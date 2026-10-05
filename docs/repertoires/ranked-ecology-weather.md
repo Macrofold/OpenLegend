@@ -7,8 +7,8 @@
 Coverage: **ECW-001–ECW-244**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
 
 | Core | Complete | Depth | Detail | Specialist | Total |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 74 | 47 | 79 | 39 | 244 |
+| ---: | -------: | ----: | -----: | ---------: | ----: |
+|    5 |       74 |    47 |     79 |         39 |   244 |
 
 ## Selection decisions
 
@@ -22,40 +22,40 @@ Window frost (ECW-012), lingering canopy drops (ECW-008), burr dispersal through
 
 ## 1 Core
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 1 | Local light provides usable observation rather than an omniscient map. | ECW-002 |
-| 2 | A recognizable prey animal supplies a real hunting encounter. | ECW-081 |
-| 4 | Usable terrain and a discoverable shelter support leaving and returning. | ECW-101, ECW-103 |
-| 6 | An actual finite food source supports gathering. | ECW-061 |
+| Game order | Selection reason                                                         | Entry IDs        |
+| ---------: | ------------------------------------------------------------------------ | ---------------- |
+|          1 | Local light provides usable observation rather than an omniscient map.   | ECW-002          |
+|          2 | A recognizable prey animal supplies a real hunting encounter.            | ECW-081          |
+|          4 | Usable terrain and a discoverable shelter support leaving and returning. | ECW-101, ECW-103 |
+|          6 | An actual finite food source supports gathering.                         | ECW-061          |
 
 ## 2 Complete
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 2 | Readable wildlife opposition and concrete enemy habitats. | ECW-082, ECW-083, ECW-089, ECW-098, ECW-158, ECW-188, ECW-211, ECW-225, ECW-235, ECW-238, ECW-242 |
-| 3 | Visible environmental danger with actual response and escape choices. | ECW-141, ECW-142, ECW-147, ECW-230 |
-| 4 | Distinct routes, clues, destinations and discoverable hazards. | ECW-004, ECW-005, ECW-009, ECW-013, ECW-017, ECW-022, ECW-032, ECW-035, ECW-044, ECW-052, ECW-056, ECW-058, ECW-068, ECW-070, ECW-074, ECW-077, ECW-078, ECW-080, ECW-102, ECW-104, ECW-108, ECW-109, ECW-110, ECW-111, ECW-114, ECW-117, ECW-145, ECW-173, ECW-207, ECW-214, ECW-234, ECW-237 |
-| 6 | Useful renewable supplies and environmental conditions support worthwhile production. | ECW-001, ECW-007, ECW-021, ECW-023, ECW-026, ECW-027, ECW-028, ECW-041, ECW-042, ECW-062, ECW-063, ECW-121, ECW-122, ECW-123, ECW-124, ECW-127, ECW-130, ECW-161, ECW-162, ECW-163, ECW-221, ECW-224 |
-| 8 | Beautiful, observable places offer enjoyable peaceful discovery. | ECW-016, ECW-029, ECW-031, ECW-050, ECW-064 |
+| Game order | Selection reason                                                                      | Entry IDs                                                                                                                                                                                                                                                                                      |
+| ---------: | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|          2 | Readable wildlife opposition and concrete enemy habitats.                             | ECW-082, ECW-083, ECW-089, ECW-098, ECW-158, ECW-188, ECW-211, ECW-225, ECW-235, ECW-238, ECW-242                                                                                                                                                                                              |
+|          3 | Visible environmental danger with actual response and escape choices.                 | ECW-141, ECW-142, ECW-147, ECW-230                                                                                                                                                                                                                                                             |
+|          4 | Distinct routes, clues, destinations and discoverable hazards.                        | ECW-004, ECW-005, ECW-009, ECW-013, ECW-017, ECW-022, ECW-032, ECW-035, ECW-044, ECW-052, ECW-056, ECW-058, ECW-068, ECW-070, ECW-074, ECW-077, ECW-078, ECW-080, ECW-102, ECW-104, ECW-108, ECW-109, ECW-110, ECW-111, ECW-114, ECW-117, ECW-145, ECW-173, ECW-207, ECW-214, ECW-234, ECW-237 |
+|          6 | Useful renewable supplies and environmental conditions support worthwhile production. | ECW-001, ECW-007, ECW-021, ECW-023, ECW-026, ECW-027, ECW-028, ECW-041, ECW-042, ECW-062, ECW-063, ECW-121, ECW-122, ECW-123, ECW-124, ECW-127, ECW-130, ECW-161, ECW-162, ECW-163, ECW-221, ECW-224                                                                                           |
+|          8 | Beautiful, observable places offer enjoyable peaceful discovery.                      | ECW-016, ECW-029, ECW-031, ECW-050, ECW-064                                                                                                                                                                                                                                                    |
 
 ## 3 Depth
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 9 | Interconnected habitats and distinctive environmental behavior after the baseline works. | ECW-018, ECW-019, ECW-024, ECW-037, ECW-038, ECW-045, ECW-047, ECW-059, ECW-075, ECW-076, ECW-090, ECW-094, ECW-097, ECW-099, ECW-100, ECW-116, ECW-118, ECW-119, ECW-132, ECW-137, ECW-138, ECW-139, ECW-143, ECW-144, ECW-148, ECW-154, ECW-157, ECW-159, ECW-165, ECW-178, ECW-189, ECW-195, ECW-197, ECW-198, ECW-201, ECW-202, ECW-205, ECW-208, ECW-210, ECW-212, ECW-215, ECW-216, ECW-223, ECW-231, ECW-232, ECW-233, ECW-243 |
+| Game order | Selection reason                                                                         | Entry IDs                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------: | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|          9 | Interconnected habitats and distinctive environmental behavior after the baseline works. | ECW-018, ECW-019, ECW-024, ECW-037, ECW-038, ECW-045, ECW-047, ECW-059, ECW-075, ECW-076, ECW-090, ECW-094, ECW-097, ECW-099, ECW-100, ECW-116, ECW-118, ECW-119, ECW-132, ECW-137, ECW-138, ECW-139, ECW-143, ECW-144, ECW-148, ECW-154, ECW-157, ECW-159, ECW-165, ECW-178, ECW-189, ECW-195, ECW-197, ECW-198, ECW-201, ECW-202, ECW-205, ECW-208, ECW-210, ECW-212, ECW-215, ECW-216, ECW-223, ECW-231, ECW-232, ECW-233, ECW-243 |
 
 ## 4 Detail
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | ECW-003, ECW-006, ECW-008, ECW-010, ECW-011, ECW-012, ECW-014, ECW-015, ECW-025, ECW-030, ECW-033, ECW-034, ECW-043, ECW-046, ECW-048, ECW-051, ECW-053, ECW-054, ECW-055, ECW-057, ECW-065, ECW-066, ECW-067, ECW-069, ECW-071, ECW-072, ECW-073, ECW-079, ECW-084, ECW-085, ECW-086, ECW-087, ECW-088, ECW-091, ECW-092, ECW-095, ECW-096, ECW-105, ECW-106, ECW-107, ECW-112, ECW-113, ECW-115, ECW-125, ECW-126, ECW-128, ECW-129, ECW-131, ECW-133, ECW-134, ECW-135, ECW-136, ECW-146, ECW-150, ECW-151, ECW-152, ECW-153, ECW-156, ECW-164, ECW-168, ECW-169, ECW-170, ECW-172, ECW-174, ECW-175, ECW-179, ECW-203, ECW-204, ECW-206, ECW-209, ECW-213, ECW-222, ECW-226, ECW-227, ECW-228, ECW-229, ECW-240, ECW-241, ECW-244 |
+| Game order | Selection reason                                                                                          | Entry IDs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------: | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | ECW-003, ECW-006, ECW-008, ECW-010, ECW-011, ECW-012, ECW-014, ECW-015, ECW-025, ECW-030, ECW-033, ECW-034, ECW-043, ECW-046, ECW-048, ECW-051, ECW-053, ECW-054, ECW-055, ECW-057, ECW-065, ECW-066, ECW-067, ECW-069, ECW-071, ECW-072, ECW-073, ECW-079, ECW-084, ECW-085, ECW-086, ECW-087, ECW-088, ECW-091, ECW-092, ECW-095, ECW-096, ECW-105, ECW-106, ECW-107, ECW-112, ECW-113, ECW-115, ECW-125, ECW-126, ECW-128, ECW-129, ECW-131, ECW-133, ECW-134, ECW-135, ECW-136, ECW-146, ECW-150, ECW-151, ECW-152, ECW-153, ECW-156, ECW-164, ECW-168, ECW-169, ECW-170, ECW-172, ECW-174, ECW-175, ECW-179, ECW-203, ECW-204, ECW-206, ECW-209, ECW-213, ECW-222, ECW-226, ECW-227, ECW-228, ECW-229, ECW-240, ECW-241, ECW-244 |
 
 ## 5 Specialist
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | ECW-020, ECW-036, ECW-039, ECW-040, ECW-049, ECW-060, ECW-093, ECW-120, ECW-140, ECW-149, ECW-155, ECW-160, ECW-166, ECW-167, ECW-171, ECW-176, ECW-177, ECW-180, ECW-181, ECW-182, ECW-183, ECW-184, ECW-185, ECW-186, ECW-187, ECW-190, ECW-191, ECW-192, ECW-193, ECW-194, ECW-196, ECW-199, ECW-200, ECW-217, ECW-218, ECW-219, ECW-220, ECW-236, ECW-239 |
+| Game order | Selection reason                                                                                   | Entry IDs                                                                                                                                                                                                                                                                                                                                                     |
+| ---------: | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | ECW-020, ECW-036, ECW-039, ECW-040, ECW-049, ECW-060, ECW-093, ECW-120, ECW-140, ECW-149, ECW-155, ECW-160, ECW-166, ECW-167, ECW-171, ECW-176, ECW-177, ECW-180, ECW-181, ECW-182, ECW-183, ECW-184, ECW-185, ECW-186, ECW-187, ECW-190, ECW-191, ECW-192, ECW-193, ECW-194, ECW-196, ECW-199, ECW-200, ECW-217, ECW-218, ECW-219, ECW-220, ECW-236, ECW-239 |
 
 ## Verification and limits
 

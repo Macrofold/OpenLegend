@@ -7,8 +7,8 @@
 Coverage: **CB-001–CB-300**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
 
 | Core | Complete | Depth | Detail | Specialist | Total |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 83 | 99 | 13 | 104 | 300 |
+| ---: | -------: | ----: | -----: | ---------: | ----: |
+|    1 |       83 |    99 |     13 |        104 |   300 |
 
 ## Selection decisions
 
@@ -24,38 +24,38 @@ Specialist marks biographies that require a separate modern/industrial, unfamili
 
 ## 1 Core
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 2 | A controlled road and a willing adversary supply a concrete first opposition. | CB-112 |
+| Game order | Selection reason                                                              | Entry IDs |
+| ---------: | ----------------------------------------------------------------------------- | --------- |
+|          2 | A controlled road and a willing adversary supply a concrete first opposition. | CB-112    |
 
 ## 2 Complete
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 2 | Particular opponents and contested situations give the player something to confront or outwit. | CB-097, CB-099, CB-102, CB-103, CB-110, CB-114, CB-116, CB-117, CB-138, CB-175, CB-185, CB-200, CB-286 |
-| 3 | Guards, recruits, protection and recovery providers make dangerous play workable. | CB-006, CB-081, CB-082, CB-083, CB-090, CB-093, CB-206, CB-255, CB-259 |
-| 4 | Guides, companions, clues and concrete requests lead to worthwhile destinations and results. | CB-010, CB-027, CB-076, CB-104, CB-124, CB-130, CB-132, CB-141, CB-142, CB-144, CB-146, CB-149, CB-154, CB-168, CB-208, CB-212, CB-216, CB-243, CB-261, CB-264, CB-265 |
-| 5 | Teachers, competitors, equipment and useful knowledge make advancement tangible. | CB-003, CB-023, CB-028, CB-030, CB-034, CB-085, CB-088, CB-092, CB-094, CB-095, CB-182, CB-199, CB-207, CB-209, CB-242, CB-244, CB-251, CB-252, CB-254, CB-275 |
-| 6 | Practical makers and suppliers enable useful production. | CB-004, CB-005 |
-| 8 | Markets, music, games, creative work and enjoyable company make settlements worth visiting. | CB-001, CB-002, CB-008, CB-012, CB-016, CB-017, CB-046, CB-061, CB-062, CB-068, CB-089, CB-101, CB-127, CB-143, CB-197, CB-198, CB-246, CB-253 |
+| Game order | Selection reason                                                                               | Entry IDs                                                                                                                                                              |
+| ---------: | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|          2 | Particular opponents and contested situations give the player something to confront or outwit. | CB-097, CB-099, CB-102, CB-103, CB-110, CB-114, CB-116, CB-117, CB-138, CB-175, CB-185, CB-200, CB-286                                                                 |
+|          3 | Guards, recruits, protection and recovery providers make dangerous play workable.              | CB-006, CB-081, CB-082, CB-083, CB-090, CB-093, CB-206, CB-255, CB-259                                                                                                 |
+|          4 | Guides, companions, clues and concrete requests lead to worthwhile destinations and results.   | CB-010, CB-027, CB-076, CB-104, CB-124, CB-130, CB-132, CB-141, CB-142, CB-144, CB-146, CB-149, CB-154, CB-168, CB-208, CB-212, CB-216, CB-243, CB-261, CB-264, CB-265 |
+|          5 | Teachers, competitors, equipment and useful knowledge make advancement tangible.               | CB-003, CB-023, CB-028, CB-030, CB-034, CB-085, CB-088, CB-092, CB-094, CB-095, CB-182, CB-199, CB-207, CB-209, CB-242, CB-244, CB-251, CB-252, CB-254, CB-275         |
+|          6 | Practical makers and suppliers enable useful production.                                       | CB-004, CB-005                                                                                                                                                         |
+|          8 | Markets, music, games, creative work and enjoyable company make settlements worth visiting.    | CB-001, CB-002, CB-008, CB-012, CB-016, CB-017, CB-046, CB-061, CB-062, CB-068, CB-089, CB-101, CB-127, CB-143, CB-197, CB-198, CB-246, CB-253                         |
 
 ## 3 Depth
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 9 | Distinctive motives, relationships and situational depth after the baseline works. | CB-011, CB-013, CB-014, CB-018, CB-019, CB-022, CB-024, CB-025, CB-031, CB-032, CB-033, CB-036, CB-037, CB-038, CB-041, CB-042, CB-043, CB-044, CB-045, CB-047, CB-049, CB-050, CB-051, CB-052, CB-053, CB-054, CB-055, CB-056, CB-057, CB-058, CB-059, CB-063, CB-064, CB-065, CB-066, CB-069, CB-070, CB-071, CB-072, CB-073, CB-078, CB-079, CB-084, CB-087, CB-091, CB-098, CB-105, CB-106, CB-108, CB-109, CB-113, CB-115, CB-122, CB-125, CB-126, CB-128, CB-131, CB-133, CB-134, CB-136, CB-137, CB-139, CB-145, CB-147, CB-148, CB-150, CB-151, CB-152, CB-157, CB-158, CB-164, CB-165, CB-170, CB-181, CB-201, CB-202, CB-203, CB-204, CB-210, CB-211, CB-213, CB-214, CB-215, CB-217, CB-218, CB-219, CB-241, CB-250, CB-258, CB-262, CB-271, CB-272, CB-273, CB-274, CB-276, CB-281, CB-282, CB-283, CB-284 |
+| Game order | Selection reason                                                                   | Entry IDs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------: | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|          9 | Distinctive motives, relationships and situational depth after the baseline works. | CB-011, CB-013, CB-014, CB-018, CB-019, CB-022, CB-024, CB-025, CB-031, CB-032, CB-033, CB-036, CB-037, CB-038, CB-041, CB-042, CB-043, CB-044, CB-045, CB-047, CB-049, CB-050, CB-051, CB-052, CB-053, CB-054, CB-055, CB-056, CB-057, CB-058, CB-059, CB-063, CB-064, CB-065, CB-066, CB-069, CB-070, CB-071, CB-072, CB-073, CB-078, CB-079, CB-084, CB-087, CB-091, CB-098, CB-105, CB-106, CB-108, CB-109, CB-113, CB-115, CB-122, CB-125, CB-126, CB-128, CB-131, CB-133, CB-134, CB-136, CB-137, CB-139, CB-145, CB-147, CB-148, CB-150, CB-151, CB-152, CB-157, CB-158, CB-164, CB-165, CB-170, CB-181, CB-201, CB-202, CB-203, CB-204, CB-210, CB-211, CB-213, CB-214, CB-215, CB-217, CB-218, CB-219, CB-241, CB-250, CB-258, CB-262, CB-271, CB-272, CB-273, CB-274, CB-276, CB-281, CB-282, CB-283, CB-284 |
 
 ## 4 Detail
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | CB-009, CB-021, CB-026, CB-048, CB-086, CB-121, CB-172, CB-183, CB-184, CB-196, CB-205, CB-277, CB-285 |
+| Game order | Selection reason                                                                                          | Entry IDs                                                                                              |
+| ---------: | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+|         10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | CB-009, CB-021, CB-026, CB-048, CB-086, CB-121, CB-172, CB-183, CB-184, CB-196, CB-205, CB-277, CB-285 |
 
 ## 5 Specialist
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | CB-007, CB-015, CB-020, CB-029, CB-035, CB-039, CB-040, CB-060, CB-067, CB-074, CB-075, CB-077, CB-080, CB-096, CB-100, CB-107, CB-111, CB-118, CB-119, CB-120, CB-123, CB-129, CB-135, CB-140, CB-153, CB-155, CB-156, CB-159, CB-160, CB-161, CB-162, CB-163, CB-166, CB-167, CB-169, CB-171, CB-173, CB-174, CB-176, CB-177, CB-178, CB-179, CB-180, CB-186, CB-187, CB-188, CB-189, CB-190, CB-191, CB-192, CB-193, CB-194, CB-195, CB-220, CB-221, CB-222, CB-223, CB-224, CB-225, CB-226, CB-227, CB-228, CB-229, CB-230, CB-231, CB-232, CB-233, CB-234, CB-235, CB-236, CB-237, CB-238, CB-239, CB-240, CB-245, CB-247, CB-248, CB-249, CB-256, CB-257, CB-260, CB-263, CB-266, CB-267, CB-268, CB-269, CB-270, CB-278, CB-279, CB-280, CB-287, CB-288, CB-289, CB-290, CB-291, CB-292, CB-293, CB-294, CB-295, CB-296, CB-297, CB-298, CB-299, CB-300 |
+| Game order | Selection reason                                                                                   | Entry IDs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------: | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | CB-007, CB-015, CB-020, CB-029, CB-035, CB-039, CB-040, CB-060, CB-067, CB-074, CB-075, CB-077, CB-080, CB-096, CB-100, CB-107, CB-111, CB-118, CB-119, CB-120, CB-123, CB-129, CB-135, CB-140, CB-153, CB-155, CB-156, CB-159, CB-160, CB-161, CB-162, CB-163, CB-166, CB-167, CB-169, CB-171, CB-173, CB-174, CB-176, CB-177, CB-178, CB-179, CB-180, CB-186, CB-187, CB-188, CB-189, CB-190, CB-191, CB-192, CB-193, CB-194, CB-195, CB-220, CB-221, CB-222, CB-223, CB-224, CB-225, CB-226, CB-227, CB-228, CB-229, CB-230, CB-231, CB-232, CB-233, CB-234, CB-235, CB-236, CB-237, CB-238, CB-239, CB-240, CB-245, CB-247, CB-248, CB-249, CB-256, CB-257, CB-260, CB-263, CB-266, CB-267, CB-268, CB-269, CB-270, CB-278, CB-279, CB-280, CB-287, CB-288, CB-289, CB-290, CB-291, CB-292, CB-293, CB-294, CB-295, CB-296, CB-297, CB-298, CB-299, CB-300 |
 
 ## Verification and limits
 

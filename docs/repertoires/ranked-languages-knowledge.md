@@ -7,8 +7,8 @@
 Coverage: **LKN001–LKN280**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
 
 | Core | Complete | Depth | Detail | Specialist | Total |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 17 | 125 | 76 | 23 | 39 | 280 |
+| ---: | -------: | ----: | -----: | ---------: | ----: |
+|   17 |      125 |    76 |     23 |         39 |   280 |
 
 ## Selection decisions
 
@@ -24,41 +24,41 @@ Nuanced registers, private meanings and richer knowledge transmission follow as 
 
 ## 1 Core
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 1 | Usable communication, warnings and understandable choices make ordinary play possible. | LKN001, LKN002, LKN018, LKN023, LKN033, LKN034, LKN037, LKN074, LKN129, LKN230 |
-| 4 | Clues, routes and fair puzzles turn knowledge into a reason to explore. | LKN178, LKN225 |
-| 5 | Learnable methods and discoveries provide useful rewards and progression. | LKN081, LKN177, LKN189, LKN196, LKN200 |
+| Game order | Selection reason                                                                       | Entry IDs                                                                      |
+| ---------: | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+|          1 | Usable communication, warnings and understandable choices make ordinary play possible. | LKN001, LKN002, LKN018, LKN023, LKN033, LKN034, LKN037, LKN074, LKN129, LKN230 |
+|          4 | Clues, routes and fair puzzles turn knowledge into a reason to explore.                | LKN178, LKN225                                                                 |
+|          5 | Learnable methods and discoveries provide useful rewards and progression.              | LKN081, LKN177, LKN189, LKN196, LKN200                                         |
 
 ## 2 Complete
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 1 | Usable communication, warnings and understandable choices make ordinary play possible. | LKN015, LKN017, LKN035, LKN040, LKN045, LKN050, LKN055, LKN061, LKN062, LKN065, LKN119, LKN181, LKN228, LKN266, LKN271 |
-| 2 | Concrete opposition and deception create encounters that can be understood and answered. | LKN151, LKN171, LKN185, LKN186, LKN187, LKN240 |
-| 3 | Shared signals and informed methods support dangerous exploration and rescue. | LKN066, LKN068, LKN069, LKN070, LKN176, LKN263, LKN268, LKN274, LKN275 |
-| 4 | Clues, routes and fair puzzles turn knowledge into a reason to explore. | LKN031, LKN042, LKN046, LKN047, LKN078, LKN097, LKN099, LKN100, LKN102, LKN103, LKN111, LKN113, LKN115, LKN117, LKN121, LKN123, LKN126, LKN127, LKN131, LKN133, LKN134, LKN138, LKN142, LKN143, LKN145, LKN146, LKN154, LKN157, LKN158, LKN162, LKN163, LKN164, LKN165, LKN166, LKN169, LKN172, LKN180, LKN182, LKN197, LKN202, LKN227, LKN229, LKN233, LKN234, LKN235, LKN239, LKN242, LKN245, LKN247, LKN249, LKN251, LKN252, LKN265, LKN269, LKN273, LKN278 |
-| 5 | Learnable methods and discoveries provide useful rewards and progression. | LKN082, LKN083, LKN085, LKN086, LKN089, LKN090, LKN091, LKN092, LKN093, LKN094, LKN112, LKN140, LKN191, LKN203, LKN206, LKN216, LKN226, LKN231, LKN246, LKN250, LKN253, LKN255, LKN257, LKN267 |
-| 6 | Practical lessons and reproducible methods support worthwhile production. | LKN051, LKN109, LKN122, LKN195, LKN198, LKN201, LKN236, LKN277 |
-| 8 | Humor, expression and peaceful learning add substantial variety. | LKN053, LKN057, LKN118, LKN124, LKN147, LKN148, LKN168 |
+| Game order | Selection reason                                                                         | Entry IDs                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------: | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|          1 | Usable communication, warnings and understandable choices make ordinary play possible.   | LKN015, LKN017, LKN035, LKN040, LKN045, LKN050, LKN055, LKN061, LKN062, LKN065, LKN119, LKN181, LKN228, LKN266, LKN271                                                                                                                                                                                                                                                                                                                                         |
+|          2 | Concrete opposition and deception create encounters that can be understood and answered. | LKN151, LKN171, LKN185, LKN186, LKN187, LKN240                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|          3 | Shared signals and informed methods support dangerous exploration and rescue.            | LKN066, LKN068, LKN069, LKN070, LKN176, LKN263, LKN268, LKN274, LKN275                                                                                                                                                                                                                                                                                                                                                                                         |
+|          4 | Clues, routes and fair puzzles turn knowledge into a reason to explore.                  | LKN031, LKN042, LKN046, LKN047, LKN078, LKN097, LKN099, LKN100, LKN102, LKN103, LKN111, LKN113, LKN115, LKN117, LKN121, LKN123, LKN126, LKN127, LKN131, LKN133, LKN134, LKN138, LKN142, LKN143, LKN145, LKN146, LKN154, LKN157, LKN158, LKN162, LKN163, LKN164, LKN165, LKN166, LKN169, LKN172, LKN180, LKN182, LKN197, LKN202, LKN227, LKN229, LKN233, LKN234, LKN235, LKN239, LKN242, LKN245, LKN247, LKN249, LKN251, LKN252, LKN265, LKN269, LKN273, LKN278 |
+|          5 | Learnable methods and discoveries provide useful rewards and progression.                | LKN082, LKN083, LKN085, LKN086, LKN089, LKN090, LKN091, LKN092, LKN093, LKN094, LKN112, LKN140, LKN191, LKN203, LKN206, LKN216, LKN226, LKN231, LKN246, LKN250, LKN253, LKN255, LKN257, LKN267                                                                                                                                                                                                                                                                 |
+|          6 | Practical lessons and reproducible methods support worthwhile production.                | LKN051, LKN109, LKN122, LKN195, LKN198, LKN201, LKN236, LKN277                                                                                                                                                                                                                                                                                                                                                                                                 |
+|          8 | Humor, expression and peaceful learning add substantial variety.                         | LKN053, LKN057, LKN118, LKN124, LKN147, LKN148, LKN168                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 ## 3 Depth
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 9 | Distinctive motives, relationships and situational depth after the baseline works. | LKN003, LKN005, LKN006, LKN007, LKN008, LKN009, LKN010, LKN011, LKN012, LKN013, LKN014, LKN016, LKN019, LKN020, LKN021, LKN022, LKN024, LKN025, LKN028, LKN029, LKN038, LKN039, LKN041, LKN043, LKN048, LKN052, LKN056, LKN060, LKN063, LKN073, LKN088, LKN095, LKN101, LKN104, LKN105, LKN106, LKN107, LKN110, LKN116, LKN120, LKN125, LKN128, LKN132, LKN136, LKN152, LKN153, LKN155, LKN156, LKN161, LKN167, LKN173, LKN174, LKN179, LKN183, LKN184, LKN188, LKN190, LKN192, LKN207, LKN208, LKN213, LKN214, LKN215, LKN217, LKN219, LKN221, LKN224, LKN237, LKN241, LKN243, LKN254, LKN256, LKN259, LKN264, LKN272, LKN279 |
+| Game order | Selection reason                                                                   | Entry IDs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------: | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|          9 | Distinctive motives, relationships and situational depth after the baseline works. | LKN003, LKN005, LKN006, LKN007, LKN008, LKN009, LKN010, LKN011, LKN012, LKN013, LKN014, LKN016, LKN019, LKN020, LKN021, LKN022, LKN024, LKN025, LKN028, LKN029, LKN038, LKN039, LKN041, LKN043, LKN048, LKN052, LKN056, LKN060, LKN063, LKN073, LKN088, LKN095, LKN101, LKN104, LKN105, LKN106, LKN107, LKN110, LKN116, LKN120, LKN125, LKN128, LKN132, LKN136, LKN152, LKN153, LKN155, LKN156, LKN161, LKN167, LKN173, LKN174, LKN179, LKN183, LKN184, LKN188, LKN190, LKN192, LKN207, LKN208, LKN213, LKN214, LKN215, LKN217, LKN219, LKN221, LKN224, LKN237, LKN241, LKN243, LKN254, LKN256, LKN259, LKN264, LKN272, LKN279 |
 
 ## 4 Detail
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | LKN004, LKN026, LKN027, LKN036, LKN049, LKN058, LKN084, LKN098, LKN108, LKN114, LKN130, LKN135, LKN139, LKN149, LKN170, LKN193, LKN194, LKN199, LKN204, LKN232, LKN238, LKN258, LKN261 |
+| Game order | Selection reason                                                                                          | Entry IDs                                                                                                                                                                              |
+| ---------: | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | LKN004, LKN026, LKN027, LKN036, LKN049, LKN058, LKN084, LKN098, LKN108, LKN114, LKN130, LKN135, LKN139, LKN149, LKN170, LKN193, LKN194, LKN199, LKN204, LKN232, LKN238, LKN258, LKN261 |
 
 ## 5 Specialist
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | LKN030, LKN032, LKN044, LKN054, LKN059, LKN064, LKN067, LKN071, LKN072, LKN075, LKN076, LKN077, LKN079, LKN080, LKN087, LKN096, LKN137, LKN141, LKN144, LKN150, LKN159, LKN160, LKN175, LKN205, LKN209, LKN210, LKN211, LKN212, LKN218, LKN220, LKN222, LKN223, LKN244, LKN248, LKN260, LKN262, LKN270, LKN276, LKN280 |
+| Game order | Selection reason                                                                                   | Entry IDs                                                                                                                                                                                                                                                                                                              |
+| ---------: | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | LKN030, LKN032, LKN044, LKN054, LKN059, LKN064, LKN067, LKN071, LKN072, LKN075, LKN076, LKN077, LKN079, LKN080, LKN087, LKN096, LKN137, LKN141, LKN144, LKN150, LKN159, LKN160, LKN175, LKN205, LKN209, LKN210, LKN211, LKN212, LKN218, LKN220, LKN222, LKN223, LKN244, LKN248, LKN260, LKN262, LKN270, LKN276, LKN280 |
 
 ## Verification and limits
 

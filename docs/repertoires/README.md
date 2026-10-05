@@ -6,14 +6,14 @@
 
 **All 27 expanded inventories are written and individually reranked: 7,871 entries.** Start with the [expanded inventory index](expanded-inventories.md), which links every full catalogue, its entry count, pinned source revision, research ledgers and completed ranking register. The eight newer repertoire branches have been brought together here as `inventory-*.md` documents without changing their source branches. The shorter original category files retain introductory context; they are not the full inventories.
 
-| Selection owner | What to use it for |
-| --- | --- |
-| [Priority policy](gameplay-priorities.md) | Whole-game ordering, score definitions, scope boundaries and the first playable-game checks |
-| [Expanded inventories and review status](expanded-inventories.md) | All 27 individual-entry catalogues, their pinned sources and per-catalogue ranking coverage |
-| [Ranked coverage](ranked-coverage.md) | Core capabilities, all 27 categories, all 25 worked situations and the four optional world families; not an individual-entry register |
-| [Ranked introductory patterns](ranked-patterns.md) | Scores for the 270 older illustrative examples only, not the expanded inventory rows |
-| [Ranked actions](ranked-actions.md) | Current scores for all 384 stable action examples |
-| [Selection and scale](selection-and-scale.md) | Choosing and evaluating a coherent slice without confusing gameplay value with engineering effort |
+| Selection owner                                                   | What to use it for                                                                                                                    |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| [Priority policy](gameplay-priorities.md)                         | Whole-game ordering, score definitions, scope boundaries and the first playable-game checks                                           |
+| [Expanded inventories and review status](expanded-inventories.md) | All 27 individual-entry catalogues, their pinned sources and per-catalogue ranking coverage                                           |
+| [Ranked coverage](ranked-coverage.md)                             | Core capabilities, all 27 categories, all 25 worked situations and the four optional world families; not an individual-entry register |
+| [Ranked introductory patterns](ranked-patterns.md)                | Scores for the 270 older illustrative examples only, not the expanded inventory rows                                                  |
+| [Ranked actions](ranked-actions.md)                               | Current scores for all 384 stable action examples                                                                                     |
+| [Selection and scale](selection-and-scale.md)                     | Choosing and evaluating a coherent slice without confusing gameplay value with engineering effort                                     |
 
 **Current ranking registers supersede the older High/Try/Niche labels and per-domain Criticality assessments, including those in expanded source inventories.** The preserved source snapshots retain those historical cells and sort directions for provenance; they are not another active roadmap. All 27 imported inventories have completed individual-entry reviews. Future additions need their own assignments; an action or introductory-pattern review cannot substitute for reviewing new inventory rows. Do not average old scores with new ones or use them as a tie-breaker. Source descriptions, stable IDs, category ownership, applicability and provisional implementation estimates remain useful. A catalogue is a library of options, not an instruction to implement every row.
 
@@ -25,53 +25,53 @@ Use the [design foundation](design-foundation.md) to ask what people seek, what 
 
 These links open the expanded inventories, except Actions, which is its own existing inventory. The ordering foregrounds the current game's foundations but does not make every feature in a higher category more important than every feature below it. Use the [individual ranking coverage](expanded-inventories.md#inventory-and-ranking-coverage). The shorter category introductions remain linked from the introductory-pattern register and existing research references.
 
-| Create or explore | Expanded catalogue | Coverage and starting points |
-| --- | --- | --- |
-| Specific attempts and usable control | [Actions and interactions](actions.md) | 384 preserved examples across 32 domains; current scores in the action register |
-| Fighting, victory, rescue and loss | [Combat and rescue](inventory-combat-rescue.md) | Melee and ranged combat rules, defenses, damage, actual opponents, tactics, rescue and aftermath |
-| Things to wield, use and treasure | [Objects](inventory-objects.md) | Weapons, armor, ammunition, tools, useful loot, equipment and possessions |
-| Reasons to leave and return | [Adventure and discovery](inventory-adventure-discovery.md) | Journeys, quests, sites, mysteries, encounter premises and discoveries |
-| Learned powers and useful improvement | [Abilities and progression](inventory-abilities-progression.md) | Techniques, proficiencies, unlocks, builds and advancement paths |
-| Lives with needs and ambitions | [Needs](inventory-needs.md) | Survival, pleasure, security, autonomy, recognition and belonging |
-| Scarcity, abundance and access | [Materials and resources](inventory-materials-resources.md) | Food, fuel, rare substances, contested supplies and substitutes |
-| Expertise, labor and making | [Work and crafting](inventory-work-crafting.md) | Professions and processes for making, modifying and repairing things |
-| Places that shape action | [Settlements and architecture](inventory-settlements-architecture.md) | Functional homes, workshops, fortresses, prisons, ruins and contested routes |
-| Living surroundings | [Ecology and weather](inventory-ecology-weather.md) | Habitats, predators, harvests, hazards and beautiful places |
-| Different ways to inhabit reality | [Bodies and species](inventory-bodies-species.md) | Senses, growth, injury, predation, mortality and unusual bodies |
-| Wealth, livelihoods and exchange | [Economy and logistics](inventory-economy-logistics.md) | Trade, wages, debt, monopoly, smuggling and spoils |
-| People who affect each other | [Relationships](inventory-relationships.md) | Companionship, love, rivalry, loyalty, patronage, dependency and betrayal |
-| People with a past and a future | [Characters and backstories](inventory-characters-backstories.md) | Knights, rivals, ordinary families, personal histories and present aims |
-| Consequences that combine | [Mechanics](inventory-mechanics.md) | Interaction patterns across activities: costs, timing, composition and outcomes |
-| Interpreting, wanting and deciding | [Psychology and behavior](inventory-psychology-behavior.md) | Fear, pride, affection, deception, conviction and self-justification |
-| Particular personalities | [Traits](inventory-traits.md) | Courage, cruelty, generosity, ambition and contradictory conduct |
-| Alliances and opposed purposes | [Diplomacy and conflict](inventory-diplomacy-conflict.md) | Hostile groups, treaties, espionage, war, conquest, resistance and peace |
-| Authority and collective life | [Institutions and politics](inventory-institutions-politics.md) | Law, office, class, corruption, coercion, services and succession |
-| A past that affects the present | [History and myth](inventory-history-myth.md) | Heroes, atrocities, migrations, myths and disputed legacies |
-| Understanding and controlling information | [Languages and knowledge](inventory-languages-knowledge.md) | Knowledge, secrets, translation, propaganda and discovery |
-| Pleasure, expression and competition | [Arts and leisure](inventory-arts-leisure.md) | Music, beauty, sport, satire, festivals and fame |
-| Faith and sacred authority | [Faith and ritual](inventory-faith-ritual.md) | Devotion, consolation, prophecy, fanaticism and dissent |
-| Coherent impossibilities | [Magic](inventory-magic.md) | Spells, enchantment, curses, bargains, wonder and domination |
-| Machines, networks and new power | [Technology](inventory-technology.md) | Technical principles, device systems, communications and infrastructure |
-| Delegation and authored worlds | [Automation and creators](inventory-automation-creators.md) | Work, defense, routines, blueprints and playable creations |
-| Stranger creator possibilities | [Unusual realities](inventory-unusual-realities.md) | Different time, space, minds, scale, death and causality |
-| Explicit experimental models | [Simulation experiments](inventory-simulation-experiments.md) | Ecology, inequality, cooperation, conflict and institutional change |
+| Create or explore                         | Expanded catalogue                                                    | Coverage and starting points                                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Specific attempts and usable control      | [Actions and interactions](actions.md)                                | 384 preserved examples across 32 domains; current scores in the action register                  |
+| Fighting, victory, rescue and loss        | [Combat and rescue](inventory-combat-rescue.md)                       | Melee and ranged combat rules, defenses, damage, actual opponents, tactics, rescue and aftermath |
+| Things to wield, use and treasure         | [Objects](inventory-objects.md)                                       | Weapons, armor, ammunition, tools, useful loot, equipment and possessions                        |
+| Reasons to leave and return               | [Adventure and discovery](inventory-adventure-discovery.md)           | Journeys, quests, sites, mysteries, encounter premises and discoveries                           |
+| Learned powers and useful improvement     | [Abilities and progression](inventory-abilities-progression.md)       | Techniques, proficiencies, unlocks, builds and advancement paths                                 |
+| Lives with needs and ambitions            | [Needs](inventory-needs.md)                                           | Survival, pleasure, security, autonomy, recognition and belonging                                |
+| Scarcity, abundance and access            | [Materials and resources](inventory-materials-resources.md)           | Food, fuel, rare substances, contested supplies and substitutes                                  |
+| Expertise, labor and making               | [Work and crafting](inventory-work-crafting.md)                       | Professions and processes for making, modifying and repairing things                             |
+| Places that shape action                  | [Settlements and architecture](inventory-settlements-architecture.md) | Functional homes, workshops, fortresses, prisons, ruins and contested routes                     |
+| Living surroundings                       | [Ecology and weather](inventory-ecology-weather.md)                   | Habitats, predators, harvests, hazards and beautiful places                                      |
+| Different ways to inhabit reality         | [Bodies and species](inventory-bodies-species.md)                     | Senses, growth, injury, predation, mortality and unusual bodies                                  |
+| Wealth, livelihoods and exchange          | [Economy and logistics](inventory-economy-logistics.md)               | Trade, wages, debt, monopoly, smuggling and spoils                                               |
+| People who affect each other              | [Relationships](inventory-relationships.md)                           | Companionship, love, rivalry, loyalty, patronage, dependency and betrayal                        |
+| People with a past and a future           | [Characters and backstories](inventory-characters-backstories.md)     | Knights, rivals, ordinary families, personal histories and present aims                          |
+| Consequences that combine                 | [Mechanics](inventory-mechanics.md)                                   | Interaction patterns across activities: costs, timing, composition and outcomes                  |
+| Interpreting, wanting and deciding        | [Psychology and behavior](inventory-psychology-behavior.md)           | Fear, pride, affection, deception, conviction and self-justification                             |
+| Particular personalities                  | [Traits](inventory-traits.md)                                         | Courage, cruelty, generosity, ambition and contradictory conduct                                 |
+| Alliances and opposed purposes            | [Diplomacy and conflict](inventory-diplomacy-conflict.md)             | Hostile groups, treaties, espionage, war, conquest, resistance and peace                         |
+| Authority and collective life             | [Institutions and politics](inventory-institutions-politics.md)       | Law, office, class, corruption, coercion, services and succession                                |
+| A past that affects the present           | [History and myth](inventory-history-myth.md)                         | Heroes, atrocities, migrations, myths and disputed legacies                                      |
+| Understanding and controlling information | [Languages and knowledge](inventory-languages-knowledge.md)           | Knowledge, secrets, translation, propaganda and discovery                                        |
+| Pleasure, expression and competition      | [Arts and leisure](inventory-arts-leisure.md)                         | Music, beauty, sport, satire, festivals and fame                                                 |
+| Faith and sacred authority                | [Faith and ritual](inventory-faith-ritual.md)                         | Devotion, consolation, prophecy, fanaticism and dissent                                          |
+| Coherent impossibilities                  | [Magic](inventory-magic.md)                                           | Spells, enchantment, curses, bargains, wonder and domination                                     |
+| Machines, networks and new power          | [Technology](inventory-technology.md)                                 | Technical principles, device systems, communications and infrastructure                          |
+| Delegation and authored worlds            | [Automation and creators](inventory-automation-creators.md)           | Work, defense, routines, blueprints and playable creations                                       |
+| Stranger creator possibilities            | [Unusual realities](inventory-unusual-realities.md)                   | Different time, space, minds, scale, death and causality                                         |
+| Explicit experimental models              | [Simulation experiments](inventory-simulation-experiments.md)         | Ecology, inequality, cooperation, conflict and institutional change                              |
 
 ## Category ownership and cross-references
 
 Give each idea one primary catalogue based on **what the entry defines**. A weapon is an object; the rules for aiming and resolving its shot are combat mechanics; learning to use it better is progression. A technological or magical origin does not move the finished weapon out of Objects. A category can discuss another category's idea while linking to its defining entry instead of reproducing its inventory or rules. Introductory patterns can illustrate several categories; keep that context and apply these boundaries to the specific inventories. Existing links to a short category introduction identify the category, not proof that all its inventory rows are present in that introductory file.
 
-| Primary catalogue | Owns the idea when it defines | Examples and boundaries |
-| --- | --- | --- |
-| [Objects](inventory-objects.md) | A specific item, its properties, uses and distinctive features | Bows, swords, firearms, shields, armor, ammunition, enchanted weapons and tools. Link combat rules, materials and recipes. |
-| [Combat and rescue](inventory-combat-rescue.md) | How fighting, defense, tactical opposition or rescue works | Reach, aiming, projectiles, ammunition use, reload timing, cover, damage, armor interaction, suppression, enemy tactics, evacuation and aftermath. Specific equipment stays in Objects. |
-| [Mechanics](inventory-mechanics.md) | A reusable interaction pattern | Preparation, interruption, resource tradeoffs, combining effects and persistent consequences. Domain-specific combat, crafting and relationship rules belong to their own catalogues. |
-| [Abilities and progression](inventory-abilities-progression.md) | What an actor learns, unlocks, specializes in or improves | Archery proficiency, reload technique, fighting style, class or training path. Link affected behavior and equipment. |
-| [Actions](actions.md#reading-and-extending-the-catalogue) | A concrete attempt by an actor | Aim, shoot, reload or parry. The attempt is distinct from the rule resolving it. |
-| [Work and crafting](inventory-work-crafting.md) | A profession, recipe, production, modification or repair process | Bowmaking, forging, ammunition making and armor repair. Link outputs and inputs. |
-| [Materials and resources](inventory-materials-resources.md) | An input, substance, stock or access requirement | Wood, steel, fibers, fuel, reagents and workshop time. Finished arrows and cartridges remain object entries. |
-| [Technology](inventory-technology.md) | A technical principle, device system or infrastructure capability | Energy storage, actuation, sensing, communication and shield generators. A beam weapon's power system belongs here; its item is Objects and its attack is Combat. |
-| [Magic](inventory-magic.md) | A spell, enchantment, supernatural effect or magical law | Flame enchantments, homing, summoning, sources, costs and limits. Link particular artifacts, shared attack rules and learned abilities to their owners. |
-| [Adventure and discovery](inventory-adventure-discovery.md) | A journey, quest, site, mystery, encounter setup or discovery | A monster hunt, occupied ruin or expedition for a lost bow. It defines why and where, not a duplicate creature or weapon. |
+| Primary catalogue                                               | Owns the idea when it defines                                     | Examples and boundaries                                                                                                                                                                 |
+| --------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Objects](inventory-objects.md)                                 | A specific item, its properties, uses and distinctive features    | Bows, swords, firearms, shields, armor, ammunition, enchanted weapons and tools. Link combat rules, materials and recipes.                                                              |
+| [Combat and rescue](inventory-combat-rescue.md)                 | How fighting, defense, tactical opposition or rescue works        | Reach, aiming, projectiles, ammunition use, reload timing, cover, damage, armor interaction, suppression, enemy tactics, evacuation and aftermath. Specific equipment stays in Objects. |
+| [Mechanics](inventory-mechanics.md)                             | A reusable interaction pattern                                    | Preparation, interruption, resource tradeoffs, combining effects and persistent consequences. Domain-specific combat, crafting and relationship rules belong to their own catalogues.   |
+| [Abilities and progression](inventory-abilities-progression.md) | What an actor learns, unlocks, specializes in or improves         | Archery proficiency, reload technique, fighting style, class or training path. Link affected behavior and equipment.                                                                    |
+| [Actions](actions.md#reading-and-extending-the-catalogue)       | A concrete attempt by an actor                                    | Aim, shoot, reload or parry. The attempt is distinct from the rule resolving it.                                                                                                        |
+| [Work and crafting](inventory-work-crafting.md)                 | A profession, recipe, production, modification or repair process  | Bowmaking, forging, ammunition making and armor repair. Link outputs and inputs.                                                                                                        |
+| [Materials and resources](inventory-materials-resources.md)     | An input, substance, stock or access requirement                  | Wood, steel, fibers, fuel, reagents and workshop time. Finished arrows and cartridges remain object entries.                                                                            |
+| [Technology](inventory-technology.md)                           | A technical principle, device system or infrastructure capability | Energy storage, actuation, sensing, communication and shield generators. A beam weapon's power system belongs here; its item is Objects and its attack is Combat.                       |
+| [Magic](inventory-magic.md)                                     | A spell, enchantment, supernatural effect or magical law          | Flame enchantments, homing, summoning, sources, costs and limits. Link particular artifacts, shared attack rules and learned abilities to their owners.                                 |
+| [Adventure and discovery](inventory-adventure-discovery.md)     | A journey, quest, site, mystery, encounter setup or discovery     | A monster hunt, occupied ruin or expedition for a lost bow. It defines why and where, not a duplicate creature or weapon.                                                               |
 
 An **enchanted hunting bow** has one object entry. Its draw, range and projectile interaction reference Combat; its supernatural effect references Magic; learning an advanced shot references Abilities; making or repairing it references Work and Materials. Recovering it belongs in Adventure; “shoot the guard from this ledge” belongs in Actions. These are distinct linked ideas, not copies of one bow row.
 
@@ -81,12 +81,12 @@ Extend the existing expanded category's owned entries and record dependencies on
 
 These are adaptable proposals, not four accepted canonical worlds or simultaneous release commitments. A creator can select a family, borrow a setting or reject its lore. None enters accepted base-world rules without a separate decision. Their [current selection priorities](ranked-coverage.md#optional-world-families) do not promote all their content together.
 
-| Code | Proposal | Experience at its center |
-| --- | --- | --- |
-| **MD** | [Threewater March — medieval survival](worlds/medieval-survival.md) | Survive, build, gain standing and contest a frontier shaped by weather, kinship and force |
-| **MO** | [Linden Reach — modern life](worlds/modern-life.md) | Pursue home, career, love, wealth or influence amid competing people and institutions |
-| **SC** | [Veyra Reach — planetary science fiction](worlds/planetary-scifi.md) | Explore planetary frontiers with a capable crew, alien encounters and useful technology |
-| **FA** | [The Borrowed Dawn — living fantasy](worlds/living-fantasy.md) | Seek mastery, treasure and allegiance amid magic, danger and lives worth caring about |
+| Code   | Proposal                                                             | Experience at its center                                                                  |
+| ------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **MD** | [Threewater March — medieval survival](worlds/medieval-survival.md)  | Survive, build, gain standing and contest a frontier shaped by weather, kinship and force |
+| **MO** | [Linden Reach — modern life](worlds/modern-life.md)                  | Pursue home, career, love, wealth or influence amid competing people and institutions     |
+| **SC** | [Veyra Reach — planetary science fiction](worlds/planetary-scifi.md) | Explore planetary frontiers with a capable crew, alien encounters and useful technology   |
+| **FA** | [The Borrowed Dawn — living fantasy](worlds/living-fantasy.md)       | Seek mastery, treasure and allegiance amid magic, danger and lives worth caring about     |
 
 **Seed worlds** recommends natural homes for an idea; MD/MO/SC/FA can combine. **ALL** means a natural fit in all four with appropriate local detail, not merely theoretical reskinning. **—** retains an idea for worlds outside these four. These are not engine prohibitions. The science-fiction family still excludes playable ship piloting, space navigation and dogfighting: ships are inhabited locations and crew/capability spaces; journeys are abstract transitions.
 
@@ -96,13 +96,13 @@ These are adaptable proposals, not four accepted canonical worlds or simultaneou
 
 Criticality is a current-game product judgment, independent of engineering effort, realization type and implementation status. Its reference is the **whole survival-adventure**, not a domain considered in isolation. The [policy](gameplay-priorities.md#criticality) owns the full definitions.
 
-| Score | Selection meaning |
-| --- | --- |
-| **1 Core** | A missing basic capability or representative content needed for a complete, rewarding first playable loop |
-| **2 Complete** | Substantial variety, progression and support that make the game worth continuing |
-| **3 Depth** | Distinctive systems and meaningful expression beyond a working baseline |
-| **4 Detail** | Optional maintenance, simulation granularity, administration or narrow convenience |
-| **5 Specialist** | Alternate-world, frontier or research scope outside this game's current delivery path |
+| Score            | Selection meaning                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------------- |
+| **1 Core**       | A missing basic capability or representative content needed for a complete, rewarding first playable loop |
+| **2 Complete**   | Substantial variety, progression and support that make the game worth continuing                          |
+| **3 Depth**      | Distinctive systems and meaningful expression beyond a working baseline                                   |
+| **4 Detail**     | Optional maintenance, simulation granularity, administration or narrow convenience                        |
+| **5 Specialist** | Alternate-world, frontier or research scope outside this game's current delivery path                     |
 
 An expensive enemy capability can be Core; a cheap sharpening action can be Detail. A basic bow can be **1 Core / C** under its stated prerequisites without making every bow variant compulsory. Several entries can be alternatives for one requirement. Source patterns score their full described behavior: a nuanced kitchen institution is not basic food, and an adaptive rival's biography is not the first enemy.
 
@@ -114,11 +114,11 @@ Current values live in the corresponding registers, not older descriptive cells.
 
 **Level** replaces the older label **Route**, retaining F/U/C/D. It describes realization under available prerequisites, not measured difficulty, product priority, implementation status, permission level or a replacement for G0–G3.
 
-| Level | Meaning when prerequisites are implemented, enabled and available |
-| --- | --- |
-| **F** | Foundation: a supplied reusable grounding/control/agency operation; still dependent on compatible body, senses, topology and policy |
-| **U** | Use: invoke an existing world capability or known technique without new invention on this invocation |
-| **C** | Compose: combine existing calls, scoped observations, constraints and activities; a missing constituent can still block execution |
+| Level | Meaning when prerequisites are implemented, enabled and available                                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **F** | Foundation: a supplied reusable grounding/control/agency operation; still dependent on compatible body, senses, topology and policy                                      |
+| **U** | Use: invoke an existing world capability or known technique without new invention on this invocation                                                                     |
+| **C** | Compose: combine existing calls, scoped observations, constraints and activities; a missing constituent can still block execution                                        |
 | **D** | Define: intentionally propose, specialize, install or change reusable mechanics/policies through the appropriate authoring route; proposal is not admission or execution |
 
 **C does not mean complex.** F does not mean important. Classify an action's stated attempt as explained in [Actions](actions.md#reading-and-extending-the-catalogue); classify another inventory entry by its defining behavior. Assembling a bow from supported crafting/material/combat capabilities can be C while firing it is U. A new reusable world rule is D; an unavailable trusted engine capability is an explicit engineering gap, not something a D proposal can manufacture with code or authority.
@@ -129,8 +129,8 @@ Sharpening a blade, repairing a handle and patching a seam are ordinary, bounded
 
 Retain brief archetype context followed by specific usable ideas. The existing action and expanded-inventory tables demonstrate stable IDs and seed-world fit, but their older score cells are historical. Follow [ranked actions](ranked-actions.md) and the [expanded inventory registers](expanded-inventories.md) for current values. New tables can use:
 
-| ID | Idea | Seed worlds | Use | Current priority reference | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ID  | Idea | Seed worlds | Use | Current priority reference | Level | Specific behavior and payoff | Build scope / gap | Inspiration |
+| --- | ---- | ----------- | --- | -------------------------- | ----- | ---------------------------- | ----------------- | ----------- |
 
 Name concrete objects, situations, powers or relationships in their own rows. An archetype introduction is not an inventory. Apply category ownership and link dependencies; preserve useful pattern prose, headings and stable IDs. Use native Markdown headings and links, not HTML anchors. Explain shared mechanics references once. Inspiration identifies research sources; Seed worlds identifies proposed settings. These are different relationships.
 
@@ -140,18 +140,18 @@ Add or revise the entry in its canonical priority register as part of the same c
 
 The older introductory cards and preserved inventory snapshots retain historical descriptive labels. **High/Try/Niche and Basics/Expected/Enriching/Advanced/Frontier are not current-game recommendations. Numeric 1/2/3 build estimates are not Criticality.** Use **Small / Moderate / Large** for new scope estimates, with actual missing work; retain Compose/Extend/New when useful. Current individual scores belong in the linked register; future unreviewed additions must be identified explicitly.
 
-| Label | Meaning |
-| --- | --- |
-| **Play** | Enjoyable player or creator activity |
-| **Blend** | Play and explicit simulation exploration |
-| **Lab** | Experimental model, not a default gameplay priority |
+| Label                  | Meaning                                                                                                    |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Play**               | Enjoyable player or creator activity                                                                       |
+| **Blend**              | Play and explicit simulation exploration                                                                   |
+| **Lab**                | Experimental model, not a default gameplay priority                                                        |
 | **High / Try / Niche** | Former selection judgments only; consult the current register rather than treating them as recommendations |
-| **1** | Provisional small authoring/integration scope under stated prerequisites |
-| **2** | Provisional moderate scope involving a bounded capability or several owners |
-| **3** | Provisional large scope involving a trusted evaluator, substantial family or difficult lifecycle |
-| **Compose** | Candidate for authored content and admitted operations; verify constituent support |
-| **Extend** | Likely bounded extension to an existing semantic owner |
-| **New** | Likely new trusted capability family or major provider, not merely generated data |
+| **1**                  | Provisional small authoring/integration scope under stated prerequisites                                   |
+| **2**                  | Provisional moderate scope involving a bounded capability or several owners                                |
+| **3**                  | Provisional large scope involving a trusted evaluator, substantial family or difficult lifecycle           |
+| **Compose**            | Candidate for authored content and admitted operations; verify constituent support                         |
+| **Extend**             | Likely bounded extension to an existing semantic owner                                                     |
+| **New**                | Likely new trusted capability family or major provider, not merely generated data                          |
 
 Thus **MD FA · Play · High · 2/Extend** retains medieval/fantasy suitability, player intent and a provisional moderate extension estimate. It **does not retain a current High recommendation**. The Gap sentence identifies broad missing work. These are historical design estimates, not live support, dates, generation levels or availability promises. A biography still needs supported perception, memory and behavior for its described reactions to execute.
 

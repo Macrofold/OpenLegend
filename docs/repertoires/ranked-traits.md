@@ -7,8 +7,8 @@
 Coverage: **TR-001–TR-300**. Each ID appears once in the assignment tables. Lower priority numbers come first, then the [whole-game order](gameplay-priorities.md#whole-game-build-order), then stable ID. Tied alternatives are not all mandatory. These are product judgments about the full described feature, not measured fun, engineering effort or implementation status.
 
 | Core | Complete | Depth | Detail | Specialist | Total |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 107 | 119 | 47 | 21 | 300 |
+| ---: | -------: | ----: | -----: | ---------: | ----: |
+|    6 |      107 |   119 |     47 |         21 |   300 |
 
 ## Selection decisions
 
@@ -24,41 +24,41 @@ Most unfamiliar tastes are still ordinary Depth, even in a magical creature. Spe
 
 ## 1 Core
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 2 | Representative opponents have deliberate goals, force and limits, not mandatory hidden redemption. | TR-118, TR-120, TR-139, TR-159, TR-215 |
-| 6 | A useful project reaches an actual working result. | TR-041 |
+| Game order | Selection reason                                                                                   | Entry IDs                              |
+| ---------: | -------------------------------------------------------------------------------------------------- | -------------------------------------- |
+|          2 | Representative opponents have deliberate goals, force and limits, not mandatory hidden redemption. | TR-118, TR-120, TR-139, TR-159, TR-215 |
+|          6 | A useful project reaches an actual working result.                                                 | TR-041                                 |
 
 ## 2 Complete
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 1 | Clear communication, reliable participation and informed decisions support ordinary play. | TR-001, TR-003, TR-006, TR-043, TR-063, TR-083, TR-123, TR-131, TR-201, TR-202 |
-| 2 | Distinct adversaries and useful negotiations create real opposition and choices. | TR-019, TR-039, TR-059, TR-080, TR-136, TR-160, TR-216, TR-219, TR-273, TR-276, TR-277 |
-| 3 | Complementary companions, contests, caution and active assistance support dangerous play. | TR-121, TR-137, TR-140, TR-141, TR-142, TR-144, TR-145, TR-146, TR-147, TR-149, TR-151, TR-152, TR-154, TR-156, TR-158, TR-243, TR-285 |
-| 4 | Inquiry, travel and self-chosen challenges make exploration worthwhile. | TR-061, TR-064, TR-065, TR-070, TR-071, TR-074, TR-084, TR-157, TR-182, TR-188, TR-189, TR-226, TR-244 |
-| 5 | Useful teachers, rivals, rewards and attainable improvement sustain progression. | TR-029, TR-049, TR-050, TR-055, TR-077, TR-101, TR-107, TR-110, TR-114, TR-115, TR-122, TR-247, TR-248, TR-250, TR-256, TR-274, TR-298 |
-| 6 | Useful making and access to expertise keep production purposeful. | TR-021, TR-047, TR-051, TR-245 |
-| 7 | A particular place worth defending gives returning a purpose. | TR-133 |
-| 8 | Company, art, trade, celebration and playful activities add substantial variety. | TR-005, TR-008, TR-014, TR-025, TR-027, TR-038, TR-053, TR-058, TR-082, TR-085, TR-090, TR-095, TR-098, TR-102, TR-105, TR-113, TR-116, TR-134, TR-161, TR-162, TR-167, TR-175, TR-176, TR-177, TR-196, TR-206, TR-220, TR-242, TR-251, TR-255, TR-258, TR-261, TR-266, TR-286 |
+| Game order | Selection reason                                                                          | Entry IDs                                                                                                                                                                                                                                                                      |
+| ---------: | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|          1 | Clear communication, reliable participation and informed decisions support ordinary play. | TR-001, TR-003, TR-006, TR-043, TR-063, TR-083, TR-123, TR-131, TR-201, TR-202                                                                                                                                                                                                 |
+|          2 | Distinct adversaries and useful negotiations create real opposition and choices.          | TR-019, TR-039, TR-059, TR-080, TR-136, TR-160, TR-216, TR-219, TR-273, TR-276, TR-277                                                                                                                                                                                         |
+|          3 | Complementary companions, contests, caution and active assistance support dangerous play. | TR-121, TR-137, TR-140, TR-141, TR-142, TR-144, TR-145, TR-146, TR-147, TR-149, TR-151, TR-152, TR-154, TR-156, TR-158, TR-243, TR-285                                                                                                                                         |
+|          4 | Inquiry, travel and self-chosen challenges make exploration worthwhile.                   | TR-061, TR-064, TR-065, TR-070, TR-071, TR-074, TR-084, TR-157, TR-182, TR-188, TR-189, TR-226, TR-244                                                                                                                                                                         |
+|          5 | Useful teachers, rivals, rewards and attainable improvement sustain progression.          | TR-029, TR-049, TR-050, TR-055, TR-077, TR-101, TR-107, TR-110, TR-114, TR-115, TR-122, TR-247, TR-248, TR-250, TR-256, TR-274, TR-298                                                                                                                                         |
+|          6 | Useful making and access to expertise keep production purposeful.                         | TR-021, TR-047, TR-051, TR-245                                                                                                                                                                                                                                                 |
+|          7 | A particular place worth defending gives returning a purpose.                             | TR-133                                                                                                                                                                                                                                                                         |
+|          8 | Company, art, trade, celebration and playful activities add substantial variety.          | TR-005, TR-008, TR-014, TR-025, TR-027, TR-038, TR-053, TR-058, TR-082, TR-085, TR-090, TR-095, TR-098, TR-102, TR-105, TR-113, TR-116, TR-134, TR-161, TR-162, TR-167, TR-175, TR-176, TR-177, TR-196, TR-206, TR-220, TR-242, TR-251, TR-255, TR-258, TR-261, TR-266, TR-286 |
 
 ## 3 Depth
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 9 | Distinctive motives, relationships and situational depth after the baseline works. | TR-002, TR-004, TR-009, TR-011, TR-012, TR-013, TR-015, TR-016, TR-018, TR-020, TR-026, TR-028, TR-033, TR-034, TR-040, TR-045, TR-046, TR-056, TR-057, TR-062, TR-066, TR-068, TR-069, TR-072, TR-073, TR-075, TR-078, TR-079, TR-081, TR-086, TR-087, TR-088, TR-091, TR-092, TR-093, TR-094, TR-096, TR-097, TR-099, TR-100, TR-103, TR-104, TR-106, TR-108, TR-109, TR-111, TR-112, TR-117, TR-119, TR-125, TR-126, TR-127, TR-128, TR-129, TR-130, TR-132, TR-135, TR-138, TR-143, TR-148, TR-150, TR-153, TR-155, TR-163, TR-164, TR-165, TR-168, TR-170, TR-171, TR-172, TR-174, TR-178, TR-180, TR-194, TR-203, TR-204, TR-205, TR-207, TR-208, TR-210, TR-211, TR-212, TR-213, TR-214, TR-217, TR-218, TR-225, TR-231, TR-233, TR-234, TR-235, TR-238, TR-246, TR-249, TR-253, TR-257, TR-260, TR-262, TR-263, TR-265, TR-269, TR-270, TR-271, TR-272, TR-275, TR-278, TR-279, TR-280, TR-281, TR-282, TR-283, TR-284, TR-287, TR-289, TR-291, TR-293, TR-295, TR-296, TR-297 |
+| Game order | Selection reason                                                                   | Entry IDs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------: | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|          9 | Distinctive motives, relationships and situational depth after the baseline works. | TR-002, TR-004, TR-009, TR-011, TR-012, TR-013, TR-015, TR-016, TR-018, TR-020, TR-026, TR-028, TR-033, TR-034, TR-040, TR-045, TR-046, TR-056, TR-057, TR-062, TR-066, TR-068, TR-069, TR-072, TR-073, TR-075, TR-078, TR-079, TR-081, TR-086, TR-087, TR-088, TR-091, TR-092, TR-093, TR-094, TR-096, TR-097, TR-099, TR-100, TR-103, TR-104, TR-106, TR-108, TR-109, TR-111, TR-112, TR-117, TR-119, TR-125, TR-126, TR-127, TR-128, TR-129, TR-130, TR-132, TR-135, TR-138, TR-143, TR-148, TR-150, TR-153, TR-155, TR-163, TR-164, TR-165, TR-168, TR-170, TR-171, TR-172, TR-174, TR-178, TR-180, TR-194, TR-203, TR-204, TR-205, TR-207, TR-208, TR-210, TR-211, TR-212, TR-213, TR-214, TR-217, TR-218, TR-225, TR-231, TR-233, TR-234, TR-235, TR-238, TR-246, TR-249, TR-253, TR-257, TR-260, TR-262, TR-263, TR-265, TR-269, TR-270, TR-271, TR-272, TR-275, TR-278, TR-279, TR-280, TR-281, TR-282, TR-283, TR-284, TR-287, TR-289, TR-291, TR-293, TR-295, TR-296, TR-297 |
 
 ## 4 Detail
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | TR-007, TR-010, TR-017, TR-022, TR-023, TR-024, TR-030, TR-031, TR-032, TR-035, TR-036, TR-037, TR-042, TR-044, TR-048, TR-052, TR-054, TR-060, TR-067, TR-076, TR-089, TR-124, TR-166, TR-181, TR-183, TR-184, TR-185, TR-186, TR-187, TR-190, TR-191, TR-192, TR-193, TR-195, TR-197, TR-198, TR-199, TR-209, TR-221, TR-223, TR-232, TR-241, TR-252, TR-254, TR-259, TR-267, TR-268 |
+| Game order | Selection reason                                                                                          | Entry IDs                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------: | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | Optional maintenance, administration and narrow fidelity; not prerequisites for the interesting activity. | TR-007, TR-010, TR-017, TR-022, TR-023, TR-024, TR-030, TR-031, TR-032, TR-035, TR-036, TR-037, TR-042, TR-044, TR-048, TR-052, TR-054, TR-060, TR-067, TR-076, TR-089, TR-124, TR-166, TR-181, TR-183, TR-184, TR-185, TR-186, TR-187, TR-190, TR-191, TR-192, TR-193, TR-195, TR-197, TR-198, TR-199, TR-209, TR-221, TR-223, TR-232, TR-241, TR-252, TR-254, TR-259, TR-267, TR-268 |
 
 ## 5 Specialist
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | TR-169, TR-173, TR-179, TR-200, TR-222, TR-224, TR-227, TR-228, TR-229, TR-230, TR-236, TR-237, TR-239, TR-240, TR-264, TR-288, TR-290, TR-292, TR-294, TR-299, TR-300 |
+| Game order | Selection reason                                                                                   | Entry IDs                                                                                                                                                              |
+| ---------: | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | Alternate embodiment, world laws or specialist experiences outside the current survival-adventure. | TR-169, TR-173, TR-179, TR-200, TR-222, TR-224, TR-227, TR-228, TR-229, TR-230, TR-236, TR-237, TR-239, TR-240, TR-264, TR-288, TR-290, TR-292, TR-294, TR-299, TR-300 |
 
 ## Verification and limits
 

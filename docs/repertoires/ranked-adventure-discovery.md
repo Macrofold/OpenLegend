@@ -9,8 +9,8 @@ The reviewed set is AD-001–AD-336, including the later AD-305–AD-336 additio
 Every ID occurs exactly once in the assignment tables. The section heading supplies its priority; the table supplies its whole-game order and selection reason. IDs within each assignment row are ascending; rows sharing an order are grouped by selection reason. This is a ranking of the described entries, not an instruction to implement every alternative. Source prefixes and leading zeroes are significant. The [policy](gameplay-priorities.md#whole-game-build-order) defines the numbered game areas.
 
 | Core | Complete | Depth | Detail | Specialist | Total |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 11 | 95 | 126 | 1 | 103 | 336 |
+| ---: | -------: | ----: | -----: | ---------: | ----: |
+|   11 |       95 |   126 |      1 |        103 |   336 |
 
 ## Selection decisions
 
@@ -24,67 +24,67 @@ Personal obligations, nuanced memories, detailed institutional consequences, evo
 
 ## 1 Core
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 4 | A small threatened escort supplies an understandable objective, actual opponents and an attainable reward as one first-loop alternative. | AD-016 |
-| 4 | A bounded hunt or predator threat connects usable equipment, readable danger, a concrete objective and a useful outcome. | AD-046, AD-047 |
-| 4 | A small dungeon, occupied bandit site or finite investigation is a representative complete goal with access, opposition or clues, and an attainable result. | AD-061, AD-062, AD-076 |
-| 4 | A finite cache in a dangerous place, with useful local purchases, directly closes the challenge-to-reward first loop. | AD-106 |
-| 4 | A small hostile roadblock or dangerous mine supplies a readable opponent, a reachable objective and a persistent first-loop result. | AD-181, AD-196 |
-| 4 | A completed local objective leaves a real usable route and persistent victory. | AD-228 |
-| 5 | An earned reward buys an actual useful improvement or enjoyable outcome and is not immediately erased by another compulsory emergency. | AD-226 |
+| Game order | Selection reason                                                                                                                                            | Entry IDs              |
+| ---------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+|          4 | A small threatened escort supplies an understandable objective, actual opponents and an attainable reward as one first-loop alternative.                    | AD-016                 |
+|          4 | A bounded hunt or predator threat connects usable equipment, readable danger, a concrete objective and a useful outcome.                                    | AD-046, AD-047         |
+|          4 | A small dungeon, occupied bandit site or finite investigation is a representative complete goal with access, opposition or clues, and an attainable result. | AD-061, AD-062, AD-076 |
+|          4 | A finite cache in a dangerous place, with useful local purchases, directly closes the challenge-to-reward first loop.                                       | AD-106                 |
+|          4 | A small hostile roadblock or dangerous mine supplies a readable opponent, a reachable objective and a persistent first-loop result.                         | AD-181, AD-196         |
+|          4 | A completed local objective leaves a real usable route and persistent victory.                                                                              | AD-228                 |
+|          5 | An earned reward buys an actual useful improvement or enjoyable outcome and is not immediately erased by another compulsory emergency.                      | AD-226                 |
 
 ## 2 Complete
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 4 | A bounded route, delivery, environmental obstacle or useful discovered destination gives the player a concrete expedition and payoff. | AD-001, AD-002, AD-003, AD-004, AD-005, AD-007, AD-008, AD-010, AD-011, AD-012, AD-014, AD-017, AD-018, AD-241, AD-243, AD-244, AD-305 |
-| 4 | A useful survey, worthwhile sight, dangerous quarry, collection goal or specialist-enabled route adds a concrete expedition and reward. | AD-019, AD-029, AD-031, AD-032, AD-036, AD-039, AD-040, AD-048, AD-049, AD-050, AD-249, AD-307 |
-| 4 | A dangerous quarry, substantial dungeon, return route or concrete investigation supplies an enjoyable challenge and a worthwhile discovery. | AD-052, AD-054, AD-056, AD-063, AD-066, AD-068, AD-077, AD-079, AD-080, AD-081, AD-312 |
-| 4 | A bounded mystery, heist, contested recovery or useful treasure supplies a concrete challenge and payoff; repair here can unlock a particular reward rather than impose routine upkeep. | AD-086, AD-090, AD-091, AD-092, AD-093, AD-094, AD-098, AD-107, AD-108, AD-109, AD-110, AD-111, AD-112, AD-266, AD-267, AD-320 |
-| 4 | A reward that changes route feasibility or opens a useful production choice gives a concrete reason to explore again. | AD-120, AD-271 |
-| 4 | A bounded rescue, defended escape or competing prize adds a concrete challenge and outcome after the first fight works. | AD-166, AD-168, AD-169, AD-170, AD-171, AD-173, AD-285, AD-327 |
-| 4 | Scouting, raids, holding a crossing and exploring for a captive add substantial tactical objectives and useful outcomes. | AD-182, AD-183, AD-184, AD-185, AD-187, AD-192, AD-197 |
-| 4 | Returning for a known cache or enjoying a cleared route makes discoveries and victories worth keeping. | AD-230, AD-239 |
-| 4 | Two readable, counterable enemy behaviors create a tactical puzzle and alternative approaches, not a demand for a broad new simulation. | AD-294 |
-| 7 | Displaying a recovered possession gives exploration a visible, durable home reward. | AD-229 |
-| 7 | Turning winnings into a usable workshop or reconstructed settlement makes home improvement a tangible reward. | AD-232, AD-303 |
-| 8 | Clear contests, genuine competition, useful commissions and optional challenge variants add replayable activity with real results. | AD-121, AD-122, AD-123, AD-124, AD-127, AD-128, AD-129, AD-131, AD-274, AD-275, AD-321 |
-| 8 | Actual music, tavern activities, festivals and performances are substantial enjoyable activities, not obligations to prepare or maintain an event. | AD-151, AD-152, AD-153, AD-160, AD-326 |
+| Game order | Selection reason                                                                                                                                                                        | Entry IDs                                                                                                                              |
+| ---------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+|          4 | A bounded route, delivery, environmental obstacle or useful discovered destination gives the player a concrete expedition and payoff.                                                   | AD-001, AD-002, AD-003, AD-004, AD-005, AD-007, AD-008, AD-010, AD-011, AD-012, AD-014, AD-017, AD-018, AD-241, AD-243, AD-244, AD-305 |
+|          4 | A useful survey, worthwhile sight, dangerous quarry, collection goal or specialist-enabled route adds a concrete expedition and reward.                                                 | AD-019, AD-029, AD-031, AD-032, AD-036, AD-039, AD-040, AD-048, AD-049, AD-050, AD-249, AD-307                                         |
+|          4 | A dangerous quarry, substantial dungeon, return route or concrete investigation supplies an enjoyable challenge and a worthwhile discovery.                                             | AD-052, AD-054, AD-056, AD-063, AD-066, AD-068, AD-077, AD-079, AD-080, AD-081, AD-312                                                 |
+|          4 | A bounded mystery, heist, contested recovery or useful treasure supplies a concrete challenge and payoff; repair here can unlock a particular reward rather than impose routine upkeep. | AD-086, AD-090, AD-091, AD-092, AD-093, AD-094, AD-098, AD-107, AD-108, AD-109, AD-110, AD-111, AD-112, AD-266, AD-267, AD-320         |
+|          4 | A reward that changes route feasibility or opens a useful production choice gives a concrete reason to explore again.                                                                   | AD-120, AD-271                                                                                                                         |
+|          4 | A bounded rescue, defended escape or competing prize adds a concrete challenge and outcome after the first fight works.                                                                 | AD-166, AD-168, AD-169, AD-170, AD-171, AD-173, AD-285, AD-327                                                                         |
+|          4 | Scouting, raids, holding a crossing and exploring for a captive add substantial tactical objectives and useful outcomes.                                                                | AD-182, AD-183, AD-184, AD-185, AD-187, AD-192, AD-197                                                                                 |
+|          4 | Returning for a known cache or enjoying a cleared route makes discoveries and victories worth keeping.                                                                                  | AD-230, AD-239                                                                                                                         |
+|          4 | Two readable, counterable enemy behaviors create a tactical puzzle and alternative approaches, not a demand for a broad new simulation.                                                 | AD-294                                                                                                                                 |
+|          7 | Displaying a recovered possession gives exploration a visible, durable home reward.                                                                                                     | AD-229                                                                                                                                 |
+|          7 | Turning winnings into a usable workshop or reconstructed settlement makes home improvement a tangible reward.                                                                           | AD-232, AD-303                                                                                                                         |
+|          8 | Clear contests, genuine competition, useful commissions and optional challenge variants add replayable activity with real results.                                                      | AD-121, AD-122, AD-123, AD-124, AD-127, AD-128, AD-129, AD-131, AD-274, AD-275, AD-321                                                 |
+|          8 | Actual music, tavern activities, festivals and performances are substantial enjoyable activities, not obligations to prepare or maintain an event.                                      | AD-151, AD-152, AD-153, AD-160, AD-326                                                                                                 |
 
 ## 3 Depth
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 9 | Reciprocal favors, attributed collective maps and trust in a former enemy add social or knowledge depth to usable journeys. | AD-009, AD-015, AD-242 |
-| 9 | Personal commitments, ecological continuity, social access and unusual but bounded encounters deepen journeys that already have useful destinations. | AD-020, AD-023, AD-024, AD-026, AD-028, AD-033, AD-038, AD-051, AD-245, AD-246, AD-250, AD-251, AD-309, AD-310 |
-| 9 | Competing claims, ongoing ecology, social history, environmental combinations and changing sites enrich an already playable adventure. | AD-053, AD-058, AD-060, AD-064, AD-067, AD-070, AD-073, AD-075, AD-078, AD-083, AD-084, AD-253, AD-254, AD-255, AD-256, AD-257, AD-258, AD-259, AD-260, AD-311, AD-313, AD-314 |
-| 9 | Witness perspective, provenance, social access and continuing consequences add interpretive or relationship depth to completed adventure forms. | AD-087, AD-089, AD-097, AD-101, AD-102, AD-103, AD-104, AD-114, AD-115, AD-116, AD-261, AD-262, AD-263, AD-264, AD-268, AD-315 |
-| 9 | Shared travel, personal history, rewards with social claims and complex commissioning deepen a game that already offers adventures and useful activities. | AD-119, AD-125, AD-130, AD-132, AD-134, AD-136, AD-137, AD-138, AD-139, AD-140, AD-141, AD-142, AD-143, AD-145, AD-146, AD-148, AD-270, AD-272, AD-276, AD-277, AD-278, AD-319 |
-| 9 | Personal history, hosts, witnesses and multiple affected people add social depth to a workable outing or rescue. | AD-149, AD-155, AD-156, AD-161, AD-167, AD-172, AD-176, AD-282, AD-284, AD-288, AD-323, AD-324 |
-| 9 | Contract changes, custody, succession, relationships and extended campaign aftermath deepen local encounters without requiring a complete war simulation. | AD-179, AD-186, AD-189, AD-190, AD-191, AD-193, AD-194, AD-195, AD-198, AD-199, AD-201, AD-289, AD-290, AD-292, AD-328, AD-329, AD-330 |
-| 9 | Supernatural bargains, specific continuing consequences and voluntary homecoming scenes add later depth around existing journeys and encounters. | AD-205, AD-207, AD-211, AD-213, AD-227, AD-293, AD-295, AD-296, AD-332 |
-| 9 | Independent lives, succession, gratitude, teaching and changed places add deeper continuations after the playable expedition succeeds. | AD-231, AD-233, AD-234, AD-235, AD-236, AD-237, AD-238, AD-301, AD-304, AD-335, AD-336 |
+| Game order | Selection reason                                                                                                                                          | Entry IDs                                                                                                                                                                      |
+| ---------: | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|          9 | Reciprocal favors, attributed collective maps and trust in a former enemy add social or knowledge depth to usable journeys.                               | AD-009, AD-015, AD-242                                                                                                                                                         |
+|          9 | Personal commitments, ecological continuity, social access and unusual but bounded encounters deepen journeys that already have useful destinations.      | AD-020, AD-023, AD-024, AD-026, AD-028, AD-033, AD-038, AD-051, AD-245, AD-246, AD-250, AD-251, AD-309, AD-310                                                                 |
+|          9 | Competing claims, ongoing ecology, social history, environmental combinations and changing sites enrich an already playable adventure.                    | AD-053, AD-058, AD-060, AD-064, AD-067, AD-070, AD-073, AD-075, AD-078, AD-083, AD-084, AD-253, AD-254, AD-255, AD-256, AD-257, AD-258, AD-259, AD-260, AD-311, AD-313, AD-314 |
+|          9 | Witness perspective, provenance, social access and continuing consequences add interpretive or relationship depth to completed adventure forms.           | AD-087, AD-089, AD-097, AD-101, AD-102, AD-103, AD-104, AD-114, AD-115, AD-116, AD-261, AD-262, AD-263, AD-264, AD-268, AD-315                                                 |
+|          9 | Shared travel, personal history, rewards with social claims and complex commissioning deepen a game that already offers adventures and useful activities. | AD-119, AD-125, AD-130, AD-132, AD-134, AD-136, AD-137, AD-138, AD-139, AD-140, AD-141, AD-142, AD-143, AD-145, AD-146, AD-148, AD-270, AD-272, AD-276, AD-277, AD-278, AD-319 |
+|          9 | Personal history, hosts, witnesses and multiple affected people add social depth to a workable outing or rescue.                                          | AD-149, AD-155, AD-156, AD-161, AD-167, AD-172, AD-176, AD-282, AD-284, AD-288, AD-323, AD-324                                                                                 |
+|          9 | Contract changes, custody, succession, relationships and extended campaign aftermath deepen local encounters without requiring a complete war simulation. | AD-179, AD-186, AD-189, AD-190, AD-191, AD-193, AD-194, AD-195, AD-198, AD-199, AD-201, AD-289, AD-290, AD-292, AD-328, AD-329, AD-330                                         |
+|          9 | Supernatural bargains, specific continuing consequences and voluntary homecoming scenes add later depth around existing journeys and encounters.          | AD-205, AD-207, AD-211, AD-213, AD-227, AD-293, AD-295, AD-296, AD-332                                                                                                         |
+|          9 | Independent lives, succession, gratitude, teaching and changed places add deeper continuations after the playable expedition succeeds.                    | AD-231, AD-233, AD-234, AD-235, AD-236, AD-237, AD-238, AD-301, AD-304, AD-335, AD-336                                                                                         |
 
 ## 4 Detail
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | Cleanup and returning small keepsakes are optional incidental detail, not a missing foundational adventure loop. | AD-159 |
+| Game order | Selection reason                                                                                                 | Entry IDs |
+| ---------: | ---------------------------------------------------------------------------------------------------------------- | --------- |
+|         10 | Cleanup and returning small keepsakes are optional incidental detail, not a missing foundational adventure loop. | AD-159    |
 
 ## 5 Specialist
 
-| Game order | Selection reason | Entry IDs |
-| ---: | --- | --- |
-| 10 | A specifically modern outing, moving-world topology or nonhuman sensing premise belongs to another selected setting. | AD-006, AD-013, AD-306 |
-| 10 | Specifically modern institutions, alien first contact, size-altered or time-altered worlds and specialist inhabited-giant settings require another selected experience. | AD-021, AD-022, AD-025, AD-027, AD-030, AD-034, AD-035, AD-037, AD-041, AD-042, AD-043, AD-044, AD-045, AD-247, AD-248, AD-252, AD-308 |
-| 10 | Specialist technological settings, living interiors and world-specific navigation or institutional premises require a separately selected experience. | AD-055, AD-057, AD-059, AD-065, AD-069, AD-071, AD-072, AD-074, AD-082 |
-| 10 | Modern or alien settings and literal transferable memories, perfect-copy economies or inhabited giant sites require separately selected world premises. | AD-085, AD-088, AD-095, AD-096, AD-099, AD-100, AD-105, AD-113, AD-265, AD-316, AD-317, AD-318 |
-| 10 | Modern or alien sites, materially abundant societies, altered time or unfolding worlds, and specialist adult-getaway scope require a separate selection. | AD-117, AD-118, AD-126, AD-133, AD-135, AD-144, AD-147, AD-269, AD-273, AD-322 |
-| 10 | Adult niche outings, revival, linked bodies, impossible festival laws and specifically technological or other-world rescue settings need separate selection. | AD-150, AD-154, AD-157, AD-158, AD-162, AD-163, AD-164, AD-165, AD-174, AD-175, AD-177, AD-279, AD-280, AD-281, AD-283, AD-286, AD-287, AD-325 |
-| 10 | Alien environmental support, relocating towns, specifically modern war or crime settings and technological campaigns require another selected scope. | AD-178, AD-180, AD-188, AD-200, AD-291 |
-| 10 | Transferred memories, time asymmetry, dream spaces, alternate bodies, afterlives and reality-changing topology require a separate world premise. | AD-202, AD-203, AD-204, AD-206, AD-208, AD-209, AD-210, AD-212, AD-214, AD-215, AD-216, AD-217, AD-218, AD-219, AD-220, AD-221, AD-222, AD-223, AD-224, AD-225, AD-297, AD-298, AD-299, AD-300, AD-331, AD-333, AD-334 |
-| 10 | Closing cross-world thresholds and restoring a specifically technological vehicle belong to separately selected experiences. | AD-240, AD-302 |
+| Game order | Selection reason                                                                                                                                                        | Entry IDs                                                                                                                                                                                                              |
+| ---------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         10 | A specifically modern outing, moving-world topology or nonhuman sensing premise belongs to another selected setting.                                                    | AD-006, AD-013, AD-306                                                                                                                                                                                                 |
+|         10 | Specifically modern institutions, alien first contact, size-altered or time-altered worlds and specialist inhabited-giant settings require another selected experience. | AD-021, AD-022, AD-025, AD-027, AD-030, AD-034, AD-035, AD-037, AD-041, AD-042, AD-043, AD-044, AD-045, AD-247, AD-248, AD-252, AD-308                                                                                 |
+|         10 | Specialist technological settings, living interiors and world-specific navigation or institutional premises require a separately selected experience.                   | AD-055, AD-057, AD-059, AD-065, AD-069, AD-071, AD-072, AD-074, AD-082                                                                                                                                                 |
+|         10 | Modern or alien settings and literal transferable memories, perfect-copy economies or inhabited giant sites require separately selected world premises.                 | AD-085, AD-088, AD-095, AD-096, AD-099, AD-100, AD-105, AD-113, AD-265, AD-316, AD-317, AD-318                                                                                                                         |
+|         10 | Modern or alien sites, materially abundant societies, altered time or unfolding worlds, and specialist adult-getaway scope require a separate selection.                | AD-117, AD-118, AD-126, AD-133, AD-135, AD-144, AD-147, AD-269, AD-273, AD-322                                                                                                                                         |
+|         10 | Adult niche outings, revival, linked bodies, impossible festival laws and specifically technological or other-world rescue settings need separate selection.            | AD-150, AD-154, AD-157, AD-158, AD-162, AD-163, AD-164, AD-165, AD-174, AD-175, AD-177, AD-279, AD-280, AD-281, AD-283, AD-286, AD-287, AD-325                                                                         |
+|         10 | Alien environmental support, relocating towns, specifically modern war or crime settings and technological campaigns require another selected scope.                    | AD-178, AD-180, AD-188, AD-200, AD-291                                                                                                                                                                                 |
+|         10 | Transferred memories, time asymmetry, dream spaces, alternate bodies, afterlives and reality-changing topology require a separate world premise.                        | AD-202, AD-203, AD-204, AD-206, AD-208, AD-209, AD-210, AD-212, AD-214, AD-215, AD-216, AD-217, AD-218, AD-219, AD-220, AD-221, AD-222, AD-223, AD-224, AD-225, AD-297, AD-298, AD-299, AD-300, AD-331, AD-333, AD-334 |
+|         10 | Closing cross-world thresholds and restoring a specifically technological vehicle belong to separately selected experiences.                                            | AD-240, AD-302                                                                                                                                                                                                         |
 
 ## Verification and limits
 
