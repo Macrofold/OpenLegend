@@ -286,7 +286,11 @@ export function WorldInspection({ actorId }: { actorId: string }) {
           <p className="ol-caption">
             {root.kind} · {root.id} · version {root.version.slice(0, 12)}
           </p>
-          <div className="ol-agent-tools ol-creator-views" role="group" aria-label="Source relationship controls">
+          <div
+            className="ol-agent-tools ol-creator-views"
+            role="group"
+            aria-label="Source relationship controls"
+          >
             <Button
               size="sm"
               disabled={busy}

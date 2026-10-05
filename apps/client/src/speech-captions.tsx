@@ -79,6 +79,7 @@ export class SpeechCaptions {
   private projection?: CaptionProjection;
   private dirty = false;
   private rebase = false;
+  private destroyed = false;
   private options: SpeechCaptionOptions = {
     enabled: true,
     paused: false,
@@ -107,6 +108,7 @@ export class SpeechCaptions {
     canvas.after(this.layer);
     this.root = createRoot(this.layer);
     this.resizeObserver = new ResizeObserver((changes) => {
+      if (this.destroyed) return;
       for (const change of changes) {
         const entry = this.active.find((candidate) => candidate.node === change.target);
         if (!entry) continue;
@@ -119,6 +121,7 @@ export class SpeechCaptions {
     document.addEventListener('visibilitychange', this.visibility);
   }
   private visibility = () => {
+    if (this.destroyed) return;
     // Resume treats the next snapshot as history, not an avalanche of missed live captions.
     this.rebase = true;
     this.dropUnshown(this.pending);
@@ -126,6 +129,7 @@ export class SpeechCaptions {
     this.clock.sample(performance.now(), true);
   };
   setOptions(options: SpeechCaptionOptions): void {
+    if (this.destroyed) return;
     const enabled = options.enabled;
     const wasEnabled = this.options.enabled;
     this.reducedMotion = options.reducedMotion;
@@ -139,11 +143,13 @@ export class SpeechCaptions {
     }
   }
   resetBaseline(): void {
+    if (this.destroyed) return;
     this.dropUnshown([...this.active, ...this.pending]);
     this.clear();
     this.rebase = true;
   }
   observe(view: GameView): void {
+    if (this.destroyed) return;
     this.view = view;
     const scope = captionScope(view);
     if (scope !== this.scope || (this.rebase && !document.hidden)) {
@@ -217,6 +223,7 @@ export class SpeechCaptions {
         // A stable ref preserves measurements while other captions arrive/expire.
         // React otherwise detaches every unchanged caption on each overlay render.
         attach: (node) => {
+          if (this.destroyed && node) return;
           if (entry.node === node) return;
           if (entry.node) this.resizeObserver.unobserve(entry.node);
           entry.node = node ?? undefined;
@@ -237,6 +244,7 @@ export class SpeechCaptions {
     );
   }
   update(projection: CaptionProjection): void {
+    if (this.destroyed) return;
     this.projection = projection;
     const paused = this.options.paused || !!this.view?.clock.paused || document.hidden;
     const before = this.clock.now;
@@ -429,9 +437,18 @@ export class SpeechCaptions {
     this.dirty = true;
   }
   destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.layer.remove();
     document.removeEventListener('visibilitychange', this.visibility);
     this.clear();
-    this.root.unmount();
-    this.layer.remove();
+    this.view = undefined;
+    this.previousEvents = undefined;
+    this.projection = undefined;
+    this.seen.clear();
+    delete this.options.onMissedCaptions;
+    // Detach private text immediately. A nested React root must finish unmounting
+    // after the parent root's scene-cleanup commit, not synchronously inside it.
+    queueMicrotask(() => this.root.unmount());
   }
 }

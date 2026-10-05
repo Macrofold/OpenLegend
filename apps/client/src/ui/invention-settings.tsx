@@ -18,6 +18,7 @@ export function InventionSettings({ view }: { view: GameView }) {
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
   const latest = useRef(0);
+  const fields = useRef<HTMLDivElement>(null);
   const load = useCallback(async () => {
     const request = ++latest.current;
     setLoading(true);
@@ -87,7 +88,7 @@ export function InventionSettings({ view }: { view: GameView }) {
         These permissions govern proposing new techniques. Existing actions, crafts and learning
         stay available.
       </p>
-      <div className="ol-setting-group">
+      <div className="ol-setting-group" ref={fields}>
         <label>
           <input
             type="checkbox"
@@ -141,9 +142,21 @@ export function InventionSettings({ view }: { view: GameView }) {
             <Button
               variant="quiet"
               isDisabled={busy || loading}
-              onPress={() => {
+              onPress={(event) => {
+                const trigger = event.target;
                 setMessage('');
-                void load();
+                void load().then(() => {
+                  requestAnimationFrame(() => {
+                    if (
+                      !trigger.isConnected &&
+                      document.activeElement === document.body &&
+                      fields.current?.getClientRects().length
+                    )
+                      fields.current
+                        .querySelector<HTMLInputElement>('input:not(:disabled)')
+                        ?.focus();
+                  });
+                });
               }}
             >
               {dirty ? 'Discard draft and reload' : 'Reload current permissions'}

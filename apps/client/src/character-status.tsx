@@ -30,12 +30,14 @@ export class CharacterStatuses {
   private seen = new Set<string>();
   private activityId: string | null = null;
   private hadVisibleStatuses = false;
+  private destroyed = false;
   constructor(canvas: HTMLCanvasElement) {
     this.layer.className = 'ol-status-layer';
     canvas.after(this.layer);
     this.root = createRoot(this.layer);
   }
   upsert(entityId: string, statusId: string, status: StatusPresentation) {
+    if (this.destroyed) return;
     if (!status.text.trim()) return;
     if (status.progress !== undefined && status.progress >= 1) {
       this.remove(entityId, statusId);
@@ -104,6 +106,7 @@ export class CharacterStatuses {
   }
 
   observe(view: GameView): void {
+    if (this.destroyed) return;
     const previous = this.previous;
     this.previous = view;
     // A control, timeline or history change starts a new baseline so old events are not
@@ -191,6 +194,7 @@ export class CharacterStatuses {
     return Math.min(t.duration, t.elapsed + (Math.max(0, now - t.at) / 1000) * t.rate);
   }
   update(project: (id: string) => { x: number; y: number } | null) {
+    if (this.destroyed) return;
     const now = performance.now();
     for (const [id, q] of this.queues) {
       q.entries = q.entries.filter((e) => now < e.expires);
@@ -245,8 +249,14 @@ export class CharacterStatuses {
     this.queues.clear();
   }
   destroy() {
-    this.clear();
-    this.root.unmount();
+    if (this.destroyed) return;
+    this.destroyed = true;
     this.layer.remove();
+    this.clear();
+    this.previous = null;
+    this.seen.clear();
+    // Scene teardown can run during the parent React root's cleanup. Remove the
+    // private layer now, then release its nested root after that commit finishes.
+    queueMicrotask(() => this.root.unmount());
   }
 }

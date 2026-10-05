@@ -496,7 +496,7 @@ export interface GameView {
     familyLabel: string;
     traits: Array<{ id: string; name: string; description: string }>;
     spawnOptions: Array<{ id: string; label: string; category: 'Actors' | 'Environment' }>;
-    itemOptions: Array<{ id: string; label: string; description: string }>;
+    itemOptions: Array<{ id: string; label: string; icon?: string; description: string }>;
   };
   schemaVersion: 2;
   revision: number;

@@ -122,7 +122,12 @@ type GodEditorWindow =
   | { id: string; type: 'world-events' }
   | { id: string; type: 'family'; actorId: string };
 function taskScope(view: GameView) {
-  return JSON.stringify([view.access?.privateDraftScope, view.worldId, view.saveTimeline, view.player.id]);
+  return JSON.stringify([
+    view.access?.privateDraftScope,
+    view.worldId,
+    view.saveTimeline,
+    view.player.id,
+  ]);
 }
 function App({
   resetApplication,
@@ -1271,12 +1276,12 @@ function App({
           <>
             {mindSwitchMessage && <p role="status">{mindSwitchMessage}</p>}
             <Mind
-            key={`${taskScope(view)}:${mindId}`}
+              key={`${taskScope(view)}:${mindId}`}
               actorId={mindId}
               owned={mindId === view.player.id}
               visible={visible}
-            onDirtyChange={setMindDirty}
-            readScope={view.access?.scope}
+              onDirtyChange={setMindDirty}
+              readScope={view.access?.scope}
             />
           </>
         ) : null;
@@ -1609,7 +1614,9 @@ function App({
                         draggable={!narrow && ['agent', 'composer', 'intelligence'].includes(id)}
                         resizable={!narrow && id === 'intelligence'}
                         workspace={
-                          ['inventory', 'agent', 'journal', 'events', 'character', 'mind'].includes(id)
+                          ['inventory', 'agent', 'journal', 'events', 'character', 'mind'].includes(
+                            id,
+                          )
                             ? {
                                 expanded: expandedWorkspaces.includes(id),
                                 width: workspaceWidth,
@@ -1658,7 +1665,11 @@ function App({
               talk={talk}
             />
             {!tabPaused && (
-              <Narrator key={`narrator:${captionScope(view)}`} item={view.narrator} onReadStory={readStory} />
+              <Narrator
+                key={`narrator:${captionScope(view)}`}
+                item={view.narrator}
+                onReadStory={readStory}
+              />
             )}
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
             <CameraControls

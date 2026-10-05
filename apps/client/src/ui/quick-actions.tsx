@@ -194,6 +194,7 @@ export function QuickActions({
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if (
+        gate ||
         event.defaultPrevented ||
         event.isComposing ||
         event.repeat ||

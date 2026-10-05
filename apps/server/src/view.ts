@@ -770,6 +770,7 @@ export async function projectView(
                 .map((definition) => ({
                   id: definition.id,
                   label: definition.name,
+                  ...(definition.icon ? { icon: definition.icon } : {}),
                   description: definition.description,
                 }))
                 .sort((a, b) => a.label.localeCompare(b.label)),

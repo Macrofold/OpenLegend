@@ -36,6 +36,17 @@
   min-block-size: 0;
   overflow: hidden;
 }
+.ol-character-actions:has(.ol-action-intention:not([hidden])) {
+  overflow: auto;
+}
+/* Entering a draft is a focused task. Its own actor/subject and Cancel replace
+ * browsing navigation; the mounted Character pages retain their reading state. */
+.ol-character:has(.ol-character-page:not([data-inert]) .ol-action-intention:not([hidden]))
+  > .ol-character-identity,
+.ol-character:has(.ol-character-page:not([data-inert]) .ol-action-intention:not([hidden]))
+  .ol-character-tabs {
+  display: none;
+}
 .ol-character-identity,
 .ol-character-statuses,
 .ol-action-subject {
@@ -112,6 +123,7 @@
   flex-direction: column;
   flex: 1;
   min-block-size: 0;
+  gap: var(--space-2);
   padding: var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);

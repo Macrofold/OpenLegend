@@ -127,6 +127,14 @@ export function GameSavesPanel({
     setConfirm(null);
     confirmTrigger.current?.focus();
   }
+  function restoreCatalogFocus() {
+    // A disappearing action cannot receive focus back. Stay within this task only if
+    // its control left focus on the page, not after the user moved elsewhere.
+    requestAnimationFrame(() => {
+      if (visibleRef.current && document.activeElement === document.body)
+        catalogControls.current?.querySelector('button')?.focus();
+    });
+  }
   async function create() {
     if (creating || rowBusy || rowUncertain) return;
     catalogRequest.current++;
@@ -136,8 +144,9 @@ export function GameSavesPanel({
       createRequest.current ??= { id: crypto.randomUUID(), label: label.trim() || 'Manual save' };
       const result = await post('/api/saves/create', createRequest.current);
       if (!result.ok) {
-        setCreateUncertain(false);
-        createRequest.current = null;
+        // A later refusal (for example lost permission) does not establish what happened to an
+        // earlier unconfirmed request. Keep that exact request until its result is acknowledged.
+        if (!createUncertain) createRequest.current = null;
         setMessage(result.message || 'The checkpoint was not created.');
         await refresh();
         return;
@@ -171,7 +180,6 @@ export function GameSavesPanel({
         action === 'load' ? loadRequest.current : { id: save.id },
       );
       if (!result.ok) {
-        setRowUncertain(undefined);
         setMessage(result.message || 'The checkpoint operation was not accepted.');
         await refresh();
         return;
@@ -184,12 +192,7 @@ export function GameSavesPanel({
       setConfirm(null);
       setMessage(result.message ?? 'Done.');
       await refresh();
-      // A deleted row cannot receive focus back. Restore within this task only if its
-      // disappearing control left focus on the page, not after the user moved elsewhere.
-      requestAnimationFrame(() => {
-        if (visibleRef.current && document.activeElement === document.body)
-          catalogControls.current?.querySelector('button')?.focus();
-      });
+      restoreCatalogFocus();
     } catch (error) {
       setRowUncertain({ action, save });
       setMessage(
@@ -237,6 +240,7 @@ export function GameSavesPanel({
       );
       if (!result.ok) throw new Error(result.message);
       setAutosaves(result.autosaves);
+      restoreCatalogFocus();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not acknowledge the failure.');
     } finally {

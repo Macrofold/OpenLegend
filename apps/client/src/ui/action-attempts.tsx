@@ -69,10 +69,12 @@ export function ActionAttempts({
   visible?: boolean;
   children?: ReactNode;
 }) {
-  const draftKey = `open-legend:action-draft:${view.access?.accountId}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
+  const draftKey = view.access?.privateDraftScope
+    ? `open-legend:action-draft:${view.access.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`
+    : null;
   const [text, setText] = useState(() => {
     try {
-      return sessionStorage.getItem(draftKey) ?? '';
+      return draftKey ? (sessionStorage.getItem(draftKey) ?? '') : '';
     } catch {
       return '';
     }
@@ -123,6 +125,12 @@ export function ActionAttempts({
   const workLabel = activeActivity?.name ?? view.player.action?.label ?? work?.label;
   // Examples come in this world's own words, not a second client action grammar.
   const examples = view.player.actionWording?.examples ?? [];
+  const wordingNotice =
+    view.ai.mode === 'fixture'
+      ? 'Uses configured test responses.'
+      : !view.ai.jevConfigured || !view.ai.llmConfigured || view.ai.budget.limitUsd <= 0
+        ? 'Familiar wording only.'
+        : 'May use intelligence allowance.';
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -130,6 +138,7 @@ export function ActionAttempts({
     };
   }, []);
   useEffect(() => {
+    if (!draftKey) return;
     try {
       sessionStorage.setItem(draftKey, text);
     } catch {
@@ -297,7 +306,7 @@ export function ActionAttempts({
           }
         }}
       >
-        <strong>Describe an action</strong>
+        <strong>{view.player.name} · Action</strong>
         <div className="ol-action-subject">
           {subject ? (
             <>
@@ -368,12 +377,6 @@ export function ActionAttempts({
               )}
             </fieldset>
           )}
-          <p className="ol-caption">
-            {view.ai.mode !== 'fixture' &&
-            (!view.ai.jevConfigured || !view.ai.llmConfigured || view.ai.budget.limitUsd <= 0)
-              ? 'Only familiar wording is available with this world’s current setup.'
-              : 'Unfamiliar wording may use the world’s intelligence allowance.'}
-          </p>
           <details>
             <summary>Examples and wording</summary>
             {examples.length > 0 && <p>{examples.map((example) => `“${example}”`).join(' · ')}</p>}
@@ -396,15 +399,21 @@ export function ActionAttempts({
             isPending={busy}
             onPress={() => void send()}
           >
-            {busy ? 'Sending action…' : 'Attempt action'}
+            {busy
+              ? 'Sending action…'
+              : !hasWork
+                ? 'Attempt action'
+                : mode === 'replace'
+                  ? 'Replace work'
+                  : mode === 'interrupt'
+                    ? 'Pause and attempt'
+                    : 'Queue action'}
           </Button>
           <Button variant="quiet" onPress={closeEditor}>
             Cancel
           </Button>
         </div>
-        <p className="ol-caption">
-          Cancel closes this draft; it does not stop work already requested.
-        </p>
+        <p className="ol-caption">{wordingNotice} Cancel keeps this draft.</p>
       </div>
       {message && !editing && (
         <p role="status" className="ol-action-result">

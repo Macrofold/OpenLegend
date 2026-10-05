@@ -51,6 +51,7 @@ export function ItemCreationModal({
       className="ol-root ol-modal-overlay"
       isOpen
       isDismissable={!saving}
+      isKeyboardDismissDisabled={saving}
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
@@ -92,7 +93,9 @@ export function ItemCreationModal({
                   onChange={(event) => setQuantity(event.target.value)}
                 />
               </label>
-              {!validAmount && <p className="ol-caption">Enter a whole quantity of at least one.</p>}
+              {!validAmount && (
+                <p className="ol-caption">Enter a whole quantity of at least one.</p>
+              )}
               {error && (
                 <p role="alert" className="ol-form-error">
                   {error}
@@ -103,12 +106,10 @@ export function ItemCreationModal({
               <Button type="button" variant="quiet" onPress={close} disabled={saving}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                busy={saving}
-                disabled={!definitionId || !validAmount}
-              >
-                {validAmount ? `Create ${amount} ${amount === 1 ? 'item' : 'items'}` : 'Create item'}
+              <Button type="submit" busy={saving} disabled={!definitionId || !validAmount}>
+                {validAmount
+                  ? `Create ${amount} ${amount === 1 ? 'item' : 'items'}`
+                  : 'Create item'}
               </Button>
             </footer>
           </form>

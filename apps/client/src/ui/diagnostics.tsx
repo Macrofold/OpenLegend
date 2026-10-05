@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type ComponentProps,
   type CSSProperties,
   type ReactNode,
 } from 'react';
@@ -279,7 +280,7 @@ function KnowledgeEditor({
                 subjectId: subject?.id ?? null,
                 expectedRevision: base.revision,
                 text,
-                ...(subject && name.trim() && name !== base.name
+                ...(subject && name !== base.name
                   ? { givenName: name, nameRevision: base.nameRevision }
                   : {}),
               },
@@ -438,8 +439,11 @@ export function Mind({
     )
       .then((result) => {
         if (active) {
-          setMind(result.ok ? (result.mind ?? null) : null);
-          setError(result.ok ? '' : (result.message ?? 'Inspection unavailable.'));
+          // A refused refresh must not unmount this person's unsaved notes.
+          if (result.ok && result.mind) {
+            setMind(result.mind);
+            setError('');
+          } else setError(result.message ?? 'Inspection unavailable.');
         }
       })
       .catch((loadError) => {
@@ -606,7 +610,7 @@ export type DiagnosticSelection = IntelligenceCall & {
 type Row = DiagnosticSelection;
 type RawView = { title: string; value: unknown };
 
-/** Rich previews share the accessible tooltip primitives and escape panel clipping. */
+/** The existing row or disclosure owns focus; a preview adds no nested tab stop. */
 function Preview({
   title,
   value,
@@ -614,15 +618,11 @@ function Preview({
 }: {
   title: string;
   value: ReactNode;
-  children: ReactNode;
+  children: ComponentProps<typeof Focusable>['children'];
 }) {
   return (
     <TooltipTrigger delay={250} closeDelay={150}>
-      <Focusable>
-        <span tabIndex={0} className="ol-inspection-preview">
-          {children}
-        </span>
-      </Focusable>
+      <Focusable>{children}</Focusable>
       <Tooltip className="ol-root ol-inspection-tooltip" placement="start" offset={8}>
         <strong>{title}</strong>
         <div>{value}</div>
@@ -2113,30 +2113,27 @@ function Stage({
   return (
     <section className="ol-diagnostic-stage">
       <details>
-        <summary>
-          <StatusIcon status={outcomeKind(failure ? 'failed' : call.status, call.disposition)} />
-          <span className="ol-stage-heading">
-            <strong>{stageTitle(call)}</strong>
-            <span className="ol-stage-peek">
-              <Preview title="Input" value={<StructuredValue value={call.input} />}>
-                <span className="ol-truncate">Input · {stageInput(call)}</span>
-              </Preview>
+        <Preview
+          title={stageTitle(call)}
+          value={
+            <>
+              <h4>Input</h4>
+              <StructuredValue value={call.input} />
+              <h4>Output</h4>
+              <p>{stageResult(call)}</p>
+              <StructuredValue value={path(call.output, 'value') ?? call.output} />
+            </>
+          }
+        >
+          <summary>
+            <StatusIcon status={outcomeKind(failure ? 'failed' : call.status, call.disposition)} />
+            <span className="ol-stage-heading">
+              <strong>{stageTitle(call)}</strong>
+              <span className="ol-stage-peek ol-truncate">Input · {stageInput(call)}</span>
+              <span className="ol-stage-peek ol-truncate">Output · {stageResult(call)}</span>
             </span>
-            <span className="ol-stage-peek">
-              <Preview
-                title="Output"
-                value={
-                  <>
-                    <p>{stageResult(call)}</p>
-                    <StructuredValue value={path(call.output, 'value') ?? call.output} />
-                  </>
-                }
-              >
-                <span className="ol-truncate">Output · {stageResult(call)}</span>
-              </Preview>
-            </span>
-          </span>
-        </summary>
+          </summary>
+        </Preview>
         <details className="ol-stage-technical">
           <summary>Timing, usage and stage ID</summary>
           <StageMetrics call={call} />
@@ -2411,52 +2408,47 @@ function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
           ? 'ui.character'
           : 'ui.inview';
   return (
-    <button type="button" className="ol-trace-row" onClick={() => onSelect(row)}>
-      <Icon name={actorIcon} label={row.actorKind ?? 'Actor'} size={24} />
-      <span className="ol-trace-copy">
-        <span className="ol-trace-heading">
-          <strong>{row.actorName ?? 'World agent'}</strong>
-          {levelLabel(row.route) && <Tag>{levelLabel(row.route)}</Tag>}
-        </span>
-        <span className="ol-trace-type">
-          <Icon name={triggerIcon(type)} size={14} />
-          <span>{type}</span>
-        </span>
-        <Preview
-          title="Trigger"
-          value={
-            <dl className="ol-preview-facts">
-              <Labeled label="Type">{type}</Labeled>
-              <Labeled label="Trigger">{row.trigger ?? row.kind}</Labeled>
-            </dl>
-          }
-        >
-          <span className="ol-truncate">{row.trigger ?? row.kind}</span>
-        </Preview>
-        <span className="ol-trace-bottom">
-          {row.responseParts?.some((part) => part.label === 'Speech') && (
-            <Icon name="action.talk" size={14} />
-          )}
-          <Preview
-            title={row.errorSummary ? 'Failure' : 'Proposed response'}
-            value={
-              <>
-                {row.errorSummary && <p className="ol-diagnostic-error">{row.errorSummary}</p>}
-                <ResponsePreview row={row} />
-              </>
-            }
-          >
+    <Preview
+      title={`${row.actorName ?? 'World agent'} · recorded request`}
+      value={
+        <>
+          <dl className="ol-preview-facts">
+            <Labeled label="Type">{type}</Labeled>
+            <Labeled label="Trigger">{row.trigger ?? row.kind}</Labeled>
+          </dl>
+          <h4>{row.errorSummary ? 'Failure' : 'Proposed response'}</h4>
+          {row.errorSummary && <p className="ol-diagnostic-error">{row.errorSummary}</p>}
+          <ResponsePreview row={row} />
+        </>
+      }
+    >
+      <button type="button" className="ol-trace-row" onClick={() => onSelect(row)}>
+        <Icon name={actorIcon} label={row.actorKind ?? 'Actor'} size={24} />
+        <span className="ol-trace-copy">
+          <span className="ol-trace-heading">
+            <strong>{row.actorName ?? 'World agent'}</strong>
+            {levelLabel(row.route) && <Tag>{levelLabel(row.route)}</Tag>}
+          </span>
+          <span className="ol-trace-type">
+            <Icon name={triggerIcon(type)} size={14} />
+            <span>{type}</span>
+          </span>
+          <span className="ol-inspection-preview ol-truncate">{row.trigger ?? row.kind}</span>
+          <span className="ol-trace-bottom">
+            {row.responseParts?.some((part) => part.label === 'Speech') && (
+              <Icon name="action.talk" size={14} />
+            )}
             <span
-              className={`ol-truncate ${row.errorSummary ? 'ol-diagnostic-error' : 'ol-trace-response'}`}
+              className={`ol-inspection-preview ol-truncate ${row.errorSummary ? 'ol-diagnostic-error' : 'ol-trace-response'}`}
             >
               {row.errorSummary ?? row.responseSummary ?? row.disposition ?? 'No response recorded'}
             </span>
-          </Preview>
-          <time dateTime={row.startedAt}>{new Date(row.startedAt).toLocaleTimeString()}</time>
+            <time dateTime={row.startedAt}>{new Date(row.startedAt).toLocaleTimeString()}</time>
+          </span>
         </span>
-      </span>
-      <StatusIcon status={outcomeKind(row.status, row.disposition)} />
-    </button>
+        <StatusIcon status={outcomeKind(row.status, row.disposition)} />
+      </button>
+    </Preview>
   );
 }
 
@@ -2559,11 +2551,16 @@ export function Diagnostics({
       clearInterval(id);
     };
   }, [follow, offset, filters, worldId, selection, visible, readScope]);
-  useEffect(() => setRaw(null), [worldId, selection?.id]);
+  useEffect(() => setRaw(null), [worldId, selection?.id, readScope]);
   if (selection)
     return (
       <div ref={panel}>
-        <TraceDetail key={selection.id} row={selection} showJson={setRaw} visible={visible} />
+        <TraceDetail
+          key={`${selection.id}:${readScope}`}
+          row={selection}
+          showJson={setRaw}
+          visible={visible}
+        />
         {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
       </div>
     );

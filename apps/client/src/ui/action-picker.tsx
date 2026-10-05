@@ -420,7 +420,7 @@ export function ActionPicker({
                     options: (view.godTools?.itemOptions ?? []).map((option) => ({
                       ...option,
                       id: `item:${option.id}`,
-                      icon: symbol(option.id),
+                      icon: symbol(option.icon ?? 'ui.inventory'),
                     })),
                   },
                   ...(['Actors', 'Environment'] as const).map((category) => ({

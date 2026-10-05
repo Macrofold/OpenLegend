@@ -281,6 +281,15 @@ export function Inventions({
         className="ol-creator-page"
         aria-label="Develop an invention"
       >
+        {form.continuation && (
+          <p>
+            Follow-up:{' '}
+            {form.continuation.action === 'modify'
+              ? 'describe the changes to the selected technique'
+              : 'revise the purpose and method'}
+            . The earlier proposal stays saved.
+          </p>
+        )}
         <label>
           What would you like to make?
           <textarea
@@ -382,15 +391,6 @@ export function Inventions({
               </p>
             ))}
           </div>
-        )}
-        {form.continuation && (
-          <p>
-            Follow-up:{' '}
-            {form.continuation.action === 'modify'
-              ? 'describe the changes to the selected technique'
-              : 'revise the purpose and method below'}
-            . The earlier proposal stays saved.
-          </p>
         )}
         <details>
           <summary>Supply a complete proposal</summary>

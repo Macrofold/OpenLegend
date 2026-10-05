@@ -26,6 +26,16 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+@media (max-width: 720px) {
+  .ol-settings-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ol-settings-tabs [role='tab'] {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+}
 .ol-settings-page[data-inert] {
   display: none;
 }
