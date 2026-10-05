@@ -28,10 +28,10 @@ jobs:
           path: review-reconcile
           fetch-depth: 0
           persist-credentials: false
-      - name: Preserve source and replay only explicitly reviewed conflicts
+      - name: Preserve source and prepare reviewable conflict resolutions
         run: |
           python3 - <<'PY'
-          import hashlib, json, os, pathlib, subprocess, zipfile
+          import difflib, hashlib, json, os, pathlib, re, subprocess, zipfile
           output = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-reconciliation'
           output.mkdir()
           before, old, new = os.environ['GITHUB_SHA'], os.environ['OLD_BASE'], os.environ['NEW_BASE']
@@ -45,6 +45,7 @@ jobs:
           extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
           def snapshot(ref, filename):
               inventory = []
+              revision = git('rev-parse', ref).decode().strip()
               with zipfile.ZipFile(output / filename, 'w', zipfile.ZIP_DEFLATED) as archive:
                   for entry in git('ls-tree', '-r', '-z', '--long', ref).split(b'\0'):
                       if not entry:
@@ -64,7 +65,7 @@ jobs:
                               row['headings'] = [line for line in text.splitlines() if line.startswith('#')]
                               row['incoming_references'] = [{'line': i, 'text': line} for i, line in enumerate(text.splitlines(), 1) if 'docs/' in line]
                       inventory.append(row)
-                  archive.writestr('_review_inventory.json', json.dumps({'revision': ref, 'files': inventory}, indent=2))
+                  archive.writestr('_review_inventory.json', json.dumps({'revision': revision, 'files': inventory}, indent=2))
           snapshot(before, 'review-source.zip')
           snapshot(new, 'main-source.zip')
           configuration = {}
@@ -78,10 +79,66 @@ jobs:
           subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
           environment = dict(os.environ, GIT_EDITOR='true')
           result = subprocess.run(['git', 'rebase', '--onto', new, old], env=environment)
+          mechanical = []
+          def disjoint_merge(base, current, incoming):
+              if current == incoming:
+                  return current
+              if current == base:
+                  return incoming
+              if incoming == base:
+                  return current
+              tokens = [re.findall(r'\s+|[^\s]+', value) for value in (base, current, incoming)]
+              if any(len(value) > 200000 for value in tokens):
+                  return None
+              edits = []
+              for side in (1, 2):
+                  edits.append([(i, j, tokens[side][a:b]) for tag, i, j, a, b in difflib.SequenceMatcher(None, tokens[0], tokens[side], autojunk=True).get_opcodes() if tag != 'equal'])
+              combined = list(edits[0])
+              for incoming_edit in edits[1]:
+                  i, j, replacement = incoming_edit
+                  duplicate = False
+                  for a, b, other in edits[0]:
+                      if incoming_edit == (a, b, other):
+                          duplicate = True
+                          break
+                      if max(i, a) < min(j, b) or (i == j and a <= i <= b) or (a == b and i <= a <= j):
+                          return None
+                  if not duplicate:
+                      combined.append(incoming_edit)
+              merged = list(tokens[0])
+              for i, j, replacement in sorted(combined, key=lambda edit: (edit[0], edit[1]), reverse=True):
+                  merged[i:j] = replacement
+              return ''.join(merged)
           while result.returncode:
               stopped = git('rev-parse', 'REBASE_HEAD').decode().strip()
               names = [x for x in git('diff', '--name-only', '--diff-filter=U', '-z').decode().split('\0') if x]
               resolution = configuration.get('resolutions', {}).get(stopped)
+              if resolution is None:
+                  candidates = []
+                  for name in names:
+                      if not name.endswith('.md'):
+                          break
+                      stages = [subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True) for stage in (1, 2, 3)]
+                      if any(stage.returncode for stage in stages):
+                          break
+                      values = [stage.stdout.decode('utf-8') for stage in stages]
+                      merged = disjoint_merge(*values)
+                      if merged is None:
+                          break
+                      candidates.append((name, merged, values))
+                  if candidates and len(candidates) == len(names):
+                      for name, merged, values in candidates:
+                          record = {'commit': stopped, 'path': name, 'stages': [hashlib.sha256(value.encode()).hexdigest() for value in values], 'result_sha256': hashlib.sha256(merged.encode()).hexdigest()}
+                          mechanical.append(record)
+                          diagnostic = output / 'mechanical' / stopped / name
+                          diagnostic.parent.mkdir(parents=True, exist_ok=True)
+                          diagnostic.write_text(merged)
+                          diagnostic.with_suffix('.diff').write_text(''.join(difflib.unified_diff(values[1].splitlines(keepends=True), merged.splitlines(keepends=True), fromfile='current/' + name, tofile='merged/' + name)))
+                          pathlib.Path(name).write_text(merged)
+                      (output / 'mechanical.json').write_text(json.dumps(mechanical, sort_keys=True, indent=2))
+                      subprocess.run(['git', 'add', '--', *names], check=True)
+                      result = subprocess.run(['git', 'rebase', '--continue'], env=environment)
+                      continue
               if resolution is None or set(names) != {item['path'] for item in resolution['files']}:
                   (output / 'stopped-commit.txt').write_text(stopped + '\n')
                   (output / 'conflicts.txt').write_bytes(git('status', '--short'))
@@ -97,7 +154,7 @@ jobs:
                       for path in pathlib.Path('.git/rebase-merge').glob('*'):
                           if path.is_file():
                               archive.write(path, 'rebase-state/' + path.name)
-                  raise SystemExit('Unreviewed conflict preserved; no remote history published.')
+                  raise SystemExit('Overlapping or path conflict preserved; no remote history published.')
               for item in resolution['files']:
                   path = pathlib.Path(item['path'])
                   assert not path.is_absolute() and '..' not in path.parts and not path.is_symlink()
@@ -120,12 +177,23 @@ jobs:
           (output / 'range-diff.txt').write_bytes(git('range-diff', '--no-color', f'{old}..{before}', f'{new}..HEAD'))
           (output / 'review.patch').write_bytes(git('diff', '--binary', new, 'HEAD'))
           (output / 'after.txt').write_bytes(git('rev-parse', 'HEAD'))
-          (output / 'publish.txt').write_text('yes' if configuration.get('publish') is True else 'no')
+          mechanical_digest = hashlib.sha256(json.dumps(mechanical, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+          (output / 'mechanical-sha256.txt').write_text(mechanical_digest + '\n')
+          approved = configuration.get('publish') is True and configuration.get('approved_mechanical_sha256') == mechanical_digest
+          (output / 'publish.txt').write_text('yes' if approved else 'no')
           snapshot('HEAD', 'replayed-source.zip')
-          print('Replay prepared; publication remains disabled unless exact resolutions and publication are explicitly supplied.')
+          print('Replay prepared; publication requires explicit approval of the exact mechanical-resolution digest.')
           PY
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: review-reconcile/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Check guidance without runtime or provider execution
-        run: node scripts/check-agent-guidance.mjs
+        run: |
+          pnpm install --ignore-scripts --frozen-lockfile
+          pnpm guidance:check
       - name: Publish only the reviewed replay with an exact lease
         env:
           GH_TOKEN: ${{ github.token }}
