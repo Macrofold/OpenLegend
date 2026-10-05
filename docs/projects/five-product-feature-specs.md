@@ -66,6 +66,8 @@ The changes remove proposed prerequisites, not existing protections or useful fu
 
 ## Game-first delivery sequence
 
+The current [gameplay priorities](../repertoires/gameplay-priorities.md) own whole-game selection: readable opposition, worthwhile rewards, useful improvement and another challenge. The sequence below coordinates these optional feature projects and preserves the inherited live-invention acceptance proof; it does not restore camp-system adjacency as the general build order or claim that an invention/food demonstration is the complete adventure.
+
 This is the recommended product sequence for the five proposals. It does not reset delivered work, overwrite the [next-priority assignments](../maintainers/parallel-batch-02-foundations-and-usability.md), or declare any existing acceptance complete. Relevant fixes to discovery, response latency, invention reliability and resource selection can precede a new feature because they make the current game usable. The owning trackers retain those assignments.
 
 | Priority                                                   | What the player should get                                                                                                                                                 | Minimum useful contribution and expansion trigger                                                                                                                                                                                                                        |

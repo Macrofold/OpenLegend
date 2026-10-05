@@ -1,8 +1,8 @@
 # Optional connection study — feature specification
 
-| Status      | Current progress                                                                                                             | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG11’s product proposal is being developed; study operation, technical design and human-outcome evidence remain undelivered. | 2026-10-05   |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG11’s researched product proposal and review are complete; study operation, technical design and human-outcome evidence remain open. | 2026-10-05   |
 
 ## 1. The experience and the decision it serves
 
@@ -42,11 +42,13 @@ In the shared format, both participants can move, inspect and gather; they decid
 
 In the solo format, each person gets a separate comparable opportunity, with the same instructions, per-person resource opportunity, reachable landmark, readable goal and expected difficulty. Solo play is designed to feel intentional and satisfying. It is not an empty world, a deliberately obstructed route or a social punishment. A solitary explorer can change route, turn back early, enjoy the view or decide that the goal no longer matters.
 
-The authored outing brief owns its fictional destination, available materials and safety assumptions. These do not become universal engine rules. The study compares the offered formats for that exact activity, world revision and audience; it does not generalize from gathering to every future adventure.
+The [authored outing brief](../worlds/base/connection-study-outing.md) owns the fictional destination, actual clock, starting body state, finite meals and ordinary rest/recovery opportunities. These do not become universal engine rules. The study compares the offered formats for that exact activity, world revision and audience; it does not generalize from gathering to every future adventure.
 
 ### Pace, reward and ordinary consequences
 
 Advertise approximately twenty minutes of play, with time for invitation and feedback stated separately. The target is a manageable appointment, not a forced minimum or a maximum healthy playtime. A person who finishes in eight minutes may stop. At the planned end, one ordinary invitation to finish the research segment is enough; the game does not confiscate control or interrupt an urgent action.
+
+At the selected normal base clock, twenty real minutes spans twenty game hours. The prepared study characters therefore start healthy, full and rested, with six actual carried cooked-meat units each and ordinary rest/recovery opportunities, under the [world brief](../worlds/base/connection-study-outing.md). This is disclosed new-world preparation; consumption, needs, Sleep/Wake Up and chosen recovery keep their actual rules. Qualification checks that the route stays worthwhile when someone reads or coordinates slowly. It records coarse game time and material food/rest/recovery/technical interruptions rather than assuming equal real duration means equal experience.
 
 Nothing in the study automatically completes a physical task, heals an injury, teleports a person out, assigns their goods to a partner or reverses consumed materials. Ordinary save, absence, ownership and safety behavior remains authoritative. This is why the first route should avoid involuntary combat and high-stakes loss while still having a real choice and useful result.
 
@@ -98,9 +100,9 @@ No free-text field is included in the outcome form. People can still contact sup
 
 ### Timing and missing responses
 
-The baseline question is privately offered when both participants are ready for the outing, after consent and just before assignment is revealed. Enrollment itself may happen earlier. If a later delay exceeds ten minutes, keep the original baseline labeled as delayed; do not repeat the prompt, reassign the pair or treat it as an immediate baseline in the planned change comparison. This conservative operational timing bound is not validated psychological recall accuracy.
+The baseline question is privately offered when both participants are ready for the outing, after consent and just before assignment is revealed. Consent, instructions and baseline reading occur before taking control in an advancing study world; actual supported pause/entry behavior must keep the prepared characters from losing needs while someone reads. Enrollment itself may happen earlier. If a later delay exceeds ten minutes, keep the original baseline labeled as delayed; do not repeat the prompt, reassign the pair or treat it as an immediate baseline in the planned change comparison. This conservative operational timing bound is not validated psychological recall accuracy.
 
-The end questions are privately offered at the participant’s actual end of the measured play segment, including an early activity stop, unless they have stopped further research collection. A pending physical danger takes priority; the invitation remains dismissible and never captures movement controls. No mid-outing questionnaire appears.
+The end questions become privately available at the participant’s actual end of the measured play segment, including an early activity stop, unless they have stopped further research collection. Open the reading surface only after an ordinary departure/protection path or a legitimately paused world, as qualified in the outing brief; hiding a panel or sleeping does not imply paused needs. A person who continues ordinary play can leave the form unopened within its original deadline. Pending physical danger takes priority; the study never forces departure, pauses a friend's play without authority or captures movement controls. No mid-outing questionnaire appears.
 
 Each boundary offers its questions once. Dismissal means skip, not “ask again on the next action.” A disconnected participant can reopen their own unfinished end form through the research page until the earlier of thirty minutes after the measured play end or the published collection close, with elapsed time disclosed to the analyst. Show that actual deadline in the form. There is no email, push notification, partner reminder or next-day nag.
 
@@ -116,7 +118,7 @@ Separate three roles in the experience. The player controls their participation 
 
 ### Minimum records and excluded information
 
-The proposed dataset contains a random participant reference, a random pair reference, consent version, assigned format, whether that offer began, broad end reason when voluntarily supplied or operationally necessary, coarse elapsed play time, question timing, submitted item values, and the exact activity/game/protocol revision. It includes a minimal delivered-format or interruption fact so an outage is not interpreted as a player’s dislike.
+The proposed dataset contains a random participant reference, a random pair reference, consent version, assigned format, whether that offer began, broad end reason when voluntarily supplied or operationally necessary, coarse elapsed real and game play time, declared speed/profile revision, question timing, submitted item values, and the exact activity/game/protocol revision. Minimal delivered-format facts and four per-segment yes/no/unknown interruption flags cover food, rest, recovery and technical/pause deviation. They are not an action log, private meter history or diagnosis. These facts prevent an outage or a day of unplanned survival pressure from being interpreted simply as a player's dislike.
 
 The private account-to-study association is available only to the custodian for withdrawal and correction. Analytical exports omit account and character names, email, location, exact wall-clock session times and contact details. Pair membership is necessary to interpret the assignment, so the data remains **pseudonymous**, not anonymous. A small cohort can be recognizable even without names.
 
@@ -251,11 +253,13 @@ The strongest version of this proposal is deliberately small. A concrete shared 
 
 The friend-only cohort reduces discovery and moderation risk but sharply limits inference: it says nothing about meeting new people or whether isolated people gain durable relationships. The single item reduces burden but cannot support the measurement claims of a validated scale. The solo condition costs additional session setup and can disappoint friends assigned separately; clear advance choice and an enjoyable solo design are necessary, and refusals remain evidence.
 
+The final cross-review made the twenty-hour fictional duration explicit, added finite disclosed meals and ordinary rest/recovery, and moved form reading outside advancing participant play. These controls make the delivered offer interpretable without freezing needs or scripting help. If ordinary self-care dominates this supposedly simple outing, that is a reason to improve or stop the study, not hide the interruption.
+
 The proposal should be postponed if the ordinary game cannot yet deliver the outing. It should be abandoned if players mainly experience it as administrative work. A larger research programme is justified only by a specific unanswered decision, a better measurement plan and an experience people already want to play.
 
 ## Maintained records
 
-- Implementation and unfulfilled operation gates: [Well-being evidence tasks](../maintainers/wellbeing-evidence.md), HE01–HE06.
+- Implementation and unfulfilled operation gates: [Well-being evidence tasks](../maintainers/wellbeing-evidence.md), WBE01–WBE06.
 - Limits and constraints: [Well-being evidence inventory](../limits/wellbeing-evidence.md), WE01–WE10.
 - Current shared owners: [Production data](../maintainers/production-data.md), [production deployment](../maintainers/production-deployment.md), [save/load](../save-and-load.md), and the private-data contract linked above.
 - Scope and sequence: [DG11/ND29](../maintainers/needs-design.md), [five-group overview](product-design-groups-11-15.md).

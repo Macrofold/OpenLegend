@@ -18,7 +18,7 @@ This gives Open Legend a concrete test of its larger promise: invented uses comp
 
 A complete first experience has a visible payoff. The player chooses a spot for a purpose, turns their own cloak into cover, sees what fits beneath it and brings an activity or belonging there. Later they extend it for company, move the covering to a better view, or reclaim the cloak and continue traveling. A resident may accept an invitation, compete for the dry space, dislike the arrangement or prefer somewhere else. Actual use and response make the place matter; neither a compulsory friendly household story nor a new comfort statistic is required.
 
-This is an expansion of the [accepted first playable](../../archive/05-project/first-playable-mvp.md), whose one-NPC live invention and hunting loop remains the initial proof. Building a home and managing damp tinder must not become prerequisites for that experience or replace it with a maintenance demonstration.
+This is an expansion of the [accepted first playable](../../archive/05-project/first-playable-mvp.md), whose one-NPC live invention and hunting loop remains an inherited acceptance proof. The current [gameplay priorities](../repertoires/gameplay-priorities.md) separately govern the complete adventure and selection of subsequent work. Building a home and managing damp tinder must not become prerequisites for that experience or replace it with a maintenance demonstration.
 
 ## 2. Existing commitments and initial scope
 
@@ -276,7 +276,7 @@ The builder installs supports, then leaves before fastening the roof. The suppor
 
 ### SH-J03 — Rain finds a missing section
 
-Two roof sections protect adjacent areas and a third is missing. Rain affects the gap and any partly exposed body or object. Adding the third section changes that local area. The home name, bed assignment and other intact sections never supplied phantom coverage to the gap.
+In the selected two-bay plan, one roof cover is installed and the adjacent bay's cover is missing. Rain affects that uncovered bay and any partly exposed body or object. Installing the second cover changes that local area. The home name, bed assignment and intact first cover never supplied phantom coverage to the gap. A third connected bay is outside the first profile.
 
 ### SH-J04 — Two layers and one source of rain
 
