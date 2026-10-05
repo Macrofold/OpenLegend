@@ -80,6 +80,35 @@ jobs:
           environment = dict(os.environ, GIT_EDITOR='true')
           result = subprocess.run(['git', 'rebase', '--onto', new, old], env=environment)
           mechanical = []
+          def merge_link(base, current, incoming):
+              pattern = r'^(.*?\]\()([^#)\s]+)(#[^)\s]*)?(\).*)$'
+              parts = [re.fullmatch(pattern, value) for value in (base, current, incoming)]
+              if any(part is None for part in parts):
+                  return None
+              groups = [part.groups() for part in parts]
+              if any((p[0], p[2], p[3]) != (groups[0][0], groups[0][2], groups[0][3]) or '://' in p[1] for p in groups):
+                  return None
+              values = [p[1].split('/') for p in groups]
+              edits = []
+              for side in (1, 2):
+                  edits.append([(i, j, values[side][a:b]) for tag, i, j, a, b in difflib.SequenceMatcher(None, values[0], values[side], autojunk=False).get_opcodes() if tag != 'equal'])
+              combined = list(edits[0])
+              for change in edits[1]:
+                  i, j, replacement = change
+                  duplicate = False
+                  for a, b, other in edits[0]:
+                      if change == (a, b, other):
+                          duplicate = True
+                          break
+                      if max(i, a) < min(j, b) or (i == j and a < i < b) or (a == b and i < a < j) or i == j == a == b:
+                          return None
+                  if not duplicate:
+                      combined.append(change)
+              result = list(values[0])
+              for i, j, replacement in sorted(combined, key=lambda e: (e[0], e[1]), reverse=True):
+                  result[i:j] = replacement
+              return groups[0][0] + '/'.join(result) + (groups[0][2] or '') + groups[0][3]
+
           def disjoint_merge(base, current, incoming):
               if current == incoming:
                   return current
@@ -101,6 +130,12 @@ jobs:
                       if incoming_edit == (a, b, other):
                           duplicate = True
                           break
+                      if i == a and j == b and j == i + 1 and len(replacement) == len(other) == 1:
+                          link = merge_link(tokens[0][i], other[0], replacement[0])
+                          if link is not None:
+                              combined[combined.index((a, b, other))] = (a, b, [link])
+                              duplicate = True
+                              break
                       if max(i, a) < min(j, b) or (i == j and a <= i <= b) or (a == b and i <= a <= j):
                           return None
                   if not duplicate:
