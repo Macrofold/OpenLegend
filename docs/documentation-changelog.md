@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-04 — Use current repertoire priorities when selecting work
+
+At the owner's request, [prioritization guidance](../.agents/skills/openlegend-prioritize/SKILL.md#check-repertoire-priorities-when-selecting-gameplay) now explicitly requires current repertoire priorities and whole-game coverage when selecting gameplay work. The parallel-task skill invokes the same check in its world-gameplay category. Recommendations identify the highest-priority unfinished relevant scope, reconcile actual implementation and ongoing work, and explain departures from higher-ranked alternatives. The [consolidated catalogues](repertoires/README.md) remain the source; no fixed category quota or automatic implementation queue is added. This updates selection instructions without reprioritizing existing assignments or changing the game.
+
 ## 2026-10-04 — Resolve developer questions before dependent work
 
 At Mike's request, [root instructions](../AGENTS.md#resolve-developer-questions-before-dependent-work) now apply the same decision boundary to every task, including design and prioritization: finish authorized independent work, then ask the developer for the answers needed to complete the remainder. Dependent work waits for those answers. A design-only assignment, delegation or an open-question note cannot substitute for resolving the developer's choice. Routine reversible decisions and already supplied answers do not require new confirmation; mandatory conflict stops and scope limits still apply.
