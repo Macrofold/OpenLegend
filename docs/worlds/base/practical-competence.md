@@ -76,11 +76,13 @@ The target admits **one active practice shooter at a time** in this first profil
 
 A projectile is consumed once when a valid shot releases, hit or miss, just as in current hunting. Do not refund it because the target is inert. Existing ammunition manufacture/gathering supplies further attempts; a future recovery mechanic would need its own real object outcome and conservation. There is no automatic firing loop or free ammunition grant attached to opening the practice interface.
 
+Once practice windup begins, the shot cannot be suspended for unrelated physical work. Explicit cancellation or a permitted replacing action before release ends preparation without a projectile debit or practice credit; elapsed time remains spent. After release, the actual debit, hit/miss and credit remain. Current-format saving/reopening a still-active shot preserves that same action and rechecks its conditions, rather than canceling, refunding or replaying it.
+
 The player can stop after any shot or choose another explicit shot. Training remains available after becoming practiced if someone simply enjoys comparing equipment, but the interface plainly says there is no further handling advancement in this profile. The ordinary hunting route remains fully available to a beginner who never uses the target.
 
 ## One useful coaching episode
 
-The first coaching episode has **one already-practiced coach and one willing learner**. Both must use the supported person/action capabilities. A public expert title, recipe ownership, eloquent speech, private belief or newly purchased model tier does not establish the coach's applicable competence.
+The first coaching episode has **one already-practiced coach and one willing learner**, with at most one active episode per participant. Both must use the supported person/action capabilities. A public expert title, recipe ownership, eloquent speech, private belief or newly purchased model tier does not establish the coach's applicable competence.
 
 The participants agree to this episode through ordinary interaction and each actor's actual choice. Agreeing reserves no future attendance. An NPC decides whether to participate from their own circumstances; a human supplies their own choice. Another actor cannot start a lesson on their behalf.
 
@@ -102,7 +104,7 @@ No fee or lesson marketplace is selected for this first world profile. A player 
 
 The learner can inspect their own number of qualifying releases, completed-coaching status, current competence and its precise scope. Others learn only through their own permitted observation or deliberate disclosure. A public rule definition does not expose another character's practice history, teacher identity, exact private value or an animal's hidden condition.
 
-Progress uses actual action and participation records under their existing owners. There is no separate autobiographical essay after every shot. A compact progress record needs at most the six qualifying release references and one completed-episode reference for this initial consumer; authoritative action evidence and required identity/conversation information keep their existing retention rules and are not truncated to fit that display.
+Progress uses actual action and participation records under their existing owners. There is no separate autobiographical essay after every shot. A compact progress record needs at most the six qualifying release references and one completed-episode reference for this initial consumer. When coaching grants the improvement early, keep filling that bounded independent support with later real releases up to six, without awarding more progression. If the lesson is subsequently invalidated, six independent releases still support the earned competence; authoritative action evidence and required identity/conversation information keep their existing retention rules and are not truncated to fit that display.
 
 Ordinary memory compaction does not remove earned competence. An explicit correction, evidence revocation or privacy overlay is reconciled against independent lawful support through the existing evidence/state owners. If sole required support is invalidated, suppress the unsupported benefit and explain the permitted remaining requirement instead of inventing replacement practice. No record is restored around a privacy revocation by loading an older save. An actual historical shot is not rerolled or refunded when a later correction changes future eligibility.
 

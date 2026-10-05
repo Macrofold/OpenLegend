@@ -36,7 +36,7 @@ Proposed [world creation](projects/world-creation-feature-spec.md): [WC-L01–WC
 
 Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L10](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, concrete canopy/material/work proposals, local growth, construction permission and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
 
-Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L07](limits/authored-stats.md) inventory the finite reference curve, preparation/help, work economics, attempt continuity, staged opposition and bounded authoring/disclosure. ND03 and EWF/INV/action/state owners retain delivery. This does not alter ordinary work, implement social control or adopt ND04 progression.
+Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L13](limits/authored-stats.md) preserve the optional reference curve and add the selected finite sling-handling, practice/target/coaching, evidence and disclosure proposals. DG14/ND03/ND04 practical scope uses [PC](maintainers/practical-competence.md) and shared EWF/INV/action/state owners. No runtime effect, universal XP, social control or personality change is delivered.
 
 ## Original audit entries
 

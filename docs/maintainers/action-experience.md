@@ -2,6 +2,8 @@
 
 **Status: AE01–AE10 delivered and qualified for the accepted initial scope, September 28, 2026.** This child tracker coordinates existing AG/AC/CR/EPR/storage owners. It does not close their broader acceptance or create a separate interpreter, catalogue of capabilities or memory store.
 
+**Proposed DG14 consumer, October 5:** [Practical competence](practical-competence.md) uses actual released-shot and coaching participation evidence for a finite world-authored handling improvement. This is new product scope with open technical/runtime tasks. It neither turns current tentative method acquisition into numerical skill nor claims current Teach or AE learning implements consensual coaching. The selected [world rule](../worlds/base/practical-competence.md) retains bounded independent support after coached improvement and current privacy/correction owners. Existing AE checkboxes and limits remain unchanged.
+
 ## Maintained records
 
 - [Project and staged scope](../projects/action-experience.md).

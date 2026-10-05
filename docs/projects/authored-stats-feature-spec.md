@@ -1,8 +1,8 @@
 # World-authored stats, checks and consequences — product and behavior specification
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | DG14's useful sling competence, practice and coaching are designed; review, technical design and runtime delivery remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG14's useful sling competence, practice and coaching are designed; product review is complete; technical design and runtime delivery remain open. | 2026-10-05   |
 
 **Status: proposed detailed behavior, October 3, expanded for DG14 on October 5, 2026.** This develops ND03 and now ND04's selected practical-skill slice. Typed attributes and state ownership already have implemented foundations; configurable contested checks and the complete behavior proposed here remain future work. Technical design is deferred. Existing action, state, knowledge, invention, world-policy and accounting owners remain authoritative.
 
@@ -551,7 +551,7 @@ The NPC can choose to practice, ignore it, coach, decline to coach or prefer a b
 
 ### 16.8 Interruption, departure and correction
 
-An invalid release supplies no practice even if its intention was good. A real released miss does. The action result must make that difference clear so the player does not believe their history was lost. Current hunting does not pause after working begins; a practice action must declare and qualify its own matching finish-or-cancel behavior rather than promise generic suspension.
+An invalid release supplies no practice even if its intention was good. A real released miss does. The action result must make that difference clear so the player does not believe their history was lost. The new practice action follows a selected finish-or-cancel rule: once windup begins, it cannot be suspended for unrelated physical work. Explicit cancellation or a permitted replacing action before release ends preparation with no projectile debit or practice credit; elapsed time remains spent. After release, its actual projectile debit, result and credit remain. Saving/reopening a still-active action preserves that same action and rechecks its real conditions; it is not a player-controlled paused shot, a refund or a replay.
 
 During an unfinished lesson, loss of actual observation, required communication, learner participation or coach capability prevents completion. Previously valid shots remain. Once the episode is complete, ordinary separation does not revoke it or create a return appointment.
 
@@ -560,6 +560,8 @@ Current-format save/reopen and reconnect retain completed releases, the lesson s
 Ordinary forgetting/compaction is not skill decay. Explicit correction or revocation of sole supporting evidence is different and uses the existing privacy/evidence owners, including independent lawful support and current overlays on older saves. If a purported completed lesson is corrected as nonexistent, the progression must no longer depend on it; the character's actual releases still count. The game does not fabricate a replacement lesson or expose private deleted text to justify its response.
 
 A creator can deliberately author starting competence or revise a live law through the existing authority controls. They cannot silently infer a person's lifetime expertise from their biography or retrospectively award practice because a model says they seem skilled. Imported equipment and retained recipes likewise do not transfer personal competence across worlds.
+
+A concrete correction case must pass: someone improves after the shorter coached route, then performs enough further real releases to satisfy the independent route. If the coaching record is later invalidated, their independently supported competence remains. Continuing that bounded evidence does not grant another reward or require another lesson.
 
 ### 16.9 Creator authoring and the extension boundary
 
@@ -579,7 +581,7 @@ Ordinary shot resolution, practice credit, known-rule explanation and the finite
 
 A lesson has one coach, one learner and one selected observation/feedback episode. A practice target has one active shooter in the first qualified profile. Existing work, spatial and recording capacities apply before additional activity is admitted. Capacity refusal preserves completed evidence and the existing competence; it does not discard inconvenient history or award unrecorded progress.
 
-The narrow progress record references its real supporting events; it does not copy the complete action history into every stat. Broader history remains subject to its existing retention, paging and privacy rules. Required character evidence cannot be truncated to fund a richer progression screen. After the one improvement, ordinary action recording continues under its current owner without accumulating more advancement counters.
+The narrow progress record references its real supporting events; it does not copy the complete action history into every stat. Broader history remains subject to its existing retention, paging and privacy rules. Required character evidence cannot be truncated to fund a richer progression screen. After the one improvement, ordinary action recording continues under its current owner. If coaching supplied the shorter route, the bounded independent support still fills up to six qualifying release references as real shots occur, without another reward or advancement track. A later correction to coaching can then retain the ability through those six independent releases without reconstructing the whole history.
 
 An AI resident doing actual permitted shots may legitimately improve while the human is elsewhere, if the world's current execution and funding policies support those actions. Time passing, being offline or paying for a richer model does not itself perform practice. No per-resident background training schedule is created. The publisher's Ultima Online explanation usefully distinguishes time passing from the action that can actually award learning, without supplying this game's advancement clock. [ST-R25](#st-r25)
 

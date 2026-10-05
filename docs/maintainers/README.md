@@ -2,7 +2,7 @@
 
 ## Product design groups 11–15
 
-[The current five-group design overview](../projects/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.
+[The current five-group design overview](../projects/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal; [practical-competence tasks](practical-competence.md) track the selected sling practice/coaching consumer. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.
 
 ## Future work needing design
 

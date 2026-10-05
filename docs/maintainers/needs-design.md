@@ -157,6 +157,8 @@ ND03 and ND04's practical-skill slice: one worthwhile action affected by capabil
 
 **Start and parallel boundary:** A selected existing action is the real dependency, so this can move earlier if it improves current play. It does not wait for DG12 or DG13 as a whole. Personality development belongs to DG23; generic learning stays with its existing owner. **Existing owners:** EWF02/EWF04, INV, AC/AE and shared state.
 
+**October 5 product expansion:** [The existing stats owner](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing) now selects useful sling handling, a short finite practice route, an actual inert target and voluntary observed-shot/feedback coaching. [The authored world profile](../worlds/base/practical-competence.md) owns the exact effect and requirements. This explicitly develops ND04's practical slice while preserving separate recipe knowledge, tentative learned methods and personality. [PC](practical-competence.md) owns the new consumer; its technical/runtime tasks remain open.
+
 #### DG15 — An optional story perspective
 
 Conditional ND36: one desired cutaway, distant-event or private-thought presentation, with its audience, spoilers, preferences and the distinction between what the human sees and what the character knows.
@@ -424,7 +426,7 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select one useful stat/check family and define authoring schemas, ranges/defaults, modifiers, opposed or threshold checks, randomness, interpretation and allowed effects. Separate a displayed trait from an enforceable world rule; explain how actions, AI context and player feedback consume the result. Hand the selected family to EWF/INV and the existing action/state owners with concrete scenarios and limits.
 
-**October 3 product proposal, revised after game-first critique:** [World-authored stats, checks and consequences](../projects/authored-stats-feature-spec.md) requires a demonstrated useful action before introducing generalized checks. Predictable competence effects are valid; the finite roof/2d6 example and arithmetic remain an optional worked candidate. Actual materials, time, help, attempts and known outcomes still govern any chosen method. [ST limits](../limits/authored-stats.md) retain candidate tuning and the simpler decisive-step scope. Adoption, technical design and consumer qualification remain open; no routine action becomes uncertain and ND04 progression stays separate.
+**October 3 product proposal, revised after game-first critique:** [World-authored stats, checks and consequences](../projects/authored-stats-feature-spec.md) requires a demonstrated useful action before introducing generalized checks. Predictable competence effects are valid; the finite roof/2d6 example and arithmetic remain an optional worked candidate. Actual materials, time, help, attempts and known outcomes still govern any chosen method. [ST limits](../limits/authored-stats.md) retain candidate tuning and the simpler decisive-step scope. The October 5 DG14 expansion now selects a finite sling-handling progression consumer under [PC](practical-competence.md), using the existing shot uncertainty rather than adding dice. Technical design and consumer qualification remain open; no routine action becomes uncertain and broader ND04 progression/personality stays separate.
 
 ### ND04 — Experience-shaped personality and practical skill growth
 
@@ -433,6 +435,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [ACT07/ACT08](actor-model.md) cover appraisals and directional social continuity; [cognition](cognition-redesign.md) owns knowledge/reflection; [action experience](action-experience.md) already tracks learned methods and their evidence. Those foundations do not select numerical skill progression or personality-change rules.
 
 **Needed before an implementation project:** decide which experience changes which trait or competence, whether changes are numerical or descriptive, and how practice, teaching, hearsay and observation differ. Define attribution, uncertainty, change/reversal rules and actual effects on supported actions without forcing decisions from trait labels. Keep generic method learning with AE and select world-specific progression separately.
+
+**October 5 selected practical-skill proposal:** DG14 now specifies what a real sling release, observation, completed coaching episode and hearsay each establish, plus the finite resulting effect, privacy, correction and absence rules in the [existing stats specification](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing). [PC](practical-competence.md) tracks only that new consumer. Personality change, generic method teaching and broader skill progression remain open.
 
 ### ND05 — Richer bodies, illness and care
 

@@ -4,6 +4,8 @@
 
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
+**October 5 DG14 selected consumer:** [Practical competence](practical-competence.md) owns the new finite sling-handling, inert-target practice and coaching work specified in the existing authored-stats proposal. EWF02/EWF04 supply state and permitted presentation; their delivered checkboxes do not establish this new action/progression consumer. [World-owned rules](../worlds/base/practical-competence.md) and [ST-L08–ST-L13](../limits/authored-stats.md) retain tuning and qualification.
+
 **Proposed ND03 consumer:** [authored stats and consequential checks](../projects/authored-stats-feature-spec.md) uses EWF02/EWF04 and existing action/state owners only when competence improves a real playable activity. Predictable effects are valid; the finite practical-work check remains an optional candidate. [ST limits](../limits/authored-stats.md) retain its scope and tuning. This revised product recommendation does not reopen delivered typed state or complete consumer qualification.
 
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).
