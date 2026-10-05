@@ -16,7 +16,7 @@ The [gameplay priorities](../repertoires/gameplay-priorities.md), [engine/world 
 
 | Queue group | Product behavior owner | Design state |
 | --- | --- | --- |
-| DG11 — Evidence for a selected well-being objective | [Optional connection study](wellbeing-evidence-feature-spec.md) | Research and drafting |
+| DG11 — Evidence for a selected well-being objective | [Optional connection study](wellbeing-evidence-feature-spec.md) | Product proposal and critical review prepared; operation remains open |
 | DG12 — Create a world and reuse an invention | [Existing world creation specification](world-creation-feature-spec.md) | Current proposal to be read and deepened |
 | DG13 — Editable shelter and useful places | [Existing shelter specification](editable-shelters-feature-spec.md) | Current proposal to be read and deepened |
 | DG14 — Useful competence and practice | [Existing authored stats specification](authored-stats-feature-spec.md) | Current proposal to be read and deepened |

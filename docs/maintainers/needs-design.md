@@ -131,6 +131,8 @@ Conditional ND29: define the actual research question, comparison, opt-in data, 
 
 **Start and parallel boundary:** Place this beside the feature being studied, whenever that happens. It is independent of ordinary gameplay/cost evaluation and is not a prerequisite for DG05, DG10 or DG16 unless that particular study is selected. Engagement alone does not establish a health benefit. **Existing owners:** Research/measurement decision owners and PD/data/privacy.
 
+**Product proposal prepared, 5 October 2026:** [Optional connection study](../projects/wellbeing-evidence-feature-spec.md) selects a finite feasibility comparison for independently consenting known-friend adults, minimal exploratory questions, private withdrawal and limited interpretation. [HE01–HE06](wellbeing-evidence.md) owns delivery and the still-open actual-study decision; no well-being programme, recruitment or data collection is adopted.
+
 ### Band 3 — Broaden creation and expression
 
 #### DG12 — Create a world and reuse an invention
@@ -681,6 +683,8 @@ If [player-facing resident-memory controls](../../archive/08-wellbeing-vision/04
 **Conditional research and measurement design.** Sources: [measuring what matters](../../archive/08-wellbeing-vision/12-measuring-what-matters.md), Q1/Q11 and E6 in [questions and first experiments](../../archive/08-wellbeing-vision/14-questions-and-first-experiments.md).
 
 **Existing coverage:** operational performance, costs and ordinary gameplay evidence already have owners. This proposed research program is not an adopted analytics specification.
+
+**Scoped product design:** [DG11’s connection-study proposal](../projects/wellbeing-evidence-feature-spec.md) now defines one possible study’s full participant behavior and interpretation. [HE tasks](wellbeing-evidence.md) retain technical, operational and empirical work. The proposal does not resolve or adopt the archive’s broader Q1/Q11 programme.
 
 **Needed before collecting data:** choose the actual question and whether it is a product objective; define opt-in consent, sampling, minimal data, retention and separation from identity/private conversation. Set comparison and interpretation methods, including self-report/selection limitations, and decide whether research partners or public reporting are wanted. Design the smallest instrumentation for that study. Do not turn proposed scales into player scores or claim health benefits from engagement metrics.
 

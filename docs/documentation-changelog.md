@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-05 — Product designs for groups 11–15
+
+The [five-group assignment](projects/product-design-groups-11-15.md) continues from refreshed main with product and behavior specifications, cited primary research, limits and playable acceptance. DG11 now has a detailed [optional connection-study proposal](projects/wellbeing-evidence-feature-spec.md): a finite invited-adult feasibility comparison, optional custom questions, distinct play ending and collection withdrawal, complete removal/retention behavior and limited inference. [HE tasks](maintainers/wellbeing-evidence.md) preserve the unfulfilled actual-study, technical, operational and empirical gates. The wider well-being archive remains ideation; no collection, health objective, deployment or runtime change is authorized or claimed. The other four groups are being completed sequentially on the same task branch.
+
 ## 2026-10-04 — Resolve developer questions before dependent work
 
 At Mike's request, [root instructions](../AGENTS.md#resolve-developer-questions-before-dependent-work) now apply the same decision boundary to every task, including design and prioritization: finish authorized independent work, then ask the developer for the answers needed to complete the remainder. Dependent work waits for those answers. A design-only assignment, delegation or an open-question note cannot substitute for resolving the developer's choice. Routine reversible decisions and already supplied answers do not require new confirmation; mandatory conflict stops and scope limits still apply.
