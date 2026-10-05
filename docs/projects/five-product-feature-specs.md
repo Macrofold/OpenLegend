@@ -1,10 +1,12 @@
 # Five product and behavior specifications
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Existing product proposals are being deepened through DG12–DG14; technical design and runtime delivery remain open. | 2026-10-05   |
 
 **Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Technical design and runtime implementation remain open.**
+
+The [groups 11–15 assignment](product-design-groups-11-15.md) preserves this package and extends its existing creation, shelter and competence specifications in place. DG12 now adds the complete invention-library round trip and useful opening continuation. This follow-up does not rewrite the original source baseline below or claim technical/runtime completion.
 
 ## Purpose and scope
 
@@ -25,13 +27,13 @@ Mike explicitly requested product and behavior design before technical design. C
 
 ## Specifications and progress
 
-| Order | Product specification                                                | Existing work owner                             | Status                                                                                      |
-| ----- | -------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies | Product proposal and focused review complete; technical design and runtime work remain open |
-| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                   | Product proposal and focused review complete; technical design and runtime work remain open |
-| 3     | [Creating a world from a premise](world-creation-feature-spec.md)    | ND01, INV-4.10, EWF12                           | Product proposal and focused review complete; technical design and runtime work remain open |
-| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4                    | Product proposal and focused review complete; technical design and runtime work remain open |
-| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03, EWF02/EWF04 and action/state owners       | Product proposal and focused review complete; technical design and runtime work remain open |
+| Order | Product specification                                                | Existing work owner                             | Status                                                                                          |
+| ----- | -------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies | Product proposal and focused review complete; technical design and runtime work remain open     |
+| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                   | Product proposal and focused review complete; technical design and runtime work remain open     |
+| 3     | [Creating a world from a premise](world-creation-feature-spec.md)    | ND01/ND12, INV-4.10/INV-8, EWF11/EWF12          | DG12 expands creation and invention reuse; product review complete, technical/runtime work open |
+| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4                    | Product proposal and focused review complete; technical design and runtime work remain open     |
+| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03, EWF02/EWF04 and action/state owners       | Product proposal and focused review complete; technical design and runtime work remain open     |
 
 ## Completion criteria
 

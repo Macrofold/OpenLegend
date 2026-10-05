@@ -209,6 +209,8 @@ PW03/PW10 add a concrete 6.1–6.3 consumer through the existing object/resource
 
 **Depends on:** stable identity, activation and permissions. These do not block INV-2 through INV-7.
 
+**DG12 product scope, 5 October 2026:** [World creation and invention reuse](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) now supplies the complete same-author two-world journey, retained-copy versus reference behavior, exact destination checks, independent knowledge/materials, immutable eligible free release and source/update/removal cases. [WC-L06–WC-L12](../limits/world-creation.md#wc-l06--first-library-and-publication-scope) owns this consumer’s proposed bounds. The product document does not complete the unchecked account-library/import/rights work below or choose D44’s general contribution terms.
+
 - [ ] **8.1 Add creator library and complete world-pack inventory.** Separate original authorship, learning, imports and installation; retain exact versions, rights and private-dependency blockers. Begin with a local library, not a marketplace service. Inventory distinguishes partial templates from runnable specializations and records destination bindings, derivation/credit and use/modification rights.
   - [x] Store server-derived creation attribution separately from deduplicated mechanics: world creators own NPC creations, player and world creators jointly own player creations; preserve independent discoveries and expose an NPC-created filter over known recipes.
   - [ ] Expand these local records into authorized account libraries and complete world-pack inventory; ownership does not grant character knowledge, publication or marketplace rights.

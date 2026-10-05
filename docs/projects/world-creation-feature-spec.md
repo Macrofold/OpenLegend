@@ -1,8 +1,8 @@
 # Creating a playable world from a premise — product and behavior specification
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG12 deepens the existing creation proposal with a researched invention-library round trip; technical design and runtime delivery remain open. | 2026-10-05 |
+| Status      | Current progress                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG12 deepens the existing creation proposal with a researched invention-library round trip; technical design and runtime delivery remain open. | 2026-10-05   |
 
 **Status: proposed detailed behavior, October 3, 2026.** This develops the accepted ND01 creator experience. It specifies a product journey and its consequences, not a universal world generator or a new implementation. Technical design remains deferred. Existing invention, constitution, funding, world-host and participation owners remain authoritative.
 
@@ -435,18 +435,18 @@ The first proof does not need recommendation rankings, popularity, stars, paid p
 
 Use ordinary statuses with concrete consequences:
 
-| Library state | What the person may rely on | What it does not mean |
-| --- | --- | --- |
-| Draft | Their permitted candidate and notes are retained. | The mechanic is admitted or usable. |
-| Admitted contribution | The source world accepted this exact definition, and attribution is recorded. | Every destination supports it. |
-| Retained reusable copy | The eligible definition and required reusable content are durably available under recorded terms. | Private world history or all rights traveled with it. |
-| Reference only | The library points to a version whose bytes or grants are not held here. | It will survive source loss or be usable offline. |
-| Needs a dependency | Required content or permission is missing, with a scoped reason. | The original invention has been rewritten or partly executed. |
-| Already available here | The exact compatible definition is already installed in this destination. | The character owns an item or knows its recipe. |
-| Ready for review here | The selected destination supports the complete proposed addition under current evidence. | Review already authorized activation. |
-| Superseded | Another revision exists; this version remains identifiable. | Established worlds were updated automatically. |
+| Library state          | What the person may rely on                                                                       | What it does not mean                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Draft                  | Their permitted candidate and notes are retained.                                                 | The mechanic is admitted or usable.                           |
+| Admitted contribution  | The source world accepted this exact definition, and attribution is recorded.                     | Every destination supports it.                                |
+| Retained reusable copy | The eligible definition and required reusable content are durably available under recorded terms. | Private world history or all rights traveled with it.         |
+| Reference only         | The library points to a version whose bytes or grants are not held here.                          | It will survive source loss or be usable offline.             |
+| Needs a dependency     | Required content or permission is missing, with a scoped reason.                                  | The original invention has been rewritten or partly executed. |
+| Already available here | The exact compatible definition is already installed in this destination.                         | The character owns an item or knows its recipe.               |
+| Ready for review here  | The selected destination supports the complete proposed addition under current evidence.          | Review already authorized activation.                         |
+| Superseded             | Another revision exists; this version remains identifiable.                                       | Established worlds were updated automatically.                |
 
-The accepted governance target retains all eligible past attributed inventions independently of continued source-world membership. Do not make “Save to library” an extra ceremony required to preserve every successful invention. Admission records the contribution; the library’s actual retained-copy status reflects whether the eligible reusable content has also been secured. A contextual “Keep a reusable copy” can complete that copy when permitted, while “Favorite” remains mere organization.
+The accepted governance target retains all eligible past attributed inventions independently of continued source-world membership. In the account-library stage, the creator’s eligible own contribution artifacts, exact version and attribution enter retained account history automatically, with an honest pending/failed state if that retention is not yet complete. Do not make “Save to library” an extra ceremony required to preserve every successful invention. A contextual “Keep a reusable copy” secures the complete eligible dependency bundle; restricted dependencies may remain references. “Favorite” remains mere organization. The first local portability proof does not falsely claim this wider account-history consumer is already implemented.
 
 If copying fails, the admitted source invention remains admitted. Show “Reusable copy not saved” and the actual available reference; offer an intentional retry. Do not claim an independent retained copy because the source is still temporarily reachable. Conversely, browsing an incompatible destination must not strip unknown parts from a saved original. Factorio’s documented loss of unavailable blueprint content makes this a concrete failure to avoid. [WC-R20]
 
@@ -501,13 +501,15 @@ The current runtime’s applicable invention locks and owner-authoring limits re
 
 ### 15.8 A free release is a deliberate, exact publication
 
-The first sharing experience is an immutable eligible release available through a file or direct link. It can be one useful invention with its full permitted dependencies. A public searchable catalogue, ratings, checkout, royalties, marketplace payout or automatic cross-host synchronization is unnecessary for this proof.
+The first sharing experience is an immutable eligible release available through a file or direct link. It can be one useful invention with its full permitted dependencies. Its recipient is one other already-known account in the same supported operator/authority environment, using a prepared destination they are actually authorized to edit. Their library records imported material with original credit, not a new original invention. A public searchable catalogue, ratings, checkout, royalties, marketplace payout or automatic cross-host synchronization is unnecessary for this proof.
 
 The release review states the selected exact version, included content, dependencies, credited contributors, visible source information, applicable recorded permissions, known limitations and intended scope. Confirm that the description promises the behavior actually present. A thumbnail of a glowing staff does not make it a usable healing mechanic.
 
 “Free” means no package purchase price under the release’s terms. It does not by itself grant modification, commercial operation or redistribution, and it does not promise zero hosting, storage, adaptation or AI cost. Dreams’ and Roblox’s official permissions distinguish several of these actions; neither platform’s rules settle Open Legend’s license. [WC-R24] [WC-R26]
 
 Use existing sufficient recorded grants without repeatedly asking the same contributor for the same permission. When grants are missing, the release remains blocked or explicitly becomes an eligible subset. Joint player/world-creator ownership is attribution and product control, not blanket consent to redistribute someone else’s work.
+
+For the first proof, “eligible first-party content” means the applicable repository/component license and required notices actually cover the selected material. Check assets separately under [Licensing](../../LICENSING.md). An official label is not a grant, and the still-unselected public starter-library license is not assumed to exist.
 
 The exact product-wide free-use license and contribution terms remain with D44/INV-8.3. This specification selects no new default license, compulsory grant or consent text. It completely defines the first same-author authorized transfer and release under already sufficient terms. Selecting a new shared-publication policy is a separate owner decision before dependent publication; a zero-price button cannot bypass it.
 
@@ -545,24 +547,24 @@ Installed worlds and character minds read the definitions and permitted knowledg
 
 ### 15.11 Complete reuse scenarios
 
-| Case | Required outcome |
-| --- | --- |
-| A new user has no inventions | Explain the empty library and offer ordinary play or the chosen creation flow; do not force an invention exercise before entry. |
-| The creator imports their exact sling into World B | The destination receives the supported definition and closure under actual grants; starting knowledge and supplies are separate, visible choices. |
-| The same version is already installed | Show “Already available here” and the ordinary route to use; create no duplicate definition, invention credit, item or paid generation. |
-| Two inventions share a familiar name | Distinguish inventor, visible origin, version and behavior; do not overwrite one by name. |
-| The character lacks the recipe or ingredients after import | Explain the actual knowledge/material prerequisite through permitted information; a successful import is not a failed craft. |
-| A generated cordage recipe is needed by a container | Include and validate the exact permitted producer chain; a copied binding tag does not replace its supported meaning. |
-| The required dependency is private | Show a scoped blocker and affected behavior without disclosing the private definition, origin or author discussion. |
-| A destination has a similarly named but incompatible material | Preserve the original and offer a real supported binding or explicit adaptation, not silent substitution. |
-| The creator cancels before activation | Destination definitions, knowledge, possessions and active work stay unchanged; show any actual optional authoring charge. |
-| Activation succeeds during a disconnect | Resolve the original receipt and show the same result; do not import again or award fresh attribution. |
-| Source rights or destination rules change during review | Retain the candidate, explain the changed material requirement, and refresh review only for that affected choice. |
-| An import exceeds the complete-closure envelope | Keep the source intact, identify the supported-profile limit and leave the destination unchanged; no partial execution. |
-| A source is unavailable after an eligible copy was retained | Use the retained copy under its actual grants; a reference-only entry instead reports the missing source honestly. |
-| A release is unpublished | Future discovery changes; existing grants and installed versions follow their recorded terms, subject to separately authorized exceptional removal. |
-| An old development-format package is supplied | Explain incompatibility and preserve the file; do not add a migration path, reset a world or regenerate it on the player’s bill. |
-| An apparent update changes a living character’s rules | Route it to the actual world-change owner and show affected consequences; library preference alone grants no activation. |
+| Case                                                          | Required outcome                                                                                                                                    |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A new user has no inventions                                  | Explain the empty library and offer ordinary play or the chosen creation flow; do not force an invention exercise before entry.                     |
+| The creator imports their exact sling into World B            | The destination receives the supported definition and closure under actual grants; starting knowledge and supplies are separate, visible choices.   |
+| The same version is already installed                         | Show “Already available here” and the ordinary route to use; create no duplicate definition, invention credit, item or paid generation.             |
+| Two inventions share a familiar name                          | Distinguish inventor, visible origin, version and behavior; do not overwrite one by name.                                                           |
+| The character lacks the recipe or ingredients after import    | Explain the actual knowledge/material prerequisite through permitted information; a successful import is not a failed craft.                        |
+| A generated cordage recipe is needed by a container           | Include and validate the exact permitted producer chain; a copied binding tag does not replace its supported meaning.                               |
+| The required dependency is private                            | Show a scoped blocker and affected behavior without disclosing the private definition, origin or author discussion.                                 |
+| A destination has a similarly named but incompatible material | Preserve the original and offer a real supported binding or explicit adaptation, not silent substitution.                                           |
+| The creator cancels before activation                         | Destination definitions, knowledge, possessions and active work stay unchanged; show any actual optional authoring charge.                          |
+| Activation succeeds during a disconnect                       | Resolve the original receipt and show the same result; do not import again or award fresh attribution.                                              |
+| Source rights or destination rules change during review       | Retain the candidate, explain the changed material requirement, and refresh review only for that affected choice.                                   |
+| An import exceeds the complete-closure envelope               | Keep the source intact, identify the supported-profile limit and leave the destination unchanged; no partial execution.                             |
+| A source is unavailable after an eligible copy was retained   | Use the retained copy under its actual grants; a reference-only entry instead reports the missing source honestly.                                  |
+| A release is unpublished                                      | Future discovery changes; existing grants and installed versions follow their recorded terms, subject to separately authorized exceptional removal. |
+| An old development-format package is supplied                 | Explain incompatibility and preserve the file; do not add a migration path, reset a world or regenerate it on the player’s bill.                    |
+| An apparent update changes a living character’s rules         | Route it to the actual world-change owner and show affected consequences; library preference alone grants no activation.                            |
 
 Current creator recipe Apply teaches its initiating actor as part of ordinary invention admission. The new import consumer must explicitly provide the intended installation and learning behavior through that owner; reusing today’s Apply unchanged cannot establish an installation-only flow. Copying source-world receipts or relabeling an entire save is not a portability implementation.
 
@@ -584,18 +586,18 @@ Measure time and effort to find/reuse a known invention, avoidable questions, lo
 
 The original seventeen research entries in section 13 remain their dated evidence. The following primary-source research was reviewed on 5 October 2026 for the newly specified reuse journey. These comparisons inform product judgments; they do not prove Open Legend capacity, validate its rights or supply universal engine rules.
 
-| Source | Finding and limitation | Decision for this proposal |
-| --- | --- | --- |
-| [WC-R18] Factorio parameterized blueprints, 5 January 2024 | A developer account describes reducing repetitive configuration through meaningful parameters and dependent values in a defined construction system. | Expose actual supported variation points with preview; do not ask the creator to rebuild every repeated dependency or infer arbitrary semantic substitution. |
-| [WC-R19] Factorio library redesign, 17 July 2020 | Names, descriptions, list presentation and explicit content replacement address practical library use. It is a development account, not measured onboarding evidence. | Keep familiar identity and organization through improvements; opening a card does not create a duplicate. |
-| [WC-R20] Factorio preserving unavailable blueprint content, 24 July 2020 | Missing mods could strip saved blueprint information; the proposed repair preserves unknown references without making them usable in that game. | Incompatibility never silently edits the retained original into a weaker design. |
-| [WC-R21] Roblox Build, current documentation and 16 July 2026 announcement | The offer focuses on simpler 2D/2.5D genres, refinements and limited prompts. The documentation also labels playtesting “coming soon,” while describing it elsewhere. | Treat marketing and intended functionality as proposals; retain a supported starting scope, explicit iteration cost and a route into actual play. |
-| [WC-R22] Minecraft cooperative Add-On guidance, updated 22 July 2025 | Official guidance discusses collisions, coupled dependencies, removal risks and combined device burden. Its additive-only category is specific to Minecraft. | Check the actual combination and existing destination; do not import the vanilla-preserving policy or its numeric budgets as Open Legend laws. |
-| [WC-R23] Minecraft pack manifest reference, updated 4 August 2025 | Versions, dependencies, authors, licensing and applicable scope are separately represented; some documented features are preview-only. | Keep exact version, compatibility, rights and approval distinct. Minecraft’s replacement policy is not selected for live Open Legend worlds. |
-| [WC-R24] Dreams permissions, current official guidance | Play, remix, embedded copies and publication have different permissions and attribution consequences. Platform rights do not imply unrestricted external export. | Make the actual reuse grant readable; credit and zero price are insufficient permission. |
-| [WC-R25] Dreams deletion, current official guidance | Embedded copies and references to deleted scenes can have different consequences; ordinary deletion is distinct from enforcement. | Explain retained copy versus reference, and separate discovery removal from changes to established worlds. |
-| [WC-R26] Roblox packages, current official guidance | Update access, inserted copies, modified copies and embedded-asset access have distinct behavior. Editor updates are not automatically live publication. | An available update is a choice; protect destination customization and independently check required assets. |
-| [WC-R27] Roblox third-party asset vulnerabilities, current official guidance | Popular or moderated assets may still contain problematic executable behavior. Some automatic restrictions are described as future work. | A pleasant preview or popularity never replaces existing supported-family validation and authority. Do not add scripting to copy this ecosystem. |
+| Source                                                                       | Finding and limitation                                                                                                                                                | Decision for this proposal                                                                                                                                   |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [WC-R18] Factorio parameterized blueprints, 5 January 2024                   | A developer account describes reducing repetitive configuration through meaningful parameters and dependent values in a defined construction system.                  | Expose actual supported variation points with preview; do not ask the creator to rebuild every repeated dependency or infer arbitrary semantic substitution. |
+| [WC-R19] Factorio library redesign, 17 July 2020                             | Names, descriptions, list presentation and explicit content replacement address practical library use. It is a development account, not measured onboarding evidence. | Keep familiar identity and organization through improvements; opening a card does not create a duplicate.                                                    |
+| [WC-R20] Factorio preserving unavailable blueprint content, 24 July 2020     | Missing mods could strip saved blueprint information; the proposed repair preserves unknown references without making them usable in that game.                       | Incompatibility never silently edits the retained original into a weaker design.                                                                             |
+| [WC-R21] Roblox Build, current documentation and 16 July 2026 announcement   | The offer focuses on simpler 2D/2.5D genres, refinements and limited prompts. The documentation also labels playtesting “coming soon,” while describing it elsewhere. | Treat marketing and intended functionality as proposals; retain a supported starting scope, explicit iteration cost and a route into actual play.            |
+| [WC-R22] Minecraft cooperative Add-On guidance, updated 22 July 2025         | Official guidance discusses collisions, coupled dependencies, removal risks and combined device burden. Its additive-only category is specific to Minecraft.          | Check the actual combination and existing destination; do not import the vanilla-preserving policy or its numeric budgets as Open Legend laws.               |
+| [WC-R23] Minecraft pack manifest reference, updated 4 August 2025            | Versions, dependencies, authors, licensing and applicable scope are separately represented; some documented features are preview-only.                                | Keep exact version, compatibility, rights and approval distinct. Minecraft’s replacement policy is not selected for live Open Legend worlds.                 |
+| [WC-R24] Dreams permissions, current official guidance                       | Play, remix, embedded copies and publication have different permissions and attribution consequences. Platform rights do not imply unrestricted external export.      | Make the actual reuse grant readable; credit and zero price are insufficient permission.                                                                     |
+| [WC-R25] Dreams deletion, current official guidance                          | Embedded copies and references to deleted scenes can have different consequences; ordinary deletion is distinct from enforcement.                                     | Explain retained copy versus reference, and separate discovery removal from changes to established worlds.                                                   |
+| [WC-R26] Roblox packages, current official guidance                          | Update access, inserted copies, modified copies and embedded-asset access have distinct behavior. Editor updates are not automatically live publication.              | An available update is a choice; protect destination customization and independently check required assets.                                                  |
+| [WC-R27] Roblox third-party asset vulnerabilities, current official guidance | Popular or moderated assets may still contain problematic executable behavior. Some automatic restrictions are described as future work.                              | A pleasant preview or popularity never replaces existing supported-family validation and authority. Do not add scripting to copy this ecosystem.             |
 
 [WC-R18]: https://www.factorio.com/blog/post/fff-392
 [WC-R19]: https://www.factorio.com/blog/post/fff-356
@@ -624,6 +626,7 @@ The reward is a capability the player can use and build on. Repeated publication
 
 - Package and sequence: [five product specifications](five-product-feature-specs.md).
 - Design routing: [ND01](../maintainers/needs-design.md#nd01--assemble-a-new-world-from-a-creators-premise); authoring delivery remains [INV-4.10](../maintainers/inventions-and-world-evolution.md#inv-4--give-the-creator-useful-scoped-world-investigation-and-workshop-tools), with [EWF12](../maintainers/extensible-world-foundation.md#ewf12--runtime-to-world-agent-authoring-and-explanation-bridge) supplying supported explanation/integration.
+- DG12 reuse routing: [ND12](../maintainers/needs-design.md#nd12--cross-world-invention-libraries-and-usable-pack-publishing), [INV-8](../maintainers/inventions-and-world-evolution.md#inv-8--portable-inventions-and-later-algorithm-extensions) and [EWF11](../maintainers/extensible-world-foundation.md#ewf11--reusable-construct-integration-and-local-portability-proof). New-world entry and portability can progress independently against shared definitions.
 - Product limits: [world creation](../limits/world-creation.md); inherited questions, session, retention and spending limits remain [inventions](../limits/inventions.md), and entry remains [multiplayer](../limits/multiplayer.md).
 - Governing contracts: [world constitution](../world-constitution.md), [engine/world boundaries](../engine-and-world-boundaries.md), [invention validation](../invention-validation.md) and [invention budgets](../invention-budgets.md).
 - Existing bundled behavior: [base world](../worlds/base/README.md), [survival](../worlds/base/survival.md) and [lifecycle/protection](../worlds/base/lifecycle-and-protection.md). Current versus accepted-target status in those owners remains controlling.

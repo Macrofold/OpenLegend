@@ -139,6 +139,8 @@ Conditional ND29: define the actual research question, comparison, opt-in data, 
 
 ND01's initial world-assembly journey and ND12's bounded local/account-library round trip. Reuse the world-creation proposal; connect a faithful supported opening to retained definitions, dependency inventories, provenance, rights and understandable destination compatibility.
 
+**Product expansion prepared, 5 October 2026:** [The existing creation specification](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) now includes the full useful-recipe round trip, original retention, destination choices, independent character knowledge/resources, eligible free release to a known recipient, update/removal behavior and ten additional primary research units. INV-8/EWF11/12 remain the delivery owners; no new shared license or implementation is claimed.
+
 **Start and parallel boundary:** Use qualified current families and existing authoring/admission. World assembly and the library round trip can be designed independently against their shared definition/provenance contract. A ready small start remains valid. Do not require shelters, general stats, public matching or a marketplace. Free publication and reuse belong here; commercial catalogue/distribution and payout integration expand through DG28. **Existing owners:** INV-4/INV-8, EWF11/EWF12 and world-host owners.
 
 #### DG13 — Editable shelter and useful places
@@ -402,6 +404,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **October 3 product proposal, revised after game-first critique:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) offers optional compact creation around a qualified small opening and judges the result by worthwhile play. The accepted personal MVP is sufficient initial scope; six residents are a later community hypothesis, not a release floor. Readiness, selective revision, permissions and actual costs remain required for the selected candidate. [WC limits](../limits/world-creation.md) retain boundaries. Technical design and INV-4.10/EWF12 delivery remain open.
 
+**DG12 expansion, 5 October:** the same specification now makes purpose, useful capability gain and continuation explicit at entry, and connects the new-world candidate to ND12’s exact retained-invention reuse. The initial opening remains small and independent of a marketplace or larger society.
+
 ### ND02 — Discover a community, settle there and enter as a character
 
 **Decision before design.** Sources: [worlds and belonging](../product-scalability/worlds-and-belonging.md), especially visiting, settlement and renewed participation; [D68 — world entry beyond invites](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites).
@@ -505,6 +509,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [INV-8.1–8.3](inventions-and-world-evolution.md) and [EWF11](extensible-world-foundation.md) already own account libraries, inventories, export/import and rights-aware portability; local attribution exists. Player/world-creator joint ownership of player creations and world-creator ownership of NPC creations are accepted rules. This entry is the missing scoped product journey and cross-service design, not a claim that packs have no architecture or tracker.
 
 **Needed before an implementation project:** define library discovery, retained attribution, authorized cross-world reuse, retention and complete dependency inventories. Resolve private origin metadata, contribution grants, disputed provenance and self-hosted synchronization; specify immutable publication, destination bindings and understandable incompatibility/refusal. Define permitted use/modification/redistribution and what happens when access ends. Start with a bounded local or account-library round trip; a marketplace and ND23 payouts need not block that proof. Preserve current-format integrity and the root development-compatibility policy.
+
+**Scoped product design prepared, 5 October 2026:** [DG12’s library journey](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) specifies a same-author local proof and a known-recipient eligible free release, scoped private provenance, retained-copy/reference distinctions, complete dependency checks and failure/update/removal behavior. [WC-L06–WC-L12](../limits/world-creation.md#wc-l06--first-library-and-publication-scope) records the proposed envelope. General contribution terms and cross-operator provenance remain unselected expansions under INV-8.3/D44; technical design and unchecked import/account-library work stay open.
 
 ### ND13 — Stable action recommendations and complete control customization
 
