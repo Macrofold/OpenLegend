@@ -151,7 +151,7 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 - [x] Commit safe action interruption, inactive participation and one departure event together; project fade/removal only to witnesses through normal EPR evidence.
 - [x] Remove inactive humans from bodily hazard/depletion/action/spatial participation without deleting identity, history or possessions. Preserve detached world-property behavior.
-- [x] Keep delivered native player-to-player strike denial and inactive-human bodily protection. Active-human PvE and other admitted body effects are not universally blocked; broader harm/opt-in semantics remain [BW14](base-world.md#bw14--human-consent-and-harm-boundary) work, and a modal or role name is insufficient.
+- [x] Keep delivered native player-to-player strike denial and inactive-human bodily protection. Active-human PvE and other admitted body effects are not universally blocked; broader harm/opt-in semantics remain [BW14](base-world.md) work, and a modal or role name is insufficient.
 
 **Dependencies:** MP04.1; BW13 and relevant body/spatial owners. **Exit:** onlookers can notice departure, non-witnesses receive no account or location leak, and protected inactivity does not pause the whole shared world or protect buildings.
 

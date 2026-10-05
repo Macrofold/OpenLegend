@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The product proposal is complete for direct barter and a reusable two-person understanding, while technical design, implementation and play qualification remain open under INV-20.5 and BW17. | 2026-10-04   |
+| In progress | The product proposal is complete for direct barter and a reusable two-person understanding, while technical design, implementation and play qualification remain open under INV-20.5 and BW17. | 2026-10-05   |
 
 ## Purpose and design position
 

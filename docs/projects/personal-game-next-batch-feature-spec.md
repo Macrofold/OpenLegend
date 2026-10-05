@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                 | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG05 has a completed product proposal, while its technical design and the four delivery assignments remain open. | 2026-10-04   |
+| In progress | PG05 has a completed product proposal, while its technical design and the four delivery assignments remain open. | 2026-10-05   |
 
 [Technical definitions](personal-game-next-batch-tech-design.md) · [Assignment prompts](personal-game-next-batch-prompts.md) · [Tracking](../maintainers/personal-game-next-batch.md)
 

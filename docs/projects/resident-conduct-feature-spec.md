@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                    | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The researched adult-service product proposal and game-first review are complete; adoption, technical design and runtime qualification remain open. | 2026-10-04   |
+| In progress | The researched adult-service product proposal and game-first review are complete; adoption, technical design and runtime qualification remain open. | 2026-10-05   |
 
 ## Purpose and selected experience
 
