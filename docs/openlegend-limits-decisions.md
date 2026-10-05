@@ -34,6 +34,8 @@ Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L0
 
 Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L07](limits/authored-stats.md) inventory the finite reference curve, preparation/help, work economics, attempt continuity, staged opposition and bounded authoring/disclosure. ND03 and EWF/INV/action/state owners retain delivery. This does not alter ordinary work, implement social control or adopt ND04 progression.
 
+Proposed shared-play designs: [DG06 exchange and cooperation](projects/exchange-and-cooperation-feature-spec.md) and [DG07 first threat](projects/first-threat-encounter-feature-spec.md) use EX01–EX03 and TE01–TE05 in the [base-world inventory](limits/base-world.md). [Community participation](projects/community-entry-and-participation-feature-spec.md), [resident conduct](projects/resident-conduct-feature-spec.md) and [mutual introductions](projects/mutual-introductions-feature-spec.md) own their respective [CP](limits/community-participation.md), [RC](limits/resident-conduct.md) and [MI](limits/mutual-introductions.md) inventories. These include behavioral scope and unselected growth budgets; INV/BW/PG05, MP19/MP20, NC20 and PD retain implementation/adoption gates. No proposed envelope is a measured public capacity or changed runtime law.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).

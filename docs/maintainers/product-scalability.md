@@ -92,6 +92,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 The [DG08 managed-community proposal](../projects/community-entry-and-participation-feature-spec.md#belonging-return-and-capacity) selects a small first offering with protected current control/reconnect, honest waits and staffed intake. [CP01/CP05](../limits/community-participation.md) are proposed qualification scopes, not a new measured capacity claim or completion of PS06.
 
+[DG10 introductions](../projects/mutual-introductions-feature-spec.md#cost-and-performance-expectations) consume that same two-human scope, including any embodied host. Native matching adds no model call, but complete-session cognition, repeated/failed offers, retained receipts and actual support still require MP20/PD/PS budgets. No extra capacity, automatic cross-world expansion or all-person private ranking is selected.
+
 ## PS07 — Federation and forecast canonical campaigns
 
 **Owners:** access/domain rules, world relationships, campaign coordination, existing data/transfer owners. **Depends on:** PS05–PS06 for relevant travel, participation, and capacity.

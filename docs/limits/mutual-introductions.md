@@ -1,10 +1,10 @@
 # Mutual introduction limits and constraints
 
-All MI entries are **Proposed, unimplemented and unqualified**, reviewed 4 October 2026. They scope [Play together now](../projects/mutual-introductions-feature-spec.md), the selected DG10/ND31 offering. [MP20](../maintainers/multiplayer.md#mp20--mutually-accepted-activity-introductions) owns implementation; CP/RC/PD retain their shared participation, audience and release limits.
+All MI entries are **Proposed, unimplemented and unqualified**, reviewed 5 October 2026. They scope [Play together now](../projects/mutual-introductions-feature-spec.md), the selected DG10/ND31 offering. [MP20](../maintainers/multiplayer.md#mp20--mutually-accepted-activity-introductions) owns implementation; CP/RC/PD retain their shared participation, audience and release limits.
 
 ## MI01 — Selected people and activity
 
-**Proposed · Restrictiveness: Very safe.** One introduction between two already admitted adult humans currently participating in the same qualified world. Consume [CP01](community-participation.md#cp01--selected-public-offering-and-capacity): two embodied humans include any human host. Consume RC01's English-language adult offer. No additional body slot, auto-admission, third embodied facilitator, recurring group, family/minor mode, cross-world search, external venue or dating/therapy offering.
+**Proposed · Restrictiveness: Very safe.** One introduction between two already admitted adult humans currently participating in the same qualified world. Consume [CP01](community-participation.md#cp01--first-public-offering): two embodied humans include any human host. Consume RC01's English-language adult offer. No additional body slot, auto-admission, third embodied facilitator, recurring group, family/minor mode, cross-world search, external venue or dating/therapy offering.
 
 **Reason and boundary:** First prove that one voluntary activity is enjoyable and easy to leave. The supported activity set contains only actual qualified world content; an unavailable route or finite reward is not regenerated to produce a match. Empty results are honest and normal. The activity must not require remaining together merely to escape a social commitment; ordinary danger uses its actual owner.
 
@@ -12,7 +12,7 @@ All MI entries are **Proposed, unimplemented and unqualified**, reviewed 4 Octob
 
 ## MI02 — Active offers, consent and time
 
-**Proposed · Restrictiveness: Safe.** At most one published offer, one pending introduction and one accepted active introduction per account; the flow does not permit these to accumulate into multiple simultaneous commitments. Sending a request withdraws the requester's published offer; pending participants accept no other request, and acceptance closes both public offers. Request/accept must concern the same actual people and material terms.
+**Proposed · Restrictiveness: Safe.** One coordination place per account: Available, Pending or Accepted are mutually exclusive. A person must End or reach expiry before publishing/requesting while accepted. Sending a request withdraws the requester's published offer; pending participants accept no other request, and acceptance closes both public offers. Request/accept must concern the same actual people and material terms. On ordinary request cancellation/decline, only the still-eligible publisher's unchanged original offer may resume for its remaining window; the requester's withdrawn offer is not recreated. No implicit renewal occurs.
 
 An offer is available for **30 real minutes** from deliberate publication/renewal; a pending request shares that expiry with no additional shorter countdown. Acceptance starts **30 real minutes** of coordination availability. Either participant may end sooner. End/expiry stops further coordination, not actual world play, speech, work or possessions. No minimum attendance, withdrawal fee, automatic reminder, no-show penalty, friendship quota, recurring appointment or introduction reward is selected.
 

@@ -127,6 +127,8 @@ ND27's decisions about official-service conduct versus authored fiction, audienc
 
 #### DG10 — A chosen human social experience
 
+**October 5 product proposal:** [Play together now](../projects/mutual-introductions-feature-spec.md) selects one immediate introduction between two admitted adults around an actual useful activity. Explicit publication, identified request/acceptance, ordinary movement/Talk and freely ending coordination replace automatic matching, a third host or recurring scheduling. [MP20](multiplayer.md#mp20--mutually-accepted-activity-introductions), [MI limits](../limits/mutual-introductions.md) and the applicable CP/RC/PD gates retain technical, authority, privacy and runtime work.
+
 Conditional ND31: one mutually accepted introduction, recurring small group or family participation journey. Specify disclosure/contact consent, attribution, scheduling, opt-out and the appropriate response to problems.
 
 **Start and parallel boundary:** An invited adult pilot can use current multiplayer. New matching/public access needs the corresponding DG08 decisions; sensitive or minor-audience offerings need the relevant DG09 choice. Venues and partner programs require their own selected use case, not a compulsory extension of the first pilot. **Existing owners:** MP, NC, PD and D68.
@@ -711,6 +713,8 @@ If [player-facing resident-memory controls](../../archive/08-wellbeing-vision/04
 **Needed before an implementation project:** decide whether real-life anchors/reflections belong in the product, who may use them, and their edit/delete/forget behavior. Define permitted sources for a private PDF/print edition, art rights, corrections and shared/family editions requiring other participants' consent. First test whether a narrow export is valuable. A journal export does not authorize full-world/private-history export or a different service-sunset policy.
 
 ### ND31 — Human introductions, small groups and family participation
+
+**Selected product proposal:** [DG10's immediate mutual introduction](../projects/mutual-introductions-feature-spec.md) supplies the requested one-use-case design, research and critique. It consumes existing invited human play and the proposed shared service/audience boundaries without selecting a recurring group, family mode, venue or health study. MP20 retains adoption, technical design and qualification.
 
 **Conditional product pilot.** Sources: [residents as connectors and human participation](../../archive/08-wellbeing-vision/04-ideas-residents-who-point-outward.md), [ideas together](../../archive/08-wellbeing-vision/05-ideas-together.md), and E10 in [first experiments](../../archive/08-wellbeing-vision/14-questions-and-first-experiments.md).
 

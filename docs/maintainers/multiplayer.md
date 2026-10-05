@@ -151,7 +151,7 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 - [x] Commit safe action interruption, inactive participation and one departure event together; project fade/removal only to witnesses through normal EPR evidence.
 - [x] Remove inactive humans from bodily hazard/depletion/action/spatial participation without deleting identity, history or possessions. Preserve detached world-property behavior.
-- [x] Keep human-targeted harmful admission cooperative/denied unless actual BW14 opt-in semantics are implemented; a modal or role name is insufficient.
+- [x] Keep delivered native player-to-player strike denial and inactive-human bodily protection. Active-human PvE and other admitted body effects are not universally blocked; broader harm/opt-in semantics remain [BW14](base-world.md#bw14--human-consent-and-harm-boundary) work, and a modal or role name is insufficient.
 
 **Dependencies:** MP04.1; BW13 and relevant body/spatial owners. **Exit:** onlookers can notice departure, non-witnesses receive no account or location leak, and protected inactivity does not pause the whole shared world or protect buildings.
 
@@ -184,3 +184,14 @@ The [DG08 product proposal](../projects/community-entry-and-participation-featur
 - [ ] Qualify the full useful first visit and return, wrong-account link, existing/revoked grant, finite activity/reward, old-scope payload, block/settlement race, human-private evidence, overdue/failed submission, review conflict, containment, safe departure and capacity cases on the actual offered deployment.
 
 **Exit:** one enjoyable, sustainable managed public offering with honest limits, appropriate current authority and usable relief/review after world access ends. PD03/PD08/PD09/PD10 and PS05–PS06 retain their applicable release evidence; documentation alone closes none.
+
+## MP20 — Mutually accepted activity introductions
+
+The [DG10 product proposal](../projects/mutual-introductions-feature-spec.md) selects one available-now activity between two admitted adults in the same world, under the proposed [MI limits](../limits/mutual-introductions.md). This is new service coordination atop existing human play, not delivered matching, a private conversation channel or a recurring group.
+
+- [ ] Prove a useful actual two-human outing with ordinary movement, human Talk, separate native work and independent exit. Include a newcomer who takes meaningful actions and an experienced player with a reason to enjoy the activity; do not substitute acceptance volume for a playable result.
+- [ ] Complete technical design and delivery for deliberately published scoped offers, exact request/acceptance, mutually exclusive availability/pending/accepted participation, readable expiry, finite receipts, cancellation, replay/current-permission handling and native model-independent operation. Preserve MP01/MP04/MP18 authority and NC conversation/audience ownership.
+- [ ] Integrate adopted MP19/CP contact, evidence and case controls plus RC audience/attribution/privacy before the managed public offer. Keep current invited qualification distinct from new public access; an introduction creates no grant, character, capacity slot, location tracking, property right or danger consent.
+- [ ] Qualify complete meetings, quiet/novice participants, stale and crossed requests, actual consent versus notice delivery, multi-connection presence, no-show, changed content, finite reward, Block/revocation, explicit conversation leave, receipt/case retention, gameplay restore, overload and model-unavailable operation. Select the actual rate/byte/queue budgets with PD/data/PS and measure the full session and human support cost.
+
+**Dependencies:** applicable MP01/MP04/MP18 and NC speech/conversation work; MP19/PD08/PD10 for the managed public offer; DG07 only when offering its encounter; DG06 only when offering its new barter/arrangement behavior. **Exit:** two freely willing humans can find each other, do something worthwhile, and stop without a social debt or authority/privacy surprise. Larger groups, family participation, cross-world matching and DG11 health research remain unselected.

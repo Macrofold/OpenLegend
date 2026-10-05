@@ -30,6 +30,8 @@ The [DG08 community participation proposal](../projects/community-entry-and-part
 
 The [DG09 resident-conduct proposal](../projects/resident-conduct-feature-spec.md) supplies a scoped adult offering for NC20/PD07/PD10. Age assurance is separate from authentication; audience/territories, permitted provider data handling and the selected sensitive-response/privacy route need actual adoption and qualification. No real-player health claim, universal engine conduct layer or paid evaluation is authorized.
 
+The [DG10 mutual-introduction proposal](../projects/mutual-introductions-feature-spec.md) selects two already admitted adults and native service coordination, with [MI limits](../limits/mutual-introductions.md) for disclosure, expiry, receipts and unqualified growth budgets. MP20 consumes the applicable PD08/PD10 contact, audience, data and operating gates; it creates no new access path, third embodied host, external meetup or health study.
+
 ## Conditional launch and expansion
 
 - [ ] **PD10 — Features that need an explicit release gate.** Before each relevant feature ships: approve unattended-world time/absence semantics; enforce personal/guild-domain building/access rights; implement scoped discovery/friends/invitations; review account/data/UGC retention, age/territory, licensing/attribution and deletion/export policies. Payments additionally need verified fulfillment, non-rewinding ledger, refunds and fraud handling; marketplace payouts and voice add their own review. **Owners:** existing world/MP/D/INV/product owners. **Exit:** implement and qualify only the enabled feature; disabled features have truthful UI/product claims. This is not authorization to build the entire list now.
