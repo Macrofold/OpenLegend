@@ -20,6 +20,8 @@ export function privateDraftScope(): string {
 }
 /** The signed-in account's grant has no character here; it uses World operations instead. */
 export class CharacterlessError extends AccessError {}
+/** A restore is still replacing the world; entry must wait for a fresh view. */
+export class WorldLoadingError extends Error {}
 function clearSessionDrafts(preservePendingCommands = false): void {
   try {
     for (const key of Object.keys(sessionStorage))
@@ -123,6 +125,11 @@ export async function getState(signal?: AbortSignal): Promise<GameView> {
     signal,
     headers: { 'X-OL-Client': tabClientId() },
   });
+  if (response.status === 409) {
+    const body: unknown = await response.json().catch(() => null);
+    if (body && typeof body === 'object' && 'code' in body && body.code === 'loading')
+      throw new WorldLoadingError('A saved world is loading. Please wait.');
+  }
   if (response.status === 403) {
     const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
     if (body.code === 'characterless')

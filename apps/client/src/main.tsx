@@ -15,7 +15,14 @@ import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
 import { createRoot } from 'react-dom/client';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import type {
   ActionOption,
   ApiResult,
@@ -29,6 +36,7 @@ import {
   AccessError,
   SignInRequiredError,
   CharacterlessError,
+  WorldLoadingError,
   clearAccess,
   acceptAccess,
   eventsUrl,
@@ -450,6 +458,15 @@ function App({
       } catch (e) {
         if (active && attempt === bootstrapVersion) {
           setConnected(false);
+          if (e instanceof WorldLoadingError) {
+            // A load can remount the App before native restoration releases state reads.
+            // Wait only for that explicit temporary state, under this entry's lifetime.
+            setEntryStatus({ kind: 'loading' });
+            timer = setTimeout(() => {
+              if (active && attempt === bootstrapVersion) void bootstrap(foreground);
+            }, 250);
+            return;
+          }
           if (e instanceof CharacterlessError) {
             clearAccess();
             onCharacterless();
@@ -514,6 +531,15 @@ function App({
   const needsSheet = (nextWidth: number, nextHeight: number) =>
     nextWidth / scale < 720 || nextHeight / scale <= 600;
   const narrow = needsSheet(width, height);
+  const inventoryFeedbackVisible = useRef(false);
+  useLayoutEffect(() => {
+    // A delayed acknowledgement belongs to the panel currently shown, not its dispatch closure.
+    inventoryFeedbackVisible.current =
+      connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory');
+    return () => {
+      inventoryFeedbackVisible.current = false;
+    };
+  }, [connected, narrow, open]);
   useEffect(() => {
     const resize = () => {
       if (!narrow && needsSheet(innerWidth, innerHeight)) {
@@ -624,6 +650,7 @@ function App({
   async function sendCommand(
     action: ActionOption,
     request?: CommandRequestIdentity,
+    acknowledgement: 'notice' | 'inventory' = 'notice',
   ): Promise<ApiResult> {
     if (isPaused() || !latest.current?.access?.controlling) {
       return { ok: false, code: 'paused', message: 'Resume here to play.' };
@@ -659,7 +686,12 @@ function App({
         setLethalReview({ review: r.lethalReview, action });
         return r;
       }
-      if (!r.ok || r.code !== 'accepted') notify(r.message);
+      const feedback =
+        acknowledgement === 'inventory' && inventoryFeedbackVisible.current
+          ? hud.current?.querySelector('#inventoryPanel .ol-inventory-feedback')
+          : null;
+      const localReceipt = feedback && !feedback.closest('[hidden], [inert], [aria-hidden="true"]');
+      if (!r.ok || (r.code !== 'accepted' && !localReceipt)) notify(r.message);
       return r;
     } catch (e) {
       notify(`${String(e)} Check the journal before repeating this action.`);
@@ -671,9 +703,13 @@ function App({
     }
   }
   const containerOpening = useContainerOpening(view, connected, sendCommand);
-  function command(action: ActionOption, request?: CommandRequestIdentity): Promise<ApiResult> {
+  function command(
+    action: ActionOption,
+    request?: CommandRequestIdentity,
+    acknowledgement: 'notice' | 'inventory' = 'notice',
+  ): Promise<ApiResult> {
     if (connected && action.enabled) containerOpening.stopFollowing();
-    return sendCommand(action, request);
+    return sendCommand(action, request, acknowledgement);
   }
   function openContainer(entity: EntityView) {
     setExpandedWorkspaces((current) =>
@@ -1322,7 +1358,7 @@ function App({
                   opener,
                 });
               }}
-              command={command}
+              command={(action, request) => command(action, request, 'inventory')}
               openContainer={containerOpening.openContainer}
               onTalkAbout={talkAbout}
               visible={
