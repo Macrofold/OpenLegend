@@ -56,9 +56,314 @@ jobs:
           AI_BUDGET_USD: '0'
       # Preserve the original spatial evidence and failure while exercising the
       # existing interface journeys against their own disposable databases.
+      # One matched pending-frame observation; production rendering stays unchanged.
+      # Preserve the original Time case and restore ordinary built assets on every exit.
       - name: Check player and creator interfaces
         if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
         run: |
+          task_dir="$RUNNER_TEMP/openlegend-time-observation"
+          mkdir -p "$task_dir"
+          cat > "$task_dir/prepare.mjs" <<'OL_TIME_FILE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import crypto from 'node:crypto';
+          import { createRequire } from 'node:module';
+          import { fileURLToPath, pathToFileURL } from 'node:url';
+          const root = process.cwd(), dir = path.dirname(fileURLToPath(import.meta.url));
+          const req = createRequire(path.join(root, 'package.json'));
+          const pins = JSON.parse(fs.readFileSync(path.join(dir, 'pins.json'), 'utf8'));
+          const hash = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+          for (const [file, expected] of Object.entries(pins.files)) if (hash(fs.readFileSync(path.join(root, file))) !== expected) throw new Error('Observation source mismatch: ' + file);
+          if (['observed-client', 'ordinary-client', 'finished-observed-client', 'build-manifest.json'].some((name) => fs.existsSync(path.join(dir, name)))) throw new Error('Observation build path is not fresh');
+          const source = fs.readFileSync(path.join(root, 'apps/client/src/scene.ts'), 'utf8');
+          const appendix = fs.readFileSync(path.join(dir, 'scene-observer.js'), 'utf8');
+          const once = (text, from, to) => { if (text.split(from).length !== 2) throw new Error('Nonunique scene anchor'); return text.replace(from, to); };
+          let observed = once(source, '      this.app.start();', '      globalThis.__olTimeProbe?.attach(this);\n      this.app.start();');
+          observed = once(observed, '  return new WildernessScene(canvas, callbacks);', '  const probe = globalThis.__olTimeProbe;\n  return probe ? probe.create(() => new WildernessScene(canvas, callbacks)) : new WildernessScene(canvas, callbacks);');
+          observed = once(observed, '    const release = () => this.pendingFrames.delete(fence);', '    const observedFence = globalThis.__olTimeProbe?.fenceStarted(this);\n    const release = () => {\n      const deleted = this.pendingFrames.delete(fence);\n      globalThis.__olTimeProbe?.fenceSettled(this, observedFence);\n      return deleted;\n    };');
+          observed = once(observed, 'this.pendingFrames.size < 2', 'this.pendingFrames.size < 1');
+          observed += '\n' + appendix;
+          const { build } = await import(pathToFileURL(req.resolve('vite')).href);
+          await build({ configFile: path.join(root, 'apps/client/vite.config.ts'), build: { outDir: path.join(dir, 'observed-client'), emptyOutDir: false }, plugins: [{ name: 'time-observation-only', enforce: 'pre', transform(text, id) { if (id === path.join(root, 'apps/client/src/scene.ts')) return observed; } }] });
+          const tree = (folder) => Object.fromEntries(fs.readdirSync(folder, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => { const file = path.join(e.parentPath, e.name); return [path.relative(folder, file), hash(fs.readFileSync(file))]; }));
+          fs.writeFileSync(path.join(dir, 'build-manifest.json'), JSON.stringify({ diagnostic: true, variant: { name: 'one-pending-frame', baseline: 'db6b65b0f5b66c475a8d3efa0ad81683af63b7e1', pendingFrameLimit: 1, baselinePendingFrameLimit: 2 }, checkout: process.env.GITHUB_SHA, pins, sourceScene: hash(source), observedScene: hash(observed), instrumentation: Object.fromEntries(['prepare.mjs', 'observe.cjs', 'page-probe.cjs', 'scene-observer.js', 'restore.mjs', 'pins.json'].map((name) => [name, hash(fs.readFileSync(path.join(dir, name)))])), clientSource: tree(path.join(root, 'apps/client/src')), ordinaryClient: tree(path.join(root, 'dist/client')), observedClient: tree(path.join(dir, 'observed-client')) }, null, 2));
+          OL_TIME_FILE
+          cat > "$task_dir/restore.mjs" <<'OL_TIME_FILE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import crypto from 'node:crypto';
+          import { fileURLToPath } from 'node:url';
+          const dir = path.dirname(fileURLToPath(import.meta.url)), root = process.cwd();
+          const backup = path.join(dir, 'ordinary-client'), client = path.join(root, 'dist/client');
+          const hadBackup = fs.existsSync(backup); let equal = null, fileCount = null;
+          if (fs.existsSync(backup)) {
+            if (fs.existsSync(client)) fs.renameSync(client, path.join(dir, 'finished-observed-client'));
+            fs.renameSync(backup, client);
+          }
+          const manifest = path.join(dir, 'build-manifest.json');
+          if (fs.existsSync(manifest)) {
+            const expected = JSON.parse(fs.readFileSync(manifest, 'utf8')).ordinaryClient;
+            const actual = Object.fromEntries(fs.readdirSync(client, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => {
+              const file = path.join(e.parentPath, e.name);
+              return [path.relative(client, file), crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')];
+            }));
+            equal = Object.keys(actual).length === Object.keys(expected).length && Object.entries(expected).every(([file, hash]) => actual[file] === hash);
+            fileCount = Object.keys(actual).length;
+          }
+          const output = path.join(root, 'test-results/time-observation');
+          const observations = fs.existsSync(output) ? fs.readdirSync(output).filter((name) => /^observation-[0-9]+\.json$/.test(name)).sort() : [];
+          let instrumentation = observations.length === 1 ? 'one-observation-file' : 'incomplete';
+          let issue = observations.length === 0 ? 'absent-observation-file' : observations.length > 1 ? 'multiple-observation-files' : null;
+          let reportedTimeStatus = 'unknown';
+          if (observations.length === 1) {
+            try {
+              const file = path.join(output, observations[0]);
+              if (fs.statSync(file).size > 4 * 1024 * 1024) throw new Error('Oversized observation');
+              const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+              if (['passed', 'failed', 'timedOut', 'skipped', 'interrupted'].includes(value.status)) reportedTimeStatus = value.status;
+              else throw new Error('Unknown observation status');
+            } catch { instrumentation = 'incomplete'; issue = 'unreadable-observation-file'; }
+          }
+          const stepExitStatus = /^[0-9]+$/.test(process.argv[2] ?? '') ? Number(process.argv[2]) : null;
+          fs.writeFileSync(path.join(dir, 'restore.json'), JSON.stringify({ restoredOrdinaryBytes: equal, files: fileCount, hadBackup,
+            instrumentation: { status: instrumentation, issue, observationFileCount: observations.length, files: observations },
+            reportedTimeStatus, stepExitStatus, exitScope: 'Existing interface step including preparation; Time-specific status is reported separately.',
+            completeness: 'One file does not by itself prove sufficient timings or passing native acceptance.' }));
+          if (equal === false || (hadBackup && equal === null)) throw new Error('Ordinary client restoration could not be verified');
+          OL_TIME_FILE
+          cat > "$task_dir/observe.cjs" <<'OL_TIME_FILE'
+          // Temporary preload for the exact existing native Time case; no test or production edits.
+          const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+          const { createRequire } = require('node:module');
+          const root = process.cwd(), dir = __dirname, req = createRequire(path.join(root, 'package.json'));
+          const pw = path.dirname(createRequire(req.resolve('@playwright/test')).resolve('playwright/package.json'));
+          const core = path.dirname(createRequire(path.join(pw, 'package.json')).resolve('playwright-core/package.json'));
+          const pins = JSON.parse(fs.readFileSync(path.join(dir, 'pins.json'), 'utf8'));
+          const hash = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+          for (const [file, expected] of Object.entries(pins.files)) if (hash(path.join(root, file)) !== expected) throw new Error('Time observation source mismatch: ' + file);
+          for (const [file, expected] of Object.entries(pins.playwright)) {
+            const base = file.startsWith('core/') ? core : pw;
+            if (hash(path.join(base, file.slice(file.indexOf('/') + 1))) !== expected) throw new Error('Time observation pinned dependency mismatch: ' + file);
+          }
+          const { BrowserContext } = require(path.join(core, 'lib/server/browserContext.js'));
+          const { CRConnection } = require(path.join(core, 'lib/server/chromium/crConnection.js'));
+          const { TestInfoImpl } = require(path.join(pw, 'lib/worker/testInfo.js'));
+          const { currentTestInfo } = require(path.join(pw, 'lib/common/globals.js'));
+          const { monotonicTime, timeOrigin } = require(path.join(core, 'lib/utils/isomorphic/time.js'));
+          const install = require('./page-probe.cjs');
+          const title = 'time settings persist with sole-tab entry, explicit transfer, logout and manual world pause';
+          const output = process.env.OL_TIME_OUTPUT, rows = [], pending = new Map(), sessions = new Map();
+          let info, active = false, timer, stopped, dropped = 0, protocolPendingDropped = 0, malformed = 0, swaps = 0;
+          const methods = new Set(['Page.getLayoutMetrics', 'Page.captureScreenshot', 'Runtime.callFunctionOn', 'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Input.dispatchKeyEvent', 'Page.navigate', 'Page.reload', 'Page.close']);
+          const matches = (test) => test?.title === title && test.file.replaceAll('\\', '/').endsWith('/tests/browser/time.spec.ts');
+          const label = (connection, session) => {
+            if (!connection.__olLabel) connection.__olLabel = sessions.size + 1;
+            const key = connection.__olLabel + ':' + session;
+            if (!sessions.has(key)) sessions.set(key, 'session-' + (sessions.size + 1));
+            return sessions.get(key);
+          };
+          const add = (row) => { if (rows.length < 4096) rows.push(row); else dropped++; };
+          const stop = (reason) => { if (!stopped) stopped = { reason, at: monotonicTime() }; active = false; clearTimeout(timer); };
+          const flush = (reason) => {
+            if (!info || !output) return;
+            fs.mkdirSync(output, { recursive: true });
+            fs.writeFileSync(path.join(output, 'observation-' + process.pid + '.json'), JSON.stringify({ diagnostic: true, status: info.status, originalTimeout: info.timeout, origin: timeOrigin(), begin: info._startTime, stopped, flush: reason, dropped, protocolPendingDropped, malformed, swaps, pending: [...pending.values()], rows }));
+          };
+          const step = TestInfoImpl.prototype._runAsStep;
+          TestInfoImpl.prototype._runAsStep = function (data, ...args) {
+            if (matches(this) && data.title === 'Before Hooks') {
+              if (info) throw new Error('Only one Time observation is permitted');
+              info = this; if (this.timeout !== 60000) throw new Error('Original Time deadline changed');
+              const ordinary = path.join(dir, 'ordinary-client');
+              if (fs.existsSync(ordinary)) throw new Error('Observation backup already exists');
+              fs.renameSync(path.join(root, 'dist/client'), ordinary);
+              fs.renameSync(path.join(dir, 'observed-client'), path.join(root, 'dist/client')); swaps++;
+              active = true; timer = setTimeout(() => stop('original-deadline'), Math.max(0, this._startTime + this.timeout - monotonicTime())); timer.unref();
+            }
+            if (this === info && data.title === 'After Hooks') { stop('after-hooks'); flush('after-hooks'); }
+            return step.call(this, data, ...args);
+          };
+          const initialize = BrowserContext.prototype._initialize;
+          BrowserContext.prototype._initialize = async function (...args) {
+            await initialize.apply(this, args);
+            if (active && currentTestInfo() === info) {
+              const deadline = timeOrigin() + info._startTime + info.timeout;
+              await this.addInitScript(undefined, '(' + install.toString() + ')(' + deadline + ')');
+              this.once(BrowserContext.Events.Close, () => flush('context-close'));
+            }
+          };
+          const send = CRConnection.prototype._rawSend, receive = CRConnection.prototype._onMessage;
+          CRConnection.prototype._rawSend = function (session, method, params) {
+            if (active && monotonicTime() >= info._startTime + info.timeout) stop('original-deadline');
+            if (!active) return send.call(this, session, method, params);
+            const at = monotonicTime(), id = send.call(this, session, method, params);
+            if (active && methods.has(method)) {
+              if (pending.size >= 512) protocolPendingDropped++;
+              else {
+                const tag = label(this, session), key = tag + ':' + id;
+                const row = { type: 'protocol', phase: 'send', session: tag, id, method, at };
+                pending.set(key, row); add(row);
+              }
+            }
+            return id;
+          };
+          CRConnection.prototype._onMessage = function (message) {
+            if (info) {
+              const tag = label(this, message.sessionId || ''), key = tag + ':' + message.id;
+              const started = pending.get(key);
+              if (started) {
+                pending.delete(key); add({ type: 'protocol', phase: 'return', session: tag, id: message.id, method: started.method, at: monotonicTime(), duration: monotonicTime() - started.at, failed: !!message.error, late: !active });
+              } else if ((active || (stopped && monotonicTime() - stopped.at < 10000)) && message.method === 'Runtime.consoleAPICalled') {
+                const value = message.params?.args?.[0]?.value, prefix = 'OL_TIME_OBSERVATION ';
+                if (typeof value === 'string' && value.startsWith(prefix) && value.length <= 2048) {
+                  try {
+                    const row = JSON.parse(value.slice(prefix.length)), safe = {};
+                    const numeric = ['origin', 'at', 'duration', 'width', 'height', 'scene', 'revision', 'pending', 'draws', 'waitId', 'records', 'dropped', 'entities', 'entityMs', 'released', 'releaseMs', 'updates', 'updateMs', 'updateMax'];
+                    const words = new Set(['document', 'input', 'longtask', 'app', 'fence-start', 'fence-settled', 'pagehide', 'truncated', 'create', 'render', 'setView', 'buildLandscape', 'makeEntity', 'releaseEntity', 'update', 'destroy', 'pointerdown', 'pointerup', 'click', 'Time settings', 'Resume world', 'Pause world', 'Resume Here', 'Log Out', 'Sign in', 'other']);
+                    for (const key of numeric) if (Number.isFinite(row[key])) safe[key] = row[key];
+                    for (const key of ['type', 'name', 'event', 'control']) if (words.has(row[key])) safe[key] = row[key];
+                    for (const key of ['failed', 'suspended']) if (typeof row[key] === 'boolean') safe[key] = row[key];
+                    const cutoff = timeOrigin() + Math.min(info._startTime + info.timeout, stopped?.at ?? Infinity);
+                    if (safe.type && Number.isFinite(safe.origin) && Number.isFinite(safe.at) && safe.origin + safe.at < cutoff) add({ channel: 'app-observation', session: tag, received: monotonicTime(), ...safe });
+                    else malformed++;
+                  } catch { malformed++; }
+                }
+              }
+            }
+            return receive.call(this, message);
+          };
+          process.once('exit', () => { stop('worker-exit'); flush('worker-exit'); });
+          OL_TIME_FILE
+          cat > "$task_dir/page-probe.cjs" <<'OL_TIME_FILE'
+          module.exports = function installTimeProbe(deadline) {
+            if (window.top !== window || globalThis.__olTimeProbe) return;
+            const origin = performance.timeOrigin, prefix = 'OL_TIME_OBSERVATION ', max = 1400;
+            const debug = console.debug.bind(console); let count = 0, dropped = 0;
+            const emit = (type, fields = {}) => {
+              const at = fields.at ?? performance.now();
+              if (origin + at >= deadline) return;
+              if (count >= max) { dropped++; return; }
+              // Reserve the last permitted record for explicit truncation; dropped is a lower bound.
+              if (count === max - 1) { type = 'truncated'; fields = { records: count, dropped: ++dropped }; }
+              count++;
+              try { debug(prefix + JSON.stringify({ type, origin, at, ...fields })); } catch { /* Observation cannot fail an owner. */ }
+            };
+            const probe = { emit, alive: () => origin + performance.now() < deadline };
+            Object.defineProperty(globalThis, '__olTimeProbe', { value: probe });
+            emit('document', { width: innerWidth, height: innerHeight });
+            const names = new Set(['Time settings', 'Resume world', 'Pause world', 'Resume Here', 'Log Out', 'Sign in']);
+            const input = (e) => {
+              if (!probe.alive()) return;
+              const el = e.target instanceof Element ? e.target.closest('button,a,input') : null;
+              const label = el?.getAttribute('aria-label') || el?.textContent?.trim();
+              emit('input', { event: e.type, control: names.has(label) ? label : 'other' });
+            };
+            for (const event of ['pointerdown', 'pointerup', 'click']) window.addEventListener(event, input, true);
+            let observer;
+            if (PerformanceObserver.supportedEntryTypes.includes('longtask')) {
+              observer = new PerformanceObserver((list) => { for (const e of list.getEntries()) emit('longtask', { at: e.startTime, duration: e.duration }); });
+              observer.observe({ type: 'longtask', buffered: true });
+            }
+            window.addEventListener('pagehide', () => {
+              emit('pagehide', { records: count, dropped }); observer?.disconnect();
+              for (const event of ['pointerdown', 'pointerup', 'click']) window.removeEventListener(event, input, true);
+            }, { once: true });
+          };
+          OL_TIME_FILE
+          cat > "$task_dir/scene-observer.js" <<'OL_TIME_FILE'
+          // Appended only to a scratch build; dormant without the Time context init script.
+          if (globalThis.__olTimeProbe) {
+            const p = globalThis.__olTimeProbe, seen = new WeakMap(), totals = new WeakMap(); let nextScene = 0;
+            const stats = (scene) => { if (!totals.has(scene)) totals.set(scene, { entities: 0, entityMs: 0, released: 0, releaseMs: 0, updates: 0, updateMs: 0, updateMax: 0 }); return totals.get(scene); };
+            const id = (scene) => { if (!seen.has(scene)) seen.set(scene, ++nextScene); return seen.get(scene); };
+            const span = (name, scene, at, extra = {}) => p.emit('app', { name, scene: id(scene), at, duration: performance.now() - at, ...extra });
+            p.create = (create) => {
+              const at = performance.now(); let result;
+              try { result = create(); return result; }
+              finally { p.emit('app', { name: 'create', scene: result ? id(result) : 0, at, duration: performance.now() - at }); }
+            };
+            p.attach = (scene) => {
+              const app = scene.app, device = app.graphicsDevice;
+              if (app.__olObserved) return;
+              app.__olObserved = true;
+              const render = app.render;
+              app.render = function (...args) {
+                if (!p.alive()) return render.apply(this, args);
+                const at = performance.now();
+                try { return render.apply(this, args); }
+                finally { span('render', scene, at, { pending: scene.pendingFrames.size, suspended: scene.suspended, revision: scene.view?.revision ?? -1, draws: device._drawCallsPerFrame, ...stats(scene) }); }
+              };
+
+            };
+            let nextWait = 0;
+            p.fenceStarted = (scene) => {
+              if (!p.alive()) return;
+              const record = { waitId: ++nextWait, at: performance.now() };
+              p.emit('fence-start', { scene: id(scene), ...record, pending: scene.pendingFrames.size });
+              return record;
+            };
+            p.fenceSettled = (scene, record) => {
+              if (record) p.emit('fence-settled', { scene: id(scene), ...record, duration: performance.now() - record.at, pending: scene.pendingFrames.size });
+            };
+            for (const name of ['setView', 'buildLandscape', 'makeEntity', 'releaseEntity', 'update', 'destroy']) {
+              const original = WildernessScene.prototype[name];
+              WildernessScene.prototype[name] = function (...args) {
+                if (!p.alive()) return original.apply(this, args);
+                const at = performance.now();
+                try { return original.apply(this, args); }
+                finally {
+                  const duration = performance.now() - at, sum = stats(this);
+                  if (name === 'makeEntity') { sum.entities++; sum.entityMs += duration; }
+                  if (name === 'releaseEntity') { sum.released++; sum.releaseMs += duration; }
+                  if (name === 'update') { sum.updates++; sum.updateMs += duration; sum.updateMax = Math.max(sum.updateMax, duration); }
+                  if (!['update', 'makeEntity', 'releaseEntity'].includes(name) || duration >= 20)
+                    span(name, this, at, { revision: name === 'setView' ? args[0].revision : this.view?.revision ?? -1 });
+                }
+              };
+            }
+          }
+          OL_TIME_FILE
+          cat > "$task_dir/pins.json" <<'OL_TIME_FILE'
+          {
+            "files": {
+              "tests/browser/time.spec.ts": "c13cb11e58ca7af8d4f2b806876f0696dfb3c1d9cf54ddbcf5d6eb5da97801e1",
+              "tests/fixtures/browser.ts": "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2",
+              "playwright.config.ts": "d9c9391fafc2f2501930f742e319725d46bc1b5b46408948b444560baf88168a",
+              "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+              "apps/client/src/world-renderer.ts": "f3d52217c0ccd1cbc0fa9acf543103c5adf28996be362a40e64edf412ca34ec0",
+              "apps/client/src/main.tsx": "296b534de3dc4cae81ed731bda03f9a26d9d6de6d5b627d9c801049d3b775b00",
+              "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+              "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+              "apps/client/src/api.ts": "c0f246d8187c84508c91c7015a878950dfceefba82f422f2675e3877583ccc1e",
+              "pnpm-lock.yaml": "99592e42db86ec571dbb8694db84df34e166ab5bfae55f0feeb0081de25b8a41",
+              "apps/client/vite.config.ts": "090f0368e53945b4aa306ecbd982ac8ce57f4701b93be464d42eb4b6875a3cf1"
+            },
+            "playwright": {
+              "core/lib/server/chromium/crConnection.js": "0d41a058ad1f5c897329a9c821c52b952e0e709ab38c3e6e355224b167922f13",
+              "core/lib/server/browserContext.js": "2e3cc0b77b6fc4c47a7abbb142f2c037baaf7c7ba003840d0aadc210a9ba81ff",
+              "core/lib/utils/isomorphic/time.js": "0eebe61ffd113084f595545209536b7b354bff04faa0f8a7e0ab29ebc5fcc179",
+              "runner/lib/worker/testInfo.js": "4b5b18dc41e80934c8b627afcb93592baf8f17d6a710334c8a9223a3c935a8b9",
+              "runner/lib/common/globals.js": "f5922eb1fb6051900157492eb9c218e62d07378eed135bca4b2f173ed1184d1c",
+              "runner/lib/worker/workerMain.js": "1cd04668c4bf6bb49e60fe6c28531c5b2cf68a4bf02752a05d21a5d6e6fffd42",
+              "core/lib/server/chromium/crPage.js": "08f14f9abc4bde5b36a0679889de05e8c3c0ebbf7e15c3bafc3639830e01c174"
+            }
+          }
+          OL_TIME_FILE
+          restore_time_observation() {
+            test_status=$?
+            trap - EXIT
+            if node "$task_dir/restore.mjs" "$test_status"; then restore_status=0; else restore_status=$?; fi
+            mkdir -p test-results/time-observation
+            for name in prepare.mjs restore.mjs observe.cjs page-probe.cjs scene-observer.js pins.json build-manifest.json restore.json; do
+              if [ -f "$task_dir/$name" ]; then cp "$task_dir/$name" test-results/time-observation/; fi
+            done
+            if [ "$test_status" -ne 0 ]; then exit "$test_status"; fi
+            exit "$restore_status"
+          }
+          trap restore_time_observation EXIT
+          node "$task_dir/prepare.mjs"
+          OL_TIME_OUTPUT="$PWD/test-results/time-observation" \
+          NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--require=$task_dir/observe.cjs" \
           pnpm exec playwright test \
             tests/browser/actions.spec.ts \
             tests/browser/camera.spec.ts \

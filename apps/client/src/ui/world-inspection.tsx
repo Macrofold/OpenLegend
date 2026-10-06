@@ -64,7 +64,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
     }
   }
   const inspect = (ref: { kind: string; id: string; version?: string }, newPath = false) =>
-    void read<Inspection>('ol_inspect', ref, (value) => {
+    void read<Inspection>('ol_inspect', { ...ref, sections: ['relationships'] }, (value) => {
       setInspection(value);
       const resolved = value.node?.ref ?? value.ref;
       if (resolved)
