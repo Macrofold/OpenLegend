@@ -2,7 +2,7 @@
 
 ## Product design groups 16–20
 
-[The completed five-group product-design assignment](../projects/completed/product-design-groups-16-20.md) covers a personal Journal edition, finite continuing communities, worthwhile gatherings/background scenes, changing supplies and heat/material consequences. All five proposals are researched and reviewed. [NC21](narration-and-conversations.md#nc21--personal-journal-edition), [PS03–PS06](product-scalability.md), [CS01–CS06](changing-supplies.md) and [HM01–HM06](heat-and-materials.md) retain focused delivery; technical/runtime gates remain open.
+[The five-group product-design assignment under further gameplay review](../projects/product-design-groups-16-20.md) covers a personal Journal edition, finite continuing communities, worthwhile gatherings/background scenes, changing supplies and heat/material consequences. All five proposals are researched and reviewed. [NC21](narration-and-conversations.md#nc21--personal-journal-edition), [PS03–PS06](product-scalability.md), [CS01–CS06](changing-supplies.md) and [HM01–HM06](heat-and-materials.md) retain focused delivery; technical/runtime gates remain open.
 
 ## Product design groups 11–15
 

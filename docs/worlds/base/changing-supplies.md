@@ -2,15 +2,19 @@
 
 **Proposed authored profile, October 6, 2026.** This is DG19's selected wilderness experiment, not current food behavior or an enabled continuing-world service. The [feature specification](../../projects/changing-supplies-feature-spec.md) owns the complete product journey. [CS-L01–CS-L09](../../limits/changing-supplies.md) own the restriction inventory; [CS01–CS06](../../maintainers/changing-supplies.md) retain delivery and unsatisfied qualification.
 
+**Selection comes before these settings.** The ordinary adventure retains current nonperishable food until a particular wanted activity justifies changing it under the [selection decision](../../projects/changing-supplies-feature-spec.md#12-delivery-sequence-and-game-first-review). Sections 2–4 describe the conditional preservation experiment. Section 5 describes independently selectable renewal and may keep today's portable-food law. The full combined profile is a later comparison, not the minimum first delivery; the values remain concrete so its costs can be reviewed.
+
 ## 1. Scope and clock
 
-Choose this profile when creating a separate personal, isolated world. Use the ordinary human player, Ada and the Peacock Mercenary; create no additional residents, automatic pantry goals, food gifts or animal population. Existing starts and existing inventories are not retroactively aged, reset, reseeded or silently enrolled. A supported new profile needs explicit food definitions and source histories from its start; incompatible development state follows the [root save policy](../../../AGENTS.md#development-save-policy).
+Choose the selected preservation or renewal experiment when creating a separate personal, isolated world. Use the ordinary human player, Ada and the Peacock Mercenary; create no additional residents, automatic pantry goals, food gifts or animal population. Existing starts and existing inventories are not retroactively aged, reset, reseeded or silently enrolled. A profile enabling aging needs explicit food definitions and source histories from its start; renewal alone does not enable aging. Incompatible development state follows the [root save policy](../../../AGENTS.md#development-save-policy).
 
 All selected food, work, fire, needs and growth use the current mechanical clock. At normal **1×, one real second advances one game minute**: a game day is **24 real minutes**. Whole-world Pause, a required coherent world hold and restart downtime advance none of these laws. Sole-human departure first cancels that human's work through the ordinary absence rule, retaining completed rations and releasing the current portion; the whole-world hold then freezes all food and any still-valid NPC work. An actor-specific Pause uses preservation's stop/release behavior rather than retaining an unattended half-dried portion. An off-camera patch or a closed bag continues changing while the attended world advances. Speed changes apply to the coupled world; they do not multiply food decay alone.
 
 This profile's whole-world absence hold avoids a special freezer for an inactive human's carried food. It does not define food decay in a shared continuing world or change MP04's retained/protected possessions. Combining it with [continuing communities](continuing-communities.md) requires a separate food/absence decision and fresh qualification of usable supplies, self-care and service capacity. Calendar dates, seasons, biological aging and animal reproduction are not added.
 
 ## 2. Food law and condition continuity
+
+This entire food-condition family applies when preservation and expiry are selected together after the player-value decision. A renewal-only delivery keeps current nonperishable food. All affected food operations and residents still follow one selected law; stage separation supplies no exception for an inconvenient lot or consumer.
 
 These numbers are deliberately simple game tuning. They are not instructions for preserving real food.
 
@@ -57,6 +61,8 @@ These minimums exclude preparation from the named outing, initial fullness, food
 
 ## 4. A cache that earns its preparation
 
+Retain this worked case to check the proposed quantities and condition. It does not yet establish an attractive first activity: the same cache already survives under today's nonperishable rule, and the intervening journey below obtains its own fresh food. Before adoption, identify why the new preparation choice would improve an actual wanted activity enough to earn its extra work and losses. Do not shorten ordinary food life or lengthen a route merely to make this comparison succeed.
+
 The selected reference is a player who expects to revisit a useful place after **four advancing game days** of other play. This is **96 real minutes** at 1×, potentially spread over sessions with pauses. It is a qualification situation, not a forced wait, a minimum expedition length or an objective to walk in circles. If the available adventure, making or social content does not support a worthwhile intervening activity, the scenario is not ready to establish feature value.
 
 The player acquires **eight actual cooked portions**, for example from two successfully harvested deer that really exist, and elects to cache that surplus. At the start of the preservation batch, assume each portion has at least 75% freshness remaining. This is an example input condition, not a new admission floor. The final portion completes with at least **8 days 16 hours** remaining. Four days after the batch, every retained portion still has at least **4 days 16 hours** of life, assuming the selected rate remained unchanged. An ordinary cooked comparison from those inputs would have spoiled by that return.
@@ -71,6 +77,8 @@ Success is recovering usable food and using the resulting freedom for something 
 
 ## 5. Four renewing patches and their real ceiling
 
+Select this activity independently only when returning to an actually depleted, known source improves wanted play. It needs its own source, gathering and information behavior, without requiring preservation or expiring carried food. The same rates below can be considered with nonperishable food; that choice must not be presented as a qualified continuing community.
+
 Renew only these existing outer sources from [the current landscape](../../../packages/domain/src/worlds/base/landscape.ts). Positions identify the authored starting sources; they are not a universal source-selection rule.
 
 | Source                                  | Current authored location (x, z) | Starting standing stock and capacity |
@@ -82,7 +90,7 @@ Renew only these existing outer sources from [the current landscape](../../../pa
 
 Each intact source adds **one berry per three game hours while below capacity**. Keep partial progress while below capacity. Reaching capacity discards unused growth opportunity and holds at capacity with no banked credit. Harvesting from a full patch starts a new interval for its newly available space; harvesting again while below capacity does not restart the interval. No extra stock appears because the patch was inspected or nobody visited.
 
-Standing stock represents bounded harvest-ready potential, not individual portable food lots that are secretly being refreshed. It does not undergo separate on-bush spoilage in this first family. Gathering starts portable food's allowance at completion and withdraws actual available stock then. Putting harvested berries near or into a patch cannot reverse that step. The normal gather offer supports **up to two berries per batch**, with the source's existing **30-game-second work** and actual tool/yield rules; the new rate does not require collecting each berry separately.
+Standing stock represents bounded harvest-ready potential, not individual portable food lots that are secretly being refreshed. It does not undergo separate on-bush spoilage in this first family. Gathering withdraws actual available stock at completion and starts portable food's allowance then only if food aging is separately enabled. Putting harvested berries near or into a patch cannot reverse that step. The normal gather offer supports **up to two berries per batch**, with the source's existing **30-game-second work** and actual tool/yield rules; the new rate does not require collecting each berry separately.
 
 At a shared instant, mature the legitimately due growth before applying that instant's completed withdrawals. Competing gathers consume actual remaining stock in the existing authoritative action order. One last berry cannot satisfy two workers, and the advertised maximum does not guarantee a full yield. If no stock remains, the action reports its actual failure or supported partial result. Future growth is not reserved by standing beside an empty bush.
 
@@ -101,7 +109,7 @@ The absolute maximum supports about **2.22 people** before loss, not the ordinar
 
 ## 6. Qualification and expansion
 
-The first evidence must follow ordinary human and resident choices through actual acquisition, condition-aware cooking, finite preservation, interruption, packing, other worthwhile play, return and consumption. Include an older lot, a mixed-age selection, exact expiry, the final unit, a changed offer, two competing gatherers, a full patch, partial growth across restart and the personal whole-world absence hold. No result is asserted by this authored design.
+Qualification follows the selected activity. Preservation requires actual acquisition, condition-aware cooking, finite work, interruption, packing, wanted intervening play, return and consumption; include an older lot, a mixed-age selection, exact expiry, the final unit and a changed offer. Renewal requires an actually useful source return, two competing gatherers, a full patch and partial growth across restart. Each needs its actual personal whole-world absence behavior. The wider combined journey and voluntary resident preparation remain separately open, rather than prerequisites for completing either human activity. Food aging, if enabled, must still work correctly for every affected resident's food and ordinary actions. No result is asserted by this authored design.
 
 Evaluate complete effort and meaningful choices, not just the shortest batch. The human may stop; residents may refuse or choose another goal. Investigate unreachable food, misleading condition, lost work and unavailable required execution as defects, while preserving consequences of actual poor choices. Ordinary model unavailability supplies neither automatic feeding nor a fictional recipe failure.
 
