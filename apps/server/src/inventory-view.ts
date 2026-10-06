@@ -118,7 +118,7 @@ export function inventoryStorageHint(
     !target ||
     target.retirement ||
     target.placement?.mode !== 'world' ||
-    !(target.container || target.kind === 'item-pile')
+    !(target.container || target.kind === 'item-pile' || target.remains)
   )
     return;
   return {
@@ -150,7 +150,7 @@ export function inventoryAccess(
     !actor ||
     !target ||
     target.retirement ||
-    !(target.id === actor.id || target.container || target.kind === 'item-pile')
+    !(target.id === actor.id || target.container || target.kind === 'item-pile' || target.remains)
   )
     return unavailable;
   const root = objectAncestors(world, target.id).at(-1);
@@ -158,7 +158,7 @@ export function inventoryAccess(
   const accessible = canAccessContainer(world, actor.id, target.id);
   const visibleExterior =
     (target.placement?.mode === 'world' && seesEntity(world, actor, target)) ||
-    (root.kind === 'item-pile' &&
+    ((root.kind === 'item-pile' || root.remains) &&
       target.placement?.mode === 'contained' &&
       target.placement.parentEntityId === root.id &&
       seesEntity(world, actor, root));
@@ -320,7 +320,7 @@ function containerLocation(service: WorldService, scope: RequestScope, id: strin
     .map((entry) => observerDescription(world, scope.actorId, entry.id));
   const path = enclosing.length ? `In ${enclosing.join(' › ')} · ` : '';
   if (rootId === scope.actorId) return `${path}Carried by you`;
-  if (root.actor)
+  if (root.actor && !root.remains)
     return `${path}Carried by ${observerDescription(world, scope.actorId, rootId, 'definite')}`;
   const separation = distance(
     effectivePosition(world, scope.actorId),
@@ -382,7 +382,7 @@ export function activityStorageReader(
     const groundAppearance =
       target.placement?.mode === 'contained' &&
       target.placement.parentEntityId === root.id &&
-      root.kind === 'item-pile' &&
+      (root.kind === 'item-pile' || root.remains) &&
       seesEntity(world, actor, root);
     const visible =
       (target.placement?.mode === 'world' && seesEntity(world, actor, target)) || groundAppearance;
@@ -677,16 +677,17 @@ export function inventoryDestinationPage(
       scanned++;
       const target = candidate.value;
       if (target.id === scope.actorId) continue;
-      if (request.activity && !target.actor) {
+      // A corpse retains its actor component; its storage follows native remains access.
+      if (request.activity && (!target.actor || target.remains)) {
         if (!seesEntity(world, actor, target)) continue;
         if (target.container) add(target.id);
-        if (target.kind === 'item-pile') {
+        if (target.kind === 'item-pile' || target.remains) {
           cursor.phase = 'ground';
           cursor.grantActorId = target.id;
           cursor.grantRevision = target.inventoryRevision ?? 0;
           cursor.after = '';
         }
-      } else if (target.actor) {
+      } else if (target.actor && !target.remains) {
         if (
           !seesEntity(world, actor, target) ||
           !canReachEntity(world, actor, target, world.itemHandling.reach)
@@ -703,7 +704,7 @@ export function inventoryDestinationPage(
         cursor.grantActorId = target.id;
         cursor.grantRevision = target.inventoryRevision ?? 0;
       } else if (
-        (target.container || target.kind === 'item-pile') &&
+        (target.container || target.kind === 'item-pile' || target.remains) &&
         canAccessContainer(world, scope.actorId, target.id)
       )
         add(target.id);

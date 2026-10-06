@@ -92,6 +92,8 @@ The initial 71-image delivery was visually inspected and checked for identity, e
 
 Ordinary inventory-handling commands require `commandRecoveryScope` and successful storage of the original request before sending. Uncertain outcomes stay blocked while the exact command envelope is checked through the read-only native receipt owner; no remount or recovery read creates a new transfer. Missing browser storage refuses the send. [Recovery and scope contract](../projects/game-interaction-redesign-tech-design.md#direct-transfer-without-weaker-authority) · [Evidence and remaining checks](../verification/game-interaction-redesign.md)
 
+**October 6 native-death integration:** corpse roots and directly visible bags on remains now use the existing paired-storage presentation instead of being rejected or treated as living recipients. Native reach, visibility, permissions and living-character consent still decide access. The corpse gains no new activity-supply capability. [Scope and verification](../projects/game-interaction-redesign-tech-design.md#native-remains-in-the-paired-inventory) distinguish the reviewed projection correction from the pending real native transfer/refusal session.
+
 Exit: [J01/J03–J09](../projects/game-interaction-redesign-feature-spec.md#end-to-end-acceptance-journeys), including exact receipt/uncertain-result behavior verified against the real transfer owner. Extend with J02/J04 for deliberate approach and equipment. UXL06/07/09/10 own display, later bulk and work-bound decisions. The design does not mark PW04's earlier browser, recipient, IME or assistive-device gaps complete.
 
 ## UIUX09
