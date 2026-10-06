@@ -1,15 +1,16 @@
-name: Refresh documentation review base
+name: Publish reviewed documentation replay
 on:
   push:
     branches: [docs/full-documentation-review-reconciled-2026-10-03]
     paths: [.github/workflows/full-documentation-review-rebase.yml]
 permissions:
-  contents: read
+  contents: write
+  actions: read
 concurrency:
   group: full-documentation-review-rebase
   cancel-in-progress: false
 jobs:
-  reconcile:
+  publish:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     defaults:
@@ -17,8 +18,11 @@ jobs:
         working-directory: review-reconcile
     env:
       AI_BUDGET_USD: '0'
-      OLD_BASE: 34bfbc316394fc884dfd5f84fe1ce3607ea410a6
-      NEW_BASE: 34233ae24365eb8911fe1995c9c232bd57f34616
+      REVIEWED_ORIGINAL: 673f5085ec7168f8ec946d17ac8b295ae2e5217c
+      REVIEWED_CANDIDATE: eaf299b50b397d2dd7bc09fb08ffc0f2d0345004
+      REVIEWED_MAIN: 34233ae24365eb8911fe1995c9c232bd57f34616
+      REVIEW_BRANCH: docs/full-documentation-review-reconciled-2026-10-03
+      BACKUP_BRANCH: backup/full-doc-review-before-34233ae-20261005
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,35 +31,74 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
           show-progress: false
-      - name: Reuse the exact reviewed replay with one additional reviewed resolution
+      - uses: actions/download-artifact@v4
+        with:
+          name: documentation-review-replay-34233ae
+          run-id: 37403623373
+          github-token: ${{ github.token }}
+          path: reviewed-replay
+      - name: Install the exact reviewed candidate and preserve this publication commit
         run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$REVIEWED_ORIGINAL"
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/full-documentation-review-rebase.yml
+          test "$(git rev-parse refs/remotes/origin/main)" = "$REVIEWED_MAIN"
+          echo '65a94f3cc67599e0e5e1d885ebeaf156bcea0c2f5061dee0b521ad2236e2ac33  ../reviewed-replay/replay.bundle' | sha256sum --check
+          test "$(cat ../reviewed-replay/after.txt)" = "$REVIEWED_CANDIDATE"
+          git fetch ../reviewed-replay/replay.bundle HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$REVIEWED_CANDIDATE"
+          git checkout --detach "$REVIEWED_CANDIDATE"
+          git config user.name 'OpenLegend documentation review'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          GIT_EDITOR=true git cherry-pick "$GITHUB_SHA"
+          git diff --exit-code "$REVIEWED_CANDIDATE" HEAD -- . ':!.github/workflows/full-documentation-review-rebase.yml'
+          git diff --exit-code "$REVIEWED_MAIN" HEAD -- AGENTS.md
+          git diff --check "$REVIEWED_MAIN" HEAD
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: review-reconcile/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: review-reconcile/pnpm-lock.yaml
+      - run: pnpm install --ignore-scripts --frozen-lockfile
+      - name: Verify guidance, resolved-file formatting and comment-only source differences
+        run: |
+          pnpm guidance:check
           python3 - <<'PY'
-          import subprocess, textwrap
-          source = subprocess.check_output(['git', 'show', '4e5a052cc97431a29429bfc2bb7a09c09993b871:.github/workflows/full-documentation-review-rebase.yml'], text=True)
-          marker = "          python3 - <<'PY'\n"
-          script = textwrap.dedent(source.split(marker, 1)[1].split('\n          PY\n', 1)[0])
-          old = "    '9f31c8079049d0a6b359712fa3a63b2eff22bc90': ('docs/maintainers/inventions-and-world-evolution.md', 1),"
-          assert script.count(old) == 1
-          script = script.replace(old, old + "\n    'ae85790a9c38095a4539ebc7849210811d287b15': ('docs/maintainers/world-agent-writes.md', 1),")
-          marker = "            elif path.name.startswith('parallel-batch-03-personal-game-'):"
-          assert script.count(marker) == 1
-          additional = '''            elif stopped.startswith('ae85790a'):
-                          assert hashlib.sha256(ours.encode()).hexdigest() == 'f01f922c4e06cc4626c1078b4eb12e04601dda899099923298facde3196c88a8'
-                          assert hashlib.sha256(theirs.encode()).hexdigest() == 'ed1bd8b5076af0eccce9f74b4a16159db7c538e66ecd2dc7303b33372c901372'
-                          old_note = 'Keep active work, resources, evidence and uncertainty coherent; do not change the unresolved owner-authoring exception.'
-                          new_note = "Keep active work, resources, evidence and uncertainty coherent. Creator administration and scoped special-player invention freedom are accepted targets still awaiting INV-1.7/MP02 admission and persistence; do not turn them into an implicit runtime lock exception or broaden this adapter's grant."
-                          assert ours.count(old_note) == 1
-                          private = '  - **Private-subject authorization after awaited reads:**'
-                          assert theirs.count(private) == 1
-                          replacement = ours.replace(old_note, new_note) + private + theirs.split(private, 1)[1]
-          '''
-          script = script.replace(marker, additional + marker)
-          exec(compile(script, '<reviewed-replay>', 'exec'))
+          import json, os, pathlib, re, subprocess
+          paths = [entry['path'] for entry in json.loads(pathlib.Path('../reviewed-replay/resolutions.json').read_text())]
+          subprocess.run(['pnpm', 'exec', 'prettier', '--check', *paths], check=True)
+          base = os.environ['REVIEWED_MAIN']
+          names = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD', '--', 'apps', 'packages', 'scripts'], text=True).splitlines()
+          for name in names:
+              before = subprocess.check_output(['git', 'show', f'{base}:{name}'], text=True)
+              after = pathlib.Path(name).read_text()
+              before = re.sub(r'docs/projects/(?!completed/)', 'docs/projects/completed/', before)
+              after = re.sub(r'docs/projects/(?!completed/)', 'docs/projects/completed/', after)
+              before = before.replace('// Only replenishment transfers and health regeneration against damage remain here.', '// Conserved replenishment against a reservoir drain retains this one-second fallback.\n  // Health rates below require immediate integration, but do not select this fallback.')
+              assert before == after, ('non-documentation source change', name)
+          print(f'{len(paths)} resolved files formatted; {len(names)} runtime-source differences are documentation references/comments only. No game, database or provider checks run.')
           PY
+      - name: Preserve the original branch and publish without overwriting concurrent work
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          test "$(git ls-remote origin "refs/heads/$REVIEW_BRANCH" | cut -f1)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$REVIEWED_MAIN"
+          test -z "$(git ls-remote origin "refs/heads/$BACKUP_BRANCH")"
+          git -c 'credential.helper=!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f' push origin "$GITHUB_SHA:refs/heads/$BACKUP_BRANCH"
+          git -c 'credential.helper=!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f' push --force-with-lease="refs/heads/$REVIEW_BRANCH:$GITHUB_SHA" origin "HEAD:refs/heads/$REVIEW_BRANCH"
+          mkdir -p "$RUNNER_TEMP/review-published"
+          git rev-parse HEAD | tee "$RUNNER_TEMP/review-published/head.txt"
+          printf 'branch=%s\nbackup=%s\noriginal=%s\nmain=%s\ncheckout=%s\n' "$REVIEW_BRANCH" "$BACKUP_BRANCH" "$GITHUB_SHA" "$REVIEWED_MAIN" "$PWD" | tee "$RUNNER_TEMP/review-published/refs.txt"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: documentation-review-replay-34233ae
-          path: ${{ runner.temp }}/review-reconciliation/
+          name: documentation-review-published-34233ae
+          path: ${{ runner.temp }}/review-published/
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
