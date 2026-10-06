@@ -67,6 +67,729 @@ jobs:
           tests/browser/god-editor.spec.ts
           tests/browser/time.spec.ts
           --output test-results/interface
+      # One-off native observation; remove after its evidence is recorded.
+      - name: Observe one disposable paired inventory journey
+        if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
+        timeout-minutes: 4
+        env:
+          AI_BUDGET_USD: '0'
+          OPENAI_EMBEDDING_API_KEY: ''
+        run: |
+          node --import tsx --input-type=module <<'OPENLEGEND_PAIRED_INVENTORY'
+          // One disposable, provider-free gameplay observation. Run once from the repository root:
+          // node --import tsx --input-type=module < /path/to/paired-inventory.mjs
+          // This is a scratch scenario, not a test-runner case or a permanent verification suite.
+          // The actual App enters first; native fixture preparation precedes inventory gestures.
+          // Bags/materials and one corpse are prepared through existing immutable/native owners.
+          // Subsequent possession changes come from actual App controls and native HTTP commands.
+          import assert from 'node:assert/strict';
+          import { createHash } from 'node:crypto';
+          import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+          import { join } from 'node:path';
+          import { chromium, expect } from '@playwright/test';
+          import { createGameServer } from './apps/server/src/http.ts';
+          import { testRepository, closeTestDatabases, readConfig } from './tests/fixtures/database.ts';
+          import { editWorld } from './tests/fixtures/service.ts';
+          import { enterGame } from './tests/fixtures/browser.ts';
+          import {
+            PLAYER_ID,
+            NPC_ID,
+            createItemLot,
+            itemsForOwner,
+            itemFor,
+            setContainerAccess,
+            seesEntity,
+            canReachEntity,
+          } from './packages/domain/src/index.ts';
+          import { applyBodyEffects } from './packages/domain/src/living.ts';
+          import {
+            worldPosition,
+            worldSupport,
+            setSpatialPosition,
+            spatialMap,
+          } from './packages/domain/src/spatial-state.ts';
+          import { BODY_PROFILES, canStand } from './packages/spatial/src/index.ts';
+
+          const output = 'test-results/native-inventory';
+          await mkdir(output, { recursive: true });
+          const report = {
+            startedAt: new Date().toISOString(),
+            checkout: process.env.GITHUB_SHA ?? 'unrecorded-local-checkout',
+            headRef: process.env.GITHUB_HEAD_REF ?? '',
+            node: process.version,
+            scope:
+              'One native App/server/PostgreSQL J01 bag/pile journey, exact quantity, and nearby remains/living access',
+            excludes: [
+              'full J03 split/stale cases',
+              'camp',
+              'recipient consent',
+              'other worlds',
+              'human input/usability',
+            ],
+            fixture:
+              'One ordinary player; installed woven_bag plus 24 wood units; one nearby native NPC corpse with a portable lot and permitted/restricted bags; one nearby living NPC. Prepared after actual App entry and before inventory gestures.',
+            providerBudgetUsd: 0,
+            commandObservations: [],
+            inventoryObservations: [],
+            screenshots: [],
+            pageErrors: [],
+            unexpectedRequests: [],
+            cleanup: {},
+            passed: false,
+          };
+          const sourcePaths = [
+            'apps/server/src/http.ts',
+            'apps/server/src/inventory-view.ts',
+            'apps/client/src/main.tsx',
+            'apps/client/src/ui/inventory.tsx',
+            'apps/client/src/ui/container-opening.tsx',
+            'packages/domain/src/objects.ts',
+            'packages/domain/src/kernel.ts',
+            'packages/domain/src/worlds/base/items.ts',
+            'packages/domain/src/living.ts',
+            'packages/domain/src/worlds/base/body-policy.ts',
+            'dist/client/index.html',
+          ];
+          const assets = await readdir('dist/client/assets');
+          sourcePaths.push(
+            ...assets.filter((name) => /\.(js|css)$/.test(name)).map((name) => 'dist/client/assets/' + name),
+          );
+          report.sha256 = Object.fromEntries(
+            await Promise.all(
+              sourcePaths.map(async (path) => [
+                path,
+                createHash('sha256')
+                  .update(await readFile(path))
+                  .digest('hex'),
+              ]),
+            ),
+          );
+
+          let game, browser, context, page, base, authorityHeaders;
+          const commandRequests = [];
+          const destinationRequests = [];
+          let traceStarted = false;
+          let failed = false;
+          const message = (error) => (error instanceof Error ? error.message : String(error));
+          const total = (ownerId, definitionId) =>
+            itemsForOwner(game.service.world, ownerId)
+              .filter((item) => item.definitionId === definitionId)
+              .reduce((sum, item) => sum + item.quantity, 0);
+
+          async function readOnly(path, body, expectedStatus = 200) {
+            assert.ok(authorityHeaders, 'A real UI command must establish this browser authority first');
+            const response = await page.request.post(base + path, { headers: authorityHeaders, data: body });
+            assert.equal(response.status(), expectedStatus, 'Native read failed: ' + path);
+            return response.json();
+          }
+
+          async function act(label, expectedCommand, gesture, input = 'pointer click') {
+            const before = commandRequests.length;
+            const [response] = await Promise.all([
+              page.waitForResponse((entry) => new URL(entry.url()).pathname === '/api/command'),
+              gesture(),
+            ]);
+            assert.equal(response.status(), 200);
+            const request = response.request();
+            const body = request.postDataJSON();
+            const result = await response.json();
+            assert.equal(commandRequests.length, before + 1, label + ' sent more than one command');
+            for (const [key, value] of Object.entries(expectedCommand))
+              assert.deepEqual(body.command[key], value, label + ': ' + key);
+            const headers = await request.allHeaders();
+            assert.ok(headers['x-ol-client']);
+            assert.ok(headers['x-ol-scope']);
+            authorityHeaders = {
+              Origin: base,
+              'X-OL-Client': headers['x-ol-client'],
+              'X-OL-Scope': headers['x-ol-scope'],
+            };
+            const receipt = await readOnly('/api/command/receipt', body);
+            assert.equal(receipt.status, 'resolved', label + ' receipt must resolve the original command');
+            for (const key of ['ok', 'code', 'message', 'itemId'])
+              assert.deepEqual(receipt.result[key], result[key]);
+            report.commandObservations.push({
+              label,
+              input,
+              request: body,
+              result: { ok: result.ok, code: result.code, message: result.message, itemId: result.itemId },
+              receiptStatus: receipt.status,
+            });
+            return result;
+          }
+
+          async function inventory(containerId) {
+            const value = await readOnly('/api/inventory', { containerId });
+            assert.equal(value.ok, true);
+            assert.equal(value.container.id, containerId);
+            assert.equal(value.next, undefined, 'This small fixture must fit one native contents page');
+            return value;
+          }
+
+          function objectSnapshot(bagId) {
+            const world = game.service.world;
+            return {
+              roots: [PLAYER_ID, bagId].map((id) => ({
+                id,
+                revision: world.entities[id].inventoryRevision ?? 0,
+                load: world.entities[id].container?.load,
+              })),
+              items: [PLAYER_ID, bagId]
+                .flatMap((ownerId) =>
+                  itemsForOwner(world, ownerId).map((item) => ({
+                    id: item.id,
+                    ownerId: item.ownerId,
+                    quantity: item.quantity,
+                    revision: item.revision,
+                    placementRevision: item.placementRevision,
+                  })),
+                )
+                .sort((a, b) => a.id.localeCompare(b.id)),
+            };
+          }
+
+          async function observePair(label, bagId, playerWood, bagWood) {
+            const own = await inventory(PLAYER_ID),
+              external = await inventory(bagId);
+            // Native DTO item identity is checked against its domain object, without exposing hidden objects.
+            const permittedWood = (value) =>
+              value.items
+                .filter((item) => itemFor(game.service.world, item.id)?.definitionId === 'wood')
+                .reduce((sum, item) => sum + item.quantity, 0);
+            assert.equal(permittedWood(own), playerWood);
+            assert.equal(permittedWood(external), bagWood);
+            assert.equal(total(PLAYER_ID, 'wood'), playerWood);
+            assert.equal(total(bagId, 'wood'), bagWood);
+            assert.equal(external.container.load, bagWood);
+            assert.equal(external.container.capacity, 24);
+            assert.equal(total(PLAYER_ID, 'stone'), 6);
+            assert.equal(total(bagId, 'stone'), 0);
+            assert.equal(total(PLAYER_ID, 'wood') + total(bagId, 'wood'), 26);
+            await expect(page.locator('.ol-inventory-collection')).toHaveCount(2);
+            await expect(
+              page
+                .locator('[data-side="container"]')
+                .getByRole('heading', { name: 'Woven bag', exact: true }),
+            ).toBeVisible();
+            await expect(page.locator('[data-side="container"]')).toContainText(
+              'Packing load: ' + bagWood + ' / 24',
+            );
+            await expect(
+              page
+                .locator('[data-side="belongings"]')
+                .getByRole('button', { name: 'Supple branch, ' + playerWood, exact: true }),
+            ).toBeVisible();
+            await expect(
+              page
+                .locator('[data-side="container"]')
+                .getByRole('button', { name: 'Supple branch, ' + bagWood, exact: true }),
+            ).toBeVisible();
+            report.inventoryObservations.push({
+              label,
+              playerWood,
+              bagWood,
+              bagLoad: external.container.load,
+              capacity: external.container.capacity,
+              playerRevision: own.container.revision,
+              bagRevision: external.container.revision,
+              permittedItemIds: [...own.items, ...external.items].map((item) => item.id),
+            });
+            return { own, external };
+          }
+
+          async function capture(name) {
+            await page.screenshot({ path: join(output, name) });
+            report.screenshots.push(name);
+          }
+
+          try {
+            const fixedNow = Date.now();
+            const config = readConfig({
+              AI_BUDGET_USD: '0',
+              OPEN_LEGEND_GOD_MODE: 'false',
+              OPEN_LEGEND_AUTH_MODE: 'local',
+            });
+            assert.equal(config.budgetUsd, 0);
+            assert.equal(config.godMode, false);
+            game = await createGameServer({
+              config,
+              store: await testRepository(),
+              production: true,
+              tick: false,
+              now: () => fixedNow,
+            });
+            await new Promise((resolve) => game.server.listen(0, '127.0.0.1', resolve));
+            const address = game.server.address();
+            assert.ok(address && typeof address !== 'string');
+            base = 'http://127.0.0.1:' + address.port;
+            browser = await chromium.launch({
+              headless: true,
+              args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+            });
+            report.browser = browser.version();
+            context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+            await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+            traceStarted = true;
+            page = await context.newPage();
+            page.setDefaultTimeout(10_000);
+            page.on('pageerror', (error) => report.pageErrors.push(error.message));
+            page.on('request', (request) => {
+              const url = new URL(request.url());
+              if (url.origin !== base && !['data:', 'blob:'].includes(url.protocol))
+                report.unexpectedRequests.push(url.origin + url.pathname);
+              if (
+                /^\/api\/(?:god(?:\/|$)|chat(?:\/|$)|invent(?:\/|$)|inventions\/submit|world-agent\/.*(?:messages|start|apply))/.test(
+                  url.pathname,
+                )
+              )
+                report.unexpectedRequests.push(url.pathname);
+              if (url.pathname === '/api/command') commandRequests.push(request.postDataJSON());
+              if (url.pathname === '/api/inventory/destinations')
+                destinationRequests.push(request.postDataJSON());
+            });
+            await page.goto(base + '/auth/login');
+            await enterGame(page);
+            await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+            assert.equal(
+              game.service.paused,
+              false,
+              'The sole App must enter before native fixture preparation',
+            );
+            const seed = await editWorld(game.service, (world) => {
+              assert.equal(world.itemDefinitions.woven_bag.container.capacity, 24);
+              assert.equal(world.itemDefinitions.wood.packingLoad, 1);
+              const bagId = createItemLot(world, PLAYER_ID, 'woven_bag', 1);
+              const branchId = createItemLot(world, bagId, 'wood', 24);
+              const player = world.entities[PLAYER_ID],
+                npc = world.entities[NPC_ID];
+              const living = Object.values(world.entities).find(
+                (entity) =>
+                  entity.id !== PLAYER_ID &&
+                  entity.id !== NPC_ID &&
+                  entity.actor?.species === 'human' &&
+                  entity.actor.alive,
+              );
+              assert.ok(living);
+              const position = worldPosition(player),
+                support = worldSupport(player);
+              setSpatialPosition(world, npc, { ...position, x: position.x + 1 }, support);
+              setSpatialPosition(world, living, { ...position, z: position.z + 1 }, support);
+              const corpseLotId = createItemLot(world, NPC_ID, 'bone', 4);
+              const corpseBagId = createItemLot(world, NPC_ID, 'woven_bag', 1);
+              createItemLot(world, corpseBagId, 'bone', 2);
+              const deniedBagId = createItemLot(world, NPC_ID, 'woven_bag', 1);
+              createItemLot(world, deniedBagId, 'bone', 3);
+              return {
+                bagId,
+                branchId,
+                corpseId: NPC_ID,
+                livingId: living.id,
+                corpseLotId,
+                corpseBagId,
+                deniedBagId,
+              };
+            });
+            // Native fixture preparation only: no God UI, manufactured remains, or changed world laws.
+            const restricted = await game.service.transition((world) =>
+              setContainerAccess(world, {
+                id: 'j01-fixture-bag-access',
+                itemId: seed.deniedBagId,
+                expectedRevision: world.entities[seed.deniedBagId].inventoryRevision ?? 0,
+                actors: [seed.livingId],
+              }),
+            );
+            assert.equal(restricted.ok, true);
+            const death = await game.service.transition((world) =>
+              applyBodyEffects(
+                world,
+                'j01-fixture-native-death',
+                [
+                  {
+                    targetId: seed.corpseId,
+                    kind: 'health',
+                    amount: -world.entities[seed.corpseId].actor.health,
+                  },
+                ],
+                { [seed.corpseId]: world.entities[seed.corpseId].actor.body.revision },
+              ),
+            );
+            assert.equal(death.ok, true);
+            assert.equal(game.service.world.entities[seed.corpseId].actor.alive, false);
+            assert.equal(game.service.world.entities[seed.corpseId].remains.sourceId, seed.corpseId);
+            assert.equal(game.service.world.entities[seed.livingId].actor.alive, true);
+            assert.equal(total(PLAYER_ID, 'wood'), 2);
+            assert.equal(total(PLAYER_ID, 'stone'), 6);
+            report.seed = seed;
+            await page.getByRole('button', { name: 'Inventory', exact: true }).click();
+            const ownSide = page.locator('[data-side="belongings"]'),
+              otherSide = page.locator('[data-side="container"]');
+            await ownSide.locator('[data-item-id="' + seed.bagId + '"]').click();
+            let detail = page.getByRole('dialog', { name: 'Woven bag actions and details', exact: true });
+            const dropped = await act(
+              'Drop the filled bag',
+              { type: 'drop', itemId: seed.bagId, quantity: 1 },
+              () => detail.getByRole('button', { name: 'Drop', exact: true }).click(),
+            );
+            assert.equal(dropped.ok, true);
+            const pileId = itemFor(game.service.world, seed.bagId).ownerId;
+            assert.equal(game.service.world.entities[pileId].kind, 'item-pile');
+            report.droppedPileId = pileId;
+
+            await page.getByRole('button', { name: 'In view', exact: true }).click();
+            await page
+              .locator('#nearbyPanel [data-entity="' + pileId + '"]')
+              .getByRole('button')
+              .click();
+            await page
+              .locator('#nearbyPanel')
+              .getByRole('button', { name: /^Open / })
+              .click();
+            await otherSide.locator('[data-item-id="' + seed.bagId + '"]').click();
+            detail = page.getByRole('dialog', { name: 'Woven bag actions and details', exact: true });
+            await detail.getByRole('button', { name: /^Open / }).click();
+            const initial = await observePair('Opened the world pile and its filled bag', seed.bagId, 2, 24);
+            await capture('01-opened-paired-bag.png');
+
+            const stone = initial.own.items.find(
+              (item) => itemFor(game.service.world, item.id)?.definitionId === 'stone',
+            );
+            assert.ok(stone);
+            assert.equal(stone.availableQuantity, 6);
+            const beforeRefusal = objectSnapshot(seed.bagId);
+            await ownSide.locator('[data-item-id="' + stone.id + '"]').click();
+            detail = page.getByRole('dialog', { name: 'Small stone actions and details', exact: true });
+            const move = detail.getByRole('button', { name: /^Move to / });
+            await expect(move).toBeEnabled();
+            const refused = await act(
+              'Full bag refuses the inspected six stones',
+              {
+                type: 'transfer-item',
+                itemId: stone.id,
+                quantity: 6,
+                targetId: seed.bagId,
+                expectedRevision: stone.revision,
+                placementRevision: stone.placementRevision,
+                targetRevision: initial.external.container.revision,
+              },
+              () => move.click(),
+            );
+            assert.equal(refused.ok, false);
+            assert.equal(refused.code, 'item-unavailable');
+            assert.equal(refused.message, 'The bag does not have enough packing capacity.');
+            await expect(detail).toContainText(refused.message);
+            assert.deepEqual(objectSnapshot(seed.bagId), beforeRefusal);
+            await observePair('Full-capacity refusal preserves quantities and custody', seed.bagId, 2, 24);
+            await capture('02-full-capacity-refusal.png');
+            await detail.getByRole('button', { name: 'Close', exact: true }).click();
+
+            for (const direction of ['take', 'put']) {
+              const before = await inventory(direction === 'take' ? seed.bagId : PLAYER_ID);
+              const destination = await inventory(direction === 'take' ? PLAYER_ID : seed.bagId);
+              const item = before.items.find(
+                (entry) => itemFor(game.service.world, entry.id)?.definitionId === 'wood',
+              );
+              assert.ok(item);
+              const side = direction === 'take' ? otherSide : ownSide;
+              await side.locator('[data-item-id="' + item.id + '"]').click();
+              detail = page.getByRole('dialog', { name: 'Supple branch actions and details', exact: true });
+              await detail.getByRole('button', { name: 'Move an amount…', exact: true }).click();
+              await detail.getByLabel('Quantity', { exact: true }).fill('3');
+              const result = await act(
+                direction + ' exactly three branches',
+                {
+                  type: 'transfer-item',
+                  itemId: item.id,
+                  quantity: 3,
+                  targetId: destination.container.id,
+                  expectedRevision: item.revision,
+                  placementRevision: item.placementRevision,
+                  targetRevision: destination.container.revision,
+                },
+                async () => {
+                  const submit = detail.getByRole('button', { name: 'Move amount', exact: true });
+                  if (direction === 'put') {
+                    await submit.focus();
+                    await expect(submit).toBeFocused();
+                    await submit.press('Enter');
+                  } else await submit.click();
+                },
+                direction === 'put' ? 'keyboard Enter on focused Move amount button' : 'pointer click',
+              );
+              assert.equal(result.ok, true);
+              assert.equal(result.code, 'items-arranged');
+              assert.equal(itemFor(game.service.world, result.itemId).ownerId, destination.container.id);
+              await observePair(
+                direction + ' three branches completed',
+                seed.bagId,
+                direction === 'take' ? 5 : 2,
+                direction === 'take' ? 21 : 24,
+              );
+            }
+            await capture('03-returned-exact-quantity.png');
+            assert.equal(commandRequests.length, 4);
+            assert.equal(
+              destinationRequests.length,
+              0,
+              'Ordinary transfers must not discover or choose another destination',
+            );
+            await expect(page.locator('.ol-inventory-destinations')).toHaveCount(0);
+            await expect(
+              page.locator('.ol-inventory-workspace select, .ol-inventory-workspace [role="combobox"]'),
+            ).toHaveCount(0);
+
+            // The following are explicit native access/discovery observations, separate from the
+            // ordinary UI path above (which made no destination-discovery request).
+            const stateResponse = await page.request.get(base + '/api/state', { headers: authorityHeaders });
+            assert.equal(stateResponse.status(), 200);
+            const state = await stateResponse.json();
+            assert.equal(state.player.id, PLAYER_ID);
+            assert.equal(state.access.controlling, true);
+            assert.equal(state.godMode, false);
+            const corpse = state.entities.find((entity) => entity.id === seed.corpseId);
+            const living = state.entities.find((entity) => entity.id === seed.livingId);
+            assert.ok(corpse);
+            assert.ok(living);
+            assert.equal(corpse.storage.containerId, seed.corpseId);
+            assert.equal(living.storage, undefined);
+            const corpseAccess = await readOnly('/api/inventory/access', { containerId: seed.corpseId });
+            assert.equal(corpseAccess.status, 'ready');
+            assert.match(corpseAccess.container.location, /^On the ground/);
+            const directBag = await readOnly('/api/inventory/access', { containerId: seed.corpseBagId });
+            assert.equal(directBag.status, 'ready');
+            for (const containerId of [seed.deniedBagId, seed.livingId]) {
+              const access = await readOnly('/api/inventory/access', { containerId });
+              assert.equal(access.status, 'unavailable');
+              assert.equal(access.items, undefined);
+              const denied = await readOnly('/api/inventory', { containerId }, 400);
+              assert.equal(denied.ok, false);
+              assert.equal(denied.items, undefined);
+            }
+            const sourcePage = await inventory(PLAYER_ID);
+            const sourceItem = sourcePage.items.find(
+              (item) => itemFor(game.service.world, item.id)?.definitionId === 'stone',
+            );
+            const source = {
+              itemId: sourceItem.id,
+              revision: sourceItem.revision,
+              placementRevision: sourceItem.placementRevision,
+              containerId: PLAYER_ID,
+              containerRevision: sourcePage.container.revision,
+              quantity: 1,
+            };
+            const destinations = [];
+            let cursor;
+            for (let pageNumber = 0; pageNumber < 3; pageNumber++) {
+              const found = await readOnly('/api/inventory/destinations', {
+                source,
+                ...(cursor ? { cursor } : {}),
+              });
+              assert.notEqual(found.status, 'unavailable');
+              destinations.push(...found.destinations);
+              cursor = found.next;
+              if (!cursor) break;
+            }
+            assert.equal(cursor, undefined, 'The bounded small fixture must finish destination discovery');
+            const corpseDestination = destinations.find((entry) => entry.id === seed.corpseId);
+            assert.ok(corpseDestination);
+            assert.equal(corpseDestination.kind, 'container');
+            assert.equal(corpseDestination.openable, true);
+            assert.equal(corpseDestination.fit, 'fits');
+            const corpseChildren = await readOnly('/api/inventory/destinations', {
+              source,
+              parentId: seed.corpseId,
+            });
+            assert.equal(corpseChildren.container.id, seed.corpseId);
+            assert.notEqual(corpseChildren.status, 'unavailable');
+            assert.equal(corpseChildren.next, undefined);
+            assert.ok(
+              corpseChildren.destinations.some(
+                (entry) => entry.id === seed.corpseBagId && entry.kind === 'container',
+              ),
+            );
+            assert.equal(
+              corpseChildren.destinations.some((entry) => entry.id === seed.deniedBagId),
+              false,
+            );
+            report.remainsAccess = {
+              corpseId: seed.corpseId,
+              livingId: seed.livingId,
+              corpse: 'ready; ground location; storage destination',
+              directBag: 'ready',
+              restrictedBag: 'unavailable; contents refused',
+              livingInventory: 'no storage hint; access unavailable; contents refused',
+              excludes: [
+                'walking/arrival/cancellation',
+                'camp activity storage',
+                'player death/Continue',
+                'consent acceptance',
+              ],
+            };
+
+            await page
+              .locator('#inventoryPanel')
+              .getByRole('button', { name: /^Hide / })
+              .click();
+            const nearby = page.locator('#nearbyPanel');
+            if (!(await nearby.isVisible()))
+              await page.getByRole('button', { name: 'In view', exact: true }).click();
+            const back = nearby.getByRole('button', { name: 'Back to In view', exact: true });
+            if (await back.isVisible()) await back.click();
+            await nearby
+              .locator('[data-entity="' + seed.corpseId + '"]')
+              .getByRole('button')
+              .click();
+            await nearby.getByRole('button', { name: 'Open ' + corpse.name, exact: true }).click();
+            await expect(otherSide).toContainText('On the ground');
+            const originalCorpseBones = total(seed.corpseId, 'bone');
+            const originalPlayerBones = total(PLAYER_ID, 'bone');
+            assert.equal(originalCorpseBones, 4);
+            assert.equal(originalPlayerBones, 0);
+            for (const direction of ['take', 'put']) {
+              const from = await inventory(direction === 'take' ? seed.corpseId : PLAYER_ID);
+              const to = await inventory(direction === 'take' ? PLAYER_ID : seed.corpseId);
+              const lot = from.items.find(
+                (item) => itemFor(game.service.world, item.id)?.definitionId === 'bone',
+              );
+              assert.ok(lot);
+              const side = direction === 'take' ? otherSide : ownSide;
+              await side.locator('[data-item-id="' + lot.id + '"]').click();
+              detail = page.getByRole('dialog', { name: lot.name + ' actions and details', exact: true });
+              if (direction === 'take') {
+                await detail.getByRole('button', { name: 'Move an amount…', exact: true }).click();
+                await detail.getByLabel('Quantity', { exact: true }).fill('1');
+              }
+              const result = await act(
+                direction + ' one native corpse item',
+                {
+                  type: 'transfer-item',
+                  itemId: lot.id,
+                  quantity: 1,
+                  targetId: to.container.id,
+                  expectedRevision: lot.revision,
+                  placementRevision: lot.placementRevision,
+                  targetRevision: to.container.revision,
+                },
+                () =>
+                  detail
+                    .getByRole('button', {
+                      name: direction === 'take' ? 'Move amount' : /^Move to /,
+                      exact: direction === 'take',
+                    })
+                    .click(),
+              );
+              assert.equal(result.ok, true);
+              assert.equal(result.code, 'items-arranged');
+              assert.equal(total(seed.corpseId, 'bone'), direction === 'take' ? 3 : 4);
+              assert.equal(total(PLAYER_ID, 'bone'), direction === 'take' ? 1 : 0);
+              if (direction === 'take')
+                await expect(ownSide.locator('[data-item-id="' + result.itemId + '"]')).toBeVisible();
+              else
+                await expect(
+                  otherSide.getByRole('button', { name: lot.name + ', 4', exact: true }),
+                ).toBeVisible();
+            }
+            await capture('04-native-corpse-paired-contents.png');
+            // A final fixture relocation changes only this corpse's location. The native geometry,
+            // visibility and reach owners validate the one selected destination before its access read.
+            const distantPoint = await editWorld(game.service, (world) => {
+              const player = world.entities[PLAYER_ID],
+                body = world.entities[seed.corpseId];
+              const position = worldPosition(player),
+                surfaceId = worldSupport(player);
+              assert.ok(surfaceId);
+              const point = { ...position, x: position.x + world.itemHandling.reach + 2 };
+              assert.equal(
+                canStand(
+                  spatialMap(world),
+                  { ...point, surfaceId },
+                  BODY_PROFILES[body.spatial.bodyProfileId],
+                ),
+                true,
+                'The one distant corpse fixture point must be physically supported',
+              );
+              setSpatialPosition(world, body, point, surfaceId);
+              assert.equal(seesEntity(world, player, body), true, 'The corpse exterior must remain visible');
+              assert.equal(
+                canReachEntity(world, player, body, world.itemHandling.reach),
+                false,
+                'The corpse must be outside native handling reach',
+              );
+              return { ...point, surfaceId };
+            });
+            const remoteAccess = await readOnly('/api/inventory/access', { containerId: seed.corpseId });
+            assert.equal(remoteAccess.status, 'out-of-reach');
+            assert.equal(remoteAccess.container.id, seed.corpseId);
+            assert.equal(remoteAccess.items, undefined);
+            assert.equal(remoteAccess.message, 'Move within reach, then recheck access before opening.');
+            const remoteContents = await readOnly('/api/inventory', { containerId: seed.corpseId }, 400);
+            assert.equal(remoteContents.ok, false);
+            assert.equal(remoteContents.items, undefined);
+            report.remainsAccess.distant = {
+              position: distantPoint,
+              status: remoteAccess.status,
+              message: remoteAccess.message,
+              contents: 'refused',
+            };
+            assert.equal(commandRequests.length, 6);
+            assert.equal(
+              destinationRequests.length,
+              0,
+              'Only the explicit native read may discover destinations',
+            );
+            assert.deepEqual(report.pageErrors, []);
+            assert.deepEqual(report.unexpectedRequests, []);
+            report.passed = true;
+          } catch (error) {
+            failed = true;
+            report.failure = message(error);
+            if (page && !page.isClosed()) {
+              try {
+                await capture('failure.png');
+              } catch (captureError) {
+                report.captureFailure = message(captureError);
+              }
+            }
+          } finally {
+            if (traceStarted) {
+              try {
+                await context.tracing.stop({ path: join(output, 'trace.zip') });
+              } catch (error) {
+                failed = true;
+                report.cleanup.trace = message(error);
+              }
+            }
+            // Close this page's SSE stream before its owned server and disposable database.
+            for (const [name, close] of [
+              ['page', () => page?.close()],
+              ['browser', () => browser?.close()],
+              ['server', () => game?.shutdown()],
+              ['database', () => closeTestDatabases()],
+            ]) {
+              try {
+                const result = await close();
+                report.cleanup[name] = result ?? 'closed';
+                if (name === 'server' && result?.problems.length) failed = true;
+              } catch (error) {
+                failed = true;
+                report.cleanup[name] = message(error);
+              }
+            }
+            report.passed = report.passed && !failed;
+            report.finishedAt = new Date().toISOString();
+            await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+          }
+          if (!report.passed) process.exitCode = 1;
+          console.log(
+            JSON.stringify({
+              scenario: report.scope,
+              passed: report.passed,
+              commands: report.commandObservations.length,
+              screenshots: report.screenshots,
+              failure: report.failure,
+              cleanup: report.cleanup,
+            }),
+          );
+          OPENLEGEND_PAIRED_INVENTORY
       - uses: actions/upload-artifact@v4
         if: always()
         with:

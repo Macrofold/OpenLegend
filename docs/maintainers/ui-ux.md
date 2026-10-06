@@ -118,7 +118,7 @@ Exit: J13–J14, including audience/hearing truth, offer consent, existing ordin
 
 Record actual revision, content, input, viewport/text scale, native outcomes and recovery results. Test important concurrent/invalidated states through the true client/server path. Wireframes, component fixtures, compiler success and documentation completion do not satisfy this experience gate. The research phase ran no gameplay tests; its evidence does not qualify the runtime implementation.
 
-Full native client/server J01–J16 qualification remains open because disposable PostgreSQL/platform access is incomplete and the integrated camp session has not been demonstrated. The final inventory/activity UI corrections and their focused component checks do not close this experience gate. The [verification report](../verification/game-interaction-redesign.md) owns actual evidence and limitations; this blocker does not remove or defer any agreed journey.
+Full native client/server J01–J16 qualification remains open because the connected inventory/camp session has not been demonstrated. The local process cannot initialize PostgreSQL, but the existing CI job supplies a working disposable database, production App and browser. Native gameplay remains executable unfinished work through that environment. The final inventory/activity UI corrections and their focused component checks do not close this experience gate. The [verification report](../verification/game-interaction-redesign.md) owns actual evidence and limitations; no agreed journey is removed or deferred by the local limitation.
 
 ## UIUX12
 
