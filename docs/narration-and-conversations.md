@@ -263,7 +263,7 @@ Generation uses the configured complex reasoning model with low effort through e
 
 ## Selected optional private correspondence proposal
 
-[Keep in touch across an outing](projects/world-text-messages-feature-spec.md) selects DG24's asynchronous text product, with [personal message slates](worlds/base/text-messages.md) as a later explicitly authored world affordance. It is a proposed consumer of existing identity, evidence, action and privacy contracts, not an implemented extension of local hearing. [NC22](maintainers/narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns delivery and [TX-L01–TX-L10](limits/narration.md#tx-l01--selected-world-affordance) owns its envelope.
+[Keep in touch across an outing](projects/world-text-messages-feature-spec.md) selects DG24's asynchronous text product, with [personal message slates](worlds/base/text-messages.md) as a later explicitly authored world affordance. It is a proposed consumer of existing identity, evidence, action and privacy contracts, not an implemented extension of local hearing. [NC22](maintainers/narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns delivery and [TX-L01–TX-L10](limits/narration.md#tx-l01--selected-affordance-and-correspondents) owns its envelope.
 
 A sender's **Submitted** receipt confirms only their own durable exact submission; recipient delivery, reading, availability and blocking remain private. Eligible inbox arrival is not perception. First explicit permitted presentation supplies a written-message reading experience with original writing and actual acquisition times. Remote threads neither occupy the active local conversation nor merge private history or turn failed private output into local speech.
 
