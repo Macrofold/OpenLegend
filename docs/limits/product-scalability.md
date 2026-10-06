@@ -109,3 +109,23 @@ Material unresolved product choices are owned by [PS-D01–PS-D06](../../archive
 ## PS-L22 — Staged speech and presentation boundary
 
 **Status: Proposed; restrictiveness: Safe.** Initial exact speech retains its current instantaneous evidence contract; aggregate nonverbatim vocal activity is a proposed authored noise rule. Timed phrases, overlap and late listening remain a separately qualified option through hearing/time owners. The revised delivery recommendation permits crowded play under existing exact speech and defers timing complexity unless a desired interaction benefits from it. Captions retain their existing reading-time meaning. No new numerical duration or caption allowance is selected. Revisit interruption, effectful wording, movement, speed, reconnect, readability and accessibility; [hearing limits](hearing-and-speech.md) retain current settings.
+
+## PS-L23 — First isolated community profile
+
+**Status: Proposed; restrictiveness: Safe.** DG17's [continuing-lives owner](../projects/continuing-lives-feature-spec.md) selects an optional isolated, finite community before shared unattended hosting. The [base-world profile](../worlds/base/continuing-communities.md) owns two residents, three game days at normal speed and 24 actual cooked-meat units per resident in the prepared scenario. These are explicit qualification inputs, not measured capacity, a population ceiling or a guarantee that each resident survives. No automatic food grant, repeatable starting-stock award or sustainable ecology follows. Revisit after complete meals/rest/personal-activity and meaningful-return evidence; extended worlds need actual replenishment and their own supported envelope.
+
+## PS-L24 — Clock and absence in the first continuing profile
+
+**Status: Proposed; restrictiveness: Medium.** The first profile retains current mechanical time and current MP04 absence. Its normal speed maps three game days to 72 real minutes of uninterrupted advancement; downtime, deliberate pause and unavailable required service add no fictional age or catch-up debt. A funded interval is measured in completed game time, with separate real-time service/accounting timestamps. This is no new calendar assignment, biological rate change or human absentee-action grant. Revisit any independent calendar, accelerated profile or connected deadline through PS-D03 and its actual consumers.
+
+## PS-L25 — Coherent stop and renewed admission
+
+**Status: Proposed; restrictiveness: Safe.** Horizon expiry or unavailable required service stops the whole isolated world at its actual current state, including ongoing work, fuel use and bodily/environmental progress. A resident making a poor choice after receiving its decision opportunity is not service failure. Resumption needs current authority, applicable funding, service readiness and an admissible current world; a provider or billing reset does not itself resume play. No food, health, materials, work completion or fictional closing scene is awarded at either boundary. This option is not safe by default for a connected economy; qualify a coherent boundary before expansion.
+
+## PS-L26 — Funding and continuation liability
+
+**Status: Proposed; restrictiveness: Safe.** The first continuation admits no work outside an explicitly funded, qualified envelope; optional new activity yields before required work. Existing per-actor AI limits do not constitute a community service budget. Pending/uncertain work retains its accounting reservation and no automatic top-up or unbounded retry is implied. The profile fixes no currency price, subscription, permanent retention duration or universal inference cadence. Active worlds, retained history and aggregate account/host work still require independent operating bounds; a finite interval alone does not bound all three. PS-D06 and commerce owners retain customer terms and adoption.
+
+## PS-L27 — Return evidence and qualification depth
+
+**Status: Proposed; restrictiveness: Medium.** Returning humans may see operational elapsed/pause facts as service information; character knowledge remains limited to current perception, personal experience and actual communicated reports. No omniscient biography, fabricated dialogue, repeated historical reward or unpaid replay fills a quiet interval. The first profile must demonstrate substantial rest and repeated chosen self-care as well as non-survival interests across its whole duration. A no-player server run, adequate starting food or lower model bill alone is insufficient. Revisit optional summary density and longer horizons through actual usefulness and total-cost evidence, preserving current narration and privacy owners.

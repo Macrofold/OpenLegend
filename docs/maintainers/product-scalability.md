@@ -39,8 +39,13 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Product design proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) retains quiet initiative, funding, long-return scenarios and later stages. Offer unattended service after a smaller active world is compelling and continued absence has a concrete player benefit. PS-D06 and PS05/PS06 retain funding and shared-operation authority.
 
+**DG17 product expansion, October 6, 2026:** The same feature owner now specifies a finite, isolated continuing community, real supply and self-care qualification, the current mechanical clock, coherent service pauses, return evidence and renewed admission. The optional [prepared camp](../worlds/base/continuing-communities.md) owns the first world's authored horizon and provisions. This is a proposed first profile, not an overnight-hosting promise, autonomous ecology, adopted price or replacement for current personal-world pause behavior.
+
 **Owners:** activity families, agency/cognition, work admission, world policy. **Depends on:** PS02.
 
+- [x] Prepare the DG17 product/behavior proposal and its base-world profile; retain technical and runtime qualification as separate work.
+- [ ] Qualify the whole proposed finite interval with actual accessible supplies, repeated independently chosen meals and substantial rest, and meaningful personal/social activity; sufficient stock alone is not proof of viable life.
+- [ ] Demonstrate expiry during work, interrupted essential decision service, current-state readmission without replenishment, and a useful perspective-correct return after actual no-participant operation.
 - [ ] Add explicit low-power optional initiative policy with viable needs, retained commitments, and no backlog of missed optional thoughts.
 - [ ] Supply inherited coarse execution for a small useful set of mechanics, including travel and representable partial work.
 - [ ] Declare unsupported combinations and their funded-detailed/restricted/approximate fallbacks before accepting creator reliance.
@@ -67,6 +72,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Owners:** spatial/time, participation/access, world policy, save/load. **Depends on:** PS02–PS04 capabilities used by each behavior.
 
+The DG17 proposal deliberately uses today's mechanical clock and current MP04 absence. MP04's delivered cancellation, claim release, retained possessions/history, absent body and safe return are foundations to reuse. The future dangerous-logout and independent-calendar tasks below remain distinct; they are not missing prerequisites to the isolated prepared profile or implicitly enabled by it.
+
 - [ ] Materialize valid current activities with bounded preparation, shared overlap handling, and demotion hysteresis.
 - [ ] Integrate teleport capacity/readiness with one coherent identity and truthful failure/cost outcomes.
 - [ ] Enforce specified protected-background harms at both resolution and detailed entry; reject the wolf trap.
@@ -79,6 +86,12 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 ## PS06 — Capacity and sustainable economics
 
 **Owners:** encounter scaling, work admission, accounting, player UX. **Depends on:** supported behaviors from earlier stages.
+
+DG17's proposed first operating envelope adds the following qualification; it does not establish a commercial offer or measured cost:
+
+- [ ] Measure the complete admitted community period, including required decisions, ordinary mechanics, retained evidence, unresolved charges, interruption and return; distinguish real elapsed time from completed game time.
+- [ ] Demonstrate coherent world-wide stop/resume under the isolated profile, with no automatic top-up, provider-reset resume, fabricated resident decision, unattended time debt or selective continued harmful subsystem.
+- [ ] Keep funding authority, actual current supplies, supported effects and service readiness independently visible to admission; preserve current accounting and retention owners.
 
 - [ ] Measure interaction-cost envelopes for dispersed play, markets, concerts, unrestricted combat, and after-entry effect growth.
 - [ ] Provide visible capacity admission, safe waits, party/resident/reconnect fairness, and anti-occupancy/attention-spam abuse policies.

@@ -77,6 +77,8 @@ Use actual quality-qualified model routes and observed activity rates. Do not em
 
 ## 8. Bound the quiet-world liability
 
+The [DG17 continuing-lives proposal](../projects/continuing-lives-feature-spec.md) makes a first isolated operating contract concrete: a finite supported interval, actual resources, authorized funding, required-service readiness, coherent whole-world pause and explicit resumption. The [prepared base-world profile](../worlds/base/continuing-communities.md) supplies qualification values, not a recurring subscription or perpetual-life guarantee. [PS03/PS06](../maintainers/product-scalability.md#ps03--a-bounded-unattended-community) retain delivery; PS-D06 still owns adoption and any broader customer promise.
+
 Persistence should not imply free unlimited autonomous civilization forever. Worlds need a sustainable, explicit allowance for unattended activity. Retained state, ongoing essential commitments, optional new drama, and premium detailed simulation have different cost profiles.
 
 Supported policies may include inexpensive default background continuation, community-funded additional activity, opt-in higher fidelity, or independent/self-hosted worlds under separate operational terms. These are funding possibilities, not a selected commercial price plan. Paying for more detailed simulation must not quietly purchase invulnerability, guaranteed victories, or stronger authority in a shared campaign.

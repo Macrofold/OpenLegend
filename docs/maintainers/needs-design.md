@@ -183,6 +183,8 @@ PS03 with PS05's clock/detail-transition choices and PS06's unattended operating
 
 **Start and parallel boundary:** Consumes DG02's selected activity behavior and applicable DG07 protections. Resolve PS-D03/PS-D06 here before dependent aging, continued absence or customer promises rely on them. Initial personal-world pause rules remain current until this new mode is actually supported. **Existing owners:** PS03/PS05/PS06, activity/agency, simulation-time and work-accounting owners.
 
+**DG17 product expansion prepared, October 6, 2026:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) now defines the proposed isolated community's complete operating, return and funding-failure behavior; [its base-world profile](../worlds/base/continuing-communities.md) selects finite real provisions and a first qualification horizon. This design uses the current mechanical clock and delivered MP04 absence. It makes the narrow proposed PS-D03/PS-D06 disposition concrete without claiming that independent calendars, connected obligations, commercial terms or runtime enablement have been adopted. [PS03/PS05/PS06](product-scalability.md#ps03--a-bounded-unattended-community) and [PS-L23–PS-L27](../limits/product-scalability.md#ps-l23--first-isolated-community-profile) retain delivery and restrictions.
+
 #### DG18 — Worthwhile crowds and background social scenes
 
 PS04's larger focus/aggregation and completed social-scene families, with PS06's matching activity-cost and capacity questions. Reuse the attention proposal; define a gathering worth joining and truthful individual exceptions.
