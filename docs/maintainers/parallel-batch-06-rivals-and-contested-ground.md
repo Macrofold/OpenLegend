@@ -9,7 +9,7 @@
 - [ ] Obtain the [NPC participation answer](../../archive/05-project/open-decisions.md#batch-06--npc-combat-participation), then complete the opponent definition, existing-policy changes, acceptance and standalone prompt.
 - [ ] Implement and qualify that completed scope before marking runtime delivery done.
 
-Open prerequisites: the owner answer blocks dependent design; PG02's ordinary decision/evidence continuation is reported on unmerged `codex/pg02-attended-resident` at `d3f6bb20`; AV02 equipment is an unimplemented/unconfirmed-merged proposal. Exact CF02 consumption will be defined after the answer. Independent research is complete; do not implement a provisional enemy target policy or replace a person's decisions with the stag controller. Parents to reconcile at definition: BW14/DG07, CE and AG.
+Open prerequisites: the owner answer blocks dependent design; PG02's bounded ordinary decision/evidence continuation is now available on main at `b1357b37`, with broader CE/AG12 quality still unqualified; AV02 equipment is an unimplemented/unconfirmed-merged proposal. Exact CF02 consumption will be defined after the answer. Independent research is complete; do not implement a provisional enemy target policy or replace a person's decisions with the stag controller. Parents to reconcile at definition: BW14/DG07, CE and AG.
 
 ## CF02 — Aim, projectiles and real cover
 
@@ -34,7 +34,7 @@ Readiness: current main permits independent stag/motion implementation. AV02 rem
 - [ ] Obtain the NPC participation answer, then define voluntary help/refusal/withdrawal, actual combat scope, lifecycle implications, acceptance and prompt.
 - [ ] Implement and qualify the completed scope; no forced obedience, unearned knowledge or alternate controller.
 
-Open prerequisites: answer blocks dependent design; PG02 branch delivery and PX04 voluntary outings are not confirmed fully merged; AV02 equipment remains proposed. Investigation of the existing agency/consent boundaries can stand, but implementation is not ready. Parents: PX04, CE, AG, DG06/DG07 and BW14; exact scoped map remains unfinished.
+Open prerequisites: answer blocks dependent design; PG02's bounded delivery is now on main at `b1357b37`; PX04 voluntary outings are not confirmed fully merged; AV02 equipment remains proposed. Investigation of the existing agency/consent boundaries can stand, but implementation is not ready. Parents: PX04, CE, AG, DG06/DG07 and BW14; exact scoped map remains unfinished.
 
 ## CF05 — A contested ruin and a victory that lasts
 
