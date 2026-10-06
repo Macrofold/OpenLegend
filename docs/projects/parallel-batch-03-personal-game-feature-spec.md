@@ -1,8 +1,10 @@
 # Parallel batch 03 — Personal game — feature specification
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG02, PG03 and PG04 are underway on separate branches; integrated delivery and the remaining acceptance are open. | 2026-10-03   |
+| Status      | Current progress                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG03 and scoped PG04 are delivered; PG01's exact billing hold, PG02/PG05 and broader PF05 qualification remain open. | 2026-10-05   |
+
+PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
 
 [Technical definitions](parallel-batch-03-personal-game-tech-design.md) · [Assignment prompts](parallel-batch-03-personal-game-prompts.md) · [Tracking](../maintainers/parallel-batch-03-personal-game.md)
 
@@ -91,7 +93,7 @@ Do not implement family disclosure, new family facts, unattended communities, au
 
 ### Current behavior and scope
 
-Context menus, the full action browser, pinned shortcuts, inventory comparison and scoped action descriptions already exist. Catalogue entries already carry description/fact rows, presented through the current Explanation component. The current filter sorts enabled actions before disabled ones on each refresh, and decisive costs generally remain in explanatory detail rather than the primary action row. Extend these owners into a clear ordinary-player journey; do not create a competing recommendations panel, tutorial quest or AI-ranked task list.
+Context menus, the full action browser, pinned shortcuts, inventory comparison and scoped action descriptions already exist. Catalogue entries already carry description/fact rows, presented through the current Explanation component. At the planning baseline, filtering sorted enabled actions before disabled ones on each refresh, and decisive costs generally remained in explanatory detail rather than the primary action row. Extend these owners into a clear ordinary-player journey; do not create a competing recommendations panel, tutorial quest or AI-ranked task list.
 
 Selecting a perceived object or carried item should reveal supported uses, with the target and exact compatible tool clear. Present enough information to choose: known distance/approach, relevant target condition, duration where known, consumed inputs/ammunition, tool reach and outcome uncertainty when relevant. Reuse the action-detail contract; do not repeat every stat on every row. Expandable detail supplies longer explanations, while the primary row retains the action, target/tool and its decisive blocker or cost.
 
@@ -106,6 +108,8 @@ Keep the current contextual menu as the main entry point, a visible route to all
 - Inventory/context-menu/shortcut entry points agree about the chosen item, target and actual command result. No new inference calls are needed to render or rank ordinary supported actions.
 
 Exclude a full inventory redesign, renderer/picking changes, arbitrary key remapping and new action mechanics. Follow existing React Aria components and handbook rules. This delivers a scoped DG01/AC11 improvement, not all ND13/ND18.
+
+**PG03 delivered October 3, 2026.** The scoped ordinary and stale/failure acceptance is demonstrated in [dated evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026). Current behavior lives in [ordinary player discovery](../action-experience.md#ordinary-player-action-discovery); parent programs and PG04 remain open.
 
 **Priority hypothesis:** clearer entry and commitment information earns more immediate play than expanding the action count. If observation shows existing controls already explain a case, retain them; improve the demonstrated discovery or decision gap rather than reskinning everything.
 
@@ -128,6 +132,16 @@ Measure the current path, then remove duplicated work through shared pure prereq
 Exclude general SQL batching, scheduling redesign, renderer quality reduction and speculative caching. If current attribution disproves preview cost as a worthwhile cause, report the measured no-go and the actual dominant owner; do not manufacture a refactor to fill the assignment.
 
 **Priority hypothesis:** this known shared cost grows with useful choices and can hurt every player action. A current matched profile can change that recommendation. Equivalence plus an isolated win is necessary but does not itself prove complete-game responsiveness.
+
+**Delivered October 4:** current attribution selected shared offer prerequisites and discarded drop-preview recording. Matched complete-catalogue reads improve with identical choices and native effects; service stale/competing/restore checks and bounded real HTTP/SSE/production-browser load runs are recorded in [PG04 evidence](../verification/command-frame-spikes.md#pg04-preview-work-and-larger-load-follow-up--october-4-2026). [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness) retains complex-transfer and inventory-projection cost, comparable full-path tails, long-run and physical-device qualification. This scoped delivery preserves the existing command contract and full discovery.
+
+### PG04 delivery record — October 3, 2026
+
+The scoped assignment is complete: current profiling confirmed repeated strike-preview cost, and standalone previews for six scheduled families reuse their existing read-only prerequisites before disposable recording/interruption work. Public preview wording, commands, actual admission and committed transitions are preserved. [PG04 evidence](../verification/command-frame-spikes.md#pg04--pure-prerequisite-previews-october-3-2026) records 1,088 matching comparisons, stale/control/restore checks, isolated batches and full-game measurements. Strike previews are about 65% cheaper per call in the matched browser sample; command/menu p95 and smooth frame cadence are not qualified. Other command families retain disposable execution where later admission can still refuse. Review also preserves the original path inside a caller's work allowance and repairs current-control setup/per-family attribution in the existing profiler. PF05/SW18/AC11 retain broader load and physical-device work; PG03's interface and presentation are unchanged.
+
+### PG04 extension — October 4, 2026
+
+The owner-authorized meter-refilling/following extension is complete: both reuse shared read-only starting checks for standalone previews, bringing the implemented set to eight scheduled families. Actual execution and nested work accounting are unchanged. [Equivalence and measurements](../verification/command-frame-spikes.md#pg04--meter-refilling-and-following-october-4-2026) demonstrate cheaper checks on the existing authored-meter demonstration without adding bundled gameplay or qualifying whole-game command tails, browser rendering, broad load or physical devices.
 
 ## PG05 — Design the first dangerous encounter
 

@@ -54,6 +54,7 @@ export async function retrieveActions(
     model: scope.model,
     dimensions: scope.dimensions,
     fetch: log.fetch,
+    modelPrices: config.embeddingModelPrices,
     timeoutMs: config.aiTimeoutMs,
   });
   try {

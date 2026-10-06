@@ -4,6 +4,8 @@ These are recorded observations from the original verification log, not a new ru
 
 October 3, 2026 [NP03 evidence](camp-life.md#np03--manufactured-material-reuse-october-3-2026) adds one certified manufactured-material input through the existing invention/crafting owners, with supplied/native, PostgreSQL and actual browser observations. Earlier provider evidence below does not qualify this new material chain.
 
+[PG01 current-main evidence](camp-life.md#pg01--current-main-invention-integration-october-3-2026) verifies supplied/native hunting, food, cord/container and current-format reopen on the family-authoring baseline. Its configured ordinary inference service was initially unreachable; the later admitted request expired while queued before model invocation. Follow-up qualifies exact non-invocation spending recovery and the browser failure display. The subsequent [October 4 live player journey](camp-life.md#live-player-journey--october-4-2026) additionally qualifies genuine sling-to-meal and cord/container generation, live paraphrase/reuse and successful browser restart; costs, native failure setups and wider limits are recorded there. No provider/deployment or historical-accounting gate is closed.
+
 ## Foundation review verification
 
 The September 22 review corrected the native response envelope passed to action interpretation when NPC invention is enabled, lost withdrawal handles in relevance fallback, missing generated gathering-target knowledge checks, and premature removal of child dispatch from tracked work. These boundaries have deferred automated coverage in [TODO](../maintainers/TODO.md#invention-foundation--deferred-automated-coverage).

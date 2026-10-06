@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                          | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-03   |
+| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-04   |
 
 The [merged review](../../maintainers/parallel-batch-02-foundations-and-usability.md#merged-review--october-3-2026) records completion boundaries and remaining checks. The whole agreed batch, including its combined scenarios, is complete; these shared documents are archived together.
 
@@ -147,7 +147,7 @@ Update the precise child requirements under [EPR](../../maintainers/events-perce
 
 ## NP03 — Craft with an invented material
 
-**Status: Completed October 3, 2026; native/supplied, browser and PostgreSQL acceptance recorded.** This is one positive material-composition proof under INV-3.5/INV-6, not arbitrary recursive invention or a claim that PW02 omitted its agreed work. [Current world behavior](../../worlds/base/items.md#cordage-manufacture-and-reuse) and [evidence/limits](../../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) distinguish delivery from unqualified live model invention/choice.
+**Status: Completed October 3, 2026; native/supplied, browser and PostgreSQL acceptance recorded.** This is one positive material-composition proof under INV-3.5/INV-6, not arbitrary recursive invention or a claim that PW02 omitted its agreed work. [Current world behavior](../../worlds/base/items.md#cordage-manufacture-and-reuse) and [evidence/limits](../../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) distinguish the original supplied/native delivery from live model evidence. [PG01 subsequently qualifies player-directed live cord/container generation](../../verification/camp-life.md#live-player-journey--october-4-2026); voluntary NPC choice remains separate.
 
 ### Player outcome and priority
 

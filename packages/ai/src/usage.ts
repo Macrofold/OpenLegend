@@ -1,6 +1,21 @@
 import { usdToMicroUsd } from './cost.js';
 import type { ModelTokenPrices, TokenPrices, TokenUsage } from './types.js';
 
+/** Capture prices before dispatch; caller mutation cannot reprice admitted work. */
+export function captureModelPrices(
+  catalogue: readonly ModelTokenPrices[],
+): readonly ModelTokenPrices[] {
+  return Object.freeze(
+    catalogue.map((entry) =>
+      Object.freeze({
+        model: entry.model,
+        prices: Object.freeze({ ...entry.prices }),
+        reportedAliases: Object.freeze([...(entry.reportedAliases ?? [])]),
+      }),
+    ),
+  );
+}
+
 /** Prices belong to the admitted model; a different reported identity needs its explicit alias. */
 export function modelTokenPrices(
   catalogue: readonly ModelTokenPrices[],

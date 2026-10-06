@@ -852,6 +852,8 @@ function projectInventoryItem(
       ),
     );
   }
+  // Cooking needs an exact perceived fire. Explore uses and targets offers that
+  // choice rather than dispatching a shortcut that silently picks a world fire.
   if (accessiblePossession(world, player.id, item.id))
     for (const option of nativeInventoryActions(world, item)) {
       const availability = preview(option.command);

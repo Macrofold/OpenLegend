@@ -1,5 +1,7 @@
 # Entity names and articles
 
+The arrow assertion failure recorded below is superseded by [PG01's mechanical rejection check](camp-life.md#pg01--current-main-invention-integration-october-3-2026). Stone remains invalid as a shaft; the validator and naming behavior did not change. The historical run and its other limits remain intact.
+
 ## October 3, 2026 — shared naming and display audit
 
 Verification ran on uncommitted local `main`, starting at `b50ec6ce75f260d68c18ec99d767982c65b0fccb`, alongside separate tab/camera work. [The naming contract](../entity-names.md) owns behavior; [delivery and remaining gaps](../maintainers/TODO.md#entity-name-presentation) owns task status.

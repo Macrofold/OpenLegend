@@ -3835,7 +3835,7 @@ export class WorldService {
     });
   }
 
-  /** Run the actual admission rules on a disposable transition; never commit preview effects. */
+  /** Run current admission; native pure prerequisites or disposable effects never commit. */
   previewCommand(input: CommandInput, actorId = this.controlledEntityId): ApiResult {
     const result = this.evaluateCommand(randomUUID(), input, actorId, true) as ApiResult;
     if (result.ok && input.type === 'activity-request') {

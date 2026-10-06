@@ -117,7 +117,7 @@ export function inventionQuestions(routes: Record<string, string>): TypedQuestio
   return {
     admissibility: {
       type: 'choice',
-      instructions: `${evidenceRule} Assess feasibility within the supplied trusted construction contract, whose material properties and envelopes define this world's supported mechanics. Do not require physical properties or engineering details outside that contract. Consider requested effects and material properties, not isolated keywords. Do not confuse absent inventory quantities with an impossible technique.`,
+      instructions: `${evidenceRule} Assess whether the current invention requested in context.request is feasible within the supplied trusted construction contract, whose material properties and envelopes define this world's supported mechanics. Do not require physical properties or engineering details outside that contract. Consider requested effects and material properties, not isolated keywords. Do not confuse absent inventory quantities with an impossible technique. Judge the current request, not a prior clarification failure; previous feedback is not evidence that this request is infeasible.`,
       criteria: {
         supported:
           'One sufficiently clear physical technique can fit a supported family using permitted material properties.',
@@ -131,7 +131,7 @@ export function inventionQuestions(routes: Record<string, string>): TypedQuestio
     },
     route: {
       type: 'choice',
-      instructions: `${evidenceRule} Select a supplied known technique only if it actually satisfies the requested effect, specified materials and mechanism. Otherwise select the best supported new family. A merely similar known recipe must not block a materially different invention. Select none when no route can be justified. Native admission independently checks every generated recipe.`,
+      instructions: `${evidenceRule} For the current invention requested in context.request, select a supplied known technique only if it actually satisfies the requested effect, specified materials and mechanism. Otherwise select the best supported new family. A merely similar known recipe must not block a materially different invention. Select none when no route can be justified. Native admission independently checks every generated recipe.`,
       criteria: { ...routes, none: 'No offered recipe or supported new family is justified.' },
     },
   };

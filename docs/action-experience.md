@@ -21,6 +21,18 @@ Known facts use templates or readable labels. Critical nested details without a 
 
 Shared decision context supplies body state, goals, feelings and active commitments. A method adds its remaining steps, future prerequisites, actual or still-unproduced materials, aggregate consumption and supported shortages. These summaries follow the supplied finite structure; they do not search for every plan or simulate a future world. Known blockers, unknown facts and incomplete preparation remain distinct. Other options remain available and replace or interrupt current work through ordinary agency admission.
 
+## Ordinary player action discovery
+
+The ordinary action menu reuses permitted native action facts, including the exact target and carried tool, known distance, observed condition, approach, duration and consumed resources. A row highlights its decisive cost or blocker; adjacent details explain the longer commitment without requiring hover. Shots pin an exact compatible projectile and explain that equipped equipment stays unchanged; melee uses explain the existing exact-equipment prerequisite. A possible hit is never promised damage or a kill.
+
+Inventory cooking uses **Explore uses and targets** to choose an exact perceived fire; the former implicit-fire shortcut is removed. When none is visible, an unavailable cooking choice explains the missing fire. Preparation detail explicitly says it draws from carried supplies across lots, and a small selected lot no longer blocks an otherwise sufficient carried total. Exact-item uses retain their item identity; preparation retains its existing supply-based command rather than pretending to bind one lot.
+
+Complete discovery retains every permitted offer/fuel lot, including accessible nested possessions. Selected-item browsing binds only that exact item for these uses and refuses inaccessible contents before returning detail. Search includes the displayed target/tool identity across the whole result. The picker initially shows 40 choices, with keyboard-accessible **Show more choices** and persistent longer details; valid refresh retains the expanded reading window. [AP01](limits/interface.md#ap01--ordinary-action-discovery) owns the display bounds and performance tradeoff.
+
+Contextual selection, selected inventory uses and **Browse all known actions** share the existing preview and exact command interface. Search, expanded details and opening order survive valid refreshes. Permission/timeline changes invalidate old reads, disappeared targets lose their details, and failed reads require explicit recovery before commands return. This presentation adds no mechanical eligibility, NPC context, model ranking or universal equipment score. [PG03 evidence](verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) and [interface bounds](limits/interface.md#ap01--ordinary-action-discovery) distinguish the selected player journey from broader programs.
+
+Offer previews share read-only prerequisites with actual execution and avoid constructing a disposable world when refused. Drop previews omit the action-history record that would be discarded, while still exercising structural transfer and identity/event checks. Actual commands independently check current state and record their effects as before. Complex transfers and accepted offers still use disposable execution for previews; [PG04 evidence](verification/command-frame-spikes.md#pg04-preview-work-and-larger-load-follow-up--october-4-2026) measures this scoped improvement, and [PF05](maintainers/performance.md#pf05--public-view-and-browser-responsiveness) retains remaining projection and capacity work.
+
 ## What is recorded
 
 `packages/domain/src/action-experience.ts` stores actor-owned occurrences with selected parent meaning, native command/definition pins, actual stages, terminal outcome, multiple output ports, observed effects and links to permitted evidence. Body, status and item owners supply actual committed values and quantities. A final eight-damage hit against two remaining health records two damage. Several subjects have separate effects, not one success flag. Numeric display removes floating-point noise without changing stored values.
@@ -50,6 +62,8 @@ Each occurrence records the semantic selection, exact admitted lots and revision
 A ground-container role can be rebound through the actor's current permitted inspection of that selected container. Changed placement, access, contents or timeline makes the inspection stale; a partial page is not a census of the cache. Method offers must keep unavailable, unknown and incomplete bindings distinct. Individual keepsakes and other exact-instance inventory operations retain their existing revision-bound contract.
 
 ## Selected execution and inspection
+
+Changes to action selection, first-step availability or execution follow [Action availability and temporary execution](action-capabilities.md#action-availability-and-temporary-execution).
 
 `activity-execution.ts` extends the existing `ActorPlan` with a bounded frontier. Supported controls are native invocation, sequence, branch, bounded repeat and bounded wait. Predicates are registered observations such as availability, life, equipment, fire and actual output quantity. There is no generated code or predicate evaluation from prose. Learning retains realized traces; it does not infer new stopping rules or a universal hunting loop.
 

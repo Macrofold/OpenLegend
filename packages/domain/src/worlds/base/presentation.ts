@@ -81,16 +81,10 @@ export function nativePreparationOptions(world: WorldState) {
 type ItemAction = {
   id: string;
   label: string;
-  command: { type: 'cook'; itemId: string } | { type: 'prepare'; preparation: NativePreparation };
+  command: { type: 'prepare'; preparation: NativePreparation };
 };
 export function nativeInventoryActions(world: WorldState, item: ItemInstance): ItemAction[] {
   const actions: ItemAction[] = [];
-  if (item.definitionId === BASE_COOKING_PRESENTATION.input)
-    actions.push({
-      id: `cook-${item.id}`,
-      label: BASE_COOKING_PRESENTATION.label,
-      command: { type: 'cook', itemId: item.id },
-    });
   for (const preparation of nativePreparationOptions(world))
     if (preparation.input === item.definitionId)
       actions.push({

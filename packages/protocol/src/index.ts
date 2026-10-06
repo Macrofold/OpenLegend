@@ -226,6 +226,8 @@ export interface CatalogueAction {
 }
 
 export interface ActionContext {
+  /** Explicit complete permitted discovery, separate from empty-ground context. */
+  catalogue?: boolean;
   targetId?: string;
   itemId?: string;
   destinationId?: string;

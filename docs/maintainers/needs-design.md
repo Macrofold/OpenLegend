@@ -65,6 +65,8 @@ ND13's ordinary action recommendations, stable menus, remapping and nearby inter
 
 **Start and parallel boundary:** Use current action, inventory and narration contracts. Platform-specific input/lifecycle expansion belongs to DG35. Can run alongside DG02–DG03; presentation consumes what a character may know and do rather than redefining it. **Existing owners:** AC/UIUX, NC/EPR and PO.
 
+**PG03 scoped delivery:** existing contextual menus, complete known discovery and exact selected inventory uses now explain native commitments, retain choices through refresh and distinguish stale/failure states. The October 4 review adds complete later/nested offer/fuel identity, access-checked details and a searchable 40-row initial display with keyboard Show more. [PG03](parallel-batch-03-personal-game.md#pg03--readable-action-discovery) and [PG03 evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) own this ordinary-player slice. Recommendation counting/ranking, key remapping, broader nearby controls and place/item encounter narration remain with ND13/ND18; DG01 is not wholly completed.
+
 #### DG02 — One resident who follows through
 
 PS02 and the personal-play portion of PS04, with the early [compelling-character experience](../projects/compelling-characters-feature-spec.md): one resident whose bodily and psychological experience, identity, memories, relationships, attention and choices form a coherent life. Explicitly include contact, belonging, enjoyment, independent interests and chosen solitude alongside survival. Continued useful activity, interruptions and readable conversation must connect to actual consequences, satisfaction, changed priorities and stopping. Reuse the existing continuing-lives and attention proposals; [CE01–CE05](character-experience.md) owns this integration across the existing subsystem work.
@@ -530,6 +532,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** refine the proposed counting and menu-stability rules into a scoped delivery contract: select family markers, grouping across action revisions, windows/weights, treatment of NPC activity and the sharing/privacy contract. Define predictable recommendation changes and user control. Specify remappable actions/categories, conflict handling, accessibility, device/world scope and broken bindings when a capability changes. Scope the later direct-movement and nearby-interaction controls, including destination cancellation, stable target selection and text-focus isolation. Illustrative slot counts and keys remain examples.
 
+**PG03 scoped delivery:** the existing menu now retains opening order while updating availability, preserves search/expanded identity and provides complete permitted discovery plus exact inventory uses. Review preserves the reading window through refresh and includes visible target/tool identity in complete search. This supersedes per-refresh availability sorting in that menu. Pins and their three slots remain stable. [PG03 evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) does not close the broader recommendation signals, revision grouping, arbitrary remapping or platform-specific controls described above.
+
 ### ND14 — In-world remote messages and calls
 
 **Decision before design.** Source: [phones and spatial conversation](../../archive/03-design-proposals/world-and-player-experience.md#phones-and-spatial-conversation).
@@ -569,6 +573,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** actor/object encounter selection is implemented; NC09–NC12 and EPR retain its delivery and qualification. The tracker explicitly leaves places and inventory items needing a future exposure contract.
 
 **Needed before an implementation project:** define a real place identity and what constitutes encountering it, and when carrying, opening or inspecting an item makes it newly available. Specify recognition/detail, custody/container permissions, source text, reentry and duplicate suppression. A small place/item slice should reuse current story selection without inventing an omniscient map narrator or reopening completed actor encounters.
+
+**PG03 scoped delivery:** selected inventory items now expose their existing comparison and supported uses with permitted native facts. Review refuses inaccessible contents before detail projection and retains exact later/accessibly nested lots for offering or fuel use. The second review makes cooking select a fire and explains preparation across carried lots. This helps explain an encountered item without generating narration or defining when a place/item counts as newly encountered. [PG03 evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) therefore contributes to DG01 presentation while the full ND18 exposure/narration design remains open.
 
 ### ND34 — Additional distribution platforms and offline play
 

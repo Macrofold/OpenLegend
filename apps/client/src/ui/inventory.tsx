@@ -22,11 +22,8 @@ import './inventory.css';
 type InventoryProps = {
   view: GameView;
   addItem(): void;
-  contextMenu(
-    item: InventoryItemView,
-    point: { x: number; y: number },
-    opener: HTMLButtonElement,
-  ): void;
+  browseActions?(item: InventoryItemView, opener: HTMLElement): void;
+  contextMenu(item: InventoryItemView, point: { x: number; y: number }, opener: HTMLElement): void;
   command: CommandDispatcher;
   connected: boolean;
   visible: boolean;
@@ -119,6 +116,7 @@ export function Inventory(props: InventoryProps) {
 function InventoryWorkspace({
   view,
   addItem,
+  browseActions,
   contextMenu,
   command,
   connected,
@@ -385,7 +383,7 @@ function InventoryWorkspace({
     side: InventorySide,
     selected: InventoryItemView,
     button: HTMLButtonElement,
-    point: { x: number; y: number },
+    open: (item: InventoryItemView, opener: HTMLElement) => void,
   ) {
     const state = collection(side);
     const source = state.page;
@@ -410,7 +408,7 @@ function InventoryWorkspace({
     // World-container contents keep their exact local transfer/details route.
     if (!source.breadcrumbs.some((entry) => entry.id === view.player.id)) return;
     setDetailOpen(false);
-    contextMenu(current, point, button);
+    open(current, button);
   }
   function moveIntention(
     side: InventorySide,
@@ -683,7 +681,9 @@ function InventoryWorkspace({
                 onNavigate={(id) => navigate(side, id)}
                 onSelect={(selected, button, actions) => choose(side, selected, button, actions)}
                 onContextMenu={(selected, button, point) =>
-                  openItemContext(side, selected, button, point)
+                  openItemContext(side, selected, button, (current, opener) =>
+                    contextMenu(current, point, opener),
+                  )
                 }
                 onQuickMove={(selected) => quickMove(side, selected)}
                 onDragStart={(selected, event) => beginDrag(side, selected, event)}
@@ -925,6 +925,32 @@ function InventoryWorkspace({
                           Talk about {namePhrase(item, 'definite')}
                         </Button>
                       )}
+                      {browseActions &&
+                        selectedCollection?.page?.breadcrumbs.some(
+                          (entry) => entry.id === view.player.id,
+                        ) && (
+                          <Button
+                            size="sm"
+                            variant="quiet"
+                            disabled={
+                              busy ||
+                              !connected ||
+                              !selectedCollection.available ||
+                              selectedCollection.loading
+                            }
+                            onPress={() => {
+                              if (anchor.current?.isConnected)
+                                openItemContext(
+                                  selection.side,
+                                  item,
+                                  anchor.current,
+                                  browseActions,
+                                );
+                            }}
+                          >
+                            Explore uses and targets
+                          </Button>
+                        )}
                       {item.actions.map((action) => (
                         <div key={action.id}>
                           <Button

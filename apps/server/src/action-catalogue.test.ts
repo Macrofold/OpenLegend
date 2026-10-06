@@ -80,6 +80,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     `follow:${NPC_ID}`,
     'move',
     `punch-${NPC_ID}`,
+    `knife-${NPC_ID}:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'knife')!.id}`,
     `talk-${NPC_ID}`,
     'teach',
   ]);

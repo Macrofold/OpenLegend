@@ -11,12 +11,14 @@ import {
   createWorld,
   executeCommand,
   findPath,
+  familyMaterialEligible,
   inventoryFor,
   isWalkable,
   observeActor,
   quantityOf,
   queryMemories,
   remember,
+  recipeFamily,
   validateDeclaration,
 } from './index.js';
 import type { Command, DeclarationDraft, WorldState } from './types.js';
@@ -391,12 +393,30 @@ describe('bounded invented mechanisms', () => {
   });
   it('requires shaft-capable material for an arrow, not merely any rigid object', () => {
     const world = createWorld();
+    const snapshot = structuredClone(world);
     const candidate = arrow();
     expect(validateDeclaration(world, candidate)).toEqual([]);
+    const family = recipeFamily(world, candidate.family.id)!;
+    expect(familyMaterialEligible(world, family, world.itemDefinitions['wood']!, 'shaft')).toBe(
+      true,
+    );
+    expect(familyMaterialEligible(world, family, world.itemDefinitions['stone']!, 'shaft')).toBe(
+      false,
+    );
     candidate.inputs[0]!.definitionId = 'stone';
     expect(validateDeclaration(world, candidate)).toEqual([
       'This material cannot fill the selected role.',
     ]);
+    const rejected = admitDeclaration(world, candidate, {
+      actorId: PLAYER_ID,
+      requestId: 'stone-shaft',
+      source: 'test-fixture',
+      authority: { origin: 'player', policyRevision: 1 },
+    });
+    expect(rejected.outcome).toMatchObject({ ok: false, code: 'invalid-declaration' });
+    expect(rejected.world).toBe(world);
+    expect(world).toEqual(snapshot);
+    expect(rejected.events).toEqual([]);
   });
   it('approaches close enough to fire a short-range tool at an already fleeing animal', () => {
     const draft = sling();

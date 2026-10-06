@@ -9,7 +9,7 @@ import {
   validateQuestions,
   validateJudgmentSize,
 } from './validation.js';
-import { estimateCostUsd, modelTokenPrices } from './usage.js';
+import { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
 import type {
   AiClient,
   AiClientConfig,
@@ -123,19 +123,11 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
       ? Object.freeze({
           ...options,
           prices: options.prices ? Object.freeze({ ...options.prices }) : undefined,
-          modelPrices: Object.freeze(
-            (
-              options.modelPrices ??
+          modelPrices: captureModelPrices(
+            options.modelPrices ??
               (options.prices
                 ? [{ model: options.model ?? DEFAULTS[provider].model, prices: options.prices }]
-                : [])
-            ).map((entry) =>
-              Object.freeze({
-                model: entry.model,
-                prices: Object.freeze({ ...entry.prices }),
-                reportedAliases: Object.freeze([...(entry.reportedAliases ?? [])]),
-              }),
-            ),
+                : []),
           ),
         })
       : undefined;

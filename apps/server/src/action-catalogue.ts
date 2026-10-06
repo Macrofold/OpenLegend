@@ -1,11 +1,17 @@
 import { namePhrase } from '@open-legend/language';
-import { worldSupport, worldPosition } from '@open-legend/domain';
+import {
+  accessiblePossession,
+  worldSupport,
+  worldPosition,
+  strikeDefinition,
+  nativeHuntCatalogueLabel,
+} from '@open-legend/domain';
 import { itemFor, custodian } from '@open-legend/domain';
 import { inventoryItemView } from './inventory-view.js';
 import type { RequestScope } from './authority.js';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
-import { availableStrikes } from '@open-legend/domain';
+import { ammoFor, availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import {
@@ -20,10 +26,14 @@ import type {
   ActionCatalogue,
   ActionContext,
   CatalogueAction,
+  ActionOption,
   CommandInput,
 } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
-import { ACTION_DESCRIPTIONS, describeCommand, commandFacts } from './action-descriptions.js';
+import { ACTION_DESCRIPTIONS, actionDescriptions } from './action-descriptions.js';
+
+/** Safe selected-subject failures; other exceptions remain generic at the HTTP boundary. */
+export class ActionCatalogueUnavailable extends Error {}
 
 // Finite native family adapters remain here; INV-3 owns shared discovery/execution.
 // See archive/07-technical-architecture/world-module-runtime.md#7-action-families-and-agency-integration.
@@ -39,17 +49,27 @@ export function actionCatalogue(
   service.assertScope(scope);
   const controlling = service.currentScope(scope, 'play', true);
   const controlUnavailable = { ok: false, message: 'Take control of your character to act here.' };
-  if (context.itemId) {
-    const item = itemFor(service.world, context.itemId);
-    if (!item || custodian(service.world, item.id) !== scope.actorId)
-      throw new Error('This possession is unavailable.');
-    const observation = service.observe(scope.actorId, { includeMemories: false })!;
+  const selectedItem = context.itemId ? itemFor(service.world, context.itemId) : undefined;
+  if (
+    context.itemId &&
+    (!selectedItem || !accessiblePossession(service.world, scope.actorId, selectedItem.id))
+  )
+    throw new ActionCatalogueUnavailable('This possession is unavailable.');
+  const observation = service.observe(scope.actorId, { includeMemories: false })!;
+  const descriptions = actionDescriptions(observation, service.world);
+  const actions: CatalogueAction[] = [];
+  const possessionAvailability = (option: ActionOption) =>
+    option.enabled
+      ? service.previewCommand(option.command, scope.actorId)
+      : { ok: false, message: option.reason ?? controlUnavailable.message };
+  if (selectedItem) {
+    const item = selectedItem;
     const projected = inventoryItemView(service, scope, item),
       options = [...projected.actions];
     if (context.destinationId) {
       const destination = service.world.entities[context.destinationId];
       if (!destination || custodian(service.world, destination.id) !== scope.actorId)
-        throw new Error('This destination is unavailable.');
+        throw new ActionCatalogueUnavailable('This destination is unavailable.');
       const command: CommandInput = {
         type: 'transfer-item',
         itemId: item.id,
@@ -70,31 +90,35 @@ export function actionCatalogue(
         ...(!result.ok ? { reason: result.message } : {}),
       });
     }
-    return {
-      revision: service.version,
-      actions: options.map((option) => ({
-        id: option.id,
-        label: option.label,
-        icon: option.icon ?? nativeActionIcon(option.command.type),
-        category: 'Possessions',
-        description: describeCommand(option.command, observation, service.world),
-        facts: commandFacts(option.command, observation),
-        keywords: [projected.name],
-        enabled: option.enabled,
-        ...(option.reason ? { reason: option.reason } : {}),
-        intent: { kind: 'command', command: option.command },
-      })),
-    };
+    actions.push(
+      ...options.map((option): CatalogueAction => {
+        const availability = possessionAvailability(option);
+        return {
+          id: option.id,
+          label: option.label,
+          icon: option.icon ?? nativeActionIcon(option.command.type),
+          category: 'Possessions',
+          description: descriptions.describe(option.command),
+          facts: descriptions.facts(option.command),
+          keywords: [projected.name],
+          enabled: availability.ok,
+          ...(!availability.ok ? { reason: availability.message } : {}),
+          intent: { kind: 'command', command: option.command },
+        };
+      }),
+    );
   }
-  const observation = service.observe(scope.actorId, { includeMemories: false })!;
   const world = service.world;
+  const itemUses = selectedItem ? [selectedItem] : observation.inventory;
   const targets = observation.visibleEntities.filter((entity) => entity.id !== scope.actorId);
   const selected =
     context.targetId === scope.actorId
       ? world.entities[scope.actorId]
       : targets.find((entity) => entity.id === context.targetId);
-  if (context.targetId && !selected) throw new Error('That target is no longer in view.');
-  const actions: CatalogueAction[] = [];
+  if (context.targetId && !selected)
+    throw new ActionCatalogueUnavailable('That target is no longer in view.');
+  const actionTargets = context.catalogue || context.itemId ? targets : selected ? [selected] : [];
+  const actionIds = new Set(actions.map((action) => action.id));
   const add = (
     id: string,
     label: string,
@@ -104,21 +128,30 @@ export function actionCatalogue(
     targetId?: string,
     provided?: { availability: { ok: boolean; message: string }; description: string },
   ) => {
+    if (actionIds.has(id)) return;
     // Ground exposes destination movement only. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
-    if (!selected && command.type !== 'move') return;
-    if (selected && targetId !== selected.id && !(selected.id === scope.actorId && !targetId))
+    if (context.itemId) {
+      if (command.itemId !== context.itemId) return;
+    } else if (!context.catalogue && !selected && command.type !== 'move') return;
+    if (
+      !context.catalogue &&
+      selected &&
+      targetId !== selected.id &&
+      !(selected.id === scope.actorId && !targetId)
+    )
       return;
     const result = controlling
       ? (provided?.availability ?? service.previewCommand(command, scope.actorId))
       : controlUnavailable;
+    actionIds.add(id);
     actions.push({
       id,
       label,
       icon: nativeActionIcon(command.type),
       category,
-      description: provided?.description ?? describeCommand(command, observation, world),
-      facts: commandFacts(command, observation),
+      description: provided?.description ?? descriptions.describe(command),
+      facts: descriptions.facts(command),
       keywords,
       ...(targetId ? { targetId } : {}),
       enabled: result.ok,
@@ -142,6 +175,7 @@ export function actionCatalogue(
     reason: string,
     id: string = family,
     targetId?: string,
+    itemId?: string,
   ) => {
     const personalFamily = [
       'cancel',
@@ -152,8 +186,15 @@ export function actionCatalogue(
       'cook',
       'craft',
     ].includes(family);
-    if (!selected) return;
-    if (targetId !== selected.id && !(selected.id === scope.actorId && !targetId && personalFamily))
+    if (context.itemId) {
+      if (itemId !== context.itemId) return;
+    } else if (!context.catalogue && !selected) return;
+    if (
+      !context.itemId &&
+      !context.catalogue &&
+      targetId !== selected?.id &&
+      !(selected?.id === scope.actorId && !targetId && personalFamily)
+    )
       return;
     actions.push({
       id,
@@ -182,10 +223,32 @@ export function actionCatalogue(
       selected?.id,
     );
   else missing('move', 'Walk', 'Movement', 'Right-click a destination in the world.');
-  if (selected)
-    for (const option of statusEffectActions(world, world.entities[scope.actorId]!, selected))
-      add(option.id, option.label, 'States', option.command, [], selected.id);
+  for (const target of context.catalogue
+    ? [observation.actor, ...targets]
+    : selected
+      ? [selected]
+      : [])
+    for (const option of statusEffectActions(world, world.entities[scope.actorId]!, target))
+      add(option.id, option.label, 'States', option.command, [], target.id);
   const self = world.entities[scope.actorId]!.actor!;
+  // Select carried tools/projectiles once for this immutable actor read, before
+  // expanding their uses across perceived targets. Item browsing keeps only its tool.
+  const tools = actionTargets.some((target) => target.actor)
+    ? observation.inventory.filter(
+        (item) =>
+          (!context.itemId || item.id === context.itemId) &&
+          (world.itemDefinitions[item.definitionId]?.launcher ||
+            world.itemDefinitions[item.definitionId]?.melee) &&
+          accessiblePossession(world, scope.actorId, item.id),
+      )
+    : [];
+  const launchers = tools.filter((item) => world.itemDefinitions[item.definitionId]?.launcher);
+  const projectiles = new Map<string, string | undefined>();
+  for (const item of tools) {
+    const kind = world.itemDefinitions[item.definitionId]?.launcher?.ammunitionKind;
+    if (kind && !projectiles.has(kind))
+      projectiles.set(kind, ammoFor(world, scope.actorId, kind)?.id);
+  }
   if (
     self.action ||
     self.agency.suspended ||
@@ -205,10 +268,30 @@ export function actionCatalogue(
     ]);
   }
 
-  for (const target of selected ? [selected] : []) {
-    for (const option of pickupActions(world, observation.actor, target, (command) =>
-      service.previewCommand(command, scope.actorId),
-    ))
+  for (const target of actionTargets) {
+    if (context.catalogue && target.actor?.alive)
+      add(
+        `follow:${target.id}`,
+        `Follow ${target.name}`,
+        'Movement',
+        { type: 'follow', targetId: target.id },
+        ['follow', 'accompany'],
+        target.id,
+      );
+    if (context.catalogue && worldSupport(target))
+      add(
+        `move:${target.id}`,
+        `Walk to ${target.name}`,
+        'Movement',
+        { type: 'move', position: { ...worldPosition(target), surfaceId: worldSupport(target)! } },
+        ['move', 'go', 'travel'],
+        target.id,
+      );
+    for (const option of context.itemId
+      ? []
+      : pickupActions(world, observation.actor, target, (command) =>
+          service.previewCommand(command, scope.actorId),
+        ))
       add(
         option.id,
         option.label,
@@ -219,9 +302,16 @@ export function actionCatalogue(
         { availability: option.availability, description: option.description },
       );
     if (target.actor && target.id !== scope.actorId)
-      for (const definition of availableStrikes(service.world, scope.actorId, target))
+      for (const definition of [
+        ...availableStrikes(world, scope.actorId, target),
+        ...tools.flatMap((item) => {
+          if (item.id === self.equippedItemId) return [];
+          const strike = strikeDefinition(item.definitionId, world, item.id, target);
+          return strike ? [strike] : [];
+        }),
+      ])
         add(
-          `${definition.id}-${target.id}`,
+          `${definition.id}-${target.id}${definition.weaponItemId ? `:${definition.weaponItemId}` : ''}`,
           definition.label,
           'Combat',
           {
@@ -258,15 +348,33 @@ export function actionCatalogue(
         [world.itemDefinitions[target.resource.definitionId]!.name, 'collect'],
         target.id,
       );
-    if (target.animal && target.actor?.alive)
-      add(
-        `hunt-${target.id}`,
-        `Hunt ${target.name}`,
-        'Hunt',
-        { type: 'hunt', targetId: target.id },
-        ['shoot', 'attack', 'ranged'],
-        target.id,
-      );
+    if (target.animal && target.actor?.alive) {
+      if (!launchers.length)
+        add(
+          `hunt-${target.id}`,
+          `Hunt ${target.name}`,
+          'Hunt',
+          { type: 'hunt', targetId: target.id },
+          ['shoot', 'attack', 'ranged'],
+          target.id,
+        );
+      for (const item of launchers)
+        add(
+          `hunt-${target.id}:${item.id}`,
+          nativeHuntCatalogueLabel(target.name, world.itemDefinitions[item.definitionId]!.name),
+          'Hunt',
+          {
+            type: 'hunt',
+            targetId: target.id,
+            itemId: item.id,
+            ammunitionId: projectiles.get(
+              world.itemDefinitions[item.definitionId]!.launcher!.ammunitionKind,
+            ),
+          },
+          ['shoot', 'attack', 'ranged'],
+          target.id,
+        );
+    }
     if (target.remains)
       add(
         `harvest-${target.id}`,
@@ -276,7 +384,7 @@ export function actionCatalogue(
         ['butcher', 'meat', 'remains'],
         target.id,
       );
-    if (canSpeak(target) && target.actor?.alive) {
+    if (!context.itemId && canSpeak(target) && target.actor?.alive) {
       // Opening a composer is read-only, including while paused or AI is unconfigured.
       actions.push({
         id: `talk-${target.id}`,
@@ -301,8 +409,25 @@ export function actionCatalogue(
   }
 
   const fires = (selected ? [selected] : targets).filter((entity) => entity.heat);
-  for (const item of observation.inventory) {
+  for (const item of itemUses) {
     const definition = world.itemDefinitions[item.definitionId]!;
+    if (context.catalogue) {
+      const projected = inventoryItemView(service, scope, item);
+      for (const option of projected.actions)
+        if (!actionIds.has(option.id))
+          add(
+            option.id,
+            `${option.label} · ${projected.name}`,
+            'Possessions',
+            option.command,
+            [projected.name],
+            undefined,
+            {
+              availability: possessionAvailability(option),
+              description: descriptions.describe(option.command),
+            },
+          );
+    }
     if (definition.launcher || definition.melee || definition.gatheringTool)
       add(
         `equip-${item.id}`,
@@ -336,26 +461,31 @@ export function actionCatalogue(
           'Create',
           BASE_COOKING_PRESENTATION.missingTarget,
           `cook-${item.id}`,
+          undefined,
+          item.id,
         );
     }
   }
-  // Offers and replies involve only the selected person; the recipient alone can accept.
-  for (const option of selected?.actor
-    ? handoverOptions(world, scope.actorId, observation.inventory, selected)
-    : [])
-    add(
-      option.id,
-      option.label,
-      'Social',
-      option.command,
-      ['offer', 'give', 'share'],
-      selected!.id,
-    );
-  // Fire care binds the exact selected fire; one of light/put out applies to its current state.
-  for (const option of selected?.heat
-    ? fireCareOptions(world, observation.inventory, selected)
-    : [])
-    add(option.id, option.label, 'Survival', option.command, ['fire'], selected!.id);
+  // Each offer/reply binds its exact perceived person; the recipient alone can accept.
+  for (const target of actionTargets) {
+    for (const option of target.actor
+      ? handoverOptions(
+          world,
+          scope.actorId,
+          itemUses,
+          target,
+          context.catalogue || context.itemId
+            ? { maxLots: itemUses.length, includeNested: true }
+            : {},
+        )
+      : [])
+      add(option.id, option.label, 'Social', option.command, ['offer', 'give', 'share'], target.id);
+    // Fire care binds the exact selected fire; one of light/put out applies to its current state.
+    for (const option of target.heat
+      ? fireCareOptions(world, itemUses, target, { eachLot: !!context.catalogue })
+      : [])
+      add(option.id, option.label, 'Survival', option.command, ['fire'], target.id);
+  }
   for (const recipe of observation.knownRecipes)
     add(
       `craft-${recipe.id}`,

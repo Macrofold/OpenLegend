@@ -682,7 +682,7 @@ function App({
     requestAnimationFrame(() => canvas.current?.focus());
   }
   function closePicker() {
-    const opener = picker?.returnFocus;
+    const opener = picker?.opener;
     setPicker(null);
     if (opener?.isConnected && opener.getClientRects().length) {
       opener.focus({ preventScroll: true });
@@ -1145,6 +1145,16 @@ function App({
             <ContainerOpening state={containerOpening} paused={view.clock.paused} />
             <Inventory
               {...props}
+              browseActions={(item, opener) => {
+                const bounds = opener.getBoundingClientRect();
+                setPicker({
+                  context: { itemId: item.id },
+                  item: { id: item.id, name: item.name },
+                  point: { x: bounds.right, y: bounds.top },
+                  entity: null,
+                  opener,
+                });
+              }}
               command={command}
               openContainer={containerOpening.openContainer}
               onTalkAbout={talkAbout}
@@ -1152,13 +1162,13 @@ function App({
                 connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
               }
               addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
-              contextMenu={(item, point, returnFocus) =>
+              contextMenu={(item, point, opener) =>
                 setPicker({
                   context: { itemId: item.id },
+                  item: { id: item.id, name: item.name },
                   point,
                   entity: null,
-                  subject: item.name,
-                  returnFocus,
+                  opener,
                 })
               }
             />
@@ -1750,7 +1760,7 @@ function App({
                   setItemCreation({ definitionId, target: { position } });
                   setPicker(null);
                 }}
-                key={`${picker.point.x}:${picker.point.y}:${picker.entity?.id}`}
+                key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.saveTimeline}:${picker.point.x}:${picker.point.y}:${picker.entity?.id}:${picker.context.itemId}`}
                 picker={picker}
                 view={view}
                 connected={connected}

@@ -1,6 +1,6 @@
 import { namePhrase } from '@open-legend/language';
 import { godCharacterAvailability } from './god-character-actions';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import type {
   ActionCatalogue,
@@ -10,9 +10,11 @@ import type {
   GameView,
   PlayerProfile,
 } from '@open-legend/protocol';
-import { filterActions } from '../action-browser';
+import { filterActions, retainActionOrder } from '../action-browser';
 import { post } from '../api';
-import { Explanation, Icon, IconButton, symbol } from '../design-system/components';
+import { playerEntity } from '../entity-view';
+import { Icon, IconButton, symbol } from '../design-system/components';
+import { ActionChoice } from './action-choice';
 import { spawnIcons } from './god-tools';
 import { PulloutPicker } from './pullout';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
@@ -20,9 +22,11 @@ export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
   entity: EntityView | null;
-  subject?: string;
-  returnFocus?: HTMLButtonElement;
+  item?: { id: string; name: string };
+  opener?: HTMLElement;
 };
+// A display window, not a discovery cutoff: search still visits every choice.
+const CHOICE_WINDOW = 40;
 export function ActionPicker({
   picker,
   view,
@@ -62,59 +66,123 @@ export function ActionPicker({
   createPerson(position: { x: number; y: number; z: number; surfaceId: string }): void;
 }) {
   const [query, setQuery] = useState(''),
-    [actions, setActions] = useState<CatalogueAction[]>([]),
-    [error, setError] = useState('Loading actions…'),
+    [visibleCount, setVisibleCount] = useState(CHOICE_WINDOW),
+    [full, setFull] = useState(false),
+    [result, setResult] = useState<{
+      key: string;
+      scopeKey: string;
+      inventoryRevision: number;
+      actions: CatalogueAction[];
+    }>(),
+    [error, setError] = useState(''),
+    [preferenceError, setPreferenceError] = useState(''),
     [refreshing, setRefreshing] = useState(false),
     [saving, setSaving] = useState(false),
     [showUnavailable, setShowUnavailable] = useState(
       view.profile.preferences.showUnavailableActions,
     );
   const [openPullout, setOpenPullout] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string[]>([]);
   const [taskMatches, setTaskMatches] = useState(0);
   const menu = useRef<HTMLDivElement>(null),
     input = useRef<HTMLInputElement>(null),
-    refreshRequest = useRef(0);
+    refreshRequest = useRef(0),
+    readController = useRef<AbortController | null>(null);
   const [position, setPosition] = useState(picker.point);
-  const targetMissing =
-    !!picker.entity &&
-    picker.entity.id !== view.player.id &&
-    !view.entities.some((entity) => entity.id === picker.entity?.id);
+  const context = full ? { catalogue: true } : picker.context;
+  const scopeKey = JSON.stringify([
+    view.worldId,
+    view.player.id,
+    view.access?.scope,
+    view.access?.controlGeneration,
+    view.saveTimeline,
+    context,
+  ]);
+  const key = JSON.stringify([scopeKey, view.player.inventoryRevision, view.clock.paused]);
+  const entities = useMemo(
+    () => new Map(view.entities.map((entity) => [entity.id, entity])),
+    [view.entities],
+  );
+  // Movement replaces entity data without changing which targets are permitted.
+  // Only identity membership needs to invalidate catalogue/search filtering.
+  const visibleIds = view.entities.map((entity) => entity.id);
+  const visibleIdentity = JSON.stringify(visibleIds);
+  const visibleTargets = useMemo(() => new Set(visibleIds), [visibleIdentity]);
+  const subject =
+    picker.context.targetId === view.player.id
+      ? playerEntity(view)
+      : entities.get(picker.context.targetId ?? '');
+  const lostTarget = !full && !!picker.context.targetId && !subject;
+  const checking = refreshing || (!!result && result.key !== key);
+  // Pause changes availability, so those rows stay mounted for focus. Possession
+  // or authority changes hide old details before another read can publish them.
+  const actions = useMemo(
+    () =>
+      result?.scopeKey === scopeKey &&
+      result.inventoryRevision === view.player.inventoryRevision &&
+      !lostTarget
+        ? result.actions.filter(
+            (action) =>
+              !action.targetId ||
+              action.targetId === view.player.id ||
+              visibleTargets.has(action.targetId),
+          )
+        : [],
+    [result, scopeKey, view.player.inventoryRevision, view.player.id, lostTarget, visibleTargets],
+  );
+  const hadFocus = useRef(false);
   const refresh = useCallback(async () => {
     const request = ++refreshRequest.current;
+    readController.current?.abort();
+    const controller = new AbortController();
+    readController.current = controller;
     setRefreshing(true);
+    setError('');
     try {
       const result = await post<{ ok: boolean; message?: string; catalogue: ActionCatalogue }>(
         '/api/actions',
-        picker.context,
+        context,
+        controller.signal,
       );
       if (request !== refreshRequest.current) return;
       if (!result.ok) throw new Error(result.message);
-      setActions(result.catalogue.actions);
+      setResult((previous) => ({
+        key,
+        scopeKey,
+        inventoryRevision: view.player.inventoryRevision,
+        actions: retainActionOrder(
+          previous?.scopeKey === scopeKey ? previous.actions : [],
+          result.catalogue.actions,
+        ),
+      }));
       setError('');
     } catch (reason) {
-      if (request === refreshRequest.current) setError(String(reason));
+      if (request === refreshRequest.current) {
+        setResult(undefined);
+        setError(`Actions could not be checked. Refresh to try again. ${String(reason)}`);
+      }
     } finally {
       if (request === refreshRequest.current) setRefreshing(false);
     }
-  }, [picker.context]);
+    // The serialized read identity includes actor/control/timeline and possession changes.
+    // An obsolete completion cannot publish details for a different authorized scope.
+  }, [key]);
   useEffect(() => {
-    input.current?.focus();
     void refresh();
     return () => {
       refreshRequest.current++;
+      readController.current?.abort();
     };
   }, [refresh]);
-  const matches = filterActions(
-    actions.map((a) =>
-      !connected
-        ? { ...a, enabled: false, reason: 'Reconnect to the world.' }
-        : targetMissing
-          ? { ...a, enabled: false, reason: 'This subject is no longer in view.' }
-          : a,
-    ),
-    query,
-    showUnavailable,
-    picker.context.targetId,
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
+  useLayoutEffect(() => {
+    if (hadFocus.current && document.activeElement === document.body) input.current?.focus();
+  }, [result, key, lostTarget, actions.length]);
+  const matches = useMemo(
+    () => filterActions(actions, query, showUnavailable),
+    [actions, query, showUnavailable],
   );
   const isPickUpAll = (action: CatalogueAction) =>
     action.intent.kind === 'command' &&
@@ -123,37 +191,54 @@ export function ActionPicker({
   const pickups = matches
     .filter((action) => action.category === 'Pick Up')
     .sort((a, b) => Number(isPickUpAll(b)) - Number(isPickUpAll(a)));
+  const listedMatches = matches.filter(
+    (a) => full || a.category !== 'Pick Up' || pickups.length <= 1,
+  );
+  const visibleMatches = listedMatches.slice(0, visibleCount);
   const canInvent =
     !view.inventionPolicy.playerLocked &&
     connected &&
-    !targetMissing &&
     !error &&
+    !checking &&
+    !lostTarget &&
+    result?.key === key &&
     !!query.trim() &&
-    !taskMatches &&
+    (full || !taskMatches) &&
     !matches.some((a) => a.enabled);
   const showInspect =
-    !!picker.entity && (!query || 'look closer description inspect'.includes(query.toLowerCase()));
+    !full &&
+    !!subject &&
+    !!picker.entity &&
+    (!query || 'look closer description inspect'.includes(query.toLowerCase()));
   const showOpen =
-    !!picker.entity?.storage &&
+    !full &&
+    !lostTarget &&
+    !!subject?.storage &&
     (!query ||
-      `open storage inventory ${picker.entity.name}`
+      `open storage inventory ${subject.name}`
         .toLocaleLowerCase()
         .includes(query.toLocaleLowerCase()));
-  const showRevive =
-    view.godMode &&
-    !!picker.entity &&
-    godCharacterAvailability(picker.entity).revive &&
-    (!query || 'revive god mode'.includes(query.toLowerCase()));
   const showCognition =
+    !full &&
+    !lostTarget &&
     view.godMode &&
-    !!picker.entity &&
-    godCharacterAvailability(picker.entity).enableCognition &&
+    !!subject &&
+    godCharacterAvailability(subject).enableCognition &&
     (!query || 'grant cognition speech'.includes(query.toLowerCase()));
+  const showRevive =
+    !full &&
+    !lostTarget &&
+    view.godMode &&
+    !!subject &&
+    godCharacterAvailability(subject).revive &&
+    (!query || 'revive god mode'.includes(query.toLowerCase()));
   const creationPosition =
     picker.entity?.kind === 'item-pile' && picker.entity.supportSurfaceId
       ? { ...picker.entity.position, surfaceId: picker.entity.supportSurfaceId }
       : picker.context.position;
   const showAdd =
+    !full &&
+    !lostTarget &&
     view.godMode &&
     (!picker.entity || picker.entity.kind === 'item-pile') &&
     !!creationPosition &&
@@ -169,13 +254,19 @@ export function ActionPicker({
     };
     place();
     window.addEventListener('resize', place);
-    return () => window.removeEventListener('resize', place);
+    const observer = new ResizeObserver(place);
+    if (menu.current) observer.observe(menu.current);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', place);
+    };
   }, [picker, matches.length, error]);
   async function toggle() {
     const previous = showUnavailable;
     const next = !previous;
     setShowUnavailable(next);
     setSaving(true);
+    setPreferenceError('');
     try {
       const result = await post<{ ok: boolean; message?: string; profile: PlayerProfile }>(
         '/api/profile/preferences',
@@ -185,7 +276,7 @@ export function ActionPicker({
       preference(result.profile);
     } catch (e) {
       setShowUnavailable(previous);
-      setError(String(e));
+      setPreferenceError(`The unavailable-action preference could not be saved. ${String(e)}`);
     } finally {
       setSaving(false);
     }
@@ -196,7 +287,14 @@ export function ActionPicker({
       id="contextMenu"
       className="ol-picker"
       role="dialog"
-      aria-label={`Actions for ${picker.subject ?? (picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName)}`}
+      onFocusCapture={() => {
+        hadFocus.current = true;
+      }}
+      onBlurCapture={(event) => {
+        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget))
+          hadFocus.current = false;
+      }}
+      aria-label={`Actions for ${full ? 'all known choices' : (picker.item?.name ?? (subject ? namePhrase(subject, 'definite') : picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName))}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
         if (e.defaultPrevented || e.nativeEvent.isComposing || e.repeat) return;
@@ -208,7 +306,11 @@ export function ActionPicker({
           close();
           return;
         }
-        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (
+          (e.key === 'ArrowDown' || e.key === 'ArrowUp') &&
+          (e.target === input.current ||
+            (e.target instanceof HTMLElement && e.target.hasAttribute('data-picker-row')))
+        ) {
           const rows = Array.from(
             menu.current!.querySelectorAll<HTMLButtonElement>('[data-picker-row]'),
           );
@@ -218,21 +320,32 @@ export function ActionPicker({
         }
         if (e.key === 'Enter' && e.target === input.current) {
           e.preventDefault();
-          const first = matches.find((a) => a.enabled);
+          if (!connected || checking || error || lostTarget || result?.key !== key) return;
+          const first =
+            visibleMatches.find((a) => a.enabled) ??
+            (pickups.length > 1 && !full ? pickups.find((a) => a.enabled) : undefined);
           if (first) run(first);
           else if (canInvent) invent(query.trim());
         }
       }}
     >
       <div className="ol-picker-head">
-        <Icon name={picker.entity?.icon ?? 'ui.inview'} fallbackLabel={picker.entity?.name} />
+        <Icon
+          name={subject?.icon ?? picker.entity?.icon ?? 'ui.inview'}
+          fallbackLabel={picker.item?.name ?? subject?.name ?? picker.entity?.name}
+        />
         <strong id="contextTitle">
-          {picker.subject ?? picker.entity?.name ?? view.presentation.locationName}
+          {full
+            ? 'All known actions'
+            : (picker.item?.name ??
+              subject?.name ??
+              picker.entity?.name ??
+              view.presentation.locationName)}
         </strong>
         <IconButton
           icon="ui.refresh"
           label="Refresh actions"
-          disabled={refreshing}
+          disabled={checking}
           onPress={() => void refresh()}
         />
         <IconButton icon="ui.close" label="Close action picker" onPress={close} />
@@ -246,7 +359,10 @@ export function ActionPicker({
           aria-label="Find an action"
           placeholder="Search actions or invent something…"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setVisibleCount(CHOICE_WINDOW);
+          }}
           maxLength={1000}
         />
         {canInvent && (
@@ -265,29 +381,49 @@ export function ActionPicker({
             label="Clear search"
             onPress={() => {
               setQuery('');
+              setVisibleCount(CHOICE_WINDOW);
               input.current?.focus();
             }}
           />
         )}
       </div>
-      <div className="ol-menu-scroll">
-        {showOpen && picker.entity && (
+      {actions.some((a) => !a.enabled) && (
+        <AriaButton
+          className="ol-menu-toggle"
+          aria-pressed={showUnavailable}
+          isDisabled={saving || !connected}
+          onPress={() => void toggle()}
+        >
+          {showUnavailable ? 'Hide Unavailable Actions' : 'Show Unavailable Actions'}
+        </AriaButton>
+      )}
+      <div className="ol-menu-scroll" aria-busy={checking}>
+        {(checking || (!result && !error)) && (
+          <p role="status" className="ol-meta">
+            {result ? 'Checking current choices…' : 'Loading actions…'}
+          </p>
+        )}
+        {lostTarget && (
+          <p role="status" className="ol-meta">
+            {picker.entity?.name ?? 'That target'} is no longer in view. Choose a currently
+            perceived target or browse all known actions.
+          </p>
+        )}
+        {showOpen && subject && (
           <AriaButton
             data-picker-row
             className="ol-item"
-            isDisabled={!connected || targetMissing}
-            onPress={() => {
-              if (picker.entity) openContainer(picker.entity);
-            }}
+            isDisabled={!connected}
+            onPress={() => openContainer(subject)}
           >
             <Icon name="ui.inventory" />
-            <span>Open {picker.entity.name}</span>
+            <span>Open {subject.name}</span>
           </AriaButton>
         )}
-        {picker.entity && !targetMissing && (
+        {!full && subject && !lostTarget && (
           <ActivityEntries
             view={view}
-            targetId={picker.entity.id}
+            targetId={subject.id}
             connected={connected}
             onOpen={openActivity}
             query={query}
@@ -296,18 +432,13 @@ export function ActionPicker({
           />
         )}
         {showInspect && (
-          <AriaButton
-            data-picker-row
-            className="ol-item"
-            isDisabled={targetMissing}
-            onPress={() => inspect(picker.entity!)}
-          >
+          <AriaButton data-picker-row className="ol-item" onPress={() => inspect(subject!)}>
             <Icon name="ui.inview" />
             <span>Look closer</span>
             <small className="ol-item-hint">Inspect</small>
           </AriaButton>
         )}
-        {pickups.length > 1 && (
+        {!full && pickups.length > 1 && (
           <PulloutPicker
             label="Pick Up"
             isOpen={openPullout === 'pickup'}
@@ -317,71 +448,71 @@ export function ActionPicker({
             options={pickups.map((a) => ({
               id: a.id,
               label: a.label,
-              disabled: !a.enabled,
-              description: a.enabled ? undefined : a.reason,
+              disabled: !a.enabled || !connected || checking,
+              description: a.enabled ? a.description : a.reason,
             }))}
             onSelect={(id) => {
               const action = matches.find((a) => a.id === id);
-              if (action?.enabled) run(action);
+              if (action?.enabled && connected && !checking) run(action);
             }}
           />
         )}
-        {matches
-          .filter((a) => a.category !== 'Pick Up' || pickups.length <= 1)
-          .map((a) => (
-            <Explanation
-              key={a.id}
-              title={a.label}
-              text={`${a.description}${!a.enabled ? `\n\n${a.reason ?? 'Unavailable right now.'}` : ''}`}
-              facts={a.facts}
-            >
-              <AriaButton
-                data-picker-row
-                data-catalogue-action={a.id}
-                className="ol-item"
-                aria-disabled={!a.enabled}
-                onPress={() => {
-                  if (a.enabled) run(a);
-                }}
-              >
-                <Icon
-                  name={
-                    a.icon ??
-                    symbol(
-                      a.intent.kind === 'command'
-                        ? a.intent.command.type
-                        : a.intent.kind === 'compose'
-                          ? 'talk'
-                          : 'ui.lock',
-                    )
+        {visibleMatches.map((a) => (
+          <ActionChoice
+            key={a.id}
+            action={
+              connected && !checking
+                ? a
+                : {
+                    ...a,
+                    enabled: false,
+                    reason: connected ? 'Checking current choices…' : 'Reconnect to the world.',
                   }
-                  fallbackLabel={a.label}
-                  badge={
-                    a.intent.kind === 'command' && a.intent.command.type === 'gather'
-                      ? 'action.gather'
-                      : undefined
-                  }
-                />
-                <span>
-                  {a.label}
-                  {!a.enabled && <small className="ol-item-reason">{a.reason}</small>}
-                </span>
-                <small className="ol-item-hint">{a.category}</small>
-              </AriaButton>
-            </Explanation>
-          ))}
-        {describeAction && !picker.context.itemId && !query && (
+            }
+            run={run}
+            expanded={expanded.includes(a.id)}
+            expand={(open) =>
+              setExpanded((current) =>
+                open ? [...new Set([...current, a.id])] : current.filter((id) => id !== a.id),
+              )
+            }
+            icon={
+              a.icon ??
+              symbol(
+                a.intent.kind === 'command'
+                  ? a.intent.command.type
+                  : a.intent.kind === 'compose'
+                    ? 'talk'
+                    : 'ui.lock',
+              )
+            }
+            badge={
+              a.intent.kind === 'command' && a.intent.command.type === 'gather'
+                ? 'action.gather'
+                : undefined
+            }
+          />
+        ))}
+        {visibleMatches.length < listedMatches.length && (
           <AriaButton
-            data-picker-row
-            className="ol-item"
-            isDisabled={targetMissing}
-            onPress={() => describeAction(picker.entity)}
+            className="ol-menu-toggle"
+            onPress={() => {
+              const next = listedMatches[visibleMatches.length];
+              setVisibleCount((current) => current + CHOICE_WINDOW);
+              requestAnimationFrame(() => {
+                if (next)
+                  menu.current
+                    ?.querySelector<HTMLButtonElement>(
+                      `[data-catalogue-action="${CSS.escape(next.id)}"]`,
+                    )
+                    ?.focus();
+              });
+            }}
           >
-            <Icon name="ui.character" />
-            <span>Describe an action</span>
+            Show more choices ({visibleMatches.length} of {listedMatches.length} shown)
           </AriaButton>
         )}
-        {(showRevive || showCognition || showAdd) && !targetMissing && (
+        {(showRevive || showCognition || showAdd) && !lostTarget && (
           <div className="ol-picker-creator" role="group" aria-label="God mode">
             <p className="ol-eyebrow">God mode</p>
             {showCognition && (
@@ -389,7 +520,7 @@ export function ActionPicker({
                 data-picker-row
                 className="ol-item ol-god-action"
                 isDisabled={!connected}
-                onPress={() => enableCognition(picker.entity!)}
+                onPress={() => enableCognition(subject!)}
               >
                 <Icon name="ui.star" />
                 <span>Grant cognition and speech</span>
@@ -401,7 +532,7 @@ export function ActionPicker({
                 data-picker-row
                 className="ol-item ol-god-action"
                 isDisabled={!connected}
-                onPress={() => revive(picker.entity!)}
+                onPress={() => revive(subject!)}
               >
                 <Icon name="ui.star" />
                 <span>Revive</span>
@@ -444,44 +575,60 @@ export function ActionPicker({
             )}
           </div>
         )}
-        {targetMissing && (
-          <p role="status">
-            {picker.entity?.name} is no longer in view. Choose the subject again before acting.
-          </p>
-        )}
         {error && (
           <p role="status" className="ol-meta">
             {error}
           </p>
         )}
+        {preferenceError && (
+          <p role="status" className="ol-meta">
+            {preferenceError}
+          </p>
+        )}
         {!error &&
+          !checking &&
+          !lostTarget &&
+          result?.key === key &&
           !matches.length &&
-          !taskMatches &&
+          (full || !taskMatches) &&
           !showOpen &&
           !showInspect &&
+          !showCognition &&
           !showRevive &&
           !showAdd && (
-            <p className="ol-meta">
+            <p role="status" className="ol-meta">
               {query
                 ? view.inventionPolicy.playerLocked
                   ? 'No matching actions. Player invention is locked.'
-                  : 'No matching actions. Press Enter to invent this idea.'
+                  : canInvent
+                    ? 'No matching actions. Enter opens an editable invention idea; only Send submits it.'
+                    : 'No matching actions. Clear the search or show unavailable actions.'
                 : actions.length
                   ? 'Available actions are hidden. Show unavailable actions to see why.'
-                  : 'No actions here yet.'}
+                  : 'No permitted actions in this scope. Browse all known actions or describe an action from Character.'}
             </p>
           )}
       </div>
-      {actions.some((a) => !a.enabled) && (
+      <div className="ol-picker-footer">
         <AriaButton
           className="ol-menu-toggle"
-          aria-expanded={showUnavailable}
-          isDisabled={saving || !connected}
-          onPress={() => void toggle()}
+          onPress={() => {
+            setFull(!full);
+            setVisibleCount(CHOICE_WINDOW);
+          }}
         >
-          {showUnavailable ? 'Hide Unavailable Actions' : 'Show Unavailable Actions'}
+          {full ? 'Back to selected subject' : 'Browse all known actions'}
         </AriaButton>
-      )}
+        {describeAction && (full || !picker.context.itemId) && (
+          <AriaButton
+            className="ol-menu-toggle"
+            isDisabled={!connected || lostTarget}
+            onPress={() => describeAction(full ? null : (subject ?? picker.entity))}
+          >
+            Describe an action
+          </AriaButton>
+        )}
+      </div>
     </div>
   );
 }

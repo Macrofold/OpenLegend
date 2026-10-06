@@ -19,6 +19,11 @@ it('searches every entry and includes unavailable matches only under the saved p
   ]);
   const all = filterActions(options, 'fixture', true);
   expect(all).toHaveLength(80);
-  expect(all.slice(0, 40).every((action) => action.enabled)).toBe(true);
-  expect(all.slice(40).every((action) => !action.enabled)).toBe(true);
+  expect(
+    filterActions(
+      options.map((action) => ({ ...action, enabled: !action.enabled })),
+      'fixture',
+      true,
+    ).map((action) => action.id),
+  ).toEqual(all.map((action) => action.id));
 });
