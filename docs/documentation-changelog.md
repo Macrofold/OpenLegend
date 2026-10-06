@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-05 — Explicit unfinished dependencies and named task branches
+
+Updated [prioritization](../.agents/skills/openlegend-prioritize/SKILL.md#plan-around-unfinished-prerequisites) and [parallel assignments](../.agents/skills/create-parallel-tasks/SKILL.md) at the owner's request: future batches may depend on work that is unfinished or not confirmed fully merged into main. Each affected assignment and prompt names its specific open prerequisites, completion/merge evidence, blocked work and independent starting scope. Unanswered developer choices still require answers before dependent design.
+
+The [prompt instructions](../.agents/skills/create-parallel-tasks/references/task-prompts.md#name-a-new-branch-in-each-prompt) now require a concrete descriptive new branch name and an instruction to create/switch to it. This supersedes the earlier prohibition on assigning branch names while retaining AGENTS.md base selection and other workflow boundaries. Writing the plan does not create branches or dispatch work, and no merge/push, peer-messaging or test-authoring mandate is added. [Guidance tracking](maintainers/agent-guidance.md#pending-dependencies-and-named-task-branches) preserves the distinction between static checks and observed future compliance.
+
 ## 2026-10-05 — Batch 05: adventure, defense and a home
 
 Prepared [five implementation assignments](projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md) after batches 03/04: worthwhile expedition rewards, compatible shield defense, finite practice/coaching, real editable shelter and fishing with world-defined preparation. The [technical definitions](projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [prompts](projects/parallel-batch-05-adventure-defense-and-home-prompts.md) and [AV tracker](maintainers/parallel-batch-05-adventure-defense-and-home.md) provide ownership, dependencies, acceptance and parent reconciliation. Current repertoire priorities and actual main/branch evidence explain the selections and deferred alternatives; the recent DG11–DG15 product work does not automatically outrank missing gameplay.

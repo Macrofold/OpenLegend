@@ -76,11 +76,11 @@ For each shared boundary, specify its producer, consumers, agreed request/result
 
 **Do not make worker communication part of the design.** A dependency must be one of:
 
-- Already implemented and identified by a usable reference.
-- Included in the same assignment.
-- A documented prerequisite delivered in an earlier wave, with the owner told when the dependent task can start.
+- Confirmed complete and fully merged into `main`, with evidence for the required scope.
+- Included in the same assignment, with its internal order explicit.
+- Still open in previous or other assigned work: unfinished, awaiting full merge into `main`, or not yet verified as complete/merged.
 
-Planning a later wave is valid; labeling a blocked task immediately runnable is not. If meaningful work can proceed independently before the prerequisite, identify that part and the exact remaining gate. Never solve missing design detail with “coordinate with another agent.” Do not allocate an integration-agent role, cross-branch merging or other operational powers unless the user specifically requests them; describe the combined acceptance and dependency order instead.
+Follow [unfinished-prerequisite planning](../../openlegend-prioritize/SKILL.md#plan-around-unfinished-prerequisites) for the required status/evidence and per-assignment disclosure in both the batch and its prompts. Pending dependencies are allowed; a separately supplied branch may provide a usable development base without closing the `main` merge status. Planning a later wave is valid; labeling a blocked task immediately runnable is not. If meaningful work can proceed independently before the prerequisite, identify that part and the exact remaining gate. Never solve missing design detail with “coordinate with another agent.” Do not allocate an integration-agent role, cross-branch merging or other operational powers unless the user specifically requests them; describe the combined acceptance and dependency order instead.
 
 ## Complete the task definitions and design documents
 
@@ -93,7 +93,7 @@ Each assignment must provide or precisely reference:
 3. **Scope:** included work, explicit exclusions, shared responsibilities and relevant existing task IDs. Clarify a partial child task's relationship to its broader parent.
 4. **Design:** engine versus world ownership, existing mechanism to extend, public/data/configuration contracts, units, authority and lifecycle implications. Resolve important alternatives instead of telling the engineer to rediscover them.
 5. **Implementation map:** ordered changes, relevant source entrypoints/callers and precise design sections. Include enough concrete references to shorten searching without pretending filenames alone explain behavior.
-6. **Dependencies:** what is already available, what belongs to this task, and what prerequisite must be supplied before dependent work starts. State assumed versions/definitions only where current integrity requires them.
+6. **Dependencies:** what is confirmed available, what belongs to this task, and each specific open prerequisite with completion/merge status, evidence and the work it blocks. Identify independent work and carry these facts into the prompt. State assumed versions/definitions only where current integrity requires them.
 7. **Completion evidence:** observable success and meaningful failure cases, existing applicable checks/tools and required integration outcomes. Follow `AGENTS.md` for how verification is performed; do not introduce a requirement to author tests.
 8. **Documentation mapping:** canonical specifications, world rules, limits and every overlapping maintainer requirement that must be reconciled as the change is delivered.
 9. **Estimate and risks:** likely effort/logic affected, uncertainties, consequences of a dependency failing and what evidence would require revisiting the plan.
