@@ -184,7 +184,7 @@ type InventoryProps = {
   view: GameView;
   addItem(): void;
   browseActions?(item: InventoryItemView, opener: HTMLElement): void;
-  contextMenu(item: InventoryItemView, point: { x: number; y: number }): void;
+  contextMenu(item: InventoryItemView, point: { x: number; y: number }, opener: HTMLElement): void;
   command(action: ActionOption): Promise<ApiResult>;
   connected: boolean;
   visible: boolean;
@@ -704,14 +704,22 @@ function InventoryWorkspace({
               onContextMenu={(event) => {
                 event.preventDefault();
                 if (!loading && !pendingRef.current)
-                  contextMenu(entry, { x: event.clientX, y: event.clientY });
+                  contextMenu(
+                    entry,
+                    { x: event.clientX, y: event.clientY },
+                    event.currentTarget.querySelector('button') ?? event.currentTarget,
+                  );
               }}
               onKeyDown={(event) => {
                 if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
                 event.preventDefault();
                 if (loading || pendingRef.current) return;
                 const rect = event.currentTarget.getBoundingClientRect();
-                contextMenu(entry, { x: rect.left, y: rect.bottom });
+                contextMenu(
+                  entry,
+                  { x: rect.left, y: rect.bottom },
+                  event.currentTarget.querySelector('button') ?? event.currentTarget,
+                );
               }}
               ref={(node) => {
                 if (node && selection?.item.id === entry.id)

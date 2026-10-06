@@ -92,6 +92,7 @@ try {
     }
   };
   let measuring = false;
+  const previews = new Map<string, { count: number; ms: number }>();
   const sql = new Map<string, { count: number; ms: number }>();
   const slowSql: Array<{ sql: string; ms: number }> = [];
   type CommitTrace = {
@@ -279,6 +280,21 @@ try {
     production: true,
     aiClient: cognitionFixture ? fixture : { judge: unavailable, generate: unavailable },
   });
+  // Fixture-only attribution; no instrumentation runs in the normal game server.
+  const preview = game.service.previewCommand.bind(game.service);
+  game.service.previewCommand = (input, actorId) => {
+    const at = performance.now();
+    try {
+      return preview(input, actorId);
+    } finally {
+      if (measuring) {
+        const entry = previews.get(input.type) ?? { count: 0, ms: 0 };
+        entry.count++;
+        entry.ms += performance.now() - at;
+        previews.set(input.type, entry);
+      }
+    }
+  };
   closeResources = async () => {
     try {
       await game.close();
@@ -306,6 +322,7 @@ try {
     speechSkipped = 0;
   const probeSamples: number[] = [];
   let probeTimer: ReturnType<typeof setInterval> | undefined;
+  let probeTask: Promise<void> | undefined;
   let probeBusy = false;
   let failureCount = 0;
   const failures: Array<{ source: string; message: string }> = [];
@@ -332,8 +349,6 @@ try {
     const cookie = response.headers.get('set-cookie')?.split(';')[0];
     if (!cookie) throw new Error('Missing local session.');
     let view = (await response.json()) as GameView;
-    globalThis.gc?.();
-    const initialHeapBytes = process.memoryUsage().heapUsed;
     const post = async (path: string, body: unknown) => {
       const r = await fetch(base + path, {
         method: 'POST',
@@ -349,17 +364,21 @@ try {
       });
       return (await r.json()) as { ok: boolean; code?: string; message?: string };
     };
+    // The setup commit can leave another login holding the fixture's character.
+    // Take control through the player endpoint, then use its new scope/command epoch.
     const entered = await post('/api/embodiment', {
-      id: 'scene-profile-enter',
+      id: 'scene-profile-control',
       expectedGeneration: view.access!.controlGeneration,
       operation: 'replace',
     });
-    if (!entered.ok) throw new Error(entered.message);
-    const controlled = await fetch(base + '/api/state', {
+    if (!entered.ok) throw new Error(entered.message ?? 'Could not take fixture control.');
+    const refreshed = await fetch(base + '/api/state', {
       headers: { cookie, 'X-OL-Client': client },
     });
-    if (!controlled.ok) throw new Error('Controlled state could not be read.');
-    view = (await controlled.json()) as GameView;
+    if (!refreshed.ok) throw new Error('Controlled scene inspection failed.');
+    view = (await refreshed.json()) as GameView;
+    globalThis.gc?.();
+    const initialHeapBytes = process.memoryUsage().heapUsed;
     const stream = await fetch(
       `${base}/api/events?client=${client}&scope=${view.access!.scope}&revision=${view.revision}`,
       {
@@ -488,7 +507,7 @@ try {
       if (probeBusy) return;
       probeBusy = true;
       const at = performance.now();
-      probe
+      probeTask = probe
         .query('SELECT 1')
         .then(() => {
           if (measuring && probeSamples.length < 4000) probeSamples.push(performance.now() - at);
@@ -532,6 +551,8 @@ try {
         mode: 0o600,
       });
     }
+    // Include late diagnostic failures without extending measured gameplay time.
+    await probeTask;
     // Profile serialization and the final HTTP inspection allocate temporary data.
     // Sample resident heap after profile output and before constructing the report/view.
     globalThis.gc?.();
@@ -563,6 +584,7 @@ try {
       simulatedSeconds,
       achievedSpeed: simulatedSeconds / (elapsedMs / 1000) / 60,
       providerCalls,
+      previews: Object.fromEntries([...previews].sort(([, a], [, b]) => b.ms - a.ms)),
       speech: { offered: speechOffered, accepted: speechAccepted, skipped: speechSkipped },
       failureCount,
       failures,
@@ -663,12 +685,12 @@ try {
     if (probeTimer) clearInterval(probeTimer);
     streamAbort.abort();
     try {
-      await Promise.all([commandTask, speechTask, streamTask]);
+      await Promise.all([commandTask, speechTask, probeTask, streamTask]);
     } finally {
       profiler.disconnect();
-      await probe.end().catch(() => {});
     }
   }
 } finally {
+  await probe.end().catch(() => {});
   await closeResources();
 }

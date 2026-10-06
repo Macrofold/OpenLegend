@@ -2,6 +2,41 @@
 
 OpenLegend is an engine for authored realities with a playable bundled world. Deliver useful features without making that world's laws universal or building speculative infrastructure.
 
+## Every response to the developer
+
+Apply this section **before sending every message to the user/developer (Mike)**: answers, questions, progress updates, explanations, reviews and final handoffs. These are required checks on the message itself; do not print the checklist as part of each response.
+
+### Respond clearly and concisely
+
+Write every response to the user (answers, progress updates, handoffs and explanations of completed work) for someone who understands the game's features, purpose and project and general software and technology concepts, but has never read a single line of this codebase. Before relying on a project-specific mechanism, explain it in those terms.
+
+**Never use internal shorthand.** Code identifiers, function or variable names, coined labels and implementation jargon are not explanations, even when the label is an ordinary English word. Say “recording what a character notices,” not “acquisition”; “which animal takes the next number from the world's shared random sequence,” not “draw order.” Describe behavior through the people, objects, actions and game moments involved. File paths, tracker IDs and commits may follow a plain explanation as pointers; they never replace it. Introduce a technical term only when it is widely known or you define it.
+
+Be concise by cutting filler, never by compressing wording at the expense of clarity, accuracy or completeness; prefer an extra sentence over compressed wording. Include the context needed to understand decisions, results and limitations. When explaining implementation work, say what problem it solved, why it was needed, what it enables, and the major decisions with their tradeoffs.
+
+**Make references unambiguous.** When mentioning something, identify it specifically enough that the reader knows exactly which thing you mean. Do not use generic terms such as “response,” “state,” “context,” “history,” or “job” unless their referent is already clear. Say “a character’s AI-generated reply to something the player said,” not merely “a response.” Once you have clearly identified something, a shorter name is fine.
+
+### Before sending — required language check
+
+1. **Describe the behavior first.** Explain what a character does, what the player sees or what the computer must calculate before naming the implementation mechanism.
+2. **Replace internal labels.** Say “a character meter” rather than “reservoir”; replace “work capacity” with the specific limit being checked and what reaching it means. Identifiers and links may follow the explanation, never substitute for it.
+3. **Use real examples.** Prefer current gameplay examples verified against the implementation or evidence. Label hypothetical examples explicitly; never present a possible engine capability as current gameplay. Distinguish what exists, what is proposed and what has actually been measured.
+4. **Check every explanation as the reader.** Could the developer understand it without opening the code or asking what a term means? If not, rewrite it before sending. Make every reference specific enough to identify the character, object, action, information or operation concerned.
+
+### Reporting work
+
+Apply the following requirements when reporting work; include only those relevant to the task and message.
+
+Report delivered scope/findings, major decisions and assumptions with reasons, actual evidence/limits and remaining gaps. Only implementation requests require closing **Open decisions/questions** and **Suggested next steps** sections, explicitly saying “None” when empty; omit these sections for other requests. Never claim unrun checks, fixture-based model quality or unmeasured scale.
+
+For implementation handoffs, also include **Behavior changes and decisions**: explain each consequential decision that changes current behavior or constrains future behavior, its reason and its tradeoff. Explicitly identify any previous decision or limit that was changed. Say “None” when there are no such changes; do not bury them in implementation details.
+
+When reporting a development base or reconciliation, name the exact repository/remote, ref and commit used, following the [rebase workflow](.agents/skills/openlegend-rebase/SKILL.md#select-the-target).
+
+Whenever you create a worktree, switch the working checkout/worktree, create a branch, switch/check out a branch, or rename the working branch, explicitly notify the developer when it happens and again in the final handoff. Report every operation, even if a newly created branch is not checked out or a worktree switch keeps the same branch. Name the branches and absolute checkout/worktree paths; identify detached HEAD by its commit. Report branch switches/renames as `previous branch → new branch` and checkout/worktree switches as `previous path → new path`. State which checkout receives the edits and whether the main checkout is affected; do not imply that worktrees have separate Git history or branch references.
+
+For reports about AI calls through Jev, including progress updates and explanations, follow [Jev cost reporting](.agents/rules/verification.md#jev-cost-reporting): preserve the scoped and cumulative cost, precision and uncertainty required there.
+
 ## Plan before implementation
 
 The first step in every development task is to read the relevant context, estimate the lines of logic affected (excluding tests), assess risk and complexity, and plan the entire agreed implementation. Cover scope, affected owners, implementation steps, dependencies, required verification and concrete completion criteria, with detail proportional to the task.
@@ -16,18 +51,6 @@ For straightforward, low-risk work under the planning rule above, skip unnecessa
 
 Always inspect the full affected diff, verify changed behavior and fix in-scope issues. Preserve explicitly requested deliverables/checks, required CI/merge gates and updates to affected existing specifications or trackers. Record consequential decisions even in small changes. Reassess this lighter workflow if scope or risk grows.
 
-## Respond clearly and concisely
-
-Write every response to the user (answers, progress updates, handoffs and explanations of completed work) for someone who understands the game's features, purpose and project and general software and technology concepts, but has never read a single line of this codebase. Before relying on a project-specific mechanism, explain it in those terms.
-
-**Never use internal shorthand.** Code identifiers, function or variable names, coined labels and implementation jargon are not explanations, even when the label is an ordinary English word. Say “recording what a character notices,” not “acquisition”; “which animal takes the next number from the world's shared random sequence,” not “draw order.” Describe behavior through the people, objects, actions and game moments involved. File paths, tracker IDs and commits may follow a plain explanation as pointers; they never replace it. Introduce a technical term only when it is widely known or you define it.
-
-Be concise by cutting filler, never by compressing wording at the expense of clarity, accuracy or completeness; prefer an extra sentence over compressed wording. Include the context needed to understand decisions, results and limitations. When explaining implementation work, say what problem it solved, why it was needed, what it enables, and the major decisions with their tradeoffs.
-
-**Make references unambiguous.** When mentioning something, identify it specifically enough that the reader knows exactly which thing you mean. Do not use generic terms such as “response,” “state,” “context,” “history,” or “job” unless their referent is already clear. Say “a character’s AI-generated reply to something the player said,” not merely “a response.” Once you have clearly identified something, a shorter name is fine.
-
-Before sending, reread as that reader. Rewrite any word or phrase they could not understand without opening the code, and make specific any phrase that could refer to several different things.
-
 ## Load only relevant context
 
 Identify the requested outcome, affected behavior, semantic owner, callers and consumers. Read applicable `AGENTS.md` files along affected paths, even if native discovery misses them. Route by intent and impact, not keywords: new files count; a typo mentioning a technology does not require its implementation workflow. Recheck when scope changes. Paths are repository-relative.
@@ -36,6 +59,7 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 
 - Choosing, comparing or reprioritizing future work (for example “what’s next?” or “pick the next projects”): read [Prioritization](.agents/skills/openlegend-prioritize/SKILL.md). Route by the request's intent, not those words; ordinary implementation, continuation or explaining the next step of an already-chosen task does not load this workflow.
 - UI/UX design, implementation or review, and frontend code changes (including new components/files): read the short [UI/UX essentials](.agents/rules/ui-ux.md) every task, then only the matching handbook chapters. Do not preload the full guide or research ledger.
+- Action behavior design, implementation or review, including new commands/families, prerequisites, availability, execution or menu/NPC/plan admission: read [Action availability and temporary execution](docs/action-capabilities.md#action-availability-and-temporary-execution) before planning, implementing or reviewing those paths. A prose-only mention of an action does not trigger this read.
 - TypeScript/tooling implementation or review: [TypeScript](.agents/rules/typescript.md)
 - Code changes or verification commands: [Verification](.agents/rules/verification.md)
 - Documentation, decisions, trackers or specifications: [Documentation](.agents/rules/documentation.md)
@@ -122,7 +146,7 @@ During implementation, keep known remaining work relevant to the task accurately
 
 For every rebase or merge, load and follow [Rebase](.agents/skills/openlegend-rebase/SKILL.md) before operating, including standalone requests and operations expected to have no conflicts. For development tasks, follow it after initial planning and before implementation to select and refresh the correct base and safely reconcile the branch and plan. That workflow owns efficient reconciliation, target precedence, worktree/history protections and the mandatory all-work conflict stop; [rebase verification](.agents/rules/verification.md#rebase-verification) owns its limited checks. Report the exact remote/ref used. When the developer says `main` without naming `origin` or another remote, they mean the local `main` branch, not `origin/main`.
 
-Whenever you create a worktree, switch the working checkout/worktree, create a branch, switch/check out a branch, or rename the working branch, explicitly notify the developer when it happens and again in the final handoff. Report every operation, even if a newly created branch is not checked out or a worktree switch keeps the same branch. Name the branches and absolute checkout/worktree paths; identify detached HEAD by its commit. Report branch switches/renames as `previous branch → new branch` and checkout/worktree switches as `previous path → new path`. State which checkout receives the edits and whether the main checkout is affected; do not imply that worktrees have separate Git history or branch references.
+When creating, switching or renaming branches/worktrees, follow the [notification requirements](#reporting-work).
 
 Preserve unrelated edits, pinned dependencies and the single lockfile. Do not author automated tests by default; follow [Verification](.agents/rules/verification.md) for focused existing checks, database selection and rebase verification scope. Exercise changed behavior through downstream callers using suitable existing tools/checks or a small ad-hoc scenario; use relevant static checks and record missing coverage. CI/merge requirements remain; stress meaningful hot-path changes, not every task.
 
@@ -148,6 +172,4 @@ Continue through the full authorized scope; a progress report or completed stage
 
 Once the requested operation, affected-diff review and selected required checks pass and agreed deliverables are complete, finish. Add work only for a concrete unresolved finding, invalidated evidence or explicit requirement; unchanged broader qualification gaps do not expand a standalone reconciliation task.
 
-Report delivered scope/findings, major decisions and assumptions with reasons, actual evidence/limits and remaining gaps. Only implementation requests require closing **Open decisions/questions** and **Suggested next steps** sections, explicitly saying “None” when empty; omit these sections for other requests. Never claim unrun checks, fixture-based model quality or unmeasured scale.
-
-For implementation handoffs, also include **Behavior changes and decisions**: explain each consequential decision that changes current behavior or constrains future behavior, its reason and its tradeoff. Explicitly identify any previous decision or limit that was changed. Say “None” when there are no such changes; do not bury them in implementation details.
+Prepare the final handoff using [Reporting work](#reporting-work).

@@ -22,6 +22,18 @@ At the owner's request, [prioritization guidance](../.agents/skills/openlegend-p
 
 Recipe generation now asks for physical methods, purposes and chosen quantities in ordinary language, and the bundled container guidance no longer supplies formula notation for player descriptions. Native mechanics stay authoritative; existing discoveries retain their saved prose, avoiding an extra paid rewrite. One fresh live pouch demonstrates the correction while broader model-quality acceptance remains open under INV-3.4. [Invention contract](invention-foundation.md#current-recipe-family-slice).
 
+## 2026-10-04 — Qualify meter-refilling and following previews
+
+The owner-authorized [PG04 extension](projects/parallel-batch-03-personal-game-tech-design.md#meter-refilling-and-following-follow-up--october-4-2026) verifies and implements the two candidates recorded in AC11: standalone replenishment/following previews now reuse existing read-only checks before disposable setup. Actual execution still checks the current world, records sightings/action history and consumes supplies; previews inside another computation allowance keep temporary execution. No rules, public interface, numerical limits, catalogue, sensing or rendering quality change.
+
+[Evidence](verification/command-frame-spikes.md#pg04--meter-refilling-and-following-october-4-2026) separates equivalent decisions/transitions and cheaper isolated checks from a short complete-server comparison. Per-family preview means improve, but command tails do not, and browser/device/broader-load qualification stays open under PF05/AC11/SW18. The existing clockwork demonstration supplies the meter case; this adds no bundled drinking mechanic.
+
+## 2026-10-04 — Require a deliberate action-availability path
+
+At Mike's request, [core action guidance](action-capabilities.md#action-availability-and-temporary-execution) now requires action implementers/reviewers to trace all starting checks, prefer shared read-only evaluation, and justify retained temporary execution with a concrete later check or accounting dependency. A source-inspection candidate is distinguished from verified equivalent behavior, and any performance claim needs separate isolated and complete-path evidence. Public meaning, authority, actual transitions and current work limits remain protected.
+
+Root instructions explicitly route relevant action work to this section, including new files and menu/NPC/plan admission. [AC11](maintainers/action-capabilities.md#ac11--usability-and-measured-efficiency) records replenishment/following candidates without claiming optimization or bundled gameplay; [CG18](maintainers/agent-guidance.md) records the written route while CG05 retains installed-agent dispatch verification. This delivers documentation/guidance, not further action runtime changes or wider performance qualification.
+
 ## 2026-10-04 — Resolve developer questions before dependent work
 
 At Mike's request, [root instructions](../AGENTS.md#resolve-developer-questions-before-dependent-work) now apply the same decision boundary to every task, including design and prioritization: finish authorized independent work, then ask the developer for the answers needed to complete the remainder. Dependent work waits for those answers. A design-only assignment, delegation or an open-question note cannot substitute for resolving the developer's choice. Routine reversible decisions and already supplied answers do not require new confirmation; mandatory conflict stops and scope limits still apply.
@@ -71,6 +83,12 @@ The second review removes the inventory cooking shortcut that implicitly chose a
 PG03 delivers the existing contextual picker, complete known catalogue and selected inventory uses with exact native target/tool/projectile identity, concise cost/blocker rows and persistent longer details. The accepted change replaces re-sorting by availability on every refresh with stable opening order and in-place updates; newly discovered identities append. This avoids moving the choice a player is reading, at the cost of a refreshed unavailable choice sometimes preceding a later available one.
 
 The full catalogue is an explicit permitted read, independent of empty-ground movement. It keeps all known supported choices without paid ranking or a top-k cutoff; existing preview work therefore still grows with content and target/tool combinations. Failure suppresses old commands/details and requires explicit retry; ordinary freeform entry retains the existing draft and explicit Send contract. Native admission, NPC context, creator controls, renderer behavior and stable pins keep their existing contracts. [Current presentation](action-experience.md#ordinary-player-action-discovery), [AP01 bounds](limits/interface.md#ap01--ordinary-action-discovery), [PG03/AC11/UIUX tracking](maintainers/parallel-batch-03-personal-game.md#pg03--readable-action-discovery) and [dated evidence](verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) retain broader remapping, narration, accessibility and PG04 performance work.
+
+## 2026-10-04 — Make developer-response checks explicit
+
+At Mike's request, [every response to the developer](../AGENTS.md#every-response-to-the-developer) has a prominent root section with four required checks before sending: describe behavior first, replace internal labels, use verified current examples while labeling hypothetical ones, and reread for someone who has never seen the code. Existing plain-language, handoff and branch-reporting requirements are consolidated there, with a conditional link to the existing AI-cost reporting owner. The prior plain-language heading remains valid.
+
+This strengthens the response procedure after explanations repeatedly required Mike to ask for definitions; it changes no gameplay or task authorization. [CG17](maintainers/agent-guidance.md) records instruction delivery, while native-agent compliance remains unqualified under CG05.
 
 ## 2026-10-03 — Make the first resident a compelling integrated character
 

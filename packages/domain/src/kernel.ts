@@ -1205,7 +1205,7 @@ export function executeCommand(
   try {
     return withWorkMeter(WORK_LIMITS.group, () => {
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
-      return executeCommandNative(original, command, options);
+      return executeCommandNative(original, command, options, !nested);
     });
   } catch (error) {
     if (!(error instanceof WorkBudgetError || error instanceof ResourceReservationError) || nested)
@@ -1217,7 +1217,8 @@ export function executeCommand(
 function executeCommandNative(
   original: WorldState,
   command: Command,
-  options: { preview?: boolean } = {},
+  options: { preview?: boolean },
+  standalone: boolean,
 ): Transition {
   const reject = (code: string, message: string): Transition => ({
     world: original,
@@ -1254,6 +1255,29 @@ function executeCommandNative(
     : nativeActorProblem(original, command);
   if (prepared && 'ok' in prepared && !prepared.ok)
     return { world: original, events: [], outcome: prepared };
+  const action = prepared && !('ok' in prepared) ? prepared : undefined;
+  let result = outcome(true, 'accepted', 'Action started.');
+  // These scheduled families have no material admission after prepareNativeOperation.
+  // Replenishment checks its source/meter/reach here; following prepares its route without
+  // recording a sighting. Their remaining setup adds effects, not starting refusals.
+  // Standalone previews reuse those exact current checks
+  // before allocating IDs, recording experience or interrupting work in a throwaway draft.
+  // Nested callers retain disposable execution: interruption events must still spend
+  // their caller's work allowance. Other families retain later checks or remain unqualified.
+  // docs/action-capabilities.md#action-availability-and-temporary-execution
+  if (
+    options.preview &&
+    standalone &&
+    action &&
+    ['move', 'strike', 'gather', 'hunt', 'harvest', 'pickup', 'replenish', 'follow'].includes(
+      action.type,
+    )
+  )
+    return {
+      world: original,
+      events: [],
+      outcome: result,
+    };
   const source = getOwn(original.entities, command.actorId)!;
   if (options.preview && command.type === 'handover' && command.operation === 'offer') {
     const offer = prepareItemOffer(original, source, command);
@@ -1263,8 +1287,6 @@ function executeCommandNative(
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
-  let result = outcome(true, 'accepted', 'Action started.');
-  const action = prepared && !('ok' in prepared) ? prepared : undefined;
   // A drop preview still checks the structural transfer, but never installs its action
   // record. Capacity admission above remains identical; other families retain bookkeeping.
   // docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary

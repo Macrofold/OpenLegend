@@ -941,8 +941,14 @@ function App({
                 connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
               }
               addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
-              contextMenu={(item, point) =>
-                setPicker({ context: { itemId: item.id }, point, entity: null, subject: item.name })
+              contextMenu={(item, point, opener) =>
+                setPicker({
+                  context: { itemId: item.id },
+                  item: { id: item.id, name: item.name },
+                  point,
+                  entity: null,
+                  opener,
+                })
               }
             />
             <CampActivity

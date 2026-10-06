@@ -63,6 +63,8 @@ A ground-container role can be rebound through the actor's current permitted ins
 
 ## Selected execution and inspection
 
+Changes to action selection, first-step availability or execution follow [Action availability and temporary execution](action-capabilities.md#action-availability-and-temporary-execution).
+
 `activity-execution.ts` extends the existing `ActorPlan` with a bounded frontier. Supported controls are native invocation, sequence, branch, bounded repeat and bounded wait. Predicates are registered observations such as availability, life, equipment, fire and actual output quantity. There is no generated code or predicate evaluation from prose. Learning retains realized traces; it does not infer new stopping rules or a universal hunting loop.
 
 Each ready step passes through the existing kernel and its current authority, access, range and resource checks. Outputs bind only when actually committed. A completed step is not replayed on continuation or same-version restore. Failed native steps require a new choice; an explicitly blocked control may be reconsidered with current bindings. Unknown predicates stop honestly. Another actor's response or cooperation cannot be executed as the learner's action.

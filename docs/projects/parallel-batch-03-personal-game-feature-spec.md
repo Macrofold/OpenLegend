@@ -135,6 +135,14 @@ Exclude general SQL batching, scheduling redesign, renderer quality reduction an
 
 **Delivered October 4:** current attribution selected shared offer prerequisites and discarded drop-preview recording. Matched complete-catalogue reads improve with identical choices and native effects; service stale/competing/restore checks and bounded real HTTP/SSE/production-browser load runs are recorded in [PG04 evidence](../verification/command-frame-spikes.md#pg04-preview-work-and-larger-load-follow-up--october-4-2026). [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness) retains complex-transfer and inventory-projection cost, comparable full-path tails, long-run and physical-device qualification. This scoped delivery preserves the existing command contract and full discovery.
 
+### PG04 delivery record — October 3, 2026
+
+The scoped assignment is complete: current profiling confirmed repeated strike-preview cost, and standalone previews for six scheduled families reuse their existing read-only prerequisites before disposable recording/interruption work. Public preview wording, commands, actual admission and committed transitions are preserved. [PG04 evidence](../verification/command-frame-spikes.md#pg04--pure-prerequisite-previews-october-3-2026) records 1,088 matching comparisons, stale/control/restore checks, isolated batches and full-game measurements. Strike previews are about 65% cheaper per call in the matched browser sample; command/menu p95 and smooth frame cadence are not qualified. Other command families retain disposable execution where later admission can still refuse. Review also preserves the original path inside a caller's work allowance and repairs current-control setup/per-family attribution in the existing profiler. PF05/SW18/AC11 retain broader load and physical-device work; PG03's interface and presentation are unchanged.
+
+### PG04 extension — October 4, 2026
+
+The owner-authorized meter-refilling/following extension is complete: both reuse shared read-only starting checks for standalone previews, bringing the implemented set to eight scheduled families. Actual execution and nested work accounting are unchanged. [Equivalence and measurements](../verification/command-frame-spikes.md#pg04--meter-refilling-and-following-october-4-2026) demonstrate cheaper checks on the existing authored-meter demonstration without adding bundled gameplay or qualifying whole-game command tails, browser rendering, broad load or physical devices.
+
 ## PG05 — Design the first dangerous encounter
 
 ### Deliverable and scope

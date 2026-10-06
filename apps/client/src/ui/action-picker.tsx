@@ -22,7 +22,6 @@ export type PickerContext = {
   entity: EntityView | null;
   item?: { id: string; name: string };
   opener?: HTMLElement;
-  subject?: string;
 };
 // A display window, not a discovery cutoff: search still visits every choice.
 const CHOICE_WINDOW = 40;
@@ -272,7 +271,7 @@ export function ActionPicker({
         if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget))
           hadFocus.current = false;
       }}
-      aria-label={`Actions for ${full ? 'all known choices' : picker.item ? picker.item.name : picker.subject ? picker.subject : picker.entity ? namePhrase(picker.entity, 'definite') : 'the clearing'}`}
+      aria-label={`Actions for ${full ? 'all known choices' : picker.item ? picker.item.name : picker.entity ? namePhrase(picker.entity, 'definite') : 'the clearing'}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
         // Portaled pullouts own their keyboard navigation; React events still bubble here.
@@ -312,7 +311,6 @@ export function ActionPicker({
           {full
             ? 'All known actions'
             : (picker.item?.name ??
-              picker.subject ??
               subject?.name ??
               (lostTarget ? 'Target no longer in view' : 'The clearing'))}
         </strong>
