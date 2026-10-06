@@ -91,6 +91,10 @@ The inventory panel refreshes when the player moves or its own inventory/context
 
 [DG19 changing supplies](../../projects/changing-supplies-feature-spec.md) proposes one condition-bearing food family using this same custody and quantity owner. Its [authored profile](changing-supplies.md) selects preservation and renewal; [CS02](../../maintainers/changing-supplies.md#cs02--food-condition-follows-the-real-material) requires coherent creation, active-work condition, splitting/merging, exact partial handling and last-unit consumption before decay is enabled. Current containers and food remain as described above. Neither a bag name, ownership change, pending offer nor a storage move grants freshness or access to somebody else's food history.
 
+## Proposed heat and vessel consumer
+
+[DG20 heat and materials](../../projects/heat-and-materials-feature-spec.md) proposes firing an actual clay blank into a useful finite vessel, with local material consequences in its selected profile. The same object owner must preserve the blank's progress, the finished vessel, actual contents and any surviving damaged material without duplicate output or pristine salvage. The [world profile](heat-and-materials.md) owns the new vessel and qualified fire materials; [HM02–HM04](../../maintainers/heat-and-materials.md) retain delivery. Existing woven containers remain available. A fired-bowl name does not supply liquids, serving, preservation, extra carrying strength or new access to another person's possessions.
+
 ## Maintained records
 
 - Implementation: [Feature tasks](../../maintainers/base-world.md).

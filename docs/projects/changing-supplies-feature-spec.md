@@ -54,7 +54,7 @@ At an actual reachable lit fire, the player reviews the chosen quantity, total w
 
 The player packs or drops the resulting real food using ordinary item handling. An optional woven container keeps the collection convenient; carrying it does not improve the food's condition. A dropped cache follows actual world access and custody. Naming it "my supplies" does not lock it or reserve a portion for a future meal.
 
-On returning, the player inspects what is there now. They may find usable preserved food, fewer portions because someone actually took them, an untouched but spoiled ordinary comparison portion, or an empty location. A resident's explanation is a report with that speaker's knowledge, not a server-certified account of every change. The journal may retain a real witnessed preparation or a deliberate note, but it cannot create an omniscient supply ledger.
+On returning, the player inspects what is there now. They may find usable preserved food, fewer portions because someone actually took them, an untouched but spoiled ordinary comparison portion, or an empty location. A resident's explanation is a report with that speaker's knowledge, not a server-certified account of every change. The ordinary Journal may describe a witnessed preparation through its existing narration rules. A note in DG16's proposed personal edition remains the human's separate annotation; it does not enter the character's knowledge. Neither supplies an omniscient stock ledger.
 
 The payoff can be simple: the player can continue their preferred activity instead of starting another hunt at that moment. It does not need a reward popup or a guaranteed expression of gratitude.
 

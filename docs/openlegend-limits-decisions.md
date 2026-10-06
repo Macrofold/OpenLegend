@@ -44,6 +44,8 @@ Proposed [personal Journal edition](projects/personal-journal-feature-spec.md): 
 
 Proposed [changing supplies](projects/changing-supplies-feature-spec.md): [CS-L01–CS-L09](limits/changing-supplies.md) inventory attended scope, food/condition choices, finite preservation, actual storage effects, renewal flow, richer lot handling and complete-work/expansion requirements. [BW25 / CS](maintainers/changing-supplies.md) retains delivery. These are authored product proposals rather than implemented decay, renewal or a sustainable-population promise.
 
+Proposed [heat and materials](projects/heat-and-materials-feature-spec.md): [HM limits](limits/heat-and-materials.md) inventory the selected attended profile, material/source scope, useful firing, moisture, local spread, damage, extinguishing and complete-cost/expansion requirements. [BW26 / HM](maintainers/heat-and-materials.md) retains delivery; no general combustion, body injury or public property policy is implemented by the product proposal.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).

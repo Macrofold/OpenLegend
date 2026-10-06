@@ -179,7 +179,7 @@ NPCs may continue their own discussion while a human is silent if their knowledg
 
 ### 8.5 Splitting, merging and interruption
 
-Two groups can become one conversation only through actual interaction and permitted membership. Merging does not disclose earlier private conversation. A subgroup can leave with its own remembered experience, while remaining participants continue. Someone addressing a particular person need not pull the whole crowd into one scene.
+Two groups can become one conversation only through actual interaction and permitted membership. Merging does not disclose earlier private conversation. People who leave retain only their own remembered experience, while remaining participants continue. Addressing one person names the next recipient, not everyone's assent. If that engagement triggers the current native merge, it moves all active participants, including silent ones, under that rule; earlier audiences and privacy remain unchanged. A more selective group split requires its own supported operation.
 
 A physical emergency can suspend or end a scene. Preserve completed statements, heard fragments, actual obligations and unfinished choices. When the matter resumes, use the current participants and situation rather than replaying an obsolete script. New arrivals do not inherit private scene knowledge merely by entering the same place.
 
@@ -260,7 +260,7 @@ One bounded exchange can sometimes be resolved with less work than many independ
 
 The recommended default is common coordination plus individually owned consequential choices, with economical native continuation for already chosen participation. Apply higher evaluated model quality to actual difficult decisions and important character consistency, not every nearby body. A more expensive model is not evidence that its story is correct.
 
-If a supported scene cannot obtain a required decision, preserve the unresolved matter and any completed exchanges. Optional continuation can wait or the participants can use already supported choices. If service failure would otherwise determine an imminent consequential outcome, use the coherent failure boundary in the continuing-lives specification. Do not silently assign defeat or assent to the unavailable participant.
+If a supported scene cannot obtain a required decision, preserve the unresolved matter and any completed exchanges. Optional continuation can wait or the participants can use already supported choices. If service failure would otherwise determine an imminent consequential outcome, use the applicable operational policy. DG17's proposed whole-community hold applies only to its selected isolated continuing-world profile; a public/shared deployment needs its own qualified failure policy. Do not silently assign defeat or assent to the unavailable participant.
 
 ### 11.3 Prevent attention monopolies
 
@@ -413,7 +413,7 @@ The strongest common lesson is that selective detail must be intentional. The at
 
 **Introducing fully timed speech immediately** would resolve overlapping-message semantics but expands timing, interruption, movement, histories and effectful-language risks together. Begin with the useful exact attended gathering, then add the selected aggregate scene under the existing instantaneous contract. Review the timed behavior now and deliver it as its own stage. Do not market late listening until that stage passes.
 
-**Silently discarding sensory consequences during overload** makes a performance problem appear to be a fictional rule and enables unfair outcomes. Bound optional source creation and new scenes, then use the continuing-lives service boundary if required work cannot be supported. Capacity qualification must include actual consequences and multiple audiences.
+**Silently discarding sensory consequences during overload** makes a performance problem appear to be a fictional rule and enables unfair outcomes. Bound optional source creation and new scenes, then use the applicable operational policy if required work cannot be supported. DG17's proposed whole-community hold is limited to its selected isolated continuing-world profile, not a general promise to pause public/shared competition. Capacity qualification must include actual consequences, multiple audiences and that deployment's failure policy.
 
 Adopt easy personal conversation as the first contribution, followed by stable focus in genuinely competing situations and a character-led task/promise scene with a reason to participate. Preserve exact-language exceptions. Larger gatherings and the timed-speech cutover are separately earned expansions under the playability and cost evidence above; they do not block the accepted creative loop or the other useful features in the package. [DG18 below](#17-dg18--something-worth-showing-and-a-gathering-worth-joining) and its [world profile](../worlds/base/social-gatherings.md) now select concrete proposed attendance, gist, vocal activity and intervention behavior. Adoption and technical qualification remain separate. Broader fictional senses, actual timed phrases and larger or unattended populations retain their owners' later decisions. Measured complete-cost and performance allowances remain unselected; the authored workload is a proposal to qualify, not a capacity claim or unlimited service.
 

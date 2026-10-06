@@ -8,6 +8,8 @@ Implementation was approved in chat on September 26, 2026; the [foundation plan]
 
 **DG19 consumer proposal, October 6:** [CS02](changing-supplies.md#cs02--food-condition-follows-the-real-material) requires condition-preserving creation, work, exact partial handling and last-unit consumption for the selected [changing-supplies family](../projects/changing-supplies-feature-spec.md). Current stateless split/merge/retirement limits remain current; the completed foundation checkmarks below do not qualify this new consumer. Preserve this owner and its identity, lineage, reservations, access and persistence contracts rather than adding a food-only custody path.
 
+**DG20 consumer proposal, October 6:** [HM02–HM04](heat-and-materials.md) extends the same owner for actual heated/fired material, finite vessel output, damage and surviving salvage. The [product proposal](../projects/heat-and-materials-feature-spec.md) does not implement stateful consumption or thermal handling. Work, containment, installed parts and fuel retain one actual material history; a useful new vessel cannot be created alongside an unconsumed duplicate blank.
+
 ## Execution notes — September 26, 2026
 
 The approved finite object implementation and native/database/browser qualification are complete.
