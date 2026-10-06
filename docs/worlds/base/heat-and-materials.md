@@ -10,17 +10,17 @@ The supplied hearth begins cold on level ground, with clear ordinary approaches.
 
 The initial kit is supplied **once when this prepared profile is created**:
 
-| Actual material | Quantity and purpose |
-| --- | --- |
-| Unfired clay bowl blanks | 2; each contributes 2 packing-load units. |
-| Open stone firing hearth | 1, with a fitted reusable cover and adjacent stone cooling surface; firing-only. |
-| Substantial wooden panels | 2, already installed in the grounded assembly; each is one recoverable material part, with 6 packing units before damage. |
-| Selected small dry twigs | 2 experimental targets; each has 1 packing unit before damage. These are not automatically a full ordinary banked-fuel unit. |
-| Finite brief igniters | 4 distinct small source items, each 1 packing unit before use; one reusable striker supplies their supported starting method. |
-| Ordinary eligible fuel | 6 current full fuel units, actually transferable and consumed by Add fuel. |
-| Ordinary dry prepared fiber | 4 units: lighting supply, two optional wet/dry targets and a spare. Actual use may exhaust a different allocation. |
-| Rigid shaft | 1 actual retained tool for current friction lighting; rigidity alone does not establish fuel eligibility. |
-| Mineral lifting/extinguishing tool | 1 reusable tool for the selected hot withdrawal and extinguishing actions. |
+| Actual material                    | Quantity and purpose                                                                                                          |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Unfired clay bowl blanks           | 2; each contributes 2 packing-load units.                                                                                     |
+| Open stone firing hearth           | 1, with a fitted reusable cover and adjacent stone cooling surface; firing-only.                                              |
+| Substantial wooden panels          | 2, already installed in the grounded assembly; each is one recoverable material part, with 6 packing units before damage.     |
+| Selected small dry twigs           | 2 experimental targets; each has 1 packing unit before damage. These are not automatically a full ordinary banked-fuel unit.  |
+| Finite brief igniters              | 4 distinct small source items, each 1 packing unit before use; one reusable striker supplies their supported starting method. |
+| Ordinary eligible fuel             | 6 current full fuel units, actually transferable and consumed by Add fuel.                                                    |
+| Ordinary dry prepared fiber        | 4 units: lighting supply, two optional wet/dry targets and a spare. Actual use may exhaust a different allocation.            |
+| Rigid shaft                        | 1 actual retained tool for current friction lighting; rigidity alone does not establish fuel eligibility.                     |
+| Mineral lifting/extinguishing tool | 1 reusable tool for the selected hot withdrawal and extinguishing actions.                                                    |
 
 These are new prepared-scene supplies, not a claim about current default inventory. They begin in the human's actual custody or installed under that human's explicit authored use authority. That initial grant includes the listed thermal uses and altering the named two-panel assembly. Restart, return, failed work or resetting an uncommitted layout grants nothing. Visiting the site or offering advice grants no right to consume the kit.
 
@@ -32,14 +32,14 @@ No new carrying-strength limit is introduced. A fired bowl has **8 packing units
 
 The table gives original undamaged allowances. Each object retains its remaining fraction after use. While burning, its own retained warmth stays at its ignition threshold; its stated outward budget is already the transferable part after unmodeled retention and loss.
 
-| Form | Ignition / useful change | Original burning allowance | Transferable output |
-| --- | --- | --- | --- |
-| Brief igniter | Starts through the selected striker action; its own warming threshold is 1 unit | 5 game minutes | 1 heat unit/game minute |
-| Dry small twig | Ignites at 4 accumulated warming units with an admitted live source | 20 game minutes | 0.5 unit/minute |
-| Dry prepared-fiber unit | Ignites at 4 warming units; supported moisture is removed first | 10 game minutes | 0.25 unit/minute |
-| Substantial panel | Ignites at 30 warming units with an admitted live source | 60 game minutes | 2 units/minute |
-| Unfired / fired bowl | 40 warming units, then 200 irreversible firing units; does not ignite in this family | None | None |
-| Supported stone hearth, cover and cooling surface | Noncombustible; the cover/solid obstruction has the expressly supported blocking form | None | None |
+| Form                                              | Ignition / useful change                                                              | Original burning allowance | Transferable output     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------- | ----------------------- |
+| Brief igniter                                     | Starts through the selected striker action; its own warming threshold is 1 unit       | 5 game minutes             | 1 heat unit/game minute |
+| Dry small twig                                    | Ignites at 4 accumulated warming units with an admitted live source                   | 20 game minutes            | 0.5 unit/minute         |
+| Dry prepared-fiber unit                           | Ignites at 4 warming units; supported moisture is removed first                       | 10 game minutes            | 0.25 unit/minute        |
+| Substantial panel                                 | Ignites at 30 warming units with an admitted live source                              | 60 game minutes            | 2 units/minute          |
+| Unfired / fired bowl                              | 40 warming units, then 200 irreversible firing units; does not ignite in this family  | None                       | None                    |
+| Supported stone hearth, cover and cooling surface | Noncombustible; the cover/solid obstruction has the expressly supported blocking form | None                       | None                    |
 
 A burning twig or fiber gradually loses its real combustible material. Extinguished partial material is retained with that condition; it cannot satisfy a recipe requiring a pristine full plain unit. Exhaustion retires the combustible item through its actual material disposition and leaves one inert ash remnant at its location, with no fuel, container function or supported recipe value. The remnant retains residual warmth until ordinary cooling, has 1 packing unit when collected, and is not immediately made cold by conversion. Multiple residues may only combine through qualified condition-equivalent object operations. They are not new resource rewards.
 
@@ -71,15 +71,15 @@ A fully warmed clay object loses **2 warming units/minute when no admitted heat 
 
 The first supported sources cannot overfire this selected clay. Once fired, further heat keeps it hot and unused incoming heat is lost, while the actual source still spends fuel. There is no secret cracking timer. Hot/unfinished, cold/unfinished, hot/fired and cold/fired must be distinguishable. Other ceramics, hotter processes and deliberate breakage are unsupported, not probabilistic outcomes of this method.
 
-| Action | Work and actual result |
-| --- | --- |
-| Place a cold blank | 30 game seconds; completes the exact transfer into a free admitted position. Cancellation leaves it at source. |
-| Withdraw onto the cooling surface | 30 seconds with the mineral tool and an actual clear destination within ordinary reach; condition is retained and heating changes only on completed movement. |
-| Move the hearth | 120 seconds; requires no active source, cool contained pieces and a permitted clear destination. Stone has no separate hidden cooldown in this first profile. The same bank and actual pieces move; no refill. |
-| Install or reclaim one panel | 120 seconds under construction permission, cool/nonburning condition and actual valid space; surviving damage remains. |
-| Strike/place one brief igniter | 30 seconds with the striker, exact permitted target/contact and actual igniter; cancellation before completion does not start or consume it. Its own finite burning begins at completion. |
-| Extinguish the selected material | 30 seconds with the mineral tool and ordinary reach; only the named source/material is affected. |
-| Cover the firing hearth | 30 seconds using its actual cover; stops its source and retains unburnt fuel. |
+| Action                            | Work and actual result                                                                                                                                                                                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Place a cold blank                | 30 game seconds; completes the exact transfer into a free admitted position. Cancellation leaves it at source.                                                                                                 |
+| Withdraw onto the cooling surface | 30 seconds with the mineral tool and an actual clear destination within ordinary reach; condition is retained and heating changes only on completed movement.                                                  |
+| Move the hearth                   | 120 seconds; requires no active source, cool contained pieces and a permitted clear destination. Stone has no separate hidden cooldown in this first profile. The same bank and actual pieces move; no refill. |
+| Install or reclaim one panel      | 120 seconds under construction permission, cool/nonburning condition and actual valid space; surviving damage remains.                                                                                         |
+| Strike/place one brief igniter    | 30 seconds with the striker, exact permitted target/contact and actual igniter; cancellation before completion does not start or consume it. Its own finite burning begins at completion.                      |
+| Extinguish the selected material  | 30 seconds with the mineral tool and ordinary reach; only the named source/material is affected.                                                                                                               |
+| Cover the firing hearth           | 30 seconds using its actual cover; stops its source and retains unburnt fuel.                                                                                                                                  |
 
 Current Add fuel and Light retain their existing work/consumption behavior on the admitted hearth: 20 and 150 game seconds respectively, with actual supplies spent on valid completion. A cold blank may be positioned first; no banked fuel burns until lighting completes. Relighting includes reopening the actual fitted cover on valid Light completion, before emission begins; no extra opening command is required, and a covered hearth never emits this source through its own cover. A lit hearth already spends fuel during approach and placement. Completion exactly when the final sufficient heat exhausts the bank **earns the bowl**; checking “still lit” only after that boundary must not erase completed firing.
 

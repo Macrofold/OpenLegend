@@ -1,8 +1,8 @@
 # Heat, ignition and useful material change
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | The researched DG20 product proposal is prepared; technical design, adoption and runtime qualification remain open under HM01–HM06. | 2026-10-06 |
+| Status      | Current progress                                                                                                                    | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The researched DG20 product proposal is prepared; technical design, adoption and runtime qualification remain open under HM01–HM06. | 2026-10-06   |
 
 This develops DG20 and the remaining selected heat/fire portion of ND08 beneath INV-6. It proposes behavior; it does not enable a new service, alter current fire law, complete construction, or claim runtime qualification. The [base-world profile](../worlds/base/heat-and-materials.md) owns the selected materials, quantities, geometry, durations and balance. [HM01–HM06](../maintainers/heat-and-materials.md) owns delivery and [HM limits](../limits/heat-and-materials.md) records the restrictions.
 
@@ -186,18 +186,18 @@ Larger sites require evidence for their actual complete workload. The first kit,
 
 The following are future acceptance journeys, not tests run by this documentation task. Each should be exercised through ordinary player controls and the actual supported clock, with present state and retained material checked after the action.
 
-| Journey | Required player-visible result |
-| --- | --- |
-| A useful first bowl | Cold setup, finite real fuel, actual firing, cooling, collection, packing and an optional independently accepted offer all work without a compulsory quest or supervision loop. |
-| The player changes plans | Withdrawal preserves partial firing; cooling and later reheating cost actual time and fuel; the remaining blank and completed result cannot be duplicated. |
-| Two pieces share one source | Both receive their real shares; adding another target changes timing; exact sufficient fuel completes at exhaustion and an insufficient bank leaves truthful partial work. |
-| Matched brief sources | The selected dry twig lights and the substantial real wall section does not; a wet-fiber variation is additional evidence, not a substitute. |
-| A local mistake | Deliberate sustained exposure can ignite a panel; the player can stop the right source, preserve damaged material and understand a remaining reignition risk. |
-| A gap and an opening | The actual gap or supported stone blocks a path; losing a panel changes its occupied geometry and future exposure while a surviving independent panel remains. |
-| Another person's choice | A resident can refuse supplies or help, choose another activity, operate with actual permission, and respond only to evidence it has. |
-| A late observer | Present warmth, a finished bowl or charred material is visible appropriately; exact causation and private intentions are not fabricated. |
-| Departure and return | Human handling reconciles first, whole-world hold and protected inventory stay distinct, and valid material processes restore without duplicate fuel or output. |
-| Work unavailable | Native state remains coherent; missing decisions are not replaced by compulsory routines; a mechanical capacity failure holds the whole isolated world visibly. |
+| Journey                     | Required player-visible result                                                                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A useful first bowl         | Cold setup, finite real fuel, actual firing, cooling, collection, packing and an optional independently accepted offer all work without a compulsory quest or supervision loop. |
+| The player changes plans    | Withdrawal preserves partial firing; cooling and later reheating cost actual time and fuel; the remaining blank and completed result cannot be duplicated.                      |
+| Two pieces share one source | Both receive their real shares; adding another target changes timing; exact sufficient fuel completes at exhaustion and an insufficient bank leaves truthful partial work.      |
+| Matched brief sources       | The selected dry twig lights and the substantial real wall section does not; a wet-fiber variation is additional evidence, not a substitute.                                    |
+| A local mistake             | Deliberate sustained exposure can ignite a panel; the player can stop the right source, preserve damaged material and understand a remaining reignition risk.                   |
+| A gap and an opening        | The actual gap or supported stone blocks a path; losing a panel changes its occupied geometry and future exposure while a surviving independent panel remains.                  |
+| Another person's choice     | A resident can refuse supplies or help, choose another activity, operate with actual permission, and respond only to evidence it has.                                           |
+| A late observer             | Present warmth, a finished bowl or charred material is visible appropriately; exact causation and private intentions are not fabricated.                                        |
+| Departure and return        | Human handling reconciles first, whole-world hold and protected inventory stay distinct, and valid material processes restore without duplicate fuel or output.                 |
+| Work unavailable            | Native state remains coherent; missing decisions are not replaced by compulsory routines; a mechanical capacity failure holds the whole isolated world visibly.                 |
 
 Numeric comparisons need to cover small and large time steps, ordinary speed and accelerated creator speed. The purpose is equal material outcomes and honest real response opportunity, not a claim that a person can intervene equally quickly at every speed. Any assistance such as pausing must be an actual available control, not an unimplemented instruction in the spec.
 
@@ -217,7 +217,7 @@ Research was reviewed October 6, 2026. Sources distinguish shipped behavior, his
 
 ### HR-R01 — Finite local fire and the cost of its consequences
 
-Jean-François Levesque, [*Far Cry: How the Fire Burns and Spreads*](https://jflevesque.com/2012/12/06/far-cry-how-the-fire-burns-and-spreads/), December 6, 2012, with a later page update. The programmer describes simplified local ignition, material differences, finite burning and geometry, and identifies event volume as a bottleneck. **Inference here:** small material rules can support meaningful consequences, but propagation, presentation and reaction work must all be counted. This historical account supplies no transferable capacity benchmark and does not justify hidden spread limits.
+Jean-François Levesque, [_Far Cry: How the Fire Burns and Spreads_](https://jflevesque.com/2012/12/06/far-cry-how-the-fire-burns-and-spreads/), December 6, 2012, with a later page update. The programmer describes simplified local ignition, material differences, finite burning and geometry, and identifies event volume as a bottleneck. **Inference here:** small material rules can support meaningful consequences, but propagation, presentation and reaction work must all be counted. This historical account supplies no transferable capacity benchmark and does not justify hidden spread limits.
 
 ### HR-R02 — Spread can destroy the intended play
 
@@ -233,19 +233,19 @@ Iron Gate, [Patch 0.218.21](https://store.steampowered.com/news/posts/?appgroupn
 
 ### HR-R05 — A contained fire can already be useful
 
-Mojang, [*Village & Pillage out today on Java*](https://www.minecraft.net/en-us/article/village---pillage-out-java-), page dated April 22, 2019, Java 1.14 release. Its campfire cooks food and can be lit or unlit while explicitly not spreading fire. **Inference here:** keeping the existing contained cooking family is a coherent useful stage; every visible flame need not imply destructive propagation. The source does not establish Open Legend warmth, light, smoke signaling or fuel rules.
+Mojang, [_Village & Pillage out today on Java_](https://www.minecraft.net/en-us/article/village---pillage-out-java-), page dated April 22, 2019, Java 1.14 release. Its campfire cooks food and can be lit or unlit while explicitly not spreading fire. **Inference here:** keeping the existing contained cooking family is a coherent useful stage; every visible flame need not imply destructive propagation. The source does not establish Open Legend warmth, light, smoke signaling or fuel rules.
 
 ### HR-R06 — World fire rules should be declared
 
-Mojang, [*Minecraft Java Edition 1.21.11*](https://www.minecraft.net/en-us/article/minecraft-java-edition-1-21-11), December 9, 2025. A released world rule determines the player-relative distance within which spreading occurs, including settings disabling it or allowing it without nearby players. **Inference here:** propagation scope can be a stated world choice. Its observer-distance behavior is not adopted here; Open Legend's selected physical progression must remain consistent when an observer leaves.
+Mojang, [_Minecraft Java Edition 1.21.11_](https://www.minecraft.net/en-us/article/minecraft-java-edition-1-21-11), December 9, 2025. A released world rule determines the player-relative distance within which spreading occurs, including settings disabling it or allowing it without nearby players. **Inference here:** propagation scope can be a stated world choice. Its observer-distance behavior is not adopted here; Open Legend's selected physical progression must remain consistent when an observer leaves.
 
 ### HR-R07 — Countermeasures and trustworthy processing
 
-Tyron, [*The Homesteading update, balance & stable patch #2 (v1.15.3-rc.1)*](https://www.vintagestory.at/blog.html/news/the-homesteading-update-balance-stable-patch-2-v1153-rc1-r289/), July 29, 2021. Despite the title, the body identifies an unstable release. It discusses countermeasures, alternate kiln fuels affecting duration, missing fired outputs on connection and timer integrity. **Inference here:** finite processing needs useful choices and reliable material continuity. This historical record does not supply a ceramic recipe, a current bug claim or proof of fun.
+Tyron, [_The Homesteading update, balance & stable patch #2 (v1.15.3-rc.1)_](https://www.vintagestory.at/blog.html/news/the-homesteading-update-balance-stable-patch-2-v1153-rc1-r289/), July 29, 2021. Despite the title, the body identifies an unstable release. It discusses countermeasures, alternate kiln fuels affecting duration, missing fired outputs on connection and timer integrity. **Inference here:** finite processing needs useful choices and reliable material continuity. This historical record does not supply a ceramic recipe, a current bug claim or proof of fun.
 
 ### HR-R08 — A broad thermal world is a larger commitment
 
-The Indie Stone, [*Flame On*](https://projectzomboid.com/blog/news/2022/10/flame-on/), October 2022 development update. Its thermal overhaul contemplated materials, heating/cooling, weather and unobserved areas after a long pause for multiplayer work; the developer did not promise it for Build 42. **Inference here:** broader environmental consequences, persistence and presentation are substantial additional delivery. This is explicitly unfinished historical work, not a description of current Project Zomboid.
+The Indie Stone, [_Flame On_](https://projectzomboid.com/blog/news/2022/10/flame-on/), October 2022 development update. Its thermal overhaul contemplated materials, heating/cooling, weather and unobserved areas after a long pause for multiplayer work; the developer did not promise it for Build 42. **Inference here:** broader environmental consequences, persistence and presentation are substantial additional delivery. This is explicitly unfinished historical work, not a description of current Project Zomboid.
 
 ## Maintained records
 

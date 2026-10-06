@@ -32,7 +32,7 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 ## BW26 — Heat, ignition and material consequences
 
-**DG20 product design in progress, October 6, 2026.** [Heat and materials](../projects/heat-and-materials-feature-spec.md) develops the selected remaining ND08 family beneath INV-6. Its [base-world profile](../worlds/base/heat-and-materials.md) owns actual materials, work and tuning; [HM01–HM06](heat-and-materials.md) retains focused delivery and [HM limits](../limits/heat-and-materials.md) inventories restrictions. Current BW19 fire care remains distinct from the proposed heating, local damage and spread. Existing DG13 construction/moisture, object identity, state, time and participation owners retain their responsibilities.
+**DG20 product proposal complete and reviewed, October 6, 2026.** [Heat and materials](../projects/heat-and-materials-feature-spec.md) develops the selected remaining ND08 family beneath INV-6. Its [base-world profile](../worlds/base/heat-and-materials.md) owns actual materials, work and tuning; [HM01–HM06](heat-and-materials.md) retains focused delivery and [HM limits](../limits/heat-and-materials.md) inventories restrictions. Current BW19 fire care remains distinct from the proposed heating, local damage and spread. Existing DG13 construction/moisture, object identity, state, time and participation owners retain their responsibilities.
 
 ## BW25 — Supplies that change over time
 
