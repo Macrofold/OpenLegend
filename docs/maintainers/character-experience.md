@@ -6,6 +6,8 @@ The first useful scope is one resident whose body experience, desire for contact
 
 ## CE01 — A coherent authored person in a supported world
 
+[CF01/CF04](parallel-batch-06-rivals-and-contested-ground.md) propose hostile residents and voluntary combat help as further consumers of ordinary minds. Explicit authored initial purposes do not prove spontaneous motivation, and a biography must not prescribe the decision algorithm. Their planned evidence does not close this broader character-quality scope.
+
 The owner’s [authorship clarification](../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality) distinguishes evolving history/disposition from prescribed behavior and transient circumstances. Ada now has a simple observation preference; the supply-dependent clause, current camp assertion and generic reasoning/narration instructions are removed. The old stopping episode remains evidence for the old content and cannot qualify this revision. Whole-life acceptance remains open.
 
 [PG02](parallel-batch-03-personal-game.md#pg02--coherent-attended-resident-behavior) implements unified required experience selection and shared native perspective rendering. [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) demonstrates a freely chosen switch from cord work to hare observation with corrected content; contrary repetition remains explicit. [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) closes PG02’s last blocked execution check.

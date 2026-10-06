@@ -1,6 +1,6 @@
 # Ranged counterplay and evasion
 
-**Proposed, October 6, 2026.** These are bundled-world choices for [batch 06](../../projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md), not current mechanics or universal engine rules. NPC combat participation is separately unanswered; this profile does not broaden today's permitted targets.
+**Proposed, October 6, 2026.** These are bundled-world choices for [batch 06](../../projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md), not current mechanics or universal engine rules. NPC combat participation is an [accepted target](lifecycle-and-protection.md#npc-combat-participation) implemented by CF01; this profile consumes that permission owner rather than changing eligibility itself.
 
 ## Ranged tools and preparation
 
@@ -10,7 +10,7 @@ Holding prepared aim is allowed until canceled, interrupted or its prerequisites
 
 At release, clamp the existing base accuracy plus the applicable competence contribution to the supported probability range. One saved draw selects steady versus deviated aim. Steady aim uses the observed target point. Deviated aim uses a uniformly selected direction in the plane perpendicular to the shot and an offset of **two observed target capsule radii** at that point. The resulting direction is then fixed. These are two draws only for a deviated release, not per frame. A target moving into or out of the resulting ray can still change contact, so the accuracy field is described as **base aim steadiness**, not an eventual hit guarantee. No extra fleeing multiplier is applied after geometry already accounts for target movement; this replaces the current 0.85 hunting modifier and must be reconciled with AV03's prior calculation.
 
-The first flight family has point projectiles, straight travel and body/solid interception. It does not model arc drop, thickness-based penetration, ricochet or retained spent ammunition. A non-target body intercepts without injury; no collateral attack permission is inferred. Compatible shield protection consumes the existing chosen guard through AV02's resolver. Tuning a different supported launcher must change authored definitions rather than branch on an enemy's identity.
+The first flight family has point projectiles, straight travel and body/solid interception. It does not model arc drop, thickness-based penetration, ricochet or retained spent ammunition. A non-target body intercepts without injury; no collateral attack permission is inferred. CF02 extends AV02's contact-only guard to the supported stone/arrow projectile impacts through that same resolver: use the incoming trajectory direction at contact, the shield's existing sector/reduction and one-interception limit. A shield grants no area immunity or interception of a shot aimed at someone else. This is a scoped expansion beyond AV02, not a second guard implementation. Tuning a different supported launcher must change authored definitions rather than branch on an enemy's identity.
 
 ## Evasion
 
@@ -29,5 +29,5 @@ Release text says a shot was fired; impact text distinguishes observed target in
 ## Maintained records
 
 - Implementation: [CF02/CF03](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md).
-- Limits: [RC01–RC06](../../limits/parallel-batch-06-rivals-and-contested-ground.md).
+- Limits: [RC01–RC07](../../limits/parallel-batch-06-rivals-and-contested-ground.md).
 - Mechanisms: [batch 06 technical design](../../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md).

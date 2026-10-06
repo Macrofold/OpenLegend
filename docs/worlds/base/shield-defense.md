@@ -32,6 +32,10 @@ The result can say “Shield blocked 9 of 18 injury; you lost 9 health.” If an
 
 No passive auto-guard, endless held stance, stamina meter, shield wear, parry stun, counterattack, projectile interception or new PvP permission is introduced. A finite guard makes defense an action with a time/opportunity cost while keeping walking away a legitimate option. Expansion needs a useful encounter that this scope cannot express.
 
+## Proposed batch 06 projectile extension
+
+[CF02](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf02--aim-projectiles-and-real-cover) later extends this same guard to the supported stone/arrow impacts under [ranged counterplay](ranged-counterplay.md#ranged-tools-and-preparation). That extension is outside AV02's contact-only delivery above and remains unimplemented. It reuses the current shield sector, reduction, readiness, one-interception consumption and recovery; no independent projectile shield or ally protection is introduced.
+
 ## Maintained records
 
 - Delivery: [AV02](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment).

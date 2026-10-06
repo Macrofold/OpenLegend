@@ -4,6 +4,8 @@
 
 ## AV01 — Rewarding expeditions
 
+[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) later reuses this field-sling method, workshop note and physical-learning owner at a contested destination. It waits for the supplied AV01 result; the follow-on allocation does not complete or reimplement this work.
+
 - [ ] Deliver two reachable, distinctive destinations, truthful physical clues, a finite usable spear and an exact learnable production method under the [world profile](../worlds/base/rewarding-expeditions.md).
 - [ ] Deliver recipe-record inspection/learning through ordinary object, knowledge and action owners; never grant stock, fabrication, unrelated knowledge or hidden contents.
 - [ ] Consume supplied PX03 known-place behavior and incoming PG05/PX01 threat rules; complete the route → reward use → recipe → real manufacture/use journey and the feature's meaningful failure/continuity cases.
@@ -12,6 +14,8 @@
 **Readiness:** physical content/record work can start on the inspected main. Full discovery needs PX03; dangerous-route qualification needs incoming threat integration; final two-handed spear integration consumes AV02. **Parents:** NC09–NC12's exposure subset, INV-4/INV-7, AC09/AC11, BW authored content and PO custody. Exact implementation and acceptance: [AV01 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av01--sites-rewards-and-physical-recipe-records).
 
 ## AV02 — Shield defense and compatible equipment
+
+[Batch 06](parallel-batch-06-rivals-and-contested-ground.md) consumes this equipment/guard owner. CF02 owns the later supported-projectile extension; CF03 interruption and CF01/CF04 loadouts consume the existing contract. These open consumers do not expand AV02 into a duplicate defense implementation or establish its completion.
 
 - [ ] Replace single-equipped-item authority with admitted body-port attachment through the existing object owner; update all current callers, cleanup and current-format validation together.
 - [ ] Deliver known shield manufacture, finite family authoring, readable knife/shield versus two-handed equipment, auto-equip conflict explanation and one chosen guard.

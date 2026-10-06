@@ -24,6 +24,8 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 
 ## PX03 — Useful discoveries and known places
 
+[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) proposes an occupied-site discovery/return consumer of this place owner. Its merge dependency remains explicit; the new batch does not supply a duplicate memory store or change PX03 completion evidence.
+
 - [ ] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
 - [ ] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.
 - [ ] Reconcile NC09–NC12's exposure subset, DG01/ND18 and relevant SW/memory work. Preserve broader narration, story and world-map acceptance.
@@ -31,6 +33,8 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 Parents: [narration](narration-and-conversations.md), [spatial world](spatial-world.md), [DG01/ND18](needs-design.md#dg01--actions-and-first-encounters). PG03 excludes this new encounter scope; its action presentation remains a consumed prerequisite.
 
 ## PX04 — Voluntary shared outings
+
+[CF04](parallel-batch-06-rivals-and-contested-ground.md#cf04--a-companion-who-can-help-in-a-fight) is the proposed later combat-help consumer. It extends supplied request/consent semantics while keeping a trip separate from consent to fight and preserving independent withdrawal. PX04 is still a prerequisite, not repeated or marked complete by that allocation.
 
 - [ ] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
 - [ ] Deliver invitation, voluntary acceptance/refusal, travel, arrival and leaving; complete changed-work, interruption, privacy, blocked-route and save/replay acceptance.
