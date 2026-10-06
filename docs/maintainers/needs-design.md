@@ -219,6 +219,8 @@ ND05's first selected body/condition/treatment loop, observable symptoms, uncert
 
 **Start and parallel boundary:** Use current actor/state owners and DG07's human recovery boundary for affected human outcomes. Care can proceed without general fire, a complete disease model or NPC ghosts. Deeper biological/life-stage extensions are reconsidered with DG31 when their consumer exists. **Existing owners:** ACT/BW, shared state, actions and lifecycle owners.
 
+**October 6 product proposal complete:** [Recovery and care](../projects/recovery-and-care-feature-spec.md) selects one complete material-free, awake recovery at camp, then independently selectable field dressing and willing help. The [world profile](../worlds/base/recovery-and-care.md) restores ordinary health/injury while preserving needs, scars, current death and actual danger. It uses newer main's implemented death/scar baseline, not this branch's older collapse wording. [CARE01–CARE05](recovery-and-care.md) and [care limits](../limits/recovery-and-care.md) retain adoption, technical design and runtime qualification. A distinct future illness still needs its own worthwhile cause-to-resolution activity; it is not a prerequisite for useful recovery.
+
 #### DG22 — Durable agreements and a small world economy
 
 ND09's chosen currency and deferred-delivery/default rules, and ND10's sparse persistent group/property/obligation records. Extend DG06's actual exchanges and cooperation into a useful multi-session arrangement.
@@ -461,6 +463,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** the [actor model](actor-model.md), [base-world survival](../worlds/base/survival.md) and current status-effect/state systems already support living actors, needs, damage and selected conditions. Body-part health, disease, richer injuries and treatment are broader proposed behavior.
 
 **Needed before an implementation project:** choose one playable care or injury loop, its body representation, causes, observable symptoms, treatment and consequences. Specify what actors can know, how severity and time evolve, and how the rules interact with death/recovery, saved state and resource use. Do not turn every body-state example into a required subsystem or assume a generic attribute framework supplies biological behavior.
+
+**October 6 scoped product design:** DG21 now supplies [the ordinary recovery and optional field-care proposal](../projects/recovery-and-care-feature-spec.md), with [CARE01–CARE05](recovery-and-care.md) as its focused delivery owner beneath ACT/BW. Current main already delivers death scars and their treatment; the new gap is recovering from survived ordinary harm. Deep anatomy, new illness, rescue and broader care remain conditional extensions, with their original selection requirement preserved.
 
 ### ND06 — Ecology, aging and generations
 

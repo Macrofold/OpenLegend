@@ -14,6 +14,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
+- [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; distinguishes newer main's actual death/scars from this branch's older runtime context.
 - [Combat](combat.md)
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.

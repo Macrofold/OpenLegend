@@ -1,8 +1,8 @@
 # Product designs for groups 21–25
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Ordinary-session pacing is clarified on the parent branch; the five product designs are being developed sequentially from current sources. | 2026-10-06 |
+| Status      | Current progress                                                                                                                           | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Ordinary-session pacing is clarified on the parent branch; the five product designs are being developed sequentially from current sources. | 2026-10-06   |
 
 ## Assignment and baseline
 
@@ -24,17 +24,21 @@ Keep world-specific materials, rates, effects, opportunities and wording with au
 
 ## Sequential work and ownership
 
-| Group | Product question | Existing responsibilities to reuse |
-| --- | --- | --- |
-| DG21 | How can someone recover from a survived encounter or receive useful willing help, with clear remaining limitations? | ACT/BW bodily effects, current death/scars, native work, shared state, items, perception, participation and time. Choose a useful condition/care activity before anatomy or disease breadth. |
-| DG22 | What modest arrangement remains useful across sessions, and what do acceptance, changing terms, delivery, default and release actually mean? | Existing reciprocal exchange/agreement lifecycle, BW17/D64 commitments, INV-20, PO custody, shared state and D11/D18. Currency and larger institutions are selected only for a concrete need. |
-| DG23 | How can an experience influence a particular person's later interpretation and conduct without inventing events or forcing their choices? | ACT07/ACT08, CE, CR06/CR09, memory/provenance, current reflection, correction/forgetting and D14/D59. Early compelling characters remain independent of later transformation. |
-| DG24 | How does a character obtain and use a real remote-text affordance, reach a known recipient and understand delivery or failure? | NC/MP identity, world-authored capabilities, private communication and D48. Local hearing, remote messages and human account metadata remain distinct; voice/calls are later DG26. |
-| DG25 | When should a change add an attributed correction, and when may an authorized shared world actually return to an earlier point? | D60/D66, HE speech, SL10, memory/narration, source erasure, data/privacy and non-rewindable permissions/accounting. Correction and restoration must be independently selectable. |
+| Group | Product question                                                                                                                             | Existing responsibilities to reuse                                                                                                                                                            |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DG21  | How can someone recover from a survived encounter or receive useful willing help, with clear remaining limitations?                          | ACT/BW bodily effects, current death/scars, native work, shared state, items, perception, participation and time. Choose a useful condition/care activity before anatomy or disease breadth.  |
+| DG22  | What modest arrangement remains useful across sessions, and what do acceptance, changing terms, delivery, default and release actually mean? | Existing reciprocal exchange/agreement lifecycle, BW17/D64 commitments, INV-20, PO custody, shared state and D11/D18. Currency and larger institutions are selected only for a concrete need. |
+| DG23  | How can an experience influence a particular person's later interpretation and conduct without inventing events or forcing their choices?    | ACT07/ACT08, CE, CR06/CR09, memory/provenance, current reflection, correction/forgetting and D14/D59. Early compelling characters remain independent of later transformation.                 |
+| DG24  | How does a character obtain and use a real remote-text affordance, reach a known recipient and understand delivery or failure?               | NC/MP identity, world-authored capabilities, private communication and D48. Local hearing, remote messages and human account metadata remain distinct; voice/calls are later DG26.            |
+| DG25  | When should a change add an attributed correction, and when may an authorized shared world actually return to an earlier point?              | D60/D66, HE speech, SL10, memory/narration, source erasure, data/privacy and non-rewindable permissions/accounting. Correction and restoration must be independently selectable.              |
 
 For each group, read its linked proposals, present contracts, current implementation and verification evidence; inspect relevant repertoire priorities; research primary sources; choose and explain a complete product proposal; critique its burdens and alternatives; then reconcile the queue, focused delivery and limit owners. Commit that group's design before drafting the next. Parallel readers may audit or research the current group; preliminary source mapping for later groups does not change the sequential drafting requirement.
 
 ## Completion and verification
+
+### Group 21 completed product design
+
+[Recovery and care](recovery-and-care-feature-spec.md), its [world profile](../worlds/base/recovery-and-care.md), [CARE tracker](../maintainers/recovery-and-care.md) and [limits](../limits/recovery-and-care.md) are complete product proposals. Eight primary research records informed the design. Review removed a compulsory supply cost from ordinary camp recovery, separated field convenience and willing assistance, and preserved scar/need/death consequences. Current death's need-reset incentive is explicitly retained for existing pacing/mortality review. The group was committed before the next group's drafting; all technical/runtime claims remain open.
 
 Commit changes at least every **five minutes** while task edits remain uncommitted, labeling unfinished checkpoints accurately. Preserve existing useful research, scenarios, IDs, acceptance states and history. Update existing product owners rather than creating competing specifications; create focused owners only for newly scoped responsibilities. Keep technical/runtime work and unperformed play qualification open.
 

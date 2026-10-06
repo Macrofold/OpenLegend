@@ -30,6 +30,10 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 - [x] **BW12 — Spoken name learning:** carry optional self-introduction meaning with generated speech and learn its stated label for permitted listeners through the existing observer-name mutation, including player listeners. Preserve speech on invalid metadata and retain visibility/recognition boundaries. Automated and broader language-quality qualification remain in TODO.
 
+## Recovery and care proposal
+
+[DG21 recovery and care](../projects/recovery-and-care-feature-spec.md) proposes a complete short recovery from survived harm at an existing camp, with separately selected field dressing and willing help. [CARE01–CARE05](recovery-and-care.md) owns delivery beneath ACT04/BW14, and the [world profile](../worlds/base/recovery-and-care.md) and [care inventory](../limits/recovery-and-care.md) own its values. The current-source audit uses newer main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425), where actual death/Continue/scars and scar treatment are implemented. This proposal does not restore the older collapse law still described elsewhere on this branch or change mortality/participation policy. Broader medical detail remains conditional.
+
 ## BW26 — Heat, ignition and material consequences
 
 **DG20 product proposal complete and reviewed, October 6, 2026.** [Heat and materials](../projects/heat-and-materials-feature-spec.md) develops the selected remaining ND08 family beneath INV-6. Its [base-world profile](../worlds/base/heat-and-materials.md) owns actual materials, work and tuning; [HM01–HM06](heat-and-materials.md) retains focused delivery and [HM limits](../limits/heat-and-materials.md) inventories restrictions. Current BW19 fire care remains distinct from the proposed heating, local damage and spread. Existing DG13 construction/moisture, object identity, state, time and participation owners retain their responsibilities.

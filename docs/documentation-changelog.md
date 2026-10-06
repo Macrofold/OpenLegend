@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-06 — Recovery that supports another worthwhile activity
+
+Designed DG21/ND05 in [Recovery and care](projects/recovery-and-care-feature-spec.md), with an [authored world profile](worlds/base/recovery-and-care.md), [CARE delivery owner](maintainers/recovery-and-care.md) and [limits inventory](limits/recovery-and-care.md). The current-source audit uses main 0a3ab79b: death/Continue/scars and scar treatment are implemented, while ordinary recovery from survived harm is missing. The proposal selects short material-free awake recovery at camp, then optional fiber-consuming field dressing and willing help. It preserves ordinary needs, scars, actual danger, independent decisions, body-life identity and privacy. A distinct illness remains conditional. Product design and research are complete; adoption, technical work and all new runtime/gameplay qualification remain open. No runtime or accepted death/clock law changed.
+
 ## 2026-10-06 — Make the five product designs serve playable first experiences
 
 The owner's further gameplay critique found that the [DG16–DG20 package](projects/completed/product-design-groups-16-20.md) still coupled several first useful deliveries to their later simulation or editing machinery. Revised the actual feature stages, world profiles, limits and delivery trackers, then reconciled the design queue and base-world summaries. The design numbering remains a preparation order, not a five-feature implementation sequence. Existing accepted work is not silently replaced.

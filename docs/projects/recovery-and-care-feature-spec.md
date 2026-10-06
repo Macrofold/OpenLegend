@@ -152,7 +152,7 @@ The smallest successful extension might be one condition with no transmission, n
 | Resident has other priorities   | The same supported recovery/help choices are available when applicable, but the resident may decline or choose something else without fabricated healing.                               |
 | Different authored world        | Unsupported biology/rest methods stay unavailable; a machine does not consume wilderness fiber to repair itself by analogy.                                                             |
 
-CARE01 qualifies the complete first human camp journey and its applicable failures. CARE02 qualifies self-directed resident use when offered. CARE03 separately qualifies field self-care and assisted care, including both participants' independent choices. CARE04 owns a selected future condition; it is not a release gate for earlier care. CARE05 reviews economics, exposure and complete-context qualification for the actually selected stage.
+CARE01 qualifies the complete first human camp journey. CARE02 carries readable control and lifecycle behavior for each enabled activity; CARE05 includes independent resident choice when that use is offered. CARE03 separately qualifies field self-care and assisted care, including both participants' independent choices. CARE04 owns a selected future condition; it is not a release gate for earlier care. CARE05 reviews economics, exposure and complete-context qualification for the actually selected stage.
 
 ## 11. Research and its limits
 

@@ -1,5 +1,7 @@
 # OpenLegend limits and decisions
 
+Proposed [recovery and care](projects/recovery-and-care-feature-spec.md): [CARE-L01–CARE-L08](limits/recovery-and-care.md) records complete camp recovery, optional field supplies/help, condition scope, time and growing discovery/history. [CARE01–CARE05](maintainers/recovery-and-care.md) retains delivery; current mortality and shared limits are unchanged.
+
 Optional human-outcome research: [well-being evidence inventory](limits/wellbeing-evidence.md) and [HE delivery](maintainers/wellbeing-evidence.md). These are finite proposed study constraints, not current collection or a game-wide well-being policy.
 
 Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md). These scope bounds are not current runtime policy.

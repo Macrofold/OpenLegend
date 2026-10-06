@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Product design groups 21–25
+
+[The sequential five-group assignment](../projects/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) now supplies DG21's focused product-delivery owner; later groups are still being designed in order. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. The source audit also reads newer main without changing this branch's ancestry.
+
 ## Product design groups 16–20
 
 [The completed five-group product-design assignment](../projects/completed/product-design-groups-16-20.md) covers a personal Journal edition, continuing lives, worthwhile conversations/scenes, changing supplies and heat/material consequences. The further gameplay review separates useful attended contributions from conditional persistent editing, unattended service, crowd meaning, food aging and broader fire. It recommends strengthening the current adventure and independent resident through existing owners; DG16–DG20 is not a five-feature release order. [NC21](narration-and-conversations.md#nc21--personal-journal-edition), [PS02–PS06](product-scalability.md#ps02--one-interruptible-life), [CS01–CS06](changing-supplies.md) and [HM01–HM06](heat-and-materials.md) retain independently scoped delivery and the fuller unperformed acceptance; technical/runtime gates remain open.
