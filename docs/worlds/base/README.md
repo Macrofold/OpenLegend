@@ -18,10 +18,10 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
-- [Finite continuing communities](continuing-communities.md) — DG17's proposed current-clock supplies, horizon and qualification; no overnight service is adopted.
-- [Heat and materials](heat-and-materials.md) — DG20's proposed useful firing activity, finite sources, selected material consequences and recovery; current cooking fires retain their existing behavior.
-- [Something worth showing](social-gatherings.md) — DG18's proposed ordinary gathering and later gist/busy-camp workload; current hearing remains authoritative.
-- [Supplies worth keeping](changing-supplies.md) — DG19's proposed food condition, preservation work and finite renewing patches; current food and resource rules remain unchanged.
+- [Finite continuing communities](continuing-communities.md) — DG17's proposed current-clock supplies, horizon and actual food/rest pacing, following useful attended continuity; no overnight service is adopted.
+- [Heat and materials](heat-and-materials.md) — DG20's separately selectable human firing, material-fire, moisture and resident/food-fire activities, with finite sources and recovery; current cooking fires retain their existing behavior.
+- [Something worth showing](social-gatherings.md) — DG18's ordinary exact conversation, a worthwhile additional participant, and separately conditional gist, vocal activity and larger gatherings; current hearing remains authoritative.
+- [Supplies worth keeping](changing-supplies.md) — DG19's independently selectable preservation and finite renewal, with actual work and stock economics; current food and resource rules remain unchanged.
 
 ## Code boundary
 
