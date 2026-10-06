@@ -255,6 +255,8 @@ Immutable manifest/sense resolution, per-volume receiver bounds and bounded geom
 
 Grouping changes what is distinguishable prospectively, not what a listener already understood. Preserve existing exact speech and permitted fragments; later focus cannot recover unheard words. A coarse background scene may establish gist without an exhaustive ambient transcript, but exact-language mechanics must retain their actual words and source/audience evidence. This does not authorize replacing accepted human messages or foreground NPC utterances with generic chatter.
 
+[DG18's detailed product proposal](projects/attention-and-scenes-feature-spec.md) starts a worthwhile attended gathering using this current exact-speech contract, then specifies a separately admitted prospective gist/aggregate family. [The authored gathering](worlds/base/social-gatherings.md) is a qualification workload, not a new complete-audience cap. HE02/HE04 listener evidence, HR02 audience completeness and HR04 caption overflow/history behavior remain foundations; new focus or scene membership cannot suppress a currently entitled exact fragment. PS04 owns the proposed integration, and actual timed speech remains separate DG26 work.
+
 ## 12. Deliberate extension boundaries
 
 Deferred capabilities include timed/streamed physical speech, listening to only a later part of an ongoing sentence, room/portal propagation, reflections/diffraction, frequency bands and audiograms, voice recognition, language competence, head orientation, lip-reading, speaker amplification, sound-triggered waking/damage, and accurate sound-duration/masking processes. Their future additions should preserve the event/evidence/caption boundaries above.

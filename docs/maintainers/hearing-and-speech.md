@@ -63,6 +63,8 @@ Earlier [initial/review records](../verification/hearing-runtime-and-reviews.md#
 
 ## Deferred expansion
 
+[DG18's crowd/scene product expansion](../projects/attention-and-scenes-feature-spec.md) and [PS04](product-scalability.md#ps04--coherent-scenes-and-limited-attention) now provide a concrete future consumer for prospective aggregate/gist evidence. Its attended first gathering reuses current exact speech. HE05 still owns this feature's unperformed dense/audience/accessibility qualification; this design does not reopen delivered HE01–HE04 or enable a noise, voice-recognition or timed-speech law.
+
 - [ ] Measure stable-cache population churn before adding aging; admitted entries persist until their map is collected/replaced, and overflow remains exact.
 - [ ] Use registry-provided type metadata when an event-family catalogue exists; the current finite menu does not restrict the server's All view.
 - [ ] Resolve [D66](../../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech) before implementing dedicated speech re-authoring. Generic text rewrites remain rejected.

@@ -59,6 +59,13 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Product design proposal:** [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) first improves ordinary one-resident conversation and useful interruptions. Larger task/promise scenes, aggregate crowds and timed speech must earn their additional burden through the [playability gates](../projects/five-product-feature-specs.md#playability-gates). Current instantaneous speech and caption clocks remain authoritative; full PS04 scope and runtime acceptance remain open.
 
+**DG18 product expansion, October 6, 2026:** The same owner now develops a gathering worth joining, participant-owned exchanges, meaningful arrival/exit, prospective gist and aggregate activity, individual exceptions and a scoped capacity qualification. The [base-world gathering profile](../worlds/base/social-gatherings.md) owns authored situations and workload values. Current EPR cue/intake work, HE speech/history and NC membership are foundations; none is a completed crowd-scene feature. Attended gatherings do not require DG17's unattended service or DG26's timed speech.
+
+- [x] Prepare the DG18 product/behavior expansion and authored gathering profile; leave technical design, adoption and actual play/cost qualification open.
+- [ ] Demonstrate a voluntary gathering with actual objects or a shared matter, credible independent refusal and a useful next player choice; no automatic gift, recipe, reward or agreement follows from attendance.
+- [ ] Qualify arrival before an unresolved reply, a genuine overhearer, a departing or silent human, repeated group split/merge, source correction and restart without invented participation or retrospective exact words.
+- [ ] Compare the same meaningful gathering with ordinary exact exchanges and the proposed prospective gist/aggregate family, including required physical evidence, pre-grouping work, private decisions, retained history and readable presentation.
+
 - [ ] Add aggregate sensory evidence, distinguishable sources, stable focus, and justified interruptions through the existing owners.
 - [ ] Define actual overlapping speech or an explicit alternate rule; never use caption lifetime as physical sound duration.
 - [ ] Prevent expensive per-object cognition before grouping; retain physical effects and privacy-correct individual exceptions.

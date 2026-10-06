@@ -2,7 +2,7 @@
 
 **Status: accepted direction with proposed cognitive and sensory extensions.** [Memory](../memory-architecture.md), [agency](../agent-agency.md), [perception/reactions](../events-perception-and-reactions.md), [hearing](../hearing-and-speech.md), and [conversation](../narration-and-conversations.md) remain the semantic owners of their runtime behavior. This page defines the cross-cutting product contract; it does not claim existing evidence may already be discarded or regrouped arbitrarily.
 
-**October 3 product proposal:** the [detailed attention, crowds and scenes specification](../projects/attention-and-scenes-feature-spec.md) supplies initial scope, player/NPC journeys, research, economic boundaries and acceptance. It proposes stable focus and aggregate activity under current exact-speech rules before a distinct timed-speech stage. These detailed recommendations do not change current hearing or close PS04/PS-D02.
+**Product proposal expanded October 6, 2026:** the [detailed attention, crowds and scenes specification](../projects/attention-and-scenes-feature-spec.md) supplies initial scope and DG18's worthwhile gathering, player/NPC journeys, research, economic boundaries and acceptance. The [base-world profile](../worlds/base/social-gatherings.md) owns authored situations and qualification inputs. Ordinary attended interaction retains current exact speech; prospective gist/aggregate activity and separately optional timed speech require their own delivery. These recommendations do not change current hearing or close PS04/PS-D02.
 
 ## 1. The cognitive work boundary
 

@@ -263,5 +263,7 @@ Generation uses the configured complex reasoning model with low effort through e
 
 ## Maintained records
 
+The [DG18 crowd/scene proposal](projects/attention-and-scenes-feature-spec.md) is a prospective consumer of conversation membership, actor-permitted history and Talk presentation. Its group-reading view and NPC pair-gist family are proposed extensions, not evidence that current person-filtered Talk already supplies them. Existing exact speech, rolling compaction and private direct-reply preview retain their current meanings. [PS04](maintainers/product-scalability.md#ps04--coherent-scenes-and-limited-attention) and NC02/NC05/NC10 own integration; the proposal does not create a second conversation store or grant past speech to a newcomer.
+
 - Implementation: [Feature tasks](maintainers/narration-and-conversations.md).
 - Limits and constraints: [Narration and conversations inventory](limits/narration.md).

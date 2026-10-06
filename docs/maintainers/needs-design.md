@@ -191,6 +191,8 @@ PS04's larger focus/aggregation and completed social-scene families, with PS06's
 
 **Start and parallel boundary:** Consumes DG02's ordinary attention/evidence boundary. Attended crowds can be designed without unattended service; unattended consumers use DG17's selected rules. Actual timed speech is a separate DG26 decision. Do not select a universal population ceiling from one workload. **Existing owners:** PS04/PS06, EPR/HE/NC, agency and performance owners.
 
+**DG18 product expansion prepared, October 6, 2026:** [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) now specifies a voluntary useful gathering, real individual choices, complete arrival/exit and failure behavior, and a prospective gist/aggregate extension with explicit exact-language exceptions. [The base-world profile](../worlds/base/social-gatherings.md) supplies authored situations and finite qualification inputs. Existing exact speech, listener evidence and caption limits remain current. [PS04/PS06](product-scalability.md#ps04--coherent-scenes-and-limited-attention) retain delivery; PS-D02 adoption and measured activity envelopes remain open.
+
 #### DG19 — Supplies that change over time
 
 ND33's selected freshness/preservation loop and the related resource-renewal/scarcity part of ND06. Design useful storage, actual preservation work, depletion/regrowth and how people recognize and respond to those changes.

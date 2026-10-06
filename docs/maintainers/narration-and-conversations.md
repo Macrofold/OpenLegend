@@ -4,6 +4,8 @@ This is the sole implementation tracker for Narration and Conversations. The can
 
 Immediate response composition, durable conversation identity/intervals/atomic merges and private narration with explicit failure entries are implemented foundations. Generated Narrator execution, voices, durable jobs and integrated transcript delivery are implemented; integrated acceptance remains open. Current evidence belongs in [verification](../verification.md).
 
+**DG18 proposed consumer, October 6, 2026:** [The attention/scene product expansion](../projects/attention-and-scenes-feature-spec.md) requires the existing Talk surface to show the human's actually heard turns in a joined group conversation, while retaining one explicit next addressee, unsent drafts and historical membership boundaries. Route that future delivery through NC02/NC05/NC10 and [PS04](product-scalability.md#ps04--coherent-scenes-and-limited-attention); current person-filtered Talk is not a completed group-reading view. Delivered NC14–NC17 compaction does not establish a new semantic gist occurrence, and NC19's private direct-reply preview does not authorize group-wide drafts. The selected restrictions remain in [PS-L28–PS-L33](../limits/product-scalability.md#ps-l28--first-worthwhile-gathering), without a parallel scene tracker here.
+
 The researched [DG15 After you left product proposal](../projects/story-perspectives-feature-spec.md) now selects one optional external perspective. [NC20](#nc20--optional-after-you-left-perspective) below tracks its new policy/consumer through NC07–NC12. This product design does not close their existing acceptance or enable cutaways/private thoughts.
 
 ## Tasks
