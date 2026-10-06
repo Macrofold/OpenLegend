@@ -4,6 +4,7 @@ import { readMcpConfig } from './mcp-config.js';
 import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
 import { resolve } from 'node:path';
 import type { ModelTokenPrices, TokenPrices } from '@open-legend/ai';
+import { captureModelPrices } from '@open-legend/ai';
 
 const modelIdentity = z.string().regex(/^[\w./:-]{1,128}$/);
 const tokenRate = z.number().finite().nonnegative();
@@ -62,15 +63,7 @@ function modelPricesSetting(
       owners.add(alias);
     }
   }
-  return Object.freeze(
-    catalogue.map((entry) =>
-      Object.freeze({
-        model: entry.model,
-        prices: Object.freeze({ ...entry.prices }),
-        reportedAliases: Object.freeze([...(entry.reportedAliases ?? [])]),
-      }),
-    ),
-  );
+  return captureModelPrices(catalogue);
 }
 
 function numberSetting(
@@ -139,6 +132,21 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     ),
   });
   const llmModelPrices = modelPricesSetting(env['OPENAI_MODEL_PRICES_JSON'], llmModel, llmPrices);
+  // Standard embedding rate checked 2026-10-04. Explicit catalogue ownership wins;
+  // custom/unknown models never inherit it. docs/ai-providers.md#configuration-and-interface
+  const embeddingModelPrices = llmModelPrices.some(
+    (entry) =>
+      entry.model === 'text-embedding-3-small' ||
+      entry.reportedAliases?.includes('text-embedding-3-small'),
+  )
+    ? llmModelPrices
+    : captureModelPrices([
+        ...llmModelPrices,
+        {
+          model: 'text-embedding-3-small',
+          prices: { inputUsdPerMillion: 0.02, outputUsdPerMillion: 0 },
+        },
+      ]);
   const worldPreset = env['OPEN_LEGEND_WORLD_PRESET'] ?? 'wilderness';
   if (!['wilderness', 'reservoir-demo', 'touch-demo'].includes(worldPreset))
     throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
@@ -218,6 +226,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
         ? ''
         : (env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? ''),
     embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',
+    embeddingModelPrices,
     embeddingDimensions: numberSetting(env, 'EMBEDDING_DIMENSIONS', 512, 64, 3072),
     embeddingReserveUsd: numberSetting(env, 'EMBEDDING_CALL_RESERVE_USD', 0.01, 0.000001, 1),
     miniModel: env['COGNITION_MINI_MODEL'] ?? 'gpt-5-mini',

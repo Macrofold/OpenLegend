@@ -1,5 +1,13 @@
 import { createHash } from 'node:crypto';
-import type { AiReceipt, AiResult, FetchTransport, RequestControl } from './types.js';
+import type {
+  AiReceipt,
+  AiResult,
+  FetchTransport,
+  ModelTokenPrices,
+  RequestControl,
+} from './types.js';
+import { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
+import { decodeUsage, record } from './validation.js';
 /** Adapter admission limits shared by callers planning bounded batches. */
 export const EMBEDDING_LIMITS = { texts: 33, textBytes: 8000, batchBytes: 64000 } as const;
 export interface EmbeddingRequest extends RequestControl {
@@ -12,9 +20,12 @@ export function createEmbeddingClient(config: {
   apiKey: string;
   model: string;
   dimensions: number;
+  modelPrices?: readonly ModelTokenPrices[];
   fetch?: FetchTransport;
   timeoutMs?: number;
 }): EmbeddingClient {
+  const modelPrices = captureModelPrices(config.modelPrices ?? []);
+  config = { ...config };
   return {
     async embed(request) {
       const started = Date.now();
@@ -64,12 +75,21 @@ export function createEmbeddingClient(config: {
         receipt.dispatched = true;
         const response = await (config.fetch ?? fetch)('https://api.openai.com/v1/embeddings', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
+          headers: {
+            Authorization: `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json',
+            // Recoverable from the retained receipt even when no response arrives.
+            // A digest avoids raw caller text and satisfies the ASCII header contract.
+            'X-Client-Request-Id': createHash('sha256').update(receipt.requestId).digest('hex'),
+          },
           body,
           signal,
           redirect: 'error',
         });
         receipt.httpStatus = response.status;
+        const externalId = response.headers.get('x-request-id');
+        if (externalId && /^[\w.:-]{1,256}$/.test(externalId))
+          receipt.providerRequestId = externalId;
         if (!response.ok) {
           void response.body?.cancel();
           receipt.completionUncertain = response.status >= 500;
@@ -92,14 +112,41 @@ export function createEmbeddingClient(config: {
         } finally {
           void reader.cancel().catch(() => {});
         }
-        const data = JSON.parse(Buffer.concat(chunks).toString()) as {
-          data?: { index: number; embedding: number[] }[];
-          model?: string;
-          usage?: { prompt_tokens: number };
-        };
+        const data: unknown = JSON.parse(Buffer.concat(chunks).toString());
+        if (!record(data)) return result('invalid', 'Invalid embedding response.');
+        if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
+          receipt.model = data.model;
+          receipt.modelVersionStatus = 'reported';
+        }
+        // Billing survives unusable vectors: a completed malformed result can still cost money.
+        // docs/ai-providers.md#receipts-outcomes-and-accounting
+        const usage = decodeUsage({
+          usage: {
+            input_tokens: record(data.usage) ? data.usage.prompt_tokens : undefined,
+            output_tokens: 0,
+          },
+        });
+        if (usage) {
+          receipt.usage = usage;
+          receipt.estimatedCostUsd = estimateCostUsd(
+            usage,
+            modelTokenPrices(
+              modelPrices,
+              config.model,
+              data.model === undefined
+                ? config.model
+                : typeof data.model === 'string'
+                  ? data.model
+                  : '',
+            ),
+          );
+        }
         if (!Array.isArray(data.data) || data.data.length !== request.texts.length)
           return result('invalid', 'Missing embeddings.');
-        const vectors = [...data.data].sort((a, b) => a.index - b.index);
+        if (data.data.some((value) => !record(value) || !Number.isSafeInteger(value.index)))
+          return result('invalid', 'Invalid embedding vector.');
+        const vectors = data.data as { index: number; embedding: unknown }[];
+        vectors.sort((a, b) => a.index - b.index);
         if (
           vectors.some(
             (v, i) =>
@@ -111,13 +158,7 @@ export function createEmbeddingClient(config: {
           )
         )
           return result('invalid', 'Invalid embedding vector.');
-        if (data.model) {
-          receipt.model = data.model;
-          receipt.modelVersionStatus = 'reported';
-        }
-        if (data.usage && Number.isSafeInteger(data.usage.prompt_tokens))
-          receipt.usage = { inputTokens: data.usage.prompt_tokens, outputTokens: 0 };
-        return { outcome: 'value', value: vectors.map((v) => v.embedding), receipt };
+        return { outcome: 'value', value: vectors.map((v) => v.embedding as number[]), receipt };
       } catch {
         receipt.completionUncertain = receipt.dispatched;
         return result(

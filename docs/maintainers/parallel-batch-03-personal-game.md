@@ -1,6 +1,8 @@
 # Parallel batch 03 — Personal game — assignment tracker
 
-**Status: in progress October 3, 2026; PG02/PG03/PG04 have separate implementation branches, while integrated acceptance remains open.**
+**Status: in progress October 4, 2026; PG01's scoped live/browser journey, arrow assertion and accounting repairs are complete; embedding pricing and recipe-explanation fixes pass; one interrupted call awaits exact billing confirmation after provider-usage comparison. The other assignments retain their independent scope.**
+
+PG02, PG03 and PG04 are underway on separate branches; their integrated acceptance remains open.
 
 [Feature scope and acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md) · [Technical definitions](../projects/parallel-batch-03-personal-game-tech-design.md) · [Standalone prompts](../projects/parallel-batch-03-personal-game-prompts.md)
 
@@ -8,10 +10,17 @@ This is an allocation across existing owners, not a replacement backlog. Baselin
 
 ## PG01 — A useful live invention
 
-- [ ] Deliver the current-main ordinary-player invention, manufacture, use, meal and retained-discovery journey, with the contrasting supported non-weapon case and meaningful failures in [PG01 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg01--make-an-invention-matter-in-play).
-- [ ] Reconcile only demonstrated parent subsets and the existing arrow-material assertion mismatch. Record actual live evidence and unavailable prerequisites separately.
+- [x] Deliver the current-main ordinary-player invention, manufacture, use, meal and retained-discovery journey, with the contrasting supported non-weapon case and meaningful failures in [PG01 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg01--make-an-invention-matter-in-play).
+- [x] Reconcile only demonstrated parent subsets and the existing arrow-material assertion mismatch. Record actual live evidence and unavailable prerequisites separately.
 
-Owners: INV-3/INV-14/INV-19 in [inventions](inventions-and-world-evolution.md); relevant WW07/WW11 in [World Agent delivery](world-agent-writes.md); NP03's open live-generation child in [the completed native batch](parallel-batch-02-foundations-and-usability.md); [TODO](TODO.md). WW07's deployable-build and historical-accounting work remains separate. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg01--integration-definition).
+**PG01's scoped journey is complete.** [Live player evidence](../verification/camp-life.md#live-player-journey--october-4-2026) verifies genuine sling generation, ordinary manufacture/equipment, ammunition and prey reaction, finite harvest, cooking/eating, paraphrase/reuse, generated cord consumed by a generated pouch, packing/retrieval and current-format restart. The shared judgment prompt now names the current invention request explicitly; the confidence threshold and native checks are unchanged. Earlier native, queued-failure and accounting evidence remains labeled separately. This closes the selected play journey, not broad model quality, deployment, voluntary NPC choice or historical accounting.
+
+- [x] Repair the current request's spending reconciliation: exact confirmed non-invocation permits an absent provider invoice, while complete Run-bound usage still includes any platform charges. The [October 4 review](../verification/camp-life.md#delayed-billing-review--october-4-2026) also keeps reservations counted when the service records charges whose billing rows are delayed or incomplete. Immediate/recovered paths and conservative failure cases pass; the original Jev charge settled through the existing owner at $0 without redispatch. Operating limits and historical holds remain unchanged.
+- [x] Add exact-model embedding price estimates to memory/action/invention callers and reconcile the 40 completed retained calls through normal settlement without redispatch. [Evidence](../verification/camp-life.md#embedding-accounting-and-readable-descriptions--october-4-2026) records 901 input tokens, $0.00001802 token estimate and $0.000047 conservatively rounded ledger total.
+- [x] Improve the generation prompt and authored container guidance/refusals to explain concrete quantities in plain language; a fresh live pouch passes.
+- [ ] Retain/reconcile interrupted embedding `memory-index:cdfbeefd-7d84-4e58-a0dd-f8a563700297`: no token usage or external request ID was received, so its $0.01 remains counted under WW11. [Recovery was attempted](../verification/camp-life.md#interrupted-embedding-recovery--october-4-2026): its exact transport log records cancellation before any HTTP response, and provider usage matches the 38 completed calls/877 tokens with no additional call in that minute. Aggregate evidence suggests no charge but does not confirm the exact request; original per-request billing remains unavailable. Future embeddings now send a reconstructible client request ID for provider tracing. Cumulative ledger charges are $0.003946 plus $0.01 uncertain exposure ($0.013946 total). Keep its database/audit identified in the report; no manual waiver, provider deployment or historical write-off is included.
+
+Owners: INV-3/INV-14/INV-19 in [inventions](inventions-and-world-evolution.md); relevant WW07/WW11 in [World Agent delivery](world-agent-writes.md); NP03's demonstrated live-generation child in [the completed native batch](parallel-batch-02-foundations-and-usability.md); [TODO](TODO.md). WW07's deployable-build and historical-accounting work remains separate. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg01--integration-definition).
 
 ## PG02 — Coherent attended resident behavior
 

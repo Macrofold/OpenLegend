@@ -24,6 +24,7 @@ Accepted target: application/world compute ownership, separate actor Worktrees a
 - [x] Keep Worker allocation economics separate from Run/model charges. Do not reinterpret the old finite Sandbox allowance as an hourly Worker ceiling or refund historical compute holds without authoritative reconciliation.
 - [x] Document missing/paused/expired/destroyed Worker behavior and explicit owner recovery without automatic paid renewal.
 - [x] Release lane fencing after confirmed never-started queue failure/expiry as well as cancellation; retain fencing for started or uncertain work, including after backend reconstruction.
+  - [PG01 review](../verification/camp-life.md#live-attempt-and-accounting-repair) repairs the separate inference-receipt case: exact final non-invocation permits an absent model invoice, with complete Run-bound usage and any platform charges still required. The [October 4 review](../verification/camp-life.md#delayed-billing-review--october-4-2026) also preserves reservations for missing platform prices or usage that omits a recorded charge, then settles the original attempt when complete billing arrives. Immediate/recovery fixtures and the original queued Run pass without redispatch; native Worker invoices, deployment and historical obligations remain unchanged.
 
 ## MW03 — Documentation and verification
 

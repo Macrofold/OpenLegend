@@ -1,7 +1,7 @@
 export { createAiClient } from './client.js';
 export { JsonObjectStream } from './json-stream.js';
 export { consumeEventStream } from './event-stream.js';
-export { estimateCostUsd, modelTokenPrices } from './usage.js';
+export { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
 export {
   usdToMicroUsd,
   microUsdToUsd,

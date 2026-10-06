@@ -102,8 +102,8 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
     limitation:
       'Organizes possessions under ordinary capacity, reach, access and nesting rules. No extra carrying strength, ownership lock, reservation, preservation, waterproofing, warmth or shelter; only verified manufactured binding is supported as an invented input.',
     guidance: [
-      `Choose ${rules.minimumPouchQuantity}–${rules.maximumPouchQuantity} actual native pouch units with fiber, flexible and pouch properties, plus exactly ceil(pouch quantity / ${rules.bindingDivisor}) native or verified manufactured binding items. Each cord item supplies one binding item.`,
-      `Capacity is ${rules.capacityPerPouchUnit} times pouch quantity; empty packing load is ceil(pouch quantity / ${rules.emptyPackingLoadDivisor}); work is ${rules.workSecondsPerMaterial} game seconds per total input unit. These are derived facts, not editable effects.`,
+      `Choose ${rules.minimumPouchQuantity}–${rules.maximumPouchQuantity} actual native pouch units with fiber, flexible and pouch properties. Use one native or verified manufactured binding item for each ${rules.bindingDivisor} pouch units, rounding up to a whole item. Each cord item supplies one binding item.`,
+      `Each pouch unit adds ${rules.capacityPerPouchUnit} packing units of capacity. The empty container takes one packing unit per ${rules.emptyPackingLoadDivisor} pouch units, rounded up. Work takes ${rules.workSecondsPerMaterial} game seconds per total input item. Describe the chosen quantities and physical method in ordinary language; these derived facts are not editable effects.`,
       'Choose your own fitting names and descriptions. Installation teaches the technique; ordinary crafting consumes inputs when work starts and makes one individual container on completion. Interruption does not refund materials.',
       'Raw unprepared fiber alone does not qualify. Nested contents count toward capacity, and ground access is not an ownership lock.',
     ],
@@ -111,16 +111,16 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
   },
   validate(_world, candidate) {
     const quantity = pouchQuantity(candidate);
+    const binding = Math.ceil(quantity / rules.bindingDivisor);
     const errors: string[] = [];
     if (quantity < rules.minimumPouchQuantity || quantity > rules.maximumPouchQuantity)
       errors.push(
         `Choose ${rules.minimumPouchQuantity}–${rules.maximumPouchQuantity} pouch units.`,
       );
-    if (
-      candidate.inputs.find((input) => input.role === 'binding')?.quantity !==
-      Math.ceil(quantity / rules.bindingDivisor)
-    )
-      errors.push(`Binding quantity must be ceil(pouch quantity / ${rules.bindingDivisor}).`);
+    if (candidate.inputs.find((input) => input.role === 'binding')?.quantity !== binding)
+      errors.push(
+        `Use ${binding} binding item${binding === 1 ? '' : 's'} for ${quantity} pouch units.`,
+      );
     return errors;
   },
   compile(_world, candidate) {
