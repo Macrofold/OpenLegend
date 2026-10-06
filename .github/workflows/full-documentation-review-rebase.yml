@@ -2,11 +2,9 @@ name: Refresh documentation review base
 on:
   push:
     branches: [docs/full-documentation-review-reconciled-2026-10-03]
-    paths:
-      - .github/workflows/full-documentation-review-rebase.yml
-      - .github/full-documentation-review-resolutions.json
+    paths: [.github/workflows/full-documentation-review-rebase.yml]
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: full-documentation-review-rebase
   cancel-in-progress: false
@@ -19,8 +17,8 @@ jobs:
         working-directory: review-reconcile
     env:
       AI_BUDGET_USD: '0'
-      OLD_BASE: c4e18d91848b5b6d367dda1d7214a9f8222cf070
-      NEW_BASE: d36ec3bd66f9b317748147003cc174f58cfd5642
+      OLD_BASE: 34bfbc316394fc884dfd5f84fe1ce3607ea410a6
+      NEW_BASE: 34233ae24365eb8911fe1995c9c232bd57f34616
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,241 +26,39 @@ jobs:
           path: review-reconcile
           fetch-depth: 0
           persist-credentials: false
-      - name: Preserve source and prepare reviewable conflict resolutions
+      - name: Prepare replay and preserve any conflicts without publishing
+        shell: bash
         run: |
-          python3 - <<'PY'
-          import difflib, hashlib, json, os, pathlib, re, subprocess, zipfile
-          output = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-reconciliation'
-          output.mkdir()
-          before, old, new = os.environ['GITHUB_SHA'], os.environ['OLD_BASE'], os.environ['NEW_BASE']
-          def git(*args):
-              return subprocess.check_output(['git', *args])
-          assert git('merge-base', before, new).decode().strip() == old
-          assert not git('status', '--porcelain')
-          (output / 'refs.json').write_text(json.dumps({'before': before, 'old_base': old, 'new_base': new, 'checkout': str(pathlib.Path.cwd())}, indent=2))
-          (output / 'upstream.patch').write_bytes(git('diff', '--binary', old, new))
-          (output / 'original-review.patch').write_bytes(git('diff', '--binary', old, before))
-          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
-          def snapshot(ref, filename):
-              inventory = []
-              revision = git('rev-parse', ref).decode().strip()
-              with zipfile.ZipFile(output / filename, 'w', zipfile.ZIP_DEFLATED) as archive:
-                  for entry in git('ls-tree', '-r', '-z', '--long', ref).split(b'\0'):
-                      if not entry:
-                          continue
-                      metadata, raw_name = entry.split(b'\t', 1)
-                      mode, kind, sha, size = metadata.decode().split()
-                      name = raw_name.decode()
-                      path = pathlib.PurePosixPath(name)
-                      row = {'path': name, 'git_sha': sha, 'included': False}
-                      if kind == 'blob' and mode != '120000' and (path.suffix in extensions or name in ('LICENSE', '.env.example', '.gitignore', '.prettierignore')):
-                          data = git('show', f'{ref}:{name}')
-                          text = data.decode('utf-8')
-                          if 'archive' not in path.parts:
-                              archive.writestr(name, data)
-                              row.update(included=True, sha256=hashlib.sha256(data).hexdigest())
-                          elif path.suffix in ('.md', '.mdc', '.txt'):
-                              row['headings'] = [line for line in text.splitlines() if line.startswith('#')]
-                              row['incoming_references'] = [{'line': i, 'text': line} for i, line in enumerate(text.splitlines(), 1) if 'docs/' in line]
-                      inventory.append(row)
-                  archive.writestr('_review_inventory.json', json.dumps({'revision': revision, 'files': inventory}, indent=2))
-          snapshot(before, 'review-source.zip')
-          snapshot(new, 'main-source.zip')
-          configuration = {}
-          config_path = pathlib.Path('.github/full-documentation-review-resolutions.json')
-          if config_path.exists():
-              candidate = json.loads(config_path.read_text())
-              if candidate.get('old_base') == old and candidate.get('new_base') == new:
-                  configuration = candidate
-          inherited = configuration
-          merged_resolutions = dict(configuration.get('resolutions', {}))
-          seen = set()
-          while inherited.get('inherit_ref'):
-              ref = inherited['inherit_ref']
-              assert re.fullmatch(r'[0-9a-f]{40}', ref) and ref not in seen and len(seen) < 16, 'invalid inheritance'
-              seen.add(ref)
-              subprocess.run(['git', 'merge-base', '--is-ancestor', ref, before], check=True)
-              inherited = json.loads(git('show', f'{ref}:.github/full-documentation-review-resolutions.json'))
-              assert inherited.get('old_base') == old and inherited.get('new_base') == new, 'different inherited base'
-              for commit, value in inherited.get('resolutions', {}).items():
-                  assert commit not in merged_resolutions or merged_resolutions[commit] == value, 'conflicting inherited resolution'
-                  merged_resolutions[commit] = value
-          configuration['resolutions'] = merged_resolutions
-          (output / 'resolutions.json').write_text(json.dumps(configuration, indent=2))
-          subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
-          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
-          environment = dict(os.environ, GIT_EDITOR='true')
-          result = subprocess.run(['git', 'rebase', '--onto', new, old], env=environment)
-          mechanical = []
-          def merge_link(base, current, incoming):
-              pattern = r'^(.*?\]\()([^#)\s]+)(#[^)\s]*)?(\).*)$'
-              parts = [re.fullmatch(pattern, value) for value in (base, current, incoming)]
-              if any(part is None for part in parts):
-                  return None
-              groups = [part.groups() for part in parts]
-              if any((p[0], p[2], p[3]) != (groups[0][0], groups[0][2], groups[0][3]) or '://' in p[1] for p in groups):
-                  return None
-              values = [p[1].split('/') for p in groups]
-              edits = []
-              for side in (1, 2):
-                  edits.append([(i, j, values[side][a:b]) for tag, i, j, a, b in difflib.SequenceMatcher(None, values[0], values[side], autojunk=False).get_opcodes() if tag != 'equal'])
-              combined = list(edits[0])
-              for change in edits[1]:
-                  i, j, replacement = change
-                  duplicate = False
-                  for a, b, other in edits[0]:
-                      if change == (a, b, other):
-                          duplicate = True
-                          break
-                      if max(i, a) < min(j, b) or (i == j and a < i < b) or (a == b and i < a < j) or i == j == a == b:
-                          return None
-                  if not duplicate:
-                      combined.append(change)
-              result = list(values[0])
-              for i, j, replacement in sorted(combined, key=lambda e: (e[0], e[1]), reverse=True):
-                  result[i:j] = replacement
-              return groups[0][0] + '/'.join(result) + (groups[0][2] or '') + groups[0][3]
-
-          def disjoint_merge(base, current, incoming):
-              if current == incoming:
-                  return current
-              if current == base:
-                  return incoming
-              if incoming == base:
-                  return current
-              tokens = [re.findall(r'\s+|[^\s]+', value) for value in (base, current, incoming)]
-              if any(len(value) > 200000 for value in tokens):
-                  return None
-              edits = []
-              for side in (1, 2):
-                  edits.append([(i, j, tokens[side][a:b]) for tag, i, j, a, b in difflib.SequenceMatcher(None, tokens[0], tokens[side], autojunk=True).get_opcodes() if tag != 'equal'])
-              combined = list(edits[0])
-              for incoming_edit in edits[1]:
-                  i, j, replacement = incoming_edit
-                  duplicate = False
-                  for a, b, other in edits[0]:
-                      if incoming_edit == (a, b, other):
-                          duplicate = True
-                          break
-                      if i == a and j == b and j == i + 1 and len(replacement) == len(other) == 1:
-                          link = merge_link(tokens[0][i], other[0], replacement[0])
-                          if link is not None:
-                              combined[combined.index((a, b, other))] = (a, b, [link])
-                              duplicate = True
-                              break
-                      if max(i, a) < min(j, b) or (i == j and a <= i <= b) or (a == b and i <= a <= j):
-                          return None
-                  if not duplicate:
-                      combined.append(incoming_edit)
-              merged = list(tokens[0])
-              for i, j, replacement in sorted(combined, key=lambda edit: (edit[0], edit[1]), reverse=True):
-                  merged[i:j] = replacement
-              return ''.join(merged)
-          while result.returncode:
-              stopped = git('rev-parse', 'REBASE_HEAD').decode().strip()
-              names = [x for x in git('diff', '--name-only', '--diff-filter=U', '-z').decode().split('\0') if x]
-              resolution = configuration.get('resolutions', {}).get(stopped)
-              if resolution is None:
-                  candidates = []
-                  for name in names:
-                      if not name.endswith('.md'):
-                          break
-                      stages = [subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True) for stage in (1, 2, 3)]
-                      if any(stage.returncode for stage in stages):
-                          break
-                      values = [stage.stdout.decode('utf-8') for stage in stages]
-                      merged = disjoint_merge(*values)
-                      if merged is None:
-                          break
-                      candidates.append((name, merged, values))
-                  if candidates and len(candidates) == len(names):
-                      for name, merged, values in candidates:
-                          record = {'commit': stopped, 'path': name, 'stages': [hashlib.sha256(value.encode()).hexdigest() for value in values], 'result_sha256': hashlib.sha256(merged.encode()).hexdigest()}
-                          mechanical.append(record)
-                          diagnostic = output / 'mechanical' / stopped / name
-                          diagnostic.parent.mkdir(parents=True, exist_ok=True)
-                          diagnostic.write_text(merged)
-                          diagnostic.with_suffix('.diff').write_text(''.join(difflib.unified_diff(values[1].splitlines(keepends=True), merged.splitlines(keepends=True), fromfile='current/' + name, tofile='merged/' + name)))
-                          pathlib.Path(name).write_text(merged)
-                      (output / 'mechanical.json').write_text(json.dumps(mechanical, sort_keys=True, indent=2))
-                      subprocess.run(['git', 'add', '--all', '--', *names], check=True)
-                      result = subprocess.run(['git', 'rebase', '--continue'], env=environment)
-                      continue
-              if resolution is None or set(names) != {item['path'] for item in resolution['files']}:
-                  (output / 'stopped-commit.txt').write_text(stopped + '\n')
-                  (output / 'conflicts.txt').write_bytes(git('status', '--short'))
-                  (output / 'conflicts.diff').write_bytes(git('diff', '--cc'))
-                  with zipfile.ZipFile(output / 'conflict-stages.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
-                      for name in names:
-                          if pathlib.Path(name).is_file():
-                              archive.write(name, 'worktree/' + name)
-                          for stage in (1, 2, 3):
-                              data = subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True)
-                              if data.returncode == 0:
-                                  archive.writestr(f'stage-{stage}/' + name, data.stdout)
-                      for path in pathlib.Path('.git/rebase-merge').glob('*'):
-                          if path.is_file():
-                              archive.write(path, 'rebase-state/' + path.name)
-                  raise SystemExit('Overlapping or path conflict preserved; no remote history published.')
-              for item in resolution['files']:
-                  path = pathlib.Path(item['path'])
-                  assert not path.is_absolute() and '..' not in path.parts and not path.is_symlink()
-                  data = path.read_bytes() if path.exists() else None
-                  digest = hashlib.sha256(data).hexdigest() if data is not None else None
-                  assert digest == item['before_sha256'], ('changed conflict', str(path))
-                  for stage in (1, 2, 3):
-                      actual = subprocess.run(['git', 'show', f':{stage}:{path}'], capture_output=True)
-                      expected = item['stages'].get(str(stage))
-                      assert (hashlib.sha256(actual.stdout).hexdigest() if actual.returncode == 0 else None) == expected, ('changed stage', str(path), stage)
-                  if item.get('delete') is True:
-                      assert path.suffix == '.md' and str(path).startswith('docs/projects/'), ('invalid conflict deletion', str(path))
-                      path.unlink(missing_ok=True)
-                      continue
-                  assert data is not None
-                  text = data.decode('utf-8')
-                  end = 0
-                  for start, stop, replacement in item['edits']:
-                      assert type(start) is int and type(stop) is int and 0 <= end <= start <= stop <= len(text)
-                      assert isinstance(replacement, str)
-                      end = stop
-                  for start, stop, replacement in reversed(item['edits']):
-                      text = text[:start] + replacement + text[stop:]
-                  assert hashlib.sha256(text.encode()).hexdigest() == item['after_sha256']
-                  path.write_text(text)
-              subprocess.run(['git', 'add', '--all', '--', *names], check=True)
-              result = subprocess.run(['git', 'rebase', '--continue'], env=environment)
-          subprocess.run(['git', 'diff', '--check', new, 'HEAD'], check=True)
-          (output / 'range-diff.txt').write_bytes(git('range-diff', '--no-color', f'{old}..{before}', f'{new}..HEAD'))
-          (output / 'review.patch').write_bytes(git('diff', '--binary', new, 'HEAD'))
-          (output / 'after.txt').write_bytes(git('rev-parse', 'HEAD'))
-          mechanical_digest = hashlib.sha256(json.dumps(mechanical, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
-          (output / 'mechanical-sha256.txt').write_text(mechanical_digest + '\n')
-          approved = configuration.get('publish') is True and configuration.get('approved_mechanical_sha256') == mechanical_digest
-          (output / 'publish.txt').write_text('yes' if approved else 'no')
-          snapshot('HEAD', 'replayed-source.zip')
-          print('Replay prepared; publication requires explicit approval of the exact mechanical-resolution digest.')
-          PY
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: review-reconcile/package.json
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Check guidance without runtime or provider execution
-        run: |
-          pnpm install --ignore-scripts --frozen-lockfile
-          pnpm guidance:check
-      - name: Publish only the reviewed replay with an exact lease
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "$(cat "$RUNNER_TEMP/review-reconciliation/publish.txt")" = yes ]; then
-            git -c 'credential.helper=!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f' push --force-with-lease=refs/heads/docs/full-documentation-review-reconciled-2026-10-03:${{ github.sha }} origin HEAD:refs/heads/docs/full-documentation-review-reconciled-2026-10-03
+          set -euo pipefail
+          output="$RUNNER_TEMP/review-reconciliation"
+          mkdir -p "$output"
+          test -z "$(git status --porcelain)"
+          test "$(git merge-base "$GITHUB_SHA" "$NEW_BASE")" = "$OLD_BASE"
+          printf 'before=%s\nold_base=%s\nnew_base=%s\ncheckout=%s\n' "$GITHUB_SHA" "$OLD_BASE" "$NEW_BASE" "$PWD" | tee "$output/refs.txt"
+          git config user.name 'OpenLegend documentation review'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --binary "$OLD_BASE" "$NEW_BASE" > "$output/upstream.patch"
+          git diff --binary "$OLD_BASE" "$GITHUB_SHA" > "$output/original-review.patch"
+          if ! GIT_EDITOR=true git -c rerere.enabled=false rebase --onto "$NEW_BASE" "$OLD_BASE"; then
+            git status --short | tee "$output/conflicts.txt"
+            git rev-parse REBASE_HEAD | tee "$output/stopped-commit.txt"
+            git diff --cc | tee "$output/conflicts.diff"
+            tar -czf "$output/conflicted-checkout.tar.gz" .git $(git diff --name-only --diff-filter=U)
+            echo 'Replay stopped. Conflicted checkout preserved; remote history unchanged.'
+            exit 1
           fi
+          git diff --check "$NEW_BASE" HEAD
+          git range-diff --no-color "$OLD_BASE..$GITHUB_SHA" "$NEW_BASE..HEAD" > "$output/range-diff.txt"
+          git diff --binary "$NEW_BASE" HEAD > "$output/review.patch"
+          git diff --stat "$NEW_BASE" HEAD
+          git rev-parse HEAD | tee "$output/after.txt"
+          git bundle create "$output/replay.bundle" HEAD
+          cat "$output/range-diff.txt"
+          echo 'Replay prepared only; no branch or main ref was updated.'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: documentation-review-replay-d36ec3b
+          name: documentation-review-replay-34233ae
           path: ${{ runner.temp }}/review-reconciliation/
           retention-days: 7
           if-no-files-found: error
