@@ -207,6 +207,8 @@ The remainder of ND08: a selected coarse heating/ignition/fuel/spread/extinguish
 
 **Start and parallel boundary:** Choose a concrete playable interaction and its real materials first. Consume applicable clock, geometry and human-protection contracts; detailed biology and a full structural solver are unnecessary. This is separate from DG19 so food preservation need not wait for general fire propagation. **Existing owners:** INV-6, BW, PO/SW, shared-state and time owners.
 
+**October 6 product proposal in progress:** [Heat and materials](../projects/heat-and-materials-feature-spec.md) develops a complete useful interaction, coarse material behavior, real local consequences and recovery. [Authored rules](../worlds/base/heat-and-materials.md), [HM01–HM06](heat-and-materials.md) and [HM limits](../limits/heat-and-materials.md) separate the proposed experience from technical design and runtime qualification under BW26/INV-6.
+
 #### DG21 — Injury, illness and useful care
 
 ND05's first selected body/condition/treatment loop, observable symptoms, uncertainty, actual resources and consequences. Design a worthwhile activity around help or recovery without requiring deep anatomy.

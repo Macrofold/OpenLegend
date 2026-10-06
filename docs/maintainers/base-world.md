@@ -30,6 +30,10 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 - [x] **BW12 — Spoken name learning:** carry optional self-introduction meaning with generated speech and learn its stated label for permitted listeners through the existing observer-name mutation, including player listeners. Preserve speech on invalid metadata and retain visibility/recognition boundaries. Automated and broader language-quality qualification remain in TODO.
 
+## BW26 — Heat, ignition and material consequences
+
+**DG20 product design in progress, October 6, 2026.** [Heat and materials](../projects/heat-and-materials-feature-spec.md) develops the selected remaining ND08 family beneath INV-6. Its [base-world profile](../worlds/base/heat-and-materials.md) owns actual materials, work and tuning; [HM01–HM06](heat-and-materials.md) retains focused delivery and [HM limits](../limits/heat-and-materials.md) inventories restrictions. Current BW19 fire care remains distinct from the proposed heating, local damage and spread. Existing DG13 construction/moisture, object identity, state, time and participation owners retain their responsibilities.
+
 ## BW25 — Supplies that change over time
 
 **DG19 product proposal complete and reviewed, October 6, 2026.** [Changing supplies](../projects/changing-supplies-feature-spec.md) develops ND33 freshness/preservation and the selected ND06 resource-renewal loop. Its [authored profile](../worlds/base/changing-supplies.md) owns food, preservation work and patch tuning; [CS01–CS06](changing-supplies.md) owns focused delivery beneath BW/INV-6. [CS limits](../limits/changing-supplies.md) records the proposed scope. Current lots, containers, cooking, finite resources and corpse decay remain distinct from these new mechanics; product design does not close technical work or runtime acceptance.
