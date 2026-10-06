@@ -238,6 +238,7 @@
   padding-block-end: var(--space-1);
 }
 .ol-world-agent-view-options {
+  position: relative;
   display: flex;
   flex: 1;
   min-inline-size: 0;

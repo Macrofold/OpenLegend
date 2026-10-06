@@ -2935,6 +2935,11 @@ body,
   width: var(--control-md);
   height: var(--control-md);
 }
+/* Keep the shared focus ring inside the horizontal strip's clipping edges. */
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs))
+  .ol-launcher:focus-visible {
+  outline-offset: -2px;
+}
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
   top: var(--sheet-top);
   bottom: calc(var(--control-md) + 2 * var(--space-3));

@@ -514,7 +514,21 @@ export function WorldAgentSession({
       )}
       {session && (
         <div className="ol-creator-views" role="group" aria-label="World Agent views">
-          <div ref={viewOptions} className="ol-world-agent-view-options">
+          <div
+            ref={viewOptions}
+            className="ol-world-agent-view-options"
+            onFocusCapture={(event) => {
+              const button = event.target;
+              if (!(button instanceof HTMLButtonElement)) return;
+              const strip = event.currentTarget;
+              // Browser focus can leave a partly visible control clipped in this strip.
+              if (
+                button.offsetLeft < strip.scrollLeft ||
+                button.offsetLeft + button.offsetWidth > strip.scrollLeft + strip.clientWidth
+              )
+                strip.scrollLeft = button.offsetLeft;
+            }}
+          >
             <Button
               size="sm"
               variant="quiet"
