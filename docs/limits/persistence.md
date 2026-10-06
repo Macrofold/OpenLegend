@@ -470,7 +470,7 @@ The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches w
 
 ## RW-L06 — Notice and readable continuation
 
-**Proposed · Restrictiveness: bounded presentation, no acknowledgement barrier.** One latest relevant unacknowledged restore result per participant avoids an accumulating modal stack. Real/game times and whole-world/private-progress scope are permitted operational information; no hidden-person/message/relationship diff. Connected notice and reconnect do not wait for everyone. Fresh paused return and current eligibility govern new commands; eligible in-session drafts require explicit review, not auto-send. Existing operational history retention remains its owner, with no new lifetime audit quota.
+**Proposed · Restrictiveness: bounded presentation, no all-participant acknowledgement barrier.** One latest relevant unacknowledged restore result per participant avoids an accumulating modal stack. Real/game times and whole-world/private-progress scope are permitted operational information; no hidden-person/message/relationship diff. Connected notice and reconnect do not wait for everyone. Fresh paused return and current eligibility govern new commands; eligible in-session drafts require explicit review, not auto-send. Existing operational history retention remains its owner, with no new lifetime audit quota.
 
 ## RW-L07 — Existing capture and load bounds
 
