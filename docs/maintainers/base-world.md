@@ -30,6 +30,10 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 - [x] **BW12 — Spoken name learning:** carry optional self-introduction meaning with generated speech and learn its stated label for permitted listeners through the existing observer-name mutation, including player listeners. Preserve speech on invalid metadata and retain visibility/recognition boundaries. Automated and broader language-quality qualification remain in TODO.
 
+## BW25 — Supplies that change over time
+
+**DG19 product design in progress, October 6, 2026.** [Changing supplies](../projects/changing-supplies-feature-spec.md) develops ND33 freshness/preservation and the selected ND06 resource-renewal loop. Its [authored profile](../worlds/base/changing-supplies.md) owns food, preservation work and patch tuning; [CS01–CS06](changing-supplies.md) owns focused delivery beneath BW/INV-6. [CS limits](../limits/changing-supplies.md) records the proposed scope. Current lots, containers, cooking, finite resources and corpse decay remain distinct from these new mechanics; product design does not close technical work or runtime acceptance.
+
 ## BW24 — Fuller starting wilderness
 
 Completed under [the plan](../projects/completed/wilderness-expansion-plan.md). Delivered about five times the default area, rolling supported ground, more resources and wildlife, and an uneven forest margin with original procedural wolf/bear/birch/conifer artwork. Public static scenery has independent current-format records and shared rendering assets/detail draws; elevated rocks use native ground heights. Finite extents, decorative trees and existing animal behavior remain. New content applies to newly created worlds without reseeding saves. [Contract](../worlds/base/landscape.md), [tuning](../limits/base-world.md#bw13--starting-wilderness), [native/PostgreSQL/browser evidence and bounded costs](../verification/wilderness-expansion.md). Wider-device/geometry and general population-capacity qualification remain with SW09.4b/SW17 and performance; this adds no predation or aggression mechanic.
