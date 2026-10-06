@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                   | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Ownership, dependency gates and four delivery contracts are defined; the shelter assignment supplies its missing technical design. | 2026-10-03   |
+| In progress | Task definitions are retained; DG13 product inputs are reconciled while shelter technical design and runtime delivery remain open. | 2026-10-05   |
 
 [Feature and acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Prompts](parallel-batch-04-expeditions-and-exchange-prompts.md)
 
@@ -128,7 +128,7 @@ Update [the existing feature specification](editable-shelters-feature-spec.md) a
 
 The design must answer these concrete engineering questions:
 
-1. **Parts and location:** what stores an assembly, its independent parts, exact source lots/items, joints/supports, orientation, footprint and geometry? Define units and identity using current spatial/objects contracts. Work through a cloak lean-to and a wider two-bay variant; do not grant arbitrary towers, bridges or collapse physics.
+1. **Parts and location:** what stores an assembly, its independent parts, exact source lots/items, joints/supports, orientation, footprint and geometry? Define units and identity using current spatial/objects contracts. Work through the DG13 flat cloak canopy and its wider two-bay variant; a leaning roof follows qualified heights and clearance. Use the [world-owned proposed materials and tuning](../worlds/base/editable-shelters.md); do not grant arbitrary towers, bridges or collapse physics.
 2. **Admission and work:** from ordinary language or a direct layout control, how is a supported arrangement proposed, previewed, costed and committed? Which exact quantities are reserved/consumed when? What remains after cancellation, missing support, another actor moving a part or material exhaustion? A proposed layout is not already a building.
 3. **Editing and integrity:** show add/replace/remove/relocate, support loss and reclaiming surviving materials. Maintain one truth for material condition and placed identity. Define what happens to occupants and possessions before an edit can remove their support or passage. No hidden teleport, deleted inventory or silent creator cascade.
 4. **Useful space:** define derived coverage and navigable opening geometry, not a Boolean “indoors” assigned by a name. Show what physically fits, where an activity can occur, how changed geometry invalidates routes/perception, and how incremental recalculation stays local. A more restrictive structure is an explicit supported-family choice.

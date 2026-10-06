@@ -4,6 +4,8 @@ This is the sole implementation tracker for Narration and Conversations. The can
 
 Immediate response composition, durable conversation identity/intervals/atomic merges and private narration with explicit failure entries are implemented foundations. Generated Narrator execution, voices, durable jobs and integrated transcript delivery are implemented; integrated acceptance remains open. Current evidence belongs in [verification](../verification.md).
 
+The researched [DG15 After you left product proposal](../projects/story-perspectives-feature-spec.md) now selects one optional external perspective. [NC20](#nc20--optional-after-you-left-perspective) below tracks its new policy/consumer through NC07–NC12. This product design does not close their existing acceptance or enable cutaways/private thoughts.
+
 ## Tasks
 
 - [x] **NC00 — Immediate trigger/context slice.** Stable awareness-owned trigger metadata, English context, conservative speech action-context gating, bounded action relevance selection, provider-compatible optional operations through AG01, independently projected component outcomes, a 300-entry recent response-receipt window, owner-only thought memories and observable expression/action display. Native in-memory execution exercised prompt construction, a composed response and SQLite snapshot persistence without provider calls. New speech now uses durable conversation identity; missing legacy association is explicit. Automated coverage and live quality acceptance remain in maintainer TODO.
@@ -33,6 +35,17 @@ Immediate response composition, durable conversation identity/intervals/atomic m
 Player clarity follow-through (2026-09-28, NC03/NC10 presentation): accepted expression events now also appear as brief overhead notices for viewers who perceived them; NC03's broader bounded expressions remain open, and a target-name disclosure in expression text is recorded in [TODO](TODO.md#future-character-reaction-bubbles).
 
 Player clarity follow-through (2026-09-28, C11/E02 UI part): Journal and Talk older-page loading was rechecked in the running app; owner memory history with paging/search and perceived-speech search were added under the [player clarity plan](../projects/player-clarity-ui.md) ([evidence](../verification/player-clarity-ui.md#c11e02--older-history-and-bounded-search)). This does not close NC10's integrated acceptance.
+
+## NC20 — Optional After you left perspective
+
+This is the sole delivery item for [DG15/ND36](needs-design.md#dg15--an-optional-story-perspective), consuming NC07–NC12 rather than creating a second narration system. The [feature specification](../projects/story-perspectives-feature-spec.md), [authored camp profile](../worlds/base/story-perspectives.md) and [SP01–SP08](../limits/narration.md#sp01--selected-external-perspective) state the selected product policy and its provisional bounds. D57 private-internal disclosure and a future multiplayer perspective remain unselected.
+
+- [x] Select and research one complete external-story product proposal, including audience, source facts, ordinary-play value, voluntary reading, character knowledge, stopping, privacy, cost and the decision to discontinue a low-value mode. This records product design only.
+- [ ] Produce the technical counterpart through current NC source/permission, execution, history, spending and participation owners. Define the new authorized external projection, prospective anchor/candidate retention, real-account attempt accounting, current authorization and priority/cancellation behavior; do not reuse an ordinary voice change as a disclosure grant.
+- [ ] Qualify the actual narrow source profile: legitimate familiar identity/camp/activity evidence, real unseen completion, returning before capture, repeated crossing, zero-witness retention, missing or oversized support, no private background, and another-human enrollment before body control. Native crafting and real resident choices remain prerequisites; no extra cognition or scripted action supplies a story.
+- [ ] Deliver one complete opt-in/check/request/read/close/reopen/off journey with accessible private history, exactly one paid attempt, honest unavailability and NR01 failure. Qualify same-source dedup, all bounds, ordinary narration priority, disconnect, world sharing and source/preference revocation before publication.
+- [ ] Qualify correction, erasure authority, indexed history/source reads and current-format restoration without private leakage, false character knowledge, duplicate world effects, reset attempt accounting or paid automatic replay. Existing NC/PD/SL owners retain their actual contracts.
+- [ ] Compare the actual one-sentence familiar continuation with ordinary play without the mode under separately authorized evaluation. Record useful-scene availability, enjoyment, checking pressure, interpretation of historical information, ordinary narration interference and full cost. Continue only for a worthwhile benefit; otherwise leave it disabled without adding rewards, invented motives or broader surveillance.
 
 ## Compaction delivery and evidence
 

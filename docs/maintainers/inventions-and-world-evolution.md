@@ -171,6 +171,8 @@ Coordinate module/save integration with [EWF07](extensible-world-foundation.md#e
 
 ### INV-6 — Composable materials, assemblies and passive world processes
 
+**October 5 DG13 product refinement:** the same [shelter specification](../projects/editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) now specifies a concrete build/use/edit/reclaim journey and two open-canopy arrangements, with [world-owned materials and tuning](../worlds/base/editable-shelters.md). Reversible cords, actual garment continuity, explicit construction-use grants and unchanged ordinary rest avoid fabricated material/permission/benefit. This is product input to PX05, not its missing technical counterpart or closure of any 6.4 runtime task.
+
 **Proposed product detail for 6.4:** [Editable shelters, rain and home use](../projects/editable-shelters-feature-spec.md) develops ND07/narrow ND08 with persistent parts, supported local failure, coverage, staged moisture/drying, home use and SH-J acceptance. [SH limits](../limits/editable-shelters.md) record scope. These proposals preserve object/spatial/state owners and do not complete technical design, implementation or broader combustion.
 
 Delivered [NP03](parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material) supplies one positive generated-material producer/consumer proof: invented cordage into the woven-container binding role. The [scoped technical design](../projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#np03--craft-with-an-invented-material) and [evidence](../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) reconcile the INV-3.5/EWF09 child. Existing family registration and this finite edge are delivered; arbitrary recursive inputs, live model choice and broader INV-6 behavior remain open.
@@ -208,6 +210,8 @@ PW03/PW10 add a concrete 6.1–6.3 consumer through the existing object/resource
 ### INV-8 — Portable inventions and later algorithm extensions
 
 **Depends on:** stable identity, activation and permissions. These do not block INV-2 through INV-7.
+
+**DG12 product scope, 5 October 2026:** [World creation and invention reuse](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) now supplies the complete same-author two-world journey, retained-copy versus reference behavior, exact destination checks, independent knowledge/materials, immutable eligible free release and source/update/removal cases. [WC-L06–WC-L12](../limits/world-creation.md#wc-l06--first-library-and-publication-scope) owns this consumer’s proposed bounds. The product document does not complete the unchecked account-library/import/rights work below or choose D44’s general contribution terms.
 
 - [ ] **8.1 Add creator library and complete world-pack inventory.** Separate original authorship, learning, imports and installation; retain exact versions, rights and private-dependency blockers. Begin with a local library, not a marketplace service. Inventory distinguishes partial templates from runnable specializations and records destination bindings, derivation/credit and use/modification rights.
   - [x] Store server-derived creation attribution separately from deduplicated mechanics: world creators own NPC creations, player and world creators jointly own player creations; preserve independent discoveries and expose an NPC-created filter over known recipes.

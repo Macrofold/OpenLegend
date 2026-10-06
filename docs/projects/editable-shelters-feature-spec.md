@@ -1,10 +1,10 @@
 # Editable shelters, rain and home use — product and behavior specification
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | DG13's concrete build, use, edit and reclaim journey is designed; product review is complete; technical design and runtime delivery remain open. | 2026-10-05   |
 
-**Status: proposed detailed behavior, October 3, 2026.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. It does not claim current modular buildings, weather, moisture, drying or household behavior is implemented. Technical design remains deferred; the existing object, spatial, state, work and world-policy owners retain authority.
+**Status: proposed detailed behavior, October 3, 2026, expanded for DG13 on October 5.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. It does not claim current modular buildings, weather, moisture, drying or household behavior is implemented. Technical design remains deferred; the existing object, spatial, state, work and world-policy owners retain authority.
 
 [PX05 in batch 04](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px05--editable-shelter-technical-design) assigns the missing technical counterpart and delivery breakdown. Its design completion will not establish construction runtime acceptance.
 
@@ -18,7 +18,7 @@ This gives Open Legend a concrete test of its larger promise: invented uses comp
 
 A complete first experience has a visible payoff. The player chooses a spot for a purpose, turns their own cloak into cover, sees what fits beneath it and brings an activity or belonging there. Later they extend it for company, move the covering to a better view, or reclaim the cloak and continue traveling. A resident may accept an invitation, compete for the dry space, dislike the arrangement or prefer somewhere else. Actual use and response make the place matter; neither a compulsory friendly household story nor a new comfort statistic is required.
 
-This is an expansion of the [accepted first playable](../../archive/05-project/first-playable-mvp.md), whose one-NPC live invention and hunting loop remains the initial proof. Building a home and managing damp tinder must not become prerequisites for that experience or replace it with a maintenance demonstration.
+This is an expansion of the [accepted first playable](../../archive/05-project/first-playable-mvp.md), whose one-NPC live invention and hunting loop remains an inherited acceptance proof. The current [gameplay priorities](../repertoires/gameplay-priorities.md) separately govern the complete adventure and selection of subsequent work. Building a home and managing damp tinder must not become prerequisites for that experience or replace it with a maintenance demonstration.
 
 ## 2. Existing commitments and initial scope
 
@@ -276,7 +276,7 @@ The builder installs supports, then leaves before fastening the roof. The suppor
 
 ### SH-J03 — Rain finds a missing section
 
-Two roof sections protect adjacent areas and a third is missing. Rain affects the gap and any partly exposed body or object. Adding the third section changes that local area. The home name, bed assignment and other intact sections never supplied phantom coverage to the gap.
+In the selected two-bay plan, one roof cover is installed and the adjacent bay's cover is missing. Rain affects that uncovered bay and any partly exposed body or object. Installing the second cover changes that local area. The home name, bed assignment and intact first cover never supplied phantom coverage to the gap. A third connected bay is outside the first profile.
 
 ### SH-J04 — Two layers and one source of rain
 
@@ -377,11 +377,200 @@ The key tradeoff is physical expressiveness against understandable scope. Full s
 
 Another tradeoff is repairability against resource demand. Recovering an intact part reduces punishment for experimentation; consuming actual bindings, spending work and preserving damage prevents free duplication. Maintenance should have a purpose beyond producing recurring engagement. A material-efficient player can be successful without the game inventing decay to defeat them.
 
-Before implementation, settle the exact initial part/material set, authored dimensions and span classes, readable exposure tolerance, drying boundaries, declared light-roof failure state and the existing activities that make the first space useful. Choose usable-tinder boundaries only if that later challenge is selected. Select and inventory numerical values from complete cases rather than copying another game's wiki. Broader structure harm, protected property, heavy collapse and thermal/fire laws remain separate product decisions.
+The October 5 DG13 expansion below selects the initial material set, two arrangements, work and moisture proposals in the [base-world shelter owner](../worlds/base/editable-shelters.md). It also specifies ordinary use, permissions and failure recovery. These are proposed values to qualify through the complete scenes, not measured runtime support. Choose usable-tinder boundaries only if that later challenge is selected. Broader structure harm, protected property, heavy collapse and thermal/fire laws remain separate product decisions.
+
+## 14. DG13 expansion — make a place, use it and change it
+
+### 14.1 The smallest experience worth delivering
+
+The first attraction is the player's control over a small place. After an outing, the player chooses a site near a view or useful route, makes cover from a valued garment, brings a belonging beneath it and decides whether to stay, invite company or reclaim the garment and travel. The player has changed the world in a way that remains visible and useful on return.
+
+The recommendation is a **flat open canopy followed by an adjacent two-bay awning**, with real detachable parts and one authorized builder. The two arrangements use the same rules and differ in actual usable space. They do not require a decorative-room score, textile industry, daily repair, hired household or new survival penalty. This explicitly narrows the earlier lean-to example for the first release: a sloping roof follows when its shape is qualified and gives the player a worthwhile choice. The accepted longer-term modular-home direction remains.
+
+The [base-world proposal](../worlds/base/editable-shelters.md) is the single owner for the initial cloak, spare cloth, posts, bindings, dimensions, work and moisture tuning. The starting kit is a deliberate finite scenario endowment. It is not an invisible free construction resource, and the current starter's supple branches are not structural timber. Current equipment does not yet support wearing a cloak. That new consumer is required for the complete cloak-to-roof-to-clothing story.
+
+The first scene does not require live invention to rediscover an already admitted canopy plan. The ordinary build route must work directly once that plan is known and supported. A genuinely new material or arrangement may use the existing invention route; it must return a supported proposal with the same physical consequences. This feature is a consumer of world authoring, not a replacement for the game's initial live invention proof.
+
+### 14.2 The player's first ten minutes, without a required script
+
+This is an illustrative play sequence, not a timed tutorial or an NPC script.
+
+1. **Notice an opportunity.** The player is near an open patch after doing something worthwhile. The scene shows their carried cloak and supplies. If they inspect the cloak or ask about making cover, the known plan is available. No urgent wetness warning forces a building lesson.
+2. **Choose the spot and use.** The player selects a clear ground position and can see the proposed cover in the scene. They may orient toward the view, a path or their companion. The preview distinguishes the whole roof from the clear area beneath it and from the space occupied by posts.
+3. **Start one ordinary activity.** The player sees the actual chosen cloak, required supports and cords, known work, and any decisive blocker. A single Build action begins the supported sequence. A separate modal approval of every post and knot would add no useful choice.
+4. **See the result become real.** Completed posts persist. The cloak leaves its previous wearing/carrying location when the covering is committed. Coverage begins only when the required attachment is complete. The finished shelter can be selected in the world.
+5. **Do something ordinary there.** The player drops an exposed belonging in a valid spot, rests if their actual body and the current sleep rules allow it, or speaks with someone nearby. No extra rest bonus is needed to make that a real use.
+6. **Make one meaningful revision.** The player decides that belongings crowd their resting space or that there is insufficient room for company. The adjacent bay uses the actual spare cloth and additional parts. The first bay remains useful while the extension is incomplete.
+7. **Leave or return on purpose.** The player can keep the assembly, carry the same reclaimed cloak away, or come back through ordinary movement. The place neither summons them with maintenance notifications nor changes their recovery destination.
+
+No step requires the NPC to praise the construction, join the household or accept the invitation. If the NPC is busy or declines, the building still provides the player's chosen place. Solo quiet use is a complete outcome.
+
+### 14.3 What each arrangement honestly supplies
+
+The first bay is a snug candidate for one person **or** a useful supply spot. Its nominal floor area is not an occupancy promise. The preview must use the selected person's supported standing/resting footprint and a readable clearance margin. If a resting body does not fit naturally, the authored dimensions and covering must be enlarged before that use is offered. The player should not solve a collision puzzle to lie down.
+
+The two-bay arrangement separates uses: one side for the player, the other for belongings or company. Shared posts are still physical obstacles. A missing section leaves a wet/open area; the assembly's name does not fill it. Roof overlap must fit the actual material and attachment rules rather than an artist's silhouette. These cases follow the practical warning in building-game corrections: convenient placement controls are valuable, but occupancy and support remain consequential. [SH-R17](#sh-r17), [SH-R21](#sh-r21), [SH-R24](#sh-r24)
+
+The first ordinary uses are deliberately literal:
+
+| Player intention                 | Result supplied                                                                           | Relevant boundary                                                                          |
+| -------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Put these fibers under cover     | Actual exposed material at a valid covered location follows the admitted rain/drying rule | The stock remains reachable under its real access rules; the canopy is not a private vault |
+| Rest here                        | The existing eligible sleep/rest action runs in a location that fits                      | No new restoration multiplier, compulsory bed or shelter-only sleep restriction            |
+| Wait and talk out of the rain    | Actual people stand where they fit and exchange speech through ordinary hearing           | The roof supplies neither confidential sound nor automatic friendship                      |
+| Make room for company            | An actual second bay gives more covered space                                             | An invitation is separate from construction; occupants choose their actions                |
+| Take my cloak on the next outing | The same reclaimed garment becomes available for its admitted wearing/carrying action     | Its former patch loses that cover, and wetness/damage remain                               |
+
+Dry-looking decoration cannot stand in for the first row. A sit/lie animation alone does not prove rest mechanics, just as the specific furnishings and visiting permissions described in Palia are not general evidence of a sleeping or property system. [SH-R23](#sh-r23)
+
+### 14.4 Selection and ordinary editing
+
+Selecting a shelter shows its ordinary name, visible extent, whether the selected area is covered, and relevant available actions. Selecting a visible part shows that part's condition, its actual role and meaningful consequences of changing it. The default surface should answer “What can I do with this roof?” without requiring the player to inspect a graph of dependencies.
+
+The ordinary vocabulary is **Inspect, Extend, Replace covering, Take down covering, and Dismantle**. A permitted direct action and an equivalent ordinary-language intention lead to the same plan and effect. The selected scope stays visible. An action reviewed for the left covering must not silently switch to the right one because selection changed.
+
+Before work, the player can move or rotate the preview, compare a compatible cover and cancel. That changes no material or physical history. After work, a change of mind uses real disassembly and rebuilding. The word Undo must not claim that it can reverse another person's movement, elapsed rain or completed consumption. Grounded's separate Design/Play editor and its restoration of an unplayed design are useful evidence for reversible drafts; they do not authorize rewinding a shared living world. [SH-R19](#sh-r19)
+
+An ordinary replacement preserves the intended location and compatible attachments when possible. The interface names the outgoing and incoming objects and the actual extra work. No Man's Sky's in-place replacements support this interaction choice, while its navigation corrections show why matching placement must still account for occupants. Open Legend must additionally conserve its particular material objects. [SH-R21](#sh-r21)
+
+Use a concise explanation when an action is blocked: the missing support, occupied work area, absent permission, unsupported material, unavailable destination or active conflicting work. Keep the proposed layout and material choice so the player can correct that issue. Do not erase the entire design after a failed attempt or substitute repeated generative suggestions for a native reason.
+
+Overlapping parts have a readable selection list with the same permitted facts as the world view. Keyboard users can choose location/orientation and each action without precise dragging. Reduced rain particles, reduced motion and a calmer weather presentation preserve the mechanical exposure and textual condition cues. A camera cutaway may reveal the selected geometry only within permitted presentation; it is not new sight of hidden occupants. The historical indoor-rain feedback from Project Zomboid motivates presentation alternatives, not weather immunity. [SH-R22](#sh-r22)
+
+### 14.5 Work, interruption and the affordability of trying again
+
+The initial reversible method installs actual cords and returns them intact when untied. It does not consume a cord every time the player turns the canopy or changes a roof. There is real work and a real opportunity cost to having the cloak installed, but experimentation does not need a recurring material tax.
+
+That choice revises any reading of the earlier discussion that implied all bindings are consumed. A destructive cutting method can consume material under its own declared rules, and manufacturing replacement cord retains its current cost. This first method has no such cutting requirement. A full-refund building mode in another game is not proof that Open Legend should restore destroyed material; the intended lesson is to keep ordinary revision affordable while preserving the actual method's consequences. [SH-R18](#sh-r18), SH-R15
+
+Each completed phase is real. If the actor stops after placing two posts, those two posts remain; the roof and unused bindings have not become a completed shelter. An interruption may leave the actor somewhere different, supplies unavailable or permission changed. Resuming starts from that current situation. It should offer the remaining valid work instead of rerunning completed phases or forgetting their material.
+
+The first profile admits one active construction edit on an assembly. A second builder's unsupported edit is refused with the existing activity identified where permitted; it is not invisibly queued to run later. Ordinary movement, rest, conversation and unrelated inventory actions remain available when their own conditions permit them. An interrupted builder does not own the site indefinitely through a stale hold.
+
+If a body enters the affected location after preview, the pending phase stops before an invalid physical change. It explains the actual obstruction without pushing that body away or narrating their consent. Removing an unused post is different from removing one supporting two roofs. Dismantle proposes the cover-first sequence and identifies any use that will lose coverage. This keeps the deliberate action legible even though the initial light-roof failure approximation is harmless.
+
+### 14.6 Reclaiming and moving possessions
+
+The player chooses a valid destination for reclaimed materials: their eligible carrying location or a reachable supported ground location. The plan accounts for the actual number of items and any capacity/access restrictions. If the selected destination becomes unusable before the phase commits, that phase stops and offers another destination.
+
+If material has already been detached by a completed phase or external event, it remains in its actual recoverable location. A later pickup failure does not put the roof back, destroy the material or also create an inventory copy. The game reports “the cloth is down here; carrying it is blocked” in ordinary terms and retains the ordinary pickup route.
+
+A covering and its surviving bindings can be reclaimed separately when their actual placements permit it. The item condition is continuous. The player does not gain a fresh dry cloak by reinstalling it or by transferring it between a pile and inventory. A spare tarp remains a tarp after reclaiming.
+
+Moving an entire occupied assembly is not supplied by the first family. The player can move their materials through actual disassembly, transport and rebuilding. “Move this over there” can prepare that supported sequence and explain occupied or inaccessible parts; it cannot teleport a sleeping person or their belongings with a selected roof.
+
+### 14.7 A home name is not a permission system
+
+The first construction scene supplies a new proposed permission for one builder at its site/assembly. Existing creator and container controls do not already implement that construction grant. The material picker requires both carrying and permission for the selected use: the designated kit or qualifying material the builder legitimately produces from eligible inputs. Another person's contribution requires a transfer that permits this use or an explicitly supported material grant. Until that additional grant is implemented, the first profile declines the input. Ordinary accepted handover currently changes custody; it does not prove this additional grant or necessarily change declared title.
+
+Picking another person's identified cloak up from an unrestricted pile cannot bypass the rule. Installed parts retain their alteration/reclaim restrictions through ordinary pickup and inventory routes as well as the construction menu. The product does not assume that either current carrying or declared ownership alone establishes these permissions.
+
+This distinction is necessary because current [world-pile/container access](../worlds/base/items.md#shared-containers-and-active-work) is shared by default unless actual restrictions apply. A future collaborative build may use accessible shared materials under an explicit construction grant, but standing nearby, saying “our home,” having editor status somewhere else or being invited to rest is not that grant.
+
+| Relationship to the place    | What it means                                                                    | What it does not grant                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Authorized builder           | May perform the specifically granted construction actions with eligible material | Access to private carried inventories or authority over unrelated assemblies           |
+| Visitor                      | Can use ordinary reachable space and available actions                           | Reclaiming the host's installed cloak or changing their shelter                        |
+| Person who treats it as home | Has an attributed personal association grounded in their choices/use             | Legal title, construction authority, household-wide storage access or a guaranteed bed |
+| Recipient of shared supplies | Has the access or accepted transfer actually granted for those supplies          | Authority to read the owner's thoughts or take other possessions                       |
+| World creator                | Has the existing explicit creator controls for that world                        | A fictional statement that every resident consented                                    |
+
+Ordinary friction should be clear and local. When the player lacks alteration permission, explain that fact without disclosing a private owner list or the contents of another character's possessions. Source games' separate visitor/editor controls and documented silent denials reinforce the need for readable outcomes, not their exact permission categories. [SH-R23](#sh-r23), [SH-R24](#sh-r24)
+
+### 14.8 Returning and inviting someone
+
+First return works through the actual recognizable place and ordinary movement. The camera may focus on a currently permitted known location; that does not move the character or update what they know is there. No new teleport, respawn, logout-return anchor or Recover destination is part of marking a shelter as home.
+
+A later small home-association extension may let a person remember a visited place under their own label and choose one preferred return-place reference. It is a private navigation/meaning record until deliberately shared, not an exclusive land claim or a limit of one owned building. Its remembered location can become stale. Changing distant geometry does not secretly update a character's knowledge. Removing the label removes that association, not the actual structure, its other users or its history.
+
+The initial shelter must remain worthwhile without that new record. Do not delay the ordinary build/use/edit loop to ship a property browser, map system or household membership manager. Familiar visible landmarks and the actual place are sufficient for its first return scene.
+
+“Would you like to sit here?” is an ordinary social invitation. The resident hears only what the conversation permits, forms an actual response and chooses any subsequent movement/activity through their own cognition and capabilities. Accepting does not instantly move them, teach the whole construction plan or turn them into a repair worker. An acceptance followed by a blocked route is not a fulfilled visit. A resident who declines, is busy, cannot find a route or prefers another place should remain distinguishable where the player can actually learn the reason.
+
+The player can bring supplies closer or extend cover in response to real use. The design should not repeatedly generate a resident's opinion every time a part moves. Meaningful observed changes and actual conversations can influence later choices using existing identity, memory and commitment owners; all required evidence remains intact. No home-comfort score is allowed to replace those motivations.
+
+### 14.9 Walls and a door are a later usable-space extension
+
+The next useful extension adds light side panels and one ordinary door only after the open canopy works. This is still one ground-level family. It does not grant stone walls, upstairs bedrooms, locks, acoustic privacy or heat retention.
+
+A proposed first door opens from both sides without a lock. A reachable actor requests Open or Close; the action uses actual clearance and the door's supported movement. A person, reclining body or object in that movement area blocks the change rather than being displaced. A doorway must remain a valid entry and exit for the supported body and activity. If closing the only exit would make an occupied enclosure inoperable under the admitted rules, the action is refused before the enclosure becomes a trap.
+
+The action surface remains available from an accessible part of the actual door/frame when the usual point is visually obscured. It never reaches through a solid barrier. A wall can limit movement or sight only after those consumers are supported; it does not make speech private. These are deliberate product requirements for later qualification, informed by repeated door, route and survivor corrections in Enshrouded. [SH-R11](#12-research-and-the-resulting-choices), [SH-R26](#sh-r26)
+
+A closed-looking room that nobody can enter or use is not a home milestone. Do not make furnishing count or decorative trophies compensate for broken ordinary access. Enshrouded's April 2026 comfort changes are an example of a separate reward economy, not evidence that a comfort score is required here. [SH-R26](#sh-r26)
+
+### 14.10 Operating cost and credible scale
+
+The design spends its simulation detail on changed parts, relevant coverage and admitted exposed material. It does not need one simulation object per fiber or raindrop, a model judgment for every shower, or a full reconstruction of every building whenever a player opens inventory.
+
+Ordinary inspect, compare, rotate, build a known arrangement, untie, view moisture and resume valid work should use already supported game behavior with **no new model call**. Interpretation of an unusual request can use the existing funded authoring/character channels where needed. Failure does not schedule an automatic paid retry. An expensive generated picture never establishes actual support or coverage.
+
+The first profile has explicit local part/layer/edit allowances, inventoried with its other limits. These bound the first proof while leaving the engine/world seam open. They do not claim that a village containing many profiles has been measured. The acceptance work must include nearby assemblies, a changed shared support, overlapping covers, interrupted work and return after elapsed rain. Concentrated building activity is a distinct load case; another game's reported large-base improvements cannot establish Open Legend's capacity. [SH-R17](#sh-r17)
+
+If the system cannot safely admit another supported arrangement within real storage/spatial/work capacity, say so before taking materials. Preserve the existing place. Do not fund hosting by inventing fictional rot, delete an absent player's home, or keep every renovation as a full duplicate world. Real archival/storage limits belong to their existing product owners and must be explicit before reliance.
+
+### 14.11 Complete acceptance stories for the expansion
+
+These are product acceptance criteria for future implementation, not reports of executed tests. They add concrete first-release cases to SH-J01–SH-J13 above.
+
+| Story                                                 | Required observable outcome                                                                                                                                   |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A new builder has the finite kit and one clear patch  | They understand a proposed use, select a site, build without a material-production chain, and see only completed cover take effect                            |
+| The chosen garment is currently worn                  | It becomes the actual installed covering once, and later returns as the same conditioned garment; the spare tarp never acquires clothing capability           |
+| The first bay is too crowded for rest                 | The player sees the actual occupied footprint, moves their own bundle normally or extends the shelter; there is no hidden sleep placement or extra floor area |
+| The player prefers traveling                          | They reclaim their surviving material and leave without a maintenance debt, lost identity or story penalty                                                    |
+| One post is shared by both roofs                      | The plan identifies both dependencies; actual removal/failure updates both without duplicated salvage                                                         |
+| A destination fills while cloth is being taken down   | Uncommitted transfer blocks, or already detached material remains at its real location; no vanished roof and vanished cloth                                   |
+| A visitor asks to change a covering                   | Ordinary use remains available, while ungranted alteration fails clearly and reveals no private contents                                                      |
+| The builder says a neighbor's cloth belongs to them   | The statement grants no construction input; a real transfer/grant is needed                                                                                   |
+| The NPC accepts an invitation but cannot reach it     | Their visit remains incomplete, their private reasoning is not exposed, and the player can learn a permitted practical blocker                                |
+| Rain ends while the player is away                    | The same applicable material reflects actual wetting/drying on return, without invented host-outage time or hundreds of repeated memory entries               |
+| A player reduces rain effects and uses keyboard input | They can choose and inspect the same space, read the same exposure facts and complete the same supported work                                                 |
+| Later, a person lies across a door's movement area    | Closing waits/fails before moving the door through them; the only usable exit is not removed                                                                  |
+
+### 14.12 Recommended delivery order
+
+1. **One usable open bay:** finite authored materials, actual part and garment continuity, direct build/reclaim, real coverage, coarse drying and one ordinary chosen use. A wetting-only demonstration remains an intermediate engineering proof.
+2. **Revision and a second bay:** actual shared supports, affordable reversible bindings, swap/detach destinations, occupancy interruption and return. Include a voluntary resident-use scene; do not require cooperative editing.
+3. **Only the next useful home extension:** choose walls/door, a private remembered-place association or explicitly granted cooperative editing according to observed player friction. Each has its own concrete consumer; they need not ship together.
+4. **Richer material and survival choices:** qualify new spans, production, repair, climate or wet-tinder challenge only when they improve an already playable building feature.
+
+DG12 world transfer is not required to build the first shelter; DG14 competence is not required to make tying reliable; DG15 story perspectives are not required to notice a resident using the place. A pile of dependencies must not turn a modest canopy into the last feature to become playable.
+
+## 15. Additional research for DG13
+
+The earlier SH-R01–SH-R16 evidence remains above. The sources below were checked on **October 5, 2026**. Release notes establish the stated product behavior or the developer's correction at that date. They are not measured evidence that every player enjoyed the feature, that an issue remains unfixed, or that Open Legend can use the same scale.
+
+| Source                                                                                                                                                        | Finding and evidence limit                                                                                                                                                                                         | Decision for this proposal                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="sh-r17"></a>SH-R17 — [Grounded: Hot and Hazy](https://www.obsidian.net/news/grounded/time-for-the-backyard-to-get-hotter-and-hazier), October 20, 2021 | The release records building-placement/support corrections and large-base CPU/network improvements. These are specific game and release observations, not a portable capacity benchmark.                           | Test occupied edits, supports and concentrated construction; explain invalid placement and measure our actual first profile.                      |
+| <a id="sh-r18"></a>SH-R18 — [Grounded: A Holiday Treat](https://grounded.obsidian.net/news/grounded/a-holiday-treat), December 8, 2022                        | The update improves building convenience, nearby storage use and recycling returns. Its access and refund rules belong to Grounded's economy.                                                                      | Make selecting/reusing materials easy, but use only authorized stock and conserve actual surviving parts.                                         |
+| <a id="sh-r19"></a>SH-R19 — [Grounded 1.3: Make It and Break It](https://grounded.obsidian.net/news/grounded/update-1-3), November 13, 2023                   | The playground editor separates design and play, with undo and restoration of an unplayed design. This is an editor contract, not conservation of ordinary shared-world work.                                      | Let previews be freely reversible; distinguish them from completed construction and others' subsequent actions.                                   |
+| <a id="sh-r20"></a>SH-R20 — [No Man's Sky: Frontiers](https://www.nomanssky.com/frontiers-update/), September 1, 2021                                         | Direct selection, editing and duplication accompany a more flexible placement interface. Free placement may ignore constraints Open Legend still needs.                                                            | Offer direct part editing and useful orientation aids; a duplicate preview still needs real material and valid support.                           |
+| <a id="sh-r21"></a>SH-R21 — [No Man's Sky: Endurance](https://www.nomanssky.com/endurance-update/), July 20, 2022                                             | Matching parts can replace existing parts in place. The same release strengthens navigation checks on room deletion after players could fall out of freighters.                                                    | Preserve a player's intended placement while checking actual occupancy and route consequences; replacement is not automatic material restoration. |
+| <a id="sh-r22"></a>SH-R22 — [Project Zomboid: A Good Day](https://projectzomboid.com/blog/news/2020/01/a-good-day/), January 2020                             | The development post reports tester discomfort with indoor precipitation visuals and discusses an off option. It does not establish a currently shipped universal setting.                                         | Offer calm, legible weather presentation with equivalent mechanical facts; avoid visually intrusive rain as the only protection cue.              |
+| <a id="sh-r23"></a>SH-R23 — [Palia 0.196](https://palia.com/news/patch-196), October 7, 2025                                                                  | Barn visitor/editor/owner permissions and furniture sitting/lying actions are distinct product behaviors. Those ranching permissions do not define all housing access, and posture does not prove a rest bonus.    | Separate visiting, changing a place, accessing supplies and actual rest.                                                                          |
+| <a id="sh-r24"></a>SH-R24 — [Palia 0.202](https://palia.com/news/patch-202), May 11, 2026                                                                     | Known issues include unexplained Copy Tint permission denial and building/placement obstructions. This is evidence of recorded failure cases at that release, not a claim they remain unresolved.                  | Explain the precise blocked action and validate occupied placement; do not silently accept an unusable structure.                                 |
+| <a id="sh-r25"></a>SH-R25 — [Palia 0.182: Summer Serenade](https://palia.com/news/patch-182), July 30, 2024                                                   | Home Tours use submitted plots, visits, reactions and a weekly event/reward structure. The page does not establish an immutable copy guarantee.                                                                    | Keep ordinary home value independent of ratings, tour submission and a recurring calendar; social display can be a separate future choice.        |
+| <a id="sh-r26"></a>SH-R26 — [Enshrouded: Forging the Path](https://enshrouded.com/en-US/news/enshrouded-forging-the-path-is-live), April 21, 2026             | The release addresses survivor/door interactions, navigation and building usability, and changes comfort accumulation while planning clearer explanation. Improvements and future intentions must remain distinct. | Qualify actual access/use before interpreting a resident's behavior. Do not introduce an opaque comfort economy to make shelters count.           |
+
+## 16. DG13 critique and resulting choices
+
+**The original risk was a maintenance system looking for a reason to exist.** Wetness, drying, fire failure, repair, households and buildings could become a long chain before the player got a pleasant place. The revised first release uses ordinary rest, belongings and company, with visible material continuity and no new penalty. A shelter can be useful even when a player sensibly spends the next session exploring.
+
+**The next risk was attractive geometry that did not fit real use.** The proposal now calls its single bay snug, requires a real reclining/approach margin, distinguishes shared posts from empty floor, and supplies the second bay for a concrete space tradeoff. A visual roof or a nominal metre count cannot pass the usability gate.
+
+**The material economy should encourage expression.** Finite starting stock makes the first choice possible. Reversible cords make revision affordable. The garment's alternative use, physical work, actual space and eventual broader material sources provide tradeoffs without destroying supplies after every experiment. No full-refund rule recreates damaged or consumed material.
+
+**Home meaning must follow play.** A resident can visit without becoming a labor source. A name does not grant title, privacy or entry. Optional remembered-place navigation follows the ordinary return scene, and walls/doors follow the open canopy. Quiet solo use and declining to build remain legitimate play.
+
+**The technical assignment is still necessary.** These proposals resolve product inputs for PX05; they do not supply a support algorithm, new equipment implementation, permission enforcement or measured capacity. Its technical counterpart and the existing construction/runtime tasks remain open. No prototype, provider call, UI playtest or construction benchmark has run for this documentation task.
 
 ## Maintained records
 
 - Package and sequence: [five product specifications](five-product-feature-specs.md).
+- October 5 batch and review: [DG11–DG15](completed/product-design-groups-11-15.md).
+- Initial authored materials, arrangements and tuning: [base-world light canopies](../worlds/base/editable-shelters.md).
 - Design/delivery: [ND07 and ND08](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes), [INV-6.4](../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), with [spatial](../maintainers/spatial-world.md), [persistent objects](../maintainers/persistent-objects.md) and [state contributions](../maintainers/state-contributions.md) retaining their consumers.
 - Proposed scope and tuning: [editable-shelter limits](../limits/editable-shelters.md). Existing [object](../limits/objects.md), [spatial](../limits/spatial.md), [state-effect](../limits/state-effects.md) and [invention](../limits/inventions.md) inventories retain shared limits.
 - Current campfire behavior: [bundled survival](../worlds/base/survival.md#tending-the-campfire); the proposed dry-tinder consumer must explicitly revise and qualify that family before changing its behavior.

@@ -4,6 +4,8 @@
 
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
+**October 5 DG14 selected consumer:** [Practical competence](practical-competence.md) owns the new finite sling-handling, inert-target practice and coaching work specified in the existing authored-stats proposal. EWF02/EWF04 supply state and permitted presentation; their delivered checkboxes do not establish this new action/progression consumer. [World-owned rules](../worlds/base/practical-competence.md) and [ST-L08–ST-L13](../limits/authored-stats.md) retain tuning and qualification.
+
 **Proposed ND03 consumer:** [authored stats and consequential checks](../projects/authored-stats-feature-spec.md) uses EWF02/EWF04 and existing action/state owners only when competence improves a real playable activity. Predictable effects are valid; the finite practical-work check remains an optional candidate. [ST limits](../limits/authored-stats.md) retain its scope and tuning. This revised product recommendation does not reopen delivered typed state or complete consumer qualification.
 
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).
@@ -235,6 +237,8 @@ The delivered local reuse exercise covers definition-only attribute transfer and
 **Stop condition:** without a demonstrated consumer and approved boundary, leave the advanced feature unsupported and explain it honestly. Do not let speculative capability work block the first playable extension loop.
 
 ## EWF11 — Reusable-construct integration and local portability proof
+
+**DG12 product consumer, 5 October 2026:** [The retained-invention round trip](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) starts with one complete supported recipe in two prepared local worlds, before generic templates or remote synchronization. Its first proof can use current qualified families; the broader construct/binding acceptance below remains open. [WC limits](../limits/world-creation.md#wc-l06--first-library-and-publication-scope) constrain only this consumer, while INV-8 retains library, package and rights ownership.
 
 **Dependencies:** EWF01 plus the actual INV-3 family/composition interface; EWF07 save/version boundary as soon as stateful instances exist. **Contract:** runtime §3, including “Reusable constructs and specialization,” and §5 active effects. **Ownership:** INV owns construct schemas/compiler, candidate admission, specialization/forks, and pack artifacts. EWF owns consistency with common module/authority/state/projection contracts and the cross-world integration proof.
 

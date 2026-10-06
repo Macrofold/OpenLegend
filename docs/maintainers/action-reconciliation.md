@@ -19,7 +19,7 @@ Preserved history:
 
 1. [AGENTS](../../AGENTS.md) and its relevant documentation, review, rebase, TypeScript, verification, performance and AI routes. Also inspect guidance changes when reconciling newer main.
 2. [Action capability specification](../action-capabilities.md), especially [partial fulfillment and initiator review](../action-capabilities.md#partial-fulfillment-and-initiator-review) and [mechanical workflow reconciliation](../action-capabilities.md#mechanical-workflow-reconciliation).
-3. [Action repertoire](../repertoires/actions.md), then the [AC delivery ledger](action-capabilities.md#delivered-scope-and-remaining-work). The audited catalogue has 384 unique action IDs in 32 domains; it is not 384 implemented commands.
+3. [Action repertoire](../repertoires/actions.md), then the [AC delivery ledger](action-capabilities.md#delivered-scope-and-remaining-work). The earlier audit covered 384 unique action IDs in 32 domains; the current catalogue has 385 examples, not 385 implemented commands.
 4. The [PF tracker](performance.md), [EPR tracker](events-perception-and-reactions.md) and [PostgreSQL profiling instructions](performance-profiling.md) for the performance side of this conversation.
 5. [Focused runtime evidence](../verification/action-reconciliation.md), the retained report index below and [recovered regression requirements](action-regressions.md). A passed production build is not a passed test suite or proof of live semantic reliability.
 6. The active AR tasks below. Repair/document the known integration gaps rather than reimplementing capabilities that already exist in source.

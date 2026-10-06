@@ -1,10 +1,12 @@
 # Five product and behavior specifications
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG12–DG14 product expansions and reviews are complete; technical design and runtime delivery remain open. | 2026-10-05   |
 
 **Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Technical design and runtime implementation remain open.**
+
+The [groups 11–15 assignment](completed/product-design-groups-11-15.md) preserves this package and extends its existing creation, shelter and competence specifications in place. DG12 now adds the complete invention-library round trip and useful opening continuation. DG13 adds concrete canopy materials/layouts, direct build/use/edit/reclaim behavior, construction permissions and a positive first home-use scene. DG14 selects a short sling-handling improvement, independent inert-target practice and a willing coached episode, preserving the existing roof/dice example as optional. This follow-up does not rewrite the original source baseline below or claim technical/runtime completion.
 
 ## Purpose and scope
 
@@ -25,13 +27,13 @@ Mike explicitly requested product and behavior design before technical design. C
 
 ## Specifications and progress
 
-| Order | Product specification                                                | Existing work owner                             | Status                                                                                      |
-| ----- | -------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies | Product proposal and focused review complete; technical design and runtime work remain open |
-| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                   | Product proposal and focused review complete; technical design and runtime work remain open |
-| 3     | [Creating a world from a premise](world-creation-feature-spec.md)    | ND01, INV-4.10, EWF12                           | Product proposal and focused review complete; technical design and runtime work remain open |
-| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4                    | Product proposal and focused review complete; technical design and runtime work remain open |
-| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03, EWF02/EWF04 and action/state owners       | Product proposal and focused review complete; technical design and runtime work remain open |
+| Order | Product specification                                                | Existing work owner                                       | Status                                                                                          |
+| ----- | -------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies           | Product proposal and focused review complete; technical design and runtime work remain open     |
+| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                             | Product proposal and focused review complete; technical design and runtime work remain open     |
+| 3     | [Creating a world from a premise](world-creation-feature-spec.md)    | ND01/ND12, INV-4.10/INV-8, EWF11/EWF12                    | DG12 expands creation and invention reuse; product review complete, technical/runtime work open |
+| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4, PX05                        | DG13 product expansion and review complete; technical design and runtime work remain open       |
+| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03/ND04 practical slice, PC and shared EWF/action/state | Product proposal and focused review complete; technical design and runtime work remain open     |
 
 ## Completion criteria
 
@@ -63,6 +65,8 @@ That agreement is a demonstration of capabilities, not a compulsory quest for ev
 The changes remove proposed prerequisites, not existing protections or useful future design. Privacy, actual effects, finite resources where the world requires them, current permissions, meaningful NPC independence and truthful service failures remain essential. For ordinary play, this machinery should appear as understandable behavior and recoverable action, not repeated forms, approval screens or bookkeeping. A fictional conflict is not a platform permission request.
 
 ## Game-first delivery sequence
+
+The current [gameplay priorities](../repertoires/gameplay-priorities.md) own whole-game selection: readable opposition, worthwhile rewards, useful improvement and another challenge. The sequence below coordinates these optional feature projects and preserves the inherited live-invention acceptance proof; it does not restore camp-system adjacency as the general build order or claim that an invention/food demonstration is the complete adventure.
 
 This is the recommended product sequence for the five proposals. It does not reset delivered work, overwrite the [next-priority assignments](../maintainers/parallel-batch-02-foundations-and-usability.md), or declare any existing acceptance complete. Relevant fixes to discovery, response latency, invention reliability and resource selection can precede a new feature because they make the current game usable. The owning trackers retain those assignments.
 

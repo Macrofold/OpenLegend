@@ -26,7 +26,7 @@ An item leaves the active design queue when that preparation has an adequate own
 
 The [product roadmap](../../archive/05-project/roadmap.md) owns P1–P7 outcomes. Read the bands below in that general order, taking groups with ready inputs in parallel. A band's label is a design-planning guide, not a requirement to finish every earlier feature before drafting a later one. Named decisions must be settled before dependent designs are signed off, and the existing runtime/evidence gates still apply before offering the behavior. Conditional groups start only for their stated need; leaving one unselected is not a gap to fill with an unwanted feature.
 
-Prioritize useful, complete player activities and the smallest scope faithful to the game. No crowd, creator workflow, building, generic dice or optional well-being feature blocks the accepted live creative first playable. The [next-priority batch](parallel-batch-02-foundations-and-usability.md) is complete for its recorded scope; the [playable-week tracker](parallel-batch-01-playable-week.md) and existing parents retain any wider qualification. This grouping does not reopen that implementation or turn every existing deferred test into missing design.
+Prioritize useful, complete player activities and the smallest scope faithful to the game. The [canonical repertoire policy](../repertoires/gameplay-priorities.md) keeps practical invention and independent, observation-grounded character consequences inside the first playable experience, alongside readable opposition, exploration and worthwhile rewards. The [28 catalogues](../repertoires/README.md#catalogue-map) are ranked options, not additional mandatory projects; this review does not reorder the accepted design groups or close their acceptance. No crowd, creator workflow, building, generic dice or optional well-being feature blocks the accepted live creative first playable. The [next-priority batch](parallel-batch-02-foundations-and-usability.md) is complete for its recorded scope; the [playable-week tracker](parallel-batch-01-playable-week.md) and existing parents retain any wider qualification. This grouping does not reopen that implementation or turn every existing deferred test into missing design.
 
 DG numbers identify **design batches**, not new implementation tasks or a required count of projects. The ND entries, PS tracker, decision owners and existing subsystem trackers retain their authority. For a broad group, decide its stated common boundary once, then produce separately scoped designs where its families can ship independently. Every selected design still needs its player outcome, meaningful failure, economic burden, explicit scope and delivery breakdown. No technical class/schema design is added by this index.
 
@@ -131,11 +131,15 @@ Conditional ND29: define the actual research question, comparison, opt-in data, 
 
 **Start and parallel boundary:** Place this beside the feature being studied, whenever that happens. It is independent of ordinary gameplay/cost evaluation and is not a prerequisite for DG05, DG10 or DG16 unless that particular study is selected. Engagement alone does not establish a health benefit. **Existing owners:** Research/measurement decision owners and PD/data/privacy.
 
+**Product proposal prepared, 5 October 2026:** [Optional connection study](../projects/wellbeing-evidence-feature-spec.md) selects a finite feasibility comparison for independently consenting known-friend adults, minimal exploratory questions, private withdrawal and limited interpretation. [WBE01–WBE06](wellbeing-evidence.md) owns delivery and the still-open actual-study decision; no well-being programme, recruitment or data collection is adopted.
+
 ### Band 3 — Broaden creation and expression
 
 #### DG12 — Create a world and reuse an invention
 
 ND01's initial world-assembly journey and ND12's bounded local/account-library round trip. Reuse the world-creation proposal; connect a faithful supported opening to retained definitions, dependency inventories, provenance, rights and understandable destination compatibility.
+
+**Product expansion prepared, 5 October 2026:** [The existing creation specification](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) now includes the full useful-recipe round trip, original retention, destination choices, independent character knowledge/resources, eligible free release to a known recipient, update/removal behavior and ten additional primary research units. INV-8/EWF11/12 remain the delivery owners; no new shared license or implementation is claimed.
 
 **Start and parallel boundary:** Use qualified current families and existing authoring/admission. World assembly and the library round trip can be designed independently against their shared definition/provenance contract. A ready small start remains valid. Do not require shelters, general stats, public matching or a marketplace. Free publication and reuse belong here; commercial catalogue/distribution and payout integration expand through DG28. **Existing owners:** INV-4/INV-8, EWF11/EWF12 and world-host owners.
 
@@ -145,17 +149,23 @@ ND07's useful light construction, interior/access and home-use decisions with th
 
 **Start and parallel boundary:** Start from existing material, work and geometry contracts. Coordinate each later structural family within this same construction owner when selected. Heat/spread is DG20, medical effects DG21, institutions DG32, and additional hearing propagation DG26; none is a universal prerequisite for useful cover. **Existing owners:** INV-6, SW, PO, BW and shared-state owners.
 
+**October 5 product expansion:** [The existing shelter owner](../projects/editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) now selects one flat canopy and an adjacent two-bay awning, finite real materials, reversible ties, actual rest/storage/visitor use, explicit construction permissions and complete reclaim/interruption outcomes. [Base-world proposals](../worlds/base/editable-shelters.md) own the material/layout/work/moisture tuning. Product critique preserves a useful first place without penalties or household machinery. PX05 still owes the technical counterpart; INV-6.4 and related runtime acceptance remain open.
+
 #### DG14 — Useful competence and practice
 
 ND03 and ND04's practical-skill slice: one worthwhile action affected by capability, with explicit evidence for practice/teaching and the resulting change. Reuse the stats proposal; predictable competence can suffice and its roof/dice example remains optional.
 
 **Start and parallel boundary:** A selected existing action is the real dependency, so this can move earlier if it improves current play. It does not wait for DG12 or DG13 as a whole. Personality development belongs to DG23; generic learning stays with its existing owner. **Existing owners:** EWF02/EWF04, INV, AC/AE and shared state.
 
+**October 5 product expansion:** [The existing stats owner](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing) now selects useful sling handling, a short finite practice route, an actual inert target and voluntary observed-shot/feedback coaching. [The authored world profile](../worlds/base/practical-competence.md) owns the exact effect and requirements. This explicitly develops ND04's practical slice while preserving separate recipe knowledge, tentative learned methods and personality. [PC](practical-competence.md) owns the new consumer; its technical/runtime tasks remain open.
+
 #### DG15 — An optional story perspective
 
 Conditional ND36: one desired cutaway, distant-event or private-thought presentation, with its audience, spoilers, preferences and the distinction between what the human sees and what the character knows.
 
-**Start and parallel boundary:** Start after ordinary narration is useful and a specific mode is wanted. Existing disclosure authority must support the proposed sources. This is independent of ordinary encounter narration in DG01, voice and deeper memory machinery. **Existing owners:** NC, narration/privacy owners and D57.
+**Start and parallel boundary:** Start after ordinary narration is useful and a specific mode is wanted. The source and recipient policy must be expressly selected and its authority qualified before enabling the mode. This is independent of ordinary encounter narration in DG01, voice and deeper memory machinery. **Existing owners:** NC, narration/privacy owners and D57.
+
+**October 5 selected product proposal:** [After you left](../projects/story-perspectives-feature-spec.md) chooses one private-world, external familiar-craft continuation with explicit new disclosure, voluntary reading, bounded candidate retention, historical human-only information and full stop/correction behavior. [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) routes delivery through NC07–NC12. The proposal explicitly tests whether this small scene is worth adding; no private thoughts, multiplayer expansion, extra resident work or runtime permission is implied.
 
 #### DG16 — A useful personal journal extension
 
@@ -400,6 +410,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **October 3 product proposal, revised after game-first critique:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) offers optional compact creation around a qualified small opening and judges the result by worthwhile play. The accepted personal MVP is sufficient initial scope; six residents are a later community hypothesis, not a release floor. Readiness, selective revision, permissions and actual costs remain required for the selected candidate. [WC limits](../limits/world-creation.md) retain boundaries. Technical design and INV-4.10/EWF12 delivery remain open.
 
+**DG12 expansion, 5 October:** the same specification now makes purpose, useful capability gain and continuation explicit at entry, and connects the new-world candidate to ND12’s exact retained-invention reuse. The initial opening remains small and independent of a marketplace or larger society.
+
 ### ND02 — Discover a community, settle there and enter as a character
 
 **Decision before design.** Sources: [worlds and belonging](../product-scalability/worlds-and-belonging.md), especially visiting, settlement and renewed participation; [D68 — world entry beyond invites](../../archive/05-project/open-decisions.md#d68--world-entry-beyond-invites).
@@ -416,7 +428,7 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select one useful stat/check family and define authoring schemas, ranges/defaults, modifiers, opposed or threshold checks, randomness, interpretation and allowed effects. Separate a displayed trait from an enforceable world rule; explain how actions, AI context and player feedback consume the result. Hand the selected family to EWF/INV and the existing action/state owners with concrete scenarios and limits.
 
-**October 3 product proposal, revised after game-first critique:** [World-authored stats, checks and consequences](../projects/authored-stats-feature-spec.md) requires a demonstrated useful action before introducing generalized checks. Predictable competence effects are valid; the finite roof/2d6 example and arithmetic remain an optional worked candidate. Actual materials, time, help, attempts and known outcomes still govern any chosen method. [ST limits](../limits/authored-stats.md) retain candidate tuning and the simpler decisive-step scope. Adoption, technical design and consumer qualification remain open; no routine action becomes uncertain and ND04 progression stays separate.
+**October 3 product proposal, revised after game-first critique:** [World-authored stats, checks and consequences](../projects/authored-stats-feature-spec.md) requires a demonstrated useful action before introducing generalized checks. Predictable competence effects are valid; the finite roof/2d6 example and arithmetic remain an optional worked candidate. Actual materials, time, help, attempts and known outcomes still govern any chosen method. [ST limits](../limits/authored-stats.md) retain candidate tuning and the simpler decisive-step scope. The October 5 DG14 expansion now selects a finite sling-handling progression consumer under [PC](practical-competence.md), using the existing shot uncertainty rather than adding dice. Technical design and consumer qualification remain open; no routine action becomes uncertain and broader ND04 progression/personality stays separate.
 
 ### ND04 — Experience-shaped personality and practical skill growth
 
@@ -425,6 +437,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [ACT07/ACT08](actor-model.md) cover appraisals and directional social continuity; [cognition](cognition-redesign.md) owns knowledge/reflection; [action experience](action-experience.md) already tracks learned methods and their evidence. Those foundations do not select numerical skill progression or personality-change rules.
 
 **Needed before an implementation project:** decide which experience changes which trait or competence, whether changes are numerical or descriptive, and how practice, teaching, hearsay and observation differ. Define attribution, uncertainty, change/reversal rules and actual effects on supported actions without forcing decisions from trait labels. Keep generic method learning with AE and select world-specific progression separately.
+
+**October 5 selected practical-skill proposal:** DG14 now specifies what a real sling release, observation, completed coaching episode and hearsay each establish, plus the finite resulting effect, privacy, correction and absence rules in the [existing stats specification](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing). [PC](practical-competence.md) tracks only that new consumer. Personality change, generic method teaching and broader skill progression remain open.
 
 ### ND05 — Richer bodies, illness and care
 
@@ -459,6 +473,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [BW19 campfire care](base-world.md#bw19--camp-fire-care) and [state contributions](state-contributions.md) are delivered foundations; INV-6 retains broader materials, thermal behavior and inactive anticipated influences. The detailed thermal exploration is explicitly not a first-release checklist.
 
 **Needed before an implementation project:** choose a coarse useful model for moisture, exposure, heating, ignition, fuel, local spread and damage. Preserve the source's comparison: the same brief ignition source can ignite a selected dry twig without igniting a substantial wooden wall section; wet/dry conditions are an additional variation. Specify extinguishing, geometry changes, shared material/state ownership, bounded neighborhoods, time integration and dormant dependencies without recursively generating every possible weather system. Coordinate the first shelter consumer with ND07 and applicable background-resolution rules.
+
+**October 5 DG13 refinement:** the existing shelter proposal now includes concrete first materials/layouts, positive use, local exposure/drying proposals and complete failure/reclaim behavior; [SH-L01–SH-L10](../limits/editable-shelters.md) inventory the choices. These inputs do not close the remaining structural, thermal or runtime work.
 
 **Narrow October 3 proposal, revised after game-first critique:** the [shelter specification](../projects/editable-shelters-feature-spec.md) develops vertical rain, persistent moisture and ambient drying. A later authored wet-tinder challenge requires dependable recovery and evidence that it improves play. It is not required for the first useful shelter or the accepted creative MVP. Broader heat, ignition, spread, wind, runoff and damage design remain open; current campfire behavior is unchanged.
 
@@ -503,6 +519,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [INV-8.1–8.3](inventions-and-world-evolution.md) and [EWF11](extensible-world-foundation.md) already own account libraries, inventories, export/import and rights-aware portability; local attribution exists. Player/world-creator joint ownership of player creations and world-creator ownership of NPC creations are accepted rules. This entry is the missing scoped product journey and cross-service design, not a claim that packs have no architecture or tracker.
 
 **Needed before an implementation project:** define library discovery, retained attribution, authorized cross-world reuse, retention and complete dependency inventories. Resolve private origin metadata, contribution grants, disputed provenance and self-hosted synchronization; specify immutable publication, destination bindings and understandable incompatibility/refusal. Define permitted use/modification/redistribution and what happens when access ends. Start with a bounded local or account-library round trip; a marketplace and ND23 payouts need not block that proof. Preserve current-format integrity and the root development-compatibility policy.
+
+**Scoped product design prepared, 5 October 2026:** [DG12’s library journey](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) specifies a same-author local proof and a known-recipient eligible free release, scoped private provenance, retained-copy/reference distinctions, complete dependency checks and failure/update/removal behavior. [WC-L06–WC-L12](../limits/world-creation.md#wc-l06--first-library-and-publication-scope) records the proposed envelope. General contribution terms and cross-operator provenance remain unselected expansions under INV-8.3/D44; technical design and unchecked import/account-library work stay open.
 
 ### ND13 — Stable action recommendations and complete control customization
 
@@ -596,11 +614,13 @@ These refinements should be completed in the existing PS project and decision ow
 
 ### ND36 — Optional narrative perspectives and distant-event cutaways
 
-**Decision before design; optional narration mode.** Sources: [D57](../../archive/05-project/open-decisions.md#d57--narration-composed-responses-and-durable-conversations), [external events and awareness](../narration-and-conversations.md#5-external-world-events-and-awareness), and [Narrator context assembly](../narration-and-conversations.md#8-the-narrator-and-context-assembly).
+**Selected external product proposal; optional narration mode.** Sources: [D57](../../archive/05-project/open-decisions.md#d57--narration-composed-responses-and-durable-conversations), [external events and awareness](../narration-and-conversations.md#5-external-world-events-and-awareness), and [Narrator context assembly](../narration-and-conversations.md#8-the-narrator-and-context-assembly).
 
 **Existing coverage:** [NC07–NC12](narration-and-conversations.md) already own private Narrator storage, scoped generation, journal delivery and qualification. The [current delivery boundary](narration-and-conversations.md#remaining-delivery-within-nc01nc12) explicitly leaves cutaways and private-NPC-thought modes disabled. Ordinary actor-perspective stories and ND18 encounter extensions do not require these modes.
 
 **Needed before enabling a mode:** select the useful perspective, who may receive distant events or an NPC's private thoughts, and which source details may be disclosed. Define spoilers, cross-player fairness, preferences, revocation/retention, and bounded triggering/cost. Keep what a human sees in a story separate from what their character actually knows; retention or narrative importance alone grants no disclosure. Deliver the selected mode through existing NC execution and permission owners.
+
+**October 5 DG15 scope:** the [researched product specification](../projects/story-perspectives-feature-spec.md) now selects that permission for one external familiar activity in a single-human private world, with [SP01–SP08](../limits/narration.md#sp01--selected-external-perspective) and [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective). The source policy is a new proposed consumer, not inherited omniscience. Private internal stimuli, other-human information and broader cutaways still require separate selection; implementation and qualification remain open.
 
 ## Commercial service, creator ecosystem and launch learning
 
@@ -681,6 +701,8 @@ If [player-facing resident-memory controls](../../archive/08-wellbeing-vision/04
 **Conditional research and measurement design.** Sources: [measuring what matters](../../archive/08-wellbeing-vision/12-measuring-what-matters.md), Q1/Q11 and E6 in [questions and first experiments](../../archive/08-wellbeing-vision/14-questions-and-first-experiments.md).
 
 **Existing coverage:** operational performance, costs and ordinary gameplay evidence already have owners. This proposed research program is not an adopted analytics specification.
+
+**Scoped product design:** [DG11’s connection-study proposal](../projects/wellbeing-evidence-feature-spec.md) now defines one possible study’s full participant behavior and interpretation. [WBE tasks](wellbeing-evidence.md) retain technical, operational and empirical work. The proposal does not resolve or adopt the archive’s broader Q1/Q11 programme.
 
 **Needed before collecting data:** choose the actual question and whether it is a product objective; define opt-in consent, sampling, minimal data, retention and separation from identity/private conversation. Set comparison and interpretation methods, including self-report/selection limitations, and decide whether research partners or public reporting are wanted. Design the smallest instrumentation for that study. Do not turn proposed scales into player scores or claim health benefits from engagement metrics.
 

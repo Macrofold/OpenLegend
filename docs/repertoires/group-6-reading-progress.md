@@ -152,11 +152,11 @@ Earlier detailed cautions remain in the checkpoint chain. In particular:
 
 ### Additional dossiers and supplementary application
 
-| Read | Additional dossier                                                                                          | Committed incorporation                                                              |
-| ---- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [x]  | [Dragon Age series](../../archive/02-research/game-inspiration/dossiers/dragon-age-series.md)               | LKN256; the separately preserved mainline and smaller-game boundaries remain intact. |
-| [x]  | [Dungeons & Dragons v.3.5](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md) | HMY246; FTH257                                                                       |
-| [x]  | [Dungeons & Dragons 2024](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md) | FTH257, FTH263; ARL275, ARL294                                                       |
+| Read | Additional dossier                                                                                                                                                                          | Committed incorporation                                                              |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [x]  | [Dragon Age series](../../archive/02-research/game-inspiration/dossiers/dragon-age-series.md)                                                                                               | LKN256; the separately preserved mainline and smaller-game boundaries remain intact. |
+| [x]  | [Dungeons & Dragons v.3.5](https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md) | HMY246; FTH257                                                                       |
+| [x]  | [Dungeons & Dragons 2024](https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md) | FTH257, FTH263; ARL275, ARL294                                                       |
 
 Prior operational/reference incorporation remains: Inquisition reference and Divinity II operations → LKN254; Kingmaker operations → HMY234; Deadfire operations → FTH253/LKN253. The D&D game-mastering, complete-SRD and planes packet informs bounded roles, spell preparation, willing return and differentiated portal access in FTH257/FTH263, ARL275/ARL294 and LKN278. New indoor-weather grammar in LKN272 is expressly original synthesis, not a source rule.
 
@@ -225,7 +225,7 @@ Earlier baseline inventories, shared guidance/actions/proposals and neighboring 
 
 **Group 6 reading and incorporation are complete; no discovered game or world remains pending.** Further expansion is optional new work, not an unfilled item in this assignment.
 
-The integration owner should update shared atlas/README counts to the four totals above, update source pins/navigation for the 29 revised worlds and the D&D packet, and link the full-SRD study where shared navigation omits it. Any shared changelog entry belongs to that integration, since the assignment keeps it read-only here. Shared sources retain their declared global acceptance gates.
+The four catalogue totals above, 29-world/D&D source provenance and full-SRD references are incorporated in the [catalogue map](README.md#catalogue-map) and [source atlas](source-atlas.md#catalogue-source-revisions). The dated reading record remains evidence of that research scope, not a new runtime check. Existing global acceptance gates remain open where not otherwise satisfied.
 
 Worlds Adrift's save-discard analogy conflicts with safe in-place migrations preserving identity/unrelated state and never automatically resetting a world; see `docs/save-and-load.md#active-development-policy`. Source-documented resets or legacy branches are comparative evidence, not authorization for OpenLegend resets. The shared owner should reconcile misleading policy analogies; no runtime contract changes here.
 
