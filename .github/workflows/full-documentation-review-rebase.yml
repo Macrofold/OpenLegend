@@ -29,7 +29,7 @@ jobs:
       - name: Replay only exact reviewed resolutions and preserve other conflicts
         run: |
           python3 - <<'PY'
-          import difflib, hashlib, json, os, pathlib, re, subprocess, tarfile
+          import hashlib, json, os, pathlib, re, subprocess, tarfile
           out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-reconciliation'
           out.mkdir()
           before, old, new = os.environ['GITHUB_SHA'], os.environ['OLD_BASE'], os.environ['NEW_BASE']
@@ -43,31 +43,48 @@ jobs:
           (out / 'upstream.patch').write_bytes(git('diff', '--binary', old, new))
           (out / 'original-review.patch').write_bytes(git('diff', '--binary', old, before))
           env = dict(os.environ, GIT_EDITOR='true')
-          result = subprocess.run(['git', '-c', 'rerere.enabled=false', 'rebase', '--onto', new, old], env=env)
+          def replay(*args):
+              result = subprocess.run(['git', *args], env=env, capture_output=True)
+              with (out / 'replay.log').open('ab') as log:
+                  log.write(result.stdout + result.stderr)
+              return result
+          result = replay('-c', 'rerere.enabled=false', 'rebase', '--onto', new, old)
           resolved = []
+          allowed = {
+              '751525b3cb5b459a7dba47d55bd16d568b03a1b3': 'docs/maintainers/performance-profiling.md',
+              '21c16580c1830b1e83c6cb2fce42539d548123fb': 'docs/projects/shadow-quality-feature-spec.md',
+          }
           while result.returncode:
               stopped = git('rev-parse', 'REBASE_HEAD').decode().strip()
               names = [name for name in git('diff', '--name-only', '--diff-filter=U', '-z').decode().split('\0') if name]
-              if stopped == '751525b3cb5b459a7dba47d55bd16d568b03a1b3' and names == ['docs/maintainers/performance-profiling.md']:
+              if stopped in allowed and names == [allowed[stopped]]:
                   path = pathlib.Path(names[0])
                   text = path.read_text()
                   pattern = r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]+\n'
                   matches = list(re.finditer(pattern, text, re.MULTILINE | re.DOTALL))
-                  assert len(matches) == 1, 'changed profiler conflict count'
+                  assert len(matches) == 1, ('changed conflict count', stopped)
                   match = matches[0]
                   ours, theirs = match.group(1), match.group(2)
-                  intro, shared = ours.split('\n\n', 1)
-                  assert intro.startswith('The profiler explicitly takes control through the player endpoint,')
-                  assert shared.count('refused before migrations.') == 1
-                  assert theirs == shared.replace('refused before migrations.', 'refused before disposable-fixture initialization.'), 'changed profiler conflict'
-                  replacement = ours.replace('refused before migrations.', 'refused before disposable-fixture initialization.')
+                  if stopped.startswith('751525b3'):
+                      intro, shared = ours.split('\n\n', 1)
+                      assert intro.startswith('The profiler explicitly takes control through the player endpoint,')
+                      assert shared.count('refused before migrations.') == 1
+                      assert theirs == shared.replace('refused before migrations.', 'refused before disposable-fixture initialization.'), 'changed profiler conflict'
+                      replacement = ours.replace('refused before migrations.', 'refused before disposable-fixture initialization.')
+                  else:
+                      assert 'Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open.' in ours
+                      assert 'Artwork-aligned shadows and the supplied model are delivered; frame-time, combined-model and physical-device qualification remain open.' in theirs
+                      assert all(line.startswith('|') for side in (ours, theirs) for line in side.splitlines())
+                      assert 'The supplied mercenary is now integrated under SW18.14' in text
+                      assert 'combined model/eight-fire/3×' in text
+                      replacement = ours
                   merged = text[:match.start()] + replacement + text[match.end():]
                   assert not re.search(r'^(<<<<<<<|=======|>>>>>>>)', merged, re.MULTILINE)
                   path.write_text(merged)
-                  print('RESOLVED: profiler control/measurement addition retained; only obsolete migration wording replaced.')
+                  print('RESOLVED:', stopped, str(path))
                   resolved.append({'commit': stopped, 'path': str(path), 'sha256': hashlib.sha256(merged.encode()).hexdigest()})
                   subprocess.run(['git', 'add', '--', str(path)], check=True)
-                  result = subprocess.run(['git', 'rebase', '--continue'], env=env)
+                  result = replay('rebase', '--continue')
                   continue
               (out / 'stopped-commit.txt').write_text(stopped + '\n')
               (out / 'conflicts.txt').write_bytes(git('status', '--short'))
