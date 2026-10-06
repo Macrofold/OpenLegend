@@ -663,6 +663,17 @@
       "captureScope": "app",
       "source": "activity-picker-focus-and-task-switch",
       "originalFile": "02-original-result-new-task-recovery.png"
+    },
+    {
+      "id": "65-activity-recovery-first",
+      "file": "65-activity-recovery-first.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 993296,
+      "sha256": "1b8915c9d829686ad3b14c4d9cecc4d81b1ed7982faa9c2394fbaa646ac69790",
+      "captureScope": "app",
+      "source": "activity-recovery-first-bb537aaa",
+      "originalFile": "01-original-activity-result-first.png"
     }
   ],
   "appSource": {
@@ -2197,6 +2208,112 @@
       ],
       "observationStartedAtUtc": "2026-10-06T13:45:54.516Z",
       "observationFinishedAtUtc": "2026-10-06T13:46:40.673Z",
+      "additionalJevCostUsd": 0,
+      "cumulativeJevCostUsd": 0
+    },
+    "activity-recovery-first-bb537aaa": {
+      "baseCommit": "bb537aaa46f4d772022d0f153c0819f5413b2561",
+      "sourceTree": "7406994338999fd32b4828ff501d089bb3ad4b70",
+      "sourceSha256": {
+        "apps/client/src/main.tsx": "4ebd7a6c1308c5ca9976574833f308fbf9222258c8593abe95f06a21d956d5d0",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/ui/camp-activity.tsx": "d34320bfb66eb78c3eb12654840bfe95e4994d74ccd452ce93361fc13caaa438",
+        "apps/client/src/ui/activity-object-field.tsx": "f3d04b26b7f2665e282bb9834550bb923e9d2f608a7696c90cfed2cd2530a3f8",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "apps/client/src/command-request.ts": "d5a0dd481e2d69596a198c688409b7d0e4d8c05f786b40913278fb514cc74829",
+        "apps/client/src/ui/inventory.tsx": "5797024ebcd530385027a89318a9de2c669f8ccc8d67c55c1ae87079f391d99c",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/ui/camp-activity.css": "d0b43674c0e6044bc2d312a3529bcc4f7261adeee3249572956f427f315b3700",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/client/vite.config.ts": "090f0368e53945b4aa306ecbd982ac8ce57f4701b93be464d42eb4b6875a3cf1",
+        "apps/client/src/ui/inventory-collection.tsx": "d02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77",
+        "apps/client/src/ui/inventory.css": "6da9cb89b2a5bc159e897b9772b8af360c850b95307b8f8aa83da7840bbf48ca",
+        "apps/client/src/design-system/components.css": "7938c50a3d89c3000b047f07551f3c9925ee2476245091b5ba5432152e4dd5ac"
+      },
+      "sourceManifestSha256": "be048c55e5a6350e53e4985af1997634b27ec494b65ab1a8eaddfe31e85e21c7",
+      "inputManifestSha256": "3efe0ab1d3865a23a134a293f3411617ee012f342ea3a523943c50b72d0ddb64",
+      "runManifestSha256": "4a6ff8bae40f67cd99bc175db9c501c32afd7def2faa067a2891fc3126a7781e",
+      "provenanceSha256": "2b47598c9137b5d036138f76cb350f2c7b38022c6b696d41c1015b59bbd6eb5f",
+      "runnerSha256": "3b92ca7709032fa8c2c7a0ac1a42603ca4cb0ff1b4fc0ec61f8749e996c83590",
+      "hostSha256": "eb8771eb6ad409d6cc6d563ef784dc6aa05ee7efd36f53ea0fbf6e28f509a991",
+      "reportSha256": "4e19c208064ffc182f46cbb31a624b58e45ea1a9b70eecc1b5888b08eea84e6e",
+      "traceSha256": "780040ac843012711ceb4561f698bf45b6d9761491fde4f9a486507b25efe355",
+      "traceIntegrity": {
+        "completeArchive": true,
+        "entries": 65,
+        "crcFailures": 0,
+        "bytes": 15925452
+      },
+      "transport": "Actual App/PlayCanvas with 27 unchanged native-recorded public care resource files. Entry/presence and one held original command delivery are controlled; both target reads for the newly opened task are deliberately held. No native server, database, provider or new native gameplay effect is executed.",
+      "nativeInputProvenance": {
+        "checkout": "a117730be83e6314e388e0a0f43565b6173c4077",
+        "traceSha256": "9e279b3fb176cbd4e873423c848a35cb83132af5b4c78f9dcc674fc7ba4fb93c",
+        "reportSha256": "16d0b9a74c2b29b2ca58a173d123258a8301bd070cb8a2fd98a1e84658751b15",
+        "resourceFiles": 27
+      },
+      "observations": [
+        "Immediate keyboard material selection satisfies the unchanged five-second dialog-hidden assertion; ordinary amount/reserve/duration preparation and its normal sticky action row pass.",
+        "After one held original Start and switching tasks, the new task remains in preparation without the original local success or folded presentation; the original result is reported globally.",
+        "The entire original pending request, command identity and stored key/value remain exact; one Start, zero receipt reads and zero command replays.",
+        "Before any focus or scroll, the entire original-result explanation and enabled Check request result button are inside the visible Panel body at scrollTop 0.",
+        "After focus is initialized on the existing panel Hide control, one ordinary Tab reaches Check request result without scrolling or directly focusing that button; it is not activated.",
+        "Four ordinary wheel gestures reach the full 587px range and fully expose all three work-mode buttons, Start after current work and Refresh conditions. The unresolved action row remains in normal flow after the work-mode block without overlap.",
+        "Both held target reads, before and after the recorded working view, close during successful owned cleanup; all error and unexpected-request arrays are empty."
+      ],
+      "geometry": {
+        "viewport": {
+          "width": 1440,
+          "height": 960
+        },
+        "measuredBeforeFocusOrScroll": true,
+        "panelBody": {
+          "top": 526,
+          "bottom": 851,
+          "height": 325
+        },
+        "recovery": {
+          "top": 542,
+          "bottom": 645
+        },
+        "recoveryButton": {
+          "top": 595,
+          "bottom": 633
+        },
+        "initialScrollTop": 0,
+        "scrollContentHeight": 912,
+        "wheelGestures": 4,
+        "observedScrollTops": [0, 162, 324, 486, 587],
+        "finalActionRowPosition": "static",
+        "finalActionRowAtEnd": {
+          "top": 768,
+          "bottom": 823
+        },
+        "captureBeforeWheel": true
+      },
+      "overallOutcome": "Passed two finite groups in 28.007 seconds with one original Start, zero receipt reads/replays and one original PNG. All 17 source pins and 38 input pins remain exact; trace, context, browser, host and held-reader cleanup all pass.",
+      "visualReview": "The complete original-result explanation and visible Check request result focus outline appear before Current work. No sticky new-task action row covers this reading area. The screenshot is taken before wheel scrolling; lower work modes, full new preparation and final controls remain below its fold. Their later exposure is established by the report and trace, not this image. The fading global toast is not used as evidence of legible text in the pixels.",
+      "preservedEarlierAttempt": {
+        "sourceCommit": "ee1da9a9221e34fc23eceeb2a902721d6a748408",
+        "passed": false,
+        "durationSeconds": 21.859,
+        "commands": 0,
+        "pngs": 0,
+        "failure": "The unchanged five-second material-dialog-hidden assertion failed before Start during an entering/exiting modal lifetime. The original report and trace remain unchanged.",
+        "reportSha256": "8953df9ffac7b3f6dd62e178440989ce01c8885d605d2fc8fd63a0716da9e7cb",
+        "traceSha256": "a9e71fc03aa562a34cb70e7dfe7e64960fb37322285ad199df65813ea6187fd7"
+      },
+      "limits": [
+        "The newly opened task target reads remain held: no second-task choices or admission, new native effect, completed receipt recovery or provider acceptance is added.",
+        "Keyboard evidence starts at the initialized panel Hide control and covers one ordinary Tab. It is not a keyboard journey from world entry, OS/IME or assistive-device qualification.",
+        "The 325px-high task body still requires scrolling through Current work and full preparation. One desktop screenshot does not show every control or qualify other viewports, enlarged text or uncoached players.",
+        "The original assertions and capture/work deadlines are unchanged. The passing dismissal does not identify the earlier animation-clock delay or establish a performance repair.",
+        "The frozen preparation manifest retains its historical unrun/review-pending wording; the separately identified completed raw report owns this passing outcome."
+      ],
+      "observationStartedAtUtc": "2026-10-06T15:03:47.729Z",
+      "observationFinishedAtUtc": "2026-10-06T15:04:15.736Z",
       "additionalJevCostUsd": 0,
       "cumulativeJevCostUsd": 0
     }
