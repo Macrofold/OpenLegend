@@ -8,14 +8,14 @@ Current campfire care, cooking, object identity and shared state are implemented
 
 The second product review separates a complete human own-kit bowl from later material-fire, moisture, resident-making and combined food-fire work. The bowl is an optional expressive making hypothesis, not an established storage upgrade over woven containers. Choose a credible wanted activity before implementation; the later focused comparison assesses whether the selected prototype actually earns its cost. No prior proof of enjoyment, new study or analytics system is required.
 
-| Work | Applies when |
-| --- | --- |
-| HM01 | Select the wanted activity and its smallest complete scope before implementation. |
-| HM02 | Every enabled material/process keeps its complete actual history; first-bowl firing does not require future combustible panels or moisture. |
+| Work | Applies when                                                                                                                                                                                        |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HM01 | Select the wanted activity and its smallest complete scope before implementation.                                                                                                                   |
+| HM02 | Every enabled material/process keeps its complete actual history; first-bowl firing does not require future combustible panels or moisture.                                                         |
 | HM03 | First-bowl placement, firing, interruption, cooling, collection and stopping are complete; destructive-target actions and combined food-fire interruption apply only to those later enabled stages. |
-| HM04 | The dry-material fire stage is selected, including real wall geometry, local loss and surviving material. It is not a first-bowl gate. |
-| HM05 | Ordinary information, human authority, perception and absence apply immediately. The exact resident grant and independent making journey are a separately selectable expansion. |
-| HM06 | Qualify the actual selected activity and all its consequences. Preserve later fire, moisture, resident and combined-food-fire acceptance as separately open work. |
+| HM04 | The dry-material fire stage is selected, including real wall geometry, local loss and surviving material. It is not a first-bowl gate.                                                              |
+| HM05 | Ordinary information, human authority, perception and absence apply immediately. The exact resident grant and independent making journey are a separately selectable expansion.                     |
+| HM06 | Qualify the actual selected activity and all its consequences. Preserve later fire, moisture, resident and combined-food-fire acceptance as separately open work.                                   |
 
 When the dry-material fire stage is selected, the same brief source lighting the selected dry twig but not the substantial real wall is mandatory. Wet/dry evidence is additional. No enabled capability may omit identity, material, permission or clock correctness; stage separation reduces the enabled scope, not its obligations. Keep unchecked later items open and report completion only for the selected activity.
 

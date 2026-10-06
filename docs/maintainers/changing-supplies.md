@@ -10,13 +10,13 @@ The second product review puts an actual activity and comparison with current no
 
 The upfront selection is a reasoned activity/benefit hypothesis, not a demand to prove enjoyment before building. A small complete prototype supplies the later actual comparison before ordinary adoption or expansion; no new study or analytics requirement follows.
 
-| Work | Applies when |
-| --- | --- |
-| CS01 | Before selecting either addition; name its wanted activity and establish why current food/gathering is insufficient. |
-| CS02–CS03 | Preservation and expiry are selected; condition continuity and every affected ordinary food operation ship together. |
-| CS04 | Renewal is selected; this can retain nonperishable portable food and does not wait for CS02–CS03. |
-| CS05 | Information, access and interaction apply to each enabled capability; voluntary resident preparation is a separately selectable expansion. |
-| CS06 | Qualify the actual selected journey and its complete consequences; wider combined, resident and unattended journeys stay separately open. |
+| Work      | Applies when                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| CS01      | Before selecting either addition; name its wanted activity and establish why current food/gathering is insufficient.                       |
+| CS02–CS03 | Preservation and expiry are selected; condition continuity and every affected ordinary food operation ship together.                       |
+| CS04      | Renewal is selected; this can retain nonperishable portable food and does not wait for CS02–CS03.                                          |
+| CS05      | Information, access and interaction apply to each enabled capability; voluntary resident preparation is a separately selectable expansion. |
+| CS06      | Qualify the actual selected journey and its complete consequences; wider combined, resident and unattended journeys stay separately open.  |
 
 Deferring voluntary resident preparation never permits incorrect condition, eating, observations or handovers for residents already affected by enabled food aging. The later checks remain required when their capabilities are selected; they do not prevent a smaller complete human activity from finishing.
 

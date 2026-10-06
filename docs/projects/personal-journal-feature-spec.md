@@ -1,7 +1,7 @@
 # A personal edition of the Journal
 
-| Status      | Current progress                                                                                                                                                 | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | The gameplay review separates a useful first copy from conditional authorship and saved drafts; technical design and implementation remain open. | 2026-10-06   |
 
 ## 1. A moment worth keeping
@@ -300,4 +300,4 @@ The design deliberately preserves the archive's broader ambitions without adopti
 - Current behavior and privacy: [Narration and conversations](../narration-and-conversations.md).
 - Related proposed consumer: [Story perspectives](story-perspectives-feature-spec.md); it remains independent.
 - Design queue: [DG16/ND30](../maintainers/needs-design.md#dg16--a-useful-personal-journal-extension).
-- Assignment: [Product designs 16–20](product-design-groups-16-20.md). Technical design is intentionally outside this assignment.
+- Assignment: [Product designs 16–20](completed/product-design-groups-16-20.md). Technical design is intentionally outside this assignment.

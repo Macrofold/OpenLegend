@@ -1,7 +1,7 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                           | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | DG18 separates useful exact conversation and shared reading from conditional gist/crowd work; adoption, technical design and runtime delivery remain open. | 2026-10-06   |
 
 **Status: proposed detailed behavior, expanded October 6, 2026.** This extends the accepted PS04 direction. Existing hearing evidence and caption behavior remain authoritative until an explicitly scoped new policy is approved and delivered. Technical design, voice-media delivery and implementation are outside this product-only assignment.

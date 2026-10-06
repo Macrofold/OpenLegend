@@ -1,7 +1,7 @@
 # Heat, ignition and useful material change
 
-| Status      | Current progress                                                                                                                    | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | The DG20 proposal now separates optional bowl making from later fire, moisture and resident-permission work; adoption and delivery remain open under HM01–HM06. | 2026-10-06   |
 
 This develops DG20 and the remaining selected heat/fire portion of ND08 beneath INV-6. It proposes behavior; it does not enable a new service, alter current fire law, complete construction, or claim runtime qualification. The [base-world profile](../worlds/base/heat-and-materials.md) owns the selected materials, quantities, geometry, durations and balance. [HM01–HM06](../maintainers/heat-and-materials.md) owns delivery and [HM limits](../limits/heat-and-materials.md) records the restrictions.
@@ -22,13 +22,13 @@ The first setting is an explicitly selected isolated, attended personal world wi
 
 ### Delivery applicability
 
-| Selectable activity or extension | Complete required scope |
-| --- | --- |
-| First human bowl | The human's own finite making kit, cold placement, real fuel and firing, retained partial progress, cooling, collection and actual solid-item use. All offered arrangements, transfers, interruption and clock behavior remain correct. No wall or resident-use grant is required. |
-| Dry-material fire | The matched brief-source dry-twig/substantial-wall comparison, actual supported wall geometry, finite local burning, stopping, surviving material, residues and changed space. Select it for a wanted experiment or a situation where material loss or opening space matters, not as unavoidable pottery maintenance. |
-| Moisture variation | DG13's actual moisture and exposure plus this profile's heat-assisted drying and optional wet/dry comparison. It is an additional case after the relevant moisture behavior exists; it never substitutes for the required dry twig/wall comparison. |
-| Resident making | A wanted independent resident-making journey with the exact grant, real accepted supplies and accessible tools described below. Finish those permission and stopping rules before offering this use; human own-kit firing does not depend on it. |
-| Combined food fire | A later fire actually supporting firing and cooking or preservation, with shared output and honest emergency interruption. The first firing hearth remains separate from the current contained cooking fire. |
+| Selectable activity or extension | Complete required scope                                                                                                                                                                                                                                                                                               |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| First human bowl                 | The human's own finite making kit, cold placement, real fuel and firing, retained partial progress, cooling, collection and actual solid-item use. All offered arrangements, transfers, interruption and clock behavior remain correct. No wall or resident-use grant is required.                                    |
+| Dry-material fire                | The matched brief-source dry-twig/substantial-wall comparison, actual supported wall geometry, finite local burning, stopping, surviving material, residues and changed space. Select it for a wanted experiment or a situation where material loss or opening space matters, not as unavoidable pottery maintenance. |
+| Moisture variation               | DG13's actual moisture and exposure plus this profile's heat-assisted drying and optional wet/dry comparison. It is an additional case after the relevant moisture behavior exists; it never substitutes for the required dry twig/wall comparison.                                                                   |
+| Resident making                  | A wanted independent resident-making journey with the exact grant, real accepted supplies and accessible tools described below. Finish those permission and stopping rules before offering this use; human own-kit firing does not depend on it.                                                                      |
+| Combined food fire               | A later fire actually supporting firing and cooking or preservation, with shared output and honest emergency interruption. The first firing hearth remains separate from the current contained cooking fire.                                                                                                          |
 
 These are delivery boundaries, not exceptions within an enabled physical or permission rule. The full proposal retains every later requirement and counterexample. Qualification and tracker completion apply to the expressly selected scope, rather than making every row a gate for the first bowl. Prepared materials establish a bounded authored making or comparison scene; they do not establish ordinary-world acquisition, repeat production or live invention.
 

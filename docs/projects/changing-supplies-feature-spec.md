@@ -1,7 +1,7 @@
 # Supplies that change over time — feature specification
 
-| Status      | Current progress                                                                                                                    | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | The DG19 proposal now puts the player-value decision before food expiry and separates preservation from renewal; adoption and delivery remain open under CS01–CS06. | 2026-10-06   |
 
 ## 1. The experience this should earn
