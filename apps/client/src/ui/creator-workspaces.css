@@ -184,3 +184,112 @@
     outline-color: Highlight;
   }
 }
+
+/* Authoring keeps its one composer reachable while context, saved work and
+   conversation history retain their existing reading and request owners. */
+#agentPanel .ol-panel-body:has(> .ol-creator-workspace[data-session]) {
+  overflow: hidden;
+}
+.ol-creator-workspace[data-session] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.ol-creator-workspace[data-session] > .ol-creator-views {
+  flex-wrap: nowrap;
+  overflow: auto;
+  flex: none;
+}
+.ol-creator-workspace[data-session] > .ol-creator-authoring {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.ol-world-agent-session {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-inline-size: 0;
+  flex: 1;
+}
+.ol-world-agent-reading {
+  min-height: 0;
+  overflow: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  scrollbar-gutter: stable;
+}
+.ol-agent .ol-world-agent-session .ol-thread {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+}
+.ol-world-agent-footer,
+.ol-world-agent-compose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+}
+.ol-world-agent-footer {
+  flex: 0 0 auto;
+  max-height: 75%;
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--line);
+  overflow: auto;
+}
+.ol-world-agent-footer:empty,
+.ol-world-agent-compose[hidden],
+.ol-world-agent-footer [role='status']:empty {
+  display: none;
+}
+.ol-world-agent-footer p {
+  margin: 0;
+}
+.ol-world-agent-footer .ol-notice {
+  max-height: 8em;
+  overflow: auto;
+  flex-shrink: 1;
+}
+.ol-world-agent-compose .ol-composer textarea {
+  max-height: 6em;
+  overflow-y: auto;
+}
+
+.ol-world-agent-controls > summary {
+  cursor: pointer;
+  padding-block: var(--space-2);
+  overflow-wrap: anywhere;
+}
+.ol-world-agent-context {
+  display: grid;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.ol-creator-workspace[data-session] > .ol-creator-views .ol-btn {
+  flex: none;
+  white-space: nowrap;
+}
+.ol-world-agent-reading > * {
+  flex: none;
+}
+.ol-world-agent-reading > .ol-world-agent-conversation {
+  flex: 1 0 min(100px, 16dvh);
+  min-height: 0;
+}
+.ol-world-agent-conversation .ol-thread-shell {
+  height: 100%;
+}
+.ol-world-agent-footer > *,
+.ol-world-agent-compose > * {
+  flex: none;
+}
+.ol-world-agent-title {
+  margin: 0;
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}

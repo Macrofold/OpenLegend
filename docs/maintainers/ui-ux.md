@@ -158,6 +158,8 @@ Exit remains J46 with corresponding affected journeys against supported base/tou
 
 ## UIUX18
 
+The October 6 UTC continuation passes full Code checks (344 tests) and selected native spatial, camera and owner-conversation browser journeys at `36ee7e0`. Four interface cases still fail; measured rendering backlog, reachable creator composition and responsive measurement corrections are in progress. [The current report](../verification/game-interaction-redesign.md#entry-and-required-check-continuation) retains exact outcomes. These selected passes do not close the broader journey or human-input gates below.
+
 **Open — whole-interface input and uncoached usability; bounded viewport/keyboard evidence added.** Apply J47–J48 across the complete [58-group coverage map](../ui-ux/interface-coverage.md), using the composed journeys from UIUX08–UIUX17. Record actual role/world/build/input/viewport/text and outcomes. The whole-interface pass adds real App/PlayCanvas checks at desktop and 390/320px with 130% component UI scale, plus controlled component reading, editor, lifecycle and focus cases. These are the specific bounded observations recorded in the [verification report](../verification/game-interaction-redesign.md), not whole-interface or enlarged-browser-text acceptance.
 
 Native IME means real input-method-editor character composition through the operating system; synthetic composition events and ordinary typing do not qualify it. Real OS IME, assistive devices, broader browser/text/short-viewport combinations, additional non-drag tasks and uncoached observation remain open. Retain descriptions of shallow or failed fixture captures and their corrected scope in the evidence owner; a later passing layout does not erase the earlier result.

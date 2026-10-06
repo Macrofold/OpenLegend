@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                        | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The whole-interface implementation candidate is delivered; authenticated native integration, broader input and uncoached-player acceptance remain open. | 2026-10-05   |
+| In progress | The whole-interface implementation candidate is delivered; authenticated native integration, broader input and uncoached-player acceptance remain open. | 2026-10-06   |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
 

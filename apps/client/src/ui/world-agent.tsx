@@ -136,8 +136,75 @@ function WorldAgentPanel(props: Props) {
   const activeTitle =
     sessions.find((session) => session.sessionId === active)?.title ??
     (inventionTarget === active ? 'New invention' : 'New conversation');
+  const allowance = (
+    <UsageRemaining
+      limit={budget.limitUsd}
+      spent={budget.accounts?.[actorId]?.spentUsd ?? 0}
+      reserved={budget.accounts?.[actorId]?.reservedUsd ?? 0}
+      available={connected && !!budget.accounts}
+    />
+  );
+  const controls = (
+    <>
+      {allowance}
+      <header className="ol-creator-context">
+        <Tag tone="highlight">God mode · World authoring</Tag>
+        <h3>{active ? activeTitle : 'Investigate and shape this world'}</h3>
+        <p className="ol-caption">
+          Discuss an idea in Conversation, inspect saved Work, then review an exact change before
+          applying it.
+        </p>
+      </header>
+      <div className="ol-agent-tools">
+        <Button size="sm" variant="quiet" onPress={() => create()}>
+          New conversation
+        </Button>
+        <Button size="sm" variant="quiet" onPress={() => create(true)}>
+          New invention
+        </Button>
+      </div>
+      <details className="ol-creator-history">
+        <summary>Saved conversations and history</summary>
+        <p className="ol-caption">
+          Opening history only reads it. Ended conversations remain separate from new work.
+        </p>
+        <div className="ol-creator-records">
+          {sessions.map((session) => (
+            <Button
+              key={session.sessionId}
+              variant="quiet"
+              aria-pressed={active === session.sessionId}
+              onPress={() => setActive(session.sessionId)}
+            >
+              <strong>{session.title}</strong>
+              <span className="ol-caption">
+                {session.available ? 'Available conversation' : 'History · read only'}
+              </span>
+            </Button>
+          ))}
+        </div>
+        {!sessions.length && !busy && (
+          <p className="ol-caption">No saved conversations on this page.</p>
+        )}
+        <div className="ol-agent-tools">
+          <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list()}>
+            Refresh conversations
+          </Button>
+          {before && (
+            <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list(before)}>
+              Earlier conversations
+            </Button>
+          )}
+        </div>
+      </details>
+      {error && <p role="alert">{error}</p>}
+    </>
+  );
   return (
-    <div className="ol-agent ol-creator-workspace">
+    <div
+      className="ol-agent ol-creator-workspace"
+      data-session={godMode && workspace === 'authoring' && !!active ? '' : undefined}
+    >
       {godMode && (
         <nav className="ol-creator-views" aria-label="Creation workspaces">
           <Button
@@ -163,64 +230,9 @@ function WorldAgentPanel(props: Props) {
           </Button>
         </nav>
       )}
-      <UsageRemaining
-        limit={budget.limitUsd}
-        spent={budget.accounts?.[actorId]?.spentUsd ?? 0}
-        reserved={budget.accounts?.[actorId]?.reservedUsd ?? 0}
-        available={connected && !!budget.accounts}
-      />
+      {(!godMode || workspace !== 'authoring') && allowance}
       {godMode && (
-        <div hidden={workspace !== 'authoring'} className="ol-creator-page">
-          <header className="ol-creator-context">
-            <Tag tone="highlight">God mode · World authoring</Tag>
-            <h3>{active ? activeTitle : 'Investigate and shape this world'}</h3>
-            <p className="ol-caption">
-              Discuss an idea in Conversation, inspect saved Work, then review an exact change
-              before applying it.
-            </p>
-          </header>
-          <div className="ol-agent-tools">
-            <Button size="sm" variant="quiet" onPress={() => create()}>
-              New conversation
-            </Button>
-            <Button size="sm" variant="quiet" onPress={() => create(true)}>
-              New invention
-            </Button>
-          </div>
-          <details className="ol-creator-history">
-            <summary>Saved conversations and history</summary>
-            <p className="ol-caption">
-              Opening history only reads it. Ended conversations remain separate from new work.
-            </p>
-            <div className="ol-creator-records">
-              {sessions.map((session) => (
-                <Button
-                  key={session.sessionId}
-                  variant="quiet"
-                  aria-pressed={active === session.sessionId}
-                  onPress={() => setActive(session.sessionId)}
-                >
-                  <strong>{session.title}</strong>
-                  <span className="ol-caption">
-                    {session.available ? 'Available conversation' : 'History · read only'}
-                  </span>
-                </Button>
-              ))}
-            </div>
-            {!sessions.length && !busy && (
-              <p className="ol-caption">No saved conversations on this page.</p>
-            )}
-            <div className="ol-agent-tools">
-              <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list()}>
-                Refresh conversations
-              </Button>
-              {before && (
-                <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list(before)}>
-                  Earlier conversations
-                </Button>
-              )}
-            </div>
-          </details>
+        <div hidden={workspace !== 'authoring'} className="ol-creator-page ol-creator-authoring">
           {active ? (
             <WorldAgentSession
               key={`${worldId}:${saveTimeline}:${active}`}
@@ -232,13 +244,17 @@ function WorldAgentPanel(props: Props) {
               seed={seedTarget === active ? inventionSeed : null}
               purpose={inventionTarget === active ? 'invention' : undefined}
               onCreated={() => void list()}
+              controls={controls}
+              title={activeTitle}
             />
           ) : (
-            <EmptyState title="Investigate and create in one conversation">
-              <Button onPress={() => create()}>New conversation</Button>
-            </EmptyState>
+            <>
+              {controls}
+              <EmptyState title="Investigate and create in one conversation">
+                <Button onPress={() => create()}>New conversation</Button>
+              </EmptyState>
+            </>
           )}
-          {error && <p role="alert">{error}</p>}
         </div>
       )}
       {godMode && (
