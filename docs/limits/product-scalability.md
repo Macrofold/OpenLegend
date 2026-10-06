@@ -120,7 +120,7 @@ Material unresolved product choices are owned by [PS-D01–PS-D06](../../archive
 
 ## PS-L25 — Coherent stop and renewed admission
 
-**Status: Proposed; restrictiveness: Safe.** Horizon expiry or unavailable required service stops the whole isolated world at its actual current state, including ongoing work, fuel use and bodily/environmental progress. A resident making a poor choice after receiving its decision opportunity is not service failure. Resumption needs current authority, applicable funding, service readiness and an admissible current world; a provider or billing reset does not itself resume play. No food, health, materials, work completion or fictional closing scene is awarded at either boundary. This option is not safe by default for a connected economy; qualify a coherent boundary before expansion.
+**Status: Proposed; restrictiveness: Safe.** Horizon expiry while unattended or unavailable required service stops the whole isolated world at its actual current state, including ongoing work, fuel use and bodily/environmental progress. A resident making a poor choice after receiving its decision opportunity is not service failure. Resumption needs current authority, applicable funding, service readiness and an admissible current world; a provider or billing reset does not itself resume play. Ordinary attended play can continue or resume under its existing authorization without buying another unattended period; this does not renew permission to run after departure. No food, health, materials, work completion or fictional closing scene is awarded at either boundary. This option is not safe by default for a connected economy; qualify a coherent boundary before expansion.
 
 ## PS-L26 — Funding and continuation liability
 

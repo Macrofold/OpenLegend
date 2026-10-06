@@ -45,7 +45,7 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 - [x] Prepare the DG17 product/behavior proposal and its base-world profile; retain technical and runtime qualification as separate work.
 - [ ] Qualify the whole proposed finite interval with actual accessible supplies, repeated independently chosen meals and substantial rest, and meaningful personal/social activity; sufficient stock alone is not proof of viable life.
-- [ ] Demonstrate expiry during work, interrupted essential decision service, current-state readmission without replenishment, and a useful perspective-correct return after actual no-participant operation.
+- [ ] Demonstrate expiry during work, interrupted essential decision service, current-state readmission without replenishment, ordinary attended play without renewing unattended permission, and a useful perspective-correct return after actual no-participant operation.
 - [ ] Add explicit low-power optional initiative policy with viable needs, retained commitments, and no backlog of missed optional thoughts.
 - [ ] Supply inherited coarse execution for a small useful set of mechanics, including travel and representable partial work.
 - [ ] Declare unsupported combinations and their funded-detailed/restricted/approximate fallbacks before accepting creator reliance.

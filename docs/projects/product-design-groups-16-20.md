@@ -1,8 +1,8 @@
 # Product designs for groups 16–20
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | The current sources and design boundaries are being reconciled before completing the five researched product specifications in order. | 2026-10-06 |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG16 and DG17 product proposals are written and independently reviewed; DG18–DG20 and the final package review remain. | 2026-10-06   |
 
 ## Assignment and baseline
 
@@ -14,13 +14,13 @@ The task changes zero runtime logic lines. Its material risks are contradictory 
 
 ## Deliverables and ownership
 
-| Group | Intended behavior owner | Existing delivery responsibilities |
-| --- | --- | --- |
-| DG16 | A focused personal journal feature specification | NC narration/journal, data/privacy and existing rights owners |
-| DG17 | Expand the existing continuing-lives feature specification | PS03/PS05/PS06, simulation time, agency, participation protection and spending |
-| DG18 | Expand the existing attention-and-scenes feature specification | PS04/PS06, perception/hearing, narration and independent character choices |
-| DG19 | A focused changing-supplies feature specification and authored world profile | Base-world resources, persistent objects, activities, shared state and simulation time |
-| DG20 | A focused heat/material feature specification and authored world profile | Base-world fire, construction, persistent objects, spatial effects, shared state and time |
+| Group | Intended behavior owner                                                      | Existing delivery responsibilities                                                        |
+| ----- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| DG16  | A focused personal journal feature specification                             | NC narration/journal, data/privacy and existing rights owners                             |
+| DG17  | Expand the existing continuing-lives feature specification                   | PS03/PS05/PS06, simulation time, agency, participation protection and spending            |
+| DG18  | Expand the existing attention-and-scenes feature specification               | PS04/PS06, perception/hearing, narration and independent character choices                |
+| DG19  | A focused changing-supplies feature specification and authored world profile | Base-world resources, persistent objects, activities, shared state and simulation time    |
+| DG20  | A focused heat/material feature specification and authored world profile     | Base-world fire, construction, persistent objects, spatial effects, shared state and time |
 
 Reuse existing maintained owners wherever they already cover the behavior. Keep detailed delivery criteria in focused trackers and discretionary restrictions in their owning limits inventories. Update the DG/ND register with the product-design disposition without closing technical work, operational decisions, runtime delivery or unperformed acceptance.
 
@@ -38,4 +38,3 @@ The assignment is complete when all five product designs and associated world ru
 - Delivery navigation: [Maintainer index](../maintainers/README.md).
 - Limits: the feature inventories linked by each product specification; this assignment creates no separate runtime limit.
 - Related completed assignment: [Product designs 11–15](completed/product-design-groups-11-15.md).
-
