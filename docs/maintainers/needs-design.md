@@ -173,6 +173,8 @@ Conditional ND30: begin with the selected private export or journal extension an
 
 **Start and parallel boundary:** Actual use of the current journal supplies the trigger. A narrow export can proceed without shared-world rewind or a print business. Before expanding to other people's material, resolve its consent and retention boundary; do not promise unrestricted world export. **Existing owners:** NC, data/privacy, art-rights and journal owners.
 
+**Product proposal prepared, October 6, 2026:** [A personal Journal edition](../projects/personal-journal-feature-spec.md) selects an exact private PDF/text copy of chosen eligible entries, separately attributed notes, one explicit saved draft, current source-use checks and complete cancellation/correction behavior. [NC21](narration-and-conversations.md#nc21--personal-journal-edition) owns the unimplemented delivery; [JP01–JP06](../limits/narration.md#jp01--selected-personal-export-profile) records the envelope. Other-human editions, illustrations, real-life reflection and printing remain independent unselected extensions.
+
 ### Band 4 — Make communities last
 
 #### DG17 — Continuing communities, clocks and quiet-world funding
@@ -711,6 +713,8 @@ If [player-facing resident-memory controls](../../archive/08-wellbeing-vision/04
 **Conditional product design.** Sources: the Legenda concept in [top picks](../../archive/08-wellbeing-vision/00-top-picks.md), [self-knowledge and meaning](../../archive/08-wellbeing-vision/07-ideas-growth-and-real-goals.md), and [privacy proposals](../../archive/08-wellbeing-vision/11-guardrails-risks-and-law.md).
 
 **Existing coverage:** NC07–NC12 already own private Narrator storage, grounded generation, Journal UI and qualification. This entry is not a task to build that foundation again.
+
+**Scoped product design:** [DG16's personal-edition proposal](../projects/personal-journal-feature-spec.md) and [NC21](narration-and-conversations.md#nc21--personal-journal-edition) cover a useful narrow export. The wider real-life, art, print and shared-edition choices below remain unselected, with no new rights or service-sunset policy implied.
 
 **Needed before an implementation project:** decide whether real-life anchors/reflections belong in the product, who may use them, and their edit/delete/forget behavior. Define permitted sources for a private PDF/print edition, art rights, corrections and shared/family editions requiring other participants' consent. First test whether a narrow export is valuable. A journal export does not authorize full-world/private-history export or a different service-sunset policy.
 

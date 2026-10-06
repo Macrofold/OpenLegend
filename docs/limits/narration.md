@@ -44,6 +44,30 @@ Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private
 
 **Proposed; Medium; lifetime capacity unqualified.** No new automatic expiry or numerical lifetime cap is imposed on already published private Journal entries by DG15; existing NC history, source privacy and recovery policies remain controlling. One-candidate retention and bounded generation limit new additions but do not prove lifetime query or storage capacity. History is not advertised as unlimited free storage. Shared exports, other source families, additional humans and private internal perspectives remain separate selected work, not an automatic scope escalation when the first scene is dull.
 
+## JP01 — Selected personal export profile
+
+**Proposed; Very safe.** DG16 initially permits only ordinary actor-perspective Journal text whose sources are the requester's own participation and supported NPC/world occurrences, with current viewing and personal-export permission established. Other-human contributions or uncertain source participation, raw conversation/history, private thoughts, DG15 cutaways and media are excluded. Exclusion is explained safely, without disclosing hidden source facts; names or private-row ownership are not eligibility proof. This is a deliberately narrow first useful edition, not a permanent ban on permissioned shared editions. [Product owner](../projects/personal-journal-feature-spec.md#32-initial-eligibility); [NC21](../maintainers/narration-and-conversations.md#nc21--personal-journal-edition).
+
+## JP02 — Authorship and format
+
+**Proposed; Medium.** Explicitly selected entries remain in original chronological order; original narration is not rewritten. Optional title and per-entry personal notes are clearly attributed. First outputs are PDF and plain text with identical selected words and order, no embedded art, audio, remote resources or private internal identifiers. No new AI generation, automatic important-moment selection, writing reward or public distribution occurs. The restriction keeps an understandable readable copy complete without a publishing platform. Accessible PDF and text must be qualified, not assumed from format.
+
+## JP03 — Edition and draft envelope
+
+**Proposed; Safe; unmeasured initial envelope.** One edition contains at most 100 selected entries and 256 KiB of combined UTF-8 original text, title, notes and attribution before layout. A title has at most 120 Unicode characters; each note at most 2,000. Selection records and document generation have finite separately qualified resource bounds before implementation; the textual envelope is not a proof of bounded source traversal or PDF heap use. Preserve whole entries and draft input on overflow, explain the binding limit and let the player reduce the edition. Never silently truncate or replace a long entry. These values admit a substantial short personal edition while bounding optional work; increase only for a wanted use with measured source/layout cost.
+
+## JP04 — Draft and prepared-file retention
+
+**Proposed; Medium.** One explicitly saved current draft per account/world/controlled-character scope; it stores source references, title and personal notes, not copied original narration. Replacing/discarding it is deliberate. No new automatic age expiry or hosted edition archive is added. Current-world/account growth can still create more scopes: no independently qualified total storage allowance is claimed, and deployment must account for this dimension under existing data/retention owners before offering it. Prepared files exist only for the active authorized preview and are released on close, replacement or invalidation. Explicit deletion, source erasure and privacy policies remain controlling.
+
+## JP05 — Preparation and changed-source behavior
+
+**Proposed; Safe.** One active preparation per current edition; duplicate actions do not add a queue. Bounded scoped selection precedes full content/source preparation. Changes invalidate preview; all selected content and use rights are rechecked before release. A correction needs review, and a revoked source cannot survive in service-controlled output. Missing content or conversion failure is explicit; text download is a deliberate alternative. Optional export cannot block ordinary play or create an unbounded history scan. No scan, queue, latency or PDF output-byte figure is asserted as measured; technical qualification must choose and verify finite operating bounds.
+
+## JP06 — Copies and omitted expansion
+
+**Proposed; Very safe for expansion scope.** A download is a historical personal copy, with no remote recall, automatic correction, restore/import or unlimited-service promise. No new edition sharing, other-human consent workflow, real-life reflection, art inclusion or print ordering is selected. The service explains that its erasure cannot delete an already downloaded external copy. This is an honest boundary of control, not a relaxation of current in-service erasure or permission enforcement.
+
 ## LA153
 
 **Removed at original audit; not reverified · Restrictiveness: — (removed).**

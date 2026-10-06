@@ -257,6 +257,10 @@ Generation uses the configured complex reasoning model with low effort through e
 
 [DG15's After you left specification](projects/story-perspectives-feature-spec.md) selects a new, narrow external craft-completion perspective for a private world with one human account in its participation history. It distinguishes an authorized human's historical story from character awareness, and expressly excludes private thoughts, speech and other-human material. This new permission, voluntary candidate buffer and stronger cancellation behavior must be adopted and qualified through [NC20](maintainers/narration-and-conversations.md#nc20--optional-after-you-left-perspective), consuming NC07–NC12, before enabling the mode. Current cutaways remain disabled; ordinary source scope, NR01 failure and full actor-evidence rules remain unchanged. The [SP inventory](limits/narration.md#sp01--selected-external-perspective) records proposed bounds; [base-world content](worlds/base/story-perspectives.md) owns the first camp/activity selection. This paragraph is a consumer link, not a second permission or story-selection implementation.
 
+## Selected personal Journal edition proposal
+
+[DG16's personal edition](projects/personal-journal-feature-spec.md) proposes a selected private PDF/text copy of eligible existing Journal narrations and separately attributed player notes. [NC21](maintainers/narration-and-conversations.md#nc21--personal-journal-edition) owns delivery and [JP01–JP06](limits/narration.md#jp01--selected-personal-export-profile) owns its proposed limits. The current Journal remains the reading foundation; no export, new content license, other-human sharing, illustration, private-thought access or runtime implementation is established by the proposal.
+
 ## Maintained records
 
 - Implementation: [Feature tasks](maintainers/narration-and-conversations.md).
