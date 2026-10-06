@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                                                                        | Last updated |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | ACT07/ACT08 native appraisal and directional-note continuity are delivered and qualified for the agreed foundation; broader actor/provider gates and conditional ACT09 remain separate. | 2026-10-03   |
+| Completed | ACT07/ACT08 native appraisal and directional-note continuity are delivered and qualified for the agreed foundation; broader actor/provider gates and conditional ACT09 remain separate. | 2026-10-05   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 5. [Technical design](appraisal-social-continuity-tech-design.md) defines mechanisms; [ACT07/ACT08 delivery slices](../../maintainers/actor-model.md#priority-5-implementation-slices) own work. CR, EPR04, EWF and SL retain their existing responsibilities. [Foundation package](foundations-1-5.md) applies.
 
@@ -16,7 +16,7 @@ Separately, each character can maintain a freely written, directional understand
 
 ## 2. Historical source baseline
 
-At the design baseline, main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` kept damage-derived fear/discomfort in [social.ts](../../../packages/domain/src/social.ts), with fixed decay and strongest-16 retention. Those records lacked the stable `id` expected by the record-list key. The delivered [appraisal owner](../../../packages/domain/src/appraisals.ts) supplies stable identity and the accepted multi-cause lifecycle; that earlier conversion is not remaining migration work.
+At the design baseline, main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` kept damage-derived fear/discomfort in [social.ts](https://github.com/Macrofold/OpenLegend/blob/c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041/packages/domain/src/social.ts), with fixed decay and strongest-16 retention. Those records lacked the stable `id` expected by the record-list key. The delivered [appraisal owner](../../../packages/domain/src/appraisals.ts) supplies stable identity and the accepted multi-cause lifecycle; that earlier conversion is not remaining migration work.
 
 Actor-owned subject knowledge already had revision-checked full-text replacement in [knowledge.ts](../../../packages/domain/src/knowledge.ts). Reflection already proposed `knowledgeChanges` alongside accepted self-understanding through [CognitionMaintenance](../../../apps/server/src/cognition-maintenance.ts). The delivered project extended those owners instead of creating a new relationship score store or emotional text database.
 
