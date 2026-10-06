@@ -1,5 +1,5 @@
 {
-  "reviewed": "2026-10-05",
+  "reviewed": "2026-10-06",
   "scope": "Requested Open Legend implementation screenshots. Separate from external game references and design proposals. See README for revisions, controlled transport and actual evidence.",
   "images": [
     {
@@ -172,11 +172,97 @@
       "bytes": 36950,
       "sha256": "f8fb539807ca86be00c74f582bebec2e0a74e27b20535a7e41e46ba2d01711de",
       "captureScope": "component"
+    },
+    {
+      "id": "20-narrow-controls",
+      "file": "20-narrow-controls.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 207348,
+      "sha256": "76e75d4350fc30b2728880f6d5e9eacfe9e1741225caf630df5c4ea4716aa179",
+      "captureScope": "app",
+      "source": "narrow-controls-2026-10-06"
+    },
+    {
+      "id": "21-short-shortcut-tooltip",
+      "file": "21-short-shortcut-tooltip.png",
+      "width": 320,
+      "height": 568,
+      "bytes": 144415,
+      "sha256": "1c32e5433ee8519cb531bebd0c1c4b7fee790a88f0aeb5a62bd6da84198abd3e",
+      "captureScope": "app",
+      "source": "narrow-controls-2026-10-06"
+    },
+    {
+      "id": "22-creator-answer",
+      "file": "22-creator-answer.png",
+      "width": 320,
+      "height": 568,
+      "bytes": 27998,
+      "sha256": "b37f46edf4a87f436fb93aafeca7b1699aa6ff90a4bdc53f936b66b816b39109",
+      "captureScope": "component",
+      "source": "creator-question-2026-10-06"
+    },
+    {
+      "id": "23-keyboard-return",
+      "file": "23-keyboard-return.png",
+      "width": 320,
+      "height": 740,
+      "bytes": 208921,
+      "sha256": "27ca8a41046d13457315dfa33cbabba5f177eeb01b0a241ea4c534e7b3b36cb5",
+      "captureScope": "app",
+      "source": "keyboard-return-296ae67"
     }
   ],
   "appSource": {
     "baseCommit": "ba33c1c510ccb99276535e1b2276a64b459488c4",
     "additionalChange": "Conditional shortcut overlay owner in apps/client/src/design-system/layout.css",
     "layoutSha256": "fb0f00ebc87420b12480f842bc0f7adbe111ca7fb617e111c2f62b3017ad1704"
+  },
+  "additionalCaptureSources": {
+    "narrow-controls-2026-10-06": {
+      "captured": "2026-10-06",
+      "description": "Production App and PlayCanvas, controlled native public view/HTTP transport. Lower-control source at ced806c; source hashes identify exact frozen build. 130% application UI scale and reduced motion.",
+      "sourceHashes": {
+        "main.tsx": "1270755d5500312e0bf2313b297f8fb9d80262a8eefad979ca7332aff01bf046",
+        "design-system/layout.css": "e39c7f61d2f65bcf253f1157434616b601c61d56ad387edc46636c99fd5d3d2a",
+        "design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "ui/quick-actions.tsx": "bd7ba2b8799de9c808887a44b8761051fb7343814d3100867e8a47883825a9cd",
+        "ui/hud-layout.ts": "c8ae379d5b217d3d1776b99dd88481a9fd602efc789b3258f5a7cd4264d470a6",
+        "ui/composer.tsx": "8cacb7aafc9526829bcd24e30a33cf9f5aea66da60e7f3c433aa829014c2591f",
+        "ui/creator-workspaces.css": "514db45a3c90352f7a4094ab919d4cd653abc3ac3096d63552b8c25bc591b4ab",
+        "ui/world-agent.tsx": "9650b6d7d0c149dfffd434b5b87d92f934461c0f8725d1383a3fe42011cd878d",
+        "ui/world-agent-session.tsx": "11d14635331db2973ca0b1d9d205d475ecf75db2f94060653cbc67bdb709064b"
+      }
+    },
+    "creator-question-2026-10-06": {
+      "captured": "2026-10-06",
+      "description": "Production creator components in a bounded Panel host with controlled transport, v9 question/cue check. Later v11 changes only local choice-strip focus handling; this image retains its actual earlier source identity. 320x568,130% application scale,two panels open.",
+      "sourceHashes": {
+        "ui/conversation.tsx": "1e712cf3cc629fae121878daac2c22835afbc16f84af94599504a891c020e1b2",
+        "ui/world-agent.tsx": "9650b6d7d0c149dfffd434b5b87d92f934461c0f8725d1383a3fe42011cd878d",
+        "ui/world-agent-session.tsx": "11d14635331db2973ca0b1d9d205d475ecf75db2f94060653cbc67bdb709064b",
+        "ui/creator-workspaces.css": "514db45a3c90352f7a4094ab919d4cd653abc3ac3096d63552b8c25bc591b4ab",
+        "design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "design-system/layout.css": "e39c7f61d2f65bcf253f1157434616b601c61d56ad387edc46636c99fd5d3d2a",
+        "main.tsx": "1270755d5500312e0bf2313b297f8fb9d80262a8eefad979ca7332aff01bf046"
+      }
+    },
+    "keyboard-return-296ae67": {
+      "captured": "2026-10-06",
+      "commit": "296ae67af41b38a5aa29405a9fff30ac1c3dd42a",
+      "description": "Production App and PlayCanvas with controlled native-view/HTTP transport. Enter closes Inventory, then its launcher retains visible keyboard focus while Conversation remains open. 320x740,130% application scale,reduced motion.",
+      "sourceHashes": {
+        "main.tsx": "1270755d5500312e0bf2313b297f8fb9d80262a8eefad979ca7332aff01bf046",
+        "design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "ui/quick-actions.tsx": "bd7ba2b8799de9c808887a44b8761051fb7343814d3100867e8a47883825a9cd",
+        "ui/hud-layout.ts": "c8ae379d5b217d3d1776b99dd88481a9fd602efc789b3258f5a7cd4264d470a6",
+        "ui/composer.tsx": "8cacb7aafc9526829bcd24e30a33cf9f5aea66da60e7f3c433aa829014c2591f",
+        "ui/creator-workspaces.css": "08399b47456cd3136be0910bbd2258b1c712e8aa07570c6b58163ed715710796",
+        "ui/world-agent.tsx": "9650b6d7d0c149dfffd434b5b87d92f934461c0f8725d1383a3fe42011cd878d",
+        "ui/world-agent-session.tsx": "5caa725f72c032b90fdce06593b7124d640ad5b5d4570c8f88e34ba7434b41f5"
+      }
+    }
   }
 }

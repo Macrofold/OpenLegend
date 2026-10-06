@@ -142,6 +142,7 @@ function App({
     [transportReady, setConnected] = useState(false),
     [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: 'loading' }),
     [sceneError, setSceneError] = useState(''),
+    [sceneCreated, setSceneCreated] = useState(false),
     [notice, setNotice] = useState('');
   const [itemCreation, setItemCreation] = useState<{
     target: ItemCreationTarget;
@@ -801,14 +802,49 @@ function App({
       });
     },
   };
+  const failScene = useCallback((error: unknown) => {
+    scene.current?.destroy();
+    scene.current = null;
+    setSceneCreated(false);
+    setSceneError(`${String(error)}. The In view list still provides interactions.`);
+  }, []);
   useEffect(() => {
-    if (!view || !canvas.current || sceneError) return;
-    // A fresh blocked tab needs its Resume decision before allocating graphics.
-    // Existing scenes still receive suspended updates and private-scope resets.
-    if (!scene.current && tabPaused) return;
-    try {
-      if (!scene.current)
-        scene.current = createWorldRenderer(canvas.current, {
+    const initial = latest.current;
+    const surface = canvas.current;
+    if (!initial || !surface || sceneError || scene.current || tabPaused) return;
+    let cancelled = false;
+    let frame = 0;
+    let task: number | undefined;
+    let allocated: WorldRenderer | null = null;
+    const discard = () => {
+      allocated?.destroy();
+      allocated = null;
+    };
+    const current = () => {
+      const next = latest.current;
+      return (
+        !cancelled &&
+        !isPaused() &&
+        canvas.current === surface &&
+        next?.worldId === initial.worldId &&
+        next.saveTimeline === initial.saveTimeline &&
+        next.access?.scope === initial.access?.scope &&
+        next.player.id === initial.player.id
+      );
+    };
+    // Graphics allocation and the first world draw can each block. Give input
+    // and paint a turn between them, without postponing ordinary view updates.
+    const schedule = (next: () => void) => {
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          task = window.setTimeout(next, 0);
+        });
+      });
+    };
+    schedule(() => {
+      if (!current()) return;
+      try {
+        allocated = createWorldRenderer(surface, {
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
           target: (entity) => handlers.current.target(entity),
@@ -833,6 +869,40 @@ function App({
                 : { projection, levelId, rotationLocked, following },
             ),
         });
+        allocated.setSuspended(true);
+        schedule(() => {
+          if (!current()) {
+            discard();
+            return;
+          }
+          scene.current = allocated;
+          allocated = null;
+          setSceneCreated(true);
+        });
+      } catch (error) {
+        discard();
+        failScene(error);
+      }
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      clearTimeout(task);
+      discard();
+    };
+  }, [
+    view?.worldId,
+    view?.saveTimeline,
+    view?.access?.scope,
+    view?.player.id,
+    sceneError,
+    tabPaused,
+    isPaused,
+    failScene,
+  ]);
+  useEffect(() => {
+    if (!view || !scene.current || sceneError) return;
+    try {
       scene.current.setSuspended(tabPaused);
       scene.current.setShadowQuality(shadowQuality);
       scene.current.setPerceptionOptions({
@@ -840,21 +910,36 @@ function App({
         hearing: hearingGuide,
       });
       scene.current.setView(view);
-    } catch (e) {
-      scene.current?.destroy();
-      scene.current = null;
-      setSceneError(`${String(e)}. The In view list still provides interactions.`);
+    } catch (error) {
+      failScene(error);
     }
-  }, [view, sceneError, shadowQuality, tabPaused]);
+  }, [view, sceneError, shadowQuality, tabPaused, sceneCreated, failScene]);
+  useEffect(() => {
+    // List inspection can precede graphics. Replay once; inspect/clear own later selections.
+    if (
+      sceneCreated &&
+      selected &&
+      (selected === view?.player.id || view?.entities.some((entity) => entity.id === selected))
+    )
+      scene.current?.select(selected);
+  }, [sceneCreated]);
   useEffect(() => {
     scene.current?.setPerceptionOptions({
       vision: visionGuide,
       hearing: hearingGuide,
     });
-  }, [worldVisible, sceneError, visionGuide, hearingGuide]);
+  }, [worldVisible, sceneCreated, sceneError, visionGuide, hearingGuide]);
   useEffect(() => {
     scene.current?.setTargeting(targeting && connected && !tabPaused && !choosingActionSubject);
-  }, [targeting, connected, tabPaused, worldVisible, sceneError, choosingActionSubject]);
+  }, [
+    targeting,
+    connected,
+    tabPaused,
+    worldVisible,
+    sceneCreated,
+    sceneError,
+    choosingActionSubject,
+  ]);
   useEffect(() => {
     setTargeting(false);
   }, [view?.access?.scope, view?.saveTimeline, tabPaused, connected]);
@@ -871,6 +956,7 @@ function App({
   }, [
     worldVisible,
     tabPaused,
+    sceneCreated,
     sceneError,
     captionsEnabled,
     captionsPaused,

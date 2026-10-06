@@ -1,12 +1,14 @@
 # Open Legend implementation screenshots
 
-**Reviewed October 5, 2026.** These 19 original screenshots show the whole-interface implementation candidate. They are separate from the [98 external game screenshots](../screenshots/gallery.md) and [nine design proposals](../wireframes/README.md). Each image retains its captured bytes; [the manifest](manifest.json) records dimensions and hashes. This gallery explains the visible decisions; the [verification report](../../verification/game-interaction-redesign.md#whole-interface-runtime) owns actual results, earlier failures and remaining acceptance.
+**Reviewed October 6, 2026.** These 23 original screenshots show the whole-interface implementation candidate. They are separate from the [98 external game screenshots](../screenshots/gallery.md) and [nine design proposals](../wireframes/README.md). Each image retains its captured bytes; [the manifest](manifest.json) records dimensions, hashes and capture-specific source identities. This gallery explains the visible decisions; the [verification report](../../verification/game-interaction-redesign.md#whole-interface-runtime) owns actual results, earlier failures and remaining acceptance.
 
 ## How to read the images
 
 Images 01–09 render the production App and PlayCanvas scene after main merge `164e43` and picker correction `ba33c1c`, including the subsequent conditional shortcut-overlay rule. They use current native public views with controlled access, HTTP history, inventory-page transport and an empty action catalogue. They are actual implemented UI, not drawings; the transport is not authenticated PostgreSQL gameplay.
 
 Images 10–17 and 19 show production components in their focused implementation checks before the final main merge. The empty background and any small test-navigation buttons belong to that isolated check, not the game's navigation. These captures illustrate their inspected composition and failure states, not the final whole-App placement. Image 18 uses the current merged native projection in the actual activity component. Dummy names, tokens, dialogue and reviews are controlled example data; no provider or account operation was performed.
+
+Images 20–23 show the October 6 narrow-layout corrections. Images 20, 21 and 23 use the actual App/PlayCanvas with controlled native public views and HTTP transport; image 22 uses the actual creator components in a bounded Panel host. Their exact source hashes are separate from the older captures. Image 23 includes the keyboard-outline correction at `296ae67`. The creator question image predates the later local choice-strip focus correction and retains that source identity; it is not relabeled as a final full-App capture.
 
 The screenshots establish what was visible in those states. Keyboard operation, retained drafts, request identity and native work behavior require the linked interaction evidence. Real operating-system IME, assistive devices, broader displays and uncoached player observation remain open.
 
@@ -78,6 +80,24 @@ The screenshots establish what was visible in those states. Keyboard operation, 
 
 **1180×420, App.** Scrolling brings the caption-reading control and its consequence into view without moving the game page. The control was measured inside the panel's visible bounds. A short viewport has little simultaneous context; this capture demonstrates reachability of this setting, not ideal reading space for every possible combination of controls and text.
 
+### 20 — Camera and shortcuts share available space
+
+![At 390 pixels wide, the world HUD keeps the time controls and launcher strip above a bounded lower area containing suggestions, numbered shortcuts and camera controls.](20-narrow-controls.png)
+
+**390×844, 130% interface scale, App.** Suggestions and retained numbered shortcuts remain distinct, and the existing camera controls fit inside one lower scrolling region. Their earlier independent positions overlapped and pushed configuration controls beyond the viewport. The correction gives layout ownership to their common region while retaining every capability. This view still devotes much of a narrow screen to the HUD; some launchers and shortcuts require horizontal scrolling. The benefit is reliable access and separation, not a claim that all controls are visible or that this density has passed new-player observation.
+
+### 21 — A short viewport exposes the scrolling tradeoff
+
+![At 320 by 568 pixels and enlarged interface scale, a shortcut tooltip names Gather branches and Fallen branches above its visible shortcut button.](21-short-shortcut-tooltip.png)
+
+**320×568, 130% interface scale, App.** The plain tooltip stays attached to the shortcut and can appear outside the lower region's clipping. It names both the action and its selected source. Actual wheel/keyboard checks reach the other controls through the local scrollers without moving the camera. The camera is below the visible part of that region in this capture, and the decorative title wraps beneath the HUD. This is a deliberately constrained case: it demonstrates a bounded overflow strategy and a visible explanation, while making the remaining density problem explicit. Tooltips supplement reachable action details; they do not supply an essential instruction that exists only on hover.
+
+### 23 — Closing a task returns visible keyboard focus
+
+![The Inventory launcher has a complete inset keyboard focus outline after Inventory closes; Conversation remains open beneath the launcher strip.](23-keyboard-return.png)
+
+**320×740, 130% interface scale, App.** Enter on Hide Inventory returns focus to the Inventory launcher and reveals it in the horizontal strip. Its complete outline remains inside the scroll boundary. The green Conversation launcher describes the still-open task, so selected/open state and keyboard focus remain visibly distinct. The earlier outward outline was clipped even though focus ownership was correct; this is why a focus assertion alone was insufficient. The retained conversation is controlled example content, and this image establishes no successful message send. The [focused interaction record](../../verification/game-interaction-redesign.md#narrow-controls-and-creator-reading) records the unchanged toolbar reentry behavior and exact bounds.
+
 ### 11 — Saving and recovering have different meanings
 
 ![The Checkpoints component explains loading consequences and shows a persistent checkpoint-protection failure.](11-checkpoints.png)
@@ -115,6 +135,12 @@ The screenshots establish what was visible in those states. Keyboard operation, 
 ![A diagnostic detail names the actor, reason, recorded time and stages, and labels unreported usage as unknown.](17-diagnostics.png)
 
 **1366×900, component.** Investigation detail is separated from ordinary play. The view identifies what happened and keeps stage detail behind an explicit disclosure; unavailable usage is labeled Unknown, not shown as zero. Focus and tooltip triggers use native elements. The visible trace is fixture data and says nothing about live model quality or measured cost.
+
+### 22 — A new-reply cue must not cover an answer
+
+![The short creator panel shows an unobstructed Save answer button, with the unread jump cue beside Conversation and Work and Stop this request in its own footer.](22-creator-answer.png)
+
+**320×568, 130% interface scale, two panels open, component.** The question has been scrolled to its Save answer action. The unread cue now occupies the existing Conversation/Work row instead of floating across that action. The complete answer button is visible, and Stop remains in the separate footer. The optional Workspace and Session controls share one row; their collapsed state saves reading space. The available reader is only about 62 physical pixels high in this extreme case, so the full question requires scrolling. That is a material compromise, not comfortable paragraph reading. The interaction check traverses the full question and verifies the complete button target, retained unread state and exact request recovery. The small Settings/Create controls above the panel belong to the isolated host, not proposed game navigation.
 
 ## Operating and authoring different worlds
 

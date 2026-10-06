@@ -507,6 +507,7 @@ export class WildernessScene implements WorldRenderer {
     return { ...this.cameraSettings, focus: { ...this.cameraSettings.focus } };
   }
   cameraCommand(command: CameraCommand): void {
+    if (!this.view) return;
     if (
       command.type === 'level' &&
       command.id &&
@@ -1867,6 +1868,11 @@ export class WildernessScene implements WorldRenderer {
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
   private pointerDown = (event: PointerEvent): void => {
+    if (!this.view) {
+      // A rejected press must not open a delayed native menu after the first view arrives.
+      this.pointerContextHandled = true;
+      return;
+    }
     if (event.button > 2 || this.drag) return;
     this.canvas.focus({ preventScroll: true });
     this.pointerContextHandled = false;
@@ -2011,6 +2017,7 @@ export class WildernessScene implements WorldRenderer {
     this.openContextMenu(event);
   };
   private openContextMenu(event: MouseEvent): void {
+    if (!this.view) return;
     const local = this.local(event);
     const keyboard =
       !Number.isFinite(event.clientX) ||
