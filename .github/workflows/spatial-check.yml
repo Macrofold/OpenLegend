@@ -67,175 +67,13 @@ jobs:
             tests/browser/god-editor.spec.ts \
             tests/browser/time.spec.ts \
             --output test-results/interface
-      - name: Diagnose native owner checkpoint restoration
+      - name: Qualify native owner and creation recovery
         if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
         timeout-minutes: 6
         run: |
           set -euo pipefail
-          mkdir -p test-results/whole-ui-owner-diagnostic/scripts
-          cat > test-results/whole-ui-owner-diagnostic/scripts/invoke.sh <<'OPENLEGEND_REVIEWED_SOURCE_0_END'
-          #!/usr/bin/env bash
-          # Run from the repository root. The existing driver owns all game/browser/database work.
-          set -euo pipefail
-
-          owner_scripts_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-          owner_output=${1:-test-results/whole-ui-owner-diagnostic}
-          mkdir -p -- "$owner_output"
-          owner_output=$(cd -- "$owner_output" && pwd)
-          owner_preservation="$owner_output/source-preservation"
-          # Refuse to overwrite the source backup or report of a previous invocation.
-          mkdir -- "$owner_preservation"
-          owner_driver_pid=""
-
-          restore_owner_source() {
-            owner_step_status=$?
-            trap - EXIT
-            trap '' TERM INT
-            if [ -n "$owner_driver_pid" ]; then
-              kill -TERM -- "$owner_driver_pid" 2>/dev/null || true
-              if wait "$owner_driver_pid"; then :; else :; fi
-              owner_driver_pid=""
-            fi
-            if node "$owner_scripts_dir/source-variant.mjs" restore "$owner_preservation" "$owner_step_status"; then
-              owner_restore_status=0
-            else
-              owner_restore_status=$?
-            fi
-            if [ "$owner_step_status" -ne 0 ]; then exit "$owner_step_status"; fi
-            exit "$owner_restore_status"
-          }
-
-          interrupt_owner_diagnostic() {
-            owner_signal=$1
-            owner_signal_status=$2
-            trap '' TERM INT
-            if [ -n "$owner_driver_pid" ]; then
-              kill -"$owner_signal" -- "$owner_driver_pid" 2>/dev/null || true
-              if wait "$owner_driver_pid"; then :; else :; fi
-              owner_driver_pid=""
-            fi
-            exit "$owner_signal_status"
-          }
-
-          trap restore_owner_source EXIT
-          trap 'interrupt_owner_diagnostic TERM 143' TERM
-          trap 'interrupt_owner_diagnostic INT 130' INT
-
-          (cd -- "$owner_scripts_dir" && sha256sum --check inputs.sha256)
-          node "$owner_scripts_dir/source-variant.mjs" install "$owner_preservation"
-          node --import tsx "$owner_scripts_dir/run-whole-ui.mjs" "$owner_output" &
-          owner_driver_pid=$!
-          if wait "$owner_driver_pid"; then owner_run_status=0; else owner_run_status=$?; fi
-          owner_driver_pid=""
-          exit "$owner_run_status"
-          OPENLEGEND_REVIEWED_SOURCE_0_END
-          cat > test-results/whole-ui-owner-diagnostic/scripts/source-variant.mjs <<'OPENLEGEND_REVIEWED_SOURCE_1_END'
-          // Temporary CI source ownership only. This script does not start the game.
-          import { createHash } from 'node:crypto';
-          import { readFile, writeFile, rename, rm, stat } from 'node:fs/promises';
-          import { join, resolve } from 'node:path';
-
-          const originalSha256 = '0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263';
-          const observedSha256 = '817a96f8645a9d70d5b04d95962e64260279f97597e4533cc38eb8c1a577cf84';
-          const source = resolve('apps/server/src/world-service.ts');
-          const mode = process.argv[2];
-          const directory = resolve(process.argv[3] ?? '');
-          const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
-          const original = join(directory, 'world-service.original.ts');
-          const installationPath = join(directory, 'installation.json');
-          const restorationPath = join(directory, 'restoration.json');
-
-          async function replaceOwnedSource(bytes, expectedCurrentSha256, fileMode) {
-            const temporary = source + '.owner-observation-' + process.pid + '.tmp';
-            let ownsTemporary = false;
-            try {
-              await writeFile(temporary, bytes, { flag: 'wx', mode: fileMode });
-              ownsTemporary = true;
-              if (hash(await readFile(source)) !== expectedCurrentSha256)
-                throw new Error('The source changed before replacement; it was left untouched.');
-              await rename(temporary, source);
-              ownsTemporary = false;
-            } finally {
-              if (ownsTemporary) await rm(temporary);
-            }
-          }
-
-          async function install() {
-            const before = await readFile(source);
-            const observed = await readFile(new URL('world-service.observed.ts', import.meta.url));
-            if (hash(before) !== originalSha256)
-              throw new Error('The current server source differs from the reviewed original.');
-            if (hash(observed) !== observedSha256)
-              throw new Error('The temporary observer differs from its reviewed source.');
-            const fileMode = (await stat(source)).mode & 0o777;
-            await writeFile(original, before, { flag: 'wx', mode: fileMode });
-            if (hash(await readFile(original)) !== originalSha256)
-              throw new Error('The preserved source could not be verified.');
-            const record = {
-              variant: 'native-load-commit-catch-observation',
-              source: 'apps/server/src/world-service.ts',
-              originalSha256,
-              observedSha256,
-              originalMode: fileMode,
-              originalPreserved: true,
-              installed: false,
-            };
-            await writeFile(installationPath, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' });
-            await replaceOwnedSource(observed, originalSha256, fileMode);
-            record.installed = hash(await readFile(source)) === observedSha256;
-            await writeFile(installationPath, JSON.stringify(record, null, 2) + '\n');
-            if (!record.installed)
-              throw new Error('The temporary source installation could not be verified.');
-          }
-
-          async function restore() {
-            const status = process.argv[4];
-            const result = {
-              variant: 'native-load-commit-catch-observation',
-              source: 'apps/server/src/world-service.ts',
-              expectedOriginalSha256: originalSha256,
-              expectedObservedSha256: observedSha256,
-              stepExitStatus: /^\d+$/.test(status ?? '') ? Number(status) : null,
-              originalPreserved: false,
-              restoredOriginalBytes: false,
-              replacementNeeded: false,
-            };
-            try {
-              const currentHash = hash(await readFile(source));
-              result.sourceBeforeRestorationSha256 = currentHash;
-              let backup;
-              try {
-                backup = await readFile(original);
-                result.originalPreserved = hash(backup) === originalSha256;
-              } catch (error) {
-                if (error.code !== 'ENOENT') throw error;
-              }
-              if (currentHash === observedSha256) {
-                if (!result.originalPreserved)
-                  throw new Error('The preserved original is missing or changed; restoration was refused.');
-                const fileMode = (await stat(original)).mode & 0o777;
-                await replaceOwnedSource(backup, observedSha256, fileMode);
-                result.replacementNeeded = true;
-              } else if (currentHash !== originalSha256) {
-                throw new Error('An unrelated source change was left untouched; restoration is unconfirmed.');
-              }
-              result.sourceAfterRestorationSha256 = hash(await readFile(source));
-              result.restoredOriginalBytes = result.sourceAfterRestorationSha256 === originalSha256;
-              if (!result.restoredOriginalBytes)
-                throw new Error('Original source restoration did not verify.');
-            } catch (error) {
-              result.failure = error instanceof Error ? error.message : 'Source restoration failed.';
-            }
-            await writeFile(restorationPath, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
-            if (!result.restoredOriginalBytes) process.exitCode = 1;
-          }
-
-          if (!process.argv[3] || !['install', 'restore'].includes(mode))
-            throw new Error('Use install|restore with the invocation-owned source-preservation directory.');
-          if (mode === 'install') await install();
-          else await restore();
-          OPENLEGEND_REVIEWED_SOURCE_1_END
-          cat > test-results/whole-ui-owner-diagnostic/scripts/run-whole-ui.mjs <<'OPENLEGEND_REVIEWED_SOURCE_2_END'
+          mkdir -p test-results/whole-ui-owner-creation/scripts
+          cat > test-results/whole-ui-owner-creation/scripts/run-whole-ui.mjs <<'OPENLEGEND_OWNER_CREATION_SOURCE_0_END'
           // One temporary CI continuation, from the repository cwd with --import tsx.
           // Usage: node --import tsx /path/to/run-whole-ui.mjs [test-results/whole-ui]
           // CI owns a six-minute step. At five minutes, stop new stages and close the
@@ -252,7 +90,13 @@ jobs:
               name: 'owner',
               file: 'owner-stage.mjs',
               entry: 'runOwnerStage',
-              sha256: '6ff3a000f2952bbd7a131325ad8f3accecbc7fc56104d41ec93defc30d645777',
+              sha256: 'c61745cfbd30a518b17b2c87156cf7f342729c075a14ef3458ee1de35dbd260c',
+            },
+            {
+              name: 'creation-recovery',
+              file: 'creation-recovery-stage.mjs',
+              entry: 'runCreationRecoveryStage',
+              sha256: '994b53e64169f32a9e6ee9047c7cbeb8babfac58dbe90344954872449f227552',
             },
           ];
           const reviewedSourcePins = {
@@ -270,7 +114,7 @@ jobs:
               '63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d',
             'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
             'apps/server/src/world-service.ts':
-              '817a96f8645a9d70d5b04d95962e64260279f97597e4533cc38eb8c1a577cf84',
+              '5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c',
             'packages/protocol/src/index.ts':
               '83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80',
             'apps/client/src/ui/world-inspection.tsx':
@@ -309,16 +153,9 @@ jobs:
           async function worker(outputDirectory) {
             const reportPath = join(outputDirectory, 'report.json');
             const report = {
-              kind: 'one-shot native owner restore diagnosis',
+              kind: 'one-shot native owner and creation-recovery continuation',
               selectionNote:
-                'Only the existing finite owner session is selected, with a temporary native commit-failure observer. Creation recovery remains separately unrun. Prior creator Apply, alternate-world and inventory results are reused within their recorded scopes.',
-              diagnosticSource: {
-                variant: 'native-load-commit-catch-observation',
-                path: 'apps/server/src/world-service.ts',
-                originalSha256: '0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263',
-                observedSha256: '817a96f8645a9d70d5b04d95962e64260279f97597e4533cc38eb8c1a577cf84',
-                qualification: 'Temporary observer variant; no uninstrumented production pass is claimed.',
-              },
+                'One finite owner checkpoint/editor/Operations return session followed by one three-kind creation recovery session. Prior creator Apply, alternate-world and inventory results are reused within their recorded scopes.',
               reviewedSourcePins,
               sourceSha256: {},
               reusedEvidence: {
@@ -605,7 +442,7 @@ jobs:
               await checkpoint(controlPath, control);
               console.log(
                 JSON.stringify({
-                  continuation: 'native owner restore diagnosis',
+                  continuation: 'native owner and creation recovery',
                   passed: control.passed,
                   stages: control.stageStatuses,
                   interrupted: !!control.stopRequested,
@@ -621,8 +458,8 @@ jobs:
           const outputDirectory = resolve(process.argv[isWorker ? 3 : 2] ?? 'test-results/whole-ui');
           if (isWorker) await worker(outputDirectory);
           else await supervise(outputDirectory);
-          OPENLEGEND_REVIEWED_SOURCE_2_END
-          cat > test-results/whole-ui-owner-diagnostic/scripts/owner-stage.mjs <<'OPENLEGEND_REVIEWED_SOURCE_3_END'
+          OPENLEGEND_OWNER_CREATION_SOURCE_0_END
+          cat > test-results/whole-ui-owner-creation/scripts/owner-stage.mjs <<'OPENLEGEND_OWNER_CREATION_SOURCE_1_END'
           // Scratch-only finite owner UI continuation. No execution is authorized by this file.
           // Root's driver owns Chromium, the existing staged deadline and closeTestDatabases().
           // This stage owns one repository/native host/context and returns a report on failure.
@@ -688,7 +525,7 @@ jobs:
             "apps/server/src/config.ts":
               "ea94fd7668fabbbde0261bfd9d10f11fea07186ef15d94c84ec232c91d8199a5",
             "apps/server/src/world-service.ts":
-              "817a96f8645a9d70d5b04d95962e64260279f97597e4533cc38eb8c1a577cf84",
+              "5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c",
             "apps/server/src/authority.ts":
               "1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb",
             "apps/server/src/world-graph.ts":
@@ -746,13 +583,6 @@ jobs:
                 "Native save/authority failure, question/streaming, creator Apply and family-owner evidence are reused; no fault matrix or installation rerun.",
                 "No process restart, external identity provider, multi-human, native IME, assistive-device or uncoached-player qualification.",
               ],
-              diagnosticSource: {
-                variant: "native-load-commit-catch-observation",
-                path: "apps/server/src/world-service.ts",
-                originalSha256: "0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263",
-                observedSha256: "817a96f8645a9d70d5b04d95962e64260279f97597e4533cc38eb8c1a577cf84",
-                qualification: "Temporary observer variant; no uninstrumented production pass is claimed.",
-              },
               additionalJevCostUsd: 0,
               cumulativeTaskJevCostUsd: 0,
               observations: [],
@@ -762,22 +592,6 @@ jobs:
               unexpectedRequests: [],
               cleanup: {},
               passed: false,
-            };
-            const commitFailureObservation = {
-              variant: 'native-load-commit-catch-observation',
-              recordLimit: 8,
-              records: [],
-              droppedRecords: 0,
-              installed: false,
-              cleanup: 'not installed',
-            };
-            report.commitFailureObservation = commitFailureObservation;
-            const commitFailureObserver = (record) => {
-              if (commitFailureObservation.records.length >= commitFailureObservation.recordLimit) {
-                commitFailureObservation.droppedRecords++;
-                return;
-              }
-              commitFailureObservation.records.push(record);
             };
             let repository, game, context, page, operations, base;
             let traceStarted = false;
@@ -1042,14 +856,6 @@ jobs:
                 tick: false,
                 now: () => now,
               });
-              if (!Object.hasOwn(game.service, 'commitFailureObserver'))
-                throw new Error('The pinned native commit observation variant was not installed.');
-              if (game.service.commitFailureObserver !== undefined)
-                throw new Error('Another native commit observer already owns this service.');
-              game.service.commitFailureObserver = commitFailureObserver;
-              commitFailureObservation.installed = true;
-              commitFailureObservation.cleanup = 'pending';
-
               await new Promise((resolve) => game.server.listen(0, "127.0.0.1", resolve));
               const address = game.server.address();
               assert.ok(address && typeof address !== "string");
@@ -1669,15 +1475,6 @@ jobs:
                   report.passed = false;
                 }
               }
-              if (commitFailureObservation.installed) {
-                if (game.service.commitFailureObserver === commitFailureObserver) {
-                  game.service.commitFailureObserver = undefined;
-                  commitFailureObservation.cleanup = 'released';
-                } else {
-                  commitFailureObservation.cleanup = 'callback ownership changed; left untouched';
-                  report.passed = false;
-                }
-              }
               try {
                 await repository?.close();
                 report.cleanup.repository = "closed or not created";
@@ -1696,163 +1493,680 @@ jobs:
             }
             return report;
           }
-          OPENLEGEND_REVIEWED_SOURCE_3_END
-          cat > test-results/whole-ui-owner-diagnostic/scripts/native-observer.patch <<'OPENLEGEND_REVIEWED_SOURCE_4_END'
-          --- a/apps/server/src/world-service.ts
-          +++ b/apps/server/src/world-service.ts
-          @@ -625,6 +625,19 @@
-             }
-             private debtSeconds = 0;
-             private storageFailure: string | null = null;
-          +  /** Temporary native observation; one stage-owned callback, never persisted or projected. */
-          +  commitFailureObserver?: (record: {
-          +    operation: 'restore' | 'participation' | 'other';
-          +    phase: 'prepare' | 'store' | 'store-returned' | 'installed' | 'notify';
-          +    expectedRevision: number;
-          +    returnedRevision: number | null;
-          +    storeReturned: boolean;
-          +    liveInstalled: boolean;
-          +    errorClass: string;
-          +    sqlState: string | null;
-          +    sourceFrames: string[];
-          +    sourceFramesTruncated: boolean;
-          +  }) => void;
-             /** Latched storage failure. Every assignment, from any caller, rejects durability waiters:
-              * no later snapshot will be written in this process. */
-             get storageError(): string | null {
-          @@ -1103,6 +1116,10 @@
-               // (docs/projects/ordered-async-saves.md#ordering-rules).
-               await this.backgroundSave?.done;
-               if (this.storageError) return false;
-          +    let phase: 'prepare' | 'store' | 'store-returned' | 'installed' | 'notify' = 'prepare';
-          +    const expectedRevision = this.persistedRevision;
-          +    let returnedRevision: number | null = null;
-          +    let liveInstalled = false;
-               let allocation: ReturnType<HostWork['reserve']> | undefined;
-               try {
-                 freezeWorld(saved.world);
-          @@ -1114,6 +1131,7 @@
-                 const prepared = this.prepareSnapshot(saved);
-                 const { historyWorld, appendEventCount, currentAppendCount } = prepared;
-                 saved = prepared.snapshot;
-          +      phase = 'store';
-                 const revision = await timed('world.commit', () =>
-                   this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {
-                     before: historyBefore,
-          @@ -1126,6 +1144,8 @@
-                       : {}),
-                   }),
-                 );
-          +      returnedRevision = revision;
-          +      phase = 'store-returned';
-                 this.persistedRevision = revision;
-                 allocation.commit();
-                 this.updateHistoryRevision(
-          @@ -1143,6 +1163,8 @@
-                 }
-                 if (this.store.releaseHistory) saved = this.store.releaseHistory(saved);
-                 this.installWorld(saved, historyWorld, currentAppendCount);
-          +      liveInstalled = true;
-          +      phase = 'installed';
-                 this.persistedEvents = saved.world.events;
-                 this.rememberPersistedMemorySources();
-                 this.unpersisted = false;
-          @@ -1150,9 +1172,62 @@
-                 // A load publishes its first mark only after the new timeline generation is installed.
-                 if (restore) this.durableSequence = ++this.snapshotSequence;
-                 else this.publishDurable(revision, ++this.snapshotSequence, saved.world);
-          +      phase = 'notify';
-                 this.notify(false);
-                 return true;
-               } catch (error) {
-          +      // Inspect the original failure without changing its existing classification or result.
-          +      if (this.commitFailureObserver)
-          +        try {
-          +          const stack = error instanceof Error ? (error.stack ?? '') : '';
-          +          const sourceFrames = stack
-          +            .slice(0, 8192)
-          +            .split('\n')
-          +            .slice(1)
-          +            .flatMap((line) => {
-          +              if (!/^\s+at\s/.test(line)) return [];
-          +              const frame = line.match(
-          +                /\b((?:apps\/server|packages\/(?:domain|spatial|language))\/src\/[A-Za-z0-9_./-]+\.tsx?:\d+:\d+)\)?$/,
-          +              );
-          +              return frame?.[1] ? [frame[1]] : [];
-          +            });
-          +          this.commitFailureObserver({
-          +            operation: restore
-          +              ? 'restore'
-          +              : authorityChanges?.participationChange
-          +                ? 'participation'
-          +                : 'other',
-          +            phase,
-          +            expectedRevision,
-          +            returnedRevision,
-          +            storeReturned: returnedRevision !== null,
-          +            liveInstalled,
-          +            errorClass:
-          +              error instanceof Error &&
-          +              [
-          +                'Error',
-          +                'TypeError',
-          +                'RangeError',
-          +                'SyntaxError',
-          +                'ReferenceError',
-          +                'WorkBudgetError',
-          +                'AuthorityError',
-          +                'OverloadError',
-          +              ].includes(error.name)
-          +                ? error.name
-          +                : 'other',
-          +            sqlState:
-          +              error instanceof Error
-          +                ? (/^PostgreSQL operation failed \(([0-9A-Z]{5})\)\. No automatic retry\.$/.exec(
-          +                    error.message,
-          +                  )?.[1] ?? null)
-          +                : null,
-          +            sourceFrames: sourceFrames.slice(0, 8),
-          +            sourceFramesTruncated: stack.length > 8192 || sourceFrames.length > 8,
-          +          });
-          +        } catch {
-          +          // Optional observation must never alter the original save failure path.
-          +        }
-                 allocation?.rollback();
-                 if (error instanceof WorkBudgetError) {
-                   this.storageError = `${error.message} Required native work is paused before publication.`;
-          OPENLEGEND_REVIEWED_SOURCE_4_END
-          cat > test-results/whole-ui-owner-diagnostic/scripts/inputs.sha256 <<'OPENLEGEND_REVIEWED_SOURCE_5_END'
-          7582a18068dcdf0aa16f557486ee39ef32042ab6a242bfde508cebc2085e888d  invoke.sh
-          9446828130f741f828e2f2d4baabac407d6c34b560f2963e56c2baf37c6ffb78  source-variant.mjs
-          23a023c10af047675fdc64e63249f418f722e4d93706c8af85c4b951ecffbeb0  run-whole-ui.mjs
-          6ff3a000f2952bbd7a131325ad8f3accecbc7fc56104d41ec93defc30d645777  owner-stage.mjs
-          817a96f8645a9d70d5b04d95962e64260279f97597e4533cc38eb8c1a577cf84  world-service.observed.ts
-          OPENLEGEND_REVIEWED_SOURCE_5_END
-          sha256sum --check <<'OPENLEGEND_NATIVE_PATCH_PINS_END'
-          0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263  apps/server/src/world-service.ts
-          40042ea3d3d1308751472ed1a963eff77bf7d53d603d66ecd8068ec1a805676f  test-results/whole-ui-owner-diagnostic/scripts/native-observer.patch
-          OPENLEGEND_NATIVE_PATCH_PINS_END
-          patch --batch --forward --output=test-results/whole-ui-owner-diagnostic/scripts/world-service.observed.ts apps/server/src/world-service.ts test-results/whole-ui-owner-diagnostic/scripts/native-observer.patch
-          bash test-results/whole-ui-owner-diagnostic/scripts/invoke.sh test-results/whole-ui-owner-diagnostic
-      - name: Continue native camp, care and crafting observations
+          OPENLEGEND_OWNER_CREATION_SOURCE_1_END
+          cat > test-results/whole-ui-owner-creation/scripts/creation-recovery-stage.mjs <<'OPENLEGEND_OWNER_CREATION_SOURCE_2_END'
+          // One scratch-only actual-App/native-PostgreSQL creation recovery continuation.
+          // Root owns Chromium, the existing six-minute supervisor and closeTestDatabases().
+          import assert from 'node:assert/strict';
+          import { createHash } from 'node:crypto';
+          import { mkdir, readFile, writeFile } from 'node:fs/promises';
+          import { createRequire } from 'node:module';
+          import { join, resolve } from 'node:path';
+          import { pathToFileURL } from 'node:url';
+
+          // Adopted creation checkpoint 2d535b50 plus its unchanged, source-reviewed interaction owners.
+          const preparedSources = {
+            'apps/client/src/main.tsx': 'ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785',
+            'apps/client/src/api.ts': 'c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c',
+            'apps/client/src/ui/creation-request.tsx':
+              'c3bafe7b66abebae85ab0700c29f754af7b0202b0b0030381c1bfcd43e202450',
+            'apps/client/src/ui/item-creation.tsx':
+              'c5f8c4001f517cfbb1faaab40b32a75bbdc83e6c40c213e0c82a29dd50740925',
+            'apps/client/src/ui/god-tools.tsx':
+              'a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9',
+            'apps/client/src/ui/action-picker.tsx':
+              'f1cccb5e414886231b7e14c346da052dcf19b75a1055bc16ff1fcbbea860bf27',
+            'apps/client/src/ui/pullout.tsx':
+              '38be999e97ded28cdec9c819d6570aafc4a9b2d1622c48f9cae05cfdd8361ca6',
+            'apps/client/src/ui/inventory.tsx':
+              '6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20',
+            'apps/client/src/design-system/components.tsx':
+              '6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc',
+            'apps/client/src/scene.ts': 'f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481',
+            'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
+            'apps/server/src/world-service.ts':
+              '5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c',
+            'apps/server/src/store.ts': '9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc',
+            'apps/server/src/world-records.ts':
+              'cf1cbd7a7a926091f06c0cb7184eaac15d814ccf4622249fbab9ea026d9ee8c9',
+            'apps/server/src/world-record-schema.ts':
+              '33c16a4bb31f4a49431c8c09917f88d0881861766d3663b711248a1ab9379479',
+            'packages/domain/src/types.ts':
+              'eef78f787d1d9435cc216c86e34356e04d1ebc9b744753820aa250c3854be82f',
+            'packages/domain/src/god-tools.ts':
+              '63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d',
+            'packages/domain/src/item-handling.ts':
+              '860d84e742fabf2efb401c0bd52f2742261957d4089722151d282e129876968a',
+            'packages/domain/src/objects.ts':
+              'c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70',
+            'packages/domain/src/spatial-state.ts':
+              'df9069821f57c8368d4826fec14988c1ee00ee1a4cfea7f9456441a0d56058ad',
+            'packages/domain/src/worlds/base/catalogue.ts':
+              '738d420ef40b866708e53251ae343e750be3491ba37f45f394cf5b0e10c35eca',
+            'packages/domain/src/worlds/base/spawn.ts':
+              'd065e79fb065f6348d65b1b7e577774c13a14380031d6f285a44fbfa4967e75b',
+            'packages/protocol/src/index.ts':
+              '83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80',
+            'packages/spatial/src/geometry.ts':
+              '4c69fc4ca125a672eb89e0ec6da71c67c1c241c83cdd34b1496644cd9920ba47',
+            'tests/fixtures/database.ts': '3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92',
+            'tests/fixtures/browser.ts': '61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2',
+            'apps/server/src/view.ts': '959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b',
+            'packages/domain/src/worlds/base/world.ts':
+              '98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44',
+          };
+
+          export async function runCreationRecoveryStage({ browser, outputDirectory }) {
+            const output = join(outputDirectory, 'creation-recovery');
+            await mkdir(output, { recursive: true });
+            const report = {
+              startedAt: new Date().toISOString(),
+              checkout: process.env.GITHUB_SHA ?? 'unrecorded-checkout',
+              preparedCheckout: '2d535b50290a21d1b55c44115bbc28632d39b634',
+              browser: browser.version(),
+              scope:
+                'Three actual creator creations, each with its successful native delivery lost after commit and an explicit exact-request keyboard retry.',
+              limitations: [
+                'One fresh local God-mode base world; no placement fixture, actor walking, clock advancement or model generation.',
+                'Blank ground is selected through ordinary scene right-clicks and checked with existing native placement owners before the three creation choices.',
+                'The person uses an explicit typed draft with no selected traits; native starting possessions and random traits are preserved on retry.',
+                'SQL assertions read committed current receipt rows. There is no database restart or cross-version save claim.',
+                'A retry is a real mutation request. The native owner returns its recorded original effect; it is never represented as a receipt-only read.',
+                'Storage refusal, access loss, late completion, cleanup failure, real IME, assistive devices and uncoached usability remain separately scoped evidence.',
+              ],
+              creations: [],
+              sentCreations: [],
+              lifecyclePosts: {},
+              groundSelections: [],
+              captures: [],
+              pageErrors: [],
+              unexpectedRequests: [],
+              cleanup: { finalDatabaseDrop: 'Owned by root through closeTestDatabases().' },
+              passed: false,
+            };
+            let game, store, context, page, base, headers, active, routeFailure;
+            let traceStarted = false;
+            const deliveries = new Set();
+            const errorText = (error) => (error instanceof Error ? error.message : String(error));
+            const hash = (value) => createHash('sha256').update(value).digest('hex');
+            const nativeImport = (path) => import(pathToFileURL(resolve(path)).href);
+            const paths = {
+              item: '/api/god/items',
+              person: '/api/god/person',
+              environment: '/api/god/spawn',
+            };
+            try {
+              report.sha256 = {};
+              for (const [path, expected] of Object.entries(preparedSources)) {
+                const actual = hash(await readFile(resolve(path)));
+                report.sha256[path] = actual;
+                assert.equal(actual, expected, 'Prepared source changed: ' + path);
+              }
+              report.scriptSha256 = hash(await readFile(new URL(import.meta.url)));
+              const { expect } = createRequire(resolve('package.json'))('@playwright/test');
+              const [http, database, entry, domain, spatialState, spatial] = await Promise.all([
+                nativeImport('apps/server/src/http.ts'),
+                nativeImport('tests/fixtures/database.ts'),
+                nativeImport('tests/fixtures/browser.ts'),
+                nativeImport('packages/domain/src/index.ts'),
+                nativeImport('packages/domain/src/spatial-state.ts'),
+                nativeImport('packages/spatial/src/index.ts'),
+              ]);
+              const { PLAYER_ID, itemsForOwner, itemFor, worldRootEntities } = domain;
+              const { worldPosition, worldSupport, spatialMap } = spatialState;
+              const fixedNow = Date.now();
+              const config = database.readConfig({
+                WORLD_SEED: '73',
+                AI_BUDGET_USD: '0',
+                OPEN_LEGEND_GOD_MODE: 'true',
+                OPEN_LEGEND_AUTH_MODE: 'local',
+              });
+              assert.equal(config.budgetUsd, 0);
+              assert.equal(config.godMode, true);
+              for (const key of [
+                'jevKey',
+                'llmKey',
+                'embeddingKey',
+                'macrofoldKey',
+                'macrofoldProviderConnectionId',
+                'macrofoldJevConnectionId',
+                'macrofoldWorldConnectionId',
+              ])
+                assert.equal(config[key], '');
+              store = await database.testRepository();
+              assert.equal(store.persistence, 'postgres');
+              game = await http.createGameServer({
+                config,
+                store,
+                production: true,
+                tick: false,
+                now: () => fixedNow,
+              });
+              await new Promise((resolve, reject) => {
+                game.server.once('error', reject);
+                game.server.listen(0, '127.0.0.1', resolve);
+              });
+              const address = game.server.address();
+              assert.ok(address && typeof address !== 'string');
+              base = 'http://127.0.0.1:' + address.port;
+              context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+              await context.tracing.start({ screenshots: false, snapshots: true, sources: true });
+              traceStarted = true;
+              page = await context.newPage();
+              page.setDefaultTimeout(10_000);
+              page.setDefaultNavigationTimeout(20_000);
+              page.on('pageerror', (error) => report.pageErrors.push(error.message));
+              page.on('request', (request) => {
+                const url = new URL(request.url());
+                if (url.origin !== base && !['data:', 'blob:'].includes(url.protocol))
+                  report.unexpectedRequests.push(url.origin + url.pathname);
+                if (Object.values(paths).includes(url.pathname) && request.method() === 'POST')
+                  report.sentCreations.push({ path: url.pathname, body: request.postDataJSON() });
+                else if (
+                  /^\/api\/(?:command|chat|invent|inventions|world-agent|god)(?:\/|$)/.test(url.pathname) &&
+                  request.method() === 'POST'
+                )
+                  report.unexpectedRequests.push(url.pathname);
+                if (['/api/control', '/api/presence'].includes(url.pathname) && request.method() === 'POST')
+                  report.lifecyclePosts[url.pathname] = (report.lifecyclePosts[url.pathname] ?? 0) + 1;
+                const observed = request.headers();
+                // Only this actual App supplies current control; never take a second helper session.
+                if (observed['x-ol-client'] && observed['x-ol-scope'])
+                  headers = {
+                    Origin: base,
+                    'X-OL-Client': observed['x-ol-client'],
+                    'X-OL-Scope': observed['x-ol-scope'],
+                  };
+              });
+              await page.goto(base + '/auth/login');
+              await entry.enterGame(page);
+              await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+              assert.equal(game.service.paused, false);
+              const world = () => game.service.world;
+              const worldHash = () => hash(JSON.stringify(world()));
+              async function state() {
+                assert.ok(headers, 'Actual App authority must precede native reads');
+                const response = await page.request.get(base + '/api/state', { headers, timeout: 10_000 });
+                assert.equal(response.status(), 200);
+                const value = await response.json();
+                assert.equal(value.player.id, PLAYER_ID);
+                assert.equal(value.worldId, 'wilderness-73');
+                assert.equal(value.godMode, true);
+                assert.equal(value.access.controlling, true);
+                assert.equal(value.clock.paused, false);
+                return value;
+              }
+              const initial = await state();
+              const lifetime = (value) => [
+                value.access.privateDraftScope,
+                value.worldId,
+                value.saveTimeline,
+                value.player.id,
+              ];
+              assert.ok(initial.access.privateDraftScope && initial.saveTimeline);
+              const originalLifetime = lifetime(initial);
+              const storageKey = 'open-legend:creation-request:' + JSON.stringify(originalLifetime);
+              const initialPosition = worldPosition(world().entities[PLAYER_ID]);
+              const initialTime = world().simTime;
+              const initialReceiptIds = new Set(Object.keys(world().commandReceipts));
+              const total = (actorId, definitionId) =>
+                itemsForOwner(world(), actorId)
+                  .filter((item) => item.definitionId === definitionId)
+                  .reduce((sum, item) => sum + item.quantity, 0);
+              const eventCount = (type) => world().events.filter((event) => event.type === type).length;
+              const pending = () =>
+                page.evaluate((key) => {
+                  const raw = sessionStorage.getItem(key);
+                  return raw === null ? null : JSON.parse(raw);
+                }, storageKey);
+              const recovery = () => page.getByRole('dialog', { name: 'Original creation', exact: true });
+              async function sqlReceipt(id, expected) {
+                // Read the existing owner’s row without resetting the live repository baseline via load().
+                const rows = await store.db
+                  .prepare('SELECT id,payload FROM world_command_receipts WHERE world_id=? AND slot=?')
+                  .all(world().id, id);
+                assert.equal(rows.length, 1, 'One committed SQL receipt for this exact creation');
+                const receipt = JSON.parse(String(rows[0].payload));
+                assert.deepEqual(receipt, expected);
+                const createdId = receipt.outcome.itemId ?? receipt.outcome.entityId;
+                const objects = await store.db
+                  .prepare('SELECT id FROM sim_entities WHERE world_id=? AND slot=?')
+                  .all(world().id, createdId);
+                assert.equal(objects.length, 1, 'The recorded created object exists in committed SQL');
+                return { receiptRows: rows.length, createdEntityRows: objects.length };
+              }
+              await context.route(/\/api\/god\/(?:items|person|spawn)$/, (route) => {
+                const task = (async () => {
+                  const current = active;
+                  assert.ok(current, 'Only an explicitly prepared UI creation is permitted');
+                  assert.equal(new URL(route.request().url()).pathname, paths[current.kind]);
+                  assert.equal(route.request().method(), 'POST');
+                  const body = route.request().postDataJSON();
+                  current.posts++;
+                  assert.ok(current.posts <= 2, 'At most one original and one explicit retry');
+                  if (current.posts === 1) {
+                    const { id, ...draft } = body;
+                    assert.match(id, /^[a-zA-Z0-9_.:-]{1,120}$/);
+                    assert.deepEqual(draft, current.expectedBody);
+                    current.request = body;
+                  } else assert.deepEqual(body, current.request, 'Retry sends the exact original id/body');
+                  const before = worldHash();
+                  const response = await route.fetch({ timeout: 10_000 });
+                  try {
+                    assert.equal(response.status(), 200);
+                    const result = await response.json();
+                    assert.equal(result.ok, true, result.message);
+                    assert.equal(result.code, current.kind === 'item' ? 'item-created' : 'spawned');
+                    const createdId = current.kind === 'item' ? result.itemId : result.entityId;
+                    assert.equal(typeof createdId, 'string');
+                    assert.ok(world().entities[createdId]);
+                    const receipt = world().commandReceipts[body.id];
+                    assert.ok(receipt);
+                    assert.deepEqual(receipt.outcome, result);
+                    const sql = await sqlReceipt(body.id, receipt);
+                    if (current.posts === 1) {
+                      current.originalResult = result;
+                      current.committedWorldSha256 = worldHash();
+                      current.firstSql = sql;
+                      await route.abort('failed'); // Native HTTP/SQL succeeded; only browser delivery is lost.
+                      current.delivery = 'lost after successful native commit';
+                    } else {
+                      assert.deepEqual(result, current.originalResult, 'Native exact original result');
+                      assert.equal(worldHash(), before, 'Replay changes no native world data or randomness');
+                      current.replayWorldSha256 = before;
+                      current.retrySql = sql;
+                      await route.fulfill({ response }); // Forward the real native response unchanged.
+                      current.recovered = true;
+                    }
+                  } finally {
+                    await response.dispose();
+                  }
+                })().catch(async (error) => {
+                  routeFailure ??= errorText(error);
+                  if (active) active.deliveryError = errorText(error);
+                  try {
+                    await route.abort('failed');
+                  } catch {
+                    // The route may already be consumed by the deliberate lost delivery or browser stop.
+                  }
+                });
+                deliveries.add(task);
+                void task.finally(() => deliveries.delete(task));
+                return task;
+              });
+              async function inventoryEntry() {
+                const panel = page.locator('#inventoryPanel');
+                if (!(await panel.isVisible()))
+                  await page.getByRole('button', { name: 'Inventory', exact: true }).click();
+                await expect(panel).toBeVisible();
+                await panel.getByRole('button', { name: 'God mode · Add item', exact: true }).click();
+              }
+              async function hideInventory() {
+                const panel = page.locator('#inventoryPanel');
+                if (await panel.isVisible()) await panel.getByRole('button', { name: /^Hide / }).click();
+              }
+              async function ground(profile, purpose) {
+                await hideInventory();
+                const points = [
+                  { x: 900, y: 700 },
+                  { x: 1080, y: 680 },
+                  { x: 1190, y: 590 },
+                  { x: 920, y: 565 },
+                ];
+                for (const point of points) {
+                  const menu = page.locator('#contextMenu');
+                  if (await menu.isVisible()) await page.keyboard.press('Escape');
+                  await expect(menu).toBeHidden();
+                  const [request] = await Promise.all([
+                    page.waitForRequest((request) => new URL(request.url()).pathname === '/api/actions'),
+                    page.locator('#world').click({ button: 'right', position: point }),
+                  ]);
+                  const selected = request.postDataJSON();
+                  const position = selected.position;
+                  const canStand =
+                    position &&
+                    !selected.targetId &&
+                    spatial.canStand(spatialMap(world()), position, spatial.BODY_PROFILES[profile]);
+                  const occupied =
+                    position &&
+                    worldRootEntities(world()).some((entity) => {
+                      const here = worldPosition(entity);
+                      return spatial.distance3D(here, position) < 0.5;
+                    });
+                  report.groundSelections.push({
+                    purpose,
+                    point,
+                    position: position ?? null,
+                    entitySelected: !!selected.targetId,
+                    supported: !!canStand,
+                    occupied: !!occupied,
+                  });
+                  if (canStand && !occupied) {
+                    await expect(page.locator('#contextTitle')).toHaveText(initial.presentation.locationName);
+                    await expect(menu.getByRole('button', { name: /^Add something/ })).toBeVisible();
+                    return position;
+                  }
+                }
+                throw new Error(
+                  'No supported blank ground among the four actual scene selections: ' + purpose,
+                );
+              }
+              async function chooseCreation(category, label) {
+                await page
+                  .locator('#contextMenu')
+                  .getByRole('button', { name: /^Add something/ })
+                  .click();
+                await page
+                  .getByRole('dialog', { name: 'Add something', exact: true })
+                  .getByRole('button', { name: category, exact: true })
+                  .click();
+                await page
+                  .getByRole('dialog', { name: category, exact: true })
+                  .getByRole('option', { name: label, exact: true })
+                  .click();
+              }
+              async function lose(kind, expectedBody, gesture) {
+                assert.equal(await pending(), null);
+                const before = report.sentCreations.length;
+                active = { kind, expectedBody, posts: 0 };
+                report.creations.push(active);
+                await gesture();
+                await expect.poll(() => active.delivery ?? active.deliveryError).toBeTruthy();
+                assert.equal(routeFailure, undefined);
+                assert.equal(active.delivery, 'lost after successful native commit');
+                assert.equal(report.sentCreations.length, before + 1);
+                await expect(recovery()).toBeVisible();
+                await expect(recovery()).toContainText('The original result is not confirmed.');
+                const retained = await pending();
+                assert.equal(retained.kind, kind);
+                assert.deepEqual(retained.body, active.request);
+                assert.equal(retained.outcome, undefined);
+                return active;
+              }
+              async function closeAndReload(record) {
+                const before = report.sentCreations.length;
+                await recovery()
+                  .getByRole('button', { name: 'Close creation recovery', exact: true })
+                  .click();
+                await expect(recovery()).toBeHidden();
+                assert.deepEqual((await pending()).body, record.request);
+                await page.reload();
+                await entry.enterGame(page);
+                await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+                const current = await state();
+                assert.deepEqual(
+                  lifetime(current),
+                  originalLifetime,
+                  'Same private owner/world/timeline/actor',
+                );
+                assert.equal(report.sentCreations.length, before, 'Close and reload send no creation');
+                assert.deepEqual((await pending()).body, record.request);
+                await expect(recovery()).toBeHidden();
+                record.sameOwnerReloadRetained = true;
+              }
+              async function recover(record, captureName) {
+                await expect(recovery()).toBeVisible();
+                const retained = await pending();
+                assert.deepEqual(retained.body, record.request);
+                await expect(recovery()).toContainText(retained.label);
+                await expect(recovery()).toContainText(retained.destinationLabel);
+                await expect(page.getByRole('dialog', { name: 'Create item', exact: true })).toBeHidden();
+                await expect(page.getByRole('dialog', { name: 'Create person', exact: true })).toBeHidden();
+                await expect(recovery()).toContainText(
+                  'Resolve this retained creation before creating something else.',
+                );
+                assert.equal(record.posts, 1, 'Opening a different entry does not dispatch');
+                assert.ok(report.captures.length < 3);
+                await page.screenshot({ path: join(output, captureName) });
+                report.captures.push(captureName);
+                const retry = recovery().getByRole('button', {
+                  name: 'Retry original creation',
+                  exact: true,
+                });
+                await retry.focus();
+                await expect(retry).toBeFocused();
+                await page.keyboard.press('Enter');
+                await expect.poll(() => record.recovered || record.deliveryError).toBeTruthy();
+                assert.equal(routeFailure, undefined);
+                assert.equal(record.recovered, true);
+                await expect(recovery()).toBeHidden();
+                await expect(page.locator('#toast')).toHaveText(record.originalResult.message);
+                assert.equal(await pending(), null, 'Confirmed request removed from private browser storage');
+                assert.equal(record.posts, 2);
+                record.retryInput = 'Focused Retry original creation button, then keyboard Enter';
+                delete record.expectedBody;
+                active = undefined;
+              }
+
+              // First effect: two actual raw-fiber units in the controlled character’s belongings.
+              const itemOption = initial.godTools.itemOptions.find((option) => option.id === 'raw_fiber');
+              const personOption = initial.godTools.spawnOptions.find((option) => option.id === 'person');
+              const environmentOption = initial.godTools.spawnOptions.find(
+                (option) => option.id === 'river-stones',
+              );
+              assert.ok(itemOption && personOption && environmentOption);
+              assert.equal(environmentOption.category, 'Environment');
+              const beforeItem = total(PLAYER_ID, itemOption.id);
+              const beforeItemEvents = eventCount('god-item-created');
+              await inventoryEntry();
+              const itemForm = page.getByRole('dialog', { name: 'Create item', exact: true });
+              await itemForm.getByRole('combobox', { name: 'Item', exact: true }).fill(itemOption.label);
+              await page
+                .getByRole('option', {
+                  name: new RegExp('^' + itemOption.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+                })
+                .click();
+              await itemForm.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('2');
+              const itemRecord = await lose(
+                'item',
+                {
+                  definitionId: itemOption.id,
+                  quantity: 2,
+                  destination: { actorId: PLAYER_ID },
+                },
+                () => itemForm.getByRole('button', { name: 'Create 2 items', exact: true }).click(),
+              );
+              assert.equal(total(PLAYER_ID, itemOption.id), beforeItem + 2);
+              assert.equal(eventCount('god-item-created'), beforeItemEvents + 1);
+              assert.equal(itemFor(world(), itemRecord.originalResult.itemId).ownerId, PLAYER_ID);
+              await closeAndReload(itemRecord);
+              await ground('object', 'Open an environment entry while the item remains unresolved');
+              await chooseCreation('Environment', environmentOption.label);
+              await recover(itemRecord, '01-original-item-recovered-from-environment-entry.png');
+              assert.equal(total(PLAYER_ID, itemOption.id), beforeItem + 2);
+              assert.equal(eventCount('god-item-created'), beforeItemEvents + 1);
+
+              // Second effect: one actual person with the native starting belongings and random traits.
+              const personPosition = await ground('person', 'Create a person on actual blank ground');
+              await chooseCreation('Actors', personOption.label);
+              const personForm = page.getByRole('dialog', { name: 'Create person', exact: true });
+              const person = {
+                name: 'Mira',
+                personality: 'Patient and observant.',
+                backstory: 'Arrived at the clearing today.',
+                traitIds: [],
+                initialGoals: ['Learn the paths around the clearing.'],
+              };
+              await personForm.getByRole('textbox', { name: 'Name', exact: true }).fill(person.name);
+              await personForm
+                .getByRole('textbox', { name: 'Personality', exact: true })
+                .fill(person.personality);
+              await personForm
+                .getByRole('textbox', { name: 'Backstory', exact: true })
+                .fill(person.backstory);
+              await personForm
+                .getByRole('textbox', { name: 'Initial goals', exact: true })
+                .fill(person.initialGoals[0]);
+              const personRoots = worldRootEntities(world()).length;
+              const beforePersonEvents = eventCount('god-spawned');
+              const personRecord = await lose('person', { position: personPosition, ...person }, () =>
+                personForm.getByRole('button', { name: 'Create person', exact: true }).click(),
+              );
+              const personId = personRecord.originalResult.entityId;
+              assert.equal(worldRootEntities(world()).length, personRoots + 1);
+              assert.equal(world().entities[personId].name, person.name);
+              assert.deepEqual(worldPosition(world().entities[personId]), {
+                x: personPosition.x,
+                y: personPosition.y,
+                z: personPosition.z,
+              });
+              assert.equal(worldSupport(world().entities[personId]), personPosition.surfaceId);
+              assert.equal(world().entities[personId].actor.traits.length, 3);
+              assert.equal(total(personId, 'stone_tool'), 1);
+              assert.equal(total(personId, 'berries'), 3);
+              assert.equal(eventCount('god-spawned'), beforePersonEvents + 1);
+              const personTraits = structuredClone(world().entities[personId].actor.traits);
+              await recovery().getByRole('button', { name: 'Close', exact: true }).click();
+              await inventoryEntry();
+              await recover(personRecord, '02-original-person-recovered-from-item-entry.png');
+              assert.deepEqual(world().entities[personId].actor.traits, personTraits);
+              assert.equal(total(personId, 'stone_tool'), 1);
+              assert.equal(total(personId, 'berries'), 3);
+              assert.equal(worldRootEntities(world()).length, personRoots + 1);
+              assert.equal(eventCount('god-spawned'), beforePersonEvents + 1);
+              personRecord.nativeStartingPossessions = { stone_tool: 1, berries: 3 };
+              personRecord.nativeTraitCount = personTraits.length;
+
+              // Third effect: one actual world-authored resource chosen from the selected ground’s menu.
+              const environmentPosition = await ground('object', 'Create environment on actual blank ground');
+              const environmentRoots = worldRootEntities(world()).length;
+              const beforeEnvironmentEvents = eventCount('god-spawned');
+              const environmentRecord = await lose(
+                'environment',
+                {
+                  type: environmentOption.id,
+                  position: environmentPosition,
+                },
+                () => chooseCreation('Environment', environmentOption.label),
+              );
+              const environmentId = environmentRecord.originalResult.entityId;
+              const environment = world().entities[environmentId];
+              assert.equal(worldRootEntities(world()).length, environmentRoots + 1);
+              assert.equal(environment.name, environmentOption.label);
+              assert.equal(environment.resource.definitionId, 'stone');
+              assert.equal(environment.resource.quantity, 60);
+              assert.deepEqual(worldPosition(environment), {
+                x: environmentPosition.x,
+                y: environmentPosition.y,
+                z: environmentPosition.z,
+              });
+              assert.equal(worldSupport(environment), environmentPosition.surfaceId);
+              assert.equal(eventCount('god-spawned'), beforeEnvironmentEvents + 1);
+              await closeAndReload(environmentRecord);
+              await inventoryEntry();
+              await recover(environmentRecord, '03-original-environment-recovered-after-reload.png');
+              assert.deepEqual(world().entities[environmentId], environment);
+              assert.equal(worldRootEntities(world()).length, environmentRoots + 1);
+              assert.equal(eventCount('god-spawned'), beforeEnvironmentEvents + 1);
+
+              const final = await state();
+              assert.deepEqual(lifetime(final), originalLifetime);
+              assert.deepEqual(worldPosition(world().entities[PLAYER_ID]), initialPosition);
+              assert.equal(world().simTime, initialTime);
+              assert.equal(report.sentCreations.length, 6);
+              assert.equal(report.creations.length, 3);
+              assert.equal(new Set(report.creations.map((record) => record.request.id)).size, 3);
+              assert.equal(
+                Object.keys(world().commandReceipts).filter((id) => !initialReceiptIds.has(id)).length,
+                3,
+              );
+              assert.equal(final.ai.budget.spentUsd, 0);
+              assert.equal(final.ai.budget.reservedUsd, 0);
+              assert.equal(final.ai.usage.llmCalls + final.ai.usage.jevCalls, 0);
+              assert.deepEqual(report.pageErrors, []);
+              assert.deepEqual(report.unexpectedRequests, []);
+              report.final = {
+                creationPosts: 6,
+                firstCreations: 3,
+                explicitOriginalRetries: 3,
+                createdItemId: itemRecord.originalResult.itemId,
+                createdPersonId: personId,
+                createdEnvironmentId: environmentId,
+                gameplayCommands: 0,
+                suppliedWorldTransitions: 0,
+                simulationSecondsAdvanced: 0,
+                providerCalls: 0,
+                providerCostUsd: 0,
+                pendingCreation: false,
+              };
+              report.passed = true;
+            } catch (error) {
+              report.failure = errorText(error);
+            } finally {
+              if (deliveries.size) {
+                const results = await Promise.allSettled([...deliveries]);
+                if (results.some((result) => result.status === 'rejected')) {
+                  report.cleanup.deliveryError = 'An owned delivery did not settle successfully.';
+                  report.passed = false;
+                }
+              }
+              if (routeFailure) {
+                report.cleanup.routeError = routeFailure;
+                report.passed = false;
+              }
+              if (traceStarted && context)
+                try {
+                  await context.tracing.stop({ path: join(output, 'trace.zip') });
+                  report.trace = 'trace.zip';
+                } catch (error) {
+                  report.cleanup.traceError = errorText(error);
+                  report.passed = false;
+                }
+              if (context)
+                try {
+                  await context.close();
+                  report.cleanup.contextClosed = true;
+                } catch (error) {
+                  report.cleanup.contextError = errorText(error);
+                  report.passed = false;
+                }
+              if (game)
+                try {
+                  report.cleanup.shutdown = await game.shutdown();
+                  if (!report.cleanup.shutdown.saved || report.cleanup.shutdown.problems.length)
+                    report.passed = false;
+                } catch (error) {
+                  report.cleanup.shutdownError = errorText(error);
+                  report.passed = false;
+                }
+              if (store)
+                try {
+                  await store.close();
+                  report.cleanup.repositoryClosed = true;
+                } catch (error) {
+                  report.cleanup.repositoryError = errorText(error);
+                  report.passed = false;
+                }
+              report.finishedAt = new Date().toISOString();
+              report.elapsedMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
+              await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+            }
+            return report;
+          }
+          OPENLEGEND_OWNER_CREATION_SOURCE_2_END
+          sha256sum --check <<'OPENLEGEND_SCRIPT_HASHES_END'
+          9c6955781ebb42a62d0a5b61e891da9d8d57f6dc508ab31e200b4443e81b57ff  test-results/whole-ui-owner-creation/scripts/run-whole-ui.mjs
+          c61745cfbd30a518b17b2c87156cf7f342729c075a14ef3458ee1de35dbd260c  test-results/whole-ui-owner-creation/scripts/owner-stage.mjs
+          994b53e64169f32a9e6ee9047c7cbeb8babfac58dbe90344954872449f227552  test-results/whole-ui-owner-creation/scripts/creation-recovery-stage.mjs
+          OPENLEGEND_SCRIPT_HASHES_END
+          node --import tsx test-results/whole-ui-owner-creation/scripts/run-whole-ui.mjs test-results/whole-ui-owner-creation
+      - name: Continue native care and crafting
         if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
         timeout-minutes: 6
         run: |
           set -euo pipefail
           node --input-type=module <<'OPENLEGEND_OWNED_CLEANUP_END'
           import { readFile } from 'node:fs/promises';
-          const directory = 'test-results/whole-ui-owner-diagnostic/';
+          const directory = 'test-results/whole-ui-owner-creation/';
           const read = async (name) => JSON.parse(await readFile(directory + name, 'utf8'));
           const report = await read('report.json');
           const supervisor = await read('supervisor.json');
-          const restoration = await read('source-preservation/restoration.json');
           if (report.cleanup?.browserClosed !== true || report.cleanup?.databasesClosed !== true ||
-              supervisor.stopRequested || supervisor.forcedTermination || supervisor.browserCleanupUnconfirmed ||
-              restoration.restoredOriginalBytes !== true)
-            throw new Error('The previous invocation did not confirm owned cleanup and source restoration; camp/care remains unrun.');
+              supervisor.stopRequested || supervisor.forcedTermination || supervisor.browserCleanupUnconfirmed)
+            throw new Error('The previous invocation did not confirm owned cleanup; care remains unrun.');
           OPENLEGEND_OWNED_CLEANUP_END
-          mkdir -p test-results/whole-ui-camp-care/scripts
-          cat > test-results/whole-ui-camp-care/scripts/run-whole-ui.mjs <<'OPENLEGEND_REVIEWED_SOURCE_0_END'
+          mkdir -p test-results/whole-ui-care/scripts
+          cat > test-results/whole-ui-care/scripts/run-whole-ui.mjs <<'OPENLEGEND_CARE_SOURCE_0_END'
           // One temporary CI continuation, from the repository cwd with --import tsx.
           // Usage: node --import tsx /path/to/run-whole-ui.mjs [test-results/whole-ui]
           // CI owns a six-minute step. At five minutes, stop new stages and close the
@@ -1866,16 +2180,10 @@ jobs:
 
           const stages = [
             {
-              name: 'camp',
-              file: 'camp-stage.mjs',
-              entry: 'runCampStage',
-              sha256: 'cf3a89c9e00f3b1056ce54bbe66e82bac4717749e239e6cf0d2932e20c518c63',
-            },
-            {
               name: 'object-care-crafting',
               file: 'object-care-crafting-stage.mjs',
               entry: 'runObjectCareCraftingStage',
-              sha256: 'ac959c62b1a056a98baba7171001aef125a33ddc67f22a37549eca59ab5d4688',
+              sha256: 'fa88e37037190c8d20d38170c257777b565d9a775894dc005aae51129c11ebf2',
             },
           ];
           const reviewedSourcePins = {
@@ -1897,7 +2205,7 @@ jobs:
               '63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d',
             'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
             'apps/server/src/world-service.ts':
-              '0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263',
+              '5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c',
             'packages/protocol/src/index.ts':
               '83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80',
           };
@@ -1931,12 +2239,21 @@ jobs:
           async function worker(outputDirectory) {
             const reportPath = join(outputDirectory, 'report.json');
             const report = {
-              kind: 'one-shot native camp/object/care/crafting continuation',
+              kind: 'one-shot native object/care/crafting continuation',
               selectionNote:
-                'One complete camp journey with the accepted ordinary 80 px scroll before its original clipping check, followed by the unchanged object/care/crafting journey. Both prior partial failures remain recorded. Production rendering and all deadlines remain unchanged; the earlier capture cause is unresolved. Passed creator, alternate-world and inventory evidence is reused.',
+                'Only the object/care/crafting journey is selected. The same selected fire entry reopens its task preparation after Hide; all original commands, assertions, four capture slots and deadlines remain unchanged. Screenshot timeout failures remain failed observations even when later native steps complete. Passed camp, creator, alternate-world and inventory evidence is reused; prior partial failures remain recorded.',
               reviewedSourcePins,
               sourceSha256: {},
               reusedEvidence: {
+                camp: {
+                  status: 'Passed previously; not executed in this continuation',
+                  checkout: '9689866a827609da9103433283890c8c76b5ce6e',
+                  reportSha256: '30bccac995a6f1824547b29ea292849472f32b0827603053688f688d494a7754',
+                  successfulNativeCommands: 10,
+                  requestedCapturesSaved: 4,
+                  nativeSequenceCompleted: true,
+                  ownedCleanupConfirmed: true,
+                },
                 creator: {
                   status: 'Passed previously; not executed in this continuation',
                   checkout: '45db87d7cef957cdabe8fe02c43162c4eac3c503',
@@ -2247,7 +2564,7 @@ jobs:
               await checkpoint(controlPath, control);
               console.log(
                 JSON.stringify({
-                  continuation: 'native camp/object/care/crafting',
+                  continuation: 'native object/care/crafting',
                   passed: control.passed,
                   stages: control.stageStatuses,
                   interrupted: !!control.stopRequested,
@@ -2263,1135 +2580,8 @@ jobs:
           const outputDirectory = resolve(process.argv[isWorker ? 3 : 2] ?? 'test-results/whole-ui');
           if (isWorker) await worker(outputDirectory);
           else await supervise(outputDirectory);
-          OPENLEGEND_REVIEWED_SOURCE_0_END
-          cat > test-results/whole-ui-camp-care/scripts/camp-stage.mjs <<'OPENLEGEND_REVIEWED_SOURCE_1_END'
-          // One finite scratch continuation, imported from an existing CI checkout with --import tsx.
-          // Root owns Chromium, the hard CI deadline, build identity and final closeTestDatabases().
-          // This stage owns one disposable native host and one ordinary App browser context.
-          // It is not a test-runner case, a provider fixture or a permanent verification framework.
-          import assert from 'node:assert/strict';
-          import { createHash } from 'node:crypto';
-          import { mkdir, readFile, writeFile } from 'node:fs/promises';
-          import { createRequire } from 'node:module';
-          import { join, resolve } from 'node:path';
-          import { pathToFileURL } from 'node:url';
-
-          export async function runCampStage({ browser, outputDirectory }) {
-            const output = join(outputDirectory, 'camp');
-            await mkdir(output, { recursive: true });
-            const report = {
-              startedAt: new Date().toISOString(),
-              checkout: process.env.GITHUB_SHA ?? 'unrecorded-checkout',
-              browser: browser.version(),
-              node: process.version,
-              scope:
-                'One native base-world storage/equipment/gather/fire/cook/food-offer/conversation-boundary/return journey; J16 composition and supplied J14 decisions.',
-              limitations: [
-                'No generated speech, reply or autonomous recipient-decision quality.',
-                'No complete J13/J14/J16 acceptance: positive conversation, expiry, changed access and broader recovery remain open.',
-                'No approach walking, alternative recipes, broad inventory matrix, human IME, assistive-device or uncoached-usability claim.',
-                'The installed knife is equipped; ordinary gathering uses its native two-unit batch, with no claimed knife gathering bonus.',
-                'Fixture positions, camp supplies and partly burned initial fuel are prepared after real App entry; NPC decline/accept are explicit supplied native decisions.',
-                'Six finite time amounts are offered once to the native clock, with zero-time drains for retained navigation debt; this does not qualify wall-clock pacing.',
-                'The food cell receives an ordinary 80 px wheel scroll in the paired-pane gap before the unchanged full-cell clipping check and opening click. Earlier popover and automatic-scroll failures remain recorded; their exact cause is not established by this continuation.',
-              ],
-              providerBudgetUsd: 0,
-              providerCalls: null,
-              commandObservations: [],
-              nativeProgress: [],
-              suppliedDecisions: [],
-              captures: [],
-              captureAttempts: 0,
-              captureFailures: [],
-              nativeSequenceCompleted: false,
-              foodOfferObservation: null,
-              pageErrors: [],
-              unexpectedRequests: [],
-              cleanup: { finalDatabaseDrop: 'Owned by the root driver through closeTestDatabases().' },
-              passed: false,
-            };
-            let game, store, context, page, base, authorityHeaders;
-            let entered = false,
-              traceStarted = false;
-            let foodOfferObserverStarted = false;
-            const commandRequests = [],
-              destinationRequests = [],
-              providerRequests = [];
-            const errorText = (error) => (error instanceof Error ? error.message : String(error));
-            const nativeImport = (path) => import(pathToFileURL(resolve(path)).href);
-            async function finishFoodOfferObservation() {
-              if (!foodOfferObserverStarted || report.foodOfferObservation || !page || page.isClosed())
-                return;
-              try {
-                report.foodOfferObservation = await page.evaluate(() => {
-                  const result = window.__campFoodOfferObservation?.();
-                  delete window.__campFoodOfferObservation;
-                  return result;
-                });
-              } catch (error) {
-                report.foodOfferObservation = { unavailable: errorText(error) };
-              }
-            }
-
-            try {
-              const { expect, errors } = createRequire(resolve('package.json'))('@playwright/test');
-              const [
-                http,
-                database,
-                fixture,
-                entry,
-                domain,
-                spatialState,
-                spatial,
-                cognition,
-                handover,
-                baseActions,
-                language,
-              ] = await Promise.all([
-                nativeImport('apps/server/src/http.ts'),
-                nativeImport('tests/fixtures/database.ts'),
-                nativeImport('tests/fixtures/service.ts'),
-                nativeImport('tests/fixtures/browser.ts'),
-                nativeImport('packages/domain/src/index.ts'),
-                nativeImport('packages/domain/src/spatial-state.ts'),
-                nativeImport('packages/spatial/src/index.ts'),
-                nativeImport('apps/server/src/cognition.ts'),
-                nativeImport('apps/server/src/handover-actions.ts'),
-                nativeImport('packages/domain/src/worlds/base/actions.ts'),
-                nativeImport('packages/language/src/index.ts'),
-              ]);
-              const {
-                PLAYER_ID,
-                NPC_ID,
-                createItemLot,
-                moveLot,
-                itemsForOwner,
-                inventoryFor,
-                itemFor,
-                seesEntity,
-                canReachEntity,
-                executeCommand,
-                BASE_FIRE_CARE,
-              } = domain;
-              const { worldPosition, worldSupport, setSpatialPosition, spatialMap } = spatialState;
-              const { BODY_PROFILES, canStand } = spatial;
-              const { BASE_ACTION_DEFAULTS, BASE_GATHER_QUANTITY } = baseActions;
-              const { namePhrase } = language;
-              const sourcePaths = [
-                'apps/server/src/http.ts',
-                'apps/server/src/inventory-view.ts',
-                'apps/server/src/action-catalogue.ts',
-                'apps/server/src/fire-actions.ts',
-                'apps/server/src/handover-actions.ts',
-                'apps/server/src/cognition.ts',
-                'apps/client/src/main.tsx',
-                'apps/client/src/ui/inventory.tsx',
-                'apps/client/src/ui/inventory-offer.tsx',
-                'apps/client/src/ui/composer.tsx',
-                'apps/client/src/ui/world-events.tsx',
-                'packages/domain/src/kernel.ts',
-                'packages/domain/src/handover.ts',
-                'packages/domain/src/worlds/base/fire.ts',
-                'packages/domain/src/worlds/base/actions.ts',
-                'tests/fixtures/service.ts',
-              ];
-              report.sha256 = Object.fromEntries(
-                await Promise.all(
-                  sourcePaths.map(async (path) => [
-                    path,
-                    createHash('sha256')
-                      .update(await readFile(resolve(path)))
-                      .digest('hex'),
-                  ]),
-                ),
-              );
-              report.scriptSha256 = createHash('sha256')
-                .update(await readFile(new URL(import.meta.url)))
-                .digest('hex');
-
-              const fixedNow = Date.now();
-              const config = database.readConfig({
-                WORLD_SEED: '73',
-                AI_BUDGET_USD: '0',
-                OPEN_LEGEND_GOD_MODE: 'false',
-                OPEN_LEGEND_AUTH_MODE: 'local',
-              });
-              assert.equal(config.budgetUsd, 0);
-              assert.equal(config.godMode, false);
-              for (const key of [
-                'jevKey',
-                'llmKey',
-                'embeddingKey',
-                'macrofoldKey',
-                'macrofoldProviderConnectionId',
-                'macrofoldJevConnectionId',
-                'macrofoldWorldConnectionId',
-              ])
-                assert.equal(config[key], '', 'Fixture must not inherit provider configuration: ' + key);
-              store = await database.testRepository();
-              game = await http.createGameServer({
-                config,
-                store,
-                production: true,
-                tick: false,
-                now: () => fixedNow,
-              });
-              await new Promise((resolve) => game.server.listen(0, '127.0.0.1', resolve));
-              const address = game.server.address();
-              assert.ok(address && typeof address !== 'string');
-              base = 'http://127.0.0.1:' + address.port;
-              context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
-              await context.tracing.start({ screenshots: false, snapshots: true, sources: true });
-              traceStarted = true;
-              page = await context.newPage();
-              page.setDefaultTimeout(10_000);
-              page.setDefaultNavigationTimeout(20_000);
-              page.on('pageerror', (error) => report.pageErrors.push(error.message));
-              page.on('request', (request) => {
-                const url = new URL(request.url());
-                if (url.origin !== base && !['data:', 'blob:'].includes(url.protocol))
-                  report.unexpectedRequests.push(url.origin + url.pathname);
-                if (
-                  request.method() === 'POST' &&
-                  /^\/api\/(?:chat(?:\/|$)|invent(?:\/|$)|inventions\/submit|world-agent\/.*(?:messages|start|apply))/.test(
-                    url.pathname,
-                  )
-                )
-                  providerRequests.push(url.pathname);
-                if (/^\/api\/god(?:\/|$)/.test(url.pathname)) report.unexpectedRequests.push(url.pathname);
-                if (url.pathname === '/api/command') commandRequests.push(request.postDataJSON());
-                if (url.pathname === '/api/inventory/destinations')
-                  destinationRequests.push(request.postDataJSON());
-                const headers = request.headers();
-                if (entered && headers['x-ol-client'] && headers['x-ol-scope']) {
-                  const captured = {
-                    Origin: base,
-                    'X-OL-Client': headers['x-ol-client'],
-                    'X-OL-Scope': headers['x-ol-scope'],
-                  };
-                  if (
-                    authorityHeaders &&
-                    (authorityHeaders['X-OL-Client'] !== captured['X-OL-Client'] ||
-                      authorityHeaders['X-OL-Scope'] !== captured['X-OL-Scope'])
-                  )
-                    report.unexpectedRequests.push('The sole browser authority changed during camp.');
-                  authorityHeaders = captured;
-                }
-              });
-              await page.goto(base + '/auth/login');
-              await entry.enterGame(page);
-              await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
-              assert.equal(game.service.paused, false, 'Real App entry must precede fixture preparation');
-              entered = true;
-
-              const total = (ownerId, definitionId) =>
-                itemsForOwner(game.service.world, ownerId)
-                  .filter((item) => item.definitionId === definitionId)
-                  .reduce((sum, item) => sum + item.quantity, 0);
-              const lot = (ownerId, definitionId) => {
-                const found = itemsForOwner(game.service.world, ownerId).filter(
-                  (item) => item.definitionId === definitionId,
-                );
-                assert.equal(found.length, 1, 'This small fixture expects one exact lot of ' + definitionId);
-                return found[0];
-              };
-              const custody = () =>
-                [PLAYER_ID, seed.bagId, NPC_ID].map((id) => ({
-                  id,
-                  revision: game.service.world.entities[id].inventoryRevision ?? 0,
-                  items: itemsForOwner(game.service.world, id)
-                    .map((item) => ({
-                      id: item.id,
-                      ownerId: item.ownerId,
-                      quantity: item.quantity,
-                      revision: item.revision,
-                      placementRevision: item.placementRevision,
-                    }))
-                    .sort((a, b) => a.id.localeCompare(b.id)),
-                }));
-              async function readOnly(path, body) {
-                assert.ok(authorityHeaders, 'Read only with authority captured from the actual App');
-                const response =
-                  body === undefined
-                    ? await page.request.get(base + path, { headers: authorityHeaders, timeout: 10_000 })
-                    : await page.request.post(base + path, {
-                        headers: authorityHeaders,
-                        data: body,
-                        timeout: 10_000,
-                      });
-                assert.equal(response.status(), 200, 'Native read: ' + path);
-                return response.json();
-              }
-              async function state() {
-                const view = await readOnly('/api/state');
-                assert.equal(view.player.id, PLAYER_ID);
-                assert.equal(view.worldId, 'wilderness-73');
-                assert.equal(view.access.controlling, true);
-                assert.equal(view.godMode, false);
-                assert.equal(view.clock.paused, false);
-                return view;
-              }
-              async function inventory(containerId) {
-                const value = await readOnly('/api/inventory', { containerId });
-                assert.equal(value.ok, true);
-                assert.equal(value.container.id, containerId);
-                assert.equal(value.next, undefined, 'The small camp fixture fits one native contents page');
-                return value;
-              }
-              async function act(label, expected, gesture, input = 'pointer click') {
-                const before = commandRequests.length;
-                const [response] = await Promise.all([
-                  page.waitForResponse((entry) => new URL(entry.url()).pathname === '/api/command'),
-                  gesture(),
-                ]);
-                assert.equal(response.status(), 200);
-                const request = response.request(),
-                  body = request.postDataJSON(),
-                  result = await response.json();
-                assert.equal(commandRequests.length, before + 1, label + ' sends one command');
-                for (const [key, value] of Object.entries(expected))
-                  assert.deepEqual(body.command[key], value, label + ': ' + key);
-                const headers = await request.allHeaders();
-                assert.equal(headers['x-ol-client'], authorityHeaders['X-OL-Client']);
-                assert.equal(headers['x-ol-scope'], authorityHeaders['X-OL-Scope']);
-                const receipt = await readOnly('/api/command/receipt', body);
-                assert.equal(receipt.status, 'resolved');
-                for (const key of ['ok', 'code', 'message', 'itemId', 'actionId'])
-                  assert.deepEqual(receipt.result[key], result[key]);
-                report.commandObservations.push({
-                  label,
-                  input,
-                  request: body,
-                  result: Object.fromEntries(
-                    ['ok', 'code', 'message', 'itemId', 'actionId'].map((key) => [key, result[key]]),
-                  ),
-                  receiptStatus: receipt.status,
-                });
-                assert.equal(result.ok, true, label + ': ' + result.message);
-                return result;
-              }
-              async function showPanel(id, label) {
-                const panel = page.locator('#' + id + 'Panel');
-                if (!(await panel.isVisible()))
-                  await page.getByRole('button', { name: label, exact: true }).click();
-                await expect(panel).toBeVisible();
-                return panel;
-              }
-              async function hidePanel(id) {
-                const panel = page.locator('#' + id + 'Panel');
-                if (await panel.isVisible()) await panel.getByRole('button', { name: /^Hide / }).click();
-              }
-              async function nearbyRow(id) {
-                const panel = await showPanel('nearby', 'In view');
-                const back = panel.getByRole('button', { name: 'Back to In view', exact: true });
-                if (await back.isVisible()) await back.click();
-                const row = panel.locator('[data-entity="' + id + '"]').getByRole('button');
-                await expect(row).toBeVisible();
-                return row;
-              }
-              async function choice(targetId, actionId) {
-                await hidePanel('inventory');
-                await (await nearbyRow(targetId)).click({ button: 'right' });
-                const menu = page.locator('#contextMenu');
-                const row = menu.locator('[data-catalogue-action="' + actionId + '"]');
-                await expect(row).toHaveAttribute('aria-disabled', 'false');
-                return { menu, row };
-              }
-              async function capture(name) {
-                assert.ok(report.captureAttempts < 4);
-                report.captureAttempts++;
-                const started = Date.now();
-                try {
-                  await page.screenshot({ path: join(output, name) });
-                  report.captures.push(name);
-                } catch (error) {
-                  if (!(error instanceof errors.TimeoutError) || page.isClosed() || !browser.isConnected())
-                    throw error;
-                  // Retain this failed original slot; never retry or treat native completion as a pass.
-                  report.captureFailures.push({
-                    name,
-                    error: errorText(error),
-                    elapsedMs: Date.now() - started,
-                  });
-                }
-              }
-              async function advance(label, seconds, actionId, partial = false) {
-                // Preserve the actual NavigationCoordinator. An admitted finite amount is offered
-                // once; zero-time ticks only drain its retained debt after technical work settles.
-                await expect.poll(() => domain.navigationBlocked(game.service.world)).toBe(false);
-                const before = game.service.world.simTime;
-                const target = before + seconds;
-                await game.service.tick(seconds / (config.baseRatio * game.service.speed), 0);
-                await expect
-                  .poll(async () => {
-                    await game.service.tick(0, 0);
-                    return Math.abs(game.service.world.simTime - target) < 1e-6;
-                  })
-                  .toBe(true);
-                assert.ok(
-                  Math.abs(game.service.world.simTime - target) < 1e-6,
-                  label + ' advances its declared game time',
-                );
-                const view = await state();
-                if (partial) {
-                  assert.equal(view.player.action.id, actionId);
-                  assert.ok(view.player.action.progress > 0 && view.player.action.progress < 1);
-                  assert.equal(view.player.action.advancing, true);
-                  await expect(page.locator('.ol-current-work')).toContainText(view.player.action.label);
-                } else {
-                  assert.equal(game.service.world.entities[PLAYER_ID].actor.action, null);
-                  assert.equal(view.player.action, null);
-                  await expect(page.locator('.ol-current-work')).toBeHidden();
-                }
-                report.nativeProgress.push({
-                  label,
-                  seconds,
-                  before,
-                  after: game.service.world.simTime,
-                  action: view.player.action,
-                });
-              }
-              function active(type, result, seconds) {
-                const action = game.service.world.entities[PLAYER_ID].actor.action;
-                assert.equal(action.id, result.actionId);
-                assert.equal(action.type, type);
-                assert.equal(
-                  action.stage,
-                  'working',
-                  'Prepared positions must avoid an unqualified approach',
-                );
-                assert.equal(action.totalSeconds, seconds);
-                assert.equal(action.remainingSeconds, seconds);
-                return action;
-              }
-              function completion(type, targetId) {
-                const events = game.service.world.events.filter(
-                  (event) =>
-                    event.type === type && event.actorId === PLAYER_ID && event.targetId === targetId,
-                );
-                assert.equal(events.length, 1, 'One native ' + type + ' event');
-                return events[0];
-              }
-
-              // Existing immutable fixture construction prepares a valid scene, not world laws.
-              const seed = await fixture.editWorld(game.service, (world) => {
-                assert.equal(world.itemDefinitions.woven_bag.container.capacity, 24);
-                assert.equal(world.entities[PLAYER_ID].actor.equippedItemId, null);
-                const player = world.entities[PLAYER_ID],
-                  point = worldPosition(player),
-                  surfaceId = worldSupport(player);
-                assert.ok(surfaceId);
-                for (const [id, dx, dz] of [
-                  [NPC_ID, 1, 0],
-                  ['campfire', 0, -1],
-                  ['branches', -1, 0],
-                ]) {
-                  const entity = world.entities[id],
-                    position = { ...point, x: point.x + dx, z: point.z + dz };
-                  assert.equal(
-                    canStand(
-                      spatialMap(world),
-                      { ...position, surfaceId },
-                      BODY_PROFILES[entity.spatial.bodyProfileId],
-                    ),
-                    true,
-                  );
-                  setSpatialPosition(world, entity, position, surfaceId);
-                  assert.equal(seesEntity(world, player, entity), true);
-                  assert.equal(
-                    canReachEntity(
-                      world,
-                      player,
-                      entity,
-                      Math.min(world.itemHandling.reach, BASE_ACTION_DEFAULTS.interactionRadius),
-                    ),
-                    true,
-                  );
-                }
-                assert.equal(seesEntity(world, world.entities[NPC_ID], player), true);
-                const fire = world.entities.campfire;
-                assert.equal(fire.heat.lit, true);
-                const authoredInitialFuel = fire.heat.fuelSeconds;
-                fire.heat.fuelSeconds = 7200;
-                assert.ok(
-                  fire.heat.fuelSeconds + BASE_FIRE_CARE.fuel.secondsPerUnit <=
-                    BASE_FIRE_CARE.fuel.maximumFuelSeconds,
-                );
-                const bagId = createItemLot(world, PLAYER_ID, 'woven_bag', 1);
-                const knife = itemsForOwner(world, PLAYER_ID).find((item) => item.definitionId === 'knife');
-                const wood = itemsForOwner(world, PLAYER_ID).find((item) => item.definitionId === 'wood');
-                assert.equal(knife.quantity, 1);
-                assert.equal(wood.quantity, 2);
-                moveLot(world, knife.id, bagId, 1, 'camp-fixture-supplies');
-                const branchId = moveLot(world, wood.id, bagId, 2, 'camp-fixture-supplies');
-                const extra = createItemLot(world, PLAYER_ID, 'wood', 2);
-                assert.equal(moveLot(world, extra, bagId, 2, 'camp-fixture-supplies'), branchId);
-                const rawId = createItemLot(world, bagId, 'raw_meat', 2);
-                return {
-                  bagId,
-                  knifeId: knife.id,
-                  branchId,
-                  rawId,
-                  actorId: PLAYER_ID,
-                  recipientId: NPC_ID,
-                  authoredInitialFuel,
-                  preparedInitialFuel: fire.heat.fuelSeconds,
-                  fuelMaximum: BASE_FIRE_CARE.fuel.maximumFuelSeconds,
-                  positions: [PLAYER_ID, NPC_ID, 'campfire', 'branches'].map((id) => ({
-                    id,
-                    position: worldPosition(world.entities[id]),
-                    support: worldSupport(world.entities[id]),
-                  })),
-                };
-              });
-              const preparedDrop = cognition.domainCommand(
-                { type: 'drop', itemId: seed.bagId, quantity: 1 },
-                PLAYER_ID,
-                'camp-fixture-ground-bag',
-              );
-              const drop = await game.service.transition((world) => executeCommand(world, preparedDrop));
-              assert.equal(drop.ok, true, drop.message);
-              const pileId = itemFor(game.service.world, seed.bagId).ownerId;
-              assert.equal(game.service.world.entities[pileId].kind, 'item-pile');
-              report.fixture = {
-                ...seed,
-                pileId,
-                preparationCommand: preparedDrop,
-                preparationOutcome: drop,
-              };
-              assert.equal(total(seed.bagId, 'wood'), 4);
-              assert.equal(total(seed.bagId, 'raw_meat'), 2);
-              assert.equal(total(PLAYER_ID, 'wood'), 0);
-              assert.equal(total(PLAYER_ID, 'raw_meat'), 0);
-              assert.equal(total(PLAYER_ID, 'cooked_meat'), 0);
-              assert.equal(total(NPC_ID, 'cooked_meat'), 0);
-
-              await (await nearbyRow(pileId)).click();
-              await page
-                .locator('#nearbyPanel')
-                .getByRole('button', { name: /^Open / })
-                .click();
-              const ownSide = page.locator('[data-side="belongings"]'),
-                otherSide = page.locator('[data-side="container"]');
-              await otherSide.locator('[data-item-id="' + seed.bagId + '"]').click();
-              await page
-                .getByRole('dialog', { name: 'Woven bag actions and details', exact: true })
-                .getByRole('button', { name: /^Open / })
-                .click();
-              await expect(otherSide.getByRole('heading', { name: 'Woven bag', exact: true })).toBeVisible();
-              await expect(otherSide).toContainText('On the ground');
-              const opened = await inventory(seed.bagId);
-              assert.equal(opened.container.load, 7);
-              assert.equal(opened.container.capacity, 24);
-              report.openedStorage = {
-                id: opened.container.id,
-                location: opened.container.location,
-                load: opened.container.load,
-                capacity: opened.container.capacity,
-              };
-
-              async function transfer(label, fromId, toId, definitionId, quantity, keyboard = false) {
-                await showPanel('inventory', 'Inventory');
-                await expect(
-                  otherSide.getByRole('heading', { name: 'Woven bag', exact: true }),
-                ).toBeVisible();
-                const from = await inventory(fromId),
-                  to = await inventory(toId);
-                const item = from.items.find(
-                  (entry) => itemFor(game.service.world, entry.id)?.definitionId === definitionId,
-                );
-                assert.ok(item);
-                const side = fromId === PLAYER_ID ? ownSide : otherSide;
-                await side.locator('[data-item-id="' + item.id + '"]').click();
-                const detail = page.getByRole('dialog', {
-                  name: item.name + ' actions and details',
-                  exact: true,
-                });
-                if (quantity < item.quantity) {
-                  await detail.getByRole('button', { name: 'Move an amount…', exact: true }).click();
-                  await detail.getByLabel('Quantity', { exact: true }).fill(String(quantity));
-                }
-                const submit = detail.getByRole('button', {
-                  name: quantity < item.quantity ? 'Move amount' : /^Move to /,
-                  exact: quantity < item.quantity,
-                });
-                const result = await act(
-                  label,
-                  {
-                    type: 'transfer-item',
-                    itemId: item.id,
-                    quantity,
-                    targetId: toId,
-                    expectedRevision: item.revision,
-                    placementRevision: item.placementRevision,
-                    targetRevision: to.container.revision,
-                  },
-                  async () => {
-                    if (keyboard) {
-                      await submit.focus();
-                      await expect(submit).toBeFocused();
-                      await submit.press('Enter');
-                    } else await submit.click();
-                  },
-                  keyboard ? 'keyboard Enter on the focused transfer button' : 'pointer click',
-                );
-                assert.equal(result.code, 'items-arranged');
-                assert.equal(itemFor(game.service.world, result.itemId).ownerId, toId);
-                await expect(detail).toBeHidden();
-                await expect(
-                  (toId === PLAYER_ID ? ownSide : otherSide).locator(
-                    '[data-item-id="' + result.itemId + '"]',
-                  ),
-                ).toBeVisible();
-                return result;
-              }
-
-              await transfer('Take the exact knife from camp storage', seed.bagId, PLAYER_ID, 'knife', 1);
-              await transfer('Take two branches from camp storage', seed.bagId, PLAYER_ID, 'wood', 2);
-              await transfer('Take one raw portion from camp storage', seed.bagId, PLAYER_ID, 'raw_meat', 1);
-              assert.equal(total(seed.bagId, 'wood'), 2);
-              assert.equal(total(seed.bagId, 'raw_meat'), 1);
-              const knife = lot(PLAYER_ID, 'knife');
-              await ownSide.locator('[data-item-id="' + knife.id + '"]').click();
-              const knifeDetail = page.getByRole('dialog', {
-                name: 'Knife actions and details',
-                exact: true,
-              });
-              const equipped = await act(
-                'Equip the retrieved knife',
-                { type: 'equip', itemId: knife.id },
-                () => knifeDetail.getByRole('button', { name: 'Equip', exact: true }).click(),
-              );
-              assert.equal(equipped.code, 'equipped');
-              assert.equal(game.service.world.entities[PLAYER_ID].actor.equippedItemId, equipped.itemId);
-              await expect(knifeDetail).toBeHidden();
-              await expect(page.getByRole('region', { name: 'Equipped items', exact: true })).toContainText(
-                'Knife',
-              );
-              await capture('01-storage-supplies-and-equipped-knife.png');
-              assert.equal(
-                destinationRequests.length,
-                0,
-                'Ordinary paired movement does not discover destinations',
-              );
-
-              const sourceBefore = game.service.world.entities.branches.resource.quantity;
-              const gatherSeconds = game.service.world.entities.branches.resource.workSeconds;
-              assert.equal(BASE_GATHER_QUANTITY, 2);
-              let selected = await choice('branches', 'gather-branches');
-              await selected.menu.locator('[data-action-choice="gather-branches"] summary').click();
-              await expect(selected.menu).toContainText(gatherSeconds + ' seconds of game time, plus travel');
-              const gathered = await act(
-                'Gather once from the selected branches',
-                { type: 'gather', targetId: 'branches' },
-                () => selected.row.click(),
-              );
-              active('gather', gathered, gatherSeconds);
-              assert.equal(total(PLAYER_ID, 'wood'), 2);
-              await advance('Gather is partly complete', gatherSeconds / 2, gathered.actionId, true);
-              assert.equal(total(PLAYER_ID, 'wood'), 2);
-              assert.equal(game.service.world.entities.branches.resource.quantity, sourceBefore);
-              await advance('The one gathering batch completes', gatherSeconds / 2, gathered.actionId);
-              assert.equal(total(PLAYER_ID, 'wood'), 4);
-              assert.equal(game.service.world.entities.branches.resource.quantity, sourceBefore - 2);
-              report.gather = {
-                event: completion('gathered', 'branches'),
-                quantity: 2,
-                sourceBefore,
-                sourceAfter: sourceBefore - 2,
-              };
-
-              const fuel = lot(PLAYER_ID, 'wood'),
-                heatBefore = game.service.world.entities.campfire.heat.fuelSeconds;
-              selected = await choice('campfire', 'fire-fuel:' + fuel.id + ':campfire');
-              await selected.menu
-                .locator('[data-action-choice="fire-fuel:' + fuel.id + ':campfire"] summary')
-                .click();
-              await expect(selected.menu).toContainText('Uses one carried fuel item when the work finishes');
-              await expect(selected.menu).toContainText(
-                BASE_FIRE_CARE.fuel.workSeconds + ' game seconds; cancelling before it finishes uses nothing',
-              );
-              const fueled = await act(
-                'Add one selected branch to the fire',
-                { type: 'tend-fire', fireOperation: 'fuel', targetId: 'campfire', itemId: fuel.id },
-                () => selected.row.click(),
-              );
-              active('tend-fire', fueled, BASE_FIRE_CARE.fuel.workSeconds);
-              assert.equal(total(PLAYER_ID, 'wood'), 4);
-              await advance(
-                'Fuel work is partly complete; branch remains held',
-                BASE_FIRE_CARE.fuel.workSeconds / 2,
-                fueled.actionId,
-                true,
-              );
-              assert.equal(total(PLAYER_ID, 'wood'), 4);
-              assert.ok(
-                Math.abs(
-                  game.service.world.entities.campfire.heat.fuelSeconds -
-                    (heatBefore - BASE_FIRE_CARE.fuel.workSeconds / 2),
-                ) < 1e-6,
-              );
-              await advance(
-                'Fuel and fire effect commit together',
-                BASE_FIRE_CARE.fuel.workSeconds / 2,
-                fueled.actionId,
-              );
-              assert.equal(total(PLAYER_ID, 'wood'), 3);
-              assert.ok(
-                Math.abs(
-                  game.service.world.entities.campfire.heat.fuelSeconds -
-                    (heatBefore - BASE_FIRE_CARE.fuel.workSeconds + BASE_FIRE_CARE.fuel.secondsPerUnit),
-                ) < 1e-6,
-              );
-              report.fuel = {
-                event: completion('fire-fueled', 'campfire'),
-                spent: 1,
-                heatBefore,
-                heatAfter: game.service.world.entities.campfire.heat.fuelSeconds,
-              };
-
-              const raw = lot(PLAYER_ID, 'raw_meat');
-              selected = await choice('campfire', 'cook-' + raw.id + '-campfire');
-              const cooked = await act(
-                'Cook the exact carried raw portion at this fire',
-                { type: 'cook', itemId: raw.id, targetId: 'campfire' },
-                () => selected.row.click(),
-              );
-              const cooking = active('cook', cooked, BASE_ACTION_DEFAULTS.cookSeconds);
-              assert.deepEqual(cooking.consumed, [{ definitionId: 'raw_meat', quantity: 1 }]);
-              assert.equal(total(PLAYER_ID, 'raw_meat'), 0);
-              assert.equal(total(PLAYER_ID, 'cooked_meat'), 0);
-              await advance(
-                'Cooking is partly complete; its raw input is already spent',
-                BASE_ACTION_DEFAULTS.cookSeconds / 2,
-                cooked.actionId,
-                true,
-              );
-              assert.equal(total(PLAYER_ID, 'raw_meat'), 0);
-              assert.equal(total(PLAYER_ID, 'cooked_meat'), 0);
-              await showPanel('inventory', 'Inventory');
-              await expect(ownSide.getByRole('button', { name: /^Raw meat, / })).toHaveCount(0);
-              await expect(otherSide.getByRole('button', { name: 'Raw meat, 1', exact: true })).toBeVisible();
-              await capture('02-cooking-in-progress-and-committed-input.png');
-              await advance(
-                'The cooked portion is produced',
-                BASE_ACTION_DEFAULTS.cookSeconds / 2,
-                cooked.actionId,
-              );
-              assert.equal(total(PLAYER_ID, 'cooked_meat'), 1);
-              assert.equal(total(seed.bagId, 'raw_meat'), 1);
-              report.cook = {
-                event: completion('cooked', 'campfire'),
-                consumedAtStart: 1,
-                producedAtCompletion: 1,
-              };
-
-              const recipient = (await state()).entities.find((entity) => entity.id === NPC_ID);
-              assert.ok(recipient?.canTalk);
-              assert.notEqual(recipient.talkRequiresAi, false);
-              for (const operation of ['decline', 'accept']) {
-                await showPanel('inventory', 'Inventory');
-                const from = await inventory(PLAYER_ID);
-                const food = from.items.find(
-                  (entry) => itemFor(game.service.world, entry.id)?.definitionId === 'cooked_meat',
-                );
-                assert.ok(food);
-                const beforeOffer = custody();
-                const foodCell = ownSide.locator('[data-item-id="' + food.id + '"]');
-                if (!foodOfferObserverStarted) {
-                  await foodCell.evaluate((cell) => {
-                    const started = performance.now(),
-                      first = [],
-                      last = [];
-                    let count = 0,
-                      open = false;
-                    const detail = () => document.querySelector('.ol-inventory-popover');
-                    const scope = (target) =>
-                      target == null
-                        ? 'none'
-                        : target === window || target === document
-                          ? 'page'
-                          : !(target instanceof Element)
-                            ? 'outside'
-                            : cell.contains(target)
-                              ? 'food cell'
-                              : detail()?.contains(target)
-                                ? 'item details'
-                                : target.contains(cell)
-                                  ? 'inventory ancestor'
-                                  : 'outside';
-                    const record = (kind, target, relatedTarget = null) => {
-                      const entry = {
-                        ms: Math.round(performance.now() - started),
-                        kind,
-                        target: scope(target),
-                        relatedTarget: scope(relatedTarget),
-                        workspaceScrollTop: cell.closest('.ol-inventory-workspace')?.scrollTop ?? null,
-                        popoverOpen: !!detail(),
-                      };
-                      count++;
-                      if (first.length < 32) first.push(entry);
-                      else {
-                        last.push(entry);
-                        if (last.length > 32) last.shift();
-                      }
-                    };
-                    const observe = (event) => {
-                      if (scope(event.target) !== 'outside' || detail()?.contains(event.relatedTarget))
-                        record(event.type, event.target, event.relatedTarget);
-                    };
-                    const types = ['scroll', 'focusin', 'focusout', 'pointerdown', 'click'];
-                    for (const type of types) document.addEventListener(type, observe, true);
-                    const observer = new MutationObserver(() => {
-                      const current = !!detail();
-                      if (current !== open) {
-                        open = current;
-                        record(open ? 'popover opened' : 'popover closed', cell);
-                      }
-                    });
-                    observer.observe(document.body, { childList: true });
-                    record('before deliberate scroll', cell);
-                    window.__campFoodOfferObservation = () => {
-                      for (const type of types) document.removeEventListener(type, observe, true);
-                      observer.disconnect();
-                      return {
-                        eventCount: count,
-                        omittedMiddleEvents: Math.max(0, count - first.length - last.length),
-                        events: [...first, ...last],
-                      };
-                    };
-                  });
-                  foodOfferObserverStarted = true;
-                }
-                // An ordinary wheel in the gap between the paired panes exposes the last row.
-                // Keep the full-cell clipping check and the original opening click below.
-                await foodCell.scrollIntoViewIfNeeded();
-                await page.locator('#inventoryPanel .ol-inventory-workspace').hover();
-                await page.mouse.wheel(0, 80);
-                await expect
-                  .poll(
-                    () =>
-                      foodCell.evaluate((cell) => {
-                        const bounds = cell.getBoundingClientRect();
-                        let left = 0,
-                          top = 0,
-                          right = innerWidth,
-                          bottom = innerHeight;
-                        for (let parent = cell.parentElement; parent; parent = parent.parentElement) {
-                          const style = getComputedStyle(parent),
-                            rect = parent.getBoundingClientRect();
-                          if (/(auto|scroll|hidden|clip)/.test(style.overflowX)) {
-                            left = Math.max(left, rect.left + parent.clientLeft);
-                            right = Math.min(right, rect.left + parent.clientLeft + parent.clientWidth);
-                          }
-                          if (/(auto|scroll|hidden|clip)/.test(style.overflowY)) {
-                            top = Math.max(top, rect.top + parent.clientTop);
-                            bottom = Math.min(bottom, rect.top + parent.clientTop + parent.clientHeight);
-                          }
-                        }
-                        return (
-                          bounds.width > 0 &&
-                          bounds.height > 0 &&
-                          bounds.left >= left - 1 &&
-                          bounds.top >= top - 1 &&
-                          bounds.right <= right + 1 &&
-                          bounds.bottom <= bottom + 1
-                        );
-                      }),
-                    {
-                      timeout: 5_000,
-                      message: 'The complete food cell fits the inventory scrollports before opening',
-                    },
-                  )
-                  .toBe(true);
-                await foodCell.click();
-                const detail = page.getByRole('dialog', {
-                  name: 'Cooked meat actions and details',
-                  exact: true,
-                });
-                await detail.getByRole('button', { name: 'Offer to a person…', exact: true }).click();
-                const offerPanel = detail.getByRole('region', { name: 'Offer to a person', exact: true });
-                await expect(offerPanel).toContainText('nothing changes hands until they accept');
-                await finishFoodOfferObservation();
-                await offerPanel.getByLabel('Find a person', { exact: true }).fill(recipient.name);
-                const offered = await act(
-                  'Offer the cooked portion before supplied ' + operation,
-                  {
-                    type: 'handover',
-                    handoverOperation: 'offer',
-                    targetId: NPC_ID,
-                    itemId: food.id,
-                    quantity: 1,
-                    expectedRevision: food.revision,
-                    placementRevision: food.placementRevision,
-                    targetRevision: game.service.world.entities[NPC_ID].inventoryRevision ?? 0,
-                  },
-                  () =>
-                    offerPanel
-                      .getByRole('button', {
-                        name: 'Offer to ' + namePhrase(recipient, 'definite'),
-                        exact: true,
-                      })
-                      .click(),
-                );
-                assert.equal(offered.code, 'offered');
-                await expect(detail).toBeHidden();
-                assert.deepEqual(custody(), beforeOffer, 'Making the offer changes no custody or quantity');
-                const offers = Object.values(game.service.world.itemOffers ?? {});
-                assert.equal(offers.length, 1);
-                const offer = offers[0];
-                assert.equal(offer.itemId, food.id);
-                assert.equal(offer.offererId, PLAYER_ID);
-                assert.equal(offer.recipientId, NPC_ID);
-                assert.equal(offer.quantity, 1);
-                // Supplied recipient decision, bound from this NPC's current native reply option.
-                // No second browser, human endpoint impersonation, AI response or direct custody edit.
-                const option = handover
-                  .handoverOptions(
-                    game.service.world,
-                    NPC_ID,
-                    inventoryFor(game.service.world, NPC_ID),
-                    game.service.world.entities[PLAYER_ID],
-                    { offers: false },
-                  )
-                  .find(
-                    (entry) =>
-                      entry.command.handoverOperation === operation && entry.command.offerId === offer.id,
-                  );
-                assert.ok(option);
-                const command = cognition.domainCommand(
-                  option.command,
-                  NPC_ID,
-                  'camp-supplied-' + operation + ':' + offer.id,
-                );
-                const decision = await game.service.transition((world) => executeCommand(world, command));
-                assert.equal(decision.ok, true, decision.message);
-                assert.equal(decision.code, operation === 'decline' ? 'declined' : 'accepted-offer');
-                assert.deepEqual(game.service.world.commandReceipts[command.id].outcome, decision);
-                assert.equal(Object.values(game.service.world.itemOffers ?? {}).length, 0);
-                if (operation === 'decline')
-                  assert.deepEqual(custody(), beforeOffer, 'Declining changes no custody or quantity');
-                else {
-                  assert.equal(itemFor(game.service.world, decision.itemId).ownerId, NPC_ID);
-                  assert.equal(total(NPC_ID, 'cooked_meat'), 1);
-                }
-                assert.equal(total(PLAYER_ID, 'cooked_meat'), operation === 'decline' ? 1 : 0);
-                const event = game.service.world.events.find(
-                  (event) =>
-                    event.type === (operation === 'decline' ? 'offer-declined' : 'offer-accepted') &&
-                    event.data?.offerId === offer.id,
-                );
-                assert.ok(event);
-                report.suppliedDecisions.push({
-                  supplied: true,
-                  operation,
-                  optionId: option.id,
-                  command,
-                  outcome: decision,
-                  nativeReceiptMatched: true,
-                  offer,
-                  event,
-                });
-              }
-              await expect(ownSide.getByRole('button', { name: /^Cooked meat, / })).toHaveCount(0);
-              await hidePanel('inventory');
-              const journal = await showPanel('journal', 'Journal');
-              await journal
-                .getByRole('button', { name: 'World Events · what you perceived', exact: true })
-                .click();
-              const eventsPanel = page.locator('#eventsPanel');
-              const search = eventsPanel.getByRole('searchbox', {
-                name: 'Search perceived events',
-                exact: true,
-              });
-              await search.fill('offer');
-              const [eventsResponse] = await Promise.all([
-                page.waitForResponse(
-                  (response) =>
-                    new URL(response.url()).pathname === '/api/world-events' &&
-                    new URL(response.url()).searchParams.get('q') === 'offer',
-                ),
-                eventsPanel.getByRole('button', { name: 'Search', exact: true }).click(),
-              ]);
-              assert.equal(eventsResponse.status(), 200);
-              const perceived = await eventsResponse.json();
-              for (const supplied of report.suppliedDecisions)
-                assert.ok(perceived.events.some((event) => event.id === supplied.event.id));
-              await expect(eventsPanel.getByText(/declined an offer of 1 Cooked meat\./)).toBeVisible();
-              await expect(eventsPanel.getByText(/accepted an offer of 1 Cooked meat\./)).toBeVisible();
-              report.perceivedConsentEvents = perceived.events.filter((event) =>
-                report.suppliedDecisions.some((decision) => decision.event.id === event.id),
-              );
-              await capture('03-player-perceived-decline-and-acceptance.png');
-              await hidePanel('events');
-              await hidePanel('journal');
-
-              await (await nearbyRow(NPC_ID)).click();
-              await page
-                .locator('#nearbyPanel')
-                .getByRole('button', { name: 'Talk to ' + namePhrase(recipient, 'definite'), exact: true })
-                .click();
-              const conversation = page.locator('#composerPanel');
-              await expect(conversation.locator('.ol-conversation-recipient')).toContainText(
-                'To ' + namePhrase(recipient, 'definite'),
-              );
-              const draft = 'The cooked food is ready. Shall we use this camp again?';
-              const input = conversation.getByRole('textbox', { name: 'Your message', exact: true });
-              await input.fill(draft);
-              await expect(conversation.locator('#composerReadiness')).toHaveText(
-                'AI needs setup. Open settings to continue.',
-              );
-              await hidePanel('composer');
-              await showPanel('composer', 'Conversation');
-              await expect(input).toHaveValue(draft);
-              const speechBefore = game.service.world.events
-                .filter((event) => event.type === 'speech')
-                .map((event) => event.id);
-              await conversation.getByRole('button', { name: 'Set up AI', exact: true }).click();
-              await expect(page.locator('#aiPanel')).toContainText(
-                'Intelligence is unavailable. The world owner can configure it.',
-              );
-              await hidePanel('ai');
-              await showPanel('composer', 'Conversation');
-              await expect(input).toHaveValue(draft);
-              await expect(conversation.locator('.ol-conversation-recipient')).toContainText(
-                'To ' + namePhrase(recipient, 'definite'),
-              );
-              await expect(conversation.locator('#composerReadiness')).toHaveText(
-                'AI needs setup. Open settings to continue.',
-              );
-              assert.deepEqual(
-                game.service.world.events.filter((event) => event.type === 'speech').map((event) => event.id),
-                speechBefore,
-              );
-              const chatState = await state();
-              assert.equal(chatState.ai.llmConfigured, false);
-              assert.equal(chatState.ai.jevConfigured, false);
-              assert.equal(chatState.ai.budget.limitUsd, 0);
-              assert.equal(chatState.ai.usage.llmCalls, 0);
-              assert.equal(chatState.ai.usage.jevCalls, 0);
-              report.conversation = {
-                recipientId: NPC_ID,
-                perceivedName: recipient.name,
-                draft,
-                retainedAcrossHideAndSetup: true,
-                readiness: await conversation.locator('#composerReadiness').innerText(),
-                setupFeedback: 'Intelligence is unavailable. The world owner can configure it.',
-                chatPosts: providerRequests.length,
-                speechCommitted: false,
-                generatedReplyQualified: false,
-                applicationSpentUsd: chatState.ai.budget.spentUsd,
-                applicationReservedUsd: chatState.ai.budget.reservedUsd,
-              };
-              await capture('04-recipient-draft-and-unconfigured-conversation.png');
-              await hidePanel('composer');
-              const destinationCountBeforeReturn = destinationRequests.length;
-              await transfer(
-                'Put all three leftover branches into the same camp bag',
-                PLAYER_ID,
-                seed.bagId,
-                'wood',
-                3,
-                true,
-              );
-              assert.equal(
-                destinationRequests.length,
-                destinationCountBeforeReturn,
-                'Returning leftovers uses the selected paired bag',
-              );
-              assert.equal(total(PLAYER_ID, 'wood'), 0);
-              assert.equal(total(seed.bagId, 'wood'), 5);
-              assert.equal(total(seed.bagId, 'raw_meat'), 1);
-              assert.equal(total(NPC_ID, 'cooked_meat'), 1);
-              assert.equal(total(PLAYER_ID, 'raw_meat'), 0);
-              assert.equal(total(PLAYER_ID, 'cooked_meat'), 0);
-              assert.equal(game.service.world.entities[PLAYER_ID].actor.equippedItemId, equipped.itemId);
-              const finalStorage = await inventory(seed.bagId),
-                finalOwn = await inventory(PLAYER_ID);
-              assert.equal(finalStorage.container.load, 6);
-              assert.equal(finalStorage.container.capacity, 24);
-              await expect(
-                otherSide.getByRole('button', { name: 'Supple branch, 5', exact: true }),
-              ).toBeVisible();
-              await expect(otherSide.getByRole('button', { name: 'Raw meat, 1', exact: true })).toBeVisible();
-              await expect(
-                page.locator('.ol-inventory-workspace select, .ol-inventory-workspace [role="combobox"]'),
-              ).toHaveCount(0);
-              assert.equal(commandRequests.length, 10);
-              assert.equal(providerRequests.length, 0);
-              assert.deepEqual(report.unexpectedRequests, []);
-              assert.deepEqual(report.pageErrors, []);
-              assert.equal(chatState.ai.budget.spentUsd, 0);
-              assert.equal(chatState.ai.budget.reservedUsd, 0);
-              report.providerCalls = chatState.ai.usage.llmCalls + chatState.ai.usage.jevCalls;
-              report.final = {
-                simTime: game.service.world.simTime,
-                playerId: PLAYER_ID,
-                bagId: seed.bagId,
-                playerInventoryRevision: finalOwn.container.revision,
-                bagRevision: finalStorage.container.revision,
-                bagBranches: 5,
-                bagRawMeat: 1,
-                recipientCookedMeat: 1,
-                equippedKnifeId: equipped.itemId,
-                bagLoad: 6,
-                capacity: 24,
-                actualUiCommands: commandRequests.length,
-                ordinaryTransfersUsedDestinationChooser: false,
-                providerRequests,
-                providerCostUsd: 0,
-              };
-              report.nativeSequenceCompleted = true;
-              report.passed = report.captureFailures.length === 0;
-            } catch (error) {
-              report.failure = errorText(error);
-            } finally {
-              await finishFoodOfferObservation();
-              if (traceStarted && context) {
-                try {
-                  await context.tracing.stop({ path: join(output, 'trace.zip') });
-                  report.trace = 'trace.zip';
-                } catch (error) {
-                  report.cleanup.traceError = errorText(error);
-                  report.passed = false;
-                }
-              }
-              if (context) {
-                try {
-                  await context.close();
-                  report.cleanup.contextClosed = true;
-                } catch (error) {
-                  report.cleanup.contextError = errorText(error);
-                  report.passed = false;
-                }
-              }
-              if (game) {
-                try {
-                  report.cleanup.shutdown = await game.shutdown();
-                  if (report.cleanup.shutdown.problems.length || !report.cleanup.shutdown.saved)
-                    report.passed = false;
-                } catch (error) {
-                  report.cleanup.shutdownError = errorText(error);
-                  report.passed = false;
-                }
-              }
-              if (store) {
-                try {
-                  await store.close();
-                  report.cleanup.repositoryClosed = true;
-                } catch (error) {
-                  report.cleanup.repositoryError = errorText(error);
-                  report.passed = false;
-                }
-              }
-              report.finishedAt = new Date().toISOString();
-              report.elapsedMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
-              await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
-            }
-            return report;
-          }
-          OPENLEGEND_REVIEWED_SOURCE_1_END
-          cat > test-results/whole-ui-camp-care/scripts/object-care-crafting-stage.mjs <<'OPENLEGEND_REVIEWED_SOURCE_2_END'
+          OPENLEGEND_CARE_SOURCE_0_END
+          cat > test-results/whole-ui-care/scripts/object-care-crafting-stage.mjs <<'OPENLEGEND_CARE_SOURCE_1_END'
           // One finite, scratch-only continuation of the actual built App and native PG server.
           // Root owns Chromium, the six-minute supervisor and final closeTestDatabases().
           import assert from 'node:assert/strict';
@@ -4024,7 +3214,8 @@ jobs:
               await hide('inventory');
               const fireDetail = await select('campfire');
               await fireDetail.getByRole('button', { name: /^Watch this fire for one session/ }).click();
-              const taskPanel = await panel('activity', 'Current task');
+              const taskPanel = page.locator('#activityPanel');
+              await expect(taskPanel).toBeVisible();
               const task = taskPanel.locator('.ol-camp-activities');
               await task.getByRole('button', { name: 'Change supply', exact: true }).click();
               await task.getByRole('button', { name: 'Choose fuel material…', exact: true }).click();
@@ -4119,7 +3310,9 @@ jobs:
               assert.ok(Math.abs(fuel() - (fuelBefore - 20 + BASE_FIRE_CARE.fuel.secondsPerUnit)) < 1e-6);
               await expect(task.locator('.ol-task-status')).toContainText('Used 1 of at most 1');
               await hide('activity');
-              await panel('activity', 'Current task');
+              // Reopen the same object's entry to retain its selected preparation and draft.
+              await fireDetail.getByRole('button', { name: /^Watch this fire for one session/ }).click();
+              await expect(taskPanel).toBeVisible();
               await folded();
               assert.equal(actor().agency.plan.id, firstPlan);
               const beforePreparation = JSON.stringify(actor().agency.plan);
@@ -4347,13 +3540,12 @@ jobs:
             }
             return report;
           }
-          OPENLEGEND_REVIEWED_SOURCE_2_END
-          sha256sum --check <<'OPENLEGEND_CAMP_CARE_PINS_END'
-          2ed174dc8fef142cff22550518b2ac2672e467a632b0d23bcdc436c9d36ce1aa  test-results/whole-ui-camp-care/scripts/run-whole-ui.mjs
-          cf3a89c9e00f3b1056ce54bbe66e82bac4717749e239e6cf0d2932e20c518c63  test-results/whole-ui-camp-care/scripts/camp-stage.mjs
-          ac959c62b1a056a98baba7171001aef125a33ddc67f22a37549eca59ab5d4688  test-results/whole-ui-camp-care/scripts/object-care-crafting-stage.mjs
-          OPENLEGEND_CAMP_CARE_PINS_END
-          node --import tsx test-results/whole-ui-camp-care/scripts/run-whole-ui.mjs test-results/whole-ui-camp-care
+          OPENLEGEND_CARE_SOURCE_1_END
+          sha256sum --check <<'OPENLEGEND_SCRIPT_HASHES_END'
+          3784951825bf08b7520e1b5eb9d0b037e40d2598ff654d33d2ef492153f9fd7c  test-results/whole-ui-care/scripts/run-whole-ui.mjs
+          fa88e37037190c8d20d38170c257777b565d9a775894dc005aae51129c11ebf2  test-results/whole-ui-care/scripts/object-care-crafting-stage.mjs
+          OPENLEGEND_SCRIPT_HASHES_END
+          node --import tsx test-results/whole-ui-care/scripts/run-whole-ui.mjs test-results/whole-ui-care
       - uses: actions/upload-artifact@v4
         if: always()
         with:

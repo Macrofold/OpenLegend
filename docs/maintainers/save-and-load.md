@@ -81,6 +81,8 @@ Dependencies: SL01–SL03; SL05 and current-format validation are required befor
 - [ ] Quiesce admission, preserve a recoverable pre-load point and install through one recoverable authority transition. Fail safely if preparation or installation cannot complete.
 - [ ] Rebuild derived state, discard abandoned-future projections, issue fresh client baselines and reopen paused. Keep load operation identity outside the rewindable world so request retries cannot rewind twice.
 
+The October 6 whole-interface continuation found that closing the obsolete browser stream could start a competing participation save during a load, followed by a misleading success acknowledgement. The [owning correction](../projects/game-interaction-redesign-tech-design.md#serialize-transport-cleanup-during-a-restored-world) gives connection callbacks their own queue turn and rejects a newly installed load whose following participation save fails, preserving its installed record, storage pause and pre-load protection. Source review and full TypeScript pass; the extended existing native restore case and composed owner/browser return remain pending in [UIUX14/UIUX18](ui-ux.md#uiux14) and the [evidence report](../verification/game-interaction-redesign.md). This contribution does not close the broader installation/interruption criteria.
+
 Exit: interrupted installation recovers a complete old or new world; invalid candidates leave active state intact; a lost-response retry returns the original outcome even after later progress.
 
 ## SL05 — External authority and stale-work isolation

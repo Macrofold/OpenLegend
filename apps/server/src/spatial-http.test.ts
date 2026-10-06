@@ -6,7 +6,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { advanceWorld } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 import { createGameServer } from './http.js';
@@ -161,6 +161,55 @@ it('restores elevated position and native flight while departure stops unfinishe
     expect(game.service.world.entities['bird-1']!.spatial).toEqual(
       stored.state.world.entities['bird-1']!.spatial,
     );
+    expect(game.service.storageError).toBeNull();
+    expect(game.service.pauseReason).toBe('manual');
+
+    // A completed install cannot hide a failure saving its following departure state.
+    const timeline = game.service.timelineId;
+    const protectedActor = structuredClone(game.service.world.entities[actorId]);
+    const requestId = randomUUID();
+    const store = game.service.store;
+    const realCommit = store.commit.bind(store);
+    let installedRevision: number | undefined;
+    let refusedParticipation = 0;
+    const commit = vi.spyOn(store, 'commit').mockImplementation(async (...args) => {
+      if (
+        installedRevision !== undefined &&
+        args[4]?.participationChange &&
+        !refusedParticipation
+      ) {
+        refusedParticipation++;
+        throw new Error('Fixture refused the participation write before commit.');
+      }
+      const revision = await realCommit(...args);
+      if (args[4]?.restore) installedRevision = revision;
+      return revision;
+    });
+    try {
+      await expect(game.service.restoreSave(id, requestId, stored)).rejects.toThrow(
+        'The save could not be committed.',
+      );
+    } finally {
+      commit.mockRestore();
+    }
+    expect(refusedParticipation).toBe(1);
+    expect(installedRevision).toBeDefined();
+    expect(game.service.storageError).not.toBeNull();
+    expect(game.service.pauseReason).toBe('storage');
+    expect(game.service.world.paused).toBe(true);
+    expect(game.service.timelineId).not.toBe(timeline);
+    expect(game.service.world.entities[actorId]!.actor!.action).toEqual(snapshot!.actor!.action);
+    expect(await store.records?.head()).toMatchObject({ revision: installedRevision });
+    expect(await store.getIntegration(`load-request:${requestId}`)).toEqual({ saveId: id });
+    const protection = await store.saves!.read(game.service.world.id, 'before-load');
+    expect(protection.state.world.entities[actorId]).toEqual(protectedActor);
+    const speed = game.service.speed;
+    expect(await game.service.control({ speed: speed === 3 ? 1 : 3 })).toMatchObject({
+      ok: false,
+      code: 'storage',
+    });
+    expect(game.service.speed).toBe(speed);
+    expect(await store.records?.head()).toMatchObject({ revision: installedRevision });
   } finally {
     await game.close();
     await rm(directory, { recursive: true, force: true });

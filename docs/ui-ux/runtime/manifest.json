@@ -443,6 +443,50 @@
       "captureScope": "app",
       "source": "native-owner-edit-6ede5f",
       "originalFile": "01-person-dirty-close.png"
+    },
+    {
+      "id": "45-native-camp-storage-equipment",
+      "file": "45-native-camp-storage-equipment.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 778374,
+      "sha256": "96acba2de95db8440cdcebcdf8e293851e7b57918a9c25b2d5534b8ef2411b3e",
+      "captureScope": "app",
+      "source": "native-camp-0e25bc5",
+      "originalFile": "01-storage-supplies-and-equipped-knife.png"
+    },
+    {
+      "id": "46-native-camp-cooking-input",
+      "file": "46-native-camp-cooking-input.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 890823,
+      "sha256": "8997bb3877a91c43321efca68a2cff01c4ba692be6abf2ba0904a9dfbb63a896",
+      "captureScope": "app",
+      "source": "native-camp-0e25bc5",
+      "originalFile": "02-cooking-in-progress-and-committed-input.png"
+    },
+    {
+      "id": "47-native-camp-perceived-offers",
+      "file": "47-native-camp-perceived-offers.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 768999,
+      "sha256": "7cccc2ead8451268e55b0d2c2c2546d20e12a1c542cebe16dddc45ef6fc48289",
+      "captureScope": "app",
+      "source": "native-camp-0e25bc5",
+      "originalFile": "03-player-perceived-decline-and-acceptance.png"
+    },
+    {
+      "id": "48-native-camp-recipient-draft",
+      "file": "48-native-camp-recipient-draft.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 869866,
+      "sha256": "74631f2dcfc6f03a332572222ded8724ab3d5daabc100b416eca0ab59d56f7c8",
+      "captureScope": "app",
+      "source": "native-camp-0e25bc5",
+      "originalFile": "04-recipient-draft-and-unconfigured-conversation.png"
     }
   ],
   "appSource": {
@@ -1081,6 +1125,131 @@
         "worldSaved": false,
         "durableRevision": 10,
         "durableSimTime": 0
+      }
+    },
+    "native-camp-0e25bc5": {
+      "captured": "2026-10-06",
+      "description": "Production App and PlayCanvas with the native server and disposable PostgreSQL. One complete finite camp journey passes through storage, equipment, gathering, fueling, cooking, supplied recipient decline/accept decisions, conversation recipient/draft/unconfigured feedback and keyboard return of leftovers. Every original capture succeeds; the separate following care stage still fails.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "0e25bc5",
+      "checkoutCommit": "9689866a827609da9103433283890c8c76b5ce6e",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37454635793,
+        "jobId": 112239117499,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37454635793/job/112239117499",
+        "artifactId": 11408962541,
+        "artifactZipBytes": 60636821,
+        "artifactZipSha256": "eefb36ffd7326ab52787bd7399f428fe8b6d28dc3f0b0a075bb808055e41f816",
+        "wholeWorkflowPassed": false
+      },
+      "report": {
+        "artifactPath": "whole-ui-camp-care/camp/report.json",
+        "sha256": "30bccac995a6f1824547b29ea292849472f32b0827603053688f688d494a7754",
+        "traceSha256": "e7c3d4fcd8f65f17c90a607a2620ea425473339fb3ba5e4034dea0116fd74fff",
+        "startedAt": "2026-10-06T11:14:59.210Z",
+        "finishedAt": "2026-10-06T11:16:00.888Z",
+        "elapsedMs": 61678,
+        "passed": true,
+        "nativeSequenceCompleted": true,
+        "playerCommands": 10,
+        "resolvedReceipts": 10,
+        "suppliedRecipientDecisions": 2,
+        "captures": 4,
+        "captureAttempts": 4,
+        "captureFailures": 0,
+        "continuationReportSha256": "8e1bebb5a512d003a9c426664faea97489c230abb9860ff2bdb4349b02b5256e",
+        "continuationPassed": false,
+        "followingCareStage": "failed separately"
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "playwright": "1.58.2",
+        "platform": "linux",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          }
+        ],
+        "godMode": false,
+        "providerBudgetUsd": 0,
+        "providerSpentUsd": 0,
+        "providerRequests": 0
+      },
+      "fixture": "Native base world at seed 73 after actual local player entry. Existing native fixture owners prepare a woven bag with the existing knife, four branches and two raw portions, place the NPC/fire/branches within valid visible handling range, prepare partly burned initial fire fuel and drop the bag. Installed capacity and fire rules are unchanged. NPC decline then acceptance are supplied decisions through current native handover options and execution, not generated language or another human.",
+      "observed": "Ten player commands and their exact original receipts pass. Take knife/two branches/one raw portion and equip; gather two branches in 42 game seconds; fuel with one branch in 20; cook one portion in 90 with input consumed at start and output at completion. Halfway progress and resource/custody checks pass. Neither offer moves custody; supplied decline changes nothing and supplied acceptance moves exactly one cooked portion. Journal returns both player-perceived outcomes. The same recipient and draft survive Hide and the unconfigured AI settings route with no chat POST or speech event. Focused Enter returns all three leftover branches to the same bag without an ordinary destination chooser.",
+      "finalNativeState": {
+        "simTime": 152,
+        "bagBranches": 5,
+        "bagRawMeat": 1,
+        "recipientCookedMeat": 1,
+        "equippedKnifeRetained": true,
+        "bagLoad": 6,
+        "bagCapacity": 24
+      },
+      "visualReview": {
+        "45": "Paired belongings and named ground bag, equipped knife, exact visible stacks and packing load. The last carried row extends below the visible scroller; no whole-list visibility claim.",
+        "46": "No carried raw portion and three carried branches; the separate bag still contains one raw portion and two branches. The source shows 34. Only part of the Cooking HUD appears behind Inventory, so full progress is qualified by native observations rather than these pixels.",
+        "47": "Four offer search matches and the declined sentence are visible, with an offer-accepted tag near the bottom. The transient offer receipt overlaps the accepted sentence. Both complete outcomes are checked in the native/interaction evidence; this PNG does not display them simultaneously.",
+        "48": "To the person, hearing explanation, Normal volume, retained full draft, Set up AI and readiness explanation are visible. The separate Intelligence-unavailable panel and subsequent keyboard storage return occur outside this capture."
+      },
+      "limits": [
+        "Bounded camp and supplied recipient-decision slice; not complete J13/J14/J16 acceptance, autonomous consent quality, live conversation, expiry/access change or a broader recovery matrix.",
+        "Fixture preparation follows actual entry; it does not qualify walking, obtaining the original camp supplies, alternative recipes or a knife gathering bonus.",
+        "Six finite game-time amounts are supplied once through the native clock; this does not establish wall-clock pacing.",
+        "All four original slots succeed within their unchanged ten-second allowance. Prior failures and the 80 px ordinary scroll correction remain recorded; no graphics or earlier popover-cause fix is inferred from this pass.",
+        "Original images preserve dense workspace and toast overlap. No OS IME, assistive-device, broader-display or uncoached-human qualification.",
+        "The separate object/care/crafting stage fails after this stage; the combined invocation and whole workflow are not passed by the camp result."
+      ],
+      "sourceHashes": {
+        "apps/client/src/ui/camp-activity.tsx": "406b2efc33215881f670367b470fea45fad1d34f181b94bd01cca2a842078198",
+        "packages/domain/src/activity-execution.ts": "47939664362dd2940596721f733e6ee8adbbd1a166eef0a63fd4c7b92189862b",
+        "apps/client/src/main.tsx": "ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785",
+        "apps/client/src/api.ts": "c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c",
+        "apps/client/src/ui/item-creation.tsx": "c5f8c4001f517cfbb1faaab40b32a75bbdc83e6c40c213e0c82a29dd50740925",
+        "apps/client/src/ui/god-tools.tsx": "a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9",
+        "apps/client/src/ui/creation-request.tsx": "c3bafe7b66abebae85ab0700c29f754af7b0202b0b0030381c1bfcd43e202450",
+        "packages/domain/src/types.ts": "eef78f787d1d9435cc216c86e34356e04d1ebc9b744753820aa250c3854be82f",
+        "packages/domain/src/god-tools.ts": "63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d",
+        "apps/server/src/http.ts": "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+        "apps/server/src/world-service.ts": "0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263",
+        "packages/protocol/src/index.ts": "83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80",
+        "apps/server/src/inventory-view.ts": "23a5b2e6e02c3204cb0881101251b2004d282b89932344869c66d9f3299db455",
+        "apps/server/src/action-catalogue.ts": "0e03a9d3333431135ea1b10d59852f42fe12c7319feae45710394dda3dd398d7",
+        "apps/server/src/fire-actions.ts": "369b898d4f41743f8885cb27495828a0f73e9de475edae2123b579b7a271ba60",
+        "apps/server/src/handover-actions.ts": "7aa042bd7b46acce8b4e9bb0db795746985906e7bc94e3184f3d1bfe87359f60",
+        "apps/server/src/cognition.ts": "bc7932770c249ae7e465fca821204b8d79321518105a0de13d9ae74f7dab5ceb",
+        "apps/client/src/ui/inventory.tsx": "6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20",
+        "apps/client/src/ui/inventory-offer.tsx": "28161c399dc7872d6c00b6b1239c0500d1cbb6a639efbbcb3525c1c2c60db728",
+        "apps/client/src/ui/composer.tsx": "8cacb7aafc9526829bcd24e30a33cf9f5aea66da60e7f3c433aa829014c2591f",
+        "apps/client/src/ui/world-events.tsx": "9fbb1dce1fe3c65e2426649f93f9ccc8026ec5ccac78614d17428e9be5497435",
+        "packages/domain/src/kernel.ts": "55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6",
+        "packages/domain/src/handover.ts": "1c2309e9a8f83a8fa85796cf7b290b7f95f4666e810fb561a304dc8a7d2617db",
+        "packages/domain/src/worlds/base/fire.ts": "deed0892de04002b67f3f8aa08633e066da6143b51ea08202da86f3be0c0c14b",
+        "packages/domain/src/worlds/base/actions.ts": "4dee3669ff1d6968360c9decffc907c48aa49b0b81577383a2958bb30bc3904c",
+        "tests/fixtures/service.ts": "e5322bfac774e1a952d3bced7569958389525adf271026a18d2512b1a73f21e7"
+      },
+      "scenarioHashes": {
+        "camp-stage.mjs": "cf3a89c9e00f3b1056ce54bbe66e82bac4717749e239e6cf0d2932e20c518c63",
+        "run-whole-ui.mjs": "2ed174dc8fef142cff22550518b2ac2672e467a632b0d23bcdc436c9d36ce1aa"
+      },
+      "builtAssetHashes": {
+        "dist/client/index.html": "081f908dabfc767028fdd6c8eaf40f383066378eb1a20ce95ffb94ccb6b5f701",
+        "dist/client/assets/index-BRvT99nN.css": "c578f3b88b92c5bb2b142c03ac4e366f7b546f7d13ebda653aba9c8208a83c33",
+        "dist/client/assets/index-BwOLgeJq.js": "be9af271cffa2dd8757d7ed7dd7467625afc20e1e0ed6ed3b6ba8878c97e24ed"
+      },
+      "cleanup": {
+        "contextClosed": true,
+        "repositoryClosed": true,
+        "browserClosed": true,
+        "databasesClosed": true,
+        "worldSaved": true,
+        "durableRevision": 21,
+        "durableSimTime": 152,
+        "problems": []
       }
     }
   }

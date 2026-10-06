@@ -899,37 +899,47 @@ export class WorldService {
     connected: boolean,
     scope = this.localScope,
   ): Promise<void> {
-    return this.mutate(async () => {
-      await this.ready;
+    // Transport callbacks can inherit the context of the write that closes a stream.
+    // Give them their own queue turn without borrowing that write's request authority.
+    return this.mutationContext.exit(() =>
+      this.authorityContext.run(undefined, () =>
+        this.mutate(async () => {
+          await this.ready;
 
-      if (connected) {
-        this.assertScope(scope);
-        if (this.connections.size >= this.config.capacity.connections)
-          throw new Error('Connection capacity reached.');
-        this.connections.set(connectionId, scope);
-        this.connectionPreferences.set(
-          scope.accountId,
-          (await this.profileFor(scope)).preferences.pauseWhenHidden,
-        );
-      } else {
-        const previous = this.connections.get(connectionId);
-        this.connections.delete(connectionId);
-        if (
-          previous &&
-          ![...this.connections.values()].some(
-            (item) => this.presenceKey(item) === this.presenceKey(previous),
-          )
-        ) {
-          this.presence.delete(this.presenceKey(previous));
-          this.presenceOrders.delete(this.presenceKey(previous));
-          if (![...this.connections.values()].some((item) => item.accountId === previous.accountId))
-            this.connectionPreferences.delete(previous.accountId);
-        }
-      }
-      await this.reconcileDisconnectedConversation();
-      await this.reconcileParticipation();
-      if (this.world.paused !== this.paused) await this.syncPause();
-    });
+          if (connected) {
+            this.assertScope(scope);
+            if (this.connections.size >= this.config.capacity.connections)
+              throw new Error('Connection capacity reached.');
+            this.connections.set(connectionId, scope);
+            this.connectionPreferences.set(
+              scope.accountId,
+              (await this.profileFor(scope)).preferences.pauseWhenHidden,
+            );
+          } else {
+            const previous = this.connections.get(connectionId);
+            this.connections.delete(connectionId);
+            if (
+              previous &&
+              ![...this.connections.values()].some(
+                (item) => this.presenceKey(item) === this.presenceKey(previous),
+              )
+            ) {
+              this.presence.delete(this.presenceKey(previous));
+              this.presenceOrders.delete(this.presenceKey(previous));
+              if (
+                ![...this.connections.values()].some(
+                  (item) => item.accountId === previous.accountId,
+                )
+              )
+                this.connectionPreferences.delete(previous.accountId);
+            }
+          }
+          await this.reconcileDisconnectedConversation();
+          await this.reconcileParticipation();
+          if (this.world.paused !== this.paused) await this.syncPause();
+        }),
+      ),
+    );
   }
   private async reconcileDisconnectedConversation(): Promise<void> {
     if (this.config.authentication.mode !== 'local') return;
@@ -2203,6 +2213,8 @@ export class WorldService {
         this.presence.clear();
         this.presenceOrders.clear();
         await this.authorityContext.run(undefined, () => this.reconcileParticipation());
+        // The restored world may be installed even when its follow-up save fails.
+        if (this.storageError) throw new Error(this.storageError);
         this.debtSeconds = 0;
         this.memoryBacklog = null;
         this.notify();
