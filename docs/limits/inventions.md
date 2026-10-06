@@ -4,257 +4,257 @@
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
-Implementation starting points: [context.ts](../../apps/server/src/context.ts).
+LA092–LA118 below were source-checked on October 6, 2026. **Current** identifies the named implementation path, not newly executed acceptance; the character-context builder, finite workshop and reviewed owner session have different envelopes. Source-specific limits must not be treated as universal invention or world-size limits. Historical audit recommendations remain labeled below; no tuning or admission rule was changed by this review.
 
 ## LA092
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-The current finite invention flow permits eight linked authoring follow-ups. Applying an exact saved ready proposal is exempt because it makes no provider call and grants no additional allowance.
+The finite invention continuation path permits eight linked authoring follow-ups. Applying an exact saved ready proposal is exempt because it adds no authoring turn or provider call and grants no additional allowance.
 
 **Reason / tradeoff:** Keep an explicit recursion stop so generated authoring work cannot repeatedly invoke itself without end.
 
-[Implementation starting point](../../apps/server/src/cognition-maintenance.ts).
+[Continuation admission](../../apps/server/src/ai-director.ts).
 
 Original recommendation: **Review**.
 
 ## LA098
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-Existing inventions are indexed for meaning-based search in batches of 8.
+Known-invention search prepares missing recipe embeddings in chunks of at most 8 definitions. The first request also includes the query when its embedding is not yet available, so that request can contain 9 texts. This batches indexing; it is not a limit on the number of learned recipes searched.
 
 **Reason / tradeoff:** Keep manageable indexing batches; this does not need to limit how many inventions can eventually be searched.
 
-[Implementation starting point](../../packages/ai/src/embedding.ts).
+[Search and embedding orchestration](../../apps/server/src/invention-search.ts).
 
 Original recommendation: **Keep**.
 
 ## LA099
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-The invention-reuse search returns at most 5 matches and excludes semantic-similarity scores below 0.25.
+Known-invention reuse returns at most 5 suggestions. Exact learned recipe ID/name matches are placed first and do not require a semantic score of 0.25; remaining semantic matches must meet that threshold. The final five-result cap applies to the combined list, so even exact textual matches can exceed the displayed set.
 
 **Reason / tradeoff:** Keep the small suggestion set provisionally, but report whether relevant reusable inventions are being missed.
 
-[Implementation starting point](../../packages/ai/src/embedding.ts).
+[Scoped reuse ranking](../../apps/server/src/invention-search.ts).
 
 Original recommendation: **Keep**.
 
 ## LA100
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Very safe.**
 
-An invention-model request includes at most 24 known recipes chosen by matching words in the request.
+The actor-context builder ranks the entire observed known-recipe collection by request words and supplies at most 24 recipe summaries, with later collection entries first on equal scores. The 24-summary limit is not a stored-recipe ceiling or proof of meaning-based retrieval. Reviewed owner-context and paged recipe tools have separate limits below.
 
 **Reason / tradeoff:** Search all recipes known to the character and select relevant examples within the model's actual input allowance.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Actor-context selection](../../apps/server/src/context.ts).
 
 Original recommendation: **Replace**.
 
 ## LA101
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Very safe.**
 
-An invention-model request includes at most 12 memories and 12 recent events.
+The stored actor-context path requests at most 12 relevant memories and includes the last 12 observer-permitted recent events before further byte reduction. This is the context used by the finite direct invention route, not a global limit on remembered events or the reviewed owner session.
 
 **Reason / tradeoff:** Include the memories and events needed to understand the invention request rather than assuming twelve of each is sufficient.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Stored actor-context assembly](../../apps/server/src/context.ts).
 
 Original recommendation: **Replace**.
 
 ## LA103
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Very safe.**
 
-In invention-model input, names are shortened to 40 characters, recipe names to 64, recipe descriptions to 120 and memory/event text to 220.
+The actor-context builder excerpts actor/nearby/material display names to 40 Unicode code points, recipe names to 64, recipe descriptions to 120 and memory/event prose to 220, adding an ellipsis within those limits. Exact item/material identities and physical fields are retained; these excerpts do not shorten the canonical names or history records. Material labels may be omitted later under LA104.
 
 **Reason / tradeoff:** Preserve complete meaning when it fits, and shorten only optional text when the whole request actually needs reduction.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Actor-context excerpts](../../apps/server/src/context.ts) · [Material projection](../../apps/server/src/invention-context.ts).
 
 Original recommendation: **Replace**.
 
 ## LA104
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Very safe.**
 
-Oversized invention-model input is reduced by dropping recipes and memories/events to fixed counts, then nearby beings/objects, and finally material names.
+The actor-context builder has a 100,000-byte serialized-JSON ceiling. It first reduces recipe summaries to 8, recent events to 4 and memories to 4, then recipes to 1, nearby entities to 0, recent events to 1 and memories to 1; material display names are omitted last. Exact inventory/material identities remain, and irreducible overflow throws before that context is used. The direct generation caller subsequently adds selected-family and prior-proposal/base metadata: this builder ceiling is not a complete outbound provider-request byte guarantee.
 
 **Reason / tradeoff:** Replace fixed deletion order with situation-specific selection, and explicitly fail if required facts cannot fit without changing their meaning.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Reduction and refusal](../../apps/server/src/context.ts) · [Direct generation assembly](../../apps/server/src/invention-service.ts).
 
 Original recommendation: **Replace**.
 
 ## LA105
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Very safe.**
 
-A character's invention-model input includes only 3 recent invention-job records from the current saved-world timeline, including their proposals and feedback.
+Autonomous character invention context loads the 3 latest invention-job records for that actor and the current world timeline, including candidate, feedback and continuation identity. A matching world/actor/timeline/order index is available, and only the returned rows are hydrated. This bounds the history response, not retention or all database work.
 
 **Reason / tradeoff:** Choose relevant previous invention attempts and feedback rather than always limiting the history to three records.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Autonomous invention context](../../apps/server/src/actor-invention.ts).
 
 Original recommendation: **Replace**.
 
 ## LA106
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-A generated invention purpose is limited to 1,000 characters, and the proposed invention's JSON document is limited to 12,000 characters.
+The autonomous-invention response permits a purpose of at most 1,000 characters and a complete candidate JSON string of at most 12,000. Finite workshop replies and the actor recipe-validation tool also cap candidate JSON strings at 12,000. These string guards are distinct from the reviewed owner submission's 24,000-byte normalized candidate limit under CTX03 and from LA111's native field limits.
 
 **Reason / tradeoff:** Align authoring and model-response limits so the complete supported invention can pass through every validation stage.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Autonomous response](../../apps/server/src/actor-invention.ts) · [Workshop reply](../../apps/server/src/invention-workshop.ts) · [Recipe tool](../../apps/server/src/invention-tools.ts).
 
 Original recommendation: **Expand**.
 
 ## LA107
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-The invention-generation call allows at most 1,800 output tokens.
+The direct supported-technique generation stage requests at most 1,800 output tokens after selecting an installed family. This does not set the limit for an autonomous full-cognition response, the multi-turn workshop or an external owner harness.
 
 **Reason / tradeoff:** Expand output room when supported invention descriptions need it, while reserving the additional cost before the call.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Direct generation request](../../apps/server/src/invention-service.ts).
 
 Original recommendation: **Expand**.
 
 ## LA108
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — source checked 2026-10-06 · Restrictiveness: — (removed).**
 
-**Former limit, now removed:** The world refuses to add a new, distinct recipe once its stored recipe collection contains 64 entries.
+**Former limit, still removed:** The sixty-four-recipe admission ceiling is absent from current native admission. Valid distinct candidates may extend the recipe collection; exact duplicate content reuses its existing recipe and request receipts prevent repeated effects. LA100 limits supplied examples, not total stored inventions.
 
 **Reason / tradeoff:** Removed the sixty-four-recipe admission ceiling. Recipe validity, identity, material provenance, permissions and duplicate-request handling remain.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Native declaration admission](../../packages/domain/src/declarations.ts).
 
 Original recommendation: **Completed removals**.
 
 ## LA109
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Very safe.**
 
-A new recipe must use 2–6 ingredient roles (the required kinds of material), 1–8 units per role and no more than 20 material units total.
+The four original base-world launcher/ammunition/gathering-tool families retain 2–6 ingredient roles, 1–8 units per role and at most 20 units total, plus their required-role/material checks. This is authored family policy, not the engine-wide recipe envelope: cordage requires one fixed-quantity fiber role, while woven containers use two roles and derived quantities under their own contracts.
 
 **Reason / tradeoff:** Allow richer recipes when the supported crafting mechanics can execute them correctly, keeping material accounting and balance rules explicit.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Original family policy](../../packages/domain/src/worlds/base/recipe-families.ts) · [Cordage](../../packages/domain/src/worlds/base/cordage-family.ts) · [Containers](../../packages/domain/src/worlds/base/camp-container-family.ts).
 
 Original recommendation: **Expand**.
 
 ## LA110
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — source checked 2026-10-06 · Restrictiveness: — (removed).**
 
-**Former limit, now removed:** A generated recipe's output item may declare at most 6 material properties.
+**Former limit, still removed:** There is no six-property output ceiling. Current candidates cannot directly declare output properties/components at all: only the output name and description are submitted, and the selected trusted family compiles supported native properties. Removing a numeric cap did not authorize arbitrary property or effect injection.
 
 **Reason / tradeoff:** Removed the six-output-property ceiling from both native invention validation and the model response format. Supported property names and material provenance remain required.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Strict candidate and native compiler](../../packages/domain/src/invention-families.ts).
 
 Original recommendation: **Completed removals**.
 
 ## LA111
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-Generated recipe and output-item names are limited to 80 characters, and their descriptions to 700.
+Current native recipe and output names are bounded to 80 and descriptions to 700; these limits appear in both the selected-family generation schema and native validation. Native string-length checks count UTF-16 code units, unlike LA103’s display excerpts. Stored recipe/output descriptions retain the admitted text rather than those shorter context excerpts.
 
 **Reason / tradeoff:** Expand meaningful descriptions where necessary and keep the same limits in model instructions, response validation and stored records.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Generated schemas and native field validation](../../packages/domain/src/invention-families.ts).
 
 Original recommendation: **Expand**.
 
 ## LA112
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-A generated recipe must take between 48 and 480 simulation seconds to craft.
+The four original base-world launcher/ammunition/gathering-tool families retain an integer crafting-time parameter of 48–480 game seconds. Cordage and woven-container times are instead fixed or derived by their authored family rules; 48–480 is not a universal engine or invention-time law.
 
 **Reason / tradeoff:** Review the crafting-time range as a balance rule rather than removing it as though it only protects performance.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Original family parameters](../../packages/domain/src/worlds/base/recipe-families.ts) · [Cordage](../../packages/domain/src/worlds/base/cordage-family.ts) · [Containers](../../packages/domain/src/worlds/base/camp-container-family.ts).
 
 Original recommendation: **Review**.
 
 ## LA113
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-A swing-powered launcher, such as a sling, is limited to damage 10–20, range 3–7 and accuracy 0.6–0.9.
+The installed base-world swing launcher family retains damage 10–20 health points, range 3–7 metres and base accuracy 0.6–0.9. Runtime target eligibility, ammunition expenditure and accuracy modifiers remain with the native consumer; these are authored parameter bounds, not a claim of general projectile physics.
 
 **Reason / tradeoff:** Review these weapon values as authored game balance while retaining validation of the mechanics the engine can execute.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[World-owned launcher schema](../../packages/domain/src/worlds/base/recipe-families.ts).
 
 Original recommendation: **Review**.
 
 ## LA114
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-A flex-powered launcher, such as a bow, is limited to damage 16–28, range 4–10 and accuracy 0.6–0.9.
+The installed base-world flex launcher family retains damage 16–28 health points, range 4–10 metres and base accuracy 0.6–0.9. Its body material must also be rigid. These are authored recipe parameters, not a general limit on other worlds or proof that every target is supported.
 
 **Reason / tradeoff:** Review these weapon values as authored game balance rather than a general limit on extensible worlds.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[World-owned launcher schema and rigidity check](../../packages/domain/src/worlds/base/recipe-families.ts).
 
 Original recommendation: **Review**.
 
 ## LA115
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-Invented arrows can add 0–5 damage, and invented gathering tools can yield 2–4 resource units.
+The base-world arrow family retains a damage bonus of 0–5 health points; the gathering-tool family retains an integer maximum batch yield of 2–4 units. Actual gathering is capped by remaining supply and uses the best compatible carried tool without stacking; the recipe parameter is not a guarantee of producing that quantity.
 
 **Reason / tradeoff:** Change these values only as an intentional ammunition or gathering balance decision.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[World-owned ammunition/tool schemas](../../packages/domain/src/worlds/base/recipe-families.ts).
 
 Original recommendation: **Review**.
 
 ## LA116
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-Stored feedback about an invention attempt is shortened to 700 characters.
+The private domain feedback event uses the first 700 UTF-16 code units of the message. The command receipt retains the original message as its identity digest; this is not a universal truncation of invention-job history or validation findings. Paused worlds leave feedback in request history rather than emitting that event.
 
 **Reason / tradeoff:** Preserve enough feedback to explain why the invention failed, and make fuller failure details available separately if the display stays short.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Private feedback and receipt](../../packages/domain/src/invention-feedback.ts).
 
 Original recommendation: **Expand**.
 
 ## LA117
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source checked 2026-10-06 · Restrictiveness: Safe.**
 
-An invention-permission policy change allows a reason of 500 characters and an editor identifier of 100 characters.
+The current native invention-policy record permits a nonempty audit reason of at most 500 characters and an editor identifier of at most 100. The application establishes the principal; satisfying these length checks does not grant editing permission.
 
 **Reason / tradeoff:** Keep policy-change records bounded while ensuring the reason and responsible editor remain understandable.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Policy validation and change owner](../../packages/domain/src/invention-policy.ts).
 
 Original recommendation: **Keep**.
 
 ## LA118
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source checked 2026-10-06 · Restrictiveness: Medium.**
 
-Generated inventions can use only reviewed launcher, ammunition and gathering-tool mechanics; generated data cannot introduce executable code or arbitrary new effects.
+The bundled world installs six trusted recipe families: swing launcher, flex launcher, arrow, gathering tool, woven container and cordage. The former launcher/ammunition/tool-only description is superseded by the container and cordage deliveries under RF01. Candidate data selects one exact installed family and its declared fields; it cannot introduce executable code, new host effects or arbitrary manufactured-material reuse. Another world’s installed manifest determines its supported family set.
 
 **Reason / tradeoff:** Keep the boundary between proposed data and executable mechanics; add new invention families through validated engine support.
 
-[Implementation starting point](../../apps/server/src/context.ts).
+[Installed base-world selection](../../packages/domain/src/worlds/base/world.ts) · [Trusted family registry](../../packages/domain/src/worlds/base/recipe-families.ts) · [RF01](#rf01--world-owned-recipe-families).
 
 Original recommendation: **Keep**.
 
@@ -280,7 +280,9 @@ The relationship reader bounds 50,000 nodes / 200,000 edges, 1,024 examined entr
 
 **Current · Restrictiveness: Safe for measured finite fixtures; broader qualification remains open.** Packets bound observed material and accumulated reference records to 64; candidate extraction bounds nodes to 64 and examined dependency operations to 256. Existing search/page limits still apply. Each admitted turn, including a planned recipe stage, permits 32 new tool calls in total. Exact committed write replay and authenticated operation-result lookup remain available after this quota. Generated prompt text has a 64,000-byte ceiling. Required oversize packets fail before dispatch; oversized candidate analysis is retained as incomplete and cannot produce a review. There is no general resumable analysis executor in this version.
 
-**Reason / tradeoff:** Tiny output does not bound scans, graph construction or hydration. These provisional bounds cover a selected family and direct dependencies with explicit overflow. Current whole-graph paths retain their larger construction ceilings; this design does not make them incremental automatically. WW18 measures and prefers direct reads; WW15/PF retain broader index work. No global cap on world definitions, relevant knowledge or eventual investigation completeness is proposed.
+**Whole-request qualification remains open.** [Preparation](../../apps/server/src/world-authoring-analysis.ts) runs owning native validation before bounded candidate extraction; [status-policy impact](../../apps/server/src/world-authoring-kinds.ts) enumerates every world entity and effect instance and retains the affected episode tuples before hashing them. Cold policy/definition fingerprints also process whole catalogues; immutable source identities permit later reuse, not free cold setup. The 64/256 graph bounds therefore do not cap total CPU, temporary memory or server blocking. [WW11](../maintainers/world-agent-writes.md#remaining-implementation-and-qualification) owns measured cold/warm submission, review and approval cost while preserving exact impact and freshness.
+
+**Reason / tradeoff:** Tiny output does not bound scans, graph construction or hydration. These provisional bounds cover selected candidate references with explicit overflow. Current whole-graph paths retain their larger construction ceilings; this design does not make them incremental automatically. WW18 supplies the delivered finite projection; WW15/PF retain broader index work. No global cap on world definitions, relevant knowledge or eventual investigation completeness is proposed.
 
 ### CTX03 — Retention, deduplication and cache scope
 
@@ -302,7 +304,7 @@ The relationship reader bounds 50,000 nodes / 200,000 edges, 1,024 examined entr
 
 ### CTX06 — Initial graph, validation and pipeline scope
 
-**Implemented finite scope · Restrictiveness: Medium; unsupported guarantees remain blocked.** Reuse existing relationship reader/index limits and aggregate CTX02 work accounting for candidate extraction/analysis; a nested graph call does not receive a fresh slice allowance. Required overflow retains pending coverage and a continuation or explicit unsupported blocker. Complete finite-family admission is distinct from broader interaction coverage, which remains unevaluated unless a named analyzer establishes it. Only resolved exact edges enter the index; missing required endpoints remain findings.
+**Implemented finite scope · Restrictiveness: Medium; unsupported guarantees remain blocked.** Reuse existing relationship reader/index limits and aggregate CTX02 work accounting for candidate reference extraction; a nested graph call does not receive a fresh slice allowance. CTX02 separately identifies native validation, effect-impact enumeration and cold hashing outside that counter. Required overflow retains pending coverage and a continuation or explicit unsupported blocker. Complete finite-family admission is distinct from broader interaction coverage, which remains unevaluated unless a named analyzer establishes it. Only resolved exact edges enter the index; missing required endpoints remain findings.
 
 Retained requirements, check plans, findings and readiness inherit existing authoring record/session/byte bounds and CTX03 retention rules; native quota/overflow evidence is recorded separately from live qualification. Large evidence stays referenced through bounded authorized readers, not copied into every draft/prompt. Do not add unbounded graph generations, hydration fan-out or a second history. A bounded native slice may refuse unsupported long analysis; it cannot keep a transaction/paid harness open or silently pass truncated checks.
 
