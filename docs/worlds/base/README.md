@@ -7,8 +7,8 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Starting wilderness, terrain and population](landscape.md)
 - [Items, ground piles and possession](items.md)
 - [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the existing four invention families.
-- [Inventable camp containers](camp-containers.md) — proposed material/capacity rules for a nonweapon invention and ordinary camp storage; not yet implemented.
-- [Chosen camp supplies and fire watches](camp-routines.md) — proposed finite methods and one-session care, without automatic goals or learned conditional policies.
+- [Inventable camp containers](camp-containers.md) — implemented finite woven-container family and ordinary storage; broader live voluntary integration remains unqualified.
+- [Chosen camp supplies and fire watches](camp-routines.md) — implemented finite methods and explicitly selected one-session care; uncoached/live integration remains open, with no automatic goals or learned conditional policies.
 - [Light canopies and useful shelter](editable-shelters.md) — proposed finite materials, two arrangements, reversible work and nonpunitive moisture for DG13; runtime remains open.
 - [Sling handling, practice and coaching](practical-competence.md) — proposed finite competence gain, real quiet practice and voluntary instruction for DG14; runtime remains open.
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
@@ -18,6 +18,9 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
+- [Finite continuing communities](continuing-communities.md) — DG17's proposed current-clock supplies, horizon and qualification; no overnight service is adopted.
+- [Something worth showing](social-gatherings.md) — DG18's proposed ordinary gathering and later gist/busy-camp workload; current hearing remains authoritative.
+- [Supplies worth keeping](changing-supplies.md) — DG19's proposed food condition, preservation work and finite renewing patches; current food and resource rules remain unchanged.
 
 ## Code boundary
 

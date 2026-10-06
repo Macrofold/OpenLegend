@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Product design groups 16–20
+
+[The current five-group product-design assignment](../projects/product-design-groups-16-20.md) covers a personal Journal edition, finite continuing communities, worthwhile gatherings/background scenes, changing supplies and heat/material consequences. DG16–DG18 are written and reviewed; DG19–DG20 and the final package critique are in progress. [NC21](narration-and-conversations.md#nc21--personal-journal-edition), [PS03–PS06](product-scalability.md) and [CS01–CS06](changing-supplies.md) retain focused delivery. The assignment selects detailed product proposals and authored profiles; it does not implement these features or close their technical/runtime gates.
+
 ## Product design groups 11–15
 
 [The completed five-group design review](../projects/completed/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal; [practical-competence tasks](practical-competence.md) track the selected sling practice/coaching consumer. [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) tracks the optional story consumer. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.

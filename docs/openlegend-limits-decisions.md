@@ -30,7 +30,7 @@ Proposed [progressive 3D pixel art](projects/3d-pixel-art-feature-spec.md): [A3D
 
 Current [action records and learned activities](action-experience.md): [AEL01–AEL08](limits/action-experience.md) record finite representation, projection, hydration, candidate, storage, learning and retrieval limits. [AE01–AE10](maintainers/action-experience.md) and [evidence](verification/action-experience.md) record delivery and qualification; no unlimited execution is implied.
 
-Product-scalability targets: [PS-L01–PS-L22](limits/product-scalability.md) record proposed operating constraints and unselected values, including the researched continuing-life and attention/scene scopes; [PS01–PS08](maintainers/product-scalability.md) track delivery. The [central decision register](../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns unresolved product choices. Existing runtime inventories above remain controlling until the relevant target is implemented.
+Product-scalability targets: [PS-L01–PS-L33](limits/product-scalability.md) record proposed operating constraints and unselected values, including the researched continuing-life and attention/scene scopes; [PS01–PS08](maintainers/product-scalability.md) track delivery. The [central decision register](../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns unresolved product choices. Existing runtime inventories above remain controlling until the relevant target is implemented.
 
 Proposed [world creation and invention reuse](projects/world-creation-feature-spec.md): [WC-L01–WC-L12](limits/world-creation.md) inventory local starting scope, unqualified reference population, supported families, preparation, retained definitions, destination checks, dependencies and eligible sharing. ND01/ND12, INV-4.10/INV-8 and EWF11/EWF12 retain delivery routing; shared invention and participation limits remain controlling.
 
@@ -39,6 +39,10 @@ Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L0
 Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L13](limits/authored-stats.md) preserve the optional reference curve and add the selected finite sling-handling, practice/target/coaching, evidence and disclosure proposals. DG14/ND03/ND04 practical scope uses [PC](maintainers/practical-competence.md) and shared EWF/INV/action/state owners. No runtime effect, universal XP, social control or personality change is delivered.
 
 Proposed [After you left story perspective](projects/story-perspectives-feature-spec.md): [SP01–SP08](limits/narration.md#sp01--selected-external-perspective) inventory the selected private-world source family, voluntary candidate/request bounds, publication priority, presentation and retention. [NC20](maintainers/narration-and-conversations.md#nc20--optional-after-you-left-perspective) consumes existing NC execution/privacy/history; current cutaways and private-thought modes remain disabled.
+
+Proposed [personal Journal edition](projects/personal-journal-feature-spec.md): [JP01–JP06](limits/narration.md#jp01--selected-personal-export-profile) inventory eligible sources, private drafts, preparation bounds, local export formats, retention and explicit omitted scope. [NC21](maintainers/narration-and-conversations.md#nc21--personal-journal-edition) retains delivery; no public sharing or new narration is authorized by export.
+
+Proposed [changing supplies](projects/changing-supplies-feature-spec.md): [CS-L01–CS-L09](limits/changing-supplies.md) inventory attended scope, food/condition choices, finite preservation, actual storage effects, renewal flow, richer lot handling and complete-work/expansion requirements. [BW25 / CS](maintainers/changing-supplies.md) retains delivery. These are authored product proposals rather than implemented decay, renewal or a sustainable-population promise.
 
 ## Original audit entries
 

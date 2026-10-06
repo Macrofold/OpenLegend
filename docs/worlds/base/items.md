@@ -87,6 +87,10 @@ Physical mass/volume, scattering, contested ownership/theft rules and additional
 
 The inventory panel refreshes when the player moves or its own inventory/context changes; use **Refresh** for newly nearby destinations or changes in a shared container. Every action rechecks current access and revisions. Constant background motion does not repeatedly clear an open inventory page.
 
+## Proposed food-condition consumer
+
+[DG19 changing supplies](../../projects/changing-supplies-feature-spec.md) proposes one condition-bearing food family using this same custody and quantity owner. Its [authored profile](changing-supplies.md) selects preservation and renewal; [CS02](../../maintainers/changing-supplies.md#cs02--food-condition-follows-the-real-material) requires coherent creation, active-work condition, splitting/merging, exact partial handling and last-unit consumption before decay is enabled. Current containers and food remain as described above. Neither a bag name, ownership change, pending offer nor a storage move grants freshness or access to somebody else's food history.
+
 ## Maintained records
 
 - Implementation: [Feature tasks](../../maintainers/base-world.md).

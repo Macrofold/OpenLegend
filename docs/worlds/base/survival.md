@@ -91,4 +91,3 @@ Recovery requires every configured floor meter to have a current value and any n
 - Implementation: [BW23](../../maintainers/base-world.md#bw23--injury-aftermath-and-direct-interaction), with broader survival qualification under [AG13](../../maintainers/agent-agency.md#ag13--embodied-survival-demonstration).
 - Limits and constraints: [Body and escape tuning](../../limits/base-world.md#bw12--remains-and-native-escape), [feedback display](../../limits/interface.md#la223).
 - Related contracts: [Lifecycle and protection targets](lifecycle-and-protection.md), [world presentation](../../world-presentation.md), [current verification](../../verification/embodied-feedback.md).
-
