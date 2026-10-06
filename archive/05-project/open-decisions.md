@@ -198,3 +198,11 @@ Choose the first world's representation and supported satisfaction/recovery cond
 ## PG05 — October 4 owner decisions
 
 Mike selected the stag/cache, brutal observational PvE, same-name continuity, random half of distinct carried types with corpse looting, one-minute normal-walk campfire radius, removable scars, one-attempt final-blow review, no new indirect combat and five fully simulated vulnerable seconds. The implementation and delegated details are current in the [scoped record above](#pg05--proposed-first-encounter-choices). Earlier enrollment/collapse/automatic-retreat recommendations are superseded; broad D07/PS05 and BW15 choices remain open.
+
+## Batch 06 — NPC combat participation
+
+**Open; asked October 6, 2026.** [CF01/CF04/CF05](../../docs/maintainers/parallel-batch-06-rivals-and-contested-ground.md) require an answer before their dependent design and implementation prompts: may hostile NPCs fight and permanently kill other NPCs, including Ada, under the existing death rules?
+
+The selected stag currently targets participating players and excludes residents. Persistent NPC death and continuity already exist, but broader NPC combat participation was left separate from PG05. Recommendation: allow eligible NPCs to share physical combat, observable attacks and opportunities to retreat, with no automatic resurrection; this makes companionship risky and consequential. Alternative: restrict hostile opponents to player targets for this increment, explicitly limiting companion combat. Neither option enables direct player-versus-player harm, changes inactive protection, supplies ordinary revival or settles deliberate luring/property/background conflict.
+
+CF02 projectile mechanics against current lawful targets and CF03 evasion against the existing stag can be specified independently. The [batch feature proposal](../../docs/projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md#decision-required-before-completing-the-allocation) explains the choice; this entry owns its unresolved status. No answer or dependent policy is inferred from the instruction to assume earlier tasks delivered for prioritization.

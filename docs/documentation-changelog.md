@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-06 — Plan conflict after the earlier gameplay batches
+
+Created [batch 06 — Rivals and contested ground](projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md), preserving the existing 01–05 numbering. Selection assumes prior assignments delivered as requested, while the separate dependency ledger records actual main/branch evidence. Core ranged counterplay and evasion have independent technical definitions, proposed world tuning and named-branch prompts. Armed opponents, combat companions and an occupied destination remain unfinished pending the owner's NPC participation answer; they are not converted into design-only assignments or presented as implementation-ready.
+
+The [limits inventory](limits/parallel-batch-06-rivals-and-contested-ground.md) records straight non-collateral projectile flight, actual evasion without immunity, changed steadiness interpretation and unresolved participation. These are proposed mechanics, not delivered behavior or an adopted reversal of current danger/death policy. Existing DG12–DG15 designs were considered without automatically ranking them above conflict. [CF tracker](maintainers/parallel-batch-06-rivals-and-contested-ground.md) retains all unfinished planning and runtime acceptance.
+
 ## 2026-10-05 — Make death scars optional world policy
 
 At Mike's request, the existing reincarnation service accepts an empty authored scar list and null treatment. Scar-free death/Continue creates no scar state or scar-selection random draw and requires no treatment material/time; worlds may combine it with full item retention. This removes the engine's mandatory-scar restriction while keeping the [bundled world's three scars](worlds/base/player-death.md#death-scars), exact corpse/custody behavior and current saved-definition validation. No second death implementation, storage field or migration is introduced. [Execution](projects/completed/player-death-tech-design.md#optional-world-scars-correction), [BW14/FT07](limits/base-world.md#ft07--accepted-danger-reincarnation-and-simulated-fade) and [focused evidence](verification/first-threat-encounter.md#optional-world-scars--october-5-2026) record the correction.

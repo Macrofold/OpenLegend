@@ -4,6 +4,8 @@ Optional human-outcome research: [well-being evidence inventory](limits/wellbein
 
 Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md) and [batch 05 — Adventure, defense and a home](limits/parallel-batch-05-adventure-defense-and-home.md). These scope bounds are not current runtime policy.
 
+Partially defined conflict allocation: [batch 06 — Rivals and contested ground](limits/parallel-batch-06-rivals-and-contested-ground.md) records proposed projectile/evasion bounds and the unresolved NPC participation gate.
+
 Start with [the tracking system](limits/README.md). Feature inventories retain limits, reasons and removal decisions; [Remove / Change / Expand](maintainers/limits-audit.md) contains only pending recommendations. [Feature documentation requirements](feature-documentation.md) explain how future changes keep both synchronized.
 
 ## Feature inventories
