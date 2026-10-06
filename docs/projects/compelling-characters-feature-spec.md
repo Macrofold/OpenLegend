@@ -2,11 +2,11 @@
 
 | Status      | Current progress                                                                                                               | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | The integrated product target and behavioral scenarios are documented; runtime integration and live qualification remain open. | 2026-10-03   |
+| Not started | The integrated product target and behavioral scenarios are documented; runtime integration and live qualification remain open. | 2026-10-05   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. Detailed technical design remains deferred under the original product-first instruction. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
-This project is the early character-experience part of [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through). [Continuing lives](continuing-lives-feature-spec.md) owns activity and later unattended-world behavior; [memory](../memory-architecture.md), [agency](../agent-agency.md), [social continuity](appraisal-social-continuity-feature-spec.md) and the authored world retain their established contracts. The [perspective and inner-life essay](../../archive/03-design-proposals/character-experience-and-inner-life.md) preserves the philosophical ambition, research and qualifications behind this design.
+This project is the early character-experience part of [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through). [Continuing lives](continuing-lives-feature-spec.md) owns activity and later unattended-world behavior; [memory](../memory-architecture.md), [agency](../agent-agency.md), [social continuity](completed/appraisal-social-continuity-feature-spec.md) and the authored world retain their established contracts. The [perspective and inner-life essay](../../archive/03-design-proposals/character-experience-and-inner-life.md) preserves the philosophical ambition, research and qualifications behind this design.
 
 ## Purpose and player experience
 
