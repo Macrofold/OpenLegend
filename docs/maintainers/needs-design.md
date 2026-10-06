@@ -199,6 +199,8 @@ ND33's selected freshness/preservation loop and the related resource-renewal/sca
 
 **Start and parallel boundary:** Use current lots, custody, consumption and the applicable clock. A personal pilot can use today's clock contract; a continuing-world version consumes DG17's assignments. Generations are DG31. Avoid adding spoilage or renewable abundance merely to justify a new system. **Existing owners:** BW, PO, INV, shared state and simulation-time.
 
+**October 6 product proposal in progress:** [Changing supplies](../projects/changing-supplies-feature-spec.md) and its [wilderness profile](../worlds/base/changing-supplies.md) select food condition, finite preservation work and renewing outer berry patches for a personal attended loop. [CS01–CS06](changing-supplies.md) retains technical/runtime delivery and [CS limits](../limits/changing-supplies.md) records the proposed choices. Existing-world enrollment, broader ecology and unattended supply viability are not implied.
+
 #### DG20 — Heat, ignition and material consequences
 
 The remainder of ND08: a selected coarse heating/ignition/fuel/spread/extinguishing family, actual damage and useful material transformations. Carry forward DG13's moisture/coverage decisions without making every wetness or thermal consumer mandatory.
@@ -462,6 +464,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select the first ecological or generational loop; define regrowth/scarcity, life stages, population change, caregiving and their housing/food/compute demands. Resolve audience and family-content boundaries before related features. Specify observable causes of collapse, useful intervention and population admission without promising automatic abundance or survival. Keep these authored-world choices separate from the generic simulation scheduler.
 
+**October 6 resource-renewal proposal:** [DG19 changing supplies](../projects/changing-supplies-feature-spec.md) selects a finite patch-renewal loop and compares ongoing food flow with real consumption. It does not design or authorize the remaining generational, reproductive or population features; those remain DG31 and their existing decisions.
+
 ### ND07 — Editable buildings that become usable homes
 
 **Needs scoped design under an existing umbrella.** Sources: [buildings are assemblies, homes are places people use](../../archive/03-design-proposals/evolving-materials-and-construction.md#buildings-are-assemblies-homes-are-places-people-use), [D31](../../archive/05-project/open-decisions.md) and [R21](../../archive/05-project/research-backlog.md#r21--p1--evolving-materials-construction-and-fire).
@@ -515,6 +519,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [base-world survival](../worlds/base/survival.md), [items](../worlds/base/items.md), [PO](persistent-objects.md) and BW already supply consumption, cooking, exact lots, custody and finite containers. A container currently organizes supplies; it does not keep food fresh. These foundations do not define food condition or a preservation transformation.
 
 **Needed before an implementation project:** select one useful freshness/preservation loop and define per-lot condition, aging clocks, exposure/storage effects, visible or learned spoilage, unknown safety and consumption consequences. Specify actual preservation work, resources and yields, including interrupted work and failed attempts. Preserve condition through splitting, combining, custody changes, saves and background progression; coordinate the selected rules with BW/PO/INV, shared state and simulation-time owners. Detailed nutrition and microbiology are not prerequisites.
+
+**October 6 food-state proposal:** [Changing supplies](../projects/changing-supplies-feature-spec.md) defines a concrete attended preservation/cache journey, inherited condition through work and lot operations, visible edibility, interruption and current-clock behavior. [Authored tuning](../worlds/base/changing-supplies.md), [CS delivery](changing-supplies.md) and [CS limits](../limits/changing-supplies.md) preserve the product/runtime distinction. Technical design and the stateful material consumer remain open.
 
 ## Creation, controls and communication
 

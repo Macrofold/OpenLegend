@@ -62,6 +62,8 @@ Split/merge supports **stateless homogeneous stacks only**. Per-instance attribu
 
 **Reason / tradeoff:** Preserve individual state and reservations; richer stack behavior needs explicit state/reference transfer rules.
 
+[DG19 / CS02](../maintainers/changing-supplies.md#cs02--food-condition-follows-the-real-material) proposes one concrete richer consumer, including preservation input/output condition and last-unit retirement under OB14. That proposal does not remove these current restrictions until the shared operation and complete ordinary behavior are delivered. Its selected limits are in [CS-L07](changing-supplies.md#cs-l07--preserve-differences-without-multiplying-busywork).
+
 ## OB09
 
 **Reported · Restrictiveness: Medium.**

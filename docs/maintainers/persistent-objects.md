@@ -6,6 +6,8 @@ Implementation was approved in chat on September 26, 2026; the [foundation plan]
 
 **Proposed construction consumer:** [Editable shelters](../projects/editable-shelters-feature-spec.md) uses these identity, custody, finite-resource and lineage foundations for reusable coverings, staged work and salvage. Delivery remains under INV-6.4 with SW/SC; the product proposal does not reopen completed PO foundation tasks or claim modular construction is delivered.
 
+**DG19 consumer proposal, October 6:** [CS02](changing-supplies.md#cs02--food-condition-follows-the-real-material) requires condition-preserving creation, work, exact partial handling and last-unit consumption for the selected [changing-supplies family](../projects/changing-supplies-feature-spec.md). Current stateless split/merge/retirement limits remain current; the completed foundation checkmarks below do not qualify this new consumer. Preserve this owner and its identity, lineage, reservations, access and persistence contracts rather than adding a food-only custody path.
+
 ## Execution notes — September 26, 2026
 
 The approved finite object implementation and native/database/browser qualification are complete.

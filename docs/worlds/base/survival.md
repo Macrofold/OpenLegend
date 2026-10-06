@@ -82,8 +82,13 @@ People see whether a fire is burning and roughly how much fuel it holds (“abou
 
 Recovery requires every configured floor meter to have a current value and any necessary write to remain admissible. A missing meter or exhausted required revision refuses the entire recovery, preserving position, health and life status; it never initializes a meter implicitly. A meter already above its floor needs no write. The shared body owner likewise refuses revision exhaustion rather than publishing an invalid current-format body.
 
+## Proposed changing supplies
+
+[DG19 changing supplies](../../projects/changing-supplies-feature-spec.md) and its [authored profile](changing-supplies.md) propose food condition, finite preservation and selected resource renewal for a new personal attended profile. Current cooking, eating, finite stock and corpse decay above remain implemented behavior. The proposal must preserve source condition through harvesting and active work, make the last portion consumable through the shared lot owner, and reconcile actual eligibility with ordinary inspection before enabling decay. It does not add illness, animal reproduction, a new calendar or freshness effects to existing bags. [CS delivery](../../maintainers/changing-supplies.md) and [limits](../../limits/changing-supplies.md) own the unimplemented extension.
+
 ## Maintained records
 
 - Implementation: [BW23](../../maintainers/base-world.md#bw23--injury-aftermath-and-direct-interaction), with broader survival qualification under [AG13](../../maintainers/agent-agency.md#ag13--embodied-survival-demonstration).
 - Limits and constraints: [Body and escape tuning](../../limits/base-world.md#bw12--remains-and-native-escape), [feedback display](../../limits/interface.md#la223).
 - Related contracts: [Lifecycle and protection targets](lifecycle-and-protection.md), [world presentation](../../world-presentation.md), [current verification](../../verification/embodied-feedback.md).
+
