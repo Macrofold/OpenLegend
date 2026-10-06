@@ -32,7 +32,7 @@ Right-click a visible pile. With one portable stack, **Pick Up** directly select
 
 Pickup approaches through the existing supported movement path, then transfers the eligible selection. A single-stack request refers to its actual stack ID; Pick Up All means all eligible contents present at completion. Completion rechecks visibility, reach and availability. Another actor taking the contents first causes an explicit failure, never duplicated inventory. Canceling movement does not transfer items. Loss of handling or action capability cancels pending pickup; loss of locomotion cancels a required approach but does not prevent collection already within reach.
 
-Inventory item details expose **Drop** and a whole-number quantity selector for portable items. Drop places that quantity at the actor's current supported location, only where the pile body can fit. Active work must stop first because it may hold material/equipment references. Equipping individualizes one unit; dropping the unequipped remainder leaves that unit equipped. Moving the selected unit detaches it. Player and NPC concrete action options use the same native commands. Ordinary pause, body and capability restrictions still apply.
+Inventory item details expose **Drop** and a whole-number quantity selector for portable items. Drop places that quantity at the actor's current supported location, only where the pile body can fit. Unrelated work may continue; dropping an item or bag needed by an active action or reservation is refused, including dependencies inside the bag. Release or cancel that specific dependency before moving it. Equipment changes retain their separate active-work restriction. Equipping individualizes one unit; dropping the unequipped remainder leaves that unit equipped. Moving the selected unit detaches it. Player and NPC concrete action options use the same native commands. Ordinary pause, body and capability restrictions still apply.
 
 ## God creation
 
@@ -47,9 +47,13 @@ capacity, a load of 2 for the bag itself, and an admitted nesting-depth bound of
 contents, including nested bags, count toward enclosing capacity. Ordinary base materials
 and newly admitted primitive item inventions have authored load 1; these are packing units,
 not kilograms or a new global encumbrance law. Other worlds can supply different explicit
-metadata. Unknown load cannot be assumed zero. Exact legacy native-definition bindings
-preserve old definition bytes; unsupported old custom definitions require admitted metadata
-before packing. Nonempty containers cannot be retired without a separate content disposition.
+metadata. Unknown load cannot be assumed zero. Current definitions must supply the admitted
+packing meaning, with exact definition pins preserving current identity and live-edit integrity.
+The retained legacy packing-binding reader is a compatibility exception to retire under
+[DF04](../../maintainers/production-data.md#df04--retire-residual-compatibility-paths), not a
+requirement to preserve or convert older development definitions. Refuse incompatible input
+without resetting or replacing it. Nonempty containers cannot be retired without a separate
+content disposition.
 
 ## Shared containers and active work
 
@@ -81,7 +85,7 @@ the item or granting access. Clearing it retains a monotonic revision. Ordinary 
 contents and load totals do not become public through the bag's appearance in a pile.
 [PO01–PO09](../../maintainers/persistent-objects.md) records completed foundation evidence and separate capacity limits.
 
-Inventories, pile positions/contents, item properties, handling policy and pending pickup work are saved together. The existing initializer supplies missing item-handling defaults and explicit portability without overwriting configured values. Future saved-state work follows the [development save policy](../../../AGENTS.md#development-save-policy).
+Inventories, pile positions/contents, item properties, handling policy and pending pickup work are saved together. Fresh bundled-world creation supplies its authored handling policy and item definitions; current-format validation checks retained data rather than promising missing-default injection on load. The unused old object converter is part of DF04, not the current creation or loading contract. Saved-state changes follow the [development save policy](../../../AGENTS.md#development-save-policy).
 
 Physical mass/volume, scattering, contested ownership/theft rules and additional pickup/drop restrictions require concrete mechanics. Freeform-language parameter binding belongs to the action foundation; it must call this same native transfer boundary rather than implement a second transfer path. Delivery dependencies and remaining work live only in the [tracker](../../maintainers/base-world.md).
 
