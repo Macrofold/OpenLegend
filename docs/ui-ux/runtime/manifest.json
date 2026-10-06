@@ -410,6 +410,28 @@
       "captureScope": "component",
       "source": "creator-review-component-db6b65b",
       "originalFile": "04-applied-short-enlarged.png"
+    },
+    {
+      "id": "42-creation-recovery-narrow-component",
+      "file": "42-creation-recovery-narrow-component.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 67312,
+      "sha256": "ff92511201969896154828705916e7152f5c852151801bc170b20dbe0fb110d6",
+      "captureScope": "component",
+      "source": "creation-recovery-component-2d535b5",
+      "originalFile": "01-original-creation-narrow.png"
+    },
+    {
+      "id": "43-creation-cleanup-component",
+      "file": "43-creation-cleanup-component.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 64255,
+      "sha256": "1ab073b4a86f5256dcfdb0946d8cea9e593c8be88cc88a20fd3e651090a28f7e",
+      "captureScope": "component",
+      "source": "creation-recovery-component-2d535b5",
+      "originalFile": "02-confirmed-local-cleanup.png"
     }
   ],
   "appSource": {
@@ -843,6 +865,91 @@
       "cleanup": {
         "browser": "closed",
         "server": "closed"
+      }
+    },
+    "creation-recovery-component-2d535b5": {
+      "captured": "2026-10-06",
+      "description": "Actual shared creation owner, recovery dialog, item form and person form in an isolated controlled host. A recorded native catalogue supplies item/spawn/trait choices and visible player context. All access lifetimes, storage faults and transport outcomes are explicitly controlled; no native world or actual creation runs.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "2d535b50290a21d1b55c44115bbc28632d39b634",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "report": {
+        "scratchPath": "creation-recovery-client/controlled/report.json",
+        "sha256": "cc1123aa58b486efe0c9608a2ce1f2efdc3eb9bfb01fe1e3bf5541226fe2c966",
+        "startedAt": "2026-10-06T10:29:18.188Z",
+        "finishedAt": "2026-10-06T10:29:25.365Z",
+        "elapsedSeconds": 7.177,
+        "passed": true,
+        "attempt": 1,
+        "groups": 4,
+        "controlledPostDeliveries": 9,
+        "freshCreationDeliveries": 6,
+        "originalRetryDeliveries": 3,
+        "pageErrors": 0,
+        "unexpectedRequests": 0
+      },
+      "recordProvenance": {
+        "scratchPath": "creation-recovery-client/controlled/source-provenance.json",
+        "sha256": "bda827dbd521a85e18c0b8bb0f717e753afb184cac54c39c316061884e1586aa",
+        "nativeTraceArtifactPath": "whole-ui/creator/trace.zip",
+        "nativeTraceSha256": "c07fd72a6efe9e153b533d6a8c74fb53c90493e4ad570c403baf1b9b161ee0ee",
+        "nativeCheckoutCommit": "45db87d7cef957cdabe8fe02c43162c4eac3c503",
+        "nativeResponseResource": "resources/e260500cb99a8bdc89f4ed86cc52dac478579419.json",
+        "nativeResponseSha256": "90e915d0e9d0d79c87ca057e8e9e084303f3b572e505b0e28d581c609490dabe",
+        "consumedNativeViewSha256": "314778992e9bfe8d425ad322a084d5125e1c1df91aba61f3f3c364f7ade47352",
+        "fixtureManifestSha256": "d71e58796d846bfbefaadc993f603b97257d6368cecb3dab6e30412aca11aeb3",
+        "controlledInputManifestSha256": "2be9d6d35590f4a219d82a7ce6a3c26eb5de917c1dc102d1b7f8fba53721b71a",
+        "note": "The original response bytes are preserved outside the repository; the imported JSON has exactly equal values. Preparation manifests retain their original unrun status, while this later report records execution. Native catalogue values and recorded position do not establish current grant or placement admission."
+      },
+      "environment": {
+        "viewports": [
+          {
+            "width": 390,
+            "height": 844
+          },
+          {
+            "width": 1440,
+            "height": 960
+          }
+        ],
+        "capture": "Whole isolated-host viewport with actual creation recovery components",
+        "providerOperations": 0,
+        "nativeServer": false,
+        "postgreSQL": false,
+        "playCanvas": false
+      },
+      "observed": [
+        "Storage read/write failure and malformed or oversized retained requests fail closed without a mutation",
+        "First refusal preserves editing; unknown survives another kind, later refusal and reload, then retries the exact body by Enter",
+        "Confirmed person result survives failed record removal and reload; local cleanup sends no mutation even if outcome writes fail",
+        "Old private-scope and unmounted-owner replies cannot complete or clear newer retained work"
+      ],
+      "visualReview": "Both originals inspected. The narrow sheet keeps original quantity/destination, uncertainty explanation, Close and explicit retry readable. The desktop image shows the retained known person result and only local cleanup after reload. It was captured promptly after opening and appears dimmer, so it is content/control evidence rather than final-opacity or contrast qualification. Host headings and entry buttons are controlled navigation, not proposed game UI.",
+      "limits": [
+        "Controlled storage, transport and component lifetime evidence only; no full App, native creation, PostgreSQL, placement admission or grant enforcement claim.",
+        "The native recorded catalogue is reused as supplied fixture input. Controlled success/refusal messages and owner names are not proposed production wording or current native authority.",
+        "The two-item original body is retried exactly through a later refusal and reload. Exactly-once native item/person/environment creation remains a separate native stage.",
+        "Actual keyboard Enter, storage no-send behavior and late-result fences are established by the interaction report, not by still-image focus or layout alone.",
+        "No all-catalogue/storage-platform matrix, OS IME, assistive-device, broader-display or uncoached-human qualification.",
+        "These are original Open Legend implementation captures, not external-game research images."
+      ],
+      "sourceHashes": {
+        "apps/client/src/main.tsx": "ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785",
+        "apps/client/src/api.ts": "c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c",
+        "apps/client/src/ui/item-creation.tsx": "c5f8c4001f517cfbb1faaab40b32a75bbdc83e6c40c213e0c82a29dd50740925",
+        "apps/client/src/ui/god-tools.tsx": "a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9",
+        "apps/client/src/ui/creation-request.tsx": "c3bafe7b66abebae85ab0700c29f754af7b0202b0b0030381c1bfcd43e202450"
+      },
+      "sourceScope": "The helper, API and two creation forms are imported. main.tsx is pinned as their reviewed App integration, but the App is not mounted in this observation.",
+      "scenarioHashes": {
+        "check.tsx": "b0b6f88be82c10c63065ed4547fbf803a03f6f7e790eb5072def1da8b4f2037c",
+        "server.mjs": "a317d48e203d430262d023d4e84f837105a003580a381c84329c39bb4ed4dbfc",
+        "run.mjs": "c08ab4812b4e0838f0395d0dfcc82fa1354194f34fd89c156e7cec5dfa1b1795"
+      },
+      "cleanup": {
+        "browser": "closed",
+        "server": "closed",
+        "sourceHashes": "unchanged"
       }
     }
   }
