@@ -12,7 +12,7 @@ Possessions use shared immutable definition descriptions plus current quantity/e
 
 Plans reference the [spatial destination and native route contract](../archive/07-technical-architecture/spatial-world-runtime.md). A blocked route, inaccessible stance or flying target can change the current means without deleting a goal. Native traversal and level-1 selected actions share fresh spatial admission; navigation/cache preparation is not an invented action or a mandatory LLM decision. [SW05–SW08](maintainers/spatial-world.md) supplies ground integration; flight-specific cases add SW12 only.
 
-**Specification status:** target behavior, not a statement that the runtime implements it. Delivery and acceptance belong to the [agency tracker](maintainers/agent-agency.md). The [runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md) owns serialization, admission, scheduling and execution details.
+**Specification status:** accepted behavior with delivered finite mechanisms and remaining targets. Optional multi-operation decisions, actor-owned goals, bounded native plans, visual following and selected finite methods already exist; the [agency tracker](maintainers/agent-agency.md) distinguishes their delivered scope from defects, broader lifecycle integration and behavioral acceptance. Illustrative scenarios below are not proof that every proposed route or outcome is implemented. The [runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md) owns serialization, admission, scheduling and execution details.
 
 Agency is the standard operational-controller contract, not a requirement that every organism maintain verbal thoughts or goals. [Engine/world boundaries](engine-and-world-boundaries.md#8-minds-agency-and-behavior) allows other compatible controllers while preserving native authority and the existing player/actor permission boundary.
 
@@ -57,7 +57,7 @@ Use **goal** in player-facing language and **intention** when it helps distingui
 
 A need can concern the body or a psychological dimension of the authored person, such as contact, belonging or enjoyment. Current native bodily conditions already have world-owned mechanics; broader psychological need behavior is an [accepted product target with open integration work](projects/compelling-characters-feature-spec.md#needs-experience-and-choice), not a claim that new meters are implemented. A desire is something the actor wants or imagines. A maintained goal is something the actor has chosen to keep pursuing across decisions. A plan is a proposed means of doing so. A running action is the authoritative work currently being performed. A social commitment is an obligation established by the relevant social rules. These distinctions allow each to change without pretending that the others changed too.
 
-Hunger does not require creating “Satisfy hunger” every time it changes. Eating an available berry can be a native or immediate response with no durable goal. “Keep enough food for tomorrow” is a good candidate for a persistent goal because it matters beyond the present stimulus. “Understand why the shelter leaks” is also a goal, although its next useful action may be investigation rather than construction.
+Hunger does not require creating “Satisfy hunger” every time it changes. Choosing to eat an available berry needs no durable goal; its admitted execution is native, but this world does not select it through an automatic person-feeding controller. “Keep enough food for tomorrow” is a good candidate for a persistent goal because it matters beyond the present stimulus. “Understand why the shelter leaks” is also a goal, although its next useful action may be investigation rather than construction.
 
 For example, a hungry actor carrying an edible berry may choose “Eat one berry” through Jev alone. After normal engine checks, native execution consumes the berry and applies its nutrition effect. No goal, written thought, speech, reflection or generative explanation is required. Once an eating action is chosen, its execution needs no further inference. This world no longer chooses feeding through a native person controller. The [level-1 runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation) defines selection and admission.
 
@@ -151,7 +151,7 @@ The third case requires genuine prior intent. The mere act of submitting a desig
 
 This is a behavioral scenario, not a canned recipe or a required route for every hungry actor.
 
-**Opportunity.** The actor notices its fullness declining and perceives prey. It may eat food already in its possession, continue an adequate native food-seeking action, ask someone for food, or consider a longer-term solution. It need not wait until an emergency threshold before thinking ahead.
+**Opportunity.** The actor notices its fullness declining and perceives prey. It may choose to eat food already in its possession, continue a previously chosen gathering or hunting action, ask someone for food, or consider a longer-term solution. Continuing admitted native work does not authorize an unchosen feeding sequence. It need not wait until an emergency threshold before thinking ahead.
 
 **Idea.** The actor thinks a flexible branch and a tensioned binding might propel a projectile. It can submit that proposed mechanism immediately, or first request invention and supply its method after neutral clarification. A bow alone is not assumed to solve ammunition, hunting, harvesting, cooking or eating.
 
@@ -173,7 +173,7 @@ The current task, active physical work, important obligations and new relevant r
 
 An internal goal edit can refresh derived interests without causing another LLM call immediately. A newly stored private thought does not automatically become its own significant-event trigger. An actor can hold a stable intention for a long time without constantly rephrasing it.
 
-Physiological urgency should protect timely native behavior. It should not categorically prevent a conscious actor from considering a solution when the native controller has no adequate one. Incapacitation and lack of a granted cognition capability remain different from hunger. Exact need bands and reminder cadence remain owned by the existing cognition policy and open decision D54.
+Bodily consequences and configured sleep continue natively; urgency may prioritize an eligible decision without selecting food or a target for the person. Incapacitation and lack of a granted cognition capability remain different from hunger, and unavailable or declining cognition may leave a person unfed. [World-owned survival](worlds/base/survival.md) and its linked limits own installed body concerns, recovery and background-thinking gates; [cognition limits](limits/cognition.md) and AG07 retain reconsideration tuning and remaining wake-loop qualification. Do not recreate the removed hunger-to-action controller from an earlier threshold audit.
 
 ## 9. The intended 80/20
 
