@@ -1,6 +1,6 @@
 # Open Legend implementation screenshots
 
-**Reviewed October 6, 2026.** These 27 original screenshots show the whole-interface implementation candidate. They are separate from the [98 external game screenshots](../screenshots/gallery.md) and [nine design proposals](../wireframes/README.md). Each image retains its captured bytes; [the manifest](manifest.json) records dimensions, hashes and capture-specific source identities. This gallery explains the visible decisions; the [verification report](../../verification/game-interaction-redesign.md#whole-interface-runtime) owns actual results, earlier failures and remaining acceptance.
+**Reviewed October 6, 2026.** These 31 original screenshots show the whole-interface implementation candidate and observed defects that prompted corrections. They are separate from the [98 external game screenshots](../screenshots/gallery.md) and [nine design proposals](../wireframes/README.md). Each image retains its captured bytes; [the manifest](manifest.json) records dimensions, hashes and capture-specific source identities. This gallery explains the visible decisions; the [verification report](../../verification/game-interaction-redesign.md#whole-interface-runtime) owns actual results, earlier failures and remaining acceptance.
 
 ## How to read the images
 
@@ -13,6 +13,8 @@ Images 20–23 show the October 6 narrow-layout corrections. Images 20, 21 and 2
 Images 24–27 show one actual App/PlayCanvas, native server and PostgreSQL session with local development sign-in. After the player entered, fixture preparation supplied a full woven bag and placed two existing characters nearby. One died through the existing native death transition and retained a permitted and a restricted bag; the other remained alive. The six original UI commands were Drop, the refused six-stone move, take/put exactly three branches, and take/put one bone fragment. Each has a resolved native receipt. Separate permitted reads check capacity and custody integrity, private/living inventory refusal and out-of-reach refusal; fixture relocation does not establish walking or arrival.
 
 The [native interaction record](../../verification/game-interaction-redesign.md#native-inventory-and-focus-fixture-continuation) distinguishes these outcomes from the earlier controlled captures. The branch revision is `d8f0b4`; the [CI job](https://github.com/Macrofold/OpenLegend/actions/runs/37433166390/job/112168569322) checked out merge `3731b364a82d89818d66380437d2c1c4c69d970a` on `main` at `0a3ab79b7a698a7f1941dc23722f89220d1ba425`. The manifest retains artifact `11398327568`, its archive hash, the native report hash and exact source/built-asset hashes. These four captures do not establish that the entire browser job or all interface journeys passed.
+
+Images 28–31 come from the next native App/server/PostgreSQL continuation at branch `d1315ea`, actual CI checkout `1f3faa833208b532cf99a15ca7b22939e1d0e77f` against the same main commit. Both installed alternate worlds use their existing native source, residents and possessions at seed 73 without fixture edits. Start, partial recharge, Stop and reopening each same database pass. Images 29 and 31 intentionally preserve the redundant active-task preparation that the visual review found; they are not illustrations of the later correction. The [native result](../../verification/game-interaction-redesign.md#native-alternate-world-continuation-and-remaining-gates) and manifest retain the exact source, build and artifact identities.
 
 The screenshots establish what was visible in those states. Keyboard operation, retained drafts, request identity and native work behavior require the linked interaction evidence. Real operating-system IME, assistive devices, broader displays and uncoached player observation remain open.
 
@@ -190,6 +192,30 @@ The screenshots establish what was visible in those states. Keyboard operation, 
 
 **1440×1000, App.** The existing reservoir world supplies its own location, time wording and character attributes to the shared shell. Its recharge task uses the existing native replenishment operation through the newly installed finite task presentation. A focused App check verified the old world's scene-label elements were removed; native checks separately cover charge transfer, stopping, duplicate commands and current-record restoration. Shared scene content does not make this arbitrary-world qualification, and the observed switch did not satisfy the separate five-second CI entry deadline.
 
+### 28 — The shared inventory in a native clockwork world
+
+![The native clockwork world uses the same labeled item grid, with a second collection reserved for an opened physical container.](28-native-clockwork-inventory.png)
+
+**1440×960, native App/server/PostgreSQL.** The player sees recognizable item pictures, names and exact quantities. The neighboring empty collection tells the player to open an object in the world, preserving the object-first transfer model. The existing world shares these six starting item kinds with the base world; their familiar names are actual authored content, not evidence of different equipment rules. The search field and roomy tiles are easy to distinguish, but this small six-item sample cannot establish large-inventory density or navigation quality. Reopening the same database retained the exact possessions and the world's Charge/Integrity values.
+
+### 29 — Successful work can still have poor presentation
+
+![A native Recharge task is active beside a charged capacitor, but the task panel still shows planning modes and a second Start control.](29-native-recharging-current-work.png)
+
+**1440×960, native App/server/PostgreSQL.** Current work names the real supply, Stop is available, and the source's inspected quantity agrees with actual native spending. Those are useful connections between the world and the menu. The lower panel is nevertheless crowded by scheduling choices and another Start, even though the player just started this work. The technical success toast adds little and competes with the panel. The lesson is to switch the panel's emphasis after commitment: monitor current work first and deliberately reopen preparation. Native success does not make this layout satisfactory.
+
+### 30 — Shared UI does not require identical character senses
+
+![The touch-demo world presents the same ordinary player's belongings through the shared inventory panel.](30-native-touch-world-inventory.png)
+
+**1440×960, native App/server/PostgreSQL.** This intentionally resembles image 28: the controlled player retains ordinary sight and the same six starting item kinds. The world's other resident uses contact-based perception and cannot see the distant supply; that difference is established by native permitted reads, not inferred from this screenshot. The useful design property is that inventory does not need a separate implementation for that world. This is neither touchscreen testing nor proof that any arbitrary world or equipment schema is supported.
+
+### 31 — The narrow view exposes the active-task problem clearly
+
+![At 390 pixels wide, the active task and Stop are followed by preparation modes, a repeated recharge section and a technical success notice.](31-native-narrow-task-clutter.png)
+
+**390×844, native App/server/PostgreSQL, before the correction.** The selected task and Stop fit, but the rest of the screen repeats choices that the player has already made. The acknowledgement appears both inline and as a toast; the sticky Start row crosses the repeated task description. Keeping a button technically reachable is insufficient when the screen no longer makes the current decision clear. The accepted correction folds preparation after a confirmed start, retains its values behind **Prepare another task**, uses plain acknowledgements and preserves refusal or uncertain-result recovery. This original capture remains a record of the defect; a later screenshot must identify the actual corrected source separately.
+
 ## Remaining acceptance
 
-The [current implementation map](../interface-coverage.md#current-runtime-candidate) identifies changed and reused controls across 60 surface groups, preserving the 58-group historical audit and its original evidence. The [UIUX tracker](../../maintainers/ui-ux.md#uiux08) retains the remaining complete inventory/camp/consent and creator journeys, real operating-system IME and assistive devices, broader text/display combinations and uncoached player observation. Captures 24–27 and their native record qualify the bounded bag/remains session described above; screenshots and that one session do not close the broader gates.
+The [current implementation map](../interface-coverage.md#current-runtime-candidate) identifies changed and reused controls across 60 surface groups, preserving the 58-group historical audit and its original evidence. The [UIUX tracker](../../maintainers/ui-ux.md#uiux08) retains the remaining complete inventory/camp/consent and creator journeys, real operating-system IME and assistive devices, broader text/display combinations and uncoached player observation. Captures 24–27 and their native record qualify the bounded bag/remains session; 28–31 qualify the separately described alternate-world session and expose an active-task presentation defect. These observations do not close the broader gates.

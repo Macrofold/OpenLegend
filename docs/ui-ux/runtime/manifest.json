@@ -256,6 +256,50 @@
       "captureScope": "app",
       "source": "native-inventory-d8f0b4",
       "originalFile": "04-native-corpse-paired-contents.png"
+    },
+    {
+      "id": "28-native-clockwork-inventory",
+      "file": "28-native-clockwork-inventory.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 566590,
+      "sha256": "70a328bcc3c23fd29e761853bc033e26caed9ba996cf14e47e705767e343bcee",
+      "captureScope": "app",
+      "source": "native-alternate-world-d1315ea",
+      "originalFile": "reservoir-demo-01-inventory.png"
+    },
+    {
+      "id": "29-native-recharging-current-work",
+      "file": "29-native-recharging-current-work.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 739404,
+      "sha256": "1fdc4b015cdef902b86fb5e413249cc24db8caeea06ac19201168977e8bc889b",
+      "captureScope": "app",
+      "source": "native-alternate-world-d1315ea",
+      "originalFile": "reservoir-demo-02-partial-recharge.png"
+    },
+    {
+      "id": "30-native-touch-world-inventory",
+      "file": "30-native-touch-world-inventory.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 565608,
+      "sha256": "371a868a1068c90c4f793ab1e480a1a4000d01c8c7fc7db19d4c121ad1708b0a",
+      "captureScope": "app",
+      "source": "native-alternate-world-d1315ea",
+      "originalFile": "touch-demo-01-inventory.png"
+    },
+    {
+      "id": "31-native-narrow-task-clutter",
+      "file": "31-native-narrow-task-clutter.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 232106,
+      "sha256": "15891fd227780fabde59871367f82c5b0c7603192b862395a1db12292771ef13",
+      "captureScope": "app",
+      "source": "native-alternate-world-d1315ea",
+      "originalFile": "touch-demo-02-partial-recharge.png"
     }
   ],
   "appSource": {
@@ -369,6 +413,90 @@
         "packages/domain/src/worlds/base/items.ts": "1e7d330b4648466638a2b4943c32a1dea5b6c4c4df433df1b5fd86a98bacee9e",
         "packages/domain/src/living.ts": "596b160baa6e747ac15c171aa3e6ba76ca33d0c1a40b516ca1aa6731b4783ead",
         "packages/domain/src/worlds/base/body-policy.ts": "eb85b8e45ef4e39a6d8f45746b39534dfc6348837cbd4b6905070902cd3a592d",
+        "dist/client/index.html": "192e7d1f67eb8059dc2afcfce9e0c672ee0dece3d1419c0d92c911893a9e899a",
+        "dist/client/assets/index-BMNxzZig.css": "bdf8405b72fe431d3d2c16ea947504b9bf054fe4978c74f9d71ff654928852f5",
+        "dist/client/assets/index-BY3PsIly.js": "5970199ac52fc970e6967cc9cd774780ddb93fd31b2488da0b9e64bf2d0f6df6"
+      }
+    },
+    "native-alternate-world-d1315ea": {
+      "captured": "2026-10-06",
+      "description": "Production App and PlayCanvas with actual native HTTP/local development sign-in and PostgreSQL. Fresh supported reservoir-demo and touch-demo presets at seed73; normal player sight, existing possessions/source/residents, no editWorld preparation. Each performs Start, partial native recharge, Stop and same-database reopening with original receipt reads. The narrow active-task screenshot intentionally records the redundant preparation defect before its correction.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "d1315ea6590b8edf5b19c97d4e0e8180ae8d7a39",
+      "checkoutCommit": "1f3faa833208b532cf99a15ca7b22939e1d0e77f",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37436275294,
+        "jobId": 112178748846,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37436275294/job/112178748846",
+        "artifactId": 11399204773,
+        "artifactZipSha256": "a6cc6d97da7e3ad31a96843d4ea1557a18723e7e463b3b833cd7bf31b36bddc2"
+      },
+      "report": {
+        "artifactPath": "whole-ui/alternate-world/report.json",
+        "sha256": "6c60379e9758087598f794d526de51a3687cff20d0dff37bb3ce0dd5eb474f97",
+        "startedAt": "2026-10-06T08:35:06.832Z",
+        "finishedAt": "2026-10-06T08:36:28.592Z",
+        "passed": true
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          },
+          {
+            "width": 390,
+            "height": 844
+          }
+        ],
+        "providerBudgetUsd": 0
+      },
+      "observedCommands": [
+        "Start installed recharge task in each world",
+        "Stop all recharge work in each world"
+      ],
+      "persistence": "Same named PostgreSQL database and browser login context reopened per world at simulated time7; exact items/meters and both original receipts retained without command replay.",
+      "limits": [
+        "Two installed presets at one seed; desktop interaction plus one 390×844 task capture/Stop gesture, not arbitrary world-package or device qualification.",
+        "Touch-demo player retains normal sight. Resident coarse-touch behavior is checked as a separate native observation, not player touch input.",
+        "No transfer fixture, manual checkpoint restore, access revocation, lost-response injection, provider, native IME or uncoached-human claim.",
+        "No whole CI pass: Time, camp and creator failures are retained in the verification report.",
+        "Active-task presentation in images29 and31 is the observed defect, not the subsequently corrected UI."
+      ],
+      "sourceHashes": {
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/main.tsx": "296b534de3dc4cae81ed731bda03f9a26d9d6de6d5b627d9c801049d3b775b00",
+        "apps/client/src/ui/camp-activity.tsx": "1b7e4e22de3b9cdbd4c98f7af18accbff93b08f53a7239b11d921d381b5c2afb",
+        "apps/client/src/ui/activity-object-field.tsx": "22d39b2e25f6c486d24fa0f2287e266de7ba9833c202e2885ae5d67e38ce857d",
+        "apps/client/src/ui/inventory.tsx": "6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20",
+        "apps/client/src/ui/inventory-collection.tsx": "8d0e27faa7d9afabd8ed20eabaff28909b82f2f70a25adc66da2f95d71575feb",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/server/src/http.ts": "b8b072e2bb43d2a19141bc7102b784c97da3fbc32348d0c484341b79c44be14a",
+        "apps/server/src/config.ts": "ea94fd7668fabbbde0261bfd9d10f11fea07186ef15d94c84ec232c91d8199a5",
+        "apps/server/src/world-service.ts": "b8e07637b81804ed39f5c2ab16388952f059b2f9306b85e9c9c42fe0040ce262",
+        "apps/server/src/activity-requests.ts": "39117264f341c7a34dce19f37c04934dea5d1d73de1eb4eef375d211367055f7",
+        "apps/server/src/inventory-view.ts": "23a5b2e6e02c3204cb0881101251b2004d282b89932344869c66d9f3299db455",
+        "apps/server/src/view.ts": "959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b",
+        "apps/server/src/authority.ts": "1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb",
+        "apps/server/src/store.ts": "9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc",
+        "packages/domain/src/world-presets.ts": "64ea2095bdca9409c9a6abfa30bc37a3da913c64a18bd4d0bfc86fb2ac2691ee",
+        "packages/domain/src/worlds/base/world.ts": "98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44",
+        "packages/domain/src/worlds/base/items.ts": "1e7d330b4648466638a2b4943c32a1dea5b6c4c4df433df1b5fd86a98bacee9e",
+        "packages/domain/src/worlds/base/landscape.ts": "df5f6359140accdd1d443ff61dcf429175c18180abdfc61cec055566c5074836",
+        "packages/domain/src/worlds/base/first-threat.ts": "557728d3222bbbf6a6d5754185b3c0f4379e3ead3d2e3729de87a89d43b23428",
+        "packages/domain/src/worlds/reservoir-demo/activity.ts": "766eb5f63ee82179b2c303a7c8573af6cbdaf09dff5d3175b8f9f3ca024706d8",
+        "packages/domain/src/world-modules.ts": "547dd6aa0108ddd603ff3b0182606e0146552116dbe982bb506cc863259f9f7f",
+        "packages/domain/src/kernel.ts": "55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6",
+        "packages/domain/src/activity-execution.ts": "326fe8fbf64fcc94be7ddc9d0a582c4dd30ee9a19a8f93ed68f4168f7115201f",
+        "packages/domain/src/perception.ts": "74d86b4444d7c2a7d77d93aced14753e2a18473d9d486fa7950632410464af6e",
+        "packages/domain/src/objects.ts": "c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70"
+      },
+      "assetHashes": {
         "dist/client/index.html": "192e7d1f67eb8059dc2afcfce9e0c672ee0dece3d1419c0d92c911893a9e899a",
         "dist/client/assets/index-BMNxzZig.css": "bdf8405b72fe431d3d2c16ea947504b9bf054fe4978c74f9d71ff654928852f5",
         "dist/client/assets/index-BY3PsIly.js": "5970199ac52fc970e6967cc9cd774780ddb93fd31b2488da0b9e64bf2d0f6df6"

@@ -68,7 +68,8 @@ jobs:
           tests/browser/time.spec.ts
           --output test-results/interface
       # One finite native continuation; remove after its requested evidence is retained.
-      - name: Exercise native camp, alternate worlds, and creator recovery
+      # The alternate-world roundtrip passed at d1315ea and is not repeated here.
+      - name: Exercise native camp and creator recovery
         if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
         timeout-minutes: 6
         run: |
@@ -658,7 +659,7 @@ jobs:
               assert.equal(BASE_GATHER_QUANTITY, 2);
               let selected = await choice('branches', 'gather-branches');
               await selected.menu.locator('[data-action-choice="gather-branches"] summary').click();
-              await expect(selected.menu).toContainText(gatherSeconds + ' work seconds after approach');
+              await expect(selected.menu).toContainText(gatherSeconds + ' seconds of game time, plus travel');
               const gathered = await act(
                 'Gather once from the selected branches',
                 { type: 'gather', targetId: 'branches' },
@@ -685,8 +686,9 @@ jobs:
               await selected.menu
                 .locator('[data-action-choice="fire-fuel:' + fuel.id + ':campfire"] summary')
                 .click();
+              await expect(selected.menu).toContainText('Uses one carried fuel item when the work finishes');
               await expect(selected.menu).toContainText(
-                'used up when the ' + BASE_FIRE_CARE.fuel.workSeconds + '-second work finishes',
+                BASE_FIRE_CARE.fuel.workSeconds + ' game seconds; cancelling before it finishes uses nothing',
               );
               const fueled = await act(
                 'Add one selected branch to the fire',
@@ -1058,665 +1060,7 @@ jobs:
             return report;
           }
           OPENLEGEND_WHOLE_UI_0
-          cat > "$task_dir/alternate-world-stage.mjs" <<'OPENLEGEND_WHOLE_UI_1'
-          // Scratch-only finite J46 segment. Prepared against production source 7507fb5874f8d826015aca1b29996fae9c76b22a.
-          // Import with node --import tsx from the repository cwd; call runAlternateWorldStage once.
-          // The outer continuation owns Chromium, its deadline and final closeTestDatabases().
-          // This segment returns a report even on failure; the caller must require report.passed.
-          // No invented items, relocated actors, changed world policies or model responses.
-          import assert from 'node:assert/strict';
-          import { createHash } from 'node:crypto';
-          import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-          import { createRequire } from 'node:module';
-          import { tmpdir } from 'node:os';
-          import { join, resolve } from 'node:path';
-          import { pathToFileURL } from 'node:url';
-
-          const { expect } = createRequire(resolve('package.json'))('@playwright/test');
-          const fromCheckout = (path) => import(pathToFileURL(resolve(path)).href);
-          const [{ createGameServer }, { testRepository, readConfig }, { enterGame }, domain] =
-            await Promise.all([
-              fromCheckout('apps/server/src/http.ts'),
-              fromCheckout('tests/fixtures/database.ts'),
-              fromCheckout('tests/fixtures/browser.ts'),
-              fromCheckout('packages/domain/src/index.ts'),
-            ]);
-
-          // Filled from the actual checkout during preparation, before any runtime is authorized.
-          const preparedSourceSha256 = {
-            'apps/client/src/design-system/layout.css':
-              '75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61',
-            'apps/client/src/main.tsx': '296b534de3dc4cae81ed731bda03f9a26d9d6de6d5b627d9c801049d3b775b00',
-            'apps/client/src/ui/camp-activity.tsx':
-              '1b7e4e22de3b9cdbd4c98f7af18accbff93b08f53a7239b11d921d381b5c2afb',
-            'apps/client/src/ui/activity-object-field.tsx':
-              '22d39b2e25f6c486d24fa0f2287e266de7ba9833c202e2885ae5d67e38ce857d',
-            'apps/client/src/ui/inventory.tsx':
-              '6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20',
-            'apps/client/src/ui/inventory-collection.tsx':
-              '8d0e27faa7d9afabd8ed20eabaff28909b82f2f70a25adc66da2f95d71575feb',
-            'apps/client/src/ui/panels.tsx':
-              'e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9',
-            'apps/client/src/design-system/components.tsx':
-              '6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc',
-            'apps/server/src/http.ts': 'b8b072e2bb43d2a19141bc7102b784c97da3fbc32348d0c484341b79c44be14a',
-            'apps/server/src/config.ts': 'ea94fd7668fabbbde0261bfd9d10f11fea07186ef15d94c84ec232c91d8199a5',
-            'apps/server/src/world-service.ts':
-              'b8e07637b81804ed39f5c2ab16388952f059b2f9306b85e9c9c42fe0040ce262',
-            'apps/server/src/activity-requests.ts':
-              '39117264f341c7a34dce19f37c04934dea5d1d73de1eb4eef375d211367055f7',
-            'apps/server/src/inventory-view.ts':
-              '23a5b2e6e02c3204cb0881101251b2004d282b89932344869c66d9f3299db455',
-            'apps/server/src/view.ts': '959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b',
-            'apps/server/src/authority.ts':
-              '1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb',
-            'apps/server/src/store.ts': '9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc',
-            'packages/domain/src/world-presets.ts':
-              '64ea2095bdca9409c9a6abfa30bc37a3da913c64a18bd4d0bfc86fb2ac2691ee',
-            'packages/domain/src/worlds/base/world.ts':
-              '98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44',
-            'packages/domain/src/worlds/base/items.ts':
-              '1e7d330b4648466638a2b4943c32a1dea5b6c4c4df433df1b5fd86a98bacee9e',
-            'packages/domain/src/worlds/base/landscape.ts':
-              'df5f6359140accdd1d443ff61dcf429175c18180abdfc61cec055566c5074836',
-            'packages/domain/src/worlds/base/first-threat.ts':
-              '557728d3222bbbf6a6d5754185b3c0f4379e3ead3d2e3729de87a89d43b23428',
-            'packages/domain/src/worlds/reservoir-demo/activity.ts':
-              '766eb5f63ee82179b2c303a7c8573af6cbdaf09dff5d3175b8f9f3ca024706d8',
-            'packages/domain/src/world-modules.ts':
-              '547dd6aa0108ddd603ff3b0182606e0146552116dbe982bb506cc863259f9f7f',
-            'packages/domain/src/kernel.ts':
-              '55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6',
-            'packages/domain/src/activity-execution.ts':
-              '326fe8fbf64fcc94be7ddc9d0a582c4dd30ee9a19a8f93ed68f4168f7115201f',
-            'packages/domain/src/perception.ts':
-              '74d86b4444d7c2a7d77d93aced14753e2a18473d9d486fa7950632410464af6e',
-            'packages/domain/src/objects.ts':
-              'c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70',
-          };
-          const sourcePaths = Object.keys(preparedSourceSha256);
-          const hashFile = async (path) =>
-            createHash('sha256')
-              .update(await readFile(path))
-              .digest('hex');
-          const errorMessage = (error) => (error instanceof Error ? error.message : String(error));
-          const closeNumber = (actual, expected, label) =>
-            assert.ok(Math.abs(actual - expected) < 1e-6, `${label}: ${actual} versus ${expected}`);
-
-          export async function runAlternateWorldStage({ browser, outputDirectory }) {
-            const output = join(outputDirectory, 'alternate-world');
-            await mkdir(output, { recursive: true });
-            const report = {
-              stage: 'alternate-world',
-              startedAt: new Date().toISOString(),
-              productionBase: '7507fb5874f8d826015aca1b29996fae9c76b22a',
-              checkout: process.env.GITHUB_SHA ?? 'unrecorded-local-checkout',
-              headRef: process.env.GITHUB_HEAD_REF ?? '',
-              node: process.version,
-              browser: browser.version(),
-              fixture: {
-                presets: ['reservoir-demo', 'touch-demo'],
-                seed: 73,
-                setup:
-                  'Fresh native presets, normal player sight and existing possessions/source/residents. No editWorld changes.',
-                clock:
-                  'Automatic host ticking disabled; fixed wall clock and explicit native elapsed-time calls.',
-                input:
-                  'Actual Chromium App clicks at 1440×960 and one 390×844 task/Stop view; browser-issued client identity and current native scope for read-only observations.',
-                persistence:
-                  'Same named testRepository reopened after clean native shutdown; same browser context/login retained.',
-                budgetUsd: 0,
-              },
-              limits: [
-                'Two installed presets at one seed; desktop interaction plus one 390×844 task capture/Stop gesture, not arbitrary world-package or device qualification.',
-                'Touch-demo player retains normal sight. Resident coarse-touch behavior is checked as a separate native observation, not player touch input.',
-                'No transfer fixture, manual checkpoint restore, access revocation, lost-response injection, provider, native IME or uncoached-human claim.',
-              ],
-              worlds: [],
-              captures: [],
-              cleanup: [],
-              passed: false,
-            };
-
-            try {
-              report.sourceSha256 = Object.fromEntries(
-                await Promise.all(sourcePaths.map(async (path) => [path, await hashFile(path)])),
-              );
-              assert.deepEqual(
-                report.sourceSha256,
-                preparedSourceSha256,
-                'Production owners changed after stage preparation; review the segment before running it',
-              );
-              const assets = (await readdir('dist/client/assets')).filter((name) => /\.(js|css)$/.test(name));
-              report.assetSha256 = Object.fromEntries(
-                await Promise.all(
-                  ['dist/client/index.html', ...assets.map((name) => 'dist/client/assets/' + name)].map(
-                    async (path) => [path, await hashFile(path)],
-                  ),
-                ),
-              );
-              for (const preset of ['reservoir-demo', 'touch-demo']) {
-                const directory = await mkdtemp(join(tmpdir(), 'openlegend-ui-' + preset + '-'));
-                const observed = {
-                  preset,
-                  initialViewport: { width: 1440, height: 960 },
-                  commands: [],
-                  pageErrors: [],
-                  unexpectedRequests: [],
-                  passed: false,
-                };
-                report.worlds.push(observed);
-                const fixedNow = Date.now();
-                const config = readConfig({
-                  AI_BUDGET_USD: '0',
-                  OPEN_LEGEND_AUTH_MODE: 'local',
-                  OPEN_LEGEND_GOD_MODE: 'false',
-                  OPEN_LEGEND_WORLD_PRESET: preset,
-                  WORLD_SEED: '73',
-                });
-                assert.equal(config.budgetUsd, 0);
-                assert.equal(config.godMode, false);
-                assert.equal(
-                  Boolean(config.jevKey || config.llmKey || config.macrofoldKey || config.embeddingKey),
-                  false,
-                );
-                let game, repository, context, page, base, browserClient;
-                let tracing = false;
-                const commandRequests = [];
-                let playerId;
-                const sourceId = 'charge-bank';
-                const familyId = 'reservoir-demo:recharge-session';
-
-                async function startHost(reopened = false) {
-                  repository = await testRepository(directory);
-                  game = await createGameServer({
-                    config,
-                    store: repository,
-                    production: true,
-                    tick: false,
-                    now: () => fixedNow,
-                  });
-                  await new Promise((resolveListen, reject) => {
-                    game.server.once('error', reject);
-                    game.server.listen(0, '127.0.0.1', resolveListen);
-                  });
-                  const address = game.server.address();
-                  assert.ok(address && typeof address !== 'string');
-                  base = 'http://127.0.0.1:' + address.port;
-                  if (!context) {
-                    context = await browser.newContext({ viewport: observed.initialViewport });
-                    await context.tracing.start({
-                      screenshots: false,
-                      snapshots: true,
-                      sources: true,
-                    });
-                    tracing = true;
-                  }
-                  page = await context.newPage();
-                  page.setDefaultTimeout(10_000);
-                  browserClient = undefined;
-                  page.on('pageerror', (error) => observed.pageErrors.push(error.message));
-                  page.on('request', (request) => {
-                    const url = new URL(request.url());
-                    if (url.origin !== base && !['data:', 'blob:'].includes(url.protocol))
-                      observed.unexpectedRequests.push(url.origin + url.pathname);
-                    if (
-                      /^\/api\/(?:god(?:\/|$)|chat(?:\/|$)|invent(?:\/|$)|world-agent\/)/.test(url.pathname)
-                    )
-                      observed.unexpectedRequests.push(url.pathname);
-                    if (url.origin === base && url.pathname.startsWith('/api/')) {
-                      browserClient = request.headers()['x-ol-client'] ?? browserClient;
-                      if (url.pathname === '/api/command') commandRequests.push(request.postDataJSON());
-                    }
-                  });
-                  // Cookies are retained on reopen. A new login would correctly invalidate receipt recovery.
-                  await page.goto(base + (reopened ? '/' : '/auth/login'));
-                  await enterGame(page);
-                  await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
-                  assert.equal(game.service.paused, false);
-                }
-
-                async function state() {
-                  assert.ok(browserClient, 'The actual App must establish its tab identity first');
-                  const response = await page.request.get(base + '/api/state', {
-                    headers: { 'X-OL-Client': browserClient },
-                  });
-                  assert.equal(response.status(), 200);
-                  const value = await response.json();
-                  assert.equal(value.access.controlling, true);
-                  assert.equal(value.worldId, preset + '-73');
-                  return value;
-                }
-
-                async function readOnly(path, body) {
-                  const view = await state();
-                  const response = await page.request.post(base + path, {
-                    headers: {
-                      Origin: base,
-                      'X-OL-Client': browserClient,
-                      'X-OL-Scope': view.access.scope,
-                    },
-                    data: body,
-                  });
-                  assert.equal(response.status(), 200, path);
-                  return response.json();
-                }
-
-                async function act(label, expected, gesture) {
-                  const before = commandRequests.length;
-                  const [response] = await Promise.all([
-                    page.waitForResponse((entry) => new URL(entry.url()).pathname === '/api/command'),
-                    gesture(),
-                  ]);
-                  assert.equal(response.status(), 200);
-                  const request = response.request().postDataJSON();
-                  const result = await response.json();
-                  assert.equal(commandRequests.length, before + 1, label + ' must issue one command');
-                  for (const [key, value] of Object.entries(expected))
-                    assert.deepEqual(request.command[key], value);
-                  assert.equal(result.ok, true, result.message);
-                  const receipt = await readOnly('/api/command/receipt', request);
-                  assert.equal(receipt.status, 'resolved');
-                  for (const key of ['ok', 'code', 'message', 'actionId'])
-                    assert.deepEqual(receipt.result[key], result[key]);
-                  observed.commands.push({
-                    label,
-                    request,
-                    result,
-                    receiptStatus: receipt.status,
-                  });
-                  return { request, result };
-                }
-
-                async function advanceGameSeconds(seconds) {
-                  // The real host's navigation coordinator settles technical waits. Do not replace it
-                  // with domain fixture routes, offer elapsed time twice, or call long ticks as suspension.
-                  await expect.poll(() => domain.navigationBlocked(game.service.world)).toBe(false);
-                  const target = game.service.world.simTime + seconds;
-                  await game.service.tick(seconds / (config.baseRatio * game.service.speed), 0);
-                  await expect
-                    .poll(async () => {
-                      await game.service.tick(0, 0);
-                      return Math.abs(game.service.world.simTime - target) < 1e-6;
-                    })
-                    .toBe(true);
-                  closeNumber(game.service.world.simTime, target, 'Native game time');
-                }
-
-                async function sharedPanels(captureName) {
-                  const view = await state();
-                  const inventory = await readOnly('/api/inventory', {
-                    containerId: playerId,
-                  });
-                  assert.equal(inventory.ok, true);
-                  assert.equal(inventory.container.id, playerId);
-                  assert.equal(inventory.next, undefined);
-                  assert.deepEqual(
-                    inventory.items.map((item) => item.id).sort(),
-                    domain
-                      .itemsForOwner(game.service.world, playerId)
-                      .map((item) => item.id)
-                      .sort(),
-                  );
-                  const inventoryPanel = page.locator('#inventoryPanel');
-                  await page.getByRole('button', { name: 'Inventory', exact: true }).click();
-                  await expect(inventoryPanel).toBeVisible();
-                  const own = inventoryPanel.locator('[data-side="belongings"]');
-                  await expect(own.locator('[data-item-id]')).toHaveCount(inventory.items.length);
-                  for (const item of inventory.items) {
-                    await expect(own.locator('[data-item-id="' + item.id + '"]')).toBeVisible();
-                    assert.ok(item.icon, 'Native inventory projection supplies its installed item icon');
-                  }
-                  await expect(own.locator('[data-item-id] svg.ol-icon').first()).toBeVisible();
-                  if (captureName) {
-                    await page.screenshot({ path: join(output, captureName) });
-                    report.captures.push({
-                      file: 'alternate-world/' + captureName,
-                      preset,
-                      scene: 'Native shared inventory and condition HUD',
-                      viewport: page.viewportSize(),
-                    });
-                  }
-                  await inventoryPanel.getByRole('button', { name: /^Hide / }).click();
-                  await page.getByRole('button', { name: 'Character', exact: true }).click();
-                  const character = page.locator('#characterPanel');
-                  await expect(
-                    character.getByRole('tab', { name: 'Condition', exact: true }),
-                  ).toHaveAttribute('aria-selected', 'true');
-                  for (const name of ['Charge', 'Integrity']) {
-                    const attribute = view.player.attributes.find((entry) => entry.name === name);
-                    assert.ok(attribute);
-                    await expect(character.getByRole('meter', { name, exact: true })).toHaveAttribute(
-                      'aria-valuenow',
-                      String(attribute.value),
-                    );
-                  }
-                  await expect(character.getByRole('meter', { name: /^(Food|Energy)$/ })).toHaveCount(0);
-                  await expect(character.getByText('Disposition', { exact: true })).toBeVisible();
-                  assert.deepEqual(view.player.attributes.map((entry) => entry.id).sort(), [
-                    'clockwork:charge',
-                    'clockwork:disposition',
-                    'clockwork:integrity',
-                  ]);
-                  await character.getByRole('button', { name: /^Hide / }).click();
-                  return {
-                    items: inventory.items.map(({ id, name, quantity, icon }) => ({
-                      id,
-                      name,
-                      quantity,
-                      icon,
-                    })),
-                    attributes: view.player.attributes,
-                  };
-                }
-
-                function savedContents() {
-                  const world = game.service.world;
-                  return structuredClone({
-                    worldId: world.id,
-                    timeline: game.service.timelineId,
-                    simTime: world.simTime,
-                    playerId,
-                    playerName: world.entities[playerId].name,
-                    attributes: world.entities[playerId].actor.attributes,
-                    inventory: domain.itemsForOwner(world, playerId).sort((a, b) => a.id.localeCompare(b.id)),
-                    source: world.entities[sourceId],
-                    manifest: world.moduleManifest,
-                  });
-                }
-
-                async function shutdownHost(phase) {
-                  if (page && !page.isClosed()) await page.close();
-                  page = undefined;
-                  if (game) {
-                    const result = await game.shutdown();
-                    game = undefined;
-                    repository = undefined;
-                    report.cleanup.push({ preset, phase, server: result });
-                    assert.equal(result.saved, true, 'Native shutdown must confirm the final save');
-                    assert.deepEqual(result.problems, []);
-                  } else if (repository) {
-                    await repository.close();
-                    repository = undefined;
-                  }
-                }
-
-                try {
-                  await startHost();
-                  const initial = await state();
-                  playerId = initial.player.id;
-                  const world = game.service.world;
-                  const player = world.entities[playerId];
-                  const source = world.entities[sourceId];
-                  const definition = domain.attributeDefinition(world, source.replenisher.attributeId);
-                  assert.ok(definition?.reservoir && definition.schema.kind === 'number');
-                  assert.equal(domain.seesEntity(world, player, source), true);
-                  assert.equal(
-                    initial.entities.some((entity) => entity.id === sourceId),
-                    true,
-                  );
-                  assert.equal(initial.godMode, false);
-                  observed.initialPanels = await sharedPanels(preset + '-01-inventory.png');
-
-                  const offered = await readOnly('/api/activity-requests', {
-                    targetId: sourceId,
-                  });
-                  assert.deepEqual(
-                    offered.requests.map((request) => request.id),
-                    [familyId],
-                  );
-                  assert.deepEqual(
-                    offered.entries.map(({ familyId: family, targetId }) => [family, targetId]),
-                    [[familyId, sourceId]],
-                  );
-                  const selected = await readOnly('/api/activity-choices', {
-                    family: familyId,
-                    field: 'sourceId',
-                    selectedId: sourceId,
-                  });
-                  assert.equal(selected.selected?.id, sourceId);
-                  assert.equal(selected.selected.accessible, true);
-                  const incompatible = initial.entities.find(
-                    (entity) => !world.entities[entity.id].replenisher,
-                  );
-                  assert.ok(
-                    incompatible,
-                    'Use an actually perceived incompatible object for the negative choice read',
-                  );
-                  const refused = await readOnly('/api/activity-requests', {
-                    targetId: incompatible.id,
-                  });
-                  assert.deepEqual(refused.entries, []);
-                  observed.choices = {
-                    selected: selected.selected,
-                    incompatibleId: incompatible.id,
-                    incompatibleEntries: refused.entries,
-                  };
-                  if (preset === 'touch-demo') {
-                    const residentId = domain.defaultResidentEntityId(world);
-                    assert.deepEqual(world.entities[residentId].actor.senses, [domain.COARSE_TOUCH.id]);
-                    assert.equal(domain.seesEntity(world, world.entities[residentId], source), false);
-                    observed.touch = {
-                      residentId,
-                      playerSeesSupply: true,
-                      residentSeesSupply: false,
-                      senses: [domain.COARSE_TOUCH.id],
-                    };
-                  }
-
-                  await page.getByRole('button', { name: 'In view', exact: true }).click();
-                  const nearby = page.locator('#nearbyPanel');
-                  await nearby
-                    .locator('[data-entity="' + sourceId + '"]')
-                    .getByRole('button')
-                    .click();
-                  await nearby.getByRole('button', { name: /^Recharge from this supply/ }).click();
-                  const task = page.locator('#activityPanel');
-                  await expect(task).toContainText(source.name);
-                  await expect(task.locator('input, select, [role="combobox"]')).toHaveCount(0);
-                  await expect(task.getByRole('button', { name: 'Start task', exact: true })).toBeEnabled();
-                  assert.equal(
-                    commandRequests.length,
-                    0,
-                    'Inspection and automatic task preview must not act',
-                  );
-                  const before = {
-                    charge: domain.readAttribute(game.service.world.entities[playerId].actor, definition),
-                    supply: source.replenisher.remaining,
-                    simTime: game.service.world.simTime,
-                  };
-                  const started = await act(
-                    'Start installed recharge task',
-                    {
-                      type: 'activity-request',
-                      activityFamilyId: familyId,
-                      activityArguments: { sourceId, mode: 'enqueue' },
-                    },
-                    () => task.getByRole('button', { name: 'Start task', exact: true }).click(),
-                  );
-                  await advanceGameSeconds(6);
-                  const activeWorld = game.service.world;
-                  const action = activeWorld.entities[playerId].actor.action;
-                  assert.equal(action?.type, 'replenish');
-                  assert.equal(action.targetId, sourceId);
-                  assert.ok(action.remainingSeconds > 0 && action.remainingSeconds < action.totalSeconds);
-                  assert.ok(action.transferred > 0);
-                  const transferred = Object.values(activeWorld.entities).flatMap((entity) =>
-                    entity.actor?.action?.type === 'replenish' && entity.actor.action.targetId === sourceId
-                      ? [
-                          {
-                            actorId: entity.id,
-                            amount: entity.actor.action.transferred ?? 0,
-                          },
-                        ]
-                      : [],
-                  );
-                  const supplyAfter = activeWorld.entities[sourceId].replenisher.remaining;
-                  const chargeAfter = domain.readAttribute(activeWorld.entities[playerId].actor, definition);
-                  assert.ok(supplyAfter >= 0 && supplyAfter < before.supply);
-                  // Residents keep their native behavior. All still-active source transfers count,
-                  // while the player's body continues its independently authored drain.
-                  closeNumber(
-                    before.supply - supplyAfter,
-                    transferred.reduce((sum, entry) => sum + entry.amount, 0),
-                    'Finite source debit across all actors',
-                  );
-                  closeNumber(
-                    chargeAfter,
-                    before.charge + action.transferred - definition.reservoir.drainPerSecond * 6,
-                    'Player transfer less continuous drain',
-                  );
-                  observed.partial = {
-                    before,
-                    chargeAfter,
-                    supplyAfter,
-                    playerAction: structuredClone(action),
-                    transfers: transferred,
-                  };
-                  const active = await state();
-                  assert.equal(active.player.hasWork, true);
-                  await expect(
-                    task.getByRole('button', { name: 'Stop all work', exact: true }),
-                  ).toBeEnabled();
-                  await expect(nearby).toContainText(Math.round(supplyAfter) + ' units of supply');
-                  if (preset === 'touch-demo') {
-                    await page.setViewportSize({ width: 390, height: 844 });
-                    await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
-                    await expect(task).toBeVisible();
-                    await task
-                      .getByRole('button', { name: 'Stop all work', exact: true })
-                      .scrollIntoViewIfNeeded();
-                    await expect(
-                      task.getByRole('button', { name: 'Stop all work', exact: true }),
-                    ).toBeInViewport();
-                    await expect(
-                      page.locator('.ol-survival').getByRole('meter', { name: 'Charge', exact: true }),
-                    ).toBeVisible();
-                  }
-                  const captureName = preset + '-02-partial-recharge.png';
-                  await page.screenshot({ path: join(output, captureName) });
-                  report.captures.push({
-                    file: 'alternate-world/' + captureName,
-                    preset,
-                    scene: 'Partial native recharge, source consumption and reachable Stop control',
-                    viewport: page.viewportSize(),
-                  });
-                  const stopped = await act('Stop all recharge work', { type: 'cancel' }, () =>
-                    task.getByRole('button', { name: 'Stop all work', exact: true }).click(),
-                  );
-                  assert.equal(game.service.world.entities[playerId].actor.action, null);
-                  const stoppedView = await state();
-                  assert.equal(stoppedView.player.hasWork, false);
-                  await expect(task.getByRole('button', { name: 'Stop all work', exact: true })).toHaveCount(
-                    0,
-                  );
-                  await advanceGameSeconds(1);
-                  closeNumber(
-                    domain.readAttribute(game.service.world.entities[playerId].actor, definition),
-                    chargeAfter - definition.reservoir.drainPerSecond,
-                    'Stopped player only drains',
-                  );
-                  assert.equal(game.service.world.entities[playerId].actor.action, null);
-                  const retained = savedContents();
-                  observed.stopped = {
-                    charge: domain.readAttribute(game.service.world.entities[playerId].actor, definition),
-                    sourceRemaining: game.service.world.entities[sourceId].replenisher.remaining,
-                    hasWork: false,
-                  };
-                  await shutdownHost('before reopen');
-
-                  await startHost(true);
-                  assert.deepEqual(
-                    savedContents(),
-                    retained,
-                    'Same-owned PostgreSQL restart must retain identity, exact contents, source, attributes, time and installed manifest',
-                  );
-                  const reopened = await state();
-                  assert.equal(reopened.access.accountId, initial.access.accountId);
-                  assert.equal(reopened.access.commandRecoveryScope, stoppedView.access.commandRecoveryScope);
-                  assert.equal(reopened.player.hasWork, false);
-                  assert.equal(game.service.world.entities[playerId].actor.action, null);
-                  for (const original of [started, stopped]) {
-                    const receipt = await readOnly('/api/command/receipt', original.request);
-                    assert.equal(receipt.status, 'resolved');
-                    for (const key of ['ok', 'code', 'message', 'actionId'])
-                      assert.deepEqual(receipt.result[key], original.result[key]);
-                  }
-                  observed.reopenedPanels = await sharedPanels();
-                  const availableAgain = await readOnly('/api/activity-requests', {
-                    targetId: sourceId,
-                  });
-                  assert.deepEqual(
-                    availableAgain.entries.map((entry) => entry.familyId),
-                    [familyId],
-                  );
-                  assert.equal(
-                    commandRequests.length,
-                    2,
-                    'Restart and receipt inspection must not replay either command',
-                  );
-                  const usage = await game.service.store.usage(0);
-                  assert.equal(usage.usage.jevCalls, 0);
-                  assert.equal(usage.usage.llmCalls, 0);
-                  assert.equal(usage.budget.spentUsd, 0);
-                  assert.equal(usage.budget.reservedUsd, 0);
-                  observed.usage = usage;
-                  observed.recovery = {
-                    worldId: retained.worldId,
-                    playerId,
-                    timeline: retained.timeline,
-                    simTime: retained.simTime,
-                    exactContentsRetained: true,
-                    originalReceiptsResolved: 2,
-                    commandReplay: false,
-                  };
-                  assert.deepEqual(observed.pageErrors, []);
-                  assert.deepEqual(observed.unexpectedRequests, []);
-                  observed.passed = true;
-                } catch (error) {
-                  observed.failure = errorMessage(error);
-                } finally {
-                  for (const [name, close] of [
-                    ['server', () => shutdownHost('final')],
-                    [
-                      'trace',
-                      async () => {
-                        if (tracing)
-                          await context.tracing.stop({
-                            path: join(output, preset + '-trace.zip'),
-                          });
-                      },
-                    ],
-                    ['context', () => context?.close()],
-                    ['temporary directory', () => rm(directory, { recursive: true, force: true })],
-                  ]) {
-                    try {
-                      await close();
-                    } catch (error) {
-                      observed.passed = false;
-                      report.cleanup.push({ preset, name, failure: errorMessage(error) });
-                    }
-                  }
-                }
-                if (observed.pageErrors.length || observed.unexpectedRequests.length) {
-                  observed.passed = false;
-                  observed.failure ??= 'Unexpected page error or request, including during owned cleanup';
-                }
-                if (!observed.passed)
-                  throw new Error(preset + ': ' + (observed.failure ?? 'owned cleanup failed'));
-              }
-              assert.equal(report.captures.length, 4);
-              report.passed = true;
-            } catch (error) {
-              report.failure = errorMessage(error);
-            } finally {
-              report.finishedAt = new Date().toISOString();
-              await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
-            }
-            return report;
-          }
-          OPENLEGEND_WHOLE_UI_1
-          cat > "$task_dir/creator-stage.mjs" <<'OPENLEGEND_WHOLE_UI_2'
+          cat > "$task_dir/creator-stage.mjs" <<'OPENLEGEND_WHOLE_UI_1'
           // Temporary native observation, invoked only by the one-shot CI driver.
           // All repository imports resolve from that driver's repository working directory.
           import assert from 'node:assert/strict';
@@ -2065,16 +1409,30 @@ jobs:
               assert.deepEqual(possessions(), beforeItems);
               await page.setViewportSize({ width: 390, height: 844 });
               await expect(review).toContainText('rejected');
-              const bounds = await review.boundingBox();
-              assert.ok(
-                bounds &&
-                  bounds.x >= 0 &&
-                  bounds.x + bounds.width <= 391 &&
-                  bounds.y >= 0 &&
-                  bounds.y + bounds.height <= 845,
-              );
+              // The modal is the viewport-bounded scrollport; its dialog content may be taller.
+              const modal = page.locator('.ol-modal').filter({ has: review });
+              await expect
+                .poll(
+                  async () => {
+                    const bounds = await modal.boundingBox();
+                    report.narrowReview = { viewport: { width: 390, height: 844 }, scrollport: bounds };
+                    return (
+                      !!bounds &&
+                      bounds.x >= 0 &&
+                      bounds.x + bounds.width <= 391 &&
+                      bounds.y >= 0 &&
+                      bounds.y + bounds.height <= 845
+                    );
+                  },
+                  { timeout: 5000, message: 'The review scrollport fits the narrow viewport' },
+                )
+                .toBe(true);
+              const closeReview = review.getByRole('button', { name: 'Close review', exact: true });
+              await closeReview.scrollIntoViewIfNeeded();
+              await expect(closeReview).toBeInViewport({ ratio: 1 });
+              report.narrowReview.closeReview = await closeReview.boundingBox();
               await capture('02-rejected-exact-review-narrow.png');
-              await review.getByRole('button', { name: 'Close review', exact: true }).click();
+              await closeReview.click();
               await page.setViewportSize({ width: 1440, height: 960 });
 
               const prepared = await uiCall(
@@ -2256,8 +1614,8 @@ jobs:
             }
             return report;
           }
-          OPENLEGEND_WHOLE_UI_2
-          cat > "$task_dir/run-whole-ui.mjs" <<'OPENLEGEND_WHOLE_UI_3'
+          OPENLEGEND_WHOLE_UI_1
+          cat > "$task_dir/run-whole-ui.mjs" <<'OPENLEGEND_WHOLE_UI_2'
           // One temporary CI continuation, from the repository cwd with --import tsx.
           // Usage: node --import tsx /path/to/run-whole-ui.mjs [test-results/whole-ui]
           // CI owns a six-minute step. At five minutes, stop new stages and close the
@@ -2274,19 +1632,13 @@ jobs:
               name: 'camp',
               file: 'camp-stage.mjs',
               entry: 'runCampStage',
-              sha256: '4e1cf2217ee975c270274994882e5cb650b1850ad1b427d4a85fb53efd556f34',
-            },
-            {
-              name: 'alternate-world',
-              file: 'alternate-world-stage.mjs',
-              entry: 'runAlternateWorldStage',
-              sha256: '91296b989e8b0fa98b79cfb5a7eb4576520e77a533ade913dba6ffd239d304a6',
+              sha256: '56539e1321746d5371948fa9d7eaddbcfabe4287f68cb257f22a59c05ebfc2b1',
             },
             {
               name: 'creator',
               file: 'creator-stage.mjs',
               entry: 'runCreatorStage',
-              sha256: '24a439c87fd8458ba073917bbc7c337583f0b1f456cd3a693b53ccebcbb18377',
+              sha256: 'a9507a316ceed3343df8a2b187ea94af1e96dbf9fd833e13decbffc38b1726f3',
             },
           ];
           const limits = { stopWorkMs: 300_000, terminateWorkerMs: 345_000, ciStepMinutes: 6 };
@@ -2314,15 +1666,6 @@ jobs:
                 !cleanup.repositoryError &&
                 (!cleanup.shutdown || cleanShutdown(cleanup.shutdown))
               );
-            if (name === 'alternate-world')
-              return (
-                Array.isArray(cleanup) &&
-                cleanup.every(
-                  (entry) =>
-                    (!entry.server || cleanShutdown(entry.server)) &&
-                    !(entry.failure && ['server', 'context'].includes(entry.name)),
-                )
-              );
             return (
               cleanup?.context === 'closed or not created' &&
               (cleanup.server === 'closed or not created' || cleanShutdown(cleanup.server))
@@ -2332,7 +1675,14 @@ jobs:
           async function worker(outputDirectory) {
             const reportPath = join(outputDirectory, 'report.json');
             const report = {
-              kind: 'one-shot native whole-UI continuation',
+              kind: 'one-shot native camp/creator continuation',
+              reusedEvidence: {
+                alternateWorld: {
+                  status: 'Passed previously; not executed in this continuation',
+                  checkout: '1f3faa833208b532cf99a15ca7b22939e1d0e77f',
+                  reportSha256: '6c60379e9758087598f794d526de51a3687cff20d0dff37bb3ce0dd5eb474f97',
+                },
+              },
               startedAt: new Date().toISOString(),
               checkout: null,
               limits,
@@ -2595,7 +1945,7 @@ jobs:
               await checkpoint(controlPath, control);
               console.log(
                 JSON.stringify({
-                  continuation: 'native whole UI',
+                  continuation: 'native camp/creator',
                   passed: control.passed,
                   stages: control.stageStatuses,
                   interrupted: !!control.stopRequested,
@@ -2611,7 +1961,7 @@ jobs:
           const outputDirectory = resolve(process.argv[isWorker ? 3 : 2] ?? 'test-results/whole-ui');
           if (isWorker) await worker(outputDirectory);
           else await supervise(outputDirectory);
-          OPENLEGEND_WHOLE_UI_3
+          OPENLEGEND_WHOLE_UI_2
           node --import tsx "$task_dir/run-whole-ui.mjs" test-results/whole-ui
       - uses: actions/upload-artifact@v4
         if: always()

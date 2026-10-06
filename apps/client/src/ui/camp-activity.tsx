@@ -233,6 +233,13 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const recoveryScope = view.access?.commandRecoveryScope;
   const pendingKey = `open-legend:activity-command:${recoveryScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
   const [draft, setDraft] = useState(() => readDraft(draftKey));
+  const [preparing, setPreparing] = useState(() => {
+    try {
+      return sessionStorage.getItem(`${draftKey}:presentation`) !== 'current';
+    } catch {
+      return true;
+    }
+  });
   const [mode, setMode] = useState<WorkMode>('enqueue');
   const [editing, setEditing] = useState<'supply' | 'amount' | 'stop' | null>(null);
   const [choices, setChoices] = useState<ActivityRequestsView>();
@@ -250,6 +257,11 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   >({});
   const [review, setReview] = useState<{ key: string; result: ApiResult; input: CommandInput }>();
   const alive = useRef(true);
+  const task = useRef<HTMLDivElement>(null);
+  const focusOwner = useRef<Element | null>(null);
+  const taskVisible = useRef(visible);
+  taskVisible.current = visible;
+  if (!visible) focusOwner.current = null;
   const pending = useRef<string | undefined>(undefined);
   const statusTicket = useRef(0);
   const statusAbort = useRef<AbortController | undefined>(undefined);
@@ -328,6 +340,51 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       /* Optional private storage. */
     }
   }
+  function showPreparation(value: boolean) {
+    setPreparing(value);
+    try {
+      sessionStorage.setItem(`${draftKey}:presentation`, value ? 'prepare' : 'current');
+    } catch {
+      /* Hiding still retains this presentation while the task is mounted. */
+    }
+  }
+  function rememberFocus() {
+    focusOwner.current = task.current?.contains(document.activeElement)
+      ? document.activeElement
+      : null;
+  }
+  function focusAfterChange(target: () => HTMLElement | null) {
+    const owner = focusOwner.current;
+    if (!owner) return;
+    requestAnimationFrame(() => {
+      if (
+        alive.current &&
+        taskVisible.current &&
+        focusOwner.current === owner &&
+        (document.activeElement === owner || document.activeElement === document.body)
+      )
+        target()?.focus();
+      if (focusOwner.current === owner) focusOwner.current = null;
+    });
+  }
+  useEffect(() => {
+    // Disabling Start may leave focus on body; any newer user intent cancels the return.
+    const moved = (event: Event) => {
+      if (
+        event.type !== 'focusin' ||
+        (event.target !== focusOwner.current && event.target !== document.body)
+      )
+        focusOwner.current = null;
+    };
+    document.addEventListener('focusin', moved);
+    document.addEventListener('pointerdown', moved, true);
+    window.addEventListener('blur', moved);
+    return () => {
+      document.removeEventListener('focusin', moved);
+      document.removeEventListener('pointerdown', moved, true);
+      window.removeEventListener('blur', moved);
+    };
+  }, []);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -425,7 +482,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const latestReviewKey = useRef(reviewKey);
   latestReviewKey.current = reviewKey;
   useEffect(() => {
-    if (!ready || !visible) return;
+    if (!ready || !visible || !preparing) return;
     const abort = new AbortController();
     // Read-only prerequisites appear automatically. A changing clock never extends the checked deadline.
     const selectedInput = { ...input, activityArguments: { ...input.activityArguments } };
@@ -452,7 +509,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       clearTimeout(timer);
       abort.abort();
     };
-  }, [reviewKey, ready, visible]);
+  }, [reviewKey, ready, visible, preparing]);
 
   async function refreshStatus() {
     const ticket = ++statusTicket.current;
@@ -492,6 +549,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     }
     setUnresolved(saved);
     pending.current = request.commandId;
+    if (kind === 'start') rememberFocus();
     setOperation(kind);
     setError('');
     setMessage('');
@@ -500,7 +558,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       if (!alive.current || pending.current !== request.commandId) return result;
       if (result.code === 'unconfirmed')
         setError('Delivery is uncertain. Check this exact request before starting other work.');
-      else acceptReceipt(result, request.commandId);
+      else acceptReceipt(result, request.commandId, action.command);
       await refreshStatus();
       if (alive.current && pending.current === request.commandId) setRefresh((value) => value + 1);
       return result;
@@ -518,7 +576,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       }
     }
   }
-  function acceptReceipt(result: ApiResult, commandId: string) {
+  function acceptReceipt(result: ApiResult, commandId: string, input: CommandInput) {
     if (!alive.current || pending.current !== commandId) return;
     try {
       if (readPending(pendingKey)?.request.commandId === commandId)
@@ -530,11 +588,24 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     if (result.ok) {
       setError('');
       setMessage(result.message);
+      if (
+        entry &&
+        bound &&
+        presentation &&
+        input.type === 'activity-request' &&
+        input.activityFamilyId === entry.familyId &&
+        input.activityArguments?.[presentation.target] === entry.targetId
+      ) {
+        showPreparation(false);
+        setEditing(null);
+        focusAfterChange(() => task.current);
+      }
     } else setError(result.message);
   }
   async function recover() {
     if (!unresolved || unavailable || recovering || pending.current) return;
     const commandId = unresolved.request.commandId;
+    rememberFocus();
     pending.current = commandId;
     setRecovering(true);
     try {
@@ -546,7 +617,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       if (receipt.scope !== view.access?.scope)
         throw new Error('Your access changed. Reopen this task.');
       if (receipt.status === 'resolved') {
-        acceptReceipt(receipt.result, commandId);
+        acceptReceipt(receipt.result, commandId, unresolved.action.command);
         await refreshStatus();
         if (alive.current && pending.current === commandId) setRefresh((value) => value + 1);
       } else setError(receipt.message);
@@ -687,7 +758,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         scope={choices.scope}
         readKey={selectionKey(key)}
         page={selectedPage(key)}
-        visible={visible}
+        visible={visible && preparing}
         connected={!unavailable}
         busy={!!operation || !!unresolved || recovering}
         working={working}
@@ -727,7 +798,11 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   }
   return (
     <div
+      ref={task}
       className="ol-camp-activities"
+      role="group"
+      aria-label={preparing ? 'Task preparation' : 'Current work'}
+      tabIndex={-1}
       onKeyDown={(event) => {
         // Portaled pickers close their own layer before the task editor handles Escape.
         if (!event.currentTarget.contains(event.target as Node)) return;
@@ -741,7 +816,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       }}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      {(!entry || activity || working) && (
+      {(!entry || activity || working || !preparing) && (
         <Section title="Current work">
           {activity ? (
             <div className="ol-task-status" aria-live="polite">
@@ -792,13 +867,27 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               )}
             </>
           )}
-          {scheduling}
+          {preparing && scheduling}
         </Section>
       )}
       {error && <p role="alert">{error}</p>}
       {message && <p role="status">{message}</p>}
       {unavailable ? (
         <p role="status">Reconnect and take control of a living character to prepare a task.</p>
+      ) : !preparing && entry ? (
+        <Button
+          variant="quiet"
+          disabled={disabled}
+          onPress={() => {
+            rememberFocus();
+            showPreparation(true);
+            focusAfterChange(
+              () => document.getElementById(`${fieldId}-change-supply`) ?? task.current,
+            );
+          }}
+        >
+          Prepare another task
+        </Button>
       ) : !entry ? (
         <p>
           Select an object in the world to prepare new work or a replacement. Opening this panel
@@ -1027,9 +1116,10 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           </Button>
         </div>
       )}
-      {!unavailable && entry && presentation && bound && (
+      {preparing && !unavailable && entry && presentation && bound && (
         <div className="ol-actions ol-task-submit">
           <Button
+            id={`${fieldId}-start`}
             variant="primary"
             disabled={disabled || !ready || !currentReview?.result.ok || expired}
             busy={operation === 'start'}
