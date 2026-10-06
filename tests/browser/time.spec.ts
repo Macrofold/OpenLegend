@@ -136,7 +136,12 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await other.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
-      await other.close();
+      // Ordinary close runs pagehide/release. Default Playwright close skips unload;
+      // abrupt loss and its heartbeat expiry are exercised separately below.
+      await Promise.all([
+        other.waitForEvent('close', { timeout: 5000 }),
+        other.close({ runBeforeUnload: true }),
+      ]);
       await focus(true);
       await enterGame(page); // The selected page is gone; one surviving tab needs no Resume.
       const logoutTab = await page.context().newPage();

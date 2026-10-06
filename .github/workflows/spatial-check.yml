@@ -67,6 +67,2063 @@ jobs:
             tests/browser/god-editor.spec.ts \
             tests/browser/time.spec.ts \
             --output test-results/interface
+      - name: Check native owner and creation recovery
+        if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/whole-ui-owner-creation/scripts
+          cat > test-results/whole-ui-owner-creation/scripts/run-whole-ui.mjs <<'OPENLEGEND_OWNER_CREATION_SOURCE_0'
+          // One temporary CI continuation, from the repository cwd with --import tsx.
+          // Usage: node --import tsx /path/to/run-whole-ui.mjs [test-results/whole-ui]
+          // CI owns a six-minute step. At five minutes, stop new stages and close the
+          // browser to release UI waits; at 5m45s, report and terminate an unclean worker.
+          import { spawn } from 'node:child_process';
+          import { createHash } from 'node:crypto';
+          import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
+          import { createRequire } from 'node:module';
+          import { join, resolve } from 'node:path';
+          import { fileURLToPath, pathToFileURL } from 'node:url';
+
+          const stages = [
+            {
+              name: 'owner',
+              file: 'owner-stage.mjs',
+              entry: 'runOwnerStage',
+              sha256: '59f1c99ee580e124103f8b766ca37de4bc05b6fff63d92e34b7f7b8c36259f48',
+            },
+            {
+              name: 'creation-recovery',
+              file: 'creation-recovery-stage.mjs',
+              entry: 'runCreationRecoveryStage',
+              sha256: 'ec63a2b6dfcf58aafcb6a5f48f826c5fddf66d782447d3708de17d899e4a80d9',
+            },
+          ];
+          const reviewedSourcePins = {
+            'apps/client/src/main.tsx': 'ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785',
+            'apps/client/src/api.ts': 'c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c',
+            'apps/client/src/ui/item-creation.tsx':
+              'c5f8c4001f517cfbb1faaab40b32a75bbdc83e6c40c213e0c82a29dd50740925',
+            'apps/client/src/ui/god-tools.tsx':
+              'a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9',
+            'apps/client/src/ui/creation-request.tsx':
+              'c3bafe7b66abebae85ab0700c29f754af7b0202b0b0030381c1bfcd43e202450',
+            'packages/domain/src/types.ts':
+              'eef78f787d1d9435cc216c86e34356e04d1ebc9b744753820aa250c3854be82f',
+            'packages/domain/src/god-tools.ts':
+              '63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d',
+            'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
+            'apps/server/src/world-service.ts':
+              '0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263',
+            'packages/protocol/src/index.ts':
+              '83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80',
+            'apps/client/src/ui/world-inspection.tsx':
+              '06357c8b670744ff8884d264d3379fcdc6c03f9418662ea3606bbc162da054e8',
+          };
+          const limits = { stopWorkMs: 300_000, terminateWorkerMs: 345_000, ciStepMinutes: 6 };
+          const launchArgs = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+          const errorText = (error) => (error instanceof Error ? error.message : String(error));
+          const sha256 = async (path) =>
+            createHash('sha256')
+              .update(await readFile(path))
+              .digest('hex');
+          async function checkpoint(path, value) {
+            await writeFile(path + '.tmp', JSON.stringify(value, null, 2) + '\n');
+            await rename(path + '.tmp', path);
+          }
+
+          // A returned assertion failure is independent only after its native host and
+          // browser context have closed. Evidence/trace failures alone do not retain hosts.
+          function ownedCleanupFinished(name, result) {
+            if (name !== 'owner' && name !== 'creation-recovery') return false;
+            const cleanup = result.cleanup;
+            const cleanShutdown = (value) => value?.saved === true && value.problems?.length === 0;
+            return (
+              !!cleanup &&
+              (name !== 'owner' ||
+                (cleanup.context === 'closed or not created' &&
+                  cleanup.repository === 'closed or not created')) &&
+              !cleanup.contextError &&
+              !cleanup.shutdownError &&
+              !cleanup.repositoryError &&
+              (!cleanup.shutdown || cleanShutdown(cleanup.shutdown))
+            );
+          }
+
+          async function worker(outputDirectory) {
+            const reportPath = join(outputDirectory, 'report.json');
+            const report = {
+              kind: 'one-shot native owner and creation-recovery continuation',
+              selectionNote:
+                'One finite owner checkpoint/editor/Operations return session followed by one three-kind creation recovery session. Prior creator Apply, alternate-world and inventory results are reused within their recorded scopes.',
+              reviewedSourcePins,
+              sourceSha256: {},
+              reusedEvidence: {
+                creator: {
+                  status: 'Passed previously; not executed in this continuation',
+                  checkout: '45db87d7cef957cdabe8fe02c43162c4eac3c503',
+                  reportSha256: '333b5e64a73bdc1f4bbdd413dbd829a3d7dc3dc516063e4958791dcaaa84c4b8',
+                },
+                pairedInventory: {
+                  status: 'Passed previously; not executed in this continuation',
+                  checkout: '3731b364a82d89818d66380437d2c1c4c69d970a',
+                  reportSha256: '06423f316185b27733410357705681e8ec38103e78d4c0f9a5bc5621be9124a8',
+                },
+                alternateWorld: {
+                  status: 'Passed previously; not executed in this continuation',
+                  checkout: '1f3faa833208b532cf99a15ca7b22939e1d0e77f',
+                  reportSha256: '6c60379e9758087598f794d526de51a3687cff20d0dff37bb3ce0dd5eb474f97',
+                },
+              },
+              startedAt: new Date().toISOString(),
+              checkout: null,
+              limits,
+              providerBudgetUsd: 0,
+              database: 'Existing explicit CI loopback PostgreSQL URL; native disposable fixtures only',
+              stages: stages.map((stage) => ({
+                name: stage.name,
+                script: stage.file,
+                expectedSha256: stage.sha256,
+                report: stage.name + '/report.json',
+                status: 'pending',
+              })),
+              cleanup: {},
+              passed: false,
+            };
+            let browser, browserServer, closeBrowserPromise, closeTestDatabases;
+            const browserNotice = (kind, pid) => {
+              if (process.connected) process.send({ kind, pid }, () => {});
+            };
+            const closeBrowser = () =>
+              (closeBrowserPromise ??= Promise.resolve().then(async () => {
+                report.cleanup.browserAttempted = true;
+                try {
+                  if (browser) await browser.close();
+                } catch (error) {
+                  report.cleanup.browserError = errorText(error);
+                }
+                try {
+                  if (browserServer) await browserServer.close();
+                } catch (error) {
+                  report.cleanup.browserServerError = errorText(error);
+                }
+                report.cleanup.browserClosed =
+                  !report.cleanup.browserError && !report.cleanup.browserServerError;
+              }));
+            const requestStop = (signal) => {
+              report.stopRequested ??= { signal, at: new Date().toISOString() };
+              if (browser || browserServer) void closeBrowser();
+            };
+            const onTerm = () => requestStop('SIGTERM');
+            const onInt = () => requestStop('SIGINT');
+            process.on('SIGTERM', onTerm);
+            process.on('SIGINT', onInt);
+            try {
+              await mkdir(outputDirectory, { recursive: true });
+              if (process.env.AI_BUDGET_USD !== '0') throw new Error('AI_BUDGET_USD must be exactly 0.');
+              if (!/^[a-f0-9]{40}$/i.test(process.env.GITHUB_SHA ?? ''))
+                throw new Error('This one-shot CI continuation requires its exact GITHUB_SHA.');
+              report.checkout = process.env.GITHUB_SHA;
+              report.headRef = process.env.GITHUB_HEAD_REF ?? '';
+              let databaseUrl;
+              try {
+                databaseUrl = new URL(process.env.OPENLEGEND_TEST_DATABASE_URL);
+              } catch {
+                throw new Error('The existing explicit CI loopback PostgreSQL URL is required.');
+              }
+              if (
+                !['postgres:', 'postgresql:'].includes(databaseUrl.protocol) ||
+                !['localhost', '127.0.0.1', '[::1]'].includes(databaseUrl.hostname) ||
+                databaseUrl.search ||
+                databaseUrl.hash
+              )
+                throw new Error('Use the existing CI loopback PostgreSQL URL without overrides.');
+              // Never copy the URL, credentials or environment into evidence or stdout.
+              for (const [index, stage] of stages.entries()) {
+                const actual = await sha256(new URL(stage.file, import.meta.url));
+                report.stages[index].sha256 = actual;
+                if (actual !== stage.sha256)
+                  throw new Error(stage.name + ' differs from its reviewed script.');
+              }
+              for (const [path, expected] of Object.entries(reviewedSourcePins)) {
+                const actual = await sha256(path);
+                report.sourceSha256[path] = actual;
+                if (actual !== expected) throw new Error(path + ' differs from its reviewed source.');
+              }
+              report.driverSha256 = await sha256(new URL(import.meta.url));
+              const assets = (await readdir('dist/client/assets'))
+                .filter((name) => /\.(js|css)$/.test(name))
+                .sort();
+              report.buildSha256 = Object.fromEntries(
+                await Promise.all(
+                  ['dist/client/index.html', ...assets.map((name) => 'dist/client/assets/' + name)].map(
+                    async (path) => [path, await sha256(path)],
+                  ),
+                ),
+              );
+              report.packageSha256 = Object.fromEntries(
+                await Promise.all(
+                  ['package.json', 'pnpm-lock.yaml'].map(async (path) => [path, await sha256(path)]),
+                ),
+              );
+              const require = createRequire(resolve('package.json'));
+              const { chromium } = require('@playwright/test');
+              ({ closeTestDatabases } = await import(
+                pathToFileURL(resolve('tests/fixtures/database.ts')).href
+              ));
+              report.runtime = {
+                node: process.version,
+                v8: process.versions.v8,
+                platform: process.platform,
+                architecture: process.arch,
+                playwright: require('@playwright/test/package.json').version,
+                launchArgs,
+              };
+              await checkpoint(reportPath, report);
+              if (!report.stopRequested) {
+                // Public process ownership gives the supervisor this exact Chromium group.
+                // Its loopback websocket capability is never logged or saved.
+                browserServer = await chromium.launchServer({
+                  headless: true,
+                  args: launchArgs,
+                  host: '127.0.0.1',
+                  handleSIGINT: false,
+                  handleSIGTERM: false,
+                  handleSIGHUP: false,
+                });
+                const browserPid = browserServer.process().pid;
+                if (!Number.isInteger(browserPid) || browserPid <= 0)
+                  throw new Error('The owned Chromium process identity is unavailable.');
+                report.runtime.browserPid = browserPid;
+                browserNotice('browser-opened', browserPid);
+                browserServer.process().once('exit', () => browserNotice('browser-closed', browserPid));
+                if (!report.stopRequested) {
+                  browser = await chromium.connect(browserServer.wsEndpoint(), { timeout: 30_000 });
+                  report.runtime.browser = browser.version();
+                }
+              }
+              for (const [index, stage] of stages.entries()) {
+                if (report.stopRequested) break;
+                const entry = report.stages[index];
+                entry.status = 'running';
+                entry.startedAt = new Date().toISOString();
+                await checkpoint(reportPath, report);
+                try {
+                  const module = await import(new URL(stage.file, import.meta.url).href);
+                  if (report.stopRequested) {
+                    entry.status = 'not run';
+                    entry.reason = 'Interrupted before stage invocation';
+                    break;
+                  }
+                  const result = await module[stage.entry]({ browser, outputDirectory });
+                  entry.returned = true;
+                  entry.passed = result.passed === true;
+                  entry.status = entry.passed ? 'passed' : 'failed';
+                  entry.failure = result.failure;
+                  entry.cleanup = result.cleanup;
+                  entry.remainingBrowserContexts = browser.contexts().length;
+                  entry.ownedCleanupFinished =
+                    entry.remainingBrowserContexts === 0 && ownedCleanupFinished(stage.name, result);
+                  entry.finishedAt = new Date().toISOString();
+                  await checkpoint(reportPath, report);
+                  if (!entry.ownedCleanupFinished || !browser.isConnected()) {
+                    report.failure = 'A returned stage did not leave a usable, clean shared runtime.';
+                    break;
+                  }
+                } catch (error) {
+                  entry.status = 'failed';
+                  entry.failure = errorText(error);
+                  entry.finishedAt = new Date().toISOString();
+                  report.failure = 'Stage return/cleanup was not confirmed; later stages were not started.';
+                  break;
+                }
+              }
+            } catch (error) {
+              report.failure = errorText(error);
+            } finally {
+              for (const entry of report.stages) if (entry.status === 'pending') entry.status = 'not run';
+              await closeBrowser();
+              report.cleanup.databaseDropAttempted = !!closeTestDatabases;
+              try {
+                if (closeTestDatabases) await closeTestDatabases();
+                report.cleanup.databasesClosed = true;
+              } catch (error) {
+                report.cleanup.databaseError = errorText(error);
+              }
+              report.finishedAt = new Date().toISOString();
+              report.elapsedMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
+              report.passed =
+                !report.stopRequested &&
+                !report.failure &&
+                report.stages.every((entry) => entry.passed && entry.ownedCleanupFinished) &&
+                report.cleanup.browserClosed === true &&
+                report.cleanup.databasesClosed === true;
+              await checkpoint(reportPath, report);
+              process.off('SIGTERM', onTerm);
+              process.off('SIGINT', onInt);
+            }
+            process.exitCode = report.passed ? 0 : 1;
+          }
+
+          async function supervise(outputDirectory) {
+            await mkdir(outputDirectory, { recursive: true });
+            const controlPath = join(outputDirectory, 'supervisor.json');
+            const control = { startedAt: new Date().toISOString(), limits, passed: false };
+            await checkpoint(controlPath, control);
+            const child = spawn(
+              process.execPath,
+              ['--import', 'tsx', fileURLToPath(import.meta.url), '--worker', outputDirectory],
+              {
+                cwd: process.cwd(),
+                env: process.env,
+                stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+                detached: true,
+              },
+            );
+            let browserPid;
+            child.on('message', (message) => {
+              if (!Number.isInteger(message?.pid) || message.pid <= 0) return;
+              if (message.kind === 'browser-opened') browserPid = message.pid;
+              if (message.kind === 'browser-closed' && browserPid === message.pid) browserPid = undefined;
+            });
+            const terminateGroup = (pid, owner) => {
+              if (!Number.isInteger(pid) || pid <= 0) return;
+              try {
+                process.kill(-pid, 'SIGKILL');
+              } catch (error) {
+                if (error.code !== 'ESRCH') control[owner + 'TerminationError'] = errorText(error);
+              }
+            };
+            const stop = (reason) => {
+              control.stopRequested ??= { reason, at: new Date().toISOString() };
+              child.kill('SIGTERM');
+            };
+            const onTerm = () => stop('CI SIGTERM');
+            const onInt = () => stop('SIGINT');
+            process.on('SIGTERM', onTerm);
+            process.on('SIGINT', onInt);
+            const soft = setTimeout(() => stop('Five-minute work deadline'), limits.stopWorkMs);
+            const hard = setTimeout(() => {
+              control.forcedTermination = {
+                at: new Date().toISOString(),
+                reason: 'The owned worker did not exit by 5m45s; cleanup is unconfirmed.',
+              };
+              terminateGroup(browserPid, 'browser');
+              terminateGroup(child.pid, 'worker');
+            }, limits.terminateWorkerMs);
+            try {
+              control.workerExit = await new Promise((resolveExit) => {
+                child.once('error', (error) => resolveExit({ error: errorText(error) }));
+                child.once('close', (code, signal) => resolveExit({ code, signal }));
+              });
+            } finally {
+              clearTimeout(soft);
+              clearTimeout(hard);
+              process.off('SIGTERM', onTerm);
+              process.off('SIGINT', onInt);
+              if (browserPid) {
+                control.browserCleanupUnconfirmed = true;
+                terminateGroup(browserPid, 'browser');
+              }
+              try {
+                const result = JSON.parse(await readFile(join(outputDirectory, 'report.json'), 'utf8'));
+                control.checkout = result.checkout;
+                control.stageStatuses = result.stages.map(({ name, status }) => ({ name, status }));
+                control.passed =
+                  control.workerExit?.code === 0 &&
+                  !control.stopRequested &&
+                  !control.forcedTermination &&
+                  !control.browserCleanupUnconfirmed &&
+                  result.passed === true;
+              } catch (error) {
+                control.reportError = errorText(error);
+              }
+              control.finishedAt = new Date().toISOString();
+              await checkpoint(controlPath, control);
+              console.log(
+                JSON.stringify({
+                  continuation: 'native owner and creation recovery',
+                  passed: control.passed,
+                  stages: control.stageStatuses,
+                  interrupted: !!control.stopRequested,
+                  forcedTermination: !!control.forcedTermination,
+                  reports: outputDirectory,
+                }),
+              );
+              process.exitCode = control.passed ? 0 : 1;
+            }
+          }
+
+          const isWorker = process.argv[2] === '--worker';
+          const outputDirectory = resolve(process.argv[isWorker ? 3 : 2] ?? 'test-results/whole-ui');
+          if (isWorker) await worker(outputDirectory);
+          else await supervise(outputDirectory);
+          OPENLEGEND_OWNER_CREATION_SOURCE_0
+          cat > test-results/whole-ui-owner-creation/scripts/owner-stage.mjs <<'OPENLEGEND_OWNER_CREATION_SOURCE_1'
+          // Scratch-only finite owner UI continuation. No execution is authorized by this file.
+          // Root's driver owns Chromium, the existing staged deadline and closeTestDatabases().
+          // This stage owns one repository/native host/context and returns a report on failure.
+          import assert from "node:assert/strict";
+          import { createHash } from "node:crypto";
+          import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+          import { createRequire } from "node:module";
+          import { join, resolve } from "node:path";
+          import { pathToFileURL } from "node:url";
+
+          const { expect } = createRequire(resolve("package.json"))("@playwright/test");
+          const fromCheckout = (path) => import(pathToFileURL(resolve(path)).href);
+          const errorText = (error) =>
+            error instanceof Error ? error.message : String(error);
+          const hashFile = async (path) =>
+            createHash("sha256")
+              .update(await readFile(path))
+              .digest("hex");
+          // Filled from reviewed production owners during preparation; all are checked before startup.
+          const preparedSourceSha256 = {
+            "apps/client/src/main.tsx":
+              "ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785",
+            "apps/client/src/api.ts":
+              "c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c",
+            "apps/client/src/tab-control.ts":
+              "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+            "apps/client/src/tab-session.ts":
+              "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+            "apps/client/src/ui/world-inspection.tsx":
+              "06357c8b670744ff8884d264d3379fcdc6c03f9418662ea3606bbc162da054e8",
+            "apps/client/src/ui/world-agent.tsx":
+              "9650b6d7d0c149dfffd434b5b87d92f934461c0f8725d1383a3fe42011cd878d",
+            "apps/client/src/ui/panels.tsx":
+              "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+            "apps/client/src/ui/god-tools.tsx":
+              "a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9",
+            "apps/client/src/ui/editor.tsx":
+              "59706ee6f0ce3bbfcf3ddc147cce90a732652cce7acab45d1178e4a2a4036566",
+            "apps/client/src/ui/editor-changes.ts":
+              "bed0f8756d498e4654ef463bdd24f7cbb0488b7df8e80e8f4a6ef6e07edb282a",
+            "apps/client/src/ui/game-saves.tsx":
+              "8ce6a3404eda60468491af5290cc002d489a7f424a183cec585bb26bd45dd6f5",
+            "apps/client/src/ui/operations-console.tsx":
+              "8a144975d0f1ac7d9a551915d69731efea959ed75c068246b7d3c9e60be9701f",
+            "apps/client/src/ui/operations-maintenance.tsx":
+              "22d7a9d3b69e0d5c6289ab956357a1ed0137a4cc23b82157364ebd838a3dde88",
+            "apps/client/src/ui/operations-access.tsx":
+              "d1c44f291d4b9d4037a5b6c18904bfd415f47b8dd1e46bec2942dbd149c76663",
+            "apps/client/src/ui/storage.ts":
+              "4c44656d43e8e49663158dd9f9f0160775b702e2169e5cb300d67d2e4d31bad9",
+            "apps/client/src/ui/creator-workspaces.css":
+              "08399b47456cd3136be0910bbd2258b1c712e8aa07570c6b58163ed715710796",
+            "apps/client/src/ui/lifecycle.css":
+              "b272f6f169e40c38fcb56ce21371bed8f431f6178969c51b85da286df804f778",
+            "apps/client/src/ui/operations.css":
+              "2f3e9bb8ea64632a5ffb9ae33fead056cc1525f55fce1d18ef9ee6f1d2a699c1",
+            "apps/client/src/design-system/layout.css":
+              "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+            "apps/client/src/design-system/components.tsx":
+              "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+            "apps/server/src/http.ts":
+              "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+            "apps/server/src/config.ts":
+              "ea94fd7668fabbbde0261bfd9d10f11fea07186ef15d94c84ec232c91d8199a5",
+            "apps/server/src/world-service.ts":
+              "0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263",
+            "apps/server/src/authority.ts":
+              "1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb",
+            "apps/server/src/world-graph.ts":
+              "aef1db76e5256211dcfe1844ba596e0f1a853fb4c41e65824ede1367e250faed",
+            "apps/server/src/world-tools.ts":
+              "9d552a34c08908fd38b51e3b192e867e3f15f916fde1db26cfb708d4e0e46de7",
+            "apps/server/src/operations-routes.ts":
+              "a63bcc58336495db737aa82d39bb40dd063ca33eae56f4a222df2f9245c88f91",
+            "apps/server/src/maintenance.ts":
+              "9a0b5cfbe7e1ad734cd21f80f672280d4e3418ad0ef8b9583224d2a9c02f1cdc",
+            "apps/server/src/game-saves.ts":
+              "a98ee951631852990ec05bbf8dbd8c38f9c8c53a07d9685cfc1906153d58f58c",
+            "apps/server/src/world-records.ts":
+              "cf1cbd7a7a926091f06c0cb7184eaac15d814ccf4622249fbab9ea026d9ee8c9",
+            "apps/server/src/store.ts":
+              "9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc",
+            "packages/domain/src/god-tools.ts":
+              "63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d",
+            "packages/domain/src/worlds/base/world.ts":
+              "98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44",
+            "packages/domain/src/worlds/base/attributes.ts":
+              "d34e43c524a7b3b153cdbbe1e2ceb56270eb34443c4d2d0bdcd89d5076b745e8",
+            "packages/protocol/src/index.ts":
+              "83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80",
+            "tests/fixtures/database.ts":
+              "3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92",
+            "tests/fixtures/browser.ts":
+              "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2",
+          };
+
+          export async function runOwnerStage({ browser, outputDirectory }) {
+            const output = join(outputDirectory, "owner");
+            await mkdir(output, { recursive: true });
+            const report = {
+              stage: "owner",
+              startedAt: new Date().toISOString(),
+              checkout: process.env.GITHUB_SHA ?? "unrecorded-local-checkout",
+              headRef: process.env.GITHUB_HEAD_REF ?? "",
+              scope:
+                "One native local-owner definition/editor/checkpoint/Operations return session",
+              fixture: {
+                seed: 1086,
+                setup:
+                  "Unmodified native base world; the single deliberate person-name edit is performed through the real editor.",
+                authority:
+                  "Actual local browser entry with God mode; play/save/create/inspect/manage-access, no invented spectator grant.",
+                clock:
+                  "Native automatic ticking disabled; fixed wall clock, no elapsed simulation time supplied.",
+                mutations:
+                  "Four deliberate UI writes: create named baseline, save person name, load baseline, load its actual recovery. Native entry/presence and automatic protective captures are recorded separately.",
+              },
+              limits: [
+                "This connects selected owner interfaces; it does not close whole J28–35/J40–45 rows.",
+                "No new recipe, family, story-policy, autosave-setting, maintenance or provider mutation.",
+                "Native save/authority failure, question/streaming, creator Apply and family-owner evidence are reused; no fault matrix or installation rerun.",
+                "No process restart, external identity provider, multi-human, native IME, assistive-device or uncoached-player qualification.",
+              ],
+              additionalJevCostUsd: 0,
+              cumulativeTaskJevCostUsd: 0,
+              observations: [],
+              writes: [],
+              captures: [],
+              pageErrors: [],
+              unexpectedRequests: [],
+              cleanup: {},
+              passed: false,
+            };
+            let repository, game, context, page, operations, base;
+            let traceStarted = false;
+            const requests = [];
+            const clients = new Map();
+            const pageNames = new Map();
+            const deliberatePaths = new Set([
+              "/api/saves/create",
+              "/api/god/editor/person/save",
+              "/api/saves/load",
+            ]);
+            const controlledActor = { id: "", accountId: "", worldId: "" };
+            function watch(target) {
+              if (pageNames.has(target)) return;
+              pageNames.set(target, "page-" + (pageNames.size + 1));
+              target.setDefaultTimeout(10000);
+              target.on("pageerror", (error) =>
+                report.pageErrors.push({
+                  page: pageNames.get(target),
+                  message: error.message,
+                }),
+              );
+              target.on("request", (request) => {
+                const url = new URL(request.url());
+                if (url.protocol !== "data:" && url.origin !== new URL(base).origin)
+                  report.unexpectedRequests.push(request.url());
+                if (!url.pathname.startsWith("/api/")) return;
+                const client = request.headers()["x-ol-client"];
+                if (client) clients.set(target, client);
+                const entry = {
+                  page: pageNames.get(target),
+                  path: url.pathname,
+                  method: request.method(),
+                };
+                if (
+                  request.method() === "POST" &&
+                  (deliberatePaths.has(url.pathname) ||
+                    url.pathname === "/api/embodiment")
+                )
+                  entry.body = request.postDataJSON();
+                requests.push(entry);
+              });
+            }
+            async function nativeRead(target, path) {
+              const client = clients.get(target);
+              assert.ok(
+                client,
+                "Use the identity already issued by this actual App page",
+              );
+              const response = await target.request.get(base + path, {
+                headers: { "X-OL-Client": client },
+              });
+              assert.equal(response.status(), 200, path);
+              return response.json();
+            }
+            async function uiCall(target, path, gesture, label, writes = false) {
+              const count = requests.filter(
+                (entry) => entry.path === path && entry.method === "POST",
+              ).length;
+              const [response] = await Promise.all([
+                target.waitForResponse(
+                  (value) =>
+                    new URL(value.url()).pathname === path &&
+                    value.request().method() === "POST",
+                ),
+                gesture(),
+              ]);
+              const request = response.request().postDataJSON();
+              const result = await response.json();
+              assert.equal(response.status(), 200, label + " HTTP result");
+              assert.equal(result.ok, true, result.message ?? label);
+              assert.equal(
+                requests.filter((entry) => entry.path === path && entry.method === "POST")
+                  .length,
+                count + 1,
+                label + " sends once",
+              );
+              if (writes) report.writes.push({ label, path, request, result });
+              return { request, result };
+            }
+            async function step(label, operation) {
+              report.currentStep = label;
+              await operation();
+              report.observations.push({ label, completedAt: new Date().toISOString() });
+            }
+            async function capture(name) {
+              assert.ok(
+                report.captures.length < 2,
+                "At most two requested owner captures",
+              );
+              await page.screenshot({ path: join(output, name), timeout: 10000 });
+              report.captures.push({ name, viewport: page.viewportSize() });
+            }
+            async function showGame(target = page) {
+              const panel = target.locator("#gamePanel");
+              if (!(await panel.isVisible()))
+                await target.getByRole("button", { name: "Game", exact: true }).click();
+              await expect(panel).toBeVisible();
+              return panel;
+            }
+            async function showCheckpoints(target = page) {
+              const panel = target.locator("#checkpointsPanel");
+              if (!(await panel.isVisible())) {
+                const menu = await showGame(target);
+                await menu
+                  .getByRole("button", { name: "Checkpoints", exact: true })
+                  .click();
+              }
+              await expect(
+                panel.getByLabel("Checkpoint name", { exact: true }),
+              ).toBeVisible();
+              return panel;
+            }
+            async function entered(target, enterGame) {
+              // Existing native God-editor readiness, not a replacement for Time's five-second gate.
+              await expect(target.locator("#world")).toHaveAttribute(
+                "data-ready",
+                "true",
+                { timeout: 20000 },
+              );
+              await enterGame(target);
+              const view = await nativeRead(target, "/api/state");
+              assert.equal(view.access.controlling, true);
+              if (controlledActor.id) {
+                assert.equal(view.player.id, controlledActor.id);
+                assert.equal(view.worldId, controlledActor.worldId);
+                assert.equal(view.access.accountId, controlledActor.accountId);
+              }
+              return view;
+            }
+            async function editor() {
+              const checkpointPanel = page.locator("#checkpointsPanel");
+              if (await checkpointPanel.isVisible())
+                await checkpointPanel
+                  .getByRole("button", { name: "Hide Checkpoints panel", exact: true })
+                  .click();
+              const character = page.locator("#characterPanel");
+              if (!(await character.isVisible()))
+                await page
+                  .getByRole("button", { name: "Character", exact: true })
+                  .click();
+              const details = character
+                .locator("details")
+                .filter({
+                  has: page.getByText("God mode · Character controls", { exact: true }),
+                });
+              if ((await details.getAttribute("open")) === null)
+                await character
+                  .getByText("God mode · Character controls", { exact: true })
+                  .click();
+              const loaded = await uiCall(
+                page,
+                "/api/god/editor/person",
+                () =>
+                  character
+                    .getByRole("button", { name: "Edit Person", exact: true })
+                    .click(),
+                "Read actual person editor",
+              );
+              const dialog = page.getByRole("dialog", { name: /^Edit / });
+              await expect(dialog).toBeVisible();
+              await dialog.getByRole("button", { name: "Identity", exact: true }).click();
+              return { dialog, loaded: loaded.result };
+            }
+            async function assertPerson(name) {
+              assert.equal(game.service.world.entities[controlledActor.id].name, name);
+              const durable = await repository.records.entitySummary(
+                controlledActor.worldId,
+                controlledActor.id,
+              );
+              assert.ok(
+                durable,
+                "The same actor remains present in the native stored entity records",
+              );
+              assert.equal(durable.id, controlledActor.id);
+              assert.equal(durable.name, name);
+              return durable;
+            }
+
+            try {
+              const [
+                { createGameServer },
+                { testRepository, readConfig },
+                { enterGame },
+                { readDefinition },
+              ] = await Promise.all([
+                fromCheckout("apps/server/src/http.ts"),
+                fromCheckout("tests/fixtures/database.ts"),
+                fromCheckout("tests/fixtures/browser.ts"),
+                fromCheckout("apps/server/src/world-graph.ts"),
+              ]);
+              report.sourceSha256 = Object.fromEntries(
+                await Promise.all(
+                  Object.keys(preparedSourceSha256).map(async (path) => [
+                    path,
+                    await hashFile(path),
+                  ]),
+                ),
+              );
+              assert.deepEqual(
+                report.sourceSha256,
+                preparedSourceSha256,
+                "Review changed owners before executing this prepared segment",
+              );
+              const assets = (await readdir("dist/client/assets")).filter((name) =>
+                /\.(js|css)$/.test(name),
+              );
+              report.assetSha256 = Object.fromEntries(
+                await Promise.all(
+                  [
+                    "dist/client/index.html",
+                    ...assets.map((name) => "dist/client/assets/" + name),
+                  ].map(async (path) => [path, await hashFile(path)]),
+                ),
+              );
+              const config = readConfig({
+                OPEN_LEGEND_GOD_MODE: "true",
+                OPEN_LEGEND_AUTH_MODE: "local",
+                WORLD_SEED: "1086",
+                AI_BUDGET_USD: "0",
+              });
+              assert.equal(config.budgetUsd, 0);
+              assert.equal(
+                Boolean(
+                  config.jevKey ||
+                    config.llmKey ||
+                    config.macrofoldKey ||
+                    config.embeddingKey,
+                ),
+                false,
+              );
+              repository = await testRepository();
+              const now = Date.now();
+              game = await createGameServer({
+                config,
+                store: repository,
+                production: true,
+                tick: false,
+                now: () => now,
+              });
+              await new Promise((resolve) => game.server.listen(0, "127.0.0.1", resolve));
+              const address = game.server.address();
+              assert.ok(address && typeof address !== "string");
+              base = "http://127.0.0.1:" + address.port;
+              context = await browser.newContext({
+                viewport: { width: 1440, height: 960 },
+                locale: "en-US",
+                timezoneId: "UTC",
+              });
+              context.on("page", watch);
+              await context.tracing.start({
+                screenshots: true,
+                snapshots: true,
+                sources: true,
+              });
+              traceStarted = true;
+              page = await context.newPage();
+              watch(page);
+              await page.goto(base);
+              const initial = await entered(page, enterGame);
+              Object.assign(controlledActor, {
+                id: initial.player.id,
+                worldId: initial.worldId,
+                accountId: initial.access.accountId,
+              });
+              assert.equal(initial.godMode, true);
+              assert.equal(initial.access.canManageSaves, true);
+              const nameA = initial.player.name,
+                nameB = "Owner UI checkpoint check";
+              const checkpointLabel = "Owner UI baseline";
+              report.identity = {
+                ...controlledActor,
+                initialTimeline: initial.saveTimeline,
+                originalName: nameA,
+                editedName: nameB,
+              };
+              let checkpointId, originalEditor, savedEditor, timelineA, timelineB;
+
+              await step(
+                "Read installed Health, its native host relation and the original source again",
+                async () => {
+                  const menu = await showGame();
+                  await menu.getByRole("button", { name: "Create", exact: true }).click();
+                  const creation = page.locator("#agentPanel");
+                  await creation
+                    .getByRole("button", { name: "Inspect world", exact: true })
+                    .click();
+                  const inspection = creation.getByRole("region", {
+                    name: "World-owner relationship inspection",
+                    exact: true,
+                  });
+                  await inspection
+                    .getByLabel("Name or ID", { exact: true })
+                    .fill("wilderness:health");
+                  await uiCall(
+                    page,
+                    "/api/world-agent/inspect",
+                    () =>
+                      inspection
+                        .getByRole("button", { name: "Search", exact: true })
+                        .click(),
+                    "Search installed Health",
+                  );
+                  const health = await uiCall(
+                    page,
+                    "/api/world-agent/inspect",
+                    () =>
+                      inspection
+                        .getByRole("list", { name: "World search results", exact: true })
+                        .getByRole("button", { name: "Health", exact: true })
+                        .click(),
+                    "Inspect installed Health",
+                  );
+                  const expected = readDefinition(
+                    game.service.world,
+                    "attribute",
+                    "wilderness:health",
+                  );
+                  assert.ok(expected);
+                  assert.deepEqual(health.result.result.data.node, expected.node);
+                  assert.deepEqual(health.result.result.data.data, expected.data);
+                  const host = await uiCall(
+                    page,
+                    "/api/world-agent/inspect",
+                    () =>
+                      inspection
+                        .getByRole("button", {
+                          name: "Inspect native-health-v1",
+                          exact: true,
+                        })
+                        .click(),
+                    "Follow native Health implementation",
+                  );
+                  assert.equal(host.result.result.data.node.ref.kind, "host");
+                  assert.equal(host.result.result.data.node.ref.id, "native-health-v1");
+                  const implementation =
+                    health.result.result.data.relationships.edges.find(
+                      (edge) =>
+                        edge.relation === "implements" &&
+                        edge.target.kind === "host" &&
+                        edge.target.id === "native-health-v1",
+                    );
+                  assert.ok(
+                    implementation,
+                    "The actual Health neighborhood declares the implementation relation",
+                  );
+                  assert.deepEqual(implementation.source, expected.node.ref);
+                  assert.deepEqual(
+                    implementation.target,
+                    host.result.result.data.node.ref,
+                  );
+                  const back = await uiCall(
+                    page,
+                    "/api/world-agent/inspect",
+                    () =>
+                      inspection
+                        .getByRole("button", { name: "Back one source", exact: true })
+                        .click(),
+                    "Return to Health source",
+                  );
+                  assert.deepEqual(back.result.result.data.node.ref, expected.node.ref);
+                  await inspection
+                    .getByText("Exact source record", { exact: true })
+                    .click();
+                  await expect(
+                    inspection.getByText(
+                      "Source revision: " + expected.node.ref.version,
+                      { exact: true },
+                    ),
+                  ).toBeVisible();
+                  await expect(inspection.locator("pre").first()).toContainText(
+                    "native-health-v1",
+                  );
+                  await expect(
+                    inspection.getByText(
+                      "Complete for this projected neighborhood only.",
+                      { exact: true },
+                    ),
+                  ).toBeVisible();
+                  report.definition = {
+                    source: expected.node.ref,
+                    host: host.result.result.data.node.ref,
+                    relation: implementation,
+                    returnedSource: back.result.result.data.node.ref,
+                  };
+                  await creation
+                    .getByRole("button", { name: "Hide Create panel", exact: true })
+                    .click();
+                },
+              );
+
+              await step(
+                "Create the actual named baseline with the original actor name",
+                async () => {
+                  const checkpoints = await showCheckpoints();
+                  await checkpoints
+                    .getByLabel("Checkpoint name", { exact: true })
+                    .fill(checkpointLabel);
+                  const created = await uiCall(
+                    page,
+                    "/api/saves/create",
+                    () =>
+                      checkpoints
+                        .getByRole("button", { name: "Create checkpoint", exact: true })
+                        .click(),
+                    "Create named baseline",
+                    true,
+                  );
+                  checkpointId = created.request.id;
+                  await expect(
+                    checkpoints.getByRole("button", {
+                      name: "Load " + checkpointLabel,
+                      exact: true,
+                    }),
+                  ).toBeEnabled();
+                  const catalog = await repository.saves.list(controlledActor.worldId);
+                  assert.equal(
+                    catalog.filter(
+                      (save) =>
+                        save.id === checkpointId && save.label === checkpointLabel,
+                    ).length,
+                    1,
+                  );
+                  const saved = await repository.saves.read(
+                    controlledActor.worldId,
+                    checkpointId,
+                  );
+                  assert.equal(
+                    saved.state.world.entities[controlledActor.id].name,
+                    nameA,
+                  );
+                  report.baseline = {
+                    id: checkpointId,
+                    name: checkpointLabel,
+                    actorName: nameA,
+                    time: saved.state.world.simTime,
+                  };
+                },
+              );
+
+              await step(
+                "Keep the deliberate dirty name through Close, then Save and Close exactly once",
+                async () => {
+                  const opened = await editor();
+                  originalEditor = opened.loaded;
+                  const name = opened.dialog.getByLabel("Name", { exact: true });
+                  await expect(name).toHaveValue(nameA);
+                  await name.fill(nameB);
+                  await opened.dialog
+                    .getByRole("button", { name: "Close Edit " + nameA, exact: true })
+                    .click();
+                  const confirmation = page.getByRole("alertdialog", {
+                    name: "Unsaved changes in Edit " + nameA,
+                    exact: true,
+                  });
+                  await expect(confirmation).toBeVisible();
+                  await assertPerson(nameA);
+                  assert.equal(
+                    requests.filter(
+                      (entry) => entry.path === "/api/god/editor/person/save",
+                    ).length,
+                    0,
+                  );
+                  await capture("01-person-dirty-close.png");
+                  await confirmation
+                    .getByRole("button", { name: "Keep editing", exact: true })
+                    .click();
+                  await expect(name).toHaveValue(nameB);
+                  await opened.dialog
+                    .getByRole("button", { name: "Close Edit " + nameA, exact: true })
+                    .click();
+                  savedEditor = await uiCall(
+                    page,
+                    "/api/god/editor/person/save",
+                    () =>
+                      confirmation
+                        .getByRole("button", { name: "Save and Close", exact: true })
+                        .click(),
+                    "Save deliberate person name",
+                    true,
+                  );
+                  assert.equal(savedEditor.request.actorId, controlledActor.id);
+                  assert.equal(savedEditor.request.generation, originalEditor.generation);
+                  assert.equal(
+                    savedEditor.request.manifestRevision,
+                    originalEditor.manifestRevision,
+                  );
+                  assert.deepEqual(
+                    savedEditor.request.bodyPolicyPin,
+                    originalEditor.bodyPolicyPin,
+                  );
+                  assert.deepEqual(savedEditor.request.basePerson, originalEditor.person);
+                  assert.deepEqual(savedEditor.request.memoryChanges, []);
+                  assert.equal(savedEditor.request.person.name, nameB);
+                  const withoutName = ({ name: _name, ...fields }) => fields;
+                  assert.deepEqual(
+                    withoutName(savedEditor.request.person),
+                    withoutName(originalEditor.person),
+                  );
+                  await expect(opened.dialog).toBeHidden();
+                  await assertPerson(nameB);
+                  const reopened = await editor();
+                  await expect(
+                    reopened.dialog.getByLabel("Name", { exact: true }),
+                  ).toHaveValue(nameB);
+                  assert.deepEqual(
+                    withoutName(reopened.loaded.person),
+                    withoutName(originalEditor.person),
+                  );
+                  await reopened.dialog
+                    .getByRole("button", { name: "Close Edit " + nameB, exact: true })
+                    .click();
+                  timelineA = game.service.timelineId;
+                },
+              );
+
+              await step(
+                "Cancel exact baseline Load once, then use its native protected restore",
+                async () => {
+                  const checkpoints = await showCheckpoints();
+                  const load = checkpoints.getByRole("button", {
+                    name: "Load " + checkpointLabel,
+                    exact: true,
+                  });
+                  await load.click();
+                  const confirmation = checkpoints.getByRole("group", {
+                    name: "Load checkpoint " + checkpointLabel,
+                    exact: true,
+                  });
+                  await expect(confirmation).toContainText("Before last load");
+                  await confirmation
+                    .getByRole("button", { name: "Cancel", exact: true })
+                    .click();
+                  await expect(load).toBeFocused();
+                  assert.equal(game.service.timelineId, timelineA);
+                  assert.equal(
+                    requests.filter((entry) => entry.path === "/api/saves/load").length,
+                    0,
+                  );
+                  await load.click();
+                  // A successful native load reloads this actual App. Observe that document before
+                  // checking entry, rather than accepting the previous document's ready marker.
+                  const [, loaded] = await Promise.all([
+                    page.waitForEvent("domcontentloaded"),
+                    uiCall(
+                      page,
+                      "/api/saves/load",
+                      () =>
+                        confirmation
+                          .getByRole("button", { name: "Confirm load", exact: true })
+                          .click(),
+                      "Load named baseline with protection",
+                      true,
+                    ),
+                  ]);
+                  assert.equal(loaded.request.id, checkpointId);
+                  const restored = await entered(page, enterGame);
+                  assert.equal(restored.player.name, nameA);
+                  await assertPerson(nameA);
+                  assert.notEqual(restored.saveTimeline, timelineA);
+                  timelineB = restored.saveTimeline;
+                  assert.equal(restored.clock.paused, true);
+                  assert.equal(restored.clock.pauseReason, "manual");
+                  const protectedWorld = await repository.saves.read(
+                    controlledActor.worldId,
+                    "before-load",
+                  );
+                  assert.equal(
+                    protectedWorld.state.world.entities[controlledActor.id].name,
+                    nameB,
+                  );
+                  assert.equal(
+                    (
+                      await repository.getIntegration(
+                        "load-request:" + loaded.request.requestId,
+                      )
+                    ).saveId,
+                    checkpointId,
+                  );
+                  report.firstRestore = {
+                    timeline: timelineB,
+                    actorName: nameA,
+                    protectedActorName: nameB,
+                    paused: restored.clock.pauseReason,
+                  };
+                },
+              );
+
+              await step(
+                "Load the actual Before last load protection and recover the edited character",
+                async () => {
+                  const checkpoints = await showCheckpoints();
+                  await checkpoints
+                    .getByRole("button", { name: "Load Before last load", exact: true })
+                    .click();
+                  const confirmation = checkpoints.getByRole("group", {
+                    name: "Load checkpoint Before last load",
+                    exact: true,
+                  });
+                  await expect(confirmation).toContainText("Before last load");
+                  await capture("02-exact-recovery-load.png");
+                  const [, loaded] = await Promise.all([
+                    page.waitForEvent("domcontentloaded"),
+                    uiCall(
+                      page,
+                      "/api/saves/load",
+                      () =>
+                        confirmation
+                          .getByRole("button", { name: "Confirm load", exact: true })
+                          .click(),
+                      "Recover edited world through protected slot",
+                      true,
+                    ),
+                  ]);
+                  assert.equal(loaded.request.id, "before-load");
+                  const restored = await entered(page, enterGame);
+                  assert.equal(restored.player.name, nameB);
+                  await assertPerson(nameB);
+                  assert.notEqual(restored.saveTimeline, timelineB);
+                  assert.equal(restored.clock.paused, true);
+                  assert.equal(restored.clock.pauseReason, "manual");
+                  const replacementProtection = await repository.saves.read(
+                    controlledActor.worldId,
+                    "before-load",
+                  );
+                  assert.equal(
+                    replacementProtection.state.world.entities[controlledActor.id].name,
+                    nameA,
+                  );
+                  assert.equal(
+                    (
+                      await repository.getIntegration(
+                        "load-request:" + loaded.request.requestId,
+                      )
+                    ).saveId,
+                    "before-load",
+                  );
+                  report.finalRestore = {
+                    timeline: restored.saveTimeline,
+                    actorName: nameB,
+                    protectedActorName: nameA,
+                    paused: restored.clock.pauseReason,
+                  };
+                },
+              );
+
+              await step(
+                "Read native Operations, maintenance and the same catalogue without entering play",
+                async () => {
+                  const menu = await showGame();
+                  [operations] = await Promise.all([
+                    context.waitForEvent("page"),
+                    menu
+                      .getByRole("link", {
+                        name: "World operations · opens separately",
+                        exact: true,
+                      })
+                      .click(),
+                  ]);
+                  watch(operations);
+                  await expect(
+                    operations.getByRole("tablist", {
+                      name: "World operations tasks",
+                      exact: true,
+                    }),
+                  ).toBeVisible();
+                  const state = await nativeRead(operations, "/api/operations");
+                  assert.equal(state.worldId, controlledActor.worldId);
+                  assert.equal(state.actorId, controlledActor.id);
+                  assert.equal(state.accountId, controlledActor.accountId);
+                  assert.deepEqual([...state.capabilities].sort(), [
+                    "create",
+                    "inspect",
+                    "manage-access",
+                    "play",
+                    "save",
+                  ]);
+                  assert.equal(state.overview, undefined);
+                  await expect(
+                    operations.getByText(
+                      "This account has a character. Return to your character to play.",
+                      { exact: true },
+                    ),
+                  ).toBeVisible();
+                  await operations
+                    .getByText("World and account details", { exact: true })
+                    .click();
+                  await expect(
+                    operations.getByText("World: " + controlledActor.worldId, {
+                      exact: true,
+                    }),
+                  ).toBeVisible();
+                  await expect(
+                    operations.getByText("Account: " + controlledActor.accountId, {
+                      exact: true,
+                    }),
+                  ).toBeVisible();
+                  const granted = operations.getByRole("list", {
+                    name: "Granted operations",
+                    exact: true,
+                  });
+                  await expect(granted).toBeVisible();
+                  assert.deepEqual(
+                    (await granted.getByRole("listitem").allTextContents())
+                      .map((value) => value.trim())
+                      .sort(),
+                    [
+                      "Play a character",
+                      "Creator tools and maintenance",
+                      "Inspect characters and diagnostics",
+                      "Save and load the world",
+                      "Invite people and manage access",
+                    ].sort(),
+                  );
+                  assert.equal(state.clock.paused, true);
+                  assert.equal(state.clock.pauseReason, "manual");
+                  await operations
+                    .getByRole("tab", { name: "Maintenance", exact: true })
+                    .click();
+                  await expect(
+                    operations.getByText(
+                      "Whole world · creator permission required · real dates and times",
+                      { exact: true },
+                    ),
+                  ).toBeVisible();
+                  await expect(
+                    operations.getByText(
+                      "only Mark ready and resume ends active maintenance",
+                      { exact: false },
+                    ),
+                  ).toBeVisible();
+                  assert.ok(
+                    state.maintenance === null || state.maintenance === undefined,
+                  );
+                  await operations
+                    .getByRole("tab", { name: "Checkpoints", exact: true })
+                    .click();
+                  await expect(
+                    operations.getByRole("button", {
+                      name: "Load " + checkpointLabel,
+                      exact: true,
+                    }),
+                  ).toBeEnabled();
+                  await expect(
+                    operations.getByRole("button", {
+                      name: "Load Before last load",
+                      exact: true,
+                    }),
+                  ).toBeEnabled();
+                  const ownRequests = requests.filter(
+                    (entry) => entry.page === pageNames.get(operations),
+                  );
+                  assert.deepEqual(
+                    ownRequests.filter((entry) =>
+                      ["/api/embodiment", "/api/presence", "/api/events"].includes(
+                        entry.path,
+                      ),
+                    ),
+                    [],
+                  );
+                  report.operations = {
+                    actorId: state.actorId,
+                    worldId: state.worldId,
+                    accountId: state.accountId,
+                    capabilities: state.capabilities,
+                    paused: state.clock.pauseReason,
+                    requestsBeforeReturn: ownRequests,
+                  };
+                },
+              );
+
+              await step(
+                "Use Return to your character after closing the original game page",
+                async () => {
+                  await page.close();
+                  await operations
+                    .getByRole("link", { name: "Return to your character", exact: true })
+                    .click();
+                  const returned = await entered(operations, enterGame);
+                  assert.equal(returned.player.name, nameB);
+                  await assertPerson(nameB);
+                  assert.equal(returned.saveTimeline, report.finalRestore.timeline);
+                  assert.equal(returned.clock.paused, true);
+                  assert.equal(returned.clock.pauseReason, "manual");
+                  const menu = await showGame(operations);
+                  await expect(menu).toContainText("playing as " + nameB);
+                  report.returned = {
+                    actorId: returned.player.id,
+                    worldId: returned.worldId,
+                    timeline: returned.saveTimeline,
+                    actorName: returned.player.name,
+                    pauseReason: returned.clock.pauseReason,
+                  };
+                },
+              );
+
+              assert.equal(report.writes.length, 4);
+              assert.equal(
+                requests.filter((entry) => deliberatePaths.has(entry.path)).length,
+                4,
+              );
+              assert.deepEqual(
+                requests.filter((entry) =>
+                  ["/api/command", "/api/control"].includes(entry.path),
+                ),
+                [],
+              );
+              assert.deepEqual(
+                requests.filter(
+                  (entry) =>
+                    entry.path.startsWith("/api/maintenance/") && entry.method === "POST",
+                ),
+                [],
+              );
+              assert.deepEqual(report.pageErrors, []);
+              assert.deepEqual(report.unexpectedRequests, []);
+              report.nativeParticipation = requests.filter((entry) =>
+                ["/api/embodiment", "/api/presence"].includes(entry.path),
+              );
+              report.passed = true;
+            } catch (error) {
+              report.failure = {
+                message: errorText(error),
+                stack: error instanceof Error ? error.stack : undefined,
+              };
+              report.passed = false;
+            } finally {
+              report.requests = requests;
+              if (traceStarted) {
+                try {
+                  await context.tracing.stop({ path: join(output, "trace.zip") });
+                  report.cleanup.trace = "saved";
+                } catch (error) {
+                  report.cleanup.traceError = errorText(error);
+                  report.passed = false;
+                }
+              }
+              try {
+                await context?.close();
+                report.cleanup.context = "closed or not created";
+              } catch (error) {
+                report.cleanup.contextError = errorText(error);
+                report.passed = false;
+              }
+              if (game) {
+                try {
+                  report.cleanup.shutdown = await game.shutdown();
+                  if (
+                    !report.cleanup.shutdown.saved ||
+                    report.cleanup.shutdown.problems.length
+                  )
+                    report.passed = false;
+                } catch (error) {
+                  report.cleanup.shutdownError = errorText(error);
+                  report.passed = false;
+                }
+              }
+              try {
+                await repository?.close();
+                report.cleanup.repository = "closed or not created";
+              } catch (error) {
+                report.cleanup.repositoryError = errorText(error);
+                report.passed = false;
+              }
+              report.cleanup.sharedBrowser = "left with driver";
+              report.cleanup.disposableDatabases =
+                "final closeTestDatabases belongs to driver";
+              report.finishedAt = new Date().toISOString();
+              await writeFile(
+                join(output, "report.json"),
+                JSON.stringify(report, null, 2) + "\n",
+              );
+            }
+            return report;
+          }
+          OPENLEGEND_OWNER_CREATION_SOURCE_1
+          cat > test-results/whole-ui-owner-creation/scripts/creation-recovery-stage.mjs <<'OPENLEGEND_OWNER_CREATION_SOURCE_2'
+          // One scratch-only actual-App/native-PostgreSQL creation recovery continuation.
+          // Root owns Chromium, the existing six-minute supervisor and closeTestDatabases().
+          import assert from 'node:assert/strict';
+          import { createHash } from 'node:crypto';
+          import { mkdir, readFile, writeFile } from 'node:fs/promises';
+          import { createRequire } from 'node:module';
+          import { join, resolve } from 'node:path';
+          import { pathToFileURL } from 'node:url';
+
+          // Adopted creation checkpoint 2d535b50 plus its unchanged, source-reviewed interaction owners.
+          const preparedSources = {
+            'apps/client/src/main.tsx': 'ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785',
+            'apps/client/src/api.ts': 'c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c',
+            'apps/client/src/ui/creation-request.tsx':
+              'c3bafe7b66abebae85ab0700c29f754af7b0202b0b0030381c1bfcd43e202450',
+            'apps/client/src/ui/item-creation.tsx':
+              'c5f8c4001f517cfbb1faaab40b32a75bbdc83e6c40c213e0c82a29dd50740925',
+            'apps/client/src/ui/god-tools.tsx':
+              'a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9',
+            'apps/client/src/ui/action-picker.tsx':
+              'f1cccb5e414886231b7e14c346da052dcf19b75a1055bc16ff1fcbbea860bf27',
+            'apps/client/src/ui/pullout.tsx':
+              '38be999e97ded28cdec9c819d6570aafc4a9b2d1622c48f9cae05cfdd8361ca6',
+            'apps/client/src/ui/inventory.tsx':
+              '6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20',
+            'apps/client/src/design-system/components.tsx':
+              '6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc',
+            'apps/client/src/scene.ts': 'f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481',
+            'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
+            'apps/server/src/world-service.ts':
+              '0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263',
+            'apps/server/src/store.ts': '9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc',
+            'apps/server/src/world-records.ts':
+              'cf1cbd7a7a926091f06c0cb7184eaac15d814ccf4622249fbab9ea026d9ee8c9',
+            'apps/server/src/world-record-schema.ts':
+              '33c16a4bb31f4a49431c8c09917f88d0881861766d3663b711248a1ab9379479',
+            'packages/domain/src/types.ts':
+              'eef78f787d1d9435cc216c86e34356e04d1ebc9b744753820aa250c3854be82f',
+            'packages/domain/src/god-tools.ts':
+              '63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d',
+            'packages/domain/src/item-handling.ts':
+              '860d84e742fabf2efb401c0bd52f2742261957d4089722151d282e129876968a',
+            'packages/domain/src/objects.ts':
+              'c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70',
+            'packages/domain/src/spatial-state.ts':
+              'df9069821f57c8368d4826fec14988c1ee00ee1a4cfea7f9456441a0d56058ad',
+            'packages/domain/src/worlds/base/catalogue.ts':
+              '738d420ef40b866708e53251ae343e750be3491ba37f45f394cf5b0e10c35eca',
+            'packages/domain/src/worlds/base/spawn.ts':
+              'd065e79fb065f6348d65b1b7e577774c13a14380031d6f285a44fbfa4967e75b',
+            'packages/protocol/src/index.ts':
+              '83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80',
+            'packages/spatial/src/geometry.ts':
+              '4c69fc4ca125a672eb89e0ec6da71c67c1c241c83cdd34b1496644cd9920ba47',
+            'tests/fixtures/database.ts': '3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92',
+            'tests/fixtures/browser.ts': '61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2',
+            'apps/server/src/view.ts': '959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b',
+            'packages/domain/src/worlds/base/world.ts':
+              '98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44',
+          };
+
+          export async function runCreationRecoveryStage({ browser, outputDirectory }) {
+            const output = join(outputDirectory, 'creation-recovery');
+            await mkdir(output, { recursive: true });
+            const report = {
+              startedAt: new Date().toISOString(),
+              checkout: process.env.GITHUB_SHA ?? 'unrecorded-checkout',
+              preparedCheckout: '2d535b50290a21d1b55c44115bbc28632d39b634',
+              browser: browser.version(),
+              scope:
+                'Three actual creator creations, each with its successful native delivery lost after commit and an explicit exact-request keyboard retry.',
+              limitations: [
+                'One fresh local God-mode base world; no placement fixture, actor walking, clock advancement or model generation.',
+                'Blank ground is selected through ordinary scene right-clicks and checked with existing native placement owners before the three creation choices.',
+                'The person uses an explicit typed draft with no selected traits; native starting possessions and random traits are preserved on retry.',
+                'SQL assertions read committed current receipt rows. There is no database restart or cross-version save claim.',
+                'A retry is a real mutation request. The native owner returns its recorded original effect; it is never represented as a receipt-only read.',
+                'Storage refusal, access loss, late completion, cleanup failure, real IME, assistive devices and uncoached usability remain separately scoped evidence.',
+              ],
+              creations: [],
+              sentCreations: [],
+              lifecyclePosts: {},
+              groundSelections: [],
+              captures: [],
+              pageErrors: [],
+              unexpectedRequests: [],
+              cleanup: { finalDatabaseDrop: 'Owned by root through closeTestDatabases().' },
+              passed: false,
+            };
+            let game, store, context, page, base, headers, active, routeFailure;
+            let traceStarted = false;
+            const deliveries = new Set();
+            const errorText = (error) => (error instanceof Error ? error.message : String(error));
+            const hash = (value) => createHash('sha256').update(value).digest('hex');
+            const nativeImport = (path) => import(pathToFileURL(resolve(path)).href);
+            const paths = {
+              item: '/api/god/items',
+              person: '/api/god/person',
+              environment: '/api/god/spawn',
+            };
+            try {
+              report.sha256 = {};
+              for (const [path, expected] of Object.entries(preparedSources)) {
+                const actual = hash(await readFile(resolve(path)));
+                report.sha256[path] = actual;
+                assert.equal(actual, expected, 'Prepared source changed: ' + path);
+              }
+              report.scriptSha256 = hash(await readFile(new URL(import.meta.url)));
+              const { expect } = createRequire(resolve('package.json'))('@playwright/test');
+              const [http, database, entry, domain, spatialState, spatial] = await Promise.all([
+                nativeImport('apps/server/src/http.ts'),
+                nativeImport('tests/fixtures/database.ts'),
+                nativeImport('tests/fixtures/browser.ts'),
+                nativeImport('packages/domain/src/index.ts'),
+                nativeImport('packages/domain/src/spatial-state.ts'),
+                nativeImport('packages/spatial/src/index.ts'),
+              ]);
+              const { PLAYER_ID, itemsForOwner, itemFor, worldRootEntities } = domain;
+              const { worldPosition, worldSupport, spatialMap } = spatialState;
+              const fixedNow = Date.now();
+              const config = database.readConfig({
+                WORLD_SEED: '73',
+                AI_BUDGET_USD: '0',
+                OPEN_LEGEND_GOD_MODE: 'true',
+                OPEN_LEGEND_AUTH_MODE: 'local',
+              });
+              assert.equal(config.budgetUsd, 0);
+              assert.equal(config.godMode, true);
+              for (const key of [
+                'jevKey',
+                'llmKey',
+                'embeddingKey',
+                'macrofoldKey',
+                'macrofoldProviderConnectionId',
+                'macrofoldJevConnectionId',
+                'macrofoldWorldConnectionId',
+              ])
+                assert.equal(config[key], '');
+              store = await database.testRepository();
+              assert.equal(store.persistence, 'postgres');
+              game = await http.createGameServer({
+                config,
+                store,
+                production: true,
+                tick: false,
+                now: () => fixedNow,
+              });
+              await new Promise((resolve, reject) => {
+                game.server.once('error', reject);
+                game.server.listen(0, '127.0.0.1', resolve);
+              });
+              const address = game.server.address();
+              assert.ok(address && typeof address !== 'string');
+              base = 'http://127.0.0.1:' + address.port;
+              context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+              await context.tracing.start({ screenshots: false, snapshots: true, sources: true });
+              traceStarted = true;
+              page = await context.newPage();
+              page.setDefaultTimeout(10_000);
+              page.setDefaultNavigationTimeout(20_000);
+              page.on('pageerror', (error) => report.pageErrors.push(error.message));
+              page.on('request', (request) => {
+                const url = new URL(request.url());
+                if (url.origin !== base && !['data:', 'blob:'].includes(url.protocol))
+                  report.unexpectedRequests.push(url.origin + url.pathname);
+                if (Object.values(paths).includes(url.pathname) && request.method() === 'POST')
+                  report.sentCreations.push({ path: url.pathname, body: request.postDataJSON() });
+                else if (
+                  /^\/api\/(?:command|chat|invent|inventions|world-agent|god)(?:\/|$)/.test(url.pathname) &&
+                  request.method() === 'POST'
+                )
+                  report.unexpectedRequests.push(url.pathname);
+                if (['/api/control', '/api/presence'].includes(url.pathname) && request.method() === 'POST')
+                  report.lifecyclePosts[url.pathname] = (report.lifecyclePosts[url.pathname] ?? 0) + 1;
+                const observed = request.headers();
+                // Only this actual App supplies current control; never take a second helper session.
+                if (observed['x-ol-client'] && observed['x-ol-scope'])
+                  headers = {
+                    Origin: base,
+                    'X-OL-Client': observed['x-ol-client'],
+                    'X-OL-Scope': observed['x-ol-scope'],
+                  };
+              });
+              await page.goto(base + '/auth/login');
+              await entry.enterGame(page);
+              await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+              assert.equal(game.service.paused, false);
+              const world = () => game.service.world;
+              const worldHash = () => hash(JSON.stringify(world()));
+              async function state() {
+                assert.ok(headers, 'Actual App authority must precede native reads');
+                const response = await page.request.get(base + '/api/state', { headers, timeout: 10_000 });
+                assert.equal(response.status(), 200);
+                const value = await response.json();
+                assert.equal(value.player.id, PLAYER_ID);
+                assert.equal(value.worldId, 'wilderness-73');
+                assert.equal(value.godMode, true);
+                assert.equal(value.access.controlling, true);
+                assert.equal(value.clock.paused, false);
+                return value;
+              }
+              const initial = await state();
+              const lifetime = (value) => [
+                value.access.privateDraftScope,
+                value.worldId,
+                value.saveTimeline,
+                value.player.id,
+              ];
+              assert.ok(initial.access.privateDraftScope && initial.saveTimeline);
+              const originalLifetime = lifetime(initial);
+              const storageKey = 'open-legend:creation-request:' + JSON.stringify(originalLifetime);
+              const initialPosition = worldPosition(world().entities[PLAYER_ID]);
+              const initialTime = world().simTime;
+              const initialReceiptIds = new Set(Object.keys(world().commandReceipts));
+              const total = (actorId, definitionId) =>
+                itemsForOwner(world(), actorId)
+                  .filter((item) => item.definitionId === definitionId)
+                  .reduce((sum, item) => sum + item.quantity, 0);
+              const eventCount = (type) => world().events.filter((event) => event.type === type).length;
+              const pending = () =>
+                page.evaluate((key) => {
+                  const raw = sessionStorage.getItem(key);
+                  return raw === null ? null : JSON.parse(raw);
+                }, storageKey);
+              const recovery = () => page.getByRole('dialog', { name: 'Original creation', exact: true });
+              async function sqlReceipt(id, expected) {
+                // Read the existing owner’s row without resetting the live repository baseline via load().
+                const rows = await store.db
+                  .prepare('SELECT id,payload FROM world_command_receipts WHERE world_id=? AND slot=?')
+                  .all(world().id, id);
+                assert.equal(rows.length, 1, 'One committed SQL receipt for this exact creation');
+                const receipt = JSON.parse(String(rows[0].payload));
+                assert.deepEqual(receipt, expected);
+                const createdId = receipt.outcome.itemId ?? receipt.outcome.entityId;
+                const objects = await store.db
+                  .prepare('SELECT id FROM sim_entities WHERE world_id=? AND slot=?')
+                  .all(world().id, createdId);
+                assert.equal(objects.length, 1, 'The recorded created object exists in committed SQL');
+                return { receiptRows: rows.length, createdEntityRows: objects.length };
+              }
+              await context.route(/\/api\/god\/(?:items|person|spawn)$/, (route) => {
+                const task = (async () => {
+                  const current = active;
+                  assert.ok(current, 'Only an explicitly prepared UI creation is permitted');
+                  assert.equal(new URL(route.request().url()).pathname, paths[current.kind]);
+                  assert.equal(route.request().method(), 'POST');
+                  const body = route.request().postDataJSON();
+                  current.posts++;
+                  assert.ok(current.posts <= 2, 'At most one original and one explicit retry');
+                  if (current.posts === 1) {
+                    const { id, ...draft } = body;
+                    assert.match(id, /^[a-zA-Z0-9_.:-]{1,120}$/);
+                    assert.deepEqual(draft, current.expectedBody);
+                    current.request = body;
+                  } else assert.deepEqual(body, current.request, 'Retry sends the exact original id/body');
+                  const before = worldHash();
+                  const response = await route.fetch({ timeout: 10_000 });
+                  try {
+                    assert.equal(response.status(), 200);
+                    const result = await response.json();
+                    assert.equal(result.ok, true, result.message);
+                    assert.equal(result.code, current.kind === 'item' ? 'item-created' : 'spawned');
+                    const createdId = current.kind === 'item' ? result.itemId : result.entityId;
+                    assert.equal(typeof createdId, 'string');
+                    assert.ok(world().entities[createdId]);
+                    const receipt = world().commandReceipts[body.id];
+                    assert.ok(receipt);
+                    assert.deepEqual(receipt.outcome, result);
+                    const sql = await sqlReceipt(body.id, receipt);
+                    if (current.posts === 1) {
+                      current.originalResult = result;
+                      current.committedWorldSha256 = worldHash();
+                      current.firstSql = sql;
+                      await route.abort('failed'); // Native HTTP/SQL succeeded; only browser delivery is lost.
+                      current.delivery = 'lost after successful native commit';
+                    } else {
+                      assert.deepEqual(result, current.originalResult, 'Native exact original result');
+                      assert.equal(worldHash(), before, 'Replay changes no native world data or randomness');
+                      current.replayWorldSha256 = before;
+                      current.retrySql = sql;
+                      await route.fulfill({ response }); // Forward the real native response unchanged.
+                      current.recovered = true;
+                    }
+                  } finally {
+                    await response.dispose();
+                  }
+                })().catch(async (error) => {
+                  routeFailure ??= errorText(error);
+                  if (active) active.deliveryError = errorText(error);
+                  try {
+                    await route.abort('failed');
+                  } catch {
+                    // The route may already be consumed by the deliberate lost delivery or browser stop.
+                  }
+                });
+                deliveries.add(task);
+                void task.finally(() => deliveries.delete(task));
+                return task;
+              });
+              async function inventoryEntry() {
+                const panel = page.locator('#inventoryPanel');
+                if (!(await panel.isVisible()))
+                  await page.getByRole('button', { name: 'Inventory', exact: true }).click();
+                await expect(panel).toBeVisible();
+                await panel.getByRole('button', { name: 'God mode · Add item', exact: true }).click();
+              }
+              async function hideInventory() {
+                const panel = page.locator('#inventoryPanel');
+                if (await panel.isVisible()) await panel.getByRole('button', { name: /^Hide / }).click();
+              }
+              async function ground(profile, purpose) {
+                await hideInventory();
+                const points = [
+                  { x: 900, y: 700 },
+                  { x: 1080, y: 680 },
+                  { x: 1190, y: 590 },
+                  { x: 920, y: 565 },
+                ];
+                for (const point of points) {
+                  const menu = page.locator('#contextMenu');
+                  if (await menu.isVisible()) await page.keyboard.press('Escape');
+                  await expect(menu).toBeHidden();
+                  const [request] = await Promise.all([
+                    page.waitForRequest((request) => new URL(request.url()).pathname === '/api/actions'),
+                    page.locator('#world').click({ button: 'right', position: point }),
+                  ]);
+                  const selected = request.postDataJSON();
+                  const position = selected.position;
+                  const canStand =
+                    position &&
+                    !selected.targetId &&
+                    spatial.canStand(spatialMap(world()), position, spatial.BODY_PROFILES[profile]);
+                  const occupied =
+                    position &&
+                    worldRootEntities(world()).some((entity) => {
+                      const here = worldPosition(entity);
+                      return spatial.distance3D(here, position) < 0.5;
+                    });
+                  report.groundSelections.push({
+                    purpose,
+                    point,
+                    position: position ?? null,
+                    entitySelected: !!selected.targetId,
+                    supported: !!canStand,
+                    occupied: !!occupied,
+                  });
+                  if (canStand && !occupied) {
+                    await expect(page.locator('#contextTitle')).toHaveText(initial.presentation.locationName);
+                    await expect(menu.getByRole('button', { name: /^Add something/ })).toBeVisible();
+                    return position;
+                  }
+                }
+                throw new Error(
+                  'No supported blank ground among the four actual scene selections: ' + purpose,
+                );
+              }
+              async function chooseCreation(category, label) {
+                await page
+                  .locator('#contextMenu')
+                  .getByRole('button', { name: /^Add something/ })
+                  .click();
+                await page
+                  .getByRole('dialog', { name: 'Add something', exact: true })
+                  .getByRole('button', { name: category, exact: true })
+                  .click();
+                await page
+                  .getByRole('dialog', { name: category, exact: true })
+                  .getByRole('option', { name: label, exact: true })
+                  .click();
+              }
+              async function lose(kind, expectedBody, gesture) {
+                assert.equal(await pending(), null);
+                const before = report.sentCreations.length;
+                active = { kind, expectedBody, posts: 0 };
+                report.creations.push(active);
+                await gesture();
+                await expect.poll(() => active.delivery ?? active.deliveryError).toBeTruthy();
+                assert.equal(routeFailure, undefined);
+                assert.equal(active.delivery, 'lost after successful native commit');
+                assert.equal(report.sentCreations.length, before + 1);
+                await expect(recovery()).toBeVisible();
+                await expect(recovery()).toContainText('The original result is not confirmed.');
+                const retained = await pending();
+                assert.equal(retained.kind, kind);
+                assert.deepEqual(retained.body, active.request);
+                assert.equal(retained.outcome, undefined);
+                return active;
+              }
+              async function closeAndReload(record) {
+                const before = report.sentCreations.length;
+                await recovery()
+                  .getByRole('button', { name: 'Close creation recovery', exact: true })
+                  .click();
+                await expect(recovery()).toBeHidden();
+                assert.deepEqual((await pending()).body, record.request);
+                await page.reload();
+                await entry.enterGame(page);
+                await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+                const current = await state();
+                assert.deepEqual(
+                  lifetime(current),
+                  originalLifetime,
+                  'Same private owner/world/timeline/actor',
+                );
+                assert.equal(report.sentCreations.length, before, 'Close and reload send no creation');
+                assert.deepEqual((await pending()).body, record.request);
+                await expect(recovery()).toBeHidden();
+                record.sameOwnerReloadRetained = true;
+              }
+              async function recover(record, captureName) {
+                await expect(recovery()).toBeVisible();
+                const retained = await pending();
+                assert.deepEqual(retained.body, record.request);
+                await expect(recovery()).toContainText(retained.label);
+                await expect(recovery()).toContainText(retained.destinationLabel);
+                await expect(page.getByRole('dialog', { name: 'Create item', exact: true })).toBeHidden();
+                await expect(page.getByRole('dialog', { name: 'Create person', exact: true })).toBeHidden();
+                await expect(recovery()).toContainText(
+                  'Resolve this retained creation before creating something else.',
+                );
+                assert.equal(record.posts, 1, 'Opening a different entry does not dispatch');
+                assert.ok(report.captures.length < 3);
+                await page.screenshot({ path: join(output, captureName) });
+                report.captures.push(captureName);
+                const retry = recovery().getByRole('button', {
+                  name: 'Retry original creation',
+                  exact: true,
+                });
+                await retry.focus();
+                await expect(retry).toBeFocused();
+                await page.keyboard.press('Enter');
+                await expect.poll(() => record.recovered || record.deliveryError).toBeTruthy();
+                assert.equal(routeFailure, undefined);
+                assert.equal(record.recovered, true);
+                await expect(recovery()).toBeHidden();
+                await expect(page.locator('#toast')).toHaveText(record.originalResult.message);
+                assert.equal(await pending(), null, 'Confirmed request removed from private browser storage');
+                assert.equal(record.posts, 2);
+                record.retryInput = 'Focused Retry original creation button, then keyboard Enter';
+                delete record.expectedBody;
+                active = undefined;
+              }
+
+              // First effect: two actual raw-fiber units in the controlled character’s belongings.
+              const itemOption = initial.godTools.itemOptions.find((option) => option.id === 'raw_fiber');
+              const personOption = initial.godTools.spawnOptions.find((option) => option.id === 'person');
+              const environmentOption = initial.godTools.spawnOptions.find(
+                (option) => option.id === 'river-stones',
+              );
+              assert.ok(itemOption && personOption && environmentOption);
+              assert.equal(environmentOption.category, 'Environment');
+              const beforeItem = total(PLAYER_ID, itemOption.id);
+              const beforeItemEvents = eventCount('god-item-created');
+              await inventoryEntry();
+              const itemForm = page.getByRole('dialog', { name: 'Create item', exact: true });
+              await itemForm.getByRole('combobox', { name: 'Item', exact: true }).fill(itemOption.label);
+              await page
+                .getByRole('option', {
+                  name: new RegExp('^' + itemOption.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+                })
+                .click();
+              await itemForm.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('2');
+              const itemRecord = await lose(
+                'item',
+                {
+                  definitionId: itemOption.id,
+                  quantity: 2,
+                  destination: { actorId: PLAYER_ID },
+                },
+                () => itemForm.getByRole('button', { name: 'Create 2 items', exact: true }).click(),
+              );
+              assert.equal(total(PLAYER_ID, itemOption.id), beforeItem + 2);
+              assert.equal(eventCount('god-item-created'), beforeItemEvents + 1);
+              assert.equal(itemFor(world(), itemRecord.originalResult.itemId).ownerId, PLAYER_ID);
+              await closeAndReload(itemRecord);
+              await ground('object', 'Open an environment entry while the item remains unresolved');
+              await chooseCreation('Environment', environmentOption.label);
+              await recover(itemRecord, '01-original-item-recovered-from-environment-entry.png');
+              assert.equal(total(PLAYER_ID, itemOption.id), beforeItem + 2);
+              assert.equal(eventCount('god-item-created'), beforeItemEvents + 1);
+
+              // Second effect: one actual person with the native starting belongings and random traits.
+              const personPosition = await ground('person', 'Create a person on actual blank ground');
+              await chooseCreation('Actors', personOption.label);
+              const personForm = page.getByRole('dialog', { name: 'Create person', exact: true });
+              const person = {
+                name: 'Mira',
+                personality: 'Patient and observant.',
+                backstory: 'Arrived at the clearing today.',
+                traitIds: [],
+                initialGoals: ['Learn the paths around the clearing.'],
+              };
+              await personForm.getByRole('textbox', { name: 'Name', exact: true }).fill(person.name);
+              await personForm
+                .getByRole('textbox', { name: 'Personality', exact: true })
+                .fill(person.personality);
+              await personForm
+                .getByRole('textbox', { name: 'Backstory', exact: true })
+                .fill(person.backstory);
+              await personForm
+                .getByRole('textbox', { name: 'Initial goals', exact: true })
+                .fill(person.initialGoals[0]);
+              const personRoots = worldRootEntities(world()).length;
+              const beforePersonEvents = eventCount('god-spawned');
+              const personRecord = await lose('person', { position: personPosition, ...person }, () =>
+                personForm.getByRole('button', { name: 'Create person', exact: true }).click(),
+              );
+              const personId = personRecord.originalResult.entityId;
+              assert.equal(worldRootEntities(world()).length, personRoots + 1);
+              assert.equal(world().entities[personId].name, person.name);
+              assert.deepEqual(worldPosition(world().entities[personId]), {
+                x: personPosition.x,
+                y: personPosition.y,
+                z: personPosition.z,
+              });
+              assert.equal(worldSupport(world().entities[personId]), personPosition.surfaceId);
+              assert.equal(world().entities[personId].actor.traits.length, 3);
+              assert.equal(total(personId, 'stone_tool'), 1);
+              assert.equal(total(personId, 'berries'), 3);
+              assert.equal(eventCount('god-spawned'), beforePersonEvents + 1);
+              const personTraits = structuredClone(world().entities[personId].actor.traits);
+              await recovery().getByRole('button', { name: 'Close', exact: true }).click();
+              await inventoryEntry();
+              await recover(personRecord, '02-original-person-recovered-from-item-entry.png');
+              assert.deepEqual(world().entities[personId].actor.traits, personTraits);
+              assert.equal(total(personId, 'stone_tool'), 1);
+              assert.equal(total(personId, 'berries'), 3);
+              assert.equal(worldRootEntities(world()).length, personRoots + 1);
+              assert.equal(eventCount('god-spawned'), beforePersonEvents + 1);
+              personRecord.nativeStartingPossessions = { stone_tool: 1, berries: 3 };
+              personRecord.nativeTraitCount = personTraits.length;
+
+              // Third effect: one actual world-authored resource chosen from the selected ground’s menu.
+              const environmentPosition = await ground('object', 'Create environment on actual blank ground');
+              const environmentRoots = worldRootEntities(world()).length;
+              const beforeEnvironmentEvents = eventCount('god-spawned');
+              const environmentRecord = await lose(
+                'environment',
+                {
+                  type: environmentOption.id,
+                  position: environmentPosition,
+                },
+                () => chooseCreation('Environment', environmentOption.label),
+              );
+              const environmentId = environmentRecord.originalResult.entityId;
+              const environment = world().entities[environmentId];
+              assert.equal(worldRootEntities(world()).length, environmentRoots + 1);
+              assert.equal(environment.name, environmentOption.label);
+              assert.equal(environment.resource.definitionId, 'stone');
+              assert.equal(environment.resource.quantity, 60);
+              assert.deepEqual(worldPosition(environment), {
+                x: environmentPosition.x,
+                y: environmentPosition.y,
+                z: environmentPosition.z,
+              });
+              assert.equal(worldSupport(environment), environmentPosition.surfaceId);
+              assert.equal(eventCount('god-spawned'), beforeEnvironmentEvents + 1);
+              await closeAndReload(environmentRecord);
+              await inventoryEntry();
+              await recover(environmentRecord, '03-original-environment-recovered-after-reload.png');
+              assert.deepEqual(world().entities[environmentId], environment);
+              assert.equal(worldRootEntities(world()).length, environmentRoots + 1);
+              assert.equal(eventCount('god-spawned'), beforeEnvironmentEvents + 1);
+
+              const final = await state();
+              assert.deepEqual(lifetime(final), originalLifetime);
+              assert.deepEqual(worldPosition(world().entities[PLAYER_ID]), initialPosition);
+              assert.equal(world().simTime, initialTime);
+              assert.equal(report.sentCreations.length, 6);
+              assert.equal(report.creations.length, 3);
+              assert.equal(new Set(report.creations.map((record) => record.request.id)).size, 3);
+              assert.equal(
+                Object.keys(world().commandReceipts).filter((id) => !initialReceiptIds.has(id)).length,
+                3,
+              );
+              assert.equal(final.ai.budget.spentUsd, 0);
+              assert.equal(final.ai.budget.reservedUsd, 0);
+              assert.equal(final.ai.usage.llmCalls + final.ai.usage.jevCalls, 0);
+              assert.deepEqual(report.pageErrors, []);
+              assert.deepEqual(report.unexpectedRequests, []);
+              report.final = {
+                creationPosts: 6,
+                firstCreations: 3,
+                explicitOriginalRetries: 3,
+                createdItemId: itemRecord.originalResult.itemId,
+                createdPersonId: personId,
+                createdEnvironmentId: environmentId,
+                gameplayCommands: 0,
+                suppliedWorldTransitions: 0,
+                simulationSecondsAdvanced: 0,
+                providerCalls: 0,
+                providerCostUsd: 0,
+                pendingCreation: false,
+              };
+              report.passed = true;
+            } catch (error) {
+              report.failure = errorText(error);
+            } finally {
+              if (deliveries.size) {
+                const results = await Promise.allSettled([...deliveries]);
+                if (results.some((result) => result.status === 'rejected')) {
+                  report.cleanup.deliveryError = 'An owned delivery did not settle successfully.';
+                  report.passed = false;
+                }
+              }
+              if (routeFailure) {
+                report.cleanup.routeError = routeFailure;
+                report.passed = false;
+              }
+              if (traceStarted && context)
+                try {
+                  await context.tracing.stop({ path: join(output, 'trace.zip') });
+                  report.trace = 'trace.zip';
+                } catch (error) {
+                  report.cleanup.traceError = errorText(error);
+                  report.passed = false;
+                }
+              if (context)
+                try {
+                  await context.close();
+                  report.cleanup.contextClosed = true;
+                } catch (error) {
+                  report.cleanup.contextError = errorText(error);
+                  report.passed = false;
+                }
+              if (game)
+                try {
+                  report.cleanup.shutdown = await game.shutdown();
+                  if (!report.cleanup.shutdown.saved || report.cleanup.shutdown.problems.length)
+                    report.passed = false;
+                } catch (error) {
+                  report.cleanup.shutdownError = errorText(error);
+                  report.passed = false;
+                }
+              if (store)
+                try {
+                  await store.close();
+                  report.cleanup.repositoryClosed = true;
+                } catch (error) {
+                  report.cleanup.repositoryError = errorText(error);
+                  report.passed = false;
+                }
+              report.finishedAt = new Date().toISOString();
+              report.elapsedMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
+              await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+            }
+            return report;
+          }
+          OPENLEGEND_OWNER_CREATION_SOURCE_2
+          sha256sum --check <<'OPENLEGEND_OWNER_CREATION_HASHES'
+          191ec6fb7043a038dc130aa35c54b667d35c7374fcd7b6cfc95b6991d44a9ea0  test-results/whole-ui-owner-creation/scripts/run-whole-ui.mjs
+          59f1c99ee580e124103f8b766ca37de4bc05b6fff63d92e34b7f7b8c36259f48  test-results/whole-ui-owner-creation/scripts/owner-stage.mjs
+          ec63a2b6dfcf58aafcb6a5f48f826c5fddf66d782447d3708de17d899e4a80d9  test-results/whole-ui-owner-creation/scripts/creation-recovery-stage.mjs
+          OPENLEGEND_OWNER_CREATION_HASHES
+          node --import tsx test-results/whole-ui-owner-creation/scripts/run-whole-ui.mjs test-results/whole-ui-owner-creation
       - uses: actions/upload-artifact@v4
         if: always()
         with:
