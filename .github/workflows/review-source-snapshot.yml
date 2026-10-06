@@ -1,0 +1,54 @@
+name: Documentation review source
+on:
+  push:
+    branches: [docs/full-documentation-review-reconciled-2026-10-03]
+    paths: [.github/workflows/review-source-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 517bc26372f62a3be9bbbdbdcf0650615a213e8a
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Package pinned text and review history
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+          revision = '517bc26372f62a3be9bbbdbdcf0650615a213e8a'
+          base = '34233ae24365eb8911fe1995c9c232bd57f34616'
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-source.zip'
+          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          inventory = []
+          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as output:
+              for entry in subprocess.check_output(['git', 'ls-tree', '-r', '-z', '--long', revision]).split(b'\0'):
+                  if not entry:
+                      continue
+                  metadata, raw_path = entry.split(b'\t', 1)
+                  mode, kind, sha, size = metadata.decode().split()
+                  name = raw_path.decode()
+                  path = pathlib.Path(name)
+                  row = {'path': name, 'git_sha': sha, 'included': False, 'size': int(size) if size != '-' else None}
+                  if kind == 'blob' and mode != '120000' and 'archive' not in path.parts and (path.suffix in extensions or name in ('LICENSE', '.env.example', '.prettierignore', '.gitignore')):
+                      data = path.read_bytes()
+                      data.decode('utf-8')
+                      output.writestr(name, data)
+                      row.update(included=True, sha256=hashlib.sha256(data).hexdigest())
+                  inventory.append(row)
+              output.writestr('_review_inventory.json', json.dumps({'revision': revision, 'base': base, 'files': inventory}, indent=2))
+              output.writestr('_review_diff.patch', subprocess.check_output(['git', 'diff', '--binary', base, revision]))
+              output.writestr('_review_history.txt', subprocess.check_output(['git', 'log', '--format=%H%x09%aI%x09%s', '--name-status', f'{base}..{revision}']))
+          print(f'Pinned {revision}; packaged {sum(row["included"] for row in inventory)} tracked text files. No provider, save or database operations.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-source-517bc263
+          path: ${{ runner.temp }}/review-source.zip
+          retention-days: 7
+          if-no-files-found: error
