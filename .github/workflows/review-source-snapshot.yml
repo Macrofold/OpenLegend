@@ -1,4 +1,4 @@
-name: Documentation review source
+name: Read-only documentation review refresh preview
 on:
   push:
     branches: [docs/full-documentation-review-reconciled-2026-10-03]
@@ -6,49 +6,75 @@ on:
 permissions:
   contents: read
 jobs:
-  snapshot:
+  preview:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 6
     env:
       AI_BUDGET_USD: '0'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 517bc26372f62a3be9bbbdbdcf0650615a213e8a
+          ref: 7e0f417965579d90dfbe1e49a872a68663efe6d1
           fetch-depth: 0
           persist-credentials: false
-      - name: Package pinned text and review history
+      - name: Preserve source and preview the four upstream commits locally only
         run: |
           python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess, zipfile
-          revision = '517bc26372f62a3be9bbbdbdcf0650615a213e8a'
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-preview'
+          out.mkdir()
+          revision = '7e0f417965579d90dfbe1e49a872a68663efe6d1'
           base = '34233ae24365eb8911fe1995c9c232bd57f34616'
-          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-source.zip'
+          upstream = '0a3ab79b7a698a7f1941dc23722f89220d1ba425'
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == revision
+          assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True)
           extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
           inventory = []
-          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as output:
+          with zipfile.ZipFile(out / 'source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
               for entry in subprocess.check_output(['git', 'ls-tree', '-r', '-z', '--long', revision]).split(b'\0'):
                   if not entry:
                       continue
-                  metadata, raw_path = entry.split(b'\t', 1)
+                  metadata, raw_name = entry.split(b'\t', 1)
                   mode, kind, sha, size = metadata.decode().split()
-                  name = raw_path.decode()
+                  name = raw_name.decode()
                   path = pathlib.Path(name)
-                  row = {'path': name, 'git_sha': sha, 'included': False, 'size': int(size) if size != '-' else None}
+                  row = {'path': name, 'git_sha': sha, 'included': False}
                   if kind == 'blob' and mode != '120000' and 'archive' not in path.parts and (path.suffix in extensions or name in ('LICENSE', '.env.example', '.prettierignore', '.gitignore')):
                       data = path.read_bytes()
                       data.decode('utf-8')
-                      output.writestr(name, data)
+                      archive.writestr(name, data)
                       row.update(included=True, sha256=hashlib.sha256(data).hexdigest())
                   inventory.append(row)
-              output.writestr('_review_inventory.json', json.dumps({'revision': revision, 'base': base, 'files': inventory}, indent=2))
-              output.writestr('_review_diff.patch', subprocess.check_output(['git', 'diff', '--binary', base, revision]))
-              output.writestr('_review_history.txt', subprocess.check_output(['git', 'log', '--format=%H%x09%aI%x09%s', '--name-status', f'{base}..{revision}']))
-          print(f'Pinned {revision}; packaged {sum(row["included"] for row in inventory)} tracked text files. No provider, save or database operations.')
+              archive.writestr('_review_inventory.json', json.dumps({'revision': revision, 'base': base, 'files': inventory}, indent=2))
+              archive.writestr('_review_history.txt', subprocess.check_output(['git', 'log', '--format=%H%x09%aI%x09%s', '--name-status', f'{base}..{revision}']))
+          (out / 'upstream.diff').write_bytes(subprocess.check_output(['git', 'diff', base, upstream]))
+          subprocess.run(['git', 'config', 'user.name', 'Documentation review preview'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          result = subprocess.run(['git', 'rebase', '--rebase-merges', '--onto', upstream, base], capture_output=True)
+          (out / 'rebase-output.txt').write_bytes(result.stdout + result.stderr)
+          state = {'source': revision, 'upstream': upstream, 'exit_code': result.returncode, 'published': False}
+          if result.returncode:
+              conflicts = subprocess.check_output(['git', 'diff', '--name-only', '--diff-filter=U'], text=True).splitlines()
+              state['conflicts'] = conflicts
+              (out / 'conflicts.diff').write_bytes(subprocess.check_output(['git', 'diff', '--cc']))
+              (out / 'stopped-commit.diff').write_bytes(subprocess.check_output(['git', 'show', 'REBASE_HEAD']))
+              with zipfile.ZipFile(out / 'conflict-stages.zip', 'w', zipfile.ZIP_DEFLATED) as stages:
+                  for name in conflicts:
+                      for stage in (1, 2, 3):
+                          value = subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True)
+                          if value.returncode == 0:
+                              stages.writestr(f'{stage}/{name}', value.stdout)
+          else:
+              state['preview_head'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+              (out / 'range-diff.txt').write_bytes(subprocess.check_output(['git', 'range-diff', f'{base}..{revision}', f'{upstream}..HEAD']))
+              (out / 'review.diff').write_bytes(subprocess.check_output(['git', 'diff', upstream, 'HEAD']))
+          (out / 'state.json').write_text(json.dumps(state, indent=2))
+          print(json.dumps(state, indent=2))
+          print('Preview only: no push, branch publication, provider, database or save operations.')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: review-source-517bc263
-          path: ${{ runner.temp }}/review-source.zip
+          name: documentation-review-preview-7e0f417
+          path: ${{ runner.temp }}/review-preview/
           retention-days: 7
           if-no-files-found: error
