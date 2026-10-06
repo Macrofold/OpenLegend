@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                              | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG16–DG19 product proposals are written and independently reviewed; DG20 and the final package review remain. | 2026-10-06   |
+| In progress | All five product proposals are written; final material-handling refinements and package verification remain. | 2026-10-06   |
 
 ## Assignment and baseline
 
@@ -42,3 +42,41 @@ The assignment is complete when all five product designs and associated world ru
 - Delivery navigation: [Maintainer index](../maintainers/README.md).
 - Limits: the feature inventories linked by each product specification; this assignment creates no separate runtime limit.
 - Related completed assignment: [Product designs 11–15](completed/product-design-groups-11-15.md).
+
+## Selected activities and their useful result
+
+| Design | Complete activity | Why this scope is useful |
+| --- | --- | --- |
+| [Personal Journal edition](personal-journal-feature-spec.md) | Select eligible existing entries, add a title and separate personal notes, preview the exact edition, and obtain a private accessible PDF or plain-text file. | A player keeps a meaningful outing without needing another generated story, a public archive, a print business or a new reflection habit. |
+| [Continuing communities](continuing-lives-feature-spec.md#15-dg17--a-first-funded-unattended-community) | Review a prepared isolated camp, its real provisions and a finite continuation period; leave; return to actual events and independent choices. | The game can establish whether people living on their own are interesting and viable before offering overnight service or an indefinite recurring operating obligation. |
+| [Worthwhile social scenes](attention-and-scenes-feature-spec.md#17-dg18--something-worth-showing-and-a-gathering-worth-joining) | Join an ordinary conversation about something real, inspect or offer it through actual permission, listen, respond and leave; later qualify larger scenes. | A real made object can matter to another person now. A crowd is useful only when its individual activity creates more worthwhile encounters. |
+| [Changing supplies](changing-supplies-feature-spec.md) | Preserve real food for an outing, use a reserve on a later visit, and revisit actually renewing resources. | Storage and preparation can support exploration if their benefit exceeds the extra work; spoilage and farming are not opening-game obligations. |
+| [Heat and materials](heat-and-materials-feature-spec.md) | Fire a clay blank, continue another activity, cool and use the bowl; optionally compare and manage a small local material fire. | A useful made object provides a positive reason for heat before destruction, broad physics or compulsory tending. |
+
+The world-profile files are authored content and qualification choices. They are not five mandatory player configuration screens. The user-facing first activity should use ordinary Journal, conversation, inspection, work and inventory controls. Permission or operating review belongs only where the particular action genuinely needs it.
+
+## Cross-group critique and revisions
+
+### Preserve a good ordinary adventure
+
+The five designs are separate additions, not a minimum simulation package. The current creative adventure still needs worthwhile exploration, conflict, rewards, practical invention and independent people. None of these proposals makes broad crowd simulation, food spoilage, unattended service or thermal construction a prerequisite for that loop. The familiar campfire and ordinary containers remain useful while new material families earn their place.
+
+Among these additions, the first social gathering most directly reuses an existing made object in an enjoyable human encounter; the Journal can preserve that experience independently. Continuing communities should follow credible attended self-care and voluntary activity. Supply aging has the weakest immediate case: a nominally four-day return interval is only meaningful if the intervening play is worthwhile without that timer. The heat proposal similarly retains an explicit rejection criterion for an inferior bag obtained by waiting through an extra process. These judgments guide later scope selection; they do not silently reprioritize existing approved implementation work.
+
+### Account for the whole cost
+
+The review corrected misleading clock intuitions throughout the package. At the current speed, three game days are 72 real minutes, not an overnight absence. Food preparation spends both real materials and the advancing time in which people become hungry. Heat delivered to another piece changes a bowl's actual firing time. A nominally cheap calculation still leaves discovery, character decisions, observation, retained history and reopening costs to measure.
+
+Scarcity must come from actual authored supplies and consequences. Preserving food retains its existing deterioration; cooking, packing or changing an identifier cannot make it fresh. Renewing berries have a modest two-person theoretical margin and fail to sustain three people on their own. A fire divides finite output, consumes real remaining material and cannot also award intact salvage. The Journal prepares from existing permitted writing instead of regenerating every selected memory. None of these designs claims measured scale or a commercial price.
+
+### Preserve choices and readable recovery
+
+Independent residents may refuse, pursue another purpose or make a bad choice. Their participation is never supplied by a fallback personality or a compulsory schedule. The first crowd experience retains exact ordinary conversation; proposed background meaning cannot invent quoted words, transfer consent or reveal an unheard exchange. The original scene proposal now describes the implemented full active-member conversation merge accurately and reserves selective subgroup separation for a supported later operation.
+
+An individual leaving, a human stopping their action and a whole-world hold are different events. The continuation hold is scoped to the selected isolated community, not all public/shared deployments. Supply work releases the actual unfinished portion on an ordinary stop. Placed clay continues as a physical process until the world's clock is held or its heat changes. The Journal's human annotations neither grant a character knowledge nor rewrite what occurred.
+
+The final heat critique requires an actually coolable withdrawal destination, a defined narrow permission for an optional resident firing, truthful remaining material after a panel fails, and supported reopening after the hearth is covered. Ordinary excluded objects and people approaching the site must remain playable; an undefined deliberate experiment can be refused without turning routine movement into a world-stopping failure. A completed bowl cannot be ruined merely because collection was late.
+
+### Stop expanding when the benefit is missing
+
+Each specification includes complete future acceptance journeys and its own simplify/defer criterion. Greater population, more elapsed days, more spoiled food or more burned geometry are not success measures. A useful first experience, credible independent behavior, a changed plan the player understands and a reason to return are the evidence that should justify expansion. Technical design and implementation remain the next distinct authorized mode, with their actual acceptance still open in the focused trackers.
