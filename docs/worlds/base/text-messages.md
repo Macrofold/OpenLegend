@@ -1,0 +1,61 @@
+# Personal message slates
+
+**Proposed optional DG24 world profile, October 6, 2026.** [Keep in touch across an outing](../../projects/world-text-messages-feature-spec.md) owns the full product behavior. This is a later correspondence-equipped scenario, not new primitive starting equipment or an implemented invention family.
+
+## The chosen affordance
+
+An explicitly installed magical slate family sends plain text between consenting contacts in the same world. Its description openly states world-wide reach, no artificial transmission delay, and reading at the recipient's convenience. The initial invited-world reference provides two real blank slates at a known camp through explicit creator scenario setup. No current world's starting inventory is modified by this proposal.
+
+Each slate is an individual physical item with ordinary possession and loss. A person acquires one legitimately and activates it for themselves. The first scope permits one active bound slate per stable person. An actual blank replacement disables the earlier binding; the item cannot be retargeted to impersonate someone else. There is no extra sending allowance from more devices.
+
+New reading and sending require the living, awake, participating person to carry and be capable of handling their bound slate. First reference bodies are humanlike people with the needed manipulation and text-understanding capability. Existing native danger, needs and participation still apply. Slates provide no battery, consumable postage, range simulation, healing, navigation, inventory access or remote action authority.
+
+Person-owned contacts and permitted history are not loot inside the slate. Finding it does not reveal messages, real account identity or a reusable login. The owner can revoke a lost slate, manage blocking and later bind an actual replacement. Previously read words remain legitimate personal evidence under ordinary retention. A missing device keeps unread words unavailable in play until replacement.
+
+## Become reachable by choice
+
+During an actual clear local conversation with a recognized person, offer Exchange contacts. Both must have the installed service and their usable bound devices, and both must independently assent to the exact pair. Contact exchange gives mutual permission to submit private text within this world. It grants no live status, map position, trade assent, group membership or public profile.
+
+Only one outgoing contact invitation per actor and one invitation for the pair can be pending. The offer ends when the actual local exchange becomes unavailable, on explicit withdrawal or rejection. Opening a panel, hearing a greeting, knowing someone's name or sharing world membership never creates a contact. No remote address guessing, contact forwarding or world directory is offered.
+
+## A note across separate activities
+
+The reference journey is a mutually wanted later meeting at an already known camp. Each participant pursues their own actual outing. A sender may describe a result or suggest a revised time. The recipient reads when they choose and can answer, decline or stay silent. Written claims are testimony, not live remote perception; the meeting occurs only through actual independent actions.
+
+The sender's acknowledgement is **Sent to world**. It certifies only their own durable submission, including when recipient policy privately prevents arrival. It never states delivered, read, online, asleep, blocked, alive or willing to reply. Eligible arrivals wait in the recipient's private inbox. Text sent while blocked is not replayed later. A private failure never turns into speaking aloud.
+
+The recipient sees a quiet Messages waiting cue only when eligible to operate their device. The cue has no body preview. Opening a thread presents exact permitted text and records the reading experience, without claiming human comprehension or sending a read receipt. Mute suppresses cues while retaining permitted arrivals. Block suppresses new arrivals and existing-thread alerts; earlier text stays privately reachable. Unblocking affects future text only. Removing a contact/archiving a thread is separate from blocking or erasing evidence.
+
+Stored remote threads do not occupy the one active local conversation, inherit its inactivity timeout, join other people to it or merge earlier private text. A person may talk locally while keeping correspondence. Actual NPC sending/reading is independently qualified, with no automatic reply or separate paid allowance.
+
+## Limits and operating cost
+
+These are proposed first-profile values, not measured service capacity or current defaults:
+
+| Scope                   | Selected first envelope                                                                                                                            | Rationale and overflow behavior                                                                                                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Message                 | One recipient; plain text up to 2,000 Unicode code points and 8,000 UTF-8 bytes, both required.                                                    | Fits a useful note with room for non-ASCII text. An over-limit draft stays editable; no automatic split or silent truncation.                                                                                      |
+| Submission rate         | At most six accepted submissions to one contact and twenty-four overall in a rolling sixty real seconds, per sender across all their devices/tabs. | Allows ordinary notes and corrections while bounding bursts independently of game speed or recipient reading. Own visible allowance and wait are explicit; a duplicate receipt counts once.                        |
+| Contact invitation      | One outgoing invitation per actor and one per pair, only during the eligible local exchange.                                                       | Avoid stacked invitations and repeated cues; a new device is no bypass. These bounds do not independently cap a crowded world's total input.                                                                       |
+| Thread/contact list     | Twenty rows per requested page.                                                                                                                    | Keep the current view small; permitted older history and contacts remain reachable. No lifetime contact or thread cap is selected.                                                                                 |
+| Human thread page       | Twenty message rows, at most 160,000 message-body bytes before bounded presentation metadata.                                                      | A page is a viewing bound, not an instruction to include the entire page in cognition or a retained-history cap.                                                                                                   |
+| NPC unread presentation | At most five messages and 16,000 UTF-8 body bytes per explicit native read, in accepted order.                                                     | Show complete messages only; remaining unread text stays available. No automatic paid draining or invented “nothing else” conclusion. Existing total required-context admission can still refuse a later decision. |
+| Waiting cue             | One coalesced private cue for outstanding unpresented text, without a body preview or repeated automatic paid routing while pending.               | Preserve attention and hide private content from bystanders. The owner's unread bookkeeping is not a sender-facing receipt.                                                                                        |
+| Accepted text           | No new age expiry or lifetime-count cap.                                                                                                           | Actual source retention, erasure and growing storage remain NC/data owners; a small page or send rate does not prove bounded lifetime cost.                                                                        |
+
+There is no charge in world goods for human text, no automatic narration/summary and no model call to produce delivery status. NPC interpretation and reply use ordinary admitted spending. Service load, saved history, contact policies, private derivatives and current-format recovery still need complete operational qualification.
+
+## Privacy, loss and time
+
+Only actual thread participants obtain its text. A qualified NPC may use legitimately read words for its own lawful choice, but automated messages, speech, notes, reflections, diagnostics and narration cannot reveal human-private source content to nonparticipants. Actual observable actions keep their ordinary audience without the hidden motive attached. First scope offers no NPC forwarding or secret-sharing permission.
+
+Human Continue preserves the person, contacts and permitted history; ordinary possession loss may leave the slate on the corpse. The person still needs a real functioning device. An NPC death does not create a ghost correspondent or notify every contact of the private death. World-access revocation remains current regardless of stored contact permissions.
+
+Pause does not accumulate fictional delivery delay or wake the world. Existing read history remains available as history; new sending and first unread presentation wait for eligible active play, with no automatic send on resume. A stopped service cannot accept new messages. Current-format restart restores accepted submissions and private evidence once. Optional shared rewind uses DG25's selected private-channel treatment; ordinary save/export must already preserve D48 before this profile is offered.
+
+## Maintained records
+
+- Product: [Keep in touch across an outing](../../projects/world-text-messages-feature-spec.md).
+- Delivery: [NC](../../maintainers/narration-and-conversations.md), [MP](../../maintainers/multiplayer.md), [CR](../../maintainers/cognition-redesign.md).
+- Constraints: [Message limits](../../limits/narration.md), [Participation](../../limits/multiplayer.md), [Memory and private derivatives](../../limits/memory.md).
+- Related world meaning: [Social](social.md), [Knowledge](knowledge.md), [Agreements](durable-agreements.md).
