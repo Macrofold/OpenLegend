@@ -487,6 +487,116 @@
       "captureScope": "app",
       "source": "native-camp-0e25bc5",
       "originalFile": "04-recipient-draft-and-unconfigured-conversation.png"
+    },
+    {
+      "id": "49-native-object-transfer-unknown",
+      "file": "49-native-object-transfer-unknown.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 750972,
+      "sha256": "4adaa0fdb57fb968b644b2a4f01b125e2c14f1d13a157941f6c1fa82d2ed285c",
+      "captureScope": "app",
+      "source": "native-care-crafting-847bba8",
+      "originalFile": "01-original-transfer-awaits-recovery-after-reload.png"
+    },
+    {
+      "id": "50-native-care-partial-current-work",
+      "file": "50-native-care-partial-current-work.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 963476,
+      "sha256": "037a7dc57269cddf3f1fa5732bd03f5a5b2d394255d35ce9b2e9154569c58e83",
+      "captureScope": "app",
+      "source": "native-care-crafting-847bba8",
+      "originalFile": "02-partial-fire-care-current-work.png"
+    },
+    {
+      "id": "51-native-care-replacement-stop",
+      "file": "51-native-care-replacement-stop.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 230552,
+      "sha256": "1ef9401c93f500ec8c157fea693dcba00e5f4a5b0d34d397772878e0b394d699",
+      "captureScope": "app",
+      "source": "native-care-crafting-847bba8",
+      "originalFile": "03-replacement-care-and-reachable-stop-narrow.png"
+    },
+    {
+      "id": "52-native-crafted-equipped-sling",
+      "file": "52-native-crafted-equipped-sling.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 826259,
+      "sha256": "9cbf53794eebd4504863d5d273c6c3a1aa08d28b9397082212ac97347b2b9b99",
+      "captureScope": "app",
+      "source": "native-care-crafting-847bba8",
+      "originalFile": "04-crafted-sling-actual-item-and-fallback.png"
+    },
+    {
+      "id": "53-native-item-original-unconfirmed",
+      "file": "53-native-item-original-unconfirmed.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 812309,
+      "sha256": "f61350a49da58eaddcfad6a0f2a3d73815a3269b3d289f76f613a631231a10d4",
+      "captureScope": "app",
+      "source": "native-creation-recovery-847bba8",
+      "originalFile": "01-original-item-recovered-from-environment-entry.png"
+    },
+    {
+      "id": "54-native-person-original-unconfirmed",
+      "file": "54-native-person-original-unconfirmed.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 664031,
+      "sha256": "5726cce5412ce53a0b0243f34733eba96e4fbf231552d52ba586562cf336ae30",
+      "captureScope": "app",
+      "source": "native-creation-recovery-847bba8",
+      "originalFile": "02-original-person-recovered-from-item-entry.png"
+    },
+    {
+      "id": "55-native-environment-original-unconfirmed",
+      "file": "55-native-environment-original-unconfirmed.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 666430,
+      "sha256": "e7fef1050306b7cfcfca5a9fdb6d9c7202d936d806cbc56e60d59ae82c30541c",
+      "captureScope": "app",
+      "source": "native-creation-recovery-847bba8",
+      "originalFile": "03-original-environment-recovered-after-reload.png"
+    },
+    {
+      "id": "56-owner-person-unsaved-draft",
+      "file": "56-owner-person-unsaved-draft.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 727654,
+      "sha256": "4b0d795ef985cb905b9cc7b41ec6626bff859c8698ca9553ef45e0899abdc36a",
+      "captureScope": "app",
+      "source": "native-owner-return-a4e02cc",
+      "originalFile": "01-person-dirty-close.png"
+    },
+    {
+      "id": "57-owner-recovery-load-confirmation",
+      "file": "57-owner-recovery-load-confirmation.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 946505,
+      "sha256": "b7a4d30e473e04a2dedf835d9309d146d0b63e10745b12c50e5a3589d87355ce",
+      "captureScope": "app",
+      "source": "native-owner-return-a4e02cc",
+      "originalFile": "02-exact-recovery-load.png"
+    },
+    {
+      "id": "58-inventory-before-space-correction",
+      "file": "58-inventory-before-space-correction.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 737665,
+      "sha256": "d9d54e0e2084c6b5943d8789a08fb73a8d27675d1991285046c2e214d0953f5c",
+      "captureScope": "app",
+      "source": "inventory-feedback-before-space-correction",
+      "originalFile": "01-visible-inventory-success.png"
     }
   ],
   "appSource": {
@@ -1251,6 +1361,459 @@
         "durableSimTime": 152,
         "problems": []
       }
+    },
+    "native-care-crafting-847bba8": {
+      "captured": "2026-10-06",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "847bba81fb614c7f242e6a72319808d54d1a301a",
+      "checkoutCommit": "a117730be83e6314e388e0a0f43565b6173c4077",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37457945393,
+        "jobId": 112250061692,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37457945393/job/112250061692",
+        "artifactId": 11410463281,
+        "artifactZipBytes": 84652822,
+        "artifactZipSha256": "9fd360c671dab6d98445618e09915e519150bdee6d408a644627d540312687ac",
+        "wholeWorkflowPassed": false
+      },
+      "description": "Production App and PlayCanvas with the native server and disposable PostgreSQL. One finite ordinary-player session passes deliberate approach, recovery of an exact original transfer result, partial/completed fuel work, retained care preparation, deliberate replacement and Stop, then actual known Sling crafting, inspection and equipment. Four original captures pass once.",
+      "report": {
+        "artifactPath": "whole-ui-care/object-care-crafting/report.json",
+        "sha256": "16d0b9a74c2b29b2ca58a173d123258a8301bd070cb8a2fd98a1e84658751b15",
+        "traceSha256": "9e279b3fb176cbd4e873423c848a35cb83132af5b4c78f9dcc674fc7ba4fb93c",
+        "startedAt": "2026-10-06T11:49:06.092Z",
+        "finishedAt": "2026-10-06T11:50:53.116Z",
+        "elapsedMs": 107024,
+        "passed": true,
+        "captures": 4,
+        "continuationReportSha256": "7435e05e854a9b17f35797e7e3e29b94555df5f77f4a31cca0a2f08a6abd2637",
+        "continuationPassed": true,
+        "supervisorSha256": "7dd6ad467149edf27976c1021c5524443eee92dc50e899b0eaa7d7259542932c",
+        "workerExit": {
+          "code": 0,
+          "signal": null
+        },
+        "workInterruptionOrForcedTermination": false,
+        "nativeSequenceCompleted": true,
+        "playerCommands": 7,
+        "originalReceipts": 7,
+        "captureAttempts": 4,
+        "captureFailures": 0
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "playwright": "1.58.2",
+        "platform": "linux",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          },
+          {
+            "width": 390,
+            "height": 844
+          }
+        ],
+        "godMode": false,
+        "providerBudgetUsd": 0,
+        "providerSpentUsd": 0,
+        "providerRequests": 0
+      },
+      "fixture": "After actual local App entry in the native seed-73 base world, existing owners prepare a woven bag with four branches, drop/place it four metres away on supported visible ground, prepare the existing fire fuel without moving it or changing its laws, and admit/teach the supported Sling declaration used by the existing native fixture. Initial carried supplies remain native. One setup Drop is separate from the seven gameplay commands. No production recipe seed or generated invention.",
+      "observed": "Seven original gameplay commands and their receipts pass: keyboard Walk to and open, take exactly two branches with success-only reply loss and one original receipt read after same-owner reload, keyboard Start task, deliberate replacement, keyboard Stop all work, Craft one and Equip the exact physical result. The five native clock offers total 110 seconds. Partial ten-second fuel work preserves resources; completion spends one branch and adds exactly one authored fuel unit. Reopening uses the same selected fire entry and retains the draft. Preparation/replacement review sends nothing; the explicit replacement changes the plan. Stop clears active/suspended work and the next second adds no debit. Sixty-second crafting commits one cord and two prepared fibers at start, produces one Sling at completion and equips that exact item.",
+      "finalNativeState": {
+        "simTime": 110,
+        "gameplayCommands": 7,
+        "originalReceipts": 7,
+        "providerCalls": 0,
+        "providerCostUsd": 0,
+        "bagBranches": 2,
+        "carriedBranches": 3,
+        "equippedSlingId": "item-77"
+      },
+      "visualReview": {
+        "49": "After reload, an unknown two-branch move and Check result remain visible with carried branches at four. The other collection is empty in this image. The original commit is known to the native observer, but this screenshot precedes the player receipt check.",
+        "50": "Adding fuel appears in the HUD; Current work names the watch, budget, stopping time, Stop and deliberate preparation. Native progress 0.5 is separately asserted; these pixels do not independently measure a visual progress fill.",
+        "51": "At 390×844 the replacement task waits for low fuel, shows Used 0 of at most 2 and its stopping time, with Stop all work fully visible. The image precedes the actual focused-Enter Stop.",
+        "52": "The actual crafted/equipped Woven river sling has a readable W fallback symbol, equipped badge/strip and open item details including work and launcher properties. Crafting and exact input/output timing are native observations, not visible in this finished-item image."
+      },
+      "limits": [
+        "Native fixture bag, four branches and supplied Sling declaration are prepared after actual App entry; no production recipe seed or generated invention.",
+        "The low-fuel fire retains its authored position and laws. Existing player possessions and NPC behavior remain native.",
+        "One completed fuel action is observed within a longer waiting task; this does not claim natural deadline completion or continuous real-time attendance.",
+        "Finite game-time offers do not qualify wall-clock pacing. Prior offer expiry, refusal and save-integrity evidence is reused, not rerun.",
+        "No provider, human IME, assistive-device, real identity-provider or uncoached-usability qualification.",
+        "Four captures succeed once under the unchanged ten-second limit; prior capture/selector failures remain historical. No production graphics change or performance fix is inferred.",
+        "The original transfer result is read without replay. Creation recovery in the separate segment instead explicitly resends its exact original mutation; these are different native contracts.",
+        "The observed completed action belongs to a longer task that remains waiting, then is deliberately replaced/stopped. Natural task-deadline completion is not claimed.",
+        "Bounded recorded connections across J01–J16 only; no whole-journey checkbox or broader input/player acceptance is closed."
+      ],
+      "sourceHashes": {
+        "apps/client/src/ui/camp-activity.tsx": "406b2efc33215881f670367b470fea45fad1d34f181b94bd01cca2a842078198",
+        "packages/domain/src/activity-execution.ts": "47939664362dd2940596721f733e6ee8adbbd1a166eef0a63fd4c7b92189862b",
+        "apps/client/src/main.tsx": "ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785",
+        "apps/client/src/api.ts": "c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c",
+        "apps/client/src/ui/item-creation.tsx": "c5f8c4001f517cfbb1faaab40b32a75bbdc83e6c40c213e0c82a29dd50740925",
+        "apps/client/src/ui/god-tools.tsx": "a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9",
+        "apps/client/src/ui/creation-request.tsx": "c3bafe7b66abebae85ab0700c29f754af7b0202b0b0030381c1bfcd43e202450",
+        "packages/domain/src/types.ts": "eef78f787d1d9435cc216c86e34356e04d1ebc9b744753820aa250c3854be82f",
+        "packages/domain/src/god-tools.ts": "63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d",
+        "apps/server/src/http.ts": "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+        "apps/server/src/world-service.ts": "5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c",
+        "packages/protocol/src/index.ts": "83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80",
+        "apps/server/src/inventory-view.ts": "23a5b2e6e02c3204cb0881101251b2004d282b89932344869c66d9f3299db455",
+        "apps/server/src/activity-requests.ts": "39117264f341c7a34dce19f37c04934dea5d1d73de1eb4eef375d211367055f7",
+        "apps/server/src/navigation/coordinator.ts": "7a557d09ae2a7d46a5d6c8c378139a968fc8c44b5d87cc5a5bf3183a151171c6",
+        "apps/client/src/ui/container-opening.tsx": "4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684",
+        "apps/client/src/ui/use-inventory-command.ts": "596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e",
+        "apps/client/src/ui/inventory.tsx": "6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "packages/domain/src/kernel.ts": "55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6",
+        "packages/domain/src/worlds/base/camp-activity.ts": "abb0c0251261cea2f7bd336d72b62e49ea2e46a2137d8330308d5122f746f3c2",
+        "packages/domain/src/worlds/base/fire.ts": "deed0892de04002b67f3f8aa08633e066da6143b51ea08202da86f3be0c0c14b",
+        "packages/domain/src/declarations.ts": "fd7c757883bf97c9a764f373b16ea98d99cb07ad8c0d5332886b348541dfa8f1",
+        "packages/domain/src/worlds/base/recipe-families.ts": "ccc76ccb5928db930e2d07ce8f41449733bfb6c9e20dde2623f508d22c2466ea"
+      },
+      "scenarioHashes": {
+        "object-care-crafting-stage.mjs": "fa88e37037190c8d20d38170c257777b565d9a775894dc005aae51129c11ebf2",
+        "run-whole-ui.mjs": "3784951825bf08b7520e1b5eb9d0b037e40d2598ff654d33d2ef492153f9fd7c"
+      },
+      "builtAssetHashes": {
+        "dist/client/index.html": "081f908dabfc767028fdd6c8eaf40f383066378eb1a20ce95ffb94ccb6b5f701",
+        "dist/client/assets/index-BRvT99nN.css": "c578f3b88b92c5bb2b142c03ac4e366f7b546f7d13ebda653aba9c8208a83c33",
+        "dist/client/assets/index-BwOLgeJq.js": "be9af271cffa2dd8757d7ed7dd7467625afc20e1e0ed6ed3b6ba8878c97e24ed"
+      },
+      "cleanup": {
+        "contextClosed": true,
+        "repositoryClosed": true,
+        "browserClosed": true,
+        "databasesClosed": true,
+        "worldSaved": true,
+        "durableRevision": 23,
+        "durableSimTime": 110,
+        "problems": []
+      }
+    },
+    "native-creation-recovery-847bba8": {
+      "captured": "2026-10-06",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "847bba81fb614c7f242e6a72319808d54d1a301a",
+      "checkoutCommit": "a117730be83e6314e388e0a0f43565b6173c4077",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37457945393,
+        "jobId": 112250061692,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37457945393/job/112250061692",
+        "artifactId": 11410463281,
+        "artifactZipBytes": 84652822,
+        "artifactZipSha256": "9fd360c671dab6d98445618e09915e519150bdee6d408a644627d540312687ac",
+        "wholeWorkflowPassed": false
+      },
+      "description": "Production App and PlayCanvas with the native server and disposable PostgreSQL. Three actual creator writes retain their exact original requests after successful native replies are deliberately lost; three explicit keyboard retries recover their original outcomes with no duplicate native effect. Every screenshot is taken before its retry and shows the unconfirmed request, despite the original artifact filenames saying recovered.",
+      "report": {
+        "artifactPath": "whole-ui-owner-creation/creation-recovery/report.json",
+        "sha256": "a8390fc79504698132a3ea072c63167827e4ac0ab2dfc4da620ba30ca2e52fee",
+        "traceSha256": "f7c9018732c3536a2849af3e79d8b6eb2b082e172dd23886883c29902f57d579",
+        "startedAt": "2026-10-06T11:47:33.889Z",
+        "finishedAt": "2026-10-06T11:49:01.773Z",
+        "elapsedMs": 87884,
+        "passed": true,
+        "captures": 3,
+        "continuationReportSha256": "13921653782c413bef3d0e7ba922cac0a572d5540cab70283b3942aad1e9a57d",
+        "continuationPassed": false,
+        "supervisorSha256": "4ed74e907d11ef0469f7e94fe156fbabf8d78cef79f47ad3717ec0a65fc2c97d",
+        "workerExit": {
+          "code": 1,
+          "signal": null
+        },
+        "workInterruptionOrForcedTermination": false,
+        "firstCreations": 3,
+        "explicitOriginalRetries": 3,
+        "creationPosts": 6,
+        "gameplayCommands": 0,
+        "suppliedWorldTransitions": 0,
+        "simulationSecondsAdvanced": 0,
+        "precedingOwnerStage": "failed on second-load App acceptance; native shutdown saved: true revision 14/time 0"
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "playwright": "1.58.2",
+        "platform": "linux",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          }
+        ],
+        "godMode": true,
+        "providerBudgetUsd": 0,
+        "providerSpentUsd": 0,
+        "providerRequests": 0
+      },
+      "fixture": "Fresh local God-mode seed-73 base world through actual App entry. No supplied world transition, placement fixture, walking or simulation time. Two Reed fibers are created in Mike’s native inventory. Mira and River stones use actual scene right-click selection with native support and occupancy checks; the second environment candidate is chosen because the first is occupied. No provider keys or generated content.",
+      "observed": "Exactly three original creation POSTs and three focused-Enter original retries. Each original first commits through the real HTTP/SQL owner, is checked for its receipt/object, and only its browser delivery is aborted. Opening another creation kind retains the unresolved record without a new creation. Same-owner reload preserves item and environment requests. Every retry resends the exact id/body, returns the exact original result and leaves the complete native world unchanged immediately across that retry, including random state. Each first/retry SQL read finds one original receipt and one corresponding entity. Person traits/starting belongings and environment resources remain unchanged; item quantity and creation-event counts do not duplicate.",
+      "finalNativeState": {
+        "creationPosts": 6,
+        "firstCreations": 3,
+        "explicitOriginalRetries": 3,
+        "createdItemId": "item-30",
+        "createdPersonId": "person-32",
+        "createdEnvironmentId": "river-stones-36",
+        "gameplayCommands": 0,
+        "suppliedWorldTransitions": 0,
+        "simulationSecondsAdvanced": 0,
+        "providerCalls": 0,
+        "providerCostUsd": 0,
+        "pendingCreation": false
+      },
+      "visualReview": {
+        "53": "The centered Original creation dialog shows Create 2 Reed fibers, Mike’s inventory, unconfirmed-result explanation, the shared creation block, Close and Retry original creation. It was opened through an environment entry after reload; the successful retry occurs after this PNG.",
+        "54": "The same dialog shows Create Mira at 15.5,20.1 over the Inventory item entry. It remains unconfirmed, with Close/Retry visible. Mira’s native creation, traits and belongings are established by separate assertions, not shown in the background.",
+        "55": "After same-owner reload, the retained original River stones request shows ground 20.0,19.5 and the same unconfirmed explanation/actions over Inventory. No completed recovery is shown; the subsequent explicit retry returns its original native outcome."
+      },
+      "limits": [
+        "One fresh local God-mode base world; no placement fixture, actor walking, clock advancement or model generation.",
+        "Blank ground is selected through ordinary scene right-clicks and checked with existing native placement owners before the three creation choices.",
+        "The person uses an explicit typed draft with no selected traits; native starting possessions and random traits are preserved on retry.",
+        "SQL assertions read committed current receipt rows. There is no database restart or cross-version save claim.",
+        "A retry is a real mutation request. The native owner returns its recorded original effect; it is never represented as a receipt-only read.",
+        "Storage refusal, access loss, late completion, cleanup failure, real IME, assistive devices and uncoached usability remain separately scoped evidence.",
+        "The full-world equality assertion brackets each retry itself. Initial-commit and later pre-retry hashes differ across item/environment reloads; equality across those whole sessions is not claimed.",
+        "Three original screenshots show uncertainty before each successful retry. Their names in the artifact retain recovered, but gallery names/captions explicitly state unconfirmed.",
+        "The combined owner/creation invocation fails because owner’s second-load App acceptance times out; creation independently passes after owned owner cleanup. Clean browser/database shutdown does not turn the combined result into a pass.",
+        "Existing controlled storage/lifetime evidence is separate; this segment does not exercise every refusal, browser-storage denial or ownership change. No broad J40/OS/human qualification."
+      ],
+      "sourceHashes": {
+        "apps/client/src/main.tsx": "ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785",
+        "apps/client/src/api.ts": "c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c",
+        "apps/client/src/ui/item-creation.tsx": "c5f8c4001f517cfbb1faaab40b32a75bbdc83e6c40c213e0c82a29dd50740925",
+        "apps/client/src/ui/god-tools.tsx": "a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9",
+        "apps/client/src/ui/creation-request.tsx": "c3bafe7b66abebae85ab0700c29f754af7b0202b0b0030381c1bfcd43e202450",
+        "packages/domain/src/types.ts": "eef78f787d1d9435cc216c86e34356e04d1ebc9b744753820aa250c3854be82f",
+        "packages/domain/src/god-tools.ts": "63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d",
+        "apps/server/src/http.ts": "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+        "apps/server/src/world-service.ts": "5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c",
+        "packages/protocol/src/index.ts": "83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80",
+        "apps/client/src/ui/world-inspection.tsx": "06357c8b670744ff8884d264d3379fcdc6c03f9418662ea3606bbc162da054e8",
+        "apps/client/src/ui/action-picker.tsx": "f1cccb5e414886231b7e14c346da052dcf19b75a1055bc16ff1fcbbea860bf27",
+        "apps/client/src/ui/pullout.tsx": "38be999e97ded28cdec9c819d6570aafc4a9b2d1622c48f9cae05cfdd8361ca6",
+        "apps/client/src/ui/inventory.tsx": "6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/server/src/store.ts": "9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc",
+        "apps/server/src/world-records.ts": "cf1cbd7a7a926091f06c0cb7184eaac15d814ccf4622249fbab9ea026d9ee8c9",
+        "apps/server/src/world-record-schema.ts": "33c16a4bb31f4a49431c8c09917f88d0881861766d3663b711248a1ab9379479",
+        "packages/domain/src/item-handling.ts": "860d84e742fabf2efb401c0bd52f2742261957d4089722151d282e129876968a",
+        "packages/domain/src/objects.ts": "c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70",
+        "packages/domain/src/spatial-state.ts": "df9069821f57c8368d4826fec14988c1ee00ee1a4cfea7f9456441a0d56058ad",
+        "packages/domain/src/worlds/base/catalogue.ts": "738d420ef40b866708e53251ae343e750be3491ba37f45f394cf5b0e10c35eca",
+        "packages/domain/src/worlds/base/spawn.ts": "d065e79fb065f6348d65b1b7e577774c13a14380031d6f285a44fbfa4967e75b",
+        "packages/spatial/src/geometry.ts": "4c69fc4ca125a672eb89e0ec6da71c67c1c241c83cdd34b1496644cd9920ba47",
+        "tests/fixtures/database.ts": "3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92",
+        "tests/fixtures/browser.ts": "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2",
+        "apps/server/src/view.ts": "959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b",
+        "packages/domain/src/worlds/base/world.ts": "98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44"
+      },
+      "scenarioHashes": {
+        "creation-recovery-stage.mjs": "994b53e64169f32a9e6ee9047c7cbeb8babfac58dbe90344954872449f227552",
+        "run-whole-ui.mjs": "9c6955781ebb42a62d0a5b61e891da9d8d57f6dc508ab31e200b4443e81b57ff"
+      },
+      "builtAssetHashes": {
+        "dist/client/index.html": "081f908dabfc767028fdd6c8eaf40f383066378eb1a20ce95ffb94ccb6b5f701",
+        "dist/client/assets/index-BRvT99nN.css": "c578f3b88b92c5bb2b142c03ac4e366f7b546f7d13ebda653aba9c8208a83c33",
+        "dist/client/assets/index-BwOLgeJq.js": "be9af271cffa2dd8757d7ed7dd7467625afc20e1e0ed6ed3b6ba8878c97e24ed"
+      },
+      "cleanup": {
+        "contextClosed": true,
+        "repositoryClosed": true,
+        "browserClosed": true,
+        "databasesClosed": true,
+        "worldSaved": true,
+        "durableRevision": 23,
+        "durableSimTime": 0,
+        "problems": []
+      }
+    },
+    "native-owner-return-a4e02cc": {
+      "captured": "2026-10-06",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "a4e02cc731e11fb593317b3fda75ae92258c3219",
+      "checkoutCommit": "46f82ead6e31c055b18d10a72a397b6b1dde7785",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37460819991,
+        "jobId": 112259640282,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37460819991/job/112259640282",
+        "artifactId": 11411348995,
+        "artifactZipBytes": 68821273,
+        "artifactZipSha256": "63b032fed94f4352218f3b911fd4617e63bae0b17d790d346bfecfb7fe0dc9e7",
+        "wholeWorkflowPassed": false
+      },
+      "description": "Actual App and PlayCanvas with the native server and disposable PostgreSQL. The owner reads installed Health and its native relation, edits one person name through dirty-close decisions, restores both the named baseline and its real protective checkpoint, reads Operations/Maintenance/catalogue and returns through the real character link. Both requested images preserve their original pixels; neither shows the later Operations or completed Return.",
+      "report": {
+        "artifactPath": "whole-ui-owner-return/owner/report.json",
+        "sha256": "f78d2a417b3f22f11191d195d7e96b0fad19272daf9f0efa8c3b763442e9ab07",
+        "traceSha256": "af4b67c93a3e1164e729aa8a14cf43bbb0b6e257bcb76ef4e19960a7dc465475",
+        "startedAt": "2026-10-06T12:11:37.036Z",
+        "finishedAt": "2026-10-06T12:13:04.491Z",
+        "elapsedMs": 87455,
+        "passed": true,
+        "observations": 7,
+        "deliberateUiWrites": 4,
+        "captures": 2,
+        "captureAttempts": 2,
+        "captureElapsedMs": [7642.48, 5961.719],
+        "continuationReportSha256": "023fa9c07f1c024fc3671ac65cea415e22c14072b39032593405d5928ab8260f",
+        "continuationPassed": true,
+        "supervisorSha256": "8e0c383048d8b1eedba3922b8ddcf37da098ee98e93947e735c44ede6445efdb",
+        "workerExit": {
+          "code": 0,
+          "signal": null
+        },
+        "workInterruptionOrForcedTermination": false,
+        "gameplayCommands": 0,
+        "simulationSecondsAdvanced": 0
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "playwright": "1.58.2",
+        "platform": "linux",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          }
+        ],
+        "godMode": true,
+        "providerBudgetUsd": 0,
+        "providerSpentUsd": 0,
+        "providerRequests": 0
+      },
+      "fixture": {
+        "seed": 1086,
+        "setup": "Unmodified native base world; the single deliberate person-name edit is performed through the real editor.",
+        "authority": "Actual local browser entry with God mode; play/save/create/inspect/manage-access, no invented spectator grant.",
+        "clock": "Native automatic ticking disabled; fixed wall clock, no elapsed simulation time supplied.",
+        "mutations": "Four deliberate UI writes: create named baseline, save person name, load baseline, load its actual recovery. Native entry/presence and automatic protective captures are recorded separately."
+      },
+      "observed": "Seven complete observations and exactly four deliberate UI writes: create the named baseline, save one person name, load the baseline and load its real Before last load protection. Each native save/load request succeeds once. Both loads change the accepted App timeline and restore the same actor with the expected name, manual pause, exact protective contents and original load record. The second restore directly returns one retained HTTP 409 loading body and subsequent 200 state reads before successful re-entry. Operations reads do not acquire control; after the original game page closes, the real Return link enters the same final character and timeline.",
+      "visualReview": {
+        "56": "The original image shows Edit Mike on Identity with the typed Owner UI checkpoint check name, Unsaved changes, Discard changes and Save person changes. HUD/Character still show Mike. The close-confirmation overlay is not visible in these pixels, although the screenshot call follows a passing confirmation-visible assertion; Keep editing and Save and Close are separately recorded interactions.",
+        "57": "The Checkpoints panel names Before last load, its saved time and the Load confirmation. Its consequence and protective-save explanation, Confirm load and Cancel are visible over the paused Mike world. This image precedes the second Confirm action; successful recovery, Operations/Maintenance and Return are native/interaction evidence outside the pixels."
+      },
+      "limits": [
+        "This connects selected owner interfaces; it does not close whole J28–35/J40–45 rows.",
+        "No new recipe, family, story-policy, autosave-setting, maintenance or provider mutation.",
+        "Native save/authority failure, question/streaming, creator Apply and family-owner evidence are reused; no fault matrix or installation rerun.",
+        "No process restart, external identity provider, multi-human, native IME, assistive-device or uncoached-player qualification.",
+        "Two desktop images only; no narrow editor or assistive/input claim.",
+        "The first capture follows the confirmation assertion but its pixels show the underlying dirty editor. This timing discrepancy is retained, not reconstructed.",
+        "Neither image depicts Operations, Maintenance, the exact-source reader or the final restored character.",
+        "The owner-only invocation passes; the original God editor and Time browser gates fail in the same job. No performance fix, changed renderer policy, relaxed deadline or whole-workflow pass is claimed.",
+        "Current-format PostgreSQL records and protective slots are checked in this session. It is not a process restart, all-owner save/load qualification or another external identity provider."
+      ],
+      "sourceHashes": {
+        "apps/client/src/main.tsx": "c229b401705ca8412fab0dbe0a49544d4abb865baa2afc75fdd33f7d569abd92",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/ui/world-inspection.tsx": "06357c8b670744ff8884d264d3379fcdc6c03f9418662ea3606bbc162da054e8",
+        "apps/client/src/ui/world-agent.tsx": "9650b6d7d0c149dfffd434b5b87d92f934461c0f8725d1383a3fe42011cd878d",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "apps/client/src/ui/god-tools.tsx": "a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9",
+        "apps/client/src/ui/editor.tsx": "59706ee6f0ce3bbfcf3ddc147cce90a732652cce7acab45d1178e4a2a4036566",
+        "apps/client/src/ui/editor-changes.ts": "bed0f8756d498e4654ef463bdd24f7cbb0488b7df8e80e8f4a6ef6e07edb282a",
+        "apps/client/src/ui/game-saves.tsx": "8ce6a3404eda60468491af5290cc002d489a7f424a183cec585bb26bd45dd6f5",
+        "apps/client/src/ui/operations-console.tsx": "8a144975d0f1ac7d9a551915d69731efea959ed75c068246b7d3c9e60be9701f",
+        "apps/client/src/ui/operations-maintenance.tsx": "22d7a9d3b69e0d5c6289ab956357a1ed0137a4cc23b82157364ebd838a3dde88",
+        "apps/client/src/ui/operations-access.tsx": "d1c44f291d4b9d4037a5b6c18904bfd415f47b8dd1e46bec2942dbd149c76663",
+        "apps/client/src/ui/storage.ts": "4c44656d43e8e49663158dd9f9f0160775b702e2169e5cb300d67d2e4d31bad9",
+        "apps/client/src/ui/creator-workspaces.css": "08399b47456cd3136be0910bbd2258b1c712e8aa07570c6b58163ed715710796",
+        "apps/client/src/ui/lifecycle.css": "b272f6f169e40c38fcb56ce21371bed8f431f6178969c51b85da286df804f778",
+        "apps/client/src/ui/operations.css": "2f3e9bb8ea64632a5ffb9ae33fead056cc1525f55fce1d18ef9ee6f1d2a699c1",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/server/src/http.ts": "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+        "apps/server/src/config.ts": "ea94fd7668fabbbde0261bfd9d10f11fea07186ef15d94c84ec232c91d8199a5",
+        "apps/server/src/world-service.ts": "5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c",
+        "apps/server/src/authority.ts": "1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb",
+        "apps/server/src/world-graph.ts": "aef1db76e5256211dcfe1844ba596e0f1a853fb4c41e65824ede1367e250faed",
+        "apps/server/src/world-tools.ts": "9d552a34c08908fd38b51e3b192e867e3f15f916fde1db26cfb708d4e0e46de7",
+        "apps/server/src/operations-routes.ts": "a63bcc58336495db737aa82d39bb40dd063ca33eae56f4a222df2f9245c88f91",
+        "apps/server/src/maintenance.ts": "9a0b5cfbe7e1ad734cd21f80f672280d4e3418ad0ef8b9583224d2a9c02f1cdc",
+        "apps/server/src/game-saves.ts": "a98ee951631852990ec05bbf8dbd8c38f9c8c53a07d9685cfc1906153d58f58c",
+        "apps/server/src/world-records.ts": "cf1cbd7a7a926091f06c0cb7184eaac15d814ccf4622249fbab9ea026d9ee8c9",
+        "apps/server/src/store.ts": "9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc",
+        "packages/domain/src/god-tools.ts": "63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d",
+        "packages/domain/src/worlds/base/world.ts": "98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44",
+        "packages/domain/src/worlds/base/attributes.ts": "d34e43c524a7b3b153cdbbe1e2ceb56270eb34443c4d2d0bdcd89d5076b745e8",
+        "packages/protocol/src/index.ts": "83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80",
+        "tests/fixtures/database.ts": "3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92",
+        "tests/fixtures/browser.ts": "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2"
+      },
+      "scenarioHashes": {
+        "owner-stage.mjs": "94fa32d6fa42640e338be09d3588747b6f69d502ec7f96b6c71669566026fe1c",
+        "run-whole-ui.mjs": "cbf4adc3f84a6a673fb7b48c8fea8a25063dfc7bad3aa0d872022a8ca3dea9ab"
+      },
+      "builtAssetHashes": {
+        "dist/client/index.html": "ecadf0bed937c0d9f65cf63e730f6ec8f9ad40ba458542ab472a3261698c5519",
+        "dist/client/assets/index-BRvT99nN.css": "c578f3b88b92c5bb2b142c03ac4e366f7b546f7d13ebda653aba9c8208a83c33",
+        "dist/client/assets/index-V3xxFtp_.js": "f2c0593829e9989d8b4769d4b1a52883e0fa2c2c1ff0a81a8543308174477621"
+      },
+      "cleanup": {
+        "contextClosed": true,
+        "repositoryClosed": true,
+        "browserClosed": true,
+        "databasesClosed": true,
+        "worldSaved": true,
+        "durableRevision": 18,
+        "durableSimTime": 0,
+        "problems": []
+      }
+    },
+    "inventory-feedback-before-space-correction": {
+      "baseCommit": "a4e02cc731e11fb593317b3fda75ae92258c3219",
+      "additionalChange": "Captured main9fa7 Activity acknowledgement candidate, subsequently committed at4e92101; Inventory6284 and stylesheet985e remain unchanged before the focus/space correction.",
+      "sourceSha256": {
+        "apps/client/src/main.tsx": "9fa7c297e69e2e81c2b76e2939198187f7c76aa41fcf4554612b0a9137e9bc88",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/ui/inventory.tsx": "6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20",
+        "apps/client/src/ui/use-inventory-command.ts": "596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e",
+        "apps/client/src/ui/use-inventory-collection.ts": "bddeee69bd02e90d82269bdde2674401abc0453ee6a85ed713bbe1f59bf16b5e",
+        "apps/client/src/ui/inventory-collection.tsx": "8d0e27faa7d9afabd8ed20eabaff28909b82f2f70a25adc66da2f95d71575feb",
+        "apps/client/src/command-request.ts": "d5a0dd481e2d69596a198c688409b7d0e4d8c05f786b40913278fb514cc74829",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/ui/inventory.css": "985e44a54aaf7e4106d5263732f92bf98c27bdf9acf5d86a1db823e734a865e3",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/client/vite.config.ts": "090f0368e53945b4aa306ecbd982ac8ce57f4701b93be464d42eb4b6875a3cf1"
+      },
+      "runnerSha256": "8b5d0ccaefd4a5c4296bf8203df60b3336b92af021ff99cf1981f0c1fb7cd2fc",
+      "hostSha256": "36170576a5b4546122330720790ef6bce0491b1a825b40f869a96b974af15655",
+      "reportSha256": "a1ec428baa449a2d0dab611c662d2a96af7417cfb9a1066f6e7ff7b4419945ae",
+      "traceSha256": "b8e9ab494a10a85497ddacb6e79d99a06a41c071e8f8c9dca42c72204b2050e7",
+      "transport": "Actual App/PlayCanvas with six byte-exact recorded native care resources; local control and command deliveries are supplied. No native execution, database, provider or human/OS input claim.",
+      "observations": [
+        "Visible successful Inventory command keeps one local receipt without a global duplicate",
+        "A held original success after Hide keeps the global notice and retained Inventory receipt"
+      ],
+      "overallOutcome": "Failed before a third command: two successful feedback phases, one capture, refusal and unknown presentations unrun. All owned cleanup passes.",
+      "visualReview": "Equipped sling and absent global notice are visible. Local receipt lies below the current scroll view; focus is established separately by recorded DOM events. Seven lots, three large columns and an empty half-width destination illustrate the default space problem.",
+      "limits": [
+        "No new native effects or permissions are established.",
+        "No performance cause is attributed to delayed focus or the later disappearing popover.",
+        "This is the preserved before-state, not acceptance of density, whole input coverage or player usability."
+      ],
+      "observationStartedAtUtc": "2026-10-06T12:25:31.687Z"
     }
   }
 }
