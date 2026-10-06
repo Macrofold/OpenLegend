@@ -1588,53 +1588,57 @@ function App({
               </Button>
               <IconButton icon="ui.help" label="Settings and help" onPress={() => toggle('help')} />
             </div>
-            {(['left', 'right'] as const).map((side) => (
-              <Toolbar
-                key={side}
-                className={`ol-rail ol-rail-${side}`}
-                orientation="vertical"
-                aria-label={
-                  side === 'left' ? 'Your character and records' : 'World actions and creation'
-                }
-              >
-                {(side === 'left'
-                  ? (['inventory', 'character', 'journal', 'composer'] as PanelId[])
-                  : (['nearby', 'crafting', 'agent'] as PanelId[])
-                ).map((id) => (
-                  <Launcher
-                    key={id}
-                    icon={
-                      {
-                        inventory: 'ui.inventory',
-                        crafting: 'ui.crafting',
-                        character: 'ui.character',
-                        journal: 'ui.journal',
-                        events: 'ui.journal',
-                        composer: 'action.talk',
-                        agent: 'ui.agent',
-                        game: 'ui.settings',
-                        nearby: 'ui.inview',
-                        intelligence: 'ui.star',
-                      }[id as 'inventory']
-                    }
-                    label={panelInfo[id].title}
-                    open={open.includes(id)}
-                    side={side}
-                    shortcut={
-                      {
-                        inventory: 'I',
-                        crafting: 'C',
-                        character: 'K',
-                        agent: 'W',
-                        nearby: 'V',
-                        journal: 'J',
-                      }[id as 'inventory']
-                    }
-                    onPress={() => toggle(id)}
-                  />
-                ))}
-              </Toolbar>
-            ))}
+            <div className="ol-launcher-rails">
+              {(['left', 'right'] as const).map((side) => (
+                <Toolbar
+                  key={side}
+                  className={`ol-rail ol-rail-${side}`}
+                  orientation={
+                    width / scale < 360 || (narrow && open.length > 0) ? 'horizontal' : 'vertical'
+                  }
+                  aria-label={
+                    side === 'left' ? 'Your character and records' : 'World actions and creation'
+                  }
+                >
+                  {(side === 'left'
+                    ? (['inventory', 'character', 'journal', 'composer'] as PanelId[])
+                    : (['nearby', 'crafting', 'agent'] as PanelId[])
+                  ).map((id) => (
+                    <Launcher
+                      key={id}
+                      icon={
+                        {
+                          inventory: 'ui.inventory',
+                          crafting: 'ui.crafting',
+                          character: 'ui.character',
+                          journal: 'ui.journal',
+                          events: 'ui.journal',
+                          composer: 'action.talk',
+                          agent: 'ui.agent',
+                          game: 'ui.settings',
+                          nearby: 'ui.inview',
+                          intelligence: 'ui.star',
+                        }[id as 'inventory']
+                      }
+                      label={panelInfo[id].title}
+                      open={open.includes(id)}
+                      side={side}
+                      shortcut={
+                        {
+                          inventory: 'I',
+                          crafting: 'C',
+                          character: 'K',
+                          agent: 'W',
+                          nearby: 'V',
+                          journal: 'J',
+                        }[id as 'inventory']
+                      }
+                      onPress={() => toggle(id)}
+                    />
+                  ))}
+                </Toolbar>
+              ))}
+            </div>
             {narrow && open.length > 0 && (
               <div className="ol-mobile-tabs" role="toolbar" aria-label="Open panels">
                 {open.map((id) => (

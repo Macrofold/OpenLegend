@@ -198,7 +198,8 @@ body,
   flex-wrap: wrap;
   gap: var(--space-3);
 }
-.ol-hud[data-picking='true'] :is(.ol-clock-position, .ol-quick-position, .ol-rail, .ol-top-tools) {
+.ol-hud[data-picking='true']
+  :is(.ol-clock-position, .ol-quick-position, .ol-launcher-rails, .ol-rail, .ol-top-tools) {
   visibility: hidden;
 }
 .ol-hud[data-picking='true'] .ol-survival {
@@ -262,6 +263,9 @@ body,
   gap: var(--space-2);
   border-radius: var(--radius-md);
   background: var(--surface-glass);
+}
+.ol-launcher-rails {
+  display: contents;
 }
 .ol-rail {
   position: absolute;
@@ -2860,11 +2864,45 @@ body,
 #app {
   overflow: clip;
 }
-.ol-hud[data-tight='true']:has(.ol-mobile-tabs) .ol-dock {
-  top: auto;
+/* A narrow sheet reserves one scrolling launcher strip and the open-task tabs.
+   They share the sheet's geometry instead of sitting behind its reading area. */
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) {
+  --sheet-top: calc(
+    var(--space-3) + var(--control-sm) + var(--space-2) + 2 * var(--control-md) + 4 * var(--space-1)
+  );
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-top-tools {
+  flex-direction: row;
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-launcher-rails {
+  position: absolute;
+  top: calc(var(--space-3) + var(--control-sm) + var(--space-2));
+  left: var(--hud-inset);
+  right: var(--hud-inset);
+  display: flex;
+  gap: var(--space-2);
+  min-height: var(--control-md);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  pointer-events: auto;
+  z-index: var(--z-sheet);
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-rail {
+  position: static;
+  flex: none;
+  flex-direction: row;
+  gap: var(--space-1);
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-launcher {
+  flex: none;
+  width: var(--control-md);
+  height: var(--control-md);
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
+  top: var(--sheet-top);
   height: calc(100% - var(--sheet-top) - var(--control-md) - 2 * var(--space-3));
 }
-.ol-hud[data-tight='true']:has(.ol-mobile-tabs) .ol-mobile-tabs {
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-mobile-tabs {
   top: auto;
   bottom: calc(100% - var(--sheet-top));
 }

@@ -189,17 +189,14 @@
    conversation history retain their existing reading and request owners. */
 #agentPanel .ol-panel-body:has(> .ol-creator-workspace[data-session]) {
   overflow: hidden;
+  padding: var(--space-2);
 }
 .ol-creator-workspace[data-session] {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
-}
-.ol-creator-workspace[data-session] > .ol-creator-views {
-  flex-wrap: nowrap;
-  overflow: auto;
-  flex: none;
+  gap: var(--space-2);
 }
 .ol-creator-workspace[data-session] > .ol-creator-authoring {
   display: flex;
@@ -214,7 +211,7 @@
   flex: 1;
 }
 .ol-world-agent-reading {
-  min-height: 0;
+  min-height: calc(80px / var(--ui-scale, 1) + var(--control-sm) + var(--space-3));
   overflow: auto;
   flex: 1;
   display: flex;
@@ -235,8 +232,8 @@
   min-height: 0;
 }
 .ol-world-agent-footer {
-  flex: 0 0 auto;
-  max-height: 75%;
+  flex: 0 1 auto;
+  max-height: 60%;
   padding-block-start: var(--space-2);
   border-block-start: 1px solid var(--line);
   overflow: auto;
@@ -255,7 +252,7 @@
   flex-shrink: 1;
 }
 .ol-world-agent-compose .ol-composer textarea {
-  max-height: 6em;
+  max-height: min(6em, 12dvh);
   overflow-y: auto;
 }
 
@@ -270,15 +267,11 @@
   padding-block: var(--space-2);
 }
 
-.ol-creator-workspace[data-session] > .ol-creator-views .ol-btn {
-  flex: none;
-  white-space: nowrap;
-}
 .ol-world-agent-reading > * {
   flex: none;
 }
 .ol-world-agent-reading > .ol-world-agent-conversation {
-  flex: 1 0 min(100px, 16dvh);
+  flex: 1;
   min-height: 0;
 }
 .ol-world-agent-conversation .ol-thread-shell {
@@ -288,8 +281,72 @@
 .ol-world-agent-compose > * {
   flex: none;
 }
-.ol-world-agent-title {
-  margin: 0;
-  font-size: inherit;
-  overflow-wrap: anywhere;
+.ol-world-agent-header {
+  flex: none;
+  position: relative;
+}
+.ol-world-agent-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-world-agent-identity .ol-usage-remaining {
+  flex: 1;
+  min-width: 0;
+}
+.ol-world-agent-identity .ol-usage-remaining > div {
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.ol-world-agent-reading > .ol-creator-views {
+  flex-wrap: nowrap;
+  overflow: auto;
+  scrollbar-width: thin;
+  padding-block-end: var(--space-1);
+}
+.ol-world-agent-reading > .ol-creator-views .ol-btn {
+  flex: none;
+}
+
+.ol-creator-workspace-switch {
+  position: relative;
+}
+.ol-creator-workspace-switch > summary {
+  cursor: pointer;
+}
+.ol-creator-workspace-switch > .ol-creator-views,
+.ol-world-agent-controls > .ol-world-agent-context {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  top: 100%;
+  max-height: min(110px, 18dvh);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  padding: var(--space-2);
+  box-shadow: var(--shadow-panel);
+}
+.ol-world-agent-identity .ol-usage-remaining > div > span:first-child,
+.ol-world-agent-identity .ol-meter-track {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-height: 700px) {
+  .ol-world-agent-compose .ol-composer textarea {
+    max-height: calc(1.5em + 2 * var(--space-2));
+  }
+}
+
+.ol-world-agent-controls > .ol-world-agent-context {
+  top: calc(100% + var(--control-sm) + var(--space-3));
+}
+@media (max-height: 700px) {
+  .ol-world-agent-controls > .ol-world-agent-context {
+    max-height: 6dvh;
+  }
 }

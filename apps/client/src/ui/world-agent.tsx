@@ -136,6 +136,31 @@ function WorldAgentPanel(props: Props) {
   const activeTitle =
     sessions.find((session) => session.sessionId === active)?.title ??
     (inventionTarget === active ? 'New invention' : 'New conversation');
+  const navigation = (
+    <nav className="ol-creator-views" aria-label="Creation workspaces">
+      <Button
+        variant="quiet"
+        aria-pressed={workspace === 'workshop'}
+        onPress={() => setWorkspace('workshop')}
+      >
+        Your workshop
+      </Button>
+      <Button
+        variant="quiet"
+        aria-pressed={workspace === 'authoring'}
+        onPress={() => setWorkspace('authoring')}
+      >
+        World authoring
+      </Button>
+      <Button
+        variant="quiet"
+        aria-pressed={workspace === 'relationships'}
+        onPress={() => setWorkspace('relationships')}
+      >
+        Inspect world
+      </Button>
+    </nav>
+  );
   const allowance = (
     <UsageRemaining
       limit={budget.limitUsd}
@@ -205,31 +230,15 @@ function WorldAgentPanel(props: Props) {
       className="ol-agent ol-creator-workspace"
       data-session={godMode && workspace === 'authoring' && !!active ? '' : undefined}
     >
-      {godMode && (
-        <nav className="ol-creator-views" aria-label="Creation workspaces">
-          <Button
-            variant="quiet"
-            aria-pressed={workspace === 'workshop'}
-            onPress={() => setWorkspace('workshop')}
-          >
-            Your workshop
-          </Button>
-          <Button
-            variant="quiet"
-            aria-pressed={workspace === 'authoring'}
-            onPress={() => setWorkspace('authoring')}
-          >
-            World authoring
-          </Button>
-          <Button
-            variant="quiet"
-            aria-pressed={workspace === 'relationships'}
-            onPress={() => setWorkspace('relationships')}
-          >
-            Inspect world
-          </Button>
-        </nav>
-      )}
+      {godMode &&
+        (workspace === 'authoring' && active ? (
+          <details className="ol-creator-workspace-switch">
+            <summary>Creation workspaces</summary>
+            {navigation}
+          </details>
+        ) : (
+          navigation
+        ))}
       {(!godMode || workspace !== 'authoring') && allowance}
       {godMode && (
         <div hidden={workspace !== 'authoring'} className="ol-creator-page ol-creator-authoring">
