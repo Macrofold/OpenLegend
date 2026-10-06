@@ -32,7 +32,7 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 ## BW25 — Supplies that change over time
 
-**DG19 product design in progress, October 6, 2026.** [Changing supplies](../projects/changing-supplies-feature-spec.md) develops ND33 freshness/preservation and the selected ND06 resource-renewal loop. Its [authored profile](../worlds/base/changing-supplies.md) owns food, preservation work and patch tuning; [CS01–CS06](changing-supplies.md) owns focused delivery beneath BW/INV-6. [CS limits](../limits/changing-supplies.md) records the proposed scope. Current lots, containers, cooking, finite resources and corpse decay remain distinct from these new mechanics; product design does not close technical work or runtime acceptance.
+**DG19 product proposal complete and reviewed, October 6, 2026.** [Changing supplies](../projects/changing-supplies-feature-spec.md) develops ND33 freshness/preservation and the selected ND06 resource-renewal loop. Its [authored profile](../worlds/base/changing-supplies.md) owns food, preservation work and patch tuning; [CS01–CS06](changing-supplies.md) owns focused delivery beneath BW/INV-6. [CS limits](../limits/changing-supplies.md) records the proposed scope. Current lots, containers, cooking, finite resources and corpse decay remain distinct from these new mechanics; product design does not close technical work or runtime acceptance.
 
 ## BW24 — Fuller starting wilderness
 

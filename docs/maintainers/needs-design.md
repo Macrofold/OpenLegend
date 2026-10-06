@@ -199,7 +199,7 @@ ND33's selected freshness/preservation loop and the related resource-renewal/sca
 
 **Start and parallel boundary:** Use current lots, custody, consumption and the applicable clock. A personal pilot can use today's clock contract; a continuing-world version consumes DG17's assignments. Generations are DG31. Avoid adding spoilage or renewable abundance merely to justify a new system. **Existing owners:** BW, PO, INV, shared state and simulation-time.
 
-**October 6 product proposal in progress:** [Changing supplies](../projects/changing-supplies-feature-spec.md) and its [wilderness profile](../worlds/base/changing-supplies.md) select food condition, finite preservation work and renewing outer berry patches for a personal attended loop. [CS01–CS06](changing-supplies.md) retains technical/runtime delivery and [CS limits](../limits/changing-supplies.md) records the proposed choices. Existing-world enrollment, broader ecology and unattended supply viability are not implied.
+**October 6 product proposal complete and reviewed:** [Changing supplies](../projects/changing-supplies-feature-spec.md) and its [wilderness profile](../worlds/base/changing-supplies.md) select food condition, finite preservation work and renewing outer berry patches for a personal attended loop. The review accounts for the complete preparation/away-food cost, inherited condition, partial work, absence and the three-person renewable-food deficit. [CS01–CS06](changing-supplies.md) retains technical/runtime delivery and [CS limits](../limits/changing-supplies.md) records the proposed choices. Existing-world enrollment, broader ecology and unattended supply viability are not implied.
 
 #### DG20 — Heat, ignition and material consequences
 

@@ -20,6 +20,8 @@
 
 **Proposed · Restrictiveness: Very safe.** The first family gives permitted observers understandable food-condition/edibility information and handles unknown or uninspected food explicitly. It introduces no probabilistic contamination, secret poison roll, illness, nutritional taxonomy, freshness reward or compulsory taste test. Spoiled food remains a real unusable material until its supported disposition; a missing record is not proof of freshness.
 
+Only an actor's own accessible, known spoiled portions may be deliberately discarded through the selected food disposition action. Discarding retires the actual material and gives no compost, bait, fuel or other benefit. Claims and other people's possessions retain their existing authority; dropping food only changes its location.
+
 **Reason / tradeoff:** The decision should concern what to prepare, carry and use. Surprise illness and repeated inspection would add another care system before the selected preservation benefit is established. Later unsafe-food or medical consumers need their own observable evidence, actual consequences and DG21 design. Keeping information permission-scoped is a correctness requirement, not a switch for making decay more difficult.
 
 ## CS-L04 — Deliberate finite preservation

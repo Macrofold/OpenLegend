@@ -1,8 +1,8 @@
 # Product designs for groups 16–20
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | DG16–DG18 product proposals are written and independently reviewed; DG19–DG20 and the final package review remain. | 2026-10-06   |
+| Status      | Current progress                                                                                              | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG16–DG19 product proposals are written and independently reviewed; DG20 and the final package review remain. | 2026-10-06   |
 
 ## Assignment and baseline
 
