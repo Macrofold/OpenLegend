@@ -1,6 +1,6 @@
 # Open Legend implementation screenshots
 
-**Reviewed October 6, 2026.** These 23 original screenshots show the whole-interface implementation candidate. They are separate from the [98 external game screenshots](../screenshots/gallery.md) and [nine design proposals](../wireframes/README.md). Each image retains its captured bytes; [the manifest](manifest.json) records dimensions, hashes and capture-specific source identities. This gallery explains the visible decisions; the [verification report](../../verification/game-interaction-redesign.md#whole-interface-runtime) owns actual results, earlier failures and remaining acceptance.
+**Reviewed October 6, 2026.** These 27 original screenshots show the whole-interface implementation candidate. They are separate from the [98 external game screenshots](../screenshots/gallery.md) and [nine design proposals](../wireframes/README.md). Each image retains its captured bytes; [the manifest](manifest.json) records dimensions, hashes and capture-specific source identities. This gallery explains the visible decisions; the [verification report](../../verification/game-interaction-redesign.md#whole-interface-runtime) owns actual results, earlier failures and remaining acceptance.
 
 ## How to read the images
 
@@ -9,6 +9,10 @@ Images 01–09 render the production App and PlayCanvas scene after main merge `
 Images 10–17 and 19 show production components in their focused implementation checks before the final main merge. The empty background and any small test-navigation buttons belong to that isolated check, not the game's navigation. These captures illustrate their inspected composition and failure states, not the final whole-App placement. Image 18 uses the current merged native projection in the actual activity component. Dummy names, tokens, dialogue and reviews are controlled example data; no provider or account operation was performed.
 
 Images 20–23 show the October 6 narrow-layout corrections. Images 20, 21 and 23 use the actual App/PlayCanvas with controlled native public views and HTTP transport; image 22 uses the actual creator components in a bounded Panel host. Their exact source hashes are separate from the older captures. Image 23 includes the keyboard-outline correction at `296ae67`. The creator question image predates the later local choice-strip focus correction and retains that source identity; it is not relabeled as a final full-App capture.
+
+Images 24–27 show one actual App/PlayCanvas, native server and PostgreSQL session with local development sign-in. After the player entered, fixture preparation supplied a full woven bag and placed two existing characters nearby. One died through the existing native death transition and retained a permitted and a restricted bag; the other remained alive. The six original UI commands were Drop, the refused six-stone move, take/put exactly three branches, and take/put one bone fragment. Each has a resolved native receipt. Separate permitted reads check capacity and custody integrity, private/living inventory refusal and out-of-reach refusal; fixture relocation does not establish walking or arrival.
+
+The [native interaction record](../../verification/game-interaction-redesign.md#native-inventory-and-focus-fixture-continuation) distinguishes these outcomes from the earlier controlled captures. The branch revision is `d8f0b4`; the [CI job](https://github.com/Macrofold/OpenLegend/actions/runs/37433166390/job/112168569322) checked out merge `3731b364a82d89818d66380437d2c1c4c69d970a` on `main` at `0a3ab79b7a698a7f1941dc23722f89220d1ba425`. The manifest retains artifact `11398327568`, its archive hash, the native report hash and exact source/built-asset hashes. These four captures do not establish that the entire browser job or all interface journeys passed.
 
 The screenshots establish what was visible in those states. Keyboard operation, retained drafts, request identity and native work behavior require the linked interaction evidence. Real operating-system IME, assistive devices, broader displays and uncoached player observation remain open.
 
@@ -51,6 +55,30 @@ The screenshots establish what was visible in those states. Keyboard operation, 
 ![Current fire-watch work remains visible with Stop all work disabled and the character-condition reason underneath.](18-work-unavailable.png)
 
 **470×311, native projection and component.** An incapacitated character still has waiting work. The UI shows the work, the material/time facts and the native reason Stop all work is unavailable. The cancellation consequence is explicit: paused work is discarded, completed effects remain. Actual native admission and body effects supplied this projection; pointer attempts emitted no commands. This bounded result does not qualify the complete authenticated camp journey.
+
+### 24 — Opened storage stays beside belongings
+
+![Mike’s belongings beside an opened woven bag on the ground, with a ground-pile breadcrumb and a packing load of 24 out of 24.](24-native-opened-paired-bag.png)
+
+**1440×960, native App/server/PostgreSQL.** The player dropped the supplied filled bag, opened the resulting ground pile and opened the bag inside it. Both collections remain named above their item grids. The ground location, distance, breadcrumb and packing load explain which bag is open and why its contents are relevant. This applies the object-first inventory design: the opposite open collection supplies the destination for a move. The expanded workspace consumes much of the screen, leaving the world and selected ground pile mainly to its right; this desktop capture does not establish a comfortable layout at every width.
+
+### 25 — A full bag refuses without losing items
+
+![The selected stack of six small stones retains its details and named Move to the woven bag action while the packing-capacity refusal remains visible.](25-native-full-capacity-refusal.png)
+
+**1440×960, native App/server/PostgreSQL.** The native move refuses all six stones because the bag is full. The reason stays both in the item detail and the workspace status, and the named destination remains available for deliberate reconsideration. The interaction record verifies unchanged quantities, custody and bag contents after refusal, including the existing 24 branches and load of 24/24; the screenshot alone cannot prove that integrity. The detail panel covers much of the second collection. Keeping the two names above it preserves orientation, but simultaneous comparison of both grids is reduced while the panel is open.
+
+### 26 — Exact amounts return a recorded result
+
+![After the exact-quantity round trip, Mike has two supple branches, the woven bag has 24, and the workspace reports Possessions updated.](26-native-returned-exact-quantity.png)
+
+**1440×960, native App/server/PostgreSQL.** Taking three branches changed the player/bag totals from 2/24 to 5/21; putting three back restored 2/24. The native command bodies and resolved receipts establish both exact moves. The local quantity control kept the chosen item and opposite collection, and ordinary transfers made no destination-discovery request. For the return, the script focused **Move amount** and pressed Enter. That input is established by the script and receipt record, not by the visible outline, which is around **Small stone** in this later capture. This image demonstrates the returned totals and persistent result; it does not demonstrate focus on the transferred branch cell or broader keyboard usability.
+
+### 27 — Remains retain identity and permission boundaries
+
+![The dead person’s belongings open beside Mike’s, with a ground location one metre away and a selected-person panel describing the body.](27-native-corpse-paired-contents.png)
+
+**1440×960, native App/server/PostgreSQL.** The same paired workspace opens the nearby body and shows its permitted possessions. The character used by the fixture is Ada, but the player has not learned that name, so the UI correctly calls the target **person**. Taking one bone fragment and returning it leaves the visible stack at four; both native commands have resolved receipts. Separate native access checks allow the permitted bag, refuse restricted-bag contents, expose no storage route into the living person’s inventory, and refuse the body’s contents after it is moved beyond reach by the fixture. Those refusals are established by the interaction record, not by this successful opening image. Two identically named woven bags still require context and available actions to distinguish; only the permitted bag shows the **Container** affordance here. Opening the body grants no general access to private or living inventories. No player death, walking, arrival or consent-acceptance journey is claimed.
 
 ## Reading and conversation
 
@@ -164,4 +192,4 @@ The screenshots establish what was visible in those states. Keyboard operation, 
 
 ## Remaining acceptance
 
-The [current implementation map](../interface-coverage.md#current-runtime-candidate) identifies changed and reused controls across all 58 surface groups. The [UIUX tracker](../../maintainers/ui-ux.md#uiux08) retains authenticated gameplay/storage, complete inventory/camp/consent and creator journeys, real IME and assistive devices, broader text/display combinations and uncoached player observation. Screenshots and controlled interaction evidence do not close those gates.
+The [current implementation map](../interface-coverage.md#current-runtime-candidate) identifies changed and reused controls across 60 surface groups, preserving the 58-group historical audit and its original evidence. The [UIUX tracker](../../maintainers/ui-ux.md#uiux08) retains the remaining complete inventory/camp/consent and creator journeys, real operating-system IME and assistive devices, broader text/display combinations and uncoached player observation. Captures 24–27 and their native record qualify the bounded bag/remains session described above; screenshots and that one session do not close the broader gates.

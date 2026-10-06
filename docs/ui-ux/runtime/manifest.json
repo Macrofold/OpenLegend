@@ -1,6 +1,6 @@
 {
   "reviewed": "2026-10-06",
-  "scope": "Requested Open Legend implementation screenshots. Separate from external game references and design proposals. See README for revisions, controlled transport and actual evidence.",
+  "scope": "Requested Open Legend implementation screenshots. Separate from external game references and design proposals. See README for revisions, controlled transport, native App/server/PostgreSQL captures and the limits of each observation.",
   "images": [
     {
       "id": "01-hud",
@@ -212,6 +212,50 @@
       "sha256": "27ca8a41046d13457315dfa33cbabba5f177eeb01b0a241ea4c534e7b3b36cb5",
       "captureScope": "app",
       "source": "keyboard-return-296ae67"
+    },
+    {
+      "id": "24-native-opened-paired-bag",
+      "file": "24-native-opened-paired-bag.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 802474,
+      "sha256": "61b504d8b6bbcce8c9ddd6771528aaa6a963f0d39bab1cfa888cd643104283df",
+      "captureScope": "app",
+      "source": "native-inventory-d8f0b4",
+      "originalFile": "01-opened-paired-bag.png"
+    },
+    {
+      "id": "25-native-full-capacity-refusal",
+      "file": "25-native-full-capacity-refusal.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 725381,
+      "sha256": "795b43d599c8aee0cf60edb4be00baf258bcc1528af15c46fb2490a800f8449e",
+      "captureScope": "app",
+      "source": "native-inventory-d8f0b4",
+      "originalFile": "02-full-capacity-refusal.png"
+    },
+    {
+      "id": "26-native-returned-exact-quantity",
+      "file": "26-native-returned-exact-quantity.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 803527,
+      "sha256": "86ca46731775828b74e329433fceff73b18ae99b9598ab2e177f4a62a861c2e8",
+      "captureScope": "app",
+      "source": "native-inventory-d8f0b4",
+      "originalFile": "03-returned-exact-quantity.png"
+    },
+    {
+      "id": "27-native-corpse-paired-contents",
+      "file": "27-native-corpse-paired-contents.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 807657,
+      "sha256": "deab74010d389839854d9d162e24ae63e60655564840290821f65350e44885de",
+      "captureScope": "app",
+      "source": "native-inventory-d8f0b4",
+      "originalFile": "04-native-corpse-paired-contents.png"
     }
   ],
   "appSource": {
@@ -262,6 +306,72 @@
         "ui/creator-workspaces.css": "08399b47456cd3136be0910bbd2258b1c712e8aa07570c6b58163ed715710796",
         "ui/world-agent.tsx": "9650b6d7d0c149dfffd434b5b87d92f934461c0f8725d1383a3fe42011cd878d",
         "ui/world-agent-session.tsx": "5caa725f72c032b90fdce06593b7124d640ad5b5d4570c8f88e34ba7434b41f5"
+      }
+    },
+    "native-inventory-d8f0b4": {
+      "captured": "2026-10-06",
+      "description": "Production App and PlayCanvas with the actual native server, local development sign-in and PostgreSQL. One supplied bag/remains fixture after real App entry; six original UI commands with resolved native receipts. Pointer gestures and one Enter on the focused Move amount button; the returned-item screenshot does not establish transferred-cell focus. No provider work.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "d8f0b4",
+      "checkoutCommit": "3731b364a82d89818d66380437d2c1c4c69d970a",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37433166390,
+        "jobId": 112168569322,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37433166390/job/112168569322",
+        "artifactId": 11398327568,
+        "artifactZipSha256": "8863c14ae299e42a62928d0b1d6322fd707d234b52804f6f20e91b8df3d2adad"
+      },
+      "report": {
+        "artifactPath": "native-inventory/report.json",
+        "sha256": "06423f316185b27733410357705681e8ec38103e78d4c0f9a5bc5621be9124a8",
+        "startedAt": "2026-10-06T08:05:36.316Z",
+        "finishedAt": "2026-10-06T08:06:43.907Z",
+        "passed": true
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "viewport": {
+          "width": 1440,
+          "height": 960
+        },
+        "providerBudgetUsd": 0
+      },
+      "fixture": "One ordinary player; installed woven_bag plus 24 wood units; one nearby native NPC corpse with a portable lot and permitted/restricted bags; one nearby living NPC. Prepared after actual App entry and before inventory gestures.",
+      "observedCommands": [
+        "Drop the filled bag",
+        "Refuse six stones because the bag is full",
+        "Take exactly three branches",
+        "Put exactly three branches using Enter",
+        "Take one bone fragment from native remains",
+        "Put one bone fragment back into native remains"
+      ],
+      "accessChecks": "Native read-only checks confirm permitted corpse and direct bag contents, refusal of restricted bag and living inventory contents, and out-of-reach corpse refusal after fixture relocation. The visible corpse is named person because its name is not known to the player.",
+      "limits": [
+        "No walking, arrival or movement cancellation",
+        "No complete split/stale inventory matrix",
+        "No composed camp or recipient-consent journey",
+        "No player death/Continue journey",
+        "No alternate-world acceptance",
+        "No operating-system IME, assistive-device or uncoached usability qualification",
+        "No live provider or whole-J01–J48 completion claim"
+      ],
+      "sourceHashes": {
+        "apps/server/src/http.ts": "b8b072e2bb43d2a19141bc7102b784c97da3fbc32348d0c484341b79c44be14a",
+        "apps/server/src/inventory-view.ts": "23a5b2e6e02c3204cb0881101251b2004d282b89932344869c66d9f3299db455",
+        "apps/client/src/main.tsx": "296b534de3dc4cae81ed731bda03f9a26d9d6de6d5b627d9c801049d3b775b00",
+        "apps/client/src/ui/inventory.tsx": "6284cc3c1bc6e8f0030a315becc3b503f8e983f1839bc5cf9736989719b18c20",
+        "apps/client/src/ui/container-opening.tsx": "4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684",
+        "packages/domain/src/objects.ts": "c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70",
+        "packages/domain/src/kernel.ts": "55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6",
+        "packages/domain/src/worlds/base/items.ts": "1e7d330b4648466638a2b4943c32a1dea5b6c4c4df433df1b5fd86a98bacee9e",
+        "packages/domain/src/living.ts": "596b160baa6e747ac15c171aa3e6ba76ca33d0c1a40b516ca1aa6731b4783ead",
+        "packages/domain/src/worlds/base/body-policy.ts": "eb85b8e45ef4e39a6d8f45746b39534dfc6348837cbd4b6905070902cd3a592d",
+        "dist/client/index.html": "192e7d1f67eb8059dc2afcfce9e0c672ee0dece3d1419c0d92c911893a9e899a",
+        "dist/client/assets/index-BMNxzZig.css": "bdf8405b72fe431d3d2c16ea947504b9bf054fe4978c74f9d71ff654928852f5",
+        "dist/client/assets/index-BY3PsIly.js": "5970199ac52fc970e6967cc9cd774780ddb93fd31b2488da0b9e64bf2d0f6df6"
       }
     }
   }

@@ -24,10 +24,11 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
   if (!address || typeof address === 'string') throw new Error('Missing listener');
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  // Headless Chromium reports each page as focused, so exercise the native event
-  // handlers explicitly; these are event fixtures, not OS tab-switch evidence.
+  // Headless Chromium reports each page as focused. Pair the event with its
+  // matching focus query; these are input fixtures, not OS tab-switch evidence.
   const focus = (focused: boolean) =>
     page.evaluate((active) => {
+      Object.defineProperty(document, 'hasFocus', { configurable: true, value: () => active });
       window.dispatchEvent(new Event(active ? 'focus' : 'blur'));
     }, focused);
   try {
