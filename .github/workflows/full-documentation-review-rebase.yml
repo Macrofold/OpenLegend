@@ -26,35 +26,71 @@ jobs:
           path: review-reconcile
           fetch-depth: 0
           persist-credentials: false
-      - name: Prepare replay and preserve any conflicts without publishing
-        shell: bash
+      - name: Replay only exact reviewed resolutions and preserve other conflicts
         run: |
-          set -euo pipefail
-          output="$RUNNER_TEMP/review-reconciliation"
-          mkdir -p "$output"
-          test -z "$(git status --porcelain)"
-          test "$(git merge-base "$GITHUB_SHA" "$NEW_BASE")" = "$OLD_BASE"
-          printf 'before=%s\nold_base=%s\nnew_base=%s\ncheckout=%s\n' "$GITHUB_SHA" "$OLD_BASE" "$NEW_BASE" "$PWD" | tee "$output/refs.txt"
-          git config user.name 'OpenLegend documentation review'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git diff --binary "$OLD_BASE" "$NEW_BASE" > "$output/upstream.patch"
-          git diff --binary "$OLD_BASE" "$GITHUB_SHA" > "$output/original-review.patch"
-          if ! GIT_EDITOR=true git -c rerere.enabled=false rebase --onto "$NEW_BASE" "$OLD_BASE"; then
-            git status --short | tee "$output/conflicts.txt"
-            git rev-parse REBASE_HEAD | tee "$output/stopped-commit.txt"
-            git diff --cc | tee "$output/conflicts.diff"
-            tar -czf "$output/conflicted-checkout.tar.gz" .git $(git diff --name-only --diff-filter=U)
-            echo 'Replay stopped. Conflicted checkout preserved; remote history unchanged.'
-            exit 1
-          fi
-          git diff --check "$NEW_BASE" HEAD
-          git range-diff --no-color "$OLD_BASE..$GITHUB_SHA" "$NEW_BASE..HEAD" > "$output/range-diff.txt"
-          git diff --binary "$NEW_BASE" HEAD > "$output/review.patch"
-          git diff --stat "$NEW_BASE" HEAD
-          git rev-parse HEAD | tee "$output/after.txt"
-          git bundle create "$output/replay.bundle" HEAD
-          cat "$output/range-diff.txt"
-          echo 'Replay prepared only; no branch or main ref was updated.'
+          python3 - <<'PY'
+          import difflib, hashlib, json, os, pathlib, re, subprocess, tarfile
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-reconciliation'
+          out.mkdir()
+          before, old, new = os.environ['GITHUB_SHA'], os.environ['OLD_BASE'], os.environ['NEW_BASE']
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          assert not git('status', '--porcelain')
+          assert git('merge-base', before, new).decode().strip() == old
+          (out / 'refs.json').write_text(json.dumps({'before': before, 'old_base': old, 'new_base': new, 'checkout': str(pathlib.Path.cwd())}, indent=2))
+          subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          (out / 'upstream.patch').write_bytes(git('diff', '--binary', old, new))
+          (out / 'original-review.patch').write_bytes(git('diff', '--binary', old, before))
+          env = dict(os.environ, GIT_EDITOR='true')
+          result = subprocess.run(['git', '-c', 'rerere.enabled=false', 'rebase', '--onto', new, old], env=env)
+          resolved = []
+          while result.returncode:
+              stopped = git('rev-parse', 'REBASE_HEAD').decode().strip()
+              names = [name for name in git('diff', '--name-only', '--diff-filter=U', '-z').decode().split('\0') if name]
+              if stopped == '751525b3cb5b459a7dba47d55bd16d568b03a1b3' and names == ['docs/maintainers/performance-profiling.md']:
+                  path = pathlib.Path(names[0])
+                  text = path.read_text()
+                  pattern = r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]+\n'
+                  matches = list(re.finditer(pattern, text, re.MULTILINE | re.DOTALL))
+                  assert len(matches) == 1, 'changed profiler conflict count'
+                  match = matches[0]
+                  ours, theirs = match.group(1), match.group(2)
+                  intro, shared = ours.split('\n\n', 1)
+                  assert intro.startswith('The profiler explicitly takes control through the player endpoint,')
+                  assert shared.count('refused before migrations.') == 1
+                  assert theirs == shared.replace('refused before migrations.', 'refused before disposable-fixture initialization.'), 'changed profiler conflict'
+                  replacement = ours.replace('refused before migrations.', 'refused before disposable-fixture initialization.')
+                  merged = text[:match.start()] + replacement + text[match.end():]
+                  assert not re.search(r'^(<<<<<<<|=======|>>>>>>>)', merged, re.MULTILINE)
+                  path.write_text(merged)
+                  print('RESOLVED: profiler control/measurement addition retained; only obsolete migration wording replaced.')
+                  resolved.append({'commit': stopped, 'path': str(path), 'sha256': hashlib.sha256(merged.encode()).hexdigest()})
+                  subprocess.run(['git', 'add', '--', str(path)], check=True)
+                  result = subprocess.run(['git', 'rebase', '--continue'], env=env)
+                  continue
+              (out / 'stopped-commit.txt').write_text(stopped + '\n')
+              (out / 'conflicts.txt').write_bytes(git('status', '--short'))
+              diff = git('diff', '--cc')
+              (out / 'conflicts.diff').write_bytes(diff)
+              print('STOPPED COMMIT:', stopped)
+              print(diff.decode())
+              with tarfile.open(out / 'conflicted-checkout.tar.gz', 'w:gz') as archive:
+                  archive.add('.git')
+                  for name in names:
+                      if pathlib.Path(name).exists():
+                          archive.add(name)
+              raise SystemExit('Unresolved conflict preserved; no remote history published.')
+          (out / 'resolutions.json').write_text(json.dumps(resolved, indent=2))
+          subprocess.run(['git', 'diff', '--check', new, 'HEAD'], check=True)
+          rangediff = git('range-diff', '--no-color', f'{old}..{before}', f'{new}..HEAD')
+          (out / 'range-diff.txt').write_bytes(rangediff)
+          (out / 'review.patch').write_bytes(git('diff', '--binary', new, 'HEAD'))
+          (out / 'after.txt').write_bytes(git('rev-parse', 'HEAD'))
+          subprocess.run(['git', 'bundle', 'create', str(out / 'replay.bundle'), 'HEAD'], check=True)
+          print(rangediff.decode())
+          print('Replay prepared only; no remote ref updated.')
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
