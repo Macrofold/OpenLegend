@@ -48,7 +48,7 @@ Current Continue restores food and energy as well as bodily health and relocates
 
 ## Time, continuity and contrasting worlds
 
-Game-time pause stops progress and need expenditure through the current clock. Ordinary human departure stops unfinished care; the protected absent body accrues no treatment credit. Current-format save/restore retains real body state, valid work and exact materials together; it neither refunds a completed dressing nor doubles a completion. A physical-life change invalidates old care.
+Game-time pause stops progress and need expenditure through the current clock. Ordinary human departure stops unfinished care; the protected absent body accrues no treatment credit. Current-format save/restore retains real body state, work and exact materials together, then applies current participation/absence interruption. A human's saved care need not resume after loading; another player's Resume cannot complete it for an unavailable patient/helper. Unspent bound fiber is released when care stops, while completed effects/material use are not duplicated or refunded. A physical-life change invalidates old care.
 
 A person with no cognition available does not automatically start treatment. A previously chosen valid native action needs no repeated model calls. Resident offers and refusals use ordinary actor-permitted evidence and independent choice when that stage is delivered.
 

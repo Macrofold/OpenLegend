@@ -491,6 +491,12 @@ The current god-mode Person editor lists raw personal memories, awareness of sha
 
 Person-editor deletion now uses the authoritative forgetting transition in the same atomic character save: it records forgotten evidence, removes dependent summaries transitively, invalidates derived mind text and marks workspace reconsideration, then clears derived vector/interest caches. Unresolved commitments cannot be deleted. Recall still filters against the authoritative ledger if cache invalidation fails. Raw JSON edits use bounded schema/hash validation and permit only prose and importance changes; identifiers, ownership, evidence links and mechanical fields must remain unchanged. Batched mutations validate before applying changes. Importance-only edits refresh retrieval metadata without deleting dependent summaries or accepted mind prose; prose changes still invalidate their dependents. Person memory pages cache actor-local ordering and hash only the selected page. Deferred regression coverage remains in the [validation queue](maintainers/TODO.md#deferred-regression-coverage--persistence-and-owner-editors).
 
+## Selected correction and shared restoration proposal
+
+[DG25](projects/corrections-and-shared-restoration-feature-spec.md) distinguishes ordinary new corrective speech, existing explicit source correction/forgetting, later CE02 memory convenience and complete-world restoration. The first speech shortcut adds actual current words and private own-history links; it does not invoke the current broad mind invalidation or force other characters to accept the claim. The [accepted creator-edit policy](projects/creator-edit-propagation-feature-spec.md#accepted-policy) continues to forbid automatic semantic memory cascades.
+
+The selected optional shared/private restore uses one protected coherent fictional cut: messages, read evidence, accepted NPC outlook and derivatives return together, subject to current erasure/private ownership. No discarded-future inbox backlog, audit, human notice or externally retained copy silently enters restored cognition. Human knowledge cannot be unlearned; a later human account is new testimony. [HE06](maintainers/hearing-and-speech.md#he06--attributed-correction) and [SL10](maintainers/save-and-load.md#dg25--protected-shared-restoration) retain delivery; this is a product proposal, not a new implemented memory or restore policy.
+
 ## Maintained records
 
 - Implementation: [Feature tasks](maintainers/cognition-redesign.md).

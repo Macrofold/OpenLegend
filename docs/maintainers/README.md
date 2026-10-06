@@ -6,6 +6,8 @@
 
 [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) now covers DG24's optional private text journey, with existing MP/CR/data consumer obligations and no parallel authority or cognition checklist. The first complete two-human journey precedes NPC correspondence and optional calls.
 
+[HE06](hearing-and-speech.md#he06--attributed-correction) and [SL10.1–SL10.7](save-and-load.md#dg25--protected-shared-restoration) now cover DG25's independent new-event correction and protected shared restore. Existing creator-edit, privacy, participation, billing and operational-recovery owners retain their responsibilities. All five product proposals are written; runtime and evidence states remain with the focused trackers.
+
 ## Product design groups 16–20
 
 [The completed five-group product-design assignment](../projects/completed/product-design-groups-16-20.md) covers a personal Journal edition, continuing lives, worthwhile conversations/scenes, changing supplies and heat/material consequences. The further gameplay review separates useful attended contributions from conditional persistent editing, unattended service, crowd meaning, food aging and broader fire. It recommends strengthening the current adventure and independent resident through existing owners; DG16–DG20 is not a five-feature release order. [NC21](narration-and-conversations.md#nc21--personal-journal-edition), [PS02–PS06](product-scalability.md#ps02--one-interruptible-life), [CS01–CS06](changing-supplies.md) and [HM01–HM06](heat-and-materials.md) retain independently scoped delivery and the fuller unperformed acceptance; technical/runtime gates remain open.

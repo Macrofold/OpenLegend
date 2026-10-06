@@ -170,6 +170,12 @@ The [DG24 product proposal](../../docs/projects/world-text-messages-feature-spec
 
 Human–NPC source text and mixed derivatives remain restricted in cognition, creator inspection, narration, exports and future control changes. A new human controller receives no former NPC private-human corpus, and fictional device possession transfers no history right. Current authorized source access and erasure continue to govern restored and exported data. [NC22](../../docs/maintainers/narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns this prospective consumer; its proposed product behavior does not claim a new implemented query policy or extend privacy against direct host administration.
 
+### Proposed coherent private restoration consumer
+
+[DG25](../../docs/projects/corrections-and-shared-restoration-feature-spec.md#7-selected-shared-restoration-policy) selects a protected fictional private rewind within one same-world checkpoint. Current human-private ownership, blocks, erasure and controller restrictions still govern the restored records and derivatives. Save authority does not grant private plaintext, hidden membership or a private “what changed” diff. Creator-facing complete private-world export/import is outside the first scope; protected service slots remain complete-world recovery, not a participant-mail archive.
+
+Current operational receipts may identify an earlier-history outcome only within their retained authorized scope; they cannot recreate a discarded message, grant access, settle a restored claim or feed NPC future knowledge. Fictional item title/access and agreement state rewind with the world, while external privacy and actual accounting stay current. [SL10's focused consumer](../../docs/maintainers/save-and-load.md#dg25--protected-shared-restoration) owns the remaining product/runtime qualification. D48/D60 statuses and the application's direct-host-administrator threat boundary are unchanged.
+
 ## 6. Query performance and index contract
 
 | Required query                            | Initial access path / behavior                                                                               |

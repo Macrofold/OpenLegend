@@ -54,6 +54,8 @@ Proposed [experience-shaped characters](projects/experience-shaped-characters-fe
 
 Proposed [private world text](projects/world-text-messages-feature-spec.md): [TX-L01–TX-L10](limits/narration.md#tx-l01--selected-affordance-and-correspondents) inventory the optional authored device, mutual contacts, exact text, real-time send allowance, bounded presentation, growing history and private control/save boundaries. [NC22](maintainers/narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns delivery. The first two-human experience needs no AI call; NPC correspondence remains separately qualified under existing cognition budgets.
 
+Proposed [deliberate correction and shared restoration](projects/corrections-and-shared-restoration-feature-spec.md): [HC-L01–HC-L05](limits/hearing-and-speech.md#hc-l01--correction-through-actual-speech) and [RW-L01–RW-L10](limits/persistence.md#rw-l01--one-protected-world-history) inventory own-history correction links, ordinary speech envelopes, coherent private cut, existing save/binding/refusal limits, current authority/receipts and accumulated-history exposure. [HE06](maintainers/hearing-and-speech.md#he06--attributed-correction) and [SL10.1–SL10.7](maintainers/save-and-load.md#dg25--protected-shared-restoration) retain focused delivery. No new save cadence, compatibility, lifetime archive or model-repair budget is selected.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).
