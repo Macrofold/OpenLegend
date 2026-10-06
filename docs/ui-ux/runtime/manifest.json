@@ -597,6 +597,72 @@
       "captureScope": "app",
       "source": "inventory-feedback-before-space-correction",
       "originalFile": "01-visible-inventory-success.png"
+    },
+    {
+      "id": "59-inventory-narrow-before-header-correction",
+      "file": "59-inventory-narrow-before-header-correction.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 230981,
+      "sha256": "cd3a27b63d72aed9f38cc957f71063806d4e0cb30fb3f561c636d58d459c91e5",
+      "captureScope": "app",
+      "source": "inventory-focus-width-before-header-correction",
+      "originalFile": "03-single-collection-narrow.png"
+    },
+    {
+      "id": "60-inventory-compact-paired",
+      "file": "60-inventory-compact-paired.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 709815,
+      "sha256": "3d18db30e5676b9866646b673c2e40322a26d96027fff828d29eb51f0778269e",
+      "captureScope": "app",
+      "source": "inventory-compact-header-controlled-32cd1af",
+      "originalFile": "01-compact-paired-desktop.png"
+    },
+    {
+      "id": "61-inventory-compact-single",
+      "file": "61-inventory-compact-single.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 682755,
+      "sha256": "ff975ca4d85dd8af99729fbe82002b4589798e9e93adf7f35a628e1c3701ebe9",
+      "captureScope": "app",
+      "source": "inventory-compact-header-controlled-32cd1af",
+      "originalFile": "02-compact-single-desktop.png"
+    },
+    {
+      "id": "62-inventory-compact-narrow",
+      "file": "62-inventory-compact-narrow.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 211084,
+      "sha256": "4938c5f2b2139ada7c65471fbf0a41471e8a91cfa4aa89f56f88a897fb8675de",
+      "captureScope": "app",
+      "source": "inventory-compact-header-controlled-32cd1af",
+      "originalFile": "03-compact-single-narrow.png"
+    },
+    {
+      "id": "63-activity-prepared-focus",
+      "file": "63-activity-prepared-focus.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 975724,
+      "sha256": "33f5e606e4d97ce3251453e6ad9ec0ee2116fd2f4b7a95b2e98f1743072d9e29",
+      "captureScope": "app",
+      "source": "activity-picker-focus-and-task-switch",
+      "originalFile": "01-prepared-task-newer-start-focus.png"
+    },
+    {
+      "id": "64-activity-original-result-task-switch",
+      "file": "64-activity-original-result-task-switch.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 981675,
+      "sha256": "f0a6085847627c9eac2ec85806287d14ef2a1e5969d27c66d66d58279251b80f",
+      "captureScope": "app",
+      "source": "activity-picker-focus-and-task-switch",
+      "originalFile": "02-original-result-new-task-recovery.png"
     }
   ],
   "appSource": {
@@ -1814,6 +1880,325 @@
         "This is the preserved before-state, not acceptance of density, whole input coverage or player usability."
       ],
       "observationStartedAtUtc": "2026-10-06T12:25:31.687Z"
+    },
+    "inventory-focus-width-before-header-correction": {
+      "sourceCommit": "3bbfc7b12e5e44c306cb2b115e0b896f191a985b",
+      "sourceSha256": {
+        "apps/client/src/main.tsx": "9fa7c297e69e2e81c2b76e2939198187f7c76aa41fcf4554612b0a9137e9bc88",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/ui/inventory.tsx": "6f5495836ad71b61dea01890155b03b0a13622fa12c52d167bbb7f614039bace",
+        "apps/client/src/ui/use-inventory-command.ts": "596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e",
+        "apps/client/src/ui/use-inventory-collection.ts": "bddeee69bd02e90d82269bdde2674401abc0453ee6a85ed713bbe1f59bf16b5e",
+        "apps/client/src/ui/inventory-collection.tsx": "d02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77",
+        "apps/client/src/command-request.ts": "d5a0dd481e2d69596a198c688409b7d0e4d8c05f786b40913278fb514cc74829",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/ui/inventory.css": "c6c994dc362fc91cf8135a8377f4575c4297b58b19ee6c3d45f413032baa03ba",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/client/vite.config.ts": "090f0368e53945b4aa306ecbd982ac8ce57f4701b93be464d42eb4b6875a3cf1",
+        "apps/client/src/ui/container-opening.tsx": "4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684",
+        "apps/client/src/ui/inventory-controls.tsx": "1570933c143b8e0374965fa133d1f47c5b8e37743ef106c5d71524cc747870ed",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "apps/client/src/design-system/icons/icons.json": "77bcc5d92fa8077e05d28d93fb08ea20febaa57f88588320bdd19054f439d522",
+        "apps/client/src/ui/camp-activity.tsx": "2c05f950f9b70b1d4b819b8fe217eb34a0f08e84fbcab0ca0e1f22f9b13042dc"
+      },
+      "runnerSha256": "f699b20b073479dc66ce1bbca9a3010b1c6df48a840f49f5583f860a05103e5b",
+      "hostSha256": "3534128bd6ebbb1e28c5215be9c708e5ce4a7c7cf5112125add25da55d746967",
+      "harnessManifestSha256": "a8e712b1624f302432095b4f5d9fa8bc07f93a43bc19aa79bdf294fb6293d115",
+      "reportSha256": "68feec82e4ccbe539bc04e144d6106f8f8959097dbe985b5ea26762532ef5c51",
+      "traceSha256": "8514ddc2f8efe95b27e26d5af340c73150977b8249c13b3224e8c8ba2a966174",
+      "diagnosisManifestSha256": "7f775fe914d0ba57f74ef1977b30b430f83b180f9297c4af46068bd8837d55a3",
+      "nativeInputTraces": {
+        "d8": {
+          "sha256": "0aee88988c52e61f2a8d64366b7128dcf3eb9550d5deb3ad485e2b19abd1d30f",
+          "nativeCheckout": "3731b364a82d89818d66380437d2c1c4c69d970a"
+        },
+        "care847": {
+          "sha256": "9e279b3fb176cbd4e873423c848a35cb83132af5b4c78f9dcc674fc7ba4fb93c",
+          "nativeCheckout": "a117730be83e6314e388e0a0f43565b6173c4077"
+        }
+      },
+      "transport": "Actual production App/PlayCanvas with 14 byte-exact recorded native public JSON inputs. Entry, transport, projection selection and command deliveries are controlled. No native server, database, provider or new gameplay effect.",
+      "observationStartedAtUtc": "2026-10-06T13:25:07.640Z",
+      "observationFinishedAtUtc": "2026-10-06T13:26:16.947Z",
+      "observations": [
+        "New carried-bag recipient focus while its contents read is held, followed by Close container cancellation; no invented carried contents reply",
+        "Separately coherent populated ground-pile/bag pair with exact native names, quantities and nested path",
+        "First controlled Equip gives a local receipt, no global duplicate and actual belongings focus",
+        "Full-width single collection at desktop and narrow widths; narrow width is 356 of 356 available pixels",
+        "Second controlled success after Hide/reopen preserves newer Search focus; the later Small stone quantity-3 draft is unsent"
+      ],
+      "overallOutcome": "Failed before the later pointer Close dispatch. Two command POSTs, zero receipt reads, three original captures. Refusal/unknown-result deliveries remain unrun; neither work/hard-stop guard fires.",
+      "visualReview": "Original narrow pixels show Inventory and Belongings headings, gesture tutorial, equipped Woven river sling with Unequip, unopened-container instruction, Mike/Carried by you, Search Mike, three complete first-row cells and partial lower cells. First-row y=587 is also recorded in layout bounds. Lower inventory and the local receipt are not visible; the later pointer Close failure is not pictured.",
+      "layoutObservation": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "collectionWidth": 356,
+        "availableWidth": 356,
+        "firstItemRowY": 587,
+        "widthCheckPassed": true,
+        "densityAccepted": false
+      },
+      "cleanup": {
+        "trace": true,
+        "context": true,
+        "browser": true,
+        "server": true
+      },
+      "limits": [
+        "Source precedes the compact header at 32cd1af; later source changes are not assigned to these pixels.",
+        "This single image does not depict collection focus, the held reply, a later draft or the failed pointer Close.",
+        "Recorded width/name checks do not accept the information hierarchy or whole-interface usability.",
+        "The source-proven focus correction and the pointer actionability failure retain separate causality limits.",
+        "No new native custody, authority, OS/assistive device, provider or uncoached-player acceptance."
+      ]
+    },
+    "inventory-compact-header-controlled-32cd1af": {
+      "captured": "2026-10-06",
+      "baseCommit": "32cd1af8851fb2db115ce8cd999655dca2964afb",
+      "description": "Actual ordinary App and PlayCanvas on the reviewed compact-header source, with coherent byte-exact native care847 HTTP resources replayed by a local controlled host. Three new header captures and only the remaining known-refusal/unreadable-result deliveries.",
+      "sourceSha256": {
+        "apps/client/src/main.tsx": "4ebd7a6c1308c5ca9976574833f308fbf9222258c8593abe95f06a21d956d5d0",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/ui/inventory.tsx": "5797024ebcd530385027a89318a9de2c669f8ccc8d67c55c1ae87079f391d99c",
+        "apps/client/src/ui/use-inventory-command.ts": "596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e",
+        "apps/client/src/ui/use-inventory-collection.ts": "bddeee69bd02e90d82269bdde2674401abc0453ee6a85ed713bbe1f59bf16b5e",
+        "apps/client/src/ui/inventory-collection.tsx": "d02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77",
+        "apps/client/src/command-request.ts": "d5a0dd481e2d69596a198c688409b7d0e4d8c05f786b40913278fb514cc74829",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/ui/inventory.css": "6da9cb89b2a5bc159e897b9772b8af360c850b95307b8f8aa83da7840bbf48ca",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/client/vite.config.ts": "090f0368e53945b4aa306ecbd982ac8ce57f4701b93be464d42eb4b6875a3cf1",
+        "apps/client/src/ui/container-opening.tsx": "4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684",
+        "apps/client/src/ui/inventory-controls.tsx": "1570933c143b8e0374965fa133d1f47c5b8e37743ef106c5d71524cc747870ed",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "apps/client/src/design-system/icons/icons.json": "77bcc5d92fa8077e05d28d93fb08ea20febaa57f88588320bdd19054f439d522",
+        "apps/client/src/ui/camp-activity.tsx": "2c05f950f9b70b1d4b819b8fe217eb34a0f08e84fbcab0ca0e1f22f9b13042dc",
+        "apps/client/src/ui/activity-object-field.tsx": "230922a4dbcb81d23b8c09cf3e0c8a77c9d5f29fa40f9ab09b5445ebd698a11a"
+      },
+      "runnerSha256": "5644dfc3c3717d6a165fa14d50f565e3e4646ba181c8fe8277649777890f6cfc",
+      "hostSha256": "d1a14f48ffcd9798dd7612dce3019a048fecf4ffe7314792e12fd872fc45ad22",
+      "frozenManifestSha256": "ce5fb984fa19e797617f4cd93bc3c44a6f6c779165d38fc69c41ce3e1e9fa3e6",
+      "report": {
+        "sha256": "0ddc277191aab2dd715ccda860194db6763edc54a5929b8847b2d1c4e4d0af31",
+        "traceSha256": "468a4f5e15205cd4c248c647919fd79ef91a499c24369b2df74ec43f293e8d86",
+        "traceBytes": 17342524,
+        "traceEntries": 102,
+        "traceCrcAllPass": true,
+        "startedAt": "2026-10-06T13:58:13.556Z",
+        "finishedAt": "2026-10-06T13:59:13.644Z",
+        "elapsedMs": 60088,
+        "passed": true,
+        "observations": 5,
+        "commands": 2,
+        "captures": 3,
+        "captureAttempts": 3,
+        "captureElapsedMs": [8917.858, 8674.107, 5796.657]
+      },
+      "transport": "One local browser/client identity, recorded controlling views and exact scope-specific inventory/access/discovery pages, one explicit selection of the recorded later equipped view, controlled entry/presence, one known not-equippable refusal and one unreadable HTTP502 reply. No successful or held command response, receipt request or replay.",
+      "nativeInputProvenance": {
+        "source": "Nine byte-exact native care847 HTTP resources from the original trace; no new native effects.",
+        "traces": {
+          "care847": {
+            "path": "/workspace/scratch/fd5041c8d3ed/ci-847bba8/extracted/whole-ui-care/object-care-crafting/trace.zip",
+            "sha256": "9e279b3fb176cbd4e873423c848a35cb83132af5b4c78f9dcc674fc7ba4fb93c"
+          }
+        },
+        "nativeCheckout": "a117730be83e6314e388e0a0f43565b6173c4077",
+        "resources": {
+          "paired-view.json": {
+            "trace": "care847",
+            "traceResource": "resources/cc97c800b51e09b78c6b564b95694c30ec7add13.json",
+            "sha256": "5dd2459d1f7dbc842f6616487aae5e95b6651fc9d2e5c8985948e4e5283890d1"
+          },
+          "paired-access.json": {
+            "trace": "care847",
+            "traceResource": "resources/b1fbd14bade26200b0712275a2cd82040ae84e03.json",
+            "sha256": "fc06368df0b4f8fca4b1642d70f69ea68c7c3aff29b5401c2516af538a0fc905"
+          },
+          "paired-outer.json": {
+            "trace": "care847",
+            "traceResource": "resources/69200e380ef500885cf7118a883f7f5e80b44fa2.json",
+            "sha256": "49af3387b28dfb5c0058637f92df1ae531ee6d64a1bca4dbb86880735c80fc13"
+          },
+          "paired-pile.json": {
+            "trace": "care847",
+            "traceResource": "resources/fb15cf97cbc5da1868a3e19d1dbafa7e7eb5e028.json",
+            "sha256": "eb453593494dfb0c81fadc0fc43d6b114578e33d221fc5394902aa0f0063ec4a"
+          },
+          "paired-bag.json": {
+            "trace": "care847",
+            "traceResource": "resources/926eb389ad9f64f1ffcbc67a11fcd54fce272f71.json",
+            "sha256": "c055f10238ae0fd143daa7a3f2ab7b5dd2e055ca746e1ef3eeab74f72748e1ee"
+          },
+          "paired-activities.json": {
+            "trace": "care847",
+            "traceResource": "resources/0fc35baa62274bd2a09c614797237bdf418fe013.json",
+            "sha256": "b0d5a6b2f42c99435a55ca6e01282292f5ac15edf2e65790f6c0719b2612e49a",
+            "recordedRequest": {
+              "method": "POST",
+              "path": "/api/activity-requests",
+              "body": {
+                "targetId": "pile-32"
+              },
+              "scope": "a1cfedca0e540ae6146cdf838033b084158fac495395f98d6e74a2fea00b26ce",
+              "responseStatus": 200
+            }
+          },
+          "view-equipped.json": {
+            "traceResource": "resources/e0a78512ea44cfccb53408815f0bbc4ef2a782a0.json",
+            "sha256": "a60b737aba3d137362a3b56d82ebb859dac4ad2b2780cfd3d9fdb88862c2260b",
+            "trace": "care847"
+          },
+          "inventory-equipped.json": {
+            "traceResource": "resources/15242b88f567da58f79c3d3a0825c6d68d870bb3.json",
+            "sha256": "95633d5624695b8b62f2a2709732ee0614ac1632dcc3bd2cfb3a0b73b3e233ab",
+            "trace": "care847"
+          },
+          "equip-request.json": {
+            "traceResource": "resources/dc8715d14b9217edca0754cd0924c490e67c1125.json",
+            "sha256": "5b1caa57b2da9d003c96b0940470d582870a28b432b06300baf579750c1b08c4",
+            "trace": "care847"
+          }
+        },
+        "paired": "Original revision38 controlling view, exact target activity discovery, access reply, player/pile/bag pages share original paired scope. Actual object UI remains.",
+        "equipped": "Select the original already-equipped view/page after closing the external container and hiding the object reader; same private owner and original later control generation. No successful Equip replay or newly simulated projection.",
+        "controlledTransport": "Local entry/presence and explicit original-projection selection, one controlled known refusal and one unreadable HTTP502 response. No native server, PostgreSQL, provider, carried fixture, successful/held command or receipt request.",
+        "purpose": "Qualify the changed compact header with three original captures, native Inventory controls disclosure, supported keyboard Close of an unsent amount, and only the two remaining refusal/unknown deliveries. Preserve earlier pointer failure and passed focus subsets separately."
+      },
+      "observations": [
+        "The corrected paired desktop header keeps named collections and the original nested path without a repeated endpoint strip",
+        "Native Inventory controls reveals its retained guidance deliberately; single desktop and narrow headers keep equipment and search visible",
+        "A deliberate keyboard Close leaves an unsent amount without an extra command; the original pointer failure stays preserved",
+        "The original known-refusal delivery retains both global and local feedback without changing the recorded equipped inventory",
+        "The original unreadable delivery retains its exact request and a reachable narrow Check result through Hide/reopen without replay"
+      ],
+      "visualReview": {
+        "60": "Two 373px columns name Mike and Woven bag. Bag location On the ground · 1.0 m away, original two-node path, packing load 4/24, quantities and Close container are visible. Closed Inventory controls replaces the always-visible tutorial; the redundant wide endpoint strip is absent. The panel still occupies substantial world space. No command or receipt is shown.",
+        "61": "The single collection uses 758px. Six readable lots form the first row and the equipped Sling forms the second; all seven names and quantities, W fallback, equipped badge and separate equipment strip are visible. The native summary focus outline remains after deliberate keyboard open/close. No unopened half-width collection or result receipt is shown.",
+        "62": "At 390×844 the first row begins at y422, 165px above the preserved prior y587. Six lots are fully visible. The upper part of the third-row Sling cell shows its fallback, full name and quantity; the lower Equipped badge is below the scroller edge. Equipment strip and Search remain visible. The local receipt area and Object history are also below the captured fold. This is not zero-scrolling or all-item visibility."
+      },
+      "layout": {
+        "pairedColumnsPx": [373, 373],
+        "singleDesktopWidthPx": 758,
+        "singleNarrowWidthPx": 356,
+        "firstItemY": {
+          "pairedDesktop": 297,
+          "singleDesktop": 346,
+          "singleNarrow": 422
+        },
+        "priorNarrowFirstItemY": 587,
+        "narrowFirstItemRisePx": 165,
+        "itemFontPx": 14,
+        "summaryHeightPx": 32
+      },
+      "keyboard": {
+        "helpRetainedFocus": "SUMMARY Inventory controls",
+        "unsentCloseFinalFocus": "Small stone,6 item opener",
+        "unknownCheckBounds": {
+          "x": 32,
+          "y": 542,
+          "width": 341,
+          "height": 40
+        },
+        "unknownCheckFocused": true
+      },
+      "resultIntegrity": {
+        "deliberateCommands": 2,
+        "successfulCommandDeliveries": 0,
+        "receiptRequests": 0,
+        "unknownIdEpochBodyPreservedAcrossHide": true,
+        "knownRefusalRetainedUnknownRequests": 0,
+        "allThreeCapturesBeforeCommands": true
+      },
+      "cleanup": {
+        "trace": true,
+        "context": true,
+        "browser": true,
+        "server": true
+      },
+      "errors": {
+        "page": [],
+        "route": [],
+        "host": [],
+        "unexpectedRequests": []
+      },
+      "limits": [
+        "Actual ordinary App/PlayCanvas with recorded native projections and two controlled transport outcomes; no native server, PostgreSQL, provider, permission or gameplay result is newly established.",
+        "Three screenshots precede either command; none depicts the refusal, unknown result or a local command receipt.",
+        "Earlier loading, carried destination focus, ordinary success and held success/newer Search observations are preserved and not repeated.",
+        "The prior pointer Close timeout remains an unresolved historical failure. This run establishes only the actual supported keyboard Close without sending the prepared quantity.",
+        "The narrow image does not show every full item, its lower equipped badge or receipt/history; scrolling remains necessary.",
+        "No complete journey, original60/5second Time gate, performance, OS IME, assistive-device or uncoached-player acceptance claim."
+      ]
+    },
+    "activity-picker-focus-and-task-switch": {
+      "baseCommit": "32cd1af8851fb2db115ce8cd999655dca2964afb",
+      "sourceTree": "3d06bf66c50a3b5bab13da24395bbcdb9a1a09d7",
+      "sourceSha256": {
+        "apps/client/src/main.tsx": "4ebd7a6c1308c5ca9976574833f308fbf9222258c8593abe95f06a21d956d5d0",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/ui/camp-activity.tsx": "2c05f950f9b70b1d4b819b8fe217eb34a0f08e84fbcab0ca0e1f22f9b13042dc",
+        "apps/client/src/ui/activity-object-field.tsx": "230922a4dbcb81d23b8c09cf3e0c8a77c9d5f29fa40f9ab09b5445ebd698a11a",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "apps/client/src/command-request.ts": "d5a0dd481e2d69596a198c688409b7d0e4d8c05f786b40913278fb514cc74829",
+        "apps/client/src/ui/inventory.tsx": "5797024ebcd530385027a89318a9de2c669f8ccc8d67c55c1ae87079f391d99c",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/ui/camp-activity.css": "d3a925906d5622a03a1caae70290956d0d8fcaf74f032e87429fc85aee301b83",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/client/vite.config.ts": "090f0368e53945b4aa306ecbd982ac8ce57f4701b93be464d42eb4b6875a3cf1",
+        "apps/client/src/ui/inventory-collection.tsx": "d02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77",
+        "apps/client/src/ui/inventory.css": "6da9cb89b2a5bc159e897b9772b8af360c850b95307b8f8aa83da7840bbf48ca"
+      },
+      "sourceManifestSha256": "d8f642f1e6bfaf201a79e93fdd25b278812e4f96f124270d1f798bbde82cfabb",
+      "inputManifestSha256": "ddead2df1afbce6634e2c42be2cf03c9ad98b8385202469b4093315fa334c0bb",
+      "runnerSha256": "84056bfa6bdb8a8e4f5ebd54df36c87489aa34354ed26df95499aef89af95b7e",
+      "hostSha256": "eb8771eb6ad409d6cc6d563ef784dc6aa05ee7efd36f53ea0fbf6e28f509a991",
+      "reportSha256": "18beb643954ced5bb8d2090b222dc9c6ab5283d8ce3caaa3255528b9a18afd0c",
+      "traceSha256": "d32b31fcd4e01922f36d36d9c7d8c63d66ae6b4712a5e156ffdf80515f983556",
+      "traceIntegrity": {
+        "completeArchive": true,
+        "entries": 88,
+        "crcFailures": 0,
+        "bytes": 17985458
+      },
+      "transport": "Actual App/PlayCanvas with 27 unchanged native-recorded care resource files. Entry/presence and one original command delivery are controlled; both new-task target reads are deliberately held. No native server/database/provider or new native gameplay effect is executed.",
+      "nativeInputProvenance": {
+        "checkout": "a117730be83e6314e388e0a0f43565b6173c4077",
+        "traceSha256": "9e279b3fb176cbd4e873423c848a35cb83132af5b4c78f9dcc674fc7ba4fb93c",
+        "reportSha256": "16d0b9a74c2b29b2ca58a173d123258a8301bd070cb8a2fd98a1e84658751b15",
+        "resourceFiles": 27
+      },
+      "observations": [
+        "Real material Cancel returns focus to its opener",
+        "Real material selection preserves newer Done focus through ordinary frames and modal disappearance",
+        "Ordinary task editor returns, retained two-minute input and newer Start focus through ordinary frames",
+        "After a held original Start and task switch, B stays in preparation without the original local success/fold marker",
+        "Original pending request/body remains exact and the recovery control is rendered; one command and zero receipt reads/replays",
+        "Initial before and refreshed working target reads both held and closed; all owned cleanup passes"
+      ],
+      "overallOutcome": "Passed the finite controlled sequence: two groups, one original command, two captures and no errors or unexpected requests; all 16 source pins, 49 input pins and 154 earlier files unchanged.",
+      "visualReview": "Image 63 shows the prepared task and clear Start focus. Image 64 shows the new task heading, original current work and one global success toast. The original recovery reader is below the captured fold, and the sticky action footer partially covers the lower work-mode row at the unscrolled top position. The body is scrollable; no captured maximum-scroll failure proves the controls unreachable. Scroll reachability was not exercised or accepted in this sequence.",
+      "limits": [
+        "No native effect, the second task choice/admission, receipt recovery completion, provider or OS/human qualification is added.",
+        "Two ordinary frame waits demonstrate observed focus preservation, not deterministic callback scheduling or a performance improvement.",
+        "The image 64 screenshot does not show the recovery control, full preparation or ease of reaching them; body scrolling was not exercised in this sequence.",
+        "The preceding failed attempts retain their original results, including attempt 05’s malformed trace, attempt 06’s focus failure and attempt 07’s setup-pin failure."
+      ],
+      "observationStartedAtUtc": "2026-10-06T13:45:54.516Z",
+      "observationFinishedAtUtc": "2026-10-06T13:46:40.673Z",
+      "additionalJevCostUsd": 0,
+      "cumulativeJevCostUsd": 0
     }
   }
 }
