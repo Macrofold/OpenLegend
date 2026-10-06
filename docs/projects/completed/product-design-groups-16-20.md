@@ -80,3 +80,11 @@ The final heat critique requires an actually coolable withdrawal destination, a 
 ### Stop expanding when the benefit is missing
 
 Each specification includes complete future acceptance journeys and its own simplify/defer criterion. Greater population, more elapsed days, more spoiled food or more burned geometry are not success measures. A useful first experience, credible independent behavior, a changed plan the player understands and a reason to return are the evidence that should justify expansion. Technical design and implementation remain the next distinct authorized mode, with their actual acceptance still open in the focused trackers.
+
+## Completion evidence
+
+The five proposals add **37 primary-source research records**. Independent product, source and mechanics reviews found no remaining material product contradiction after the documented corrections. The existing continuing-lives specification retains all 14 earlier research records and 12 named journeys; the attention/scenes specification retains all 16 earlier research records and 14 named journeys. Their preserved records are unchanged apart from formatting.
+
+Final documentation verification covers **36 changed Markdown files**, all passing the repository's formatting choices. The added-link review examined 393 link occurrences and resolved all 292 local targets/anchors with no missing or unread target. All **362 original acceptance checkboxes** are preserved without removal, rewording or state change; newly completed checks concern only delivered product-design scope. The pre-existing changelog history is preserved exactly. The assignment's old active path is removed and incoming references point to this completed record.
+
+The committed branch tree was compared with every local task document by exact Git blob content, with no mismatch or runtime file in the changed scope. A final source check on October 6 at 02:23 UTC found GitHub main still at `34233ae24365eb8911fe1995c9c232bd57f34616`, the latest implementation revision already inspected. These are documentation and source-review results, not game, browser, autonomous-character, paid-provider, load or enjoyment measurements. No such runtime experiments were performed by this assignment.
