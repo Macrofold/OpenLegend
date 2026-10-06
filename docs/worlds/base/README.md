@@ -6,9 +6,10 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 
 - [Starting wilderness, terrain and population](landscape.md)
 - [Items, ground piles and possession](items.md)
-- [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the existing four invention families.
-- [Inventable camp containers](camp-containers.md) — proposed material/capacity rules for a nonweapon invention and ordinary camp storage; not yet implemented.
-- [Chosen camp supplies and fire watches](camp-routines.md) — proposed finite methods and one-session care, without automatic goals or learned conditional policies.
+- [Inventable tools and ammunition](invention-families.md) — authored rules and native consumers for the four original launcher, ammunition and gathering-tool families.
+- [Inventable camp containers](camp-containers.md) — delivered woven-container family and ordinary storage; broader live-proposal and voluntary-choice qualification remains open.
+- [Manufactured cordage](items.md#cordage-manufacture-and-reuse) — delivered binding-material family and exact verified reuse in woven containers, not unrestricted invented-input composition.
+- [Chosen camp supplies and fire watches](camp-routines.md) — delivered finite requests and one-session attendance; broader player and voluntary-learning qualification remains open, without automatic goals or learned conditional policies.
 - [Light canopies and useful shelter](editable-shelters.md) — proposed finite materials, two arrangements, reversible work and nonpunitive moisture for DG13; runtime remains open.
 - [Sling handling, practice and coaching](practical-competence.md) — proposed finite competence gain, real quiet practice and voluntary instruction for DG14; runtime remains open.
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
@@ -33,7 +34,7 @@ God-mode **Add something** groups the creation catalogue into **Items**, **Actor
 
 Known items include installed generated definitions. A resource source such as a berry bush is Environment; the harvested berries are Items. “Object” is the general term, not another overlapping menu category.
 
-Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecycle-and-protection.md) (accepted targets; BW13–BW15).
+Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecycle-and-protection.md) distinguish delivered departure/return from remaining conflict and ghost work under BW13–BW15; they are not one undelivered feature.
 
 ## Maintained records
 
