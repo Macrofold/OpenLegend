@@ -1,0 +1,247 @@
+# Heat, ignition and useful material change
+
+**Status: In progress — comprehensive product proposal prepared October 6, 2026.** This develops DG20 and the remaining selected heat/fire portion of ND08 beneath INV-6. It proposes behavior; it does not enable a new service, alter current fire law, complete construction, or claim runtime qualification. The [base-world profile](../worlds/base/heat-and-materials.md) owns the selected materials, quantities, geometry, durations and balance. [HM01–HM06](../maintainers/heat-and-materials.md) owns delivery and [HM limits](../limits/heat-and-materials.md) records the restrictions.
+
+## 1. The experience we want
+
+A player chooses to make a small clay bowl. They place a real blank in a cold outdoor hearth, supply real fuel, light it, and do something else while heat changes the material. They can talk, look around, eat, or reconsider where the object belongs. Later they collect the cooled bowl, put small belongings or food in it, and perhaps offer it to somebody. It is a modest useful thing that exists because of their decision.
+
+That is sufficient reason for the first feature. The bowl need not unlock survival, outperform every bag or become a compulsory technology. A resident may like its purpose, dislike the design, ask to use it, suggest a different arrangement, or care much more about something else. Ordinary woven containers remain useful. The game should tolerate the player deciding that pottery is not today's activity.
+
+The same small worksite makes the broader physical promise understandable. A brief source can light a dry twig and fail to light a substantial wooden wall section. A sustained source can produce a different outcome. A nearby piece can catch; a gap can stop that path; extinguishing a source can save material that is still there. These outcomes follow actual material, exposure, elapsed heat and remaining fuel. Repeating a command does not reroll an unexplained chance.
+
+Useful transformation comes before a destructive spectacle. We want understandable preparation, freedom during processing, a meaningful changed plan and a recoverable local mistake. We do not need a camp that repeatedly burns down to keep the feature relevant. Far Cry 2's developer describes how uncontrolled spread could erase the encounter as well as overwhelm the machine; that is a reason to judge the whole activity, not propagation alone. [HR-R01](#hr-r01--finite-local-fire-and-the-cost-of-its-consequences), [HR-R02](#hr-r02--spread-can-destroy-the-intended-play).
+
+The first setting is an explicitly selected isolated, attended personal world with the current human and two residents. Its heat rules have no bodily burn, smoke, suffocation or animal-injury effect. Its finite experimental material belongs to the participating human unless actually transferred or separately permitted. Public property hazards and indirect player harm remain with their existing owners. Those restrictions are visible scope; they are not immunity secretly granted to a favorite actor or to whichever object the camera can see.
+
+## 2. What exists and what this proposal adds
+
+Current campfires have a finite fuel bank and real lighting, fueling, cooking and extinguishing actions. They power ordinary cooking. They do not currently heat nearby objects, spread to buildings, warm bodies or make smoke dangerous. Current native cooking spends raw meat when work starts and produces cooked meat only on valid completion. Current fire care spends its selected material at completion. Those different interruption outcomes matter.
+
+Native portable containers also exist. Current main records a coached live journey through generated cord and pouch, manufacture, packing, retrieval, reuse and reopening. That evidence used manual time advancement and disabled autonomous choices; it does not qualify independent resident participation or unattended production. The bowl can reuse real containment and transfer behavior without claiming those remaining results. See [camp containers](../worlds/base/camp-containers.md) and the [October 4 live-player evidence at the inspected main revision](https://github.com/Macrofold/OpenLegend/blob/34233ae24365eb8911fe1995c9c232bd57f34616/docs/verification/camp-life.md#live-player-journey--october-4-2026).
+
+The original source audit used `ce68e678ebe7589ae34db9fe7942782dbccbe7a5`; the action and container context was rechecked against main `34233ae24365eb8911fe1995c9c232bd57f34616`. That newer work improves exact item/fire discovery, accessible nested choices and action availability. It does not implement this heat family. Existing details and explicit Refresh are the interface foundation; a displayed available action is not a continuously renewed guarantee.
+
+[Editable shelters](editable-shelters-feature-spec.md) already proposes actual parts, vertical rain exposure, persistent moisture, recoverable changes and a particular harmless failure of its light cloth cover. It does not currently supply an implemented wooden wall. This proposal therefore includes a small real construction consumer: a grounded wall made of independently supported substantial panels with occupied geometry. A renamed scenery prop cannot satisfy that requirement.
+
+[Changing supplies](changing-supplies-feature-spec.md) proposes food aging and preservation. Neither is a prerequisite for making the bowl. The first new open hearth is **for firing**, while the current contained campfire remains the cooking place. A combined fire supporting firing, cooking and preservation would need an explicit shared-heat and interruption qualification before it is offered.
+
+The [archived heat exploration](../../archive/03-design-proposals/heat-and-fire.md) remains valuable reasoning about material scale, accumulated exposure, finite fuel, geometry and complete costs. This spec chooses a coarse product family from that exploration. It does not require temperatures, airflow, chemical smoke, full structural analysis or recursively invented weather. The archive's migration examples do not override the current rule against retaining unsupported legacy formats or APIs.
+
+## 3. A complete ordinary journey
+
+The first scene is a place to make something, with an optional comparison nearby. It supplies its finite prepared materials once. Reopening the world, repeating the activity or losing an object does not regenerate that kit. The first default is a cold hearth separated from the wooden wall and loose targets. It is possible to complete the bowl without starting an accidental fire.
+
+The player inspects a blank. The ordinary use picker offers its supported firing method, the exact perceived hearth and useful details: what material will move, available fuel, approximate completion under the selected arrangement, cooling before collection and the resulting container. The read explains that a second piece or newly exposed material shares the available heat. It does not label every possible starting arrangement “one hour.”
+
+The player places the blank while the hearth is cold, adds the fuel and then lights it. This order makes the simplest one-unit fuel calculation true. Placing a blank in a fire that has already been burning uses its actual remaining fuel; an expired or marginal estimate must not be concealed by the original full-bank label. Cancelling placement before completion leaves the actual blank at its source. Successfully placing it moves that object once.
+
+Firing then continues without occupying the maker's physical work lane. The blank is not secretly being held in an ongoing human craft action. Heat and material change are native consequences of a chosen arrangement. The player may leave the panel closed, continue a conversation, retrieve a meal or leave the immediate area while connected. No periodic confirmation, paid “continue firing” decision or repeated command is needed.
+
+On completion, the object is a fired but hot bowl. It is already a successful transformation; collection does not decide whether the past work counted. It remains hot while exposed to sufficient heat and cools after that exposure ends. The first supported sources do not overfire this selected clay. A player who forgets to collect promptly loses no bowl to an added punctuality test, although an unnecessarily burning hearth still spends actual fuel.
+
+The cooled bowl accepts ordinary permitted solid items within its capacity. The player can organize a small kit, leave the bowl somewhere accessible, or offer it through the current independent acceptance path. Eating remains the current whole-item action. Putting meat in a bowl does not create servings, fractional meals, a communal dinner permission or food preservation. If somebody declines the gift, the bowl remains a usable object and the making was not a failed quest.
+
+## 4. Beginning work without hidden commitments
+
+Before any consequential action, the player must know the exact source, exact target, selected quantity and place. “Light that” cannot silently select a nearby wall instead of a twig. An ambiguous freeform request must be resolved before consuming the source. A visual preview is not committed material and cannot catch fire, obstruct somebody or reserve a real blank.
+
+The ordinary availability view answers whether this actor can start the selected action now. It checks present authority, knowledge, accessible supplies, any material already held for work, reach, actual target condition, work interruption and the ability to support this operation. It must also account for material released when the actor deliberately stops another action. Starting checks must not spend fuel, allocate a second bowl, interrupt somebody, change the weather or advance firing. Execution checks the actual situation again. This extends the [current action-availability contract](../action-capabilities.md#action-availability-and-temporary-execution), rather than designing a new interaction interface.
+
+A changed arrangement receives a changed result. If another person takes a still-accessible blank before placement completes, the action fails without creating its replacement. If a target moves out of the selected contact, a brief ignition action does not redirect itself. If the hearth is extinguished before a requested light-transfer method could complete, that method cannot conjure a source. The selected brief igniter has its own actual finite material and supported method; it is not free fire produced by saying the right phrase.
+
+The feature has ordinary, short physical operations for placing cold material, withdrawing a hot piece onto a cooling surface, using the extinguishing tool and moving a cold hearth. Their durations and handling conditions are in the profile. Cancelling before the transfer or effect completes preserves the actual current arrangement. Once a source really burns, cancelling an intention does not refund already consumed fuel or erase heat already delivered.
+
+No actor may pack a hot item into a bag to suspend its heat, dismantle a burning panel into pristine timber, or place the same claimed blank in two hearths. A tool-supported withdrawal moves the hot object to an actual nearby cooling surface while preserving its condition. It does not pass through protected carried inventory. Ordinary collection waits until that object is cool enough under the selected handling rule.
+
+## 5. Coarse heat with understandable consequences
+
+The selected model distinguishes a small ready target, a substantial section and a useful heat process. It keeps one account of the target's current warming and, where meaningful, irreversible material progress. A warm wall is not a partly completed “set wall on fire” quest. A partly fired bowl has actually changed material, even after its warmth has dissipated.
+
+Each source has finite remaining material or fuel, a duration or consumption rate and a total transferable output. Its contribution depends on actual contact, nearby exposed material and obstruction. The profile uses simple game units to make the chosen examples reproducible; these are not displayed as real temperatures or physical predictions. Qualitative material distinctions motivated the archived proposal, but no external source calibrates these numbers.
+
+A source divides its available output across all actual exposed recipients. Contact receives a stronger share than nearby exposure. Unused output is explicitly lost to the surroundings. Adding more pieces does not give each the source's full power. Splitting one physical quantity into several records must divide the same exposed quantity and share, not create extra collection surfaces. An object's name, owner, inventory label, conversation membership or renderer grouping has no effect on that allocation.
+
+Several sources can contribute to the same target. Their supported contributions are combined before the resulting material change is decided. Two individually insufficient sources may together be sufficient, provided they actually overlap in time and geometry. A large processing step must preserve the same meaningful ignition, exhaustion, movement and damage boundaries as ordinary progression; iteration order must not decide which panel survives.
+
+The selected warming rates already describe retained arrival during an admitted heating interval. The profile's cooling loss applies when no admitted external heat remains, not simultaneously as an equal loss that would cancel the pilot. When exposure ends, a partly warmed target cools instead of resetting instantly. Closely repeated exposures can therefore add to remaining warmth; sufficiently separated attempts start from a cooler object. Neither case is a new random roll.
+
+Ignition requires the selected material's threshold, remaining fuel and an admitted live source at the relevant exposure boundary. A source delivering its final sufficient heat can ignite a target at the same instant its own fuel ends. Once ignited, the target spends its own material and can become a source. Cooling material does not create another hidden source in this first family; smoldering, hot-ash ignition and spontaneous ignition need separate behavior before their imagery or wording is used.
+
+The first brief-source comparison uses equal source profiles and equal initial conditions. One source lights a dry twig during its short life. Its matched source leaves a substantial wooden section warmed but unignited. A later stronger or sustained exposure can light that section. This is a specific paired outcome. It is not the claim that no thin edge, coating, damaged wall, different species or constructed arrangement could ever ignite from a small source.
+
+## 6. A bowl is a continuing material, not a completion reward
+
+The firing process first warms the blank, then advances an irreversible transformation while sufficient heat continues to arrive. If it cools halfway through, the earlier firing progress remains. Restarting requires actual heat to warm it again and supply the unfinished work. It does not produce an already finished bowl, erase all investment, or restore a fresh blank that can be sold or fired again for duplicate output.
+
+One blank alone in the cold-start arrangement fits exactly within one ordinary fuel unit. Two blanks divide the available output and need a correspondingly longer actual burn. A nearby target taking heat can extend the process; a partly spent bank can end before completion. The interface should explain these consequences in ordinary terms: “Two pieces share this fire,” “Some heat reaches the wall,” or “The remaining fuel is insufficient for this arrangement.” Exact hidden contents or an unseen target's private condition are not exposed merely to make an estimate exact.
+
+The player can deliberately stop heating. Putting out the hearth leaves the fuel that has not burned. Withdrawing one blank to the actual cooling surface lets the other continue receiving the new share. The changed share begins when the move completes, not when the command is clicked. Partial firing and residual warmth move with the withdrawn material. If the actor stops the withdrawal, the object remains where it actually was, with all intervening exposure.
+
+An unfinished cooled blank is portable under the selected handling rules but is not yet a container. A completed hot bowl is a container in material identity but cannot be packed, filled, offered for immediate handover or collected until the supported cool condition is reached. These temporary handling refusals must explain the next useful step. Waiting for cooling or putting out the actual source is sufficient; an unimplemented glove, invented tongs or paid consultation must not become an accidental prerequisite.
+
+The first supported fire cannot overfire this clay. “Already fired; still hot” is therefore a stable useful state, not a concealed countdown. A request for a different ceramic, a hotter process, glazing or a process that deliberately cracks material is unsupported until it has an actual admitted family. We do not infer those mechanics from the word “pottery.” Vintage Story's processing and reconnect fixes support paying attention to actual outputs and process continuity; its industrial ladder is not our scope. [HR-R07](#hr-r07--countermeasures-and-trustworthy-processing).
+
+Condition-bearing objects need the existing object owner to preserve the new warming, firing, moisture and remaining-material facts. Current plain-lot splitting and merging do not establish that support. The first blank and panel are indivisible material pieces; cutting one is not an enabled shortcut. Any subsequently admitted split or merge must preserve actual quantity, exposed share and equivalent condition, while last-unit retirement accounts for the real residue. A convenient inventory grouping must never average a hot damaged part into a pristine one.
+
+The player follows one material through these stages. Completion replaces or updates the exact blank through the existing object owner, producing exactly one bowl with its actual custody and provenance. A late completion, repeated command or restart cannot award a second one. A future material salvage method must consume the actual remainder and establish what it yields; describing an unfinished blank as “clay” does not authorize an automatic full refund.
+
+## 7. Damage changes actual places
+
+The wall comparison uses an actual construction assembly, not an actor with a wall name or a decorative texture. Its panels occupy space, obstruct according to their admitted geometry and remain individually connected to the assembly. The first wall is grounded and small. It provides a real divider and a substantial material surface; it does not add upper floors, a load-bearing roof or wind simulation.
+
+Each panel has its own exposed material and remaining fuel. Heating one panel does not mark the entire wall as burning. Its opposite face is not a second stock of wood. Fire consumes real material and weakens that panel; extinguishing it can preserve a damaged but still standing remainder. Losing one panel changes that portion of occupied geometry while the independently supported neighbor remains in place.
+
+At the selected failure threshold, that panel breaks down into the specified low, nonblocking charred material at its actual location. The remainder retains its heat, damage and unconsumed fuel. It can continue burning there if not extinguished. The original standing material and the charred remainder never both supply fuel or salvage. This is the declared failure of this small family, not an assertion that arbitrary heavy walls collapse harmlessly.
+
+A cooled damaged panel can be reclaimed through the construction owner. It does not become an undamaged full-strength panel because its installation ended. A replacement consumes actual replacement material; surviving old material remains separately accounted for. If the destination cannot accept the reclaimed piece, it remains physically at the site. Failure of a transfer must not delete it, teleport it into a bag or undo the burnt opening.
+
+Burning timber is not automatically eligible for the current plain-material Add fuel action. Its remaining material needs a supported conversion before it can become a banked fuel amount. The first profile permits its current burning and extinguishing states; it does not promise a charcoal economy or full repair recipe. Useful salvage includes preserving what can still stand or be reclaimed, not necessarily converting every damaged fragment into another reward.
+
+When a later supported thermal profile affects a DG13 shelter support, construction must apply that shelter's existing failure contract: coverage ends at the actual support failure and its selected light cloth lowers recoverably without injuring or blocking occupants. This does not grant fire behavior to cloth, qualify arbitrary wooden posts, or extend harmless collapse to heavy structures. The first wall and bowl do not require that later combination.
+
+Geometry matters before and after damage. A supported stone obstruction can stop a path; a real gap can separate targets; removing a panel can expose a new neighbor. A noncombustible material is not automatically a perfect barrier: only the first specifically supported stone form has the declared blocking behavior. Decorative trees remain decorative and do not become millions of burnable objects because their artwork resembles wood.
+
+## 8. Moisture shares the existing material owner
+
+The optional wet/dry comparison uses the selected prepared fiber or cloth moisture already proposed by DG13. Full incident rain and zero-incident ambient drying keep their existing rates and exposure rules. Cover changes incident rain; it does not instantly dry an object. Moving, packing, splitting, installing or reclaiming an admitted moisture-bearing item must retain its actual condition.
+
+This feature adds a selected thermal drying contribution to that same moisture. Incoming heat first pays for removing the actual remaining moisture, then contributes to warming the now-dry ignition target. Rain and supported drying are reconciled at their actual times. There is no second private “fire wetness,” and no double charge for the same drying. The profile gives the chosen additional rate and a wet-fiber comparison that cannot secretly be treated as the required twig/wall example.
+
+The original shelter's first useful cover remains nonpunitive. This proposal does not make damp fiber universally uncraftable, impose a new wet-tinder penalty on the current contained fire, reduce ordinary crafting yield or add wet-body illness. Selected direct heating can distinguish dry and wet targets without retroactively degrading those actions. The optional challenge involving tinder too wet for an attempted new light remains separately governed by the shelter design, including its unconsumed-tinder outcome.
+
+Not every material has a moisture or ignition rule. General wet wood, soaked clay, rainfall extinguishing flames, wind, runoff, enclosed ventilation, cloth combustion and nested-container heat transfer remain unsupported here. Unknown response must not be presented as fireproofing. The initial worksite admits its listed material forms, keeps unsupported objects out of an active exposure arrangement through clear placement/action availability, and refuses an unsupported deliberate experiment without consuming its materials. Wider-world enrollment needs enough material coverage that ordinary object movement does not routinely encounter that restriction.
+
+## 9. Stopping the right fire
+
+The first scene includes a real reusable extinguishing tool and an ordinary target-specific action. It is reachable from the worksite's clear approaches. The action says which source or burning piece it will stop, the brief work involved, what remains hot and whether another source can reheat it. A large “stop fire” button that silently picks one of several sources would be inadequate.
+
+Extinguishing a hearth stops that hearth's output after actual work completes and retains its unburnt bank. Extinguishing a twig or panel stops its combustion, retains its remaining material and lowers its warming according to the profile. The heat removed is an explicit loss to the surroundings. A nearby live source can warm it again; the action does not create permanent fire immunity. If the player wants a lasting stop, stopping or separating that source is often the better choice.
+
+An action cancelled before its effect completes has not extinguished anything. If the target is already out, the result explains that fact without silently redirecting to another fire. If the target has broken into a charred remainder before completion, the original selection cannot automatically authorize an unrelated piece; the supported continuation may follow only its actual material successor. Fuel exhaustion and simultaneous completion are resolved at the actual boundary, not in whichever order a display happened to refresh.
+
+The existing contained fire keeps its current rule refusing manual extinguishing while another actor is actively cooking; DG19 proposes the corresponding preservation guard. Approaching work does not create that protection. The first firing-only hearth has no cooking or preservation consumer, so it introduces no enabled exception to those rules.
+
+**Future combined-fire requirement:** if a later qualified fire supports those consumers and can cause admitted material ignition, an emergency extinguish may override the work guard only when stopping that exact source reduces that actual threat. An unrelated burning twig is not a pretext to cancel somebody's meal. The action must disclose that native cooking's already-spent raw meat is not refunded; DG19's current held cooked portion is released at its actual condition, and completed rations remain. Passive exhaustion still interrupts affected work. This is a proposed combination contract, not a prerequisite for the first bowl or a new public-harm permission.
+
+At the current clock, brief sources really are brief. A player cannot be promised time to notice text, understand it, travel and act merely because a label uses game minutes. The first useful process is prepared while cold and has a finite fuel stop; the destructive comparison is deliberately selected in advance. At accelerated creator speed, consequences remain correct but the same real reaction time is not promised. The personal operator's ordinary Pause and speed controls remain available; hiding a panel, moving the camera or stopping an actor is not a world pause.
+
+## 10. People, knowledge and permission
+
+Residents have the same material rules and ordinary action consequences as the human. They can make a bowl with permitted supplies, choose to watch, ask for a turn, suggest another use, decline to help, or leave. Interest in making does not erase hunger, relationships, private concerns or a desire to go elsewhere. A character who dislikes the activity need not discover a convenient excuse to satisfy a scripted refusal quota.
+
+The kit is not automatically communal. Current access to a grounded container is not a grant to burn its contents, and a handover is not an invented blanket property policy. Deliberate use of another person's blank, fuel or panel needs their actual permission for that use, expressed through the selected permission path. Permission to inspect a bowl, carry supplies or help move a wall is not permission to destroy the wall. An NPC can request a particular allocation and independently decide whether to use it after receiving it.
+
+The first authored scenario keeps private property outside its admitted experimental arrangement. The human chooses which owned material to expose and which supplies to offer. Heat itself does not test ownership: an admitted exposed panel has the same consequence regardless of who holds permission to operate the hearth. This preserves a believable physical rule while keeping the initial proposal separate from D07's unresolved wider property and indirect-harm policy. Bringing contested property or additional humans into the hazard setting requires that policy, not an invisible exception in propagation.
+
+An NPC's choice requires only its own knowledge and permitted current observations. Seeing a warm or charred panel does not disclose who lit it, an absent person's motive, or the exact sequence that happened offscreen. A witness may remember and report what they actually saw. Somebody arriving later sees the present damage and can ask questions; they do not receive an omniscient incident transcript. A human's service or Pause controls can explain operational timing without granting that information to every resident.
+
+The interface uses the existing object inspection, action Details, scoped events and actual visible consequences. It distinguishes cold, warming, burning, cooling, unfinished and fired objects in text as well as presentation. The player can read selected material details without a flame animation covering the control or a moving label destroying their reading position. Current availability may need an explicit Refresh; a stale successful preview never bypasses final checks.
+
+Changing the camera does not end a source, and a caption's lifetime does not determine heat duration. Fire sounds, smoke signals, light affecting sight and familiar-voice warnings are not silently added. Any selected perceptual stimulus must be an actual supported emitted fact with ordinary range, obstruction and attribution. A participant's private reply preview stays private and is not durable speech or evidence that another resident agreed to help.
+
+A useful response might be “That bowl is still too hot to move” or “I can lend you the tool after I finish.” Those words require that speaker's actual evidence and decision. Native action feedback can state that a move failed or a panel broke. It must not become a fallback narrator inventing a person's feelings. The existing Narrator failure behavior remains **“Narration failed.”** Mechanical detail and a readable current state are sufficient to continue playing when narration is unavailable.
+
+## 11. Time, absence and resuming the world
+
+Heat, fuel, material damage, firing progress, supported moisture and cooling use the same current simulation clock. Real service time is not a second aging law. Offscreen connected play continues normally; closing the action picker or looking elsewhere does not pause the worksite. A pause of one actor stops that actor's unfinished handling action under its ordinary cancellation rules but does not stop an already placed fire or blank.
+
+A whole-world Pause preserves the complete physical arrangement and its valid continuing processes. No fuel burns while that authoritative clock is held. On resume, heat starts from its actual previous material and geometry; the system does not replay a backlog of every paused tick or insert retrospective choices. A rate change preserves actual game-time outcomes and reports changed real-time estimates.
+
+Sole-human departure first applies ordinary participation reconciliation: the departing human's handling action is cancelled or completed only under its existing rules, and held supplies are released appropriately. The first isolated profile then holds the world coherently. The already placed blank is a world process, so it remains where it actually was; this is distinct from preserving an invalid human crafting action. Still-valid NPC work, grounded fire, food, moisture and the rest of this isolated world share the hold.
+
+Inactive human possessions retain MP04 protection. A hot piece cannot be smuggled into that inventory through unsupported collection before departure. Cooled carried material keeps its real prior damage and firing state. This personal hold is not a proposal to freeze every other person's shared world, or to grant infinite protected storage while a wider world continues. Continued-community enrollment would need absence, material custody, supply viability and fire-response requalification together.
+
+A restart restores actual current-format material, source, geometry and valid process state, then applies current participation rules. It does not count unverified wall-clock downtime as fuel consumption or give a reconnecting human an automatic new intention. The last unit of fuel, a bowl finishing at that instant, an already broken panel and its surviving material must restore once. If restoration cannot establish the supported state safely, the world stays visibly unavailable for that operation rather than inventing a finished object or quietly resetting the source.
+
+## 12. Economy and the complete cost of the feature
+
+The first process should buy a meaningful object with little supervision. Its shortest practical path is modest real time at the current speed, but it still spends actual fuel, supplies and hunger time. The profile accounts for cold setup, firing, cooling and interruptions. The human must have food for the surrounding play; a decorative bowl is not compensation for being trapped in a newly mandatory maintenance loop.
+
+There is no recurring charge or per-firing commercial promise in this proposal. Provider prices, standing spending authority, community funding and operating retention remain with their current owners. We can nevertheless reason about the shape of cost. Ordinary placement, heating, fuel exhaustion, cooling and transfer must not require paid interpretation at every tick. A meaningful conversation or an independent decision can use the established actor service when authorized. A successfully chosen material process then continues natively.
+
+A naïve per-second reconsideration would multiply by sources, exposed pieces and listeners. Four objects observed each game second during an hour already create 14,400 object observations before any conversation. That arithmetic is a warning about an inappropriate work pattern, not a proposed measurement or a limit. The desired path performs the actual mechanical changes and only submits meaningful perceptual opportunities through the existing attention rules. A warming number changing is not automatically a new crisis, memory or paid deliberation.
+
+An unavailable paid model does not generate a scripted caretaker, free personality imitation, or an automatic resident promise. Already valid native work and material effects retain their rules. The human can still use permitted native actions. The first setting does not rely on a resident rescuing a short-lived flame; if its interesting play requires that rescue reliably, the profile has failed its first-slice design.
+
+Mechanical cost also extends beyond the burning pieces. Finding real neighbors can inspect more objects than ultimately receive heat. A geometry edit can expose new surfaces and affect observation or movement. Several overlapping sources require a complete contribution reconciliation. The general action catalogue may inspect many accessible supplies even though a picker initially displays a small window. Existing bounded attention descriptors and actor-work intake help with delivery, but do not prove neighbor discovery, cold reconstruction or finalization is constant cost.
+
+The selected finite kit makes these costs reviewable. Qualification covers the entire chosen scene: candidate discovery, allocation, material transitions, current action availability, geometry changes, observation, NPC opportunities, rendering, save size and a cold reopen with the aftermath present. Repeated warm reads alone cannot establish this. Material splitting, moving the hearth repeatedly, adding and withdrawing blanks, rapidly changing observers and opening/closing the picker must not create free heat, duplicate outputs, an expanding history of obsolete process records or a storm of paid reactions.
+
+Cold unchanged objects need no mandatory fast heat work. A cooled finished bowl and settled charred material can become ordinary persistent objects. Stable references, current meaningful condition and necessary history should remain; an indefinite record for every fractional warming update is not a player benefit. The user can inspect present damage and actual retained evidence without needing a permanent thermal diary.
+
+If the service cannot advance the admitted physical scene, it must not select a few visible targets and ignore the rest, drop ignition debt or let needs continue while their material consequences freeze. The first isolated profile visibly holds its whole authoritative world and explains the operational problem. It does not charge a silent retry, roll back a burnt panel or grant temporary fireproofing. Reducing permitted acceleration can be a later qualified operating response; silently changing material outcomes cannot.
+
+Larger sites require evidence for their actual complete workload. The first kit, two residents and a few panels do not establish a universal population, fire-count or world-size claim. New rules for many buildings, unattended settlements or cross-world obligations are distinct product commitments, even if the first material calculation is cheap.
+
+## 13. Qualification through play and counterexamples
+
+The following are future acceptance journeys, not tests run by this documentation task. Each should be exercised through ordinary player controls and the actual supported clock, with present state and retained material checked after the action.
+
+| Journey | Required player-visible result |
+| --- | --- |
+| A useful first bowl | Cold setup, finite real fuel, actual firing, cooling, collection, packing and an optional independently accepted offer all work without a compulsory quest or supervision loop. |
+| The player changes plans | Withdrawal preserves partial firing; cooling and later reheating cost actual time and fuel; the remaining blank and completed result cannot be duplicated. |
+| Two pieces share one source | Both receive their real shares; adding another target changes timing; exact sufficient fuel completes at exhaustion and an insufficient bank leaves truthful partial work. |
+| Matched brief sources | The selected dry twig lights and the substantial real wall section does not; a wet-fiber variation is additional evidence, not a substitute. |
+| A local mistake | Deliberate sustained exposure can ignite a panel; the player can stop the right source, preserve damaged material and understand a remaining reignition risk. |
+| A gap and an opening | The actual gap or supported stone blocks a path; losing a panel changes its occupied geometry and future exposure while a surviving independent panel remains. |
+| Another person's choice | A resident can refuse supplies or help, choose another activity, operate with actual permission, and respond only to evidence it has. |
+| A late observer | Present warmth, a finished bowl or charred material is visible appropriately; exact causation and private intentions are not fabricated. |
+| Departure and return | Human handling reconciles first, whole-world hold and protected inventory stay distinct, and valid material processes restore without duplicate fuel or output. |
+| Work unavailable | Native state remains coherent; missing decisions are not replaced by compulsory routines; a mechanical capacity failure holds the whole isolated world visibly. |
+
+Numeric comparisons need to cover small and large time steps, ordinary speed and accelerated creator speed. The purpose is equal material outcomes and honest real response opportunity, not a claim that a person can intervene equally quickly at every speed. Any assistance such as pausing must be an actual available control, not an unimplemented instruction in the spec.
+
+## 14. Sequence and game-first critique
+
+The first implementation project should deliver the positive firing journey, readable material condition, exact input/output continuity and a feasible way to collect. It can then qualify the small source/target comparison and local wall consequence with its real construction owner. Moisture uses the already selected owner when that optional variation is enabled. A technical design should cover these actual consumers and complete costs, not prebuild a universal thermodynamics platform.
+
+The review asks whether the ordinary bowl remains worth choosing after the novelty of lighting a twig has gone. There must be room to name it, choose its use, share it or simply prefer another container. If players consistently experience only an extra timer before obtaining an inferior bag, improve the object-making and use experience or postpone this family. Do not reduce the usefulness of existing bags, manufacture fuel scarcity, create compulsory damp-tinder failure or force a social reward to justify the investment.
+
+Likewise, if the only memorable experience is an avoidable accident consuming a person's evening, simplify the hazard arrangement. The first default stays separated and controllable. The exposed-wall experiment is optional, and normal play need not repeat it. Success is allowed to remain success; no hidden director spreads a later fire because the player became prepared.
+
+The strongest retained ambitions are consistent material causes, actual independent people and a world that can later support larger construction and fire. The deliberately omitted mechanics are deep body temperature, smoke chemistry, fire-driven combat, forest propagation, arbitrary ceramics, liquid serving, continuous unattended industry and a comprehensive property system. Add one when it enables a particular enjoyable activity that cannot be achieved adequately with the current family, and qualify its consequences before promising it.
+
+## 15. Research record
+
+Research was reviewed October 6, 2026. Sources distinguish shipped behavior, historical test fixes, developer retrospectives and unfinished proposals. They inform product judgments, not Open Legend's tuning or performance claims. All numerical material and timing rules in the linked profile are authored game proposals.
+
+### HR-R01 — Finite local fire and the cost of its consequences
+
+Jean-François Levesque, [*Far Cry: How the Fire Burns and Spreads*](https://jflevesque.com/2012/12/06/far-cry-how-the-fire-burns-and-spreads/), December 6, 2012, with a later page update. The programmer describes simplified local ignition, material differences, finite burning and geometry, and identifies event volume as a bottleneck. **Inference here:** small material rules can support meaningful consequences, but propagation, presentation and reaction work must all be counted. This historical account supplies no transferable capacity benchmark and does not justify hidden spread limits.
+
+### HR-R02 — Spread can destroy the intended play
+
+Chris Remo's direct [interview with Levesque about Far Cry 2 fire](https://www.gamedeveloper.com/game-platforms/interview-how-i-far-cry-2-i-s-fire-fuels-spreads), November 5, 2008. An early expanded prototype could consume an encounter, kill its guards and overwhelm the development machine; balancing required substantial work. **Inference here:** a correct growing fire can still spoil the desired activity. The account is not measured player-preference evidence or a reason to make combat this feature's purpose.
+
+### HR-R03 — Destructive fire has many downstream interactions
+
+Iron Gate, [Ashlands release and preceding public-test notes](https://store.steampowered.com/news/posts/?appids=892970&enddate=1716883996&feed=steam_community_announcements), April–May 2024. The May 14 release scopes wooden-building spread to Ashlands unless a world modifier broadens it. Historical test fixes address cooking stations, unplaced construction previews, excessive enemy attraction, damage displays and post-burn performance. **Inference here:** declare the hazard profile and qualify consumers, observers and aftermath together. Those fixed test issues are not claims about current Valheim.
+
+### HR-R04 — Response must be an actual ability
+
+Iron Gate, [Patch 0.218.21](https://store.steampowered.com/news/posts/?appgroupname=Valheim&appids=892970&enddate=1724755836&feed=steam_community_announcements), August 26, 2024. The shipped patch adds a game-item extinguishing ability and corrects a fire effect visible beyond its associated body's distance. **Inference here:** danger needs a real permitted response and truthful presentation. This does not establish that the item was cheap or universally available, and we are not copying its fictional smoke-bomb method.
+
+### HR-R05 — A contained fire can already be useful
+
+Mojang, [*Village & Pillage out today on Java*](https://www.minecraft.net/en-us/article/village---pillage-out-java-), page dated April 22, 2019, Java 1.14 release. Its campfire cooks food and can be lit or unlit while explicitly not spreading fire. **Inference here:** keeping the existing contained cooking family is a coherent useful stage; every visible flame need not imply destructive propagation. The source does not establish Open Legend warmth, light, smoke signaling or fuel rules.
+
+### HR-R06 — World fire rules should be declared
+
+Mojang, [*Minecraft Java Edition 1.21.11*](https://www.minecraft.net/en-us/article/minecraft-java-edition-1-21-11), December 9, 2025. A released world rule determines the player-relative distance within which spreading occurs, including settings disabling it or allowing it without nearby players. **Inference here:** propagation scope can be a stated world choice. Its observer-distance behavior is not adopted here; Open Legend's selected physical progression must remain consistent when an observer leaves.
+
+### HR-R07 — Countermeasures and trustworthy processing
+
+Tyron, [*The Homesteading update, balance & stable patch #2 (v1.15.3-rc.1)*](https://www.vintagestory.at/blog.html/news/the-homesteading-update-balance-stable-patch-2-v1153-rc1-r289/), July 29, 2021. Despite the title, the body identifies an unstable release. It discusses countermeasures, alternate kiln fuels affecting duration, missing fired outputs on connection and timer integrity. **Inference here:** finite processing needs useful choices and reliable material continuity. This historical record does not supply a ceramic recipe, a current bug claim or proof of fun.
+
+### HR-R08 — A broad thermal world is a larger commitment
+
+The Indie Stone, [*Flame On*](https://projectzomboid.com/blog/news/2022/10/flame-on/), October 2022 development update. Its thermal overhaul contemplated materials, heating/cooling, weather and unobserved areas after a long pause for multiplayer work; the developer did not promise it for Build 42. **Inference here:** broader environmental consequences, persistence and presentation are substantial additional delivery. This is explicitly unfinished historical work, not a description of current Project Zomboid.
+
+## Maintained records
+
+- [HM01–HM06](../maintainers/heat-and-materials.md), [HM-L01–HM-L10](../limits/heat-and-materials.md) and [BW26](../maintainers/base-world.md#bw26--heat-ignition-and-material-consequences) retain product, implementation and qualification status beneath INV-6.
+- [Base-world heat and materials](../worlds/base/heat-and-materials.md) owns all selected world balance and endowment; it is not duplicated as engine policy here.
+- [Persistent objects](persistent-objects-feature-spec.md), [shared state](shared-state-contributions-feature-spec.md), [simulation time](../simulation-time.md) and [action capabilities](../action-capabilities.md) retain identity, condition, clocks, actual work and authority.
+- [Editable shelters](editable-shelters-feature-spec.md), [changing supplies](changing-supplies-feature-spec.md), [continuing lives](continuing-lives-feature-spec.md) and [lifecycle/protection](../worlds/base/lifecycle-and-protection.md) own their separate combinations and unresolved policy.
