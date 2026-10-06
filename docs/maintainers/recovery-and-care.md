@@ -1,0 +1,65 @@
+# Recovery and care — DG21 / ND05 delivery
+
+**Status: product proposal prepared, October 6, 2026; technical design, implementation and gameplay qualification remain open.** The [feature specification](../projects/recovery-and-care-feature-spec.md) owns the experience and behavior, the [base-world profile](../worlds/base/recovery-and-care.md) owns the selected rules, and the [CARE limit inventory](../limits/recovery-and-care.md) records their scope, reasons and expansion triggers. This is the focused delivery owner for [DG21 / ND05](needs-design.md#dg21--injury-illness-and-useful-care), coordinating ACT04, BW14, actions, time, perception and persistence without replacing them.
+
+The source audit distinguishes the parent design branch from newer implemented behavior. On inspected GitHub main `0a3ab79b7a698a7f1941dc23722f89220d1ba425`, [player death and scar treatment](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/player-death.md) are implemented. Sleep restores energy, eating restores fullness, and treating a death scar removes one scar count. None supplies ordinary recovery of a living person's lost health and injury. Earlier parent-branch descriptions of living collapse and free camp recovery are superseded inputs, not the baseline for this proposal. No runtime from newer main is delivered by these documents.
+
+## Selection and delivery applicability
+
+The first complete activity lets a survivor recover at an existing campfire, then return to an activity worth pursuing. It requires no treatment item or helper. Field dressing and care from another person are later options; illness needs its own useful situation before selection. Do not add wounds or sickness merely to create demand for treatment.
+
+| Work   | Applies when                                                                                                                                                    |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CARE01 | Deliver the selected living-person camp recovery through the existing bodily and action owners.                                                                 |
+| CARE02 | Every enabled care activity must remain understandable and correct through ordinary control, interrupted work, absence and current-format restoration.          |
+| CARE03 | Select field dressing or another person's help for a worthwhile outing or interaction. It is independently completable and is not a camp-recovery prerequisite. |
+| CARE04 | A particular illness adds a distinct useful decision. This conditional expansion remains open without holding camp or field care incomplete.                    |
+| CARE05 | Qualify the complete selected activity, its actual costs and its contribution to the game. Apply later journeys only when their capabilities are enabled.       |
+
+## CARE01 — Recover after surviving an encounter
+
+- [ ] Before runtime work, prepare the scoped technical counterpart against the current body, action, time and participation owners. Preserve the selected death/Continue/scar law and the future world-owned-body seam under [EWF03](extensible-world-foundation.md#ewf03--extract-default-body-and-need-policies-through-real-consumers); a general anatomy or disease framework is not required.
+- [ ] Deliver the selected material-free **Recover at camp** activity for a living, awake human with lost ordinary health or remaining injury. Apply the authored reach, duration, food/energy eligibility and interruption rules in the world profile. A lit flame, bed, shelter, helper, new skill or supply item is not required.
+- [ ] At valid completion, restore ordinary health and clear injury through their existing owner together. Do not remove scars, refill food/energy, extinguish burning, cure an illness, revive a dead body, relocate the person or alter someone else's injury. Mere progress toward completion grants no healing; actual damage at the completion boundary interrupts before healing.
+- [ ] Preserve actual bodily losses and prior world consequences when work stops. Actual movement, leaving reach, admitted incompatible physical work, incoming harm, zero food/energy, departure or death cancels recovery; an invalid command does not cancel it. There is no automatic restart or immunity while recovering. Talking and inspection remain available.
+
+**Exit:** someone who survived a real encounter can choose one finite recovery activity and use the restored function afterward. The first result is not gated by CARE03's supplies/helpers or CARE04's illness. Existing scar treatment keeps its separate cost and effect.
+
+## CARE02 — Readable care, life continuity and interruption
+
+- [ ] Expose the actual action and current reason for refusal through ordinary camp/character interaction, keyboard use and the relevant actor choices. Explain the effect and time before starting, show progress and a clear Stop, and distinguish healing from scar treatment and energy-restoring Sleep. If current known ordinary rates already imply food or energy reaches zero by completion, refuse the start and tell that actor to eat or rest first; later changes still require interruption checks. Routine self-care needs no extra confirmation dialog, invention or model reply.
+- [ ] Preserve current observation boundaries: visible health is public in the inspected base world, while food/energy and private thoughts remain owner-scoped. A helper learns only the care facts the patient actually shares or the world permits; an offer, refusal or availability indicator cannot reveal a hidden diagnosis or another person's private meter.
+- [ ] Keep exactly one active physical care activity per participant under ordinary action ownership. Choosing care while doing something else must use the existing interruption/replacement behavior. Reading or speaking alone does not cancel it. The current control holder, selected physical life, chosen camp where required, reach and bodily eligibility must still be valid when the effect completes.
+- [ ] Reconcile Pause, disconnect, hidden-tab release, death, Continue, creator revival, current-format save/reopen and restored timelines. Pausing preserves uncompleted work; player departure cancels it under the selected departure law. Downtime grants no elapsed healing, and stale work for an old physical life cannot affect its successor. Preserve active work only where current participation and the actual save contract permit it.
+- [ ] Give a specific outcome for injury, hunger, exhaustion, movement, lost access, changed definition or unavailable service. Busy execution does not become fictional refusal, complete the treatment, fabricate a disease or authorize a paid retry. No hidden nearby-danger scan blocks care; physical danger remains capable of interrupting it.
+
+**Exit:** the real person and body receive the correct consequence once, and the player can understand both success and stopping without consulting a separate administration interface.
+
+## CARE03 — A useful field dressing and willing help
+
+**Conditional later delivery.** Select this when carrying one supply or accepting another person's effort improves a particular outing. Its usefulness must be compared with walking back to a camp and with a self-sufficient outing; a helper is never necessary to make the first recovery activity work.
+
+- [ ] Deliver the authored field dressing using one actual prepared fiber and finite uninterrupted effort. It has the same ordinary bodily result and food/energy boundary as camp recovery, and leaves death scars intact. Show the selected supply and whether the person is treating themself or a willing nearby patient.
+- [ ] For assistance, obtain both participants' agreement to that patient, care activity and offered supply. Require both patient and helper to remain living, awake, present and capable within the authored reach, with their applicable food and energy remaining positive. Either can stop. A helper receives no private meter values or private reason for the patient's unavailability. Acceptance grants no inventory access, future touching permission, promise of repayment or authority to choose other work for the patient.
+- [ ] Preserve the exact material owner, selected prepared fiber, custody and competing claims. Use only the material actually committed to the selected attempt; spend it on successful completion. Cancellation, injury, withdrawal, stale completion or simultaneous claims cannot spend it twice or heal twice. A prior handover remains a real handover if subsequent care is declined.
+- [ ] Give assistance no automatic speed, healing, relationship or gratitude bonus. The helper contributes an actual item or the effort to apply it, and can independently decline or pursue another purpose. Qualify the interrupted and refused interaction as well as a successful shared recovery.
+
+**Exit:** field care creates an intelligible preparation or social choice and returns a living person to useful play. It does not establish rescue/carrying, forced treatment, surgery, a care profession or long-term patient administration.
+
+## CARE04 — One distinct illness when it improves play
+
+- [ ] Before selecting illness, name the wanted situation and the different choice it adds beyond ordinary damage recovery. Choose one authored cause, observable symptoms, uncertainty, consequence and useful response; current body/status support does not define them automatically.
+- [ ] Specify what the patient knows, what an observer can see, what a claimed diagnosis establishes and what remains uncertain. State progression, cessation, resources and recovery explicitly; do not introduce automatic infection from every wound, random punishment for ordinary meals or a compulsory diagnosis minigame.
+- [ ] Complete the selected illness journey, including doing nothing, a mistaken or ineffective response, a changed condition, death/absence boundaries and return to an activity the person values. Reuse the selected care owner where the behavior is actually shared; a generic health increase does not automatically cure the cause.
+
+**Exit:** a particular condition supports worthwhile play with readable consequences. General anatomy, epidemiology, multiple simultaneous diseases and staffing remain unsupported unless separately selected through this owner and the relevant DG31 boundary.
+
+## CARE05 — Complete gameplay and operating-cost qualification
+
+- [ ] Exercise a real survived encounter, route back, camp recovery and worthwhile subsequent activity using the offered clock and ordinary controls. Include no prepared fibers, health loss without injury, injury with restored health, scar-only impairment, low food/energy, interruption, repeated attempts and current-format restoration. Report fixtures, scripted browser checks and uncoached observation separately.
+- [ ] Account for travel, human reading, any actual generation delay, treatment time and continuing food/energy use. Compare the result with current death/Continue and the earlier absence of ordinary healing. Do not claim this feature removes every incentive for deliberate death: the existing mortality law also refills needs and relocates the player. Any remaining incentive to die when needs reach zero remains an integrated pacing/recovery question under CE05/BW14; this proposal adopts no new death policy.
+- [ ] Measure complete action/camp discovery, candidate inspection, active work, scoped feedback, queues, persistence and retained results. One person and a ten-second action do not bound world-wide discovery, aggregate concurrent patients or accumulating history. Use [native-work](../limits/native-work.md) and [persistence](../limits/persistence.md) controls; do not add a hidden candidate cutoff, a paid medical tick or a treatment-specific total-history cap.
+- [ ] For each later enabled capability, qualify its complete additional journey: a finite field supply, consenting/refusing/interrupted help, or the selected illness's own response. Unperformed later checks stay open; they do not prevent reporting the separately completed camp activity accurately.
+- [ ] Review whether recovery leaves time and resources for adventure, independent purposes and conversation. A modest prototype can establish the product evidence; no mandatory new analytics system or research study precedes it. Change pacing or optional scope if recovery becomes a chore, while preserving the selected death/protection rules and actual resource consequences.
+
+**Evidence status:** this assignment supplies product design and source review only. All implementation, browser, live-character, gameplay and complete-cost qualification above remains open. Existing [first-threat evidence](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/verification/first-threat-encounter.md) does not qualify these new activities.
