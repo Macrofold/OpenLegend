@@ -102,7 +102,18 @@ The care, commission and text numbers are explicitly authored or proposed limits
 
 The five specifications contain **46 primary research records**: eight for care, nine for agreements, ten for changing characters, nine for text and ten for correction/restoration. Each separates source findings from Open Legend's design inference. Historical game changes remain historical; publisher abstracts, indexed official extracts and partially retrieved papers retain their access limits. All thirty in-spec research-anchor references resolve, and the conservative full-record count is below 200 words for every record.
 
-Independent review covered the full feature specifications, authored profiles, focused limits, and all affected existing canonical, archive, tracker, queue and index diffs. The final documentation checks and committed-tree comparison are recorded in the completion commit. This is a product-design review: no runtime, browser, paid-provider or load experiment was performed, and no new gameplay qualification was marked complete.
+Independent review covered the full feature specifications, authored profiles, focused limits, and all affected existing canonical, archive, tracker, queue and index diffs. The completed overview also received a separate full read after its move. No material review finding remains unresolved outside the explicitly open delivery and qualification work.
+
+Documentation results against the exact ad4 parent:
+
+- **38 Markdown documents** changed, including thirteen new documents. The GitHub comparison contains no runtime file.
+- All **310 previously checked items** in affected documents remain checked with their text preserved. All pre-existing unchecked items are retained; **52 new delivery/qualification items remain unchecked**.
+- Added relative links and heading references resolve. There are no stale links to the moved overview, removed-heading references, untrusted reference copies or leaked conversation citation markers.
+- The earlier documentation changelog is preserved exactly. All changed Markdown passes the repository's pinned Prettier check.
+- The committed package at [review checkpoint 37ded846](https://github.com/Macrofold/OpenLegend/commit/37ded8465a4150ce9c706eb131feeef7c7f9b285) matched the local contents of all 38 task documents by Git blob identity, and the active overview path was absent. Its comparison confirms the exact ad4 parent and no history rewrite. Completion-record edits receive the same final committed-content check.
+- Final reference reads retain the first branch at ad4 and current main at 0a3ab79b; the source audit did not merge newer runtime into this branch.
+
+This is a product-design review. No runtime, browser, paid-provider or load experiment was performed, and no new gameplay qualification was marked complete.
 
 ## Maintained records
 

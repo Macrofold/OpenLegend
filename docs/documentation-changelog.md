@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-06 — Complete the second sequential five-group design assignment
+
+Moved the [DG21–DG25 overview](projects/completed/product-design-groups-21-25.md) to completed projects after the full gameplay, current-source, research and affected-diff reviews. Its final critique records the independent useful journeys, selected cuts, pacing and accumulated-history risks, and actual documentation verification. Corrected stale completion wording and kept all 310 prior checked states, prior open work and the 52 new open delivery items intact. All five product proposals are complete; adoption, technical design, runtime delivery and live qualification retain their separate owners.
+
 ## 2026-10-06 — Correct actual words; restore one coherent shared world
 
 Completed the researched [DG25 product proposal](projects/corrections-and-shared-restoration-feature-spec.md). Added the open [HE06](maintainers/hearing-and-speech.md#he06--attributed-correction), [SL10.1–SL10.7](maintainers/save-and-load.md#dg25--protected-shared-restoration) delivery checklists and the proposed [HC](limits/hearing-and-speech.md#hc-l01--correction-through-actual-speech) and [RW](limits/persistence.md#rw-l01--one-protected-world-history) constraints. Ten primary records inform ordinary new-event correction and optional protected coherent private rewind. Source audit preserves the accepted no-automatic-memory-cascade policy, existing broad administrative correction, settled save roles, missing-bound-person refusal and current participation interruption. Review restricts speech links to the speaker, preserves retained-scope receipt uncertainty, current blocks/erasure/accounting and complete pre-load recovery, and omits a separate discarded-future archive or private creator export. NC/CR/MP/privacy/queue/decisions are reconciled. Historical legacy-reader wording is clarified without importing main's newer runtime format.
