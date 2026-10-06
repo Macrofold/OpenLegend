@@ -235,12 +235,32 @@
   grid-column: 1 / -1;
   grid-row: 4;
   flex-wrap: nowrap;
+  padding-block-end: var(--space-1);
+}
+.ol-world-agent-view-options {
+  display: flex;
+  flex: 1;
+  min-inline-size: 0;
+  gap: var(--space-2);
   overflow: auto;
   scrollbar-width: thin;
-  padding-block-end: var(--space-1);
 }
 .ol-world-agent-session > .ol-creator-views .ol-btn {
   flex: none;
+}
+.ol-world-agent-session > .ol-creator-views button:focus-visible {
+  /* Keep the complete focus ring inside the scrolling row's edge controls. */
+  outline-offset: -2px;
+}
+.ol-world-agent-new-message {
+  display: flex;
+  flex: none;
+}
+.ol-world-agent-new-message:empty {
+  display: none;
+}
+.ol-world-agent-new-message .ol-icon-wrap {
+  transform: rotate(90deg);
 }
 .ol-world-agent-reading,
 .ol-world-agent-footer,

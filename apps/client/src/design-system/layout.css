@@ -2982,6 +2982,9 @@ body,
 .ol-hud[data-tight='true'] .ol-world-controls[data-bounded] {
   inset-inline: var(--hud-inset);
 }
+.ol-hud[data-picking='true'] .ol-world-controls[data-bounded] > .ol-quick-position {
+  display: none;
+}
 .ol-world-controls[data-bounded] > :is(.ol-quick-position, .ol-camera) {
   position: static;
   flex: none;
@@ -3000,7 +3003,7 @@ body,
   align-items: start;
   overflow-x: auto;
   scrollbar-width: thin;
-  padding-block: var(--space-1);
+  padding: var(--space-1);
 }
 .ol-world-controls[data-bounded] :is(.ol-qa-section, .ol-qadivider) {
   flex: none;

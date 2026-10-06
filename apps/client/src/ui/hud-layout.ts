@@ -24,6 +24,7 @@ export function observeHudLayout(
       // The narrow scroller owns only its visible region. Its clipped descendants
       // must not reserve invisible space; display:contents keeps desktop measurements.
       .filter((element) => !boundedControls || element === controls || !controls?.contains(element))
+      .filter((element) => getComputedStyle(element).visibility !== 'hidden')
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)
       .map((rect) => ({

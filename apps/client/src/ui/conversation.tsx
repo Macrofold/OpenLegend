@@ -84,6 +84,7 @@ export function ConversationThread({
   liveAnnouncements = 'polite',
   newMessageLabel = 'New messages',
   preserveReading = false,
+  renderNewMessageControl,
 }: {
   conversationKey: string;
   items: ConversationItem[];
@@ -97,6 +98,7 @@ export function ConversationThread({
   liveAnnouncements?: 'polite' | 'off';
   newMessageLabel?: string;
   preserveReading?: boolean;
+  renderNewMessageControl?: (onPress: () => void, label: string) => ReactNode;
 }) {
   const log = useRef<HTMLDivElement>(null);
   const previous = useRef<{ key: string; count: number; latestId: string } | null>(null);
@@ -225,11 +227,15 @@ export function ConversationThread({
           </div>
         ))}
       </div>
-      {showNewMessage && (
-        <Button className="ol-new-message" size="sm" variant="solid" onPress={scrollToBottom}>
-          {newMessageLabel} <Icon name="ui.next" size={14} />
-        </Button>
-      )}
+      {showNewMessage &&
+        (renderNewMessageControl ? (
+          // A control placed outside this reader must still follow its visibility.
+          visible && renderNewMessageControl(scrollToBottom, newMessageLabel)
+        ) : (
+          <Button className="ol-new-message" size="sm" variant="solid" onPress={scrollToBottom}>
+            {newMessageLabel} <Icon name="ui.next" size={14} />
+          </Button>
+        ))}
     </div>
   );
 }

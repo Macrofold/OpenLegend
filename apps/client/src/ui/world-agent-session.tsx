@@ -6,7 +6,8 @@ import type {
   WorldAgentProgressSnapshot,
 } from '@open-legend/protocol';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Button, EmptyState, Tag } from '../design-system/components';
+import { createPortal } from 'react-dom';
+import { Button, EmptyState, IconButton, Tag, TextTooltip } from '../design-system/components';
 import { post, worldAgentProgressUrl } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { ConversationComposer, ConversationMessage, ConversationThread } from './conversation';
@@ -80,6 +81,8 @@ export function WorldAgentSession({
   const [turns, setTurns] = useState<WorldAgentTurnView[]>([]);
   const [before, setBefore] = useState<WorldAgentTurnCursor | null>(null);
   const [view, setView] = useState<'conversation' | 'work'>('conversation');
+  const viewOptions = useRef<HTMLDivElement>(null);
+  const [newMessageTarget, setNewMessageTarget] = useState<HTMLSpanElement | null>(null);
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const detailsId = useId();
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -511,29 +514,32 @@ export function WorldAgentSession({
       )}
       {session && (
         <div className="ol-creator-views" role="group" aria-label="World Agent views">
-          <Button
-            size="sm"
-            variant="quiet"
-            aria-pressed={view === 'conversation'}
-            onPress={() => {
-              closeDetails();
-              setView('conversation');
-            }}
-          >
-            Conversation
-          </Button>
-          <Button
-            size="sm"
-            variant="quiet"
-            aria-pressed={view === 'work'}
-            onPress={() => {
-              closeDetails();
-              setSeenWork(workRevision);
-              setView('work');
-            }}
-          >
-            Work{newWork && <span> · New work</span>}
-          </Button>
+          <div ref={viewOptions} className="ol-world-agent-view-options">
+            <Button
+              size="sm"
+              variant="quiet"
+              aria-pressed={view === 'conversation'}
+              onPress={() => {
+                closeDetails();
+                setView('conversation');
+              }}
+            >
+              Conversation
+            </Button>
+            <Button
+              size="sm"
+              variant="quiet"
+              aria-pressed={view === 'work'}
+              onPress={() => {
+                closeDetails();
+                setSeenWork(workRevision);
+                setView('work');
+              }}
+            >
+              Work{newWork && <span> · New work</span>}
+            </Button>
+          </div>
+          <span className="ol-world-agent-new-message" ref={setNewMessageTarget} />
         </div>
       )}
       <div className="ol-world-agent-reading">
@@ -588,6 +594,24 @@ export function WorldAgentSession({
                   )
                   .join('|')}
                 newMessageLabel="New reply text"
+                renderNewMessageControl={(jumpToLatest, label) =>
+                  newMessageTarget &&
+                  createPortal(
+                    <TextTooltip text={label}>
+                      <IconButton
+                        icon="ui.next"
+                        label={label}
+                        onPress={() => {
+                          jumpToLatest();
+                          viewOptions.current
+                            ?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+                            ?.focus({ preventScroll: true });
+                        }}
+                      />
+                    </TextTooltip>,
+                    newMessageTarget,
+                  )
+                }
                 preserveReading
                 before={
                   before && (
