@@ -49,9 +49,6 @@ jobs:
                           assert theirs.count(private) == 1
                           replacement = ours.replace(old_note, new_note) + private + theirs.split(private, 1)[1]
           '''
-          # The literal above keeps its desired first-line indentation; normalize its body once.
-          lines = additional.splitlines()
-          additional = lines[0] + '\n' + '\n'.join(line[10:] for line in lines[1:] if line.strip()) + '\n'
           script = script.replace(marker, additional + marker)
           exec(compile(script, '<reviewed-replay>', 'exec'))
           PY
