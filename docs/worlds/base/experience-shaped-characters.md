@@ -20,11 +20,11 @@ After an intervening activity and a later encounter, provide a truthful opportun
 
 ## A life can contain contrary evidence
 
-A later person may rush the resident, offer unwanted advice or misunderstand the idea. The resident can qualify the view: sharing can be enjoyable, and they want others to ask before taking over. The earlier enjoyable exchange remains real. Different people and situations need not collapse into one global confidence or trust value.
+A later person may rush the resident, offer unwanted advice or misunderstand the idea. The resident can qualify the view: sharing can be enjoyable, and they want others to ask before taking over the discussion. The earlier enjoyable exchange remains real. Different people and situations need not collapse into one global confidence or trust value.
 
 Repeated reading of the same encounter supplies no new event. Separate genuine encounters remain separate and may establish a pattern. The player cannot buy a particular outlook with a fixed number of gifts, compliments, apologies or harms. Actual repeated conduct still matters; avoiding a growth grind is not permission to suppress inconvenient history.
 
-Solitary pleasure is a companion case: a resident who enjoys a supported making activity may discover that an imperfect attempt was worthwhile. Human approval is unnecessary, and reflection does not award practical proficiency. The next supported attempt still needs real knowledge, inputs, time and opportunity.
+Solitary pleasure is a companion case: a resident who enjoys a supported making activity may discover that an attempt they judge imperfect was worthwhile. That judgment does not invent a native item-quality or failed-craft mechanic. Human approval is unnecessary, and reflection does not award practical proficiency. The next supported attempt still needs real knowledge, inputs, time and opportunity.
 
 ## Older recollection and optional dreams
 

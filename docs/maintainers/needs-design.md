@@ -235,6 +235,8 @@ ND04's personality-change slice and ND19's older-memory transformation or select
 
 **Start and parallel boundary:** Use current memory, appraisal and correction/forgetting contracts. No numerical skill system or external retrieval service is required. DG25 owns deliberate changes to shared history; this group changes recollection/interpretation, not what actually occurred. **Existing owners:** ACT07/ACT08, CR06/CR09 and memory/provenance owners.
 
+**October 6 product proposal complete:** [People who change through living](../projects/experience-shaped-characters-feature-spec.md) selects a specific revisable outlook using existing accepted NPC self-understanding and qualifies its effect in later voluntary conduct. Older reinterpretation retains the original event; dreams, human-reviewed suggestions and deliberate coarsening are independent optional extensions, with no default weekly pass or numeric trait progression. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection), [the world profile](../worlds/base/experience-shaped-characters.md) and [EC limits](../limits/memory.md#ec-l01--existing-authored-capacity) reuse ACT/CR/CE. Current consolidation/reflection remain distinct from the proposed semantic extensions; all technical/live-quality work remains open.
+
 #### DG24 — Text messages inside an authored world
 
 ND14's contacts and asynchronous text journey: a real world affordance, addressing, delivery/read state, availability, retention and who learns the message.
@@ -458,6 +460,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **October 5 selected practical-skill proposal:** DG14 now specifies what a real sling release, observation, completed coaching episode and hearsay each establish, plus the finite resulting effect, privacy, correction and absence rules in the [existing stats specification](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing). [PC](practical-competence.md) tracks only that new consumer. Personality change, generic method teaching and broader skill progression remain open.
 
+**October 6 personality proposal:** DG23 selects descriptive, specific, revisable outlooks in [the experience-shaped character specification](../projects/experience-shaped-characters-feature-spec.md). Starting protected identity and static trait labels remain separate; real practice, observation, teaching and hearsay retain the existing practical-learning meanings. Repetition provides no personality points, a later choice stays independent, and conflicting experience can qualify a view. [EC delivery](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) builds on current reflection; broader numerical personality progression remains unselected.
+
 ### ND05 — Richer bodies, illness and care
 
 **Conditional scoped design.** Sources: [physical state](../../archive/03-design-proposals/agents-and-social-simulation.md#physical-state), F03 in the [product baseline](../../archive/01-requirements/product-baseline.md), and [conditional capability expansion](extensible-world-foundation.md#ewf10--conditional-capability-expansion-review).
@@ -617,6 +621,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [CR06/CR09](cognition-redesign.md), the [retention decision ledger](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger), and source/provenance storage own related foundations. Existing cleanup, consolidation—including the implemented daily mini-model review—and idle reflection do not implement the proposed progressive fuzzing of older recollection or the separate dream-specific reinterpretation.
 
 **Needed before an implementation project:** decide which detail may change or disappear, what important incidents/obligations retain, and how current beliefs can color interpretation without creating false witnessing. Define imagined-versus-factual attribution, lineage, correction/forgetting propagation, cadence, cost and same-version restoration. Treat the proposed weekly/older-period schedule as a candidate, not an enabled default, and set behavioral quality criteria before selecting an algorithm.
+
+**October 6 semantic proposal complete:** [DG23's older recollection and optional dream design](../projects/experience-shaped-characters-feature-spec.md#6-understanding-older-experience-without-inventing-it) specifies changed interpretation without changed witnessing, honest missing detail, consequential distinctions, protected obligations, source-sensitive erasure and optional incidental coarsening. Current daily review remains faithful consolidation; no weekly cadence or new lifetime expiry is enabled. [EC03/EC05/EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) retain delivery and qualification, using D59's existing delegated retention ledger.
 
 ### ND20 — A bounded richer-memory retrieval comparison
 

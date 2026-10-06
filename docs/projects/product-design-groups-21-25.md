@@ -36,6 +36,10 @@ For each group, read its linked proposals, present contracts, current implementa
 
 ## Completion and verification
 
+### Group 23 completed product design
+
+[People who change through living](experience-shaped-characters-feature-spec.md), its [world profile](../worlds/base/experience-shaped-characters.md), [EC01–EC06 delivery](../maintainers/cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) and [EC constraints](../limits/memory.md#ec-l01--existing-authored-capacity) form a complete researched product proposal. Ten primary records informed the design. Review preserves current reflection, protected origins, actual speech versus repeated corroboration, imperfect attributed interpretations and later independent conduct. It puts qualification before optional dreams, human suggestions or deliberate coarsening. The first episode requires no unfinished-item mechanic, simultaneous second NPC, numerical trait state or new paid cadence. Current-source wording about relationship editing and dream review is reconciled; no runtime or original acceptance state changes.
+
 ### Group 22 completed product design
 
 [Agreements worth coming back to](durable-agreements-feature-spec.md), its [world profile](../worlds/base/durable-agreements.md), [INV-20.5a–f delivery](../maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) and [DA limits](../limits/durable-agreements.md) are complete product proposals, supported by nine primary research records. Review retains PX02’s independent immediate barter, current cheap production, no first currency/default deadline, exact remaining claims and owner-local knowledge. Advance and association are independent later selections; D11/D18/D64 adoption and all runtime qualification remain open. The group was reconciled and committed before drafting DG23.

@@ -2,7 +2,7 @@
 
 ## Product design groups 21–25
 
-[The sequential five-group assignment](../projects/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. Later groups are still being designed in order. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. The source audit also reads newer main without changing this branch's ancestry.
+[The sequential five-group assignment](../projects/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent optional extensions. Later groups are still being designed in order. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. The source audit also reads newer main without changing this branch's ancestry.
 
 ## Product design groups 16–20
 
