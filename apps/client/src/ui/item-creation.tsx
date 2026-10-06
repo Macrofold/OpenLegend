@@ -1,7 +1,6 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
-import type { SurfacePoint } from '@open-legend/protocol';
-import { post } from '../api';
+import type { ApiResult, SurfacePoint } from '@open-legend/protocol';
 import { Button, IconButton, SelectField, Tag } from '../design-system/components';
 export type ItemCreationTarget = { actorId: string } | { position: SurfacePoint };
 export function ItemCreationModal({
@@ -9,15 +8,17 @@ export function ItemCreationModal({
   target,
   targetLabel,
   initialDefinitionId,
+  enabled,
   close,
-  notify,
+  create,
 }: {
   options: Array<{ id: string; label: string; description: string }>;
   target: ItemCreationTarget;
   targetLabel?: string;
   initialDefinitionId?: string;
+  enabled: boolean;
   close(): void;
-  notify(text: string): void;
+  create(definitionId: string, quantity: number): Promise<ApiResult | undefined>;
 }) {
   const [definitionId, setDefinitionId] = useState(initialDefinitionId ?? '');
   const [quantity, setQuantity] = useState('1');
@@ -25,25 +26,27 @@ export function ItemCreationModal({
   const validAmount = !!quantity.trim() && Number.isSafeInteger(amount) && amount >= 1;
   const [saving, setSaving] = useState(false),
     [error, setError] = useState('');
-  // An uncertain HTTP result can be retried without duplicating creation.
-  const attempt = useRef<{ body: string; id: string } | null>(null);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (saving || !definitionId || !validAmount) return;
-    const body = JSON.stringify({ definitionId, quantity: amount, destination: target });
-    if (attempt.current?.body !== body) attempt.current = { body, id: crypto.randomUUID() };
+    if (saving || !enabled || !definitionId || !validAmount) return;
     setSaving(true);
     setError('');
     try {
-      const result = await post('/api/god/items', { ...JSON.parse(body), id: attempt.current.id });
-      if (result.ok) {
-        notify(result.message);
-        close();
-      } else setError(result.message);
+      const result = await create(definitionId, amount);
+      if (!alive.current || !result) return;
+      if (result.ok) close();
+      else setError(result.message);
     } catch (reason) {
-      setError(String(reason));
+      if (alive.current) setError(String(reason));
     } finally {
-      setSaving(false);
+      if (alive.current) setSaving(false);
     }
   }
   return (
@@ -101,12 +104,21 @@ export function ItemCreationModal({
                   {error}
                 </p>
               )}
+              {!enabled && (
+                <p role="status">
+                  Reconnect with control of this character and God mode to create.
+                </p>
+              )}
             </fieldset>
             <footer className="ol-modal-actions">
               <Button type="button" variant="quiet" onPress={close} disabled={saving}>
                 Cancel
               </Button>
-              <Button type="submit" busy={saving} disabled={!definitionId || !validAmount}>
+              <Button
+                type="submit"
+                busy={saving}
+                disabled={!enabled || !definitionId || !validAmount}
+              >
                 {validAmount
                   ? `Create ${amount} ${amount === 1 ? 'item' : 'items'}`
                   : 'Create item'}

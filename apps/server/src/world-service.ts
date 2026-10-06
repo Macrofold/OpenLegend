@@ -124,7 +124,7 @@ import {
   type DeclarationDraft,
   type DeclarationProvenance,
   type Transition,
-  type GodSpawnDraft,
+  type GodSpawnRequest,
   type GodMemoryEdit,
   type GodPersonDraft,
   type GodPersonEditorDraft,
@@ -3291,8 +3291,11 @@ export class WorldService {
     });
   }
 
-  async spawn(draft: GodSpawnDraft): Promise<ApiResult> {
-    return await this.godTransition((world) => spawnWorldEntity(world, draft));
+  async spawn(request: GodSpawnRequest, scope = this.localScope): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      this.assertScope(scope, 'create');
+      return spawnWorldEntity(world, request);
+    });
   }
 
   async godInventionPolicy(

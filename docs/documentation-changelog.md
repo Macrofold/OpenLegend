@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-10-06 — recover the original creator creation
+
+Item, person and environment creation now share a candidate recovery flow that retains one exact original request in the current private character/world/timeline. Person and environment creation gain the same native request identity and committed-result recovery already used by item creation. This replaces reliance on a mounted item dialog or occupied ground: a lost reply must not create a second object after closing, reloading or moving the first creation. Retry is explicit and may perform an originally unreceived creation; ordinary environment selection remains immediate. The tradeoff is that one unresolved creation blocks another creator creation until its outcome and browser cleanup resolve. Static and focused native checks pass; integrated browser/storage acceptance remains pending. The [design and implementation plan](projects/game-interaction-redesign-tech-design.md#recover-item-person-and-environment-creation), [UXL12](limits/ui-ux.md#uxl12) and [UIUX15](maintainers/ui-ux.md#uiux15) own the contract and remaining work.
+
 ## 2026-10-06 UTC — Remove measured interaction stalls and continue native acceptance
 
 The whole-interface continuation removes duplicate landscape setup during entry and blocking pixel reads when newly seen artwork is created. It accepts small measured rasterization-edge differences while preserving native geometry and authority. A two-frame graphics submission bound keeps old camera images from accumulating behind a slow GPU; updates, input and visual detail remain. [RF01](limits/interface.md#rf01--submitted-graphics-frames) records this new engineering bound and its limits.

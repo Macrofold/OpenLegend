@@ -344,6 +344,8 @@ export interface Outcome {
   message: string;
   recipeId?: string;
   itemId?: string;
+  /** The exact entity created by this result, even if it has since moved. */
+  entityId?: string;
   goalId?: string;
   planId?: string;
   /** Exact action started by this result; command identity is a separate receipt key. */
@@ -625,6 +627,10 @@ export interface GodSpawnDraft {
   type: GodSpawnType;
   position: SurfacePoint;
   person?: GodPersonDraft;
+}
+
+export interface GodSpawnRequest extends GodSpawnDraft {
+  id: string;
 }
 
 export type ExperienceEntry =

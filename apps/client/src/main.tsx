@@ -65,6 +65,7 @@ import {
   symbol,
 } from './design-system/components';
 import { ItemCreationModal, type ItemCreationTarget } from './ui/item-creation';
+import { CreationRecoveryModal, useCreationRequest } from './ui/creation-request';
 import { ActionPicker, type PickerContext } from './ui/action-picker';
 import {
   PersonCreationModal,
@@ -150,6 +151,7 @@ function App({
     target: ItemCreationTarget;
     definitionId?: string;
   } | null>(null);
+  const [creationEntryScope, setCreationEntryScope] = useState<string | null>(null);
   const [cameraView, setCameraView] = useState<
     Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>
   >({
@@ -303,6 +305,7 @@ function App({
   }, [view?.presentation.worldName]);
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling;
+  const creation = useCreationRequest(view, connected);
   const accept = useCallback(
     (next: GameView, reset = false) => {
       const previous = latest.current;
@@ -1236,28 +1239,42 @@ function App({
     type: string,
     position: { x: number; y: number; z: number; surfaceId: string },
   ) {
-    if (!connected) return notify('Reconnect to the world.');
-    try {
-      const result = await post('/api/god/spawn', { type, position });
+    const opened = currentPicker.current;
+    const result = await creation.create({
+      kind: 'environment',
+      body: { type, position },
+      label: `Create ${view?.godTools?.spawnOptions.find((option) => option.id === type)?.label ?? type}`,
+      destinationLabel: `On the selected ground at ${position.x.toFixed(1)}, ${position.z.toFixed(1)}.`,
+    });
+    if (result) {
       notify(result.message);
-      if (result.ok) setPicker(null);
-    } catch (reason) {
-      notify(String(reason));
+      if (result.ok && currentPicker.current === opened) setPicker(null);
     }
   }
   async function createPerson(
     position: { x: number; y: number; z: number; surfaceId: string },
     draft: PersonDraft,
   ) {
-    if (!connected)
-      return {
-        ok: false,
-        code: 'offline',
-        message: 'Reconnect to the world.',
-      } as const;
-    const result = await post('/api/god/person', { position, ...draft });
-    notify(result.message);
+    const result = await creation.create({
+      kind: 'person',
+      body: { position, ...draft },
+      label: `Create ${draft.name}`,
+      destinationLabel: `On the selected ground at ${position.x.toFixed(1)}, ${position.z.toFixed(1)}.`,
+    });
+    if (result?.ok) notify(result.message);
     return result;
+  }
+  function openItemCreation(value: NonNullable<typeof itemCreation>) {
+    if (!creation.openEntry()) return;
+    setCreationEntryScope(creation.key);
+    setPersonPosition(null);
+    setItemCreation(value);
+  }
+  function closeCreationRecovery() {
+    creation.hide();
+    setItemCreation(null);
+    setPersonPosition(null);
+    setPicker(null);
   }
   const entity =
     view &&
@@ -1311,7 +1328,7 @@ function App({
               visible={
                 connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
               }
-              addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
+              addItem={() => openItemCreation({ target: { actorId: view.player.id } })}
               contextMenu={(item, point, opener) =>
                 setPicker({
                   context: { itemId: item.id },
@@ -1910,10 +1927,10 @@ function App({
               />
             )}
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
-            {!tabPaused && picker && (
+            {!tabPaused && picker && !creation.visible && (
               <ActionPicker
                 createItem={(definitionId, position) => {
-                  setItemCreation({ definitionId, target: { position } });
+                  openItemCreation({ definitionId, target: { position } });
                   setPicker(null);
                 }}
                 key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.saveTimeline}:${picker.point.x}:${picker.point.y}:${picker.entity?.id}:${picker.context.itemId}`}
@@ -1933,38 +1950,77 @@ function App({
                 spawn={(type, position) => void spawn(type, position)}
                 createPerson={(position) => {
                   setPicker(null);
+                  if (!creation.openEntry()) return;
+                  setCreationEntryScope(creation.key);
+                  setItemCreation(null);
                   setPersonPosition(position);
                 }}
               />
             )}
-            {!tabPaused && view.godMode && itemCreation && (
-              <ItemCreationModal
-                options={view.godTools?.itemOptions ?? []}
-                target={itemCreation.target}
-                targetLabel={
-                  'actorId' in itemCreation.target
-                    ? itemCreation.target.actorId === view.player.id
-                      ? view.player.name
-                      : view.entities.find(
-                          (entity) =>
-                            entity.id ===
-                            ('actorId' in itemCreation.target
-                              ? itemCreation.target.actorId
-                              : undefined),
-                        )?.name
-                    : undefined
-                }
-                initialDefinitionId={itemCreation.definitionId}
-                close={() => setItemCreation(null)}
-                notify={notify}
-              />
-            )}
-            {!tabPaused && personPosition && view.godMode && (
-              <PersonCreationModal
-                position={personPosition}
-                traits={view.godTools?.traits ?? []}
-                create={(draft) => createPerson(personPosition, draft)}
-                close={() => setPersonPosition(null)}
+            {!tabPaused &&
+              view.godMode &&
+              itemCreation &&
+              creationEntryScope === creation.key &&
+              !creation.visible && (
+                <ItemCreationModal
+                  key={`item:${creation.key}`}
+                  options={view.godTools?.itemOptions ?? []}
+                  target={itemCreation.target}
+                  targetLabel={
+                    'actorId' in itemCreation.target
+                      ? itemCreation.target.actorId === view.player.id
+                        ? view.player.name
+                        : view.entities.find(
+                            (entity) =>
+                              entity.id ===
+                              ('actorId' in itemCreation.target
+                                ? itemCreation.target.actorId
+                                : undefined),
+                          )?.name
+                      : undefined
+                  }
+                  initialDefinitionId={itemCreation.definitionId}
+                  enabled={creation.enabled}
+                  close={() => setItemCreation(null)}
+                  create={async (definitionId, quantity) => {
+                    const target = itemCreation.target;
+                    const result = await creation.create({
+                      kind: 'item',
+                      body: { definitionId, quantity, destination: target },
+                      label: `Create ${quantity} ${view.godTools?.itemOptions.find((option) => option.id === definitionId)?.label ?? definitionId}`,
+                      destinationLabel:
+                        'actorId' in target
+                          ? `In ${target.actorId === view.player.id ? view.player.name : (view.entities.find((entity) => entity.id === target.actorId)?.name ?? 'the selected character')}’s inventory.`
+                          : `On the selected ground at ${target.position.x.toFixed(1)}, ${target.position.z.toFixed(1)}.`,
+                    });
+                    if (result?.ok) notify(result.message);
+                    return result;
+                  }}
+                />
+              )}
+            {!tabPaused &&
+              personPosition &&
+              view.godMode &&
+              creationEntryScope === creation.key &&
+              !creation.visible && (
+                <PersonCreationModal
+                  key={`person:${creation.key}`}
+                  position={personPosition}
+                  traits={view.godTools?.traits ?? []}
+                  enabled={creation.enabled}
+                  create={(draft) => createPerson(personPosition, draft)}
+                  close={() => setPersonPosition(null)}
+                />
+              )}
+            {!tabPaused && view.godMode && creation.visible && (
+              <CreationRecoveryModal
+                key={creation.key}
+                recovery={creation}
+                close={closeCreationRecovery}
+                resolved={(result) => {
+                  notify(result.message);
+                  closeCreationRecovery();
+                }}
               />
             )}
             {!tabPaused &&

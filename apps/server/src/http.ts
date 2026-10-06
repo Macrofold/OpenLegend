@@ -1797,27 +1797,37 @@ async function initializeGameServer(
             case '/api/god/spawn': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
-              const value = z.object({ type: godSpawnType, position }).strict().parse(body);
-              return send(response, 200, await service.spawn(value));
+              const value = z
+                .object({ id: requestIdSchema, type: godSpawnType, position })
+                .strict()
+                .parse(body);
+              return send(response, 200, await service.spawn(value, scope));
             }
             case '/api/god/person': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
-              const value = godPerson.extend({ position }).strict().parse(body);
+              const value = godPerson
+                .extend({ id: requestIdSchema, position })
+                .strict()
+                .parse(body);
               return send(
                 response,
                 200,
-                await service.spawn({
-                  type: 'person',
-                  position: value.position,
-                  person: {
-                    name: value.name,
-                    personality: value.personality,
-                    backstory: value.backstory,
-                    traitIds: value.traitIds,
-                    initialGoals: value.initialGoals,
+                await service.spawn(
+                  {
+                    id: value.id,
+                    type: 'person',
+                    position: value.position,
+                    person: {
+                      name: value.name,
+                      personality: value.personality,
+                      backstory: value.backstory,
+                      traitIds: value.traitIds,
+                      initialGoals: value.initialGoals,
+                    },
                   },
-                }),
+                  scope,
+                ),
               );
             }
             case '/api/god/editor/attributes': {

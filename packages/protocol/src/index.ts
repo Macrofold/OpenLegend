@@ -661,6 +661,8 @@ export interface ApiResult {
   message: string;
   jobId?: string;
   itemId?: string;
+  /** The exact entity created by this result, even if it has since moved. */
+  entityId?: string;
   recipeId?: string;
   goalId?: string;
   planId?: string;

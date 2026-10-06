@@ -56,6 +56,7 @@ describe('local HTTP boundary', () => {
     expect(
       (
         await ordinary.post('/api/god/spawn', {
+          id: 'denied-spawn',
           type: 'hare',
           position: { y: 0, surfaceId: 'terrain', x: 24, z: 5 },
         })

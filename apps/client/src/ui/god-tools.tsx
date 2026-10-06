@@ -59,7 +59,7 @@ function normalizedPerson(person: PersonDraft): PersonDraft {
   };
 }
 
-function validatePerson(person: PersonDraft): string {
+export function validatePerson(person: PersonDraft): string {
   const value = normalizedPerson(person);
   if (!value.name) return 'Name is required.';
   if (value.name.length > 80) return 'Name must be 80 characters or fewer.';
@@ -364,12 +364,14 @@ function PersonEditorFields({
 export function PersonCreationModal({
   position,
   traits,
+  enabled,
   create,
   close,
 }: {
   position: Position;
   traits: TraitOption[];
-  create(draft: PersonDraft): Promise<ApiResult>;
+  enabled: boolean;
+  create(draft: PersonDraft): Promise<ApiResult | undefined>;
   close(): void;
 }) {
   const [person, setPerson] = useState<PersonDraft>({
@@ -381,20 +383,28 @@ export function PersonCreationModal({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   async function submit(event: FormEvent) {
     event.preventDefault();
     const invalid = validatePerson(person);
-    if (invalid || saving) return setError(invalid);
+    if (invalid || saving || !enabled) return setError(invalid);
     setSaving(true);
     setError('');
     try {
       const result = await create(normalizedPerson(person));
+      if (!alive.current || !result) return;
       if (result.ok) close();
       else setError(result.message);
     } catch (reason) {
-      setError(String(reason));
+      if (alive.current) setError(String(reason));
     } finally {
-      setSaving(false);
+      if (alive.current) setSaving(false);
     }
   }
   return (
@@ -432,11 +442,16 @@ export function PersonCreationModal({
                 {error}
               </p>
             )}
+            {!enabled && (
+              <p className="ol-person-error" role="status">
+                Reconnect with control of this character and God mode to create.
+              </p>
+            )}
             <footer className="ol-modal-actions">
               <Button type="button" variant="quiet" onPress={close} disabled={saving}>
                 Cancel
               </Button>
-              <Button type="submit" busy={saving} disabled={!person.name.trim()}>
+              <Button type="submit" busy={saving} disabled={!enabled || !person.name.trim()}>
                 Create person
               </Button>
             </footer>

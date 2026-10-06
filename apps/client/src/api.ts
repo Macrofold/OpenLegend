@@ -26,6 +26,7 @@ function clearSessionDrafts(preservePendingCommands = false): void {
       if (
         key.startsWith('open-legend:composer-draft:') ||
         key.startsWith('open-legend:action-draft:') ||
+        key.startsWith('open-legend:creation-request:') ||
         (!preservePendingCommands &&
           (key.startsWith('open-legend:inventory-command:') ||
             key.startsWith('open-legend:activity-command:')))
