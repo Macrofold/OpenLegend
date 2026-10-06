@@ -2,6 +2,7 @@ import { namePhrase } from '@open-legend/language';
 import { nativeCatalogueView, strikeDefinition } from '@open-legend/domain';
 import { domainCommand } from './cognition.js';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
+import { BASE_DEATH_COMMAND_DESCRIPTIONS } from '@open-legend/domain';
 import { consumptionDescription } from './body-services.js';
 import {
   BASE_FIRE_CARE,
@@ -16,6 +17,7 @@ import type { CommandInput } from '@open-legend/protocol';
 /** Common explanations also cover families with no eligible target. Prose is
  * presentation data; command previews and the kernel still own every prerequisite. */
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
+  ...BASE_DEATH_COMMAND_DESCRIPTIONS,
   'activity-request':
     'Choose every required parameter and review a supported activity before starting it.',
   'inspect-activities':
@@ -107,7 +109,7 @@ function describeCommand(
         const m = itemDefinition.melee;
         return `${common} ${itemDefinition.name}: ${m.damage} damage, ${m.accuracy * 100}% accuracy, ${m.range} units reach, ${m.windupSeconds} game seconds wind-up and ${m.recoverySeconds} seconds recovery. Requires this exact equipped weapon; misses cause no damage.`;
       }
-      const strike = strikeDefinition(command.definitionId);
+      const strike = strikeDefinition(command.definitionId, world);
       return strike
         ? `${common} ${strike.label}: ${strike.damage} injury damage, ${strike.range} units reach, ${strike.workSeconds} game seconds of wind-up. One strike per command; no automatic repeated attacks.`
         : common;

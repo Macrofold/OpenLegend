@@ -18,6 +18,10 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
 - [Combat](combat.md)
+- [First optional threat encounter](first-threat-encounter.md)
+- [Player danger and leaving the world](player-danger.md)
+- [Player death, corpses and treatable scars](player-death.md)
+- [Lifecycle and inactive protection](lifecycle-and-protection.md)
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)

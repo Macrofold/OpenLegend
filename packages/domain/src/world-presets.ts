@@ -68,6 +68,8 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
   const policy: BodyPolicy = {
     id: 'clockwork:body-policy',
     version: 1,
+    reincarnation: null,
+    lethalAttackReview: null,
     zeroHealth: {
       player: 'incapacitate',
       npc: 'die',

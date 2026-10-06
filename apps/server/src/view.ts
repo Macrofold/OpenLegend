@@ -61,6 +61,7 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { describeEntity } from './entity-description.js';
+import { reincarnationPolicy, scarTreatmentProblem } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 
 interface ViewCache {
@@ -184,7 +185,7 @@ export async function projectView(
     () => {
       const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
       for (const pile of observation.visibleEntities.filter(
-        (entity) => entity.kind === 'item-pile',
+        (entity) => entity.kind === 'item-pile' || !!entity.remains,
       )) {
         for (const item of itemsForOwner(world, pile.id)) {
           const definition = world.itemDefinitions[item.definitionId]!;
@@ -272,7 +273,7 @@ export async function projectView(
           entity,
           world.observerIdentities?.[scope.actorId]?.[entity.id],
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
-          entity.kind === 'item-pile' ? pileContents.get(entity.id) : undefined,
+          entity.kind === 'item-pile' || entity.remains ? pileContents.get(entity.id) : undefined,
           // Fire care availability depends on the player's carried tinder, drill and fuel.
           entity.heat ? player.inventoryRevision : undefined,
           // Offer replies appear and disappear with pending offers between the two people.
@@ -292,6 +293,12 @@ export async function projectView(
           player.statusEffects,
           world.map,
           actor.attributes,
+          actor.scars,
+          actor.physicalLife,
+          world.participationPolicy,
+          world.exitExposures?.[entity.id],
+          // Only fading subjects depend on the clock. Other entity projections stay reusable.
+          world.exitExposures?.[entity.id] !== undefined ? world.simTime : undefined,
           world.moduleManifest,
           world.statusEffectPolicy,
         ],
@@ -443,19 +450,21 @@ export async function projectView(
           const kind: EntityView['kind'] =
             entity.kind === 'item-pile'
               ? 'item-pile'
-              : entity.remains && entity.animal
+              : entity.remains
                 ? 'remains'
                 : entity.animal
                   ? 'animal'
                   : entity.actor
                     ? 'actor'
-                    : entity.resource
+                    : entity.resource || entity.kind === 'resource'
                       ? 'resource'
                       : 'station';
           return {
             id: entity.id,
             ...display,
-            ...(entity.kind === 'item-pile' ? { contents: pileContents.get(entity.id) ?? [] } : {}),
+            ...(entity.kind === 'item-pile' || entity.remains
+              ? { contents: pileContents.get(entity.id) ?? [] }
+              : {}),
             description: describeEntity({ ...entity, ...display }, world.itemDefinitions),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
@@ -465,6 +474,21 @@ export async function projectView(
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
+            ...(entity.actor?.body ? { bodyPlan: entity.actor.body.plan } : {}),
+            ...(world.exitExposures?.[entity.id] !== undefined &&
+            world.participationPolicy?.exitExposureSeconds
+              ? {
+                  departureProgress: Math.max(
+                    0,
+                    Math.min(
+                      1,
+                      1 -
+                        (world.exitExposures[entity.id]! - world.simTime) /
+                          world.participationPolicy.exitExposureSeconds,
+                    ),
+                  ),
+                }
+              : {}),
             ...(entity.actor
               ? {
                   speechCapable,
@@ -497,14 +521,17 @@ export async function projectView(
                         harvest: 'Harvesting',
                         cook: 'Cooking',
                         'tend-fire': 'Tending a fire',
+                        'treat-scar': 'Treating an injury',
                         prepare: 'Preparing',
                         craft: 'Crafting',
                       }[entity.actor.action.type] ?? 'Working')
-                    : entity.animal
-                      ? entity.animal.danger > 0
-                        ? 'Fleeing'
-                        : 'Foraging'
-                      : 'Watching the clearing'
+                    : entity.threat
+                      ? ''
+                      : entity.animal
+                        ? entity.animal.danger > 0
+                          ? 'Fleeing'
+                          : 'Foraging'
+                        : 'Watching the clearing'
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
@@ -523,7 +550,9 @@ export async function projectView(
                       ? `${Math.round(entity.replenisher.remaining)} units of supply`
                       : entity.kind === 'item-pile'
                         ? `${pileContents.get(entity.id)?.length ?? 0} item stack${pileContents.get(entity.id)?.length === 1 ? '' : 's'}`
-                        : 'Gatherable',
+                        : entity.resource
+                          ? 'Gatherable'
+                          : '',
             ...(entity.resource ? { quantity: entity.resource.quantity } : {}),
             ...(entity.actor
               ? {
@@ -672,6 +701,43 @@ export async function projectView(
       enabled: !paused,
       reason: 'Personal playtest recovery; world history is retained.',
     });
+  const reincarnation = reincarnationPolicy(world);
+  if (actor.pendingDeath && reincarnation)
+    playerActions.push({
+      id: 'respawn',
+      label: reincarnation.continueLabel,
+      command: { type: 'respawn' },
+      enabled:
+        !paused &&
+        actor.participation?.phase !== 'inactive' &&
+        service.currentScope(scope, 'play', true),
+      reason: 'Resume here before continuing.',
+    });
+  const scarTreatment = reincarnation?.treatment;
+  if (reincarnation && scarTreatment && actor.alive) {
+    const rest = observation.visibleEntities.find(
+      (entity) =>
+        entity.kind === reincarnation.restKind &&
+        Math.hypot(
+          worldPosition(entity).x - worldPosition(player).x,
+          worldPosition(entity).y - worldPosition(player).y,
+          worldPosition(entity).z - worldPosition(player).z,
+        ) <= scarTreatment.reach,
+    );
+    if (rest)
+      for (const scar of reincarnation.scars.filter((scar) => actor.scars?.[scar.id])) {
+        const problem = scarTreatmentProblem(world, player, scar.id, rest.id);
+        playerActions.push(
+          action(
+            `treat-${scar.id}`,
+            `${reincarnation.treatmentLabel} ${scar.name}`,
+            { type: 'treat-scar', targetId: rest.id, scarId: scar.id },
+            !problem,
+            problem ?? undefined,
+          ),
+        );
+      }
+  }
   const work = actor.action;
   const consumption = applicableConsumption(world, player);
   const suggestedConsumption =
@@ -693,8 +759,13 @@ export async function projectView(
   ];
   const targetName =
     work?.targetId &&
-    observation.visibleEntities.find((entity) => entity.id === work.targetId)?.name;
+    observation.visibleEntities.some((entity) => entity.id === work.targetId) &&
+    observerName(world, player.id, work.targetId).name;
   const workLabels: Record<string, string> = {
+    'treat-scar':
+      work?.scarId && reincarnation
+        ? `${reincarnation.treatmentLabel} ${reincarnation.scars.find((scar) => scar.id === work.scarId)?.name ?? ''}`
+        : 'Working',
     move: 'Walking',
     follow: 'Following',
     replenish: 'Replenishing',
@@ -801,6 +872,7 @@ export async function projectView(
     player: {
       appearance: player.appearance ?? 'sprite',
       participation: actor.participation?.phase ?? 'active',
+      departureNotice: world.participationPolicy?.exitDescription,
       id: player.id,
       name: player.name,
       nameForm: player.nameForm,
@@ -812,6 +884,27 @@ export async function projectView(
       actionAnimation: actionAnimation(world, player),
       suggestedActionIds,
       alive: actor.alive,
+      life: actor.physicalLife ?? 0,
+      death:
+        actor.pendingDeath && reincarnation
+          ? {
+              message: reincarnation.deathText,
+              at: actor.pendingDeath.at,
+              corpseId: actor.pendingDeath.corpseId,
+              retained: actor.pendingDeath.retained,
+              left: actor.pendingDeath.left,
+              retainedLabel: bodyPolicy(world)!.reincarnation!.retainedLabel,
+              lostLabel: bodyPolicy(world)!.reincarnation!.lostLabel,
+            }
+          : null,
+      scars: (reincarnation?.scars ?? [])
+        .filter((scar) => actor.scars?.[scar.id])
+        .map((scar) => ({
+          id: scar.id,
+          name: scar.name,
+          description: scar.description,
+          treatmentsRemaining: actor.scars![scar.id]!,
+        })),
       ...(!actor.alive
         ? {
             bodyState:
@@ -836,6 +929,7 @@ export async function projectView(
                   'craft',
                   'cook',
                   'harvest',
+                  'treat-scar',
                   'hunt',
                   'strike',
                   'replenish',

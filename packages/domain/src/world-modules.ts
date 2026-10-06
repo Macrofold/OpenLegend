@@ -13,7 +13,7 @@ import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 export { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 import { validateStatusEffects } from './status-effect-validation.js';
 import { activeStatusEffects } from './status-capabilities.js';
-import { strikeDefinition, validMelee } from './strikes.js';
+import { strikeDefinition, validMelee, validateNativeStrikes } from './strikes.js';
 import {
   conditionText,
   reconcileConditions,
@@ -37,7 +37,9 @@ import { isFuel } from './worlds/base/fire.js';
 import { validateAgency } from './agency.js';
 import { assertReservedStock, validateResourceReservations } from './resource-claims.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
-import { validateBodyPolicy, type BodyPolicy } from './body-policy.js';
+import { bodyPolicy, validateBodyPolicy, type BodyPolicy } from './body-policy.js';
+import { validateReincarnation } from './reincarnation.js';
+import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
 import { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
@@ -774,6 +776,9 @@ export function validateWorldModules(world: WorldState): void {
     world.itemDefinitions,
   );
   validateCognitionPolicy(world, world.cognitionPolicy);
+  validateReincarnation(world);
+  validateNativeStrikes(world);
+  validateTerritorialThreats(world);
   for (const e of Object.values(world.entities)) {
     if (!validName(e)) throw new Error('Invalid canonical entity name or name grammar.');
     if (
@@ -829,14 +834,20 @@ export function validateWorldModules(world: WorldState): void {
       )
         throw new Error('Invalid saved animal threat memory.');
     }
-    if (e.actor?.body && !e.actor.alive && !e.remains)
+    if (e.actor?.body && !e.actor.alive && !e.remains && !e.actor.pendingDeath)
       throw new Error('Dead bodies require saved remains.');
     if (e.remains) {
       const remains = e.remains;
       if (
         !e.actor?.body ||
         e.actor.alive ||
-        remains.sourceId !== e.id ||
+        (remains.sourceId !== e.id &&
+          !(
+            e.kind === 'remains' &&
+            world.entities[remains.sourceId]?.actor?.controller === 'player' &&
+            world.entities[remains.sourceId]?.kind !== 'remains' &&
+            !world.entities[remains.sourceId]?.remains
+          )) ||
         !Number.isFinite(remains.diedAt) ||
         remains.diedAt < 0 ||
         remains.diedAt > world.simTime ||
@@ -956,6 +967,39 @@ export function validateWorldModules(world: WorldState): void {
       )
         throw new Error('Invalid saved guarded fuel action.');
     }
+    const activeAction = e.actor?.action;
+    if (
+      activeAction?.targetLife !== undefined &&
+      (!['strike', 'hunt'].includes(activeAction.type) ||
+        !Number.isSafeInteger(activeAction.targetLife) ||
+        activeAction.targetLife < 0)
+    )
+      throw new Error('Invalid saved attack life.');
+    if (activeAction?.lethalPermission) {
+      const permission = activeAction.lethalPermission;
+      if (
+        !['strike', 'hunt'].includes(activeAction.type) ||
+        permission.actorId !== e.id ||
+        permission.sourceLife !== (e.actor!.physicalLife ?? 0) ||
+        permission.targetId !== activeAction.targetId ||
+        permission.targetLife !== activeAction.targetLife ||
+        typeof permission.attackDigest !== 'string' ||
+        !permission.attackDigest
+      )
+        throw new Error('Invalid saved lethal permission.');
+    }
+    if (
+      activeAction?.requiresLethalReview !== undefined &&
+      (!['strike', 'hunt'].includes(activeAction.type) ||
+        typeof activeAction.requiresLethalReview !== 'boolean')
+    )
+      throw new Error('Invalid saved attack origin.');
+    if (
+      activeAction?.type === 'treat-scar' &&
+      (!bodyPolicy(world)?.reincarnation?.scars.some((scar) => scar.id === activeAction.scarId) ||
+        !activeAction.targetId)
+    )
+      throw new Error('Invalid saved scar treatment.');
     if (
       e.actor?.action?.type === 'strike' &&
       (!strikeDefinition(e.actor.action.definitionId, world, e.actor.action.weaponItemId) ||
@@ -965,7 +1009,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing active strike definition.');
     if (
       e.actor?.action?.type === 'strike' &&
-      e.actor.action.weaponItemId &&
+      e.actor.action.strikePhase &&
       (!['windup', 'recovery'].includes(e.actor.action.strikePhase ?? '') ||
         (e.actor.action.strikePhase === 'windup' && e.actor.action.strikeOutcome !== undefined) ||
         (e.actor.action.strikePhase === 'recovery' &&

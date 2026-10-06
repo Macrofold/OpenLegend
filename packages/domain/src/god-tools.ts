@@ -156,6 +156,12 @@ export function reviveActor(
   const current = original.entities[actorId];
   if (!current?.actor?.body)
     return reject(original, 'actor', 'Choose an actor with a compatible body.');
+  if (current.actor.pendingDeath || (current.remains && current.remains.sourceId !== current.id))
+    return reject(
+      original,
+      'reincarnation',
+      'A lost player life continues through its recovery action. Its old body remains separate.',
+    );
   if (expectedRevision !== undefined && current.actor.body.revision !== expectedRevision)
     return reject(original, 'stale', 'The body changed.');
   if (current.actor.alive)
@@ -180,6 +186,9 @@ export function reviveActor(
   const world = draftWorld(original);
   const entity = world.entities[actorId]!;
   const actor = entity.actor!;
+  if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
+    throw new Error('Physical life exhausted.');
+  actor.physicalLife = (actor.physicalLife ?? 0) + 1;
   actor.alive = true;
   actor.incapacitated = false;
   setBodyHealth(actor, actor.body!.maxHealth);

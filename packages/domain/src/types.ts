@@ -118,9 +118,15 @@ export type ActionType =
   | 'harvest'
   | 'cook'
   | 'status-effect'
+  | 'treat-scar'
   | 'replenish'
   | 'tend-fire';
 export interface Action {
+  requiresLethalReview?: boolean;
+  /** A physical life, rather than the continuing identity, is an attack's target. */
+  targetLife?: number;
+  lethalPermission?: import('./combat-consent.js').LethalPermission;
+  scarId?: string;
   /** The manufacturing meaning chosen when work started, independent of later authoring. */
   recipePin?: import('./world-modules.js').DefinitionPin;
   strikePhase?: 'windup' | 'recovery';
@@ -179,6 +185,12 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  /** Authored natural actions for bodies that do not use the manual-work family. */
+  naturalStrikeIds?: string[];
+  /** Identity/history survive a replacement body; unfinished effects do not. */
+  physicalLife?: number;
+  pendingDeath?: import('./reincarnation.js').PendingDeath;
+  scars?: Record<string, number>;
   conditions?: Record<string, import('./conditions.js').ConditionEpisode>;
   /** Attack recovery survives cancelling an already committed swing. */
   attackReadyAt?: number;
@@ -244,6 +256,9 @@ export interface HeatComponent {
   lit: boolean;
 }
 export interface Entity extends Named {
+  /** Authored outward detail, disclosed only with the perceived entity. */
+  description?: string;
+  threat?: import('./territorial-threat.js').TerritorialThreat;
   statusEffects?: Record<string, import('./status-effects.js').StatusEffectInstance>;
   /** Sparse attributes for non-actor entities; actors retain their existing owner. */
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
@@ -333,7 +348,13 @@ export interface CommandReceipt {
 export interface WorldState {
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
-  participationPolicy?: { safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint };
+  participationPolicy?: {
+    safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint;
+    exitExposureSeconds?: number;
+    exitDescription?: string;
+  };
+  /** Deadline authority is owned by participation, separate from operational presence. */
+  exitExposures?: Record<string, number>;
   resourceReservations?: Record<string, import('./resource-claims.js').ResourceReservation>;
   /** Pending offers only, bounded per offerer; saved with the world settings record. */
   itemOffers?: Record<string, import('./handover.js').ItemOffer>;
@@ -376,6 +397,7 @@ export interface WorldState {
   profile: { id: 'grounded-wilderness'; version: 1 };
   map: WorldMap;
   flightRoutes: Record<string, import('./spatial-state.js').FlightRoute>;
+  nativeStrikes?: Record<string, import('./strikes.js').StrikeDefinition>;
   entities: Record<string, Entity>;
   objectState: { revision: number };
   objectLineage?: Record<string, import('./objects.js').ObjectLineage>;
@@ -401,6 +423,8 @@ export interface WorldState {
   nextId: number;
 }
 interface Envelope {
+  /** Trusted caller classification; never accepted from a public command body. */
+  humanInitiated?: true;
   /** Selected meaning only; never native effect authority. */
   purpose?: string;
   id: string;
@@ -475,8 +499,21 @@ export type Command = Envelope &
     | { type: 'craft'; recipeId: string }
     | { type: 'replenish'; targetId: string; attributeId: string }
     | { type: 'equip' | 'eat'; itemId: string }
-    | { type: 'strike'; definitionId: string; targetId: string; weaponItemId?: string }
-    | { type: 'hunt'; targetId: string; weaponItemId?: string; ammoItemId?: string }
+    | {
+        type: 'strike';
+        definitionId: string;
+        targetId: string;
+        weaponItemId?: string;
+        lethalPermission?: import('./combat-consent.js').LethalPermission;
+      }
+    | {
+        type: 'hunt';
+        targetId: string;
+        weaponItemId?: string;
+        ammoItemId?: string;
+        lethalPermission?: import('./combat-consent.js').LethalPermission;
+      }
+    | { type: 'treat-scar'; scarId: string; targetId: string }
     | { type: 'cook'; itemId: string; heatId: string }
     | {
         type: 'handover';
@@ -521,7 +558,7 @@ export type Command = Envelope &
         expectedScope?: string;
       }
     | { type: 'inspect-activities'; after: number; methodAfter?: number }
-    | { type: 'cancel' | 'recover' }
+    | { type: 'cancel' | 'recover' | 'respawn' }
     | {
         type: 'say';
         text: string;

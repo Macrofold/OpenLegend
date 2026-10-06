@@ -1,6 +1,6 @@
 # Parallel batch 03 — Personal game — assignment tracker
 
-**Status: in progress October 5, 2026; PG03 and scoped PG04 are delivered; PG01's scoped live/browser journey, arrow assertion and accounting repairs are complete; embedding pricing and recipe-explanation fixes pass; one interrupted call awaits exact billing confirmation after provider-usage comparison. The other assignments retain their independent scope.**
+**Status: in progress October 6, 2026; PG03, scoped PG04 and PG05's encounter/death/danger delivery are complete; PG01's scoped live/browser journey and accounting repairs are complete except one exact billing confirmation; PG02 and combined batch acceptance remain open.**
 
 PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
 
@@ -57,10 +57,16 @@ Delivered October 4: the owner-authorized [meter/follow follow-up](../projects/p
 
 ## PG05 — First threat encounter design
 
-- [ ] Produce the paired first-threat encounter documents, source-backed missing-mechanism inventory, implementation stages and explicit owner choices in [PG05 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg05--design-the-first-dangerous-encounter).
-- [ ] Reconcile the design's references and proposed decisions without implementing combat or marking unresolved policy/runtime tasks complete.
+- [x] Produce the paired first-threat encounter documents, source-backed missing-mechanism inventory, implementation stages and explicit owner choices in [PG05 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg05--design-the-first-dangerous-encounter).
+- [x] Implement and qualify the approved optional stag, player death/reincarnation and danger slice through existing engine owners; retain broader unresolved policy/runtime tasks as open.
 
-Owners: [BW14](base-world.md#accepted-lifecycle-and-protection-delivery), MP04 in [multiplayer](multiplayer.md), [DG07/ND11](needs-design.md#dg07--human-participation-and-recoverable-conflict), D07/PS-D01 in [decisions](../../archive/05-project/open-decisions.md), and [base-world limits](../limits/base-world.md). PG05 completes when its design/decision package is ready; runtime delivery is a subsequent assignment. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg05--encounter-design-assignment-definition).
+**Runtime delivered October 4, 2026 after Mike's revised approval:** [feature specification](../projects/completed/first-threat-encounter-feature-spec.md), [technical design](../projects/completed/first-threat-encounter-tech-design.md), [current authored encounter](../worlds/base/first-threat-encounter.md), [Player Death](../worlds/base/player-death.md) and [Player Danger](../worlds/base/player-danger.md). This replaces the design-only recommendations of saved enrollment, guaranteed warning, all-possession collapse and retreat-only wall-time exit with the owner's selected signs/no prompt, corpse/half-type/scars, one-attack final blow and five simulated seconds of exposed fade.
+
+- [x] Deliver actual avoidance/cache pickup, confrontation/natural contact, injury interruption, finite sight/search/route/time, displacement/death and persistent aftermath through existing owners.
+- [x] Deliver player death/Continue, half of distinct carried item types retained, a lootable corpse, scars/treatment and simulated departure exposure while preserving inactive/PvP protection.
+- [x] Qualify focused native/service/SQL/browser flows, exact request replay/stale life, current cold reconstruction, keyboard/compact surfaces and relevant bounded costs; [evidence and limits](../verification/first-threat-encounter.md).
+
+Owners: [BW14](base-world.md#accepted-lifecycle-and-protection-delivery), MP04 in [multiplayer](multiplayer.md), [DG07/ND11](needs-design.md#dg07--human-participation-and-recoverable-conflict), D07/PS-D01 in [decisions](../../archive/05-project/open-decisions.md), and [base-world limits](../limits/base-world.md). The bounded runtime delivery is complete; broader D07/PS-D01, ND11, inactive-protection and cooperative-PvP questions remain open as recorded in those owners. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg05--encounter-design-assignment-definition).
 
 ## Integration boundary
 

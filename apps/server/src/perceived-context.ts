@@ -29,6 +29,7 @@ const activities: Record<Action['type'], string | undefined> = {
   strike: 'striking',
   replenish: 'replenishing a supply',
   'tend-fire': 'tending a fire',
+  'treat-scar': 'treating an injury',
   // The internal effect identifier is not itself an observable activity description.
   'status-effect': undefined,
 };

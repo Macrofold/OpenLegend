@@ -1,0 +1,14 @@
+/* Keep the consequential choices visible while long attack facts scroll. */
+.ol-lethal-review .ol-person-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: min(92dvh, calc(100dvh - var(--space-6)));
+}
+.ol-lethal-review .ol-person-form {
+  overflow: auto;
+  min-height: 0;
+}
+.ol-lethal-review .ol-modal-head,
+.ol-lethal-review .ol-modal-actions {
+  flex-shrink: 0;
+}

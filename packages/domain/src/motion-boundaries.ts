@@ -183,11 +183,15 @@ export function nativeMotionInterval(
             ));
         bound = Math.min(bound, path.travel, held ? cadence : path.stop);
       }
-    } else if (entity.animal) {
+    } else if (entity.animal && !entity.threat) {
       const travel = travelFor(id);
       const animal = entity.animal;
       if (animal.danger > 0 && animal.threatPosition)
-        bound = Math.min(bound, escapeDuration(entity), travel / nativeMovementSpeed(entity, true));
+        bound = Math.min(
+          bound,
+          escapeDuration(entity),
+          travel / nativeMovementSpeed(world, entity, true),
+        );
       else if (travel < 0.4 && animal.wanderSeconds > TIME_EPSILON)
         bound = Math.min(bound, animal.wanderSeconds);
     }
@@ -211,13 +215,17 @@ const lift = (p: WorldPoint, y: number): WorldPoint => ({ x: p.x, y: p.y + y, z:
 
 /** Approach along an unchanged fixed route; routes toward living targets can replan inside the
  * slice and keep the declared sampled bound. Sweeps can fail, so staying put is an outcome. */
-function walkerTracks(entity: Entity, seconds: number): MotionTrack[] | 'sampled' | undefined {
+function walkerTracks(
+  world: WorldState,
+  entity: Entity,
+  seconds: number,
+): MotionTrack[] | 'sampled' | undefined {
   const action = entity.actor?.action;
   if (action?.stage !== 'approaching' || action.navigation || !action.path.length) return;
   if (action.type !== 'move') return 'sampled';
   const start = { ...worldPosition(entity) },
     point = action.path[0]!,
-    speed = nativeMovementSpeed(entity);
+    speed = nativeMovementSpeed(world, entity);
   const delta = distance3D(start, point),
     travel = speed * seconds;
   const arrival = delta <= travel ? (delta > 0 ? delta / speed : 0) : seconds;
@@ -239,7 +247,7 @@ function fleeTracks(world: WorldState, entity: Entity, seconds: number): MotionT
   if (!start) return;
   const outcomes: MotionTrack[] = [{ at: [0, seconds], pose: [start, start] }];
   if (animal.escapeHeading === null) return outcomes;
-  const step = nativeMovementSpeed(entity, true) * seconds;
+  const step = nativeMovementSpeed(world, entity, true) * seconds;
   const end = {
     x: start.x + Math.cos(animal.escapeHeading) * step,
     z: start.z + Math.sin(animal.escapeHeading) * step,
@@ -588,7 +596,7 @@ function walkerCertainTrack(
   if (!support) return;
   const map = spatialMap(world),
     body = bodyProfile(entity),
-    speed = nativeMovementSpeed(entity);
+    speed = nativeMovementSpeed(world, entity);
   let from = { ...worldPosition(entity), surfaceId: support };
   const track: MotionTrack = { at: [0], pose: [{ x: from.x, y: from.y, z: from.z }] };
   for (const point of action.path) {
@@ -845,7 +853,7 @@ export function sensoryCrossingBound(
       const route = walkerCertainTrack(world, entity, horizon);
       if (route) remember(id, route, horizon);
       else {
-        const tracks = walkerTracks(entity, horizon);
+        const tracks = walkerTracks(world, entity, horizon);
         if (tracks && tracks !== 'sampled') outcomes.set(id, tracks);
       }
     } else {

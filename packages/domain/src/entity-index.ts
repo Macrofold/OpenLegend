@@ -11,6 +11,7 @@ const draftMembership = new WeakMap<WorldState, Set<string>>();
 const physicalRoot = (entity: Entity | undefined) =>
   !!entity &&
   !entity.retirement &&
+  !entity.actor?.pendingDeath &&
   entity.remains?.phase !== 'removed' &&
   entity.placement?.mode === 'world';
 function snapshotRoots(entities: WorldState['entities']): readonly string[] {

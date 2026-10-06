@@ -27,7 +27,7 @@ export function canAccessContainer(world: WorldState, actorId: string, id: strin
   const grantedBag = chain.at(-2)?.container?.access?.actors.includes(actorId);
   // Another person's carried inventory never opens here; items reach them only through
   // their accepted offer (docs/worlds/base/social.md#offering-and-accepting-possessions).
-  if (root.actor && !grantedBag) return false;
+  if (root.actor && !root.remains && !grantedBag) return false;
   return (
     seesEntity(world, actor, root) && canReachEntity(world, actor, root, world.itemHandling.reach)
   );

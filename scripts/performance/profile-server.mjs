@@ -27,6 +27,46 @@ const distribution = (values) => ({
   maxMs: values.length ? Math.max(...values) : null,
 });
 
+// Drive presence/control with the measured login's current lease. The process-local
+// setup lease can become stale when HTTP entry or a restart replaces control.
+async function controlWorld(base, cookie, input) {
+  const view = await (await fetch(base + '/api/state', { headers: { cookie } })).json();
+  const response = await fetch(base + '/api/control', {
+    method: 'POST',
+    headers: {
+      cookie,
+      origin: base,
+      'content-type': 'application/json',
+      'x-ol-scope': view.access.scope,
+    },
+    body: JSON.stringify(input),
+  });
+  const result = await response.json();
+  if (!response.ok || !result.ok)
+    throw Error(result.message ?? 'Could not control profiling world');
+}
+async function resumeWorld(base, cookie) {
+  const view = await (await fetch(base + '/api/state', { headers: { cookie } })).json();
+  const response = await fetch(base + '/api/embodiment', {
+    method: 'POST',
+    headers: {
+      cookie,
+      origin: base,
+      'content-type': 'application/json',
+      'x-ol-scope': view.access.scope,
+    },
+    body: JSON.stringify({
+      id: randomUUID(),
+      expectedGeneration: view.access.controlGeneration,
+      operation: 'replace',
+    }),
+  });
+  const result = await response.json();
+  if (!response.ok || !result.ok)
+    throw Error(result.message ?? 'Could not take control of profiling fixture');
+  return (await fetch(base + '/api/state', { headers: { cookie } })).json();
+}
+
 // A separate process keeps a busy server event loop from silently delaying the load generator.
 // This is a bounded profiling workload, not a browser or live-cognition acceptance suite.
 async function clientLoad() {
@@ -96,7 +136,12 @@ async function clientLoad() {
     periodic(3000, async (i) => {
       const response = await fetch(base + '/api/presence', {
         method: 'POST',
-        headers: { cookie, origin: base, 'content-type': 'application/json' },
+        headers: {
+          cookie,
+          origin: base,
+          'content-type': 'application/json',
+          'x-ol-scope': settings.scope,
+        },
         body: JSON.stringify({ clientId: presenceId, visible: true, sequence: i + 2 }),
         signal: AbortSignal.timeout(15000),
       });
@@ -111,7 +156,12 @@ async function clientLoad() {
           : { type: 'move', position: { ...position, x: position.x + (i % 2 ? 0 : 0.5) } };
       const response = await fetch(base + '/api/command', {
         method: 'POST',
-        headers: { cookie, origin: base, 'content-type': 'application/json' },
+        headers: {
+          cookie,
+          origin: base,
+          'content-type': 'application/json',
+          'x-ol-scope': settings.scope,
+        },
         body: JSON.stringify({ commandId: randomUUID(), commandEpoch: epoch, command }),
         signal: AbortSignal.timeout(15000),
       });
@@ -401,14 +451,18 @@ async function main() {
     let cookie = response.headers.get('set-cookie')?.split(';')[0];
     await response.arrayBuffer();
     if (!cookie) throw Error('No local session');
-    await game.service.setConnection('profile-setup', true);
-    await game.service.control({ paused: false, clientId: 'profile-setup', presenceSequence: 1 });
+    await resumeWorld(base, cookie);
+    await controlWorld(base, cookie, {
+      paused: false,
+      clientId: 'profile-setup',
+      presenceSequence: 1,
+    });
     await game.service.transition((world) => ({
       world: populateScenario(structuredClone(world), scenario),
       events: [],
       outcome: { ok: true, code: 'profile-setup', message: 'Disposable profiling scene' },
     }));
-    await game.service.control({ paused: true });
+    await controlWorld(base, cookie, { paused: true });
     await game.service.flush();
     await game.close();
     game = undefined;
@@ -419,21 +473,11 @@ async function main() {
     base = 'http://' + config.host + ':' + game.server.address().port;
     response = await fetch(base + '/api/state');
     cookie = response.headers.get('set-cookie')?.split(';')[0];
-    const state = await response.json();
+    await response.arrayBuffer();
     if (!cookie) throw Error('No restarted local session');
     // The reopened fixture has a new login, while its setup login may still hold
     // control. Take control explicitly through the same endpoint used by a player.
-    response = await fetch(base + '/api/embodiment', {
-      method: 'POST',
-      headers: { cookie, origin: base, 'content-type': 'application/json' },
-      body: JSON.stringify({
-        id: randomUUID(),
-        expectedGeneration: state.access.controlGeneration,
-        operation: 'replace',
-      }),
-    });
-    const control = await response.json();
-    if (!response.ok || !control.ok) throw Error('Could not take control of profiling fixture');
+    const state = await resumeWorld(base, cookie);
     const actor = game.service.world.entities[game.service.controlledEntityId];
     const position = { ...worldPosition(actor), surfaceId: worldSupport(actor) };
     // Keep warm-up and measured work continuous: an intervening pause can itself
@@ -445,6 +489,7 @@ async function main() {
         base,
         cookie,
         epoch: game.service.commandEpoch,
+        scope: state.access.scope,
         position,
         seconds,
         warmupSeconds,
@@ -452,7 +497,7 @@ async function main() {
         commandIntervalMs,
       });
       activePhase = beginPhase();
-      await game.service.control({
+      await controlWorld(base, cookie, {
         paused: false,
         speed,
         clientId: presenceId,
@@ -483,7 +528,7 @@ async function main() {
       // Between speeds retain ordinary pause admission; final shutdown already stops
       // the server's own timer before draining and saving, so no last pause is needed.
       if (index + 1 < speeds.length) {
-        await game.service.control({ paused: true });
+        await controlWorld(base, cookie, { paused: true });
         await game.service.flush();
       }
     }

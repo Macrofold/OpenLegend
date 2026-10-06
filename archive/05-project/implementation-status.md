@@ -4,6 +4,10 @@ PostgreSQL is now the sole local/production backend. Decision and reflection pre
 
 Current runtime performance follow-through: [3× scene implementation and evidence](../../docs/verification/three-times-scene-performance.md), tracked under PF00/PF03–06/PF08–09/PF12. Source-specific saves, query routing and redundant cognition/diagnostic work are reduced; scheduled route admission avoids redundant draft geometry reads. [Command/frame follow-up](../../docs/verification/command-frame-spikes.md) records isolated gains and the remaining host/device qualification. Smooth sustained 3× acceptance remains open.
 
+## First threat and player death — October 4, 2026
+
+One optional territorial stag/cache is implemented with physical signs, real bypass/cover, finite observed pursuit/contact and persistent displacement/death. Player death leaves a separate corpse, retains floor-half distinct carried types, and Continue returns the same identity near a usable campfire with a removable scar. Human potentially lethal attacks require one exact final-blow review; departure stays vulnerable for five normally simulated seconds before protected inactivity. [Current world contract](../../docs/worlds/base/first-threat-encounter.md), [PG05 status](../../docs/maintainers/parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design) and [evidence](../../docs/verification/first-threat-encounter.md) distinguish delivered behavior from broader PvP/indirect harm, NPC ghosts/ordinary revival, uncoached balance and hosted/dense capacity still open.
+
 ## Gameplay availability
 
 Source-reviewed against `56b8c383` (2026-09-26). This is the current exposure summary, not a second task or limits inventory. **Native support**, **automatic NPC use**, **player controls**, **creator controls** and **verified acceptance** are independent. A registered definition, API or completed foundation does not establish all five. This documentation pass adds no runtime qualification.

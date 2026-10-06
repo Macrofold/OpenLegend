@@ -20,6 +20,7 @@ import {
   remember,
   recipeFamily,
   validateDeclaration,
+  lethalAttackOffer,
 } from './index.js';
 import type { Command, DeclarationDraft, WorldState } from './types.js';
 
@@ -79,6 +80,20 @@ function command(
   } as Command);
   expect(result.outcome.ok, result.outcome.message).toBe(true);
   return result.world;
+}
+/** These hunting fixtures explicitly choose the offered lethal attempt. */
+function confirmedAttack(
+  world: WorldState,
+  body: Record<string, unknown>,
+  actorId = PLAYER_ID,
+): WorldState {
+  const intended = { ...body, actorId, id: `test-${world.sequence}-${world.nextId}` } as Command;
+  const review = lethalAttackOffer(world, intended);
+  return command(
+    world,
+    review ? { ...review.command, lethalPermission: review.permission } : body,
+    actorId,
+  );
 }
 function itemId(world: WorldState, definitionId: string, actorId = PLAYER_ID): string {
   const item = inventoryFor(world, actorId).find((value) => value.definitionId === definitionId);
@@ -276,7 +291,7 @@ describe('bounded invented mechanisms', () => {
   it('completes a generated sling → hunt → finite harvest → cook → eat loop', () => {
     let world = makeSling();
     const ammoBefore = quantityOf(world, PLAYER_ID, 'stone');
-    world = command(world, { type: 'hunt', targetId: 'hare-1' });
+    world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(ammoBefore - 1);
     expect(world.entities['hare-1']!.actor!.alive).toBe(false);
@@ -333,7 +348,7 @@ describe('bounded invented mechanisms', () => {
     world = command(world, { type: 'craft', recipeId });
     world = advanceWorld(world, 72).world;
     expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(1);
-    world = command(world, { type: 'hunt', targetId: 'hare-1' });
+    world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 30).world;
     expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
     expect(
@@ -348,7 +363,7 @@ describe('bounded invented mechanisms', () => {
         itemFor(world, world.entities[PLAYER_ID]!.actor!.equippedItemId!)!.definitionId
       ]!;
     weapon.launcher!.accuracy = 0.6;
-    world = command(world, { type: 'hunt', targetId: 'hare-1' });
+    world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 20).world;
     expect(world.events.some((event) => event.type === 'shot' && event.data?.hit === false)).toBe(
       true,
@@ -359,7 +374,7 @@ describe('bounded invented mechanisms', () => {
   });
   it('resolves competing harvesters once and never duplicates finite remains', () => {
     let world = makeSling();
-    world = command(world, { type: 'hunt', targetId: 'hare-1' });
+    world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 24).world;
     const position = worldPosition(world.entities['hare-1']!);
     setSpatialPosition(
@@ -384,7 +399,7 @@ describe('bounded invented mechanisms', () => {
   });
   it('revalidates the animal before spending ammunition on a queued shot', () => {
     let world = makeSling();
-    world = command(world, { type: 'hunt', targetId: 'hare-1' });
+    world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world.entities['hare-1']!.actor!.alive = false;
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(6);
@@ -405,6 +420,11 @@ describe('bounded invented mechanisms', () => {
     );
     candidate.inputs[0]!.definitionId = 'stone';
     expect(validateDeclaration(world, candidate).length).toBeGreaterThan(0);
+    expect(
+      validateDeclaration(createWorld(), candidate).includes(
+        'This material cannot fill the selected role.',
+      ),
+    ).toBe(true);
     const rejected = admitDeclaration(world, candidate, {
       actorId: PLAYER_ID,
       requestId: 'stone-shaft',
@@ -428,7 +448,7 @@ describe('bounded invented mechanisms', () => {
       itemId: itemId(world, world.recipes[admitted.recipeId]!.outputDefinitionId),
     });
     for (let attempt = 0; attempt < 2; attempt++) {
-      world = command(world, { type: 'hunt', targetId: 'hare-1' });
+      world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
       for (let seconds = 0; seconds < 400 && world.entities[PLAYER_ID]!.actor!.action; seconds++)
         world = advanceWorld(world, 1).world;
       expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
@@ -503,7 +523,7 @@ describe('perception, survival and continuity', () => {
       ),
     ).toBe(false);
   });
-  it('allows NPC death while preserving separate player recovery and history', () => {
+  it('allows NPC death while preserving player continuity across a new physical life', () => {
     let world = createWorld();
     for (const item of inventoryFor(world, NPC_ID)) retireItem(world, item.id, 'fixture');
     for (const entity of Object.values(world.entities))
@@ -514,9 +534,13 @@ describe('perception, survival and continuity', () => {
     }
     world = advanceWorld(world, 3).world;
     expect(world.entities[NPC_ID]!.actor!.alive).toBe(false);
-    expect(world.entities[PLAYER_ID]!.actor!.incapacitated).toBe(true);
-    world = command(world, { type: 'recover' });
-    expect(world.entities[PLAYER_ID]!.actor!.health).toBe(65);
+    const player = world.entities[PLAYER_ID]!;
+    expect(player.actor!.alive).toBe(false);
+    expect(world.entities[player.actor!.pendingDeath!.corpseId]!.remains!.sourceId).toBe(PLAYER_ID);
+    world = command(world, { type: 'respawn' });
+    expect(world.entities[PLAYER_ID]!.actor!.health).toBe(100);
+    expect(world.entities[PLAYER_ID]!.actor!.physicalLife).toBe(1);
+    expect(Object.values(world.entities[PLAYER_ID]!.actor!.scars!)).toEqual([1]);
     expect(world.events.some((event) => event.type === 'death' && event.actorId === NPC_ID)).toBe(
       true,
     );

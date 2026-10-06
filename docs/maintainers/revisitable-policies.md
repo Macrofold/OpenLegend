@@ -48,7 +48,7 @@ The accepted [product-scalability direction](../product-scalability/README.md) a
 
 The [explicit tab Resume contract](../projects/completed/tab-resume-feature-spec.md) now replaces follower tabs with a blocking dialog for another selected open tab: leaving releases control, sole-tab entry/refocus are automatic, and only deliberate Resume Here transfers between open tabs. The single-character/current-controller envelope remains; the revised presentation is tracked by [MP18](multiplayer.md#mp18--explicit-tab-resume).
 
-**Current policy:** [Account setup](../../README.md#configure-authenticated-shared-play) and [aggregate native work](../architecture.md#typed-state-claims-and-aggregate-work) use configurable eight-hour sessions, fifteen-second real-time exit grace, one active embodiment per account/world, and versioned finite process-wide native-work ceilings. Characterless operator/spectator sessions add no embodiment or control lease. These are operational v1 choices, not universal world laws or hosted capacity promises. [Measured release admission](../performance.md#bounded-admission) now coordinates 100-player defaults and admits 64 MB of native event output without trimming witnesses; PF11/D5 performance acceptance remains open.
+**Current policy:** [Account setup](../../README.md#configure-authenticated-shared-play) and [aggregate native work](../architecture.md#typed-state-claims-and-aggregate-work) use configurable eight-hour sessions, fifteen-second operational exit grace for worlds without an installed simulated exposure (the base world uses five simulated normal seconds), one active embodiment per account/world, and versioned finite process-wide native-work ceilings. Characterless operator/spectator sessions add no embodiment or control lease. These are operational v1 choices, not universal world laws or hosted capacity promises. [Measured release admission](../performance.md#bounded-admission) now coordinates 100-player defaults and admits 64 MB of native event output without trimming witnesses; PF11/D5 performance acceptance remains open.
 
 **Why revisit:** Multiple simultaneous embodiments, deployment security needs, new supported recurring families or measured shared-world load may need different envelopes. The final mixed profile has an explicit [PF03/09 CPU gap](performance.md#foundations-15-measurements-and-remaining-cost).
 
@@ -56,7 +56,7 @@ The [explicit tab Resume contract](../projects/completed/tab-resume-feature-spec
 
 **Decision authority:** Project maintainer for embodiment/product policy; operator for supported session/grace settings; implementing engineer for measured native bounds within accepted semantics. Bounds never authorize truncating owed effects or creating spending allowances.
 
-Before implementing [dangerous-logout continuation](../product-scalability/participation-and-protection.md), revisit the current exit grace and distinguish encounter continuation from protected post-exit absence. [PS-D01](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns the remaining fairness/ending choices; PS05 does not change today's grace or control rules merely by being documented.
+Before implementing [dangerous-logout continuation](../product-scalability/participation-and-protection.md), revisit the current exit grace and distinguish encounter continuation from protected post-exit absence. [PS-D01](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns the remaining fairness/ending choices; PS05 does not change current grace or control rules merely by being documented. Mike's October 4 PG05 decision separately selected and implemented [five fully simulated seconds](../worlds/base/player-danger.md#five-simulated-seconds-to-leave) for the base world; coarse/background continuation and wider fairness remain PS-D01 work.
 
 ## Limits inventory and concrete work
 
@@ -77,3 +77,13 @@ The proposed [independent calendar](../product-scalability/participation-and-pro
 ## Maintaining this register
 
 Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trigger and decision authority. Add only known revisitable decisions, not every constant or hypothetical concern. When a trigger is relevant, raise it in the task/PR; put resulting work or unresolved choices in their existing owners. An accepted change updates the policy, affected summaries and this entry together; significant decisions go in the [decision history](../documentation-changelog.md). Retire superseded entries with a link to their replacement or recorded decision, not another copy of the contract.
+
+## RP07 — First danger and death balance
+
+**Current policy:** [Observational player danger](../worlds/base/player-danger.md), [death/type loss/scars](../worlds/base/player-death.md) and [the optional stag](../worlds/base/first-threat-encounter.md); numerical/family bounds remain [FT01–FT07](../limits/base-world.md#ft01--proposed-first-threat-scope-and-reward).
+
+**Why revisit:** These are Mike's brutal-play direction and delegated initial tuning, not measured optimal difficulty. Signs can be missed, the odd type is lost, and repeated deaths add treatment work. The safe bypass and finite reward should create worthwhile choices without repetitive recovery chores.
+
+**Review trigger:** Uncoached players repeatedly cannot discover/escape danger, death/treatment prevents resuming worthwhile play, distinct worthless types materially undermine loss, or real constructed rest density makes selection costly. Present play evidence and alternatives before adding compulsory warnings, changing loss/scars or building new mechanics; a trigger does not grant permission to weaken inactive protection or enable new indirect harm/PvP.
+
+**Decision authority:** Mike for danger/recovery policy changes; engineers may tune within explicitly delegated scope with recorded reasons. No new warning or recovery exception is automatically activated.

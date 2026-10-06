@@ -1,8 +1,8 @@
 # Parallel batch 03 — Personal game — technical task definitions
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG03 and scoped PG04 are delivered; PG01's exact billing hold, PG02/PG05 and broader PF05 qualification remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation, PG02 and combined acceptance remain open. | 2026-10-06   |
 
 PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
 
@@ -270,9 +270,11 @@ The owner authorized the remaining PG04/PF05 latency and larger-load work after 
 
 ## PG05 — Encounter-design assignment definition
 
+**Design delivered October 3, 2026; bounded runtime delivered October 4 after Mike's revised approval:** [completed design](completed/first-threat-encounter-tech-design.md) and [verification](../verification/first-threat-encounter.md) record the source-backed design, current stag/death/danger behavior and remaining broader D07/PS-D01 decisions. The original design-only scope below is retained as historical assignment context; the child document's [implementation breakdown](completed/first-threat-encounter-tech-design.md#conditional-implementation-breakdown) now owns the delivered runtime work. This authorization did not depend on the other batch assignments.
+
 Use [lifecycle and protection](../worlds/base/lifecycle-and-protection.md), BW14/MP04, D07/PS-D01, DG07/ND11, relevant [combat/rescue repertoire](../repertoires/combat-rescue.md) and action examples. Read current animal movement/flee behavior in `packages/domain/src/kernel.ts`, authored bodies/species under `worlds/base/`, attack result/equipment families, native participation/protection and existing event/experience projection before claiming a mechanic exists.
 
-Create `docs/projects/first-threat-encounter-feature-spec.md` and `docs/projects/first-threat-encounter-tech-design.md`. The pair owns this bounded proposal; update the existing BW14/DG07/ND11 references rather than creating another combat backlog. Do not mark D07 resolved merely because the design recommends an answer.
+The completed feature/technical pair lives in `docs/projects/completed/first-threat-encounter-feature-spec.md` and `docs/projects/completed/first-threat-encounter-tech-design.md`. Those documents and the linked BW14/DG07/ND11 records own this bounded proposal and delivery; do not create another combat backlog or mark D07 resolved merely because the design recommends an answer.
 
 The feature document must name one encounter and explain why someone would willingly engage. Define discoverability, warning, a viable noncombat alternative, confrontation, interruption, disengagement and a satisfying consequence. Compare the recommended animal case with a hostile speaking character and with deferral. A territorial animal is a recommendation to evaluate, not a required enemy taxonomy or an excuse to hardcode engine behavior.
 
@@ -282,11 +284,11 @@ Present explicit decisions for human incapacitation/recovery and possession pres
 
 Describe player feedback with a small proposed layout/wording example: warning source, current target/range, active action, interrupted/escaped/defeated result and next possible action. Include keyboard and compact-screen implications under the handbook. Choose placeholder art only if it honestly communicates the intended threat; presentation cannot imply implemented attack animations or invisible mechanics.
 
-Completion is the full [PG05 definition](parallel-batch-03-personal-game-feature-spec.md#pg05--design-the-first-dangerous-encounter), with a decision list the owner can answer, preferred choices and their consequences, explicit implementation stages and owner-linked acceptance. Runtime delivery waits for the unresolved consequential choices and implementation authorization; the design task itself is immediately runnable.
+The original design completed the full [PG05 definition](parallel-batch-03-personal-game-feature-spec.md#pg05--design-the-first-dangerous-encounter), including a decision list, preferred choices and consequences, implementation stages and owner-linked acceptance. Mike later selected the bounded choices and authorized delivery; the completed child technical design now records execution and remaining owner questions.
 
 ## Verification and document reconciliation
 
-This planning packet requires source/reference/acceptance review and documentation checks only. No browser session, model call, benchmark or runtime acceptance was performed by writing it. Future workers use AGENTS.md for verification, authoring tests, budget, commits and completion; these task definitions add no competing workflow.
+This allocation packet records assignment context; it is not evidence of runtime acceptance. [PG05 verification evidence](../verification/first-threat-encounter.md) records the actual native, service, storage and browser checks and their limits. Future workers use AGENTS.md for verification, authoring tests, budget, commits and completion; these task definitions add no competing workflow.
 
 Each task updates its scoped PG row and the exact linked parent requirements when evidence changes them. A completed child does not close all CE, INV, WW, PF, AC, BW or UIUX work. Mark project files completed/move them only when their own agreed scope is actually complete, following the canonical documentation policy.
 

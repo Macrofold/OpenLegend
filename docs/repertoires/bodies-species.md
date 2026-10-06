@@ -763,3 +763,7 @@ Alternative movement, climbing, gliding and a bridge-spinning animal (BSP-253) c
 Localized bruising (BSP-021), calluses (BSP-011), grooming/coat changes (BSP-082/161), detailed blood depletion (BSP-244), regional cold (BSP-247), lingering body heat (BSP-249) and nutrient accounting beyond a full stomach (BSP-250) are Detail. Basic harm, survival, rest and recovery remain earlier requirements. These detailed states must not turn each expedition into obligatory treatment or maintenance. Small surface or fit changes need not be complex systems.
 
 Life-cycle care, synthetic citizens, radically different atmospheres and distributed personhood are Specialist in this survival-adventure selection, not claims about the value of real people or permanent exclusions from the library. Distinctive anatomy and transformation can be Depth without every impossible body being Frontier. Current source limitations, privacy, participation and identity continuity remain intact.
+
+## Current first death-scar consumer
+
+The bundled world's [Player Death](../worlds/base/player-death.md#death-scars) now implements stiff leg, unsteady hands and tender chest as removable bodily penalties. They are separate from descriptive personality traits and reuse movement/injury/treatment owners. The broader lasting-injury/scar repertoire remains ideas for selected future consumers, not a universal installed status catalog.

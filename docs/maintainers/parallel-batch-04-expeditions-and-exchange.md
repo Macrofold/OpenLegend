@@ -6,6 +6,8 @@
 
 ## PX01 — A readable wilderness threat
 
+October 4 reconciliation: PG05 now delivers this overlapping encounter scope on `codex/pg05-first-threat`, including the owner-selected danger/death choices. Its [evidence](../verification/first-threat-encounter.md) and [current contract](../worlds/base/first-threat-encounter.md) supersede the old missing-choice assumption. Keep the integration checks below open until that branch is integrated; reconcile PX01 to the remaining integration/invalidated evidence rather than reimplementing the same encounter.
+
 - [ ] Prerequisites supplied: PG05's paired encounter design with relevant owner decisions settled, plus the integrated/qualified overlapping embodied-feedback behavior. **Not ready at the inspected planning baseline.**
 - [ ] Deliver warning, avoidance, engagement and aftermath under [PX01 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px01--a-readable-wilderness-threat) and [technical ownership](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px01--encounter-implementation-contract), preserving protection and actor-permitted pursuit.
 - [ ] Complete integrated encounter acceptance, including loss/disconnection/recovery, and reconcile the exact delivered portions of PG05/BW14/MP04/PS05 without closing broader human-conflict or ghost scope.

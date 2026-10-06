@@ -21,5 +21,6 @@ export const NATIVE_STRIKES: Readonly<Record<string, StrikeDefinition>> = Object
     workSeconds: 30,
     damage: 5,
     animation: 'punch',
+    requiredBodyPlan: 'biped',
   }),
 });

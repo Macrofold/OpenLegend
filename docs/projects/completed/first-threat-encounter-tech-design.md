@@ -1,0 +1,114 @@
+# First threat encounter — technical design
+
+| Status    | Current progress                                                                                                                                       | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | Selected runtime, documentation, required review and focused native/service/browser verification are delivered; broader qualification remains tracked. | 2026-10-04   |
+
+[Feature specification](first-threat-encounter-feature-spec.md) · [Current authored rules](../../worlds/base/first-threat-encounter.md)
+
+## Scope, baseline and plan
+
+Initial design-only source inspection used `c4e18d91848b5b6d367dda1d7214a9f8222cf070`; the October 3 documentation delivery changed zero production logic lines and ran formatting/link/diff checks, without runtime or provider claims. Mike's October 4 revisions and chat go-ahead authorized complete runtime implementation. Four design commits were reconciled onto freshly fetched `origin/main` **d36ec3bd66f9b317748147003cc174f58cfd5642**, from `https://github.com/Macrofold/OpenLegend.git`.
+
+The working checkout changed from detached `ac4f3fb8` to `codex/pg05-first-threat` in `/Users/mzw/.codex/worktrees/1dfa/OpenLegend`; the main checkout was not edited. The durable plan estimated **1,650–2,850 production logic lines excluding tests**, high risk across lethal authority, identity, custody, privacy, departure timing, current-format persistence and UI. It superseded the earlier collapse-only 1,000–1,750-line estimate. No old-save support, paid models, raids/factions/ecology or universal combat framework is authorized.
+
+## Source-backed current support and missing computation
+
+Read the original batch's PG05 assignment and parallel boundaries, [shared implementation boundary](../parallel-batch-03-personal-game-tech-design.md#shared-implementation-boundary), [architecture](../../architecture.md), [targeted actions](../../targeted-actions.md), [lifecycle/protection](../../worlds/base/lifecycle-and-protection.md), [BW14](../../maintainers/base-world.md#accepted-lifecycle-and-protection-delivery), [MP04](../../maintainers/multiplayer.md#mp041--participation-and-bounded-exit-contract), [D07/PS-D01](../../../archive/05-project/open-decisions.md#pg05--proposed-first-encounter-choices), [simulation time](../../simulation-time.md) and [save/load](../../save-and-load.md). The supplied older next-batch filenames had been renamed to the current parallel-batch packet; current paths are used throughout.
+
+| Concern             | Reused support                                                                                                          | Delivered addition / remaining boundary                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Animal body/content | Existing native deer anatomy, 36 health, energy and finite harvest without human cognition/speech                       | One authored territorial individual/site; ordinary prey behavior preserved                                |
+| Decisions/movement  | Native animal phase, nearby spatial index, sight, direct clearance and persistent navigation worker                     | Saved finite pursuit/search/return controller using observed positions; no hidden shooter tracking        |
+| One attack          | Existing strike/hunt admission, windup/impact/recovery, exact tool/ammunition and geometry checks                       | Supported quadruped natural contact and injury interruption; one exact lethal review for human attacks    |
+| Body/custody        | One living-body mutation owner, indexed nested items, object moves and physical remains/decay                           | Player death separates a corpse, half-type partition, physical life, pending Continue and removable scars |
+| Participation       | Domain active/exiting/inactive state plus authenticated server control/exit identity                                    | Saved game-time exposure and protection-before-impact ordering; wall time cannot shorten base fade        |
+| Feedback            | Scoped sensory events, observed naming, catalogue, work/results, React Aria modals                                      | Physical cues, review facts, private death snapshot, Continue, scars/treatment and visible fade           |
+| Persistence         | Atomic current world/entity/actor records, ordered simulation saves, durable human receipts and generation invalidation | Current-format native profiles/controller/exposure/life/scars/death fields; no parallel combat journal    |
+
+Broader PvP/indirect-harm policy, NPC incapacitation/rescue/ghosts/ordinary revival, towns/rest construction and PS coarse/background resolution remain unimplemented. Existing creator/native environmental effects are separate authorities, not client combat permission. This feature does not turn engine-supported body mutations into a universally safe player hazard API.
+
+## Semantic owners and engine/world seam
+
+Apply the [authored-reality principles](../../engine-and-world-boundaries.md#design-principles-for-every-feature): world laws/content have one authored source, generic execution performs current validation and exact mutation, and v1 specificity states its owner/limit/expansion trigger.
+
+| Owner                                                                  | Responsibility and consumers                                                                                                                                              |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worlds/base/first-threat.ts`, `death.ts`, body/participation policies | Site/signs/reward, eligible bodies, motives, tuning, mortality, scars, rest family/radius, exposure and all player-facing policy wording                                  |
+| `territorial-threat.ts`                                                | Deterministic supported controller; target/life, last sighting, episode/search/review/route budget and relinquishment; supplies native intentions only                    |
+| Existing `kernel.ts` / strikes / navigation                            | Admit and finish one action, geometry/resource/definition checks, natural capability, interruption/recovery, finite native command execution; existing worker owns routes |
+| `living.ts` / `reincarnation.ts` / objects / remains                   | One body reconciliation, separate corpse and exact custody partition, checked replacement placement, scar effects/treatment and decay                                     |
+| Participation / simulation boundaries                                  | Vulnerability deadline, unfinished-work interruption, active/inactive protection and deterministic tied-effect order                                                      |
+| Server authority / WorldService / records                              | Authenticated control, bounded ephemeral review, exact request replay, scoped disclosure, current-format commits and restoration                                          |
+| Protocol/client / existing scene                                       | Permitted attack/death/scar/fade fields, accessible intentions and original presentation; never grants harm/respawn authority                                             |
+
+Policy/content stay with the bundled world in every layer. There is no deer-name engine check, new target scheduler, paid animal mind, second loot/save service or unused external-world loader. Another installed world can omit these laws or choose different supported rates/aftermath. The finite controller family and reincarnation transition are the actual expansion seams; add a new semantic family only for a real unsupported consumer.
+
+## Approach, attack and disengagement rules
+
+The authored [encounter contract](../../worlds/base/first-threat-encounter.md#eligibility-warning-and-reaction) owns values. The native phase filters nearby candidates by eligibility and exact distance before sight and selects nearest in one pass. Entry signs are independent physical objects; movement has no consent guard. One target/action is held, with its physical life. Pursuit reads current sight only; search has a saved last sighting and finite deadline. Return chooses home or refuge according to persistent wounds/relinquishment. Original deadline/detour allowance survive reacquisition and save/load. Timed-out lives need an observed departure from the entry footprint; failed terminal return stops in place.
+
+Natural contact is registered in the existing native strike dictionary and granted explicitly by the stag's body capability. Biped unarmed/manual-work restrictions remain for unrelated bodies. Preparation emits an ordinary scoped physical cue; impact rechecks current body, participation, sight, exact profile/tool and reach. Positive received injury interrupts windup with recovery retained. Existing player weapon/ranged accuracy and resource semantics stay in their current owners. Ordinary animals retain their upstream evidence-based escape controller; this stag never simultaneously wanders/flees. Unseen misses do not supply attacker facts. The existing retreat accuracy factor follows actual movement, not a prior-shot timer.
+
+At a simultaneous death, current stable native ordering decides committed effects; the old body's uncommitted work stops. Target-life pins prevent delayed effects from reaching a successor or creator-revived body. An earlier committed projectile/effect keeps its owner and costs; logout never refunds it. Current hunting consumes ammunition at completion, so an unfinished hunt interrupted by departure leaves unused ammunition.
+
+## Human lethal authority and departure
+
+`combat-consent.ts` computes the exact supported attack commitment and conservative injury using current tool/ammunition definitions, physical lives and scar factors. Authenticated human requests, including human-controlled speaking bodies, require one review when potential injury can kill. Public input carries only an opaque server token; generated proposals/history cannot manufacture or learn permission. Preview creates no action, debit, random draw, lock or durable authority. One pending review per controlled actor shares the existing request-capacity bound and expires after 60 real seconds.
+
+The token binds login/control/world/timeline generation and exact original input. Admission pins exact body/tool/ammo/effect; impact rechecks. Source/target replacement, changed tool/profile/scar or control/world invalidates it. Confirmed health-only changes are covered, while a previously unconfirmed attack newly lethal at impact stops before remaining damage/ammunition. Durable command retries return the original accepted result once; reused tokens on a new request are refused. Unconsumed reviews are discarded at restart. The dialog consumes existing authored activity facts, avoiding a second weapon-description policy.
+
+[Player Danger](../../worlds/base/player-danger.md#five-simulated-seconds-to-leave) owns exposure. Departure identity remains operational, but installed base-world vulnerability uses one saved simulation deadline. Starting departure interrupts uncommitted human work/rest/plans and releases reservations. New native attacks remain possible. The server keeps mechanics running through a lone fade, excludes pause/navigation preparation/downtime and does not manufacture downtime combat. At expiry, continuous effects settle first, then inactive protection, then discrete work; existing time precision prevents floating-point residue from letting a tied hit win. Returning control cancels a fade; another genuine return/departure starts a new one, while duplicate absence notifications do not renew it.
+
+## Death, persistence and live changes
+
+[Player Death execution](player-death-tech-design.md) details one exact custody/life transaction. Retained identity/private history stay separate from the independently visible corpse. Pending death contains its own event-time retained/left quantities; projection cannot query present corpse contents remotely. Equipped/nested/borrowed possessions are included, quantities conserved and same-type lots share fate. Continue is a single durable physical-life change, not login resurrection. Scar effects reuse movement/injury owners; treatment has exact completion cost and interruption.
+
+The current save format is `development-2026-10-04-player-lives`. Current records/validation/capture update together for native profiles, territorial policy/progress, life, scars, pending death, corpse links and game-time exposure. Reject incompatible development saves under [AGENTS.md](../../../AGENTS.md#development-save-policy); no migrations, aliases, fallback readers or automatic reset/deletion. Same-format atomicity, complete cold reconstruction, scoped history/privacy and account/spending overlays remain required. Save/restore adopts a whole coherent world, never selective loot or combat undo.
+
+Definition/tool pins and current action dependencies prevent incompatible changed content from completing old attacks. Removing a target/controller cannot resurrect it through a late route or review; removing a fire yields explicit placement/treatment refusal. Authored creator revival increments physical life but does not refill supplies or clear relinquishment; pending player and successor corpse revival are refused. NPC ghost/summoning/ordinary revival remains BW15. Native simulation retains the existing durability window; human acknowledgements remain durable. No SQL write per warning/frame/hit is added.
+
+## Costs, scheduling and growth
+
+Enemy sensing/behavior/contact, death selection, placement and scars require **zero paid model calls**; additional Jev cost and task total are **$0**. Actual invention generation retains its separate authorization/cost owner. Native controller commands do not append human action-learning records or durable command receipts each review.
+
+Use existing nearby/entity/custody indexes and worker meshes. Candidate cost grows with the nearby broad-phase set; cheap exact footprint/body/participation checks precede sight and no all-world sorting occurs. There is no lossy candidate cap or claim that one target bounds crowded scenes. Relevant deadlines join existing temporal boundaries; no timer loop or wall clock enters the domain. Only costly detours consume the episode allowance. Exhaustion is a refusal/stopped aggression, not fabricated absence or unreachability.
+
+Death visits each carried lot/edge once, sorts distinct type IDs and samples half using saved randomness; giant quantities do not expand allocation. Changed custody chains use existing moves and one coupled record publication. Respawn is rare request work: scan exposed roots for rest-family candidates, rank distance and check in-range local points; nearest fallback tests lazily. It is not a per-tick rest scan or path from corpse to camp. A dedicated rest index is deferred until many constructed rest spots make this measured path costly; the present world has few fixed fires. No unused registry/resumable death framework is added. Budget exhaustion preserves atomic publication through existing native work admission.
+
+No new history/corpse/loot deletion horizon is introduced. Existing physical decay does not bound retained identity, ground-item or history growth. Current cold records/paging and ordered simulation persistence retain their owners. The [verification report](../../verification/first-threat-encounter.md) records a matched crowded-world capacity failure, lot/quantity measurements and starter full-server evidence; this is not hosted/population/lower-end qualification. The existing full-server profiler now uses the HTTP login's current control scope for setup and measured commands, rather than a stale process-local lease.
+
+## Conditional implementation breakdown
+
+Mike resolved the required choices and authorized all stages; the original conditional gate is satisfied. Stages remain reviewable owner boundaries rather than runtime prerequisites on PG01–PG04.
+
+| Stage / owner                           | Delivered work                                                                                                                 | Completion evidence                                                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| 1 — BW14 / body, custody, participation | Fatal physical life, exact half-type partition/corpse, pending Continue, scars, protected absence and current-format authority | Native conservation/interruption/placement and service persistence/replay                                                |
+| 2 — BW14 / actions, native movement     | Natural contact, interruption/recovery, one exact lethal review, finite observed controller/search/return                      | Actual ordinary attack/avoidance/death and stale/retry/failure checks                                                    |
+| 3 — authored content / MP04             | One stag/cache/signs/stone barrier/bypass/refuge plus five simulated seconds of fade                                           | Actual peaceful reward route, injury/displacement, fade/tied expiry                                                      |
+| 4 — protocol/client                     | Scoped cue/work/death/scar/fade projection, final-blow modal, Continue and treatment                                           | Browser Cancel/Escape/confirmation, death/Continue and compact/keyboard review                                           |
+| 5 — integration / maintainers           | Required review fixes, selected checks, measured costs, canonical decisions/limits/status and local commit                     | [Recorded evidence](../../verification/first-threat-encounter.md); broader human balance/capacity limits remain explicit |
+
+Future expansion is conditional on its own choices: speaking hostile people need motive/social/NPC recovery design; new indirect attacks need attributed harm/D07 policy; towns/rest construction need a rest-family/index consumer; ordinary NPC resurrection/ghosts remain BW15. No unfinished agreed runtime stage is relabeled as one of those future projects.
+
+### Verification plan and actual evidence boundary
+
+Use focused existing checks and a single missing downstream journey through real native/navigation/body/custody/participation owners. Service checks use authenticated HTTP, durable receipts and only disposable explicit loopback PostgreSQL. Browser checks cover actual modal/death/Continue/scar surfaces and keyboard/compact behavior. Measure nearby/dense native work, lot-sized death, cold persistence and complete server timing separately. No live provider, external player enjoyment, physical lower-end device, hosted scale or bespoke animation qualification is claimed. The report retains failures and fixes as evidence, not retrospective claims that every workload passed.
+
+### Concrete owner-decision list
+
+Mike delegated routine unresolved details; these choices are implemented and available for critique, not pending permission gates:
+
+1. **Odd item types:** retain `floor(T/2)` and lose the extra type. This keeps the rule strict and simple. Alternative: retain the extra (`ceil`) or alternate/randomize rounding to soften one-item deaths.
+2. **Rest/new life:** uniformly select usable in-range campfires, nearest usable fallback, cold fires eligible, full new-life health/food/energy and eight checked arrival points. This makes recovery playable while scars/loss carry the cost. Alternatives: require lit fires, lower new-life physiology or add towns when authored.
+3. **Scars:** three bodily penalties, category penalty once, repeated category adds treatment count; one prepared fiber plus ten normal real seconds at camp per treatment. This provides work without exponential disability. Alternatives: cumulative stronger penalties, longer treatment/material variety or unique lasting traits after play evidence.
+4. **Lethality:** one ordinary potentially lethal attack review, persistent NPC/animal death and no unconsciousness/execution-only framework. This fits existing attacks and preserves a moral pause. Alternative: a separate incapacitated final-blow system requires its own recovery/defense design.
+5. **Indirect harm:** no new damaging indirect family; independent animal perception can create incidental shared danger. Deliberate luring/property/PvP/background rules remain open D07/PS choices, not permission for new hazards.
+6. **Logout/reconnect:** five fully simulated normal seconds, expiry wins a tie, no auto-retreat or unfinished human work; genuine returned control cancels the fade and a subsequent departure starts fresh exposure. This avoids trapping a returned player under a stale deadline. Alternative: retain a previous exposure across connection churn until a separately defined stable-return interval, at the cost of more state and less predictable play.
+
+## Maintained records
+
+- Implementation: [PG05](../../maintainers/parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design), [BW14](../../maintainers/base-world.md#accepted-lifecycle-and-protection-delivery), [DG07/ND11](../../maintainers/needs-design.md#dg07--human-participation-and-recoverable-conflict), [MP04](../../maintainers/multiplayer.md#mp041--participation-and-bounded-exit-contract).
+- Limits and constraints: [FT01–FT07](../../limits/base-world.md#ft01--proposed-first-threat-scope-and-reward), [native work](../../limits/native-work.md), [objects](../../limits/objects.md), [persistence](../../limits/persistence.md).
+- Related contract/design: [Current authored encounter](../../worlds/base/first-threat-encounter.md), [lifecycle/protection](../../worlds/base/lifecycle-and-protection.md), [verification](../../verification/first-threat-encounter.md), [D07/PS-D01 decision record](../../../archive/05-project/open-decisions.md#pg05--proposed-first-encounter-choices).

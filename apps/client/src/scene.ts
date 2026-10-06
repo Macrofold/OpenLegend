@@ -78,6 +78,7 @@ import {
 } from './art';
 
 interface RenderedEntity {
+  attackPose?: boolean;
   model?: MercenaryActor;
   departedAt?: number;
   observed: boolean;
@@ -344,7 +345,9 @@ export class WildernessScene implements WorldRenderer {
       this.callbacks.cameraChanged?.(this.cameraState());
     }
     const playerAbsent =
-      view.player.participation === 'inactive' || view.player.bodyState === 'removed';
+      !!view.player.death ||
+      view.player.participation === 'inactive' ||
+      view.player.bodyState === 'removed';
     const entities = [
       ...view.entities.filter((entity) => entity.id !== view.player.id),
       ...(playerAbsent ? [] : [playerEntity(view)]),
@@ -880,6 +883,7 @@ export class WildernessScene implements WorldRenderer {
     this.app.root.addChild(root);
     root.setPosition(view.position.x, view.position.y, view.position.z);
     const dead = !!view.bodyState;
+    const person = view.kind === 'actor' || (view.kind === 'remains' && view.bodyPlan === 'biped');
     const equipped =
       view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
     const deer = view.subtype === 'deer',
@@ -897,7 +901,7 @@ export class WildernessScene implements WorldRenderer {
             .join('|')}`
         : crate
           ? 'crate-mesh'
-          : view.kind === 'actor'
+          : person
             ? `person:${view.id !== game.player.id}:${equipped}:${view.bodyState ?? ''}`
             : view.kind === 'animal' || view.kind === 'remains'
               ? `animal:${view.subtype}:${view.appearance}:${view.bodyState ?? ''}`
@@ -909,7 +913,7 @@ export class WildernessScene implements WorldRenderer {
         ? 1
         : crate
           ? 1
-          : view.kind === 'actor'
+          : person
             ? dead
               ? 2.1
               : 1.05
@@ -931,7 +935,7 @@ export class WildernessScene implements WorldRenderer {
         ? 0.55
         : crate
           ? 0.8
-          : view.kind === 'actor'
+          : person
             ? dead
               ? 0.55
               : 2.1
@@ -957,7 +961,7 @@ export class WildernessScene implements WorldRenderer {
           ? [itemPileArt(view.contents ?? [])]
           : crate
             ? []
-            : view.kind === 'actor'
+            : person
               ? (dead ? [0] : [0, 1, 2, 3, 4, 5]).map((frame) =>
                   personArt(view.id !== game.player.id, dead ? 0 : frame, equipped && !dead, dead),
                 )
@@ -982,7 +986,7 @@ export class WildernessScene implements WorldRenderer {
             return m;
           });
       // Read alpha once while creating an asset, not a Canvas readback on each hover frame.
-      if (view.kind === 'actor' || view.kind === 'animal')
+      if (person || view.kind === 'animal')
         for (const material of materials) setVisibilityStencil(material, personStencil);
       const pixels = images.map((image) =>
         image.getContext('2d')!.getImageData(0, 0, image.width, image.height),
@@ -1060,7 +1064,7 @@ export class WildernessScene implements WorldRenderer {
         sprite,
         asset.materials[0]!,
         !crate,
-        view.kind === 'actor' || view.kind === 'animal',
+        person || view.kind === 'animal',
       ),
       renderedSupport: view.supportSurfaceId,
       view,
@@ -1361,6 +1365,9 @@ export class WildernessScene implements WorldRenderer {
         for (const mesh of entry.sprite.render?.meshInstances ?? [])
           mesh.setParameter('material_opacity', opacity);
       }
+      if (entry.departedAt === undefined)
+        for (const mesh of entry.sprite.render?.meshInstances ?? [])
+          mesh.setParameter('material_opacity', 1 - (entry.view.departureProgress ?? 0));
       if (!entry.observed) {
         this.presentation.updateReveal(
           entry.reveal,
@@ -1461,15 +1468,19 @@ export class WildernessScene implements WorldRenderer {
           entry.scaleFacing = entry.facing;
           this.orientCard(entry.sprite);
         }
-        if (moving || entry.lastMoving)
+        const animalStrike = entry.view.kind === 'animal' && punch?.kind === 'melee';
+        if (moving || entry.lastMoving || animalStrike || entry.attackPose)
           this.orientCard(
             entry.sprite,
-            entry.view.kind === 'actor' &&
-              !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
-              moving
-              ? Math.sin(this.elapsed * 12) * 0.015
-              : 0,
+            animalStrike
+              ? -0.12 * (punch.phase === 'windup' ? punch.progress : 1 - punch.progress)
+              : entry.view.kind === 'actor' &&
+                  !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
+                  moving
+                ? Math.sin(this.elapsed * 12) * 0.015
+                : 0,
           );
+        entry.attackPose = animalStrike;
         entry.lastMoving = moving;
         if (positionChanged) {
           const p = entry.root.getPosition();
@@ -1613,7 +1624,8 @@ export class WildernessScene implements WorldRenderer {
       entry.root.enabled &&
       !entry.view.bodyState &&
       !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
-      !entry.view.actionAnimation;
+      !entry.view.actionAnimation &&
+      entry.view.departureProgress === undefined;
     entry.model.setVisible(supported);
     entry.sprite.enabled = !entry.model.visible;
   }

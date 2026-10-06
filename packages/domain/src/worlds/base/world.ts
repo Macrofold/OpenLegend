@@ -8,6 +8,8 @@ import { emptyActionExperience } from '../../action-experience.js';
 import { ADA_IDENTITY } from './characters.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { BASE_PARTICIPATION_POLICY } from './participation.js';
+import { NATIVE_STRIKES } from './strikes.js';
+import { STAG_CONTACT, installFirstThreat } from './first-threat.js';
 import { addItem, nextRandom, nextId } from '../../data.js';
 import { BASE_ITEM_HANDLING } from './item-handling.js';
 import { NATIVE_ITEMS } from './items.js';
@@ -143,6 +145,7 @@ export function createWorld(
       spatial: starterSpatialLayout(STARTER_EXTENT.width, STARTER_EXTENT.depth),
     },
     flightRoutes: starterFlightRoutes(),
+    nativeStrikes: structuredClone({ ...NATIVE_STRIKES, [STAG_CONTACT.id]: STAG_CONTACT }),
     entities: {},
     objectState: { revision: 0 },
     itemDefinitions: structuredClone(NATIVE_ITEMS),
@@ -384,6 +387,7 @@ export function createWorld(
     importance: 8,
   });
   populateOuterWilderness(world);
+  installFirstThreat(world);
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);

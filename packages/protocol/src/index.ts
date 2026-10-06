@@ -46,6 +46,8 @@ export interface CommandInput {
     | 'inspect-activities'
     | 'cancel'
     | 'recover'
+    | 'respawn'
+    | 'treat-scar'
     | 'teach';
   purpose?: string;
   activityFamilyId?: string;
@@ -75,6 +77,8 @@ export interface CommandInput {
   position?: SurfacePoint;
   distance?: number;
   attemptId?: string;
+  scarId?: string;
+  lethalReviewId?: string;
   quantity?: number;
   expectedRevision?: number;
   placementRevision?: number;
@@ -261,6 +265,9 @@ export interface EntityView extends Named {
   health?: number;
   bodyRevision?: number;
   bodyState?: 'dead' | 'rotting';
+  bodyPlan?: 'biped' | 'quadruped' | 'avian';
+  /** Observed fraction of the installed simulated departure exposure. */
+  departureProgress?: number;
   species?: string;
   quantity?: number;
   actions: ActionOption[];
@@ -494,6 +501,18 @@ export interface GameView {
     offsetHours: number;
   };
   player: Named & {
+    life?: number;
+    death?: {
+      message: string;
+      at: number;
+      corpseId: string;
+      retainedLabel: string;
+      lostLabel: string;
+      retained: Array<{ name: string; quantity: number }>;
+      left: Array<{ name: string; quantity: number }>;
+    } | null;
+    departureNotice?: string;
+    scars?: Array<{ id: string; name: string; description: string; treatmentsRemaining: number }>;
     bodyState?: 'dead' | 'rotting' | 'removed';
     appearance?: EntityView['appearance'];
     participation?: 'active' | 'exiting' | 'inactive';
@@ -594,6 +613,19 @@ export interface ApiResult {
   recipeId?: string;
   goalId?: string;
   planId?: string;
+  lethalReview?: {
+    id: string;
+    title: string;
+    description: string;
+    targetLabel: string;
+    attack: {
+      name: string;
+      tool?: string;
+      facts: Array<{ name: string; value: string; critical: boolean }>;
+    };
+    confirmLabel: string;
+    cancelLabel: string;
+  };
 }
 
 export interface GodPersonFields {

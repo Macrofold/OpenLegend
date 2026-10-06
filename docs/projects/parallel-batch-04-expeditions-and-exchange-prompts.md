@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                  | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five standalone prompts are prepared; their delivery and explicit prerequisite gates remain open. | 2026-10-03   |
+| Not started | Five standalone prompts are prepared; their delivery and explicit prerequisite gates remain open. | 2026-10-04   |
 
 Use the [allocation/readiness table](parallel-batch-04-expeditions-and-exchange-feature-spec.md#allocation-and-readiness) before distributing these. **PX01 is conditional on the approved encounter design and overlapping runtime work. PX04 needs integrated PG02. All runtime tasks consume integrated PG03/PG04 where relevant. PX05 is design only and can start independently.** The owner supplies the correct starting branch; these instructions do not direct workers to communicate with each other. [Technical boundaries](parallel-batch-04-expeditions-and-exchange-tech-design.md#shared-boundaries-and-delivery-order) settle shared ownership.
 
@@ -11,7 +11,7 @@ Use the [allocation/readiness table](parallel-batch-04-expeditions-and-exchange-
 ```text
 Implement PX01: one readable wilderness threat with warning, a viable way to avoid it, voluntary confrontation and understandable aftermath. Follow AGENTS.md and applicable guidance.
 
-This assignment is ready only on a branch containing the approved PG05 first-threat encounter feature specification and technical design, the relevant settled recovery/protection decisions, and the overlapping injury/targeting/escape/remains work. Those expected files are docs/projects/first-threat-encounter-feature-spec.md and docs/projects/first-threat-encounter-tech-design.md. If they or a consequential decision are absent, report the specific unmet prerequisite rather than inventing its rules or duplicating the earlier assignment.
+This assignment is ready only on a branch containing the approved PG05 first-threat encounter feature specification and technical design, the relevant settled recovery/protection decisions, and the overlapping injury/targeting/escape/remains work. Those expected files are docs/projects/completed/first-threat-encounter-feature-spec.md and docs/projects/completed/first-threat-encounter-tech-design.md. If they or a consequential decision are absent, report the specific unmet prerequisite rather than inventing its rules or duplicating the earlier assignment.
 
 Read docs/projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md, “PX01 — A readable wilderness threat”; the matching “PX01 — Encounter implementation contract” and shared boundaries in parallel-batch-04-expeditions-and-exchange-tech-design.md; and docs/maintainers/parallel-batch-04-expeditions-and-exchange.md, PX01. The approved PG05 pair owns the creature, warning/escalation, pursuit, reward, loss and recovery behavior.
 

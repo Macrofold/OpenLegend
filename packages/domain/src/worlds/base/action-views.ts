@@ -9,6 +9,7 @@ import { strikeDefinition, describeAttack } from '../../strikes.js';
 import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
+import { reincarnationPolicy } from '../../reincarnation.js';
 
 type ViewPossessions = {
   items: readonly ItemInstance[];
@@ -90,10 +91,20 @@ function activityView(
     follow: 'Follow',
     replenish: 'Replenish',
     recover: 'Recover',
+    'treat-scar': 'Treat a scar',
     say: 'Speak',
     teach: 'Teach',
   };
   const view: ActivityView = { name: command.purpose ?? names[command.type] ?? 'Act', facts: [] };
+  if (command.type === 'treat-scar') {
+    const treatment = reincarnationPolicy(world)?.treatment;
+    if (treatment)
+      view.facts.push({
+        name: 'treatment',
+        value: `${treatment.quantity} ${world.itemDefinitions[treatment.materialId]?.name ?? 'material'} and ${treatment.workSeconds} game seconds beside a rest spot; injury interrupts treatment.`,
+        critical: true,
+      });
+  }
   if (perceived) {
     view.target = observerDescription(world, command.actorId, target.id);
     const a = worldPosition(actor),

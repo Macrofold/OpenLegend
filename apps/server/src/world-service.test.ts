@@ -79,14 +79,18 @@ describe('world presence, time and durable commands', () => {
     await service.setConnection('background-stream', false);
     expect(service.paused).toBe(false);
     await service.setConnection('another-stream', false);
+    expect(service.pauseReason).toBeNull();
+    for (let i = 0; i < 20; i++) {
+      clock.now += 250;
+      await service.tick(0.25);
+    }
     expect(service.pauseReason).toBe('away');
-    await service.tick(1);
-    expect(service.world.simTime).toBe(60);
+    expect(service.world.simTime).toBe(360);
     clock.now += 60_000;
     await service.setConnection('returned-stream', true);
-    expect(service.world.simTime).toBe(60);
+    expect(service.world.simTime).toBe(360);
     await service.tick(0.5);
-    expect(service.world.simTime).toBe(90);
+    expect(service.world.simTime).toBe(390);
   });
 
   it('preserves independent settings and half speed across PostgreSQL restart', async () => {
@@ -118,51 +122,54 @@ describe('world presence, time and durable commands', () => {
     expect(restored.service.world.simTime).toBe(15);
   });
 
-  it('starts absent and advances the requested game time at each speed', async () => {
+  it('settles disconnected exposure and advances the requested game time at each speed', async () => {
     await Promise.all(
       [0.5, 1, 3, 8].map(async (speed) => {
         const { service, clock } = await setup();
         expect(service.paused).toBe(true);
         expect(service.pauseReason).toBe('away');
         await service.tick(1);
-        expect(service.world.simTime).toBe(0);
+        expect(service.world.simTime).toBe(60);
+        for (let i = 0; i < 16; i++) {
+          clock.now += 250;
+          await service.tick(0.25);
+        }
+        expect(service.world.simTime).toBe(300);
         await activate(service);
         expect((await service.control({ speed })).ok).toBe(true);
-        expect(
-          (
-            await service.command('rest', {
-              type: 'status-effect',
-              definitionId: 'wilderness:restorative-rest',
-              targetId: PLAYER_ID,
-              effectOperation: 'activate',
-            })
-          ).ok,
-        ).toBe(true);
+        const restResult = await service.command('rest', {
+          type: 'status-effect',
+          definitionId: 'wilderness:restorative-rest',
+          targetId: PLAYER_ID,
+          effectOperation: 'activate',
+        });
+        expect(restResult.ok, restResult.message).toBe(true);
         await run(service, clock, 6 / speed);
-        expect(service.world.simTime).toBeCloseTo(360, 9);
+        expect(service.world.simTime).toBeCloseTo(660, 9);
       }),
     );
   });
-  it('freezes immediately on explicit absence and performs no return catch-up', async () => {
+  it('simulates five vulnerable seconds on explicit absence, then freezes without return catch-up', async () => {
     const { service, clock } = await setup();
     await activate(service);
     await run(service, clock, 1);
     await service.setPresence('test-client', false);
-    const before = structuredClone(service.world);
+    const before = service.world.simTime;
+    for (let i = 0; i < 20; i++) {
+      clock.now += 250;
+      await service.tick(0.25);
+    }
+    expect(service.world.simTime).toBe(before + 300);
+    expect(service.world.entities[PLAYER_ID]!.actor!.participation!.phase).toBe('inactive');
+    const rng = service.world.rngState;
     clock.now += 60_000;
     await service.tick(60);
-    expect(service.world.simTime).toBe(before.simTime);
-    expect(service.world.rngState).toBe(before.rngState);
-    // Operational departure may change participation while physical time stays frozen.
-    const { participation: _beforeParticipation, ...bodyBefore } =
-      before.entities[PLAYER_ID]!.actor!;
-    const { participation: _afterParticipation, ...bodyAfter } =
-      service.world.entities[PLAYER_ID]!.actor!;
-    expect(bodyAfter).toEqual(bodyBefore);
+    expect(service.world.simTime).toBe(before + 300);
+    expect(service.world.rngState).toBe(rng);
     await activate(service);
-    expect(service.world.simTime).toBe(before.simTime);
+    expect(service.world.simTime).toBe(before + 300);
     await service.tick(0.25);
-    expect(service.world.simTime).toBe(before.simTime + 15);
+    expect(service.world.simTime).toBe(before + 315);
   });
   it('refreshes the local composition scope while fencing already captured control scopes', async () => {
     const { service } = await setup();
@@ -180,17 +187,22 @@ describe('world presence, time and durable commands', () => {
     expect(service.currentScope(captured, 'play', true)).toBe(false);
     expect(service.currentScope(service.localScope, 'play', true)).toBe(true);
   });
-  it('expires a silent connection after the 12-second grace period', async () => {
+  it('begins five simulated seconds of exposure after a silent connection expires', async () => {
     const { service, clock } = await setup();
     await activate(service);
     await service.tick(0.25);
     const time = service.world.simTime;
     clock.now += 12_001;
     await service.tick(0.25);
+    expect(service.paused).toBe(false);
+    expect(service.world.entities[PLAYER_ID]!.actor!.participation!.phase).toBe('exiting');
+    for (let i = 0; i < 19; i++) {
+      clock.now += 250;
+      await service.tick(0.25);
+    }
     expect(service.paused).toBe(true);
-    expect(service.world.paused).toBe(true);
     expect(service.pauseReason).toBe('away');
-    expect(service.world.simTime).toBe(time);
+    expect(service.world.simTime).toBe(time + 300);
   });
   it('keeps manual pause across reconnect and rejects paused speech/actions', async () => {
     const { service, clock } = await setup();
@@ -206,7 +218,12 @@ describe('world presence, time and durable commands', () => {
     await run(service, clock, 3);
     await service.setPresence('test-client', false);
     await activate(service);
-    expect(service.world).toEqual(state);
+    expect(service.world.simTime).toBe(state.simTime);
+    expect(service.world.rngState).toBe(state.rngState);
+    expect(service.world.entities[PLAYER_ID]!.actor!.health).toBe(
+      state.entities[PLAYER_ID]!.actor!.health,
+    );
+    expect(service.world.entities[PLAYER_ID]!.actor!.action).toBeNull();
     expect(service.pauseReason).toBe('manual');
     expect((await service.say('paused-speech', NPC_ID, 'This was never spoken.')).code).toBe(
       'paused',
@@ -278,9 +295,8 @@ describe('world presence, time and durable commands', () => {
     const restored = await setup(path, clock);
     await activate(restored.service);
     expect(restored.service.world.simTime).toBe(previous.simTime);
-    expect(restored.service.world.entities[PLAYER_ID]!.actor!.action).toEqual(
-      previous.entities[PLAYER_ID]!.actor!.action,
-    );
+    // Starting departure interrupts human work, including a restored rest attempt.
+    expect(restored.service.world.entities[PLAYER_ID]!.actor!.action).toBeNull();
     expect(restored.service.speed).toBe(3);
     expect(restored.service.pauseReason).toBe('manual');
     await restored.service.control({ paused: false });

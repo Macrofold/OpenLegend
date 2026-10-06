@@ -1,14 +1,14 @@
 # Parallel batch 03 — Personal game — assignment prompts
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG03 and scoped PG04 are delivered; PG01's exact billing hold, PG02/PG05 and broader PF05 qualification remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation, PG02 and combined acceptance remain open. | 2026-10-06   |
 
 PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
 
 [Prioritized scope](parallel-batch-03-personal-game-feature-spec.md) · [Technical definitions](parallel-batch-03-personal-game-tech-design.md) · [Status and parent mapping](../maintainers/parallel-batch-03-personal-game.md)
 
-Start each assignment from a branch containing this planning packet. PG01–PG04 are delivery assignments; PG05 is design only. They can begin independently; PG01/PG02 live closure additionally requires the configured provider and authorized allowance described in the feature scope. Shared meanings are settled in the technical document, and tasks do not communicate with one another. Follow current AGENTS.md for the development workflow; these prompts add task scope, not separate Git, testing, spending or approval rules.
+Start each assignment from a branch containing this planning packet. PG01–PG04 are delivery assignments; PG05 began as design only and later received separate owner authorization for the bounded runtime slice, now delivered. They can begin independently; PG01/PG02 live closure additionally requires the configured provider and authorized allowance described in the feature scope. Shared meanings are settled in the technical document, and tasks do not communicate with one another. Follow current AGENTS.md for the development workflow; these prompts add task scope, not separate Git, testing, spending or approval rules.
 
 ## Prompt 1 — Make an invention matter in play
 
@@ -66,10 +66,10 @@ Demonstrate equivalent enabled/refused decisions and actual transitions, includi
 Do not communicate with other tasks. PG03 consumes today's interface; its presentation is not yours to redesign. General SQL batching, scheduling changes and family-authoring semantics are excluded. Update PG04, PF05, AC11 and the existing command/frame plan/report with the exact scoped outcome and limits; do not close wider performance qualification without its evidence.
 ```
 
-## Prompt 5 — Design a first dangerous encounter
+## Prompt 5 — Historical design assignment (completed; runtime slice delivered)
 
 ```text
-Complete PG05 as a design task only: specify one optional wilderness threat that makes observation, movement and useful inventions matter, with meaningful avoidance, confrontation and aftermath. Follow AGENTS.md and applicable design/prioritization guidance. Do not implement runtime combat in this assignment.
+This historical design assignment is complete, and its bounded runtime slice was separately authorized and delivered. Do not dispatch this prompt again. See the completed encounter and player-death design records for current behavior, verification and remaining broader decisions.
 
 Read docs/projects/parallel-batch-03-personal-game-feature-spec.md: "PG05 — Design the first dangerous encounter" and "Parallel boundaries and sequencing". Read docs/projects/parallel-batch-03-personal-game-tech-design.md: "Shared implementation boundary" and "PG05 — Encounter-design assignment definition". Follow its source and canonical-policy reading map, particularly docs/worlds/base/lifecycle-and-protection.md, BW14/MP04 and D07/PS-D01.
 

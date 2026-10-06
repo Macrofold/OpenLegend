@@ -134,7 +134,10 @@ export function pickUpItems(
   quantity?: number,
 ): { itemId: string; definitionId: string; quantity: number }[] | string {
   const pile = getOwn(world.entities, pileId);
-  if (pile?.kind !== 'item-pile' || !canHandleItems(world, actor))
+  if (
+    !(pile?.kind === 'item-pile' || (pile?.remains && pile.remains.phase !== 'removed')) ||
+    !canHandleItems(world, actor)
+  )
     return 'The pile or item-handling capability is unavailable.';
   const items = portableItems(world, pileId).filter((i) => !itemId || i.id === itemId);
   if (!items.length) return 'Those portable items are no longer in the pile.';
@@ -167,7 +170,7 @@ export function pickUpItems(
     actor,
     pile.id,
   );
-  if (!itemsForOwner(world, pileId).length) {
+  if (pile.kind === 'item-pile' && !itemsForOwner(world, pileId).length) {
     delete world.entities[pileId];
     rootMembershipChanged(world, pileId);
   }

@@ -86,6 +86,22 @@ import {
 } from './objects.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
+import { finishSimulatedExits } from './participation.js';
+import {
+  territorialIntention,
+  territorialReviewDue,
+  territorialRefusal,
+  admitTerritorialDetour,
+  noteTerritorialInjury,
+} from './territorial-threat.js';
+import { attackReviewProblem, lethalPermission, type LethalPermission } from './combat-consent.js';
+import {
+  respawnPlayer,
+  reincarnationPolicy,
+  scarTreatmentProblem,
+  completeScarTreatment,
+  scarFactor,
+} from './reincarnation.js';
 import { advanceRemains } from './remains.js';
 import { advanceAnimal, rememberAttack } from './worlds/base/animal-behavior.js';
 import { actionTargetsCurrent } from './action-targets.js';
@@ -125,7 +141,7 @@ import {
   dropItemReason,
   itemsForOwner,
 } from './item-handling.js';
-import { strikeDefinition } from './strikes.js';
+import { strikeDefinition, supportsStrike } from './strikes.js';
 import { inspectPossessions, inspectedContainer } from './inventory-inspection.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
@@ -332,6 +348,7 @@ export function ammoFor(
 }
 function actionReach(world: WorldState, action: Action): number {
   if (action.type === 'pickup') return world.itemHandling.reach;
+  if (action.type === 'treat-scar') return reincarnationPolicy(world)?.treatment?.reach ?? 0;
   if (action.type === 'strike') {
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
     return definition?.approachRange ?? definition?.range ?? 0;
@@ -408,6 +425,12 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
     return outcome(false, 'unreachable', 'No supported route to a reachable stance was found.');
   if (path.status !== 'reached' && path.status !== 'pending')
     return outcome(false, path.status, 'No supported route was found.');
+  if (path.status === 'pending' && !admitTerritorialDetour(actor))
+    return outcome(
+      false,
+      'route-allowance',
+      'The animal has exhausted this pursuit route allowance.',
+    );
   action.stage = 'approaching';
   action.path = path.path;
   action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
@@ -598,7 +621,12 @@ function workMaterials(
   }
   return claims;
 }
-function startWork(world: WorldState, actor: Entity, action: Action): Outcome | null {
+function startWork(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  events: WorldEvent[],
+): Outcome | null {
   const requirements = materialRequirements(world, action);
   const selected = workMaterials(world, actor, action);
   if ('ok' in selected) return selected;
@@ -623,6 +651,8 @@ function startWork(world: WorldState, actor: Entity, action: Action): Outcome | 
   action.consumed = requirements;
   action.stage = 'working';
   action.path = [];
+  if (actor.threat && action.type === 'strike')
+    emit(world, events, 'attack-preparation', actor.threat.policy.windupText, actor);
   return null;
 }
 
@@ -669,10 +699,16 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   const reject = (code: string, message: string) => outcome(false, code, message);
   const source = getOwn(world.entities, command.actorId);
   if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
+  if (command.type === 'respawn') {
+    if (world.paused) return reject('paused', 'Resume the world before continuing.');
+    return source.actor.pendingDeath
+      ? null
+      : reject('respawn-unavailable', 'There is no lost life to continue.');
+  }
   if (!activelyParticipates(source))
     return reject('inactive', 'Return to the world before acting.');
   if (
-    source.actor.controller === 'player' &&
+    (source.actor.controller === 'player' || command.humanInitiated) &&
     command.type === 'strike' &&
     world.entities[command.targetId]?.actor?.controller === 'player'
   )
@@ -701,8 +737,14 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
       command.type,
     ) ||
-      command.type === 'tend-fire') &&
-    !supportsManualWork(source)
+      command.type === 'tend-fire' ||
+      command.type === 'treat-scar') &&
+    !supportsManualWork(source) &&
+    !(
+      command.type === 'strike' &&
+      source.actor.naturalStrikeIds?.includes(command.definitionId) &&
+      strikeDefinition(command.definitionId, world)?.requiredBodyPlan === source.actor.body?.plan
+    )
   )
     return reject(
       'unsupported-body',
@@ -721,7 +763,8 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
       : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
             command.type,
           ) ||
-            command.type === 'tend-fire') &&
+            command.type === 'tend-fire' ||
+            command.type === 'treat-scar') &&
           'targetId' in command
         ? command.targetId
         : undefined;
@@ -732,6 +775,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   }
   if (
     isRecordedActivityCommand(command) &&
+    hasMemory(source) &&
     world.actionExperience.admitted >= ACTIVITY_LIMITS.retainedRecords
   )
     return reject(
@@ -765,10 +809,29 @@ export function nativeOperationAvailable(world: WorldState, command: Command): O
     return outcome(false, error.code, error.message);
   }
 }
+/** Resolve the same exact tools/ammunition as admission, without granting consent or
+ * spending. The server binds its opaque, authenticated review to this single command. */
+export function lethalAttackOffer(
+  world: WorldState,
+  command: Command,
+): { command: Command; permission: LethalPermission } | null {
+  if (command.type !== 'strike' && command.type !== 'hunt') return null;
+  const prepared = prepareNativeOperation(world, command, { skipLethalReview: true });
+  if ('ok' in prepared) return null;
+  const actor = world.entities[command.actorId]!,
+    target = world.entities[prepared.targetId!]!;
+  const permission = lethalPermission(world, actor, target, prepared);
+  if (!permission) return null;
+  const exact: Command =
+    command.type === 'strike'
+      ? { ...command, weaponItemId: prepared.weaponItemId }
+      : { ...command, weaponItemId: prepared.weaponItemId, ammoItemId: prepared.ammoItemId };
+  return { command: exact, permission };
+}
 function prepareNativeOperation(
   world: WorldState,
   command: Command,
-  options: { executing?: boolean } = {},
+  options: { executing?: boolean; skipLethalReview?: true } = {},
 ): Action | Outcome {
   const reject = (code: string, message: string) => outcome(false, code, message);
   if (!isActivityCommand(command))
@@ -809,7 +872,7 @@ function prepareNativeOperation(
     }
     case 'pickup': {
       const target = getOwn(world.entities, command.targetId);
-      if (!canHandleItems(world, source) || target?.kind !== 'item-pile')
+      if (!canHandleItems(world, source) || !(target?.kind === 'item-pile' || target?.remains))
         return reject('unavailable', 'Choose a visible pile and an actor able to handle items.');
       const stack = command.itemId
         ? portableItems(world, target.id).find((item) => item.id === command.itemId)
@@ -890,6 +953,8 @@ function prepareNativeOperation(
       const definition = strikeDefinition(command.definitionId, world, command.weaponItemId);
       const target = getOwn(world.entities, command.targetId);
       if (!definition) return reject('unknown-action', 'Choose a registered strike.');
+      if (!supportsStrike(actor, definition))
+        return reject('unsupported-body', 'This body cannot perform that natural strike.');
       if ((component.attackReadyAt ?? 0) > world.simTime)
         return reject(
           'attack-recovery',
@@ -909,10 +974,24 @@ function prepareNativeOperation(
       action.definitionId = definition.id;
       action.definitionVersion = definition.version;
       action.targetId = target.id;
-      if (command.weaponItemId) {
-        action.weaponItemId = command.weaponItemId;
+      action.targetLife = target.actor.physicalLife ?? 0;
+      action.weaponItemId = command.weaponItemId;
+      action.lethalPermission = command.lethalPermission;
+      action.requiresLethalReview = command.humanInitiated;
+      const review = options.skipLethalReview
+        ? null
+        : attackReviewProblem(world, actor, target, action);
+      if (review) return review;
+      if (command.weaponItemId || definition.recoverySeconds !== undefined)
         action.strikePhase = 'windup';
-      }
+      break;
+    }
+    case 'treat-scar': {
+      const problem = scarTreatmentProblem(world, actor, command.scarId, command.targetId);
+      if (problem) return reject('treatment-unavailable', problem);
+      action = temporary('treat-scar', reincarnationPolicy(world)!.treatment!.workSeconds);
+      action.targetId = command.targetId;
+      action.scarId = command.scarId;
       break;
     }
     case 'gather': {
@@ -1007,6 +1086,13 @@ function prepareNativeOperation(
       action.targetId = target.id;
       action.weaponItemId = item.id;
       action.ammoItemId = ammo.id;
+      action.targetLife = target.actor.physicalLife ?? 0;
+      action.lethalPermission = command.lethalPermission;
+      action.requiresLethalReview = command.humanInitiated;
+      const review = options.skipLethalReview
+        ? null
+        : attackReviewProblem(world, actor, target, action);
+      if (review) return review;
       break;
     }
     case 'harvest': {
@@ -1199,7 +1285,7 @@ function prepareNativeOperation(
 export function executeCommand(
   original: WorldState,
   command: Command,
-  options: { preview?: boolean } = {},
+  options: { preview?: boolean; nativeController?: true } = {},
 ): Transition {
   const nested = inWorkGroup();
   try {
@@ -1217,7 +1303,7 @@ export function executeCommand(
 function executeCommandNative(
   original: WorldState,
   command: Command,
-  options: { preview?: boolean },
+  options: { preview?: boolean; nativeController?: true },
   standalone: boolean,
 ): Transition {
   const reject = (code: string, message: string): Transition => ({
@@ -1245,7 +1331,9 @@ function executeCommandNative(
       command.generation,
     );
   const digest = canonicalJson(command);
-  const receipt = getOwn(original.commandReceipts, command.id);
+  const receipt = options.nativeController
+    ? undefined
+    : getOwn(original.commandReceipts, command.id);
   if (receipt)
     return receipt.digest === digest
       ? { world: original, events: [], outcome: { ...receipt.outcome, code: 'duplicate' } }
@@ -1279,6 +1367,11 @@ function executeCommandNative(
       outcome: result,
     };
   const source = getOwn(original.entities, command.actorId)!;
+  if (options.nativeController && (source.actor?.controller !== 'native' || !source.threat))
+    return reject(
+      'unsupported-controller',
+      'This entity has no installed native threat controller.',
+    );
   if (options.preview && command.type === 'handover' && command.operation === 'offer') {
     const offer = prepareItemOffer(original, source, command);
     if ('ok' in offer) return { world: original, events: [], outcome: offer };
@@ -1291,7 +1384,9 @@ function executeCommandNative(
   // record. Capacity admission above remains identical; other families retain bookkeeping.
   // docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary
   const experience =
-    !(options.preview && command.type === 'drop') && isRecordedActivityCommand(command)
+    !options.nativeController &&
+    !(options.preview && command.type === 'drop') &&
+    isRecordedActivityCommand(command)
       ? beginActivity(
           world,
           command,
@@ -1767,6 +1862,11 @@ function executeCommandNative(
         );
         break;
       }
+      case 'respawn': {
+        result = respawnPlayer(world, actor, events);
+        if (!result.ok) return reject(result.code, result.message);
+        break;
+      }
       case 'recover': {
         if (!canRecoverAtCamp(world, actor))
           return reject(
@@ -1922,7 +2022,7 @@ function executeCommandNative(
   if (action) {
     if (experience) bindActivityAction(world, experience, action.id);
     if (action.stage === 'working' && action.type !== 'follow') {
-      const error = startWork(world, actor, action);
+      const error = startWork(world, actor, action, events);
       if (error) return { world: original, events: [], outcome: error };
     }
     interruptStatusEffects(world, actor, events, 'new-action');
@@ -1968,7 +2068,7 @@ function executeCommandNative(
   }
   if (options.preview) return { world: original, events: [], outcome: result };
   if (!action && experience) endActivity(world, actor.id, command.id, result);
-  world.commandReceipts[command.id] = { digest, outcome: result };
+  if (!options.nativeController) world.commandReceipts[command.id] = { digest, outcome: result };
   reconcileConditions(world, actor, events);
   return finish(world, events, result);
 }
@@ -2029,6 +2129,15 @@ function completeAction(
     return itemId;
   };
   switch (action.type) {
+    case 'treat-scar': {
+      const result = completeScarTreatment(world, actor, action.scarId!, action.targetId!, events);
+      if (!result.ok) {
+        failAction(world, actor, events, result.message);
+        return;
+      }
+      completion = result.message;
+      break;
+    }
     case 'pickup': {
       const target = world.entities[action.targetId ?? ''];
       if (!target || !visible(world, actor, target) || !actionInReach(world, actor, action)) {
@@ -2175,7 +2284,7 @@ function completeAction(
       break;
     }
     case 'strike': {
-      if (action.weaponItemId) break; // Impact already committed; recovery completes the attempt.
+      if (action.strikePhase === 'recovery') break; // Impact already committed; recovery completes the attempt.
       const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
       const target = world.entities[action.targetId ?? ''];
       // Admission is not a hit: recheck the pinned definition and live physical target.
@@ -2196,16 +2305,28 @@ function completeAction(
         return;
       }
       const before = target.actor.health;
+      const review = attackReviewProblem(world, actor, target, action);
+      if (review) {
+        failAction(world, actor, events, review.message);
+        return;
+      }
       commitBodyEffects(
         world,
         target,
-        [{ targetId: target.id, kind: 'injury', amount: definition.damage }],
+        [
+          {
+            targetId: target.id,
+            kind: 'injury',
+            amount: definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
+          },
+        ],
         action.id,
         events,
       );
       const damage = before - target.actor.health;
       if (target.animal && target.actor.alive) {
-        rememberAttack(world, target, actor);
+        if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
+        else rememberAttack(world, target, actor);
       }
       emit(
         world,
@@ -2241,16 +2362,36 @@ function completeAction(
         return;
       }
       const bonus = world.itemDefinitions[ammunition.definitionId]!.ammunition!.damageBonus;
+      const review = attackReviewProblem(world, actor, target, action);
+      if (review) {
+        failAction(world, actor, events, review.message);
+        return;
+      }
       if (!takeItem(world, actor.id, ammunition.id, action.id)) {
         failAction(world, actor, events, 'compatible ammunition is no longer available.');
         return;
       }
-      const accuracy = launcher.accuracy * (target.animal.danger > 0 ? 0.85 : 1);
+      const accuracy =
+        launcher.accuracy *
+        ((
+          target.threat
+            ? target.threat.mode === 'return' && !!target.actor.action
+            : target.animal.danger > 0
+        )
+          ? 0.85
+          : 1);
       const hit = nextRandom(world) < accuracy;
       action.strikeOutcome = hit ? 'hit' : 'miss';
-      const damage = hit ? launcher.damage + bonus : 0;
-      const actualDamage = Math.min(target.actor!.health, damage);
-      rememberAttack(world, target, actor);
+      const damage = hit
+        ? (launcher.damage + bonus) * scarFactor(world, actor, 'outgoingInjuryFactor')
+        : 0;
+      const actualDamage = Math.min(
+        target.actor!.health,
+        damage *
+          target.actor!.body!.susceptibility.injury *
+          scarFactor(world, target, 'incomingInjuryFactor'),
+      );
+      if (!target.threat) rememberAttack(world, target, actor);
       emit(
         world,
         events,
@@ -2270,10 +2411,11 @@ function completeAction(
         commitBodyEffects(
           world,
           target,
-          [{ targetId: target.id, kind: 'injury', amount: actualDamage }],
+          [{ targetId: target.id, kind: 'injury', amount: damage }],
           action.id,
           events,
         );
+      if (target.threat) noteTerritorialInjury(world, target, actor, actualDamage, events);
       break;
     }
     case 'harvest': {
@@ -2365,13 +2507,18 @@ function moveAlongPath(
   let remaining = distanceBudget;
   const map = spatialMap(world),
     profile = bodyProfile(actor);
+  // A territorial animal cannot take a detour outside its authored pursuit bound.
+  const withinTerritory = (point: SurfacePoint) =>
+    !actor.threat ||
+    !['pursuit', 'search'].includes(actor.threat.mode) ||
+    distance(point, actor.threat.policy.home) <= actor.threat.policy.territoryRadius;
   while (path.length) {
     const point = path[0]!,
       start = supportedPosition(actor);
     if (!start) return false;
     const delta = distance(start, point);
     if (delta <= SPATIAL_LIMITS.epsilon) {
-      if (!canWalkSegment(map, start, point, profile)) return false;
+      if (!withinTerritory(point) || !canWalkSegment(map, start, point, profile)) return false;
       setSpatialPosition(world, actor, point, point.surfaceId);
       path.shift();
       continue;
@@ -2384,7 +2531,7 @@ function moveAlongPath(
             ...interpolate(start, point, remaining / delta),
             surfaceId: start.surfaceId,
           };
-    if (!canWalkSegment(map, start, next, profile)) return false;
+    if (!withinTerritory(next) || !canWalkSegment(map, start, next, profile)) return false;
     if (delta <= remaining) {
       setSpatialPosition(world, actor, point, point.surfaceId);
       path.shift();
@@ -2413,8 +2560,15 @@ function advanceAction(
     return;
   }
   if (
+    action.targetLife !== undefined &&
+    (world.entities[action.targetId ?? '']?.actor?.physicalLife ?? 0) !== action.targetLife
+  ) {
+    failAction(world, actor, events, 'the targeted physical life has ended.');
+    return;
+  }
+  if (
     action.type === 'strike' &&
-    actor.actor!.controller === 'player' &&
+    (actor.actor!.controller === 'player' || action.requiresLethalReview) &&
     world.entities[action.targetId ?? '']?.actor?.controller === 'player'
   ) {
     failAction(world, actor, events, 'human conflict is not enabled.');
@@ -2444,17 +2598,18 @@ function advanceAction(
   }
   if (
     action.type === 'strike' &&
-    strikeDefinition(action.definitionId, world, action.weaponItemId)?.version !==
-      action.definitionVersion
+    (strikeDefinition(action.definitionId, world, action.weaponItemId)?.version !==
+      action.definitionVersion ||
+      !supportsStrike(actor, strikeDefinition(action.definitionId, world, action.weaponItemId)!))
   ) {
     failAction(world, actor, events, 'the strike definition is unavailable or changed.');
     return;
   }
   if (
-    action.weaponItemId &&
     action.type === 'strike' &&
-    (actor.actor!.equippedItemId !== action.weaponItemId ||
-      !accessiblePossession(world, actor.id, action.weaponItemId) ||
+    ((action.weaponItemId &&
+      (actor.actor!.equippedItemId !== action.weaponItemId ||
+        !accessiblePossession(world, actor.id, action.weaponItemId))) ||
       capabilityBlocked(world, actor, 'actions') ||
       !world.entities[action.targetId!]?.actor?.alive ||
       !visible(world, actor, world.entities[action.targetId!]!))
@@ -2502,7 +2657,7 @@ function advanceAction(
       wasApproaching &&
       action.stage === 'approaching' &&
       !action.navigation &&
-      !moveAlongPath(world, actor, action.path, nativeMovementSpeed(actor) * seconds)
+      !moveAlongPath(world, actor, action.path, nativeMovementSpeed(world, actor) * seconds)
     )
       failAction(world, actor, events, 'the following route became physically blocked.');
     return; // Holding is still an active activity, never a completed arrival.
@@ -2571,7 +2726,7 @@ function advanceAction(
         }
         if (action.navigation) return;
       }
-      if (!moveAlongPath(world, actor, action.path, nativeMovementSpeed(actor) * seconds)) {
+      if (!moveAlongPath(world, actor, action.path, nativeMovementSpeed(world, actor) * seconds)) {
         action.path = [];
         if ((action.replans ?? 0) >= MOVEMENT.maxReplans)
           failAction(world, actor, events, 'the route became physically blocked.');
@@ -2582,7 +2737,7 @@ function advanceAction(
       completeAction(world, actor, action, events);
       return;
     }
-    const error = startWork(world, actor, action);
+    const error = startWork(world, actor, action, events);
     if (error) {
       // This supported observation skip ends the admitted fuel attempt without
       // spending. Other failures still stop the selected activity.
@@ -2599,7 +2754,7 @@ function advanceAction(
     seconds = 0;
   }
   if (
-    ['gather', 'harvest', 'cook', 'pickup', 'tend-fire'].includes(action.type) &&
+    ['gather', 'harvest', 'cook', 'pickup', 'tend-fire', 'treat-scar'].includes(action.type) &&
     !actionInReach(world, actor, action)
   ) {
     failAction(
@@ -2679,28 +2834,43 @@ function advanceAction(
   }
   if (action.type === 'status-effect') return; // Effect conditions own completion; docs/status-effects.md#transitions.
   action.remainingSeconds = Math.max(0, action.remainingSeconds - seconds);
+  // The simulation already treats sub-epsilon time as settled. Do not leave work at
+  // 100% awaiting a later tick solely because sliced subtraction retained residue.
+  if (action.remainingSeconds <= TIME_EPSILON) action.remainingSeconds = 0;
   if (
     action.remainingSeconds === 0 &&
     action.type === 'strike' &&
-    action.weaponItemId &&
     action.strikePhase === 'windup'
   ) {
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId)!;
     const target = world.entities[action.targetId!]!;
+    const review = attackReviewProblem(world, actor, target, action);
+    if (review) {
+      failAction(world, actor, events, review.message);
+      return;
+    }
     const inRange = target.actor!.alive && canReachEntity(world, actor, target, definition.range);
-    const hit = inRange && nextRandom(world) < definition.accuracy!;
+    const accuracy = definition.accuracy ?? 1;
+    const hit = inRange && (accuracy === 1 || nextRandom(world) < accuracy);
     const before = target.actor!.health;
     if (hit)
       commitBodyEffects(
         world,
         target,
-        [{ targetId: target.id, kind: 'injury', amount: definition.damage }],
+        [
+          {
+            targetId: target.id,
+            kind: 'injury',
+            amount: definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
+          },
+        ],
         action.id,
         events,
       );
     const damage = before - target.actor!.health;
     if (target.animal && target.actor!.alive) {
-      rememberAttack(world, target, actor);
+      if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
+      else rememberAttack(world, target, actor);
     }
     action.strikeOutcome = hit ? 'hit' : 'miss';
     action.strikePhase = 'recovery';
@@ -2713,12 +2883,12 @@ function advanceAction(
       world,
       events,
       'struck',
-      `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? 'hit' : 'missed'} the target with ${namePhrase(world.itemDefinitions[definition.id]!, 'definite')}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
+      `${namePhrase(actor, 'definite', { capitalize: true })} ${hit ? definition.pastTense : 'missed'} the target.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
       actor,
       target.id,
       {
         definitionId: definition.id,
-        weaponItemId: action.weaponItemId,
+        ...(action.weaponItemId ? { weaponItemId: action.weaponItemId } : {}),
         actionId: action.id,
         hit,
         damage,
@@ -2825,13 +2995,29 @@ function* integrateEndpoint(
     ? integrateStatusRates(world, mechanics.status, rateSeconds, events, interval.drains, true)
     : [];
   const bodyRatesByTarget = new Map(bodyRates.map((rate) => [rate.targetId, rate]));
+  const exitDue =
+    !!work &&
+    Object.values(world.exitExposures ?? {}).some((at) => at - world.simTime <= TIME_EPSILON);
+  const progressWork = (id: string) => {
+    const actor = world.entities[id],
+      component = actor?.actor;
+    if (!actor || !component?.alive || component.incapacitated || !activelyParticipates(actor))
+      return;
+    if (work && work.working.get(id) === component.action?.id) {
+      const following = component.action?.type === 'follow';
+      const stage = component.action?.stage;
+      advanceAction(world, actor, following ? 0 : work.seconds, events);
+      if (following && component.action?.stage !== stage) mechanics.remainingSeconds = 0;
+    }
+  };
   // Drains folded into a status net flow were applied there (PF13.12).
   const folded = (id: string, kind: 'reservoir') =>
     interval.drains.some((drain) => drain.targetId === id && drain.kind === kind);
   for (const id of participants.actors) {
     const actor = world.entities[id],
       component = actor?.actor;
-    if (!actor || !component?.alive || component.incapacitated) continue;
+    if (!actor || !component?.alive || component.incapacitated || !activelyParticipates(actor))
+      continue;
     if (rateSeconds) {
       const bodyRate = bodyRatesByTarget.get(id);
       if (bodyRate) applyBodyRate(world, bodyRate, events);
@@ -2839,12 +3025,13 @@ function* integrateEndpoint(
       if (!component.alive || component.incapacitated) continue;
       if (!folded(id, 'reservoir')) advanceReservoirs(world, actor, rateSeconds, events);
     }
-    if (work && work.working.get(id) === component.action?.id) {
-      const following = component.action?.type === 'follow';
-      const stage = component.action?.stage;
-      advanceAction(world, actor, following ? 0 : work.seconds, events);
-      if (following && component.action?.stage !== stage) mechanics.remainingSeconds = 0;
-    }
+    if (!exitDue) progressWork(id);
+  }
+  if (exitDue) {
+    // Continuous exposure through the elapsed interval commits first. Protection then
+    // precedes every discrete attack at this instant, independent of actor ID ordering.
+    finishSimulatedExits(world, events);
+    for (const id of participants.actors) progressWork(id);
   }
   if (!rateSeconds) return;
   for (const id of participants.ambient) {
@@ -3020,6 +3207,7 @@ function* advanceWorldNative(
     const beforeState = mechanicalRevision(world);
     let statusIds = participants.statuses;
     if (!mechanics) {
+      if (finishSimulatedExits(world, events)) participants = nativeParticipants(world);
       reconcileResourceReservations(world);
       if (advanceRemains(world, participants.ambient, events))
         participants = nativeParticipants(world);
@@ -3039,6 +3227,20 @@ function* advanceWorldNative(
       if (!component.alive || component.incapacitated) continue;
       reconcileConditions(world, actor, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
+      if (actor.threat && territorialReviewDue(world, actor)) {
+        yield* materialize();
+        const intent = territorialIntention(world, actor, events);
+        if (intent) {
+          const transition = executeCommand(world, intent, { nativeController: true });
+          participants = nativeParticipants(transition.world);
+          world = draftWorld(transition.world);
+          events.push(...transition.events);
+          actor = world.entities[actorId]!;
+          component = actor.actor!;
+          if (!transition.outcome.ok) territorialRefusal(world, actor, events);
+        }
+        discardMechanics();
+      }
       const step = readyPlanStep(world, actorId);
       if (step && admitActivityAttempt(world, actorId, component.agency.plan!, step)) {
         yield* materialize();
@@ -3206,7 +3408,8 @@ function* advanceWorldNative(
         const actor = world.entities[id]?.actor;
         return (
           actor &&
-          (actor.action?.type === 'follow' ||
+          (world.entities[id]?.threat ||
+            actor.action?.type === 'follow' ||
             actor.agency.plan ||
             (actor.controller === 'npc' &&
               Object.entries(actor.attributes ?? {}).some(([id, state]) => {
@@ -3311,6 +3514,7 @@ function* advanceWorldNative(
         const e = world.entities[id];
         return (
           e?.animal &&
+          !e.threat &&
           e.actor?.alive &&
           !e.actor.incapacitated &&
           !e.actor.action &&
@@ -3380,6 +3584,12 @@ function* advanceWorldNative(
       working,
       burning,
     });
+    if (
+      events
+        .slice(beforeEffects)
+        .some((event) => ['death', 'player-death', 'departed'].includes(event.type))
+    )
+      participants = nativeParticipants(world);
     if (!deferred)
       for (const id of statusIds) {
         const entity = world.entities[id];

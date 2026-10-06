@@ -9,6 +9,8 @@ import { EntryScreen, type EntryStatus } from './ui/entry-screen';
 import { EntryNotice } from './ui/entry-notice';
 import { MaintenanceNotice } from './ui/maintenance-notice';
 import { TabResumeDialog } from './ui/tab-resume';
+import { LethalAttackDialog } from './ui/lethal-attack-dialog';
+import { DeathNotice } from './ui/death-notice';
 import { useTabControl, type TabControl } from './tab-control';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
@@ -16,6 +18,7 @@ import { ClockOffsetContext, clockParts } from './ui/event-time';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type {
   ActionOption,
+  ApiResult,
   CatalogueAction,
   EntityView,
   GamePatch,
@@ -146,6 +149,22 @@ function App({
     [hover, setHover] = useState<{ entity: EntityView; point: { x: number; y: number } } | null>(
       null,
     );
+  const [lethalReview, setLethalReview] = useState<{
+    review: NonNullable<ApiResult['lethalReview']>;
+    action: ActionOption;
+  } | null>(null);
+  const [lethalBusy, setLethalBusy] = useState(false);
+  useEffect(
+    () => setLethalReview(null),
+    [
+      view?.worldId,
+      view?.saveTimeline,
+      view?.access?.scope,
+      view?.access?.controlGeneration,
+      view?.player.life,
+      view?.player.alive,
+    ],
+  );
   const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>([]);
   const [inventoryOpened, setInventoryOpened] = useState(false);
   const [npcId, setNpcId] = useState<string | null>(null),
@@ -521,12 +540,23 @@ function App({
     }
     setPicker(null);
     setTargeting(false);
+    const requestedLife = latest.current?.player.life;
+    const requestedScope = latest.current?.access?.scope;
     try {
       const r = await post('/api/command', {
         commandId: crypto.randomUUID(),
         commandEpoch: view?.commandEpoch,
         command: action.command,
       });
+      if (
+        r.lethalReview &&
+        !latest.current?.player.death &&
+        latest.current?.player.life === requestedLife &&
+        latest.current?.access?.scope === requestedScope
+      ) {
+        setLethalReview({ review: r.lethalReview, action });
+        return r;
+      }
       if (!r.ok || r.code !== 'accepted') notify(r.message);
       return r;
     } catch (e) {
@@ -536,6 +566,19 @@ function App({
         code: 'unconfirmed',
         message: `${String(e)} Check the journal before repeating this action.`,
       };
+    }
+  }
+  async function confirmLethalAttack() {
+    if (!lethalReview || lethalBusy) return;
+    setLethalBusy(true);
+    try {
+      const result = await command({
+        ...lethalReview.action,
+        command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
+      });
+      if (!('lethalReview' in result) || !result.lethalReview) setLethalReview(null);
+    } finally {
+      setLethalBusy(false);
     }
   }
   function talk(id: string) {
@@ -1104,6 +1147,7 @@ function App({
                 Open World operations
               </a>
             )}
+            {view.player.departureNotice && <p>{view.player.departureNotice}</p>}
             <Button onPress={() => void logOut().catch((error: unknown) => notify(String(error)))}>
               Log Out
             </Button>
@@ -1658,6 +1702,15 @@ function App({
           error={tab.error}
           resume={() => void tab.enter((next) => accept(next, true), true)}
           logout={() => void tab.logout()}
+        />
+      )}
+      {view?.player.death && <DeathNotice view={view} command={command} />}
+      {lethalReview && !tabPaused && (
+        <LethalAttackDialog
+          review={lethalReview.review}
+          busy={lethalBusy}
+          cancel={() => setLethalReview(null)}
+          confirm={() => void confirmLethalAttack()}
         />
       )}
     </ClockOffsetContext.Provider>

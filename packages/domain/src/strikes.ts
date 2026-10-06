@@ -1,12 +1,12 @@
 import { namePhrase, type Named } from '@open-legend/language';
-import { NATIVE_STRIKES, weaponStrikeWording } from './worlds/base/strikes.js';
+import { weaponStrikeWording } from './worlds/base/strikes.js';
 import { itemFor } from './objects.js';
-import type { WorldState } from './types.js';
-export { NATIVE_STRIKES } from './worlds/base/strikes.js';
+import type { Entity, WorldState } from './types.js';
 /** Trusted targeted-strike definitions; data selects only this finite native family.
  * docs/targeted-actions.md#targeted-strikes
  */
 export interface StrikeDefinition {
+  requiredBodyPlan?: import('./living.js').LivingBody['plan'];
   weaponItemId?: string;
   approachRange?: number;
   recoverySeconds?: number;
@@ -61,13 +61,13 @@ export function validMelee(profile: MeleeProfile): boolean {
 }
 export function strikeDefinition(
   id: string | undefined,
-  world?: WorldState,
+  world: WorldState,
   weaponItemId?: string,
   target?: Named | string,
 ): StrikeDefinition | undefined {
   if (weaponItemId) {
-    const item = world && itemFor(world, weaponItemId);
-    const definition = item && world!.itemDefinitions[item.definitionId];
+    const item = itemFor(world, weaponItemId);
+    const definition = item && world.itemDefinitions[item.definitionId];
     const profile = definition?.melee;
     if (!definition || definition.id !== id || !profile || !validMelee(profile)) return;
     return {
@@ -85,7 +85,8 @@ export function strikeDefinition(
       weaponItemId,
     };
   }
-  const native = id && Object.hasOwn(NATIVE_STRIKES, id) ? NATIVE_STRIKES[id] : undefined;
+  const definitions = world.nativeStrikes;
+  const native = id && definitions && Object.hasOwn(definitions, id) ? definitions[id] : undefined;
   return native && target ? { ...native, label: `${native.label} ${namePhrase(target)}` } : native;
 }
 export function availableStrikes(
@@ -96,8 +97,52 @@ export function availableStrikes(
   const weaponItemId = world.entities[actorId]?.actor?.equippedItemId;
   const item = weaponItemId && itemFor(world, weaponItemId);
   const melee = item && strikeDefinition(item.definitionId, world, item.id, target);
-  const native = Object.values(NATIVE_STRIKES).map((definition) =>
-    target ? { ...definition, label: `${definition.label} ${namePhrase(target)}` } : definition,
+  const native = Object.values(world.nativeStrikes ?? {})
+    .filter((definition) => supportsStrike(world.entities[actorId], definition))
+    .map((definition) =>
+      target ? { ...definition, label: `${definition.label} ${namePhrase(target)}` } : definition,
+    );
+  return [...native, ...(melee && supportsStrike(world.entities[actorId], melee) ? [melee] : [])];
+}
+/** The same anatomical/capability requirement governs discovery, admission and impact. */
+export function supportsStrike(actor: Entity | undefined, definition: StrikeDefinition): boolean {
+  return (
+    !!actor?.actor?.body &&
+    (!definition.requiredBodyPlan || definition.requiredBodyPlan === actor.actor.body.plan) &&
+    (actor.actor.body.plan === 'biped' || !!actor.actor.naturalStrikeIds?.includes(definition.id))
   );
-  return [...native, ...(melee ? [melee] : [])];
+}
+export function validateNativeStrikes(world: WorldState): void {
+  for (const [id, strike] of Object.entries(world.nativeStrikes ?? {}))
+    if (
+      strike.id !== id ||
+      !Number.isSafeInteger(strike.version) ||
+      strike.version < 1 ||
+      ![strike.range, strike.workSeconds].every((n) => Number.isFinite(n) && n > 0) ||
+      (strike.approachRange !== undefined &&
+        (!Number.isFinite(strike.approachRange) ||
+          strike.approachRange <= 0 ||
+          strike.approachRange > strike.range)) ||
+      !Number.isFinite(strike.damage) ||
+      strike.damage < 0 ||
+      (strike.recoverySeconds !== undefined &&
+        (!Number.isFinite(strike.recoverySeconds) || strike.recoverySeconds <= 0)) ||
+      (strike.accuracy !== undefined &&
+        (!Number.isFinite(strike.accuracy) || strike.accuracy < 0 || strike.accuracy > 1)) ||
+      (strike.requiredBodyPlan !== undefined &&
+        !['biped', 'quadruped', 'avian'].includes(strike.requiredBodyPlan)) ||
+      !['punch', 'melee'].includes(strike.animation) ||
+      typeof strike.autoMoveToRange !== 'boolean' ||
+      ![strike.label, strike.pastTense].every(
+        (text) => typeof text === 'string' && text.length > 0 && text.length <= 256,
+      )
+    )
+      throw new Error('Invalid installed native strike.');
+  for (const entity of Object.values(world.entities))
+    if (
+      entity.actor?.naturalStrikeIds &&
+      (new Set(entity.actor.naturalStrikeIds).size !== entity.actor.naturalStrikeIds.length ||
+        entity.actor.naturalStrikeIds.some((id) => !world.nativeStrikes?.[id]))
+    )
+      throw new Error('Invalid natural strike capability.');
 }
