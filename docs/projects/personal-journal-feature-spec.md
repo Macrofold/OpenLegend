@@ -54,7 +54,7 @@ The first profile supports existing ordinary actor-perspective Journal narration
 | A narration derived from another human's speech or contribution, or a source whose participation cannot be established | Unavailable for this first profile | Being able to read it in play does not settle a durable-copy consent policy |
 | Raw conversations, memory records, unseen world events, private NPC thoughts and operator inspection material | Excluded | The requested consumer is a personal Journal edition |
 | An optional distant perspective from DG15 | Excluded initially, even if that future mode is enabled | Its additional disclosure and retention contract needs a deliberate export extension |
-| Images, generated art, screenshots, audio, custom fonts and imported layout assets | Excluded initially | Avoids implied reproduction rights and extra media processing |
+| Images, generated art, screenshots, audio, player-supplied fonts and imported layout assets | Excluded initially | Avoids implied reproduction rights and extra media processing; any bundled export font still needs its permitted embedding use |
 | A selected entry whose narration failed | Explain the failure; let the player remove it or explicitly include the existing failure notice | Never fabricate a replacement story or quietly spend to repair the edition |
 
 The first profile does not ban accounts that have played with others. An eligible solo episode in a world that later becomes shared can still qualify if its actual sources and current rights establish eligibility. Conversely, a current single-human population does not retroactively make past shared material eligible.
@@ -75,7 +75,7 @@ The first draft is a small editing convenience. It is not a general notes applic
 
 The existing Journal remains the default reading view. **Make a personal edition** enters a clearly labeled selection mode. An entry can also offer **Add to personal edition**, which opens the same current draft and never starts a second competing collection.
 
-Selection starts empty. Entries do not arrive preselected because an algorithm called them important. An optional **Select this page** control says exactly which currently shown eligible entries it adds; it never means every unseen page or all future matching entries.
+Selection starts empty. Entries do not arrive preselected because an algorithm called them important. An optional **Select this page** control says exactly which currently shown eligible entries it adds; it never means every unseen page or all future matching entries. Download requires at least one eligible selected entry, including an existing failure notice only when the player deliberately chooses it. If every selection becomes unavailable, explain that the edition needs an eligible entry; title and orphan notes alone cannot become a file.
 
 Each selected entry has a normal checkbox or equivalent accessible selection control. The draft shows selected count, included date range and a route to review the full selection. Filters and loading older entries preserve selection. Removing a filter does not remove hidden selections; **Review selection** always exposes them.
 
@@ -222,7 +222,11 @@ The player selects long multilingual entries, uses enlarged text and a screen re
 
 After saving a draft, the world is restored or the account switches character. The old edition cannot appear under the wrong identity. Missing sources are visible as unavailable; no hidden old-world data is supplied to make the draft look complete.
 
-### JP-J10 — Never use it
+### JP-J10 — Two editors and a changed note
+
+Two tabs open the saved draft. One confirms a change; the other's later save reports the conflict and retains its unsaved words for deliberate resolution. After preview, changing any note, title or selection makes the prepared file stale. Download cannot deliver either an overwritten draft or the earlier preview unnoticed.
+
+### JP-J11 — Never use it
 
 Another player ignores the Journal export for weeks. There are no missed rewards, guilt messages or required end-of-session steps. Necessary gameplay feedback still works. This is a successful supported way to play.
 
