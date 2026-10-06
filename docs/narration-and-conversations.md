@@ -259,7 +259,7 @@ Generation uses the configured complex reasoning model with low effort through e
 
 ## Selected personal Journal edition proposal
 
-[DG16's personal edition](projects/personal-journal-feature-spec.md) proposes a selected private PDF/text copy of eligible existing Journal narrations and separately attributed player notes. [NC21](maintainers/narration-and-conversations.md#nc21--personal-journal-edition) owns delivery and [JP01–JP06](limits/narration.md#jp01--selected-personal-export-profile) owns its proposed limits. The current Journal remains the reading foundation; no export, new content license, other-human sharing, illustration, private-thought access or runtime implementation is established by the proposal.
+[DG16's personal edition](projects/personal-journal-feature-spec.md) proposes a selected private PDF/text copy of eligible existing Journal narrations, with personal notes and saved resumption selected only for their wanted authorship/convenience benefit. The first exact in-session copy can be delivered independently; source-use, privacy, correction and accessibility remain necessary for every offered capability. [NC21](maintainers/narration-and-conversations.md#nc21--personal-journal-edition) owns delivery and [JP01–JP06](limits/narration.md#jp01--selected-personal-export-profile) owns its proposed limits. The current Journal remains the reading foundation; no export, new content license, other-human sharing, illustration, private-thought access or runtime implementation is established by the proposal.
 
 ## Maintained records
 

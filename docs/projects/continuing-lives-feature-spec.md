@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                           | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG17 prepares a finite unattended profile with clock, self-care, funding and return behavior; adoption, technical design and runtime delivery remain open. | 2026-10-06   |
+| In progress | DG17 prioritizes useful attended continuity before its finite unattended profile; adoption, technical design and runtime delivery remain open. | 2026-10-06   |
 
 **Status: proposed detailed behavior, expanded October 6, 2026.** This specification expands the accepted continuing-world direction into a reviewable product proposal. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. Technical design is deferred at Mike's request.
 

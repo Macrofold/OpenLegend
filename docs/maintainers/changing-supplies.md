@@ -8,6 +8,8 @@ This tracker does not replace PO's single object/lot owner, AC/native work, ST c
 
 The second product review puts an actual activity and comparison with current nonperishable food **before** expiry adoption. Preservation and renewal are independent delivery choices; neither is approved or established as worthwhile by the detailed arithmetic. Keep all unperformed checks below open, and report completion only for the expressly selected activity.
 
+The upfront selection is a reasoned activity/benefit hypothesis, not a demand to prove enjoyment before building. A small complete prototype supplies the later actual comparison before ordinary adoption or expansion; no new study or analytics requirement follows.
+
 | Work | Applies when |
 | --- | --- |
 | CS01 | Before selecting either addition; name its wanted activity and establish why current food/gathering is insufficient. |
@@ -22,8 +24,8 @@ Deferring voluntary resident preparation never permits incorrect condition, eati
 
 - [x] Complete the researched product proposal, concrete authored profile, player/resident journeys and game-first critique. Distinguish current mechanics from the selected extension and record every discretionary restriction in CS limits. Delivered October 6, 2026; independent review corrected departure/work reconciliation and made shared-fire interruption explicit. No new runtime evidence is claimed.
 - [ ] Before selecting implementation, identify the actual wanted outing, return or depleted-source visit and compare it with current nonperishable food, existing bags and ordinary gathering. Preservation must earn its additional work and expiry; renewal must earn return visits. If neither improves the chosen activity, retain current behavior and leave these proposals conditional.
-- [ ] Before runtime implementation, prepare the scoped technical design through existing owners, including the actual lot-state, work, renewal, disclosure and lifecycle changes. The product-only assignment does not supply or approve that design.
-- [ ] Qualify a full ordinary journey from acquired food through deliberate preservation, packing, an independently worthwhile outing, return and useful consumption. Compare against the simpler current food loop; reject a feature whose main result is compulsory inspection and repeated chores.
+- [ ] Before runtime implementation, prepare the scoped technical design through existing owners, including only the selected lot-state, work, renewal, disclosure and lifecycle changes. The product-only assignment does not supply or approve that design.
+- [ ] Qualify the selected full ordinary journey: preservation runs from acquired food through deliberate work, packing, an independently worthwhile outing, return and useful consumption; renewal runs from an actually depleted source through other wanted play, return and usable gathering. Compare against the simpler current food loop; reject an addition whose main result is compulsory inspection or repeated chores. The unselected journey stays open separately.
 
 **Exit:** the selected addition offers an understandable benefit in actual play without a required new technology tree, a food-management quota or free manufactured supplies. A short outing remains possible without preservation, and current nonperishable adventure remains the choice when expiry adds no worthwhile decision. The preserved four-day cache remains a feasibility case, not prior evidence satisfying this exit.
 

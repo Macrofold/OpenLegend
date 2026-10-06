@@ -2,13 +2,13 @@
 
 | Status      | Current progress                                                                                                                                                 | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The researched product proposal is complete; the selected export, source eligibility and accessible-file journey still need technical design and implementation. | 2026-10-06   |
+| In progress | The gameplay review separates a useful first copy from conditional authorship and saved drafts; technical design and implementation remain open. | 2026-10-06   |
 
 ## 1. A moment worth keeping
 
 The player has tried an improvised sling, lost an encounter at a crossing, and later found a better route with Ada. They open the Journal, choose the failed attempt and the discovery, give the selection a title, and add a sentence in their own words. They preview a short, readable edition and download it. A week later, they can read it without running Open Legend and remember why that particular outing mattered.
 
-That is the proposed first experience for DG16/ND30. Its value is personal authorship and useful recollection. The player chooses the meaning: a triumph, an embarrassing mistake, an ingenious tool, an unanswered question or an ordinary enjoyable moment. The product does not need to score those choices, interpret the player's psychology or turn every adventure into an uplifting lesson.
+That is the complete proposed keepsake experience for DG16/ND30. Its value is personal authorship and useful recollection. The player chooses the meaning: a triumph, an embarrassing mistake, an ingenious tool, an unanswered question or an ordinary enjoyable moment. The product does not need to score those choices, interpret the player's psychology or turn every adventure into an uplifting lesson. The first delivery should select the wanted use: keeping and rereading a chosen moment can be complete without a persistent editor; expressing a personal interpretation needs the optional note capability. A notes-free copy does not establish the fuller authorship experience described above.
 
 This is an optional companion to a worthwhile game. The [gameplay priorities](../repertoires/gameplay-priorities.md) still put a complete adventure, practical invention, independent people and persistent consequences first. Someone who never opens the Journal must still receive necessary action feedback, understand failure and continue playing.
 
@@ -37,9 +37,13 @@ A row labeled private can still describe a multiplayer conversation. Eligibility
 
 ### 3.1 First complete capability
 
-From the existing Journal, choose **Make a personal edition**. Select specific eligible entries, optionally add a title and personal notes, preview the complete result, and choose **Download PDF** or **Download text**. Both formats contain the same selected words, authorship labels and order. PDF provides a readable keepsake; text provides a portable, editable alternative and a useful accessible fallback. Neither requires a new model call.
+The retained keepsake target is: from the existing Journal, choose **Make a personal edition**; select specific eligible entries, optionally add a title and personal notes, preview the complete result, and choose **Download PDF** or **Download text**. Both formats contain the same selected words, authorship labels and order. PDF provides a readable keepsake; text provides a portable, editable alternative and a useful accessible fallback. Neither requires a new model call.
 
-A single current edition draft is available for each account, world and controlled character. It contains selected entry references, a title and the player's own annotations; it is not an archive of copied journal text. Saving this draft is explicit and reports whether the save completed. A new edition can replace it only after the player deliberately discards or replaces the existing draft. This modest persistence lets someone finish later without introducing a shelf of duplicate private histories.
+**First independently complete delivery:** an in-session selection of permitted entries, optional title, exact preview, PDF/text download and cancellation can serve a wanted keeping/rereading task. Add the existing per-entry notes to that slice when personal interpretation is the wanted benefit; do not promise that benefit through a notes-free copy. Persistent drafts, cross-tab conflict resolution and later resumption are a separately selected convenience. The complete rules for them below remain required if that capability is offered, but they do not block a useful one-session edition.
+
+Until persistence is selected, **draft** means the current working selection and any enabled title/notes. It is not automatically saved. Closing with changed writing or selection offers **Discard changes** or **Keep editing**; a connection error preserves safe visible work without claiming device-crash recovery. The interface offers no nonfunctional Save or Resume controls. Current source access, correction/erasure, safe identity changes and complete accessible output remain requirements in every selected slice.
+
+When resumption is selected, a single current edition draft is available for each account, world and controlled character. It contains selected entry references, a title and the player's own annotations; it is not an archive of copied journal text. Saving this draft is explicit and reports whether the save completed. A new edition can replace it only after the player deliberately discards or replaces the existing draft. This modest persistence lets someone finish later without introducing a shelf of duplicate private histories.
 
 The draft's saved references are rechecked when opened. The app does not store a permanent generated PDF library. Once prepared, a download may be attempted again from the still-authorized current preview without another paid operation. Closing the preview releases its prepared file; the saved draft remains until discarded.
 
@@ -67,7 +71,7 @@ No new duty to detect or censor every reference in a player's freely written not
 
 There are no writing streaks, completeness scores, rewards for exporting, automatic emotional assessments, prompts about real-life trauma, public profile posts, recipient invitations or print orders. The feature does not generate missing adventures, fill gaps with plausible prose or call an export a world backup.
 
-The first draft is a small editing convenience. It is not a general notes application, searchable lifelong personal archive or a new player-character memory. The player can use ordinary tools with their downloaded text if they want extensive editing.
+The proposed saved draft is a small editing convenience. It is not a general notes application, searchable lifelong personal archive or a new player-character memory. The player can use ordinary tools with their downloaded text if they want extensive editing. Its convenience must be wanted before the additional storage and recovery work becomes part of delivery.
 
 ## 4. Choosing the contents
 
@@ -95,11 +99,11 @@ A long history is accessible through bounded continuation. The export must not s
 
 The default title is a neutral, editable description such as **A journey in Threewater** using a permitted world name. The player can change it. The app does not infer a moral, a diagnosis or a heroic identity.
 
-An optional **My note** field belongs beneath each selected entry. The preview keeps it visually distinct from the original narration and labels it **Personal note**. It can express disagreement: **I thought Ada was annoyed; I still do not know why she left.** That is the player's interpretation, not evidence of Ada's private motive.
+When personal authorship is selected, an optional **My note** field belongs beneath each selected entry. The preview keeps it visually distinct from the original narration and labels it **Personal note**. It can express disagreement: **I thought Ada was annoyed; I still do not know why she left.** That is the player's interpretation, not evidence of Ada's private motive. This can operate within one editing session without introducing a saved-draft service.
 
 Editing a note never rewrites narration, speech, a character's recollection or an action result. Removing an entry from the draft also removes that entry's draft note after an ordinary undo opportunity within the open editor. The UI makes this consequence clear before replacing a saved draft. There is no hidden retained note history after an explicit discard.
 
-Use an explicit **Save draft** action with saved, unsaved, failed and outcome-not-confirmed states. Closing the editor with unsaved writing offers **Save draft**, **Discard changes** or **Keep editing**. A failed save retains the visible writing while the account still has access. Do not claim device-crash recovery for unsaved text. If two tabs edit the same saved draft, the later conflicting save preserves its unsaved writing and offers a deliberate comparison/reload; it never silently replaces another confirmed edit. This remains one current draft, with no automatic merge of personal words.
+When saved drafts are selected, use an explicit **Save draft** action with saved, unsaved, failed and outcome-not-confirmed states. Closing the editor with unsaved writing offers **Save draft**, **Discard changes** or **Keep editing**. A failed save retains the visible writing while the account still has access. Do not claim device-crash recovery for unsaved text. If two tabs edit the same saved draft, the later conflicting save preserves its unsaved writing and offers a deliberate comparison/reload; it never silently replaces another confirmed edit. This remains one current draft, with no automatic merge of personal words.
 
 ## 5. Preview and download
 
@@ -132,13 +136,15 @@ A world restore likewise requires a fresh source and authority check. If the sel
 
 **Download PDF** prepares and hands the file to the browser. The UI can say **File prepared** or **Download started** when that is what it knows. It must not claim **Saved to your computer** merely because it opened a browser download or print dialog.
 
-Before handoff, verify that the file is readable, nonempty, contains every approved selected entry and note once, and preserves their order. A failed conversion leaves the Journal and saved draft intact. Offer the same reviewed text download if the player wants it; do not automatically change format or assert that a partial PDF completed successfully.
+Before handoff, verify that the file is readable, nonempty, contains every approved selected entry and enabled note once, and preserves their order. A failed conversion leaves the Journal, safe visible working selection and any saved draft intact. Offer the same reviewed text download if the player wants it; do not automatically change format or assert that a partial PDF completed successfully.
 
 The player can cancel before delivery. Cancellation removes pending optional preparation without changing gameplay or source records. If bytes have already been handed to the browser, say so; cancellation cannot honestly recall them.
 
 A downloaded copy is outside the service's direct control. Explain this briefly at the first download and in export help: deleting an in-game entry or account does not delete copies already saved elsewhere. Avoid repeated alarming dialogs for each ordinary download. A specific future shared edition would need the corresponding consent information before selection, not a footnote after sharing.
 
 ## 6. Lifecycle, privacy and authorship
+
+The saved-draft and personal-note rows below describe those selected capabilities, not additional requirements to build them before a one-session copy. Every slice still handles its actual working selection, source changes, current permissions, identity switches, preparation and delivered copies correctly. Enabling persistence activates its complete deletion, conflict, restoration and retention obligations together.
 
 | Player action or event                                                   | Required result                                                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -185,6 +191,8 @@ Only one preparation runs for the current edition. Repeated clicks reuse or canc
 A simple sensitivity example illustrates the unit of cost rather than forecasting it: 20 selected entries averaging 1,000 characters, plus ten 200-character notes, produce about 22,000 characters of source text before layout. That is enough for a meaningful short edition. Exporting every retained event instead would scale with the entire history and solve a different problem. Actual source-read volume, file bytes, memory use and latency must be measured for the qualified limits.
 
 ## 9. Complete journeys and adverse cases
+
+Apply each journey to the capability it exercises. Selection, truthful files, changed or revoked sources, applicable account/world boundaries, failed preparation and ignoring the feature belong to every edition. Notes, saved resumption and concurrent saved editors qualify their respective selected additions. The initial scope cannot claim a later journey passed by omitting the behavior that journey tests.
 
 ### JP-J01 — Keep a failed expedition
 
@@ -251,29 +259,35 @@ The strongest case for the feature is a modest human task: choose and reread som
 
 ## 11. Staged delivery and acceptance
 
+### Stage 0 — Choose a wanted use
+
+Before selecting implementation scope, name the actual task: keeping a chosen outing, expressing an interpretation, or resuming unfinished writing. Compare what existing Journal reading and an ordinary independent note already provide. Use available observations, a concrete request or a walkthrough to identify the missing value; no formal study, new analytics or proof of enjoyment before a prototype is required. A plausible but uncertain benefit can justify a modest delivery. The actual comparison follows that delivery and can change the decision to continue.
+
 ### Stage 1 — An exact private edition
 
-Deliver one complete selection, explicit saved draft, note, preview, PDF/text download and cancellation path using the selected eligible text profile. Source validation, erasure, account scoping and accessible output are part of this stage, not later polish. Use a small permitted history to establish the actual journey.
+Deliver a complete in-session select/title/preview/PDF-or-text/download/cancel path for the selected eligible source profile. Include the existing optional note capability if expressing personal interpretation is the selected benefit; a curated copy alone is a complete keeping/rereading experience, not a demonstration of personal annotation. Saved drafts and later resumption are independent additions.
 
-Acceptance: the reader can select a wanted moment, distinguish original narration from personal writing, obtain exactly the previewed contents and understand what a saved copy means. Failure and changed-source cases retain useful lawful work without exposing stale information. No model or game mutation is introduced by the edition itself.
+Source validation, correction and erasure, account isolation, bounded permitted-history access and preparation, truthful completion and accessible actual output belong to this stage. Qualify the size and history scope actually offered before release. Privacy or usable files cannot be deferred as editing polish.
 
-### Stage 2 — Useful under ordinary history growth
+Acceptance: the reader can find and select a wanted moment through current history access, obtain exactly the previewed contents, understand any enabled personal writing and keep playing after cancellation or failure. A changed source cannot leak stale material. Compare the actual result and effort with ordinary Journal reading; keeping it modest or stopping here is valid. This stage introduces no model call or game mutation.
 
-Qualify older-page selection, bounded preparation, the selected maximum, mixed text, accessibility and resuming saved drafts after normal interruptions and current-format restoration. Verify that source correction, forgotten content and scope changes reach every service-controlled preview/output path.
+### Stage 2 — Authorship and resumption when wanted
 
-Acceptance: using the feature does not require sifting an entire lifetime, stall current play or obscure the limit. Actual latency, memory, query work and bytes are recorded for the tested history sizes; no one successful small file is called scale qualification.
+Add per-entry interpretation when that is the wanted task and was not selected initially. Add one explicit saved draft only when returning to unfinished editions provides a concrete benefit. In-session notes do not require saved drafts merely because both involve writing. Once persistence is offered, deliver its whole save, reopen, conflict, scope-change, deletion, correction and restoration behavior described above.
 
-### Stage 3 — Decide whether to expand
+Acceptance: the player can express and retain what they intended without confusing narration and personal words or losing confirmed writing. Reopening and conflicts work under current authority, and service-controlled copies obey source removal. This is qualification of the selected writing capability, not a prerequisite for the already useful first copy.
 
-In a separately authorized voluntary evaluation, ask whether players wanted a copy, selected something personally meaningful and later found it worth reopening. Compare the extra selection/editing burden with ordinary Journal reading. Record confusion about completeness, notes, source removal and sharing.
+### Stage 3 — Expand only for a further use
 
-If the feature sees little value, keep it modest or defer it. Improve a concrete discovery or readability problem before commissioning more prose. Art requires rights and accessible description; shared editions require contributor consent and withdrawal terms; print requires a wanted order and delivery economics. Real-life reflection requires a separately selected purpose and privacy design. None follows automatically from finishing stage 1.
+Use actual experience with the delivered edition to decide whether longer histories, a larger selection, richer editing or another output serves a wanted task. Reuse the current permitted history owner; improve a concrete discovery problem there rather than building a competing index. Wider offered bounds need measured source reads, layout, bytes and latency. Existing bounds and accessibility remain obligations from their first use, not work postponed to this stage.
+
+A player wanting to select and later reread a particular moment matters more than export count or file length. Further voluntary observation can resolve uncertainty within its existing authorization; it is not a mandatory standalone research program. If the feature adds little, keep it modest or defer expansion. Art requires rights and accessible description; shared editions require contributor consent and withdrawal terms; print requires a wanted order and delivery economics. Real-life reflection requires a separately selected purpose and privacy design. None follows automatically from finishing the first edition.
 
 ## 12. Final product critique
 
 A diary can easily become a second game of collecting every memory. This proposal avoids that incentive by starting empty, admitting failure and ordinary moments, and providing no completion pressure. Its success is a small edition the player wants, not the largest file or most writing.
 
-The main remaining cost is not generation; it is preserving truthful source permissions and useful editing through corrections. That cost is warranted only if the selected copy adds something the existing Journal does not. Keeping the first profile to eligible text, one current draft and no hosted edition archive limits the extra responsibility while retaining a complete experience.
+The main remaining cost is not generation; it is preserving truthful source permissions and useful editing through corrections. That cost is warranted only if the selected copy adds something the existing Journal does not. Keeping the first edition to eligible text and an in-session working selection limits the extra responsibility while retaining a complete keeping/rereading experience. Personal notes and one saved draft earn their own scope through the wanted authorship or resumption task; no hosted edition archive is added.
 
 The PDF is a readable keepsake, and the text copy is practical. Adding both earns its cost through two distinct reading uses, but accessibility and conversion must actually be qualified. A superficially attractive PDF with missing content is worse than an honest unavailable result and a usable text alternative.
 
