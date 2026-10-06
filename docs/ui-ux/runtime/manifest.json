@@ -432,6 +432,17 @@
       "captureScope": "component",
       "source": "creation-recovery-component-2d535b5",
       "originalFile": "02-confirmed-local-cleanup.png"
+    },
+    {
+      "id": "44-native-person-dirty-editor",
+      "file": "44-native-person-dirty-editor.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 727654,
+      "sha256": "4b0d795ef985cb905b9cc7b41ec6626bff859c8698ca9553ef45e0899abdc36a",
+      "captureScope": "app",
+      "source": "native-owner-edit-6ede5f",
+      "originalFile": "01-person-dirty-close.png"
     }
   ],
   "appSource": {
@@ -950,6 +961,126 @@
         "browser": "closed",
         "server": "closed",
         "sourceHashes": "unchanged"
+      }
+    },
+    "native-owner-edit-6ede5f": {
+      "captured": "2026-10-06",
+      "description": "Production App and PlayCanvas with native HTTP, owner inspection, person editing and checkpoint owners in disposable CI PostgreSQL. The original image visibly records the selected person and unsaved name. Native interaction records establish Keep editing and one exact name save, but the later restore fails and this continuation does not pass.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "6ede5f0531d783465ab8e793b6bfd688b29919a0",
+      "checkoutCommit": "b0288cd65c209100b62a4f39e9c19a65f4613ea2",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37450418880,
+        "jobId": 112225357374,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37450418880/job/112225357374",
+        "artifactId": 11405158827,
+        "artifactZipBytes": 47979802,
+        "artifactZipSha256": "730fb0958f821caf5e56233251b668af8d4ab0308385cecd9cf29f5fcc2b147b",
+        "wholeWorkflowPassed": false
+      },
+      "report": {
+        "artifactPath": "whole-ui-owner-creation/owner/report.json",
+        "sha256": "a559dee70ef7d8df7cc04907dc53f4a9af689d94715a37a90831bba1c600c04f",
+        "traceSha256": "4ad478ee0ce4629d4e1cb8cc63072dfb34523c839996da016d70968a3d71575f",
+        "startedAt": "2026-10-06T10:38:22.315Z",
+        "finishedAt": "2026-10-06T10:39:17.654Z",
+        "passed": false,
+        "completedObservations": 3,
+        "writes": 3,
+        "captures": 1,
+        "continuationReportSha256": "3c576d5f82f2a9359411a7c333f05299335fbe30c8f94cb8e16d7bf3cf2b77db",
+        "continuationPassed": false,
+        "creationStage": "not run"
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "playwright": "1.58.2",
+        "platform": "linux",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          }
+        ],
+        "providerBudgetUsd": 0,
+        "providerSpentUsd": 0
+      },
+      "fixture": "Unmodified native base world at seed 1086, actual local owner entry with God mode. Automatic ticking is disabled with a fixed wall clock and no supplied elapsed simulation time. The editor name is deliberately changed through the UI; no person payload or save result is fabricated.",
+      "observed": "Read installed Health, follow its native host relation and return to the same source; create Owner UI baseline; keep the dirty name through Close, then Save and Close exactly once. The saved request changes only Mike's name to Owner UI checkpoint check, retaining all other person fields and empty memory changes; live/stored/reopened-editor checks pass. Canceling the first Load sends nothing and restores focus. The later confirmed baseline Load returns HTTP 200 and restores Mike on a new timeline, but the next native state reports storage failure and control entry is refused.",
+      "requestCounts": {
+        "definitionInspection": 4,
+        "checkpointCreate": 1,
+        "personSave": 1,
+        "checkpointLoad": 1,
+        "protectedRecoveryLoad": 0,
+        "creation": 0
+      },
+      "visualReview": "The original PNG shows Edit Mike, the Identity tab, the changed Name field, Unsaved changes and the editor footer. It does not visibly show the Keep editing / Discard / Save and Close confirmation. Trace DOM immediately before and after the 8282.190 ms capture contains that alert dialog, and later real controls work; neither this mismatch nor the PNG establishes the cause or a new stacking defect.",
+      "limits": [
+        "One desktop dirty-editor image only; visible confirmation, save completion and checkpoint restoration are not depicted in it.",
+        "The native stage fails after its third deliberate write. The fourth planned write, protected recovery, Operations/Maintenance and return-to-character checks are not reached; the following creation stage is not run.",
+        "The confirmed checkpoint Load reports success, but its first restored state is paused for storage with persistence error. The original storage exception was not recorded, so no production root cause or repair is established.",
+        "The stage also assumes a new document after Load and times out waiting for DOMContentLoaded; the recorded access-change remount does not itself require that event. This observation error does not explain away the separate native storage failure.",
+        "The browser and disposable databases close, but shutdown reports saved:false at durable revision 10 and simulated time 0. Resource closure is not successful world persistence.",
+        "No walking, recipient consent, native creation recovery, complete journey, provider, operating-system IME, assistive-device or uncoached-human qualification."
+      ],
+      "sourceHashes": {
+        "apps/client/src/main.tsx": "ab7fd1f448bd93c1a83fef8f17ff8825efee5027ae86f892a3dbc1382bc4a785",
+        "apps/client/src/api.ts": "c497362cebf3f548f9fa6f79a1389d27d569af88badf7d6d5279983f744fcd0c",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/ui/world-inspection.tsx": "06357c8b670744ff8884d264d3379fcdc6c03f9418662ea3606bbc162da054e8",
+        "apps/client/src/ui/world-agent.tsx": "9650b6d7d0c149dfffd434b5b87d92f934461c0f8725d1383a3fe42011cd878d",
+        "apps/client/src/ui/panels.tsx": "e32d52caee866136531c97f3a3f6ac69a26e4b3b3572c2ff8d7b1a84a2c0f6f9",
+        "apps/client/src/ui/god-tools.tsx": "a3f0dd525e5d4080a0f62142ede8ce78872b08a480c7a64f5a8e7ab06d03b4e9",
+        "apps/client/src/ui/editor.tsx": "59706ee6f0ce3bbfcf3ddc147cce90a732652cce7acab45d1178e4a2a4036566",
+        "apps/client/src/ui/editor-changes.ts": "bed0f8756d498e4654ef463bdd24f7cbb0488b7df8e80e8f4a6ef6e07edb282a",
+        "apps/client/src/ui/game-saves.tsx": "8ce6a3404eda60468491af5290cc002d489a7f424a183cec585bb26bd45dd6f5",
+        "apps/client/src/ui/operations-console.tsx": "8a144975d0f1ac7d9a551915d69731efea959ed75c068246b7d3c9e60be9701f",
+        "apps/client/src/ui/operations-maintenance.tsx": "22d7a9d3b69e0d5c6289ab956357a1ed0137a4cc23b82157364ebd838a3dde88",
+        "apps/client/src/ui/operations-access.tsx": "d1c44f291d4b9d4037a5b6c18904bfd415f47b8dd1e46bec2942dbd149c76663",
+        "apps/client/src/ui/storage.ts": "4c44656d43e8e49663158dd9f9f0160775b702e2169e5cb300d67d2e4d31bad9",
+        "apps/client/src/ui/creator-workspaces.css": "08399b47456cd3136be0910bbd2258b1c712e8aa07570c6b58163ed715710796",
+        "apps/client/src/ui/lifecycle.css": "b272f6f169e40c38fcb56ce21371bed8f431f6178969c51b85da286df804f778",
+        "apps/client/src/ui/operations.css": "2f3e9bb8ea64632a5ffb9ae33fead056cc1525f55fce1d18ef9ee6f1d2a699c1",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/server/src/http.ts": "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+        "apps/server/src/config.ts": "ea94fd7668fabbbde0261bfd9d10f11fea07186ef15d94c84ec232c91d8199a5",
+        "apps/server/src/world-service.ts": "0b95431272e8801f4820f7f0714448d07c958b3c4daf0d89f57060c9e9c72263",
+        "apps/server/src/authority.ts": "1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb",
+        "apps/server/src/world-graph.ts": "aef1db76e5256211dcfe1844ba596e0f1a853fb4c41e65824ede1367e250faed",
+        "apps/server/src/world-tools.ts": "9d552a34c08908fd38b51e3b192e867e3f15f916fde1db26cfb708d4e0e46de7",
+        "apps/server/src/operations-routes.ts": "a63bcc58336495db737aa82d39bb40dd063ca33eae56f4a222df2f9245c88f91",
+        "apps/server/src/maintenance.ts": "9a0b5cfbe7e1ad734cd21f80f672280d4e3418ad0ef8b9583224d2a9c02f1cdc",
+        "apps/server/src/game-saves.ts": "a98ee951631852990ec05bbf8dbd8c38f9c8c53a07d9685cfc1906153d58f58c",
+        "apps/server/src/world-records.ts": "cf1cbd7a7a926091f06c0cb7184eaac15d814ccf4622249fbab9ea026d9ee8c9",
+        "apps/server/src/store.ts": "9068d7b4f4e46deb6094df696558b0d788c68e8ddcb857e00f7bb16259e221dc",
+        "packages/domain/src/god-tools.ts": "63521dd42326723ffb71514b03ac71fc9d8e022216f467b93db752a5e7efbf6d",
+        "packages/domain/src/worlds/base/world.ts": "98929d5b2fa5c66524002382a0d063ac2124782046570d6d7980bb62155e1d44",
+        "packages/domain/src/worlds/base/attributes.ts": "d34e43c524a7b3b153cdbbe1e2ceb56270eb34443c4d2d0bdcd89d5076b745e8",
+        "packages/protocol/src/index.ts": "83ce75297b5bab5a7daae64f7c23a3b46a84286b057520851692efcf9efdee80",
+        "tests/fixtures/database.ts": "3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92",
+        "tests/fixtures/browser.ts": "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2"
+      },
+      "scenarioHashes": {
+        "owner-stage.mjs": "59f1c99ee580e124103f8b766ca37de4bc05b6fff63d92e34b7f7b8c36259f48",
+        "run-whole-ui.mjs": "191ec6fb7043a038dc130aa35c54b667d35c7374fcd7b6cfc95b6991d44a9ea0"
+      },
+      "builtAssetHashes": {
+        "dist/client/index.html": "081f908dabfc767028fdd6c8eaf40f383066378eb1a20ce95ffb94ccb6b5f701",
+        "dist/client/assets/index-BRvT99nN.css": "c578f3b88b92c5bb2b142c03ac4e366f7b546f7d13ebda653aba9c8208a83c33",
+        "dist/client/assets/index-BwOLgeJq.js": "be9af271cffa2dd8757d7ed7dd7467625afc20e1e0ed6ed3b6ba8878c97e24ed"
+      },
+      "cleanup": {
+        "browserClosed": true,
+        "databasesClosed": true,
+        "worldSaved": false,
+        "durableRevision": 10,
+        "durableSimTime": 0
       }
     }
   }

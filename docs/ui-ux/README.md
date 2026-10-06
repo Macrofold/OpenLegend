@@ -16,7 +16,7 @@ The [verification report](../verification/game-interaction-redesign.md) records 
 
 The full J01–J48 acceptance scope remains open. The latest combined continuation of person editing, checkpoint recovery, return from World operations and item/person/environment creation contains a failure under diagnosis. Remaining composed native gameplay/recovery journeys, real operating-system IME (input method editor) composition, assistive-device use, broader text/viewport combinations and uncoached player observation remain with [UIUX08–UIUX18](../maintainers/ui-ux.md#uiux08). The implemented and natively exercised alternate-world example remains distinct from arbitrary-world qualification.
 
-The [implementation gallery](runtime/README.md) adds 43 annotated captures of the actual App and focused production components. It identifies controlled data, revisions, viewport/scale and limits for each view. These images are separate from the external game atlas and original design proposals.
+The [implementation gallery](runtime/README.md) adds 44 annotated captures of the actual App and focused production components. It identifies controlled data, revisions, viewport/scale and limits for each view. These images are separate from the external game atlas and original design proposals.
 
 ## Start here, not everywhere
 
