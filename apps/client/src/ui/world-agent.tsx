@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type {
   ActionOption,
   GameView,
@@ -53,6 +53,8 @@ function WorldAgentPanel(props: Props) {
     connected,
   } = props;
   const navigationRef = useRef<HTMLDetailsElement>(null);
+  const navigationId = useId();
+  const [navigationOpen, setNavigationOpen] = useState(false);
   const selectionKey = `open-legend:authoring-selection:${worldId}:${saveTimeline}:${accessScope}`;
   const [active, setActive] = useState(() =>
     readLocal(
@@ -137,8 +139,17 @@ function WorldAgentPanel(props: Props) {
   const activeTitle =
     sessions.find((session) => session.sessionId === active)?.title ??
     (inventionTarget === active ? 'New invention' : 'New conversation');
+  const compactNavigation = !!godMode && workspace === 'authoring' && !!active;
+  const closeNavigation = () => {
+    if (navigationRef.current?.hasAttribute('data-compact')) navigationRef.current.open = false;
+  };
   const navigation = (
-    <nav className="ol-creator-views" aria-label="Creation workspaces">
+    <nav
+      id={navigationId}
+      className="ol-creator-views ol-creator-navigation"
+      aria-label="Creation workspaces"
+      hidden={compactNavigation && !navigationOpen}
+    >
       <Button
         variant="quiet"
         aria-pressed={workspace === 'workshop'}
@@ -154,7 +165,7 @@ function WorldAgentPanel(props: Props) {
           if (active)
             requestAnimationFrame(() => {
               const navigation = navigationRef.current;
-              if (!navigation) return;
+              if (!navigation?.hasAttribute('data-compact')) return;
               navigation.open = false;
               navigation.querySelector('summary')?.focus();
             });
@@ -235,7 +246,6 @@ function WorldAgentPanel(props: Props) {
       {error && <p role="alert">{error}</p>}
     </>
   );
-  const compactNavigation = godMode && workspace === 'authoring' && !!active;
   return (
     <div
       onKeyDown={(event) => {
@@ -263,15 +273,37 @@ function WorldAgentPanel(props: Props) {
       data-session={compactNavigation ? '' : undefined}
     >
       {godMode && (
-        <details
-          ref={navigationRef}
-          className="ol-creator-workspace-switch"
-          data-compact={compactNavigation || undefined}
-          open={!compactNavigation}
-        >
-          <summary hidden={!compactNavigation}>Creation workspaces</summary>
+        <>
+          <details
+            ref={navigationRef}
+            className="ol-creator-workspace-switch"
+            data-compact={compactNavigation || undefined}
+            open={!compactNavigation}
+            onToggle={(event) => {
+              const open = compactNavigation && event.currentTarget.open;
+              setNavigationOpen(open);
+              if (open) {
+                const details =
+                  event.currentTarget.parentElement?.querySelector<HTMLDetailsElement>(
+                    '.ol-world-agent-controls[open]',
+                  );
+                if (details) details.open = false;
+              }
+            }}
+          >
+            <summary
+              hidden={!compactNavigation}
+              aria-label="Creation workspaces"
+              aria-controls={navigationId}
+            >
+              <span className="ol-creator-workspace-label">Creation workspaces</span>
+              <span className="ol-creator-workspace-label-short" aria-hidden="true">
+                Workspaces
+              </span>
+            </summary>
+          </details>
           {navigation}
-        </details>
+        </>
       )}
       {(!godMode || workspace !== 'authoring') && allowance}
       {godMode && (
@@ -288,6 +320,8 @@ function WorldAgentPanel(props: Props) {
               purpose={inventionTarget === active ? 'invention' : undefined}
               onCreated={() => void list()}
               controls={controls}
+              navigationOpen={compactNavigation && navigationOpen}
+              closeNavigation={closeNavigation}
             />
           ) : (
             <>

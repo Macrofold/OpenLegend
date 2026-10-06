@@ -610,7 +610,12 @@ export function Panel({
         </div>
         <div className="ol-panel-tools">
           {workspace && (
-            <Button size="sm" variant="quiet" onPress={workspace.onToggle}>
+            <Button
+              className="ol-panel-expand"
+              size="sm"
+              variant="quiet"
+              onPress={workspace.onToggle}
+            >
               {workspace.expanded ? 'Compact workspace' : 'Expand workspace'}
             </Button>
           )}

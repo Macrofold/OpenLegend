@@ -1570,6 +1570,10 @@ body,
 .ol-hud[data-narrow='true'] .ol-panel[data-workspace] {
   width: 100%;
 }
+/* Both workspace widths use the same narrow sheet. Keep its Close control visible. */
+.ol-hud[data-narrow='true'] .ol-panel-expand {
+  display: none;
+}
 .ol-hud[data-narrow='true'] .ol-mobile-tabs {
   position: absolute;
   bottom: 55%;

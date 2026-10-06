@@ -570,6 +570,16 @@ function App({
         (launcher ?? document.getElementById('gameMenuButton') ?? canvas.current)?.focus({
           preventScroll: true,
         });
+        // Toolbar entry restores its remembered child synchronously. An explicit
+        // panel return must finish on its own launcher without changing Tab reentry.
+        if (
+          launcher &&
+          document.activeElement !== launcher &&
+          launcher.closest('[role="toolbar"]')?.contains(document.activeElement)
+        )
+          launcher.focus({ preventScroll: true });
+        if (launcher && document.activeElement === launcher)
+          launcher.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       });
   }
   function toggle(id: PanelId) {

@@ -83,10 +83,7 @@ test('owner conversation grows from one line and shows message-local pending and
     await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
     const input = page.getByRole('textbox', { name: 'Message to World Agent', exact: true });
     await expect(input).toBeVisible();
-    const sessionDetails = page.getByRole('button', {
-      name: 'Session details and owner spending',
-      exact: true,
-    });
+    const sessionDetails = page.getByLabel('Session details and owner spending', { exact: true });
     const refresh = page.getByRole('button', { name: 'Refresh this session', exact: true });
     const initial = await input.boundingBox();
     await input.fill('First line\nSecond line');

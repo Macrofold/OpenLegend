@@ -5,7 +5,7 @@ import type {
   WorldAgentTurnCursor,
   WorldAgentProgressSnapshot,
 } from '@open-legend/protocol';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Button, EmptyState, Tag } from '../design-system/components';
 import { post, worldAgentProgressUrl } from '../api';
 import { readLocal, writeLocal } from './storage';
@@ -41,6 +41,8 @@ export function WorldAgentSession({
   purpose,
   onCreated,
   controls,
+  navigationOpen = false,
+  closeNavigation,
 }: {
   worldId: string;
   accessScope: string;
@@ -51,6 +53,8 @@ export function WorldAgentSession({
   purpose?: 'invention';
   onCreated(): void;
   controls?: ReactNode;
+  navigationOpen?: boolean;
+  closeNavigation?(): void;
 }) {
   const key = `open-legend:authoring:${worldId}:${accessScope}:${sessionId}`;
   const [initialPurpose] = useState(
@@ -76,6 +80,14 @@ export function WorldAgentSession({
   const [turns, setTurns] = useState<WorldAgentTurnView[]>([]);
   const [before, setBefore] = useState<WorldAgentTurnCursor | null>(null);
   const [view, setView] = useState<'conversation' | 'work'>('conversation');
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const detailsId = useId();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const readingVisible = visible && !detailsOpen && !navigationOpen;
+  const closeDetails = () => {
+    if (detailsRef.current) detailsRef.current.open = false;
+    closeNavigation?.();
+  };
   const [seenWork, setSeenWork] = useState<string>();
   const [review, setReview] = useState<string>();
   const [busy, setBusy] = useState(false),
@@ -478,8 +490,15 @@ export function WorldAgentSession({
               available={connected}
             />
           </div>
-          <details className="ol-world-agent-controls">
-            <summary aria-label="Session details and owner spending">
+          <details
+            ref={detailsRef}
+            className="ol-world-agent-controls"
+            onToggle={(event) => {
+              setDetailsOpen(event.currentTarget.open);
+              if (event.currentTarget.open) closeNavigation?.();
+            }}
+          >
+            <summary aria-label="Session details and owner spending" aria-controls={detailsId}>
               <span className="ol-world-agent-detail-label">
                 Session details and owner spending
               </span>
@@ -487,7 +506,115 @@ export function WorldAgentSession({
                 Session &amp; spending
               </span>
             </summary>
-            <div className="ol-world-agent-context">
+          </details>
+        </header>
+      )}
+      {session && (
+        <div className="ol-creator-views" role="group" aria-label="World Agent views">
+          <Button
+            size="sm"
+            variant="quiet"
+            aria-pressed={view === 'conversation'}
+            onPress={() => {
+              closeDetails();
+              setView('conversation');
+            }}
+          >
+            Conversation
+          </Button>
+          <Button
+            size="sm"
+            variant="quiet"
+            aria-pressed={view === 'work'}
+            onPress={() => {
+              closeDetails();
+              setSeenWork(workRevision);
+              setView('work');
+            }}
+          >
+            Work{newWork && <span> · New work</span>}
+          </Button>
+        </div>
+      )}
+      <div className="ol-world-agent-reading">
+        {!session && controls}
+        {!session && status && (
+          <EmptyState
+            title={
+              initialPurpose === 'invention'
+                ? 'Create an invention'
+                : 'One conversation to investigate and create'
+            }
+          >
+            <p>
+              The agent can inspect this world's mechanics and prepare changes. Live changes require
+              your review. Starting a conversation does not use your allowance.
+            </p>
+            <details>
+              <summary>Owner spending controls</summary>
+              <p>
+                This conversation can use up to $
+                {status.availability.sessionAllowanceUsd.toFixed(2)} in Run charges, within the
+                character’s monthly allocation. Shared Worker capacity is managed and billed
+                separately by the world owner.
+              </p>
+            </details>
+            <Button busy={busy} disabled={!connected} onPress={() => void open()}>
+              Start conversation
+            </Button>
+          </EmptyState>
+        )}
+        {!session && status && !status.availability.configured && (
+          <p role="status" className="ol-caption">
+            {status.availability.reason}
+          </p>
+        )}
+        {session && (
+          <>
+            <div
+              hidden={view !== 'conversation' || detailsOpen || navigationOpen}
+              className="ol-world-agent-conversation"
+            >
+              <ConversationThread
+                conversationKey={key}
+                items={entries}
+                visible={readingVisible && view === 'conversation'}
+                ariaLabel="World Agent conversation"
+                liveAnnouncements="off"
+                contentRevision={turns
+                  .map(
+                    (turn) =>
+                      `${turn.id}:${turn.revision ?? 0}:${turn.progress?.revision ?? 0}:${turn.response?.code ?? ''}`,
+                  )
+                  .join('|')}
+                newMessageLabel="New reply text"
+                preserveReading
+                before={
+                  before && (
+                    <Button size="sm" variant="quiet" disabled={busy} onPress={() => void older()}>
+                      Earlier messages
+                    </Button>
+                  )
+                }
+                empty={
+                  <EmptyState title="What might this world become?">
+                    Describe an invention, investigate its relationships, or ask the agent to
+                    propose a change.
+                  </EmptyState>
+                }
+              />
+            </div>
+            <WorldAgentWorkView
+              worldId={worldId}
+              sessionId={sessionId}
+              accessScope={accessScope}
+              session={session}
+              connected={connected}
+              visible={readingVisible && view === 'work'}
+              onRefresh={() => void refresh()}
+              onOpenReview={setReview}
+            />
+            <div id={detailsId} className="ol-world-agent-context" hidden={!detailsOpen}>
               {controls}
               <p className="ol-caption">
                 A proposed change stays in Work until you review and apply it.
@@ -527,105 +654,6 @@ export function WorldAgentSession({
                 </p>
               )}
             </div>
-          </details>
-        </header>
-      )}
-      <div className="ol-world-agent-reading">
-        {!session && controls}
-        {!session && status && (
-          <EmptyState
-            title={
-              initialPurpose === 'invention'
-                ? 'Create an invention'
-                : 'One conversation to investigate and create'
-            }
-          >
-            <p>
-              The agent can inspect this world's mechanics and prepare changes. Live changes require
-              your review. Starting a conversation does not use your allowance.
-            </p>
-            <details>
-              <summary>Owner spending controls</summary>
-              <p>
-                This conversation can use up to $
-                {status.availability.sessionAllowanceUsd.toFixed(2)} in Run charges, within the
-                character’s monthly allocation. Shared Worker capacity is managed and billed
-                separately by the world owner.
-              </p>
-            </details>
-            <Button busy={busy} disabled={!connected} onPress={() => void open()}>
-              Start conversation
-            </Button>
-          </EmptyState>
-        )}
-        {!session && status && !status.availability.configured && (
-          <p role="status" className="ol-caption">
-            {status.availability.reason}
-          </p>
-        )}
-        {session && (
-          <>
-            <div className="ol-creator-views" role="group" aria-label="World Agent views">
-              <Button
-                size="sm"
-                variant="quiet"
-                aria-pressed={view === 'conversation'}
-                onPress={() => setView('conversation')}
-              >
-                Conversation
-              </Button>
-              <Button
-                size="sm"
-                variant="quiet"
-                aria-pressed={view === 'work'}
-                onPress={() => {
-                  setSeenWork(workRevision);
-                  setView('work');
-                }}
-              >
-                Work{newWork && <span> · New work</span>}
-              </Button>
-            </div>
-            <div hidden={view !== 'conversation'} className="ol-world-agent-conversation">
-              <ConversationThread
-                conversationKey={key}
-                items={entries}
-                visible={visible && view === 'conversation'}
-                ariaLabel="World Agent conversation"
-                liveAnnouncements="off"
-                contentRevision={turns
-                  .map(
-                    (turn) =>
-                      `${turn.id}:${turn.revision ?? 0}:${turn.progress?.revision ?? 0}:${turn.response?.code ?? ''}`,
-                  )
-                  .join('|')}
-                newMessageLabel="New reply text"
-                preserveReading
-                before={
-                  before && (
-                    <Button size="sm" variant="quiet" disabled={busy} onPress={() => void older()}>
-                      Earlier messages
-                    </Button>
-                  )
-                }
-                empty={
-                  <EmptyState title="What might this world become?">
-                    Describe an invention, investigate its relationships, or ask the agent to
-                    propose a change.
-                  </EmptyState>
-                }
-              />
-            </div>
-            <WorldAgentWorkView
-              worldId={worldId}
-              sessionId={sessionId}
-              accessScope={accessScope}
-              session={session}
-              connected={connected}
-              visible={visible && view === 'work'}
-              onRefresh={() => void refresh()}
-              onOpenReview={setReview}
-            />
           </>
         )}
       </div>
