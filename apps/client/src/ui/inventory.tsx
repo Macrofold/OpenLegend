@@ -27,6 +27,7 @@ type InventoryProps = {
   command: CommandDispatcher;
   connected: boolean;
   visible: boolean;
+  showHeading?: boolean;
   openContainer?: { requestId: string; containerId: string | null; name: string } | null;
   onTalkAbout?(context: { itemId: string; name: string; recipientId?: string }): void;
 };
@@ -123,6 +124,7 @@ function InventoryWorkspace({
   command,
   connected,
   visible,
+  showHeading = true,
   openContainer,
   onTalkAbout,
   scope,
@@ -665,19 +667,30 @@ function InventoryWorkspace({
       }}
     >
       <header className="ol-inventory-header">
-        <div className="ol-inventory-toolbar">
-          <h2 className="ol-heading">Belongings</h2>
-          {view.godMode && (
-            <Button size="sm" variant="quiet" disabled={busy || !connected} onPress={addItem}>
-              God mode · Add item
-            </Button>
+        {(showHeading || view.godMode) && (
+          <div className="ol-inventory-toolbar">
+            {showHeading && <h2 className="ol-heading">Belongings</h2>}
+            {view.godMode && (
+              <Button size="sm" variant="quiet" disabled={busy || !connected} onPress={addItem}>
+                God mode · Add item
+              </Button>
+            )}
+          </div>
+        )}
+        <details className="ol-inventory-controls">
+          <summary>Inventory controls</summary>
+          <p className="ol-caption">
+            Select an item to inspect it. With two containers open, drag between them or Shift-click
+            to move its available units. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to
+            move.
+          </p>
+          {!right.location.id && (
+            <p>
+              Open a container in the world to see it beside your belongings. You can also open one
+              of your bags beside them.
+            </p>
           )}
-        </div>
-        <p className="ol-caption">
-          Select an item to inspect it. With two containers open, drag between them or Shift-click
-          to move its available units. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to
-          move.
-        </p>
+        </details>
         {view.player.inventory.some((entry) => entry.equipped) && (
           <section className="ol-inventory-equipment" aria-label="Equipped items">
             <strong>Equipped</strong>
@@ -722,12 +735,6 @@ function InventoryWorkspace({
         <p className="ol-inventory-unavailable" role="status">
           The selected item is not on this page of these contents. Change the search or page, or
           select another item.{amountDraft && ' Your entered amount is retained.'}
-        </p>
-      )}
-      {!right.location.id && (
-        <p className="ol-inventory-empty-target">
-          Open a container in the world to see it beside your belongings. You can also open one of
-          your bags beside them.
         </p>
       )}
       <div className="ol-inventory-panes" data-paired={!!right.location.id || undefined}>

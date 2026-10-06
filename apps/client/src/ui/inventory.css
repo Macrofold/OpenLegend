@@ -30,6 +30,14 @@
   gap: 8px;
   flex: none;
 }
+.ol-inventory-controls > summary {
+  min-block-size: 32px;
+  padding-block: 6px;
+  cursor: pointer;
+}
+.ol-inventory-header .ol-inventory-controls > p {
+  margin-block-start: 8px;
+}
 .ol-inventory-context {
   /* Stacked grids can be longer than the narrow sheet. Both endpoints remain
    * named while the player scrolls either collection or the whole workspace. */
@@ -274,6 +282,9 @@
 .ol-inventory-collection-header > * {
   margin: 0;
 }
+.ol-inventory-collection-header > .ol-caption {
+  margin: 0;
+}
 .ol-inventory-collection-header .ol-heading {
   overflow-wrap: anywhere;
 }
@@ -341,12 +352,6 @@
 .ol-inventory-collection[data-drop-active] {
   outline: 2px dashed var(--focus);
   outline-offset: -3px;
-}
-.ol-inventory-empty-target {
-  margin: 0;
-  padding: 8px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--control-radius);
 }
 .ol-inventory-equipment {
   display: flex;
@@ -422,6 +427,9 @@
   gap: 8px;
 }
 @container (min-width: 36rem) {
+  .ol-inventory-context {
+    display: none;
+  }
   .ol-inventory-panes[data-paired] {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }

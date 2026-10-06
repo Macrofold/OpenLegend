@@ -55,7 +55,6 @@ export function ActivityObjectField({
   const errorKey = JSON.stringify([scope, family, fieldId, value, witnessId, sourceId]);
   const [error, setError] = useState<{ key: string; message: string }>();
   const [acting, setActing] = useState(false);
-  const trigger = useRef<HTMLDivElement>(null);
   const alive = useRef(true);
   const latestRead = useRef(readKey);
   latestRead.current = readKey;
@@ -102,7 +101,6 @@ export function ActivityObjectField({
   const selected = page?.selected;
   const close = () => {
     setOpen(false);
-    requestAnimationFrame(() => trigger.current?.querySelector('button')?.focus());
   };
   const choose = (choice: ActivityChoice) => {
     onChange(choice);
@@ -174,7 +172,7 @@ export function ActivityObjectField({
   return (
     <div className="ol-camp-object">
       <span>{field.label}</span>
-      <div ref={trigger}>
+      <div>
         <Button variant="secondary" disabled={!connected || busy} onPress={() => setOpen(true)}>
           {selected
             ? `Change ${field.label.toLowerCase()}: ${selected.label}`
