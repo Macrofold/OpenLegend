@@ -32,6 +32,8 @@ DG numbers identify **design batches**, not new implementation tasks or a requir
 
 [Batch 04 — Expeditions and exchange](parallel-batch-04-expeditions-and-exchange.md) selects follow-on children after batch 03: PX01 consumes DG07’s approved first-threat design; PX02/PX04 define immediate barter and paired outings within DG06; PX03 supplies DG01’s place/item exposure; PX05 produces DG13’s missing shelter technical design. This is a proposed allocation, not closure of these design groups or their runtime parents. Its explicit prerequisites preserve the existing band ordering.
 
+[Batch 05 — Adventure, defense and a home](parallel-batch-05-adventure-defense-and-home.md) selects implementation after those assignments: useful expedition rewards, shield defense, DG14's selected practice/coaching consumer, DG13's canopy implementation after PX05, and fishing through world-defined preparation. The [comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md#priority-comparison) considers the October 5 designs without automatically promoting libraries, story perspectives or the optional study. AV03 supplies PC02's scoped technical counterpart during delivery; AV04 requires PX05's supplied technical design first. No unanswered developer decision is bypassed with design-only work, and no ND/DG runtime acceptance closes here.
+
 ### Reuse the five existing product proposals
 
 The earlier five-topic package did not cover all five register categories. Its proposals are reusable input, not completion of entire ND/PS parents. They are now included in the current main baseline; the links below use their maintained repository paths. The earlier branch at d2cca27 remains historical provenance. Reconcile their current product recommendations with the owning tracker before designing the remaining slice. Do not restart their research or silently treat their proposals as delivered behavior.
@@ -103,9 +105,9 @@ ND09's immediate barter and ND10's first small recurring arrangement: offers, ac
 
 #### DG07 — Human participation and recoverable conflict
 
-[PG05](parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design) selects a proposed small design assignment here: one optional wilderness threat, with avoidance, confrontation and recoverable aftermath. It produces explicit D07/PS-D01 proposals, not runtime combat or automatic resolution of those choices.
+[PG05](parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design) now delivers the selected [stag encounter](../worlds/base/first-threat-encounter.md), [player death/scars](../worlds/base/player-death.md), [one-attack lethal review and simulated departure](../worlds/base/player-danger.md), with [recorded evidence](../verification/first-threat-encounter.md). Mike resolved this slice's choices and authorized implementation. DG07 remains open for explicit PvP modes, deliberate luring/indirect harm, rescue/incapacitation and general PS background fairness; these are not runtime prerequisites retroactively added to PG05.
 
-ND11's human opt-in, indirect harm, incapacitation, rescue and return, with the matching PS05 protection and dangerous-logout decisions. One group owns the experience of entering danger and losing connection during it.
+ND11's broader human PvP opt-in, indirect harm, incapacitation/rescue and other return modes, with the matching PS05 background-protection decisions. One group owns the experience of entering danger and losing connection during it.
 
 **Start and parallel boundary:** Build on current protected departure and recoverable-human-death direction. Settle the relevant PS-D01 boundary before dependent shared risks are offered. This can proceed beside trade and creator design; NPC ghosts are DG33, and richer medical rules are DG21. **Existing owners:** BW14, MP, PS05/PS-D01 and lifecycle/time owners.
 
@@ -502,7 +504,9 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Existing coverage:** protected human departure/return and the accepted recoverable-human-death direction remain controlling. BW14 retains combat participation, indirect harm and recovery; BW15 retains NPC ghosts, summoning and ordinary revival. Creator revival is a separate existing power. PS-D01 owns future dangerous-logout integration.
 
-**Needed before the affected implementation projects:** choose human opt-in presentation, incapacitation/final-blow behavior, indirect hazards, rescue/return and cooldowns. Separately specify where an NPC ghost exists, what summoning permits, embodiment/duration, retained relationships and a difficult ordinary revival loop. Coordinate property/background protection with PS rather than inventing a blanket building-protection rule or reopening permanent human death.
+**Delivered bounded human-risk slice:** PG05 implements the owner-selected observational stag encounter, half-type corpse loss and campfire/new-life scars, exact final-blow review and five simulated seconds of vulnerable fade. [Execution](../projects/completed/first-threat-encounter-tech-design.md) and [evidence](../verification/first-threat-encounter.md) define the delivered boundary. This does not complete ND11 or NPC ghost/rescue/ordinary-revival scope. Broader D07/PS-D01 remain unresolved; inactive protection and cooperative PvP are retained.
+
+**Needed before the affected implementation projects:** choose explicit PvP opt-in presentation, any separate incapacitation/execution state, new attributed indirect hazards and broader rescue/return modes. PG05's ordinary one-attack final-blow review, campfire reincarnation/scars and detailed simulated fade are already selected/implemented; do not reopen them implicitly. Separately specify where an NPC ghost exists, what summoning permits, embodiment/duration, retained relationships and a difficult ordinary revival loop. Coordinate property/background protection with PS rather than inventing a blanket building-protection rule or reopening permanent human death.
 
 ### ND33 — Food freshness, spoilage and preservation
 

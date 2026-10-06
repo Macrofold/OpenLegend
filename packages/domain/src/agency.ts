@@ -1212,6 +1212,8 @@ export function isPhysicalCommand(command: Command): boolean {
       return command.preparation === 'fiber' || command.preparation === 'cord';
     case 'craft':
       return isSafeRecordId(command.recipeId);
+    case 'treat-scar':
+      return isSafeRecordId(command.targetId) && isSafeRecordId(command.scarId);
     case 'replenish':
       return isSafeRecordId(command.targetId) && isSafeRecordId(command.attributeId);
     case 'equip':

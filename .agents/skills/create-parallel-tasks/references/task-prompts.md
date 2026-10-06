@@ -11,13 +11,19 @@ Include the following, tailoring length to the actual task:
 - **A plain-language assignment:** explain what becomes possible or reliable, then identify the matching task IDs. A task number or internal code name alone is not an explanation.
 - **Specific work:** name included deliverables, important decisions, constraints and exclusions. Group related work in the order it should be approached. Do not transcribe entire specs when an exact section is sufficient.
 - **An ordered reading map:** repository-relative paths and headings for the relevant design, implementation brief, canonical behavior, source entrypoints, limits and maintainer requirements. Explain why a less obvious reference matters. Avoid giant reading lists or sending every worker through unrelated projects.
-- **Dependency facts:** state available interfaces and supplied prerequisites, their controlling definitions and the task's responsibility at each boundary. If a prerequisite is not yet available, tell the owner the task is not fully ready before delivering it as a start-now instruction. Never make a worker find another chat to obtain its specification.
+- **Dependency facts:** apply [unfinished-prerequisite planning](../../openlegend-prioritize/SKILL.md#plan-around-unfinished-prerequisites). Name each required open deliverable, task/design reference, completion/merge status and evidence, what it blocks and what can proceed independently. Include this inside the affected prompt, not only in a shared preamble. A complete conditional prompt is valid for unfinished or unconfirmed-merged work; do not call it immediately runnable. Never make a worker find another chat to obtain its specification.
 - **Completion meaning:** describe the real integrated result and important negative cases. Reference the design's complete acceptance and current `AGENTS.md` rather than imposing a new test-writing or command-running routine.
 - **Synchronized documentation:** name the canonical docs and all overlapping maintainer entries. Require the changes to those records that the existing documentation policy calls for: completed scope, still-open scope, changed behavior/decisions, dependencies and actual verification limits.
 
 Use relative paths inside the copyable prompt so it works in the recipient's checkout. Verify paths and headings. If a file must be present on the starting branch, say so; check the planning files' actual Git status when the user is preparing new branches. Explain to the owner if uncommitted planning files would be absent from new worktrees. Do not silently commit, branch or create tasks merely to write the prompts.
 
 Each prompt must stand alone: it cannot depend on an earlier prompt, this conversation, a shared preamble the owner may omit, or another agent's message. Shared documentation is appropriate because each prompt references it explicitly. If a new copyable prompt is requested after the project changes, reconcile it against current source and accepted decisions rather than replaying old assignment text.
+
+## Name a new branch in each prompt
+
+Every copyable task prompt must tell its recipient to **create and switch to a new branch**, giving the exact branch name chosen for that assignment. Use a concise, change-specific `codex/<descriptive-name>` by default, honoring an explicit user naming constraint. Give different assignments different names; check known branches and earlier allocations to avoid reusing an existing task branch. Published prompts must contain concrete names, not unresolved placeholders or only a suggestion to choose a branch.
+
+The worker selects and refreshes the development base under `AGENTS.md` before creating the branch and beginning implementation. Do not assume pending prerequisites are already present in that base. This branch instruction does not authorize the planning agent to create branches now, or grant the worker pushing, merging, shared-history rewriting or task coordination. Explicit read-only/no-branch instructions remain controlling.
 
 ## Keep workflow with AGENTS.md
 
@@ -27,7 +33,7 @@ In particular, generated prompts must not:
 
 - Tell tasks to contact, message, coordinate with, monitor, wait for replies from or report to other AI tasks. Do not assign task-to-task communication through a shared message file as a workaround. Explain boundaries and owner-mediated sequencing in the plan instead.
 - Tell agents to write unit/integration/browser tests, prescribe coverage quotas or blanket test suites, or prohibit tests that current repository rules require. Define needed evidence; test authoring and execution follow `AGENTS.md` and its verification policy.
-- Invent mandatory commits, branch names, worktrees, rebases, cherry-picks, merge authority, push behavior, integration leadership or cross-task status reporting. Carry explicit user instructions where applicable; otherwise leave the workflow to repository rules.
+- Invent mandatory commits, worktrees, rebases, cherry-picks, merge authority, push behavior, integration leadership or cross-task status reporting. Include the specifically requested new-branch instruction above; other Git workflow stays with `AGENTS.md` and explicit user instructions.
 - Create spending permission, numeric budget splits, model choices, retry rules, timing deadlines or approval rituals from a previous run. Preserve relevant explicit constraints and refer to current policy for the rest. Splitting work never multiplies an existing shared allowance.
 - Claim that a planning request has approved execution, override a “do not implement” instruction, or make a document's status an excuse to ignore the user's actual authorization. Match the requested mode: draft an implementation instruction when asked for one, but do not execute it yourself.
 - Add a new ritual for progress, review, testing or handoff merely because it sounds thorough. Include necessary deliverables and known requirements, not generic workflow boilerplate that duplicates or may conflict with `AGENTS.md`.
@@ -40,6 +46,11 @@ The following is a drafting aid, not literal text to output with placeholders. U
 
 ```text
 Implement [plain-language outcome and the specific scoped work]. Follow AGENTS.md and the applicable repository guidance.
+
+After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch [exact descriptive branch name for this assignment].
+
+Open prerequisites:
+- [Each required unfinished or unconfirmed-merged deliverable, task/reference, current completion/merge status and evidence, blocked work, and independent work allowed. Say None when there are none.]
 
 Scope and intended result:
 - [Current problem and the exact behavior to deliver, followed by task IDs.]
@@ -65,6 +76,6 @@ If the requested deliverable is findings or design rather than implementation, c
 
 Verify the requested number and focus, readable descriptions, real references, complete task definitions and coherent combined outcome. A task can span categories, and multiple tasks can share a category. Any capacity figures must match the user's request and disclose assumptions.
 
-Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, available prerequisites, design decisions, completion criteria and documentation obligations? Remove unsupported assumptions and instructions requiring sibling communication. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
+Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, exact new branch name, design decisions, completion criteria and documentation obligations? Remove unsupported assumptions and instructions requiring sibling communication. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
 
 Present one clearly labeled copyable block per assignment, with a short allocation/dependency explanation for the owner where useful. Do not create chats, dispatch work or start runtime implementation unless separately requested. Report genuine readiness gaps plainly; a polished prompt does not resolve them.

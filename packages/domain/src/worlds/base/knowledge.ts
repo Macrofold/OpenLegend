@@ -152,6 +152,9 @@ export function rememberSubject(
 
 /** Select permitted identity before applying presentation grammar. */
 export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
+  const remains = world.entities[subjectId]?.remains;
+  if (remains && remains.sourceId !== subjectId)
+    return observerName(world, observerId, remains.sourceId);
   const known = observerGivenName(world, observerId, subjectId);
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
   const entity = world.entities[subjectId];

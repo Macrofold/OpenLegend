@@ -1,5 +1,6 @@
 import { WILDERNESS_NEEDS } from './needs.js';
 import { PERCEPTION_RULES } from './senses.js';
+import { scarFactor } from '../../reincarnation.js';
 
 // Bundled balance values consumed by the existing finite native adapters.
 // docs/worlds/base/survival.md
@@ -58,6 +59,7 @@ export function rangedApproachRange(range: number): number {
 
 /** Native locomotion and deadline planning use the same authored speed. */
 export function nativeMovementSpeed(
+  world: import('../../types.js').WorldState,
   entity: import('../../types.js').Entity,
   fleeing = false,
 ): number {
@@ -65,6 +67,8 @@ export function nativeMovementSpeed(
     (fleeing
       ? BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond
       : BASE_ACTION_DEFAULTS.movementTilesPerSecond) *
-    (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200)
+    (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200) *
+    (entity.threat?.policy.movementFactor ?? 1) *
+    scarFactor(world, entity, 'movementFactor')
   );
 }

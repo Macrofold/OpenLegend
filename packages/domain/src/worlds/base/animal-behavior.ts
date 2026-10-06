@@ -100,6 +100,7 @@ export function advanceAnimal(world: WorldState, entity: Entity, seconds: number
   const animal = entity.animal;
   if (
     !animal ||
+    entity.threat ||
     !entity.actor?.alive ||
     entity.actor.incapacitated ||
     entity.actor.action ||
@@ -147,12 +148,12 @@ export function advanceAnimal(world: WorldState, entity: Entity, seconds: number
         world.simTime +
         ANIMAL_ESCAPE.lookAheadMetres /
           ANIMAL_ESCAPE.clearanceSamples /
-          nativeMovementSpeed(entity, true);
+          nativeMovementSpeed(world, entity, true);
       return;
     }
     const heading = animal.escapeHeading;
     if (heading !== null) {
-      const travel = nativeMovementSpeed(entity, true) * seconds;
+      const travel = nativeMovementSpeed(world, entity, true) * seconds;
       const position = worldPosition(entity),
         start = supportedPosition(entity);
       const point =

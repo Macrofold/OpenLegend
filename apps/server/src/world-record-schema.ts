@@ -54,6 +54,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       knowledgePolicy: one('config_knowledge'),
       itemHandling: one('config_item_handling'),
       participationPolicy: one('config_participation'),
+      nativeStrikes: map('config_native_strikes'),
+      exitExposures: map('sim_exit_exposures'),
       statusEffectPolicy: one('config_status_effects'),
       authorship: one('world_authorship', {
         creatorAccountIds: list('world_creators'),
@@ -94,6 +96,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           traits: list('sim_actor_traits', 'id'),
         }),
         animal: one('sim_animal_behavior'),
+        threat: one('sim_territorial_threat'),
         resource: one('sim_resources'),
         remains: one('sim_remains'),
         heat: one('sim_heat'),

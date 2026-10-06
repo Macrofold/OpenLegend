@@ -1,5 +1,7 @@
 # Persistent objects — DF01 / BW07 subtracker
 
+**Next allocated consumers:** [Batch 05](parallel-batch-05-adventure-defense-and-home.md) gives AV02 the equipment attachment/caller cutover, AV04 installed shelter parts under supplied PX05 design, and AV01/AV05 finite rewards/catches. These extend the same PO owners; the [technical contracts](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#shared-responsibility-and-delivery-contracts) forbid competing writable equipment/custody. Current PO delivery and wider qualification remain unchanged.
+
 **Status:** implemented and qualified for the approved object foundation scope; arbitrary construction and hosted capacity remain separate. This decomposes [DF01](production-data.md) and [BW07](base-world.md), coordinated with INV-6, P1 claims, P2 authority and SL00. It does not create a competing inventory or ownership roadmap. [Feature specification](../projects/persistent-objects-feature-spec.md) and [technical design](../projects/persistent-objects-tech-design.md) own the approved project.
 
 Implementation was approved in chat on September 26, 2026; the [foundation plan](../projects/foundations-1-5.md#approved-implementation-plan) records scope, refreshed base and DF02 branch seams. Retain current receipts and semantic owners. Each new state owner must join SL00 in its introducing slice.

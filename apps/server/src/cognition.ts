@@ -166,7 +166,10 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       return { ...base, type: input.type, targetId: input.targetId! };
     case 'cancel':
     case 'recover':
+    case 'respawn':
       return { ...base, type: input.type };
+    case 'treat-scar':
+      return { ...base, type: 'treat-scar', targetId: input.targetId!, scarId: input.scarId! };
     case 'unequip':
       return {
         ...base,

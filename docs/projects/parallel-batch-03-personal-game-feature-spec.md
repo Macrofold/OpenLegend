@@ -1,8 +1,8 @@
 # Parallel batch 03 — Personal game — feature specification
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG03 and scoped PG04 are delivered; PG01's exact billing hold, PG02/PG05 and broader PF05 qualification remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation, PG02 and combined acceptance remain open. | 2026-10-06   |
 
 PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
 
@@ -145,11 +145,13 @@ The owner-authorized meter-refilling/following extension is complete: both reuse
 
 ## PG05 — Design the first dangerous encounter
 
+**Delivered:** the design assignment was completed October 3, and Mike separately approved its bounded runtime delivery on October 4. Current behavior, verification and remaining broader choices are recorded in the [completed encounter design](completed/first-threat-encounter-tech-design.md), [base-world rules](../worlds/base/first-threat-encounter.md) and [evidence](../verification/first-threat-encounter.md). This section preserves the original design acceptance; it is not an open implementation prompt.
+
 ### Deliverable and scope
 
 Produce a paired feature specification and technical design for one optional, discoverable wilderness threat. Recommend one concrete encounter, preferably a territorial animal using the existing animal/body/navigation/action foundation, and compare it briefly with a hostile person and with leaving danger out for now. Threat selection must earn tension, tactical choice or a useful reason to invent; it must not exist only to consume food or demand equipment maintenance.
 
-This is explicitly a **design assignment**. Current hunting/attack primitives do not establish enemy perception, pursuit, disengagement, player defeat or recoverable human death. D07/BW14 leave consequential choices open; no implementation prompt should pretend those decisions have been made.
+This began as a **design assignment**; Mike later approved its bounded runtime delivery. Current hunting/attack primitives alone did not establish enemy perception, pursuit, disengagement, player defeat or recoverable human death. The completed child design and implementation now address the selected slice while D07/BW14 retain broader consequential choices; no other implementation prompt inherits that authorization.
 
 ### Completion
 
@@ -158,19 +160,19 @@ This is explicitly a **design assignment**. Current hunting/attack primitives do
 - Propose exact human defeat/recovery, possession preservation, NPC lethal consequence/confirmation and logout behavior consistent with current accepted policy. Explain any remaining owner choices and preferred alternatives; do not silently settle D07 or change PvP defaults.
 - Define engine versus bundled-world ownership, supported body/equipment/reaction integration, interruption and pursuit bounds, known/unknown target information, save/load and replay. An unseen fleeing player is not an omniscient target; inactive characters remain protected.
 - Walk through an interrupted attack, obstructed pursuit, lost sight, changed consent, disappearance, disconnect, simultaneous defeat and returning to the aftermath. Identify native mechanisms genuinely missing from current code.
-- Supply implementation stages, complete acceptance scenarios, estimated logic/risk, content/art fallback needs and a specific owner-decision list. No runtime or live behavioral claim follows from the written design.
+- Supply implementation stages, complete acceptance scenarios, estimated logic/risk, content/art fallback needs and a specific owner-decision list. The completed design's implementation breakdown was later authorized and delivered; broader D07/PS-D01 questions remain with their existing owners.
 
-The output must be ready for an owner decision and subsequent implementation assignment. No raids, factions, pack ecology, resurrection system, arbitrary combat engine or broad PvP release is included.
+The original output provided the owner decision and implementation breakdown. No raids, factions, pack ecology, resurrection system, arbitrary combat engine or broad PvP release is included.
 
 **Priority hypothesis:** an optional credible threat gives existing movement and inventions new meaning. If escape/recovery needs dominate the benefit, reduce the encounter scope or defer it, while preserving the proposed design and explaining why.
 
 ## Parallel boundaries and sequencing
 
-All five assignments can begin their scoped work from a branch containing this packet. PG01 and PG02 can start with source/native baseline work, but their live acceptance requires a configured, authorized provider path and available allowance under the existing policy. This planning pass did not probe provider availability or dispatch calls; those operational prerequisites are not claimed as verified. A missing service blocks live closure, not the independent work of PG03–PG05. PG01/PG02 use existing action surfaces; they do not wait for PG03 or PG04. PG03 consumes the existing preview/command interface; PG04 preserves it. PG05 delivers documents and does not block the other four. The owner combines the work; no task-to-task communication is required or requested.
+All five assignments began from their scoped packet without task-to-task communication. PG01 and PG02 can start with source/native baseline work, but their live acceptance requires a configured, authorized provider path and available allowance under the existing policy. A missing service blocks live closure, not the independent work of PG03–PG05. PG01/PG02 use existing action surfaces; they do not wait for PG03 or PG04. PG03 consumes the existing preview/command interface; PG04 preserves it. PG05's runtime slice was separately approved and had no runtime prerequisite on the other assignments. The owner combines the work; no task-to-task communication is required or requested.
 
-PG01 owns demonstrated invention/manufacture/use integration defects. PG02 owns cognition preparation, authored resident content and outcome-driven continuation. PG03 owns ordinary action discovery/detail presentation and its permitted projection. PG04 owns prerequisite computation and preview efficiency. PG05 owns the encounter design and unresolved combat decision proposals. Shared files may be edited, but these meanings have a single assigned owner.
+PG01 owns demonstrated invention/manufacture/use integration defects. PG02 owns cognition preparation, authored resident content and outcome-driven continuation. PG03 owns ordinary action discovery/detail presentation and its permitted projection. PG04 owns prerequisite computation and preview efficiency. PG05 owns its delivered encounter/death/danger slice; broader conflict proposals remain with D07/PS-D01. Shared files may be edited, but these meanings have a single assigned owner.
 
-After integration, reuse PG01's invention journey with PG03's discovery surfaces and PG04's preserved command behavior; revisit PG02 only for a changed cognition/action assumption. This combined check is the owner's integration boundary, not a sixth assignment or permission for workers to merge one another's branches. Parent qualification stays with its existing tracker.
+After integration, reuse PG01's invention journey with PG03's discovery surfaces and PG04's preserved command behavior; revisit PG02 only for a changed cognition/action assumption. PG05's separate runtime delivery had no prerequisite on the other assignments. This combined check is the owner's integration boundary, not a sixth assignment or permission for workers to merge one another's branches. Parent qualification stays with its existing tracker.
 
 ## Maintained records
 

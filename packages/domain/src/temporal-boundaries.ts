@@ -64,8 +64,17 @@ export function nativeInterval(
     bound = Math.min(bound, time - world.simTime);
   };
   at(nextRemainsDeadline(world, ambientIds));
+  for (const deadline of Object.values(world.exitExposures ?? {})) at(deadline);
   for (const id of ambientIds) {
-    const animal = world.entities[id]?.animal;
+    const entity = world.entities[id],
+      animal = entity?.animal;
+    const threat = entity?.threat;
+    if (threat && !(threat.relinquished && threat.mode === 'idle')) {
+      at(threat.reviewAt);
+      if (['pursuit', 'search'].includes(threat.mode) && threat.episodeUntil !== undefined)
+        at(threat.episodeUntil);
+      if (threat.mode === 'search' && threat.searchUntil !== undefined) at(threat.searchUntil);
+    }
     if (animal && animal.danger > 0) at(animal.reviewAt);
   }
   // Serial clamps depend on how an interval is divided; such values integrate every slice.
@@ -176,7 +185,7 @@ export function nativeInterval(
       action.path.length &&
       !capabilityBlocked(world, entity, 'locomotion')
     ) {
-      const speed = nativeMovementSpeed(entity);
+      const speed = nativeMovementSpeed(world, entity);
       bound = Math.min(
         bound,
         travelFor(id) / speed,

@@ -270,6 +270,14 @@ export function Character({
         <TabPanel id="condition" className="ol-character-page">
           <Section title="Condition">
             <Condition {...view.player} />
+            {view.player.scars?.map((scar) => (
+              <div key={scar.id}>
+                <Tag>{scar.name}</Tag>
+                <p className="ol-caption">
+                  {scar.description} Treatments remaining: {scar.treatmentsRemaining}.
+                </p>
+              </div>
+            ))}
             <div className="ol-character-statuses">
               {view.player.statusEffects?.map((effect) => (
                 <Tag key={effect.id}>{effect.label}</Tag>

@@ -37,6 +37,18 @@ For gameplay selection or an open-ended next-work recommendation that includes g
 
 Identify the highest-priority unfinished experiences and entries. Check their actual remaining scope against maintainer trackers, implemented behavior, verification, active branches and dependencies before recommending work; a catalogue proposal is not evidence that its capability is missing. Cite the selected entry IDs/priorities and remaining gap, and explain why any relevant higher-ranked unfinished alternative is deferred. Rankings guide the choice alongside player value, urgent defects, prerequisites and the user's constraints; they neither override those considerations nor establish a quota of repertoire assignments.
 
+## Plan around unfinished prerequisites
+
+Valuable future work may depend on previous tasks or implementation that is still unfinished or not confirmed fully merged into `main`. That does not disqualify it from a recommendation or a new batch. Distinguish priority from readiness; do not replace important work with lower-value tasks merely to make every assignment immediately runnable.
+
+For every suggested batch, explicitly list **open prerequisites** for each affected assignment. Identify the specific required deliverable and task ID/design/tracker, its current completion and merge status, the supporting branch/ref or evidence when known, and what it blocks: starting, a particular part of implementation, integration or final acceptance. State what can proceed independently. A dependency on an entire earlier batch is insufficient when only one of its deliverables is needed.
+
+Treat the prerequisite as open unless the required scope is confirmed complete and fully merged into `main`, using the repository's meaning of that ref. Work completed on another branch, partially merged work and uncertain completion/merge status remain explicitly open; distinguish these states instead of guessing. An explicitly supplied alternative development base may make work available there, but does not establish its merge into `main`. Recheck actual required behavior/evidence before calling the dependency satisfied; a branch name or completed-plan label alone is not proof.
+
+Carry each open prerequisite and the independent-work boundary into the affected copyable prompt. Pending implementation or merge can have a complete conditional assignment; an unanswered developer decision still follows [the root question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work). Do not use this permission to invent a dependent design answer, duplicate the prerequisite's implementation or grant workers merge authority.
+
+When producing copyable implementation/task prompts, include the [specific new-branch instruction](../create-parallel-tasks/references/task-prompts.md#name-a-new-branch-in-each-prompt) in every prompt. This specifies the future worker's branch; writing a recommendation does not create it.
+
 ## Apply the principles proportionally
 
 - Establish the requested scope and current state. Reuse adequate supplied or already-loaded evidence; investigate only decision-relevant gaps or potentially stale claims through the [maintainer index](../../../docs/maintainers/README.md), owning plans, implementation and existing evidence. Distinguish proposals, owner-approved requirements, delivered behavior and verified outcomes. When a gameplay comparison needs broader direction not already in context, consult relevant sections of the [repertoire design foundation](../../../docs/repertoires/design-foundation.md) or [selection guidance](../../../docs/repertoires/selection-and-scale.md). Do not preload both documents or the whole catalogue for a narrow grounded question; the catalogue is not an implementation queue.

@@ -1,0 +1,47 @@
+# First wilderness threat
+
+Current bundled-world behavior, implemented October 4, 2026. [Lifecycle and protection](lifecycle-and-protection.md) controls mortality and human protection. The [feature specification](../../projects/completed/first-threat-encounter-feature-spec.md) retains the experience, alternatives and acceptance; the [technical design](../../projects/completed/first-threat-encounter-tech-design.md) explains execution. These laws are authored in [first-threat.ts](../../../packages/domain/src/worlds/base/first-threat.ts), not universal engine defaults.
+
+## Authored site and motivation
+
+One territorial stag with the existing 36-health deer body defends the short approach to a torn woodland cache. Home is `(32,28)`, refuge `(38,31)` and cache `(36.8,26)` on their actual ground support. The cache and its collection stance lie outside the four-unit aggression footprint. A longer route from the south reaches the same reward without entering it. A stone screen at x 29.2–29.8, z 26.3–29.7, rising 1.8 units from ground, uses actual movement, sight and acoustic geometry. It is not decorative cover. Camp, compulsory travel, the existing lookout cache and starter supplies remain independent.
+
+Deep hoof tracks at `(28,24)` and shredded foliage at `(30,24)` describe possible animal aggression. They remain physical evidence after displacement or death. They do not detect an unseen living threat or promise safety when absent. No consent, enrollment, entry modal, forced movement stop or guaranteed warning interval exists. Missing signs can have lethal consequences; the ordinary attack preparation remains observable when perception permits it. [Player Danger](player-danger.md) owns that choice.
+
+The cache contains four prepared fibers, two cord and eight stones in ordinary item lots. It does not refill, reroll, require killing or award quest currency. These materials support existing manufacturing/ammunition use; an invented ranged weapon earns its advantage through actual admitted range and compatible ammunition, without a hidden required recipe. Killing provides the existing finite deer yield (four raw meat, three bone fragments), not another cache. The site is installed in newly created bundled worlds, not injected into older worlds or restored saves.
+
+## Eligibility, warning and reaction
+
+This individual's policy targets living, physically participating player-controlled bipeds, including fading humans; ordinary residents are excluded. It chooses the nearest independently seen eligible body within four units of home, with a stable identity tie. Another player's action cannot nominate a victim. Incidental attraction near another active player is possible; direct cooperative PvP remains denied. Deliberate shared-play luring policy remains D07 work, not a solved universal indirect-harm rule.
+
+Pursuit stays within eight units of home and ends after 2,400 game seconds. Current sight supplies the destination. Losing sight immediately cancels a preparing contact attack at the next policy review; search follows only the last sighting for at most 30 game seconds. It cannot track hidden movement. Death, inactivity, replacement life or a seen target outside the pursuit bound ends targeting. Reviews and route refresh opportunities are 15 game seconds; destination displacement must reach one unit. Four expensive detour requests are available in an episode, plus one terminal return attempt. Reacquiring sight does not replenish time or requests. After timeout, the same life needs an observed departure from the entry footprint before another episode; a changed/dead/inactive life cannot inherit the attack.
+
+A natural contact attempt lowers the antlers, prepares for 120 game seconds, then may inflict 18 injury within 1.6 units of actual interaction reach and sight. Recovery is 180 game seconds. At normal 60:1 time these are two seconds of preparation and three of recovery. The installed stag moves at 75% of nominal walking (0.0825 units/game second), allowing ordinary walking to help escape. No charge collision, push, ranged antler effect, parry or dodge roll is implied. At impact, target life, participation, profile, visibility and reach are checked again. Successful incoming injury interrupts preparation and preserves attack recovery; misses do not stagger it. Preparation is an actual action, not guaranteed advance danger advice.
+
+Only this controller moves the stag: ordinary prey wandering/fleeing does not run alongside it. A hit from an unseen source supplies injury but no hidden attacker location; the stag withdraws. An unseen miss creates no attack-specific reaction. Existing ranged accuracy is multiplied by 0.85 only while this stag is actually moving in return/withdrawal; a prior shot alone does not apply a timer penalty. Other prey keep their existing behavior.
+
+At or below 18 health, the living stag permanently relinquishes the cache and withdraws to the refuge. Minor wounds persist when it returns home after disengagement. Failed/exhausted return stops it at an actual supported point and relinquishes the site, without teleportation or imaginary path success. The longer route remains available throughout. Death and displacement do not reset on logout, Continue or restart; ordinary revival is unavailable. Authorized creator revival changes physical life but does not refill supplies or clear relinquishment.
+
+## Owner choices and recommended policy
+
+Mike selected the stag, signs without entry warnings, true player death, one-attempt final-blow confirmation, no new indirect combat and five fully simulated seconds of vulnerable logout. These replace the October 3 proposal's enrollment, guaranteed warning, all-possession collapse recovery and automatic retreat. [Player Death](player-death.md) and [Player Danger](player-danger.md) own the detailed current rules. No broader D07 property/PvP rule, BW15 ghost/summoning law or PS coarse/background combat was silently adopted.
+
+The credible alternatives remain a hostile speaking person (adds motive, dialogue, social context and NPC recovery design) or deferral (lower immediate risk but no dangerous reason to observe/move/invent). The stag supplies a complete optional episode with less speculative infrastructure. Tuning and adding warnings require evidence from later play, not a claim that the first values are optimal.
+
+## Visible feedback and art
+
+Inspection exposes only currently seen signs, posture, permitted health and actual offered actions. The attack cue is “The stag lowers its antlers and braces to strike.” Withdrawal and failed return report observable behavior. Current action/results show the actual attempt, miss, range loss or injury; no enemy-intent marker, hidden position or private relationship data is projected. Dead players cannot scout from their old body. Final-blow review names the observed target, attack/tool/range/timing/ammunition and persistent death consequence. Cancellation initially has focus; Escape closes without acting. Review does not pause mechanics.
+
+Original existing deer art and a simple melee preparation motion provide the initial presentation. This is not a bespoke antler rig, roar or charge animation. Text remains sufficient without motion. Signs use ordinary resource scenery without falsely offering gathering. The general logout notice describes the installed five-second law and detects no hidden enemy.
+
+## Persistence and growth
+
+Controller policy/progress, exact target life, last sighting, finite deadlines/request allowance, wounds, supplies and remains use current world/entity records. Action and server generation owners invalidate stale callbacks/reviews after restore. Saved randomness determines outcomes; no reroll on duplicate commands. Existing synchronous human acknowledgement and ordered simulation persistence remain controlling: unsaved simulation progress can be lost on crash. There is no SQL commit per pose or native hit, no paid animal cognition, new history journal, second path worker or universal combat framework.
+
+Candidate selection uses the existing nearby index, cheap eligibility and exact footprint filtering before sight, then one pass; it does not sort or scan the world for each target. Candidate, event/history and repeated corpse growth remain bounded by existing work admission or explicitly unbounded retention policies, not by a hidden truncation. One seeded stag is a content limit, not a capacity claim. [Verification](../../verification/first-threat-encounter.md) records both playable checks and the dense-scene capacity failure.
+
+## Maintained records
+
+- Implementation: [PG05](../../maintainers/parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design), [BW14](../../maintainers/base-world.md#accepted-lifecycle-and-protection-delivery), [DG07/ND11](../../maintainers/needs-design.md#dg07--human-participation-and-recoverable-conflict), [MP04](../../maintainers/multiplayer.md#mp041--participation-and-bounded-exit-contract).
+- Limits and constraints: [FT01–FT07](../../limits/base-world.md#ft01--proposed-first-threat-scope-and-reward), [native work](../../limits/native-work.md), [objects](../../limits/objects.md), [persistence](../../limits/persistence.md).
+- Related contract/design: [technical design](../../projects/completed/first-threat-encounter-tech-design.md), [lifecycle](lifecycle-and-protection.md), [selected decisions](../../../archive/05-project/open-decisions.md#pg05--proposed-first-encounter-choices).

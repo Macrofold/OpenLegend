@@ -1,0 +1,16 @@
+.ol-death-notice {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--space-6) + 3rem);
+  transform: translateX(-50%);
+  width: min(32rem, calc(100vw - var(--space-6)));
+  z-index: 40;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  max-height: 50vh;
+  overflow: auto;
+}
+.ol-death-notice p {
+  margin: 0;
+}

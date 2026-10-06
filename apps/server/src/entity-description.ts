@@ -12,6 +12,15 @@ export function describeEntity(
 ): string {
   const remains = describeBodyRemains(entity, definitions);
   if (remains) return remains;
+  if (entity.threat)
+    return entity.actor?.action?.strikePhase === 'windup'
+      ? entity.threat.policy.windupText
+      : entity.threat.mode === 'return'
+        ? entity.threat.policy.withdrawalText
+        : entity.threat.relinquished
+          ? entity.threat.policy.stopText
+          : (entity.description ?? entity.name);
+  if (entity.description) return entity.description;
   if (entity.resource)
     return `${namePhrase(entity, 'indefinite', { capitalize: true })}. ${definitions[entity.resource.definitionId]?.description ?? 'A source of gathering materials.'} ${entity.resource.quantity} units remain.`;
   if (entity.actor && !entity.animal)

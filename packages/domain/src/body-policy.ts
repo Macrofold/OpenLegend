@@ -7,12 +7,15 @@ import { matchesStatusCondition, type StatusCondition } from './status-effects.j
 import { validateStatusCondition } from './status-effect-validation.js';
 import { isWalkable } from './spatial.js';
 import { bodyProfile } from './spatial-state.js';
+import { validateReincarnationPolicy } from './reincarnation.js';
 
 /** Finite installed body services. Policy chooses existing outcomes, never authority.
  * docs/projects/parallel-batch-01-playable-week/survival.md#installed-body-policy */
 export interface BodyPolicy {
   id: string;
   version: number;
+  reincarnation: import('./reincarnation.js').ReincarnationPolicy | null;
+  lethalAttackReview: import('./combat-consent.js').LethalReviewPolicy | null;
   zeroHealth: {
     player: 'incapacitate' | 'die';
     npc: 'incapacitate' | 'die';
@@ -87,6 +90,8 @@ export function validateBodyPolicy(
   fields(policy, [
     'id',
     'version',
+    'reincarnation',
+    'lethalAttackReview',
     'zeroHealth',
     'recovery',
     'revival',
@@ -95,6 +100,11 @@ export function validateBodyPolicy(
     'carryingConcern',
     'backgroundThinking',
   ]);
+  validateReincarnationPolicy(policy.reincarnation);
+  if (policy.lethalAttackReview !== null) {
+    fields(policy.lethalAttackReview, ['title', 'description', 'confirmLabel', 'cancelLabel']);
+    for (const value of Object.values(policy.lethalAttackReview)) text(value);
+  }
   if (
     typeof policy.id !== 'string' ||
     !/^[a-z][a-z0-9-]{0,39}:[a-z][a-z0-9-]{0,59}$/.test(policy.id) ||
@@ -115,6 +125,20 @@ export function validateBodyPolicy(
       schema: Extract<AttributeDefinition['schema'], { kind: 'number' }>;
     };
   };
+  if (policy.reincarnation) {
+    if (
+      policy.zeroHealth.player !== 'die' ||
+      !policy.remains ||
+      !Array.isArray(policy.reincarnation.fillAttributes) ||
+      new Set(policy.reincarnation.fillAttributes).size !==
+        policy.reincarnation.fillAttributes.length ||
+      (itemDefinitions &&
+        policy.reincarnation.treatment &&
+        !itemDefinitions[policy.reincarnation.treatment.materialId])
+    )
+      throw new Error('Incompatible reincarnation services.');
+    policy.reincarnation.fillAttributes.forEach(numeric);
+  }
   const condition = (value: unknown) => validateStatusCondition(world, value, statusIds);
   fields(policy.zeroHealth, ['player', 'npc', 'native', 'incapacitateNarration', 'deathNarration']);
   for (const controller of ['player', 'npc', 'native'] as const)

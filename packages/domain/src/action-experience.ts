@@ -365,6 +365,13 @@ export function beginActivity(
   view: ActivityView,
   parentId?: string,
 ): ActivityOccurrence {
+  // A learned success may reproduce the physical action, never a human's one-attack consent.
+  const { humanInitiated: _human, ...recordable } = command;
+  command = recordable;
+  if (command.type === 'strike' || command.type === 'hunt') {
+    const { lethalPermission: _permission, ...physical } = command;
+    command = physical;
+  }
   const state = world.actionExperience;
   const entries = (state.occurrences[command.actorId] ??= []);
   const existing = entries.find((entry) => entry.commandId === command.id);
@@ -690,6 +697,7 @@ const invocationFields: Partial<
   },
   strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId'] },
   hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
+  'treat-scar': { required: ['targetId', 'scarId'] },
   cook: { required: ['itemId', 'heatId'] },
   'tend-fire': {
     required: ['targetId', 'operation'],

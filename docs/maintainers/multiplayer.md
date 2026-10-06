@@ -139,6 +139,8 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 ### MP04.1 — Participation and bounded exit contract
 
+**Delivered encounter integration (October 4):** The bundled world now uses [five normally simulated seconds of full vulnerability](../worlds/base/player-danger.md#five-simulated-seconds-to-leave), saved as 300 game seconds. New animal attacks/death are possible; pause/navigation preparation/downtime spends none. Unfinished human work stops, no auto-retreat/new absent-player work starts, and protection wins tied discrete impact. Remaining exposure survives current-format restart, with no downtime combat. [PG05 evidence](../verification/first-threat-encounter.md) covers native/service/cold/browser cases. The earlier 15-real-second operational default remains for worlds without installed simulated exposure; it cannot override this authored rule. Broader PS-D01 coarse/background fairness and hosted MP gates remain open.
+
 - [x] Separate controlling/participating connections, followers, authentication expiry, viewport visibility and global pause. Persist one actor participation state and distinct operational exit identity/deadline.
 - [x] Implement idempotent last-participant-loss and reconnect transitions; bound exit even while simulation is paused, without domain wall-clock I/O or offline catch-up.
 - [x] Audit current actions for supported finish/interruption at exit; retain spent effects and unused-hold release. Unsupported future delayed/indirect harm remains BW14 work, not guessed settlement.

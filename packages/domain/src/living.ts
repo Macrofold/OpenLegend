@@ -11,6 +11,9 @@ import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { setBodyHealth } from './body-state.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { finishPlanAction } from './agency.js';
+import { releaseInvocationResources } from './resource-claims.js';
+import { separateDeadLife, scarFactor } from './reincarnation.js';
+import { strikeDefinition } from './strikes.js';
 import type { Entity, WorldEvent, WorldState, Transition } from './types.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
@@ -57,6 +60,7 @@ export function reconcileBody(
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'body' });
   setBodyHealth(actor, Math.max(0, Math.min(body.maxHealth, actor.health)));
   if (actor.health === 0 && actor.alive && !actor.incapacitated) {
+    if (actor.action) releaseInvocationResources(world, actor.action.id);
     if (actor.action)
       finishPlanAction(
         world,
@@ -92,6 +96,7 @@ export function reconcileBody(
         harvested: false,
         yields: body.harvestYield.map((y) => ({ ...y })),
       };
+      separateDeadLife(world, entity, events);
     }
     if (!actor.alive) {
       // Death ends live sensory continuity, not retained knowledge or historical evidence.
@@ -190,6 +195,7 @@ export function commitBodyEffects(
   ))
     totals[effect.kind] +=
       effect.amount * (effect.kind === 'health' ? 1 : body.susceptibility[effect.kind]);
+  totals.injury *= scarFactor(world, entity, 'incomingInjuryFactor');
   const before = actor.health;
   const previous = { ...body.conditions };
   body.conditions.injury = Math.max(
@@ -218,6 +224,32 @@ export function commitBodyEffects(
     observer ? observerDescription(world, observer.id, entity.id) : undefined,
   );
   if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
+  if (actor.health < before && actor.action?.type === 'treat-scar') {
+    finishPlanAction(
+      world,
+      entity.id,
+      actor.action.id,
+      outcome(false, 'interrupted', 'Injury interrupted scar treatment.'),
+    );
+    actor.action = null;
+  }
+  if (actor.health < before && actor.action?.strikePhase === 'windup') {
+    const interrupted = actor.action;
+    actor.attackReadyAt = Math.max(
+      actor.attackReadyAt ?? 0,
+      world.simTime +
+        (strikeDefinition(interrupted.definitionId, world, interrupted.weaponItemId)
+          ?.recoverySeconds ?? 0),
+    );
+    releaseInvocationResources(world, interrupted.id);
+    finishPlanAction(
+      world,
+      entity.id,
+      interrupted.id,
+      outcome(false, 'interrupted', 'Injury interrupted the prepared strike.'),
+    );
+    actor.action = null;
+  }
   emit(
     world,
     events,

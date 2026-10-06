@@ -31,6 +31,13 @@ import { HostWork } from './host-work.js';
 import { WorkBudgetError } from '@open-legend/domain';
 import { changeParticipation } from '@open-legend/domain';
 import {
+  lethalAttackOffer,
+  bodyPolicy,
+  observerName,
+  nativeActivityView,
+  type LethalPermission,
+} from '@open-legend/domain';
+import {
   AuthorityError,
   commandRecoveryFields,
   scopeKey,
@@ -177,6 +184,8 @@ export const commandInputSchema = z
       'inspect-activities',
       'cancel',
       'recover',
+      'respawn',
+      'treat-scar',
       'teach',
     ]),
     purpose: z.string().trim().min(1).max(120).optional(),
@@ -221,6 +230,8 @@ export const commandInputSchema = z
     definitionId: id.optional(),
     distance: z.number().min(1.5).max(12).optional(),
     attemptId: id.optional(),
+    scarId: id.optional(),
+    lethalReviewId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
     attributeId: id.optional(),
@@ -391,6 +402,18 @@ export class WorldService {
   private readonly connections = new Map<string, RequestScope>();
   private readonly connectionPreferences = new Map<string, boolean>();
   private exits = new Map<string, ExitAttempt>();
+  private lethalReviews = new Map<
+    string,
+    {
+      requestId: string;
+      inputDigest: string;
+      scope: string;
+      expiresAt: number;
+      command: Command;
+      permission: LethalPermission;
+      view: NonNullable<ApiResult['lethalReview']>;
+    }
+  >();
   private humanActorIds: readonly string[] = [];
   private pauseWhenHidden = true;
   private currentProfile!: PlayerProfile;
@@ -858,6 +881,7 @@ export class WorldService {
   }
   private get absent(): boolean {
     if (this.present) return false;
+    if (Object.keys(this.world.exitExposures ?? {}).length) return false;
     // Non-browser clients may opt into connected background play. Game tabs
     // always release control on blur, so an old stream cannot keep them active.
     for (const scope of this.connections.values()) {
@@ -2470,7 +2494,10 @@ export class WorldService {
         this.exits.set(entity.id, attempt);
         actor = this.world.entities[entity.id]!.actor!;
       }
-      if (this.now() >= attempt.deadline) {
+      if (
+        this.world.participationPolicy?.exitExposureSeconds === undefined &&
+        this.now() >= attempt.deadline
+      ) {
         const result = changeParticipation(this.world, entity.id, actor.participation!.revision, {
           type: 'depart',
           attemptId: attempt.id,
@@ -2526,6 +2553,7 @@ export class WorldService {
           throw new Error('Presence capacity reached. Reconnect before continuing.');
         this.presence.set(clientId, { at: this.now(), scope });
       } else this.presence.delete(clientId);
+      await this.reconcileParticipation();
       if (this.paused !== wasPaused || this.world.paused !== this.paused) await this.syncPause();
     });
   }
@@ -3763,7 +3791,14 @@ export class WorldService {
       // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
       if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
       if (epoch === undefined || !this.store.commands)
-        return await this.evaluateCommand(commandId, input, actor, false);
+        return await this.evaluateCommand(
+          commandId,
+          input,
+          actor,
+          false,
+          undefined,
+          scope ?? this.localScope,
+        );
       await this.refreshCommandEpoch();
       const id = `gameplay:${scope?.accountId ?? 'local-player'}:${epoch}:${digest(commandId)}`;
       const fingerprint = digest({ actor, input, ...(scope ? { scope } : {}) });
@@ -3785,13 +3820,20 @@ export class WorldService {
           code: 'expired',
           message: 'This command epoch has closed. Refresh before issuing a new action.',
         };
-      return await this.evaluateCommand(id, input, actor, false, {
+      return await this.evaluateCommand(
         id,
-        epoch: this.epoch.generation,
-        fingerprint,
-        recoveryFingerprint: scope ? commandRecoveryFingerprint(input, scope) : null,
-        expiresAt: this.now() + COMMAND_RETRY_MS,
-      });
+        input,
+        actor,
+        false,
+        {
+          id,
+          epoch: this.epoch.generation,
+          fingerprint,
+          recoveryFingerprint: scope ? commandRecoveryFingerprint(input, scope) : null,
+          expiresAt: this.now() + COMMAND_RETRY_MS,
+        },
+        scope ?? this.localScope,
+      );
     });
   }
 
@@ -3838,6 +3880,7 @@ export class WorldService {
   /** Run current admission; native pure prerequisites or disposable effects never commit. */
   previewCommand(input: CommandInput, actorId = this.controlledEntityId): ApiResult {
     const result = this.evaluateCommand(randomUUID(), input, actorId, true) as ApiResult;
+    if (result.code === 'lethal-review-required') return { ...result, ok: true };
     if (result.ok && input.type === 'activity-request') {
       const notes = reviewActivityRequest(this.world, actorId, {
         family: input.activityFamilyId!,
@@ -4132,6 +4175,7 @@ export class WorldService {
         command = {
           ...envelope,
           type: 'strike',
+          humanInitiated: true,
           targetId: input.targetId,
           definitionId: input.definitionId,
           ...(input.itemId ? { weaponItemId: input.itemId } : {}),
@@ -4142,9 +4186,20 @@ export class WorldService {
         command = {
           ...envelope,
           type: 'hunt',
+          humanInitiated: true,
           targetId: input.targetId,
           ...(input.itemId ? { weaponItemId: input.itemId } : {}),
           ...(input.ammunitionId ? { ammoItemId: input.ammunitionId } : {}),
+        };
+        break;
+      case 'treat-scar':
+        if (!input.targetId || !input.scarId)
+          return { ok: false, code: 'target', message: 'Choose a scar and rest spot.' };
+        command = {
+          ...envelope,
+          type: 'treat-scar',
+          targetId: input.targetId,
+          scarId: input.scarId,
         };
         break;
       case 'teach':
@@ -4187,16 +4242,95 @@ export class WorldService {
     actorId: string,
     preview: boolean,
     gameplay?: Omit<GameplayReceipt, 'result'>,
+    scope?: RequestScope,
   ): ApiResult | Promise<ApiResult> {
     const bound = this.bindCommand(commandId, input, actorId);
     if (!('actorId' in bound)) return bound;
-    const command = bound;
+    let command = bound;
     if (preview) {
       if (this.paused) return { ok: false, code: 'paused', message: 'Resume the world to act.' };
       const { outcome } = executeCommand(this.world, command, { preview: true });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
-    return this.transition((world) => executeCommand(world, command), gameplay);
+    const { lethalReviewId, ...unreviewedInput } = input;
+    const inputDigest = digest(unreviewedInput);
+    const reviewScope = scope ? digest({ scope, generation: this.generation }) : undefined;
+    if (lethalReviewId) {
+      const review = this.lethalReviews.get(actorId);
+      if (
+        !review ||
+        review.view.id !== lethalReviewId ||
+        review.scope !== reviewScope ||
+        review.expiresAt <= this.now() ||
+        review.inputDigest !== inputDigest ||
+        (review.command.type !== 'strike' && review.command.type !== 'hunt')
+      )
+        return {
+          ok: false,
+          code: 'lethal-review-stale',
+          message: 'That attack review expired or changed. Choose the attack again.',
+        };
+      command = { ...review.command, id: commandId, lethalPermission: review.permission };
+    } else if (scope && (command.type === 'strike' || command.type === 'hunt')) {
+      const preview = executeCommand(this.world, command, { preview: true }).outcome;
+      if (preview.code === 'lethal-review-required') {
+        const offer = lethalAttackOffer(this.world, command),
+          policy = bodyPolicy(this.world)?.lethalAttackReview;
+        if (!offer || !policy) return preview;
+        // One pending review per controlled actor, with a cap shared by connected requests.
+        // No target lock, paid work, ammo debit or action occurs while the dialog is open.
+        for (const [actor, prior] of this.lethalReviews)
+          if (prior.expiresAt <= this.now()) this.lethalReviews.delete(actor);
+        if (
+          !this.lethalReviews.has(actorId) &&
+          this.lethalReviews.size >= this.config.capacity.requests
+        )
+          return {
+            ok: false,
+            code: 'busy',
+            message: 'Attack review capacity is full. Try again shortly.',
+          };
+        const prior = this.lethalReviews.get(actorId);
+        if (
+          prior?.requestId === commandId &&
+          prior.scope === reviewScope &&
+          prior.inputDigest === inputDigest
+        )
+          return { ...preview, lethalReview: prior.view };
+        const attack = nativeActivityView(this.world, offer.command);
+        const view: NonNullable<ApiResult['lethalReview']> = {
+          id: randomUUID(),
+          ...policy,
+          targetLabel: observerName(this.world, actorId, offer.permission.targetId).name,
+          attack: {
+            name: attack.name,
+            ...(attack.tool ? { tool: attack.tool } : {}),
+            facts: attack.facts
+              .filter((fact) => fact.critical)
+              .map((fact) => ({
+                name: fact.name,
+                value: String(fact.value),
+                critical: true,
+              })),
+          },
+        };
+        this.lethalReviews.set(actorId, {
+          requestId: commandId,
+          inputDigest,
+          scope: reviewScope!,
+          expiresAt: this.now() + 60_000,
+          command: offer.command,
+          permission: offer.permission,
+          view,
+        });
+        return { ...preview, lethalReview: view };
+      }
+    }
+    return this.transition((world) => executeCommand(world, command), gameplay).then((result) => {
+      if (lethalReviewId && (result.ok || result.code === 'lethal-review-stale'))
+        this.lethalReviews.delete(actorId);
+      return result;
+    });
   }
 
   async say(

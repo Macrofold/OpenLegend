@@ -8,7 +8,7 @@
 
 ## Scope, risk and planning
 
-The original request covered the entire interface. The first implementation concentrated on inventory, contextual camp activities, crafting and conversation, leaving substantial existing player, creator and operator surfaces outside the redesign. The [58-group source/evidence map](../ui-ux/interface-coverage.md) defines the complete coverage boundary. The research/design correction added no production logic. The user's subsequent **continue** authorizes implementation of that reviewed whole-interface plan. Earlier inventory implementation and acceptance remain recorded below; the following coordinated plan was recorded before the broader runtime work and now retains its original estimate and dependency decisions.
+The original request covered the entire interface. The first implementation concentrated on inventory, contextual camp activities, crafting and conversation, leaving substantial existing player, creator and operator surfaces outside the redesign. The [58-group historical source/evidence map](../ui-ux/interface-coverage.md#historical-source-audit) defines the original audited coverage boundary. [Later integrated death/attack groups](../ui-ux/interface-coverage.md#later-integrated-surfaces--october-6-2026) are recorded separately and retain the existing lifecycle/confirmation journeys and native owners. The research/design correction added no production logic. The user's subsequent **continue** authorizes implementation of that reviewed whole-interface plan. Earlier inventory implementation and acceptance remain recorded below; the following coordinated plan was recorded before the broader runtime work and now retains its original estimate and dependency decisions.
 
 ## Whole-interface runtime plan — October 4, 2026 UTC
 
@@ -103,7 +103,7 @@ Review corrected lost-focus recovery, private draft isolation, recipient-specifi
 
 ## Whole-interface implementation boundaries
 
-The following boundaries are implemented in the current whole-interface candidate, grounded in the [58-group source map](../ui-ux/interface-coverage.md). Explicitly conditional mechanics and unrun acceptance remain targets. The earlier inventory implementation plan below retains its own historical revision and evidence.
+The following boundaries are implemented in the current whole-interface candidate, grounded in the [current source map](../ui-ux/interface-coverage.md). Explicitly conditional mechanics and unrun acceptance remain targets. The earlier inventory implementation plan below retains its own historical revision and evidence.
 
 ### Keep the application, reorganize its task entry
 

@@ -1,6 +1,7 @@
 import type { BodyPolicy } from '../../body-policy.js';
 import type { StatusCondition } from '../../status-effects.js';
 import { BASE_FAMILY_FACTS } from './actions.js';
+import { BASE_REINCARNATION_POLICY } from './death.js';
 const below = (attribute: string, value: number): StatusCondition => ({
   compare: { target: '$subject', attribute, operator: 'lessThan', value },
 });
@@ -12,34 +13,23 @@ const awake: StatusCondition = {
 };
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 2,
+  version: 4,
+  reincarnation: BASE_REINCARNATION_POLICY,
+  lethalAttackReview: {
+    title: 'Attempt a final blow?',
+    description:
+      'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.',
+    confirmLabel: 'Attempt lethal blow',
+    cancelLabel: 'Cancel',
+  },
   zeroHealth: {
-    player: 'incapacitate',
+    player: 'die',
     npc: 'die',
     native: 'die',
     incapacitateNarration: '{subject.name:definite} collapsed and can recover at camp.',
     deathNarration: '{subject.name:definite} died.',
   },
-  recovery: {
-    controllers: ['player'],
-    when: {
-      any: [
-        { field: { target: '$subject', name: 'incapacitated', operator: 'equal', value: true } },
-        below('wilderness:health', 30),
-        below('wilderness:fullness', 20),
-      ],
-    },
-    anchor: 'safeReturnAnchor',
-    floors: [
-      { attributeId: 'wilderness:health', value: 65 },
-      { attributeId: 'wilderness:fullness', value: 45 },
-      { attributeId: 'wilderness:energy', value: 65 },
-    ],
-    label: 'Recover at camp',
-    narration: '{subject.name:definite} recovered at camp.',
-    successText: 'Recovered at camp.',
-    refusalText: 'Camp recovery is available when health or food is critically low.',
-  },
+  recovery: null,
   revival: { fillToMaximum: ['wilderness:fullness', 'wilderness:energy'] },
   remains: {
     rotAfterSeconds: 3 * 86400,

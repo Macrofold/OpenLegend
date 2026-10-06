@@ -1,5 +1,7 @@
 # Inventions and world evolution implementation tracker
 
+**Next playable consumers:** [Batch 05](parallel-batch-05-adventure-defense-and-home.md) proposes exact recipe-record learning (AV01), an admitted shield consumer (AV02), selected shelter delivery after PX05 (AV04), and finite fishing/world-defined preparation (AV05). The [technical reconciliation map](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#documentation-reconciliation-map) identifies the INV-4/INV-7, family-admission and INV-6.4 subsets. No broader invention, materials, library or live-generation requirement is closed by this plan.
+
 [Batch 04](parallel-batch-04-expeditions-and-exchange.md) proposes two scoped follow-ons: PX02 extends immediate barter within INV-20 using existing custody; PX05 supplies the missing editable-shelter technical design beneath INV-6.4. Neither closes these parents or implements currency, construction or wider structural families.
 
 Current-main integration is implemented with [focused September 27 PostgreSQL, authority, Worker, usage and review evidence](../verification/invention-main-integration.md). Existing task IDs and broader INV/WW release gates remain unchanged; merging this foundation does not deliver every future scenario.

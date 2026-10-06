@@ -7,6 +7,8 @@ import { EntryScreen, type EntryStatus } from './ui/entry-screen';
 import { EntryNotice } from './ui/entry-notice';
 import { MaintenanceNotice } from './ui/maintenance-notice';
 import { TabResumeDialog } from './ui/tab-resume';
+import { LethalAttackDialog } from './ui/lethal-attack-dialog';
+import { DeathNotice } from './ui/death-notice';
 import { useTabControl, type TabControl } from './tab-control';
 import { Narrator } from './ui/history';
 import { Journal } from './ui/journal';
@@ -164,6 +166,22 @@ function App({
       entity: EntityView;
       point: { x: number; y: number };
     } | null>(null);
+  const [lethalReview, setLethalReview] = useState<{
+    review: NonNullable<ApiResult['lethalReview']>;
+    action: ActionOption;
+  } | null>(null);
+  const [lethalBusy, setLethalBusy] = useState(false);
+  useEffect(
+    () => setLethalReview(null),
+    [
+      view?.worldId,
+      view?.saveTimeline,
+      view?.access?.scope,
+      view?.access?.controlGeneration,
+      view?.player.life,
+      view?.player.alive,
+    ],
+  );
   const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>(['inventory']);
   const [inventoryOpened, setInventoryOpened] = useState(false);
   const [activityOpened, setActivityOpened] = useState(false);
@@ -621,12 +639,23 @@ function App({
     }
     setPicker(null);
     setTargeting(false);
+    const requestedLife = latest.current?.player.life;
+    const requestedScope = latest.current?.access?.scope;
     try {
       const r = await post('/api/command', {
         commandId: request?.commandId ?? crypto.randomUUID(),
         commandEpoch: request?.commandEpoch ?? view?.commandEpoch,
         command: action.command,
       });
+      if (
+        r.lethalReview &&
+        !latest.current?.player.death &&
+        latest.current?.player.life === requestedLife &&
+        latest.current?.access?.scope === requestedScope
+      ) {
+        setLethalReview({ review: r.lethalReview, action });
+        return r;
+      }
       if (!r.ok || r.code !== 'accepted') notify(r.message);
       return r;
     } catch (e) {
@@ -655,6 +684,19 @@ function App({
     setActivityEntry(entry);
     show('activity');
     setPicker(null);
+  }
+  async function confirmLethalAttack() {
+    if (!lethalReview || lethalBusy) return;
+    setLethalBusy(true);
+    try {
+      const result = await command({
+        ...lethalReview.action,
+        command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
+      });
+      if (!('lethalReview' in result) || !result.lethalReview) setLethalReview(null);
+    } finally {
+      setLethalBusy(false);
+    }
   }
   function talk(id: string) {
     setNpcId(id);
@@ -1493,6 +1535,7 @@ function App({
                 </a>
               )}
             </Section>
+            {view.player.departureNotice && <p>{view.player.departureNotice}</p>}
             <Button busy={loggingOut} onPress={() => void leaveAccount()}>
               Log Out
             </Button>
@@ -2030,6 +2073,15 @@ function App({
           error={tab.error}
           resume={() => void tab.enter((next) => accept(next, true), true)}
           logout={() => void tab.logout()}
+        />
+      )}
+      {view?.player.death && <DeathNotice view={view} command={command} />}
+      {lethalReview && !tabPaused && (
+        <LethalAttackDialog
+          review={lethalReview.review}
+          busy={lethalBusy}
+          cancel={() => setLethalReview(null)}
+          confirm={() => void confirmLethalAttack()}
         />
       )}
     </ClockOffsetContext.Provider>

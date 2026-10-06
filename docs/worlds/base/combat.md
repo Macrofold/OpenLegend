@@ -12,4 +12,4 @@ The authored definition lives in `packages/domain/src/worlds/base/strikes.ts`. T
 
 ## Accepted lethal-action direction
 
-The initial Punch implementation does not complete the [deliberate lethal-consequence policy](lifecycle-and-protection.md#deliberate-lethal-consequences). Human PvP consent, death confirmation and the final-blow/incapacitation choice remain delivery work in BW14; NPC ghost continuity is BW15. Do not make these main-world choices universal strike-runtime laws.
+Human-issued supported strikes/hunts now require [one exact potentially lethal attack confirmation](player-danger.md#final-blow-confirmation), and the [territorial stag](first-threat-encounter.md) uses an explicitly granted natural-contact profile through the same attack owner. Player death uses [corpse/half-type/scar continuity](player-death.md); NPC and animal deaths persist without ordinary revival. Broader human PvP, attributed indirect harm and rescue remain BW14/D07, and NPC ghosts/ordinary revival remain BW15. These are installed world choices rather than universal strike laws.

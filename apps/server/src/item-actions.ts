@@ -6,7 +6,7 @@ export function pickupActions(
   pile: Entity,
   preview: (command: CommandInput) => { ok: boolean; message: string },
 ) {
-  if (pile.kind !== 'item-pile' || !canHandleItems(world, actor)) return [];
+  if (!(pile.kind === 'item-pile' || pile.remains) || !canHandleItems(world, actor)) return [];
   const items = portableItems(world, pile.id);
   const one = items.map((item) => ({
     id: `pickup-${item.id}`,

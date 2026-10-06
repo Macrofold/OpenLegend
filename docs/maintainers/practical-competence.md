@@ -7,6 +7,8 @@
 - Limits and expansion triggers: [ST-L08–ST-L13](../limits/authored-stats.md).
 - Design routing: [DG14](needs-design.md#dg14--useful-competence-and-practice), ND03 and ND04's practical-skill slice.
 
+**Implementation allocation:** [AV03, batch 05](parallel-batch-05-adventure-defense-and-home.md#av03--useful-competence-and-voluntary-coaching) owns PC02–PC06 as one delivery assignment. Its [technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience) supplies the current handoff decisions; all unchecked runtime/value criteria below remain open.
+
 ## PC01 — Product and behavior
 
 - [x] Specify a useful existing activity, capable beginner, finite real-use progression, quiet practice route, willing coaching, material economics, privacy, interruption and restoration.
