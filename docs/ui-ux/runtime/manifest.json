@@ -322,6 +322,94 @@
       "captureScope": "component",
       "source": "current-work-component-8903595",
       "originalFile": "02-narrow-current-work.png"
+    },
+    {
+      "id": "34-native-creator-preview",
+      "file": "34-native-creator-preview.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 1041604,
+      "sha256": "40ca03a30658544fd27ceccafbb661582ae249811b311c1754b07d22a8c892be",
+      "captureScope": "app",
+      "source": "native-creator-8903595",
+      "originalFile": "01-local-native-preview.png"
+    },
+    {
+      "id": "35-native-rejected-review-heading",
+      "file": "35-native-rejected-review-heading.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 74987,
+      "sha256": "854a2feb30ad8b0ac2c033afc013a2e6ee4f343713c1eab566ed47f5ace057e3",
+      "captureScope": "app",
+      "source": "native-creator-8903595",
+      "originalFile": "02-rejected-exact-review-narrow.png"
+    },
+    {
+      "id": "36-native-original-apply-unconfirmed",
+      "file": "36-native-original-apply-unconfirmed.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 713651,
+      "sha256": "45d20939cc16200cfcdef027e6499fffaca4f704cf473db7f8646c35f299c351",
+      "captureScope": "app",
+      "source": "native-creator-8903595",
+      "originalFile": "03-original-apply-awaiting-confirmation.png"
+    },
+    {
+      "id": "37-native-confirmed-apply",
+      "file": "37-native-confirmed-apply.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 712975,
+      "sha256": "382175c94396a7be4b940d5ae4f08a5956e05ae023d0715964466ed06900595d",
+      "captureScope": "app",
+      "source": "native-creator-8903595",
+      "originalFile": "04-confirmed-original-apply.png"
+    },
+    {
+      "id": "38-creator-pending-component",
+      "file": "38-creator-pending-component.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 96760,
+      "sha256": "1f8c2bff9900775f181f7f533ec6150ac64615806b29d6941bd65b2fa81efe6d",
+      "captureScope": "component",
+      "source": "creator-review-component-db6b65b",
+      "originalFile": "01-pending-desktop.png"
+    },
+    {
+      "id": "39-creator-narrow-heading-component",
+      "file": "39-creator-narrow-heading-component.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 59063,
+      "sha256": "8014b920d3c554aeb77e5e38f56fb638d61f9d12cefa5ddc8b8f998fac2c966e",
+      "captureScope": "component",
+      "source": "creator-review-component-db6b65b",
+      "originalFile": "02-rejected-narrow.png"
+    },
+    {
+      "id": "40-creator-unconfirmed-component",
+      "file": "40-creator-unconfirmed-component.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 100626,
+      "sha256": "b41160a1bbe72f5ed66a7cc6976c5f9a7d6df1c438c62206a7892b672497cf19",
+      "captureScope": "component",
+      "source": "creator-review-component-db6b65b",
+      "originalFile": "03-unconfirmed-desktop.png"
+    },
+    {
+      "id": "41-creator-receipt-short-component",
+      "file": "41-creator-receipt-short-component.png",
+      "width": 320,
+      "height": 568,
+      "bytes": 33604,
+      "sha256": "e365fe439ad3af3af7047677887c35b4cbad92d69e9654b6461bbf8cd186cc4f",
+      "captureScope": "component",
+      "source": "creator-review-component-db6b65b",
+      "originalFile": "04-applied-short-enlarged.png"
     }
   ],
   "appSource": {
@@ -585,6 +673,176 @@
         "run.mjs": "ff4ca03d2ab48c4f0979977fbaac340b1d800963af510b0af1076252b6c1fa98",
         "check.tsx": "1fb338c428136f8893f944545c763a1e9e91e11c32231e4a8c74610d95f7037a",
         "server.mjs": "15c241c910e8516aa2f2b853d82869196a20927b14cf2d85f04bed5dfee77078"
+      }
+    },
+    "native-creator-8903595": {
+      "captured": "2026-10-06",
+      "description": "Production App and PlayCanvas, native HTTP/permission/authoring/revision/review/installation owners and disposable PostgreSQL. One supplied compatible Sling recipe, no model generation. The creator sequence passes while its screenshots preserve duplicate explanations and the narrow outer-scroll defect preceding the presentation correction.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "8903595612ca60dc08b4c97dcb48c67dad7e8221",
+      "checkoutCommit": "45db87d7cef957cdabe8fe02c43162c4eac3c503",
+      "mainCommit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425",
+      "ci": {
+        "repository": "Macrofold/OpenLegend",
+        "runId": 37440534188,
+        "jobId": 112192924969,
+        "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37440534188/job/112192924969",
+        "artifactId": 11400539422,
+        "artifactZipBytes": 65759213,
+        "artifactZipSha256": "8fb4ca88caf3d3c6b47c2e722bf9199a649f470246c8a7673f137c7a0ed483c1",
+        "wholeWorkflowPassed": false
+      },
+      "report": {
+        "artifactPath": "whole-ui/creator/report.json",
+        "sha256": "333b5e64a73bdc1f4bbdd413dbd829a3d7dc3dc516063e4958791dcaaa84c4b8",
+        "traceSha256": "c07fd72a6efe9e153b533d6a8c74fb53c90493e4ad570c403baf1b9b161ee0ee",
+        "startedAt": "2026-10-06T09:12:17.807Z",
+        "finishedAt": "2026-10-06T09:13:20.971Z",
+        "passed": true,
+        "continuationReportSha256": "7fc0cc7ecdbfa2b6afe28c0a2ef66e8bf3d61936804cc33826d095206e47efa3",
+        "continuationPassed": false
+      },
+      "environment": {
+        "node": "v22.23.3",
+        "chromium": "145.0.7632.6",
+        "playwright": "1.58.2",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          },
+          {
+            "width": 390,
+            "height": 844
+          }
+        ],
+        "providerBudgetUsd": 0,
+        "providerSpentUsd": 0,
+        "providerReservedUsd": 0,
+        "providerUncertainUsd": 0
+      },
+      "fixture": "One owner session opens without generation. The compatible Sling candidate from packages/domain/src/kernel.test.ts is supplied through native draft creation. Real editor Preview changes workSeconds from 60 to 72, and Save creates revision 2.",
+      "observed": "Prepare/reject the first exact review, prepare/approve a new review, commit original Apply, interrupt only that successful reply, then use Retry original Apply to recover its unchanged receipt. Exactly one learned recipe is installed; the six original carried item records remain unchanged. Native storage contains the learned recipe at revision 7; shutdown saves revision 8 at simulated time 0.",
+      "requestCounts": {
+        "open": 1,
+        "draft-preview": 1,
+        "draft-save": 1,
+        "draft-prepare": 2,
+        "decision": 2,
+        "apply": 2
+      },
+      "visualReview": "All four original viewport captures inspected. The review repeats its installation semantics and status, long passed findings precede the actual result, and the narrow heading is clipped after outer scrolling. The saved trace records 30px of outer scroll; visible Close and outer bounds do not establish a fixed heading.",
+      "limits": [
+        "Native creator installation/recovery only; the whole CI workflow and camp continuation did not pass.",
+        "No physical Sling item is crafted, and this does not qualify output-first Crafting.",
+        "No newly generated question, provider admission or model quality; existing retained-question evidence has separate ownership.",
+        "No all-kind editor matrix, lost Save/Prepare reply matrix, changed authority/world/pause matrix, process restart or cross-account privacy qualification.",
+        "No operating-system IME, assistive-device, complete keyboard or uncoached-human qualification.",
+        "These original native captures predate the corrected creator components shown in 38–41 and retain their own source identity."
+      ],
+      "sourceHashes": {
+        "apps/server/src/world-authoring.ts": "cf31bbeece9e243e592287e24f17d8352a818d4b73efe7b6bbb1f1ddbe038cb5",
+        "apps/server/src/world-agent-store.ts": "11e1a7ecad2b8147c70edf363319286f155bcf2fd99701f744ebbb357471731c",
+        "apps/server/src/invention-tools.ts": "2d1f3f84b2c1696ac54c684658ad21e41fe82a363f160bfbbe332027ff192c75",
+        "apps/client/src/ui/world-agent-work.tsx": "f49f0fcb5c9c2b6ee3df1e45534fed253c9e96708993c0b97c1ee3a4e366c940",
+        "apps/client/src/ui/world-agent-recipe-editor.tsx": "2da8c0624bdc9e7fad89341270612a139cece9a463c6473c013dd76ebb4feb5f",
+        "apps/client/src/ui/world-agent-review.tsx": "a5bc97d70e7fd74d2b46858e31f9c9b05655566961e5460ccb8d1895673c2f5f",
+        "packages/domain/src/kernel.test.ts": "b7e9ef8018b0e9448caeb5e2bda6e6aa2d7a0c01b013eab15f9440b0f8e9a0e0",
+        "packages/domain/src/worlds/base/recipe-families.ts": "ccc76ccb5928db930e2d07ce8f41449733bfb6c9e20dde2623f508d22c2466ea"
+      },
+      "scenarioHashes": {
+        "creator-stage.mjs": "a9507a316ceed3343df8a2b187ea94af1e96dbf9fd833e13decbffc38b1726f3",
+        "run-whole-ui.mjs": "c1de3004ba77bfd30f3acfbf31809214d41c29b27d9a590b98ac24f86c85ca89"
+      },
+      "builtAssetHashes": {
+        "dist/client/index.html": "99fc38acd385e12fb3f3d31245969eacd7237b4af63c51e8403c9c2407b2caa9",
+        "dist/client/assets/index-BMNxzZig.css": "bdf8405b72fe431d3d2c16ea947504b9bf054fe4978c74f9d71ff654928852f5",
+        "dist/client/assets/index-CMMq4ljH.js": "ad624aaa4c678c1d218eba5b1b1f1afbd1fffba9e81e2f9bc5f3eae244324619"
+      }
+    },
+    "creator-review-component-db6b65b": {
+      "captured": "2026-10-06",
+      "description": "Actual WorldAgentReview and shared preparation components in an isolated controlled host. Exact recorded native review values from the preceding successful creator trace are delivered by controlled responses; additional failed/newer-validation variants are supplied explicitly. No new native installation or full App is rendered.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "db6b65b",
+      "report": {
+        "scratchPath": "creator-review-followthrough/controlled/report.json",
+        "sha256": "f6a2678a98ebce6532549f999f8df34c11c29f02c0d417752e5b8ea8b0a7fa44",
+        "startedAt": "2026-10-06T09:33:44.192Z",
+        "finishedAt": "2026-10-06T09:33:49.042Z",
+        "passed": true,
+        "controlledApplyDeliveries": 2,
+        "identicalOriginalApplyBodies": true
+      },
+      "recordProvenance": {
+        "scratchPath": "creator-review-followthrough/controlled/source-provenance.json",
+        "sha256": "f346e45a3305e462f35d85759462f16ebb942dc738b573b720f7c9c9861cfc37",
+        "nativeTraceArtifactPath": "whole-ui/creator/trace.zip",
+        "nativeTraceSha256": "c07fd72a6efe9e153b533d6a8c74fb53c90493e4ad570c403baf1b9b161ee0ee",
+        "nativeReviewsSha256": "c5b77a1ab447c3e5eba25bdd8568282f7b016c5f902b7cedea1ed84b16f792dc",
+        "fixtureManifestSha256": "ec366ef919a0b19b6578ea71471f9e130fb7853fefe4489c0154942ea5c3cb4b"
+      },
+      "environment": {
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 960
+          },
+          {
+            "width": 390,
+            "height": 844
+          },
+          {
+            "width": 320,
+            "height": 568
+          }
+        ],
+        "capture": "Whole isolated-host viewport with the actual modal component",
+        "shortBodyTypography": {
+          "controlledPercent": 130,
+          "fontSizePixels": 18.2,
+          "lineHeightPixels": 26,
+          "scope": "Body typography tokens only; not browser zoom or whole-interface UI scale"
+        },
+        "providerOperations": 0
+      },
+      "observed": [
+        "Pending exact review shows one consequence and deliberate passed evidence",
+        "Narrow rejected review keeps heading and Close while only the body scrolls",
+        "Unconfirmed original Apply keeps its exact recovery request and visible controls",
+        "Applied receipt precedes optional evidence at short viewport with enlarged body text",
+        "Controlled failed, pending and missing findings remain outside collapsed evidence",
+        "New validation remains distinct from older retained passed checks in shared caller"
+      ],
+      "narrowScroll": {
+        "bodyBeforePixels": 0,
+        "bodyAfterPixels": 350,
+        "outerScrollBeforePixels": 0,
+        "outerScrollAfterPixels": 0,
+        "outerOverflowPixels": 0,
+        "headingAndFooterRectanglesUnchanged": true
+      },
+      "visualReview": "All four originals inspected. The consequence/result precedes retained evidence; passed checks are revision-labeled disclosures, and the heading/footer remain in one modal envelope while the body scrolls. The short enlarged-body capture is scrolled to the recorded applied receipt. The background label and Open retained review button belong to the isolated host.",
+      "limits": [
+        "Component response delivery only; no full App, PlayCanvas, authenticated HTTP, PostgreSQL mutation or new native installation.",
+        "Two identical controlled Apply requests illustrate original-result UI recovery; the native single-installation proof belongs to the preceding 8903595 creator report.",
+        "Failed/pending/missing and newer-validation checks are controlled variants; their visibility checks are in the report, not all pictured in these four images.",
+        "The 320×568 case enlarges body typography only; it is not browser zoom, whole-UI scale, operating-system IME, assistive-device or uncoached-human qualification.",
+        "These are original Open Legend implementation captures, not external-game research images."
+      ],
+      "sourceHashes": {
+        "apps/client/src/ui/world-agent-review.tsx": "24bfadbbe3284ef503bcfff8ee0a5f928e668adbb6d826a0358e3b4a063f64cd",
+        "apps/client/src/ui/world-agent-work-details.tsx": "b929d234e5aac6c1d5be4a7758e7bdc4a13535988f99fc1fe6a8d3badcb75d46",
+        "apps/client/src/ui/world-agent-work.css": "be2787b2843eb3e192bb23d887d933af0327212c2a564c7e672e5dbe2d55b89a"
+      },
+      "scenarioHashes": {
+        "check.tsx": "4275cd45f60c38d0278c037ab14312d96d8efe2dad106709df200eda8dda76b3",
+        "server.mjs": "2f15d5b8d62f62454e6a975232474dc4d3ee858b4bc7434fc16b70e66ba1762f",
+        "run.mjs": "c34b773f8a1cb23d578e2f40591001d4d7c26c3b86ba3532b80ca168bf05ed5c"
+      },
+      "cleanup": {
+        "browser": "closed",
+        "server": "closed"
       }
     }
   }
