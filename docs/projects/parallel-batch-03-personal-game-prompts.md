@@ -1,10 +1,10 @@
 # Parallel batch 03 — Personal game — assignment prompts
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG01's pricing and explanation fixes pass; one interrupted call awaits exact billing confirmation, and other assignments remain open. | 2026-10-04   |
+| Status      | Current progress                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PG03 and scoped PG04 are delivered; PG01's exact billing hold, PG02/PG05 and broader PF05 qualification remain open. | 2026-10-05   |
 
-PG02, PG03 and PG04 are underway on separate branches; their integrated acceptance remains open.
+PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
 
 [Prioritized scope](parallel-batch-03-personal-game-feature-spec.md) · [Technical definitions](parallel-batch-03-personal-game-tech-design.md) · [Status and parent mapping](../maintainers/parallel-batch-03-personal-game.md)
 

@@ -926,6 +926,16 @@ function App({
           <>
             <Inventory
               {...props}
+              browseActions={(item, opener) => {
+                const bounds = opener.getBoundingClientRect();
+                setPicker({
+                  context: { itemId: item.id },
+                  item: { id: item.id, name: item.name },
+                  point: { x: bounds.right, y: bounds.top },
+                  entity: null,
+                  opener,
+                });
+              }}
               command={command}
               visible={
                 connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
@@ -1488,16 +1498,26 @@ function App({
                   setItemCreation({ definitionId, target: { position } });
                   setPicker(null);
                 }}
-                key={`${picker.point.x}:${picker.point.y}:${picker.entity?.id}`}
+                key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.saveTimeline}:${picker.point.x}:${picker.point.y}:${picker.entity?.id}:${picker.context.itemId}`}
                 picker={picker}
                 view={view}
                 connected={connected}
                 close={() => {
                   setPicker(null);
-                  canvas.current?.focus();
+                  if (picker.opener?.isConnected) picker.opener.focus();
+                  else canvas.current?.focus();
                 }}
                 run={run}
                 invent={invent}
+                requestAction={() => {
+                  setPicker(null);
+                  show('character');
+                  requestAnimationFrame(() =>
+                    document
+                      .querySelector<HTMLTextAreaElement>('#characterPanel textarea')
+                      ?.focus(),
+                  );
+                }}
                 inspect={inspect}
                 preference={preference}
                 revive={(target) => void revive(target)}

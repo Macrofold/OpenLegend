@@ -725,7 +725,8 @@ body,
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-panel);
-  z-index: var(--z-menu);
+  /* Expanded action details can reach the clock and active panel sheets. */
+  z-index: calc(var(--z-sheet) + 1);
   display: flex;
   flex-direction: column;
 }
@@ -769,6 +770,60 @@ body,
 .ol-menu-scroll {
   overflow: auto;
   min-height: 0;
+  flex: 1 1 auto;
+  padding: var(--space-1);
+}
+.ol-picker-head strong,
+.ol-action-choice .ol-item > span {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-picker-head,
+.ol-picker-footer {
+  flex: none;
+}
+.ol-picker-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.ol-picker .ol-menu-toggle {
+  flex: none;
+  height: auto;
+  background: transparent;
+  border: 0;
+  color: var(--ink-muted);
+  font: inherit;
+  text-align: start;
+  min-height: var(--control-md);
+  cursor: pointer;
+}
+.ol-picker .ol-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.ol-action-choice .ol-item {
+  padding-block: var(--space-2);
+  grid-template-columns: 22px minmax(0, 1fr);
+}
+.ol-item-identity,
+.ol-action-choice .ol-item-reason {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+.ol-action-detail {
+  padding: 0 var(--space-2) var(--space-2);
+  overflow-wrap: anywhere;
+}
+.ol-action-detail summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.ol-action-detail dd {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
 }
 .ol-item {
   width: 100%;

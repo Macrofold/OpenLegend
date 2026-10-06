@@ -212,13 +212,13 @@ Original recommendation: **Keep**.
 
 ## LA225
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — rechecked October 3, 2026 · Restrictiveness: Very safe.**
 
-The quick-action interface shows 3 contextual suggestions and supports 3 pinned shortcuts.
+The quick-action interface shows up to 3 contextual suggestions and supports 3 stable player-selected pinned shortcuts. PG03 preserves this arrangement; the complete catalogue has no corresponding action-count ceiling. [Scoped identity evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) covers one exact-tool pin, not recommendation ranking or remapping.
 
 **Reason / tradeoff:** Review the number as a screen-layout choice rather than a limit on which actions exist in the world.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Implementation starting point](../../apps/client/src/ui/quick-actions.tsx).
 
 Original recommendation: **Review**.
 
@@ -407,3 +407,15 @@ All boundary cores are **0.018m** wide (previously 0.0375m), lifted 0.035m from 
 **Reason / tradeoff:** Closed, matching fills and outlines make the reachable area legible even when its edge is off-screen. Native checks and bounded sampling remain outside the frame loop. Filled triangles cost more than the former isolated contours: current matched local measurements and broader calculation/device qualification are in [verification](../verification/perception-overlays.md#connected-outlines-and-faint-fills--october-3-2026) and SW09.4b. [Current walking evidence](../verification/embodied-feedback.md#guide-and-escape-costs) records frame-following graphics, cooperative calculation slices and separate replacement costs. These values are presentation choices, not proven optimal accuracy or a hardware guarantee. Geometry-query work still grows with already-public surface/blocker count; entity population and sound-source lists are excluded. No geometry-count truncation or gameplay range clamp is introduced. Reassess sampling or move calculation off-thread when measured fidelity or main-thread latency warrants it; do not quietly substitute new perception rules.
 
 [Calculation](../../apps/client/src/perception-field.ts) · [Graphics lifecycle](../../apps/client/src/perception-overlay.ts) · [Measured evidence](../verification/perception-overlays.md).
+
+## AP01 — Ordinary action discovery
+
+**Current — PG03, reviewed October 4, 2026 · Restrictiveness: Safe.** Context queries remain selected-subject reads; the explicit complete catalogue enumerates all supported known choices over permitted current possessions, recipes and perceived targets. It has no relevance top-k, paid ranking, universal equipment score or stored-content quota. Exact weapon/projectile commands and display facts come from existing native owners. Unknown techniques, hidden targets and another character’s private knowledge remain unavailable.
+
+The picker requests on opening, explicit refresh and possession/pause/authority/timeline changes, without polling. Existing rows retain their opening order; newly discovered identities append. It initially renders 40 matching choices; **Show more choices** adds 40 and focuses the first added command. Search visits the complete permitted result, including its visible target/tool identity, and retains the existing 1,000-character bound. Refresh retains the reading window; deliberate search or catalogue-scope changes reset it. Enter chooses a displayed available action or the existing grouped pickup choice. The menu uses the existing panel width, viewport insets and bounded vertical result scrolling; long names/reasons wrap. Persistent details are accessible separately from the command, with hover supplementary; their bodies render only while expanded. Failed reads suppress old commands/details rather than certifying an empty catalogue. Expected selected-item/target loss returns a safe 400 explanation; unknown service exceptions remain generic. Facts describe the last completed permitted read, and execution independently rechecks current conditions.
+
+Full and selected-item discovery bypass the compact offer builder's six-lot/default top-level selection, using all permitted accessible possessions or only the exact selected item. The complete catalogue includes every fuel lot rather than one per definition. Accessible nested lots are included; inaccessible contents cannot return selected-item details. Compact/NPC defaults and native admission are unchanged. Request-scoped definition, target, item, recipe, tool-name and ammunition lookups are reused across candidates; no persistent authorization or preview cache is added. Client target filtering follows changes to visible identities, while current entity data still updates subject/icon presentation; position-only patches do not repeat catalogue/search filtering.
+
+Cooking discovery requires choosing an exact perceived fire; inventory no longer offers the implicit-fire shortcut. Preparation explicitly discloses its existing supply-based, cross-lot consumption. These are presentation/selection boundaries, with native command admission unchanged.
+
+**Reason / tradeoff:** Rendering 40 choices initially bounds initial row/detail work without hiding content, but deliberately showing all rows can still grow the DOM. Complete target-by-tool/resource discovery and structural previews remain proportional to supported combinations. [PG03 review evidence](../verification/player-clarity-ui.md#requested-review-follow-up--october-4-2026) records its historical workloads and interference. [PG04 evidence](../verification/command-frame-spikes.md#pg04-preview-work-and-larger-load-follow-up--october-4-2026) demonstrates cheaper offer refusals and omitted discarded drop-preview records, with an equivalent 1,443-choice native warm median of 272.42 → 175.87 ms. The actual Metal browser's 5,291-choice sample still takes 1.36 seconds to open and a 1.28-second median to refresh. Accepted offers/structural transfers and repeated inventory detail reads retain cost; PF05 owns comparable complete-path tails, longer runs and physical-device qualification. This introduces no stored-inventory, target or catalogue cap. Remapping, native IME, assistive devices and full accessibility remain open.

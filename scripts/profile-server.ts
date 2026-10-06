@@ -331,7 +331,7 @@ try {
     const response = await fetch(base + '/api/state', { headers: { 'X-OL-Client': client } });
     const cookie = response.headers.get('set-cookie')?.split(';')[0];
     if (!cookie) throw new Error('Missing local session.');
-    const view = (await response.json()) as GameView;
+    let view = (await response.json()) as GameView;
     globalThis.gc?.();
     const initialHeapBytes = process.memoryUsage().heapUsed;
     const post = async (path: string, body: unknown) => {
@@ -342,11 +342,24 @@ try {
           origin: base,
           'content-type': 'application/json',
           'X-OL-Client': client,
+          'X-OL-Scope': view.access!.scope,
+          'X-OL-Generation': view.historyEpoch?.split(':')[0] ?? '',
         },
         body: JSON.stringify(body),
       });
       return (await r.json()) as { ok: boolean; code?: string; message?: string };
     };
+    const entered = await post('/api/embodiment', {
+      id: 'scene-profile-enter',
+      expectedGeneration: view.access!.controlGeneration,
+      operation: 'replace',
+    });
+    if (!entered.ok) throw new Error(entered.message);
+    const controlled = await fetch(base + '/api/state', {
+      headers: { cookie, 'X-OL-Client': client },
+    });
+    if (!controlled.ok) throw new Error('Controlled state could not be read.');
+    view = (await controlled.json()) as GameView;
     const stream = await fetch(
       `${base}/api/events?client=${client}&scope=${view.access!.scope}&revision=${view.revision}`,
       {

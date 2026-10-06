@@ -53,6 +53,10 @@ Protect character readability: ordinary objects do not show through people. Only
 
 A contextual action should make clear **who acts, on what, with which relevant tool, at what known cost and with what important consequence**. Express conditions in player language. Distinguish known duration from an estimate and a supported attempt from guaranteed success. Avoid presenting an unknown chance as 0% or promising a result the world has not committed.
 
+The current ordinary picker keeps exact choices and expanded detail stable while refreshing. Its initial 40-choice display has an explicit **Show more choices** route; search covers every permitted result and its displayed target/tool names. Keyboard expansion focuses the first added choice. Failed reads remove commands and retain search for deliberate retry. Selected-item uses retain exact accessible identity, including permitted contents. [Action journey](../action-experience.md#ordinary-player-action-discovery) and [AP01](../limits/interface.md#ap01--ordinary-action-discovery) own current behavior and bounds; broader remapping and first-encounter narration remain separate work.
+
+Inventory cooking enters the existing target chooser so the player reviews the actual fire. Supply-based preparation states that it may consume across carried lots; selecting an item does not imply an exact-lot command when the mechanic has no such parameter.
+
 Selection and preview are read-only. Use the current action admission route for execution. Keep unavailable-action disclosure under its current owner; when the player asks for an explanation, name a remedy if one exists. Do not substitute a technical exception for an understandable action failure.
 
 For target selection, show that targeting mode is active, the permitted target class/range when known, a clear cancel route and the intended effect before commitment when practical. A changed selected entity must not retarget an already reviewed operation silently. Repeated hotkeys and double-clicks must not duplicate a costly command.
@@ -60,6 +64,12 @@ For target selection, show that targeting mode is active, the permitted target c
 Where a targeting footprint represents a known area of effect, range or direction, its graphic must agree with the applicable geometry. Decorative glow must not imply additional affected space, precision or certainty. If prediction is approximate or incomplete, communicate that distinction rather than draw a falsely exact boundary. This adapts Riot's gameplay-clarity rationale, without adopting its combat rules or revealing information the player cannot know. [S19](research.md#s19)
 
 Quick actions accelerate a known task; they do not become the only route to the full action catalogue. Preserve current contextual suggestions and pinned shortcuts. Do not reorder a player's pins based on a relevance model without their explicit choice. Cooldown rings are for actual cooldowns; work progress follows the work contract, not whatever indicator component is visually convenient.
+
+### Current ordinary action menu
+
+PG03 applies the commitment guidance to the existing contextual picker, complete known catalogue and exact selected inventory item. Rows keep target/tool identity and decisive cost or blocker visible, with sibling native detail disclosures for longer facts and uncertainty. Hover supplements those disclosures. Opening order places available choices first; subsequent refreshes update identities in place and append new choices. Search, details and inventory drafts remain intact where still permitted.
+
+The menu distinguishes loading, checking, a failed read, no matches, hidden unavailable choices and a genuinely empty permitted result. Failed reads suppress old commands/details; target disappearance and actor/control/timeline changes prevent stale disclosure or substitution. Full catalogue and freeform routes stay outside the scrolling results, and closing an inventory-opened picker restores its opener. [Dated evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) qualifies this scope without closing remapping, encounter narration or whole-interface accessibility.
 
 ## Navigation and world search
 

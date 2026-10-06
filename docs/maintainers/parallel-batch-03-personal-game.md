@@ -1,8 +1,8 @@
 # Parallel batch 03 — Personal game — assignment tracker
 
-**Status: in progress October 4, 2026; PG01's scoped live/browser journey, arrow assertion and accounting repairs are complete; embedding pricing and recipe-explanation fixes pass; one interrupted call awaits exact billing confirmation after provider-usage comparison. The other assignments retain their independent scope.**
+**Status: in progress October 5, 2026; PG03 and scoped PG04 are delivered; PG01's scoped live/browser journey, arrow assertion and accounting repairs are complete; embedding pricing and recipe-explanation fixes pass; one interrupted call awaits exact billing confirmation after provider-usage comparison. The other assignments retain their independent scope.**
 
-PG02, PG03 and PG04 are underway on separate branches; their integrated acceptance remains open.
+PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
 
 [Feature scope and acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md) · [Technical definitions](../projects/parallel-batch-03-personal-game-tech-design.md) · [Standalone prompts](../projects/parallel-batch-03-personal-game-prompts.md)
 
@@ -31,17 +31,25 @@ Owners: [CE01–CE05](character-experience.md), [AG06/AG07/AG12](agent-agency.md
 
 ## PG03 — Readable action discovery
 
-- [ ] Deliver existing context-menu/catalogue/inventory entry points with clear target/tool, relevant commitment information, stable choices and complete permitted discovery under [PG03 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg03--discover-actions-and-understand-their-consequences).
-- [ ] Demonstrate ordinary and stale/failure journeys with readable compact layouts and reconcile the scoped parent criteria.
+- [x] Deliver existing context-menu/catalogue/inventory entry points with clear target/tool, relevant commitment information, stable choices and complete permitted discovery under [PG03 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg03--discover-actions-and-understand-their-consequences).
+- [x] Demonstrate ordinary and stale/failure journeys with readable compact layouts and reconcile the scoped parent criteria.
 
 Owners: [AC11](action-capabilities.md#ac11--usability-and-measured-efficiency), [UIUX](ui-ux.md), [DG01/ND13/ND18](needs-design.md#dg01--actions-and-first-encounters). Remapping, broad first-encounter narration and full inventory redesign stay outside this child. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg03--presentation-definition).
 
+**Delivered scope:** exact permitted target/tool/projectile facts, concise commitments, persistent detail, complete known discovery, stable refresh/focus and specific stale/failure recovery through existing commands. [dated evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) records comparison → actual shot, cancellation, exact pin identity, draft continuity, scoped layouts and lost-item/target/control cases. No paid ranking, mechanical eligibility, NPC context, creator or renderer change is included.
+
+**Reviewed October 4:** inaccessible selected contents are refused before projecting facts; complete discovery includes later and accessible nested offer/fuel lots. One request reuses permitted lookup data. The display initially mounts 40 choices, with complete search and keyboard Show more; valid refresh retains its reading window and expanded detail. [Review evidence](../verification/player-clarity-ui.md#requested-review-follow-up--october-4-2026) covers native output equivalence, exact fuel consumption, focus/recovery and the remaining PG04/PF05 latency gap.
+
+**Second review, October 4:** cooking now enters the exact-fire chooser, including a missing-fire remedy; preparation availability uses carried totals and its detail discloses cross-lot consumption. Selected-item enumeration skips unrelated possessions. [Evidence](../verification/player-clarity-ui.md#second-requested-review--october-4-2026) records actual effects and the remaining projection-growth boundary.
+
 ## PG04 — Cheaper action availability
 
-- [ ] Confirm current preview attribution and deliver shared pure prerequisite work where it reduces repeated measured cost, preserving real admission and public results under [PG04 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg04--make-action-previews-cheap-without-changing-admission).
-- [ ] Record equivalence, isolated and complete-path measurements with actual progress and host limitations; a disproved hypothesis is a documented no-go, not an invented optimization.
+- [x] Confirm current preview attribution and deliver shared pure prerequisite work where it reduces repeated measured cost, preserving real admission and public results under [PG04 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg04--make-action-previews-cheap-without-changing-admission).
+- [x] Record equivalence, isolated and complete-path measurements with actual progress and host limitations; a disproved hypothesis is a documented no-go, not an invented optimization.
 
-Owners: [PF05](performance.md#pf05--public-view-and-browser-responsiveness), [AC11](action-capabilities.md#ac11--usability-and-measured-efficiency), existing [command/frame follow-up](../projects/shadow-quality-tech-design.md#follow-up-commandframe-spikes-and-physical-lower-end-hardware). Physical-device and larger-load requirements remain open without their evidence. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg04--prerequisite-evaluation-definition).
+Owners: [PF05](performance.md#pf05--public-view-and-browser-responsiveness), [AC11](action-capabilities.md#ac11--usability-and-measured-efficiency), existing [command/frame follow-up](../projects/shadow-quality-tech-design.md#follow-up-commandframe-spikes-and-physical-lower-end-hardware). Physical-device, long-run and broader capacity requirements remain open without their evidence. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg04--prerequisite-evaluation-definition).
+
+**Delivered October 4:** shared read-only offer prerequisites avoid disposable worlds for refusals, and drop previews omit discarded action-history construction while retaining structural transfer checks. Actual commands retain current admission and effects. A matched 1,443-choice native catalogue comparison reduces warm read time by about 35%, with identical serialized choices. Complete native transitions and service stale/competing/restored-command cases match. Production-browser catalogue samples reach 5,291 complete choices; bounded larger-scene runs sustain approximately 3× with successful commands. [Evidence](../verification/command-frame-spikes.md#pg04-preview-work-and-larger-load-follow-up--october-4-2026) separates those results from host-dependent tails, remaining transfer/inventory projection cost, physical-device and long-run qualification. The arrow-material assertion mismatch recorded during these checks is repaired by PG01 on current main.
 
 ## PG05 — First threat encounter design
 

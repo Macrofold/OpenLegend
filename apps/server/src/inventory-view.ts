@@ -1,5 +1,6 @@
 import {
   NATIVE_PREPARATIONS,
+  quantityOf,
   activityRequestHost,
   currentInventoryInspection,
   visionRadius,
@@ -724,8 +725,8 @@ export function inventoryItemView(
       ),
     );
   }
-  if (accessiblePossession(world, player.id, item.id) && item.definitionId === 'raw_meat')
-    actions.push(action(`cook-${item.id}`, 'Cook one', { type: 'cook', itemId: item.id }));
+  // Cooking needs an exact perceived fire. Explore uses and targets offers that
+  // choice rather than dispatching a shortcut that silently picks a world fire.
   for (const [key, recipe] of Object.entries(NATIVE_PREPARATIONS))
     if (accessiblePossession(world, player.id, item.id) && recipe.input === item.definitionId)
       actions.push(
@@ -733,8 +734,8 @@ export function inventoryItemView(
           `prepare-${key}`,
           key === 'fiber' ? 'Clean fibers' : 'Twist cord',
           { type: 'prepare', preparation: key as 'fiber' | 'cord' },
-          item.quantity >= recipe.inputQuantity,
-          `Requires ${recipe.inputQuantity}.`,
+          quantityOf(world, player.id, recipe.input) >= recipe.inputQuantity,
+          `Requires ${recipe.inputQuantity} ${world.itemDefinitions[recipe.input]!.name} across carried supplies.`,
         ),
       );
   if (item.individuality === 'homogeneous' && item.quantity > 1)

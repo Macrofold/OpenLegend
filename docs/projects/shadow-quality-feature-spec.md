@@ -1,5 +1,9 @@
 # Shadow quality
 
+| Status      | Current progress                                                                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open. | 2026-10-04   |
+
 Approved for implementation in chat on 2026-09-27. Scope: improve the existing PlayCanvas lighting/shadow system and qualify the result without requiring metadata for every image. [Technical design](shadow-quality-tech-design.md) owns the implementation plan. [World presentation](../world-presentation.md) remains the current behavior owner.
 
 ## Player experience
@@ -19,6 +23,8 @@ The owner now authorizes optimization to support eight simultaneously illuminati
 ## Command/frame spikes and physical hardware follow-up
 
 The owner authorized further reduction of command/frame spikes and testing on physical lower-end hardware. Preserve the eight-fire/3×/1080p workload, gameplay admission and durable command ordering. Measure complete-path latency against a matched baseline; physical-device qualification needs a recorded device/browser/driver run and cannot be closed by throttling or software rendering. [Technical plan](shadow-quality-tech-design.md#follow-up-commandframe-spikes-and-physical-lower-end-hardware), PF05 and SW18.10/SW18.13 own the remaining work.
+
+The scoped PG04 preview reduction and bounded larger-scene checks are [delivered with evidence](../verification/command-frame-spikes.md#pg04-preview-work-and-larger-load-follow-up--october-4-2026). They preserve the renderer and actual command effects; the original sustained shadow workload, comparable complete-path tails and physical hardware requirement remain open.
 
 ## Acceptance and scope
 

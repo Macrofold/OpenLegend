@@ -16,7 +16,12 @@ export {
 export * from './action-experience.js';
 export * from './activity-learning.js';
 export * from './activity-execution.js';
-export { nativeActivityView, equippedTargetAction } from './worlds/base/action-views.js';
+export {
+  nativeActivityView,
+  equippedTargetAction,
+  nativeCatalogueView,
+  nativeHuntCatalogueLabel,
+} from './worlds/base/action-views.js';
 export * from './item-handling.js';
 export { BASE_ITEM_HANDLING } from './worlds/base/item-handling.js';
 export {
@@ -207,7 +212,7 @@ export * from './contribution-residency.js';
 
 export * from './object-access.js';
 
-export { advanceWorldSlices } from './kernel.js';
+export { advanceWorldSlices, ammoFor } from './kernel.js';
 export { completeNavigation } from './kernel.js';
 
 export * from './action-targets.js';

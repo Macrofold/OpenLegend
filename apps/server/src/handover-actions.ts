@@ -21,13 +21,18 @@ export interface HandoverOption {
 
 /** Offer and reply options between an actor and one visible person; native admission still
  * decides. Only offers between these two are read, never other people's pending offers.
- * Offers cover top-level portable lots, food first, as one unit or the whole lot. */
+ * Compact offers cover top-level portable lots, food first, as one unit or the
+ * whole lot. Complete player discovery also includes accessible contents. */
 export function handoverOptions(
   world: WorldState,
   actorId: string,
   inventory: readonly ItemInstance[],
   person: Entity,
-  { offers = true, maxLots = 6 }: { offers?: boolean; maxLots?: number } = {},
+  {
+    offers = true,
+    maxLots = 6,
+    includeNested = false,
+  }: { offers?: boolean; maxLots?: number; includeNested?: boolean } = {},
 ): HandoverOption[] {
   // The dead cannot hold, give or take; their offers have already lapsed.
   if (!person.actor?.alive || person.id === actorId) return [];
@@ -83,7 +88,7 @@ export function handoverOptions(
   const lots = inventory
     .filter(
       (item) =>
-        item.ownerId === actorId &&
+        (includeNested || item.ownerId === actorId) &&
         world.itemDefinitions[item.definitionId]?.portable === true &&
         !outgoing.some((offer) => offer.itemId === item.id),
     )

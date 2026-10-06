@@ -11,7 +11,7 @@ import { canReachEntity } from './spatial.js';
 import { nextId } from './data.js';
 import { WorkBudgetError } from './work-budget.js';
 import { BASE_HANDOVER } from './worlds/base/handover.js';
-import type { Command, Entity, Outcome, WorldEvent, WorldState } from './types.js';
+import type { Command, Entity, ItemInstance, Outcome, WorldEvent, WorldState } from './types.js';
 
 /** A pending proposal to hand over carried items. Nothing is reserved or moved until the
  * named recipient's own command accepts it; terminal offers are deleted, events keep history.
@@ -127,6 +127,61 @@ function close(
   if (source) emit(world, events, type, text, source, targetId, { offerId: offer.id });
 }
 
+/** Offer admission is read-only and shared with execution. Accepted previews retain the
+ * disposable executor: identity allocation and emitted effects are still checked there.
+ * docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary */
+export function prepareItemOffer(
+  world: WorldState,
+  actor: Entity,
+  command: Extract<HandoverCommand, { operation: 'offer' }>,
+): Outcome | { item: ItemInstance; recipient: Entity } {
+  if (!isHandoverCommand(command))
+    return outcome(false, 'invalid-command', 'Choose an offer and a person.');
+  const other = getOwn(world.entities, command.targetId);
+  // Sight comes first, so an unseen person cannot be probed for their condition.
+  const refused = offerRecipientProblem(world, actor, other);
+  if (refused || !other)
+    return outcome(false, refused?.code ?? 'not-visible', refused?.message ?? 'Choose a person.');
+  const item = itemFor(world, command.itemId);
+  const definition = item && world.itemDefinitions[item.definitionId];
+  if (!item || !definition || !accessiblePossession(world, actor.id, item.id))
+    return outcome(false, 'item-unavailable', 'Choose one of your accessible possessions.');
+  // A held inventory selection must not silently offer changed items. Check only after
+  // normal sight and possession admission so these pins cannot probe private revisions.
+  if (
+    (command.expectedRevision !== undefined && item.revision !== command.expectedRevision) ||
+    (command.placementRevision !== undefined &&
+      item.placementRevision !== command.placementRevision) ||
+    (command.expectedContentsRevision !== undefined &&
+      (world.entities[item.id]!.inventoryRevision ?? 0) !== command.expectedContentsRevision) ||
+    (command.targetRevision !== undefined &&
+      (other.inventoryRevision ?? 0) !== command.targetRevision)
+  )
+    return outcome(false, 'stale', 'The item or recipient changed. Refresh before offering it.');
+  if (definition.portable !== true)
+    return outcome(false, 'not-portable', 'This object cannot be handed over.');
+  if (command.quantity > availableItemQuantity(world, item.id))
+    return outcome(false, 'quantity', 'You do not have that many free to offer.');
+  if (
+    command.quantity !== item.quantity &&
+    (item.individuality === 'individual' || world.entities[item.id]?.container)
+  )
+    return outcome(false, 'whole-object', 'Offer the whole object.');
+  const busy = inventoryWorkReason(world, actor.id, item.id);
+  if (busy) return outcome(false, 'in-use', busy);
+  if (grantedContainer(world, item.id))
+    return outcome(false, 'access-granted', "Clear this bag's access list before offering it.");
+  const pending = Object.values(world.itemOffers ?? {});
+  if (pending.some((offer) => offer.itemId === item.id))
+    return outcome(false, 'already-offered', 'These items are already being offered.');
+  if (
+    pending.filter((offer) => offer.offererId === actor.id).length >=
+    BASE_HANDOVER.pendingPerOfferer
+  )
+    return outcome(false, 'offer-limit', 'Withdraw an earlier offer first.');
+  return { item, recipient: other };
+}
+
 /** The single owner of offer creation, consent and custody transfer. Every refusal leaves
  * the world unchanged; the kernel converts a failed outcome into a rejected command.
  * Neither outcome messages nor event text name the other person: a reader may not know
@@ -138,52 +193,10 @@ export function executeHandover(
   command: HandoverCommand,
   events: WorldEvent[],
 ): Outcome {
-  if (!isHandoverCommand(command))
-    return outcome(false, 'invalid-command', 'Choose an offer and a person.');
-  const other = getOwn(world.entities, command.targetId);
-  const reach = world.itemHandling.reach;
-  if (command.operation === 'offer') {
-    // Sight comes first, so an unseen person cannot be probed for their condition.
-    const refused = offerRecipientProblem(world, actor, other);
-    if (refused || !other)
-      return outcome(false, refused?.code ?? 'not-visible', refused?.message ?? 'Choose a person.');
-    const item = itemFor(world, command.itemId);
-    const definition = item && world.itemDefinitions[item.definitionId];
-    if (!item || !definition || !accessiblePossession(world, actor.id, item.id))
-      return outcome(false, 'item-unavailable', 'Choose one of your accessible possessions.');
-    // A held inventory selection must not silently offer changed items. Check only after
-    // normal sight and possession admission so these pins cannot probe private revisions.
-    if (
-      (command.expectedRevision !== undefined && item.revision !== command.expectedRevision) ||
-      (command.placementRevision !== undefined &&
-        item.placementRevision !== command.placementRevision) ||
-      (command.expectedContentsRevision !== undefined &&
-        (world.entities[item.id]!.inventoryRevision ?? 0) !== command.expectedContentsRevision) ||
-      (command.targetRevision !== undefined &&
-        (other.inventoryRevision ?? 0) !== command.targetRevision)
-    )
-      return outcome(false, 'stale', 'The item or recipient changed. Refresh before offering it.');
-    if (definition.portable !== true)
-      return outcome(false, 'not-portable', 'This object cannot be handed over.');
-    if (command.quantity > availableItemQuantity(world, item.id))
-      return outcome(false, 'quantity', 'You do not have that many free to offer.');
-    if (
-      command.quantity !== item.quantity &&
-      (item.individuality === 'individual' || world.entities[item.id]?.container)
-    )
-      return outcome(false, 'whole-object', 'Offer the whole object.');
-    const busy = inventoryWorkReason(world, actor.id, item.id);
-    if (busy) return outcome(false, 'in-use', busy);
-    if (grantedContainer(world, item.id))
-      return outcome(false, 'access-granted', "Clear this bag's access list before offering it.");
-    const pending = Object.values(world.itemOffers ?? {});
-    if (pending.some((offer) => offer.itemId === item.id))
-      return outcome(false, 'already-offered', 'These items are already being offered.');
-    if (
-      pending.filter((offer) => offer.offererId === actor.id).length >=
-      BASE_HANDOVER.pendingPerOfferer
-    )
-      return outcome(false, 'offer-limit', 'Withdraw an earlier offer first.');
+  if (command?.operation === 'offer') {
+    const prepared = prepareItemOffer(world, actor, command);
+    if ('ok' in prepared) return prepared;
+    const { item, recipient: other } = prepared;
     const container = world.entities[item.id]?.container;
     const offer: ItemOffer = {
       id: nextId(world, 'offer'),
@@ -213,6 +226,10 @@ export function executeHandover(
       `Offered ${described(world, offer)}. Nothing moves unless they accept within ${BASE_HANDOVER.offerSeconds / 60} game minutes; you can withdraw it.`,
     );
   }
+  if (!isHandoverCommand(command))
+    return outcome(false, 'invalid-command', 'Choose an offer and a person.');
+  const other = getOwn(world.entities, command.targetId);
+  const reach = world.itemHandling.reach;
   const offer = getOwn(world.itemOffers ?? {}, command.offerId);
   const own =
     command.operation === 'withdraw'

@@ -1,4 +1,4 @@
-import type { Command, Entity, WorldState } from '../../types.js';
+import type { Command, Entity, ItemInstance, WorldState } from '../../types.js';
 import type { ActivityView } from '../../action-experience.js';
 import { itemFor } from '../../objects.js';
 import { accessiblePossession, possessionItems } from '../../object-access.js';
@@ -9,6 +9,12 @@ import { strikeDefinition, describeAttack } from '../../strikes.js';
 import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
+
+type ViewPossessions = {
+  items: readonly ItemInstance[];
+  byId: ReadonlyMap<string, ItemInstance>;
+  names: ReadonlyMap<string, string>;
+};
 
 /** This world's supported equipped-item uses, selected from already permitted offers.
  * The host retains the offer's admission/result metadata; it never invents an executor. */
@@ -36,6 +42,16 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
 /** Bundled-world disclosure and wording; the engine stores the permitted view.
  * No later observation may fill in a hidden historical target or effect. */
 export function nativeActivityView(world: WorldState, command: Command): ActivityView {
+  return activityView(world, command);
+}
+function toolName(name: string, ordinal: number, count: number): string {
+  return count > 1 ? `${name}, item ${ordinal} among my same-named items` : name;
+}
+function activityView(
+  world: WorldState,
+  command: Command,
+  possessions?: ViewPossessions,
+): ActivityView {
   const actor = world.entities[command.actorId];
   const targetId =
     'targetId' in command ? command.targetId : 'heatId' in command ? command.heatId : undefined;
@@ -122,13 +138,17 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
     });
   }
   if (definition) {
-    const siblings = [...possessionItems(world, command.actorId)].filter(
-      (value) => world.itemDefinitions[value.definitionId]?.name === definition.name,
-    );
-    view.tool =
-      siblings.length > 1
-        ? `${definition.name}, item ${siblings.findIndex((value) => value.id === item!.id) + 1} among my same-named items`
-        : definition.name;
+    if (possessions) view.tool = possessions.names.get(item!.id);
+    else {
+      const siblings = [...possessionItems(world, command.actorId)].filter(
+        (value) => world.itemDefinitions[value.definitionId]?.name === definition.name,
+      );
+      view.tool = toolName(
+        definition.name,
+        siblings.findIndex((value) => value.id === item!.id) + 1,
+        siblings.length,
+      );
+    }
     if (definition.description)
       view.facts.push({ name: 'description', value: definition.description, critical: false });
   }
@@ -147,12 +167,18 @@ export function nativeActivityView(world: WorldState, command: Command): Activit
     }
   }
   if (command.type === 'hunt' && definition?.launcher) {
-    const ammunition = [...possessionItems(world, command.actorId)].find(
-      (item) =>
-        (!command.ammoItemId || command.ammoItemId === item.id) &&
-        world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
-          definition.launcher!.ammunitionKind,
-    );
+    const compatible = (item: ItemInstance) =>
+      world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
+      definition.launcher!.ammunitionKind;
+    const exact = command.ammoItemId && possessions?.byId.get(command.ammoItemId);
+    const ammunition =
+      possessions && command.ammoItemId
+        ? exact && compatible(exact)
+          ? exact
+          : undefined
+        : (possessions?.items ?? [...possessionItems(world, command.actorId)]).find(
+            (item) => (!command.ammoItemId || command.ammoItemId === item.id) && compatible(item),
+          );
     const ammo = ammunition && world.itemDefinitions[ammunition.definitionId];
     view.facts.push({
       name: 'attack',
@@ -313,4 +339,84 @@ export function sharedNativeActivityName(world: WorldState, command: Command): s
     ...command,
     purpose: command.purpose === 'Hunt once' ? 'Hunt once' : undefined,
   }).name;
+}
+
+/** Extra ordinary-player commitment wording; NPC decision context is unchanged. */
+export function nativeHuntCatalogueLabel(targetName: string, toolName: string): string {
+  return `Hunt ${targetName} with ${toolName}`;
+}
+
+function nativeCatalogueCommitments(
+  world: WorldState,
+  command: Command,
+  possessions: ViewPossessions,
+): Array<[string, string]> {
+  const facts: Array<[string, string]> = [];
+  if (command.type === 'prepare')
+    facts.push([
+      'Material selection',
+      'Draws from carried supplies across lots; this action does not bind to one selected lot',
+    ]);
+  if (command.type === 'strike' && command.weaponItemId)
+    facts.push(['Equipment', 'Requires this exact weapon to be equipped; approach is automatic']);
+  if (command.type === 'hunt' && command.weaponItemId)
+    facts.push([
+      'Equipment',
+      'Uses this exact carried ranged tool; approach is automatic and equipped equipment is unchanged',
+    ]);
+  if (command.type === 'hunt') {
+    facts.push(['Time', `${BASE_ACTION_DEFAULTS.shotSeconds} seconds of game time, plus approach`]);
+    if (command.ammoItemId) {
+      const projectile = activityView(
+        world,
+        {
+          type: 'equip',
+          actorId: command.actorId,
+          id: 'preview-projectile',
+          itemId: command.ammoItemId,
+        },
+        possessions,
+      ).tool;
+      if (projectile) facts.push(['Projectile', projectile]);
+    } else if (command.weaponItemId)
+      facts.push(['Ammunition', 'No compatible accessible, unreserved projectile is available.']);
+  }
+  if (command.type === 'hunt' || command.type === 'strike')
+    facts.push([
+      'Uncertainty',
+      'An attempt, not a promised hit or kill; range and line of effect are checked at impact',
+    ]);
+  return facts;
+}
+
+/** One immutable actor read supplies names and exact projectile lookups for the
+ * entire player catalogue. Nothing survives the request or changes NPC context. */
+export function nativeCatalogueView(
+  world: WorldState,
+  items: readonly ItemInstance[],
+): (command: Command) => ActivityView {
+  const counts = new Map<string, number>(),
+    ordinals = new Map<string, number>();
+  for (const item of items) {
+    const name = world.itemDefinitions[item.definitionId]!.name;
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  const names = new Map<string, string>();
+  for (const item of items) {
+    const name = world.itemDefinitions[item.definitionId]!.name;
+    const ordinal = (ordinals.get(name) ?? 0) + 1;
+    ordinals.set(name, ordinal);
+    names.set(item.id, toolName(name, ordinal, counts.get(name)!));
+  }
+  const possessions: ViewPossessions = {
+    items,
+    names,
+    byId: new Map(items.map((item) => [item.id, item])),
+  };
+  return (command) => {
+    const view = activityView(world, command, possessions);
+    for (const [name, value] of nativeCatalogueCommitments(world, command, possessions))
+      view.facts.push({ name, value, critical: true });
+    return view;
+  };
 }

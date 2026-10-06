@@ -14,7 +14,12 @@ import {
   recipeMechanicalPin,
 } from './invention-families.js';
 import { rangedApproachRange } from './worlds/base/actions.js';
-import { executeHandover, offerRecipientProblem, reconcileItemOffers } from './handover.js';
+import {
+  executeHandover,
+  prepareItemOffer,
+  offerRecipientProblem,
+  reconcileItemOffers,
+} from './handover.js';
 import {
   BASE_FIRE_CARE,
   completeFireCare,
@@ -312,7 +317,7 @@ function canCut(world: WorldState, actorId: string): boolean {
     world.itemDefinitions[item.definitionId]?.properties.includes('point'),
   );
 }
-function ammoFor(
+export function ammoFor(
   world: WorldState,
   actorId: string,
   kind: string,
@@ -1250,23 +1255,31 @@ function executeCommandNative(
   if (prepared && 'ok' in prepared && !prepared.ok)
     return { world: original, events: [], outcome: prepared };
   const source = getOwn(original.entities, command.actorId)!;
+  if (options.preview && command.type === 'handover' && command.operation === 'offer') {
+    const offer = prepareItemOffer(original, source, command);
+    if ('ok' in offer) return { world: original, events: [], outcome: offer };
+  }
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
   let result = outcome(true, 'accepted', 'Action started.');
   const action = prepared && !('ok' in prepared) ? prepared : undefined;
-  const experience = isRecordedActivityCommand(command)
-    ? beginActivity(
-        world,
-        command,
-        command.id,
-        nativeActivityView(original, command),
-        component.agency.plan?.steps.some((step) => step.id === command.id)
-          ? component.agency.plan.id
-          : undefined,
-      )
-    : undefined;
+  // A drop preview still checks the structural transfer, but never installs its action
+  // record. Capacity admission above remains identical; other families retain bookkeeping.
+  // docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary
+  const experience =
+    !(options.preview && command.type === 'drop') && isRecordedActivityCommand(command)
+      ? beginActivity(
+          world,
+          command,
+          command.id,
+          nativeActivityView(original, command),
+          component.agency.plan?.steps.some((step) => step.id === command.id)
+            ? component.agency.plan.id
+            : undefined,
+        )
+      : undefined;
   if (action) action.id = nextId(world, 'action');
   if (action?.type === 'follow') updateFollowPath(world, actor, action);
   if (

@@ -21,11 +21,13 @@ export interface FireCareOption {
 }
 
 /** One builder for fire care on every surface; native admission still decides eligibility.
- * Light or put out follows the fire's current state; fuel is offered per carried fuel kind. */
+ * Light or put out follows the fire's current state. Compact menus offer one lot
+ * per fuel kind; complete player discovery preserves every exact fuel lot. */
 export function fireCareOptions(
   world: WorldState,
   inventory: readonly ItemInstance[],
   fire: Entity,
+  { eachLot = false }: { eachLot?: boolean } = {},
 ): FireCareOption[] {
   const heat = fire.heat;
   if (!heat) return [];
@@ -50,8 +52,8 @@ export function fireCareOptions(
   const fuels = new Map<string, ItemInstance>();
   for (const item of inventory) {
     const definition = world.itemDefinitions[item.definitionId];
-    if (definition && isFuel(definition) && !fuels.has(definition.id))
-      fuels.set(definition.id, item);
+    const key = eachLot ? item.id : item.definitionId;
+    if (definition && isFuel(definition) && !fuels.has(key)) fuels.set(key, item);
   }
   const fuelEffect = `each piece burns about ${BASE_FIRE_CARE.fuel.secondsPerUnit / 3600} hour, up to ${BASE_FIRE_CARE.fuel.maximumFuelSeconds / 3600} hours in the fire`;
   for (const item of fuels.values()) {

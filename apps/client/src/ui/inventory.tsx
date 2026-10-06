@@ -183,6 +183,7 @@ function MergeTargets({
 type InventoryProps = {
   view: GameView;
   addItem(): void;
+  browseActions?(item: InventoryItemView, opener: HTMLElement): void;
   contextMenu(item: InventoryItemView, point: { x: number; y: number }): void;
   command(action: ActionOption): Promise<ApiResult>;
   connected: boolean;
@@ -219,6 +220,7 @@ export function Inventory(props: InventoryProps) {
 function InventoryWorkspace({
   view,
   addItem,
+  browseActions,
   contextMenu,
   command,
   connected,
@@ -921,6 +923,18 @@ function InventoryWorkspace({
                   )}
                   {!transfer && (
                     <>
+                      {browseActions && (
+                        <Button
+                          size="sm"
+                          variant="quiet"
+                          onPress={(event) => {
+                            if (event.target instanceof HTMLElement)
+                              browseActions(item, event.target);
+                          }}
+                        >
+                          Explore uses and targets
+                        </Button>
+                      )}
                       <InventoryQuantity
                         value={selection.quantity}
                         onChange={(quantity) => {

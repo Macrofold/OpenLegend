@@ -26,7 +26,7 @@
 
 ## Batch 03 — Personal game
 
-[PG01–PG05](parallel-batch-03-personal-game.md) defines the previous five assignments: a complete live invention/use journey, coherent attended resident behavior, clearer action discovery, measured action-preview efficiency, and a first-threat encounter design. The [feature scope](../projects/parallel-batch-03-personal-game-feature-spec.md), [technical definitions](../projects/parallel-batch-03-personal-game-tech-design.md) and [copyable prompts](../projects/parallel-batch-03-personal-game-prompts.md) distinguish four delivery tasks from one design task. Family authoring has since merged; PG02/PG03/PG04 are underway in separate worktrees, without integrated acceptance claimed here. This allocation is proposed; it neither reopens the completed NP batch nor closes parent acceptance.
+[PG01–PG05](parallel-batch-03-personal-game.md) defines the previous five assignments: a complete live invention/use journey, coherent attended resident behavior, clearer action discovery, measured action-preview efficiency, and a first-threat encounter design. The [feature scope](../projects/parallel-batch-03-personal-game-feature-spec.md), [technical definitions](../projects/parallel-batch-03-personal-game-tech-design.md) and [copyable prompts](../projects/parallel-batch-03-personal-game-prompts.md) distinguish four delivery tasks from one design task. Family authoring has since merged. PG03 and scoped offer/drop preview improvements are delivered with evidence in the tracker; PG01 retains its exact billing hold, and PG02 and other PG04 work retain independent acceptance. This allocation neither reopens the completed NP batch nor closes parent acceptance.
 
 ## Batch 02 — Foundations and usability
 

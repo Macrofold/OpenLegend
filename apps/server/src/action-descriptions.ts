@@ -1,5 +1,6 @@
 import { namePhrase } from '@open-legend/language';
-import { strikeDefinition } from '@open-legend/domain';
+import { nativeCatalogueView, strikeDefinition } from '@open-legend/domain';
+import { domainCommand } from './cognition.js';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
 import { consumptionDescription } from './body-services.js';
 import {
@@ -71,29 +72,34 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   talk: 'Open a conversation with a nearby person. You can review and edit your message before sending it.',
 };
 
+function descriptionRead(observation: ActorObservation) {
+  const definitions = new Map(observation.itemDefinitions.map((item) => [item.id, item]));
+  return {
+    definitions,
+    targets: new Map(observation.visibleEntities.map((entity) => [entity.id, entity])),
+    items: new Map(observation.inventory.map((item) => [item.id, item])),
+    recipes: new Map(observation.knownRecipes.map((recipe) => [recipe.id, recipe])),
+    gatheringTools: observation.inventory
+      .filter((item) => item.quantity > 0)
+      .map((item) => definitions.get(item.definitionId)),
+  };
+}
+type DescriptionRead = ReturnType<typeof descriptionRead>;
+
 /** Only the player's permitted observation enters this projection. Reuse saved
  * invention prose and trusted mechanics; hovering never starts model work. */
-export function describeCommand(
+function describeCommand(
   command: CommandInput,
   observation: ActorObservation,
   world: WorldState,
+  read: DescriptionRead,
 ): string {
-  const definition = (id: string) =>
-    observation.itemDefinitions.find((item) => item.id === id) ?? NATIVE_ITEMS[id];
+  const definition = (id: string) => read.definitions.get(id) ?? NATIVE_ITEMS[id];
   const name = (id: string) => definition(id)?.name ?? 'material';
-  const target =
-    'targetId' in command
-      ? observation.visibleEntities.find((entity) => entity.id === command.targetId)
-      : undefined;
-  const item =
-    'itemId' in command
-      ? observation.inventory.find((entry) => entry.id === command.itemId)
-      : undefined;
+  const target = 'targetId' in command ? read.targets.get(command.targetId ?? '') : undefined;
+  const item = 'itemId' in command ? read.items.get(command.itemId ?? '') : undefined;
   const itemDefinition = item && definition(item.definitionId);
-  const recipe =
-    'recipeId' in command
-      ? observation.knownRecipes.find((entry) => entry.id === command.recipeId)
-      : undefined;
+  const recipe = 'recipeId' in command ? read.recipes.get(command.recipeId ?? '') : undefined;
   const common = ACTION_DESCRIPTIONS[command.type];
   switch (command.type) {
     case 'strike': {
@@ -124,12 +130,12 @@ export function describeCommand(
           ? `${itemDefinition.description}\n\n${common}`
           : common;
     case 'hunt': {
-      const equipped = observation.inventory.find(
-        (entry) => entry.id === observation.actor.actor?.equippedItemId,
+      const equipped = read.items.get(
+        command.itemId ?? observation.actor.actor?.equippedItemId ?? '',
       );
       const weapon = equipped && definition(equipped.definitionId);
       const subject = target?.animal ? namePhrase(target, 'definite') : 'a living animal';
-      return `Attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is equipped and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
+      return `Attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
     }
     case 'harvest':
       if (!target?.remains) return common;
@@ -180,10 +186,10 @@ export function describeCommand(
 export function commandFacts(
   command: CommandInput,
   observation: ActorObservation,
+  read: DescriptionRead = descriptionRead(observation),
 ): Array<[string, string]> {
-  const target = observation.visibleEntities.find((e) => e.id === command.targetId);
-  const name = (id: string) =>
-    observation.itemDefinitions.find((d) => d.id === id)?.name ?? NATIVE_ITEMS[id]?.name ?? id;
+  const target = read.targets.get(command.targetId ?? '');
+  const name = (id: string) => read.definitions.get(id)?.name ?? NATIVE_ITEMS[id]?.name ?? id;
   const duration = (seconds: number) =>
     `${seconds < 60 ? `${seconds} seconds` : `${Number((seconds / 60).toFixed(1))} minutes`} of game time`;
   if (command.type === 'gather' && target?.resource)
@@ -191,12 +197,7 @@ export function commandFacts(
       [
         'Yields',
         `${Math.min(
-          gatheringYield(
-            observation.inventory
-              .filter((item) => item.quantity > 0)
-              .map((item) => observation.itemDefinitions.find((d) => d.id === item.definitionId)),
-            target.resource.definitionId,
-          ),
+          gatheringYield(read.gatheringTools, target.resource.definitionId),
           target.resource.quantity,
         )} ${name(target.resource.definitionId)}`,
       ],
@@ -218,14 +219,14 @@ export function commandFacts(
         operation === 'light'
           ? '1 tinder bundle; a drill is kept'
           : operation === 'fuel'
-            ? `1 ${command.itemId ? name(observation.inventory.find((i) => i.id === command.itemId)?.definitionId ?? '') : 'fuel item'}`
+            ? `1 ${command.itemId ? name(read.items.get(command.itemId)?.definitionId ?? '') : 'fuel item'}`
             : 'Nothing',
       ],
       ['Time', duration(BASE_FIRE_CARE[operation].workSeconds)],
     ];
   }
   if (command.type === 'craft') {
-    const r = observation.knownRecipes.find((r) => r.id === command.recipeId);
+    const r = read.recipes.get(command.recipeId ?? '');
     if (r)
       return [
         ['Costs', r.inputs.map((i) => `${i.quantity} ${name(i.definitionId)}`).join(', ')],
@@ -234,4 +235,27 @@ export function commandFacts(
       ];
   }
   return [];
+}
+
+/** Adapt the existing permitted action view, not a second set of combat/travel formulas.
+ * Facts are display-only; the exact original command remains the execution intention. */
+export function actionDescriptions(observation: ActorObservation, world: WorldState) {
+  const read = descriptionRead(observation);
+  const nativeView = nativeCatalogueView(world, observation.inventory);
+  return {
+    describe: (command: CommandInput) => describeCommand(command, observation, world, read),
+    facts: (command: CommandInput): Array<[string, string]> => {
+      const native = domainCommand(command, observation.actor.id, 'preview');
+      if (native.type === 'hunt' && command.ammunitionId) native.ammoItemId = command.ammunitionId;
+      const view = nativeView(native);
+      const facts: Array<[string, string]> = [];
+      if (view.target) facts.push(['Target', view.target]);
+      if (view.tool) facts.push(['Tool', view.tool]);
+      facts.push(...commandFacts(command, observation, read));
+      for (const fact of view.facts)
+        if (typeof fact.value === 'string' || typeof fact.value === 'number')
+          facts.push([fact.name[0]!.toUpperCase() + fact.name.slice(1), String(fact.value)]);
+      return [...new Map(facts)];
+    },
+  };
 }

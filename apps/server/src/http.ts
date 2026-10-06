@@ -71,7 +71,7 @@ import { SqlGameRepository, digest } from './store.js';
 import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
 import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
-import { actionCatalogue } from './action-catalogue.js';
+import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
 import { containerPage, inventoryDestinationPage, objectHistoryPage } from './inventory-view.js';
 import { activityRequests, activityStatus, activityChoicePage } from './activity-requests.js';
 
@@ -134,6 +134,7 @@ const presence = z
   .strict();
 const actionContext = z
   .object({
+    catalogue: z.boolean().optional(),
     targetId: requestIdSchema.optional(),
     itemId: requestIdSchema.optional(),
     destinationId: requestIdSchema.optional(),
@@ -2924,6 +2925,8 @@ async function initializeGameServer(
           error instanceof SyntaxError ||
           error instanceof HistoryCursorError ||
           (error instanceof Error && error.message === 'body-limit');
+        if (error instanceof ActionCatalogueUnavailable)
+          return send(response, 400, { ok: false, code: 'action-context', message: error.message });
         if (error instanceof AuthoringRequestError)
           return send(response, 409, {
             ok: false,
