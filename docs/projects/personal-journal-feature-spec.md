@@ -45,7 +45,7 @@ Until persistence is selected, **draft** means the current working selection and
 
 When resumption is selected, a single current edition draft is available for each account, world and controlled character. It contains selected entry references, a title and the player's own annotations; it is not an archive of copied journal text. Saving this draft is explicit and reports whether the save completed. A new edition can replace it only after the player deliberately discards or replaces the existing draft. This modest persistence lets someone finish later without introducing a shelf of duplicate private histories.
 
-The draft's saved references are rechecked when opened. The app does not store a permanent generated PDF library. Once prepared, a download may be attempted again from the still-authorized current preview without another paid operation. Closing the preview releases its prepared file; the saved draft remains until discarded.
+When saved resumption is offered, the draft's saved references are rechecked when opened. The app does not store a permanent generated PDF library. Once prepared, a download may be attempted again from the still-authorized current preview without another paid operation. Closing the preview releases its prepared file; any saved draft remains until discarded.
 
 ### 3.2 Initial eligibility
 
@@ -160,9 +160,9 @@ The saved-draft and personal-note rows below describe those selected capabilitie
 | World ownership or service funding changes                               | No new owner gains access to human-private drafts merely by operating the world                                                                                                                                                                                                                        |
 | A character dies, retires or changes human controller                    | Draft ownership stays with its original human author; the new controller receives no notes. The original author's access to historical source text follows current Journal permission, with unavailable rows where access no longer applies; character recovery is not invented by the export feature. |
 
-The current draft has no new automatic age-based deletion policy. That avoids pretending this feature can choose a general retention or service-sunset promise. It has a finite per-scope size and explicit deletion; the number of worlds/scopes remains a real growth dimension that deployment must qualify. It is not marketed as unlimited free storage.
+When saved resumption is offered, the current draft has no new automatic age-based deletion policy. That avoids pretending this feature can choose a general retention or service-sunset promise. It has a finite per-scope size and explicit deletion; the number of worlds/scopes remains a real growth dimension that deployment must qualify. It is not marketed as unlimited free storage.
 
-The draft's source references do not prolong access to revoked text. A saved edition cannot become an alternate evidence archive. Operational backups and account-erasure retention remain with their current owners and need to include this new private draft before release.
+The draft's source references do not prolong access to revoked text. A saved edition cannot become an alternate evidence archive. When saved resumption is offered, operational backups and account-erasure retention remain with their current owners and need to include the new private draft before that release.
 
 The player's download is not signed proof that events occurred. Narration can contain perspective and uncertainty; personal notes can contain mistakes. Keep both readable without manufacturing an official historical certificate or giving characters knowledge of the human's interpretation.
 
@@ -216,7 +216,7 @@ The player writes that a friendly-looking exchange felt unconvincing. Their note
 
 ### JP-J06 — The export fails
 
-PDF preparation fails while ordinary play continues. The visible message explains that no completed PDF is available and retains the saved draft. The player may deliberately download the reviewed text. A timeout does not erase the Journal, return a blank success file or dispatch a Narrator retry.
+PDF preparation fails while ordinary play continues. The visible message explains that no completed PDF is available and retains the safe visible working selection and any saved draft. The player may deliberately download the reviewed text. A timeout does not erase the Journal, return a blank success file or dispatch a Narrator retry.
 
 ### JP-J07 — A source is erased during preparation
 
@@ -265,7 +265,7 @@ Before selecting implementation scope, name the actual task: keeping a chosen ou
 
 ### Stage 1 — An exact private edition
 
-Deliver a complete in-session select/title/preview/PDF-or-text/download/cancel path for the selected eligible source profile. Include the existing optional note capability if expressing personal interpretation is the selected benefit; a curated copy alone is a complete keeping/rereading experience, not a demonstration of personal annotation. Saved drafts and later resumption are independent additions.
+Deliver a complete in-session selection, optional title, exact preview, download and cancellation path for the selected eligible source profile. Offer PDF and text downloads so the player can choose the useful format. Include the existing optional note capability if expressing personal interpretation is the selected benefit; a curated copy alone is a complete keeping/rereading experience, not a demonstration of personal annotation. Saved drafts and later resumption are independent additions.
 
 Source validation, correction and erasure, account isolation, bounded permitted-history access and preparation, truthful completion and accessible actual output belong to this stage. Qualify the size and history scope actually offered before release. Privacy or usable files cannot be deferred as editing polish.
 
@@ -275,7 +275,7 @@ Acceptance: the reader can find and select a wanted moment through current histo
 
 Add per-entry interpretation when that is the wanted task and was not selected initially. Add one explicit saved draft only when returning to unfinished editions provides a concrete benefit. In-session notes do not require saved drafts merely because both involve writing. Once persistence is offered, deliver its whole save, reopen, conflict, scope-change, deletion, correction and restoration behavior described above.
 
-Acceptance: the player can express and retain what they intended without confusing narration and personal words or losing confirmed writing. Reopening and conflicts work under current authority, and service-controlled copies obey source removal. This is qualification of the selected writing capability, not a prerequisite for the already useful first copy.
+Acceptance: the player can express and retain what they intended without confusing narration and personal words or losing confirmed writing. When saved drafts are offered, reopening and conflicts work under current authority. All service-controlled copies obey source removal. This is qualification of the selected writing capability, not a prerequisite for the already useful first copy.
 
 ### Stage 3 — Expand only for a further use
 

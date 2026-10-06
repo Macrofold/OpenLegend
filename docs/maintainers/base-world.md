@@ -34,9 +34,13 @@ Cross-cutting deferred automated checks are in [TODO](TODO.md#base-world-items--
 
 **DG20 product proposal complete and reviewed, October 6, 2026.** [Heat and materials](../projects/heat-and-materials-feature-spec.md) develops the selected remaining ND08 family beneath INV-6. Its [base-world profile](../worlds/base/heat-and-materials.md) owns actual materials, work and tuning; [HM01–HM06](heat-and-materials.md) retains focused delivery and [HM limits](../limits/heat-and-materials.md) inventories restrictions. Current BW19 fire care remains distinct from the proposed heating, local damage and spread. Existing DG13 construction/moisture, object identity, state, time and participation owners retain their responsibilities.
 
+The gameplay review separates human firing with their own prepared kit, dry-material fire, moisture, resident making and combined food-fire scope. Making the proposed bowl is a possible enjoyable activity, not a storage improvement over current woven containers. A consequential fire activity may earn its own selection. Each enabled stage retains complete material, permission, time and recovery behavior; the matched dry-twig/substantial-wall comparison belongs to the selected material-fire stage and is not a first-bowl prerequisite.
+
 ## BW25 — Supplies that change over time
 
 **DG19 product proposal complete and reviewed, October 6, 2026.** [Changing supplies](../projects/changing-supplies-feature-spec.md) develops ND33 freshness/preservation and the selected ND06 resource-renewal loop. Its [authored profile](../worlds/base/changing-supplies.md) owns food, preservation work and patch tuning; [CS01–CS06](changing-supplies.md) owns focused delivery beneath BW/INV-6. [CS limits](../limits/changing-supplies.md) records the proposed scope. Current lots, containers, cooking, finite resources and corpse decay remain distinct from these new mechanics; product design does not close technical work or runtime acceptance.
+
+The gameplay review makes preservation and renewal independently selectable. A wanted outing or return must give food aging a credible benefit before adoption; the four-day cache example demonstrates feasibility rather than enjoyment. Renewal can use current nonperishable food without preservation work, but its harvested surplus can then accumulate beyond standing patch capacity. Correct eating, observation and handover remain required wherever aging is enabled; broader resident preparation and unattended community viability are separate acceptance.
 
 ## BW24 — Fuller starting wilderness
 

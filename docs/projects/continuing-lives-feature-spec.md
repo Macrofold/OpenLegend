@@ -381,7 +381,7 @@ Add a bounded policy for new unobserved developments using current exact interac
 
 ### Stage 4 — Funded shared operation
 
-Qualify long absence, burst arrivals, actual growth in memories and objects, recurring hazards, quiet and busy communities, funding warnings and coherent operational suspension. Integrate applicable PS05/PS06 policies before relying on cross-boundary pauses or contested absentee consequences. Begin unattended qualification with the [isolated finite proposal in §15](#15-dg17--a-first-funded-unattended-community), then expand only through supported boundaries. Offer unattended continuation when it produces a worthwhile return experience at an affordable complete cost; a successful personal world need not wait for this service. Expand published capacity only to workloads actually qualified.
+For wider funded shared operation, qualify the offered long absence, burst arrivals, actual growth in memories and objects, recurring hazards, quiet and busy communities, funding warnings and coherent operational suspension. Integrate applicable PS05/PS06 policies before relying on cross-boundary pauses or contested absentee consequences. Begin unattended qualification with the [isolated finite proposal in §15](#15-dg17--a-first-funded-unattended-community), applying the requirements for its actual boundaries; wider community and crowd workloads are later scope. Offer unattended continuation when it produces a worthwhile return experience at an affordable complete cost; a successful personal world need not wait for this service. Expand published capacity only to workloads actually qualified.
 
 ### Behavioral acceptance matrix
 
