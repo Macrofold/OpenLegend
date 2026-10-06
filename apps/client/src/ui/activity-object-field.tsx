@@ -253,7 +253,7 @@ export function ActivityObjectField({
       )}
       {error?.key === errorKey && <p role="alert">{error.message}</p>}
       <ModalOverlay
-        className="ol-root ol-modal-overlay"
+        className="ol-root ol-modal-overlay ol-activity-picker-overlay"
         isOpen={open && visible && connected && !readOnly}
         isDismissable
         onOpenChange={(next) => {

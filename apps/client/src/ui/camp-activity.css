@@ -165,3 +165,6 @@
 .ol-task-submit[data-unresolved] {
   position: static;
 }
+.ol-activity-picker-overlay[data-exiting] {
+  animation: none;
+}
