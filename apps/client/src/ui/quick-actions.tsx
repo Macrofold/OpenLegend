@@ -8,6 +8,7 @@ import {
   Icon,
   IconButton,
   SelectField,
+  TextTooltip,
   Toolbar,
   symbol,
 } from '../design-system/components';
@@ -243,25 +244,25 @@ export function QuickActions({
               <div className="ol-qagroup">
                 {suggested.map((action) => (
                   <div key={action.id} className="ol-qa-wrap">
-                    <AriaButton
-                      className="ol-qa"
-                      data-kind="suggested"
-                      aria-label={action.label}
-                      aria-disabled={!action.enabled}
-                      aria-describedby={`${labelId}-${action.id}`}
-                      onPress={() =>
-                        action.enabled
-                          ? action.run()
-                          : setReason(action.reason ?? 'Unavailable now.')
-                      }
-                    >
-                      <Icon name={action.icon} fallbackLabel={action.label} size={24} />
-                    </AriaButton>
-                    <span id={`${labelId}-${action.id}`} className="ol-hover-label">
-                      {[action.label, action.description, action.reason]
+                    <TextTooltip
+                      text={[action.label, action.description, action.reason]
                         .filter(Boolean)
                         .join(' · ')}
-                    </span>
+                    >
+                      <AriaButton
+                        className="ol-qa"
+                        data-kind="suggested"
+                        aria-label={action.label}
+                        aria-disabled={!action.enabled}
+                        onPress={() =>
+                          action.enabled
+                            ? action.run()
+                            : setReason(action.reason ?? 'Unavailable now.')
+                        }
+                      >
+                        <Icon name={action.icon} fallbackLabel={action.label} size={24} />
+                      </AriaButton>
+                    </TextTooltip>
                   </div>
                 ))}
               </div>
@@ -280,31 +281,33 @@ export function QuickActions({
                 (id ? `Shortcut ${index + 1} unavailable` : `Assign shortcut ${index + 1}`);
               return (
                 <div key={index} className="ol-qa-wrap">
-                  <AriaButton
-                    id={`${labelId}-pin-${index}`}
-                    className="ol-qa"
-                    data-kind={id ? 'shortcut' : 'empty'}
-                    aria-label={label}
-                    aria-disabled={unavailable || undefined}
-                    aria-describedby={`${labelId}-pin-reason-${index}`}
-                    onPress={() => activatePin(index)}
+                  <TextTooltip
+                    text={
+                      action
+                        ? [action.label, action.description, action.reason]
+                            .filter(Boolean)
+                            .join(' · ')
+                        : id
+                          ? 'Pinned action unavailable; assignment retained.'
+                          : 'Assign a shortcut'
+                    }
                   >
-                    <Icon
-                      name={action?.icon ?? (id ? 'ui.lock' : 'ui.plus')}
-                      fallbackLabel={label}
-                      size={24}
-                    />
-                    <span className="ol-qa-key">{index + 1}</span>
-                  </AriaButton>
-                  <span id={`${labelId}-pin-reason-${index}`} className="ol-hover-label">
-                    {action
-                      ? [action.label, action.description, action.reason]
-                          .filter(Boolean)
-                          .join(' · ')
-                      : id
-                        ? 'Pinned action unavailable; assignment retained.'
-                        : 'Assign a shortcut'}
-                  </span>
+                    <AriaButton
+                      id={`${labelId}-pin-${index}`}
+                      className="ol-qa"
+                      data-kind={id ? 'shortcut' : 'empty'}
+                      aria-label={label}
+                      aria-disabled={unavailable || undefined}
+                      onPress={() => activatePin(index)}
+                    >
+                      <Icon
+                        name={action?.icon ?? (id ? 'ui.lock' : 'ui.plus')}
+                        fallbackLabel={label}
+                        size={24}
+                      />
+                      <span className="ol-qa-key">{index + 1}</span>
+                    </AriaButton>
+                  </TextTooltip>
                   <div className="ol-qa-edit">
                     <IconButton
                       icon="ui.settings"

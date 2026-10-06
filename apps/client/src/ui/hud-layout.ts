@@ -11,13 +11,19 @@ export function observeHudLayout(
 ): () => void {
   const obstacles = [
     ...root.querySelectorAll<HTMLElement>(
-      '.ol-survival, .ol-timebar, .ol-time-settings, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking',
+      '.ol-survival, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking',
     ),
   ];
+  const controls = root.querySelector<HTMLElement>('.ol-world-controls');
   let previous: ScreenRect[] = [];
   const measure = () => {
     const origin = canvas.getBoundingClientRect();
+    const controlBounds = controls?.getBoundingClientRect();
+    const boundedControls = !!controlBounds?.width && !!controlBounds.height;
     const next = obstacles
+      // The narrow scroller owns only its visible region. Its clipped descendants
+      // must not reserve invisible space; display:contents keeps desktop measurements.
+      .filter((element) => !boundedControls || element === controls || !controls?.contains(element))
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)
       .map((rect) => ({

@@ -1739,13 +1739,28 @@ function App({
                   ))}
               </div>
             ))}
-            <QuickActions
-              key={`quick:${captionScope(view)}`}
-              view={view}
-              connected={connected && !choosingActionSubject}
-              command={(a) => void command(a)}
-              talk={talk}
-            />
+            <div
+              className="ol-world-controls"
+              data-bounded={narrow && open.length === 0 ? '' : undefined}
+            >
+              <QuickActions
+                key={`quick:${captionScope(view)}`}
+                view={view}
+                connected={connected && !choosingActionSubject}
+                command={(a) => void command(a)}
+                talk={talk}
+              />
+              <CameraControls
+                overlays={{ vision: visionGuide, hearing: hearingGuide }}
+                toggleOverlay={(sense) =>
+                  sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
+                }
+                levels={view.map.spatial.levels}
+                state={cameraView}
+                send={(command) => scene.current?.cameraCommand(command)}
+                center={() => scene.current?.center()}
+              />
+            </div>
             {!tabPaused && (
               <Narrator
                 key={`narrator:${captionScope(view)}`}
@@ -1754,16 +1769,6 @@ function App({
               />
             )}
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
-            <CameraControls
-              overlays={{ vision: visionGuide, hearing: hearingGuide }}
-              toggleOverlay={(sense) =>
-                sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
-              }
-              levels={view.map.spatial.levels}
-              state={cameraView}
-              send={(command) => scene.current?.cameraCommand(command)}
-              center={() => scene.current?.center()}
-            />
             {!tabPaused && picker && (
               <ActionPicker
                 createItem={(definitionId, position) => {

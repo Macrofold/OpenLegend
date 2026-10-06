@@ -202,9 +202,6 @@
   cursor: not-allowed;
   box-shadow: none;
 }
-.ol-quick-position .ol-qa-wrap:focus-within .ol-hover-label {
-  opacity: 1;
-}
 .ol-shortcut-picker[role='dialog'] {
   align-items: start;
 }

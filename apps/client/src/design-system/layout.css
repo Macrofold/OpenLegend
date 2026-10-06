@@ -922,6 +922,9 @@ body,
 .ol-fact {
   display: contents;
 }
+.ol-world-controls {
+  display: contents;
+}
 .ol-quick-position {
   position: absolute;
   left: 50%;
@@ -2955,13 +2958,70 @@ body,
 .ol-hud[data-narrow='true'] .ol-clock-position {
   transform: none;
 }
-.ol-hud[data-narrow='true']:not([data-tight='true']):not(:has(.ol-mobile-tabs)) .ol-camera {
-  right: calc(2 * var(--space-3) + var(--control-md));
+/* Closed narrow views share one bounded lower region. Scrolling keeps every
+ * camera/shortcut control reachable when the short viewport cannot show them all. */
+.ol-world-controls[data-bounded] {
+  position: absolute;
+  inset-inline: calc(var(--hud-inset) + var(--control-md) + var(--space-2));
+  bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-inline-size: 460px;
+  margin-inline: auto;
+  max-block-size: max(
+    calc(var(--control-sm) + 2 * var(--space-1)),
+    calc(100% - var(--dock-top) - var(--control-md) - 2 * var(--space-3))
+  );
+  min-block-size: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  pointer-events: auto;
+  z-index: var(--z-panel);
 }
-@media (max-width: 720px) {
-  .ol-hud[data-narrow='true']:not([data-tight='true']):not(:has(.ol-mobile-tabs)) .ol-camera {
-    bottom: calc(var(--control-md) + 3 * var(--space-3));
-  }
+.ol-hud[data-tight='true'] .ol-world-controls[data-bounded] {
+  inset-inline: var(--hud-inset);
+}
+.ol-world-controls[data-bounded] > :is(.ol-quick-position, .ol-camera) {
+  position: static;
+  flex: none;
+  inline-size: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
+  transform: none;
+}
+.ol-world-controls[data-bounded] .ol-camera {
+  grid-template-columns: repeat(6, minmax(var(--control-sm), 1fr));
+}
+.ol-world-controls[data-bounded] .ol-qabar {
+  display: flex;
+  inline-size: 100%;
+  box-sizing: border-box;
+  align-items: start;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-block: var(--space-1);
+}
+.ol-world-controls[data-bounded] :is(.ol-qa-section, .ol-qadivider) {
+  flex: none;
+}
+.ol-world-controls[data-bounded] .ol-qa-wrap {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+.ol-world-controls[data-bounded] .ol-qa-edit {
+  position: static;
+  opacity: 1;
+}
+.ol-world-controls[data-bounded] :is(.ol-shortcut-picker, .ol-quick-source, .ol-quick-reason) {
+  position: static;
+  inset: auto;
+  translate: none;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  max-block-size: none;
+  box-sizing: border-box;
 }
 
 /* Family inspection is a modal creator task with its own bounded reading area. */
