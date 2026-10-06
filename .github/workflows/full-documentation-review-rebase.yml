@@ -58,6 +58,7 @@ jobs:
               '666a454f75f5b5aba660a7bb0db4ac6dd3b3b2cf': ('docs/projects/parallel-batch-03-personal-game-feature-spec.md', 1),
               '82e1512f961029e35f6dcf66008e57826454ac94': ('docs/projects/parallel-batch-03-personal-game-tech-design.md', 1),
               'f8d92cb9ede8896f1b1163f0c49746adfb71cfb7': ('docs/projects/parallel-batch-03-personal-game-prompts.md', 1),
+              '9f31c8079049d0a6b359712fa3a63b2eff22bc90': ('docs/maintainers/inventions-and-world-evolution.md', 1),
           }
           while result.returncode:
               stopped = git('rev-parse', 'REBASE_HEAD').decode().strip()
@@ -77,6 +78,10 @@ jobs:
                           assert shared.count('refused before migrations.') == 1
                           assert theirs == shared.replace('refused before migrations.', 'refused before disposable-fixture initialization.'), 'changed profiler conflict'
                           replacement = ours.replace('refused before migrations.', 'refused before disposable-fixture initialization.')
+                      elif stopped.startswith('9f31c807'):
+                          assert hashlib.sha256(ours.encode()).hexdigest() == 'c4861cd0849c8a575a5b10cb52d06e20c217ce9649fe63c5c001dd2946e794ff'
+                          assert hashlib.sha256(theirs.encode()).hexdigest() == 'a8b86c4e3a8ddddba6c183157b7d36d61985b6251ad0e4a8288978f0076954c9'
+                          replacement = 'The original four recipe families—sling, bow, arrow and gathering tool—now have the PW03 woven-container and NP03 manufactured-cordage families alongside them. The [playable-week designs](../projects/parallel-batch-01-playable-week-tech-design.md#pw02--family-definitions-not-engine-recipe-switches) and [PW02 work](parallel-batch-01-playable-week.md#pw02--world-owned-invention-families-and-one-admission-path) own the delivered world-family admission boundary and remaining integration qualification. PW03 supplies native compilation/crafting for both container sizes, PostgreSQL teaching/custody/restart and scripted ordinary Craft evidence; NP03 supplies the exact manufactured-binding dependency and consumption proof below. [PG01’s live player journey](../verification/camp-life.md#live-player-journey--october-4-2026) additionally qualifies player-directed generation, cord-to-container composition, ordinary use and reopen. Voluntary NPC chain choice and the shared ground-cache picker remain separately owned and unqualified. These results do not complete general host registration, arbitrary recursive composition or live-law migration; existing parent and release gates retain those distinct requirements.\n'
                       elif path.name.startswith('parallel-batch-03-personal-game-'):
                           assert "PG03 and scoped PG04 are delivered; PG01's exact billing hold, PG02/PG05 and broader PF05 qualification remain open." in ours
                           assert 'PG02, PG03 and PG04 are underway on separate branches; integrated delivery and the remaining acceptance are open.' in theirs
