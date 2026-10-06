@@ -1,3 +1,4 @@
+import { subjectNarration } from './narration.js';
 import { canonicalName, namePhrase } from '@open-legend/language';
 import { inventionAttribution } from './invention-attribution.js';
 import { inventionPermission } from './invention-policy.js';
@@ -146,7 +147,7 @@ export function admitDeclaration(
     world,
     events,
     'declaration-admitted',
-    `${namePhrase(actor, 'definite', { capitalize: true })} worked out a technique: ${draft.name}.`,
+    subjectNarration(actor, `worked out a technique: ${draft.name}.`),
     actor,
     undefined,
     { recipeId, source: provenance.source },

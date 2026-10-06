@@ -398,7 +398,15 @@ export function npcCandidates(
       id: 'continue',
       description: actor.action
         ? `Continue the ${actor.action.type} already in progress.`
-        : 'Remain in place while considering the next useful step.',
+        : actor.agency.plan?.status === 'active' &&
+            (actor.agency.plan.activity ||
+              actor.agency.plan.steps.some(
+                (step) => step.status === 'queued' || step.status === 'running',
+              ))
+          ? // Between steps, continuation still advances chosen work; it is not idleness.
+            // docs/agent-agency.md#4-plans-preserve-continuity-without-prescribing-a-life
+            'Continue the remaining chosen work, including steps not yet started. Each step rechecks its prerequisites.'
+          : 'Remain in place while considering the next useful step.',
       command: null,
     },
   ];

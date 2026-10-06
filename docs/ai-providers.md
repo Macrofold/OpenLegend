@@ -22,6 +22,8 @@ Direct player/NPC conversations on the qualified Macrofold fast/complex inferenc
 
 Structured preview parsing uses exact-pinned [`@streamparser/json` 0.0.26](https://github.com/juanjoDiaz/streamparser-json), with partial-token/value emission disabled and only the server-selected first operation assembled. Its incremental parser owns JSON syntax and completion. A small AI-layer wrapper enforces the existing byte/depth/key bounds, rejects decoded duplicate keys and unsupported root fields throughout the document, and rejects nonfinite numbers and lone surrogates. The server still strictly validates the complete speech operation and current recipient/hearing before showing it. No JSON repair, custom alternate parser or additional inference is retained; parser references are released on decoding failure or completion. [NPV01](limits/interface.md#npv01--private-npc-reply-preview) owns the unchanged bounds.
 
+Macrofold inference requests use one delivery mode: progressive NPC replies set `stream: true` without `Prefer: respond-async`; non-streamed inference may request asynchronous admission and observe the returned run. Combining the two is rejected before inference. [PG02’s live repair](verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) qualified actual welcome/refusal replies after removing the incompatible header, without a retry loop or model substitution.
+
 Direct Responses generation, full-harness structured calls, invention/workshop explanations and private/background callers retain completed-value delivery and are not qualified by this slice. Jev uses its native question protocol; Mike authorized correcting the local decision setting to `typesafe/jev-1.13`, without changing generation models or routes. [NC19](maintainers/narration-and-conversations.md#nc19--progressive-display-of-structured-conversation-replies) retains broader caller qualification.
 
 `jev-questions.ts` separates relevance, immediate complexity, lasting significance and invention admissibility/mechanism. One attention request contains as many candidate questions as its serialized size budget allows; routing asks route and reflection together; invention asks admissibility and route together. Useful contradictory evidence must survive relevance selection. A provider confidence field is not the same as a selected answer's probability. Invention remains conservatively gated; routing never grants domain authority.
@@ -136,6 +138,8 @@ const generated = await ai.generate<{ text: string }>({
 The routing example illustrates transport structure; production context must include declared capabilities and the actual evidence needed for that decision. A helmet description alone cannot establish native rule coverage.
 
 ## Provider behavior and limits
+
+Accepted-run status/result and reflection tool-history reads honor HTTP 429 backoff under the original deadline and cancellation signal. They only re-observe the same run; paid admission is never retried. Background reflection polls every two seconds to reduce request contention; interactive observation retains its existing cadence. [Observation limits](limits/cognition.md#cg13--provider-run-observation) records the tradeoff.
 
 Context/action relevance uses one Noul per candidate with the shared rubric in `state.attentionPolicy`; each short question explicitly references its candidate because question keys are not model input. Noul directly supplies P(yes), without repeated yes/no option descriptions. [Noul documentation](https://docs.typesafe.ai/primitives/noul).
 

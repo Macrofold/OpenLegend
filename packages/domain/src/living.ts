@@ -1,3 +1,4 @@
+import { person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { activeActivity, connectActivityState } from './action-experience.js';
 import { seesEntity } from './perception.js';
@@ -221,7 +222,6 @@ export function commitBodyEffects(
     before,
     actor.health,
     !!observer && (observer.id === entity.id || seesEntity(world, observer, entity)),
-    observer ? observerDescription(world, observer.id, entity.id) : undefined,
   );
   if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
   if (actor.health < before && actor.action?.type === 'treat-scar') {
@@ -254,7 +254,7 @@ export function commitBodyEffects(
     world,
     events,
     'body-effect',
-    `${namePhrase(entity, 'definite', { capitalize: true })}'s body changed.`,
+    { parts: [person(entity, 'possessive'), ' body changed.'] },
     entity,
     entity.id,
     {

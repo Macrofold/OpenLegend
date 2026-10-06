@@ -1,3 +1,4 @@
+import { personalPronoun } from '@open-legend/language';
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
 import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
@@ -109,11 +110,11 @@ export function memoryCandidate(
     const recipient = awareness.intendedRecipientId;
     const relation =
       awareness.sourceId === actorId
-        ? `I said${recipient ? ` to ${recipient === actorId ? 'myself' : participant(recipient)}` : ''}`
-        : `${participant(awareness.sourceId)} said${recipient === actorId ? ' to me' : recipient ? ` to ${participant(recipient)} (overheard; not addressed to me)` : ' nearby (recipient unknown)'}`;
+        ? `${personalPronoun('subject')} said${recipient ? ` to ${recipient === actorId ? personalPronoun('reflexive') : participant(recipient)}` : ''}`
+        : `${participant(awareness.sourceId)} said${recipient === actorId ? ` to ${personalPronoun('object')}` : recipient ? ` to ${participant(recipient)} (overheard; not addressed to ${personalPronoun('object')})` : ' nearby (recipient unknown)'}`;
     summary = awareness.intelligible
       ? `${relation}: ${JSON.stringify(awareness.content)}`
-      : 'I heard indistinct speech.';
+      : `${personalPronoun('subject')} heard indistinct speech.`;
   }
   const required =
     matches(requiredIds) ||

@@ -169,7 +169,16 @@ export {
   isFuel,
   type FireOperation,
 } from './worlds/base/fire.js';
-export { memoryPerspective } from './memory-perspective.js';
+export {
+  personalText,
+  person,
+  presentVerb,
+  subjectNarration,
+  renderNarration,
+  narrationTemplate,
+  type Narration,
+  type NarrationPart,
+} from './narration.js';
 
 export * from './participation.js';
 export { isSafeRecordId } from './records.js';

@@ -85,6 +85,8 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 
 ### BW18 — Ada and the lean starting camp
 
+PG02’s unified outcome memories and shared native perspective are implemented. Ada’s animal-observation preference remains unconditional; the mercenary’s generic reasoning/current-clearing instruction is replaced by personal travel/work history. [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) demonstrates a freely chosen cord-to-hare-observation switch with current content while retaining stockpiling failures. [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) also completes with corrected content and a subsequent real action. Broader BW18/CE reliability criteria remain open.
+
 **Status:** starter content implemented and native/live context inspected; Jev-only hunting/retry is demonstrated, while UI acceptance remains open. [Feature specification](../projects/embodied-survival-feature-spec.md) · [Technical design](../projects/embodied-survival-tech-design.md#starter-content-and-observability). The owner confirmed existing NPC ghost/revival policy remains; this does not implement BW15.
 
 - [x] After design approval, author Ada's consistent biography, traits and practical knowledge through existing identity/About me sources. Explicit empty goals must stay empty in both actor creation and mind initialization; no fallback survival instruction or fictional witnessed hunting event.

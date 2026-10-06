@@ -679,6 +679,23 @@ export class MacrofoldBackend implements AiClient {
     }
     return { question: state.paused === true, hasMore };
   }
+  /** Re-observe an admitted Run after throttling; never replay its paid admission.
+   * docs/ai-providers.md#provider-behavior-and-limits */
+  private async readRun(
+    api: Pick<MacrofoldTransport, 'request'>,
+    path: string,
+    signal: AbortSignal,
+  ): Promise<unknown> {
+    for (;;) {
+      signal.throwIfAborted();
+      try {
+        return await api.request(path, undefined, undefined, signal);
+      } catch (error) {
+        if (!(error instanceof MacrofoldHttpError) || error.status !== 429) throw error;
+        await delay(Math.max(1000, error.retryAfterMs ?? 60_000), undefined, { signal });
+      }
+    }
+  }
   private async waitRun(
     id: string,
     urls: Record<string, unknown>,
@@ -698,16 +715,13 @@ export class MacrofoldBackend implements AiClient {
     const api = privateContent ? this.privateApi : this.api;
     for (;;) {
       signal.throwIfAborted();
-      const status = object(
-        await api.request(string(urls['status']), undefined, undefined, signal),
-      );
+      const status = object(await this.readRun(api, string(urls['status']), signal));
       if (status['id'] !== id) throw new Error('Macrofold run identity mismatch.');
       if (maxToolCalls !== undefined) {
         const page = object(
-          await this.api.request(
+          await this.readRun(
+            this.api,
             `/v1/runs/${encodeURIComponent(id)}/events?after=${eventSequence}&limit=100`,
-            undefined,
-            undefined,
             signal,
           ),
         );
@@ -741,9 +755,7 @@ export class MacrofoldBackend implements AiClient {
       }
       const question = events.question;
       if (terminal.has(String(status['status']))) {
-        const result = object(
-          await api.request(string(urls['result']), undefined, undefined, signal),
-        );
+        const result = object(await this.readRun(api, string(urls['result']), signal));
         if (result['run_id'] !== id || result['final'] !== true)
           throw new Error('Macrofold result is not final.');
         await this.save(`result:${id}`, { status, result });
@@ -754,7 +766,8 @@ export class MacrofoldBackend implements AiClient {
         throw new Error(
           'Macrofold requested interactive input; this bounded call cannot continue.',
         );
-      await delay(500, undefined, { signal });
+      // Background reflection needs completion/tool bounds, not interactive streaming.
+      await delay(maxToolCalls === undefined ? 500 : 2000, undefined, { signal });
     }
   }
   reconcileQuestion(

@@ -1,5 +1,7 @@
 # Events, perception, and reactions
 
+Apply [precise history and general causes](engine-and-world-boundaries.md#preserve-precise-history-and-solve-the-general-cause) to event facts, actor evidence and every downstream historical projection. Exact world facts never grant observer knowledge; compact wording never replaces the precise retained source.
+
 ## Spatial dependency
 
 [Spatial world](spatial-world.md) supplies coordinates, physical geometry and queries; the sensory owner still assigns modality/detail/exposure. Position/support and geometry revisions feed the existing candidate/exposure intake. Event-time origin is immutable historical evidence; newer geometry cannot upgrade it. The 3D integration adds no parallel event bus and no paid call per altitude or camera frame. See [SW08](maintainers/spatial-world.md); private thoughts and technical readiness remain distinct from external occurrences.

@@ -611,3 +611,11 @@ Owner memory history and search (`/api/memories`, god variant for inspectable no
 **Evidence:** Existing 10,000-pad fixture measured candidate projection at 77 ms median / 106 ms p95; [prior fixture evidence](../verification/items-and-knowledge.md#editable-knowledge-and-observer-names), not a new run or natural-growth estimate. [Implementation](../../apps/server/src/knowledge-context.ts) (`subjectKnowledgeCandidates`). [Revisit C07](../maintainers/limits-audit.md#c07).
 
 **Implemented mitigation:** Current candidate preparation checks a combined 8,192 current-world/note items and 4 MiB of note text before formatting. The document collection is still resident; overflow is explicit, not silent note deletion.
+
+## MH14 — Required recent action outcomes
+
+**Current — October 5, 2026 · Restrictiveness: Medium.** Decision preparation follows result references from the latest action/control result, current and paused plans and the existing 32-step agency history. The same actor-scoped retrieval, correction/forgetting, conversation deduplication and request-local cache apply. Missing records disclose incomplete coverage; mandatory context overflow refuses preparation instead of truncating facts. No new retention duration or history-size cap is introduced.
+
+**Reason / tradeoff:** Recent results must survive optional relevance failure without a second narrative store or full-history scan. Exact action facts increase mandatory prompt bytes; 33 cold references were exercised locally, not population-qualified. Existing consolidation and explicit forgetting still apply. [Canonical contract](../memory-architecture.md#2-semantic-levels-and-triggers) · [Evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices). Broader history/preparation capacity remains C17/C18 and CR12.
+
+The creator memory editor accepts up to 32,768 characters per personal summary (previously 20,000), reusing the native action-record byte ceiling as a sufficient character allowance. This preserves round-trip editing of a maximally sized native result; the existing 1 MiB editor HTTP envelope remains enforced. It does not increase native action-record or model-context budgets.

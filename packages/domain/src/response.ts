@@ -1,6 +1,7 @@
+import { subjectNarration, presentVerb, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
-import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
+import { BASE_FAMILY_FACTS, BASE_EXPRESSION_VERBS } from './worlds/base/actions.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   actionTargetsCurrent,
@@ -711,15 +712,6 @@ export function commitActorResponse(
       const invalidTarget =
         !!act.targetEntityId &&
         (!permitted.has(act.targetEntityId) || !Object.hasOwn(world.entities, act.targetEntityId));
-      const verbs = {
-        nod: 'nods',
-        smile: 'smiles',
-        frown: 'frowns',
-        wave: 'waves',
-        shrug: 'shrugs',
-        shake_head: 'shakes their head',
-        slap: 'slaps',
-      };
       const reachable =
         act.verb !== 'slap' ||
         (!!target &&
@@ -732,7 +724,7 @@ export function commitActorResponse(
       if (
         !supportsManualWork(source) ||
         !act.verb ||
-        !Object.hasOwn(verbs, act.verb) ||
+        !Object.hasOwn(BASE_EXPRESSION_VERBS, act.verb) ||
         invalidTarget ||
         !reachable ||
         (target &&
@@ -752,7 +744,17 @@ export function commitActorResponse(
           world,
           events,
           'expression',
-          `${namePhrase(source, 'definite', { capitalize: true })} ${verbs[act.verb!]}${target ? `${act.verb === 'slap' ? ' ' : ' toward '}the target` : ''}.`,
+          subjectNarration(source, [
+            presentVerb(source, BASE_EXPRESSION_VERBS[act.verb!]),
+            ...(act.verb === 'shake_head' ? [' ', person(source, 'possessive'), ' head'] : []),
+            ...(target
+              ? [
+                  act.verb === 'slap' ? ' ' : ' toward ',
+                  person(target, target.id === source.id ? 'reflexive' : 'object'),
+                ]
+              : []),
+            '.',
+          ]),
           source,
           target?.id,
           {
@@ -968,7 +970,7 @@ export function commitActorResponse(
         appendMemory(world, actorId, {
           kind: 'episode',
           source: 'self_thought',
-          summary: `I thought: ${op.think.text}`,
+          summary: subjectNarration(actorId, `thought: ${op.think.text}`),
           entityIds: op.think.aboutEntityIds,
           importance: 5,
           responseId: id,

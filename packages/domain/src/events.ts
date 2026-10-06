@@ -1,3 +1,4 @@
+import { renderNarration, subjectNarration, personalText, type Narration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { countDomainWork } from './diagnostic-counters.js';
 import { activeActivity } from './action-experience.js';
@@ -22,7 +23,6 @@ import { hasMemory } from './living.js';
 import { finishWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
-import { memoryPerspective } from './memory-perspective.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import type {
   Entity,
@@ -56,24 +56,19 @@ export function contentLabel(value: string): string {
 export function appendMemory(
   world: WorldState,
   actorId: string,
-  memory: Omit<MemoryRecord, 'id' | 'actorId' | 'at'>,
-): void {
-  if (!hasMemory(world.entities[actorId]) || !memory.summary.trim()) return;
+  memory: Omit<MemoryRecord, 'id' | 'actorId' | 'at' | 'summary'> & { summary: string | Narration },
+): string | undefined {
+  if (!hasMemory(world.entities[actorId])) return;
+  const summary = personalText(world, actorId, memory.summary);
+  if (!summary.trim()) return;
   const records = world.memories[actorId] ?? (world.memories[actorId] = []);
-  if (
+  const prior =
     memory.eventId &&
-    records.some((record) => record.eventId === memory.eventId && record.kind === memory.kind)
-  )
-    return;
+    records.find((record) => record.eventId === memory.eventId && record.kind === memory.kind);
+  if (prior) return prior.id;
   const record: MemoryRecord = {
     ...memory,
-    summary: memoryPerspective(
-      world,
-      actorId,
-      memory.summary,
-      memory.eventType === 'speech',
-      memory.speakerId,
-    ),
+    summary,
     id: nextId(world, 'memory'),
     actorId,
     at: world.simTime,
@@ -83,16 +78,20 @@ export function appendMemory(
     entityIds: [...memory.entityIds],
     importance: Math.max(0, Math.min(10, memory.importance)),
   };
-  mutateExperience(world, actorId, {
-    operation: 'add',
-    entry: { source: 'memory', value: record },
-  });
+  if (
+    mutateExperience(world, actorId, {
+      operation: 'add',
+      entry: { source: 'memory', value: record },
+    }) === null
+  )
+    throw new Error('Personal experience could not be recorded.');
+  return record.id;
 }
 export function emit(
   world: WorldState,
   events: WorldEvent[],
   type: string,
-  text: string,
+  text: string | Narration,
   source?: Entity,
   targetId?: string,
   data?: WorldEvent['data'],
@@ -166,7 +165,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       world,
       events,
       'encounter',
-      `${namePhrase(source, 'definite', { capitalize: true })} ${observed}`,
+      subjectNarration(source, observed),
       [source.id],
       source,
       targetId,
@@ -180,7 +179,6 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       },
       'private',
       pending,
-      `I ${observed}`,
     );
     // Bound temporary memory independently of the number of visible objects.
     if (pending.length >= 128) flush();
@@ -193,15 +191,15 @@ function recordEvent(
   world: WorldState,
   events: WorldEvent[],
   type: string,
-  text: string,
+  narration: string | Narration,
   audience: string[],
   source: Entity | undefined,
   targetId: string | undefined,
   data: WorldEvent['data'],
   scope: EventScope,
   awarenessBatch?: ExperienceMutation[],
-  privatePerspective?: string,
 ): WorldEvent {
+  const text = typeof narration === 'string' ? narration : renderNarration(world, narration);
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
       ? Math.max(0, Math.min(10, value))
@@ -247,6 +245,7 @@ function recordEvent(
     at: world.simTime,
     type,
     text,
+    ...(typeof narration !== 'string' ? { narration } : {}),
     audience: [...audience],
     importance,
     urgency,
@@ -299,6 +298,7 @@ function recordEvent(
   if (
     [
       'action-started',
+      'speech',
       'ate',
       'equipped',
       'gathered',
@@ -328,6 +328,10 @@ function recordEvent(
       !experience.evidenceIds.includes(event.id)
     )
       experience.evidenceIds.push(event.id);
+    // Speech already has a complete listener-specific account, including exact words.
+    // Reuse it as the speaker's result rather than narrating the utterance twice.
+    if (experience && type === 'speech' && speechAwareness.has(experience.actorId))
+      experience.resultMemoryId = event.id;
   }
   if (world.experience) {
     countDomainWork('awarenessWritten', audience.length);
@@ -338,21 +342,11 @@ function recordEvent(
         acquired.push(speech);
         continue;
       }
-      // The private acquisition phase supplies its exact first-person template and batches
-      // additions by owner. Speech retains its independently resolved listener evidence.
+      // Native participants and grammar are rendered once for this observer; literal
+      // prose/quotes retain their supplied ownership. Speech has listener-specific evidence.
       // docs/architecture.md#private-perception-and-evidence-batches
       const perceivedText =
-        privatePerspective !== undefined && scope === 'private' && actorId === source?.id
-          ? privatePerspective
-          : memoryPerspective(
-              world,
-              actorId,
-              text,
-              type === 'speech',
-              source?.id,
-              targetId,
-              data?.['targetReference'] === true,
-            );
+        typeof narration === 'string' ? narration : renderNarration(world, narration, actorId);
       const awareness: Awareness = {
         eventId: event.id,
         actorId,

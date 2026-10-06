@@ -104,6 +104,14 @@ These principles guide engine design, subsystem design, and implementation revie
 
 Apply P07 separately to fictional knowledge and application security. A world may deliberately support telepathy or compulsion through admitted game effects; neither can reach credentials, actual billing, or ungranted human-private data.
 
+### Preserve precise history and solve the general cause
+
+For event, action-result, awareness, memory, recall, consolidation, journal, telemetry and other historical tracking work, preserve the exact available facts at the recording boundary: identities and attribution, occurrence time/order, quantities and units, before/after values, attempted versus committed effects, failure/cancellation, and source/observation uncertainty. Record actual values after clamping or partial execution. Do not replace “15 to 33” with “improved,” silently round a canonical value, truncate an account, or let a compact summary become the only surviving representation. Precision means retaining what was actually known, not inventing exactness or exposing truth an observer could not perceive.
+
+Keep authoritative event facts and each observer’s permitted evidence distinct. Native structured facts flow through shared rendering with explicit participants and perspective; arbitrary prose and quoted testimony retain their source and are not silently rewritten into fact. Summaries and compact displays are derived views with source links and explicit coverage. Required decision evidence is selected through the common personal-memory path before optional relevance work. Budget overflow narrows or defers work; it does not silently erase required facts. Existing explicit forgetting, correction, deletion, privacy and retention contracts still apply—this principle does not require infinite retention or universal perfect memory.
+
+When a newly discovered case fails, trace the owner and complete producer-to-consumer path against these principles before adding a local branch, duplicate state or stronger prompt. State the general missing fact, contract or operation, repair its owner, and check a materially different case plus a meaningful failure. A successful forced experiment identifies a missing link; it cannot establish that the general design works. Reassess the architecture when the repair would bypass an owner or create competing representations. Do not change acceptance to excuse a defect.
+
 ### Intentional v1 specificity
 
 Do not scatter placeholder interfaces everywhere. A deliberate fixed implementation is acceptable when:

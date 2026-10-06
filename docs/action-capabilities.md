@@ -390,6 +390,8 @@ Trusted spatial binding resolves the intended support and height. A planar pair 
 
 A point can be an intended destination even when not currently occupied by a visible object. Public terrain or remembered geometry may support it under the world's disclosure policy. Physical collision authority and actor route knowledge remain separate, as specified by SW. No need to enumerate every point as an offered handle.
 
+Current target-approach admission accepts an explicitly repeated `near` relation because it adds no requirement to that movement. Other relations, distances, loss policies and time qualifiers remain unsupported for a point/target move; they must not be silently ignored. A permitted target and normal route admission are still required.
+
 After binding, use the existing native move/route admission, movement timing and terminal receipt. Route preparation, path following and native collision handling require no paid model call. A failed path search can mean no known route, unsupported traversal, stale geometry, search budget exhaustion or technical unavailability—not a proof of physical impossibility.
 
 ### 10.2 Entity-relative navigation

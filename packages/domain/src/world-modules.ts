@@ -1,3 +1,11 @@
+import { validNarrationTemplate } from '@open-legend/language';
+import {
+  narrationTemplate,
+  renderNarration,
+  subjectNarration,
+  presentVerb,
+  validateNarration,
+} from './narration.js';
 import { validName } from '@open-legend/language';
 import { validateFamilyTree } from './worlds/base/family.js';
 import { validateAppraisalPolicy, validateAppraisals, type AppraisalPolicy } from './appraisals.js';
@@ -423,6 +431,7 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
         d.concern.below < d.schema.min ||
         d.concern.below > d.schema.max ||
         !boundedText(d.concern.text, 160) ||
+        !validNarrationTemplate(d.concern.text, ['subject']) ||
         !['instant', 'latched'].includes(d.concern.mode) ||
         typeof d.concern.notify !== 'boolean' ||
         typeof d.concern.reconsider !== 'boolean' ||
@@ -581,13 +590,22 @@ export function setAttribute(
         world,
         events,
         'attribute-concern',
-        concerned ? d.concern.text : `${d.name} is no longer low.`,
+        {
+          parts: [
+            ...narrationTemplate(concerned ? d.concern.text : `${d.name} is no longer low.`, {
+              subject: entity,
+            }).parts,
+            ` ${d.name}: ${value}${d.schema.unit}.`,
+          ],
+        },
         entity,
         undefined,
         {
           attributeId: d.id,
           definitionVersion: d.version,
           attributeRevision: prior.revision,
+          value,
+          unit: d.schema.unit,
           semanticTrigger: true,
           importance: 6,
           urgency: concerned ? 4 : 1,
@@ -670,9 +688,17 @@ export function projectAttributes(
         revision: entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0,
         ...(d.schema.kind === 'number' ? { min: d.schema.min, max, unit: d.schema.unit } : {}),
         ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
-        ...(audience === 'owner' && d.condition ? { condition: conditionText(d, value) } : {}),
+        ...(audience === 'owner' && d.condition
+          ? { condition: conditionText(world, entity, d, value) }
+          : {}),
         ...(audience === 'owner' && attributeConcernActive(entity, d, value)
-          ? { concern: d.concern!.text }
+          ? {
+              concern: renderNarration(
+                world,
+                narrationTemplate(d.concern!.text, { subject: entity }),
+                entity.id,
+              ),
+            }
           : {}),
       };
     });
@@ -688,13 +714,19 @@ export function bodyContext(world: WorldState, entity: Entity): string {
         v.status === 'unknown'
           ? `${name}: unknown.`
           : v.display === 'meter'
-            ? `${name}: ${typeof v.value === 'number' ? Number(v.value.toFixed(1)) : v.value}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
+            ? `${name}: ${v.value}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
             : `${name}: ${v.value}.`;
       return [measurement, v.condition ?? v.concern, v.meaning].filter(Boolean);
     }),
     ...activeStatusEffects(world, entity)
       .filter((d) => d.actions)
-      .map((d) => `I am ${d.label.toLowerCase()}.`),
+      .map((d) =>
+        renderNarration(
+          world,
+          subjectNarration(entity, [presentVerb(entity, 'be'), ` ${d.label.toLowerCase()}.`]),
+          entity.id,
+        ),
+      ),
     `Current activity: ${actor.action?.type ?? 'idle'}.`,
   ].join(' ');
 }
@@ -719,6 +751,8 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  for (const event of world.events)
+    if (event.narration !== undefined) validateNarration(event.narration);
   const interval = world.nativeInterval;
   if (
     interval !== undefined &&

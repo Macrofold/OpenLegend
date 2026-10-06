@@ -1,12 +1,43 @@
 # Compelling characters — integrated product and behavior specification
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | The integrated product target and behavioral scenarios are documented; runtime integration and live qualification remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Unified personal evidence, native perspective and the bounded PG02 demonstration are delivered; broader character reliability remains open. | 2026-10-06   |
 
-**Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. Detailed technical design remains deferred under the original product-first instruction. Existing implemented foundations and their unfinished acceptance retain their recorded status.
+**Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The October 4 owner clarification is developed in the [scoped technical design](compelling-characters-tech-design.md); broader psychological mechanics remain deferred. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
 This project is the early character-experience part of [DG02](../maintainers/needs-design.md#dg02--one-resident-who-follows-through). [Continuing lives](continuing-lives-feature-spec.md) owns activity and later unattended-world behavior; [memory](../memory-architecture.md), [agency](../agent-agency.md), [social continuity](appraisal-social-continuity-feature-spec.md) and the authored world retain their established contracts. The [perspective and inner-life essay](../../archive/03-design-proposals/character-experience-and-inner-life.md) preserves the philosophical ambition, research and qualifications behind this design.
+
+## Character authorship and changing personality
+
+**Accepted owner clarification, October 4, 2026.** Author the person and the world circumstances that cognition can interpret; do not author the character’s decision procedure in biography, traits, dispositions, memories or hidden prompts. This boundary applies to character creation/editing, behavior experiments, default residents, generated characters, personality change and cognition/context work. It is not limited to the bundled resident or to TypeScript conditionals: natural-language instructions can prescribe behavior too.
+
+Backstory records explicitly authored personal history; personality, values, interests and dispositions describe the person’s current tendencies. These can develop through lived experience and accepted self-understanding, and can also be changed through authorized creator edits. “Relatively persistent” does not mean immutable or continually reset from a seed. Keep the historical experience distinct from a later reinterpretation of it. A preference influences a choice without requiring it or proving satisfaction.
+
+| Meaning                                                | Appropriate owner and boundary                                                                                                                                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| “Enjoys watching animals and quietly observing”        | Authored/current disposition; a possible reason to act, with no required occasion, target or sequence.                                                                                         |
+| “After supplies are full, stop work and watch animals” | Prescribed behavior even if phrased as a preference; exclude it from personality/biography and diagnostic success claims.                                                                      |
+| Current camp, location, possessions or stock level     | Actual world state and permitted perception/knowledge; never permanently asserted by the biography. A historical camp experience may belong in backstory or memory with its time/source clear. |
+| “I intend to prepare cord for this repair”             | A character’s current chosen goal/plan, formed and revised through cognition; it is not a creator-installed personality rule.                                                                  |
+| A creator deliberately seeds a scenario intention      | Explicit scenario setup using the existing goal owner, labeled as an intervention; it cannot qualify independently formed motivation.                                                          |
+| A person invites, refuses or changes their mind        | Ordinary perceived speech and cognition with existing actions; no phrase-triggered social script or automatic belonging reward.                                                                |
+
+Use a counterfactual review: move the person elsewhere, remove the camp, vary possessions, or supply a competing concern. Does the authored text still describe that person, or does it require a particular next action or assert a stale circumstance? Concrete past places are legitimate biography; transient present-tense world facts belong with their current owners. Authoring the world’s initial camp is legitimate but does not make it permanent character identity. Diagnose poor stopping through actual evidence, chosen goals, available actions and reconsideration before adding content tailored to produce the desired trajectory. A successful experiment using a prescribed rule is diagnostic, not product acceptance.
+
+A **goal** is an explicitly represented chosen objective with its existing lifecycle. A **plan** is admitted work intended to pursue an objective. “Reason to act” describes the character’s interpretation of a current need, preference, belief or commitment; it is not another stored purpose object, meter or scheduler. Reconsideration means deciding, using current permitted evidence, whether to continue, revise, suspend or abandon an intention. “The reason ended” means that its supporting situation changed—for example, an actual meal relieved hunger or another person declined contact—not that an action label automatically fulfilled a goal. Existing cognition triggers already provide opportunities to make that decision; a trigger does not guarantee good judgment.
+
+### Shared evidence and personal perspective
+
+Memories remain the unified record of experienced events. A relevant action result must not disappear from a decision merely because optional similarity/relevance retrieval omitted it. Prefer a required, bounded selection of the existing source-linked personal experience through the same retrieval and presentation path, deduplicated with optional recall. Current body state and executable plan/goal state remain authoritative in their own owners: a remembered meal is not the current fullness value, and a remembered intention cannot authorize or reconstruct execution. Do not create a second narrative history as a workaround for retrieval failure. The [technical design](compelling-characters-tech-design.md#one-experience-path-and-required-outcomes) describes the implemented unified selection and its bounds.
+
+Personal perspective is a shared system responsibility, not a convention each description writer must remember. Producers provide the person acting, person affected, memory owner/viewer, acquisition/source, time and structured facts where supported. Shared presentation chooses self/other wording and observer-permitted names; self wording is used only when the viewer is that person. Preserve quoted speech verbatim and distinguish observation, testimony, inference and imagination. Freeform authored/model prose cannot be made truthful by pronoun replacement. The existing [personal-memory contract](../memory-architecture.md#personal-perspective-and-acquisition) remains authoritative; coverage gaps and the staged consolidation are in the technical counterpart.
+
+### Scope and acceptance of this clarification
+
+The design, required reading routes, unified required outcome selection and shared native personal rendering are implemented. Ada’s conditional provisioning sentence, transient camp assertion and generic instructions remain removed; her simple observation preference remains. The mercenary’s generic epistemic instruction is also replaced with personal background. The [October 5 comparisons](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) demonstrate an independent cord-to-hare-observation switch and retain contrary stockpiling trials. Personality development, repeatability and whole-life acceptance remain open; [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) now completes publication and subsequent action without forcing an inner change. Existing saved identities are not rewritten.
+
+Acceptance: authoring survives the counterfactual review; source-linked action experience remains available without a duplicate narrative store; native facts render consistently for self, a named observer and an unknown observer while quotes remain unchanged; current goals and personality can change through their own owners without resetting or inventing history. The [CE tracker](../maintainers/character-experience.md) owns unfinished implementation and qualification.
 
 ## Purpose and player experience
 
@@ -42,7 +73,7 @@ Psychological concerns need equally explicit meaning. For each selected concern,
 
 ### Author an individual who has a present life
 
-The character seed should make present behavior understandable. Provide a concise combination of formative background, values, pleasures, attachments, practical knowledge, habits, current circumstances and unresolved interests. Include ordinary positive experience as well as difficulty where appropriate. A past injury or one adjective must not explain everything the person does.
+The character seed should make present behavior understandable. Provide a concise combination of formative background, values, pleasures, attachments, practical knowledge, habits and unresolved interests. Supply current circumstances through the actual world and permitted knowledge, separately from biography. Include ordinary positive experience as well as difficulty where appropriate. A past injury or one adjective must not explain everything the person does.
 
 Background has value when it affects attention, interpretation or choices. A former maker might notice a useful join, take pride in careful work, dislike waste, enjoy an elegant object or hesitate to ask for help. They need not recount their biography in every conversation. An ambition should admit compromise and change; a preference can be strong without commanding the same response in every circumstance.
 
@@ -345,6 +376,8 @@ The [research companion](../../archive/03-design-proposals/character-experience-
 The selected vocabulary, represented pressures, satisfaction/recovery rules, mixed-concern pacing and supported enjoyable activities need authored-world decisions under [D69](../../archive/05-project/open-decisions.md#d69--multidimensional-character-experience). The accepted requirements are multidimensionality, situated perspective, meaningful variation, independent choice and full-flow evaluation. Exact numbers and richer mechanisms remain proposals until selected and tested.
 
 ## Maintained records
+
+- [Scoped technical design](compelling-characters-tech-design.md): character authorship, unified experience selection and shared personal perspective; implementation gaps remain explicit.
 
 - Integration and delivery: [Character experience — CE01–CE05](../maintainers/character-experience.md).
 - Behavioral evaluation: [AG12](../maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized), [CR12](../maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence) and [R24](../../archive/05-project/research-backlog.md#r24--p1--agency-continuity-optionality-and-actor-method-fidelity).

@@ -1,3 +1,4 @@
+import { subjectNarration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { reconcileConditions } from './conditions.js';
 import { validateStatusInstallation } from './native-work.js';
@@ -35,7 +36,7 @@ import {
   mutateExperience,
   type ExperienceMutation,
 } from './experience.js';
-import { memoryPerspective } from './memory-perspective.js';
+import { personalText } from './narration.js';
 import { distance, isWalkable } from './spatial.js';
 import type {
   Entity,
@@ -123,7 +124,7 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
     world,
     events,
     'god-spawned',
-    `${namePhrase(entity, 'definite', { capitalize: true })} appeared in the clearing.`,
+    subjectNarration(entity, `appeared in the clearing.`),
     entity,
     undefined,
     {
@@ -213,7 +214,7 @@ export function reviveActor(
     world,
     events,
     'god-revived',
-    `${namePhrase(entity, 'definite', { capitalize: true })} returned to life.`,
+    subjectNarration(entity, `returned to life.`),
     entity,
     undefined,
     {
@@ -255,7 +256,7 @@ export function enableActorCognition(original: WorldState, actorId: string): Tra
     world,
     events,
     'god-cognition-enabled',
-    `${namePhrase(entity, 'definite', { capitalize: true })} gained cognition and speech.`,
+    subjectNarration(entity, `gained cognition and speech.`),
     entity,
     undefined,
     { significant: true, godMode: true },
@@ -659,6 +660,7 @@ export function editWorldEvents(
     if (!change) return true;
     if (!change.replacement) return false;
     event.text = change.replacement.text;
+    delete event.narration;
     if (rawContent.has(event.id)) event.data!['text'] = rawContent.get(event.id)!;
     return true;
   });
@@ -700,12 +702,10 @@ export function editWorldEvents(
       const aware = awareness.get(sourceId);
       const remembered = memories.get(sourceId) ?? [];
       if (change.replacement) {
-        const text = memoryPerspective(
+        const text = personalText(
           world,
           actorId,
-          change.replacement.text,
-          change.replacement.type === 'speech',
-          change.replacement.actorId,
+          change.replacement.narration ?? change.replacement.text,
         );
         if (aware)
           mutations.push({

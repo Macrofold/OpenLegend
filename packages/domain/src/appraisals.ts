@@ -1,3 +1,4 @@
+import { subjectNarration, presentVerb, person } from './narration.js';
 import {
   prepareAppraisalIndex,
   indexAppraisal,
@@ -408,7 +409,12 @@ function privateChange(
     world,
     events,
     'appraisal-changed',
-    record.state === 'active' ? `I feel ${definition.label}.` : `My ${definition.label} has ended.`,
+    record.state === 'active'
+      ? subjectNarration(record.actorId, [
+          presentVerb(record.actorId, 'feel'),
+          ` ${definition.label}.`,
+        ])
+      : { parts: [person(record.actorId, 'possessive'), ` ${definition.label} has ended.`] },
     world.entities[record.actorId],
     undefined,
     {

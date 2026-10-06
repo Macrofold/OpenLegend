@@ -1,10 +1,10 @@
 # Parallel batch 03 — Personal game — feature specification
 
-| Status      | Current progress                                                                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation, PG02 and combined acceptance remain open. | 2026-10-06   |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Bounded PG02, PG03, scoped PG04 and PG05 encounter/death/danger delivery are complete; one PG01 billing confirmation and combined acceptance remain open. | 2026-10-06   |
 
-PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
+PG02’s bounded resident demonstration, PG03, scoped PG04 and PG05’s encounter/death/danger delivery are complete; combined batch acceptance and broader character/performance qualification remain open.
 
 [Technical definitions](parallel-batch-03-personal-game-tech-design.md) · [Assignment prompts](parallel-batch-03-personal-game-prompts.md) · [Tracking](../maintainers/parallel-batch-03-personal-game.md)
 

@@ -1,4 +1,5 @@
-import { renderNameTemplate, validNameTemplate, type Named } from '@open-legend/language';
+import { narrationTemplate, type Narration } from './narration.js';
+import { validNarrationTemplate, type Named } from '@open-legend/language';
 import { canonicalJson } from './events.js';
 import type { Entity, WorldState, MaterialProperty, ItemDefinition } from './types.js';
 import type { AttributeDefinition } from './world-modules.js';
@@ -76,7 +77,7 @@ function text(value: unknown, template = false): asserts value is string {
     typeof value !== 'string' ||
     !value.trim() ||
     value.length > 512 ||
-    (template && !validNameTemplate(value, ['subject', 'item']))
+    (template && !validNarrationTemplate(value, ['subject', 'item']))
   )
     throw new Error('Invalid body policy text.');
 }
@@ -248,7 +249,7 @@ export function validateBodyPolicy(
     fields(policy.carryingConcern, ['attributeId', 'itemProperty', 'text']);
     numeric(policy.carryingConcern.attributeId);
     text(policy.carryingConcern.itemProperty);
-    text(policy.carryingConcern.text);
+    text(policy.carryingConcern.text, true);
     if (
       itemDefinitions &&
       !Object.values(itemDefinitions).some((definition) =>
@@ -360,8 +361,8 @@ export function applicableConsumption(
     ? consumption
     : null;
 }
-export function bodyNarration(template: string, subject: Entity, item?: Named): string {
-  return renderNameTemplate(template, { subject, item });
+export function bodyNarration(template: string, subject: Entity, item?: Named): Narration {
+  return narrationTemplate(template, { subject, item });
 }
 
 /** Exact eligibility inputs captured before background work; numeric meter drift is rechecked separately. */

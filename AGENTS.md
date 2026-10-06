@@ -66,6 +66,8 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 - Feature-spec/tech-design or architecture requests, changed engine/world contracts, or chat approval/start/continuation of a project plan: [Design](.agents/skills/openlegend-design/SKILL.md)
 - Requested or substantial implementation review: [Review](.agents/skills/openlegend-review/SKILL.md)
 - Changed hot paths, perception queries, scaling or latency investigation: [Performance](.agents/skills/openlegend-performance/SKILL.md)
+- Event/history tracking, action outcomes, awareness, memories, recall, summaries or personal wording: read [Precise history and general causes](docs/engine-and-world-boundaries.md#preserve-precise-history-and-solve-the-general-cause) and the affected event/memory contract before changing producers or consumers.
+- Character creation/editing, backstories, personality/disposition, character behavior or changes to their cognition/context: read [Character authorship and changing personality](docs/projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality); for implementation or architecture work also read its [technical design](docs/projects/compelling-characters-tech-design.md). Apply the shared evidence/perspective boundaries to new producers and consumers.
 - Character decisions, Jev/TypeSafe, LLMs, prompts, cognition context, embeddings or provider behavior: [AI](.agents/skills/openlegend-ai/SKILL.md)
 - PlayCanvas, camera, picking, scene assets or render lifecycle: [PlayCanvas](.agents/skills/openlegend-playcanvas/SKILL.md)
 - Development startup, base selection or any rebase/merge, with or without conflicts: [Rebase](.agents/skills/openlegend-rebase/SKILL.md)
@@ -118,7 +120,7 @@ Wait for the answers before completing the dependent work, then continue the ori
 
 ### Authored-reality design principles
 
-Apply the [boundary principles](docs/engine-and-world-boundaries.md#design-principles-for-every-feature) when designing or changing a subsystem. Localize justified v1 specificity with its owner, limitation, seam and expansion trigger. Preserve the external-world-package seam without an unused loader.
+For architecture and implementation, diagnose new specific cases against the overall design before adding exceptions or duplicate representations; follow [precise history and general causes](docs/engine-and-world-boundaries.md#preserve-precise-history-and-solve-the-general-cause). Apply the [boundary principles](docs/engine-and-world-boundaries.md#design-principles-for-every-feature) when designing or changing a subsystem. Localize justified v1 specificity with its owner, limitation, seam and expansion trigger. Preserve the external-world-package seam without an unused loader.
 
 State/storage changes follow the development save policy below and the [current-format save/load contract](docs/save-and-load.md).
 

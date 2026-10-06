@@ -85,23 +85,33 @@ export async function prepareHistoryEdit(
       SELECT a.actor_id,d.id FROM affected a CROSS JOIN LATERAL (
         SELECT id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND event_id=a.source_id
         UNION SELECT event_id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND id=a.source_id AND source_kind='memory' AND event_id IS NOT NULL
+        UNION SELECT result_memory_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_memory_id IS NOT NULL
+        UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_memory_id=a.source_id
+        UNION SELECT payload::jsonb->>'activityId' FROM mind_memories WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND payload::jsonb->>'activityId' IS NOT NULL
         UNION SELECT summary_id FROM mind_summary_sources WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id
         UNION SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=a.actor_id AND correction_id=a.source_id
       ) d
     ) SELECT actor_id,source_id FROM affected`,
       )
-      .all(JSON.stringify(roots), worldId, worldId, worldId, worldId);
+      .all(JSON.stringify(roots), worldId, worldId, worldId, worldId, worldId, worldId, worldId);
     const scope = JSON.stringify(affected);
     const world = {
       ...state.world,
       memories: { ...state.world.memories },
+      actionExperience: {
+        ...state.world.actionExperience,
+        occurrences: { ...state.world.actionExperience.occurrences },
+      },
       experience: {
         ...state.world.experience!,
         awareness: { ...state.world.experience!.awareness },
         summaries: { ...state.world.experience!.summaries },
       },
     };
-    for (const [kind, table] of Object.entries(MEMORY_SOURCE_TABLES)) {
+    for (const [kind, table] of Object.entries({
+      ...MEMORY_SOURCE_TABLES,
+      activity: 'activity_occurrences',
+    })) {
       const rows = await db
         .prepare(
           `SELECT t.actor_id,t.payload,t.position FROM ${table} t
@@ -119,11 +129,13 @@ export async function prepareHistoryEdit(
       // The runtime arrays carry their SQL ordinals independently of membership. Preserve
       // those ordinals so a partial edit neither renumbers nor deletes unselected history.
       const target =
-        kind === 'memory'
-          ? world.memories
-          : kind === 'awareness'
-            ? world.experience.awareness
-            : world.experience.summaries;
+        kind === 'activity'
+          ? world.actionExperience.occurrences
+          : kind === 'memory'
+            ? world.memories
+            : kind === 'awareness'
+              ? world.experience.awareness
+              : world.experience.summaries;
       for (const [actorId, selected] of owners) {
         const old = target[actorId] ?? [];
         const placement = historyPositions.get(old);
@@ -154,7 +166,11 @@ export async function prepareHistoryEdit(
           complete: placement?.complete,
         });
         // Kind and target are selected together above; keep the heterogeneous merge local.
-        if (kind === 'memory') world.memories[actorId] = next as (typeof world.memories)[string];
+        if (kind === 'activity')
+          world.actionExperience.occurrences[actorId] =
+            next as (typeof world.actionExperience.occurrences)[string];
+        else if (kind === 'memory')
+          world.memories[actorId] = next as (typeof world.memories)[string];
         else if (kind === 'awareness')
           world.experience.awareness[actorId] = next as (typeof world.experience.awareness)[string];
         else

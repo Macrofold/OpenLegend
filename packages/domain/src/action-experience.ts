@@ -1,6 +1,7 @@
+import { person, personalText } from './narration.js';
 import type { Command, Outcome, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
-import { canonicalJson } from './events.js';
+import { appendMemory, canonicalJson } from './events.js';
 
 import { isActivityCommand } from './agency.js';
 import {
@@ -98,11 +99,14 @@ export interface ActivityOccurrence {
   connections: ActivityConnection[];
   outcome?: Outcome;
   evidenceIds: string[];
+  /** Reference to the personal result; the execution record is not a recall store. */
+  resultMemoryId?: string;
   effects?: {
     id: string;
     subjectId: string;
     label: string;
     property: string;
+    unit?: string;
     before: ActivityScalar;
     after: ActivityScalar;
   }[];
@@ -242,6 +246,24 @@ export function isRecordedActivityCommand(command: Command): boolean {
   return false;
 }
 
+/** Exact event-time facts for the personal record, independent of prompt/display budgets.
+ * Summaries never replace the source facts. docs/engine-and-world-boundaries.md#preserve-precise-history-and-solve-the-general-cause */
+export function activityRecordText(view: ActivityView): string {
+  const facts = view.facts.map(
+    (fact) =>
+      `${fact.name}: ${typeof fact.value === 'string' ? fact.value : JSON.stringify(fact.value)}`,
+  );
+  return [
+    view.name,
+    ...(view.actor ? [`actor: ${view.actor}`] : []),
+    ...(view.target ? [`target: ${view.target}`] : []),
+    ...(view.tool ? [`tool: ${view.tool}`] : []),
+    ...facts,
+    ...(view.children?.map(activityRecordText) ?? []),
+    ...(view.result ? [`Result: ${view.result}`] : []),
+  ].join('; ');
+}
+
 /** Input is already scoped by the observation owner. Labels and sentences cover
  * common facts; only critical unhandled data reaches the narrow JSON fallback. */
 export function projectActivity(
@@ -357,6 +379,33 @@ export function occurrenceFor(
   actionId: string,
 ): ActivityOccurrence | undefined {
   return world.actionExperience.occurrences[actorId]?.find((entry) => entry.actionId === actionId);
+}
+
+/** Project committed results, retaining event-time wording and observed changes;
+ * never describe a recipe's possible future yield as a completed result. */
+export function activityResultFacts(
+  world: WorldState,
+  outputs: readonly ActivityOutput[],
+  recorded?: readonly ActivityFact[],
+): ActivityFact[] {
+  if (recorded)
+    return recorded.filter((fact) => fact.name === 'produced' || fact.name === 'observed changes');
+  const produced = outputs.map((output) => ({
+    quantity: output.quantity,
+    material: world.itemDefinitions[output.definitionId]?.name ?? 'items',
+  }));
+  return produced.length
+    ? [
+        {
+          name: 'produced',
+          // Each admitted label retains its own text bound; several valid outputs
+          // must not fail because their combined sentence exceeds one label's limit.
+          value: produced,
+          sentence: `produced: ${produced.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
+          critical: true,
+        },
+      ]
+    : [];
 }
 export function beginActivity(
   world: WorldState,
@@ -544,7 +593,6 @@ export function connectActivityState(
   before: number,
   after: number,
   permitted: boolean,
-  label = 'the observed subject',
 ): void {
   const state = world.actionExperience;
   const entry = activeActivity(world, cause);
@@ -564,7 +612,6 @@ export function connectActivityState(
       }
     recordActivityEffect(world, cause, {
       subjectId: targetId,
-      label,
       property: 'health',
       before,
       after,
@@ -584,7 +631,7 @@ export function connectActivityState(
 export function recordActivityEffect(
   world: WorldState,
   cause: string,
-  effect: Omit<NonNullable<ActivityOccurrence['effects']>[number], 'id'>,
+  effect: Omit<NonNullable<ActivityOccurrence['effects']>[number], 'id' | 'label'>,
 ): void {
   const entry = activeActivity(world, cause);
   if (!entry) return;
@@ -596,14 +643,19 @@ export function recordActivityEffect(
   else {
     if (effects.length >= ACTIVITY_LIMITS.outputs)
       throw new Error('The admitted action effect allowance is full.');
-    effects.push({ ...effect, id: `${entry.id}:effect:${effects.length}` });
+    effects.push({
+      ...effect,
+      label: personalText(world, entry.actorId, { parts: [person(effect.subjectId, 'object')] }),
+      id: `${entry.id}:effect:${effects.length}`,
+    });
   }
   const fact: ActivityFact = {
     name: 'observed changes',
     critical: true,
-    value: effects.map(({ label, property, before, after }) => ({
+    value: effects.map(({ label, property, unit, before, after }) => ({
       target: label,
       property,
+      ...(unit ? { unit } : {}),
       before,
       after,
     })),
@@ -612,13 +664,9 @@ export function recordActivityEffect(
         const { label, property, before, after } = value;
         if (typeof before === 'boolean' && typeof after === 'boolean')
           return `${label}: ${property} ${before === after ? `remained ${after ? 'active' : 'inactive'}` : after ? 'began' : 'ended'}`;
-        const readable = (part: ActivityScalar) =>
-          typeof part === 'number' ? Number(part.toFixed(6)) : part;
         const change =
-          typeof before === 'number' && typeof after === 'number'
-            ? Number((after - before).toFixed(6))
-            : undefined;
-        return `${label}: ${property} ${readable(before)} to ${readable(after)}${change === undefined ? '' : ` (${change >= 0 ? '+' : ''}${change})`}`;
+          typeof before === 'number' && typeof after === 'number' ? after - before : undefined;
+        return `${label}: ${property} ${before} to ${after}${change === undefined ? '' : ` (${change >= 0 ? '+' : ''}${change})`}`;
       })
       .join('; '),
   };
@@ -631,9 +679,9 @@ export function endActivity(
   actorId: string,
   actionId: string,
   result: Outcome,
-): void {
+): string | undefined {
   const entry = occurrenceFor(world, actorId, actionId);
-  if (!entry || entry.status !== 'running') return;
+  if (!entry || entry.status !== 'running') return entry?.resultMemoryId;
   entry.status = result.ok ? 'completed' : result.code === 'cancelled' ? 'cancelled' : 'blocked';
   entry.endedAt = world.simTime;
   entry.outcome = result;
@@ -658,20 +706,29 @@ export function endActivity(
     if (fact.name === 'health') fact.name = 'health before the attempt';
     if (fact.name === 'distance') fact.name = 'distance before the attempt';
   }
-  if (entry.outputs.length)
-    entry.view.facts.push({
-      name: 'produced',
-      value: entry.outputs
-        .map(
-          (output) =>
-            `${output.quantity} ${world.itemDefinitions[output.definitionId]?.name ?? 'items'}`,
-        )
-        .join(', '),
-      critical: true,
+  entry.view.facts.push(...activityResultFacts(world, entry.outputs));
+  // Forgetting a running attempt revokes its personal evidence, not its already
+  // admitted physical work. Completion must not recreate the forgotten episode.
+  if (!entry.revoked && !world.experience?.forgotten[actorId]?.includes(entry.id)) {
+    entry.resultMemoryId ??= appendMemory(world, actorId, {
+      kind: 'episode',
+      source: 'internal',
+      importance: 6,
+      activityId: entry.id,
+      summary: {
+        parts: [
+          person(actorId, 'possessive'),
+          ` action ${entry.status} at simulation time ${world.simTime}: ${activityRecordText(entry.view)}`,
+        ],
+      },
+      entityIds: [actorId],
     });
+  }
+  world.entities[actorId]!.actor!.agency.lastResultMemoryId = entry.resultMemoryId;
   const cursor = world.actionExperience.learning[actorId]!;
   if (!cursor.pending.includes(entry.id)) cursor.pending.push(entry.id);
   if (cursor.pending.length > ACTIVITY_LIMITS.page) cursor.pending.shift();
+  return entry.resultMemoryId;
 }
 /** Executable fields are closed even when a save or a model supplies extra JSON.
  * This describes existing native commands, never installs a new executor. */
@@ -1181,6 +1238,7 @@ export function validateActionExperience(world: WorldState): void {
         ids.has(entry.id) ||
         entry.actorId !== actorId ||
         !isSafeRecordId(entry.actionId) ||
+        (entry.resultMemoryId !== undefined && !isSafeRecordId(entry.resultMemoryId)) ||
         (entry.parentId !== undefined && !isSafeRecordId(entry.parentId)) ||
         (entry.parentName !== undefined &&
           (typeof entry.parentName !== 'string' ||
@@ -1246,6 +1304,8 @@ export function validateActionExperience(world: WorldState): void {
                 (value) =>
                   typeof value !== 'string' || !value.trim() || value.length > ACTIVITY_LIMITS.text,
               ) ||
+              (effect.unit !== undefined &&
+                (typeof effect.unit !== 'string' || effect.unit.length > ACTIVITY_LIMITS.text)) ||
               [effect.before, effect.after].some(
                 (value) =>
                   !['string', 'number', 'boolean'].includes(typeof value) ||

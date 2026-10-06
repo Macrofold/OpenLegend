@@ -1,3 +1,4 @@
+import { subjectNarration, presentVerb } from './narration.js';
 import { emit } from './events.js';
 import { nextId } from './data.js';
 import { bodiesTouch, sensesFor, type ContactEpisode } from './perception.js';
@@ -68,9 +69,10 @@ export function* updateContactEpisodes(
         world,
         events,
         'contact',
-        detail === 'moving'
-          ? 'I feel an unidentified moving contact.'
-          : 'I feel an unidentified contact.',
+        subjectNarration(observer, [
+          presentVerb(observer, 'feel'),
+          detail === 'moving' ? ' an unidentified moving contact.' : ' an unidentified contact.',
+        ]),
         observer,
         undefined,
         {

@@ -13,7 +13,7 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
     schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '%' },
     concern: {
       below: 40,
-      text: 'I am seriously injured.',
+      text: '{subject.subject} {subject.verb:be} seriously injured.',
       mode: 'instant',
       notify: false,
       reconsider: false,
@@ -35,17 +35,17 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
       'Fullness measures nourishment; lower means hungrier. Edible food restores fullness. At zero, lack of nourishment continuously damages health and can kill this body.',
     condition: {
       bands: [
-        { below: 40, text: 'I am hungry.' },
-        { below: 30, text: 'I am very hungry.' },
-        { below: 20, text: 'I am famished.' },
-        { below: 10, text: 'I am starving.' },
+        { below: 40, text: '{subject.subject} {subject.verb:be} hungry.' },
+        { below: 30, text: '{subject.subject} {subject.verb:be} very hungry.' },
+        { below: 20, text: '{subject.subject} {subject.verb:be} famished.' },
+        { below: 10, text: '{subject.subject} {subject.verb:be} starving.' },
         {
           below: 0,
           inclusive: true,
-          text: 'I have no nourishment left. Starvation is damaging my health.',
+          text: '{subject.subject} {subject.verb:have} no nourishment left. Starvation is damaging {subject.possessive} health.',
         },
       ],
-      clearText: 'I am not currently hungry.',
+      clearText: '{subject.subject} {subject.verb:be} not currently hungry.',
       recoveryMargin: 2,
       criticalSeverity: 3,
       reviewSeconds: 3600,
@@ -63,7 +63,7 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
     schema: { kind: 'number', min: 0, max: 100, initial: 85, unit: '%' },
     concern: {
       below: 25,
-      text: 'I am exhausted.',
+      text: '{subject.subject} {subject.verb:be} exhausted.',
       mode: 'instant',
       notify: false,
       reconsider: false,

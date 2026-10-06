@@ -104,3 +104,52 @@ export function renderNameTemplate(
     );
   });
 }
+
+/** Participant grammar shared by native experience and observer-aware narration. */
+export type PersonRole = 'subject' | 'object' | 'possessive' | 'reflexive';
+export function personalPronoun(role: PersonRole): string {
+  return { subject: 'I', object: 'me', possessive: 'my', reflexive: 'myself' }[role];
+}
+export function personPhrase(
+  named: Named,
+  role: PersonRole,
+  self: boolean,
+  article: NameArticle,
+): string {
+  if (self) return personalPronoun(role);
+  if (role === 'reflexive') return named.nameForm === 'plural' ? 'themselves' : 'themself';
+  const phrase = namePhrase(named, article);
+  return `${phrase}${role === 'possessive' ? (named.nameForm === 'plural' && phrase.endsWith('s') ? '’' : '’s') : ''}`;
+}
+export function presentTense(verb: string, first: boolean, plural: boolean): string {
+  if (verb === 'be') return first ? 'am' : plural ? 'are' : 'is';
+  if (first || plural) return verb;
+  if (verb === 'have') return 'has';
+  if (verb === 'do') return 'does';
+  if (/[^aeiou]y$/.test(verb)) return `${verb.slice(0, -1)}ies`;
+  return `${verb}${/(?:s|x|z|ch|sh|o)$/.test(verb) ? 'es' : 's'}`;
+}
+const narrationToken =
+  /^([A-Za-z]\w*)\.(?:(name|subject|object|possessive|reflexive)(?::(none|indefinite|definite))?|verb:([a-z]+))$/;
+export function validNarrationTemplate(template: string, bindings: readonly string[]): boolean {
+  return !template
+    .replace(/\{([^{}]*)\}/g, (token, contents: string) => {
+      const parsed = narrationToken.exec(contents);
+      return parsed && bindings.includes(parsed[1]!) ? '' : token;
+    })
+    .match(/[{}]/);
+}
+export function parseNarrationToken(
+  token: string,
+):
+  | { binding: string; role?: 'name' | PersonRole; article?: NameArticle; verb?: string }
+  | undefined {
+  const parsed = narrationToken.exec(token);
+  if (!parsed) return;
+  return {
+    binding: parsed[1]!,
+    role: parsed[2] as 'name' | PersonRole | undefined,
+    article: parsed[3] as NameArticle | undefined,
+    verb: parsed[4],
+  };
+}

@@ -140,7 +140,8 @@ function distribution(keys: string[], weights: Record<string, number>): Judgment
   return { type: 'choice', choice, probabilities, confidence: probabilities[choice]! };
 }
 
-const isEat = (description: string) => description.startsWith('Eat one Wild berries');
+const isEat = (description: string) =>
+  description.startsWith('Eat one. Selected item: the wild berries.');
 const isContinue = (description: string) =>
   description.startsWith('Continue the') || description.startsWith('Remain in place');
 const noul = (rating: number): JudgmentAnswer => ({ type: 'noul', noul: rating });
@@ -416,7 +417,10 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(input.ratings.map((entry) => entry.handle)).toEqual(keys.filter(handleKey));
     expect(input.ratings.every((entry) => entry.status === 'rated')).toBe(true);
     expect(input.ratings.filter((entry) => (entry.rating ?? 0) >= LEVEL1_POLICY.selectAt)).toEqual([
-      expect.objectContaining({ rating: 0.9, description: expect.stringMatching(/^Eat one Wild/) }),
+      expect.objectContaining({
+        rating: 0.9,
+        description: expect.stringMatching(/^Eat one\. Selected item: the wild berries\./),
+      }),
     ]);
     const eat = input.ratings.find((entry) => isEat(entry.description ?? ''))!;
     expect(output.outcome).toEqual({
@@ -565,7 +569,9 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       task: 'npc_response',
     });
     // Generation reuses the ratings at the 0.5 relevance line instead of buying another request.
-    expect(String(generation!.context)).toContain('Eat one Wild berries. Restores up to 18');
+    expect(String(generation!.context)).toContain(
+      'Eat one. Selected item: the wild berries. Restores up to 18',
+    );
     expect(String(generation!.context)).not.toContain('Drop 2 Wild berries on the ground.');
     const { root, input, output } = await level1Stage(h, job.id);
     expect(root.route).toBe('level1→level2');
@@ -918,12 +924,13 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(jobs).toHaveLength(1);
     const [job] = jobs;
     expect(request.requestId).toBe(`${job!.id}${ROUTE}`);
-    expect(job?.result).toMatchObject({ level1: { kind: 'act', rating: 0.9 } });
-    // The current native prerequisites reject the stale choice before it joins a plan.
-    expect(h.service.world.responseReceipts?.[job!.id]?.components['action']).toMatchObject({
-      ok: false,
-      code: 'not-edible',
+    // Dropping the food produced new personal evidence after preparation. The source
+    // fence refuses that stale decision before action admission; no paid retry follows.
+    expect(job?.status).toBe('failed');
+    expect((await h.trace(job!.id)).stage('Workflow failure')[0]?.input).toMatchObject({
+      reason: expect.stringContaining('Action outcomes changed'),
     });
+    expect(h.service.world.responseReceipts?.[job!.id]).toBeUndefined();
     await h.service.tick(0.1);
     await h.director.idle();
     expect(h.ada().agency.plan).toBeNull();
