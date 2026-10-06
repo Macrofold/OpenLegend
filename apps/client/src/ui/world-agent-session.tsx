@@ -41,7 +41,6 @@ export function WorldAgentSession({
   purpose,
   onCreated,
   controls,
-  title,
 }: {
   worldId: string;
   accessScope: string;
@@ -52,7 +51,6 @@ export function WorldAgentSession({
   purpose?: 'invention';
   onCreated(): void;
   controls?: ReactNode;
-  title?: string;
 }) {
   const key = `open-legend:authoring:${worldId}:${accessScope}:${sessionId}`;
   const [initialPurpose] = useState(
@@ -481,9 +479,15 @@ export function WorldAgentSession({
             />
           </div>
           <details className="ol-world-agent-controls">
-            <summary>Session details and owner spending</summary>
+            <summary aria-label="Session details and owner spending">
+              <span className="ol-world-agent-detail-label">
+                Session details and owner spending
+              </span>
+              <span className="ol-world-agent-detail-label-short" aria-hidden="true">
+                Session &amp; spending
+              </span>
+            </summary>
             <div className="ol-world-agent-context">
-              <h3>{title}</h3>
               {controls}
               <p className="ol-caption">
                 A proposed change stays in Work until you review and apply it.

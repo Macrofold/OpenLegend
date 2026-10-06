@@ -83,7 +83,10 @@ test('owner conversation grows from one line and shows message-local pending and
     await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
     const input = page.getByRole('textbox', { name: 'Message to World Agent', exact: true });
     await expect(input).toBeVisible();
-    await page.getByText('Session details and owner spending', { exact: true }).click();
+    const sessionDetails = page.getByRole('button', {
+      name: 'Session details and owner spending',
+      exact: true,
+    });
     const refresh = page.getByRole('button', { name: 'Refresh this session', exact: true });
     const initial = await input.boundingBox();
     await input.fill('First line\nSecond line');
@@ -94,7 +97,9 @@ test('owner conversation grows from one line and shows message-local pending and
     await expect(page.getByText(/considering|queueing|generating|thinking/i)).toHaveCount(0);
     await expect.poll(() => typeof gate.release).toBe('function');
     ((value: { release?: () => void }) => value.release?.())(gate);
+    await sessionDetails.click();
     await refresh.click();
+    await sessionDetails.click();
     await expect(page.getByText('The clearing feels ready for change.')).toBeVisible();
     await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeHidden();
     // Hidden retained Work can describe completed proposals; visible completion text is forbidden.
@@ -107,7 +112,9 @@ test('owner conversation grows from one line and shows message-local pending and
     await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeVisible();
     await expect.poll(() => typeof gate.release).toBe('function');
     ((value: { release?: () => void }) => value.release?.())(gate);
+    await sessionDetails.click();
     await refresh.click();
+    await sessionDetails.click();
     await expect(page.getByText('Technical failure details.', { exact: true })).toBeVisible();
     const failed = page.getByRole('button', { name: 'Failed: failed', exact: true });
     const failureDetail = page.getByRole('tooltip');

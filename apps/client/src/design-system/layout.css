@@ -1516,19 +1516,6 @@ body,
 .ol-hud[data-narrow='true'] .ol-panel[data-workspace] {
   width: 100%;
 }
-.ol-hud[data-narrow='true']
-  .ol-dock:has(.ol-panel-slot:not([hidden]) > :is(.ol-panel[data-workspace], #composerPanel)) {
-  /* Conversations need the same readable sheet as Work, especially at enlarged text sizes. */
-  top: auto;
-  height: calc(100% - var(--sheet-top));
-}
-.ol-hud[data-narrow='true']:has(
-    .ol-panel-slot:not([hidden]) > :is(.ol-panel[data-workspace], #composerPanel)
-  )
-  .ol-mobile-tabs {
-  top: auto;
-  bottom: calc(100% - var(--sheet-top));
-}
 .ol-hud[data-narrow='true'] .ol-mobile-tabs {
   position: absolute;
   bottom: 55%;
@@ -2761,14 +2748,6 @@ body,
   font-size: 16px;
   line-height: 20px;
 }
-.ol-hud[data-narrow='true'] .ol-dock:has(.ol-panel-slot:not([hidden]) > #composerPanel) {
-  top: auto;
-  height: calc(100% - var(--sheet-top));
-}
-.ol-hud[data-narrow='true']:has(.ol-panel-slot:not([hidden]) > #composerPanel) .ol-mobile-tabs {
-  top: auto;
-  bottom: calc(100% - var(--sheet-top));
-}
 
 /* Conversation is an explicit reading task: give it useful height instead of
  * forcing the transcript into the gap below the condition card. */
@@ -2829,13 +2808,6 @@ body,
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera > :not(.ol-range-toggle) {
   display: none;
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
-  bottom: calc(var(--control-md) + 2 * var(--space-3));
-}
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock:has(.ol-panel[data-workspace]),
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock:has(#composerPanel) {
-  height: calc(100% - var(--sheet-top) - var(--control-md) - 2 * var(--space-3));
-}
 .ol-perception-hint {
   position: fixed;
   max-width: min(360px, calc(100vw - 16px));
@@ -2853,13 +2825,6 @@ body,
   }
 }
 
-.ol-hud[data-narrow='true']:not([data-tight='true']):not(
-    :has(.ol-panel-slot:not([hidden]) > #composerPanel)
-  ):not(:has(.ol-panel[data-workspace]))
-  .ol-mobile-tabs {
-  bottom: calc(55% + var(--control-md) + 2 * var(--space-3));
-}
-
 /* Focusing a clipped descendant must never scroll the entire game viewport. */
 #app {
   overflow: clip;
@@ -2867,14 +2832,22 @@ body,
 /* A narrow sheet reserves one scrolling launcher strip and the open-task tabs.
    They share the sheet's geometry instead of sitting behind its reading area. */
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) {
+  --sheet-tabs-space: calc(var(--control-md) + 2 * var(--space-1));
   --sheet-top: calc(
-    var(--space-3) + var(--control-sm) + var(--space-2) + 2 * var(--control-md) + 4 * var(--space-1)
+    var(--space-3) + var(--control-sm) + var(--space-2) + var(--control-md) + 2 * var(--space-1) +
+      var(--sheet-tabs-space)
   );
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs[data-single='true']) {
+  --sheet-tabs-space: 0px;
+}
+.ol-hud[data-narrow='true'] .ol-mobile-tabs[data-single='true'] {
+  display: none;
 }
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-top-tools {
   flex-direction: row;
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-launcher-rails {
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs)) .ol-launcher-rails {
   position: absolute;
   top: calc(var(--space-3) + var(--control-sm) + var(--space-2));
   left: var(--hud-inset);
@@ -2887,19 +2860,23 @@ body,
   pointer-events: auto;
   z-index: var(--z-sheet);
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-rail {
+.ol-hud[data-tight='true']:not(:has(.ol-mobile-tabs)) .ol-launcher-rails {
+  top: var(--dock-top);
+}
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs)) .ol-rail {
   position: static;
   flex: none;
   flex-direction: row;
   gap: var(--space-1);
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-launcher {
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs)) .ol-launcher {
   flex: none;
   width: var(--control-md);
   height: var(--control-md);
 }
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
   top: var(--sheet-top);
+  bottom: calc(var(--control-md) + 2 * var(--space-3));
   height: calc(100% - var(--sheet-top) - var(--control-md) - 2 * var(--space-3));
 }
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-mobile-tabs {

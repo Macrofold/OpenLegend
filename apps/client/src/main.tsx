@@ -793,10 +793,9 @@ function App({
   };
   useEffect(() => {
     if (!view || !canvas.current || sceneError) return;
-    // Connecting already has a permitted snapshot, but acquiring control replaces
-    // its access scope. Build graphics when the world is shown, once. Existing
-    // scenes still receive suspended updates and all private-scope resets.
-    if (!scene.current && !worldVisible) return;
+    // A fresh blocked tab needs its Resume decision before allocating graphics.
+    // Existing scenes still receive suspended updates and private-scope resets.
+    if (!scene.current && tabPaused) return;
     try {
       if (!scene.current)
         scene.current = createWorldRenderer(canvas.current, {
@@ -836,7 +835,7 @@ function App({
       scene.current = null;
       setSceneError(`${String(e)}. The In view list still provides interactions.`);
     }
-  }, [view, sceneError, shadowQuality, tabPaused, worldVisible]);
+  }, [view, sceneError, shadowQuality, tabPaused]);
   useEffect(() => {
     scene.current?.setPerceptionOptions({
       vision: visionGuide,
@@ -861,6 +860,7 @@ function App({
     });
   }, [
     worldVisible,
+    tabPaused,
     sceneError,
     captionsEnabled,
     captionsPaused,
@@ -1640,7 +1640,12 @@ function App({
               ))}
             </div>
             {narrow && open.length > 0 && (
-              <div className="ol-mobile-tabs" role="toolbar" aria-label="Open panels">
+              <div
+                className="ol-mobile-tabs"
+                data-single={open.length === 1 ? 'true' : undefined}
+                role="toolbar"
+                aria-label="Open panels"
+              >
                 {open.map((id) => (
                   <Button
                     key={id}

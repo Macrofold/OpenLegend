@@ -52,6 +52,7 @@ function WorldAgentPanel(props: Props) {
     command,
     connected,
   } = props;
+  const navigationRef = useRef<HTMLDetailsElement>(null);
   const selectionKey = `open-legend:authoring-selection:${worldId}:${saveTimeline}:${accessScope}`;
   const [active, setActive] = useState(() =>
     readLocal(
@@ -148,7 +149,16 @@ function WorldAgentPanel(props: Props) {
       <Button
         variant="quiet"
         aria-pressed={workspace === 'authoring'}
-        onPress={() => setWorkspace('authoring')}
+        onPress={() => {
+          setWorkspace('authoring');
+          if (active)
+            requestAnimationFrame(() => {
+              const navigation = navigationRef.current;
+              if (!navigation) return;
+              navigation.open = false;
+              navigation.querySelector('summary')?.focus();
+            });
+        }}
       >
         World authoring
       </Button>
@@ -225,20 +235,44 @@ function WorldAgentPanel(props: Props) {
       {error && <p role="alert">{error}</p>}
     </>
   );
+  const compactNavigation = godMode && workspace === 'authoring' && !!active;
   return (
     <div
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape' || event.defaultPrevented || event.nativeEvent.isComposing)
+          return;
+        const target = event.target;
+        if (
+          !(target instanceof Element) ||
+          !event.currentTarget.contains(target) ||
+          target.closest('[aria-modal="true"]')
+        )
+          return;
+        const owned =
+          '.ol-creator-workspace-switch[data-compact][open], .ol-world-agent-controls[open]';
+        const disclosure =
+          target.closest<HTMLDetailsElement>(owned) ??
+          event.currentTarget.querySelector<HTMLDetailsElement>(owned);
+        if (!disclosure) return;
+        event.preventDefault();
+        event.stopPropagation();
+        disclosure.open = false;
+        disclosure.querySelector('summary')?.focus();
+      }}
       className="ol-agent ol-creator-workspace"
-      data-session={godMode && workspace === 'authoring' && !!active ? '' : undefined}
+      data-session={compactNavigation ? '' : undefined}
     >
-      {godMode &&
-        (workspace === 'authoring' && active ? (
-          <details className="ol-creator-workspace-switch">
-            <summary>Creation workspaces</summary>
-            {navigation}
-          </details>
-        ) : (
-          navigation
-        ))}
+      {godMode && (
+        <details
+          ref={navigationRef}
+          className="ol-creator-workspace-switch"
+          data-compact={compactNavigation || undefined}
+          open={!compactNavigation}
+        >
+          <summary hidden={!compactNavigation}>Creation workspaces</summary>
+          {navigation}
+        </details>
+      )}
       {(!godMode || workspace !== 'authoring') && allowance}
       {godMode && (
         <div hidden={workspace !== 'authoring'} className="ol-creator-page ol-creator-authoring">
@@ -254,7 +288,6 @@ function WorldAgentPanel(props: Props) {
               purpose={inventionTarget === active ? 'invention' : undefined}
               onCreated={() => void list()}
               controls={controls}
-              title={activeTitle}
             />
           ) : (
             <>
