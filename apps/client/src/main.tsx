@@ -532,12 +532,16 @@ function App({
     nextWidth / scale < 720 || nextHeight / scale <= 600;
   const narrow = needsSheet(width, height);
   const inventoryFeedbackVisible = useRef(false);
+  const activityFeedbackVisible = useRef(false);
   useLayoutEffect(() => {
     // A delayed acknowledgement belongs to the panel currently shown, not its dispatch closure.
     inventoryFeedbackVisible.current =
       connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory');
+    activityFeedbackVisible.current =
+      connected && open.includes('activity') && (!narrow || open.at(-1) === 'activity');
     return () => {
       inventoryFeedbackVisible.current = false;
+      activityFeedbackVisible.current = false;
     };
   }, [connected, narrow, open]);
   useEffect(() => {
@@ -650,7 +654,7 @@ function App({
   async function sendCommand(
     action: ActionOption,
     request?: CommandRequestIdentity,
-    acknowledgement: 'notice' | 'inventory' = 'notice',
+    acknowledgement: 'notice' | 'inventory' | 'activity' = 'notice',
   ): Promise<ApiResult> {
     if (isPaused() || !latest.current?.access?.controlling) {
       return { ok: false, code: 'paused', message: 'Resume here to play.' };
@@ -671,6 +675,11 @@ function App({
     setTargeting(false);
     const requestedLife = latest.current?.player.life;
     const requestedScope = latest.current?.access?.scope;
+    // A task switch replaces this group; its pending result still belongs to the original reader.
+    const activityFeedback =
+      acknowledgement === 'activity'
+        ? hud.current?.querySelector('#activityPanel .ol-camp-activities')
+        : null;
     try {
       const r = await post('/api/command', {
         commandId: request?.commandId ?? crypto.randomUUID(),
@@ -689,7 +698,11 @@ function App({
       const feedback =
         acknowledgement === 'inventory' && inventoryFeedbackVisible.current
           ? hud.current?.querySelector('#inventoryPanel .ol-inventory-feedback')
-          : null;
+          : acknowledgement === 'activity' &&
+              activityFeedbackVisible.current &&
+              activityFeedback?.isConnected
+            ? activityFeedback
+            : null;
       const localReceipt = feedback && !feedback.closest('[hidden], [inert], [aria-hidden="true"]');
       if (!r.ok || (r.code !== 'accepted' && !localReceipt)) notify(r.message);
       return r;
@@ -706,7 +719,7 @@ function App({
   function command(
     action: ActionOption,
     request?: CommandRequestIdentity,
-    acknowledgement: 'notice' | 'inventory' = 'notice',
+    acknowledgement: 'notice' | 'inventory' | 'activity' = 'notice',
   ): Promise<ApiResult> {
     if (connected && action.enabled) containerOpening.stopFollowing();
     return sendCommand(action, request, acknowledgement);
@@ -1382,7 +1395,7 @@ function App({
           <CampActivity
             view={view}
             connected={connected}
-            command={command}
+            command={(action, request) => command(action, request, 'activity')}
             entry={activityEntry}
             visible={
               connected && open.includes('activity') && (!narrow || open.at(-1) === 'activity')
