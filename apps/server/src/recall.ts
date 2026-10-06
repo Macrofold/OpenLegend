@@ -417,6 +417,7 @@ export class RecallService {
       createEmbeddingClient({
         apiKey: c.embeddingKey,
         model: c.embeddingModel,
+        modelPrices: c.embeddingModelPrices,
         dimensions: c.embeddingDimensions,
         fetch: log.fetch,
         timeoutMs: c.aiTimeoutMs,

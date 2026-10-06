@@ -64,6 +64,7 @@ export async function searchInventions(
     model: config.embeddingModel,
     dimensions: config.embeddingDimensions,
     fetch: log.fetch,
+    modelPrices: config.embeddingModelPrices,
     timeoutMs: config.aiTimeoutMs,
   });
   try {

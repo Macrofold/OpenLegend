@@ -233,12 +233,12 @@ function inferenceFailure<T>(
 /** One terminal-evidence rule for original execution and later receipt recovery.
  * A terminal intermediary status or a price cannot prove an uncertain provider finished.
  * docs/ai-providers.md#receipts-outcomes-and-accounting */
-function terminalCompletionUncertain(
+function terminalEvidence(
   run: string,
   status: Record<string, unknown>,
   result: Record<string, unknown>,
   execution: 'inference' | 'native',
-): boolean {
+): { completionUncertain: boolean; uninvokedInferenceChargeUsd?: number } {
   if (
     status['id'] !== run ||
     typeof status['status'] !== 'string' ||
@@ -269,12 +269,18 @@ function terminalCompletionUncertain(
     const expectedStatus = ['value', 'unknown', 'refused', 'stale_input'].includes(outcome)
       ? 'succeeded'
       : 'failed';
-    return (
+    const completionUncertain =
       outcome === 'uncertain' ||
       providerOutcome === 'uncertain' ||
       (!['cancelled', 'timed_out'].includes(String(status['status'])) &&
-        status['status'] !== expectedStatus)
-    );
+        status['status'] !== expectedStatus);
+    return {
+      completionUncertain,
+      uninvokedInferenceChargeUsd:
+        !completionUncertain && status['kind'] === 'inference' && providerOutcome === 'not_invoked'
+          ? microUsdToUsd(status['cost_micro_usd'])
+          : undefined,
+    };
   }
   const nativeOutcomes: Record<string, string> = {
     succeeded: 'success',
@@ -283,7 +289,9 @@ function terminalCompletionUncertain(
     timed_out: 'timed_out',
   };
   const expected = nativeOutcomes[String(status['status'])];
-  return expected === undefined || result['execution_outcome'] !== expected;
+  return {
+    completionUncertain: expected === undefined || result['execution_outcome'] !== expected,
+  };
 }
 
 /** Backend-owned remote identities and spending. Only explicitly granted authoring sessions receive world tools.
@@ -876,7 +884,7 @@ export class MacrofoldBackend implements AiClient {
         signal,
       ),
     );
-    if (terminalCompletionUncertain(original.runId, status, result, 'native')) return;
+    if (terminalEvidence(original.runId, status, result, 'native').completionUncertain) return;
     const receipt = { ...original.receipt };
     if (original.billingMode === 'managed')
       receipt.estimatedCostUsd = microUsdToUsd(status['cost_micro_usd']);
@@ -988,6 +996,7 @@ export class MacrofoldBackend implements AiClient {
     signal: AbortSignal,
     billingMode = this.service.config.macrofoldBillingMode,
     privateContent = false,
+    uninvokedInferenceChargeUsd?: number,
   ): Promise<void> {
     if (!receipt.providerRequestId) return;
     // A model-body invoice alone cannot establish the complete attributable
@@ -1024,8 +1033,12 @@ export class MacrofoldBackend implements AiClient {
         .filter((e) => e['kind'] === 'model')
         .map((e) => object(e['model_usage']));
       const integer = parseNonnegativeSafeInteger;
+      // Exact terminal inference evidence can prove no provider invoice is due.
+      // A usable Run charge and complete usage are still needed: an empty page
+      // can precede the billing rows for an already-recorded platform charge.
+      // docs/ai-providers.md#receipts-outcomes-and-accounting
       if (
-        !models.length ||
+        (!models.length && uninvokedInferenceChargeUsd === undefined) ||
         models.some((m) => m['completeness'] !== 'complete' || m['provisional'] !== false)
       )
         return;
@@ -1077,7 +1090,12 @@ export class MacrofoldBackend implements AiClient {
             .map((e) => integer(e['charged_micro_usd']) ?? NaN),
         ];
         const total = sumSafeIntegers(charges);
-        if (total !== undefined) receipt.estimatedCostUsd = microUsdToUsd(String(total));
+        const cost = total === undefined ? undefined : microUsdToUsd(String(total));
+        if (
+          cost !== undefined &&
+          (uninvokedInferenceChargeUsd === undefined || cost >= uninvokedInferenceChargeUsd)
+        )
+          receipt.estimatedCostUsd = cost;
       }
     } catch {
       // Missing reporting permission or delayed usage leaves the reserve intact.
@@ -1353,7 +1371,12 @@ export class MacrofoldBackend implements AiClient {
         throw error;
       });
       this.captureProviderTiming(status, receipt);
-      receipt.completionUncertain = terminalCompletionUncertain(lane.run, status, result, 'native');
+      receipt.completionUncertain = terminalEvidence(
+        lane.run,
+        status,
+        result,
+        'native',
+      ).completionUncertain;
       if (billingMode === 'managed')
         receipt.estimatedCostUsd = microUsdToUsd(status['cost_micro_usd']);
       await this.captureRunUsage(receipt, signal, billingMode, !!worldAgent);
@@ -1755,12 +1778,8 @@ export class MacrofoldBackend implements AiClient {
         }
       : await this.waitRun(run, object(accepted['urls']), signal);
     const inference = object(resolved.result['inference']);
-    receipt.completionUncertain = terminalCompletionUncertain(
-      run,
-      resolved.status,
-      resolved.result,
-      'inference',
-    );
+    const evidence = terminalEvidence(run, resolved.status, resolved.result, 'inference');
+    receipt.completionUncertain = evidence.completionUncertain;
     this.captureProviderTiming(resolved.status, receipt);
     // Managed billing comes only from the verified Run; BYOK model invoices are separate.
     const raw =
@@ -1770,7 +1789,13 @@ export class MacrofoldBackend implements AiClient {
     const usage = raw['usage'] && typeof raw['usage'] === 'object' ? object(raw['usage']) : {};
     if (this.service.config.macrofoldBillingMode === 'managed')
       receipt.estimatedCostUsd = microUsdToUsd(resolved.status['cost_micro_usd']);
-    await this.captureRunUsage(receipt, signal);
+    await this.captureRunUsage(
+      receipt,
+      signal,
+      this.service.config.macrofoldBillingMode,
+      false,
+      evidence.uninvokedInferenceChargeUsd,
+    );
     if (
       !receipt.completionUncertain &&
       ['cancelled', 'timed_out'].includes(String(resolved.status['status']))
@@ -2167,14 +2192,13 @@ export class MacrofoldBackend implements AiClient {
               signal,
             ),
           );
-          if (
-            terminalCompletionUncertain(
-              receipt.providerRequestId!,
-              status,
-              result,
-              status['kind'] === 'inference' ? 'inference' : 'native',
-            )
-          )
+          const evidence = terminalEvidence(
+            receipt.providerRequestId!,
+            status,
+            result,
+            status['kind'] === 'inference' ? 'inference' : 'native',
+          );
+          if (evidence.completionUncertain)
             return {
               runs: results,
               note: 'Provider completion is still unconfirmed; its original reservation remains counted.',
@@ -2187,6 +2211,7 @@ export class MacrofoldBackend implements AiClient {
             signal,
             this.service.config.macrofoldBillingMode,
             privateContent,
+            evidence.uninvokedInferenceChargeUsd,
           );
           if (receipt.estimatedCostUsd !== undefined) {
             await this.service.store.settle(receipt.requestId, receipt);

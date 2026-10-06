@@ -32,7 +32,10 @@ Parents: [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-f
 
 - [x] Deliver the world-authored cordage family and positively certified binding input for woven containers through existing invention admission, dependencies, craft and custody.
 - [x] Demonstrate [NP03 acceptance](../projects/completed/parallel-batch-02-foundations-and-usability-feature-spec.md#np03--craft-with-an-invented-material) with native/supplied proposals: actual manufacture, rejected impostor/stale/private inputs, resource conservation, cancellation/replay/competing commands, two names/sizes, storage/reuse and current-format reopen; reconcile [NP03 design](../projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md#np03--craft-with-an-invented-material). Browser workshop review/Apply, separate manufacture, ordinary container admission/Craft and exact packing/retrieval passed. Creator field eligibility/preview passed through their native service projections.
-- [ ] Separately qualify live model generation/voluntary two-stage choice through the existing INV/AG provider gate. No provider calls were made here; supplied/native success does not establish model quality. This is an evidence gap, not an unfinished native implementation or automatic authoring-chain requirement.
+- [x] Qualify the ordinary player-directed live generation chain: generate cord, manufacture its actual stock, generate a container with that certified input, craft, pack/retrieve and reopen. [PG01 evidence](../verification/camp-life.md#live-player-journey--october-4-2026) closes this finite live-generation child.
+- [ ] Separately qualify voluntary NPC two-stage choice through the existing INV/AG provider gate. Player-directed success does not establish autonomous model choice or broad quality. This is an evidence gap, not an unfinished native implementation or automatic authoring-chain requirement.
+
+[PG01's later live journey](../verification/camp-life.md#live-player-journey--october-4-2026) follows the earlier supplied/native and queued-failure evidence. Three genuine generated recipes and browser manufacture/use pass; autonomous choice remains unqualified.
 
 Parents: INV-3.5/INV-6.1–6.2, EWF09 and RF01. PW02/PW03 already supply the family/metadata/container mechanisms. Arbitrary recursive invention, assemblies, live-law replacement, generated code and automatic recipe knowledge remain outside this child.
 
@@ -77,7 +80,7 @@ Fresh verification passed: `pnpm typecheck`, `pnpm build`, and the 26 existing i
 The initial quick review left combined acceptance unqualified; both scenarios subsequently passed the focused checks below. Remaining work outside the completed batch is explicit:
 
 - Deferred multilingual verification: revisit real OS IME composition/confirmation when other-language support is prioritized; it no longer blocks NP05. Investigate the potentially orphaned disposable database only if its ownership can be positively identified; never guess a database to delete.
-- Separately owned follow-ups stay open: NP02 dense-work CPU/capacity qualification and NP03 live invention/voluntary two-stage choice. They do not reopen the completed scoped assignments.
+- Separately owned follow-ups stay open: NP02 dense-work CPU/capacity qualification and NP03 voluntary two-stage NPC choice. They do not reopen the completed scoped assignments.
 
 The feature specification, technical design and prompt document cover the whole batch. With both combined scenarios now demonstrated and multilingual verification explicitly deferred by Mike, all three are marked Completed and filed together under `docs/projects/completed/`. The original prompts are retained as assignment history, not instructions to repeat completed work.
 
