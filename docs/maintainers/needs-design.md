@@ -243,6 +243,8 @@ ND14's contacts and asynchronous text journey: a real world affordance, addressi
 
 **Start and parallel boundary:** Use existing identity and conversation contracts. Keep remote messages distinct from local hearing and account metadata. Calls belong to DG26, so text need not wait for media. Contact and delivery meanings become the input to that later call design. **Existing owners:** NC/MP, world affordance and privacy owners.
 
+**Product design completed, October 6, 2026:** [Keep in touch across an outing](../projects/world-text-messages-feature-spec.md) and the [message-slate profile](../worlds/base/text-messages.md) select an optional later authored world, local mutual contact exchange and private asynchronous notes. Submission is distinct from arrival/read; no presence, read receipts, attachments, artificial delay or primitive-start change. Two-human completion comes before separately qualified NPC correspondence with private derivatives and control-transition protection. [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) and [TX-L01–TX-L10](../limits/narration.md#tx-l01--selected-world-affordance) retain technical/runtime delivery. Calls remain DG26.
+
 #### DG25 — Deliberate corrections and shared restoration
 
 Conditional ND17 and ND35. First settle the narrow common decision about attributed correction versus replacing history, affected people and private evidence. Then scope speech re-authoring and shared-world/private-history restoration as independently selectable designs.
@@ -571,6 +573,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [NC](narration-and-conversations.md) owns durable local conversations and history; MP owns human identity and permissions. Remote communication devices are a later world affordance, not part of the primitive starting inventory or a delivered extension of local hearing.
 
 **Needed before an implementation project:** choose how remote communication becomes available in a world, beginning with contacts/asynchronous text if useful. Define addressing, delivery/read status, availability, blocking, offline retention and who may learn each message. Calls additionally need schedules, missed/interrupted calls and private media delivery coordinated with ND15. A connection must not expose unrelated remote conversations or grant fictional knowledge from account metadata.
+
+**DG24 product disposition, October 6, 2026:** The [researched asynchronous-text proposal](../projects/world-text-messages-feature-spec.md) now answers the contacts/text portion through a selected optional message-slate world profile. It adds no current primitive equipment or delivered remote capability. [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns implementation and privacy qualification; DG26 retains calls and their separate media journey. This design completion leaves the original decision/implementation status above explicit.
 
 ### ND15 — Audible NPC dialogue, microphone input and proximity voice
 

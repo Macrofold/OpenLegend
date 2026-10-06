@@ -26,6 +26,8 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Something worth showing](social-gatherings.md) — DG18's ordinary exact conversation, a worthwhile additional participant, and separately conditional gist, vocal activity and larger gatherings; current hearing remains authoritative.
 - [Supplies worth keeping](changing-supplies.md) — DG19's independently selectable preservation and finite renewal, with actual work and stock economics; current food and resource rules remain unchanged.
 
+- [Personal message slates](text-messages.md) — proposed optional later-world correspondence with local mutual contacts, private reading, real device possession and no primitive-start addition.
+
 ## Code boundary
 
 The corresponding bundled content lives in `packages/domain/src/worlds/base/`: world/actor initialization, initial map and flight routes, item/preparation definitions, creation categories/templates, body and attribute/sense defaults, physiology, strike definitions, fire care (`fire.ts`), item-handling defaults and status-effect/trait configuration. YAML and generated JSON stay together under its `config/` directory; generators and reusable validators stay outside. The pure domain reads generated data, never YAML or filesystem APIs.

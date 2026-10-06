@@ -31,14 +31,14 @@ Accepted first-version direction: complete mouse controls using click-to-move an
 
 The later accepted [playability and controls direction](playability-and-controls.md) extends those menus into a complete searchable action catalogue with automatic categories, contextual availability, personal/world/global usage ordering, configurable action/category bindings and dynamic suggestions. Five configured slots plus three suggestions to their left are a tentative layout. Existing actions remain discoverable beyond recommendations; unavailable entries explain their prerequisites. An explicit AI sparkle starts permitted invention when the player invention lock is off, independently of the agent invention lock, with naming and workshop links. Exact geometry, ranking and staging remain proposals.
 
-| Input | Behavior |
-|---|---|
-| Left-click ground | Walk to the clicked location. |
-| Left-click an object or person | Select the target and show its name and available actions. Selection alone does not perform an action. |
-| Right-click an object, person or ground location | Open a contextual action menu for that target or location. |
-| Choose an action | Approach to the required range if necessary, then perform the action when its conditions are satisfied. |
-| Escape | Close an open menu first; otherwise cancel the current movement or action according to its interruption rules. |
-| Tap ground or a target | Move or select using the same distinction as left-click. Selected-target actions are available through visible on-screen controls. |
+| Input                                            | Behavior                                                                                                                           |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Left-click ground                                | Walk to the clicked location.                                                                                                      |
+| Left-click an object or person                   | Select the target and show its name and available actions. Selection alone does not perform an action.                             |
+| Right-click an object, person or ground location | Open a contextual action menu for that target or location.                                                                         |
+| Choose an action                                 | Approach to the required range if necessary, then perform the action when its conditions are satisfied.                            |
+| Escape                                           | Close an open menu first; otherwise cancel the current movement or action according to its interruption rules.                     |
+| Tap ground or a target                           | Move or select using the same distinction as left-click. Selected-target actions are available through visible on-screen controls. |
 
 A selected-target panel also exposes the contextual actions, so touchscreens and trackpads do not depend on right-click. A berry bush might offer **Gather**, **Inspect** and **Try something…**; a person might offer **Talk**, **Give item** and **Try something…**. The free-form option accepts a request about the selected target or location. Clicking a UI control must not also issue a movement command to the ground behind it.
 
@@ -48,10 +48,10 @@ Click-to-move simplifies the initial control scheme but still requires pathfindi
 
 ### Planned keyboard additions
 
-| Input | Planned behavior |
-|---|---|
-| WASD or arrow keys | Direct movement; manual movement cancels an existing walking destination. |
-| E | Open interaction actions for the highlighted eligible nearby target. |
+| Input                       | Planned behavior                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------ |
+| WASD or arrow keys          | Direct movement; manual movement cancels an existing walking destination.                  |
+| E                           | Open interaction actions for the highlighted eligible nearby target.                       |
 | Remappable action shortcuts | Open inventory and other frequent controls; exact additional bindings remain to be chosen. |
 
 Nearby interaction should visibly highlight its candidate before E is pressed. An explicitly selected eligible nearby object takes priority; otherwise use facing direction and distance to choose a reachable candidate. Avoid silently switching to whichever object happens to be closest. Movement and gameplay shortcuts must not fire while the player types into dialogue or a free-form request.
@@ -139,6 +139,12 @@ Later sophistication can be introduced independently: walls attenuate sound; doo
 A phone is a later in-world communication affordance backed by identity and messaging permissions. It is not assumed among the primitive group's initial possessions; how it enters the world remains open. Start with contacts and asynchronous text after local conversation works. Add calls, missed calls, NPC schedules, and availability later. A call delivers only its intended participants' audio; it should not automatically grant hearing of remote private conversations.
 
 Spatial voice needs proximity-based subscription permissions, playback positioning, captions, mute/block/report controls, and push-to-talk or explicit voice activation. An NPC speech pipeline is transcription → addressed-turn detection → grounded response → voice synthesis → scoped playback. Budget each stage separately, limit overlapping speakers, and use short responses. Text remains a complete route to play.
+
+### Selected asynchronous text proposal
+
+[DG24's product specification](../../docs/projects/world-text-messages-feature-spec.md) now selects a complete optional asynchronous-text journey: two real people acquire actual devices, exchange contacts locally by mutual assent, pursue separate activities, and read a private note when they choose. The [message-slate profile](../../docs/worlds/base/text-messages.md) openly authors magical same-world reach with no battery, postage or artificial delay. It does not add a phone to the primitive start.
+
+Submission is distinct from private arrival and reading; there is no sender-facing presence or read surveillance. Human-private evidence remains participant-restricted through NPC derivatives and save/export. The first two-human experience precedes independently qualified NPC correspondence. The broader phone and call ideas above remain future options under DG26; asynchronous text does not require media, a carrier economy or relay infrastructure.
 
 ## Bounded sectors and a growing world
 

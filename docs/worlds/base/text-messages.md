@@ -10,7 +10,7 @@ Each slate is an individual physical item with one unit of carrying load, ordina
 
 New reading and sending require the living, awake, participating person to carry and be capable of handling their bound slate. First reference bodies are humanlike people with the needed manipulation and text-understanding capability. Existing native danger, needs and participation still apply. Slates provide no battery, consumable postage, range simulation, healing, navigation, inventory access or remote action authority.
 
-Person-owned contacts and permitted history are not loot inside the slate. Finding it does not reveal messages, real account identity or a reusable login. The owner can revoke a lost slate, manage blocking and later bind an actual replacement. Previously read words remain legitimate personal evidence under ordinary retention. A missing device keeps unread words unavailable in play until replacement.
+Person-owned contacts and permitted history are not loot inside the slate. Finding it does not reveal messages, real account identity or a reusable login. The owner can revoke a lost slate, manage blocking and later bind an actual replacement. Previously read words remain legitimate personal evidence under ordinary retention. A missing device keeps unread words unavailable in play until recovery of the still-valid device or activation of an actual replacement.
 
 Activate, Read and Send are immediate admitted communicator operations, with no additional work timer or food/energy fee. Human reading/composition and any actual NPC reasoning still take real attention while ordinary world time and needs advance. Current capability, control and device checks apply at the actual operation, so a preview does not reserve later use.
 
