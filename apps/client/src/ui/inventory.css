@@ -309,7 +309,6 @@
   justify-content: flex-start;
   gap: 4px;
   inline-size: 100%;
-  min-block-size: 7.5rem;
   padding: 8px 4px;
   border: 1px solid var(--line-strong);
   border-radius: var(--control-radius);
@@ -344,15 +343,10 @@
   outline-offset: -3px;
 }
 .ol-inventory-empty-target {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
-  padding: 16px;
+  margin: 0;
+  padding: 8px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--control-radius);
-}
-.ol-inventory-empty-target > * {
-  margin: 0;
 }
 .ol-inventory-equipment {
   display: flex;
@@ -428,7 +422,7 @@
   gap: 8px;
 }
 @container (min-width: 36rem) {
-  .ol-inventory-panes {
+  .ol-inventory-panes[data-paired] {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }

@@ -651,20 +651,22 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   }
   const disabled = unavailable || !!operation || !!unresolved || recovering;
   function edit(kind: NonNullable<typeof editing>) {
+    rememberFocus();
     setEditing(kind);
-    requestAnimationFrame(() => {
+    focusAfterChange(() => {
       const editor = document.getElementById(`${fieldId}-editor-${kind}`);
       const duration =
         kind === 'stop'
           ? editor?.querySelector<HTMLElement>('input:not([role="combobox"])')
           : undefined;
-      (duration ?? editor?.querySelector<HTMLElement>('input,button'))?.focus();
+      return duration ?? editor?.querySelector<HTMLElement>('input,button') ?? null;
     });
   }
   function closeEditor() {
     const previous = editing;
+    rememberFocus();
     setEditing(null);
-    requestAnimationFrame(() => document.getElementById(`${fieldId}-change-${previous}`)?.focus());
+    focusAfterChange(() => document.getElementById(`${fieldId}-change-${previous}`));
   }
   function choiceLabel(key: string) {
     return selectedPage(key)?.selected?.label ?? 'Choose';

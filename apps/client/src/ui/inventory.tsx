@@ -1,5 +1,5 @@
 import { namePhrase } from '@open-legend/language';
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from 'react';
 import { Dialog, Popover } from 'react-aria-components';
 import type {
   ActionOption,
@@ -47,6 +47,8 @@ type DragIntention = {
   targetRevision: number;
 };
 type WorldRoot = { id: string; placementRevision?: number; position?: string };
+type InputFocus = { origin: HTMLElement; opener?: HTMLElement; generation: number };
+type CollectionFocus = InputFocus & { recipient: HTMLElement };
 const dragFormat = 'application/x-open-legend-possession';
 
 function sameItem(left: InventoryItemView, right: InventoryItemView) {
@@ -127,6 +129,14 @@ function InventoryWorkspace({
 }: InventoryProps & { scope: string }) {
   const workspace = useRef<HTMLDivElement>(null);
   const anchor = useRef<HTMLButtonElement>(null);
+  const detail = useRef<HTMLDivElement>(null);
+  const focusGeneration = useRef(0);
+  const focusFrame = useRef<number | undefined>(undefined);
+  const focusAvailable = useRef(false);
+  const actionInput = useRef<CollectionFocus | undefined>(undefined);
+  const navigationInput = useRef<
+    (InputFocus & { side: InventorySide; containerId: string }) | undefined
+  >(undefined);
   const [selection, setSelection] = useState<Selection>();
   const [detailOpen, setDetailOpen] = useState(false);
   const [amountDraft, setAmountDraft] = useState<AmountDraft>();
@@ -169,6 +179,7 @@ function InventoryWorkspace({
     containerId: string;
     neighborId?: string;
     itemId?: string;
+    input?: CollectionFocus;
   }>();
   const [ownerBusy, setOwnerBusy] = useState(false);
   const ownerGuard = useRef(false);
@@ -226,6 +237,13 @@ function InventoryWorkspace({
         : undefined,
   });
   const requestId = openContainer === null ? null : openContainer?.requestId;
+  useLayoutEffect(() => {
+    focusAvailable.current = visible && connected;
+    return () => {
+      focusAvailable.current = false;
+      cancelCollectionFocus();
+    };
+  }, [visible, connected, requestId]);
   if (requestId !== requestSeen) {
     setRequestSeen(requestId);
     if (openContainer !== undefined) {
@@ -257,16 +275,30 @@ function InventoryWorkspace({
       right.refresh();
       if (result.ok) {
         closeDetail(false);
-        if (actionFocus.current) focusCollection(actionFocus.current.side);
+        scheduleCollectionFocus(actionInput.current);
       }
-      if (actionFocus.current) setResolvedFocus({ ...actionFocus.current, itemId: result.itemId });
+      if (actionFocus.current)
+        setResolvedFocus({
+          ...actionFocus.current,
+          itemId: result.itemId,
+          input: actionInput.current,
+        });
       actionFocus.current = undefined;
+      actionInput.current = undefined;
     },
   });
   const busy = !!operations.pending || ownerBusy;
   const canAct = visible && connected && view.player.canUseInventory && !busy;
   const collection = (side: InventorySide) => (side === 'belongings' ? left : right);
   const opposite = (side: InventorySide) => (side === 'belongings' ? right : left);
+  useLayoutEffect(() => {
+    const input = navigationInput.current;
+    if (!input || collection(input.side).location.id !== input.containerId) return;
+    navigationInput.current = undefined;
+    // Opening a bag beside belongings creates this recipient only at this commit.
+    const recipient = workspace.current?.querySelector<HTMLElement>(`[data-side="${input.side}"]`);
+    if (recipient) scheduleCollectionFocus({ ...input, recipient });
+  }, [left.location.id, right.location.id]);
   const selectedCollection = selection && collection(selection.side);
   const item = selectedCollection?.page?.items.find((entry) => entry.id === selection?.itemId);
   const target = selection && opposite(selection.side).page?.container;
@@ -294,7 +326,10 @@ function InventoryWorkspace({
     // Do not steal focus from a search, a reopened object or another panel while a receipt
     // was in flight. The identity returned by a merge can differ from the source identity.
     if (
+      focusAvailable.current &&
+      resolvedFocus.input?.generation === focusGeneration.current &&
       region &&
+      region === resolvedFocus.input.recipient &&
       region === document.activeElement &&
       state.page?.container.id === resolvedFocus.containerId
     ) {
@@ -308,10 +343,51 @@ function InventoryWorkspace({
     setResolvedFocus(undefined);
   }, [resolvedFocus, left.key, left.page, right.key, right.page]);
 
+  function cancelCollectionFocus() {
+    focusGeneration.current++;
+    navigationInput.current = undefined;
+    if (focusFrame.current !== undefined) window.cancelAnimationFrame(focusFrame.current);
+    focusFrame.current = undefined;
+  }
+  function captureInputFocus(): InputFocus | undefined {
+    const origin = document.activeElement;
+    if (
+      !focusAvailable.current ||
+      !(origin instanceof HTMLElement) ||
+      (!workspace.current?.contains(origin) && !detail.current?.contains(origin))
+    )
+      return;
+    return {
+      origin,
+      opener: detail.current?.contains(origin) ? (anchor.current ?? undefined) : undefined,
+      generation: focusGeneration.current,
+    };
+  }
+  function captureCollectionFocus(side: InventorySide): CollectionFocus | undefined {
+    const input = captureInputFocus();
+    const recipient = workspace.current?.querySelector<HTMLElement>(`[data-side="${side}"]`);
+    return input && recipient ? { ...input, recipient } : undefined;
+  }
+  function scheduleCollectionFocus(focus: CollectionFocus | undefined) {
+    if (!focus) return;
+    const ownsInput = () =>
+      focusAvailable.current &&
+      focus.generation === focusGeneration.current &&
+      focus.recipient.isConnected &&
+      (document.activeElement === focus.origin ||
+        document.activeElement === focus.recipient ||
+        (!focus.origin.isConnected && document.activeElement === focus.opener) ||
+        (document.activeElement === document.body &&
+          (!focus.origin.isConnected || focus.origin.matches(':disabled'))));
+    if (!ownsInput()) return;
+    if (focusFrame.current !== undefined) window.cancelAnimationFrame(focusFrame.current);
+    focusFrame.current = window.requestAnimationFrame(() => {
+      focusFrame.current = undefined;
+      if (ownsInput()) focus.recipient.focus();
+    });
+  }
   function focusCollection(side: InventorySide) {
-    window.requestAnimationFrame(() =>
-      workspace.current?.querySelector<HTMLElement>(`[data-side="${side}"]`)?.focus(),
-    );
+    scheduleCollectionFocus(captureCollectionFocus(side));
   }
   function closeDetail(restoreFocus = true) {
     setDetailOpen(false);
@@ -332,7 +408,10 @@ function InventoryWorkspace({
     }, 0);
   }
   useEffect(() => {
-    const cancel = () => stopDrag();
+    const cancel = () => {
+      stopDrag();
+      cancelCollectionFocus();
+    };
     const escape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && dragRef.current) {
         event.preventDefault();
@@ -340,9 +419,14 @@ function InventoryWorkspace({
         cancel();
       }
     };
+    // A later input owns its own focus, even if the prior receipt has not arrived.
+    document.addEventListener('pointerdown', cancelCollectionFocus, true);
+    document.addEventListener('keydown', cancelCollectionFocus, true);
     window.addEventListener('blur', cancel);
     window.addEventListener('keydown', escape, true);
     return () => {
+      document.removeEventListener('pointerdown', cancelCollectionFocus, true);
+      document.removeEventListener('keydown', cancelCollectionFocus, true);
       window.removeEventListener('blur', cancel);
       window.removeEventListener('keydown', escape, true);
     };
@@ -360,8 +444,9 @@ function InventoryWorkspace({
       setWorldRoot(undefined);
       setWorldInvalid(false);
     }
+    const input = captureInputFocus();
+    navigationInput.current = input ? { ...input, side, containerId: id } : undefined;
     collection(side).navigate(id);
-    focusCollection(side);
   }
   function choose(
     side: InventorySide,
@@ -444,6 +529,7 @@ function InventoryWorkspace({
   function send(action: ActionOption, side: InventorySide) {
     if (!canAct || !action.enabled) return;
     const source = collection(side).page;
+    actionInput.current = captureCollectionFocus(side);
     if (source) {
       const index = source.items.findIndex((entry) => entry.id === action.command.itemId);
       actionFocus.current = {
@@ -638,24 +724,16 @@ function InventoryWorkspace({
           select another item.{amountDraft && ' Your entered amount is retained.'}
         </p>
       )}
+      {!right.location.id && (
+        <p className="ol-inventory-empty-target">
+          Open a container in the world to see it beside your belongings. You can also open one of
+          your bags beside them.
+        </p>
+      )}
       <div className="ol-inventory-panes" data-paired={!!right.location.id || undefined}>
         {(['belongings', 'container'] as const).map((side) => {
           const state = collection(side);
-          if (side === 'container' && !state.location.id)
-            return (
-              <section
-                key={side}
-                className="ol-inventory-empty-target"
-                aria-label="Open a container"
-              >
-                <Icon name="chest" fallbackLabel="Container" size={32} />
-                <h3 className="ol-heading">Open a container in the world</h3>
-                <p>
-                  Open a chest or other storage to see its contents beside your belongings. You can
-                  also open one of your bags beside them.
-                </p>
-              </section>
-            );
+          if (side === 'container' && !state.location.id) return null;
           const other = opposite(side);
           return (
             <div key={side} className="ol-inventory-side">
@@ -716,6 +794,7 @@ function InventoryWorkspace({
         shouldFlip
       >
         <div
+          ref={detail}
           onKeyDownCapture={(event) => {
             if (event.key === 'Escape' && amountDraft && !event.nativeEvent.isComposing) {
               event.preventDefault();
@@ -1142,7 +1221,11 @@ function InventoryWorkspace({
             {operations.pending.status === 'unknown' && (
               <Button
                 disabled={!connected || !operations.pending.request}
-                onPress={() => void operations.check()}
+                onPress={() => {
+                  if (actionFocus.current)
+                    actionInput.current = captureCollectionFocus(actionFocus.current.side);
+                  void operations.check();
+                }}
               >
                 Check result
               </Button>

@@ -67,7 +67,7 @@ export function InventoryCollection({
       <header className="ol-inventory-collection-header">
         <h3 className="ol-heading">{page?.container.name ?? title}</h3>
         {page?.container.location && <p className="ol-caption">{page.container.location}</p>}
-        {!!page?.breadcrumbs.length && (
+        {page && page.breadcrumbs.length > 1 && (
           <nav aria-label={`${title} path`} className="ol-inventory-breadcrumbs">
             {page.breadcrumbs.map((entry) => (
               <Button
