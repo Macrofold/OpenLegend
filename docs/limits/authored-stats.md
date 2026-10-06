@@ -1,6 +1,6 @@
 # Authored stats and checks: proposed product limits
 
-**Baseline: researched product proposal, October 3, 2026; no runtime support or capacity is changed.** The [feature specification](../projects/authored-stats-feature-spec.md) owns behavior. [ND03](../maintainers/needs-design.md#nd03--world-authored-stats-checks-and-their-effects) retains design routing; EWF/INV and action/state owners retain delivery. The game-first review makes a useful competence effect conditional on an actual player need; deterministic effects are sufficient. The roof and dice rules below remain an optional worked candidate, not a first-playable prerequisite or a minimum release bundle. These proposed reference-world bounds do not become generic engine laws.
+**Baseline: researched product proposal, October 3, expanded October 5, 2026; no runtime support or capacity is changed.** The [feature specification](../projects/authored-stats-feature-spec.md) owns behavior. [ND03](../maintainers/needs-design.md#nd03--world-authored-stats-checks-and-their-effects) retains design routing; EWF/INV and action/state owners retain delivery. DG14 now selects [sling handling](../worlds/base/practical-competence.md) under ND03 and ND04's practical slice; [PC](../maintainers/practical-competence.md) owns the new consumer's delivery. Deterministic competence effects remain sufficient in other worthwhile activities. The roof and dice rules below remain an optional worked candidate, not a first-playable prerequisite or a minimum release bundle. These proposed reference-world bounds do not become generic engine laws.
 
 ## ST-L01 — Initial competence and curve
 
@@ -26,7 +26,7 @@ Before adopting it, compare the real player's goal, pause/speed controls, helper
 
 ## ST-L05 — Later opposition, social effects and progression
 
-**Proposed · Restrictiveness: Safe.** Opposed, social-control and numerical-progression families are not requirements for the first useful competence. The two-participant physical control contest remains an optional later example, with one draw per participant, shared adjudication and ties preserving prior state, only after real participation/custody behavior exists and the activity earns inclusion. Additional participants, curves, XP, personality change and social outcomes require a concrete need and supported design, not automatic stage progression. Players can already make progress through supported learning, invention, equipment and relationships without numerical XP. No check creates human consent, ownership, secret knowledge or resources.
+**Proposed · Restrictiveness: Safe.** Opposed, social-control and broad numerical-progression families are not requirements for the first useful competence. DG14 separately proposes the finite two-state sling consumer in ST-L08–ST-L13, narrowly revising the earlier no-progression proposal for that activity only. The two-participant physical control contest remains an optional later example, with one draw per participant, shared adjudication and ties preserving prior state, only after real participation/custody behavior exists and the activity earns inclusion. Additional participants, curves, XP, personality change and social outcomes require a concrete need and supported design, not automatic stage progression. Players can already make progress through supported learning, invention, equipment and relationships without numerical XP. No check creates human consent, ownership, secret knowledge or resources.
 
 ## ST-L06 — Formula and runtime work
 
@@ -36,8 +36,37 @@ Before adopting it, compare the real player's goal, pause/speed controls, helper
 
 **Proposed consumer policy · Restrictiveness: Medium.** No new universal per-character stat count, world count or result-history cap is selected. This does not promise unlimited storage, context or live evaluation: existing state, invention, action-experience, privacy and scalability limits still apply. Candidate sources and retained/exposed history need bounded qualification independent of the short result display. Exact odds and modifier detail are shown only when their inputs may be known; otherwise use a qualified estimate or permitted explanation. Refuse unsupported growth before relying on it, preserving admitted state. Revisit whole-world authoring, modifier density, long-running histories and private-input cases.
 
+## ST-L08 — First useful competence effect
+
+**Proposed · Restrictiveness: Safe.** The base-world Sling handling consumer has only states 0 and 1: ordinary current performance and practiced handling. At 1, weapon-related miss chance is reduced by 25% before the existing animal condition: a becomes a + 0.25 × (1 − a). The weapon's authored 0.6–0.9 accuracy range is unchanged, and the existing 0.85 animal factor applies afterward. There is one existing hit draw, with no new damage, range, yield, ammunition or target permission. This applies across admitted sling-like definitions, not to bows or arbitrarily renamed items. Revisit through actual hunting/target choices, weapon-quality ordering and scoped forecasts; arithmetic is not balance or enjoyment evidence.
+
+## ST-L09 — Finite progression
+
+**Proposed · Restrictiveness: Medium.** Six real qualifying released shots earn the one improvement; three shots plus one completed coaching episode provide the alternative. Hunting and inert-target shots can mix; hits and misses both count. The coached shot is one of the required releases. New gain affects subsequent shots only. Invalid, canceled, narrated, duplicated or replayed actions supply no release. Progress follows the character/world and supported mechanism, not names, item instances or sessions. Repeated practice at one target is allowed; after mastery there is no overflow XP or additional rank. Revisit if the requirement becomes an unwanted opening chore, the benefit is unnoticeable or actual progression feels unearned; do not add a daily/novelty/kill gate without a new need.
+
+## ST-L10 — Inert practice target and interruption
+
+**Proposed · Restrictiveness: Safe.** The prepared first scene supplies one reusable inert target and qualifies one active practice shooter at a time. A second request is refused clearly without an automatic queue. The new one-shot action uses a real sling/projectile, ordinary approach, 18 game seconds of windup and actual release checks. It consumes one projectile per valid shot and resolves one target hit/miss without the animal factor. No health, injury, corpse, loot, harvest, target-break reward, free ammunition or assumed projectile recovery. Safe target/use geometry is a new qualified consumer, not current animal hunting under another name.
+
+Once windup begins there is no physical-work suspension. Canceling or a permitted replacement before release ends the shot with no projectile debit or credit; elapsed time remains spent. After release, debit/result/credit remain. Current-format saving/reopening preserves a still-active action and rechecks its conditions without refund or replay. Revisit extra targets, concurrent use, moving targets or recovery only for actual desired play.
+
+## ST-L11 — One completed coaching episode
+
+**Proposed · Restrictiveness: Medium.** One practiced coach and one willing learner agree, the coach actually observes an eligible learner release/result, and both complete one guided-feedback activity. Proposed feedback duration is 30 game seconds, with actual reach, communication and work eligibility. One active episode per participant; no automatic future appointment or benefit stacking. A completed episode does not expire on ordinary separation, and the learner's independent route remains available. Incomplete episodes retain real shots but grant no lesson. Existing Teach is recipe knowledge, not this behavior. No compulsory prose grading, invented NPC speech, fee, gratitude or recruiting reward. Revisit with genuine human/NPC choices and observation/interruption cases.
+
+## ST-L12 — Evidence, initial state and persistence
+
+**Proposed · Restrictiveness: Safe.** Applicable new characters explicitly start at 0 or an authorized authored 1; existing applicable characters receive a reviewed initialization, with new practice counted prospectively. No biography-based inference or retroactive whole-history scan. A compact initial progress record needs at most six qualifying release references and one completed-episode reference. After coached improvement, later actual releases continue filling the independent support up to six, without another reward; that support can preserve competence if coaching is corrected. Actual action, lesson participation and required character evidence retain their existing owners and must not be discarded or truncated to fit this summary.
+
+No decay from ordinary absence, misses, recovery or equipment changes; no cross-world personal skill transfer with recipe imports. Corrections/revocation use independent lawful support and current privacy overlays, not fabricated practice. Revisit a new competence, rule change or evidence lifecycle under the same owners.
+
+## ST-L13 — Cost and disclosure
+
+**Proposed · Restrictiveness: Safe.** Native shot outcomes, practice credit, known-rule explanations and the finite improvement require no additional model call. NPC choice/conversation remains genuine and funded under existing admission, with no automatic paid retry or fictional assent on outage. Only the learner/authorized audience sees private practice and lesson information; a public skill definition does not disclose others' values or an animal's hidden danger factor. Existing recording, action, state, storage and spatial capacity limits control admission; these local bounds do not qualify population scale. Revisit complete action/lesson workloads before broader simultaneous training or background offers.
+
 ## Maintained records
 
 - Behavior and scenarios: [authored stats and checks](../projects/authored-stats-feature-spec.md).
+- Selected authored profile: [sling practice](../worlds/base/practical-competence.md); focused delivery: [PC](../maintainers/practical-competence.md).
 - Shared inventories: [state effects](state-effects.md), [inventions](inventions.md), [action experience](action-experience.md) and [product scalability](product-scalability.md).
 - Existing work owners: [EWF](../maintainers/extensible-world-foundation.md), [INV](../maintainers/inventions-and-world-evolution.md), [AC](../maintainers/action-capabilities.md) and [SC](../maintainers/state-contributions.md). Typed state is a foundation, not proof the proposed rule exists.

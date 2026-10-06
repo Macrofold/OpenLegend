@@ -253,6 +253,10 @@ Generation uses the configured complex reasoning model with low effort through e
 
 [LA236](limits/narration.md#la236) owns byte and preparation policies. [Implementation evidence](verification/conversation-compaction.md#conversation-compaction) distinguishes native lifecycle checks from live continuity qualification. The [project design](projects/conversation-compaction-tech-design.md#14-extension-seam) retains the replaceable strategy seam for measured recursive drift or missing old-topic detail.
 
+## Selected optional story-perspective proposal
+
+[DG15's After you left specification](projects/story-perspectives-feature-spec.md) selects a new, narrow external craft-completion perspective for a private world with one human account in its participation history. It distinguishes an authorized human's historical story from character awareness, and expressly excludes private thoughts, speech and other-human material. This new permission, voluntary candidate buffer and stronger cancellation behavior must be adopted and qualified through [NC20](maintainers/narration-and-conversations.md#nc20--optional-after-you-left-perspective), consuming NC07–NC12, before enabling the mode. Current cutaways remain disabled; ordinary source scope, NR01 failure and full actor-evidence rules remain unchanged. The [SP inventory](limits/narration.md#sp01--selected-external-perspective) records proposed bounds; [base-world content](worlds/base/story-perspectives.md) owns the first camp/activity selection. This paragraph is a consumer link, not a second permission or story-selection implementation.
+
 ## Maintained records
 
 - Implementation: [Feature tasks](maintainers/narration-and-conversations.md).

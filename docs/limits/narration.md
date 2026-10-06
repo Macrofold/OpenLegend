@@ -8,6 +8,42 @@ Implementation starting points: [story-selection.ts](../../packages/domain/src/s
 
 Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private-npc-reply-preview). Provisional Talk text does not enter speech, memory, caption or conversation records; these still require final native admission and actual listener projection. [NP05 evidence](../verification/npc-reply-preview.md) distinguishes private early reading from committed speech. No narration retention or audience policy changed.
 
+## Selected DG15 product proposal
+
+[After you left](../projects/story-perspectives-feature-spec.md) proposes one optional historical external perspective. SP01–SP08 are unimplemented product choices; they do not change the current LA/NR baseline below. [NC20](../maintainers/narration-and-conversations.md#nc20--optional-after-you-left-perspective) owns the consumer through existing NC execution, privacy and history work. Correct source authority and accounting are invariants, not limits that may be relaxed to obtain more stories.
+
+## SP01 — Selected external perspective
+
+**Proposed; Very safe.** Off by default; one human account in the world's entire participant/spectator history, one controlled character, one familiar resident, one already perceived campfire scene and one already witnessed native cord-making family. The authored camp radius is eight metres. One subsequent external completion may be disclosed under a new explicit world/reader grant. No speech, private internal material, another human, new recipe, current inventory/position or distant tactical opportunity is admitted. Public-looking geometry and narrative importance do not grant access. This narrow profile limits disclosure work and tests a modest continuation payoff; it is not a universal story policy. [World profile](../worlds/base/story-perspectives.md).
+
+## SP02 — Capture and unrequested scene
+
+**Proposed; Safe.** One active departure anchor and one latest unrequested scene per reader/world; one captured completion per witnessed activity anchor. The source window lasts at most one game hour after actual departure and closes on re-entry, first capture, replacement or permission loss. Captured candidates last at most seven real days and may be replaced by later eligible ones without generating a backlog. These are new candidate-storage policies, distinct from ordinary automatic narration. For this mode alone, seven days replaces original-occurrence freshness; timestamps remain historical. A new request is declined before dispatch when execution cannot proceed, not left in another waiting queue. The short source window preserves a recognizable episode and the longer reading window avoids immediate-attention pressure; useful availability is unqualified.
+
+## SP03 — Optional request frequency and priority
+
+**Proposed; Safe.** At most four dispatched glimpse attempts per authenticated human account across worlds in a rolling twenty-four real hours. Dispatched failure/cancellation counts; pre-dispatch refusal does not. Restore, new worlds, voice changes and reconnect cannot reset real-account attempt accounting. Existing funding can stop work earlier. Use the existing single queued/running narration slot with lower optional priority, no automatic paid retry or secondary generation queue. Optional work does not consume ordinary cooldown or introduction milestones; the new cancellation/priority behavior requires NC qualification. Four is a conservative request-count ceiling, not a dollar estimate, daily goal or monetized bypass. Revisit only from useful-reading and interference evidence.
+
+## SP04 — Source and prose envelope
+
+**Proposed; Safe.** One primary occurrence with at most two necessary supporting references; at most 8,000 UTF-8 bytes in the complete retained permitted scene projection. No ordinary personal background is added. One bounded Narrator call yields one to three sentences, at most 500 characters each and 1,200 characters total, within the existing 24,000-byte complete input and 1,800-token output allowance. No minimum prose length. Mandatory facts that do not fit cause refusal, not selective omission; invalid generated text follows NR01. These smaller envelopes contain source review and prose cost. They do not justify reducing any required actor context or prove semantic entailment.
+
+## SP05 — Readable historical presentation
+
+**Proposed; Very safe.** Text-only first presentation in the private Journal; no automatic banners, push reminders, ungenerated unread count, camera move, map pin, remote controls, voiced scene or gameplay reward. Published permitted text has no reading/dismissal timer. Occurrence time and the human/character distinction remain visible. World time and actual needs/danger continue under their existing rules. This gives voluntary reading a small attention footprint; fuller cinematic presentation requires its own demonstrated benefit.
+
+## SP06 — Preference and cancellation scope
+
+**Proposed; Very safe.** Off clears the active anchor and unrequested candidate, stops future capture and cancels pending publication, while preserving valid published entries. On requires a fresh witnessed activity; closing the Journal alone may allow the same already-requested authorized entry to finish privately. Adding a second ordinary human participant or spectator closes the profile before their world access is granted. No abandoned request is automatically resent. These are explicitly new stronger lifecycle requirements; existing source-revision checks alone do not satisfy them.
+
+## SP07 — Source retention and correction
+
+**Proposed; Safe.** Retain only the permitted scene projection and minimum source support; no full private transcript, hidden inventory or NPC biography. Correction/revocation must invalidate derived prose and all reader-facing routes under existing NC/privacy rules. A compact but valid source may continue supporting history; missing evidence cannot be reconstructed from current state. No automatic generation repairs a withdrawal. This retains enough provenance to explain a true historical sentence without secretly retaining excluded material.
+
+## SP08 — Published history and expansion
+
+**Proposed; Medium; lifetime capacity unqualified.** No new automatic expiry or numerical lifetime cap is imposed on already published private Journal entries by DG15; existing NC history, source privacy and recovery policies remain controlling. One-candidate retention and bounded generation limit new additions but do not prove lifetime query or storage capacity. History is not advertised as unlimited free storage. Shared exports, other source families, additional humans and private internal perspectives remain separate selected work, not an automatic scope escalation when the first scene is dull.
+
 ## LA153
 
 **Removed at original audit; not reverified · Restrictiveness: — (removed).**

@@ -9,10 +9,14 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the existing four invention families.
 - [Inventable camp containers](camp-containers.md) — proposed material/capacity rules for a nonweapon invention and ordinary camp storage; not yet implemented.
 - [Chosen camp supplies and fire watches](camp-routines.md) — proposed finite methods and one-session care, without automatic goals or learned conditional policies.
+- [Light canopies and useful shelter](editable-shelters.md) — proposed finite materials, two arrangements, reversible work and nonpunitive moisture for DG13; runtime remains open.
+- [Sling handling, practice and coaching](practical-competence.md) — proposed finite competence gain, real quiet practice and voluntary instruction for DG14; runtime remains open.
+- [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
 - [Combat](combat.md)
 - [Knowledge and observer identity](knowledge.md)
+- [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
 
 ## Code boundary

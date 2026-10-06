@@ -1,5 +1,7 @@
 # OpenLegend limits and decisions
 
+Optional human-outcome research: [well-being evidence inventory](limits/wellbeing-evidence.md) and [HE delivery](maintainers/wellbeing-evidence.md). These are finite proposed study constraints, not current collection or a game-wide well-being policy.
+
 Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md). These scope bounds are not current runtime policy.
 
 Start with [the tracking system](limits/README.md). Feature inventories retain limits, reasons and removal decisions; [Remove / Change / Expand](maintainers/limits-audit.md) contains only pending recommendations. [Feature documentation requirements](feature-documentation.md) explain how future changes keep both synchronized.
@@ -30,11 +32,13 @@ Current [action records and learned activities](action-experience.md): [AEL01–
 
 Product-scalability targets: [PS-L01–PS-L22](limits/product-scalability.md) record proposed operating constraints and unselected values, including the researched continuing-life and attention/scene scopes; [PS01–PS08](maintainers/product-scalability.md) track delivery. The [central decision register](../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns unresolved product choices. Existing runtime inventories above remain controlling until the relevant target is implemented.
 
-Proposed [world creation](projects/world-creation-feature-spec.md): [WC-L01–WC-L05](limits/world-creation.md) inventory the local starting scope, unqualified reference population, supported families and preparation boundaries. ND01, INV-4.10 and EWF12 retain delivery routing; shared invention and participation limits remain controlling.
+Proposed [world creation and invention reuse](projects/world-creation-feature-spec.md): [WC-L01–WC-L12](limits/world-creation.md) inventory local starting scope, unqualified reference population, supported families, preparation, retained definitions, destination checks, dependencies and eligible sharing. ND01/ND12, INV-4.10/INV-8 and EWF11/EWF12 retain delivery routing; shared invention and participation limits remain controlling.
 
-Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L06](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, work growth and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
+Proposed [editable shelters](projects/editable-shelters-feature-spec.md): [SH-L01–SH-L10](limits/editable-shelters.md) inventory light construction/failure, vertical-rain applicability, staged recovery, concrete canopy/material/work proposals, local growth, construction permission and salvage/upkeep choices. ND07/narrow ND08 and INV-6.4 retain delivery; no full weather, structural or fire simulation is implied.
 
-Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L07](limits/authored-stats.md) inventory the finite reference curve, preparation/help, work economics, attempt continuity, staged opposition and bounded authoring/disclosure. ND03 and EWF/INV/action/state owners retain delivery. This does not alter ordinary work, implement social control or adopt ND04 progression.
+Proposed [authored stats and checks](projects/authored-stats-feature-spec.md): [ST-L01–ST-L13](limits/authored-stats.md) preserve the optional reference curve and add the selected finite sling-handling, practice/target/coaching, evidence and disclosure proposals. DG14/ND03/ND04 practical scope uses [PC](maintainers/practical-competence.md) and shared EWF/INV/action/state owners. No runtime effect, universal XP, social control or personality change is delivered.
+
+Proposed [After you left story perspective](projects/story-perspectives-feature-spec.md): [SP01–SP08](limits/narration.md#sp01--selected-external-perspective) inventory the selected private-world source family, voluntary candidate/request bounds, publication priority, presentation and retention. [NC20](maintainers/narration-and-conversations.md#nc20--optional-after-you-left-perspective) consumes existing NC execution/privacy/history; current cutaways and private-thought modes remain disabled.
 
 ## Original audit entries
 
