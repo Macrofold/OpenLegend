@@ -1,8 +1,8 @@
 # Open Legend: whole-interface technical design
 
-| Status      | Current progress                                                                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The whole-interface implementation candidate is delivered; authenticated native integration, broader input and uncoached-player acceptance remain open. | 2026-10-06   |
+| Status      | Current progress                                                                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Whole-interface research, design and the implementation candidate are in place; complete gameplay and real-input/player qualification remain open. | 2026-10-06   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
