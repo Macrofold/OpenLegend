@@ -30,7 +30,7 @@ jobs:
       - name: Replay only exact reviewed resolutions and preserve other conflicts
         run: |
           python3 - <<'PY'
-          import hashlib, json, os, pathlib, re, subprocess, tarfile
+          import hashlib, json, os, pathlib, re, subprocess, tarfile, zipfile
           out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-reconciliation'
           out.mkdir()
           before, old, new = os.environ['GITHUB_SHA'], os.environ['OLD_BASE'], os.environ['NEW_BASE']
@@ -55,6 +55,7 @@ jobs:
               '751525b3cb5b459a7dba47d55bd16d568b03a1b3': ('docs/maintainers/performance-profiling.md', 1),
               '21c16580c1830b1e83c6cb2fce42539d548123fb': ('docs/projects/shadow-quality-feature-spec.md', 1),
               'b7ceb27c64017e9adad942f2ef2145cae45c70ac': ('docs/projects/shadow-quality-tech-design.md', 2),
+              '666a454f75f5b5aba660a7bb0db4ac6dd3b3b2cf': ('docs/projects/parallel-batch-03-personal-game-feature-spec.md', 1),
           }
           while result.returncode:
               stopped = git('rev-parse', 'REBASE_HEAD').decode().strip()
@@ -74,6 +75,12 @@ jobs:
                           assert shared.count('refused before migrations.') == 1
                           assert theirs == shared.replace('refused before migrations.', 'refused before disposable-fixture initialization.'), 'changed profiler conflict'
                           replacement = ours.replace('refused before migrations.', 'refused before disposable-fixture initialization.')
+                      elif stopped.startswith('666a454f'):
+                          assert "PG03 and scoped PG04 are delivered; PG01's exact billing hold, PG02/PG05 and broader PF05 qualification remain open." in ours
+                          assert 'PG02, PG03 and PG04 are underway on separate branches; integrated delivery and the remaining acceptance are open.' in theirs
+                          assert ours.startswith('| Status') and theirs.startswith('| Status')
+                          assert 'PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.' in ours
+                          replacement = ours
                       elif ours.startswith('| Status'):
                           assert 'Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open.' in ours
                           assert 'Artwork-aligned shadows and the supplied model are delivered; frame-time, combined-model and physical-device qualification remain open.' in theirs
@@ -116,6 +123,28 @@ jobs:
           (out / 'review.patch').write_bytes(git('diff', '--binary', new, 'HEAD'))
           (out / 'after.txt').write_bytes(git('rev-parse', 'HEAD'))
           subprocess.run(['git', 'bundle', 'create', str(out / 'replay.bundle'), 'HEAD'], check=True)
+          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          for ref, label in [(before, 'original'), (new, 'main'), ('HEAD', 'replayed')]:
+              inventory = []
+              with zipfile.ZipFile(out / f'{label}-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+                  for entry in git('ls-tree', '-r', '-z', ref).split(b'\0'):
+                      if not entry:
+                          continue
+                      metadata, raw_name = entry.split(b'\t', 1)
+                      mode, kind, sha = metadata.decode().split()
+                      name = raw_name.decode()
+                      path = pathlib.PurePosixPath(name)
+                      row = {'path': name, 'git_sha': sha, 'included': False}
+                      if kind == 'blob' and mode != '120000' and (path.suffix in extensions or name in ('LICENSE', '.env.example', '.prettierignore', '.gitignore')):
+                          data = git('show', f'{ref}:{name}')
+                          text = data.decode('utf-8')
+                          if 'archive' not in path.parts:
+                              archive.writestr(name, data)
+                              row.update(included=True, sha256=hashlib.sha256(data).hexdigest())
+                          elif path.suffix == '.md':
+                              row['headings'] = [line for line in text.splitlines() if line.startswith('#')]
+                      inventory.append(row)
+                  archive.writestr('_review_inventory.json', json.dumps({'revision': git('rev-parse', ref).decode().strip(), 'files': inventory}, indent=2))
           print(rangediff.decode())
           print('Replay prepared only; no remote ref updated.')
           PY
