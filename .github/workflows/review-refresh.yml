@@ -1,0 +1,109 @@
+name: Refresh documentation-review source
+on:
+  push:
+    branches: [docs/full-documentation-review-reconciled-2026-10-03]
+    paths: [.github/workflows/review-refresh.yml]
+permissions:
+  contents: write
+concurrency:
+  group: documentation-review-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: review-refresh
+    env:
+      AI_BUDGET_USD: '0'
+      OLD_BASE: d36ec3bd66f9b317748147003cc174f58cfd5642
+      NEW_BASE: 34bfbc316394fc884dfd5f84fe1ce3607ea410a6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: review-refresh
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Replay unchanged review commits or preserve exact conflicts
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess, zipfile
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'review-refresh'
+          out.mkdir()
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          old, new, before = os.environ['OLD_BASE'], os.environ['NEW_BASE'], os.environ['GITHUB_SHA']
+          assert git('merge-base', before, new).decode().strip() == old
+          assert not git('status', '--porcelain')
+          (out / 'refs.json').write_text(json.dumps({'before': before, 'old_base': old, 'new_base': new, 'checkout': str(pathlib.Path.cwd())}, indent=2))
+          (out / 'upstream.patch').write_bytes(git('diff', old, new))
+          subprocess.run(['git', 'config', 'user.name', 'OpenLegend documentation review'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          result = subprocess.run(['git', 'rebase', '--onto', new, old], env=dict(os.environ, GIT_EDITOR='true'))
+          if result.returncode:
+              names = [p for p in git('diff', '--name-only', '--diff-filter=U', '-z').decode().split('\0') if p]
+              (out / 'stopped-commit.txt').write_bytes(git('rev-parse', 'REBASE_HEAD'))
+              (out / 'conflicts.diff').write_bytes(git('diff', '--cc'))
+              with zipfile.ZipFile(out / 'conflict-stages.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+                  for name in names:
+                      for stage in (1, 2, 3):
+                          data = subprocess.run(['git', 'show', f':{stage}:{name}'], capture_output=True)
+                          if data.returncode == 0:
+                              archive.writestr(f'stage-{stage}/{name}', data.stdout)
+                  for path in pathlib.Path('.git/rebase-merge').glob('*'):
+                      if path.is_file():
+                          archive.write(path, 'rebase-state/' + path.name)
+              raise SystemExit('Conflict preserved; review branch has not been rewritten.')
+          (out / 'range-diff.txt').write_bytes(git('range-diff', '--no-color', f'{old}..{before}', f'{new}..HEAD'))
+          (out / 'after.txt').write_bytes(git('rev-parse', 'HEAD'))
+          (out / 'review.patch').write_bytes(git('diff', new, 'HEAD'))
+          subprocess.run(['git', 'diff', '--check', new, 'HEAD'], check=True)
+          with zipfile.ZipFile(out / 'source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              inventory = []
+              for row in git('ls-tree', '-r', '-z', '--long', 'HEAD').split(b'\0'):
+                  if not row:
+                      continue
+                  meta, raw = row.split(b'\t', 1)
+                  mode, kind, sha, size = meta.decode().split()
+                  name = raw.decode()
+                  path = pathlib.Path(name)
+                  entry = {'path': name, 'git_sha': sha, 'included': False}
+                  if kind == 'blob' and mode != '120000':
+                      try:
+                          data = path.read_bytes()
+                          text = data.decode('utf-8')
+                      except (UnicodeDecodeError, OSError):
+                          inventory.append(entry)
+                          continue
+                      if 'archive' not in path.parts:
+                          archive.writestr(name, data)
+                          entry['included'] = True
+                      else:
+                          entry['headings'] = [line for line in text.splitlines() if line.startswith('#')]
+                  inventory.append(entry)
+              archive.writestr('_review_inventory.json', json.dumps({'revision': git('rev-parse', 'HEAD').decode().strip(), 'files': inventory}, indent=2))
+          PY
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: review-refresh/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check guidance
+        run: |
+          pnpm install --ignore-scripts --frozen-lockfile
+          pnpm guidance:check
+      - name: Publish only a clean replay with an exact lease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git -c 'credential.helper=!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f' push --force-with-lease=refs/heads/docs/full-documentation-review-reconciled-2026-10-03:${{ github.sha }} origin HEAD:refs/heads/docs/full-documentation-review-reconciled-2026-10-03
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review-refresh-34bfbc3
+          path: ${{ runner.temp }}/review-refresh/
+          retention-days: 7
+          if-no-files-found: error
