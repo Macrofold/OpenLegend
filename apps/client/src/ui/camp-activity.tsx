@@ -818,6 +818,22 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       }}
       onPointerDown={(event) => event.stopPropagation()}
     >
+      {unresolved && (
+        <div className="ol-task-recovery" role="status">
+          <p>
+            Awaiting the exact result of {unresolved.action.label}. Current work alone does not
+            prove whether this request arrived.
+          </p>
+          <Button
+            variant="quiet"
+            disabled={unavailable || !!operation || recovering}
+            busy={recovering}
+            onPress={() => void recover()}
+          >
+            Check request result
+          </Button>
+        </div>
+      )}
       {(!entry || activity || working || !preparing) && (
         <Section title="Current work">
           {activity ? (
@@ -1102,24 +1118,8 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           </details>
         </Section>
       )}
-      {unresolved && (
-        <div className="ol-task-recovery" role="status">
-          <p>
-            Awaiting the exact result of {unresolved.action.label}. Current work alone does not
-            prove whether this request arrived.
-          </p>
-          <Button
-            variant="quiet"
-            disabled={unavailable || !!operation || recovering}
-            busy={recovering}
-            onPress={() => void recover()}
-          >
-            Check request result
-          </Button>
-        </div>
-      )}
       {preparing && !unavailable && entry && presentation && bound && (
-        <div className="ol-actions ol-task-submit">
+        <div className="ol-actions ol-task-submit" data-unresolved={!!unresolved || undefined}>
           <Button
             id={`${fieldId}-start`}
             variant="primary"

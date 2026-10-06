@@ -162,3 +162,6 @@
   background: var(--surface);
   border-block-start: 1px solid var(--line);
 }
+.ol-task-submit[data-unresolved] {
+  position: static;
+}
