@@ -18,7 +18,7 @@ Factorio's developers reported that a separate agricultural production chain fel
 
 ## 2. Current foundation and the actual missing behavior
 
-The baseline audit uses main `ce68e678ebe7589ae34db9fe7942782dbccbe7a5`. Current canonical contracts, rather than older survival examples, control what already works.
+The initial baseline audit uses main `ce68e678ebe7589ae34db9fe7942782dbccbe7a5`. A later source refresh inspected main `34233ae24365eb8911fe1995c9c232bd57f34616`, including the [current action-availability contract](https://github.com/Macrofold/OpenLegend/blob/34233ae24365eb8911fe1995c9c232bd57f34616/docs/action-capabilities.md#action-availability-and-temporary-execution), ordinary exact target/item selection and the [coached live container journey](https://github.com/Macrofold/OpenLegend/blob/34233ae24365eb8911fe1995c9c232bd57f34616/docs/verification/camp-life.md#live-player-journey--october-4-2026). Those newer changes improve discovery, explanation and qualified player use; they do not add food aging or renewal. Current canonical contracts, rather than older survival examples, control what already works.
 
 | Current behavior                                                                                                                                                                                  | Consequence for this proposal                                                                                                                           |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -154,6 +154,8 @@ The [flow calculation](../worlds/base/changing-supplies.md#5-four-renewing-patch
 ## 8. What people know and how the interface helps
 
 The inventory's primary food row shows its name, quantity, usable/spoiled condition and a concise remaining-life estimate where that information is permitted. The estimate is in **game time while the world advances**, with the normal-speed real-time equivalent available in explanation. The recipe's maximum shelf life is identified as a maximum for fresh output, not the current lot's deadline.
+
+Reuse the already delivered persistent action details, exact material/target choices, readable blockers, search and bounded result paging. These controls do not already implement freshness. Current choices describe the last completed permitted read; newly available nearby targets may require the existing Refresh action, and execution always rechecks. The new condition consumer must keep the selected food's displayed facts truthful without position-only polling, scanning everybody's possessions or moving a focused choice as time passes.
 
 Detailed inspection can explain why two portions differ: this food is older, this was successfully preserved, or this offer was observed earlier. It must not disclose an unseen killer, a private cook's thoughts or an inaccessible container. In this first world, the condition estimate is an authored inspection affordance, not a claim that appearance reveals a precise real-world expiry date.
 
