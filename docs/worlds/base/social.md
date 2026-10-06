@@ -22,7 +22,7 @@ The fixed parent meaning, two-parent rule and relationship wording belong to thi
 
 ## Feelings
 
-[Bundled appraisal definitions](../../../packages/domain/src/worlds/base/appraisals.ts) supply fear/discomfort, persistent grief, condition-sustained restlessness and recurring calm examples. Only the compatibility damage reactions run by default: positive shot/strike damage maps to fear; supported negative body-health effects map to discomfort. Numeric pacing belongs to the [world defaults inventory](../../limits/base-world.md#bw02) and [decay entry](../../limits/feelings.md#la081).
+[Bundled appraisal definitions](../../../packages/domain/src/worlds/base/appraisals.ts) supply fear/discomfort, persistent grief, condition-sustained restlessness and recurring calm examples. Only the existing world-authored damage reactions run by default: positive shot/strike damage maps to fear; supported negative body-health effects map to discomfort. Numeric pacing belongs to the [world defaults inventory](../../limits/base-world.md#bw02) and [decay entry](../../limits/feelings.md#la081).
 
 Installed definitions are not automatic actor enrollment. Kinship and personality prose do not cause grief or enroll restlessness/calm processes by themselves. A valid admitted cause/process is required. Feelings can persist, expire, decay or follow a supported enduring condition through the native owner; they do not force a human's choices.
 
@@ -49,14 +49,14 @@ The English parser and gathering interpretation currently live beside reusable o
 Handing carried items to another person is a consent exchange, owned by `packages/domain/src/handover.ts` with world values in `worlds/base/handover.ts`:
 
 - **Offering** holds out a quantity of one carried portable lot to a person the offerer can see within arm's reach (the saved item-handling reach). It moves nothing and reserves nothing.
-- **Accepting** can be done only by the named recipient, through their own command. The items move atomically into the recipient's own inventory through the ordinary custody owner. The offer must not have expired; both people must be alive, active and able to see each other within reach; and the offerer must still carry that lot, with enough free units and unchanged bag contents.
+- **Accepting** can be done only by the named recipient, through their own command. The items move atomically into the recipient's own inventory through the ordinary custody owner; their declared ownership is unchanged. Receiving custody is not a general title transfer or a grant of additional construction/alteration rights. The offer must not have expired; both people must be alive, active and able to see each other within reach; and the offerer must still carry that lot, with enough free units and unchanged bag contents.
 - **Declining**, by the recipient, or **withdrawing**, by the offerer, moves nothing.
 - **Expiry:** an unanswered offer expires after **30 game minutes** (30 wall seconds at 1×).
 - **Lapse:** an offer lapses at the next simulation moment if its items leave the offerer, change, or are needed by work, or if either person dies, becomes incapacitated or leaves.
 
 Nobody else can accept, decline or withdraw an offer, and an offer never transfers anything on its own. A person may hold out at most three offers at once, and a lot can be in only one offer. Bags are offered whole, and offer text never lists their contents. A bag carrying an access grant must have it cleared first. Partial quantities of individual objects are refused.
 
-For example, Mike holds out two Wild berries to Ada. If she accepts, the berries become hers. If she declines, ignores the offer or Mike withdraws it, nothing moves. If Mike eats them first, her acceptance is refused with “The offered items are no longer available.” Refusal messages never name the other person or explain their private circumstances. The offer and its outcome are ordinary visible events. Only the offer itself is notable enough to invite an NPC recipient to decide.
+For example, Mike holds out two Wild berries to Ada. If she accepts, the berries move into her possession, retaining any existing declared ownership. If she declines, ignores the offer or Mike withdraws it, nothing moves. If Mike eats them first, her acceptance is refused with “The offered items are no longer available.” Refusal messages never name the other person or explain their private circumstances. The offer and its outcome are ordinary visible events. Only the offer itself is notable enough to invite an NPC recipient to decide.
 
 A character decides through its ordinary choices:
 
