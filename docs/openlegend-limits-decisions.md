@@ -1,5 +1,7 @@
 # OpenLegend limits and decisions
 
+Proposed [durable agreements](projects/durable-agreements-feature-spec.md): [DA-L01–DA-L09](limits/durable-agreements.md) records the first commission, active/pending allowances, owner-local ending, optional advance/association, no currency and growing claims/history. [INV-20.5a–f](maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) owns delivery; existing item, memory and authority limits remain controlling.
+
 Proposed [recovery and care](projects/recovery-and-care-feature-spec.md): [CARE-L01–CARE-L08](limits/recovery-and-care.md) records complete camp recovery, optional field supplies/help, condition scope, time and growing discovery/history. [CARE01–CARE05](maintainers/recovery-and-care.md) retains delivery; current mortality and shared limits are unchanged.
 
 Optional human-outcome research: [well-being evidence inventory](limits/wellbeing-evidence.md) and [HE delivery](maintainers/wellbeing-evidence.md). These are finite proposed study constraints, not current collection or a game-wide well-being policy.

@@ -36,6 +36,10 @@ For each group, read its linked proposals, present contracts, current implementa
 
 ## Completion and verification
 
+### Group 22 completed product design
+
+[Agreements worth coming back to](durable-agreements-feature-spec.md), its [world profile](../worlds/base/durable-agreements.md), [INV-20.5a–f delivery](../maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) and [DA limits](../limits/durable-agreements.md) are complete product proposals, supported by nine primary research records. Review retains PX02’s independent immediate barter, current cheap production, no first currency/default deadline, exact remaining claims and owner-local knowledge. Advance and association are independent later selections; D11/D18/D64 adoption and all runtime qualification remain open. The group was reconciled and committed before drafting DG23.
+
 ### Group 21 completed product design
 
 [Recovery and care](recovery-and-care-feature-spec.md), its [world profile](../worlds/base/recovery-and-care.md), [CARE tracker](../maintainers/recovery-and-care.md) and [limits](../limits/recovery-and-care.md) are complete product proposals. Eight primary research records informed the design. Review removed a compulsory supply cost from ordinary camp recovery, separated field convenience and willing assistance, and preserved scar/need/death consequences. Current death's need-reset incentive is explicitly retained for existing pacing/mortality review. The group was committed before the next group's drafting; all technical/runtime claims remain open.

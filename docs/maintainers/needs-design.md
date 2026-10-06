@@ -227,6 +227,8 @@ ND09's chosen currency and deferred-delivery/default rules, and ND10's sparse pe
 
 **Start and parallel boundary:** Use existing agreement, custody and identity contracts. Decide money issuance/sinks only if currency is selected. This group is independent of real-money service billing. Broader governments, credit/escrow institutions and political powers are DG32 rather than prerequisites for a modest economy. **Existing owners:** INV-20, PO/BW, social/state owners and D11/D18.
 
+**October 6 product proposal complete:** [Agreements worth coming back to](../projects/durable-agreements-feature-spec.md) selects a finite known-output commission paid in goods on actual later delivery, with no default deadline or currency. It consumes PX02's independently useful, still-unimplemented exact barter. Optional advances and a narrowly governed association remain separate deliveries. [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation), the [world profile](../worlds/base/durable-agreements.md) and [DA limits](../limits/durable-agreements.md) preserve exact assent, owner-local ending, actual claims, knowledge and custody. D11/D18/D64 have proposed dispositions; their adoption status and broader currency/institution scope remain open.
+
 #### DG23 — Characters changed by their experience
 
 ND04's personality-change slice and ND19's older-memory transformation or selected dream reinterpretation. Design how experiences alter interpretation and dispositions while preserving factual provenance, obligations and independent decisions. [DG02](#dg02--one-resident-who-follows-through) and [CE](character-experience.md) already own a multidimensional, compelling initial character and ordinary experience-to-choice continuity; those requirements do not wait for this later transformation work.
@@ -508,6 +510,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select the first reciprocal barter family and player/NPC negotiation journey, mapping its actual items, quantities, offer presentation and fulfillment onto the existing agreement lifecycle. Select whether currency belongs in the first slice; if so, define issuance, sinks, theft/loss and ownership. Choose which deferred delivery, default and dispute consequences that world supports; escrow and interest remain optional. Reuse existing assent/amendment/settlement contracts. Fictional currency is separate from ND22–ND23 real-money accounts.
 
+**October 6 product design:** [DG22’s commission, change and default rules](../projects/durable-agreements-feature-spec.md) now select the narrow family above PX02 barter, with optional unsecured advance and no currency in the first delivery. [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) retains technical/runtime work; D64 management is a proposed disposition pending adoption. A later currency still needs its own actual exchange need and full circulation choices under D11/R09.
+
 ### ND10 — Persistent groups, shared ownership and in-world institutions
 
 **Conditional scoped design.** Source: [institutions without a mandatory government system](../../archive/03-design-proposals/world-and-player-experience.md#institutions-without-a-mandatory-government-system), with D18's unsettled starting social organization.
@@ -515,6 +519,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** conversations, commitments, permissioned containers, actor knowledge and [INV-20 social families](inventions-and-world-evolution.md) have their own contracts or tracked foundations. Account roles and creator privileges already belong to [MP](multiplayer.md). A character calling something a company or government does not create its mechanics.
 
 **Needed before an implementation project:** select one useful group or recurring cooperative arrangement. Specify membership, shared property/goals, delegation, obligations, notices, disputes and dissolution only as that use case requires. Decide whether a formal organization record is needed and which facts each observer knows. Preserve the separation between fictional institutions and platform access/billing authority; do not prescribe a starting government or implement every repertoire institution.
+
+**October 6 scoped product design:** [DG22’s optional small association](../projects/durable-agreements-feature-spec.md#9-optional-small-association) now specifies voluntary membership, narrow record stewardship, accepted custodial responsibility, known history and dissolution without implied property/access or platform powers. It is independent of the first commission. Ordinary shared-property rights require their real PO consumer; formal corporate title and wider institutions remain DG32. No organization is added to the current starting world.
 
 ### ND11 — Human conflict/recovery and NPC ghost continuity
 
