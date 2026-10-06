@@ -1,0 +1,56 @@
+# Batch 05 — Adventure, defense and a home
+
+**Proposed October 5, 2026; no runtime implementation or verification is closed by this plan.** Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
+
+## AV01 — Rewarding expeditions
+
+- [ ] Deliver two reachable, distinctive destinations, truthful physical clues, a finite usable spear and an exact learnable production method under the [world profile](../worlds/base/rewarding-expeditions.md).
+- [ ] Deliver recipe-record inspection/learning through ordinary object, knowledge and action owners; never grant stock, fabrication, unrelated knowledge or hidden contents.
+- [ ] Consume supplied PX03 known-place behavior and incoming PG05/PX01 threat rules; complete the route → reward use → recipe → real manufacture/use journey and the feature's meaningful failure/continuity cases.
+- [ ] Reconcile the technical design's parent map and record actual player/native/model evidence separately.
+
+**Readiness:** physical content/record work can start on the inspected main. Full discovery needs PX03; dangerous-route qualification needs incoming threat integration; final two-handed spear integration consumes AV02. **Parents:** NC09–NC12's exposure subset, INV-4/INV-7, AC09/AC11, BW authored content and PO custody. Exact implementation and acceptance: [AV01 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av01--sites-rewards-and-physical-recipe-records).
+
+## AV02 — Shield defense and compatible equipment
+
+- [ ] Replace single-equipped-item authority with admitted body-port attachment through the existing object owner; update all current callers, cleanup and current-format validation together.
+- [ ] Deliver known shield manufacture, finite family authoring, readable knife/shield versus two-handed equipment, auto-equip conflict explanation and one chosen guard.
+- [ ] Integrate one current contact-defense/damage owner; complete real front/late/rear/miss/cancel/expiry/concurrent-impact and lifecycle/transfer/restore acceptance.
+- [ ] Reconcile AC/PO/EWF/INV/BW/UIUX affected requirements and the [shield profile](../worlds/base/shield-defense.md), preserving supplied death/PvP decisions.
+
+**Readiness:** starts after the owner supplies integrated incoming threat/lifecycle work (`codex/pg05-first-threat` inspected at `75e8c82e`). Do not duplicate PG05/PX01. **Consumers:** AV04's cloak uses this equipment owner; AV03/AV05 do not create alternate equipment stores. [AV02 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
+
+## AV03 — Useful competence and voluntary coaching
+
+- [ ] Complete PC02's scoped technical counterpart and implement PC03's actual-use progression, inert target and private progress.
+- [ ] Deliver PC04's two genuine consents, observed shot, chosen feedback and refusal/interruption, distinct from recipe teaching and method learning.
+- [ ] Complete PC05 continuity/correction/cost and PC06 game-value qualification under the existing exact world profile; no beginner nerf or mandatory target grind.
+- [ ] Reconcile [PC](practical-competence.md), DG14/ND03/ND04's scoped portion, EWF/SC/AE/AG/CE consumers and actual evidence.
+
+**Readiness:** current main plus this plan; existing sling release, typed state and action evidence are available. Coaching owns its finite episode and does not depend on PX04's trip controller. [AV03 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience). The numerical effect is selected product scope, not proven enjoyment.
+
+## AV04 — A usable editable shelter
+
+- [ ] Supply PX05's complete technical design before implementing its selected structural family; preserve existing product/world decisions.
+- [ ] Implement real phased construction, part identity, builder/material permission, geometry/coverage, rest/visitor use and selected rain/moisture.
+- [ ] Implement extension, cloak use through AV02, safe support failure, material-preserving alteration/reclaim and complete current-format continuity.
+- [ ] Complete the selected canopy/two-bay acceptance and reconcile PX05/DG13/ND07/shelter-only ND08, INV-6.4 and affected SW/PO/SC/BW work. Do not close general construction or rain/heat systems.
+
+**Readiness:** PX05 technical design is a required earlier-wave deliverable. Construction can proceed after that delivery; final wearing/attachment integration also needs AV02. [AV04 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av04--real-construction-and-useful-shelter).
+
+## AV05 — River fishing and world-defined cooking
+
+- [ ] Replace the meat-only cooking assumption with installed world preparation definitions through one existing work/effect owner, preserving current meat behavior.
+- [ ] Deliver the known tool, two real bank sources, one finite chosen cast, conserved stock/randomness and ordinary catch items under the [world profile](../worlds/base/river-fishing.md).
+- [ ] Deliver cook/eat/pack/offer integration, relevant voluntary NPC choices and complete empty/exhausted/blocked/canceled/concurrent/heat-loss/restore acceptance.
+- [ ] Reconcile BW06's specific cooking boundary and affected AC/INV-6/PO/AE/AG13 food scope; retain broader ecology and autonomy acceptance.
+
+**Readiness:** current main plus this plan. Uses an exact reserved work tool, not AV02's new held slot. No dependence on barter, shelters, competence or PX03 to fish/cook/eat. [AV05 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av05--finite-casts-and-preparation-definitions).
+
+## Combined completion
+
+- [ ] Incoming prerequisites and the five changes are integrated with one owner for equipment, contact injury, practice, construction and cooking; no parallel old/new writable representations remain.
+- [ ] Ordinary play can explore, gain/use rewards, defend or escape, learn optionally, obtain a different meal and use an altered shelter, then return with the same actual consequences. No forced itinerary, canned NPC acceptance or mandatory skill/home penalty is introduced.
+- [ ] Actual relevant verification, defects, limitations and affected parent statuses are reconciled. Only then mark the batch complete and move its project documents together under the repository's completion policy.
+
+The owner supplies prerequisite revisions and integration order; no agent-to-agent communication is required. This register is allocation/status, not a replacement for parent specifications or broader backlogs.

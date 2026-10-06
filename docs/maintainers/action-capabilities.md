@@ -1,5 +1,7 @@
 # Action capability grounding and activities: delivery tracker
 
+**Next consumers:** [AV01–AV05](parallel-batch-05-adventure-defense-and-home.md) allocate physical recipe learning, compatible shield guard, practice/coaching, supplied shelter construction and finite fishing/general preparation. Their [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md) extend existing action, result and preview owners. AC09/AC10/AC11 and broader acceptance stay open; no runtime checkbox changes in this planning allocation.
+
 **Status: delivery and acceptance tracker.** A narrow native slice is implemented; unchecked tasks retain broader scope or qualification requirements. Current runtime facts and evidence are linked below. This is the focused subtracker for the detailed parameterized invocation and activity contract beneath AG05, with AG03 continuation and INV-3 family integration. It does not replace their IDs, reset their checkboxes, or duplicate their complete acceptance programs.
 
 The [capability specification](../action-capabilities.md) owns behavior/contracts. The [action repertoire](../repertoires/actions.md) owns example intents. [Architecture](../architecture.md) owns current facts; [Verification](../verification.md) owns actual evidence. The [maintainer index](README.md) remains navigation only. The [playable-game priority policy](../repertoires/gameplay-priorities.md) owns product selection; this technical tracker does not override it.

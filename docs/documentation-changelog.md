@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-05 — Batch 05: adventure, defense and a home
+
+Prepared [five implementation assignments](projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md) after batches 03/04: worthwhile expedition rewards, compatible shield defense, finite practice/coaching, real editable shelter and fishing with world-defined preparation. The [technical definitions](projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [prompts](projects/parallel-batch-05-adventure-defense-and-home-prompts.md) and [AV tracker](maintainers/parallel-batch-05-adventure-defense-and-home.md) provide ownership, dependencies, acceptance and parent reconciliation. Current repertoire priorities and actual main/branch evidence explain the selections and deferred alternatives; the recent DG11–DG15 product work does not automatically outrank missing gameplay.
+
+Numbering advances to 05 without renaming already numbered batches or changing their stable work IDs. The incoming first-threat branch is evidence of delivered separate work, not an integrated-main claim. PX03 and PX05 remain supplied prerequisites, and shelter wearing consumes the new equipment owner. Proposed authored content and restrictions are labeled separately from runtime truth. No implementation, playtest, developer mortality decision, task dispatch or broader parent completion is asserted.
+
 ## 2026-10-05 — Product designs for groups 11–15
 
 Completed the [five-group product-design assignment](projects/completed/product-design-groups-11-15.md) against refreshed main, with 54 added primary-source research entries, concrete behavior, economic limits, scenarios and independent review. The individual feature projects remain active; no study operation, runtime implementation or private-thought disclosure is delivered by this documentation.

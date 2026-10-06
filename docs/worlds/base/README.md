@@ -5,6 +5,9 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 ## Mechanics
 
 - [Starting wilderness, terrain and population](landscape.md)
+- [Useful discoveries beyond the clearing](rewarding-expeditions.md) — proposed finite expedition rewards and physical recipe learning for AV01.
+- [Held shields and chosen defense](shield-defense.md) — proposed compatible equipment and finite contact guard for AV02.
+- [A river catch becomes a meal](river-fishing.md) — proposed finite fishing and world-defined cooking for AV05.
 - [Items, ground piles and possession](items.md)
 - [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the existing four invention families.
 - [Inventable camp containers](camp-containers.md) — proposed material/capacity rules for a nonweapon invention and ordinary camp storage; not yet implemented.
