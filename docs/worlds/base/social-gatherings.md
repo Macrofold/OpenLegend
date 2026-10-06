@@ -14,16 +14,16 @@ The human can explain, ask, demonstrate a supported use, offer the object, retai
 
 ## First attended selection
 
-| Authored choice | Selected first profile | Reason and restriction |
-| --- | --- | --- |
-| Attendance | One human and the existing two residents; a smaller exchange remains valid if someone declines | Enough for a real difference of opinion and group reading without generating a town. Three is a qualification arrangement, not a universal conversation maximum. |
-| Place | Existing reachable camp space, with actual sight and acoustic access | No hall, stage, seating system, invitation board or new construction is required. Placement does not override perception. |
-| Matter | A known real made object, its actual use, or the participants' current related interest | The player brings their own achievement or curiosity; no hidden-answer presentation or mandatory agenda. Subjects may change naturally. |
-| Language | Current exact instantaneous speech; no new aggregate masking in this stage | The full encounter can succeed before DG26 or a new crowd acoustic family. Current per-listener fragments and source uncertainty remain. |
-| Time | Current world clock and ordinary controls; no fixed meeting timer, daily reset or attendance reward | The gathering ends through real participation and decisions. Reading preferences do not stop bodily needs or lengthen sound. |
-| Physical effects | Existing inspection, holding, dropping, work, native item offers/acceptance and supported uses | A fluent account cannot create a test result, grant a method or move an object. |
-| Social direction | Independent resident choice with ordinary ability to refuse, remain silent, change subject or leave | Neither a host role nor the human's interest scripts other people. |
-| Hosting | Attended play under existing authorization and service settings | This does not require funded empty-world service or extend DG17's unattended offer. |
+| Authored choice  | Selected first profile                                                                              | Reason and restriction                                                                                                                                           |
+| ---------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Attendance       | One human and the existing two residents; a smaller exchange remains valid if someone declines      | Enough for a real difference of opinion and group reading without generating a town. Three is a qualification arrangement, not a universal conversation maximum. |
+| Place            | Existing reachable camp space, with actual sight and acoustic access                                | No hall, stage, seating system, invitation board or new construction is required. Placement does not override perception.                                        |
+| Matter           | A known real made object, its actual use, or the participants' current related interest             | The player brings their own achievement or curiosity; no hidden-answer presentation or mandatory agenda. Subjects may change naturally.                          |
+| Language         | Current exact instantaneous speech; no new aggregate masking in this stage                          | The full encounter can succeed before DG26 or a new crowd acoustic family. Current per-listener fragments and source uncertainty remain.                         |
+| Time             | Current world clock and ordinary controls; no fixed meeting timer, daily reset or attendance reward | The gathering ends through real participation and decisions. Reading preferences do not stop bodily needs or lengthen sound.                                     |
+| Physical effects | Existing inspection, possession, dropping, work, native item offers/acceptance and supported uses   | A fluent account cannot create a test result, grant a method or move an object.                                                                                  |
+| Social direction | Independent resident choice with ordinary ability to refuse, remain silent, change subject or leave | Neither a host role nor the human's interest scripts other people.                                                                                               |
+| Hosting          | Attended play under existing authorization and service settings                                     | This does not require funded empty-world service or extend DG17's unattended offer.                                                                              |
 
 The intended interaction does not require choosing Listen to separately from ordinary Talk. The shared conversation reading extension belongs to the feature spec; the next addressed person stays explicit. Other people hear only through current rules and may act on that evidence independently.
 
@@ -35,9 +35,9 @@ Current conversation inactivity and maximum hearing continuity remain their own 
 
 Show an object through actual permitted presence, inspection or an existing action. A visible model proves its appearance and presence, not every hidden property. A person's description of how it performed is testimony unless the listener witnessed the use or has another supported source.
 
-The current woven container helps organize and share actual supplies. It does not increase carrying strength, preserve freshness or create waterproof storage. The gathering can reveal a desired improvement without pretending it already exists. The human can submit that idea through the ordinary invention owner and continue other play while it is considered.
+The implemented [woven-container family](camp-containers.md#purpose-and-supported-effect) supports organizing and sharing actual supplies; combined voluntary use remains subject to its recorded qualification. It does not increase carrying strength, preserve freshness or create waterproof storage. The gathering can reveal a desired improvement without pretending it already exists. The human can submit that idea through the ordinary invention owner and continue other play while it is considered.
 
-Dropping an object creates its normal grounded custody/access situation; it is not a protected display case. If retaining control matters, show it while held or use the native offer operation. An offer moves and reserves nothing, and only the named recipient's actual acceptance moves custody after current checks. Refusal, withdrawal and expiry leave the object where the actual owner rules put it. An accepted handover does not invent a formal loan or guaranteed return.
+Dropping an object creates its normal grounded custody/access situation; it is not a protected display case. For direct visual inspection, the supported baseline is a visible ground pile and its permitted contents. Merely carrying or equipping an item does not grant every bystander an inspectable view of it or its hidden properties. If retaining custody matters, the human can discuss their experience as testimony, or deliberately use the native directed offer with its actual recipient disclosure and acceptance behavior. That is a real offer, not a harmless display action that forbids acceptance. An offer moves and reserves nothing, and only the named recipient's actual acceptance moves custody after current checks. Refusal, withdrawal and expiry leave the object where the actual owner rules put it. An accepted handover does not invent a formal loan or guaranteed return.
 
 The social consequence can be real even without a new numerical reward. A resident may later recall the maker's care, the failed attempt or a disagreement, through their permitted experience and current interpretation. The design does not assign an automatic positive relationship change or compel a future compliment.
 
@@ -81,4 +81,3 @@ Compare the initial exact gathering with the later gist and busy versions. Keep 
 - Limits and constraints: [PS-L28–33](../../limits/product-scalability.md) own the proposed profile and behavior restrictions; unchanged [hearing limits](../../limits/hearing-and-speech.md) retain current acoustic and caption tuning.
 - Common proposal: [attention, crowds and scenes](../../projects/attention-and-scenes-feature-spec.md#17-dg18--something-worth-showing-and-a-gathering-worth-joining).
 - Current world behavior: [containers](camp-containers.md), [survival](survival.md), [time](time.md) and [participation/protection](lifecycle-and-protection.md).
-
