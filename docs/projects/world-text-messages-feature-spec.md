@@ -1,8 +1,8 @@
 # Keep in touch across an outing
 
-| Status      | Current progress                                                                                                 | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG24 product draft; research and review are being reconciled. No remote-message capability is currently claimed. | 2026-10-06   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG24 product proposal complete; NC22 technical/runtime delivery and private correspondence qualification remain open. | 2026-10-06   |
 
 This specifies DG24 and ND14's contacts/asynchronous-text scope. The [authored world profile](../worlds/base/text-messages.md) selects a concrete later-world communicator. NC/MP/CR retain communication, private evidence, participation and delivery work. Calls and voice remain DG26. This is a product proposal, not an addition to current primitive starts or a technical architecture.
 
@@ -12,7 +12,7 @@ Two people meet, choose to stay in touch, then pursue separate activities. Later
 
 The value is continuity across distance and separate sessions. A message can spare a pointless search, preserve an invitation, explain a delay or make a reunion possible. It does not transport the berries, establish an agreement by implication, expose the recipient's location or require a reply. Current small crafts can take only seconds; “notify me when this pouch is ready” is not sufficient justification for a whole correspondence system. [DG22's production arithmetic](../worlds/base/durable-agreements.md#actual-production-economics) makes that comparison concrete.
 
-The first experience uses **one-to-one plain text between consenting known contacts**, through a real installed world affordance. Human-to-human delivery is independently useful and requires no language-model call. An NPC becomes a correspondent only after its reading, voluntary response and derived-private-evidence behavior are complete. There is no automatic assistant answering service attached to every resident.
+The first experience uses **one-to-one plain text between consenting known contacts**, through a real installed world affordance. Human-to-human delivery is independently useful and requires no language-model call. An NPC becomes a correspondent only after its reading, voluntary response and derived-private-evidence behavior are complete. There is no automatic assistant answering service attached to every resident. [TX-R01](#tx-r01--ffxiv-a-world-service-can-bridge-separate-play-sessions), [TX-R03](#tx-r03--animal-crossing-correspondence-can-serve-ordinary-relationships).
 
 ## 2. Current reality and the missing consumer
 
@@ -36,13 +36,15 @@ Reading new messages and sending require that living, awake, participating perso
 
 Contacts, accepted message history and receipt evidence belong to the person and permitted participants, not the physical item's inventory. A finder gets the actual lost object, not its owner's private text or identity authority. The owner can revoke a lost device and manage their own blocking preferences without possessing it. Their previously read text remains eligible under ordinary personal memory/history rules; losing a device does not cause amnesia. New unread content still requires a usable communicator to be presented in play.
 
+Activate, Read and Send are immediate admitted communicator operations, with no additional work timer or food/energy fee. Human reading/composition and any actual NPC reasoning still take real attention while ordinary world time and needs advance. Current capability, control and device checks apply at the actual operation, so a preview does not reserve later use.
+
 ## 4. Becoming contacts
 
-The first contact exchange is local and mutual. During an actual clear conversation with a recognized addressed person, choose **Exchange contacts**. The invitation names the specific person using the initiator's legitimate recognition. It explains that acceptance permits each to send private text in this world, without revealing presence, read state or a real-world account identity. No permission to trade, enter property, inspect possessions or command the recipient is included.
+The first contact exchange is local and mutual. During an actual clear conversation with a recognized addressed person, with both operating their own bound devices, choose **Exchange contacts**. The invitation names the specific person using the initiator's legitimate recognition. It explains that acceptance permits each to send private text in this world, without revealing presence, read state or a real-world account identity. No permission to trade, enter property, inspect possessions or command the recipient is included.
 
-The other person can accept, decline or ignore the invitation. An NPC must choose independently through its ordinary admitted decision path; an invitation is not model-generated consent. Acceptance records this exact pair and scope. A duplicate acceptance returns the same contact relationship, not a second address. A newly learned display name changes the local label, not who the contact is.
+The other person can accept, decline or ignore the invitation. An NPC must choose independently through its ordinary admitted decision path; the proposer cannot generate the other person’s assent inside their own reasoning. Acceptance records this exact pair and scope. A duplicate acceptance returns the same contact relationship, not a second address. A newly learned display name changes the local label, not who the contact is. The exchanged address permits persistent correspondence with that person; it does not automatically identify a later visible stranger as them. Duplicate names never merge addresses or transfer an old thread. Labels and optional private contact notes follow existing observer knowledge limits and reveal no global name change.
 
-An invitation remains usable only while the original two people remain eligible for that local exchange. Leaving its local channel, losing clear addressing, death or withdrawal closes it; a later remote acceptance is not supported. The first scope permits one outstanding outgoing contact invitation per actor and one invitation for the pair. Repeating it does not create more notifications or reflection work. A declined or ignored invitation grants no remote channel.
+An invitation remains usable only while the original two people remain eligible for that local exchange. Leaving its local channel, losing clear addressing, death or withdrawal closes it; a later remote acceptance is not supported. The first scope permits one outstanding outgoing contact invitation per actor and one invitation for the pair. Repeating it does not create more notifications or reflection work. A declined or ignored invitation grants no remote channel. Dismissal suppresses another invitation cue for the same local conversation episode. New contact offers share a three-per-sender rolling sixty-real-second allowance; repeated transport of the same offer counts once. The recipient can block further invitations from that stable person. Blocking suppresses both fresh contact invitations and future message arrival; changing devices does not evade it.
 
 There is no world population directory, guessed-name address lookup, invitation by account ID, nearby-phone scan or automatic address-book import. A contact cannot introduce a third person by forwarding an identifier. A new correspondent requires their own consented local exchange. Existing social acquaintance is useful recognition, but it is not standing permission to send remote messages.
 
@@ -60,13 +62,15 @@ The sender sees one of these truthful outcomes:
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Draft                | Only this unsent composition exists. The world has not accepted it.                                                                                                              |
 | Sending              | An explicit submission is awaiting an authoritative result. This does not prove any arrival.                                                                                     |
-| Sent to world        | This world durably accepted the sender's exact message submission. It does not certify recipient arrival, reading, availability or a reply.                                      |
+| Submitted            | This world durably accepted the sender's exact message submission. It does not certify recipient arrival, reading, availability or a reply.                                      |
 | Not sent             | The submission was not accepted, for an own-scope reason the sender may know, such as no usable slate, no current control, invalid text, a sending allowance or service refusal. |
 | Result not confirmed | The connection failed after submission and the client cannot yet tell whether it committed. Resolve the same submission before offering a deliberate new copy.                   |
 
-Use **Sent to world** deliberately: recipient policy is private. A known contact may have blocked new arrivals, lost access, died, or have no usable device. The sender's receipt confirms only their own accepted submission. It is identical with respect to those hidden recipient conditions and must never imply a successful delivery that did not occur. A recipient who currently permits the message gets its actual inbox record; otherwise it does not enter their readable inbox. Text submitted while blocked is not replayed if they later unblock.
+Use **Submitted** deliberately: recipient policy is private. A known contact may have blocked new arrivals, lost access, died, or have no usable device. The sender's receipt confirms only their own accepted submission. It is identical with respect to those hidden recipient conditions and must never imply a successful delivery that did not occur. A recipient who currently permits the message gets its actual inbox record; otherwise it does not enter their readable inbox. Text submitted while blocked is not replayed if they later unblock.
 
-That distinction belongs in concise help beside the status: “Accepted here. Delivery, reading and replies are private.” Do not provide ticks, color changes, counts, error details or timing hints that covertly reveal the hidden recipient state. Ordinary service and own-device failures can remain explicit. The contact chooser's label and last-known identity must not update from hidden world changes.
+The distinction between service acceptance, device delivery and reading is informed by [TX-R06](#tx-r06--signal-sending-delivery-and-reading-are-different-events); the first profile deliberately withholds the latter two. That distinction belongs in concise help beside the status: “Your exact message was accepted privately. Delivery, reading and replies are unconfirmed.” Do not provide ticks, color changes, counts, error details or timing hints that covertly reveal the hidden recipient state. Ordinary service and own-device failures can remain explicit. The contact chooser's label and last-known identity must not update from hidden world changes.
+
+If the sender loses the slate, control or current eligibility before admission, the request cannot become a new send. If admission already committed, later loss does not undo it or turn it into another send on recovery. An uncertain acknowledgement still resolves that original submission, even after a replacement device. Unsent drafts remain private and never auto-submit after return; clear them on account/world change or logout, after the ordinary discard warning where available.
 
 Once accepted, a message cannot be edited, recalled or unsent from the other person's history. A correction is another explicitly sent message, optionally linked to the original. This preserves what the person actually received and any consequent choices. Duplicate delivery or reconnect resolves the original message once; it cannot create another speech event, repeated payment or multiple NPC response opportunities.
 
@@ -78,17 +82,17 @@ The world can accept and retain eligible text while its recipient is asleep, abs
 
 When eligible to use the device, the person can encounter one quiet **Messages waiting** indication. It carries no body preview and does not announce exact unread totals to bystanders. Hide or mute that cue without losing the accepted text. It must not interrupt movement, seize camera/focus, overlap combat controls or keep a departed human's body active. The ordinary attention and participation policies still apply.
 
-Opening an eligible thread presents a bounded page of exact text in its accepted order with sender labels and world times. Presentation creates the recipient's permitted reading experience. It proves the text was made available in play, not that the real human attended to every word, understood it, agreed or intends to answer. Merely receiving an inbox record, loading hidden UI or previewing a row must not count as reading the body.
+Opening an eligible thread preserves the human's reading position, identifies the oldest unread boundary and presents a bounded page of exact text in accepted order with sender labels and original world times. Presentation creates the recipient's permitted reading experience. It proves the text was made available in play, not that the real human attended to every word, understood it, agreed or intends to answer. Merely receiving an inbox record, loading hidden UI or previewing a row must not count as reading the body. The evidence remains “read a message written at X, first presented at Y,” not local heard speech; both times are privately retained, and the recipient's reading time is never sent back.
 
-The person's own unread marker clears for the actual messages presented. There is no outbound read receipt, last-seen time, online indicator, typing indicator or automatic “busy” answer in the first scope. A person can explicitly send “I'm at camp now” or “I'll answer later”; that remains their statement at that time, not a live tracking permission. Marking a thread unread is a personal reminder only and never makes already read text unknown again.
+The person's own unread marker clears for the actual messages presented. There is no outbound read receipt, last-seen time, online indicator, typing indicator or automatic “busy” answer in the first scope. A person can explicitly send “I'm at camp now” or “I'll answer later”; that remains their statement at that time, not a live tracking permission. Marking a thread unread is a personal reminder only and never makes already read text unknown again. [TX-R09](#tx-r09--matrix-private-reading-state-need-not-inform-the-sender) supplies the relevant distinction without requiring its protocol.
 
 ### An NPC chooses when to attend
 
 A qualified NPC receives a coalesced owner-private opportunity that messages are waiting, not an automatic paid generation for each arrival. It can continue a valid activity, attend later, mute a correspondent, read or do nothing. New arrivals while the same cue is pending do not force repeated routing. Reading is a supported native activity; actual message text becomes available only through that permitted operation.
 
-After reading, the resident can decide whether a reply is warranted under ordinary cognition and spend admission. They may answer, ask a question, decline, choose a supported action or remain silent. A delivered text supplies neither a mandatory response nor an urgent survival override. One shared world budget still owns reasoning; there is no new per-message or per-contact inference allowance. No budget or provider availability means no fabricated explanation or automatic answer.
+After reading, the resident can decide whether a reply is warranted under ordinary cognition and spend admission. They may answer, ask a question, decline, choose a supported action or remain silent. A delivered text supplies neither a mandatory response nor an urgent survival override. One shared world budget still owns reasoning; there is no new per-message or per-contact inference allowance. No budget or provider availability means no fabricated explanation or automatic answer. Native reading selects the oldest unread complete messages in the chosen thread and explicitly identifies any remaining unread coverage. A partial page is not the latest settled plan: a later correction may still be unread, so the resident cannot claim it has read the whole exchange.
 
-Sending several short messages should not buy several full AI responses. Coalesce the current permitted unread material within the existing bounded context; retain later material that does not fit for an explicit later reading opportunity. Do not silently omit a required instruction or old promise to produce a fluent answer. The first unread operation has its own small envelope in [the profile](../worlds/base/text-messages.md#limits-and-operating-cost); it does not authorize automatic mailbox draining or paid catch-up.
+Sending several short messages should not buy several full AI responses. Coalesce the current permitted unread material within the existing bounded context; retain later material that does not fit for an explicit later reading opportunity. Do not silently omit a required instruction or old promise to produce a fluent answer. The selected initial autonomous correspondent is an NPC exchanging with a human; autonomous NPC-to-NPC correspondence is a separate later selection, with a complete conversation purpose and spending/termination qualification before it can form reply chains. The first unread operation has its own small envelope in [the profile](../worlds/base/text-messages.md#limits-and-operating-cost); it does not authorize automatic mailbox draining or paid catch-up.
 
 An NPC reply must use the same explicit remote-text route and the current contact/device/authority rules. It cannot fall back to speaking the message aloud. Local conversation remains independently available. A message panel is not active membership in every stored thread, and switching threads does not join, leave or merge local conversations or private histories.
 
@@ -114,7 +118,11 @@ Public-world reporting and platform staff inspection remain their explicitly sel
 
 Blocking is bound to the stable person in this world. A new slate or browser tab cannot bypass it. A third-party contact forward cannot evade the required local consent. Normal world access revocation immediately stops fresh reading/sending under that revoked authority, including delayed results; it does not disclose private reasons or reassign the human's history to a new owner.
 
-An actual lost/destroyed device prevents further operation until a valid replacement is activated. New eligible messages can wait for that person without showing a device-status receipt to senders. Human death/Continue preserves the person and permitted history, while current possession loss can leave the actual device on the separate corpse. Reconnecting does not revive a dead human or summon their slate. A dead NPC does not read, reply or continue as a hidden correspondent; no automatic death notice is sent through the channel.
+An actual lost/destroyed device prevents further operation until a valid replacement is activated. New eligible messages can wait for that person without showing a device-status receipt to senders. Human death/Continue preserves the person and permitted history, while current possession loss can leave the actual device on the separate corpse. Reconnecting does not revive a dead human or summon their slate. A dead NPC does not read, reply or continue as a hidden correspondent; no automatic death notice is sent through the channel. Retained permitted inbox text is not evidence of a living ghost or a guarantee of revival.
+
+Recovering the still-valid bound slate restores ordinary use without replacement. The owner may explicitly release/revoke a binding, or replace it with an actual blank slate; the earlier physical slate then becomes blank and may be activated by its current lawful possessor, without transferring contacts or history. Merely taking a still-bound device grants no reset or operation right. The device may be inspected as an ordinary object, but it does not display a private account or the former correspondence.
+
+A human taking control of an NPC is not automatically a historical participant in that NPC’s private threads. Preserve the former participants’ access; exclude old restricted messages and derivatives from the new human’s view and context, including mixed text that cannot be safely separated. Old correspondence authority does not follow the new controller: stop new arrivals through that old relationship without notifying senders, and require a fresh local exchange explicitly disclosing the new human-controlled correspondence context before new text is available to them. No old message is replayed into the new exchange. Current physical facts and independently permitted history remain available. If a proposed control transition cannot preserve that boundary, it must reject before the transition or private exposure; do not silently leak or discard the protected corpus.
 
 ## 9. Time, persistence, correction and restoration
 
@@ -125,6 +133,8 @@ When the world is paused, existing permitted history remains readable as history
 Save/restart preserves accepted submissions, actual inbox arrival, which messages were presented, contact permissions and current device bindings without duplicate messages or new paid calls. Protect current access and erasure through every read, export and restored state. If the supported save/export path cannot preserve private content without exposing it to a creator, that path must be completed before enabling private correspondence; hiding the inbox UI is not an adequate substitute.
 
 Ordinary correction is a new attributed message. Guarded source erasure remains the existing privacy owner and must remove forbidden derived text and stale contexts; hiding a thread is not erasure. Preserve actual native obligations separately. [DG25](../maintainers/needs-design.md#dg25--deliberate-corrections-and-shared-restoration) selects shared fictional rewind and private-channel treatment. Its settled common policy is a prerequisite to offering that optional rewind with messaging, not to ordinary same-state restart or useful current-time text.
+
+Disabling the installed slate service stops new contact exchange, sending and first unread presentation, preserving permitted prior outcomes and private history. Re-enabling the same supported profile does not restore revoked blocks, revive old devices, re-offer expired invitations or resend messages. Removing a definition follows the existing dependency preview and refusal rules; it cannot orphan stored private text or reinterpret it as public world history. A new service or changed audience needs a reviewed authoring choice before use.
 
 First scope supplies no cross-world recipient, external push notification, email/SMS forwarding or human account chat outside the world. Those would change audience, retention, operating costs and the meaning of absence. A phone-shaped object does not implicitly enable them.
 
@@ -148,9 +158,9 @@ Show no auto-generated “They must be busy” explanation for silence. The play
 
 Human plain-text acceptance, storage, paging and status require no model. Exact text remains sufficient presentation; do not automatically summarize or narrate every message. An optional NPC answer uses the existing complete budget for preparation, retrieval, routing and generation. Private-source restrictions apply before candidate preparation and after delayed results, not only when rendering a panel.
 
-The profile supplies bounded message size, sending rate, pages and NPC unread intake. Those limits do not make lifetime text, contact count, private derivatives, delivery receipts or inactive inbox storage finite. Keep no new silent message-expiry policy; record actual growth with NC/data retention owners. Read the requested thread and permitted page rather than scan every world's contacts or every lifetime message to show one unread indicator. Background queues must not buy their way through a returning person's entire mailbox.
+The profile supplies bounded message size, sending rate, pages and NPC unread intake. Those limits do not make lifetime text, contact count, private derivatives, delivery receipts or inactive inbox storage finite. Keep no new silent message-expiry policy; record actual growth with NC/data retention owners. Read the requested thread and permitted page rather than scan every world's contacts or every lifetime message to show one unread indicator. Background queues must not buy their way through a returning person's entire mailbox. At the proposed maximum, one hundred active senders submitting twenty-four 8,000-byte messages each minute produce 19.2 MB of raw body text per minute, or 1.152 GB per real hour, before metadata, indexes, private derivatives or replicas. One recipient with one hundred permitted correspondents could receive 4.8 MB per minute at the six-per-pair bound. These are worst-envelope arithmetic, not forecast use or measured capacity. A small private-world pilot does not qualify that workload; wider participation needs the existing complete storage/admission/retention owner to handle the actual offered volume without revealing inbox state through sender errors.
 
-Rate limits depend on the sender's own real-time submissions, not the recipient's reading, inbox size or response. Otherwise an apparently full allowance can become a covert read receipt. Each accepted submission counts once across devices/tabs, including submissions that do not enter a blocked recipient's inbox. Native privacy and delivery do not wait for inference. A slow, overloaded or stopped service returns its honest current outcome rather than claiming fictionally delayed postage.
+Rate limits depend on the sender's own real-time submissions, not the recipient's reading, inbox size or response. Otherwise an apparently full allowance can become a covert read receipt. Each accepted submission counts once across devices/tabs, including submissions that do not enter a blocked recipient's inbox. The rolling real-time allowance remains current through restart and fictional restoration, so loading a save cannot buy another burst. Native privacy and delivery do not wait for inference. A slow, overloaded or stopped service returns its honest current outcome rather than claiming fictionally delayed postage.
 
 1. **Select the actual world and exact private route.** Install the explicit affordance and its finite initial objects, consented pair addressing, owner permissions and declared audience/retention meaning. Complete current-save/export privacy for this new data class before enabling it.
 2. **Complete the human correspondence journey.** Two genuinely separate human accounts acquire/bind devices, become contacts, separate, submit/read/reply, lose access, mute/block, replace devices and return. Qualify uncertainty, keyboard use, hidden previews and private payloads. This can finish with zero language-model calls.
@@ -162,7 +172,7 @@ Rate limits depend on the sender's own real-time submissions, not the recipient'
 
 Communication should support the outing, not replace it with inbox management. The first feature keeps one quiet cue, optional reading, concise text and independent replies. It introduces no streak, response deadline, relationship penalty for silence, compulsory availability schedule or paid catch-up. Existing bodily pacing still needs the CE05 attended-session qualification; a new message panel is no reason to ignore that pressure.
 
-Physical devices create a clear authored-world capability and possible loss without turning private history into loot. No battery or postage is added unless an actual authored world wants those stakes and provides a complete useful alternative. No arbitrary delivery delay is needed to preserve the option of meeting; actual items, local action authority and participants' independent lives already supply reasons to meet.
+Physical devices create a clear authored-world capability and possible loss without turning private history into loot. No battery or postage is added unless an actual authored world wants those stakes and provides a complete useful alternative. [TX-R02](#tx-r02--wow-classic-retain-friction-only-for-a-particular-social-choice) documents a different game’s reason for item-mail delay. No arbitrary text delay is needed to preserve the option of meeting here; actual items, local action authority and participants' independent lives already supply reasons to meet.
 
 Sender-facing simplicity costs some certainty: there is no guaranteed delivery/read knowledge. That is intentional in the first private scope. A recipient can explicitly acknowledge a message when they choose. If later players repeatedly need reliable receipt coordination, design an opt-in acknowledgement capability with its privacy meaning; do not reinterpret a current submission acknowledgement as proof of reading.
 
@@ -170,7 +180,97 @@ The material implementation risk is human–NPC confidentiality, not text transp
 
 ## 13. Research
 
-Primary research is being reconciled before completion.
+All sources below are primary publisher, developer, support or protocol documents, retrieved October 6, 2026. They establish the documented behavior or the author's stated design intention. They do not, by themselves, establish player satisfaction, measurable spam reduction or suitable Open Legend balance. Historical comparisons are identified; the Open Legend recommendations are inferences.
+
+### TX-R01 — FFXIV: a world service can bridge separate play sessions
+
+**Source:** Square Enix, [Party Play — Game Manual: Moogle Delivery Service](https://na.finalfantasyxiv.com/game_manual/pp/). Manual last update displayed as September 8, 2026.
+
+**Supported finding.** The manual permits messages, items and gil to friends on the same world. Players access the service through a delivery moogle or moogle letter box, and can receive messages while offline. This combines a recognizable world service with communication that does not require simultaneous attendance.
+
+**Open Legend inference.** Choose a concrete authored means of correspondence and an established recipient. A note can become available while its recipient is absent or asleep; reading and responding remain later character activities. This supports arranging a future meeting without requiring both people to abandon their present activity.
+
+**Limitation.** FFXIV also exposes friend login information and transfers assets. Neither belongs automatically in Open Legend's first text capability. The manual does not establish that any particular delay or access journey is enjoyable.
+
+### TX-R02 — WoW Classic: retain friction only for a particular social choice
+
+**Source:** Blizzard Entertainment, [Restoring History: Creating WoW Classic Panel Recap](https://news.blizzard.com/en-us/article/22646759/restoring-history-creating-wow-classic-panel-recap), reporting BlizzCon 2018. The retrieved article does not display a publication date.
+
+**Supported finding.** Blizzard explains that restoring a one-hour mail delay preserved a reason to meet another player when an urgent transaction mattered. It retained name completion and quick mailbox clearing because it judged those conveniences compatible with the intended Classic experience.
+
+**Open Legend inference.** Evaluate each communication restriction by the playable choice it creates. Physical delivery may justify a journey when that journey is an intentional activity. Routine text should not acquire waiting, postage grinding or repeated menu work merely because another game delays valuable cargo. Keep addressing and inbox use convenient unless a specific world interaction benefits.
+
+**Limitation.** This is a historical developer rationale about recreating Classic, not an experiment proving that delay improves social play. Text-only coordination has different costs and substitutes from item transactions.
+
+### TX-R03 — Animal Crossing: correspondence can serve ordinary relationships
+
+**Source:** Nintendo, [Animal Crossing: New Horizons](https://www.nintendo.com/en-gb/Games/Nintendo-Switch-games/Animal-Crossing-New-Horizons-1438623.html), “Friends for life.” Undated current product page; the game release date is March 20, 2020.
+
+**Supported finding.** Nintendo presents letters and gifts as expressions within relationships with individual island residents, alongside residents offering materials. The publisher's framing includes everyday companionship, rather than limiting correspondence to trading or quest instructions.
+
+**Open Legend inference.** Qualify text through recognizable personal uses: an invitation, apology, change of plans, remembered promise or thank-you that reaches someone engaged elsewhere. A message can matter because of its particular content and relationship context. It needs neither a score for sending nor guaranteed gratitude to justify its existence. A recipient may independently answer, act later, decline or leave it unanswered.
+
+**Limitation.** Product copy does not establish precise eligibility, delivery timing, friendship calculations or observed enjoyment. Its promise of appreciation should not become an Open Legend rule that every message or gift earns a positive reaction.
+
+### TX-R04 — Guild Wars 2: mutual-contact text is a complete smaller capability
+
+**Source:** ArenaNet, [Guild Wars 2 Free Account (Features)](https://help.guildwars2.com/hc/en-us/articles/115015898508-Guild-Wars-2-Free-Account-Features). Undated support article.
+
+**Supported finding.** Free accounts can send text-only in-game mail to mutual friends, while gold and item attachments are unavailable. ArenaNet describes restrictions on capabilities that could otherwise disrupt other players. Communication permission, recipient eligibility and asset-transfer permission are therefore distinct decisions in an existing game.
+
+**Open Legend inference.** Deliver useful private correspondence between consenting known contacts before extending it to strangers, public discovery or packages. Sharing a world or knowing a displayed name need not grant private access. A sender should see whether contact is established before investing effort in a message that cannot be sent.
+
+**Limitation.** These are freemium account restrictions, not evidence for level gates, paid access or numerical rate limits in Open Legend. The article supplies no measured abuse reduction or player-satisfaction result.
+
+### TX-R05 — Guild Wars 2: attachments add custody and economic obligations
+
+**Source:** ArenaNet, [Gold & Wealth Transfer Restrictions (Mail/Guild Bank)](https://help.guildwars2.com/hc/en-us/articles/230430967-Gold-Wealth-Transfer-Restrictions-Mail-Guild-Bank). Undated support article.
+
+**Supported finding.** ArenaNet documents restrictions on sending and receiving wealth. Gold exceeding a recipient's allowance can remain in the inbox until it can be collected or be returned to its sender. The stated purposes include limiting fraud, account theft and real-money trading; newer accounts also have transfer restrictions.
+
+**Open Legend inference.** Adding an attachment creates decisions about possession, acceptance, storage, return and failed delivery. Keep the first communication feature text-only so those decisions remain with the existing material and agreement rules. Writing that food has been sent cannot itself transfer food, settle payment or complete a commission.
+
+**Limitation.** These particular monetary thresholds are not balance evidence for Open Legend. The support explanation documents intended protections, not a measured reduction in fraud or an endorsement of obstructive inbox management.
+
+### TX-R06 — Signal: sending, delivery and reading are different events
+
+**Source:** Signal, [How do I know if my message was delivered or read?](https://support.signal.org/hc/en-us/articles/360007320751-How-do-I-know-if-my-message-was-delivered-or-read). Undated support article.
+
+**Supported finding.** Signal distinguishes acceptance by its service from delivery to the recipient's device. Reading has a separate indication, available when both participants enable read receipts. Connectivity can postpone delivery. These states establish different evidence; one does not imply the others.
+
+**Open Legend inference.** Give every visible status an exact meaning within the selected world service. An available message is not proof that its recipient is awake, has learned its contents, understands it, accepts a proposal or intends to answer. A sleeping NPC should acquire message knowledge only through a later permitted reading activity, without an automatic response obligation.
+
+**Limitation.** Signal's service and device boundaries are communication examples, not the fiction Open Legend must adopt. The game still has to define its own delivery point and permitted knowledge transitions.
+
+### TX-R07 — Signal: accepting contact, deleting history and blocking are separate
+
+**Source:** Signal, [Signal Profiles and Message Requests](https://support.signal.org/hc/en-us/articles/360007459591-Signal-Profiles-and-Message-Requests). Undated support article; used here for request controls, not its phone-number visibility wording.
+
+**Supported finding.** A message request offers acceptance, deletion or blocking. Acceptance enables further contact and relevant profile sharing; blocking prevents further contact notifications and profile updates. Signal says the blocked contact is not notified of the block. These controls are not equivalent to deleting an existing conversation.
+
+**Open Legend inference.** Make permission to contact someone an explicit, revocable relationship between the participants. Removing a local thread should not silently revoke contact or erase the recipient's prior knowledge. Declined or unopened requests should not become NPC beliefs merely because their text exists. Sender feedback should avoid revealing private recipient activity or the reason for silence.
+
+**Limitation.** An application control does not prove a particular game abuse policy effective. Blocking cannot erase what someone already read, remembered or legitimately copied.
+
+### TX-R08 — Signal: a contact route is distinct from identity and discovery
+
+**Source:** Signal, [Phone Number Privacy and Usernames](https://support.signal.org/hc/en-us/articles/6712070553754-Phone-Number-Privacy-and-Usernames). Undated support article.
+
+**Supported finding.** Signal usernames are optional ways to initiate contact, distinct from profile names. Initiation requires an exact username; there is no searchable username directory. A username can change or be deleted while established chats persist. An old username may later be claimed by someone else.
+
+**Open Legend inference.** Establish contact through an actual world encounter or authorized route, then bind correspondence to the recognized person. A renamed character should not lose an established conversation, and another character adopting the old displayed name should not inherit it. Account email, a participant roster and unrelated identity metadata provide no fictional introduction or right to contact.
+
+**Limitation.** Signal's account and phone mechanisms are not proposed world infrastructure. Name matching alone is not identity verification, and this comparison makes no claim of equivalent technical security.
+
+### TX-R09 — Matrix: private reading state need not inform the sender
+
+**Source:** Matrix.org Foundation, [Client-Server API v1.18 — Private read receipts](https://spec.matrix.org/v1.18/client-server-api/#private-read-receipts) and the surrounding receipt guidance. Version released [March 25, 2026](https://spec.matrix.org/v1.18/changelog/v1.18/); cited as that specific version.
+
+**Supported finding.** Matrix distinguishes public receipts from private receipts that clear the recipient's notifications without broadcasting reading. Its guidance says receiving an event alone is insufficient for a read receipt: the event should be displayed through user action. Marking a room unread also does not reverse the actual read position.
+
+**Open Legend inference.** Let recipients manage their own unread indicators or reminders without revealing when they read. Sender-visible reading information needs an explicit separate decision. Marking a note unread cannot make a character forget it, undo an agreement or rewrite who learned its contents.
+
+**Limitation.** This is a protocol contract, not a game usability study or a recommendation to adopt Matrix. Private status management does not require importing rooms, presence, typing indicators or group messaging.
 
 ## 14. Maintained records
 
