@@ -26,6 +26,7 @@ jobs:
           path: review-reconcile
           fetch-depth: 0
           persist-credentials: false
+          show-progress: false
       - name: Replay only exact reviewed resolutions and preserve other conflicts
         run: |
           python3 - <<'PY'
@@ -51,34 +52,44 @@ jobs:
           result = replay('-c', 'rerere.enabled=false', 'rebase', '--onto', new, old)
           resolved = []
           allowed = {
-              '751525b3cb5b459a7dba47d55bd16d568b03a1b3': 'docs/maintainers/performance-profiling.md',
-              '21c16580c1830b1e83c6cb2fce42539d548123fb': 'docs/projects/shadow-quality-feature-spec.md',
+              '751525b3cb5b459a7dba47d55bd16d568b03a1b3': ('docs/maintainers/performance-profiling.md', 1),
+              '21c16580c1830b1e83c6cb2fce42539d548123fb': ('docs/projects/shadow-quality-feature-spec.md', 1),
+              'b7ceb27c64017e9adad942f2ef2145cae45c70ac': ('docs/projects/shadow-quality-tech-design.md', 2),
           }
           while result.returncode:
               stopped = git('rev-parse', 'REBASE_HEAD').decode().strip()
               names = [name for name in git('diff', '--name-only', '--diff-filter=U', '-z').decode().split('\0') if name]
-              if stopped in allowed and names == [allowed[stopped]]:
+              if stopped in allowed and names == [allowed[stopped][0]]:
                   path = pathlib.Path(names[0])
                   text = path.read_text()
                   pattern = r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]+\n'
                   matches = list(re.finditer(pattern, text, re.MULTILINE | re.DOTALL))
-                  assert len(matches) == 1, ('changed conflict count', stopped)
-                  match = matches[0]
-                  ours, theirs = match.group(1), match.group(2)
-                  if stopped.startswith('751525b3'):
-                      intro, shared = ours.split('\n\n', 1)
-                      assert intro.startswith('The profiler explicitly takes control through the player endpoint,')
-                      assert shared.count('refused before migrations.') == 1
-                      assert theirs == shared.replace('refused before migrations.', 'refused before disposable-fixture initialization.'), 'changed profiler conflict'
-                      replacement = ours.replace('refused before migrations.', 'refused before disposable-fixture initialization.')
-                  else:
-                      assert 'Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open.' in ours
-                      assert 'Artwork-aligned shadows and the supplied model are delivered; frame-time, combined-model and physical-device qualification remain open.' in theirs
-                      assert all(line.startswith('|') for side in (ours, theirs) for line in side.splitlines())
-                      assert 'The supplied mercenary is now integrated under SW18.14' in text
-                      assert 'combined model/eight-fire/3×' in text
-                      replacement = ours
-                  merged = text[:match.start()] + replacement + text[match.end():]
+                  assert len(matches) == allowed[stopped][1], ('changed conflict count', stopped)
+                  merged = text
+                  for match in reversed(matches):
+                      ours, theirs = match.group(1), match.group(2)
+                      if stopped.startswith('751525b3'):
+                          intro, shared = ours.split('\n\n', 1)
+                          assert intro.startswith('The profiler explicitly takes control through the player endpoint,')
+                          assert shared.count('refused before migrations.') == 1
+                          assert theirs == shared.replace('refused before migrations.', 'refused before disposable-fixture initialization.'), 'changed profiler conflict'
+                          replacement = ours.replace('refused before migrations.', 'refused before disposable-fixture initialization.')
+                      elif ours.startswith('| Status'):
+                          assert 'Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open.' in ours
+                          assert 'Artwork-aligned shadows and the supplied model are delivered; frame-time, combined-model and physical-device qualification remain open.' in theirs
+                          assert all(line.startswith('|') for side in (ours, theirs) for line in side.splitlines())
+                          replacement = ours
+                      else:
+                          assert stopped.startswith('b7ceb27c')
+                          first, rest = ours.split('\n\n', 1)
+                          old_ending = 'Existing floor-hearing test failure is reproduced on the original code and tracked in SW08/HE05. The plan remains partially delivered, not closed by these narrower gains.'
+                          new_ending = 'The floor-hearing test failure was reproduced on the original code at that checkpoint. The later [October 1 fixture correction](../verification/hearing-main-integration.md#floor-hearing-regression--october-1-2026) repairs those obsolete sight-barrier and speech-origin assertions without changing production acoustics; that specific SW08 regression is no longer an open blocker. HE05 retains broader hearing qualification. The plan remains partially delivered because the narrower route-query gains do not establish whole-game tail improvement or physical lower-end performance.'
+                          assert first.count(old_ending) == 1
+                          assert theirs == first.replace(old_ending, new_ending) + '\n', 'changed hearing correction'
+                          assert rest.startswith('The October 4 [PG04 follow-up]')
+                          assert '### Meter/follow preview extension' in rest
+                          replacement = theirs + '\n' + rest
+                      merged = merged[:match.start()] + replacement + merged[match.end():]
                   assert not re.search(r'^(<<<<<<<|=======|>>>>>>>)', merged, re.MULTILINE)
                   path.write_text(merged)
                   print('RESOLVED:', stopped, str(path))
