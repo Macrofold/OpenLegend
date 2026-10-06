@@ -393,21 +393,33 @@ function App({
         if (source === connection) schedule(6000);
       };
     }
-    async function bootstrap() {
+    async function bootstrap(foreground = false) {
       const attempt = ++bootstrapVersion;
       clearTimeout(timer);
       source?.close();
       source = undefined;
-      try {
-        const initial = await getState();
-        if (!active || attempt !== bootstrapVersion) return;
-        streamView = initial;
+      const acceptBootstrapView = (next: GameView) => {
+        if (!active || attempt !== bootstrapVersion) return false;
+        streamView = next;
         scene.current?.resetTransientCaptions();
-        accept(initial, true);
+        accept(next, true);
         setConnected(true);
         setEntryStatus({ kind: 'loading' });
+        return true;
+      };
+      try {
+        // Entry already reads fresh authority. Record a new foreground intent
+        // before another lookup lets an older automatic attempt commit again.
+        if (foreground && isPaused()) {
+          await enter(acceptBootstrapView);
+          return;
+        }
+        const initial = await getState();
+        if (!acceptBootstrapView(initial)) return;
         if (isPaused()) {
-          await enter((next) => accept(next, true));
+          await enter((next) => {
+            if (active && attempt === bootstrapVersion) accept(next, true);
+          });
           return;
         }
         if (initial.access?.controlling) {
@@ -460,7 +472,7 @@ function App({
         if (e.persisted) void bootstrap();
       };
     const focus = () => {
-      if (isPaused()) void bootstrap();
+      if (isPaused()) void bootstrap(true);
     };
     window.addEventListener('focus', focus);
     window.addEventListener('pagehide', hide);
