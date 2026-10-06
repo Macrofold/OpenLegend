@@ -300,6 +300,28 @@
       "captureScope": "app",
       "source": "native-alternate-world-d1315ea",
       "originalFile": "touch-demo-02-partial-recharge.png"
+    },
+    {
+      "id": "32-current-work-component",
+      "file": "32-current-work-component.png",
+      "width": 504,
+      "height": 528,
+      "bytes": 153881,
+      "sha256": "e42618dfaf4c64bac4574a2dfff229eb928ef2e64c913a9e95f360a13628df6e",
+      "captureScope": "component",
+      "source": "current-work-component-8903595",
+      "originalFile": "01-confirmed-current-work.png"
+    },
+    {
+      "id": "33-narrow-current-work-component",
+      "file": "33-narrow-current-work-component.png",
+      "width": 390,
+      "height": 465,
+      "bytes": 119216,
+      "sha256": "d0a00a2a26e0504ee8c75c701fa8193caf1789089eacbf5209b087214ee2f667",
+      "captureScope": "component",
+      "source": "current-work-component-8903595",
+      "originalFile": "02-narrow-current-work.png"
     }
   ],
   "appSource": {
@@ -500,6 +522,69 @@
         "dist/client/index.html": "192e7d1f67eb8059dc2afcfce9e0c672ee0dece3d1419c0d92c911893a9e899a",
         "dist/client/assets/index-BMNxzZig.css": "bdf8405b72fe431d3d2c16ea947504b9bf054fe4978c74f9d71ff654928852f5",
         "dist/client/assets/index-BY3PsIly.js": "5970199ac52fc970e6967cc9cd774780ddb93fd31b2488da0b9e64bf2d0f6df6"
+      }
+    },
+    "current-work-component-8903595": {
+      "captured": "2026-10-06",
+      "description": "Actual CampActivity in the existing Panel and production design-system CSS. Cropped Panel captures from a focused component host, using native in-memory task discovery, preview, execution and status with a controlled partial view and command delivery. No full App, PlayCanvas, authenticated HTTP or PostgreSQL acceptance claim.",
+      "branch": "docs/game-ui-research-redesign",
+      "branchCommit": "8903595612ca60dc08b4c97dcb48c67dad7e8221",
+      "report": {
+        "scratchPath": "active-task-followthrough/controlled/attempt-03/report.json",
+        "sha256": "a014e50928de50cb8a33c9f897fc95f68958fac9a1f36370fcd4ee329a4da298",
+        "startedAt": "2026-10-06T09:09:27.400Z",
+        "elapsedSeconds": 10.28,
+        "passed": true,
+        "nativeInMemorySubmissions": 5,
+        "originalReceiptReads": 2
+      },
+      "environment": {
+        "viewports": [
+          {
+            "width": 1280,
+            "height": 900
+          },
+          {
+            "width": 390,
+            "height": 844
+          }
+        ],
+        "capture": "Actual Panel element, not whole viewport",
+        "providerOperations": 0
+      },
+      "fixture": "Bundled world seed 913 with prepared player position and fire fuel. The existing in-memory camp adapter supplies native discovery, preview, bind/execute and status in a controlled partial public view. One controlled refusal precedes admission; lost and held replies occur after the native in-memory result exists.",
+      "observed": "Confirmed Start folds preparation and scheduling into Current work/Stop. Prepare retains values and explicit blanks. Two original receipts resolve without replay; recovering task A while different-family B is open leaves B preparation intact. Actual outside-input focus is retained; a separate visible-prop hidden interval cancels the old focus return.",
+      "visualReview": "The desktop focus boundary and the narrow status/Stop/Prepare layout were inspected. Space inside the retained Panel comes from removing repeated preparation and Start, not a full-App layout or native-session acceptance result.",
+      "priorAttempts": [
+        {
+          "attempt": "01",
+          "passed": false,
+          "elapsedSeconds": 8.25,
+          "reason": "Stopped before Start because an exact accessible-name selector omitted the nested amount hint. Original evidence retained outside the repository."
+        },
+        {
+          "attempt": "02",
+          "passed": false,
+          "elapsedSeconds": 10.46,
+          "nativeInMemorySubmissions": 1,
+          "reason": "Start/fold/focus and draft/blank retention passed before the next enqueue was correctly refused by native watch-busy policy. The final attempt uses a deliberate Prepare replacement gesture."
+        }
+      ],
+      "limits": [
+        "Component and Panel evidence only; no full App, PlayCanvas, authenticated HTTP or PostgreSQL qualification.",
+        "The clock is not advanced: no fuel spending, task completion or continuous attendance claim.",
+        "Hide/return in the delayed-reply case uses the real component visible prop; it is not a native panel-hide journey.",
+        "No same-family/different-target runtime case, private-scope change, unmounted-lifetime matrix, operating-system IME, assistive-device or uncoached-human qualification.",
+        "These are original Open Legend implementation captures, not external-game research images."
+      ],
+      "sourceHashes": {
+        "apps/client/src/ui/camp-activity.tsx": "406b2efc33215881f670367b470fea45fad1d34f181b94bd01cca2a842078198",
+        "packages/domain/src/activity-execution.ts": "47939664362dd2940596721f733e6ee8adbbd1a166eef0a63fd4c7b92189862b"
+      },
+      "scenarioHashes": {
+        "run.mjs": "ff4ca03d2ab48c4f0979977fbaac340b1d800963af510b0af1076252b6c1fa98",
+        "check.tsx": "1fb338c428136f8893f944545c763a1e9e91e11c32231e4a8c74610d95f7037a",
+        "server.mjs": "15c241c910e8516aa2f2b853d82869196a20927b14cf2d85f04bed5dfee77078"
       }
     }
   }

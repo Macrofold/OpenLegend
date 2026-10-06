@@ -187,7 +187,7 @@ export function WorldAgentReview({
         if (!open) onClose();
       }}
     >
-      <Modal className="ol-modal">
+      <Modal className="ol-modal ol-agent-work-review-modal">
         <Dialog
           ref={dialog}
           className="ol-person-dialog ol-agent-work-review"
@@ -205,11 +205,23 @@ export function WorldAgentReview({
             {!review && !error && <p role="status">Loading exact review…</p>}
             {review && (
               <>
-                <Tag>
-                  {review.draft.kind} · revision {review.draft.revision} · {review.plan.status}
-                </Tag>
+                <Tag>{review.draft.kind}</Tag>
                 <h3>{review.draft.title ?? review.draft.intent}</h3>
-                <p>{review.plan.validation.semantics}</p>
+                <p>Affected records: {review.plan.impact.affected}.</p>
+                <p>
+                  {review.plan.status === 'applied'
+                    ? 'This exact change has been applied.'
+                    : 'This is a saved review. The change has not been applied.'}
+                  {review.draft.kind === 'recipe' &&
+                    ' Installing a recipe does not create an item. Crafting is separate.'}
+                </p>
+                {review.plan.result && <p role="status">{review.plan.result.message}</p>}
+                {review.plan.status !== 'applied' &&
+                  review.plan.validation.activationRequiresResume && (
+                    <p>
+                      Applying this change requires a running world. Approval does not resume it.
+                    </p>
+                  )}
                 {review.draft.title && (
                   <details>
                     <summary>Original purpose</summary>
@@ -221,20 +233,6 @@ export function WorldAgentReview({
                   preparationRevision={review.plan.revision}
                   validation={review.plan.validation}
                 />
-                <p>Affected records: {review.plan.impact.affected}.</p>
-                <p>
-                  {review.plan.status === 'applied'
-                    ? 'This exact change has been applied; its native receipt remains below.'
-                    : 'This is a saved review. The change has not been applied.'}
-                  {review.draft.kind === 'recipe' &&
-                    ' Installing a recipe does not create an item. Crafting is separate.'}
-                </p>
-                {review.plan.status !== 'applied' &&
-                  review.plan.validation.activationRequiresResume && (
-                    <p>
-                      Applying this change requires a running world. Approval does not resume it.
-                    </p>
-                  )}
                 <details>
                   <summary>Exact candidate</summary>
                   <pre className="ol-agent-json">
@@ -251,7 +249,6 @@ export function WorldAgentReview({
                     )}
                   </pre>
                 </details>
-                {review.plan.result && <p role="status">{review.plan.result.message}</p>}
               </>
             )}
           </div>

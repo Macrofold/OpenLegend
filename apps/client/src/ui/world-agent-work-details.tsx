@@ -62,20 +62,29 @@ export function WorldAgentPreparationDetails({
           {(['passed', 'failed', 'pending'] as const).map((status) => {
             const checks = preparation.checks.filter((check) => check.status === status);
             if (!checks.length) return null;
-            const heading =
-              status === 'passed'
-                ? 'Supported consequences: passed native checks'
-                : status === 'failed'
-                  ? 'Failed requirements'
-                  : 'Checks still pending';
+            const findings = (
+              <ul>
+                {checks.map((check) => (
+                  <li key={check.id}>{check.finding}</li>
+                ))}
+              </ul>
+            );
+            if (status === 'passed')
+              return (
+                <details key={status}>
+                  <summary>
+                    {preparationRevision === undefined
+                      ? 'Passed native checks for this preview'
+                      : `Passed native checks retained with revision ${preparationRevision}`}
+                  </summary>
+                  {findings}
+                </details>
+              );
+            const heading = status === 'failed' ? 'Failed requirements' : 'Checks still pending';
             return (
               <section key={status} aria-label={heading}>
                 <h4>{heading}</h4>
-                <ul>
-                  {checks.map((check) => (
-                    <li key={check.id}>{check.finding}</li>
-                  ))}
-                </ul>
+                {findings}
               </section>
             );
           })}

@@ -160,10 +160,15 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+.ol-modal.ol-agent-work-review-modal {
+  --review-max-height: calc(100dvh - var(--space-6));
+  max-height: var(--review-max-height);
+}
 .ol-agent-work-review {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  max-block-size: calc(100dvh - var(--space-6));
+  /* The shared modal has a one-pixel border on each side. Only the body scrolls. */
+  max-block-size: calc(var(--review-max-height) - 2px);
 }
 .ol-agent-work-review-body {
   overflow: auto;
@@ -186,6 +191,11 @@
 }
 .ol-agent-work-review-footer {
   border-block-start: 1px solid var(--line);
+}
+@media (max-width: 560px) {
+  .ol-modal.ol-agent-work-review-modal {
+    --review-max-height: 92dvh;
+  }
 }
 @container (min-width: 700px) {
   .ol-agent-work-list {
