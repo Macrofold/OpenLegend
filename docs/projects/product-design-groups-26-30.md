@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26's researched voice and private-call proposal and review are complete; the remaining four groups continue in order. | 2026-10-07   |
+| Status      | Current progress                                                                                    | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG26 and DG27's researched product proposals and reviews are complete; DG28–DG30 continue in order. | 2026-10-07   |
 
 ## Assignment and exact baseline
 
@@ -57,6 +57,12 @@ The assignment is complete only when all five product proposals and needed autho
 Independent product and source reviews produced concrete improvements: sender-owned directional request allowances; no reading of merely arrived private text; explicit generated-reading disclosure; inherited per-sender message bursts; quiet request defaults that respect thread mute; window-foreground capture ending without keyboard-focus breakage; stopping game playback before capture; and preservation of historical call facts without live continuation after restore. Existing PS04 timing ownership was clarified rather than selected as a prerequisite. No additional ND16 acoustic family was invented to fill the group.
 
 HE07/NC23 and the proposed VC inventory retain technical, actual play, accessibility and aggregate-cost work. The first draft checkpoint is [76852a76](https://github.com/Macrofold/OpenLegend/commit/76852a76f44833506e9213461eb5209eaf6bbbf5); subsequent group closure remains an ordinary commit on this branch.
+
+### DG27 — Customer and supporter offers
+
+[The product specification](customer-and-supporter-offers-feature-spec.md) completes one initial owner-paid hosted world, account-wide successful-objective invention terms, payment/renewal/cancellation/refund/recovery, and an independently optional one-time chronicle acknowledgement. Ten primary records inform current playable value, host-paid access, finite AI liability, honest renewal measurement and bounded fulfillment. Actual prices, quantities, operating budgets, territories and post-launch continuity remain required before sale.
+
+Independent critique corrected repeated/overlapping allowance grants, the distinct personal-plan lifecycle, pending renewal timing, late hosting anniversaries, inactive third-charge prevention and lifetime correction labor. The first recognition edition uses the purchaser's own pseudonym; it requires no gifting or collectible market. PD10.1–PD10.4 and INV-13.8a–b retain open delivery with [OF limits](../limits/customer-and-supporter-offers.md); the original checkboxes/history remain unchanged. The draft checkpoint is [4ddcb80f](https://github.com/Macrofold/OpenLegend/commit/4ddcb80f76c28af395abda944df1292c875706ab). Documentation links/anchors and inherited checklist states pass; no runtime/payment test or actual commercial experiment ran.
 
 ## Maintained records
 
