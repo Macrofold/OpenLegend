@@ -8,49 +8,49 @@ Implementation starting points: [http.ts](../../apps/server/src/http.ts), [index
 
 ## LA179
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Medium.**
 
-The player can select simulation speeds of 0.5×, 1×, 3× or 8×, and the base rate is 60 game seconds per real second.
+The browser controls admit **0.5×, 1×, 3× or 8×**. Server configuration currently fixes the base ratio at **60 game seconds per real second**; the service multiplies admitted active elapsed time by that ratio and the selected speed. This conversion is not a requirement to execute sixty integration steps per second, and selecting a speed does not establish that the current workload sustains it. [Elapsed-time ownership](../simulation-time.md) retains pause, technical-barrier and unadvanced-time semantics.
 
 **Reason / tradeoff:** Treat these as game-speed presets and measure how much simulation work the server can complete before offering faster choices.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Control schema](../../apps/server/src/http.ts) · [Configured ratio](../../apps/server/src/config.ts) · [Elapsed-time admission](../../apps/server/src/world-service.ts).
 
 Original recommendation: **Review**.
 
 ## LA197
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Medium.**
 
 Server ports are restricted to 1,024–65,535 and world-generation seeds to 1–2,147,483,647.
 
 **Reason / tradeoff:** Keep valid configuration ranges unless a concrete deployment or reproducible-world requirement needs values outside them.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Configuration](../../apps/server/src/config.ts). These are environment-setting ranges, not a claim that the operating system forbids privileged ports or that every native random-seed representation uses this envelope.
 
 Original recommendation: **Keep**.
 
 ## LA205
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-Invention-job history returns 50 entries per page, and the character-memory editor returns 100 entries per page.
+The invention-job repository defaults to **50 records** and accepts a selected page size of **1–50**. The person-memory editor uses **100 records**, with a **101-row** lookahead over eligible awareness, memory and summary sources. The SQL page is tied to the current storage generation; its caller rechecks current private-inspection authority. These are record-count bounds, not total payload or preparation-time bounds. The memory editor’s resident fallback sorts its available entries before slicing; it is not a complete cold-history substitute. Other player memory/history views use their own page sizes.
 
 **Reason / tradeoff:** Keep pagination so large histories remain available without loading them all at once.
 
-[Implementation starting point](../../apps/server/src/intelligence-log.ts).
+[Invention-job pages](../../apps/server/src/store.ts) · [Memory pages](../../apps/server/src/memory-repository.ts) · [Editor and scope recheck](../../apps/server/src/world-service.ts) · [Resident fallback](../../apps/server/src/person-memory-page.ts).
 
 Original recommendation: **Keep**.
 
 ## LA206
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-The stored-event editor shows 100 events per page and fetches 101 to detect more; the general history view defaults to 40 and permits 100 per page.
+The stored-event editor returns **100 events** and queries **101** to detect continuation. The ordinary history read defaults to **40** and clamps its selected page size to **1–100**. These distinct readers retain their own audience, timeline, ordering and cursor checks; the person-memory editor and owner memory browser are not the same route.
 
 **Reason / tradeoff:** Keep paginated history access and make the next page available whenever additional records exist.
 
-[Implementation starting point](../../apps/server/src/intelligence-log.ts).
+[Event editor and transcript history](../../apps/server/src/history.ts) · [Route admission](../../apps/server/src/http.ts).
 
 Original recommendation: **Keep**.
 
@@ -68,103 +68,103 @@ Original recommendation: **Replace** — delivered through the durable history r
 
 ## LA211
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-Player chat/action input and the locally saved unsent draft are limited to 1,000 characters.
+The ordinary player composer and submitted interaction text allow **1,000 characters**. Its session-storage draft reader/writer slices text to the same length and retains the selected intent; this is not the World Agent’s separate 2,000-character input or the native speech envelope. The draft module still reads an older storage key: that compatibility path is residual cleanup under [DF04](../maintainers/production-data.md#df04--retire-residual-compatibility-paths), not a requirement to preserve older client formats.
 
 **Reason / tradeoff:** Align editing and submission limits and avoid silently cutting the player's unsent text when saving the draft.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Composer](../../apps/client/src/ui/composer.tsx) · [Draft persistence](../../apps/client/src/draft.ts) · [Interaction admission](../../apps/server/src/http.ts).
 
 Original recommendation: **Expand**.
 
 ## LA212
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-The message box for the AI that edits the world and invention-purpose UI allow 2,000 characters.
+The World Agent conversation composer and invention-purpose field allow **2,000 characters**. The `/api/world-agent/messages` route also validates a 2,000-character text field. This UI/route envelope does not define all authoring tool, question-answer or candidate limits; those belong to [the invention inventory](inventions.md).
 
 **Reason / tradeoff:** Align these input allowances with downstream authoring validators so accepted text does not fail later because another limit is smaller.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[World Agent composer](../../apps/client/src/ui/world-agent-session.tsx) · [Invention-purpose UI](../../apps/client/src/ui/inventions.tsx) · [Message route](../../apps/server/src/http.ts).
 
 Original recommendation: **Expand**.
 
 ## LA213
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-The native speech command accepts 1,500 characters, while the native private-thought command accepts 350.
+The direct native **say** command accepts **1–1,500 characters**. The **350-character** check belongs to the direct **goal** command, which replaces the actor’s goals; it is not a private-thought command. Model-generated speech, structured goal operations and person editing retain their separate schemas and limits.
 
-**Reason / tradeoff:** Make native text limits consistent with the user interface and model-generated response limits for the same operations.
+**Reason / tradeoff:** Identify the operation actually constrained before changing a limit. A direct-goal envelope must not be applied to private memories or used as evidence that model thought text has the same bound.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Native admission](../../packages/domain/src/kernel.ts) · [HTTP command envelope](../../apps/server/src/world-service.ts).
 
 Original recommendation: **Expand**.
 
 ## LA214
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
 The person editor allows an 80-character name, 2,000-character description, 1,000-character personality and 4,000-character backstory.
 
 **Reason / tradeoff:** Expand descriptions when useful while preserving clear total character-data and model-input allowances.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Person editor schema](../../apps/server/src/http.ts) · [Native person editing](../../packages/domain/src/god-tools.ts) · [Human form](../../apps/client/src/ui/god-tools.tsx). These are person-editor fields, not permission to include all authored private text in another actor’s model context.
 
 Original recommendation: **Expand**.
 
 ## LA215
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Very safe.**
 
-Character creation/editing permits 8 traits and 8 initial goals, each goal limited to 500 characters.
+The person creation form permits **8 selected traits** and **8 initial goals**; the person editor’s replacement goal list also permits **8**, with **500 characters per goal**. These authoring envelopes do not define every native goal operation or a lifetime limit on learned techniques, experiences or character development.
 
 **Reason / tradeoff:** Allow richer authored characters without forcing every trait and goal into every model request.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Person form schemas](../../apps/server/src/http.ts) · [Native creation/editing](../../packages/domain/src/god-tools.ts).
 
 Original recommendation: **Expand**.
 
 ## LA216
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-Owner editing of memories/events permits 20,000-character text, 100 referenced entities and 1,000 source-event or audience identifiers.
+The generic memory/event editor envelopes permit **20,000-character text**, **100 referenced entity IDs**, and **1,000 source IDs** on summaries or **1,000 audience IDs** on events. These fields are not interchangeable. The native edit boundary still rejects forbidden speech, identity, evidence and unresolved-commitment changes; fitting the envelope and holding creator permission do not grant a new disclosure or correction capability.
 
 **Reason / tradeoff:** Ensure legitimate large-group events and their explanations can be edited without losing who participated or who perceived them.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Editor schemas](../../apps/server/src/http.ts) · [History edit preparation](../../apps/server/src/history-edit.ts) · [Current memory contract](../memory-architecture.md).
 
 Original recommendation: **Expand**.
 
 ## LA217
 
-**Historical — needs recheck · Restrictiveness: Liberal.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Liberal.**
 
 One owner request can edit up to 10,000 memory/event records, subject also to the editor HTTP request's 1 MiB size limit.
 
 **Reason / tradeoff:** Measure and bound total editing work rather than assuming the large entry count alone makes a batch safe.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Batch schemas](../../apps/server/src/http.ts) · [Editor request bytes](multiplayer.md#la163) · [Native edit preparation](../../apps/server/src/history-edit.ts). The envelope does not qualify a 10,000-record workload or bypass per-record expected-content, private-data and dependency checks.
 
 Original recommendation: **Review**.
 
 ## LA218
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-Save labels allow 80 characters, editor entry identifiers 200, paging cursors 240 and inspection request identifiers 300.
+Save labels allow **80 characters**, person-memory editor entry identifiers **200**, and that editor’s `before` cursor **240**. The **300-character** identifier belongs to **narration regeneration**, not a general inspection-request ID. Character/history cursors and inventory/discovery cursors have different envelopes ([PB04](#pb04), [IW01](#iw01--inventory-task-workspace)); none of these numbers is a universal identifier length.
 
 **Reason / tradeoff:** Keep labels readable and ensure identifiers fit consistently through every endpoint that stores or reads the same record.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Route-specific schemas](../../apps/server/src/http.ts).
 
 Original recommendation: **Expand**.
 
 ## LA221
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
 A rendered ground-item pile uses only its first 12 item types, at most 3 decorative copies per type and 18 decorative pieces total.
 
@@ -200,13 +200,13 @@ Original recommendation: **Keep**.
 
 ## LA224
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-The browser's set of already-announced event identifiers shrinks from more than 600 entries to the newest 300.
+The over-character status manager’s set of seen event identifiers shrinks from **more than 600** to its newest **300** entries. This is local notice deduplication, not a global browser history limit or the storage boundary for speech and memories.
 
 **Reason / tradeoff:** Keep notification deduplication memory bounded, recognizing that very old repeated event deliveries may be announced again.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Character-status owner](../../apps/client/src/character-status.tsx).
 
 Original recommendation: **Keep**.
 
@@ -224,61 +224,61 @@ Original recommendation: **Review**.
 
 ## LA226
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-Collapsed diagnostic previews shorten text to 240 characters and show only the first 4 fields of structured data.
+Collapsed diagnostic value previews shorten each string to **240 characters** plus an ellipsis and display up to **4 eligible object fields**, excluding null fields and `receipt`, `schema` and `requestId`. Arrays show a count rather than all members. These are preview rules, not a recursive aggregate byte limit, saved-diagnostic retention policy or assurance that capture retained every original field.
 
 **Reason / tradeoff:** Keep previews brief while allowing the user to inspect or copy the full saved data.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Diagnostic value preview](../../apps/client/src/ui/diagnostics.tsx) · [Capture and retention limits](observability.md).
 
 Original recommendation: **Keep**.
 
 ## LA227
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-A conversation tab for the AI that edits the world title uses at most 36 characters, and a temporary main-screen notice disappears after 6 seconds.
+The native World Agent session owner initializes its conversation title from the first **60 characters** of the opening text when the title is absent; the earlier **36-character** description is obsolete. A temporary main-screen notice clears after **6 seconds**. Title initialization, notice display and durable conversation/error records are separate concerns.
 
 **Reason / tradeoff:** Keep compact titles and temporary notices without deleting the underlying conversation or important error information.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Session title](../../apps/server/src/world-authoring.ts) · [Main-screen notice](../../apps/client/src/main.tsx).
 
 Original recommendation: **Keep**.
 
 ## LA228
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-Camera controls restrict zoom to 4–30, tilt to about 25–75 degrees, per-command pan movement to ±1,000 and horizontal focus coordinates to -64–192.
+The client camera clamps zoom to **4–30** and tilt to **25–75 degrees**. A manual pan first clamps each input delta to **±1,000 viewport pixels**, then converts it using zoom, viewport height, pitch and yaw; those are not metre-per-command bounds. Only that manual-pan path clamps horizontal focus to **−64–192**. An explicit finite focus point is accepted without those coordinate clamps, while level selection uses its supplied finite height. These presentation controls neither move the actor nor grant sight outside its permitted projection.
 
 **Reason / tradeoff:** Choose camera bounds that fit the actual authored world and viewport rather than only the starter map.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Client camera controller](../../apps/client/src/world-camera.ts).
 
 Original recommendation: **Review**.
 
 ## LA229
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
 The renderer adds at most 0.1 seconds to its animation clock for one frame.
 
 **Reason / tradeoff:** Keep protection against visual jumps after a stalled frame without changing the server's authoritative simulation time.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Scene animation clock](../../apps/client/src/scene.ts). Suspended presentation returns before advancing this clock; authoritative movement and game time retain their own owners.
 
 Original recommendation: **Keep**.
 
 ## LA230
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Medium.**
 
-Current health/food/energy and body-condition values use 0–100, probabilities/confidence use 0–1 and trust uses -1–1.
+The bundled wilderness’s Health, Food and Energy definitions currently use **0–100**, but that is not a universal presentation or attribute scale. Numeric meters project their authored minimum, maximum and unit; categorical attributes project their defined values, and missing values stay explicitly unknown. Special native implementations retain their own interpretation and validation. Probability, confidence and social-value constraints belong to their respective native families, not one blanket body-value range.
 
-**Reason / tradeoff:** Keep valid values within each defined representation; changing physiology scales requires an explicit world-model change.
+**Reason / tradeoff:** Preserve each field’s actual meaning and authored range. UI normalization, editing and explanatory text must consume the current definition rather than force another world’s meter into wilderness physiology.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Bundled definitions](../../packages/domain/src/worlds/base/attributes.ts) · [Attribute projection](../../packages/domain/src/world-modules.ts) · [Configured body services](state-effects.md#st17--passive-meters-and-configured-body-services).
 
 Original recommendation: **Review**.
 
