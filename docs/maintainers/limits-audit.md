@@ -143,9 +143,9 @@ A stored intention should not be rejected merely because 8 goals or 16 promises 
 
 **P2. Sustained: many AI calls and a failure requiring investigation.** Diagnostic history/fields can disappear; support impact rather than a gameplay stop.
 
-Keep full retained diagnostic history separately from UI caches; cursor-page older records, redact vector fields by schema, and mark missing exchanges explicitly.
+Keep full retained diagnostic history separately from UI caches; cursor-page older records, redact vector fields by schema, and mark missing exchanges explicitly. Bound optional captured payloads and preparation separately from necessary running-call bookkeeping: the delivered pending-write queue does not bound the recent-call cache or the traversal performed before capture reduction. The current 1,000-record storage target is periodic and counts both roots and steps; the 1,000-child query is shared across a root page. Report incomplete child coverage and cost subtotals honestly instead of implying that returned stage counts cover the whole workflow. Preserve durable accounting independently.
 
-1,000 records or broad numeric-array redaction can erase the evidence needed to diagnose failures. [LA198](../limits/observability.md#la198), [LA199](../limits/observability.md#la199), [LA200](../limits/observability.md#la200), [LA201](../limits/observability.md#la201), [LA203](../limits/observability.md#la203) · [Work](performance-profiling.md)
+Completion needs bounded-memory evidence under slow storage and overlapping running calls, and truthful omission/continuation behavior for oversized captures, dropped exchanges and child-step limits. An absent timing category must also be distinguishable from zero work when the retained metric-name capacity is exhausted. These are source-identified gaps, not newly observed overload results. Periodic record retention and broad numeric-array redaction can erase the evidence needed to diagnose failures. [LA198](../limits/observability.md#la198), [LA199](../limits/observability.md#la199), [LA200](../limits/observability.md#la200), [LA201](../limits/observability.md#la201), [LA202](../limits/observability.md#la202), [LA203](../limits/observability.md#la203), [LA209](../limits/observability.md#la209) · [Work](performance-profiling.md)
 
 ### C09
 
