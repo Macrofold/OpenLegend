@@ -591,39 +591,51 @@ try {
     visibleRowsAfterRelease: await revoked.right.locator('[data-item-id]').count(),
   };
   await revoked.page.unroute('**/api/inventory');
-  await capture(revoked, '01-revoked-inventory-workspace-after-old-response.png');
-  for (const [index, viewer] of viewers.entries()) {
-    assert.equal(viewer.commands.length, 1);
-    assert.equal(
-      quantity(viewer.actorId, 'wood'),
-      baseline[index] + (contests[index].result.ok ? 1 : 0),
-    );
-    const state = await nativeRead(viewer, '/api/state');
-    assert.equal(state.player.id, viewer.actorId);
-    assert.equal(state.access.controlling, true);
-    assert.equal(state.ai.budget.spentUsd, 0);
-    assert.equal(state.ai.budget.reservedUsd, 0);
-    assert.equal(state.ai.usage.llmCalls + state.ai.usage.jevCalls, 0);
+  try {
+    await capture(revoked, '01-revoked-inventory-workspace-after-old-response.png');
+  } catch (error) {
+    report.captureFailure = errorText(error);
+    throw error;
+  } finally {
+    try {
+      for (const [index, viewer] of viewers.entries()) {
+        assert.equal(viewer.commands.length, 1);
+        assert.equal(
+          quantity(viewer.actorId, 'wood'),
+          baseline[index] + (contests[index].result.ok ? 1 : 0),
+        );
+        const state = await nativeRead(viewer, '/api/state');
+        assert.equal(state.player.id, viewer.actorId);
+        assert.equal(state.access.controlling, true);
+        assert.equal(state.ai.budget.spentUsd, 0);
+        assert.equal(state.ai.budget.reservedUsd, 0);
+        assert.equal(state.ai.usage.llmCalls + state.ai.usage.jevCalls, 0);
+      }
+      assert.equal(quantity(bagId, 'wood'), 0);
+      assert.equal(quantity(bagId, 'prepared_fiber'), 1);
+      assert.deepEqual(report.pageErrors, []);
+      assert.deepEqual(report.unexpectedRequests, []);
+      assert.deepEqual(await store.recentJobs(), []);
+      assert.equal(expired, false);
+      assert.equal(report.failure, undefined);
+      report.final = {
+        branches: viewers.map((viewer) => ({
+          actorId: viewer.actorId,
+          quantity: quantity(viewer.actorId, 'wood'),
+          commands: viewer.commands.length,
+        })),
+        bagBranches: quantity(bagId, 'wood'),
+        bagMarker: quantity(bagId, 'prepared_fiber'),
+        nativeControlsAndProviderUsageChecked: true,
+        noPaidJobs: true,
+        simTime: game.service.world.simTime,
+      };
+    } catch (error) {
+      report.finalAuditFailure = errorText(error);
+      fail(report.captureFailure ?? error);
+      throw error;
+    }
   }
-  assert.equal(quantity(bagId, 'wood'), 0);
-  assert.equal(quantity(bagId, 'prepared_fiber'), 1);
-  assert.deepEqual(report.pageErrors, []);
-  assert.deepEqual(report.unexpectedRequests, []);
-  assert.deepEqual(await store.recentJobs(), []);
-  assert.equal(expired, false);
-  assert.equal(report.failure, undefined);
-  report.final = {
-    branches: viewers.map((viewer) => ({
-      actorId: viewer.actorId,
-      quantity: quantity(viewer.actorId, 'wood'),
-      commands: viewer.commands.length,
-    })),
-    bagBranches: quantity(bagId, 'wood'),
-    bagMarker: quantity(bagId, 'prepared_fiber'),
-    nativeControlsAndProviderUsageChecked: true,
-    noPaidJobs: true,
-    simTime: game.service.world.simTime,
-  };
   report.passed = true;
 } catch (error) {
   fail(error);

@@ -751,6 +751,28 @@
       "captureScope": "app",
       "source": "native-shared-storage-0f44943",
       "originalFile": "02-contest-entity-0002.png"
+    },
+    {
+      "id": "73-native-care-waiting-current-work",
+      "file": "73-native-care-waiting-current-work.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 1013488,
+      "sha256": "1b216f92a97054f76cbd6382f92b530632bfd5444aa3c4ba556016b48b43223e",
+      "captureScope": "app",
+      "source": "native-care-presentation-b8dd1dfe",
+      "originalFile": "01-waiting-one-second-before-deadline.png"
+    },
+    {
+      "id": "74-native-care-completed-last-task",
+      "file": "74-native-care-completed-last-task.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 959064,
+      "sha256": "6df580e0d425a284af5aa7521094e7673146fae5672e5201a2b837abc5617d81",
+      "captureScope": "app",
+      "source": "native-care-presentation-b8dd1dfe",
+      "originalFile": "02-completed-task-after-hide-and-reopen.png"
     }
   ],
   "appSource": {
@@ -3132,6 +3154,241 @@
       ],
       "providerQualification": "Startup asserts zero budget and empty provider credentials. The report declares zero provider cost; its final native AI-usage/job sweep was not reached.",
       "lateResponseBoundary": "The earlier native permitted response was fulfilled in transport, but its browser request had net::ERR_ABORTED. Current native 400 denial and zero displayed rows remain; consumption of an older response payload is not established."
+    },
+    "native-care-presentation-b8dd1dfe": {
+      "baseCommit": "b8dd1dfecc43421dc1594007204397c2b65107f1",
+      "nativeCheckout": "0ebc7ece1d3f645e94eb272071e2cd93c1959870",
+      "workflowRunId": 37578515691,
+      "jobId": 112652694675,
+      "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37578515691/job/112652694675",
+      "artifact": {
+        "id": 11463389069,
+        "name": "temporary-native-ui-observations",
+        "bytes": 1978264,
+        "sha256": "9742a8d5bba6c257cd35f67d45af5ea1340024e3b2a1f6a8398c7ccea3ffe1f8",
+        "digestAndCrcVerified": true,
+        "url": "https://github.com/Macrofold/OpenLegend/actions/runs/37578515691/artifacts/11463389069"
+      },
+      "fullEvidenceArtifact": {
+        "id": 11463648337,
+        "name": "spatial-browser-evidence",
+        "bytes": 70096191,
+        "sha256": "05671dbc3aa82d0ab8401eb3ab55d4df420cd332adc66593c10323a194fb1ec2",
+        "url": "https://github.com/Macrofold/OpenLegend/actions/runs/37578515691/artifacts/11463648337",
+        "downloaded": false,
+        "traceArchivesInspected": false
+      },
+      "reportFile": "care-deadline/evidence/report.json",
+      "reportSha256": "dd5efb8b4f2629ddd3c9f90d53c227defa8edc8a187037dde63891710c4c073a",
+      "observationStartedAtUtc": "2026-10-07T05:58:51.707Z",
+      "observationFinishedAtUtc": "2026-10-07T05:59:44.599Z",
+      "additionalJevCostUsd": 0,
+      "cumulativeJevCostUsd": 0,
+      "overallOutcome": "Native completion and corrected Last task / Chosen stopping time presentation pass, including Hide/reopen, retained preparation and no restart or further debit through time 61.",
+      "visualReview": "Both original captures inspected. Active time 59 retains Current work, Stops at, Stop all work and the HUD task; completed/reopened time 60 shows Last task and Chosen stopping time without Start, Stop or the HUD work card. Historical Start acknowledgement remains; the fixed panel has substantial blank space.",
+      "providerQualification": "Final native budget, usage and no-paid-job checks pass. One original UI Start and one exact resolved receipt.",
+      "sourceSha256": {
+        "apps/server/src/http.ts": "77ec66ebf3a78c9da940015149ec7b3ef185deb019b7de8715802e8c9a55ca23",
+        "apps/server/src/world-service.ts": "5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c",
+        "apps/server/src/activity-requests.ts": "39117264f341c7a34dce19f37c04934dea5d1d73de1eb4eef375d211367055f7",
+        "apps/server/src/view.ts": "959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b",
+        "apps/client/src/main.tsx": "08c4e291889452e20d3d94ccd14f5ec66d3fb57322ee850039bc810bcbbd7e62",
+        "apps/client/src/ui/camp-activity.tsx": "80a06abf450c314ec73d537112570269e12d8b2f56c8cfd7c45cd958da72e16d",
+        "apps/client/src/ui/activity-object-field.tsx": "f3d04b26b7f2665e282bb9834550bb923e9d2f608a7696c90cfed2cd2530a3f8",
+        "packages/domain/src/kernel.ts": "10582d414a42aa56cf8b795ae505a17e20b2a3c803ae111a26dc9dbbfaeb12bb",
+        "packages/domain/src/activity-execution.ts": "b049c40c9d02cb349f4dd43e6bf1e96ec6c657e9639b0fa6f9ecdeb0e1a9dcc9",
+        "packages/domain/src/worlds/base/camp-activity.ts": "abb0c0251261cea2f7bd336d72b62e49ea2e46a2137d8330308d5122f746f3c2",
+        "packages/domain/src/worlds/base/fire.ts": "650d2cf3969424806b555c8f1b02c0e63bf3e3d4b71231302c0fc263d923e858",
+        "packages/domain/src/worlds/base/fire-rules.ts": "6f20cd53fcde0834da78c8e55fc5f895a2f12f1658081ed89d474d1ba3665e02",
+        "tests/fixtures/database.ts": "3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92",
+        "tests/fixtures/service.ts": "e5322bfac774e1a952d3bced7569958389525adf271026a18d2512b1a73f21e7",
+        "tests/fixtures/browser.ts": "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2"
+      },
+      "runnerSha256": "9e4d406b372b274aa5e315ebb06fef7262fc79e0bc881c4bde5c5e6655be510d",
+      "builtEntrySha256": "478b50f9407217b86bf042cd3bcd1958890909a3e6b55c69490c1d0f9bc971eb",
+      "browser": "145.0.7632.6",
+      "fixture": {
+        "beforePosition": {
+          "x": 11,
+          "y": 0,
+          "z": 13
+        },
+        "stance": {
+          "x": 11,
+          "y": 0,
+          "z": 11,
+          "surfaceId": "terrain"
+        },
+        "firePosition": {
+          "x": 11,
+          "y": 0,
+          "z": 10
+        },
+        "priorFuel": 172800,
+        "preparedFuel": 600,
+        "nativeCarriedBranches": 2
+      },
+      "commands": [
+        {
+          "input": "Enter on focused Start task",
+          "request": {
+            "commandId": "5ea06aa1-ee8a-4550-ad7a-c46400cd66fe",
+            "commandEpoch": "4caddb5d-a2dc-4c54-9ac5-596a01d4db55",
+            "command": {
+              "type": "activity-request",
+              "activityFamilyId": "base:fire-watch",
+              "activityArguments": {
+                "sourceId": "entity-0001",
+                "fireId": "campfire",
+                "definitionId": "wood",
+                "minimumHeld": 1,
+                "mode": "enqueue",
+                "deadline": 60,
+                "maxUnits": 1
+              }
+            }
+          },
+          "result": {
+            "ok": true,
+            "code": "queued",
+            "message": "Started the task."
+          },
+          "receipt": {
+            "ok": true,
+            "scope": "6acd2dfaa2239cd4f34b784337365b8b1389dc05e0d70690f0045bbad63b14de",
+            "status": "resolved",
+            "result": {
+              "ok": true,
+              "code": "queued",
+              "message": "Started the task."
+            }
+          }
+        }
+      ],
+      "observations": [
+        {
+          "label": "native deadline reached",
+          "planId": "gameplay:local-player:4caddb5d-a2dc-4c54-9ac5-596a01d4db55:076eb56d7d6477c858855d319c823f345082a8fdc68688df4ea6b254a22b5828",
+          "completed": {
+            "name": "Watch this fire for one session",
+            "status": "completed",
+            "reason": "The chosen stopping time was reached.",
+            "spent": 1,
+            "maximumSpent": 1,
+            "spendingUnit": "fuel units",
+            "attempts": 1,
+            "interrupted": false,
+            "deadline": 60
+          },
+          "simTime": 60,
+          "visibleTaskText": "LAST TASK\n\ncompleted Watch this fire for one session\n\nThe chosen stopping time was reached.\n\nUsed 1 of at most 1 fuel units.\n\nChosen stopping time Day 1 · 08:01.\n\nStarted the task.\n\nPrepare another task",
+          "taskAccessibleName": "Last task",
+          "visibleHudCurrentWork": false
+        },
+        {
+          "label": "completed task reopened",
+          "visibleTaskText": "LAST TASK\n\ncompleted Watch this fire for one session\n\nThe chosen stopping time was reached.\n\nUsed 1 of at most 1 fuel units.\n\nChosen stopping time Day 1 · 08:01.\n\nStarted the task.\n\nPrepare another task",
+          "statusText": "completed Watch this fire for one session\n\nThe chosen stopping time was reached.\n\nUsed 1 of at most 1 fuel units.\n\nChosen stopping time Day 1 · 08:01.",
+          "taskAccessibleName": "Last task",
+          "visibleHudCurrentWork": false,
+          "headingText": ["Last task"]
+        }
+      ],
+      "captures": [
+        {
+          "name": "01-waiting-one-second-before-deadline.png",
+          "elapsedMs": 9270,
+          "bytes": 1013488,
+          "sha256": "1b216f92a97054f76cbd6382f92b530632bfd5444aa3c4ba556016b48b43223e"
+        },
+        {
+          "name": "02-completed-task-after-hide-and-reopen.png",
+          "elapsedMs": 7321,
+          "bytes": 959064,
+          "sha256": "6df580e0d425a284af5aa7521094e7673146fae5672e5201a2b837abc5617d81"
+        }
+      ],
+      "limits": {
+        "workMs": 120000,
+        "hardMs": 150000,
+        "actionMs": 10000,
+        "assertionMs": 5000,
+        "navigationMs": 20000,
+        "captureMs": 10000
+      },
+      "limitations": [
+        "Reachable player stance and 600 seconds of fire fuel are supplied fixture setup after real local App entry.",
+        "Native time is offered explicitly; this is not wall-clock pacing, walking, multiplayer, provider, assistive-input or human-usability evidence."
+      ],
+      "cleanup": {
+        "traceSaved": true,
+        "contextClosed": true,
+        "shutdown": {
+          "saved": true,
+          "durableRevision": 12,
+          "durableSimTime": 61,
+          "problems": []
+        },
+        "nativeShutdown": true,
+        "repositoryClosed": true,
+        "browserClosed": true,
+        "disposableDatabasesDropped": true
+      },
+      "passed": true,
+      "elapsedMs": 52892,
+      "clocks": [
+        {
+          "label": "Half of the one admitted native fuel action",
+          "seconds": 10,
+          "before": 0,
+          "after": 10
+        },
+        {
+          "label": "Complete one native fuel action",
+          "seconds": 10,
+          "before": 10,
+          "after": 20
+        },
+        {
+          "label": "Remain attending until one second before the chosen deadline",
+          "seconds": 39,
+          "before": 20,
+          "after": 59
+        },
+        {
+          "label": "Reach the exact chosen stopping time without Stop or replacement",
+          "seconds": 1,
+          "before": 59,
+          "after": 60
+        },
+        {
+          "label": "No native restart or extra debit after reopen and preparation",
+          "seconds": 1,
+          "before": 60,
+          "after": 61
+        }
+      ],
+      "final": {
+        "simTime": 61,
+        "commands": 1,
+        "planId": "gameplay:local-player:4caddb5d-a2dc-4c54-9ac5-596a01d4db55:076eb56d7d6477c858855d319c823f345082a8fdc68688df4ea6b254a22b5828",
+        "status": {
+          "name": "Watch this fire for one session",
+          "status": "completed",
+          "reason": "The chosen stopping time was reached.",
+          "spent": 1,
+          "maximumSpent": 1,
+          "spendingUnit": "fuel units",
+          "attempts": 1,
+          "interrupted": false,
+          "deadline": 60
+        },
+        "branches": 1,
+        "fuelEvents": ["event-59"],
+        "noRestart": true,
+        "noPaidJobs": true
+      },
+      "transport": "Actual production App/PlayCanvas, native HTTP/server and disposable PostgreSQL. No mocked command, receipt, contents or permission response."
     }
   }
 }
