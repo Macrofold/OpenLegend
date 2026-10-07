@@ -230,13 +230,13 @@ Original recommendation: **Review**.
 
 **Current PW01 branch evidence · Restrictiveness: Safe.**
 
-The direct generation-allowance helper has a $0.25 minimum before requested-model pricing can raise it. The general interactive-headroom calculation reserves room for two generation calls, three judgments and one embedding call; in Jev-only mode it instead retains three judgment allowances and no generation/embedding headroom. This is admission headroom, not an instruction to make all those calls or proof of actual cost.
+The direct generation-allowance helper defaults to a minimum of the greater of $0.25 and the configured generation reservation, before requested-model pricing can raise it. A caller may supply a different floor and token estimate: narration uses 26,000 input tokens, 1,800 output tokens and the configured generation reservation as its floor. This is a reservation calculation, not a minimum provider charge. The general interactive-headroom calculation reserves room for two generation calls, three judgments and one embedding call; in Jev-only mode it instead retains three judgment allowances and no generation/embedding headroom. This is admission headroom, not an instruction to make all those calls or proof of actual cost.
 
 The shared allowance now selects the actual configured model's prices; an undecided route takes the maximum across configured default/mini/complex/summary models, including cache-rate premiums. The existing floor and interactive headroom remain; no added provider allowance is implied. [Evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026).
 
 **Reason / tradeoff:** Reduce unnecessarily large reservations using the actual planned calls without allowing background work to consume the money needed to answer the player.
 
-[Allowance owner](../../apps/server/src/cognition-budget.ts).
+[Allowance owner](../../apps/server/src/cognition-budget.ts) · [Narration caller](../../apps/server/src/narrator.ts).
 
 Original recommendation: **Review**.
 
