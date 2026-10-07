@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Reusable appearance families, modular equipment and broad pose coverage remain proposed; the delivered mercenary is one fixed asset family. | 2026-10-04   |
+| Not started | Reusable appearance families, modular equipment and broad pose coverage remain proposed; the delivered mercenary is one fixed asset family. | 2026-10-07   |
 
 **Status: proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
 
@@ -130,6 +130,6 @@ Each v1-specific family records its owner, supported inputs/states, restrictions
 
 ## 11. Required evidence
 
-The first family qualification must include distinct bodies/outfits at gameplay scale, a held item through turns and a supported activity, equipment appearing on the ground after a real drop, a dead/removed animal with delayed art, a partial modular construction fixture, and a nonhuman articulated object. Include incompatible fits, missing required poses, concealed contents, material changes, and repeated instancing.
+Qualify each selected family through its complete relevant player path before expanding it: rigid items need held/ground/contained transitions and real drop; humanoids need distinct bodies/outfits, turns, supported activity and fit/pose coverage; animal/death presentation needs delayed art after removal; construction needs a partial modular fixture; and the nonhuman proof needs its own articulation and permitted senses. Across those slices retain all incompatible-fit, missing-pose, concealed-content, material-change and repeated-instancing cases. These requirements cover the proposed family range, not prerequisites to deliver the first rigid-item slice or permission to claim untested families complete. [V3D04–V3D06](../maintainers/3d-pixel-art.md#v3d04--rigid-parts-materials-and-construction-visuals) owns their dependency and completion boundaries.
 
 Measure both rendering and production effort: creation/correction time, number of separately authored variants, reuse rate, failures, retained bytes, and crowd cost. An attractive human turntable does not qualify clothing combinations, animal rigs, structural modularity, or novel generated art. Detailed evidence requirements remain in [validation](3d-pixel-art-validation.md).
