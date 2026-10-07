@@ -30,6 +30,10 @@ A gathering on an open landscape may not have the convenient restrictions of a v
 
 ## 4. Admission and player experience
 
+**DG29 product proposal, October 7, 2026:** [Visits and wider participation](../projects/visits-and-wider-participation-feature-spec.md#5-admission-and-waiting-that-preserve-the-game) selects one understandable pending request while ordinary source play remains available, explicit ready acceptance, counted destination preparation and a retained home-return admission in the first [authored pair](../worlds/base/visits-and-arrival.md). The complete proposal owns reservation durations, cancellation, current control, access loss and safe recovery. A held return place is a real capacity cost even when the absent body is not simulated. Recovery, storage and support must be funded before another trip is accepted; invitation does not make the visitor a bill payer.
+
+A useful small visit can qualify independently of the full growth program. [DG29's population and economics review](../projects/visits-and-wider-participation-feature-spec.md#12-larger-populations-that-remain-playable) preserves the exact existing mixed-world and busy-scene targets, post-entry effect growth, cold/mature history and full human experience. The reported synthetic 100-account speech burst and a configured player-capacity setting do not establish that envelope. [PS06/PS08](../maintainers/product-scalability.md) consume existing PF11/D5 qualification rather than create a parallel performance owner.
+
 Show known congestion before travel when possible. Reserve capacity for an accepted arrival so teleport preparation does not finish at a destination that has already lost its slot. Shared preparation should serve multiple arrivals without duplicating history or characters.
 
 Capacity policies need fair treatment of residents, groups, reconnecting players, current encounters, and ordinary visitors. Owning a home preserves the home; it is not an unlimited guarantee of immediate entry to any crowded location. A coherent safe arrival or queue option is preferable to spawning inside an overload or an unrelated danger.

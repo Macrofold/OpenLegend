@@ -41,6 +41,10 @@ Protecting ownership does not imply universal invulnerability. Public-world sieg
 
 ## 4. Visiting, moving, and continuity
 
+**DG29 product proposal, October 7, 2026:** [Visits and wider participation](../projects/visits-and-wider-participation-feature-spec.md) specifies a complete first visit between two prepared compatible worlds under one operating authority. The [authored workyard](../worlds/base/visits-and-arrival.md) gives the visitor a friend, an independent resident and useful ordinary activity before returning. No physical cargo or companion crosses in this first profile; actual food, treatment, bodily consequences and legitimate learning can persist. The same fictional person continues through fresh destination-local identities and explicit provenance, including return home. A stale home body is never reactivated as another life.
+
+The proposal keeps protected local storage, current private-human rights, counted home-return admission and funded failure recovery together. General cargo, NPC relocation, another operator and DG34 campaigns are separately qualified extensions. [PS05–PS08](../maintainers/product-scalability.md) own delivery; this proposal does not claim implemented travel or require a campaign before visiting a friend.
+
 A visitor enters a place with an existing past. They do not need to have experienced that past for the place to be coherent. Explanations can come from residents, archives, visible construction, and other permitted evidence. Do not reveal all private history merely to make onboarding convenient.
 
 Travel changes location, not identity. Accompanying NPCs, possessions, unfinished work, and accepted obligations retain their owners and provenance. Whether a particular character can accompany a traveler is an actual choice or supported permission, not automatic attachment of an entire city to the player.

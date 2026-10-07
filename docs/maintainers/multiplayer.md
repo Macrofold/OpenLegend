@@ -173,6 +173,12 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 The [immediate limits implementation](../projects/immediate-gameplay-limits.md) coordinates release admission and projection cache capacity from `OPEN_LEGEND_PLAYER_CAPACITY` (default 100), retaining per-scope authority and slow-client handling. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) includes 100 separate synthetic accounts with actual SSE/control/commands; session setup bypassed OIDC. MP01 authority remains required. PF11/D5 and [E01](limits-audit.md#e01) remain open for sustained mixed gameplay, hosted operation and 10,000-player growth; the 100-player burst latency is not acceptable release evidence.
 
+## Optional visit and return consumer
+
+**DG29 product proposal, October 7, 2026:** [Visits and wider participation](../projects/visits-and-wider-participation-feature-spec.md) adds a first compatible two-world visit through [PS05–PS08](product-scalability.md). Existing MP grants, one current controlling session, request outcomes and private-human restrictions remain authoritative. Same-world tab/control transfer is not implemented cross-world travel, and reading current main's newer danger/death rules does not update this branch's runtime or rewrite the dated evidence above.
+
+The visit must resolve current actual custody before reconnect or return, refuse a conflicting destination person without merging lives, and preserve fresh destination-local identity/provenance without reactivating the old home body. Actual destination Continue, food, treatment and learning remain real outcomes. Access removal stops new unauthorized work while the admitted deposit/exit/recovery obligation remains available; a stale bookmark or lost acknowledgement cannot create another person. PS owns the focused journey and PF the complete capacity evidence. This forwarding entry changes no existing MP checkbox and creates no parallel authority project.
+
 ## Optional private correspondence consumer
 
 The [DG24 product proposal](../projects/world-text-messages-feature-spec.md) is owned by [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text), with [TX limits](../limits/narration.md#tx-l01--selected-affordance-and-correspondents). MP01's current principal, world access, control generation, receipt and projection rules remain the authority. A fictional contact or bound item grants no account identity, world entry, control or other person's history.

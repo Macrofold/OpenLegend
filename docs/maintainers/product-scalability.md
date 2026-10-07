@@ -103,6 +103,12 @@ The DG17 proposal deliberately uses today's mechanical clock and current MP04 ab
 - [ ] Define calendar/mechanical/real-time assignments as an explicit future time feature; preserve current clock meaning until delivered.
 - [ ] Exercise mode cycling, replay, save/restore, unexpected disconnect, and cross-boundary conflict for exploits.
 
+**DG29 proposed first visit, October 7, 2026:** [Visits and wider participation](../projects/visits-and-wider-participation-feature-spec.md) and its [authored profile](../worlds/base/visits-and-arrival.md) consume current-main departure and death/Continue as explicitly audited there. This is separate from the inherited general dangerous-logout/calendar program above, and does not import newer runtime into this branch.
+
+- [ ] **PS05.1 — Preserve one actual movement and person.** Qualify preparation, precommit cancellation, exposure, ambiguous commitment, arrival, reconnect and return under current control. Fresh destination-local identity/provenance continues the fictional person; no stale source body, duplicated goods, old command or automatic second movement.
+- [ ] **PS05.2 — Carry actual bodily consequences and privacy.** Preserve remaining durations, current damage/scars and legitimate local food, treatment and learning. Death stays with its actual world; explicit local Continue precedes ordinary return. No trip reset, remote corpse recovery, unauthorized private-history disclosure or missed-time bodily debt.
+- [ ] **PS05.3 — Complete the admitted recovery obligation.** Qualify actual protected arrival, finite local custody, access revocation, closure, blocked home and service interruption. Preserve actual custody, current ownership and any required exposure; use protected inactivity at the supported recovery boundary, with an explained next action and no forced recovery purchase or invented resurrection.
+
 **Exit:** transitions do not create contradiction, death traps, logout immunity, duplicate identities, or invented private player actions.
 
 ## PS06 — Capacity and sustainable economics
@@ -121,6 +127,11 @@ DG17's proposed first operating envelope adds the following qualification; it do
 - [ ] Establish complete workflow cost and fair world/background budgets without degrading already-engaged outcomes secretly.
 - [ ] Preserve acknowledged durability; evaluate any isolated rollback policy separately from connected transfers and campaign receipts.
 
+**DG29 proposed admission and cost consumer:** [The visit journey](../projects/visits-and-wider-participation-feature-spec.md#5-admission-and-waiting-that-preserve-the-game) supplies the first concrete queue, offer and return-reservation behavior; its limits remain in the existing PS inventory.
+
+- [ ] **PS06.1 — Make waiting useful and admission honest.** Preserve ordinary source play, one current request, deliberate ready acceptance, disclosed expiry and counted destination/home-return places. Qualify reconnect, cancellation and converging effects without hidden paid priority, involuntary splitting or capacity invented by excluding required bodies.
+- [ ] **PS06.2 — Fund and qualify the whole offered trip.** Include held slot-hours, preparation, actual body/history access, protected storage, local supplies, optional cognition and eventual return/support. Stop new trips before existing obligations lose support; no automatic budget reset, paid welcome or free-running home follows from travel.
+
 **Exit:** publish only measured supported envelopes with a viable quality/cost balance, not a generic number of players per region.
 
 ## PS07 — Federation and forecast canonical campaigns
@@ -134,6 +145,13 @@ DG17's proposed first operating envelope adds the following qualification; it do
 - [ ] Provide meaningful roles before, during, and after peak battle; preserve continuous ordinary play and opted-out domains.
 - [ ] Demonstrate distinct manifestations or actual travel, specific contribution recognition, and one canonical final outcome.
 
+**DG29 independently complete first visit:** [The researched proposal](../projects/visits-and-wider-participation-feature-spec.md) selects two prepared compatible worlds under one operator before cargo, NPC migration, another operator or a general federation.
+
+- [ ] **PS07.1 — Visit a particular place and come home.** One invited human meets an actual friend and an independent resident, chooses useful ordinary activity and returns with the actual resulting experience. Preserve resident refusal and one fictional life; no copied companion, required reward or universal welcome.
+- [ ] **PS07.2 — Keep local powers, property and connected history coherent.** Qualify the named protected yard, actual source storage/local deposit and current body compatibility; no physical cargo or source-world administrative powers cross in the first profile. Preserve local consumption/output ownership and private-human boundaries. Retain the latest completed external-crossing restore boundary and refuse unsupported independent rewind through DG25/SL.
+
+**First-visit completion:** the whole admitted outward/return/recovery journey is useful and understandable on its own. The original campaign tasks and full campaign exit below remain open for DG34; they are not prerequisites for this visit.
+
 **Exit:** multiple communities affect one campaign through local opportunities without global omniscience, copied victories, or compulsory private-world invasion.
 
 ## PS08 — Broader experience and scale qualification
@@ -144,6 +162,11 @@ DG17's proposed first operating envelope adds the following qualification; it do
 - [ ] Qualify long absence, mass return, mature memory, contentious boundaries, dense sensory scenes, and cross-world outcome recovery.
 - [ ] Test returning-player and newcomer experience, relationship consistency, schedule fairness, and behavior under low budgets.
 - [ ] Expand capacity only with actual end-to-end evidence; keep native, network, database, inference, and presentation claims distinct.
+
+**DG29 proposed experience and capacity acceptance:**
+
+- [ ] **PS08.1 — Qualify a real visit, including its failures.** Use the [prepared two-human/one-resident destination](../worlds/base/visits-and-arrival.md), ordinary useful activity, retained learning and subsequent actual meeting. Include current death/Continue, finite supplies, nested excluded goods, conflicting destination binding, ambiguous movement, revocation and attempted pre-crossing restore; report full cost and meaningful player choices.
+- [ ] **PS08.2 — Retain the complete larger workload.** Through existing PF11/D5 and relevant owners, qualify the exact accepted first-release/growth populations, concentrated scene, post-entry effects, mature history, mass return and sustained client/native/cognition behavior. The small visit and synthetic 100-account speech run do not establish these capacities.
 
 **Exit:** a measured supported growth path. Millions remain an aspiration until actual relevant evidence establishes the specific claimed workload.
 

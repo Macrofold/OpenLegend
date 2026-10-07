@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-07 — Useful visits, dependable return and honest capacity
+
+Prepared DG29's [product proposal](projects/visits-and-wider-participation-feature-spec.md), [authored two-world profile](worlds/base/visits-and-arrival.md) and [PS-L34–PS-L43](limits/product-scalability.md#ps-l34--first-prepared-visit), with ten primary research records. A visit to meet a friend and use actual local resources can complete before cargo, federation, campaigns or large crowds. Current condition, explicit Continue, private knowledge, local custody, real return capacity and independent-restore boundaries are preserved.
+
+The source review distinguishes current-main 300-game-second departure/death from historical plans and separates the unqualified mixed-population targets from a ticking-disabled 100-account speech burst. Existing PS05–PS08, MP, PF and SL owners retain implementation and evidence. The first development proof does not make an unadopted ongoing commercial recovery promise. No runtime, live travel, funded service or population qualification ran.
+
 ## 2026-10-07 — Useful published packs and transparent creator earnings
 
 Prepared DG28's [product proposal](projects/published-packs-and-creator-revenue-feature-spec.md) and [PK constraints](limits/published-packs-and-creator-revenue.md), extending INV-8/EWF11 and PD10. A small complete free catalogue precedes independently selected paid packs, standalone worlds and fixed member allocation. Exact release retention, rights and private dependencies, deliberate installation, updates/removal, refunds, beneficiaries, unassigned-amount return and payout closure are specified with twelve primary research records.

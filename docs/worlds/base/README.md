@@ -27,6 +27,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Supplies worth keeping](changing-supplies.md) — DG19's independently selectable preservation and finite renewal, with actual work and stock economics; current food and resource rules remain unchanged.
 
 - [Personal message slates](text-messages.md) — proposed optional later-world correspondence with local mutual contacts, private reading, real device possession and no primitive-start addition.
+- [A visit to another camp](visits-and-arrival.md) — DG29's proposed prepared two-world visit, actual local activity, current bodily consequences, protected arrival/storage and dependable return; no cargo trade or measured population claim.
 
 ## Code boundary
 
