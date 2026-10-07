@@ -21,14 +21,14 @@ Each prompt must stand alone: it cannot depend on an earlier prompt, this conver
 
 ## Make Open prerequisites a start decision
 
-The owner uses **Open prerequisites** to decide whether another task must finish before starting this assignment. Keep it a short list of genuine external blockers: required work assigned to another task that is unfinished or not confirmed available on the intended base, and without which some specified part of this assignment must wait. A different assignment in the same batch is external for this purpose.
+The owner uses **Open prerequisites** to decide whether earlier work must be supplied before launching this assignment. Keep it a short list of required work outside this batch that is unfinished or not confirmed available on the intended base. Even if a dependency affects only a later step, it must be available before launch so the agent can finish without a stop/resume handoff.
 
-- Start each prompt with **Start readiness: Ready**, **Partial start only**, or **Wait before starting**, followed by the concrete reason. For a partial start, name the useful independent portion and say that full completion still waits; do not imply the entire assignment can run uninterrupted.
-- Each prerequisite names the other task and deliverable, its current implementation/merge status and evidence/reference, and exactly what waits. Label whether it **blocks starting** or **blocks a named later part/completion**. If none qualifies, write **Open prerequisites: None.**
+- Start each prompt with **Start readiness: Ready** or **Wait before starting**, followed by the concrete reason. Ready means the entire assignment can be completed from its starting base; do not use **Partial start only** for parallel assignments.
+- Each prerequisite names the earlier task and required deliverable, its current implementation/merge status and evidence/reference, and what part of completion needs it. Every listed prerequisite is a reason to wait before starting. If none qualifies, write **Open prerequisites: None.**
 - Exclude already available work, resolved developer decisions, work this assignment will implement itself, optional enhancements and broader unfinished quality/scale work that blocks none of this assignment. Put useful reuse guidance in implementation details and necessary evidence qualifications in the design/acceptance references, outside this list.
 - Refresh facts when revising prompts. Distinguish unfinished implementation from completed work awaiting merge/supply; do not tell the owner to wait for a task whose required result is already present. A supplied alternative base can satisfy availability there without implying a merge into `main`.
 
-Keep the full dependency history in the owning design/tracker. Do not repeat it in the quick blocker list or hide an actual wait to make a task look ready. Where tasks consume each other's partial deliveries, identify the exact independently deliverable part and later integration; do not invent a circular requirement for both whole tasks to finish first.
+A dependency on another assignment in the same batch is an allocation defect, not an acceptable prerequisite entry. Apply [independent completion](planning.md#divide-the-work-so-agents-can-act-independently): combine connected work or place dependent work in a later batch before publishing the prompts. Naming an intermediate delivery, asking the owner to transfer it, or explaining a cycle does not fix the defect. Keep dependency history in the owning design/tracker rather than the quick start-decision list.
 
 ## Name a new branch in each prompt
 
@@ -42,7 +42,7 @@ A short instruction to follow `AGENTS.md` and applicable repository guidance is 
 
 In particular, generated prompts must not:
 
-- Tell tasks to contact, message, coordinate with, monitor, wait for replies from or report to other AI tasks. Do not assign task-to-task communication through a shared message file as a workaround. Explain boundaries and owner-mediated sequencing in the plan instead.
+- Tell tasks to contact, message, coordinate with, monitor, wait for replies/results from or report to other AI tasks. Shared message files, branch polling and owner-mediated exchanges of partial implementations are not workarounds. Settle boundaries and group dependent implementation in the plan before launch.
 - Tell agents to write unit/integration/browser tests, prescribe coverage quotas or blanket test suites, or prohibit tests that current repository rules require. Define needed evidence; test authoring and execution follow `AGENTS.md` and its verification policy.
 - Invent mandatory commits, worktrees, rebases, cherry-picks, merge authority, push behavior, integration leadership or cross-task status reporting. Include the specifically requested new-branch instruction above; other Git workflow stays with `AGENTS.md` and explicit user instructions.
 - Create spending permission, numeric budget splits, model choices, retry rules, timing deadlines or approval rituals from a previous run. Preserve relevant explicit constraints and refer to current policy for the rest. Splitting work never multiplies an existing shared allowance.
@@ -60,10 +60,10 @@ Implement [plain-language outcome and the specific scoped work]. Follow AGENTS.m
 
 After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch [exact descriptive branch name for this assignment].
 
-Start readiness: [Ready / Partial start only / Wait before starting, with the concrete independent scope or reason to wait.]
+Start readiness: [Ready / Wait before starting, with evidence of full-assignment readiness or the prerequisite to supply before launch.]
 
 Open prerequisites:
-- [Only a required deliverable owned by another task that actually blocks starting or a named later part; include task/reference, current implementation/merge evidence and the exact wait. Say None when there are none.]
+- [Only required earlier work outside this batch that must be supplied before launch; include task/reference, current implementation/merge evidence and why completion needs it. Say None when there are none.]
 
 Scope and intended result:
 - [Current problem and the exact behavior to deliver, followed by task IDs.]
@@ -89,6 +89,6 @@ If the requested deliverable is findings or design rather than implementation, c
 
 Verify the requested number and focus, readable descriptions, real references, complete task definitions and coherent combined outcome. A task can span categories, and multiple tasks can share a category. Any capacity figures must match the user's request and disclose assumptions.
 
-Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, exact new branch name, design decisions, completion criteria and documentation obligations? Check that Open prerequisites contains only actual waits on another task, and that available work, this task's own deliverables and nonblocking qualifications appear elsewhere. Remove unsupported assumptions and instructions requiring sibling communication. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
+Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, exact new branch name, design decisions, completion criteria and documentation obligations? Apply the independent-completion check: could this agent finish every requirement if no sibling agent ever starts? Check that Open prerequisites contains only earlier external work needed before launch, and that available work, this task's own deliverables and nonblocking qualifications appear elsewhere. Regroup any same-batch dependency; remove unsupported assumptions and instructions requiring communication or intermediate handoffs. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
 
 Present one clearly labeled copyable block per assignment, with a short allocation/dependency explanation for the owner where useful. Do not create chats, dispatch work or start runtime implementation unless separately requested. Report genuine readiness gaps plainly; a polished prompt does not resolve them.
