@@ -1,8 +1,8 @@
 # Published packs and creator revenue
 
-| Status      | Current progress                                                                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG28's product proposal is drafted; independent critique and reconciliation remain in progress, with technical delivery and paid activation open. | 2026-10-07   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG28's researched product design, independent critique and reconciliation are complete; technical delivery and paid activation remain open. | 2026-10-07   |
 
 ## 1. The player and creator promise
 
@@ -177,7 +177,7 @@ In the selected first membership-allocation policy, a world whose valid directly
 
 The accepted direction earmarks a fixed amount from each eligible paying platform member for participating worlds they use. This proposal keeps that amount fixed per paid member period and selects **deliberate support choices among actual used worlds**, rather than metering every simulated minute. No amount or platform price is selected; the historical $5 is illustrative.
 
-A participating world must have a verified eligible recipient, a current playable service, rights to its content, current customer/reporting terms and an accepted allocation agreement. Free publication alone is not payout enrollment. The member's payment must be confirmed, attributable to that actual period and not refunded or disputed. Trials, gifted/subsidized periods without an explicit funded allocation and NPC accounts supply no implicit pool.
+A participating world must have a verified eligible recipient, a current playable service, rights to its content, current customer/reporting terms and an accepted allocation agreement. First-party official worlds may participate under the same rules, with the platform beneficiary clearly identified before selection and in the statement. They receive no automatic allocation or ranking privilege. Free publication alone is not payout enrollment. The member's payment must be confirmed, attributable to that actual period and not refunded or disputed. Trials, gifted/subsidized periods without an explicit funded allocation and NPC accounts supply no implicit pool.
 
 For that member/period, a world qualifies as used after an ordinary accepted action deliberately issued through the member's active human control while present there. Reconnect, heartbeat, automatic travel, background simulation, NPC decisions, idle presence and repeatedly installing a pack do not qualify. There is no minute target, daily streak or requirement to grind a particular action. A private boolean and the necessary scoped evidence can establish qualification without exposing speech, inventories or time spent to creators.
 
@@ -196,7 +196,7 @@ At the close of the member's account period:
 1. Take the fixed confirmed amount allocated by that exact paid membership, after any disclosed refund correction. A period cannot create more than this amount.
 2. Keep only the member's selected worlds that qualified in that period, remain eligible to receive money and had no valid directly paid premium-access overlap for that member in the period.
 3. Group those worlds by their contracting payout beneficiary. Split the fixed amount equally among the distinct beneficiaries; a creator's three listings do not count as three competing shares.
-4. For a beneficiary with several selected worlds, divide its share equally among those worlds for reporting. Whole minor-currency-unit remainders go in the stable order of the member's saved choices. The sum must equal the fixed distributable amount.
+4. For a beneficiary with several selected worlds, divide its share equally among those worlds for reporting. Round the beneficiary division down to whole minor-currency units first and assign its remaining units in the order of each beneficiary's earliest saved world choice. Then apply the same round-down/remainder rule within each beneficiary's world share. The sum must equal the fixed distributable amount; a zero amount requires no refund transaction.
 5. If no selected beneficiary qualifies, return the earmarked amount to the member's original payment method as a partial refund. Do not quietly absorb it into platform margin, carry an indefinite balance or create a grant fund.
 
 The entire recipient choice and provisional division is visible to the member before close. A change applies to the still-open period; completed allocations keep their recorded choices and formula. This permits a deliberate “that world mattered to me” judgment without minute-by-minute behavioral surveillance. A member may clear all choices and receive the unassigned-amount treatment.
@@ -272,6 +272,12 @@ The second risk is selling mechanics as immediate character power. Installation 
 
 The fourth is a cheap download that creates expensive permanent obligations. Exact small artifacts, finite new-admission budgets, explicit service retirement and funded payout/refund reserves constrain those obligations. They do not justify erasing existing rights or calling an unverified reference a retained copy.
 
+### Review outcome
+
+Independent review clarified the member pool's partial-month funding, normal 24-hour renewal reconciliation and component-only unassigned refund. Premium overlap now uses actual paid-access intervals, including canceled-but-paid-through terms. Rounding is explicit at beneficiary level before its worlds, and first-party recipients are openly identified without default enrollment. Source records were aligned with the selected world-only pool; pack sales remain distinct.
+
+The source/diff review preserves prior content and checked work, with narrow INV-8 and PD10 delivery additions. Relative links/anchors and pinned Markdown formatting are checked before group closure. No import, runtime, payment, provider or live-player qualification ran; actual paid spend for this design was $0.
+
 ## 13. Delivery, activation and completion
 
 [INV-8](../maintainers/inventions-and-world-evolution.md#inv-8--portable-inventions-and-later-algorithm-extensions) owns account publication, artifacts, retained rights and installation; [EWF11](../maintainers/extensible-world-foundation.md#ewf11--reusable-construct-integration-and-local-portability-proof) owns integration with the supported world. PD10 coordinates only enabled financial features. Existing data/UGC, world-change, budget and licensing owners retain their authority.
@@ -302,7 +308,7 @@ Accessed **2026-10-07**. The records below describe primary published product or
 
 **Finding:** Modrinth describes an advertising-funded creator pool, daily allocation using legitimate page views and in-app downloads, removal of artificial activity, project coauthor splits, and a delay until advertising revenue is received. Its information page explicitly disclaims being the governing legal agreement.
 
-**Inference:** Show Open Legend creators how much fixed membership allocation is eligible, why their worlds qualified, their agreed contributor split, any adjustment, and when money becomes payable. Estimated earnings are not cash already received. Do not copy advertising percentages or download-based allocation: they describe a different business. An explainable finite pool can reward useful published packs without charging separately for every definition invocation or creating unlimited payment liability.
+**Inference:** Show Open Legend creators how much fixed membership allocation is eligible, why their worlds qualified, their agreed contributor split, any adjustment, and when money becomes payable. Estimated earnings are not cash already received. Do not copy advertising percentages or download-based allocation: they describe a different business. An explainable finite pool can support useful worlds without charging separately for every definition invocation or creating unlimited payment liability.
 
 ### PK-R03 — CurseForge: a shared pool changes even with steady work
 
@@ -382,4 +388,4 @@ Accessed **2026-10-07**. The records below describe primary published product or
 
 **Finding:** Fortnite distributes a defined share of eligible net revenue across participating creator and Epic islands. Its current formula includes active play, return visits and acquisition; the document distinguishes the pool from the separate affiliate program and identifies deductions before net revenue. Metrics and eligibility are expressly changeable.
 
-**Inference:** Open Legend should publish how its fixed membership allocation qualifies and divides, including whether first-party packs participate, while keeping standalone sales and grants separate. Make prospective rule changes visible and retain the formula used for a completed period. Player time is evidence to interpret, not an automatic quality score. Do not import Fortnite’s revenue percentage, purchase requirements or tracking complexity into an unmeasured small game.
+**Inference:** Open Legend should publish how its fixed membership allocation qualifies and divides, including whether first-party worlds participate, while keeping standalone sales and grants separate. Make prospective rule changes visible and retain the formula used for a completed period. Player time is evidence to interpret, not an automatic quality score. Do not import Fortnite’s revenue percentage, purchase requirements or tracking complexity into an unmeasured small game.

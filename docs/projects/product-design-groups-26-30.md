@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                    | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26 and DG27's researched product proposals and reviews are complete; DG28–DG30 continue in order. | 2026-10-07   |
+| In progress | DG26–DG28's researched product proposals and reviews are complete; DG29 and DG30 continue in order. | 2026-10-07   |
 
 ## Assignment and exact baseline
 
@@ -63,6 +63,12 @@ HE07/NC23 and the proposed VC inventory retain technical, actual play, accessibi
 [The product specification](customer-and-supporter-offers-feature-spec.md) completes one initial owner-paid hosted world, account-wide successful-objective invention terms, payment/renewal/cancellation/refund/recovery, and an independently optional one-time chronicle acknowledgement. Ten primary records inform current playable value, host-paid access, finite AI liability, honest renewal measurement and bounded fulfillment. Actual prices, quantities, operating budgets, territories and post-launch continuity remain required before sale.
 
 Independent critique corrected repeated/overlapping allowance grants, the distinct personal-plan lifecycle, pending renewal timing, late hosting anniversaries, inactive third-charge prevention and lifetime correction labor. The first recognition edition uses the purchaser's own pseudonym; it requires no gifting or collectible market. PD10.1–PD10.4 and INV-13.8a–b retain open delivery with [OF limits](../limits/customer-and-supporter-offers.md); the original checkboxes/history remain unchanged. The draft checkpoint is [4ddcb80f](https://github.com/Macrofold/OpenLegend/commit/4ddcb80f76c28af395abda944df1292c875706ab). Documentation links/anchors and inherited checklist states pass; no runtime/payment test or actual commercial experiment ran.
+
+### DG28 — Published packs and creator revenue
+
+[The product specification](published-packs-and-creator-revenue-feature-spec.md) completes curated eligible publication, exact acquisition and retained rights, explicit installation/use, updates/withdrawal/exceptional remedies, separately enabled paid packs and standalone worlds, and fixed member allocation. Twelve primary records support immutable-release, permission, customer-access and explainable financial decisions. The actual source audit distinguishes delivered local attribution from the still-open account-library/pack path, including invention Apply teaching and private operational-backup contents.
+
+The game-first review keeps the useful free craft/use journey ahead of payouts. It repairs partial-month and normal-renewal pool funding, component-only unused-amount refunds, premium paid-through overlap, beneficiary-first rounding and explicit first-party treatment. INV-8.1a/8.2a/8.3a–b and PD10.5–6 remain open; EWF11 forwards without duplicate acceptance. Original licenses, prior checked states and historic commercial examples remain intact. The draft checkpoint is [2e61a08b](https://github.com/Macrofold/OpenLegend/commit/2e61a08b90384994b6efea1dbc281afeb2848eb6). No marketplace, payment or live-use result is claimed.
 
 ## Maintained records
 
