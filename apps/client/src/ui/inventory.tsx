@@ -27,6 +27,7 @@ type InventoryProps = {
   command: CommandDispatcher;
   connected: boolean;
   visible: boolean;
+  narrow: boolean;
   showHeading?: boolean;
   openContainer?: { requestId: string; containerId: string | null; name: string } | null;
   onTalkAbout?(context: { itemId: string; name: string; recipientId?: string }): void;
@@ -124,6 +125,7 @@ function InventoryWorkspace({
   command,
   connected,
   visible,
+  narrow,
   showHeading = true,
   openContainer,
   onTalkAbout,
@@ -797,7 +799,9 @@ function InventoryWorkspace({
         }}
         isNonModal
         className="ol-root ol-inventory-popover"
-        placement="right top"
+        // A sheet leaves no room beside its item; vertical placement lets the
+        // overlay owner keep the same detail and draft within the viewport width.
+        placement={narrow ? 'bottom start' : 'right top'}
         shouldFlip
       >
         <div

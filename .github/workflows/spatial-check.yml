@@ -67,6 +67,10 @@ jobs:
             tests/browser/god-editor.spec.ts \
             tests/browser/time.spec.ts \
             --output test-results/interface
+      - name: Observe natural care completion
+        if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
+        timeout-minutes: 3
+        run: node --import tsx scripts/ui-care-deadline-observation.mjs test-results/care-deadline/evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:

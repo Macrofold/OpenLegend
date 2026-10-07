@@ -1361,6 +1361,7 @@ function App({
             <ContainerOpening state={containerOpening} paused={view.clock.paused} />
             <Inventory
               {...props}
+              narrow={narrow}
               showHeading={false}
               browseActions={(item, opener) => {
                 const bounds = opener.getBoundingClientRect();
