@@ -28,6 +28,7 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition extends Named {
+  mechanismFields?: Record<string, Record<string, number>>;
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
@@ -315,6 +316,7 @@ export interface KnowledgeRecord {
 export type EventScope = 'external' | 'private' | 'system';
 export interface WorldEvent {
   narration?: import('./narration.js').Narration;
+  exposure?: import('./places.js').EncounterExposure;
   scope?: EventScope;
   /** Committed occurrence origin, never recomputed from a source's later position. */
   origin?: Position;
@@ -349,6 +351,9 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  places: Record<string, import('./places.js').PlaceDefinition>;
+  /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
+  visiblePlaces?: Record<string, Record<string, number>>;
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: {
@@ -555,6 +560,7 @@ export type Command = Envelope &
       }
     | {
         type: 'inspect-inventory';
+        itemId?: string;
         containerId?: string;
         after?: string;
         expectedRevision?: number;

@@ -18,8 +18,13 @@ export const BASE_BINDING_MATERIAL: MaterialInterface = {
   unitsPerItem: 1,
 };
 
+/** Unfamiliar constructed objects can earn an introduction; ordinary materials
+ * remain quiet. The story selector still owns all admission. */
+export const CONSTRUCTED_ITEM_STORY_FIELDS = { story_importance: { story_importance: 8 } };
+
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
   knife: {
+    mechanismFields: { story_importance: { story_importance: 7 } },
     id: 'knife',
     version: 1,
     portable: true,

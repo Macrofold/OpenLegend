@@ -1,5 +1,9 @@
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
-import { BASE_BINDING_MATERIAL, BASE_CORDAGE_RULE } from './items.js';
+import {
+  BASE_BINDING_MATERIAL,
+  BASE_CORDAGE_RULE,
+  CONSTRUCTED_ITEM_STORY_FIELDS,
+} from './items.js';
 
 const rules = BASE_CORDAGE_RULE;
 
@@ -66,6 +70,7 @@ export const BASE_CORDAGE_FAMILY: RecipeFamilyDescriptor = {
     return {
       workSeconds: rules.workSeconds,
       outputDefinition: {
+        mechanismFields: structuredClone(CONSTRUCTED_ITEM_STORY_FIELDS),
         portable: true,
         packingLoad: rules.packingLoad,
         properties: [...rules.properties],

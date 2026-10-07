@@ -9,6 +9,8 @@ import {
   bindActivityRequest,
   reviewActivityRequest,
 } from '@open-legend/domain';
+import { resolveKnownPlaceMove, knownPlaceReference } from './known-places.js';
+import type { StoryJob } from './history.js';
 import {
   prepareHistoryEdit,
   type HistoryEditSelection,
@@ -242,6 +244,7 @@ export const commandInputSchema = z
       })
       .strict()
       .optional(),
+    knownPlace: knownPlaceReference.optional(),
     expectedRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     placementRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     expectedContentsRevision: z
@@ -1015,6 +1018,18 @@ export class WorldService {
   notifyHistory(): void {
     this.transcriptRevision++;
     this.notify();
+  }
+  /** Serialize the last evidence/access check with character and world mutations.
+   * Prose cannot publish after an inspection permission or destination has changed. */
+  async publishNarration(job: StoryJob, text: string | null, reason?: string, receipt?: unknown) {
+    return this.mutate(async () => {
+      const repository = this.store.history!;
+      if (!(await repository.selectionCurrent(() => this.world, job))) {
+        await repository.cancel(this.world.id, job, receipt);
+        return false;
+      }
+      return repository.publish(this.world.id, job, text, reason, receipt);
+    });
   }
   notify(telemetry = true): void {
     if (telemetry) this.telemetryRevision++;
@@ -2819,6 +2834,7 @@ export class WorldService {
     gameplay?: Omit<GameplayReceipt, 'result'>,
     responseJobId?: string,
     validateSources?: (world: WorldState) => Promise<boolean>,
+    commandType?: Command['type'],
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
@@ -2846,7 +2862,15 @@ export class WorldService {
           code: 'stale-publication',
           message: 'Publication sources or authority changed.',
         };
-      if (this.paused)
+      // Deliberate inspection records permitted facts at frozen time. Other reasons
+      // for holding the writer still apply (docs/ui-ux/world-interaction.md#paused-game-tabs).
+      const manuallyPausedInspection =
+        commandType === 'inspect-inventory' &&
+        this.saved.manuallyPaused &&
+        !this.maintenanceHeld &&
+        !this.absent &&
+        this.storageError === null;
+      if (this.paused && !manuallyPausedInspection)
         return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
       const result = operation(this.world);
       const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
@@ -3777,15 +3801,32 @@ export class WorldService {
         };
       // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
       if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
-      if (epoch === undefined || !this.store.commands)
-        return await this.evaluateCommand(
-          commandId,
-          input,
-          actor,
-          false,
-          undefined,
-          scope ?? this.localScope,
-        );
+      const prepare = async () => {
+        if (!input.knownPlace) return input;
+        if (input.type !== 'move')
+          return {
+            ok: false,
+            code: 'invalid-command',
+            message: 'A remembered place can only select a movement destination.',
+          };
+        const result = await resolveKnownPlaceMove(this, actor, input.knownPlace);
+        if (!('position' in result)) return result;
+        const { knownPlace: _reference, ...command } = input;
+        return { ...command, position: result.position };
+      };
+      if (epoch === undefined || !this.store.commands) {
+        const resolved = await prepare();
+        return 'type' in resolved
+          ? await this.evaluateCommand(
+              commandId,
+              resolved,
+              actor,
+              false,
+              undefined,
+              scope ?? this.localScope,
+            )
+          : resolved;
+      }
       await this.refreshCommandEpoch();
       const id = `gameplay:${scope?.accountId ?? 'local-player'}:${epoch}:${digest(commandId)}`;
       const fingerprint = digest({ actor, input, ...(scope ? { scope } : {}) });
@@ -3807,9 +3848,11 @@ export class WorldService {
           code: 'expired',
           message: 'This command epoch has closed. Refresh before issuing a new action.',
         };
+      const resolved = await prepare();
+      if (!('type' in resolved)) return resolved;
       return await this.evaluateCommand(
         id,
-        input,
+        resolved,
         actor,
         false,
         {
@@ -4107,6 +4150,7 @@ export class WorldService {
           ...envelope,
           type: 'inspect-inventory',
           containerId: input.containerId,
+          itemId: input.itemId,
           after: input.after,
           expectedRevision: input.expectedRevision,
           expectedScope: input.expectedScope,
@@ -4191,7 +4235,8 @@ export class WorldService {
     if (!('actorId' in bound)) return bound;
     let command = bound;
     if (preview) {
-      if (this.paused) return { ok: false, code: 'paused', message: 'Resume the world to act.' };
+      if (this.paused && input.type !== 'inspect-inventory')
+        return { ok: false, code: 'paused', message: 'Resume the world to act.' };
       const { outcome } = executeCommand(this.world, command, { preview: true });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
@@ -4269,7 +4314,13 @@ export class WorldService {
         return { ...preview, lethalReview: view };
       }
     }
-    return this.transition((world) => executeCommand(world, command), gameplay).then((result) => {
+    return this.transition(
+      (world) => executeCommand(world, command),
+      gameplay,
+      undefined,
+      undefined,
+      command.type,
+    ).then((result) => {
       if (lethalReviewId && (result.ok || result.code === 'lethal-review-stale'))
         this.lethalReviews.delete(actorId);
       return result;

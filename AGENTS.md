@@ -63,6 +63,7 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 - TypeScript/tooling implementation or review: [TypeScript](.agents/rules/typescript.md)
 - Code changes or verification commands: [Verification](.agents/rules/verification.md)
 - Documentation, decisions, trackers or specifications: [Documentation](.agents/rules/documentation.md)
+- Recording, retaining or presenting character knowledge/experience, including native discovery and remembered-information UI: read applicable [Memory architecture](docs/memory-architecture.md) sections even without AI. Introduction/story-selection changes also read [Replaceable story selection](docs/narration-and-conversations.md#replaceable-story-selection). Prose-only mentions do not trigger these reads.
 - Feature-spec/tech-design or architecture requests, changed engine/world contracts, or chat approval/start/continuation of a project plan: [Design](.agents/skills/openlegend-design/SKILL.md)
 - Requested or substantial implementation review: [Review](.agents/skills/openlegend-review/SKILL.md)
 - Changed hot paths, perception queries, scaling or latency investigation: [Performance](.agents/skills/openlegend-performance/SKILL.md)

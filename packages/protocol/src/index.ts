@@ -75,6 +75,8 @@ export interface CommandInput {
   attributeId?: string;
   ammunitionId?: string;
   position?: SurfacePoint;
+  /** Resolve the retained observer evidence on the server; the client supplies no location. */
+  knownPlace?: { id: string; sourceId: string; revision: string };
   distance?: number;
   attemptId?: string;
   scarId?: string;
@@ -375,6 +377,32 @@ export interface MemoryHistoryPage {
   next: string | null;
   /** A search examined its per-request window without filling the page. */
   scanLimited: boolean;
+}
+
+export interface KnownPlaceView {
+  id: string;
+  sourceId: string;
+  revision: string;
+  label: string;
+  description: string;
+  locationLabel: string;
+  position: SurfacePoint;
+  time: number;
+  corrected: boolean;
+}
+export interface KnownPlacesPage {
+  ok: true;
+  worldId: string;
+  generation: string;
+  entries: KnownPlaceView[];
+  next: string | null;
+  scanLimited: boolean;
+}
+export interface KnownPlaceInspection {
+  ok: true;
+  place: KnownPlaceView;
+  move: ActionOption;
+  moveDescription: string;
 }
 
 export interface PublicEvent {
@@ -842,6 +870,8 @@ export interface IntelligenceCall {
 }
 
 export interface TranscriptItem {
+  /** Committed observation wording used when optional generation is unavailable. */
+  authoredFallback?: boolean;
   speech?: PerceivedSpeech;
   id: string;
   kind: 'speech' | 'event' | 'narration';

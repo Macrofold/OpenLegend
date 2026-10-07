@@ -13,6 +13,7 @@ import { LethalAttackDialog } from './ui/lethal-attack-dialog';
 import { DeathNotice } from './ui/death-notice';
 import { useTabControl, type TabControl } from './tab-control';
 import { History, Narrator } from './ui/history';
+import { KnownPlaces } from './ui/known-places';
 import { createRoot } from 'react-dom/client';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -523,7 +524,10 @@ function App({
     if (!open.includes('events')) setEventsType('all');
   }, [open]);
   async function command(action: ActionOption) {
-    if (isPaused() || !latest.current?.access?.controlling) {
+    if (
+      (isPaused() && action.command.type !== 'inspect-inventory') ||
+      !latest.current?.access?.controlling
+    ) {
       return { ok: false, code: 'paused', message: 'Resume here to play.' };
     }
     if (!connected) {
@@ -1099,6 +1103,19 @@ function App({
       case 'journal':
         return (
           <>
+            <Section title="Known places">
+              <KnownPlaces
+                key={`${captionScope(view)}:${view.historyEpoch}`}
+                revision={view.historyRevision ?? ''}
+                focus={(point) => {
+                  const renderer = scene.current;
+                  if (!renderer) return;
+                  if (renderer.cameraState().following) renderer.cameraCommand({ type: 'follow' });
+                  renderer.cameraCommand({ type: 'focus', point });
+                }}
+                command={command}
+              />
+            </Section>
             <Section title="A possible beginning">
               {view.milestones.map((m) => (
                 <p key={m.id}>

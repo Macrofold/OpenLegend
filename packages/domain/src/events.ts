@@ -125,6 +125,34 @@ function eventAudience(
 
 const eventEncoder = new TextEncoder();
 
+/** The caller has admitted the observation or inspection. Narration is a later consumer. */
+export function acquireExposure(
+  world: WorldState,
+  events: WorldEvent[],
+  observer: Entity,
+  targetId: string,
+  exposure: import('./places.js').EncounterExposure,
+  importance = 6,
+): WorldEvent {
+  const text =
+    exposure.kind === 'place'
+      ? `I reached ${exposure.label}. ${exposure.description}`
+      : `I inspected ${exposure.label}. ${exposure.description}`;
+  return recordEvent(
+    world,
+    events,
+    'encounter',
+    text,
+    [observer.id],
+    observer,
+    targetId,
+    { acquisition: true, change: 'onset', importance, urgency: 0 },
+    'private',
+    undefined,
+    exposure,
+  );
+}
+
 /** Acquiring evidence is private, not an observable act by the observer.
  * Batch only this fixed-position phase through the existing experience owner;
  * external speech/actions still resolve their actual event-time audiences.
@@ -198,6 +226,7 @@ function recordEvent(
   data: WorldEvent['data'],
   scope: EventScope,
   awarenessBatch?: ExperienceMutation[],
+  exposure?: import('./places.js').EncounterExposure,
 ): WorldEvent {
   const text = typeof narration === 'string' ? narration : renderNarration(world, narration);
   const boundedMetric = (value: unknown, fallback: number) =>
@@ -229,6 +258,7 @@ function recordEvent(
     ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
   );
   const event: WorldEvent = {
+    ...(exposure ? { exposure: cloneValue(exposure) } : {}),
     ...(source
       ? {
           // Copy the committed pose without walking a live draft through proxy traps.
@@ -348,6 +378,7 @@ function recordEvent(
       const perceivedText =
         typeof narration === 'string' ? narration : renderNarration(world, narration, actorId);
       const awareness: Awareness = {
+        ...(event.exposure ? { exposure: cloneValue(event.exposure) } : {}),
         eventId: event.id,
         actorId,
         text: perceivedText,

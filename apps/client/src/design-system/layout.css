@@ -1019,6 +1019,24 @@ body,
   display: grid;
   gap: var(--space-2);
 }
+.ol-known-places,
+.ol-known-place-list,
+.ol-known-place-detail {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.ol-known-place-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ol-known-place-list li,
+.ol-known-place-detail {
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-2);
+  overflow-wrap: anywhere;
+}
 .ol-memory-search {
   display: flex;
   flex-wrap: wrap;

@@ -1,6 +1,6 @@
 # Batch 04 proposed scope and constraints
 
-This inventory owns only the new **proposed** restrictions introduced by [batch 04](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md). None is a delivered runtime limit. On implementation, move the accepted mechanism-specific entry into its subsystem inventory and leave a link/disposition here; do not maintain two editable copies. Existing [base-world](base-world.md), [objects](objects.md), [narration](narration.md), [spatial](spatial.md), [action](action-experience.md) and [shelter](editable-shelters.md) limits retain their ownership and rationale.
+This inventory owns only the new **proposed** restrictions introduced by [batch 04](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md). PX-L02 is now delivered and points to its canonical spatial owner; the other entries remain proposed. On implementation, move the accepted mechanism-specific entry into its subsystem inventory and leave a link/disposition here; do not maintain two editable copies. Existing [base-world](base-world.md), [objects](objects.md), [narration](narration.md), [spatial](spatial.md), [action](action-experience.md) and [shelter](editable-shelters.md) limits retain their ownership and rationale.
 
 ## PX-L01 — One exact lot on each side of an immediate barter
 
@@ -10,9 +10,7 @@ Expansion trigger: a worthwhile exchange cannot be expressed without several lot
 
 ## PX-L02 — Static named places; learned information only
 
-**Proposed first exposure family.** Named places attach to current static physical references/footprints. Moving interiors and procedural region generation are outside this slice. This earns useful discovery without a second world/map engine. Expand when a selected journey requires a moving or changing place, preserving identity and evidence semantics.
-
-No new cap on a character's total remembered places or memories is proposed. A UI page bounds returned rows, not upstream discovery, filtering or stored knowledge. The implementation must use the current scoped/paged history and spatial candidate owners and record measured query bounds in their inventories. An unbounded all-history read remains a gap even if only ten labels are displayed. Narration frequency/length comes from existing story selection; no new automatic repeated-generation loop.
+**Adopted by PX03, October 5, 2026.** [SP08 — Static named places and private Known places](spatial.md#sp08--static-named-places-and-private-known-places) now owns the delivered static family, no total-memory/place cap, query bounds, rationale and expansion trigger. [Narration](narration.md) owns presentation admission and fallback; [cognition](cognition.md#cg15--learned-places-from-retained-experience) retains the evidence/forgetting boundary. The proposal is retained here as its disposition, not a second editable limit.
 
 ## PX-L03 — Two-person outing to one agreed destination
 

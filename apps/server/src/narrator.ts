@@ -101,7 +101,7 @@ export class Narrator {
     const job = await repository.claim(
       this.service.world.id,
       Date.now() - this.service.config.narrationBatchMs,
-      this.service.world,
+      () => this.service.world,
     );
     if (!job) return;
     const id = `${this.service.world.id}:${job.id}:generation:${job.item.revision ?? 1}`;
@@ -125,7 +125,7 @@ export class Narrator {
     } finally {
       await this.log.save({
         ...root,
-        status: job.state === 'completed' ? 'completed' : 'failed',
+        status: job.state === 'completed' || job.state === 'fallback' ? 'completed' : 'failed',
         disposition: job.state,
         completedAt: new Date().toISOString(),
         output: { reason: job.reason, sourceIds: job.item.sourceIds },
@@ -136,17 +136,16 @@ export class Narrator {
   private async generate(job: StoryJob, id: string) {
     const { store, config, world } = this.service;
     const repository = store.history!;
-    if (!(await repository.selectionCurrent(this.service.world, job))) {
+    if (!(await repository.selectionCurrent(() => this.service.world, job))) {
       await repository.cancel(world.id, job);
       return;
     }
     if (this.stopped || this.service.paused || this.controller?.signal.aborted) {
-      await repository.publish(world.id, job, null, 'Cancelled before generation.');
+      await this.service.publishNarration(job, null, 'Cancelled before generation.');
       return;
     }
     if (config.jevOnly || !(config.macrofoldKey || config.llmKey)) {
-      await repository.publish(
-        world.id,
+      await this.service.publishNarration(
         job,
         null,
         'Generation unavailable: no configured provider.',
@@ -173,25 +172,29 @@ export class Narrator {
       })),
     };
     if (Buffer.byteLength(JSON.stringify(context)) > 24000) {
-      await repository.publish(world.id, job, null, 'Narration input exceeds the bounded context.');
+      await this.service.publishNarration(
+        job,
+        null,
+        'Narration input exceeds the bounded context.',
+      );
       return;
     }
     const amount = generationAllowance(config, config.llmModel, 26_000, 1800, config.llmReserveUsd);
-    if (!(await repository.selectionCurrent(this.service.world, job))) {
+    if (!(await repository.selectionCurrent(() => this.service.world, job))) {
       await repository.cancel(world.id, job);
       return;
     }
     if (this.stopped || this.service.paused || this.controller?.signal.aborted) {
-      await repository.publish(world.id, job, null, 'Cancelled before reservation.');
+      await this.service.publishNarration(job, null, 'Cancelled before reservation.');
       return;
     }
     if (!(await store.reserve(id, 'openai', amount, config.budgetUsd, 'narrator'))) {
-      await repository.publish(world.id, job, null, 'Monthly Narrator allowance exhausted.');
+      await this.service.publishNarration(job, null, 'Monthly Narrator allowance exhausted.');
       return;
     }
     // Reservation awaits storage; recheck immediately before crossing the provider boundary.
     if (
-      !(await repository.selectionCurrent(this.service.world, job)) ||
+      !(await repository.selectionCurrent(() => this.service.world, job)) ||
       job.selection?.policyRevision !== (this.service.world.storyPolicyRevision ?? 0)
     ) {
       const at = new Date().toISOString();
@@ -224,9 +227,12 @@ export class Narrator {
       signal: this.controller!.signal,
     });
     await store.settle(id, result.receipt);
+    if (!(await repository.selectionCurrent(() => this.service.world, job))) {
+      await repository.cancel(world.id, job, result.receipt);
+      return;
+    }
     if (result.outcome !== 'value' || this.controller?.signal.aborted) {
-      await repository.publish(
-        world.id,
+      await this.service.publishNarration(
         job,
         null,
         result.outcome === 'value'
@@ -253,8 +259,7 @@ export class Narrator {
       }
     }
     if (text) job.sources.push(...optional.filter((source) => covered.has(source.id)));
-    await repository.publish(
-      world.id,
+    await this.service.publishNarration(
       job,
       text,
       text ? undefined : 'Invalid source coverage or output.',
@@ -262,7 +267,7 @@ export class Narrator {
     );
     await this.log.record(`${id}:publication`, 'Narration publication', {
       input: { sourceIds: job.sources.map((s) => s.id), voice: job.voice },
-      output: { status: text ? 'completed' : 'failed' },
+      output: { status: job.state },
     });
   }
   async close() {

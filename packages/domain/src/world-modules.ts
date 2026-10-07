@@ -7,6 +7,7 @@ import {
   validateNarration,
 } from './narration.js';
 import { validName } from '@open-legend/language';
+import { validatePlaces } from './places.js';
 import { validateFamilyTree } from './worlds/base/family.js';
 import { validateAppraisalPolicy, validateAppraisals, type AppraisalPolicy } from './appraisals.js';
 import { BASE_APPRAISAL_POLICY } from './worlds/base/appraisals.js';
@@ -779,6 +780,7 @@ export function validateWorldModules(world: WorldState): void {
   validateNativeWork(world);
   validateSpatialWorld(world);
   validatePerceptionState(world);
+  validatePlaces(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
   validateInstalledRecipes(world);

@@ -251,6 +251,8 @@ function InventoryWorkspace({
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false),
     alive = useRef(true);
+  const selectedPossession = useRef(selection);
+  selectedPossession.current = selection;
   const collection = useRef<HTMLDivElement>(null);
   const workspace = useRef<HTMLDivElement>(null);
   const detail = useRef<HTMLElement>(null);
@@ -743,6 +745,28 @@ function InventoryWorkspace({
                   setTransfer(undefined);
                   setQuantityError('');
                   setMessage('');
+                  if (connected && view.access?.controlling) {
+                    void command({
+                      id: `inspect:${entry.id}`,
+                      label: `Inspect ${entry.name}`,
+                      enabled: true,
+                      command: {
+                        type: 'inspect-inventory',
+                        itemId: entry.id,
+                        containerId: page.container.id,
+                        expectedRevision: page.container.revision,
+                      },
+                    }).then((result) => {
+                      if (
+                        alive.current &&
+                        !result.ok &&
+                        selectedPossession.current?.item.id === entry.id &&
+                        selectedPossession.current.container.id === page.container.id &&
+                        selectedPossession.current.container.revision === page.container.revision
+                      )
+                        setMessage(result.message);
+                    });
+                  }
                   requestAnimationFrame(() => {
                     if (
                       collection.current &&

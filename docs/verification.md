@@ -23,6 +23,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [Useful place and inspected-item discoveries](verification/useful-discoveries.md): private observed facts, introduction fallback, Known places, correction/forgetting, unavailable destinations and current-format reload.
+
 - [NPC reply previews](verification/npc-reply-preview.md): corrected configured-route gate, actual early browser speech, private decoding/native-history/recovery checks, exact estimated/reserved spending and remaining NP05 qualification.
 
 - [World-configured survival](verification/world-configured-survival.md): matched native outcomes, body/meter/alternate-world checks, current cost measurements and combined UI acceptance status.

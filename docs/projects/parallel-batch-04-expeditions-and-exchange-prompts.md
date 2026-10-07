@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — assignment prompts
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01 is completed; the retained prompts and prerequisites apply to the other assignments and future integration checks. | 2026-10-06   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01 and PX03 are delivered; retained prompts and prerequisites apply to the other assignments and future integration checks.          | 2026-10-07   |
 
 Use the [allocation/readiness table](parallel-batch-04-expeditions-and-exchange-feature-spec.md#allocation-and-readiness) before distributing these. **PX01 is conditional on the approved encounter design and overlapping runtime work. PX04 needs integrated PG02. All runtime tasks consume integrated PG03/PG04 where relevant. PX05 is design only and can start independently.** The owner supplies the correct starting branch; these instructions do not direct workers to communicate with each other. [Technical boundaries](parallel-batch-04-expeditions-and-exchange-tech-design.md#shared-boundaries-and-delivery-order) settle shared ownership.
 

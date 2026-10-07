@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — feature specification
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01 is delivered and qualified on the integrated encounter baseline; the other assignments retain their separate acceptance. | 2026-10-06   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01 integration and PX03 discovery are delivered and reviewed; the other assignments and broader qualification remain open.          | 2026-10-07   |
 
 [Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](parallel-batches.md)
 

@@ -110,6 +110,8 @@ SW14–SW16 accompany each slice; they are not a final cleanup phase. No milesto
 
 ## SW05 — Ground navigation and scoped route discovery
 
+PX03 adds [knowledge-bound destination selection](../spatial-world.md#static-named-places-and-known-places) over existing supported points and native routes. Private last-known facts, exact source revisions, changed/removed destinations and failed-route preservation have scoped [evidence](../verification/useful-discoveries.md). This delivers the static learned-destination subset of SW05.4, a keyboard list/focus route within SW11, and place-evidence reload within SW15; hidden topology, general maps, broader picking/device and recovery qualification remain open.
+
 **Owners:** server navigation adapter, domain route contracts. **Depends on:** SW01–SW04. **Touchpoints:** current `findPath`, `Action.path`, target-position/approach logic, scene/nav derived data.
 
 - [ ] **SW05.1** Build versioned navigation input from canonical geometry, with conservative clearance profiles and tiled invalidation. Keep rendering integrations out of authoritative generation.

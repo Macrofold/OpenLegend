@@ -1,6 +1,6 @@
 # Parallel batch 04 — Expeditions and exchange — assignment tracker
 
-**Status: in progress, October 6, 2026.** PX01 is delivered on the integrated PG05/embodied-feedback baseline; the other assignments retain their separate checks below. The original planning baseline was c4e18d91. Runtime tasks start from the integrated prerequisites in the technical design, not merely from the planning commit.
+**Status: in progress, October 7, 2026.** PX01 is delivered on the integrated PG05/embodied-feedback baseline; PX03 is delivered and reviewed. PX02, PX04 and PX05 remain open with their separate checks below. The original planning baseline was c4e18d91. Runtime tasks start from integrated prerequisites in the technical design, not merely from the planning commit.
 
 [Feature/acceptance](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Technical definitions](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](../projects/parallel-batch-04-expeditions-and-exchange-prompts.md) · [Numbers and prior batches](../projects/parallel-batches.md)
 
@@ -28,9 +28,11 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 
 [CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) proposes an occupied-site discovery/return consumer of this place owner. Its merge dependency remains explicit; the new batch does not supply a duplicate memory store or change PX03 completion evidence.
 
-- [ ] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
-- [ ] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.
-- [ ] Reconcile NC09–NC12's exposure subset, DG01/ND18 and relevant SW/memory work. Preserve broader narration, story and world-map acceptance.
+- [x] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
+- [x] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.
+- [x] Reconcile NC09–NC12's exposure subset, DG01/ND18 and relevant SW/memory work. Preserve broader narration, story and world-map acceptance.
+
+**PX03 completed and reviewed:** private discovery, useful introductions and Known places are delivered. The October 6 review fixes late forgetting/correction, moved/removed marker integrity, source-family collisions, unstable continuation and SQL amplification, with a canceled-inspection browser check. Native lifecycle, scoped query/stress, keyboard and compact/enlarged browser checks pass; the linked report retains planner and broader qualification limits. [Evidence](../verification/useful-discoveries.md) records current results and limits.
 
 Parents: [narration](narration-and-conversations.md), [spatial world](spatial-world.md), [DG01/ND18](needs-design.md#dg01--actions-and-first-encounters). PG03 excludes this new encounter scope; its action presentation remains a consumed prerequisite.
 

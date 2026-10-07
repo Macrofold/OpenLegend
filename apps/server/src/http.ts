@@ -2,6 +2,8 @@ import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuitySubjects, continuityView } from './continuity-view.js';
 import { memoryHistory } from './memory-history.js';
+import { knownPlaces, inspectKnownPlace, knownPlaceReference } from './known-places.js';
+import { validEncounterExposure } from '@open-legend/domain';
 import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
@@ -217,6 +219,10 @@ const godPersonEditor = z
   .strict();
 const godAwareness = z
   .object({
+    exposure: z
+      .custom<import('@open-legend/domain').EncounterExposure>(validEncounterExposure)
+      .optional(),
+    change: z.enum(['onset', 'detail', 'end']).optional(),
     eventType: z.string().max(200).optional(),
     sourceId: requestIdSchema.optional(),
     targetId: requestIdSchema.optional(),
@@ -1504,6 +1510,23 @@ async function initializeGameServer(
                 .strict()
                 .parse(body);
               return send(response, 200, await objectHistoryPage(service, scope, value));
+            }
+            case '/api/known-places': {
+              const value = z
+                .object({
+                  query: z.string().max(200).optional(),
+                  cursor: z.string().max(3000).optional(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, await knownPlaces(service, scope, value));
+            }
+            case '/api/known-places/inspect': {
+              return send(
+                response,
+                200,
+                await inspectKnownPlace(service, scope, knownPlaceReference.parse(body)),
+              );
             }
             case '/api/inventory': {
               const value = z

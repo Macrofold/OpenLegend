@@ -11,6 +11,9 @@ import {
   selectStory,
   personalText,
   type StorySelection,
+  currentPlaceObservation,
+  canAccessContainer,
+  itemFor,
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import type {
@@ -77,6 +80,7 @@ function eventEvidence(awareness: EventEvidence): EventEvidence {
     speech,
     importance,
     urgency,
+    exposure,
   } = awareness;
   return {
     actorId,
@@ -89,6 +93,7 @@ function eventEvidence(awareness: EventEvidence): EventEvidence {
     speech,
     importance,
     urgency,
+    exposure,
   };
 }
 /** Only observer-permitted identities enter participant indexes. */
@@ -110,7 +115,8 @@ const narrationFailed = 'Narration failed.';
 function projectNarration(item: TranscriptItem): TranscriptItem {
   // Native merge notices have no event sources and did not attempt generation.
   // docs/narration-and-conversations.md#9-triggers-ordering-and-transcript-reconstruction
-  return item.status === 'failed' || (item.status === 'fallback' && item.sourceIds.length > 0)
+  return item.status === 'failed' ||
+    (item.status === 'fallback' && item.sourceIds.length > 0 && !item.authoredFallback)
     ? { ...item, status: 'failed', text: narrationFailed }
     : item;
 }
@@ -436,6 +442,7 @@ export class HistoryRepository {
           const selection = selectStory(
             {
               viewerId: principal.actorId,
+              exposure: source.evidence.exposure,
               event: perceived,
               sourceText: source.text,
               source: world.entities[perceived.actorId ?? ''],
@@ -734,7 +741,11 @@ export class HistoryRepository {
       );
   }
   /** Claim is persisted before any paid reservation; restarted claims never redispatch. */
-  async claim(worldId: string, before: number, world?: WorldState): Promise<StoryJob | null> {
+  async claim(
+    worldId: string,
+    before: number,
+    currentWorld: () => WorldState,
+  ): Promise<StoryJob | null> {
     return this.db.transaction(async () => {
       const row = await this.db
         .prepare(
@@ -743,7 +754,7 @@ export class HistoryRepository {
         .get(worldId, before);
       if (!row) return null;
       const job = JSON.parse(String(row['payload'])) as StoryJob;
-      if (!world || !(await this.selectionCurrent(world, job))) {
+      if (!(await this.selectionCurrent(currentWorld, job))) {
         job.state = 'cancelled';
         job.reason = 'Story selection revoked or expired.';
         await this.saveStory(worldId, job);
@@ -754,13 +765,27 @@ export class HistoryRepository {
       return job;
     });
   }
-  async selectionCurrent(world: WorldState, job: StoryJob): Promise<boolean> {
-    const policy = world.storyPolicy ?? defaultStoryPolicy();
+  async selectionCurrent(currentWorld: () => WorldState, job: StoryJob): Promise<boolean> {
+    const worldId = currentWorld().id;
     const row = await this.db
       .prepare('SELECT state FROM story_jobs WHERE world_id=? AND owner_id=? AND id=?')
-      .get(world.id, job.ownerId, job.id);
+      .get(worldId, job.ownerId, job.id);
     if (!row || !['queued', 'running'].includes(String(row['state']))) return false;
+    if (!(await this.sourcesCurrent(worldId, job))) return false;
+    const eventRows = job.item.sourceIds.length
+      ? await this.db
+          .prepare(
+            `SELECT id,payload FROM history_events WHERE world_id=? AND id IN (${job.item.sourceIds.map(() => '?').join(',')})`,
+          )
+          .all(worldId, ...job.item.sourceIds)
+      : [];
+    const events = new Map(eventRows.map((row) => [String(row['id']), row]));
+    // Storage reads may outlive a permission or definition change. Check the latest
+    // world after those awaits, immediately before dispatch/publication admission.
+    const world = currentWorld();
+    const policy = world.storyPolicy ?? defaultStoryPolicy();
     if (
+      world.id !== worldId ||
       !job.selection ||
       !policy.enabled ||
       job.selection.policyRevision !== (world.storyPolicyRevision ?? 0) ||
@@ -768,14 +793,30 @@ export class HistoryRepository {
       world.simTime - job.item.time > policy.delivery.maximumAge
     )
       return false;
-    if (!(await this.sourcesCurrent(world.id, job))) return false;
+    // A forget/correction may commit after the SQL source check but before the
+    // final world read. Its authoritative ledger fences dispatch without scanning
+    // retained event bodies or treating ordinary new observations as revocations.
+    const forgotten = world.experience?.forgotten[job.actorId],
+      corrections = world.experience?.corrections?.[job.actorId];
+    if (job.sources.some((source) => forgotten?.includes(source.id) || corrections?.[source.id]))
+      return false;
     for (const id of job.item.sourceIds) {
-      const row = await this.db
-        .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
-        .get(world.id, id);
+      const row = events.get(id);
       if (!row) return false;
       const evidence = job.sources.find((source) => source.id === id)?.evidence;
       if (!evidence) return false;
+      const exposure = evidence.exposure;
+      if (exposure?.kind === 'place' && !currentPlaceObservation(world, exposure)) return false;
+      if (exposure?.kind === 'inventory-item') {
+        const item = itemFor(world, exposure.id);
+        if (
+          !item ||
+          item.definitionId !== exposure.definition.id ||
+          world.itemDefinitions[item.definitionId]?.version !== exposure.definition.version ||
+          !canAccessContainer(world, job.actorId, item.ownerId)
+        )
+          return false;
+      }
       const event = projectEventEvidence(
         JSON.parse(String(row['payload'])) as WorldEvent,
         evidence,
@@ -784,6 +825,7 @@ export class HistoryRepository {
         selectStory(
           {
             viewerId: job.actorId,
+            exposure: evidence.exposure,
             event,
             sourceText: job.sources.find((s) => s.id === id)?.text ?? '',
             source: world.entities[event.actorId ?? ''],
@@ -796,14 +838,15 @@ export class HistoryRepository {
     }
     return true;
   }
-  async cancel(worldId: string, job: StoryJob) {
+  async cancel(worldId: string, job: StoryJob, receipt?: unknown) {
     await this.db.transaction(async () => {
       const row = await this.db
         .prepare('SELECT state FROM story_jobs WHERE world_id=? AND owner_id=? AND id=?')
         .get(worldId, job.ownerId, job.id);
       if (!row || !['queued', 'running'].includes(String(row['state']))) return;
       job.state = 'cancelled';
-      job.reason = 'Story selection no longer valid before dispatch.';
+      job.reason = 'Story selection or permitted evidence no longer current.';
+      if (receipt) job.receipt = receipt;
       await this.saveStory(worldId, job);
     });
   }
@@ -834,16 +877,15 @@ export class HistoryRepository {
     });
   }
   async sourcesCurrent(worldId: string, job: StoryJob): Promise<boolean> {
-    for (const source of job.sources) {
-      const row = await this.db
-        .prepare(
-          'SELECT payload FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
-        )
-        .get(worldId, source.id, job.actorId);
-      if (!row || (JSON.parse(String(row['payload'])) as StorySource).revision !== source.revision)
-        return false;
-    }
-    return true;
+    if (!job.sources.length) return true;
+    const rows = await this.db
+      .prepare(
+        `SELECT event_id,payload::jsonb->>'revision' AS revision FROM history_perspectives
+        WHERE world_id=? AND actor_id=? AND event_id IN (${job.sources.map(() => '?').join(',')})`,
+      )
+      .all(worldId, job.actorId, ...job.sources.map((source) => source.id));
+    const revisions = new Map(rows.map((row) => [String(row['event_id']), row['revision']]));
+    return job.sources.every((source) => revisions.get(source.id) === source.revision);
   }
   async optionalSources(worldId: string, job: StoryJob): Promise<StorySource[]> {
     const rows = await this.db
@@ -889,11 +931,19 @@ export class HistoryRepository {
         return false;
       }
       delete job.previousItem;
-      job.state = text ? 'completed' : 'failed';
+      const fallback =
+        !text && job.sources.some((source) => source.evidence.exposure)
+          ? job.sources
+              .filter((source) => job.item.sourceIds.includes(source.id))
+              .map((source) => source.text)
+              .join(' ')
+          : null;
+      job.state = text ? 'completed' : fallback ? 'fallback' : 'failed';
       job.item = {
         ...job.item,
-        text: text || narrationFailed,
-        status: text ? 'completed' : 'failed',
+        text: text || fallback || narrationFailed,
+        status: text ? 'completed' : fallback ? 'fallback' : 'failed',
+        authoredFallback: !!fallback,
         revision: (job.item.revision ?? 1) + 1,
       };
       job.reason = reason;

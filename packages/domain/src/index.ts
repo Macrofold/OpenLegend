@@ -238,6 +238,7 @@ export {
 export * from './speech.js';
 export * from './conditions.js';
 export * from './inventory-inspection.js';
+export * from './places.js';
 export * from './activity-hosts.js';
 export * from './stock-transfer.js';
 export * from './item-characteristics.js';

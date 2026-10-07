@@ -143,7 +143,12 @@ import {
   itemsForOwner,
 } from './item-handling.js';
 import { strikeDefinition, supportsStrike } from './strikes.js';
-import { inspectPossessions, inspectedContainer } from './inventory-inspection.js';
+import {
+  inspectPossessions,
+  inspectedContainer,
+  recordInspectedItems,
+} from './inventory-inspection.js';
+import { exposedPlaces, placeLandmarkIndex } from './places.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
 import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
@@ -156,6 +161,7 @@ import {
   interpolate,
   MOVEMENT,
   SPATIAL_LIMITS,
+  surfaceById,
   type RoutePlan,
   type NavigationRequest,
   type NavigationResult,
@@ -216,7 +222,15 @@ import {
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
+import {
+  appendMemory,
+  canonicalJson,
+  emit,
+  encounterEmitter,
+  acquireExposure,
+  finish,
+  outcome,
+} from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -731,7 +745,8 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     return reject('capability-restricted', 'Speech is unavailable.');
   if (command.type === 'move' && capabilityBlocked(world, source, 'locomotion'))
     return reject('capability-restricted', 'Movement is unavailable.');
-  if (world.paused && command.type !== 'cancel') return reject('paused', 'The world is paused.');
+  if (world.paused && command.type !== 'cancel' && command.type !== 'inspect-inventory')
+    return reject('paused', 'The world is paused.');
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
   if (
@@ -1209,6 +1224,7 @@ function prepareNativeOperation(
           command.expectedRevision,
           command.containerId,
           command.expectedScope,
+          command.itemId,
         );
       } catch (error) {
         return reject(
@@ -1641,8 +1657,10 @@ function executeCommandNative(
             command.expectedRevision,
             command.containerId,
             command.expectedScope,
+            command.itemId,
           );
           component.inventoryInspection = cursor;
+          recordInspectedItems(world, events, actor.id, { ...cursor, page });
           const container = inspectedContainer(world, actor.id);
           const packing =
             container?.load !== undefined && container.capacity !== undefined
@@ -3728,12 +3746,16 @@ function* updateEncounters(
   actorIds: readonly string[],
 ): Generator<void> {
   const encounter = encounterEmitter(world, events);
+  const placesChanged =
+    original.places !== (isDraft(world.places) ? current(world.places) : world.places);
+  let placeIndex: ReturnType<typeof placeLandmarkIndex> | undefined;
   // Loss of sensory/memory participation cannot retain a recognition grant.
   for (const id of actorIds) {
     const observer = world.entities[id];
     if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
+    if (Object.keys(world.visiblePlaces?.[id] ?? {}).length) world.visiblePlaces![id] = {};
     retirePerceptionEpisodes(world, id);
     if (observer?.actor && Object.keys(observer.actor.contacts ?? {}).length)
       observer.actor.contacts = {};
@@ -3755,7 +3777,7 @@ function* updateEncounters(
     const contacts = Object.values(actor.entity.actor!.contacts ?? {});
     const movingContacts = contacts.some((contact) => contact.detail === 'moving');
     const blocked = capabilityBlocked(world, actor.entity, 'perception');
-    if (!frame.affected.has(actor.id) && !movingContacts) {
+    if (!frame.affected.has(actor.id) && !movingContacts && !placesChanged) {
       countDomainWork('observersSkipped');
       continue;
     }
@@ -3772,6 +3794,8 @@ function* updateEncounters(
     if (radius === 0 || blocked) {
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
+      if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
+        world.visiblePlaces![actor.id] = {};
       retirePerceptionEpisodes(world, actor.id);
       continue;
     }
@@ -3796,6 +3820,39 @@ function* updateEncounters(
           objectIds.every((id, i) => id === previousObjects[i])));
     if (samePeople) seen = previous;
     if (sameObjects) objectIds = previousObjects!;
+    placeIndex ??= placeLandmarkIndex(world.places);
+    const places = exposedPlaces(world, actor.entity, objectIds, placeIndex);
+    const previousPlaces = original.visiblePlaces?.[actor.id] ?? {};
+    if (
+      places.some((place) => previousPlaces[place.id] !== place.revision) ||
+      places.length !== Object.keys(previousPlaces).length
+    ) {
+      const exposure: Record<string, number> = ((world.visiblePlaces ??= {})[actor.id] = {});
+      for (const place of places) {
+        exposure[place.id] = place.revision;
+        if (previousPlaces[place.id] === place.revision) continue;
+        acquireExposure(
+          world,
+          events,
+          actor.entity,
+          place.landmarkId,
+          {
+            kind: 'place',
+            id: place.id,
+            revision: place.revision,
+            label: place.label,
+            description: place.description,
+            point: { ...place.point },
+            locationLabel:
+              surfaceById(spatialMap(world), place.point.surfaceId)?.name ?? 'Observed support',
+            landmarkId: place.landmarkId,
+            ...(place.mechanismFields ? { mechanismFields: place.mechanismFields } : {}),
+          },
+          place.exposure.importance,
+        );
+        yield;
+      }
+    }
     // Arrivals, departures and brief returns (EPR03) read this observer's latest private
     // sighting records once, and only when its visible people changed.
     const sightings = samePeople

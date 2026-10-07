@@ -6,6 +6,7 @@ import type {
 } from '../../invention-families.js';
 import type { MaterialProperty, RecipeCandidate, WorldState } from '../../types.js';
 import { getOwn } from '../../records.js';
+import { CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
 
 import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
 import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
@@ -132,6 +133,7 @@ function baseOutput(
   candidate: RecipeCandidate,
 ): CompiledRecipe['outputDefinition'] {
   return {
+    mechanismFields: structuredClone(CONSTRUCTED_ITEM_STORY_FIELDS),
     portable: world.itemHandling.defaultPortable,
     ...(world.itemHandling.generatedPackingLoad !== undefined
       ? { packingLoad: world.itemHandling.generatedPackingLoad }

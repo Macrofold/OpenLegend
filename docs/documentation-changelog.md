@@ -1,10 +1,26 @@
 # Documentation changelog
 
+## October 7, 2026 — Carry PX03 review lessons into guidance
+
+Native character-knowledge and introduction work now explicitly reads the existing memory/story contracts even without AI. Performance guidance distinguishes bounded results from physical SQL work; history projections use complete record identity, and adding a saved reference triggers lifecycle review of ordinary custody/removal. These targeted routes and procedures carry [PX03 findings](verification/useful-discoveries.md#october-6-2026--requested-review) into future work without duplicating its feature rules. [CG19](maintainers/agent-guidance.md) records delivery; CG05 retains installed-agent dispatch verification. Game behavior and the protected development-save policy are unchanged.
+
 ## 2026-10-06 — Plan conflict after the earlier gameplay batches
 
 Created [batch 06 — Rivals and contested ground](projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md), preserving the existing 01–05 numbering. Selection assumes prior assignments delivered as requested, while the separate dependency ledger records actual main/branch evidence. The allocation initially paused three dependent definitions for Mike's NPC participation answer; he answered yes to hostile NPCs killing other NPCs, including Ada, under existing death rules. That accepted target is recorded in [lifecycle/protection](worlds/base/lifecycle-and-protection.md#npc-combat-participation). All five definitions and named-branch prompts are now complete, covering purposeful opponents, real ranged flight/cover, evasion, voluntary help and the finite [Broken Watchpost](worlds/base/contested-watchpost.md). No companion immunity, automatic revival, new PvP or home raids are selected. Planning is complete; runtime delivery and the explicit prerequisite integrations remain open.
 
 The [limits inventory](limits/parallel-batch-06-rivals-and-contested-ground.md) records straight non-collateral projectile flight, actual evasion without immunity, changed steadiness interpretation, mortal NPC participation and voluntary help. These are proposed mechanics, not delivered behavior or an adopted reversal of current danger/death policy. Existing DG12–DG15 designs were considered without automatically ranking them above conflict. [CF tracker](maintainers/parallel-batch-06-rivals-and-contested-ground.md) retains all unimplemented scope and runtime acceptance.
+
+## October 6, 2026 — PX03 review and marker lifetime
+
+The requested PX03 review preserves an authored site's supported point and reference when native custody/retirement removes its marker, rather than making the current world unloadable. The earlier live-marker presence requirement at load is replaced by live checks at exposure and movement; retained descriptions remain historical and private. Inactive definitions can outlive their markers, without creating discovery or admitting movement. [Canonical behavior](spatial-world.md#static-named-places-and-known-places) and [review evidence](verification/useful-discoveries.md#october-6-2026--requested-review) record the changed decision and limits.
+
+The same review fixes source-family identity and late privacy changes, batches observer/place updates and narration source reads, removes repeated history joins from place search, and preserves usable paging/canceled inspection feedback. [PX03](maintainers/parallel-batch-04-expeditions-and-exchange.md#px03--useful-discoveries-and-known-places) is reviewed; broader NC/SW/CR and mature-history/population qualification remain open under [PF08](maintainers/performance.md#pf08--long-lived-worlds-hot-state-and-checkpoints).
+
+## October 5, 2026 — PX03 grounded discoveries
+
+Implemented static authored-place arrival and permitted item-inspection observations, useful first-introduction text through existing story selection, and private searchable Known places in Journal. Real observations, not generated prose, establish knowledge; remembered facts retain exact identity and last-known location through corrections, forgetting and current-format persistence. Separate focus and admitted movement reuse current PG03/PG04/native controls. Moving interiors, procedural regions, full maps and broader NC/SW/CR qualification remain open.
+
+The requested useful authored fallback changes the September 27 blanket no-substituted-prose decision for admitted place/item introductions only. Deliberate inventory inspection now remains available during manual pause at the frozen game time; physical movement remains gated. The PostgreSQL storage marker changes from 5 to 6 for current place/evidence projection records; incompatible development data is rejected without migration, deletion or reset. [Behavior](spatial-world.md#static-named-places-and-known-places), [world content](worlds/base/places.md), [limits](limits/spatial.md#sp08--static-named-places-and-private-known-places), [task](maintainers/parallel-batch-04-expeditions-and-exchange.md#px03--useful-discoveries-and-known-places), and [actual evidence](verification/useful-discoveries.md) own the reconciled scope.
 
 ## 2026-10-05 — Make death scars optional world policy
 
