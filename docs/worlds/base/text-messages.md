@@ -57,6 +57,14 @@ Human Continue preserves the person, contacts and permitted history; ordinary po
 
 Pause does not accumulate fictional delivery delay or wake the world. Existing read history remains available as history; new sending and first unread presentation wait for eligible active play, with no automatic send on resume. A stopped service cannot accept new messages. Disabling the installed family stops new use without deleting private history; re-enabling does not reset blocks, device revocations or completed outcomes. Removing its definition must resolve actual dependencies through the existing authoring owner. Current-format restart restores accepted submissions and private evidence once. Optional shared rewind uses [DG25's protected coherent private cut](../../projects/corrections-and-shared-restoration-feature-spec.md#7-selected-shared-restoration-policy): inbox/read/evidence returns to the checkpoint, while current privacy, blocks, device revocations and real sending allowance remain effective; ordinary save/export must already preserve D48 before this profile is offered.
 
+## Optional private conversation extension
+
+**Proposed DG26 extension, October 7, 2026.** The [voice and calls product](../../projects/voice-and-calls-feature-spec.md#6-the-private-slate-conversation) adds Invite, Accept and End for a two-person private submitted-turn conversation using these same real slates. Existing text contacts permit an invitation only; each call needs fresh assent. The initial two-human journey is independently complete before the separately qualified human–NPC participant.
+
+The call carries private written turns while both people have agreed to converse now. Dictation is reviewed input and read-aloud is personal presentation; neither creates physical room speech, speakerphone, waking or a continuous microphone channel. Existing text limits, actual Read evidence, new-controller privacy and current blocking remain controlling. Accepted calls do not occupy or merge the one active local conversation.
+
+Use the living, awake, participating device-holder conditions above. The fixed quiet request, pending/accepted/ended states, finite invitation bounds, current-authority checks and pause/departure/restore ending behavior are defined once in [the product](../../projects/voice-and-calls-feature-spec.md) and [VC limits](../../limits/voice-and-calls.md). No extra slate, battery, range, fee, contact grant or starting equipment is installed by this proposal. [NC23](../../maintainers/narration-and-conversations.md#nc23--private-submitted-turn-calls) owns its later delivery.
+
 ## Maintained records
 
 - Product: [Keep in touch across an outing](../../projects/world-text-messages-feature-spec.md).

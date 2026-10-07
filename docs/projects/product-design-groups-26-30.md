@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The requested branch preserves the completed designs, current sources are mapped, and the five product proposals are being developed in order. | 2026-10-07   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG26's researched voice and private-call proposal and review are complete; the remaining four groups continue in order. | 2026-10-07   |
 
 ## Assignment and exact baseline
 
@@ -47,6 +47,16 @@ For each group, read related current contracts, implementation, design/technical
 The final review covers the complete affected diff, including cross-group consequences and any beneficial follow-up. Check source attribution and access limits, numerical assumptions, complete first journeys, optional expansion boundaries, preserved IDs/checklist state/history, relative links/anchors, moved-project references, pinned Markdown formatting and exact committed document contents. Existing runtime evidence retains its actual scope; documentation checks are not performance or playability tests.
 
 The assignment is complete only when all five product proposals and needed authored profiles, focused tracker/limit updates, primary citations, review fixes and final commits are complete. Move this assignment overview to completed projects with repaired references at closure; the individual feature projects retain their still-open implementation and qualification work.
+
+## Sequential completion record
+
+### DG26 — Voice, listening and private calls
+
+[The product specification](voice-and-calls-feature-spec.md) completes optional committed-text reading, reviewed dictation and an independently useful two-human private submitted-turn call; a resident participant is separately qualified. Twelve primary research records support the decisions, including accessible modality distinctions, a repaired text/voice reach mismatch, microphone/text fallback and provider interruption/retention/cost limits.
+
+Independent product and source reviews produced concrete improvements: sender-owned directional request allowances; no reading of merely arrived private text; explicit generated-reading disclosure; inherited per-sender message bursts; quiet request defaults that respect thread mute; window-foreground capture ending without keyboard-focus breakage; stopping game playback before capture; and preservation of historical call facts without live continuation after restore. Existing PS04 timing ownership was clarified rather than selected as a prerequisite. No additional ND16 acoustic family was invented to fill the group.
+
+HE07/NC23 and the proposed VC inventory retain technical, actual play, accessibility and aggregate-cost work. The first draft checkpoint is [76852a76](https://github.com/Macrofold/OpenLegend/commit/76852a76f44833506e9213461eb5209eaf6bbbf5); subsequent group closure remains an ordinary commit on this branch.
 
 ## Maintained records
 

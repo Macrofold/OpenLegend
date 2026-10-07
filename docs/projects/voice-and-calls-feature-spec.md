@@ -1,7 +1,9 @@
 # Voice, listening and private calls — feature specification
 
-**Status:** Product design draft; technical design, implementation and qualification remain open.  
-**Updated:** 2026-10-07.  
+| Status                  | Current progress                                                                                                                                               | Last updated |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Product design complete | Researched behavior and independent critique are complete. Technical design, implementation and actual play, accessibility and cost qualification remain open. | 2026-10-07   |
+
 **Design group:** DG26 — ND15, the calls extension of ND14, and the decision boundary for selected ND16 hearing work.  
 **Assignment:** [Groups 26–30](product-design-groups-26-30.md).  
 **Owners:** [Hearing](../hearing-and-speech.md), [conversations](../narration-and-conversations.md), [private text](world-text-messages-feature-spec.md), [PS04](../maintainers/product-scalability.md#ps04--coherent-scenes-and-limited-attention) and [AI spending](../ai-providers.md).
@@ -52,11 +54,13 @@ Continuous raw human proximity voice, group calls, video, voicemail, recorded-ca
 
 Each permitted committed line has a named **Read aloud** action in its existing message/history detail. The player can start it with keyboard, pointer or supported assistive controls. A compact playback control provides Stop, Pause/Resume and a readable speed choice. Rate changes affect device listening only. They do not change simulation speed, who heard the line, its timing or what an NPC intended.
 
+For private slate text, the source must already have been presented through NC22's actual Read, device and active-play checks. Arrival in an inbox and acceptance of a call are not reading. Automatic audio cannot fetch later unread text while the player is viewing an older page; it may follow only new text actually presented through the ordinary current-reading route.
+
 Automatic reading is off initially. An explicit **Read new replies in this conversation** preference opts into the currently selected direct conversation. It does not read every bystander, old message or world event. Existing platform screen-reader preferences remain respected through the ordinary accessibility owner; the game must avoid speaking the same line twice through two automatic systems.
 
 The complete permitted text appears at the normal committed time. The player may answer, move, use an item or close the panel while the audio is playing. Closing the conversation panel stops its automatic reading and pending playback; it does not end a still-valid fictional conversation unless the existing owner says so. A manually selected history reading has its own visible playback control and can continue after the history panel is hidden, until explicitly stopped or its authority changes.
 
-An audible line is marked as **Reading** or **Replay** in the player's playback control. Character performance may be expressive, but must not add words, a second narrative explanation, or objective emotion absent from the admitted content. A generated delivery of “Fine” is not new proof of resentment.
+An audible line is marked as **Reading** or **Replay** in the player's playback control. Character performance may be expressive, but must not add words, a second narrative explanation, or objective emotion absent from the admitted content. A generated delivery of “Fine” is not new proof of resentment. Before first character-audio use, accessible copy discloses that this is generated reading of received text, not a recording of a human performer or live microphone. Keep that information reachable with voice settings without repeating a warning on every line.
 
 ### 4.2 Queue and interruption
 
@@ -84,11 +88,13 @@ Leaving earshot after a committed line does not revoke legitimately learned word
 
 **Dictate a draft** sits beside the existing composer with its real destination visible: local Talk, the chosen slate recipient, or an accepted private call. Selecting it requests device permission only when needed. Before first use, explain that captured audio is processed into editable text, name the actual processor if remote, and link the actual retention terms. There is no microphone request on entering a world or answering a text-only call.
 
-Provide both a press-and-hold control and a start/stop toggle. Active recording has a persistent visual label and accessible state; a changing decorative waveform is not the sole indicator. The player can cancel without submitting anything. No automatic voice activation is offered initially.
+Provide both a press-and-hold control and a start/stop toggle. Starting capture stops the game's own read-aloud output to avoid transcribing it into the player's reply. Moving keyboard focus between controls within the same permitted capture task does not itself end recording. Active recording has a persistent visual label and accessible state; a changing decorative waveform is not the sole indicator. The player can cancel without submitting anything. No automatic voice activation is offered initially.
+
+Keep one unfinished dictation or transcription candidate per account across tabs, with no queued recordings. Finishing, discarding or cancelling it permits another; the existing typed draft is preserved. Closing a local candidate does not release an uncertain dispatched charge or create permission for a paid retry.
 
 The initial capture ends at thirty real seconds or two MiB of admitted encoded audio, whichever comes first. Show the remaining duration while recording. These are proposed service/input bounds, not fictional speech limits or measured optimal settings. Reaching the cap stops capture, retains a bounded clip for review and offers **Transcribe**; it never sends words to the world. Ordinary deliberate Stop completes the one transcription action already described by Dictate.
 
-On focus loss, stop capture immediately and retain the bounded clip only in the same current local draft context. Returning offers Transcribe or Discard; it does not upload while the player is elsewhere. Device loss has the same outcome when a usable clip exists, otherwise retain the typed draft and explain that no recording was obtained. A local unsubmitted clip expires after five real minutes with a visible expiry notice; changing account/world/controller or discarding the draft deletes it immediately. No background microphone survives a browser or game lifecycle transition.
+On loss of window/tab foreground, stop capture immediately and retain the bounded clip only in the same current local draft context. Returning offers Transcribe or Discard; it does not upload while the player is elsewhere. Device loss has the same outcome when a usable clip exists, otherwise retain the typed draft and explain that no recording was obtained. A local unsubmitted clip expires after five real minutes with a visible expiry notice; changing account/world/controller or discarding the draft deletes it immediately. No background microphone survives a browser or game lifecycle transition.
 
 ### 5.2 The result remains editable
 
@@ -122,19 +128,19 @@ The call control is secondary to **Write a message**. If a note would do, the pl
 
 The caller selects one actual contact and chooses **Invite to talk now**. The invitation contains no custom pre-answer voice or text payload; use ordinary private messaging for a note. The caller sees **Request pending**, Cancel and the request's remaining thirty real seconds. This is the caller's own request lifetime, not the recipient's status.
 
-The recipient can allow call requests from accepted contacts or turn them off globally/per contact. Requests are quiet, coalesced in the slate surface and never steal typing focus. No audible ring, automatic waking or automatic answer is selected. Decline and ignore produce the same caller-visible outcome at expiry. Blocking, sleep, death, being busy, unavailable cognition and being offline are not disclosed before deliberate acceptance.
+In a world explicitly offering calls, quiet requests from accepted contacts are allowed initially; answering always remains explicit. The recipient can turn **Call requests** off globally or per contact. Off clears current invitation presentation and suppresses new requests; turning it on applies only to future requests. An existing DG24 thread mute suppresses call cues too, so a call cannot bypass it. Requests are quiet, coalesced in the slate surface and never steal typing focus. No audible ring, automatic waking or automatic answer is selected. Decline and ignore produce the same caller-visible outcome at expiry. Blocking, sleep, death, being busy, unavailable cognition and being offline are not disclosed before deliberate acceptance.
 
 On actual acceptance, both see the identified accepted contact and **Conversation open**. Acceptance intentionally discloses that participation. Both must still possess current authority and a usable slate. Simultaneous acceptance/cancellation is resolved once under the actual accepted order; no “open” state is displayed based solely on a button press.
 
 Either participant may End immediately. The other sees only that the conversation ended, not a private reason. Existing sent turns remain under the private text owner. There is no automatic voicemail, redial, transfer, third participant or invitation chain.
 
-The proposed envelope is one pending outgoing request and one active call per character, and one active human call per controlling account. A character may retain at most three incoming invitations; later requests receive the same private caller-side pending/expiry treatment without displacing the recipient's accepted work. Request admission is limited to three per initiating account per rolling real minute, and one per contact pair per minute. Count admitted attempts even when ignored; changing slates does not reset these bounds.
+The proposed envelope is one pending outgoing request and one active call per character, and one active human call per controlling account. A character may retain at most three incoming invitations; later requests receive the same private caller-side pending/expiry treatment without displacing the recipient's accepted work. Request admission is limited to three per initiating account per rolling real minute, and one per initiating-account-to-contact direction per minute. Only the initiating account's own attempts consume its visible allowance; an unseen reciprocal request cannot consume it. These real-time counters remain current through restart and fictional restore. Count admitted attempts even when ignored; changing slates does not reset these bounds.
 
-An incoming request never evicts an active call. The player must deliberately end one before accepting another. Quiet mode ends neither history nor current consent; it suppresses future request presentation. Blocking a contact ends their active call and prevents further contact under DG24's current social policy.
+An incoming request never evicts an active call. The player must deliberately end one before accepting another. Turning Call requests off ends neither history nor an already accepted call; it suppresses future invitation presentation. Blocking a contact ends their active call and prevents further contact under DG24's current social policy.
 
 ### 6.3 Turns and attention
 
-The accepted call opens the existing private transcript with a compact active-conversation header and End. There is one ordinary composer; a second mini-chat inside an audio widget is unnecessary. Each Send commits through the same private-message route and shares DG24's rate envelope: six per pair and twenty-four overall per sixty real seconds. There is no extra call allowance that doubles the recipient's burden.
+The accepted call opens the existing private transcript with a compact active-conversation header and End. There is one ordinary composer; a second mini-chat inside an audio widget is unnecessary. Each Send commits through the same private-message route and shares DG24's rate envelope: six per sender–recipient pair and twenty-four overall per sender per sixty real seconds. These are rolling burst allowances, not a required ten-second wait between turns. Qualify short back-and-forth without forcing players to pad messages or hesitate over ordinary acknowledgements; any justified tuning belongs to the shared text owner. There is no extra call allowance that doubles the recipient's burden.
 
 Accepted membership is permission to offer turns, not proof that each was read. Preserve Submitted rather than introducing read receipts, typing surveillance or a live location indicator. The recipient's actual read creates the proper private evidence. A call turn is not local heard speech, and does not enter bystanders' conversation history.
 
@@ -166,7 +172,7 @@ Private call words, summaries, thoughts derived from them and generated audio re
 | Timeline restore                                      | Apply DG25: cancel obsolete work, preserve real costs/current blocks, and never resend discarded-future words or repurchase media automatically.                                        |
 | Account/source erasure or revoked access              | Stop further retrieval and playback; invalidate retained media derivatives under the actual data owner. Deletion does not guarantee external processors or recipients recorded nothing. |
 
-No call request received during a pause is queued to ring on resume. After return, a person deliberately requests a new conversation. Local drafts follow existing scoped retention; a draft from an ended call may be deliberately moved into an ordinary message to the same still-authorized contact, never automatically sent.
+Admitted request, acceptance, ending and message evidence remains in the saved private history wherever legitimately present at its cut. An old pending request or accepted session is historical on load, not a resumable connection; recipients never gain an invitation that was previously withheld. No call request received during a pause is queued to ring on resume. After return, a person deliberately requests a new conversation. Local drafts follow existing scoped retention; a draft from an ended call may be deliberately moved into an ordinary message to the same still-authorized contact, never automatically sent.
 
 Administrative correction and ordinary spoken clarification remain different owners. A playback error is not historical speech correction. An inaccurate transcription caught before Send needs only editing. After an accepted mistaken turn, the person corrects through actual new communication under DG25.
 
@@ -188,7 +194,7 @@ Admission refusal should affect the optional expensive operation, with a concret
 
 ## 9. Accessibility, privacy and discoverability
 
-Communication settings must be reachable before first capture and while in a call. Group microphone input, local reading, captions and requests by their actual effect. A global **Quiet audio** control stops automatic audio and suppresses optional request sounds if later offered, while preserving prior personal preferences for deliberate restoration. It does not erase messages or block every contact.
+Communication settings must be reachable before first capture and while in a call. Group microphone input, local reading, captions and requests by their actual effect. A global **Quiet audio** control stops automatic playback while preserving prior personal preferences for deliberate restoration. The separate Call requests preference controls invitation presentation; existing thread Mute suppresses its cues and Block prevents new contact. It does not erase messages or block every contact.
 
 Per-person playback mute, own microphone control, call-request blocking and deletion are separate actions. A muted presentation does not rewrite fictional perception. First-stage playback is entirely local to the listening human; speakers do not learn whether someone enabled it.
 
