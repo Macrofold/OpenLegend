@@ -269,3 +269,43 @@ Conversation metadata admission retains the existing 8,192-row boundary, and unc
 **Assessment:** Keep the bounded projection; tune the split/model from continuity traces. Expand cold rebuild only with a bounded continuation strategy and spending evidence. There was no prior runtime compaction allocation to remove; the earlier full-transcript admission failure is replaced by on-demand compaction, with explicit capacity failures retained.
 
 [Canonical behavior](../narration-and-conversations.md#model-facing-conversation-compaction) · [Design](../projects/conversation-compaction-tech-design.md) · [Evidence](../verification/conversation-compaction.md#conversation-compaction) · [NC14–NC17](../maintainers/narration-and-conversations.md).
+
+## TX-L01 — Selected affordance and correspondents
+
+**Proposed DG24 profile · Restrictiveness: narrow first family.** [The specification](../projects/world-text-messages-feature-spec.md) selects one-to-one text in an explicitly installed later invited world. The reference has three real blank individual slates (two for the first pair and one finite, ordinarily possessed spare), unit load one, one active bound device per stable person and no added durability/power/postage system. Current capable, awake, living participation and a carried usable device govern immediate Activate/Read/Send. Previously read history and own revocation/block controls do not require the lost item. Human correspondence completes independently; initial NPC scope is human–NPC, not autonomous NPC reply chains. Owner: NC22.1/NC22.6 and [world profile](../worlds/base/text-messages.md).
+
+## TX-L02 — Contact admission and invitation load
+
+**Proposed · Restrictiveness: consented local contact.** No world directory, raw-account addressing, name guess, forwarded address or automatic contact grant. One outstanding outgoing invitation per person, one per pair, at most three new offers per sender per rolling sixty real seconds. A duplicate counts once; dismissal suppresses another cue in the same local conversation episode. The exact local exchange must remain eligible through acceptance. A person-level block suppresses fresh invitations and text; another device is no bypass. These sender/concurrency bounds do not cap total incoming invitations in a crowded encounter. Owner: NC22.2/MP access and existing native admission.
+
+## TX-L03 — Message content envelope
+
+**Proposed · Restrictiveness: short complete plain text.** One recipient, at most 2,000 Unicode code points and 8,000 UTF-8 bytes, both required. No empty text, automatic splitting, rich executable content, URL previews, attachments, money, forwarding or group audience. Retain an over-limit draft for correction. The current ordinary 16,384-byte request boundary must fit the entire encoded operation, including escaping and metadata; if it cannot, resolve that transport envelope before offering the advertised body size rather than silently lowering text at submission. Owner: NC22.3, MP transport and UI controls.
+
+## TX-L04 — Sender-owned real-time rate
+
+**Proposed · Restrictiveness: finite burst, not recipient surveillance.** Six accepted submissions per contact and twenty-four overall in a rolling sixty real seconds per sender across devices/tabs. Exact duplicate receipts count once; accepted submissions excluded by private recipient policy still count. Report only the sender's own wait/allowance. Restart or fictional rewind does not reset this current real-time envelope. These values are provisional product constraints, not measured spam protection or a reason to delay native delivery. Owner: NC22.3/NC22.5 and ordinary admission/accounting.
+
+## TX-L05 — Bounded private views
+
+**Proposed · Restrictiveness: finite pages, retained history still reachable.** Contact/thread lists return twenty rows per requested page; human thread pages return twenty messages with up to 160,000 body bytes before separately bounded metadata. Preserve exact words, stable ordering, scroll position and oldest unread boundary. No new total contact/thread/history count is selected. Existing authorized history/search owners retain their own bounds; no new semantic search or paid summary is required. Private bodies never enter hidden previews or another actor's projection. Owner: NC22.3/NC22.4 and current query/data owners.
+
+## TX-L06 — Native NPC reading and one waiting cue
+
+**Proposed · Restrictiveness: bounded attention opportunity.** One coalesced private waiting cue without text preview; unchanged pending unread work creates no repeating automatic paid route. One explicit read presents the oldest unread complete messages of a chosen thread, at most five and 16,000 UTF-8 body bytes. Remaining unread coverage stays explicit. Reading grants an attributed written-message experience, not agreement or proof that later unread corrections are known. Existing 100,000-byte complete cognition admission and LA236 remain separate; no new inference allowance or automatic drain. Owner: NC22.6/CR/EPR.
+
+## TX-L07 — Disclosure and inherited privacy
+
+**Proposed new NPC disclosure policy under D48.** No sender-visible delivery/read receipts, presence, typing, last-seen, hidden death, blocked state or recipient-capacity probe. Submitted confirms the sender's exact durable submission only. Participant restrictions follow human-private text into NPC memories, notes, self-understanding, goals/reasons, appraisals, context, narration, logs, search, counts and exports. No automated onward quote/paraphrase or NPC forwarding is selected; independently public evidence and actual observable action remain distinct. A new human controller receives no old NPC private-mail permission. Conservatively restrict mixed derivatives when safe separation is unproved. Owner: NC22.4/NC22.6 with MP/CR/ACT, not a prompt-only promise.
+
+## TX-L08 — Retention and aggregate growth
+
+**Proposed no new expiry · Restrictiveness: liberal lifetime growth.** Accepted text, contact policies, receipts and derivatives have no new aggregate lifetime quota. No game-day deletion deadline, blocked-message replay, paid catch-up or automatic source erasure. Page/send bounds do not cap lifetime storage or one recipient's many contacts. One hundred senders at 24 × 8,000 bytes/minute produce 19.2 MB/minute, or 1.152 GB/hour, before metadata/derivatives; one hundred contacts sending six messages each can offer 4.8 MB/minute to one recipient. These are envelope arithmetic, not observed demand or capacity. NC/data retention, [MH06](memory.md#mh06)/C20 and wider-participation qualification own admission/growth before larger deployment.
+
+## TX-L09 — Lifetime, device and restoration transitions
+
+**Proposed · Restrictiveness: complete current authority.** No local-conversation inactivity timeout, artificial distance delay or automatic send on Resume. Supported current-format restart preserves accepted order, actual reading, contacts and device binding once. Block and current access remain effective; service disablement stops new use but retains private history, and re-enabling does not reset permissions or replay work. Definition removal follows dependency review. Human death/Continue keeps person identity but actual item loss; a dead NPC does not act. Optional shared/private rewind consumes [DG25's protected coherent cut](../projects/corrections-and-shared-restoration-feature-spec.md#7-selected-shared-restoration-policy), with no post-cut inbox/evidence replay and current privacy/device/rate restrictions; every supported save/export must preserve D48 before text is enabled. Owner: NC22.4, MP/SL and item/invention owners.
+
+## TX-L10 — No unpriced generation or assumed full capacity
+
+**Proposed · Restrictiveness: reuse shared work allowances.** Native human text, status, reading and paging require zero language-model calls. NPC choice/reply consumes existing total admission, including preparation, retrieval, routing and failures. No automatic narrator, idle mailbox poll, per-contact AI budget or queue catch-up. No new aggregate inactive mailbox/derived-cache throughput guarantee; query a permitted scope before materializing and measure real offered loads. First useful human coordination qualifies before NPC/private expansion; wider public/world population remains separate evidence. Owner: NC22.5/NC22.7, CR12, current AI and data/performance owners.

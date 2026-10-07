@@ -6,6 +6,8 @@ Some ideas have no implementation plan. Others already have a broad task or acce
 
 **Focused gameplay review, October 6, 2026:** [the DG16–DG20 assignment](../projects/completed/product-design-groups-16-20.md) rechecked those five proposals against GitHub main at `34233ae24365eb8911fe1995c9c232bd57f34616`. Their numbers preserve the design queue, not an implementation order or a five-feature release. Useful attended play comes first: an independent resident and a worthwhile encounter can use current mechanics; the Journal is an optional companion. Unattended service, larger scenes, supply aging and material fire earn their own scope. A credible wanted activity can justify a small prototype; no new study or proof of fun before building is required. Every enabled capability still needs its complete behavior, permissions and applicable acceptance. This focused review does not reorder unrelated or already approved delivery work.
 
+**Next five product proposals, October 6, 2026:** [DG21–DG25](../projects/completed/product-design-groups-21-25.md) were designed sequentially after inspecting current main at 0a3ab79b. Their product scopes, primary research, authored profiles where applicable, existing delivery owners and limits are now recorded; technical/runtime work remains open. Recovery serves attended play; small commissions, specific learned outlook, optional private notes and deliberate shared restore each have an independently complete first journey. No new currency, numerical trait ladder, carrier economy or arbitrary history editor is required. Group numbering continues to describe design preparation, not a required five-feature release or implementation order.
+
 The [maintainer index](README.md) remains the route to implementation work. [Open decisions](../../archive/05-project/open-decisions.md) owns unresolved choices; the [research backlog](../../archive/05-project/research-backlog.md) owns empirical questions; [policies to revisit](revisitable-policies.md) owns review triggers for accepted policy. This page tracks the missing preparation and links those owners rather than replacing their records.
 
 Start with [ordered design groups](#ordered-design-groups), [parallel opportunities](#order-and-parallel-opportunities), and [complete coverage](#coverage-of-every-design-need). The original topic index remains: [scalability](#product-scalability-substantial-plans-already-exist), [worlds and communities](#worlds-rules-and-long-lived-communities), [creation and communication](#creation-controls-and-communication), [memory and authored behavior](#memory-shared-history-and-advanced-authored-behavior), [service and creator economy](#commercial-service-creator-ecosystem-and-launch-learning), [optional real-world value](#optional-well-being-and-real-world-value), and [existing plans and deferrals](#existing-designs-and-deliberate-deferrals-to-reuse).
@@ -219,11 +221,15 @@ ND05's first selected body/condition/treatment loop, observable symptoms, uncert
 
 **Start and parallel boundary:** Use current actor/state owners and DG07's human recovery boundary for affected human outcomes. Care can proceed without general fire, a complete disease model or NPC ghosts. Deeper biological/life-stage extensions are reconsidered with DG31 when their consumer exists. **Existing owners:** ACT/BW, shared state, actions and lifecycle owners.
 
+**October 6 product proposal complete:** [Recovery and care](../projects/recovery-and-care-feature-spec.md) selects one complete material-free, awake recovery at camp, then independently selectable field dressing and willing help. The [world profile](../worlds/base/recovery-and-care.md) restores ordinary health/injury while preserving needs, scars, current death and actual danger. It uses newer main's implemented death/scar baseline, not this branch's older collapse wording. [CARE01–CARE05](recovery-and-care.md) and [care limits](../limits/recovery-and-care.md) retain adoption, technical design and runtime qualification. A distinct future illness still needs its own worthwhile cause-to-resolution activity; it is not a prerequisite for useful recovery.
+
 #### DG22 — Durable agreements and a small world economy
 
 ND09's chosen currency and deferred-delivery/default rules, and ND10's sparse persistent group/property/obligation records. Extend DG06's actual exchanges and cooperation into a useful multi-session arrangement.
 
 **Start and parallel boundary:** Use existing agreement, custody and identity contracts. Decide money issuance/sinks only if currency is selected. This group is independent of real-money service billing. Broader governments, credit/escrow institutions and political powers are DG32 rather than prerequisites for a modest economy. **Existing owners:** INV-20, PO/BW, social/state owners and D11/D18.
+
+**October 6 product proposal complete:** [Agreements worth coming back to](../projects/durable-agreements-feature-spec.md) selects a finite known-output commission paid in goods on actual later delivery, with no default deadline or currency. It consumes PX02's independently useful, still-unimplemented exact barter. Optional advances and a narrowly governed association remain separate deliveries. [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation), the [world profile](../worlds/base/durable-agreements.md) and [DA limits](../limits/durable-agreements.md) preserve exact assent, owner-local ending, actual claims, knowledge and custody. D11/D18/D64 have proposed dispositions; their adoption status and broader currency/institution scope remain open.
 
 #### DG23 — Characters changed by their experience
 
@@ -231,17 +237,23 @@ ND04's personality-change slice and ND19's older-memory transformation or select
 
 **Start and parallel boundary:** Use current memory, appraisal and correction/forgetting contracts. No numerical skill system or external retrieval service is required. DG25 owns deliberate changes to shared history; this group changes recollection/interpretation, not what actually occurred. **Existing owners:** ACT07/ACT08, CR06/CR09 and memory/provenance owners.
 
+**October 6 product proposal complete:** [People who change through living](../projects/experience-shaped-characters-feature-spec.md) selects a specific revisable outlook using existing accepted NPC self-understanding and qualifies its effect in later voluntary conduct. Older reinterpretation retains the original event; dreams, human-reviewed suggestions and deliberate coarsening are independent optional extensions, with no default weekly pass or numeric trait progression. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection), [the world profile](../worlds/base/experience-shaped-characters.md) and [EC limits](../limits/memory.md#ec-l01--existing-authored-capacity) reuse ACT/CR/CE. Current consolidation/reflection remain distinct from the proposed semantic extensions; all technical/live-quality work remains open.
+
 #### DG24 — Text messages inside an authored world
 
 ND14's contacts and asynchronous text journey: a real world affordance, addressing, delivery/read state, availability, retention and who learns the message.
 
 **Start and parallel boundary:** Use existing identity and conversation contracts. Keep remote messages distinct from local hearing and account metadata. Calls belong to DG26, so text need not wait for media. Contact and delivery meanings become the input to that later call design. **Existing owners:** NC/MP, world affordance and privacy owners.
 
+**Product design completed, October 6, 2026:** [Keep in touch across an outing](../projects/world-text-messages-feature-spec.md) and the [message-slate profile](../worlds/base/text-messages.md) select an optional later authored world, local mutual contact exchange and private asynchronous notes. Submission is distinct from arrival/read; no presence, read receipts, attachments, artificial delay or primitive-start change. Two-human completion comes before separately qualified NPC correspondence with private derivatives and control-transition protection. [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) and [TX-L01–TX-L10](../limits/narration.md#tx-l01--selected-affordance-and-correspondents) retain technical/runtime delivery. Calls remain DG26.
+
 #### DG25 — Deliberate corrections and shared restoration
 
 Conditional ND17 and ND35. First settle the narrow common decision about attributed correction versus replacing history, affected people and private evidence. Then scope speech re-authoring and shared-world/private-history restoration as independently selectable designs.
 
 **Start and parallel boundary:** Only start the affected design when that administrative or shared/cloud experience is wanted. Ordinary new-event speech corrections, current save/load and operational backups already have owners. Neither special feature is a gate for normal multiplayer; history-changing consumers must agree before sign-off. **Existing owners:** HE, SL10, NC/CR, data/privacy and D60/D66.
+
+**Product design completed, October 6, 2026:** [Correct a misunderstanding; deliberately restore a world](../projects/corrections-and-shared-restoration-feature-spec.md) selects ordinary attributed new speech and optional protected coherent same-world/private-history restoration. First speech links are private to the speaker; no automatic semantic memory cascade, historical hearing edit or forced belief. Shared restore retains D60 roles, current-bound-person refusal, current privacy/accounting, mandatory pre-load preservation, participant notice and paused return. No first private portable export, alternate-history archive, branch merge or selective item/message rescue. [HE06](hearing-and-speech.md#he06--attributed-correction), [SL10.1–SL10.7](save-and-load.md#dg25--protected-shared-restoration), [HC](../limits/hearing-and-speech.md#hc-l01--correction-through-actual-speech) and [RW](../limits/persistence.md#rw-l01--one-protected-world-history) own delivery/constraints; technical/runtime adoption and qualification remain open.
 
 ### Band 5 — Add useful spoken communication
 
@@ -454,6 +466,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **October 5 selected practical-skill proposal:** DG14 now specifies what a real sling release, observation, completed coaching episode and hearsay each establish, plus the finite resulting effect, privacy, correction and absence rules in the [existing stats specification](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing). [PC](practical-competence.md) tracks only that new consumer. Personality change, generic method teaching and broader skill progression remain open.
 
+**October 6 personality proposal:** DG23 selects descriptive, specific, revisable outlooks in [the experience-shaped character specification](../projects/experience-shaped-characters-feature-spec.md). Starting protected identity and static trait labels remain separate; real practice, observation, teaching and hearsay retain the existing practical-learning meanings. Repetition provides no personality points, a later choice stays independent, and conflicting experience can qualify a view. [EC delivery](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) builds on current reflection; broader numerical personality progression remains unselected.
+
 ### ND05 — Richer bodies, illness and care
 
 **Conditional scoped design.** Sources: [physical state](../../archive/03-design-proposals/agents-and-social-simulation.md#physical-state), F03 in the [product baseline](../../archive/01-requirements/product-baseline.md), and [conditional capability expansion](extensible-world-foundation.md#ewf10--conditional-capability-expansion-review).
@@ -461,6 +475,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** the [actor model](actor-model.md), [base-world survival](../worlds/base/survival.md) and current status-effect/state systems already support living actors, needs, damage and selected conditions. Body-part health, disease, richer injuries and treatment are broader proposed behavior.
 
 **Needed before an implementation project:** choose one playable care or injury loop, its body representation, causes, observable symptoms, treatment and consequences. Specify what actors can know, how severity and time evolve, and how the rules interact with death/recovery, saved state and resource use. Do not turn every body-state example into a required subsystem or assume a generic attribute framework supplies biological behavior.
+
+**October 6 scoped product design:** DG21 now supplies [the ordinary recovery and optional field-care proposal](../projects/recovery-and-care-feature-spec.md), with [CARE01–CARE05](recovery-and-care.md) as its focused delivery owner beneath ACT/BW. Current main already delivers death scars and their treatment; the new gap is recovering from survived ordinary harm. Deep anatomy, new illness, rescue and broader care remain conditional extensions, with their original selection requirement preserved.
 
 ### ND06 — Ecology, aging and generations
 
@@ -504,6 +520,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select the first reciprocal barter family and player/NPC negotiation journey, mapping its actual items, quantities, offer presentation and fulfillment onto the existing agreement lifecycle. Select whether currency belongs in the first slice; if so, define issuance, sinks, theft/loss and ownership. Choose which deferred delivery, default and dispute consequences that world supports; escrow and interest remain optional. Reuse existing assent/amendment/settlement contracts. Fictional currency is separate from ND22–ND23 real-money accounts.
 
+**October 6 product design:** [DG22’s commission, change and default rules](../projects/durable-agreements-feature-spec.md) now select the narrow family above PX02 barter, with optional unsecured advance and no currency in the first delivery. [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) retains technical/runtime work; D64 management is a proposed disposition pending adoption. A later currency still needs its own actual exchange need and full circulation choices under D11/R09.
+
 ### ND10 — Persistent groups, shared ownership and in-world institutions
 
 **Conditional scoped design.** Source: [institutions without a mandatory government system](../../archive/03-design-proposals/world-and-player-experience.md#institutions-without-a-mandatory-government-system), with D18's unsettled starting social organization.
@@ -511,6 +529,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** conversations, commitments, permissioned containers, actor knowledge and [INV-20 social families](inventions-and-world-evolution.md) have their own contracts or tracked foundations. Account roles and creator privileges already belong to [MP](multiplayer.md). A character calling something a company or government does not create its mechanics.
 
 **Needed before an implementation project:** select one useful group or recurring cooperative arrangement. Specify membership, shared property/goals, delegation, obligations, notices, disputes and dissolution only as that use case requires. Decide whether a formal organization record is needed and which facts each observer knows. Preserve the separation between fictional institutions and platform access/billing authority; do not prescribe a starting government or implement every repertoire institution.
+
+**October 6 scoped product design:** [DG22’s optional small association](../projects/durable-agreements-feature-spec.md#9-optional-small-association) now specifies voluntary membership, narrow record stewardship, accepted custodial responsibility, known history and dissolution without implied property/access or platform powers. It is independent of the first commission. Ordinary shared-property rights require their real PO consumer; formal corporate title and wider institutions remain DG32. No organization is added to the current starting world.
 
 ### ND11 — Human conflict/recovery and NPC ghost continuity
 
@@ -558,6 +578,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** choose how remote communication becomes available in a world, beginning with contacts/asynchronous text if useful. Define addressing, delivery/read status, availability, blocking, offline retention and who may learn each message. Calls additionally need schedules, missed/interrupted calls and private media delivery coordinated with ND15. A connection must not expose unrelated remote conversations or grant fictional knowledge from account metadata.
 
+**DG24 product disposition, October 6, 2026:** The [researched asynchronous-text proposal](../projects/world-text-messages-feature-spec.md) now answers the contacts/text portion through a selected optional message-slate world profile. It adds no current primitive equipment or delivered remote capability. [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns implementation and privacy qualification; DG26 retains calls and their separate media journey. This design completion leaves the original decision/implementation status above explicit.
+
 ### ND15 — Audible NPC dialogue, microphone input and proximity voice
 
 **Decision before feature/technical design.** Sources: [spatial audio and readable conversation](../../archive/02-research/engines-art-and-audio.md#6-spatial-audio-and-readable-conversation), [voice transport and hearing permissions](../../archive/02-research/hosting-and-scale.md#7-voice-transport-and-hearing-permissions), D10/R07.
@@ -581,6 +603,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** generic text edits correctly reject rewriting committed speech; a character may make an ordinary correction as a new speech event. This is not a current hearing defect.
 
 **Needed before an implementation project:** decide whether a dedicated administrative feature creates an attributed correction, invalidates dependent evidence, or explicitly re-authors a fictional timeline. Specify partial listener fragments, recognized identities, summaries and decisions already based on the speech, with clear scope and authority. Do not reconstruct historical hearing from current positions or add old-development-event backfill. Keep implementation with HE and affected memory/data owners.
+
+**DG25 product disposition, October 6, 2026:** [The researched correction proposal](../projects/corrections-and-shared-restoration-feature-spec.md#4-first-correction-journey) chooses actual new attributed speech, with an optional own-history shortcut under [HE06](hearing-and-speech.md#he06--attributed-correction). It explicitly declines administrative inline retcon and automatic memory/consequence repair in this scope. Existing broad administrative correction and [CE02](creator-edits.md#ce02--optional-memory-propagation-tools) remain distinct. D66's original status is retained; ordinary correction needs no checkpoint or shared restore.
 
 ### ND18 — First-encounter narration for places and inventory items
 
@@ -608,6 +632,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** decide which detail may change or disappear, what important incidents/obligations retain, and how current beliefs can color interpretation without creating false witnessing. Define imagined-versus-factual attribution, lineage, correction/forgetting propagation, cadence, cost and same-version restoration. Treat the proposed weekly/older-period schedule as a candidate, not an enabled default, and set behavioral quality criteria before selecting an algorithm.
 
+**October 6 semantic proposal complete:** [DG23's older recollection and optional dream design](../projects/experience-shaped-characters-feature-spec.md#6-understanding-older-experience-without-inventing-it) specifies changed interpretation without changed witnessing, honest missing detail, consequential distinctions, protected obligations, source-sensitive erasure and optional incidental coarsening. Current daily review remains faithful consolidation; no weekly cadence or new lifetime expiry is enabled. [EC03/EC05/EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) retain delivery and qualification, using D59's existing delegated retention ledger.
+
 ### ND20 — A bounded richer-memory retrieval comparison
 
 **Conditional experiment; no new dependency selected.** Source: [Hindsight evaluation](../../archive/02-research/hindsight-memory-evaluation.md), especially its recommendation, integration boundary, matched evaluation and resumption sections.
@@ -631,6 +657,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** [SL10](save-and-load.md#sl10--conditional-portability-and-shared-world-expansion) already owns portability and shared-world expansion. Save/load roles, coherent restoration, current forgetting protections and non-rewindable permissions/accounting are specified; [PD06](production-deployment.md) owns hosted backup/disaster recovery. This entry concerns the unresolved shared gameplay and private-history treatment, separately from operational recovery, invention-pack portability and personal journal export.
 
 **Needed before the selected extension ships:** define participant notice, pending commands, reconnect and how a discarded future is presented. Decide whether private-channel history stays current or participates in a protected rewind, including dependent narration and erasure. Specify authorized exports without plaintext disclosure to creators, current-grant/accounting reconciliation, and whether branching or cross-world effects are supported. Reuse SL10 and the existing privacy/data owners. These choices do not reopen settled save permissions or authorize legacy-save support.
+
+**DG25 product disposition, October 6, 2026:** [The selected shared/private restore proposal](../projects/corrections-and-shared-restoration-feature-spec.md#7-selected-shared-restoration-policy) supplies the complete same-world journey and protected coherent private cut through [SL10.1–SL10.7](save-and-load.md#dg25--protected-shared-restoration). Current roles, erasure/private authority and real accounting remain unchanged. The first scope explicitly excludes creator-facing complete private portable transfer, alternate archives/branches, merge and unsupported cross-world effects; those conditional SL10 consumers still require their specific product choices if selected. PD06 operational recovery and current save/load are not reopened or blocked.
 
 ### ND36 — Optional narrative perspectives and distant-event cutaways
 

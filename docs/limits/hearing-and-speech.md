@@ -33,3 +33,23 @@ Current source inspection of the main/hearing integration, 2026-09-27. Values ar
 ## HR08 — Compatibility and editing
 
 **Policy reference and editing restriction.** Development compatibility is governed only by the [root policy](../../AGENTS.md#development-save-policy). Current-format restart/restore must preserve recorded fragments and normal validation; unsupported input never triggers an automatic reset. Generic editors reject committed speech text/content rewrites while preserving deletion and importance updates. Dedicated re-authoring remains [D66](../../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech). The old four-second discovery descriptor and mandatory one-second execution loop are **Removed/superseded** by [elapsed-time policy](../simulation-time.md), not hidden hearing controls.
+
+## HC-L01 — Correction through actual speech
+
+**Proposed DG25 choice · Restrictiveness: deliberate attribution.** Ordinary new-event correction remains valid; the optional HE06 control prepares an unsent new utterance by the controlled speaker. No inline committed-speech replacement, retrospective hearing, forced belief or automatic invocation of the broad administrative correction owner. First history links are for the correcting speaker only; seeing two events is not permission to reveal their relationship to another listener. [Product](../projects/corrections-and-shared-restoration-feature-spec.md), [HE06](../maintainers/hearing-and-speech.md#he06--attributed-correction).
+
+## HC-L02 — Existing content envelope
+
+**Proposed reuse · Restrictiveness: existing speech/message bounds.** Player Talk retains its current 1,000-character input; native/model speech retain HR02's separate bounds. No extra unlimited quote, generated apology or automatic split. A private written correction uses NC22/TX-L03's 2,000-code-point and 8,000-UTF-8-byte requirements. Over-limit or unavailable-source drafts remain editable. HE06/NC22 own their actual channels.
+
+## HC-L03 — One permitted relationship
+
+**Proposed · Restrictiveness: bounded reference, complete hearing.** One optional prior-utterance reference accompanies one new utterance; the first speech shortcut exposes it only in the speaker's own permitted history. Original listener fragments/identity remain unchanged and the actual new audience is never truncated for cost. No correction-specific age window or lifetime-count ceiling is selected. Source retention, history paging and current erasure remain HE/NC/memory responsibilities.
+
+## HC-L04 — No retrospective paid repair
+
+**Proposed · Restrictiveness: ordinary work admission.** Human correction and its own-history links require no model call. Optional resident response uses existing cognition; no correction-specific paid allowance, mandatory reflection, all-old-listener fan-out or recreation of past decisions. Accepted history still grows with actual communication; one link or a small page is not a lifetime storage bound. HE06/CR/NC/data own growth and actual qualification.
+
+## HC-L05 — Current authority and neighboring consequences
+
+**Proposed · Restrictiveness: preserve semantic ownership.** Current speaker control, access, erasure and restore generation govern references and submissions. A link cannot amend an agreement, remove an injury or waive a claim. Administrative correction's conservative derived-state invalidation stays explicitly separate; CE02 is later selected convenience, not automatic propagation. Supported restore preserves actual new-event order at its cut; no historical acoustics reconstruction or development-save compatibility expansion.

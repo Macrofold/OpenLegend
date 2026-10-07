@@ -14,14 +14,19 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
+- [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; distinguishes newer main's actual death/scars from this branch's older runtime context.
 - [Combat](combat.md)
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
+- [A resident revises an outlook](experience-shaped-characters.md) — DG23's proposed specific revisable understanding and later voluntary conduct; current reflection is reused, while dreams and older coarsening remain optional.
+- [A small wilderness commission](durable-agreements.md) — DG22’s proposed finite barter commission, exact later settlement and independently selected advance/association; no currency or new starting institution.
 - [Finite continuing communities](continuing-communities.md) — DG17's proposed current-clock supplies, horizon and actual food/rest pacing, following useful attended continuity; no overnight service is adopted.
 - [Heat and materials](heat-and-materials.md) — DG20's separately selectable human firing, material-fire, moisture and resident/food-fire activities, with finite sources and recovery; current cooking fires retain their existing behavior.
 - [Something worth showing](social-gatherings.md) — DG18's ordinary exact conversation, a worthwhile additional participant, and separately conditional gist, vocal activity and larger gatherings; current hearing remains authoritative.
 - [Supplies worth keeping](changing-supplies.md) — DG19's independently selectable preservation and finite renewal, with actual work and stock economics; current food and resource rules remain unchanged.
+
+- [Personal message slates](text-messages.md) — proposed optional later-world correspondence with local mutual contacts, private reading, real device possession and no primitive-start addition.
 
 ## Code boundary
 

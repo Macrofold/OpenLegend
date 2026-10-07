@@ -80,7 +80,7 @@ PostgreSQL connection/read statements have a 5-second timeout; write transaction
 
 **Changed — current checkpoint path · Restrictiveness: Too liberal.**
 
-No named-manual-save count ceiling; saves persist until deleted. New streamed packages use SV04–SV06; the former 64 MiB ceiling remains only on legacy JSON reading (SV14).
+No named-manual-save count ceiling; saves persist until deleted. New streamed packages use SV04–SV06; the 64 MiB non-streamed decode guard is separate from current-format validation (SV14). Legacy operational JSON restore is not supported.
 
 **Reason / tradeoff:** Keep complete user-selected saves; there is currently no overall disk quota. Backup separately refuses more than 10,000 retained packages (SV13).
 
@@ -202,11 +202,11 @@ Original recommendation: **Keep**.
 
 ## SV14
 
-**Reported · Restrictiveness: Safe.**
+**Historical legacy use; current guard distinguished · Restrictiveness: Safe.**
 
-**Older JSON backups:** 64 MiB for legacy backup restore/import. I extended this guard to the operational tools; the legacy gameplay-save guard already existed.
+**Non-streamed decode guard:** 64 MiB, followed by exact current-format/state validation. The earlier audit applied the same guard to legacy JSON operational restore/import; those legacy operational paths are now removed. This is a resource bound, not an older-save support window.
 
-**Reason / tradeoff:** Legacy formats parse a whole JSON document; avoid unbounded legacy allocations.
+**Reason / tradeoff:** Whole-document decoding requires a finite allocation guard. Preserve current-format refusal and the root development policy; a historical limit does not authorize compatibility.
 
 ## SV15
 
@@ -306,11 +306,11 @@ The save worker starts with the server and is not automatically restarted after 
 
 ## BW04
 
-**Reported · Restrictiveness: Medium.**
+**Historical migration behavior; not current supported compatibility · Restrictiveness: —.**
 
-Legacy feeling migration only supports the known fear/discomfort format and decay rate. Equipment migration only rebinds understood weapon references; unsupported references block migration. Unknown legacy item definitions do not automatically gain packing compatibility. [Feeling migration](../../packages/domain/src/appraisal-migration.ts), [object migration](../../packages/domain/src/object-migration.ts)
+The former legacy feeling migration only supported the known fear/discomfort format and decay rate. The former equipment migration only rebound understood weapon references; unsupported references blocked migration. Unknown legacy item definitions did not automatically gain packing compatibility. [Feeling migration](../../packages/domain/src/appraisal-migration.ts), [object migration](../../packages/domain/src/object-migration.ts)
 
-**Reason / tradeoff:** Only understood legacy semantics can be converted without guessing or losing references.
+**Historical rationale:** Only understood legacy semantics could be converted without guessing or losing references. Current unsupported development state is refused under the root policy; these earlier examples do not authorize migration or a compatibility promise.
 
 ## SV17
 
@@ -348,7 +348,7 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Changed · Restrictiveness: Safe.**
 
-**Only the current physical format is supported.** Database format 4, `records-jsonl-2` and save format `development-2026-10-02-native-continuation` require the combined perspective/access table, maintained event totals and [saved sampling progress](../simulation-time.md#native-interval-contract). The integrated model also requires exact recipe-family pins, sparse body meters and the explicit memory-search projection. It replaces the preceding format-3 gate without retaining an older reader. The remainder must be finite, positive above the current time tolerance and no greater than the world-owned fallback horizon; any exact deadline must agree with the saved clock and remainder. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
+**Only the current physical format is supported.** The active database/save markers are maintained by the [current history capture boundary](../save-and-load.md#current-history-capture-boundary) and their source constants. Current `records-jsonl-2` packages require the combined perspective/access table, maintained event totals and [saved sampling progress](../simulation-time.md#native-interval-contract). The integrated model also requires exact recipe-family pins, sparse body meters and the explicit memory-search projection. It replaces the preceding format-3 gate without retaining an older reader. The remainder must be finite, positive above the current time tolerance and no greater than the world-owned fallback horizon; any exact deadline must agree with the saved clock and remainder. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
 
 **Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That reader was removed with the history layout change; it is not a promised support window. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
 
@@ -447,3 +447,43 @@ The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches w
 **Commands and AI results still use synchronous saves.** Player commands, AI characters' finished actions and replies (including conversation updates) and other background-job results, world-editor changes, pause/resume and loads change the live world only after their own save completes, so each holds the mutation queue until it is written. Only simulation progress, which is already visible before it is saved, uses background saves. Under a slow database these synchronous saves are what still freeze the world ([evidence](../verification/ordered-async-saves.md#matched-scene-runs-pf00-delay-cases)).
 
 **Reason / tradeoff:** Preserves the durable publication boundary (no effect is visible before it is durable). Pipelining these writes would need durability-gated view publication; see [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness).
+
+## RW-L01 — One protected world history
+
+**Proposed DG25 choice · Restrictiveness: coherent same-world scope.** One active world follows an authorized restore to an actual retained compatible checkpoint. The first scope selects protected rewind of all fictional private messages/read/evidence with goods, bodies and agreements. No alternate-history archive, arbitrary point-in-time reconstruction, selective item/message rescue or automatic new model outcome. [Product](../projects/corrections-and-shared-restoration-feature-spec.md#7-selected-shared-restoration-policy), [SL10 consumer](../maintainers/save-and-load.md#dg25--protected-shared-restoration).
+
+## RW-L02 — Existing authority and bound people
+
+**Proposed reuse · Restrictiveness: current D60/MP.** Creator and authorized system administrators retain save/load rights; ordinary participants receive no rewind power. All currently bound human people must exist in the candidate, matching current refusal. No new per-player body copy, re-entry, vote, attendance minimum or countdown. A changed binding/authority or active-history review is stale; current restrictions are rechecked before installation.
+
+## RW-L03 — Protected private cut
+
+**Proposed D48 treatment · Restrictiveness: one fictional chronology.** Message submissions, eligible arrivals, actual reading, fictional contact/device state and accepted derivatives restore at the same cut. Post-cut text is absent from current inbox, unread cues and NPC recall. Pre-cut unread text may be acquired after resume; humans can remember the discarded future without the system teaching it to NPCs. The existing protected pre-load file is whole-world recovery, not individual private-history browsing.
+
+## RW-L04 — Current privacy versus fictional ownership
+
+**Proposed clarification · Restrictiveness: current external authority.** Current account/control grants, human-private ownership, blocks/revocations, erasure and device revocations constrain restored evidence before disclosure. A block does not itself erase text legitimately arrived at the cut. Fictional item title/access, association state and agreements restore with their objects; “permissions remain current” does not preserve a later fictional trade. A new human controller gains no earlier NPC private-human corpus.
+
+## RW-L05 — One replacement and truthful pending outcomes
+
+**Proposed · Restrictiveness: bounded admission, no paid replay.** One admitted world replacement at a time; another distinct request is busy and a retry resolves the same operation. A single destructive review permits cancellation before admission. No promised mid-install cancel or automatic restart/retry after uncertainty. Current real spending, uncertain attempts and DG24 real-time sending allowance stay current. Old receipts describe earlier-history outcomes only; restored pending narration is cancelled under current policy.
+
+## RW-L06 — Notice and readable continuation
+
+**Proposed · Restrictiveness: bounded presentation, no all-participant acknowledgement barrier.** One latest relevant unacknowledged restore result per participant avoids an accumulating modal stack. Real/game times and whole-world/private-progress scope are permitted operational information; no hidden-person/message/relationship diff. Connected notice and reconnect do not wait for everyone. Fresh paused return and current eligibility govern new commands; eligible in-session drafts require explicit review, not auto-send. Existing operational history retention remains its owner, with no new lifetime audit quota.
+
+## RW-L07 — Existing capture and load bounds
+
+**Existing values reused, no capacity claim.** LA167, SV01–SV08/SV11/SV23 and SB05/SB06/SB13/SB16 retain capture admission, 256 MiB package, 1 MiB record, two-million-record and duration bounds, autosave/retention settings, paged catalog and proportional-memory load. The current world must be capturable before deliberate restore; there is no new bypass. Full current private/cold history is required, not a subset fitting the budget.
+
+## RW-L08 — Retention and recovery are finite promises
+
+**Proposed reuse · Restrictiveness: explicit retained-point availability.** Existing rolling automatic and pre-load counts are targets, not hard disk quotas or proven restore success; manual saves retain no fixed count ceiling. Current erasure still constrains older saves. A missing point, damaged/incompatible payload or failed current-world preservation refuses the operation while retaining current authority. SL09-A/PD06 owns any independently preserved operational escape path.
+
+## RW-L09 — No first private portable transfer or branch merge
+
+**Proposed restriction.** First shared/private scope uses protected retained service slots. Creator-facing complete private-world download/import, alternate live branches, merge, selective recovery and unsupported cross-world effects are unavailable. No public-only export may be called complete. SL10 retains a later destination/identity/privacy/accounting transfer choice; PD06's authorized operational backup and DG16's personal Journal export remain distinct.
+
+## RW-L10 — Growing text and economic qualification
+
+**Proposed consumer exposure · Restrictiveness: unqualified aggregate growth.** DG24's 100 × 24 × 8,000 bytes/minute envelope is 19.2 MB/minute: roughly fourteen real minutes to 256 MiB of raw bodies alone, before world state/encoding/derivatives. This is worst-envelope arithmetic, not demand, exact saved size or capacity. Existing sender/page limits do not prove indefinite saveability. NC/SL/data must qualify a concrete supported accumulated-history envelope or explicit admission policy, with current retention rationale; no silent private expiry, copy-per-utterance or paid reconstruction is selected.

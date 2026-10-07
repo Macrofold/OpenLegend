@@ -1,5 +1,9 @@
 # OpenLegend limits and decisions
 
+Proposed [durable agreements](projects/durable-agreements-feature-spec.md): [DA-L01–DA-L09](limits/durable-agreements.md) records the first commission, active/pending allowances, owner-local ending, optional advance/association, no currency and growing claims/history. [INV-20.5a–f](maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) owns delivery; existing item, memory and authority limits remain controlling.
+
+Proposed [recovery and care](projects/recovery-and-care-feature-spec.md): [CARE-L01–CARE-L08](limits/recovery-and-care.md) records complete camp recovery, optional field supplies/help, condition scope, time and growing discovery/history. [CARE01–CARE05](maintainers/recovery-and-care.md) retains delivery; current mortality and shared limits are unchanged.
+
 Optional human-outcome research: [well-being evidence inventory](limits/wellbeing-evidence.md) and [HE delivery](maintainers/wellbeing-evidence.md). These are finite proposed study constraints, not current collection or a game-wide well-being policy.
 
 Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md). These scope bounds are not current runtime policy.
@@ -17,7 +21,7 @@ Start with [the tracking system](limits/README.md). Feature inventories retain l
 | [Objects, inventory and equipment](projects/persistent-objects-feature-spec.md)                       | [Limits](limits/objects.md)       | [Tracker](maintainers/persistent-objects.md)             |
 | [Shared state, resources and effects](status-effects.md)                                              | [Limits](limits/state-effects.md) | [Tracker](maintainers/state-contributions.md)            |
 | [Native work and invalidation](projects/dependency-invalidation-feature-spec.md)                      | [Limits](limits/native-work.md)   | [Tracker](maintainers/dependency-invalidation.md)        |
-| [Feelings and social continuity](projects/appraisal-social-continuity-feature-spec.md)                | [Limits](limits/feelings.md)      | [Tracker](maintainers/agent-agency.md)                   |
+| [Feelings and social continuity](projects/appraisal-social-continuity-feature-spec.md)                | [Limits](limits/feelings.md)      | [Tracker](maintainers/actor-model.md)                    |
 | [Accounts, participation and transport](projects/multiplayer-authority-feature-spec.md)               | [Limits](limits/multiplayer.md)   | [Tracker](maintainers/multiplayer.md)                    |
 | [Space, movement and perception](spatial-world.md)                                                    | [Limits](limits/spatial.md)       | [Tracker](maintainers/spatial-world.md)                  |
 | [Narration and conversations](narration-and-conversations.md)                                         | [Limits](limits/narration.md)     | [Tracker](maintainers/narration-and-conversations.md)    |
@@ -45,6 +49,12 @@ Proposed [personal Journal edition](projects/personal-journal-feature-spec.md): 
 Proposed [changing supplies](projects/changing-supplies-feature-spec.md): [CS-L01–CS-L09](limits/changing-supplies.md) inventory attended scope, food/condition choices, finite preservation, actual storage effects, renewal flow, richer lot handling and complete-work/expansion requirements. [BW25 / CS](maintainers/changing-supplies.md) retains delivery. These are authored product proposals rather than implemented decay, renewal or a sustainable-population promise.
 
 Proposed [heat and materials](projects/heat-and-materials-feature-spec.md): [HM limits](limits/heat-and-materials.md) inventory the selected attended profile, material/source scope, useful firing, moisture, local spread, damage, extinguishing and complete-cost/expansion requirements. [BW26 / HM](maintainers/heat-and-materials.md) retains delivery; no general combustion, body injury or public property policy is implemented by the product proposal.
+
+Proposed [experience-shaped characters](projects/experience-shaped-characters-feature-spec.md): [EC-L01–EC-L08](limits/memory.md#ec-l01--existing-authored-capacity) and [FL20](limits/feelings.md#fl20--experience-shaped-outlook-consumer) preserve current authored capacity, source/cadence bounds, growing history, private authority and optional dream/coarsening scope. [EC01–EC06](maintainers/cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) retains focused delivery; no numerical trait system, new expiry or paid review frequency is installed.
+
+Proposed [private world text](projects/world-text-messages-feature-spec.md): [TX-L01–TX-L10](limits/narration.md#tx-l01--selected-affordance-and-correspondents) inventory the optional authored device, mutual contacts, exact text, real-time send allowance, bounded presentation, growing history and private control/save boundaries. [NC22](maintainers/narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns delivery. The first two-human experience needs no AI call; NPC correspondence remains separately qualified under existing cognition budgets.
+
+Proposed [deliberate correction and shared restoration](projects/corrections-and-shared-restoration-feature-spec.md): [HC-L01–HC-L05](limits/hearing-and-speech.md#hc-l01--correction-through-actual-speech) and [RW-L01–RW-L10](limits/persistence.md#rw-l01--one-protected-world-history) inventory own-history correction links, ordinary speech envelopes, coherent private cut, existing save/binding/refusal limits, current authority/receipts and accumulated-history exposure. [HE06](maintainers/hearing-and-speech.md#he06--attributed-correction) and [SL10.1–SL10.7](maintainers/save-and-load.md#dg25--protected-shared-restoration) retain focused delivery. No new save cadence, compatibility, lifetime archive or model-repair budget is selected.
 
 ## Original audit entries
 

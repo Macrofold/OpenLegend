@@ -161,6 +161,12 @@ A later identification is new evidence. It does not rewrite the original utteran
 
 Generic event and awareness editors must not rewrite committed speech text or content independently of the listener capsule. Reject such rewrites clearly; existing guarded deletion and awareness-importance edits remain permitted. A correction spoken in the world is a new event, not a retroactive hearing upgrade. A dedicated administrative re-authoring operation needs explicit semantics for already-perceived fragments and their dependents; that unresolved extension is recorded in [D66](../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech).
 
+### Selected attributed correction proposal
+
+[DG25](projects/corrections-and-shared-restoration-feature-spec.md) proposes ordinary new-event correction as the first consumer of D66. The optional Correct what you said control prepares an unsent new utterance by the currently controlled speaker; normal current speaking/hearing applies. Its first history links are private to that speaker. Other listeners obtain actual new words, with no retrospective fragment, identity, relationship or hearing upgrade. An ordinary clarification does not automatically invoke the existing administrative memory-correction operation or repair appraisals, agreements and later choices.
+
+The accepted [creator-edit policy](projects/creator-edit-propagation-feature-spec.md#accepted-policy) forbids automatic semantic memory cascades after ordinary creator edits. Existing explicit dependencies, selected forgetting and guarded administrative memory operations retain their distinct authority. [HE06](maintainers/hearing-and-speech.md#he06--attributed-correction) owns the proposed optional consumer; [HC-L01–HC-L05](limits/hearing-and-speech.md#hc-l01--correction-through-actual-speech) records its constraints. Administrative inline retcon remains unselected; a deliberately different whole fictional history uses an actually supported retained-world restore under SL, independently of ordinary speech.
+
 ### Native behavior and sleep
 
 Retain current sleep/life/capability gates for conscious acquisition. An asleep listener does not receive full speech simply because a level crossed a threshold. Loud-sound waking is a future native policy. Acoustic exposure computation need not require human-style memory or cognition: a future native animal reaction can use exposure without allocating an LLM job or a transcript. Do not attach cognition to ordinary animals as part of this feature.

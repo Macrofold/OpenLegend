@@ -611,3 +611,35 @@ Owner memory history and search (`/api/memories`, god variant for inspectable no
 **Evidence:** Existing 10,000-pad fixture measured candidate projection at 77 ms median / 106 ms p95; [prior fixture evidence](../verification/items-and-knowledge.md#editable-knowledge-and-observer-names), not a new run or natural-growth estimate. [Implementation](../../apps/server/src/knowledge-context.ts) (`subjectKnowledgeCandidates`). [Revisit C07](../maintainers/limits-audit.md#c07).
 
 **Implemented mitigation:** Current candidate preparation checks a combined 8,192 current-world/note items and 4 MiB of note text before formatting. The document collection is still resident; overflow is explicit, not silent note deletion.
+
+## EC-L01 — Existing authored capacity
+
+**Proposed DG23 consumer · Restrictiveness: finite existing capacity, unresolved ordinary-context tradeoff.** [The feature](../projects/experience-shaped-characters-feature-spec.md) reuses accepted self-understanding: 1–10 files, at most 500 words and 8,000 UTF-8 bytes per file under current path/text accounting. Protected documents remain exact during reflection. The complete accepted state still accompanies ordinary semantic decisions; [CG09](cognition.md#cg09) owns the roughly 80-kB maximum and combined required-context overflow. No separate outlook inventory, file per lesson or larger quota is selected. Overflow preserves prior accepted state, without truncation or automatic paid repair. Owner: EC01–EC04/CR07 and CG09.
+
+## EC-L02 — No numerical personality progression
+
+**Proposed · Restrictiveness: intentionally descriptive.** No experience-point pool, trait count beyond existing authored capacity, conversion threshold, growth rate or forced-choice rule is introduced. Starting trait descriptions remain unchanged by automatic reflection; a specific current outlook can qualify them in existing mutable self-understanding. Real method learning and proficiency remain AE/DG14. A learned preference cannot enroll an appraisal process or write its policy; [FL06](feelings.md#fl06), D65 and ACT09 retain that boundary. Owner: ACT/EC02 and ND04.
+
+## EC-L03 — Existing work admission and evidence limits
+
+**Proposed reuse; baseline source inspected on main 0a3ab79b, October 6.** No new reflection interval, inference allowance or automatic retry. Existing maintenance uses one active job, interactive priority, a minimum 60 real seconds between a person's maintenance starts and at most one admitted reflection attempt per person per game day in the inspected scheduler. Current body and controller eligibility remain world-owned. Reflection carries at most 100,000 serialized UTF-8 bytes including instructions; [FL07–FL08](feelings.md#fl07) retain eight appraisal changes, 48 evidence sources and the first 24 active appraisals. That first-page limit does not erase omitted feelings or prove complete relevance. Missing context defers or rejects the proposal; it does not authorize invented support. [Inspected execution](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/apps/server/src/cognition-maintenance.ts). Owner: CR/EC04, existing AI spend and feeling limits. Historical cadence entries above retain their labels.
+
+## EC-L04 — No new lifetime forgetting or physical-retention promise
+
+**Proposed unchanged retention · Restrictiveness: liberal aggregate growth.** No new memory age cutoff, retained-incident count, source quota or expiry schedule is selected. Existing six-game-hour eligibility concerns consolidation; hot-tail eviction concerns residency. Historical LA016 does not establish delivered thirty-day semantic fading. Canonical sources, versions and derived artifacts still grow under [MH06](#mh06)/C20. Optional coarsening changes available autobiographical detail only under an explicit policy; it is not automatic disk deletion. Owner: CR06/EC06, D14/D59 and the existing retention ledger.
+
+## EC-L05 — Complete meaning within bounded transformations
+
+**Proposed · Restrictiveness: preserve meaning before accepting output.** Reuse existing source preparation, publication and supported output envelopes. Current consolidation preparation is 128 sources / 512 KiB per repository batch; grouping must not lose relevant chronology, uncertainty, distinct consequential incidents or protected commitments merely to fit it. No weekly full-life reread is added. A larger required episode needs the existing admitted continuation or an explicit deferred result. Repeating an interpretation never manufactures independent historical support. Owner: CR06/EC03/EC06; [MH04](#mh04) remains the distinct general retrieval bound.
+
+## EC-L06 — Dependency closure and private ownership
+
+**Proposed inherited requirement · Restrictiveness: complete affected evidence, growing work remains exposed.** All interpretations remain actor-owned and source-sensitive; human private text is not creator-visible by default. No new private growth log, hidden trait evidence or external memory authority. Current correction/forgetting may conservatively clear all affected nonprotected self-understanding, notes and appraisals rather than prove selective retention. [MH07](#mh07)/C21 retain uncapped affected-dependency work; a small output is no proof of bounded invalidation. Old jobs, saves and dream material cannot restore forgotten detail. Owner: CR/ACT privacy, EC03 and DG25.
+
+## EC-L07 — Optional dreams and reviewable human suggestions
+
+**Proposed optional consumers · Restrictiveness: no additional paid cadence.** Current dream eligibility is two continuous game hours in the configured sleep state, under episode deduplication and ordinary budget. The selected imaginative extension is separate from current faithful daily consolidation. No dream inventory, exclusive progress, compulsory nightly publication or missed-work backlog is introduced. A human suggestion publishes only the explicitly reviewed narrative scope, within that scope's existing limits; rejection leaves it unpublished. Owner: EC05/CR09 and human authoring/knowledge privacy.
+
+## EC-L08 — Presentation and full-cost qualification
+
+**Proposed · Restrictiveness: concise existing surfaces.** No growth panel, permanent change badge, automatic confession or extra notification count is required. Use existing permitted self-understanding, subject notes and short thought presentation; the current 1–3 thoughts, twenty-word presentation and latest-100 thought history remain their separate owners. A callback must concern actual supported activity. Bounded pages do not bound lifetime search, active context size, all history or queued work. EC04/CE05/CR12 qualify delayed voluntary conduct and total cost before optional expansion; numerical targets await the developmental baseline, not this documentation task.
