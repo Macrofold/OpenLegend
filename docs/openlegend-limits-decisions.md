@@ -84,3 +84,5 @@ The [source-review coverage](limits/README.md#growth-path-review-coverage) disti
 Hearing, spatial captions and perceived-event history: [HR01–HR08](limits/hearing-and-speech.md).
 
 Proposed [customer and supporter offers](projects/customer-and-supporter-offers-feature-spec.md): [OF-L01–OF-L09](limits/customer-and-supporter-offers.md) inventories the first world/optional recognition scope, successful-objective counting, monthly periods, renewal/refund/recovery terms and unqualified aggregate costs. PD01/PD10 and INV-13.8 retain delivery and actual operating inputs; no price, quantity or post-launch compatibility policy is activated.
+
+Proposed [published packs and creator revenue](projects/published-packs-and-creator-revenue-feature-spec.md): [PK-L01–PK-L10](limits/published-packs-and-creator-revenue.md) inventories curated scope, inherited complete-transfer bounds, publication/review, acquired rights, sales/refunds, fixed member choices and payout timing. INV-8/EWF11 and PD10 retain delivery; actual financial terms, licenses and aggregate retention remain activation inputs.

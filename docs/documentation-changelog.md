@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-07 — Useful published packs and transparent creator earnings
+
+Prepared DG28's [product proposal](projects/published-packs-and-creator-revenue-feature-spec.md) and [PK constraints](limits/published-packs-and-creator-revenue.md), extending INV-8/EWF11 and PD10. A small complete free catalogue precedes independently selected paid packs, standalone worlds and fixed member allocation. Exact release retention, rights and private dependencies, deliberate installation, updates/removal, refunds, beneficiaries, unassigned-amount return and payout closure are specified with twelve primary research records.
+
+The current-source audit preserves actual local attribution and identifies why ordinary invention admission and operational backups cannot be reused unchanged as imports/pack exports. The earlier pack-before-hosting sequence is clarified against DG27. No license exception, public price, allocation amount, paid execution or implemented marketplace is claimed.
+
 ## 2026-10-07 — A useful hosted world and bounded optional recognition
 
 Prepared DG27's researched [customer/supporter product proposal](projects/customer-and-supporter-offers-feature-spec.md), with [OF constraints](limits/customer-and-supporter-offers.md) and existing PD10/INV-13.8 delivery. One hosted world that works for a solo owner precedes optional personal upgrades, recognition and marketplace/grant expansion. The proposal separates successful invention objectives, real attempt costs and installed runtime expense; specifies monthly overlap, late fulfillment, renewal, cancellation, coherent service hold and proposed recovery; and defines one reviewed chronicle claim with privacy and retirement. Ten primary research records inform the choices.

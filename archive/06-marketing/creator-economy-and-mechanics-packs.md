@@ -2,6 +2,8 @@
 
 Recorded September 19, 2026. **Accepted product direction:** both platform and world memberships, standalone premium games, host-paid operation, and reusable community mechanics packs. Pricing, payment providers, allocations, and rollout remain proposals. Nothing is for sale or implemented.
 
+**DG28 product proposal — 7 October 2026:** [Published packs and creator revenue](../../docs/projects/published-packs-and-creator-revenue-feature-spec.md) develops a curated free catalogue under already sufficient rights, followed by independently enabled paid releases, standalone premium worlds and a fixed membership allocation. It specifies exact acquisition, continuing rights, creator earnings and withdrawal/refund behavior without adopting new licenses, prices or payout operations. [INV-8/EWF11 and PD10](../../docs/projects/published-packs-and-creator-revenue-feature-spec.md#13-delivery-activation-and-completion) retain delivery and actual activation inputs; the historical examples below remain examples.
+
 ## Worlds as independent creative businesses
 
 An official public world, a managed creator world, and a self-hosted world are separate experiences. A managed-world owner pays for operation and bounded AI usage, invites players, and uses scoped god controls to shape the world. Guests need not all buy individual subscriptions. Population, activity, and accelerated time must fit the world's budget, including unattended NPC activity and storage.
@@ -57,6 +59,8 @@ Large libraries require dependency-aware retrieval of affected mechanics rather 
 The license must distinguish use in a paid world, modification, exporting, and redistribution/resale of definitions. An author cannot revoke permissions already granted for inherited open components. See [LICENSING.md](../../LICENSING.md), including the unresolved executable-extension boundary.
 
 ## Sequence to test
+
+The September 19 sequence below is retained as history. The later [business plan](business-plan.md) and [DG27 customer proposal](../../docs/projects/customer-and-supporter-offers-feature-spec.md) allow an ordinary paid hosted-world experiment before pack portability. [DG28's sequence](../../docs/projects/published-packs-and-creator-revenue-feature-spec.md#12-sequence-and-game-first-critique) starts its separate distribution track with useful free reuse; paid packs and membership allocation follow their own demand, rights and financial gates. Neither track requires the other’s complete commercial ecosystem.
 
 Prove a playable creator loop, then portable packs and free sharing, managed-world economics, and a curated paid marketplace. Community governance, public grants, and broader revenue allocation can follow evidence of repeat use. These are later product directions, not additions to the first playable milestone.
 

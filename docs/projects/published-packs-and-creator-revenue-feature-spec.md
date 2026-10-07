@@ -1,8 +1,8 @@
 # Published packs and creator revenue
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | DG28's product proposal is drafted; independent critique and reconciliation remain in progress, with technical delivery and paid activation open. | 2026-10-07 |
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG28's product proposal is drafted; independent critique and reconciliation remain in progress, with technical delivery and paid activation open. | 2026-10-07   |
 
 ## 1. The player and creator promise
 
@@ -16,27 +16,27 @@ This [DG28](../maintainers/needs-design.md#dg28--published-packs-and-creator-rev
 
 The design consumes [DG12's complete reuse journey](world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator), the [invention governance owner](../../archive/03-design-proposals/invention-governance-and-ownership.md), [creator-economy direction](../../archive/06-marketing/creator-economy-and-mechanics-packs.md) and [customer lifecycle](customer-and-supporter-offers-feature-spec.md). The code audit uses current main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425); its later runtime changes are not imported into this branch.
 
-| Existing fact | Product consequence |
-| --- | --- |
-| [Actual local invention attribution](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/packages/domain/src/invention-attribution.ts) records NPC/player origin and owner accounts | Preserve fictional inventor, originating world and contributors. These records are not an account-wide library, copyright adjudication or redistribution grant. |
-| Current admission can reuse equivalent mechanics while recording independent discovery | Sharing executable definitions cannot collapse distinct historical contributions or falsely create new authorship for an importer. |
-| [INV-8](../maintainers/inventions-and-world-evolution.md#inv-8--portable-inventions-and-later-algorithm-extensions) leaves broader library, manifests and publication terms open | The catalogue extends that owner. It does not create a second definition registry, account library or consent store. |
-| [DG12 admission distinction](world-creation-feature-spec.md#157-admission-knowledge-and-possession-remain-separate) | Today's invention Apply also teaches its initiator. An import must explicitly preserve source credit and separate installation, learning and item possession through the existing admission owner. |
-| [EWF11](../maintainers/extensible-world-foundation.md#ewf11--reusable-construct-integration-and-local-portability-proof) and [current world-module contract](../../archive/07-technical-architecture/world-module-runtime.md) | Supported interfaces, exact dependencies, state and authority constrain reuse. Similar labels or a model's approval do not establish compatibility. |
-| [LICENSING.md](../../LICENSING.md) | First-party material is AGPL-3.0-only unless separately designated. No proprietary executable-pack exception or copyright assignment exists. A database format does not change the covered-software boundary. |
-| [Private-world policy](../../archive/06-marketing/open-platform-and-private-worlds.md) | Private storage, ability to inspect, permission to play, modification, commercial operation and redistribution are different rights. Client-delivered assets cannot be promised to remain secret from their recipients. |
-| [DG27](customer-and-supporter-offers-feature-spec.md) and existing billing/PD10 | Hosting, invention units, processing money, pack sales, creator allocations and grants remain distinct. Payment is not world-edit authority. |
+| Existing fact                                                                                                                                                                                                                 | Product consequence                                                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Actual local invention attribution](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/packages/domain/src/invention-attribution.ts) records NPC/player origin and owner accounts         | Preserve fictional inventor, originating world and contributors. These records are not an account-wide library, copyright adjudication or redistribution grant.                                                         |
+| Current admission can reuse equivalent mechanics while recording independent discovery                                                                                                                                        | Sharing executable definitions cannot collapse distinct historical contributions or falsely create new authorship for an importer.                                                                                      |
+| [INV-8](../maintainers/inventions-and-world-evolution.md#inv-8--portable-inventions-and-later-algorithm-extensions) leaves broader library, manifests and publication terms open                                              | The catalogue extends that owner. It does not create a second definition registry, account library or consent store.                                                                                                    |
+| [DG12 admission distinction](world-creation-feature-spec.md#157-admission-knowledge-and-possession-remain-separate)                                                                                                           | Today's invention Apply also teaches its initiator. An import must explicitly preserve source credit and separate installation, learning and item possession through the existing admission owner.                      |
+| [EWF11](../maintainers/extensible-world-foundation.md#ewf11--reusable-construct-integration-and-local-portability-proof) and [current world-module contract](../../archive/07-technical-architecture/world-module-runtime.md) | Supported interfaces, exact dependencies, state and authority constrain reuse. Similar labels or a model's approval do not establish compatibility.                                                                     |
+| [LICENSING.md](../../LICENSING.md)                                                                                                                                                                                            | First-party material is AGPL-3.0-only unless separately designated. No proprietary executable-pack exception or copyright assignment exists. A database format does not change the covered-software boundary.           |
+| [Private-world policy](../../archive/06-marketing/open-platform-and-private-worlds.md)                                                                                                                                        | Private storage, ability to inspect, permission to play, modification, commercial operation and redistribution are different rights. Client-delivered assets cannot be promised to remain secret from their recipients. |
+| [DG27](customer-and-supporter-offers-feature-spec.md) and existing billing/PD10                                                                                                                                               | Hosting, invention units, processing money, pack sales, creator allocations and grants remain distinct. Payment is not world-edit authority.                                                                            |
 
 An operational backup contains private gameplay, financial and authority material. It is never a marketplace pack. A reusable world template supplies only its separately authorized starting definitions/data; it is not a copy of a live community, unique resident, inventory or biography.
 
 ## 3. Selected stages and scope
 
-| Stage | Complete useful experience | Independent qualification |
-| --- | --- | --- |
-| A — Curated free catalogue | Publish an eligible exact supported recipe; a recipient finds it, checks a real destination, retains it and reaches an ordinary craft/use | INV-8/EWF11, current rights, safe catalogue metadata and admitted storage |
-| B — Paid immutable pack | Buy one clearly identified release and its stated continuing rights; refund and ordinary withdrawal work | PD10 payment/customer support and actual publisher/license terms |
-| C — Standalone premium world | Pay for a named playable world without buying platform membership; stop and recover under stated terms | DG27 lifecycle plus that world's supported capacity, rights and operator duties |
-| D — Fixed membership allocation | One paying member directs one bounded monthly allocation to eligible worlds they actually use | Actual amount, recipient eligibility, receipts, fraud/reconciliation and payout capacity |
+| Stage                           | Complete useful experience                                                                                                                | Independent qualification                                                                |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| A — Curated free catalogue      | Publish an eligible exact supported recipe; a recipient finds it, checks a real destination, retains it and reaches an ordinary craft/use | INV-8/EWF11, current rights, safe catalogue metadata and admitted storage                |
+| B — Paid immutable pack         | Buy one clearly identified release and its stated continuing rights; refund and ordinary withdrawal work                                  | PD10 payment/customer support and actual publisher/license terms                         |
+| C — Standalone premium world    | Pay for a named playable world without buying platform membership; stop and recover under stated terms                                    | DG27 lifecycle plus that world's supported capacity, rights and operator duties          |
+| D — Fixed membership allocation | One paying member directs one bounded monthly allocation to eligible worlds they actually use                                             | Actual amount, recipient eligibility, receipts, fraud/reconciliation and payout capacity |
 
 B, C and D can be sequenced by demand after their own dependencies. A pack author does not need to operate a popular world. A world operator can offer a premium game without authoring a marketable pack. Free publication does not require a payment account.
 
@@ -129,17 +129,17 @@ Retained rights do not guarantee compatibility with every engine update. The [de
 
 ## 7. Updating, retiring and responding to a harmful release
 
-| Change | What happens for existing recipients |
-| --- | --- |
-| Marketing correction or private favorite change | No installed behavior or rights change |
-| New release | Available as a separately reviewed choice; previous release remains identifiable |
-| Publisher stops new sales/discovery | Existing lawful acquisitions and installed versions remain under their terms |
-| Publisher closes its account | Resolve pending sales/payouts; retain permitted release access and attribution under actual service/rights obligations |
-| Buyer deletes its own eligible library copy | Explain lost future reuse; this is not an uninstall or global license revocation |
-| Routine membership cancellation | Ends that membership's future benefits; does not revoke an independently acquired paid/free pack |
-| Credible rights/privacy complaint | Existing authorized operator investigates and may limit affected distribution; no invented automatic global deletion power |
-| Dangerous supported behavior or security issue | Stop the affected new admission promptly; use the actual installed-effect/quarantine owner for running worlds |
-| Unsupported live update or incompatible development format | Preserve the old valid source, explain the blocker and require the existing world-change owner; no silent conversion |
+| Change                                                     | What happens for existing recipients                                                                                       |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Marketing correction or private favorite change            | No installed behavior or rights change                                                                                     |
+| New release                                                | Available as a separately reviewed choice; previous release remains identifiable                                           |
+| Publisher stops new sales/discovery                        | Existing lawful acquisitions and installed versions remain under their terms                                               |
+| Publisher closes its account                               | Resolve pending sales/payouts; retain permitted release access and attribution under actual service/rights obligations     |
+| Buyer deletes its own eligible library copy                | Explain lost future reuse; this is not an uninstall or global license revocation                                           |
+| Routine membership cancellation                            | Ends that membership's future benefits; does not revoke an independently acquired paid/free pack                           |
+| Credible rights/privacy complaint                          | Existing authorized operator investigates and may limit affected distribution; no invented automatic global deletion power |
+| Dangerous supported behavior or security issue             | Stop the affected new admission promptly; use the actual installed-effect/quarantine owner for running worlds              |
+| Unsupported live update or incompatible development format | Preserve the old valid source, explain the blocker and require the existing world-change owner; no silent conversion       |
 
 An update review explains changed behavior, dependencies, materials, costs, knowledge, existing objects and ongoing work. Buying a newer release does not update all worlds. A defect repair within a delivered release's promised supported behavior is supplied without another purchase when the seller undertook to deliver that behavior. A new independent capability can be a separately priced release, clearly marked. There is no blanket “all future versions” promise.
 
@@ -169,7 +169,7 @@ Reuse DG27's usable-service start, opt-in renewal, cancellation, failed/uncertai
 
 A paid membership is not a promise of infinite instantaneous admission. Advertise and qualify the actual concurrent profile, normal joining experience and capacity remedy. If the sold service is routinely unusable because it has been oversold, a queue notice alone is not fulfillment; reduce sales or provide the stated refund/remedy. Hosts fund live operation independently of uncertain future creator earnings.
 
-In the selected first membership-allocation policy, a world directly purchased by that subscriber during the same allocation period is excluded from that subscriber's platform pool for that period. Show the effect before buying the standalone membership. This avoids paying twice through opaque overlapping benefits; other eligible selected worlds receive the pool, or it is returned as described below. A later explicit additional-support purchase would be its own product.
+In the selected first membership-allocation policy, a world whose valid directly paid premium access overlaps any part of that subscriber's allocation period is excluded from that subscriber's platform pool for that period. This uses the paid access interval, even if its purchase occurred earlier or renewal is already off; buying ordinary platform hosting for a world is a different expense. Show the effect before buying the standalone membership. This avoids paying twice through opaque overlapping benefits; other eligible selected worlds receive the pool, or it is returned as described below. A later explicit additional-support purchase would be its own product.
 
 ## 9. A fixed member allocation that rewards wanted worlds
 
@@ -183,6 +183,10 @@ For that member/period, a world qualifies as used after an ordinary accepted act
 
 A user's own payout beneficiary, materially controlled alternate recipient or fraudulently coordinated self-payment is ineligible. Enforce this through actual payout/account review, not fictional character names. No anti-abuse design claims to infer perfect humanity from a click; the fixed funded pool is the primary loss boundary, with payment fraud and collusion handled by the existing operator.
 
+The initial allocation programme has one platform membership level and follows the account monthly boundary. A full paid period supplies the stated fixed amount A. A mid-period start quotes both a prorated membership price and floor(A × the remaining real fraction of the account period) in the currency's minor units before purchase; it cannot buy a full pool for a tiny prorated fee. The promised allocation must fit the actual offer's confirmed funding and costs. The same on-time renewal may be pending within DG27's 24-hour fulfillment window; confirmation creates its original period allocation once, with no second amount for the temporary free interval. An expired/failed order supplies none and a later purchase requires a fresh prorated offer.
+
+Turning renewal off preserves the already-paid period's allocation. Whole-membership refunds/reversals reduce its funded allocation in the same disclosed proportion and reconcile any affected held creator amount; a completed period's choice and arithmetic record are retained with an adjustment, not rewritten. A service upgrade, replacement order or restored world cannot supply a second pool for the same funded benefit.
+
 ### 9.2 Choices and exact allocation
 
 The member can save up to three participating worlds they wish to support. Choices are optional, persistent and editable in the account benefits view; there is no compulsory end-of-session survey or in-world payment prompt. After real use, the account may suggest eligible worlds with a clear reason, but it cannot enroll a new recipient silently. The first choice can be made once and persist through later eligible periods.
@@ -190,7 +194,7 @@ The member can save up to three participating worlds they wish to support. Choic
 At the close of the member's account period:
 
 1. Take the fixed confirmed amount allocated by that exact paid membership, after any disclosed refund correction. A period cannot create more than this amount.
-2. Keep only the member's selected worlds that qualified in that period, remain eligible to receive money and were not directly purchased by that member in the same period.
+2. Keep only the member's selected worlds that qualified in that period, remain eligible to receive money and had no valid directly paid premium-access overlap for that member in the period.
 3. Group those worlds by their contracting payout beneficiary. Split the fixed amount equally among the distinct beneficiaries; a creator's three listings do not count as three competing shares.
 4. For a beneficiary with several selected worlds, divide its share equally among those worlds for reporting. Whole minor-currency-unit remainders go in the stable order of the member's saved choices. The sum must equal the fixed distributable amount.
 5. If no selected beneficiary qualifies, return the earmarked amount to the member's original payment method as a partial refund. Do not quietly absorb it into platform margin, carry an indefinite balance or create a grant fund.
@@ -198,6 +202,8 @@ At the close of the member's account period:
 The entire recipient choice and provisional division is visible to the member before close. A change applies to the still-open period; completed allocations keep their recorded choices and formula. This permits a deliberate “that world mattered to me” judgment without minute-by-minute behavioral surveillance. A member may clear all choices and receive the unassigned-amount treatment.
 
 Only worlds receive this pool. Packs earn through their distinct sales or explicit agreements with world operators; an imported dependency does not automatically claim a share of every future subscription. No NPC action, faster clock, extra visit or dependency invocation can multiply the member's contribution.
+
+Returning an unassigned allocation is a refund of that named earmarked component only. It leaves the membership's other paid benefits, account invention allowance, paid-through date and renewal instructions intact. It is not a whole-membership cancellation/refund under DG27, and creates no reusable cash wallet.
 
 The return of unassigned amounts has real processing/support cost. Before activating this programme, qualify that cost and the actual payment route. If it cannot support the proposed promise economically, revise the offer transparently before sale; do not silently turn earmarked money into revenue. The existing hosted-world offer and free catalogue remain independent.
 
@@ -207,7 +213,7 @@ If a member selects three worlds belonging to two independent beneficiaries and 
 
 If the member only watches NPCs continue in the background and takes no qualifying action, that world does not qualify. If no selected world qualifies, the earmarked amount is returned. The programme does not pay for imaginary use.
 
-If a member independently buys one selected premium world during the period, that world is removed from this period's eligible set. The account shows the resulting division among the other eligible choices or the return. Neither a purchase nor a refund silently adds a different recipient.
+If a member has directly paid premium access to one selected world overlapping the period, that world is removed from this period's eligible set, including a canceled-but-paid-through term bought in an earlier calendar month. The account shows the resulting division among the other eligible choices or the return. Neither a purchase nor a refund silently adds a different recipient.
 
 If a selected creator's payout eligibility is suspended before close, exclude it with a generic customer-facing eligibility explanation and its private creator appeal route. The member may choose another eligible world before close. Do not reveal private enforcement evidence. If suspension arrives after close, handle the held allocation under the payout/dispute rules; do not rewrite the member's historical choice.
 
@@ -237,22 +243,22 @@ No full library enters every NPC prompt. No action polls a marketplace or asks a
 
 The member allocation needs bounded period summaries and exact financial receipts, not recorded intimate behavior, per-second attention tracking or a new token currency. The pool cannot exceed confirmed member funding. Payout processing, partial refunds, small balances, support and fraud loss are real costs to include in the offer.
 
-| Scenario | Required complete outcome |
-| --- | --- |
-| Creator shares a useful sling | Correct exact source, credit and closure; another player can find, learn, craft and use it in a supported destination |
-| Pack description depicts a larger world | Included versus demonstration-only content is explicit; no implied population or asset purchase |
-| A private dependency blocks a public pack | Publication stops or becomes a clearly labeled eligible subset; private metadata stays private |
-| Two creators share the same source name | Immutable identity and actual attribution distinguish them; neither overwrites the other |
-| Buyer owns the pack but cannot edit the destination | Retained acquisition remains; installation explains the authority requirement |
-| Source closes after lawful acquisition | Retained copy and surviving rights remain; no silent conversion to reference-only |
-| New release would alter existing objects | Separate impact review through world-change authority; purchase is not activation |
-| Refund occurs after a character crafted an item | Financial entitlement changes; no fabricated death, erased history or automatic object removal |
-| A release contains a disputed asset | Scoped distribution/use action, private investigation and remedy; no claim that a sale cleared rights |
-| A paying member samples many worlds | At most one fixed pool and three deliberate support choices; time and visit count do not mint money |
-| One beneficiary operates three selected worlds | One beneficiary share, with transparent internal reporting division |
-| Member has no qualifying choice | Earmarked amount returned; no silent operator windfall or automatic grant |
-| Creator leaves with a small or disputed balance | Visible owed/held amounts, exact reasons and a final-settlement route |
-| An old development package is incompatible | Source retained where permitted and explicit refusal; no new legacy support or customer-funded silent regeneration |
+| Scenario                                            | Required complete outcome                                                                                             |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Creator shares a useful sling                       | Correct exact source, credit and closure; another player can find, learn, craft and use it in a supported destination |
+| Pack description depicts a larger world             | Included versus demonstration-only content is explicit; no implied population or asset purchase                       |
+| A private dependency blocks a public pack           | Publication stops or becomes a clearly labeled eligible subset; private metadata stays private                        |
+| Two creators share the same source name             | Immutable identity and actual attribution distinguish them; neither overwrites the other                              |
+| Buyer owns the pack but cannot edit the destination | Retained acquisition remains; installation explains the authority requirement                                         |
+| Source closes after lawful acquisition              | Retained copy and surviving rights remain; no silent conversion to reference-only                                     |
+| New release would alter existing objects            | Separate impact review through world-change authority; purchase is not activation                                     |
+| Refund occurs after a character crafted an item     | Financial entitlement changes; no fabricated death, erased history or automatic object removal                        |
+| A release contains a disputed asset                 | Scoped distribution/use action, private investigation and remedy; no claim that a sale cleared rights                 |
+| A paying member samples many worlds                 | At most one fixed pool and three deliberate support choices; time and visit count do not mint money                   |
+| One beneficiary operates three selected worlds      | One beneficiary share, with transparent internal reporting division                                                   |
+| Member has no qualifying choice                     | Earmarked amount returned; no silent operator windfall or automatic grant                                             |
+| Creator leaves with a small or disputed balance     | Visible owed/held amounts, exact reasons and a final-settlement route                                                 |
+| An old development package is incompatible          | Source retained where permitted and explicit refusal; no new legacy support or customer-funded silent regeneration    |
 
 ## 12. Sequence and game-first critique
 

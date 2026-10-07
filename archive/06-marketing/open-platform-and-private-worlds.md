@@ -2,6 +2,8 @@
 
 Status: **accepted AGPL engine and open/private product direction**, September 19, 2026. The repository now uses AGPL-3.0-only; [LICENSING.md](../../LICENSING.md) is the authoritative project guide to current scope and future component policies. The user wants separately controlled official/creator world content and selectively released mechanic libraries. This document does not establish ownership of others' work or grant a custom executable-pack exception. Legal observations below concern cited U.S. guidance and license texts, not a complete jurisdiction-specific review.
 
+**DG28 product proposal — 7 October 2026:** [Published packs and creator revenue](../../docs/projects/published-packs-and-creator-revenue-feature-spec.md) now supplies the proposed public-release, retained-copy, source-closure and commercial lifecycle. It begins with already sufficient component or recorded permissions and keeps automatic cross-operator synchronization unselected. Actual contribution licenses and required grants remain activation inputs; the engine license, inherited rights and unresolved executable-extension boundary below remain controlling.
+
 ## Proposed product split
 
 | Layer | Candidate availability | Practical meaning |
