@@ -548,7 +548,13 @@ function App({
     const resize = () => {
       if (!narrow && needsSheet(innerWidth, innerHeight)) {
         const focused = document.activeElement;
-        const panel = focused?.closest('.ol-panel');
+        // Item detail is portaled outside its panel; its selected cell retains
+        // ownership when editing must follow Inventory into the single sheet.
+        const panel =
+          focused?.closest('.ol-panel') ??
+          (focused?.closest('.ol-inventory-popover')
+            ? hud.current?.querySelector('.ol-inventory-cell[data-selected]')?.closest('.ol-panel')
+            : null);
         if (panel) {
           // The single visible sheet must follow the panel being edited, rather
           // than hide its focused input in favor of a more recently opened panel.
