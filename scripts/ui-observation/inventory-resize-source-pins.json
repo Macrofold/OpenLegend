@@ -6,9 +6,7 @@
     "developmentBase": {
       "ref": "refs/heads/main",
       "commit": "0a3ab79b7a698a7f1941dc23722f89220d1ba425"
-    },
-    "applicationBaselineCommit": "af369fc2c7ba55d6621d49c18cff47f7513f7bf4",
-    "applicationChange": "Existing Inventory popover resize ownership in apps/client/src/main.tsx"
+    }
   },
   "files": [
     {

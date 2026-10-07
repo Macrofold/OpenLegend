@@ -465,6 +465,8 @@ try {
     });
     await expect(field).toBeFocused();
     await field.fill('');
+    // Focus plus filling an already-empty input does not open this native combobox.
+    await field.press('ArrowDown');
     await expect(page.getByRole('listbox')).toBeVisible();
     const candidates = initial.entities.flatMap((entity) =>
       entity.actions.flatMap((action) =>

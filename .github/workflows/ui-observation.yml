@@ -10,7 +10,7 @@ concurrency:
 jobs:
   native-observations:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 14
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -40,29 +40,9 @@ jobs:
         run: pnpm run build
       - id: browser
         run: pnpm exec playwright install --with-deps chromium
-      - id: time_inputs
-        name: Freeze the unchanged Time source and current build
-        run: node scripts/ui-observation/pin-build.mjs
-      - name: Attribute the unchanged Time journey
-        if: ${{ !cancelled() && steps.time_inputs.outcome == 'success' }}
-        timeout-minutes: 4
-        run: node scripts/ui-observation/run.mjs
-      - id: time_cleanup
-        name: Require a finished Time process before the independent journey
-        if: ${{ !cancelled() && steps.time_inputs.outcome == 'success' }}
-        run: |
-          node --input-type=module <<'JS'
-          import assert from 'node:assert/strict';
-          import { readFile } from 'node:fs/promises';
-          const result = JSON.parse(await readFile('test-results/time-profile-attempt-01/result.json', 'utf8'));
-          assert.equal(result.status, 'finished');
-          assert.equal(result.sourceAndBuildUnchanged, true);
-          assert.ok(!result.outerDeadlineReached && !result.signal && !result.spawnError && !result.cleanupUncertain,
-            'Time cleanup is uncertain; do not start another browser on this runner.');
-          JS
       - id: journey_inputs
         name: Freeze the native Character and history journey
-        if: ${{ !cancelled() && steps.time_cleanup.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.browser.outcome == 'success' }}
         run: node scripts/ui-observation/prepare-setup.mjs "$RUNNER_TEMP/openlegend-journey-setup.json"
       - name: Observe Character, shortcuts, current work and retained history
         if: ${{ !cancelled() && steps.journey_inputs.outcome == 'success' }}
@@ -71,20 +51,225 @@ jobs:
           timeout --signal=TERM --kill-after=15s 330s
           pnpm exec tsx scripts/ui-observation/run-native-journey.mjs
           "$RUNNER_TEMP/openlegend-journey-setup.json"
-          "$RUNNER_TEMP/openlegend-journey-attempt-01"
+          "$RUNNER_TEMP/openlegend-journey-attempt-02"
+      - id: journey_cleanup
+        name: Require finished native cleanup before observing Inventory
+        if: ${{ !cancelled() && steps.journey_inputs.outcome == 'success' }}
+        env:
+          NATIVE_JOURNEY_REPORT: ${{ runner.temp }}/openlegend-journey-attempt-02/report.json
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFile } from 'node:fs/promises';
+          const report = JSON.parse(await readFile(process.env.NATIVE_JOURNEY_REPORT, 'utf8'));
+          assert.ok(report.finished && !report.cleanupUncertain);
+          assert.ok(!report.failure?.message?.includes('Complete native journey exceeded'));
+          for (const key of ['trace', 'context', 'browser', 'database']) assert.equal(report.cleanup[key], true);
+          assert.equal(report.cleanup.server.saved, true);
+          assert.deepEqual(report.cleanup.server.problems, []);
+          JS
+      - id: inventory_inputs
+        name: Freeze the focused Inventory resize observation
+        if: ${{ !cancelled() && steps.journey_cleanup.outcome == 'success' }}
+        run: node scripts/ui-observation/prepare-inventory-resize-setup.mjs "$RUNNER_TEMP/openlegend-inventory-resize-setup.json"
+      - name: Observe the same unsent Inventory amount across both sheet breakpoints
+        if: ${{ !cancelled() && steps.inventory_inputs.outcome == 'success' }}
+        timeout-minutes: 6
+        run: >-
+          timeout --signal=TERM --kill-after=15s 300s
+          pnpm exec tsx scripts/ui-observation/run-inventory-resize.mjs
+          "$RUNNER_TEMP/openlegend-inventory-resize-setup.json"
+          "$RUNNER_TEMP/openlegend-inventory-resize-attempt-01"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ui-time-profile
+          name: ui-native-inventory-resize
           path: |
-            test-results/time-profile-attempt-01/
-            scripts/ui-observation/compiled-inputs.json
+            ${{ runner.temp }}/openlegend-inventory-resize-setup.json
+            ${{ runner.temp }}/openlegend-inventory-resize-attempt-01/
           retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ui-native-journey
+          name: ui-native-journey-attempt-02
           path: |
             ${{ runner.temp }}/openlegend-journey-setup.json
-            ${{ runner.temp }}/openlegend-journey-attempt-01/
+            ${{ runner.temp }}/openlegend-journey-attempt-02/
           retention-days: 7
+  harvest-time-profile:
+    name: Recover the saved Time profile without executing Time
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - name: Download the exact completed artifact as its original ZIP
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        timeout-minutes: 2
+        with:
+          artifact-ids: '11462178342'
+          repository: Macrofold/OpenLegend
+          run-id: '37576706330'
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/saved-time-download
+          skip-decompress: true
+          digest-mismatch: error
+      - name: Verify and split the saved ZIP; extract metadata and captured images
+        timeout-minutes: 1
+        env:
+          SAVED_TIME_DOWNLOAD: ${{ runner.temp }}/saved-time-download
+          SAVED_TIME_HARVEST: ${{ runner.temp }}/saved-time-harvest
+        shell: python
+        run: |
+          """Split the one saved Time artifact; never execute downloaded contents."""
+
+          import hashlib
+          import json
+          import os
+          import stat
+          import zipfile
+          from datetime import datetime, timezone
+          from pathlib import Path, PurePosixPath
+
+          source_directory = Path(os.environ["SAVED_TIME_DOWNLOAD"])
+          output = Path(os.environ["SAVED_TIME_HARVEST"])
+          expected_bytes = 34614291
+          expected_sha256 = "27670d75a14b97e2a5199831a232f64ef94baa48b8aee8baa3e306ec899bf50d"
+          part_limit = 24 * 1024 * 1024
+          metadata_limit = 8 * 1024 * 1024
+
+          files = []
+          for candidate in source_directory.rglob("*"):
+              if candidate.is_symlink():
+                  raise RuntimeError("Unexpected symbolic link in downloaded artifact")
+              if candidate.is_file():
+                  files.append(candidate)
+          if len(files) != 1:
+              raise RuntimeError(f"Expected the one unextracted archive; found {len(files)} files")
+          archive_path = files[0]
+          if archive_path.stat().st_size != expected_bytes:
+              raise RuntimeError("Saved archive byte count differs from the original upload")
+          with archive_path.open("rb") as source:
+              actual_sha256 = hashlib.file_digest(source, "sha256").hexdigest()
+          if actual_sha256 != expected_sha256:
+              raise RuntimeError("Saved archive SHA-256 differs from the original upload")
+
+          output.mkdir(parents=True, exist_ok=False)
+          metadata = output / "metadata"
+          metadata.mkdir()
+          manifest = {
+              "sourceRepository": "Macrofold/OpenLegend",
+              "sourceRunId": 37576706330,
+              "sourceArtifactId": 11462178342,
+              "sourceArtifactName": "ui-time-profile",
+              "sourceArtifactBytes": expected_bytes,
+              "sourceArtifactSha256": actual_sha256,
+              "originalArchiveVerified": True,
+              "harvestedAt": datetime.now(timezone.utc).isoformat(),
+              "harvestRunId": os.environ.get("GITHUB_RUN_ID"),
+              "harvestCommit": os.environ.get("GITHUB_SHA"),
+              "operation": "Read and split the saved archive; no Time execution",
+              "reconstruction": "Concatenate parts in numeric order, then verify original SHA-256",
+              "parts": [],
+              "members": [],
+          }
+          with archive_path.open("rb") as source:
+              for index in (1, 2):
+                  payload = source.read(part_limit)
+                  if not payload:
+                      raise RuntimeError("Expected exactly two nonempty archive parts")
+                  relative = Path(f"zip-part-{index:02}") / f"ui-time-profile.zip.part-{index:02}"
+                  target = output / relative
+                  target.parent.mkdir()
+                  with target.open("xb") as destination:
+                      destination.write(payload)
+                  manifest["parts"].append({
+                      "path": relative.as_posix(),
+                      "bytes": len(payload),
+                      "sha256": hashlib.sha256(payload).hexdigest(),
+                  })
+              if source.read(1):
+                  raise RuntimeError("Archive unexpectedly exceeds the two-part bound")
+
+          metadata_bytes = 0
+          with zipfile.ZipFile(archive_path) as archive:
+              members = archive.infolist()
+              if len(members) > 100:
+                  raise RuntimeError("Unexpected saved artifact member count")
+              seen = set()
+              for member in members:
+                  path = PurePosixPath(member.filename)
+                  if path.is_absolute() or ".." in path.parts or "\\" in member.filename:
+                      raise RuntimeError("Unexpected archive path")
+                  if stat.S_ISLNK(member.external_attr >> 16) or member.filename in seen:
+                      raise RuntimeError("Unexpected link or duplicate archive member")
+                  seen.add(member.filename)
+                  if member.is_dir():
+                      continue
+                  if not (
+                      member.filename.startswith("test-results/time-profile-attempt-01/")
+                      or member.filename == "scripts/ui-observation/compiled-inputs.json"
+                  ):
+                      raise RuntimeError("Unexpected file outside the saved Time evidence")
+                  record = {
+                      "path": member.filename,
+                      "bytes": member.file_size,
+                      "compressedBytes": member.compress_size,
+                      "crc32": f"{member.CRC:08x}",
+                      "separatelyExtracted": False,
+                  }
+                  if path.suffix in (".json", ".log", ".md", ".png"):
+                      metadata_bytes += member.file_size
+                      if metadata_bytes > metadata_limit:
+                          raise RuntimeError("Metadata and images exceed the 8 MiB extraction bound")
+                      payload = archive.read(member)
+                      target = metadata / Path(*path.parts)
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with target.open("xb") as destination:
+                          destination.write(payload)
+                      record["separatelyExtracted"] = True
+                      record["sha256"] = hashlib.sha256(payload).hexdigest()
+                  manifest["members"].append(record)
+          manifest["metadataAndImagesBytes"] = metadata_bytes
+          with (metadata / "harvest-manifest.json").open("x", encoding="utf-8") as destination:
+              json.dump(manifest, destination, indent=2)
+              destination.write("\n")
+          print(json.dumps({
+              "originalArchiveVerified": True,
+              "sourceRunId": manifest["sourceRunId"],
+              "sourceArtifactId": manifest["sourceArtifactId"],
+              "parts": manifest["parts"],
+              "metadataAndImagesBytes": metadata_bytes,
+              "members": len(manifest["members"]),
+              "timeExecutions": 0,
+          }))
+      - name: Upload saved Time metadata
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        timeout-minutes: 1
+        with:
+          name: ui-time-profile-metadata
+          path: ${{ runner.temp }}/saved-time-harvest/metadata/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+          include-hidden-files: true
+      - name: Upload saved Time zip-part-01
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        timeout-minutes: 1
+        with:
+          name: ui-time-profile-zip-part-01
+          path: ${{ runner.temp }}/saved-time-harvest/zip-part-01/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+          include-hidden-files: true
+      - name: Upload saved Time zip-part-02
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        timeout-minutes: 1
+        with:
+          name: ui-time-profile-zip-part-02
+          path: ${{ runner.temp }}/saved-time-harvest/zip-part-02/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+          include-hidden-files: true
