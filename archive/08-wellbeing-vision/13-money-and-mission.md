@@ -2,6 +2,8 @@
 
 Status: **open ideation** · 2026-09-28 · part of the [Wellbeing Vision](README.md). Comments on the existing [business plan](../06-marketing/business-plan.md) and [creator economy](../06-marketing/creator-economy-and-mechanics-packs.md) directions; nothing here changes an accepted decision.
 
+**Later DG30 product proposal — 7 October 2026:** [Creator support and contributor voice](../../docs/projects/creator-support-and-contributor-voice-feature-spec.md) develops one conditional, manually operated grant cycle and open unweighted consultation. It selects a useful game/contributor result, honest evidence, current rights/privacy, bounded cost and no funded manipulation of affection or fabricated engagement. It adopts no general Humane Creator Standard, Resident Code, binding council, corporate mission lock or universal export promise. The original ideation below remains unchanged; actual appropriation, agreements and operating authority are required through [PD10.7](../../docs/maintainers/production-deployment.md#conditional-launch-and-expansion) before the corresponding activity.
+
 A wellbeing vision that the business model fights will lose. Free-to-play games that earn most of their revenue from a small group of heavy spenders are pulled, month after month, toward finding and monetising vulnerability. Creator economies that pay by playtime pay creators to maximise everyone's hours. The good news: much of Open Legend's existing plan already points the right way.
 
 ---
