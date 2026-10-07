@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-07 — Optional listening and deliberate private conversation
+
+Prepared DG26's researched [voice and calls product proposal](projects/voice-and-calls-feature-spec.md). Optional committed-text reading and reviewed dictation can complete independently before a two-human private submitted-turn slate call; resident participation remains separately qualified. Added open [HE07](maintainers/hearing-and-speech.md#he07--optional-listening-and-reviewed-dictation), [NC23](maintainers/narration-and-conversations.md#nc23--private-submitted-turn-calls) work and proposed [VC constraints](limits/voice-and-calls.md), with HE/NC/MP/PS04/queue/index forwarding. The gameplay critique keeps immediate text, quiet fresh call assent, actual device/body limits and complete recovery ahead of voice performance. Neutral permitted-fragment reading avoids hidden identity and unheard-word disclosure.
+
+Reconciled older DG26 cross-links so physical timed speech remains PS04's independent proposal. No new rooms, voice familiarity, waking law, continuous human audio, provider selection or runtime behavior is delivered. All earlier IDs and checkbox states, original research/deferral reasons and current authority/accounting remain; proposed media envelopes are not measured capacity or a public offer.
+
 ## 2026-10-06 — Complete the second sequential five-group design assignment
 
 Moved the [DG21–DG25 overview](projects/completed/product-design-groups-21-25.md) to completed projects after the full gameplay, current-source, research and affected-diff reviews. Its final critique records the independent useful journeys, selected cuts, pacing and accumulated-history risks, and actual documentation verification. Corrected stale completion wording and kept all 310 prior checked states, prior open work and the 52 new open delivery items intact. All five product proposals are complete; adoption, technical design, runtime delivery and live qualification retain their separate owners.

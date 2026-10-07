@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Product design groups 26–30
+
+[The next sequential design assignment](../projects/product-design-groups-26-30.md) begins with DG26's [optional listening, reviewed dictation and private submitted-turn calls](../projects/voice-and-calls-feature-spec.md). [HE07](hearing-and-speech.md#he07--optional-listening-and-reviewed-dictation) and [NC23](narration-and-conversations.md#nc23--private-submitted-turn-calls) own its proposed delivery. Current text/hearing and independently proposed PS04 physical timing remain distinct. DG27–DG30 remain in the assignment's design sequence; no new runtime or qualification is claimed.
+
 ## Product design groups 21–25
 
 [The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent optional extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. The source audit also reads newer main without changing this branch's ancestry.
