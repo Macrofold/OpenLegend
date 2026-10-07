@@ -119,6 +119,8 @@ The completed [feature specification](../projects/completed/multiplayer-authorit
 - [x] Add stream scope generation, explicit removals/private replacement and scoped cursor validation. Clear private client state on logout/revocation/takeover/restore; reject late optional payloads.
 - [x] Bound per-connection queues and define scoped resync/disconnect; coalesce replaceable snapshots only. Keep public geometry sharing separate from observer identity and private content.
 
+- [ ] **Spectator truncation follow-through:** `worldOverview` currently takes the first 2,000 eligible entities and only then sorts their public rows. Reordering otherwise identical entities can change which bodies are disclosed or omitted; sorting the selected rows does not satisfy the intended creation-order protection. Select membership from permitted stable presentation fields before truncation, or use an equivalent bounded selection, without exposing hidden IDs or changing world/entity order. Preserve omission counts, retired/inactive exclusions and current scope checks. **Exit:** equivalent worlds with different insertion order produce the same permitted overview above the 2,000-body threshold. This is a source-identified gap, not new runtime evidence.
+
 **Dependencies:** MP01.1–MP01.3; EPR/D51 retain sensing policy. **Exit:** two clients with different knowledge and human-private notes remain isolated in actual network payloads, cache hits, old cursors, creator queries, counts and delayed responses.
 
 ### MP01.5 — Restart, restore and grant revocation
@@ -157,7 +159,7 @@ The completed [feature specification](../projects/completed/multiplayer-authorit
 
 - [x] Reconcile return during an exit versus after committed departure using expected lifecycle/control generations. Reuse the same actor and inventory.
 - [x] Validate saved return geometry and configured safe anchor; retain inactivity on unavailable placement rather than inventing a destination or losing possessions.
-- [x] Reconcile current operational sessions with restored participation before resuming; integrate P3 containment roots when delivered without activating every carried child independently.
+- [x] Reconcile current operational sessions with restored participation before resuming; use the delivered persistent-object containment roots without activating every carried child independently.
 
 **Dependencies:** MP04.1–MP04.2; MP01.5; SL00. **Exit:** races, repeated returns, changed geometry and restart/restore during exit create one continuous embodiment with no stale authority.
 
@@ -172,3 +174,5 @@ The completed [feature specification](../projects/completed/multiplayer-authorit
 ## Release admission follow-through
 
 The [immediate limits implementation](../projects/immediate-gameplay-limits.md) coordinates release admission and projection cache capacity from `OPEN_LEGEND_PLAYER_CAPACITY` (default 100), retaining per-scope authority and slow-client handling. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) includes 100 separate synthetic accounts with actual SSE/control/commands; session setup bypassed OIDC. MP01 authority remains required. PF11/D5 and [E01](limits-audit.md#e01) remain open for sustained mixed gameplay, hosted operation and 10,000-player growth; the 100-player burst latency is not acceptable release evidence.
+
+Existing PF11/D5 qualification must include full terrain plus body payload, cold/warm spectator construction, concurrent reads and aggregate gameplay-projection memory. The current overview enumerates every entity on a new service revision; the reconnect budget is per scope and excludes its complete view. [The body-row limit](../limits/multiplayer.md#mp17) and [reconnect accounting](../limits/multiplayer.md#la165) are not total work/memory bounds. Reuse current indexes/snapshots only with correct invalidation and disclosure; this clarifies the existing release gate rather than introducing a richer spectator feature or a second performance owner.
