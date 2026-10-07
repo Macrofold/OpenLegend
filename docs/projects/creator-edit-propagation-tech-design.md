@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                             | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Direction and safety contracts are recorded; concrete owner adapters and runtime tooling remain future work. | 2026-10-03   |
+| Not started | Direction and safety contracts are recorded; concrete owner adapters and runtime tooling remain future work. | 2026-10-06   |
 
 ## Boundaries
 
@@ -20,13 +20,13 @@ Bind approval to principal, world, timeline, selected set, exact revisions and a
 
 Use existing actor-scoped memory repositories and semantic-vector lookup. Pin search results to source identities/revisions and disclosure scope. Similarity determines suggested candidates only; absence of a match is not a claim that every affected memory was found. Show missing vectors or incomplete coverage, and never substitute lexical matching while calling it semantic search.
 
-Manual editing/deletion calls the existing memory editor/forgetting owner, including its explicit dependency safeguards and vector invalidation. AI bulk editing generates proposed per-record diffs under existing provider admission and spending limits. It cannot grant access, certify truth or mutate. Apply only selected approved revisions, reject conflicts and preserve untouched records. Privacy revocation cancels pending output; no automatic paid retry. Embedding refresh and native integrity maintenance remain distinct from rewriting a memory's meaning.
+Manual editing/deletion calls the existing memory editor/forgetting owner, including its explicit dependency safeguards and vector invalidation. The delivered [person editor](../../packages/domain/src/god-tools.ts) permits memory text/summary and importance changes while preserving identifiers, evidence links and mechanical fields; its generic memory form cannot rewrite committed speech. Bulk-diff payloads must retain those restrictions. The [forgetting owner](../../packages/domain/src/experience.ts) rejects deletion of evidence still required by an unresolved commitment; resolve that dependency through its owner before requesting deletion again. Explicit privacy revocation remains a separate obligation, not permission to leave revoked content accessible. AI bulk editing generates proposed per-record diffs under existing provider admission and spending limits. It cannot grant access, certify truth or mutate. Apply only selected approved revisions, reject conflicts and preserve untouched records. Privacy revocation cancels pending output; no automatic paid retry. Embedding refresh and native integrity maintenance remain distinct from rewriting a memory's meaning.
 
 ## Stages and verification
 
 CE01 (earlier): select a concrete explicit-dependency deletion consumer, map complete owners, then implement preview/selection/approval/atomic apply with invalid/stale/retry checks and actual UI qualification. CE02 (later): actor scope and semantic lookup, multiselection/manual edits, then separately bounded AI diff proposals. Establish numerical work/retention/page limits and scale evidence during each implementation; no invented capacity claims now.
 
-No runtime implementation is authorized by this future plan alone. Mike's current request authorizes documenting/tracking these capabilities while implementing the family tree.
+No runtime implementation is authorized by this future plan alone. The original October 3 family-tree task authorized recording these future capabilities, not implementing them. Later work follows the current task's authorization; this historical plan is not a standing implementation instruction.
 
 ## Maintained records
 
