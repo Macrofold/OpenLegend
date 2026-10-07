@@ -1,6 +1,8 @@
 # Invention journeys and capability ladder
 
-**Status: accepted target behavior and implementation sequence, not current gameplay evidence.** These scenarios guide the [invention foundation](invention-foundation.md), [unified World Agent](world-agent-runtime.md), [MCP](world-agent-mcp.md), [graph](invention-graph.md), and [composition](invention-composition.md). Detailed implementation tasks stay in the INV/EWF/AG/EPR/PF/SL owners; automated regression tasks stay in the maintainer TODO. Fictional examples below require the referenced families to be supported before being offered as playable features.
+**Status: accepted target scenarios and capability dependencies, not current gameplay evidence or a separate whole-game roadmap.** These scenarios guide the [invention foundation](invention-foundation.md), [unified World Agent](world-agent-runtime.md), [MCP](world-agent-mcp.md), [graph](invention-graph.md), and [composition](invention-composition.md). Detailed implementation tasks stay in the INV/EWF/AG/EPR/PF/SL owners; automated regression tasks stay in the maintainer TODO. Fictional examples below require the referenced families to be supported before being offered as playable features. Select actual delivery through [playable-game-first priorities](repertoires/gameplay-priorities.md); this ladder does not make advanced law authoring, generated art or pack export prerequisites for an enjoyable invention/use loop.
+
+Finite owner conversations, native drafts, exact review/Apply and supported attribute/status-policy adapters are already delivered under [the runtime contract](world-agent-runtime.md#durable-write-sessions). These scenarios extend that foundation rather than restart it. Their complete art, arbitrary composition and cross-world outcomes remain targets; use the linked implementation/evidence owners to determine the remaining scope.
 
 ## S01. A player invents, revises and uses a tool
 
@@ -8,9 +10,9 @@
 
 The unified World Agent inspects supported families, known/requested materials, existing recipes and current constraints. It explains useful tradeoffs without asking the player to author JSON. A complete supplied method bypasses redundant authoring. It saves a candidate, runs native validation, and shows real yield/resource/work facts plus a truthful fallback visual.
 
-The player changes function while art is in flight. The next revision keeps the pinned curve where compatible; otherwise the agent asks about the conflicting shape/function requirement. Old artwork cannot overwrite the selected revision. Low-impact admission can follow existing explicit invention intent; crafting consumes materials through a separate action. A polished sprite arrives later without changing yield.
+In the optional generated-art extension, the player changes function while art is in flight. The next revision keeps the pinned curve where compatible; otherwise the agent asks about the conflicting shape/function requirement. Old artwork cannot overwrite the selected revision. Ordinary supported recipe admission has its automatic path, but the current creator session requires exact human review before its first live write; broader automatic session approval remains [INV-18.2](world-agent-runtime.md#7-interaction-and-approval). Crafting consumes materials through a separate action. A later polished sprite cannot change yield, and its absence does not block a tool with an adequate native representation.
 
-**Necessary capabilities:** scoped read/draft/validate/apply, source-based family summaries, same-root budget, selected revision, staged art, native completion receipts. **Non-goal:** a universal tool physics model. **Failure behavior:** invalid art retains the fallback; invalid mechanics retain the draft; no provider call occurs merely to open the action catalogue.
+**Necessary capabilities:** scoped read/draft/validate/apply, source-based family summaries, same-root budget, selected revision, adequate native presentation and native completion receipts. Staged generated art is a separate extension, not required for the basic tool journey. **Non-goal:** a universal tool physics model. **Failure behavior:** invalid art retains the fallback; invalid mechanics retain the draft; no provider call occurs merely to open the action catalogue.
 
 ## S02. A shelter leaks and the player asks for help
 
@@ -40,7 +42,7 @@ The World Agent inspects available state, thermal-source, exposure, resource and
 
 Impact analysis discovers old materials and new consumers that need coverage. Existing objects receive a reviewed initialization/default where justified; they do not acquire fabricated historical burning. The creator approves the meaningful law change, then atomic activation installs a coherent bundle. A later torch binds this admitted law and reuses its evidence.
 
-**Necessary capabilities:** reusable native operators, kind adapters, world-authored obligations, reverse consumers, initialization/migration and constitution approval. **Host gap:** a missing propagation/thermal evaluator is engineering work or a clearly accepted approximation, not generated host JavaScript.
+**Necessary capabilities:** reusable native operators, kind adapters, world-authored obligations, reverse consumers, reviewed initialization of existing live objects and constitution approval. **Host gap:** a missing propagation/thermal evaluator is engineering work or a clearly accepted approximation, not generated host JavaScript.
 
 ## S05. A charge-powered, touch-only organism
 
@@ -80,7 +82,7 @@ The agent inspects the exact installed law, dependent recipes, active burning/co
 
 At activation, changed relevant state is rechecked. The existing law remains active until a coherent commit succeeds. A failure before commit leaves it unchanged; a crash after commit reads the receipt rather than applying conversions twice. Existing damage is not undone. Equivalent objects do not get contradictory laws by arbitrary player cohort.
 
-**Necessary capabilities:** reverse impact, migration plan, bounded maintenance pause, owner coordination, approval and idempotent receipt. **Expansion:** multi-sector/distributed transitions follow a qualified local implementation, not before it.
+**Necessary capabilities:** reverse impact, a reviewed live-definition transition plan, a bounded pause that covers every affected writer, owner coordination, approval and idempotent receipt. This is a change within a supported running world, not an old-save reader or migration project; the [development compatibility policy](../AGENTS.md#development-save-policy) remains controlling. Ordinary maintenance is not proof that creator edits and already-admitted writes have stopped. **Expansion:** multi-sector/distributed transitions follow a qualified local implementation, not before it.
 
 ## S09. Visual redesign exposes a real semantic change
 
@@ -108,19 +110,25 @@ An export pins allowed definitions, evidence metadata and art dependencies witho
 
 The app retains the chosen drafts, actual charges and uncertain exposure. No retry is inferred from a lost response. Old-generation work cannot apply into the restored world. The player sees which result was historical and what is currently usable. A late asset can remain authorized reusable content, but cannot recreate a deleted item or overwrite the new selection.
 
-The agent resumes from current application state with a fresh permitted model context where required. It can inspect findings and propose the next revision, but cannot revive old approvals or reset the $5 session allowance. A new paid session is an explicit user action; publication of already funded valid work does not require another generation charge.
+The agent resumes from current application state with a fresh permitted model context where required. It can inspect findings and propose the next revision, but cannot revive old approvals or reset the [configured session allowance](world-agent-runtime.md#1-product-decisions). A new paid session is an explicit user action; publication of already funded valid work does not require another generation charge.
 
 **Necessary capabilities:** durable jobs/operations, generation fencing, current privacy/lock overlays, exact candidate/binding selection and reconciled budget.
 
 ## Capability ladder and stop conditions
 
-| Phase                        | Player-visible outcome                                                                                    | Required proof before advancing                                                                                               |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| A — Connect the real agent   | One unified conversation can inspect actual supported definitions and save a draft through Macrofold MCP. | Authenticated native-harness loop, world-level scope, tool-result fidelity, $5 session accounting; no false installation.     |
-| B — Navigate and apply       | Explain a recipe's graph, compare a revision, and apply the exact permitted candidate.                    | Stable refs, paged completeness, human approval where needed, replay/restart and retained current instances.                  |
-| C — Author another subsystem | Revise/create one supported attribute or sense configuration through the same agent.                      | Kind-owned schema/validation/activation, broad read versus narrow write grants, generic actor affordance/concern integration. |
-| D — Compose behavior         | Deliver one reusable intermediate/selector/effect composition and one NPC investigative loop.             | Positive port/input contracts, resource/lifecycle invariants, actual observations and no private registry leakage.            |
-| E — Evolve laws and visuals  | Install a supported passive-law bundle and coordinate meaningful art redesign with it.                    | Reverse interaction coverage, initialization/migration, adequate fallback, exact visual binding and versioned review.         |
-| F — Scale and share          | Dense-world performance qualification and authorized cross-world release.                                 | Cold/warm capacity evidence, bounded jobs/retention, destination binding/rights checks and coherent recovery.                 |
+| Phase                        | Player-visible outcome                                                                                    | Required proof before advancing                                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| A — Connect the real agent   | One unified conversation can inspect actual supported definitions and save a draft through Macrofold MCP. | Authenticated native-harness loop, world-level scope, tool-result fidelity, configured session accounting; no false installation. |
+| B — Navigate and apply       | Explain a recipe's graph, compare a revision, and apply the exact permitted candidate.                    | Stable refs, paged completeness, human approval where needed, replay/restart and retained current instances.                      |
+| C — Author another subsystem | Revise/create one supported attribute or sense configuration through the same agent.                      | Kind-owned schema/validation/activation, broad read versus narrow write grants, generic actor affordance/concern integration.     |
+| D — Compose behavior         | Deliver one reusable intermediate/selector/effect composition and one NPC investigative loop.             | Positive port/input contracts, resource/lifecycle invariants, actual observations and no private registry leakage.                |
+| E — Evolve laws and visuals  | Install a supported passive-law bundle and coordinate meaningful art redesign with it.                    | Reverse interaction coverage, live-definition transition, adequate fallback, exact visual binding and versioned review.           |
+| F — Scale and share          | Dense-world performance qualification and authorized cross-world release.                                 | Cold/warm capacity evidence, bounded jobs/retention, destination binding/rights checks and coherent recovery.                     |
 
 Some phases can overlap, especially graph inspection and tool transport. No phase requires implementing every example. Use one complete vertical proof to justify the next abstraction. Do not declare a phase done because its types, documentation or prompt exist. Exact release population/speed targets remain a product qualification choice, not an excuse to skip the existing dense-stall work.
+
+## Maintained records
+
+- Implementation: [Invention delivery](maintainers/inventions-and-world-evolution.md) and [reviewed World Agent writes](maintainers/world-agent-writes.md); their existing parent acceptance remains controlling.
+- Limits and constraints: [Invention limits](limits/inventions.md) and [authoring/runtime budgets](invention-budgets.md).
+- Related contracts: [Invention coordination](invention-foundation.md), [staged art](invention-art-pipeline.md) and [release-gate work, PD04](maintainers/production-deployment.md).
