@@ -1045,6 +1045,7 @@ function App({
           <EntityDetail
             entity={entity}
             {...props}
+            command={command}
             talk={talk}
             godControls={characterGodControls(entity)}
           />

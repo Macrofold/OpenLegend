@@ -102,27 +102,22 @@ Each chosen action performs one strike. Repetition uses the existing bounded pla
 
 ## BW11
 
-**Current — implemented September 28 · Restrictiveness: Medium.** Consent-aware handover in [handover.ts](../../packages/domain/src/worlds/base/handover.ts):
+**Current — gifts September 28, reciprocal barter October 5 · Restrictiveness: Medium.** Authored policy in [handover.ts](../../packages/domain/src/worlds/base/handover.ts); current behavior in [social rules](../worlds/base/social.md#offering-and-accepting-possessions).
 
-- **Offer life:** an offer stays open for **1,800 game seconds** (30 wall seconds at 1×, 3.75 at 8×).
-- **Pending limits:** at most **3** pending offers per offerer, **1** per lot. Only pending offers are retained, so the world-settings record holds at most three per person.
-- **Reach:** offering needs the offerer to see the recipient within the saved item-handling reach (**1.6** units by default); accepting needs mutual sight within that reach.
-- **Bags with access grants** are refused until the grant is cleared, because a grant would otherwise keep reaching into the recipient's bag.
-- **No reservation:** offered units are not reserved.
-- **Whole objects:** bags and individual objects are offered whole.
-- **Candidate bounds:**
-  - **Character decisions:** new offers go to the nearest 3 people who can take items within reach; lots per person: 4; offer candidates: 12; quantities: one unit or the whole lot.
-  - **Player typed requests:** lots per person: 12; offer candidates: 24.
-  - **Always:** replies to existing offers are always listed.
+- **First barter family:** one exact lot/individual and positive safe-integer quantity per side. An empty requested side is a gift. Several lots per side, prices, credit and deferred delivery are unsupported. Expand the same joint owner when a useful exchange requires several lots and separate offers would risk partial delivery.
+- **Offer life:** **1,800 game seconds** (30 wall seconds at 1×, 3.75 at 8×), refreshed by explicit counteroffer.
+- **Pending limits:** at most **3** proposals per current proposer. A lot or overlapping bag/descendant may occur in only **1** pending gift/barter, on either side. Counteroffers replace rather than duplicate the existing proposal. Only pending offers are retained; outcomes stay in ordinary events/receipts.
+- **Reach:** offering needs sight within saved item-handling reach (**1.6** units by default); acceptance needs mutual sight/reach.
+- **Bags and individuals:** move whole; bags with any descendant access grant require that grant to be cleared. Offers reserve nothing. Current work and resource claims remain controlling.
+- **Candidate bounds:** resident new offers/counters use the nearest **3** eligible people, up to **4** own lots per person and **12** terms candidates overall. Typed requests use up to **12** own lots per person and **24** terms candidates. Existing replies are always retained. Compact generated new quantities remain one unit or the whole lot; explicit inventory drafts select any valid exact quantity.
+- **Disclosed references:** each character retains the **6** most recent explicitly disclosed executable lot references per other person, preserving last-disclosed terms rather than refreshing private stock. Ordinary memories retain older experiences; an older exact reference must be disclosed again before a new standalone request. A current open proposal remains an exact permitted disclosure for a counteroffer, independent of this list. No extra cap on the number of people remembered is introduced. Storage grows with encountered people; existing world/state and work budgets remain controlling.
+- **Player panel:** shows **6** own portable lots and those recent disclosed references, with an explicit explanation. Selecting another owned lot in the paged Inventory adds that exact source to the form. This is a compact selector, not a limit on possessions or permissible source lots.
 
-**Reason / tradeoff:**
+**Reason / tradeoff:** finite immediate terms make assent and atomic settlement clear before shopping carts or negotiation machinery. Shared pending caps prevent a gift/barter overlap loophole. The disclosure/selector bound limits the cross-product of proposed terms and avoids consulting private recipient stock; six is an initial authored choice, not a measured optimum. Fresh disclosure is required for useful older objects outside an open proposal; the October 6 review removed the accidental restriction on countering a still-open offer after its reference aged out. Expand only when the remaining restriction demonstrably obstructs a worthwhile trade. Expiry permits a next decision but is short at high speed. With no standing hold, either person can use offered goods and invalidate reciprocal acceptance. Gift events retain their previous wording; exact reciprocal terms go only to participants and witnesses perceive a generic exchange.
 
-- **Expiry:** long enough for a player to notice or a character's next decision. It can be too short at 8× speed, where pausing helps.
-- **Caps:** bound stored records and the choices a character rates. A player's typed request needs more lots because it names what to offer.
-- **No reservation:** avoids the unresolved claim-lifetime work (R01/ST09), at the cost that an offerer can still use offered items, which then makes acceptance fail.
-- **Visibility:** the offer is visible to people who see the offerer; refusals stay generic so neither side learns private circumstances.
+**Work and evidence:** own inventory still materializes through the existing possession query before one shared compact selection. A derived immutable pending-offer index now serves participant, promised-item and proposer-count queries; conflict checks visit the selected item's ancestors/contents, without walking unrelated proposals' containment chains. Person controls reuse the same already-prepared reply checks, and unrelated offer changes do not invalidate another person's unchanged terms. Frozen published tables reuse derived data; mutable edits, counteroffer replacement, withdrawal and restore rebuild as needed.
 
-[Social rules](../worlds/base/social.md#offering-and-accepting-possessions) · [tracker BW20](../maintainers/base-world.md#bw20--consent-aware-handover).
+The October 6 matched PostgreSQL HTTP measurements at 100 nearby people/500 unrelated offers reduced offer-table enumerations from 4,651 to 23 across the declared specimen. Refreshed views still took a median 477.577333 ms; this is improvement evidence, not acceptable population responsiveness. Index rebuilding and offer lifecycle/storage still grow with the pending collection, and full own-inventory/other projection work remains. [BW20](../maintainers/base-world.md#bw20--consent-aware-handover) retains storage and growth follow-up. [PX02 evidence](../verification/reciprocal-barter.md#october-6-review-and-matched-server-measurements) preserves workload, variance and qualification limits.
 
 ## CR01 — Proposed finite camp activities
 

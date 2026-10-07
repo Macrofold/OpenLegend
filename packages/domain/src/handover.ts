@@ -1,9 +1,15 @@
-import { subjectNarration, person, type Narration } from './narration.js';
-import { namePhrase } from '@open-legend/language';
-import { emit, outcome } from './events.js';
+import { subjectNarration } from './narration.js';
+import { emit, emitPrivateObservation, emitWitnessObservation, outcome } from './events.js';
 import { canHandleItems } from './item-handling.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
-import { directChildIds, itemFor, moveLot } from './objects.js';
+import {
+  directChildIds,
+  itemFor,
+  moveLot,
+  moveLotsTogether,
+  jointItemMoveReason,
+  objectAncestors,
+} from './objects.js';
 import { activelyParticipates } from './participation-state.js';
 import { seesEntity } from './perception.js';
 import { getOwn, hasRecordFields, isSafeRecordId } from './records.js';
@@ -11,68 +17,158 @@ import { availableItemQuantity } from './resource-claims.js';
 import { canReachEntity } from './spatial.js';
 import { nextId } from './data.js';
 import { WorkBudgetError } from './work-budget.js';
+import { readOnlyDraftView } from './draft.js';
+import { definitionPin, type DefinitionPin } from './world-modules.js';
+import { sameDefinitionPin } from './state-owners.js';
 import { BASE_HANDOVER } from './worlds/base/handover.js';
 import type { Command, Entity, ItemInstance, Outcome, WorldEvent, WorldState } from './types.js';
 
-/** A pending proposal to hand over carried items. Nothing is reserved or moved until the
- * named recipient's own command accepts it; terminal offers are deleted, events keep history.
+export interface RequestedLot {
+  itemId: string;
+  quantity: number;
+  expectedRevision?: number;
+  placementRevision?: number;
+  expectedContentsRevision?: number;
+}
+export interface OfferLot {
+  itemId: string;
+  definitionPin: DefinitionPin;
+  quantity: number;
+  whole: boolean;
+  revision: number;
+  placementRevision: number;
+  contentsRevision?: number;
+  subtreeRevision?: number;
+}
+/** Remembered explicit terms, never live stock, contents or packing information. */
+export interface KnownTradeLot {
+  lot: OfferLot;
+  name: string;
+  description: string;
+  disclosedAt: number;
+}
+/** Pending consent only. Events and ordinary command receipts retain outcomes.
  * docs/worlds/base/social.md#offering-and-accepting-possessions */
 export interface ItemOffer {
   id: string;
+  revision: number;
   offererId: string;
   recipientId: string;
-  itemId: string;
-  definitionId: string;
-  quantity: number;
-  /** An offered container's contents revision; acceptance never moves changed contents. */
-  contentsRevision?: number;
+  offered: OfferLot;
+  requested?: OfferLot;
   createdAt: number;
   expiresAt: number;
 }
-export const HANDOVER_OPERATIONS = ['offer', 'accept', 'decline', 'withdraw'] as const;
+export const HANDOVER_OPERATIONS = ['offer', 'counter', 'accept', 'decline', 'withdraw'] as const;
 type HandoverCommand = Extract<Command, { type: 'handover' }>;
-
+type TermsCommand = Extract<HandoverCommand, { operation: 'offer' | 'counter' }>;
+const revision = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0;
+function validRequest(lot: RequestedLot): boolean {
+  return (
+    !!lot &&
+    isSafeRecordId(lot.itemId) &&
+    Number.isSafeInteger(lot.quantity) &&
+    lot.quantity > 0 &&
+    [lot.expectedRevision, lot.placementRevision, lot.expectedContentsRevision].every(
+      (pin) => pin === undefined || revision(pin),
+    )
+  );
+}
 export function isHandoverCommand(command: Command): boolean {
   if (command?.type !== 'handover' || !isSafeRecordId(command.targetId)) return false;
-  return command.operation === 'offer'
-    ? isSafeRecordId(command.itemId) &&
-        Number.isSafeInteger(command.quantity) &&
-        command.quantity > 0 &&
-        [
-          command.expectedRevision,
-          command.placementRevision,
-          command.expectedContentsRevision,
-          command.targetRevision,
-        ].every(
-          (revision) => revision === undefined || (Number.isSafeInteger(revision) && revision >= 0),
-        )
-    : (HANDOVER_OPERATIONS as readonly string[]).includes(command.operation) &&
-        isSafeRecordId(command.offerId);
+  if (command.operation === 'offer' || command.operation === 'counter')
+    return (
+      validRequest(command) &&
+      (command.requested === undefined || validRequest(command.requested)) &&
+      (command.targetRevision === undefined || revision(command.targetRevision)) &&
+      (command.operation !== 'counter' ||
+        (isSafeRecordId(command.offerId) && revision(command.expectedOfferRevision)))
+    );
+  return (
+    (HANDOVER_OPERATIONS as readonly string[]).includes(command.operation) &&
+    isSafeRecordId(command.offerId) &&
+    revision(command.expectedOfferRevision)
+  );
 }
-
-/** Scoped read for the two parties only; bystanders learn from perceived events. */
-export function offersBetween(
+interface OffersBetween {
+  readonly incoming: readonly ItemOffer[];
+  readonly outgoing: readonly ItemOffer[];
+}
+interface OfferIndex {
+  between: Map<string, Map<string, { incoming: ItemOffer[]; outgoing: ItemOffer[] }>>;
+  byItem: Map<string, ItemOffer>;
+  outgoingCount: Map<string, number>;
+}
+const offerIndexes = new WeakMap<NonNullable<WorldState['itemOffers']>, OfferIndex>();
+const emptyOfferIndex: OfferIndex = {
+  between: new Map(),
+  byItem: new Map(),
+  outgoingCount: new Map(),
+};
+const noOffers: OffersBetween = Object.freeze({
+  incoming: Object.freeze([]),
+  outgoing: Object.freeze([]),
+});
+function offerIndex(world: WorldState): OfferIndex {
+  if (!world.itemOffers) return emptyOfferIndex;
+  const offers = readOnlyDraftView(world.itemOffers);
+  const cached = Object.isFrozen(offers) ? offerIndexes.get(offers) : undefined;
+  if (cached) return cached;
+  const index: OfferIndex = {
+    between: new Map(),
+    byItem: new Map(),
+    outgoingCount: new Map(),
+  };
+  const pair = (actorId: string, otherId: string) => {
+    let people = index.between.get(actorId);
+    if (!people) index.between.set(actorId, (people = new Map()));
+    let terms = people.get(otherId);
+    if (!terms) people.set(otherId, (terms = { incoming: [], outgoing: [] }));
+    return terms;
+  };
+  for (const offer of Object.values(offers ?? {})) {
+    pair(offer.offererId, offer.recipientId).outgoing.push(offer);
+    pair(offer.recipientId, offer.offererId).incoming.push(offer);
+    index.byItem.set(offer.offered.itemId, offer);
+    if (offer.requested) index.byItem.set(offer.requested.itemId, offer);
+    index.outgoingCount.set(offer.offererId, (index.outgoingCount.get(offer.offererId) ?? 0) + 1);
+  }
+  for (const people of index.between.values())
+    for (const terms of people.values()) {
+      Object.freeze(terms.incoming);
+      Object.freeze(terms.outgoing);
+      Object.freeze(terms);
+    }
+  // A published offer table has immutable terms. Draft edits/mutable builders rebuild;
+  // deletion, replacement and restore therefore cannot inherit stale consent or membership.
+  if (offers && Object.isFrozen(offers)) offerIndexes.set(offers, index);
+  return index;
+}
+export function offersBetween(world: WorldState, actorId: string, otherId: string): OffersBetween {
+  return offerIndex(world).between.get(actorId)?.get(otherId) ?? noOffers;
+}
+/** Read only remembered disclosures from this person, without consulting their stock. */
+export function knownTradeLots(
   world: WorldState,
   actorId: string,
   otherId: string,
-): { incoming: ItemOffer[]; outgoing: ItemOffer[] } {
-  const incoming: ItemOffer[] = [],
-    outgoing: ItemOffer[] = [];
-  for (const offer of Object.values(world.itemOffers ?? {})) {
-    if (offer.recipientId === actorId && offer.offererId === otherId) incoming.push(offer);
-    if (offer.offererId === actorId && offer.recipientId === otherId) outgoing.push(offer);
+  limit: number = BASE_HANDOVER.candidateLots,
+): KnownTradeLot[] {
+  const result: KnownTradeLot[] = [],
+    remembered = world.entities[actorId]?.actor?.knownTradeLots?.[otherId] ?? {};
+  for (const id in remembered) {
+    const known = getOwn(remembered, id);
+    if (known) result.push(known);
+    if (result.length >= limit) break;
   }
-  return { incoming, outgoing };
+  return result;
 }
-
 const able = (entity: Entity | undefined): entity is Entity =>
   !!entity?.actor &&
   entity.actor.alive &&
   !entity.actor.incapacitated &&
   !entity.retirement &&
   activelyParticipates(entity);
-/** One rule for who may be offered items now, shared by admission and every surface that
- * lists recipients: seen first, then able to take items, then within arm's reach. */
 export function offerRecipientProblem(
   world: WorldState,
   offerer: Entity,
@@ -86,76 +182,217 @@ export function offerRecipientProblem(
     return { code: 'out-of-reach', message: "Move within arm's reach of that person." };
   return null;
 }
-/** A bag keeps its access list when it changes hands, so a granted bag would let the giver
- * keep reaching into the recipient's possession; offer it only once no grant remains. */
 function grantedContainer(world: WorldState, itemId: string): boolean {
   if (world.entities[itemId]?.container?.access) return true;
   for (const child of directChildIds(world, itemId))
     if (grantedContainer(world, child)) return true;
   return false;
 }
-const described = (world: WorldState, offer: ItemOffer) =>
-  `${offer.quantity} ${world.itemDefinitions[offer.definitionId]?.name ?? 'item'}`;
-
-/** Whether the offered terms still hold on the offerer's side. Deliberately one generic
- * answer: neither party learns why the other's circumstances changed. */
-function offerStillHeld(world: WorldState, offer: ItemOffer): boolean {
-  const item = itemFor(world, offer.itemId);
-  const offerer = world.entities[offer.offererId];
+function pinLot(world: WorldState, item: ItemInstance, quantity: number): OfferLot {
+  const entity = world.entities[item.id]!;
+  return {
+    itemId: item.id,
+    definitionPin: { ...entity.item!.definitionPin },
+    quantity,
+    whole: !!entity.container || entity.item!.individuality === 'individual',
+    revision: entity.item!.revision,
+    placementRevision: entity.placement!.revision,
+    ...(entity.container
+      ? {
+          contentsRevision: entity.inventoryRevision ?? 0,
+          subtreeRevision: entity.container.subtreeRevision,
+        }
+      : {}),
+  };
+}
+export function describeOfferLot(world: WorldState, lot: OfferLot): string {
+  return lot.quantity + ' ' + (world.itemDefinitions[lot.definitionPin.id]?.name ?? 'item');
+}
+export function describeItemOffer(world: WorldState, offer: ItemOffer): string {
+  return BASE_HANDOVER.text.terms(
+    describeOfferLot(world, offer.offered),
+    offer.requested && describeOfferLot(world, offer.requested),
+  );
+}
+function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact = true): boolean {
+  const item = itemFor(world, lot.itemId),
+    holder = world.entities[holderId];
+  const definition = item && world.itemDefinitions[item.definitionId];
   return (
     !!item &&
-    able(offerer) &&
-    item.definitionId === offer.definitionId &&
-    world.itemDefinitions[item.definitionId]?.portable === true &&
-    accessiblePossession(world, offer.offererId, item.id) &&
-    availableItemQuantity(world, item.id) >= offer.quantity &&
-    !inventoryWorkReason(world, offer.offererId, item.id) &&
-    (offer.contentsRevision === undefined ||
-      (world.entities[item.id]?.inventoryRevision ?? 0) === offer.contentsRevision)
+    able(holder) &&
+    canHandleItems(world, holder) &&
+    !!definition &&
+    sameDefinitionPin(definitionPin(definition), lot.definitionPin) &&
+    sameDefinitionPin(world.entities[item.id]!.item!.definitionPin, lot.definitionPin) &&
+    (!exact ||
+      (item.revision === lot.revision && item.placementRevision === lot.placementRevision)) &&
+    definition.portable === true &&
+    accessiblePossession(world, holderId, item.id) &&
+    availableItemQuantity(world, item.id) >= lot.quantity &&
+    !inventoryWorkReason(world, holderId, item.id) &&
+    (lot.contentsRevision === undefined ||
+      (world.entities[item.id]?.inventoryRevision ?? 0) === lot.contentsRevision) &&
+    (lot.subtreeRevision === undefined ||
+      world.entities[item.id]?.container?.subtreeRevision === lot.subtreeRevision) &&
+    !grantedContainer(world, item.id)
   );
+}
+function offerStillHeld(world: WorldState, offer: ItemOffer): boolean {
+  return (
+    lotStillHeld(world, offer.offererId, offer.offered, !!offer.requested) &&
+    (!offer.requested || lotStillHeld(world, offer.recipientId, offer.requested))
+  );
+}
+function remember(world: WorldState, learnerId: string, holderId: string, lot: OfferLot) {
+  const learner = world.entities[learnerId]?.actor,
+    entity = world.entities[lot.itemId];
+  const definition = world.itemDefinitions[lot.definitionPin.id];
+  if (!learner || !definition || !entity?.item) return;
+  const known = (learner.knownTradeLots ??= {});
+  const disclosed: KnownTradeLot = {
+    lot: { ...lot, definitionPin: { ...lot.definitionPin } },
+    name: definition.name,
+    description: definition.description,
+    disclosedAt: world.simTime,
+  };
+  // Recent executable references are bounded; ordinary memories retain older experiences.
+  // docs/limits/parallel-batch-04-expeditions-and-exchange.md#px-l01--one-exact-lot-on-each-side-of-an-immediate-barter
+  const recent = knownTradeLots(world, learnerId, holderId).filter(
+    (entry) => entry.lot.itemId !== lot.itemId,
+  );
+  known[holderId] = Object.fromEntries(
+    [disclosed, ...recent]
+      .slice(0, BASE_HANDOVER.candidateLots)
+      .map((entry) => [entry.lot.itemId, entry]),
+  );
+}
+/** Witnesses perceive the ordinary act; only parties receive exact reciprocal terms.
+ * Private occurrences use existing awareness/memory, without disclosing bag interiors. */
+function notice(
+  world: WorldState,
+  events: WorldEvent[],
+  offer: ItemOffer,
+  type: string,
+  verb: string,
+  source: Entity | undefined,
+  targetId: string,
+  trigger = false,
+) {
+  if (!source) return;
+  if (!offer.requested) {
+    emit(
+      world,
+      events,
+      type,
+      BASE_HANDOVER.text.giftEvent(source.id, verb, describeItemOffer(world, offer)),
+      source,
+      targetId,
+      {
+        offerId: offer.id,
+        offerRevision: offer.revision,
+        semanticTrigger: trigger,
+        urgency: trigger ? 4 : 0,
+      },
+    );
+    return;
+  }
+  emitWitnessObservation(
+    world,
+    events,
+    type,
+    subjectNarration(source, BASE_HANDOVER.text.witness(verb)),
+    source,
+    targetId,
+    { offerId: offer.id },
+  );
+  for (const id of [offer.offererId, offer.recipientId]) {
+    const receiver = world.entities[id];
+    if (!receiver?.actor) continue;
+    emitPrivateObservation(
+      world,
+      events,
+      type,
+      receiver,
+      BASE_HANDOVER.text.participantEvent(source.id, verb, describeItemOffer(world, offer)),
+      source,
+      targetId,
+      {
+        offerId: offer.id,
+        offerRevision: offer.revision,
+        semanticTrigger: trigger && id === targetId,
+        urgency: trigger && id === targetId ? 4 : 0,
+      },
+    );
+  }
 }
 function close(
   world: WorldState,
   events: WorldEvent[],
   offer: ItemOffer,
   type: string,
-  text: string | Narration,
+  verb: string,
   source: Entity | undefined,
   targetId: string,
-): void {
+) {
   delete world.itemOffers![offer.id];
   if (!Object.keys(world.itemOffers!).length) delete world.itemOffers;
-  if (source) emit(world, events, type, text, source, targetId, { offerId: offer.id });
+  notice(world, events, offer, type, verb, source, targetId);
 }
-
-/** Offer admission is read-only and shared with execution. Accepted previews retain the
- * disposable executor: identity allocation and emitted effects are still checked there.
- * docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary */
+function matchingSelection(
+  world: WorldState,
+  item: ItemInstance,
+  selection: RequestedLot,
+): boolean {
+  return (
+    (selection.expectedRevision === undefined || item.revision === selection.expectedRevision) &&
+    (selection.placementRevision === undefined ||
+      item.placementRevision === selection.placementRevision) &&
+    (selection.expectedContentsRevision === undefined ||
+      (world.entities[item.id]!.inventoryRevision ?? 0) === selection.expectedContentsRevision)
+  );
+}
+function belongs(
+  offer: ItemOffer | undefined,
+  actorId: string,
+  otherId: string,
+): offer is ItemOffer {
+  return (
+    !!offer &&
+    ((offer.offererId === actorId && offer.recipientId === otherId) ||
+      (offer.recipientId === actorId && offer.offererId === otherId))
+  );
+}
 export function prepareItemOffer(
   world: WorldState,
   actor: Entity,
-  command: Extract<HandoverCommand, { operation: 'offer' }>,
-): Outcome | { item: ItemInstance; recipient: Entity } {
+  command: TermsCommand,
+): Outcome | { item: ItemInstance; recipient: Entity; requested?: OfferLot; prior?: ItemOffer } {
   if (!isHandoverCommand(command))
     return outcome(false, 'invalid-command', 'Choose an offer and a person.');
   const other = getOwn(world.entities, command.targetId);
-  // Sight comes first, so an unseen person cannot be probed for their condition.
   const refused = offerRecipientProblem(world, actor, other);
   if (refused || !other)
     return outcome(false, refused?.code ?? 'not-visible', refused?.message ?? 'Choose a person.');
-  const item = itemFor(world, command.itemId);
-  const definition = item && world.itemDefinitions[item.definitionId];
+  let prior: ItemOffer | undefined;
+  if (command.operation === 'counter') {
+    prior = getOwn(world.itemOffers ?? {}, command.offerId!);
+    if (!belongs(prior, actor.id, other.id))
+      return outcome(false, 'no-offer', 'There is no such offer between you and that person.');
+    if (prior.revision !== command.expectedOfferRevision)
+      return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
+    if (world.simTime >= prior.expiresAt)
+      return outcome(false, 'expired', 'That offer has expired.');
+  }
+  const item = itemFor(world, command.itemId),
+    definition = item && world.itemDefinitions[item.definitionId];
   if (!item || !definition || !accessiblePossession(world, actor.id, item.id))
     return outcome(false, 'item-unavailable', 'Choose one of your accessible possessions.');
-  // A held inventory selection must not silently offer changed items. Check only after
-  // normal sight and possession admission so these pins cannot probe private revisions.
+  // Barter never pins/probes the recipient's private inventory revision.
   if (
-    (command.expectedRevision !== undefined && item.revision !== command.expectedRevision) ||
-    (command.placementRevision !== undefined &&
-      item.placementRevision !== command.placementRevision) ||
-    (command.expectedContentsRevision !== undefined &&
-      (world.entities[item.id]!.inventoryRevision ?? 0) !== command.expectedContentsRevision) ||
-    (command.targetRevision !== undefined &&
+    !matchingSelection(world, item, command) ||
+    (!command.requested &&
+      command.targetRevision !== undefined &&
       (other.inventoryRevision ?? 0) !== command.targetRevision)
   )
     return outcome(false, 'stale', 'The item or recipient changed. Refresh before offering it.');
@@ -172,200 +409,316 @@ export function prepareItemOffer(
   if (busy) return outcome(false, 'in-use', busy);
   if (grantedContainer(world, item.id))
     return outcome(false, 'access-granted', "Clear this bag's access list before offering it.");
-  const pending = Object.values(world.itemOffers ?? {});
-  if (pending.some((offer) => offer.itemId === item.id))
+  let requested: OfferLot | undefined;
+  if (command.requested) {
+    // Check knowledge before touching other stock. Guessed IDs and unavailable remembered
+    // objects produce the same refusal, never where/why the other person's item changed.
+    const known = getOwn(actor.actor!.knownTradeLots?.[other.id] ?? {}, command.requested.itemId);
+    const previous = prior && (prior.offererId === other.id ? prior.offered : prior.requested);
+    // An open proposal is itself a permitted disclosure even after the compact memory
+    // list ages it out. It grants only its exact lot/pins/quantity, never other stock.
+    const disclosed =
+      known?.lot ?? (previous?.itemId === command.requested.itemId ? previous : undefined);
+    if (
+      !disclosed ||
+      command.requested.quantity > disclosed.quantity ||
+      (disclosed.whole && command.requested.quantity !== disclosed.quantity)
+    )
+      return outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable);
+    requested = {
+      ...disclosed,
+      definitionPin: { ...disclosed.definitionPin },
+      quantity: command.requested.quantity,
+    };
+    if (
+      !lotStillHeld(world, other.id, requested) ||
+      !matchingSelection(world, itemFor(world, requested.itemId)!, command.requested)
+    )
+      return outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable);
+  }
+  const pending = offerIndex(world);
+  const promised = (id: string) => {
+    const offer = pending.byItem.get(id);
+    return !!offer && offer.id !== prior?.id;
+  };
+  const promisedDescendant = (id: string): boolean => {
+    for (const child of directChildIds(world, id))
+      if (promised(child) || promisedDescendant(child)) return true;
+    return false;
+  };
+  const overlaps = (id: string) =>
+    promised(id) ||
+    objectAncestors(world, id).some((entity) => promised(entity.id)) ||
+    promisedDescendant(id);
+  if (overlaps(item.id))
     return outcome(false, 'already-offered', 'These items are already being offered.');
+  if (requested && overlaps(requested.itemId))
+    return outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable);
   if (
-    pending.filter((offer) => offer.offererId === actor.id).length >=
+    (pending.outgoingCount.get(actor.id) ?? 0) - (prior?.offererId === actor.id ? 1 : 0) >=
     BASE_HANDOVER.pendingPerOfferer
   )
     return outcome(false, 'offer-limit', 'Withdraw an earlier offer first.');
-  return { item, recipient: other };
+  return {
+    item,
+    recipient: other,
+    ...(requested ? { requested } : {}),
+    ...(prior ? { prior } : {}),
+  };
 }
-
-/** The single owner of offer creation, consent and custody transfer. Every refusal leaves
- * the world unchanged; the kernel converts a failed outcome into a rejected command.
- * Neither outcome messages nor event text name the other person: a reader may not know
- * their name, and observer perspective renames only an event's leading acting subject.
- * The recipient still perceives an offer as directed at them through its target. */
+function offerMoves(offer: ItemOffer) {
+  return [
+    {
+      itemId: offer.offered.itemId,
+      quantity: offer.offered.quantity,
+      destinationId: offer.recipientId,
+    },
+    ...(offer.requested
+      ? [
+          {
+            itemId: offer.requested.itemId,
+            quantity: offer.requested.quantity,
+            destinationId: offer.offererId,
+          },
+        ]
+      : []),
+  ];
+}
+/** Read-only admission shared by replies and previews, including final joint placement. */
+export function itemOfferReplyProblem(
+  world: WorldState,
+  actor: Entity,
+  command: Extract<HandoverCommand, { operation: 'accept' | 'decline' | 'withdraw' }>,
+): Outcome | undefined {
+  if (!isHandoverCommand(command))
+    return outcome(false, 'invalid-command', 'Choose an offer and a person.');
+  const offer = getOwn(world.itemOffers ?? {}, command.offerId);
+  const own =
+    command.operation === 'withdraw'
+      ? offer?.offererId === actor.id && offer.recipientId === command.targetId
+      : offer?.recipientId === actor.id && offer.offererId === command.targetId;
+  if (!offer || !own)
+    return outcome(false, 'no-offer', 'There is no such offer between you and that person.');
+  if (offer.revision !== command.expectedOfferRevision)
+    return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
+  if (command.operation !== 'accept') return;
+  if (world.simTime >= offer.expiresAt) return outcome(false, 'expired', 'That offer has expired.');
+  const other = world.entities[offer.offererId];
+  if (!other || !seesEntity(world, actor, other) || !seesEntity(world, other, actor))
+    return outcome(false, 'not-visible', 'You and the offerer must be able to see each other.');
+  if (!canHandleItems(world, actor))
+    return outcome(false, 'unavailable', 'You cannot take items now.');
+  if (!canReachEntity(world, actor, other, world.itemHandling.reach))
+    return outcome(false, 'out-of-reach', "Move within arm's reach of the offerer to take it.");
+  if (!able(actor) || !offerStillHeld(world, offer))
+    return outcome(
+      false,
+      'offer-lapsed',
+      offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
+    );
+  if (jointItemMoveReason(world, offerMoves(offer)))
+    return outcome(
+      false,
+      'offer-lapsed',
+      offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
+    );
+}
 export function executeHandover(
   world: WorldState,
   actor: Entity,
   command: HandoverCommand,
   events: WorldEvent[],
 ): Outcome {
-  if (command?.operation === 'offer') {
+  if ('itemId' in command) {
     const prepared = prepareItemOffer(world, actor, command);
     if ('ok' in prepared) return prepared;
-    const { item, recipient: other } = prepared;
-    const container = world.entities[item.id]?.container;
     const offer: ItemOffer = {
-      id: nextId(world, 'offer'),
+      id: prepared.prior?.id ?? nextId(world, 'offer'),
+      revision: (prepared.prior?.revision ?? 0) + 1,
       offererId: actor.id,
-      recipientId: other.id,
-      itemId: item.id,
-      definitionId: item.definitionId,
-      quantity: command.quantity,
-      ...(container ? { contentsRevision: world.entities[item.id]!.inventoryRevision ?? 0 } : {}),
+      recipientId: prepared.recipient.id,
+      offered: pinLot(world, prepared.item, command.quantity),
+      ...(prepared.requested ? { requested: prepared.requested } : {}),
       createdAt: world.simTime,
       expiresAt: world.simTime + BASE_HANDOVER.offerSeconds,
     };
+    if (!Number.isSafeInteger(offer.revision))
+      return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
     (world.itemOffers ??= {})[offer.id] = offer;
-    // Only the offer itself invites the recipient to decide; replies stay routine.
-    emit(
+    remember(world, offer.recipientId, offer.offererId, offer.offered);
+    notice(
       world,
       events,
+      offer,
       'item-offered',
-      subjectNarration(actor, `offered ${described(world, offer)} to someone nearby.`),
+      prepared.prior ? 'revised' : 'offered',
       actor,
-      other.id,
-      { offerId: offer.id, semanticTrigger: true, urgency: 4 },
+      offer.recipientId,
+      true,
     );
     return outcome(
       true,
       'offered',
-      `Offered ${described(world, offer)}. Nothing moves unless they accept within ${BASE_HANDOVER.offerSeconds / 60} game minutes; you can withdraw it.`,
+      'Offered ' +
+        describeItemOffer(world, offer) +
+        '. Nothing moves unless they accept within ' +
+        BASE_HANDOVER.offerSeconds / 60 +
+        ' game minutes; you can withdraw it.',
     );
   }
-  if (!isHandoverCommand(command))
-    return outcome(false, 'invalid-command', 'Choose an offer and a person.');
-  const other = getOwn(world.entities, command.targetId);
-  const reach = world.itemHandling.reach;
-  const offer = getOwn(world.itemOffers ?? {}, command.offerId);
-  const own =
-    command.operation === 'withdraw'
-      ? offer?.offererId === actor.id && offer.recipientId === command.targetId
-      : offer?.recipientId === actor.id && offer.offererId === command.targetId;
-  // Only the named parties may act; nobody else learns whether the offer exists.
-  if (!offer || !own)
-    return outcome(false, 'no-offer', 'There is no such offer between you and that person.');
-  if (command.operation === 'withdraw') {
+  const problem = itemOfferReplyProblem(world, actor, command);
+  if (problem) return problem;
+  const offer = world.itemOffers![command.offerId]!;
+  if (command.operation === 'withdraw' || command.operation === 'decline') {
+    const withdrawn = command.operation === 'withdraw';
     close(
       world,
       events,
       offer,
-      'offer-withdrawn',
-      subjectNarration(actor, `withdrew an offer of ${described(world, offer)}.`),
+      withdrawn ? 'offer-withdrawn' : 'offer-declined',
+      withdrawn ? 'withdrew' : 'declined',
       actor,
-      offer.recipientId,
+      command.targetId,
     );
-    return outcome(true, 'withdrawn', 'Offer withdrawn; nothing moved.');
-  }
-  if (command.operation === 'decline') {
-    close(
-      world,
-      events,
-      offer,
-      'offer-declined',
-      subjectNarration(actor, `declined an offer of ${described(world, offer)}.`),
-      actor,
-      offer.offererId,
+    return outcome(
+      true,
+      withdrawn ? 'withdrawn' : 'declined',
+      withdrawn ? 'Offer withdrawn; nothing moved.' : 'Offer declined; nothing moved.',
     );
-    return outcome(true, 'declined', 'Offer declined; nothing moved.');
   }
-  if (world.simTime >= offer.expiresAt) return outcome(false, 'expired', 'That offer has expired.');
-  if (!other || !seesEntity(world, actor, other) || !seesEntity(world, other, actor))
-    return outcome(false, 'not-visible', 'You and the offerer must be able to see each other.');
-  if (!canHandleItems(world, actor))
-    return outcome(false, 'unavailable', 'You cannot take items now.');
-  if (!canReachEntity(world, actor, other, reach))
-    return outcome(false, 'out-of-reach', "Move within arm's reach of the offerer to take it.");
-  if (!offerStillHeld(world, offer))
-    return outcome(false, 'offer-lapsed', 'The offered items are no longer available.');
   let itemId: string;
   try {
-    itemId = moveLot(world, offer.itemId, actor.id, offer.quantity, command.id);
+    itemId = offer.requested
+      ? moveLotsTogether(world, offerMoves(offer), command.id)[0]!
+      : moveLot(world, offer.offered.itemId, actor.id, offer.offered.quantity, command.id);
   } catch (error) {
     if (error instanceof WorkBudgetError) throw error;
-    return outcome(false, 'offer-lapsed', 'The offered items are no longer available.');
+    return outcome(
+      false,
+      'offer-lapsed',
+      offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
+    );
   }
-  close(
-    world,
-    events,
-    offer,
-    'offer-accepted',
-    subjectNarration(actor, `accepted an offer of ${described(world, offer)}.`),
-    actor,
-    offer.offererId,
-  );
-  return { ...outcome(true, 'accepted-offer', `Took ${described(world, offer)}.`), itemId };
+  close(world, events, offer, 'offer-accepted', 'accepted', actor, offer.offererId);
+  return {
+    ...outcome(
+      true,
+      'accepted-offer',
+      offer.requested
+        ? BASE_HANDOVER.text.exchanged(describeItemOffer(world, offer))
+        : 'Took ' + describeItemOffer(world, offer) + '.',
+    ),
+    itemId,
+  };
 }
-
-/** Close expired offers and those whose parties or items can no longer honor them.
- * Each change emits an event, which also invalidates cached simulation intervals. */
 export function reconcileItemOffers(world: WorldState, events: WorldEvent[]): void {
   if (!world.itemOffers) return;
   for (const offer of Object.values(world.itemOffers)) {
     const expired = world.simTime >= offer.expiresAt;
     if (!expired && able(world.entities[offer.recipientId]) && offerStillHeld(world, offer))
       continue;
-    const offerer = world.entities[offer.offererId];
-    const recipient = world.entities[offer.recipientId];
+    const offerer = world.entities[offer.offererId],
+      recipient = world.entities[offer.recipientId];
     close(
       world,
       events,
       offer,
       expired ? 'offer-expired' : 'offer-lapsed',
-      {
-        parts: [
-          ...(offerer ? [person(offerer, 'possessive'), ' offer'] : ['An offer']),
-          ` of ${described(world, offer)} ${expired ? 'expired' : 'lapsed'}.`,
-        ],
-      },
+      expired ? 'expired' : 'lapsed',
       offerer ?? recipient,
       offerer ? offer.recipientId : offer.offererId,
     );
   }
 }
-
 export function nextItemOfferDeadline(world: WorldState): number {
   let deadline = Infinity;
   for (const offer of Object.values(world.itemOffers ?? {}))
     deadline = Math.min(deadline, offer.expiresAt);
   return deadline;
 }
-
-/** Shape only: a dangling offer is ordinary state until reconciliation closes it. */
+function validLot(lot: OfferLot): boolean {
+  const pin = lot?.definitionPin;
+  return (
+    hasRecordFields(
+      lot,
+      ['itemId', 'definitionPin', 'quantity', 'whole', 'revision', 'placementRevision'],
+      ['contentsRevision', 'subtreeRevision'],
+    ) &&
+    isSafeRecordId(lot.itemId) &&
+    !!pin &&
+    hasRecordFields(pin, ['id', 'version', 'digest']) &&
+    isSafeRecordId(pin.id) &&
+    Number.isSafeInteger(pin.version) &&
+    pin.version > 0 &&
+    typeof pin.digest === 'string' &&
+    pin.digest.length > 0 &&
+    pin.digest.length <= 128 &&
+    Number.isSafeInteger(lot.quantity) &&
+    lot.quantity > 0 &&
+    typeof lot.whole === 'boolean' &&
+    revision(lot.revision) &&
+    revision(lot.placementRevision) &&
+    (lot.contentsRevision === undefined || revision(lot.contentsRevision)) &&
+    (lot.subtreeRevision === undefined || revision(lot.subtreeRevision))
+  );
+}
+/** Validate current shapes; dangling terms/memories are not an old-format reader. */
 export function validateItemOffers(world: WorldState): void {
+  for (const entity of Object.values(world.entities)) {
+    const remembered = entity.actor?.knownTradeLots;
+    if (remembered === undefined) continue;
+    if (!remembered || typeof remembered !== 'object' || Array.isArray(remembered))
+      throw new Error('Invalid item disclosures.');
+    for (const [holderId, lots] of Object.entries(remembered)) {
+      if (
+        !isSafeRecordId(holderId) ||
+        !lots ||
+        typeof lots !== 'object' ||
+        Array.isArray(lots) ||
+        Object.keys(lots).length > BASE_HANDOVER.candidateLots
+      )
+        throw new Error('Invalid item disclosures.');
+      for (const [id, known] of Object.entries(lots))
+        if (
+          !hasRecordFields(known, ['lot', 'name', 'description', 'disclosedAt']) ||
+          !validLot(known.lot) ||
+          id !== known.lot.itemId ||
+          typeof known.name !== 'string' ||
+          typeof known.description !== 'string' ||
+          !Number.isFinite(known.disclosedAt)
+        )
+          throw new Error('Invalid item disclosure.');
+    }
+  }
   if (world.itemOffers === undefined) return;
   if (!world.itemOffers || typeof world.itemOffers !== 'object' || Array.isArray(world.itemOffers))
     throw new Error('Invalid item offers.');
-  const perOfferer = new Map<string, number>();
-  const items = new Set<string>();
+  const perOfferer = new Map<string, number>(),
+    items = new Set<string>();
   for (const [id, offer] of Object.entries(world.itemOffers)) {
     if (
       !hasRecordFields(
         offer,
-        [
-          'id',
-          'offererId',
-          'recipientId',
-          'itemId',
-          'definitionId',
-          'quantity',
-          'createdAt',
-          'expiresAt',
-        ],
-        ['contentsRevision'],
+        ['id', 'revision', 'offererId', 'recipientId', 'offered', 'createdAt', 'expiresAt'],
+        ['requested'],
       ) ||
       id !== offer.id ||
-      ![offer.id, offer.offererId, offer.recipientId, offer.itemId, offer.definitionId].every(
-        isSafeRecordId,
-      ) ||
+      ![id, offer.offererId, offer.recipientId].every(isSafeRecordId) ||
       offer.offererId === offer.recipientId ||
-      !Number.isSafeInteger(offer.quantity) ||
-      offer.quantity < 1 ||
-      (offer.contentsRevision !== undefined &&
-        (!Number.isSafeInteger(offer.contentsRevision) || offer.contentsRevision < 0)) ||
+      !revision(offer.revision) ||
+      offer.revision < 1 ||
+      !validLot(offer.offered) ||
+      (offer.requested !== undefined && !validLot(offer.requested)) ||
       !Number.isFinite(offer.createdAt) ||
       !Number.isFinite(offer.expiresAt) ||
       offer.expiresAt <= offer.createdAt ||
-      // Same expression as creation, so fractional clocks cannot round a valid offer out.
-      offer.expiresAt > offer.createdAt + BASE_HANDOVER.offerSeconds ||
-      items.has(offer.itemId)
+      offer.expiresAt > offer.createdAt + BASE_HANDOVER.offerSeconds
     )
       throw new Error('Invalid item offer.');
-    items.add(offer.itemId);
+    for (const lot of [offer.offered, ...(offer.requested ? [offer.requested] : [])]) {
+      if (items.has(lot.itemId)) throw new Error('An item is promised twice.');
+      items.add(lot.itemId);
+    }
     const count = (perOfferer.get(offer.offererId) ?? 0) + 1;
     if (count > BASE_HANDOVER.pendingPerOfferer) throw new Error('Too many pending item offers.');
     perOfferer.set(offer.offererId, count);

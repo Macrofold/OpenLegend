@@ -4,10 +4,11 @@ import { GodCharacterActions, type GodCharacterControls } from './god-character-
 import { playerEntity } from '../entity-view';
 import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
+import { ItemTrade } from './item-trade';
 import { useState } from 'react';
 import { MemoryHistory } from './memory-history';
 import { Button as AriaButton } from 'react-aria-components';
-import type { ActionOption, EntityView, GameView } from '@open-legend/protocol';
+import type { ActionOption, ApiResult, EntityView, GameView } from '@open-legend/protocol';
 import {
   Button,
   Condition,
@@ -123,7 +124,7 @@ export function EntityDetail({
 }: {
   entity: EntityView;
   connected: boolean;
-  command(a: ActionOption): void;
+  command(a: ActionOption): Promise<ApiResult>;
   talk(id: string): void;
   godControls?: GodCharacterControls;
 }) {
@@ -153,7 +154,23 @@ export function EntityDetail({
           Talk to {namePhrase(entity, 'definite')}
         </Button>
       )}
-      <Actions actions={entity.actions} command={command} connected={connected} />
+      <Actions
+        actions={
+          entity.trade
+            ? entity.actions.filter((action) => action.command.type !== 'handover')
+            : entity.actions
+        }
+        command={command}
+        connected={connected}
+      />
+      {entity.trade && (
+        <ItemTrade
+          key={entity.trade.scope}
+          trade={entity.trade}
+          connected={connected}
+          command={command}
+        />
+      )}
       {godControls && (
         <GodCharacterActions entity={entity} connected={connected} controls={godControls} />
       )}

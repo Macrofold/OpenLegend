@@ -588,7 +588,9 @@ export function npcCandidates(
       offers: offering,
       maxLots: typed ? 12 : 4,
     })) {
-      const isOffer = option.command.handoverOperation === 'offer';
+      const isOffer =
+        option.command.handoverOperation === 'offer' ||
+        option.command.handoverOperation === 'counter';
       if (isOffer && offerCandidates >= (typed ? 24 : 12)) continue;
       if (!service.previewCommand(option.command, actorId).ok) continue;
       if (isOffer) offerCandidates++;

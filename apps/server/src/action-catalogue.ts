@@ -511,7 +511,18 @@ export function actionCatalogue(
             : {},
         )
       : [])
-      add(option.id, option.label, 'Social', option.command, ['offer', 'give', 'share'], target.id);
+      add(
+        option.id,
+        option.label,
+        'Social',
+        option.command,
+        ['offer', 'give', 'share'],
+        target.id,
+        {
+          availability: service.previewCommand(option.command, scope.actorId),
+          description: option.description,
+        },
+      );
     // Fire care binds the exact selected fire; one of light/put out applies to its current state.
     for (const option of target.heat
       ? fireCareOptions(world, itemUses, target, { eachLot: !!context.catalogue })

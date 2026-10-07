@@ -1,6 +1,6 @@
 # Parallel batch 04 — Expeditions and exchange — assignment tracker
 
-**Status: in progress, October 7, 2026.** PX01 is delivered on the integrated PG05/embodied-feedback baseline, PX03 discovery is delivered and reviewed, and PX04 paired outings are delivered; PX02 and PX05 retain their separate checks below. The original October 3 planning pass completed no runtime work; its local-main baseline was c4e18d91. Runtime tasks start from the integrated prerequisites in the technical design, not merely from the planning commit.
+**Status: in progress, October 7, 2026.** PX01 encounter integration, PX02 immediate barter, PX03 discoveries and PX04 voluntary outings are complete with the scoped evidence below; PX05 remains open. The original October 3 planning pass completed no runtime work; its local-main baseline was c4e18d91. Runtime tasks start from integrated prerequisites in the technical design, not merely from the planning commit.
 
 [Feature/acceptance](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Technical definitions](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](../projects/parallel-batch-04-expeditions-and-exchange-prompts.md) · [Numbers and prior batches](../projects/parallel-batches.md)
 
@@ -18,9 +18,11 @@ Parents: [PG05](parallel-batch-03-personal-game.md#pg05--first-threat-encounter-
 
 ## PX02 — Reciprocal barter
 
-- [ ] Extend current handover/custody to exact, revisioned, consensual two-sided exchange, preserving gifts under [PX02 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract).
-- [ ] Deliver readable player and actor choices without exposing private inventory; complete atomicity, changed-terms, refusal, replay and restart acceptance.
-- [ ] Reconcile BW20, immediate-barter DG06/ND09 and the relevant INV-20/PO portions; retain standing reservations, credit, currency, promise management and institutions as separate open scope.
+- [x] Extend current handover/custody to exact, revisioned, consensual two-sided exchange, preserving gifts under [PX02 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract).
+- [x] Deliver readable player and actor choices without exposing private inventory; complete atomicity, changed-terms, refusal, replay and restart acceptance.
+- [x] Reconcile BW20, immediate-barter DG06/ND09 and the relevant INV-20/PO portions; retain standing reservations, credit, currency, promise management and institutions as separate open scope.
+
+**Delivered October 5:** the [completed implementation plan](../projects/completed/px02-reciprocal-barter-plan.md) records decisions and the development base. One exact lot/quantity per side, replacement revisions and participant-only disclosed terms use the existing handover and ordinary object/claim owners. Current gifts retain sufficient-quantity behavior. [Verification](../verification/reciprocal-barter.md) records 26 native checks, authenticated command/projection, PostgreSQL rollback/reopening and lost-acknowledgment replay, actual narrow/keyboard/draft recovery and controlled voluntary resident acceptance/refusal. The [October 6 review](../verification/reciprocal-barter.md#october-6-review-and-matched-server-measurements) fixes work-dependent controls, open-offer disclosure retention, Inventory quantity maxima and shared draft recovery, and records reduced pending lookup/projection work. General preference/population acceptance, offer-table/lifecycle work and every broader economic/cooperation parent remain open. [BW11](../limits/base-world.md#bw11) owns the adopted PX-L01 first-family bounds.
 
 Parents: [base world](base-world.md), [persistent objects](persistent-objects.md), [inventions](inventions-and-world-evolution.md), [DG06](needs-design.md#dg06--reciprocal-exchange-and-small-cooperation). Consumes integrated PG03/PG04 action surfaces; does not depend on another PX task.
 
@@ -64,4 +66,4 @@ Parents: [shelter proposal](../projects/editable-shelters-feature-spec.md), [INV
 
 ## Completion and reconciliation
 
-Task-specific acceptance belongs to the feature/design pair above; this tracker owns checkbox state and parent disposition. [Proposed constraints](../limits/parallel-batch-04-expeditions-and-exchange.md) remain proposals until adopted into subsystem owners. The whole batch completes only after all five agreed assignments, their integration and actual required evidence are finished; drafting this allocation does not satisfy runtime scope. The owner integrates assignments without requiring task-to-task communication. Wider historical qualification is neither silently closed nor restarted by numbering this batch.
+Task-specific acceptance belongs to the feature/design pair above; this tracker owns checkbox state and parent disposition. [Constraint dispositions](../limits/parallel-batch-04-expeditions-and-exchange.md) record PX-L01 adoption into BW11; the other new constraints remain proposals until adopted into subsystem owners. The whole batch completes only after all five agreed assignments, their integration and actual required evidence are finished; drafting this allocation does not satisfy runtime scope. The owner integrates assignments without requiring task-to-task communication. Wider historical qualification is neither silently closed nor restarted by numbering this batch.

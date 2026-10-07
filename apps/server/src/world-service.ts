@@ -224,12 +224,23 @@ export const commandInputSchema = z
     operation: z.enum(['join', 'leave']).optional(),
     effectOperation: z.enum(['activate', 'deactivate']).optional(),
     fireOperation: z.enum(['light', 'fuel', 'extinguish']).optional(),
-    handoverOperation: z.enum(['offer', 'accept', 'decline', 'withdraw']).optional(),
+    handoverOperation: z.enum(['offer', 'counter', 'accept', 'decline', 'withdraw']).optional(),
     outingOperation: z.enum(['invite', 'accept', 'decline', 'leave']).optional(),
     outingId: id.optional(),
     outingMode: z.enum(['enqueue', 'replace', 'interrupt']).optional(),
     destinationId: id.optional(),
     offerId: id.optional(),
+    expectedOfferRevision: z.number().int().nonnegative().safe().optional(),
+    requestedItem: z
+      .object({
+        itemId: id,
+        quantity: z.number().int().positive().safe(),
+        expectedRevision: z.number().int().nonnegative().safe().optional(),
+        placementRevision: z.number().int().nonnegative().safe().optional(),
+        expectedContentsRevision: z.number().int().nonnegative().safe().optional(),
+      })
+      .strict()
+      .optional(),
     targetId: id.optional(),
     definitionId: id.optional(),
     distance: z.number().min(1.5).max(12).optional(),
@@ -4146,16 +4157,21 @@ export class WorldService {
       case 'handover':
         if (!input.targetId || !input.handoverOperation)
           return { ok: false, code: 'target', message: 'Choose a person and an offer.' };
-        if (input.handoverOperation === 'offer') {
+        if (input.handoverOperation === 'offer' || input.handoverOperation === 'counter') {
           if (!input.itemId || input.quantity === undefined)
             return { ok: false, code: 'item', message: 'Choose what to offer and how many.' };
           command = {
             ...envelope,
             type: 'handover',
-            operation: 'offer',
+            operation: input.handoverOperation,
             targetId: input.targetId,
             itemId: input.itemId,
             quantity: input.quantity,
+            ...(input.requestedItem ? { requested: input.requestedItem } : {}),
+            ...(input.offerId ? { offerId: input.offerId } : {}),
+            ...(input.expectedOfferRevision !== undefined
+              ? { expectedOfferRevision: input.expectedOfferRevision }
+              : {}),
             ...(input.expectedRevision !== undefined
               ? { expectedRevision: input.expectedRevision }
               : {}),
@@ -4168,13 +4184,15 @@ export class WorldService {
             ...(input.targetRevision !== undefined ? { targetRevision: input.targetRevision } : {}),
           };
         } else {
-          if (!input.offerId) return { ok: false, code: 'offer', message: 'Choose an offer.' };
+          if (!input.offerId || input.expectedOfferRevision === undefined)
+            return { ok: false, code: 'offer', message: 'Choose an offer and its current terms.' };
           command = {
             ...envelope,
             type: 'handover',
             operation: input.handoverOperation,
             targetId: input.targetId,
             offerId: input.offerId,
+            expectedOfferRevision: input.expectedOfferRevision,
           };
         }
         break;

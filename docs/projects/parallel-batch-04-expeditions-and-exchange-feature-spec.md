@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — feature specification
 
-| Status      | Current progress                                                                                                                                 | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | PX01 encounter integration, PX03 discovery and PX04 paired outings are delivered and reviewed; PX02, PX05 and broader qualification remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01 encounter integration, PX02 barter, PX03 discoveries and PX04 paired outings are delivered and reviewed; PX05 and broader qualification remain open. | 2026-10-07   |
 
 [Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](parallel-batches.md)
 
@@ -14,7 +14,7 @@ These are recommendations for subsequent work, not approval to run them or claim
 
 ### Evidence and exclusions
 
-Inspected local `main` at `c4e18d91` on October 3, 2026. The family authoring change is merged; it is not new work. `handover.ts` supports one-way offers, not reciprocal trade. `commitments.ts` records narrow spoken promises, not consenting control of another person's movement. Story selection already deduplicates character introductions, but the narration tracker explicitly leaves place and inventory-item exposure open. Known command execution, movement, activity interruption, object custody, perception and save integrity remain the foundations.
+Inspected local `main` at `c4e18d91` on October 3, 2026. The family authoring change is merged; it is not new work. At that historical baseline, `handover.ts` supported one-way offers, not reciprocal trade; PX02 now delivers immediate barter below. `commitments.ts` records narrow spoken promises, not consenting control of another person's movement. Story selection already deduplicates character introductions, but the narration tracker explicitly leaves place and inventory-item exposure open. Known command execution, movement, activity interruption, object custody, perception and save integrity remain the foundations.
 
 Worktree inspection found PG02 (`codex/pg02-attended-resident`), PG03 (`codex/pg03-action-clarity`) and PG04 (`codex/cheap-action-previews`) underway. `codex/embodied-feedback` separately implements injury presentation, direct targeting, corpse lifecycle and animal escape. Its checkpoint is evidence of overlapping work, not proof of merged/verified delivery. `codex/world-idea-repertoires` contains repertoire/research work; these tasks consume the current catalogue as inspiration and do not rewrite it. Worktree presence does not prove an agent is currently running. No other checkout was changed.
 
@@ -55,6 +55,8 @@ Use existing/integrated targeting, health feedback, escape, remains and combat. 
 The player can discover the danger without a compulsory fight, interpret a warning, avoid it, voluntarily engage with supported equipment, interrupt/escape, and see the actual encounter result. The opponent can lose sight, fail to reach, miss and stop for its authored reason. Demonstrate the approved loss/disconnection/recovery behavior, persistence and the absence of attacks against protected inactive people. Neither warning prose nor an AI claim causes damage. A second placement or changed obstacle uses the same rules without named-coordinate scripting. More creatures wait until this one is understandable and worth repeating.
 
 ## PX02 — Trade something useful
+
+**Delivered October 5:** the selected exact one-lot reciprocal family, revision-bound counteroffers, private disclosures and final joint custody now use the existing handover owner and integrated PG03/PG04. [Current contract](../worlds/base/social.md#offering-and-accepting-possessions), [tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter) and [actual evidence](../verification/reciprocal-barter.md) distinguish delivered/verified scope from remaining economic, reservation and general preference/scale work.
 
 ### Scope and player journey
 

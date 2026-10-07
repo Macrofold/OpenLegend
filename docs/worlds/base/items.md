@@ -59,18 +59,27 @@ access, while an empty list denies it. Restrictions apply through the containmen
 Carried bags remain private to their custodian unless the outer carried bag explicitly grants
 access. Handing items to another person is an offer that only they can accept
 ([social rules](social.md#offering-and-accepting-possessions)); moving items directly into
-another person's carried inventory is refused. Neither path reads the recipient's possessions.
+another person's carried inventory is refused. Gift and reciprocal-barter choices disclose only explicit exact terms, never a list of the recipient's possessions. Acceptance rechecks the named goods privately.
 Declared ownership remains separate from these permissions and from human-private notes.
 Creator controls can set/clear restrictions on world containers and their own carried bags;
 ordinary actors cannot grant themselves access. This is a physical-access foundation, not a
-lock-picking, trading or contested-ownership mechanic; consent to receive items is the offer
-exchange above.
+lock-picking or contested-ownership mechanic. Immediate reciprocal barter uses the same offer
+and custody owners; it grants no title, container access or inspection rights.
 
 Ingredient, food, ammunition and tool discovery includes accessible nested possessions.
 Equipping a nested tool moves it into the actor's equipment location through the same object
 owner. Transfer, split, merge and drop may coexist with unrelated work; operations touching
 active action dependencies or reservations, including descendants of a moved bag, reject.
-Equipment changes retain their separate active-work restriction.
+Equipment changes retain their separate active-work restriction. Reciprocal acceptance preflights both moves against
+final net container loads, contents identity and ordinary claims before publishing either move.
+Partial homogeneous transfers split before custody changes; whole individuals keep identity,
+and reciprocal lots stay distinct rather than merging into the other promised source. Failure
+discards the whole command draft. Existing gift merging and unrelated handling remain unchanged.
+Exact offer terms retain whether the actual lot is splittable or must move whole, including an
+equipped individual whose definition also permits homogeneous lots. Current-format saves must
+retain this distinction; unavailable remembered details never justify guessing it from the definition.
+[PX02 evidence](../../verification/reciprocal-barter.md) covers an invented individual tool,
+conservation, changed contents/work/reservations, a full-bag net-capacity swap and database rollback.
 
 Inventory supports scoped direct-child pages, search, breadcrumbs, split/merge and explicit
 container movement. Merge choices come from the whole current container, filtered by the merge

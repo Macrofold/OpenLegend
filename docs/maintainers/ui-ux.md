@@ -26,6 +26,8 @@ NP04 adds keyboard/pointer role pickers with named search/refresh/cancel control
 
 ## UIUX03
 
+- [ ] Reconcile the existing IW03 creator-editor layout references here and in the documentation changelog with the missing entry in `docs/limits/interface.md`. The October 6 PX02 link review confirmed this omission at the development base; use the existing editor implementation, decisions and scoped viewport evidence to restore the canonical limits record. Do not invent new layout rules or treat this documentation gap as failed barter acceptance.
+
 **PG03 review, October 4:** keyboard Show more expands 40 rows to 80 and focuses the first added command; refresh keeps that reading window. Search finds exact later-item identity across the whole result. Collapsed detail bodies are deferred while opened detail/focus survive pause/resume and narrow adaptation. [Review evidence](../verification/player-clarity-ui.md#requested-review-follow-up--october-4-2026) retains the selected scope and broader qualification gaps.
 
 **Open — qualify layout/input boundaries when those surfaces change.** Prioritize actual collisions, short/narrow overflow, text scaling, popup placement, dismissed-picker movement, wheel-through and drag/click ambiguity. Preserve selection/drafts through pane adaptation; child dismissal must not close the parent. Existing spatial/hearing trackers retain full-scene, touch and assistive-device qualification. [World contract](../ui-ux/world-interaction.md)
@@ -53,6 +55,8 @@ Native exact transfer, capacity, permission, incomplete-result and receipt scena
 NP04 completes the selected utility-container camp connection: shared source-free search, explicit approach/inspection, exact role selection, native review/admission and actual camp effects. [Evidence](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026) keeps wider PW04 recipient, bulk/trade, content, IME and assistive-device acceptance open.
 
 **PG03 contribution to UIUX04:** the existing native comparison leads from an actually crafted ranged tool and equipped knife into exact selected-item uses against perceived targets. The command keeps the chosen weapon/projectile, reports actual consumption and leaves equipped equipment unchanged for a ranged use. A possession leaving custody cannot silently substitute another item. [PG03 evidence](../verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) advances this scoped comparison/use journey without closing bulk/loadout/trading, complete inventory, first-encounter narration or general accessibility qualification.
+
+**PX02 contribution to UIUX04:** person/inventory exact reciprocal terms, renewed revision review, refusal/stale draft retention and ordinary accept/refuse controls now use the shared native authority. [Selected evidence](../verification/reciprocal-barter.md) qualifies this direct item-barter subset. Vendor/currency/fees, bulk/loadout trading, wider content/input/accessibility and population acceptance remain open; the older PW04/PG03 evidence above is retained at its recorded scope.
 
 ## UIUX05
 

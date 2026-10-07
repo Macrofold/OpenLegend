@@ -76,9 +76,11 @@ BG3/GW2 player discussions show both friction and disagreement about workarounds
 
 ## Future trading: inspect, agree, commit
 
-Trading is not another drag-and-drop animation. Identify direct exchange, vendor purchase, auction/order placement or asynchronous listing before implementation: guarantees and costs differ. This is future UX guidance, not a newly implemented economy.
+Trading is not another drag-and-drop animation. Identify direct exchange, vendor purchase, auction/order placement or asynchronous listing before implementation: guarantees and costs differ. PX02 now delivers the first direct item exchange below; vendor, market and commercial guidance remains future scope.
 
 For **direct exchange**, show both participants and offered sets, exact quantities, relevant item identity/state, currency and fees. Distinguish your side from the other side. Offer edits invalidate agreement to the prior revision; highlight changes and require renewed acceptance. The server exchanges atomically or reports actual failure; a changed offer cannot retain a misleading accepted state.
+
+**Current direct barter:** [PX02](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter) shows one exact lot and quantity per side, **You give / You receive**, current reply status and adjacent controls in person/inventory panels. Only previously disclosed other-person items appear, explicitly labeled last-known rather than live stock. Changed revisions require review; stale/refused attempts keep drafts. Inventory and person panels share the same draft and submission guard; the selected starting quantity is separate from the current available maximum. Reconnect/Resume/reopening retains private drafts within the same account, character and timeline, without resubmitting. Existing receipts and ordinary witnessed/private events show actual settlement. No currency, fees, vendor or listing is implied. [Selected actual evidence](../verification/reciprocal-barter.md) distinguishes client, database and controlled live resident results.
 
 For **market/vendor purchase**, show unit price, quantity, total, currency, fees, destination and availability. Distinguish asking price from completed-sale history, with source/time window when displaying market evidence. Selecting a listing is not buying. A changed price or unavailable listing cannot be accepted silently. Review expensive/destructive consequences without confirmation fatigue for harmless browsing.
 

@@ -279,6 +279,7 @@ function ancestorDeltas(
   destination: Entity | undefined,
   load: number | undefined,
   precedingDeltas?: ReadonlyMap<string, number>,
+  deferCapacity = false,
 ): Map<string, number> {
   const deltas = new Map<string, number>();
   for (const [parent, sign] of [
@@ -301,9 +302,14 @@ function ancestorDeltas(
       container.loadRevision !== container.subtreeRevision
     )
       throw new Error('Container capacity is unavailable.');
-    const next = checked(container.load + (precedingDeltas?.get(id) ?? 0) + delta, 'packing load');
-    if (next > definition.container.capacity)
-      throw new Error('The bag does not have enough packing capacity.');
+    if (!deferCapacity) {
+      const next = checked(
+        container.load + (precedingDeltas?.get(id) ?? 0) + delta,
+        'packing load',
+      );
+      if (next > definition.container.capacity)
+        throw new Error('The bag does not have enough packing capacity.');
+    }
     bump(container.subtreeRevision);
   }
   return deltas;
@@ -729,6 +735,7 @@ function itemMovePlan(
   destinationId: string,
   quantity: number,
   precedingDeltas?: ReadonlyMap<string, number>,
+  deferCapacity = false,
 ) {
   const entity = world.entities[id],
     lot = entity?.item,
@@ -773,6 +780,7 @@ function itemMovePlan(
     destination,
     load,
     precedingDeltas,
+    deferCapacity,
   );
   return { entity, lot, sourceId, deltas };
 }
@@ -816,6 +824,100 @@ export function itemStockMovesReason(
     if (error instanceof WorkBudgetError) throw error;
     return error instanceof Error ? error.message : 'Item movement is unavailable.';
   }
+}
+
+export interface JointItemMove {
+  itemId: string;
+  destinationId: string;
+  quantity: number;
+}
+
+/** Validate the final placement, not a fictitious full bag between the two moves.
+ * Access and consent belong to the caller; this owner protects ordinary placement,
+ * stock, work identity and packing integrity. Overlapping subtrees cannot be exchanged.
+ * docs/worlds/base/social.md#offering-and-accepting-possessions */
+function jointItemMovePlan(world: WorldState, moves: readonly JointItemMove[]) {
+  const selected = new Set<string>();
+  const deltas = new Map<string, number>();
+  const plans = moves.map((move) => {
+    if (selected.has(move.itemId)) throw new Error('Choose distinct objects.');
+    selected.add(move.itemId);
+    const plan = itemMovePlan(
+      world,
+      move.itemId,
+      move.destinationId,
+      move.quantity,
+      undefined,
+      true,
+    );
+    if (plan.sourceId === move.destinationId) throw new Error('Choose a different destination.');
+    for (const [id, delta] of plan.deltas) deltas.set(id, (deltas.get(id) ?? 0) + delta);
+    return { ...move, ...plan };
+  });
+  for (const plan of plans) {
+    if (
+      objectAncestors(world, plan.sourceId).some((entity) => selected.has(entity.id)) ||
+      objectAncestors(world, plan.destinationId).some((entity) => selected.has(entity.id))
+    )
+      throw new Error('Choose objects with separate contents and destinations.');
+  }
+  for (const [id, delta] of deltas) {
+    const container = world.entities[id]!.container!;
+    const capacity = world.itemDefinitions[container.definitionPin.id]!.container!.capacity;
+    if (checked(container.load + delta, 'packing load') > capacity)
+      throw new Error('The bag does not have enough packing capacity.');
+  }
+  return { plans, deltas };
+}
+
+export function jointItemMoveReason(
+  world: WorldState,
+  moves: readonly JointItemMove[],
+): string | undefined {
+  try {
+    jointItemMovePlan(world, moves);
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return error instanceof Error ? error.message : 'Item movement is unavailable.';
+  }
+}
+
+/** Caller owns the isolated command draft: a thrown failure discards all splits/moves.
+ * Split both sides before changing placement, then publish net container changes once.
+ * Reciprocal transfers retain distinct lots; merging into the other promised lot would
+ * change its identity before its move. Gifts retain moveLot's usual merging behavior. */
+export function moveLotsTogether(
+  world: WorldState,
+  moves: readonly JointItemMove[],
+  cause: string,
+): string[] {
+  const { plans, deltas } = jointItemMovePlan(world, moves);
+  const movedIds = plans.map((plan) =>
+    plan.quantity === plan.lot.quantity
+      ? plan.itemId
+      : splitLot(world, plan.itemId, plan.quantity, cause),
+  );
+  for (let index = 0; index < plans.length; index++) {
+    const plan = plans[index]!,
+      movedId = movedIds[index]!;
+    const moved = world.entities[movedId]!,
+      moving = moved.item!;
+    if (world.entities[plan.sourceId]?.actor?.equippedItemId === movedId)
+      world.entities[plan.sourceId]!.actor!.equippedItemId = null;
+    moving.revision = bump(moving.revision);
+    moved.placement = {
+      mode: 'contained',
+      parentEntityId: plan.destinationId,
+      revision: bump(moved.placement!.revision),
+    };
+    reindex(world, movedId, plan.sourceId, plan.destinationId);
+  }
+  publishDeltas(
+    world,
+    deltas,
+    plans.flatMap((plan) => [plan.sourceId, plan.destinationId]),
+  );
+  return movedIds;
 }
 
 export function moveLot(

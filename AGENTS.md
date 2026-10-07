@@ -41,6 +41,8 @@ For reports about AI calls through Jev, including progress updates and explanati
 
 The first step in every development task is to read the relevant context, estimate the lines of logic affected (excluding tests), assess risk and complexity, and plan the entire agreed implementation. Cover scope, affected owners, implementation steps, dependencies, required verification and concrete completion criteria, with detail proportional to the task.
 
+For code work, apply the [performance read requirement](#performance-guidance-before-code-work) before forming the plan.
+
 A conversation plan is sufficient for straightforward, low-risk work, including large mechanical changes whose behavior and verification are clear. Write a durable plan under `docs/projects/` before implementation when material risk, cross-layer contracts, staged delivery, coordination or unresolved design choices warrant it, even for a small change; update an existing project plan when available. Consider authority, privacy, data loss, compatibility, reversibility and the reach of affected behavior. Approximately 200 changed logic lines is a cue to reassess complexity, not a mandatory documentation threshold. Reassess as scope, risk or complexity grows and create/update the durable plan before continuing when warranted. Explicitly requested deliverables/checks and updates to affected existing specifications or trackers remain required.
 
 Identify unanswered developer questions during planning and follow [Resolve developer questions before dependent work](#resolve-developer-questions-before-dependent-work). Existing authorization remains sufficient for work whose decisions are settled. Keep the plan current as work proceeds.
@@ -66,7 +68,7 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 - Recording, retaining or presenting character knowledge/experience, including native discovery and remembered-information UI: read applicable [Memory architecture](docs/memory-architecture.md) sections even without AI. Introduction/story-selection changes also read [Replaceable story selection](docs/narration-and-conversations.md#replaceable-story-selection). Prose-only mentions do not trigger these reads.
 - Feature-spec/tech-design or architecture requests, changed engine/world contracts, or chat approval/start/continuation of a project plan: [Design](.agents/skills/openlegend-design/SKILL.md)
 - Requested or substantial implementation review: [Review](.agents/skills/openlegend-review/SKILL.md)
-- New or changed work on shared command, simulation-step or publication paths, hot paths, perception queries, scaling or latency investigation: read [Performance](.agents/skills/openlegend-performance/SKILL.md) before planning or changing those paths, including feature work without an explicit optimization request.
+- Code design, implementation or review, and performance/scaling/latency investigations: apply [Performance guidance before code work](#performance-guidance-before-code-work).
 - Movement, pathfinding, collision or navigation-preparation design, implementation or review in any layer: read the [movement contract](docs/spatial-world.md#movement); query/preparation changes also use [Performance](.agents/skills/openlegend-performance/SKILL.md). Prose-only mentions do not trigger these reads.
 - Event/history tracking, action outcomes, awareness, memories, recall, summaries or personal wording: read [Precise history and general causes](docs/engine-and-world-boundaries.md#preserve-precise-history-and-solve-the-general-cause) and the affected event/memory contract before changing producers or consumers.
 - Character creation/editing, backstories, personality/disposition, character behavior or changes to their cognition/context: read [Character authorship and changing personality](docs/projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality); for implementation or architecture work also read its [technical design](docs/projects/compelling-characters-tech-design.md). Apply the shared evidence/perspective boundaries to new producers and consumers.
@@ -76,6 +78,12 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 - Instructions, skills, adapters or their checker: [Guidance maintenance](.agents/skills/openlegend-guidance/SKILL.md)
 
 These routes select context, not additional authorization. Open matching files when native discovery is unavailable; follow conditional links only when relevant. Reuse loaded, current context. The optional [system guide](.agents/README.md) owns compatibility details.
+
+### Performance guidance before code work
+
+Read [Performance](.agents/skills/openlegend-performance/SKILL.md) before planning, implementing or reviewing executable behavior or runtime data flow. This includes ordinary features, fixes and refactors; new files; UI preparation/rendering, domain transitions, server/protocol delivery, AI orchestration, spatial queries, storage and executable tooling. Also read it before planning performance/scaling/latency investigations that do not change code. Apply this from the repository root or a package working directory, without waiting for a performance request, a measured bottleneck or an existing hot path. If relevance is uncertain, read it.
+
+Prose-only, comments-only and non-executable formatting changes do not trigger this read. Reuse the loaded guide when current and recheck applicability if scope changes. This is a context requirement, not permission to expand the task, add infrastructure or run benchmarks for every small code change; [Verification](.agents/rules/verification.md) still selects checks by impact.
 
 ## Development Philosophy
 

@@ -8,4 +8,4 @@ For stored-history joins, updates or derived projections, read the [identity con
 
 Keep provider/network/diagnostic I/O off the native critical path where semantics allow. Reuse existing scheduling, history and performance helpers; asynchronous work still needs an owner, bounded queues and failure handling. Do not add a second event bus, writable cache or mutation queue to bypass the first.
 
-Use the [AI skill](../../.agents/skills/openlegend-ai/SKILL.md) for cognition/provider/context work, [performance](../../.agents/skills/openlegend-performance/SKILL.md) for scheduling/scaling, and [save/load](../../docs/save-and-load.md) for storage/restoration. Keep local-development availability distinct from production/multiplayer readiness.
+Use the [AI skill](../../.agents/skills/openlegend-ai/SKILL.md) for cognition/provider/context work and [save/load](../../docs/save-and-load.md) for storage/restoration. Apply the [root performance read requirement](../../AGENTS.md#performance-guidance-before-code-work) before code work, including ordinary features. Keep local-development availability distinct from production/multiplayer readiness.

@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — technical task definitions
 
-| Status      | Current progress                                                                                                                                 | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | PX01 encounter integration, PX03 discovery and PX04 paired outings are delivered and reviewed; PX02, PX05 and broader qualification remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01 encounter integration, PX02 barter, PX03 discoveries and PX04 paired outings are delivered and reviewed; PX05 and broader qualification remain open. | 2026-10-07   |
 
 [Feature and acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Prompts](parallel-batch-04-expeditions-and-exchange-prompts.md)
 
@@ -54,9 +54,11 @@ Completion requires the formerly refused southward escape to produce an actual m
 
 ## PX02 — Reciprocal offer contract
 
+**Delivered October 5:** the implementation follows the immediate offer contract below. [Social rules](../worlds/base/social.md#offering-and-accepting-possessions) now own current behavior; [BW11](../limits/base-world.md#bw11) owns adopted PX-L01 bounds and recent explicit disclosures. [Evidence](../verification/reciprocal-barter.md) covers native, PostgreSQL, actual client and controlled voluntary resident decisions. Broader generalized agreements, currency, promises, standing reservations and population qualification remain outside PX02.
+
 ### Current owner and intended model
 
-`packages/domain/src/handover.ts` currently owns proposal, recipient reply, lapse and one-way custody. Extend that semantic owner, extracting local pure checks where useful. Update all current callers together; do not add compatibility readers for the old one-item offer format. Existing gifts become an offered side with no requested side, retaining their accepted behavior and visible text.
+`packages/domain/src/handover.ts` owns proposal, recipient reply, lapse and now both gift and reciprocal custody. Extend that semantic owner, extracting local pure checks where useful. Update all current callers together; do not add compatibility readers for the old one-item offer format. Existing gifts become an offered side with no requested side, retaining their accepted behavior and visible text.
 
 A pending reciprocal offer carries stable offer identity, revision, proposer, recipient, exact give/receive lot and quantity, definition/contents pins needed by current item semantics, and game-clock creation/expiry. The proposer’s explicit submission is consent to that revision. The named recipient's **Accept** command consents to the same revision. A counteroffer replaces the terms with a higher revision and makes its author the proposer; prior acceptance is invalid. Mutation requests carry expected offer revision plus the normal authenticated command/receipt identity. The proposer cannot accept their own offer for the other person.
 
@@ -64,7 +66,7 @@ Terms come from actor-permitted references. No response or choice catalogue may 
 
 ### Commit, lifecycle and observations
 
-- Offer creation moves/reserves nothing. Reuse applicable existing handover expiry/admission policies from the world; the proposed added cardinality is in the [batch constraints](../limits/parallel-batch-04-expeditions-and-exchange.md). References on both sides participate in conflict/lapse checks; no live proposal can promise the same lot twice through a gift/barter loophole.
+- Offer creation moves/reserves nothing. Reuse applicable existing handover expiry/admission policies from the world; the adopted added cardinality is in [BW11](../limits/base-world.md#bw11), with [PX-L01 disposition](../limits/parallel-batch-04-expeditions-and-exchange.md#px-l01--one-exact-lot-on-each-side-of-an-immediate-barter). References on both sides participate in conflict/lapse checks; no live proposal can promise the same lot twice through a gift/barter loophole.
 - Before acceptance, validate both actors' authority/participation/reach, exact terms, accessible custody, free units, current work, whole-object rules and container contents/access. Evaluate the **final joint placement**, including both sides' capacity if applicable. A valid reciprocal swap must not fail just because a hypothetical one-sided intermediate inventory would be full.
 - Perform both moves in one draft/transition through `objects.ts`/resource-claim helpers. Failure discards the whole draft. Avoid self/ancestor container cycles and overlapping offered/requested subtrees. Native exceptions or storage failure must not publish half an exchange. Effects and the command receipt commit together through current service persistence.
 - Acceptance closes the offer and emits the actual exchange. Decline/withdraw/expiry/lapse are distinct no-transfer endings. Ordinary perception supplies witnesses; only the two participants receive private terms. Memory stores what was actually experienced; speech claiming a deal is not evidence of transfer.
