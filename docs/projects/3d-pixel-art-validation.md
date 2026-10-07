@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | General family, publication and device qualification remain proposed; existing mercenary evidence covers only its named pilot scenarios. | 2026-10-04   |
+| Not started | General family, publication and device qualification remain proposed; existing mercenary evidence covers only its named pilot scenarios. | 2026-10-07   |
 
 **Status: required future evidence, not completed tests.** This document turns the [feature specification](3d-pixel-art-feature-spec.md) into reviewable experiments and acceptance scenarios. It does not authorize game changes, automated test authoring, live provider work, or spending.
 
@@ -61,7 +61,7 @@ These are required scenario outcomes. Select focused existing checks or manual s
 | Q02 | Replace a representation while moving across a ramp/support seam               | Feet, support, heading and actual route remain coherent; no body teleport or nav rebuild                        |
 | Q03 | Replace while holding/equipping/containing a real item                         | Exactly one item and correct placement/quantity; current attachment state wins                                  |
 | Q04 | Receive corpse art after harvesting/removal                                    | No resurrection, duplicate effect, old pose or phantom picker                                                   |
-| Q05 | Publish a model without the required current animation/state                   | Keep the compatible representation or approved state fallback; no silent loss of readability                    |
+| Q05 | First publication or replacement lacks the required current animation/state    | Retain adequate permitted prior/fallback art; without one, keep the new capability unready                      |
 | Q06 | Change appearance brief/style/physical profile while generation runs           | Exact stale/incompatible candidate rejection; unrelated ticks do not cause spurious rejection                   |
 | Q07 | Duplicate demand, double submit, reconnect and restart                         | Same durable work/receipts; no duplicate generation or publication                                              |
 | Q08 | Lose a provider admission response or cancel after dispatch                    | Uncertainty and financial reserve survive; no automatic paid retry/fallback                                     |
@@ -81,6 +81,8 @@ These are required scenario outcomes. Select focused existing checks or manual s
 | Q22 | Instance with nonhuman articulation and touch-only policy                      | Same rendering contracts without human/sight assumptions or invented actuator mechanics                         |
 | Q23 | Publish/rollback concurrently from two creator sessions                        | Expected-revision conflict, no last-write-wins overwrite of newer approved work                                 |
 | Q24 | Read current job status through ordinary player/NPC context                    | Only permitted art readiness; no private prompts, creator intent, hidden inventions or automatic fiction events |
+
+Q05 follows [minimum presentation adequacy](../invention-art-pipeline.md#21-adequacy-versus-polish), not a requirement to wait for optional polish. Qualify existing-fallback success separately from the no-adequate-fallback refusal. Run the relevant scenarios for each selected family; a first rigid-item proof does not need every humanoid, animal or construction case, and does not qualify them.
 
 Reuse corresponding SW/INV/PO/save evidence where unchanged; do not close broader parent tasks merely because one visual consumer passes.
 
