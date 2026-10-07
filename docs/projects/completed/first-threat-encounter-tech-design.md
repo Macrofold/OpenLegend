@@ -1,12 +1,14 @@
 # First threat encounter — technical design
 
-| Status    | Current progress                                                                                                                                       | Last updated |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Selected runtime, documentation, required review and focused native/service/browser verification are delivered; broader qualification remains tracked. | 2026-10-04   |
+| Status    | Current progress                                                                                                       | Last updated |
+| --------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Runtime and PX01 integration are qualified; broader human-conflict, player-learning and capacity work remains tracked. | 2026-10-06   |
 
 [Feature specification](first-threat-encounter-feature-spec.md) · [Current authored rules](../../worlds/base/first-threat-encounter.md)
 
 ## Scope, baseline and plan
+
+October 6 integration: [PX01](../parallel-batch-04-expeditions-and-exchange-tech-design.md#px01-integrated-delivery-plan--october-6) consumed the completed runtime at `0a3ab79b7a698a7f1941dc23722f89220d1ba425`, corrected direct walking across connected ground in the shared navigation owner, and qualified the encounter without changing its authored rules. [Current evidence](../../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) supplements the original results below.
 
 Initial design-only source inspection used `c4e18d91848b5b6d367dda1d7214a9f8222cf070`; the October 3 documentation delivery changed zero production logic lines and ran formatting/link/diff checks, without runtime or provider claims. Mike's October 4 revisions and chat go-ahead authorized complete runtime implementation. Four design commits were reconciled onto freshly fetched `origin/main` **d36ec3bd66f9b317748147003cc174f58cfd5642**, from `https://github.com/Macrofold/OpenLegend.git`.
 

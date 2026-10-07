@@ -139,6 +139,8 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 ### MP04.1 — Participation and bounded exit contract
 
+**PX01 integration qualified October 6:** [current-revision checks](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) exercise a new attack during exposed departure, protected inactivity after its fixed deadline, restored death and duplicate Continue, alongside the existing service absence/reconnect/restart checks. The unchanged PG05 tied-impact, multiple-tab and browser evidence remains applicable; this adds no hosted or coarse/background qualification.
+
 **Delivered encounter integration (October 4):** The bundled world now uses [five normally simulated seconds of full vulnerability](../worlds/base/player-danger.md#five-simulated-seconds-to-leave), saved as 300 game seconds. New animal attacks/death are possible; pause/navigation preparation/downtime spends none. Unfinished human work stops, no auto-retreat/new absent-player work starts, and protection wins tied discrete impact. Remaining exposure survives current-format restart, with no downtime combat. [PG05 evidence](../verification/first-threat-encounter.md) covers native/service/cold/browser cases. The earlier 15-real-second operational default remains for worlds without installed simulated exposure; it cannot override this authored rule. Broader PS-D01 coarse/background fairness and hosted MP gates remain open.
 
 - [x] Separate controlling/participating connections, followers, authentication expiry, viewport visibility and global pause. Persist one actor participation state and distinct operational exit identity/deadline.

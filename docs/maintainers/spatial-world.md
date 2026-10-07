@@ -298,6 +298,10 @@ Track only concrete future gaps here once evidenced: full volumetric/SVO navigat
 
 ## SW17 — Recast and round-body movement delivery
 
+**PX01 escape correction, October 6:** direct requests now reuse exact checked steering across connected ground before asking Recast for a detour. A real southward escape from the stag previously failed because raster corridor height exceeded the projection tolerance despite a valid physical connection. Both directions now reach their exact support, while existing obstacle/wrong-floor checks and changed-refuge refusal pass. [Evidence and matched route measurements](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) qualify this narrow correction; wider SW05/SW17 geometry work remains open.
+
+The [requested navigation review](../verification/first-threat-encounter.md#px01-navigation-review--october-6-2026) also restores direct ramp-foot entry and removes a duplicate destination from the support walk. Actual walking/restoration and bounded cold/warm checks at 32 authored surfaces and 128 blockers qualify those corrections. This does not close SW05's broader geometry or multi-actor capacity work; no additional navigation mechanism or cache was introduced.
+
 - [x] **SW17.1** Pin Recast and selective Rapier, initialize once at composition, use shared capsule/cylinder dimensions/margins and mechanical triangle input. Keep ordinary distance/support and acoustic semantics native; no new Rapier World.
 - [x] **SW17.2** Replace lattice-only routing with direct paths and Recast corridors; preserve exact endpoints/support seams, arbitrary-angle travel and bounded checked string-pulling. Use physical support height, not raster height; no mandatory position snapping.
 - [x] **SW17.3** Prepare reusable profile meshes in one worker, bound queue/output/runtime, prewarm, fence stale actions/maps/load epochs and dispose before replacement. Persist pending requests rather than native references. Required-data wait excludes new simulation time while retaining debt.

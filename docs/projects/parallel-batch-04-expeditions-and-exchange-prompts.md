@@ -1,12 +1,14 @@
 # Parallel batch 04 — Expeditions and exchange — assignment prompts
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five standalone prompts are prepared; their delivery and explicit prerequisite gates remain open. | 2026-10-04   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01 is completed; the retained prompts and prerequisites apply to the other assignments and future integration checks. | 2026-10-06   |
 
 Use the [allocation/readiness table](parallel-batch-04-expeditions-and-exchange-feature-spec.md#allocation-and-readiness) before distributing these. **PX01 is conditional on the approved encounter design and overlapping runtime work. PX04 needs integrated PG02. All runtime tasks consume integrated PG03/PG04 where relevant. PX05 is design only and can start independently.** The owner supplies the correct starting branch; these instructions do not direct workers to communicate with each other. [Technical boundaries](parallel-batch-04-expeditions-and-exchange-tech-design.md#shared-boundaries-and-delivery-order) settle shared ownership.
 
 ## 1. A readable wilderness threat — conditional implementation
+
+**Completed under [PX01](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px01--a-readable-wilderness-threat).** Retained original assignment; do not dispatch it again as a new encounter implementation.
 
 ```text
 Implement PX01: one readable wilderness threat with warning, a viable way to avoid it, voluntary confrontation and understandable aftermath. Follow AGENTS.md and applicable guidance.

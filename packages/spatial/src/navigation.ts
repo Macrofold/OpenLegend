@@ -103,10 +103,12 @@ export function findSurfaceRoute(
       expanded: 0,
     };
   if (from.surfaceId !== to.surfaceId) {
+    // A ramp can start inside the ground patch. Try a supported switch at either endpoint
+    // before following patch edges, which cannot discover that interior connection.
     for (const seam of [
       { ...from, surfaceId: to.surfaceId },
       { ...to, surfaceId: from.surfaceId },
-    ])
+    ]) {
       if (canWalkSegment(map, from, seam, body) && canWalkSegment(map, seam, to, body))
         return {
           status: 'reached',
@@ -114,6 +116,25 @@ export function findSurfaceRoute(
           length: distance3D(from, seam) + distance3D(seam, to),
           expanded: 0,
         };
+    }
+    // Exact connected ground can be walkable where raster heights reject a corridor.
+    // Reuse checked steering seams, but bind arrival to the requested support/floor.
+    // docs/spatial-world.md#movement
+    const path = walkSurfaceLine(map, from, to.x, to.z, body);
+    // Replace the final same-support leg with the exact destination and validate it below;
+    // keeping both would add a redundant waypoint and another movement check.
+    if (path?.at(-1)?.surfaceId === to.surfaceId) path.pop();
+    const end = path?.at(-1) ?? from;
+    if (path && path.length < SPATIAL_LIMITS.maxPathPoints && canWalkSegment(map, end, to, body)) {
+      path.push({ ...to });
+      let previous = from,
+        length = 0;
+      for (const point of path) {
+        length += distance3D(previous, point);
+        previous = point;
+      }
+      return { status: 'reached', path, length, expanded: 0 };
+    }
   }
   return {
     status: 'pending',

@@ -22,7 +22,7 @@ This avoids party command, formation/navigation and multi-party-consent semantic
 
 ## PX-L04 — Threat and construction boundaries retain their design owners
 
-**No tuning values invented by this allocation.** PG05 owns the creature/encounter and recovery proposals; current body/attack/navigation limits remain controlling until approved changes. PX05 refines the existing shelter inventory. A batch number or acceptance scenario creates no health, pursuit, loss, part-count or simulation-capacity limit. Conditional readiness is not runtime permission.
+**No tuning values invented by this allocation.** PG05 owns the implemented creature/encounter and recovery rules; PX01 integration preserves their [FT01–FT07 limits](base-world.md#ft01--proposed-first-threat-scope-and-reward). Its direct-walking correction preserves [spatial bounds](spatial.md#sp02). PX05 refines the existing shelter inventory. A batch number or acceptance scenario creates no health, pursuit, loss, part-count or simulation-capacity limit. Conditional readiness is not runtime permission.
 
 ## Review and history
 

@@ -44,9 +44,9 @@ The main world must make killing consequential: these characters have histories 
 
 The selected first implementation confirms one potentially lethal ordinary strike/hunt, with no universal incapacitation or execution-only state. [Player Danger](player-danger.md#final-blow-confirmation) owns exact reviewed costs, target/source life, cancellation, staleness and persistent death. A distinct unconscious-target final blow remains a possible future design, not current behavior. Confirmation must bind to the current target/action and cannot authorize unrelated later killing. Track indirect hazards, queued attacks, NPC combat and permission changes explicitly so a modal is not mistaken for a complete lethal-action rule. Ordinary environmental consequences and risky creator law changes retain their own approved policies.
 
-## Proposed first encounter
+## First encounter delivery
 
-The original design-only PG05 proposal was superseded by Mike's October 4 runtime authorization and revised danger/death/logout choices. The [implemented stag encounter](first-threat-encounter.md) has an optional safe bypass, finite useful cache, natural contact, bounded observation-based pursuit, permanent displacement/death, one-attempt lethal review and recoverable player death. [Evidence](../../verification/first-threat-encounter.md) states actual native/service/browser checks and capacity limits. Broader BW14/D07, BW15 and PS05 remain open; ordinary PvP, inactive protection and property policy are not weakened.
+The original design-only PG05 proposal was superseded by Mike's October 4 runtime authorization and revised danger/death/logout choices. The [implemented stag encounter](first-threat-encounter.md) has an optional safe bypass, finite useful cache, natural contact, bounded observation-based pursuit, permanent displacement/death, one-attempt lethal review and recoverable player death. [Evidence](../../verification/first-threat-encounter.md) states actual native/service/browser checks and capacity limits; [PX01 integration](../../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) qualifies the combined delivery and its escape-route correction without revising those rules. Broader BW14/D07, BW15 and PS05 remain open; ordinary PvP, inactive protection and property policy are not weakened.
 
 ## Maintained records
 
