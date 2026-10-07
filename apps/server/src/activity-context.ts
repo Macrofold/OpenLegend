@@ -505,11 +505,37 @@ export function learnedActivityCandidates(
   }
   return results;
 }
-export function remainingActivityText(world: WorldState, actorId: string): string {
-  const plan = world.entities[actorId]?.actor?.agency.plan;
-  if (!plan || plan.status === 'completed' || plan.status === 'cancelled')
-    return 'No remaining chosen work.';
+export function remainingActivityText(
+  world: WorldState,
+  actorId: string,
+  plan = world.entities[actorId]?.actor?.agency.plan,
+): string {
+  if (!plan) return 'No remaining chosen work.';
+  // Personal outcomes are selected as required memories. This projection owns only
+  // executable status and remaining work. docs/projects/compelling-characters-tech-design.md
   const execution = plan.activity;
+  const facts: ActivityView['facts'] = execution?.reason
+    ? [{ name: 'stopped because', value: execution.reason, critical: true }]
+    : [];
+  if (execution?.archivedSteps)
+    facts.push({
+      name: 'earlier steps',
+      value: `${execution.archivedSteps} earlier steps are recorded separately; they are not included in this summary`,
+      critical: true,
+    });
+  if (execution?.control) {
+    const budget = execution.control.budget;
+    const unit =
+      activityHostForCommand(world, budget.command)?.definition.spending?.unit ?? 'units';
+    facts.push({
+      name: 'chosen limits and actual progress',
+      value: `Stop at simulation time ${execution.control.deadline}. Used ${execution.spent ?? 0} of at most ${budget.maximumSpent} ${unit}; admitted ${execution.attempts ?? 0} of at most ${budget.maximumAttempts} attempts.${execution.interrupted ? ' Attendance was interrupted; continuous care cannot be claimed.' : ''} Completed transfers stay in their actual destination.`,
+      critical: true,
+    });
+  }
+  const terminal = plan.status === 'completed' || plan.status === 'cancelled';
+  if (terminal)
+    return `Chosen work is ${plan.status}. No remaining steps in this plan. Actual outcomes are in my selected memories; finishing steps does not establish goal fulfillment.`;
   const children = plan.steps
     .filter((step) => step.status === 'queued' || step.status === 'running')
     .map((step) =>
@@ -536,18 +562,11 @@ export function remainingActivityText(world: WorldState, actorId: string): strin
           ),
         ),
     );
-  const facts: ActivityView['facts'] = execution?.reason
-    ? [{ name: 'stopped because', value: execution.reason, critical: true }]
-    : [];
-  if (execution?.control) {
-    const budget = execution.control.budget;
-    const unit =
-      activityHostForCommand(world, budget.command)?.definition.spending?.unit ?? 'units';
-    facts.push({
-      name: 'chosen limits and actual progress',
-      value: `Stop at simulation time ${execution.control.deadline}. Used ${execution.spent ?? 0} of at most ${budget.maximumSpent} ${unit}; admitted ${execution.attempts ?? 0} of at most ${budget.maximumAttempts} attempts.${execution.interrupted ? ' Attendance was interrupted; continuous care cannot be claimed.' : ''} Completed transfers stay in their actual destination.`,
-      critical: true,
-    });
-  }
-  return `${ACTIVITY_SYNTAX}\n${renderActivity({ name: method?.name ?? 'Chosen work', facts, children }, 'Remaining')}${plan.status === 'blocked' ? ' Choosing a new action replaces this stopped plan. Completed effects and spent materials remain.' : ' Choosing a different action interrupts this activity; completed effects and spent materials remain.'}`;
+  const disposition =
+    plan.status === 'blocked'
+      ? 'Choosing a new action replaces this stopped plan.'
+      : plan === world.entities[actorId]?.actor?.agency.suspended
+        ? 'This work is paused; its remaining steps are not currently running.'
+        : 'Choosing a different action interrupts this activity.';
+  return `${ACTIVITY_SYNTAX}\n${renderActivity({ name: method?.name ?? 'Chosen work', facts, children }, 'Remaining')} ${disposition} Completed effects and spent materials remain.`;
 }

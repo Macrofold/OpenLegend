@@ -356,7 +356,14 @@ export function validActionInvocation(world: WorldState, raw: unknown): raw is A
     );
   if (v.itemId !== null || v.quantity !== null) return false;
   if (v.family === 'move') {
-    if (v.distance !== null || v.relation !== null || v.onLost !== null || v.until !== null)
+    // A target approach already means near. Repeating that meaning is usable;
+    // other relations or distances would change the requested movement.
+    if (
+      v.distance !== null ||
+      (v.relation !== null && !(v.place === 'target' && v.relation === 'near')) ||
+      v.onLost !== null ||
+      v.until !== null
+    )
       return false;
     if (v.place !== null)
       return (

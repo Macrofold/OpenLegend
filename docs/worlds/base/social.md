@@ -1,5 +1,7 @@
 # Relationships, feelings and promises
 
+Character authorship follows [evolving history and disposition](../../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality): starter Ada enjoys quiet animal observation, without a supply condition or standing camp instruction. Ordinary spoken welcome/refusal reaches cognition; it is not a special social mechanic. [PG02 comparisons](../../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) retain actual choices, failures and limits.
+
 This page owns the bundled world's current social rules and their visible limits. It does not prescribe universal kinship, emotion or obligation laws for the engine. General ownership and privacy remain in [Architecture](../../architecture.md#actor-means-any-living-being), [knowledge](../../knowledge.md) and the [boundary principles](../../engine-and-world-boundaries.md#design-principles-for-every-feature).
 
 ## Understanding another person

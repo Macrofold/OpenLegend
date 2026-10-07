@@ -201,7 +201,7 @@ export function createWorld(
         traits: [],
         personality: 'Reserved and practical.',
         backstory:
-          'I am a travelling mercenary wearing a red cape embroidered with peacocks. I have arrived at this clearing. I distinguish what I observe here from what I have yet to learn.',
+          'I am a travelling mercenary. I make my living through travel and practical work.',
       }),
     },
     {

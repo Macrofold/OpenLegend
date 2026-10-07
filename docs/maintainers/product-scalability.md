@@ -65,6 +65,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 ## PS05 — Transitions, protection, logout, and clocks
 
+**Delivered detailed encounter portion:** [PG05/PX01](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) demonstrates the installed five-second simulated departure, possible new animal harm during that interval, preserved aftermath and protected inactivity after it. The fixed deadline cannot be renewed by the attacker. Current-revision native/service/SQL checks supplement PG05 browser evidence. General coarse/background combat, standing defenses, detail transitions and the cross-boundary acceptance below remain open; no whole PS05 checkbox is closed by this site.
+
 **Owners:** spatial/time, participation/access, world policy, save/load. **Depends on:** PS02–PS04 capabilities used by each behavior.
 
 - [ ] Materialize valid current activities with bounded preparation, shared overlap handling, and demotion hysteresis.

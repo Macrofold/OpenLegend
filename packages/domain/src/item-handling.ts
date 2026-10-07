@@ -1,3 +1,4 @@
+import { subjectNarration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
@@ -166,7 +167,7 @@ export function pickUpItems(
     world,
     events,
     'items-picked-up',
-    `${namePhrase(actor, 'definite', { capitalize: true })} picked up ${description}.`,
+    subjectNarration(actor, `picked up ${description}.`),
     actor,
     pile.id,
   );
@@ -243,7 +244,10 @@ export function dropItems(
     world,
     events,
     'items-dropped',
-    `${namePhrase(actor, 'definite', { capitalize: true })} dropped ${quantity} ${world.itemDefinitions[item.definitionId]!.name}.`,
+    subjectNarration(
+      actor,
+      `dropped ${quantity} ${world.itemDefinitions[item.definitionId]!.name}.`,
+    ),
     actor,
     pile.id,
   );

@@ -565,7 +565,7 @@ describe(
       ).toEqual([`${job.id}:attempt:0:route`]);
       const stimulus = (route.state as { decisionContext: { stimulus: string } }).decisionContext
         .stimulus;
-      expect(stimulus).toContain('A deer died.');
+      expect(stimulus).toContain('The deer died');
 
       // The decision finished on its own (continuing existing behavior) without waiting for reflection.
       expect(job).toMatchObject({
@@ -831,7 +831,7 @@ describe(
       for (const question of Object.values(rating.questions))
         expect(question).toMatchObject({
           type: 'noul',
-          instructions: expect.stringContaining('offer concrete progress'),
+          instructions: expect.stringContaining('serve a current need, intention or interest'),
         });
       expect(job).toMatchObject({
         status: 'completed',
@@ -973,7 +973,7 @@ describe(
       const nativeStimulus = (
         routeRequest(h, native.id)!.state as { decisionContext: { stimulus: string } }
       ).decisionContext.stimulus;
-      expect(nativeStimulus).toContain('A deer died.');
+      expect(nativeStimulus).toContain('The deer died');
       const eventQueued = (await h.store.getIntegration(h.reflectionKey)) as
         | { origin: string; reason: string }
         | undefined;

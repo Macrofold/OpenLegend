@@ -108,6 +108,8 @@ PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters
 
 ### AG06 — Goal/plan-aware context and derived interests
 
+PG02’s [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) qualifies exact recent outcomes through required memory selection, remaining paused work, source-linked correction/forgetting and shared personal grammar. Complete identity remains required. Current interests, needs and chosen intentions use one shared action rating policy in shortlisting and final selection; thresholds, interest compilation and native eligibility remain unchanged.
+
 The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) now supplies capability-rich possessions, reserved bound tools, relevant-possession fingerprints and explicit revision-bound inventory inspection. Oversized preparation falls back to a disclosed page plus bound tools. [Native measurements](../verification/embodied-survival.md#inventory-preparation) cover 1k/8k inventories. Actor-proposed interests beyond the existing selected-evidence/native-prerequisite compiler, full relevance/expiry qualification, pre-materialization paging and bounded weapon-by-target candidate preparation remain open; these are not established by a final 16-item context.
 
 - [x] Derive material interests from known pending native steps even without a prior selected-object subscription; keep matching restricted to perceived candidates.
@@ -126,6 +128,10 @@ PW03/PW10 add a narrow AG06 inspection consumer: one currently accessible select
 **Exit evidence:** a newly adopted need for a known material can attend to a currently visible resource that was absent from the preceding selected-object list. Goal changes expire the old cue; unchanged goals do not rebuild every context. Relevant contrary evidence and danger survive focused planning; mandatory context overflow fails before paid dispatch.
 
 ### AG07 — Meaningful feedback, survival and bounded reconsideration
+
+[CF01/CF04](parallel-batch-06-rivals-and-contested-ground.md) propose combat choices and voluntary help through this same feedback/plan owner, consuming PG02 rather than replacing it with an enemy or companion controller. No runtime or broader quality criterion closes through those definitions.
+
+PG02’s native/live episodes connect actual completion with ordinary reconsideration. Corrected-content Ada switched from cord work to hare observation; a repeated trial instead stocked further. Material hunger can explicitly abandon unfinished work without refunding costs; native interruption separately resumes remaining steps. An unchanged opportunity buys no request. [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) completes verified publication and ordinary subsequent action with corrected content. No scheduler or automatic goal completion was added ([evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices)).
 
 **Implemented behavior reversal; integration qualification remains open:** [Embodied survival](../projects/embodied-survival-tech-design.md#remove-choices-retain-bodily-mechanics) removes this bundled world's automatic person-controller berry seeking/eating and associated food-specific protection. The completed adequacy-based fix below remains historical evidence; its automatic-feeding premise is superseded. Deterministic physiology and incapacity checks remain, while unavailable cognition may now leave an NPC unfed. Coordinate EPR04 rather than preserving feeding autopilot as an acceptance requirement.
 
@@ -214,6 +220,8 @@ The [October 2 Engineer 3 report](../verification/camp-life.md#engineer-3--conta
 | Crowded scene and long history        | Bounded candidates and diagnostics; relevant protected evidence and fair admission survive                                                                    |
 
 ### AG12 — Behavioral value and cost, separately authorized
+
+PG02’s [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) distinguishes live choices/effects, native supplied controls, confounded setups and provider failure. Independent observation is re-demonstrated without conditional biography; contrary stockpiling, failed prompt variants and actual costs remain. Reliable endings, freely chosen suspended-work resumption and whole-life quality remain open. [October 6 publication](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) now passes, while unchanged personal files and empty knowledge/goal changes leave lasting content-specific influence unqualified.
 
 **Owner:** cognition/INV research evaluation and verification. **Depends on:** AG11 for tested boundaries, relevant CR12/CH03/INV live gates. Fixture success is not evidence that the chosen model spontaneously produces useful behavior.
 

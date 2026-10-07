@@ -246,7 +246,7 @@ One navigation worker per application owns at most six body-profile meshes and o
 
 **Current · Restrictiveness: Medium.**
 
-Recast uses 0.08 m horizontal / 0.05 m vertical cells, 64-cell tiles, contour error 0.1, 0.2 m candidate height projection, 0.01 m body skin and zero physical step height. Exact supports and full-body sweeps validate proposals. Same-support string pulling considers at most 24 future points per pass. Larger simplification work or coarser rasterization is not permission to cross geometry.
+Recast uses 0.08 m horizontal / 0.05 m vertical cells, 64-cell tiles, contour error 0.1, 0.2 m candidate height projection, 0.01 m body skin and zero physical step height. Exact supports and full-body sweeps validate proposals. Direct cross-surface requests try checked endpoint support changes, then checked straight walking with exact final-support validation and the existing 2,048-point bound; [PX01](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) removed a demonstrated false refusal without widening the 0.2 m projection tolerance or any collision limit. Same-support string pulling considers at most 24 future points per pass. Larger simplification work or coarser rasterization is not permission to cross geometry.
 
 **Reason / tradeoff:** Practical worker preparation with continuous placement and demonstrated narrow-passage calibration; broader geometry/profile qualification remains SW17. [Calibration contract](../../archive/07-technical-architecture/spatial-world-runtime.md#movement-calibration).
 

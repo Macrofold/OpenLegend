@@ -1,3 +1,4 @@
+import { subjectNarration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { releaseWork } from './work-budget.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -44,7 +45,7 @@ function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): v
     world,
     events,
     'departed',
-    `${namePhrase(entity, 'definite', { capitalize: true })} left the clearing.`,
+    subjectNarration(entity, `left the clearing.`),
     entity,
     undefined,
     { significant: true },
@@ -166,7 +167,7 @@ export function changeParticipation(
         world,
         events,
         'returned',
-        `${namePhrase(entity, 'definite', { capitalize: true })} returned to the clearing.`,
+        subjectNarration(entity, `returned to the clearing.`),
         entity,
         undefined,
         { significant: true },

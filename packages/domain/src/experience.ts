@@ -35,7 +35,7 @@ import {
 } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
-import { memoryPerspective } from './memory-perspective.js';
+import { personalText } from './narration.js';
 import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
 
 export const EXPERIENCE_LIMITS = {
@@ -401,6 +401,8 @@ function applyExperienceMutation(
       world.innerWorlds = committed.innerWorlds;
       world.actorKnowledge = committed.actorKnowledge;
       world.observerIdentities = committed.observerIdentities;
+      world.actionExperience = committed.actionExperience;
+      world.appraisals = committed.appraisals;
       world.knowledgeRevisions = committed.knowledgeRevisions;
       return [...new Set([...updates, ...additions])];
     }
@@ -819,7 +821,7 @@ export function acceptConsolidation(
     return {
       id: existing[0]?.id ?? `${id}:${i}`,
       revision: Math.max(0, ...existing.map((s) => s.revision ?? 0)) + 1,
-      text: memoryPerspective(world, actorId, group.text),
+      text: personalText(world, actorId, group.text),
       from: Math.min(...entries.map((s) => previous.get(s.id)?.from ?? s.at)),
       to: Math.max(...entries.map((s) => s.at)),
       sourceIds: [...new Set(entries.flatMap((s) => previous.get(s.id)?.sourceIds ?? [s.id]))],
@@ -899,11 +901,30 @@ export function invalidateExperience(
 ): string[] {
   const state = world.experience!;
   const affected = new Set(sourceIds);
-  for (const memory of world.memories[actorId] ?? [])
-    if (memory.eventId && affected.has(memory.eventId)) affected.add(memory.id);
   let expanded = true;
+  const include = (id: string | undefined) => {
+    if (id && !affected.has(id)) {
+      affected.add(id);
+      expanded = true;
+    }
+  };
   while (expanded) {
     expanded = false;
+    // A native action and its experienced result are two views of the same source.
+    // Forgetting either must not let the other reintroduce that private experience.
+    for (const memory of world.memories[actorId] ?? []) {
+      if (
+        (memory.eventId && affected.has(memory.eventId)) ||
+        (memory.activityId && affected.has(memory.activityId))
+      )
+        include(memory.id);
+      if (affected.has(memory.id)) include(memory.activityId);
+    }
+    for (const occurrence of world.actionExperience.occurrences[actorId] ?? []) {
+      if (affected.has(occurrence.id)) include(occurrence.resultMemoryId);
+      if (occurrence.resultMemoryId && affected.has(occurrence.resultMemoryId))
+        include(occurrence.id);
+    }
     for (const [source, correction] of Object.entries(state.corrections?.[actorId] ?? {}))
       if (affected.has(correction) && !affected.has(source)) {
         affected.add(source);

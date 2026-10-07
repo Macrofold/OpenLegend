@@ -1,8 +1,8 @@
 # First threat encounter — feature specification
 
-| Status    | Current progress                                                                                                                                       | Last updated |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | Selected runtime, documentation, required review and focused native/service/browser verification are delivered; broader qualification remains tracked. | 2026-10-04   |
+| Status    | Current progress                                                                                                       | Last updated |
+| --------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Runtime and PX01 integration are qualified; broader human-conflict, player-learning and capacity work remains tracked. | 2026-10-06   |
 
 [Technical design](first-threat-encounter-tech-design.md) · [Current world rules](../../worlds/base/first-threat-encounter.md)
 
@@ -45,6 +45,8 @@ Use ordinary In view, selected-object inspection, inventory actions, current wor
 The final-blow dialog describes one attempt and persistent death, initially focuses Cancel, supports Escape, contains keyboard input and restores focus. It neither locks the target nor pauses mechanics. Duplicate confirmation cannot spend twice or authorize another body. Desktop/compact controls scroll without losing Continue/Cancel; existing accessible selection and movement work for keyboard/touch. Existing original deer artwork and simple attack preparation are honest first visuals; there is no bespoke charge/antler collision/audio asset claim. Faster simulation shortens cues, so normal-speed readability and accelerated accessibility are different claims.
 
 ## Acceptance for subsequent implementation
+
+The October 6 [PX01 integration](../../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) verifies the integrated implementation, including a corrected southward escape route, while reusing the unchanged PG05 browser and wider lifecycle evidence. It does not establish uncoached learning, live-model quality or broader capacity.
 
 Stable criteria from the original design are retained below with Mike's authorized replacements for enrollment, collapse and wall-time departure. [Actual evidence and limitations](../../verification/first-threat-encounter.md) distinguish native, service, browser and performance checks; a written criterion is not itself a pass.
 

@@ -53,7 +53,12 @@ import {
   countMetric,
   startRuntimeMonitoring,
 } from './performance.js';
-import { amendCommitment, stateOwnerCapabilities, observerDescription } from '@open-legend/domain';
+import {
+  ACTIVITY_LIMITS,
+  amendCommitment,
+  stateOwnerCapabilities,
+  observerDescription,
+} from '@open-legend/domain';
 import { traceHistory, traceDetails } from './cognition-inspection.js';
 import { admitStatusEffectPolicy, admitCognitionPolicy } from '@open-legend/domain';
 import { inspectGodMind } from './god-mind.js';
@@ -245,6 +250,7 @@ const godAwareness = z
   .strict();
 const godMemory = z
   .object({
+    activityId: requestIdSchema.optional(),
     obligation: z
       .object({
         revision: z.number().int().min(0),
@@ -266,7 +272,9 @@ const godMemory = z
     kind: z.enum(['episode', 'belief', 'commitment', 'reflection']),
     source: z.enum(['observed', 'heard', 'felt', 'internal', 'inferred', 'self_thought']),
     responseId: requestIdSchema.optional(),
-    summary: z.string().max(20_000),
+    // A native result can fill its existing 32 KiB source allowance. Do not reject
+    // an unchanged result merely because the creator edits its importance.
+    summary: z.string().max(ACTIVITY_LIMITS.recordBytes),
     at: z.number().finite().min(0),
     entityIds: z.array(requestIdSchema).max(100),
     eventId: requestIdSchema.optional(),

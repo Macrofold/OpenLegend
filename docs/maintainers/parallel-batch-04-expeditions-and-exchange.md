@@ -1,16 +1,18 @@
 # Parallel batch 04 — Expeditions and exchange — assignment tracker
 
-**Status: proposed October 3, 2026.** Five follow-on assignments are defined after batch 03; none is completed by this planning work. Local-main source baseline: c4e18d91. Runtime tasks start from the integrated prerequisites in the technical design, not merely from this planning commit.
+**Status: in progress, October 6, 2026.** PX01 is delivered on the integrated PG05/embodied-feedback baseline; the other assignments retain their separate checks below. The original planning baseline was c4e18d91. Runtime tasks start from the integrated prerequisites in the technical design, not merely from the planning commit.
 
 [Feature/acceptance](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Technical definitions](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](../projects/parallel-batch-04-expeditions-and-exchange-prompts.md) · [Numbers and prior batches](../projects/parallel-batches.md)
 
 ## PX01 — A readable wilderness threat
 
-October 4 reconciliation: PG05 now delivers this overlapping encounter scope on `codex/pg05-first-threat`, including the owner-selected danger/death choices. Its [evidence](../verification/first-threat-encounter.md) and [current contract](../worlds/base/first-threat-encounter.md) supersede the old missing-choice assumption. Keep the integration checks below open until that branch is integrated; reconcile PX01 to the remaining integration/invalidated evidence rather than reimplementing the same encounter.
+**Completed October 6.** Supplied revision `0a3ab79b7a698a7f1941dc23722f89220d1ba425` includes PG05 and the overlapping injury/targeting/escape/remains work. PX01 reused that delivery, corrected a reachable escape route refused at a ground seam, and qualified the integrated encounter through native commands, player projection and PostgreSQL reconstruction. [Integration evidence](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) separates the new checks from reused PG05 browser/lifecycle evidence and wider unqualified behavior. No encounter, recovery or protection rule was replaced.
 
-- [ ] Prerequisites supplied: PG05's paired encounter design with relevant owner decisions settled, plus the integrated/qualified overlapping embodied-feedback behavior. **Not ready at the inspected planning baseline.**
-- [ ] Deliver warning, avoidance, engagement and aftermath under [PX01 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px01--a-readable-wilderness-threat) and [technical ownership](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px01--encounter-implementation-contract), preserving protection and actor-permitted pursuit.
-- [ ] Complete integrated encounter acceptance, including loss/disconnection/recovery, and reconcile the exact delivered portions of PG05/BW14/MP04/PS05 without closing broader human-conflict or ghost scope.
+The [requested review](../verification/first-threat-encounter.md#px01-navigation-review--october-6-2026) is complete: direct ramp entry is retained, the longer support walk avoids a repeated destination, and matched bounded measurements plus actual walking/escape checks pass. Broader geometry/capacity qualification remains with SW05/SW17 and the existing parent trackers.
+
+- [x] Prerequisites supplied: PG05's paired encounter design with relevant owner decisions settled, plus integrated/qualified overlapping embodied-feedback behavior.
+- [x] Deliver warning, avoidance, engagement and aftermath under [PX01 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px01--a-readable-wilderness-threat) and [technical ownership](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px01--encounter-implementation-contract), preserving protection and actor-permitted pursuit. Warning means observable signs and actual preparation, not a guaranteed safe interval.
+- [x] Complete integrated encounter acceptance, including changed geometry, miss, blocked reach/return, loss/disconnection/recovery and persistence; reconcile the exact delivered portions of PG05/BW14/MP04/PS05/DG07/ND11 without closing broader human-conflict or ghost scope.
 
 Parents: [PG05](parallel-batch-03-personal-game.md#pg05--first-threat-encounter-design), [base world](base-world.md), [multiplayer](multiplayer.md), [product scalability](product-scalability.md), [DG07/ND11](needs-design.md#dg07--human-participation-and-recoverable-conflict). Embodied-feedback's actual injury/targeting/escape/remains work is a prerequisite consumer, not a duplicate task.
 
@@ -24,6 +26,8 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 
 ## PX03 — Useful discoveries and known places
 
+[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) proposes an occupied-site discovery/return consumer of this place owner. Its merge dependency remains explicit; the new batch does not supply a duplicate memory store or change PX03 completion evidence.
+
 - [ ] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
 - [ ] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.
 - [ ] Reconcile NC09–NC12's exposure subset, DG01/ND18 and relevant SW/memory work. Preserve broader narration, story and world-map acceptance.
@@ -31,6 +35,8 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 Parents: [narration](narration-and-conversations.md), [spatial world](spatial-world.md), [DG01/ND18](needs-design.md#dg01--actions-and-first-encounters). PG03 excludes this new encounter scope; its action presentation remains a consumed prerequisite.
 
 ## PX04 — Voluntary shared outings
+
+[CF04](parallel-batch-06-rivals-and-contested-ground.md#cf04--a-companion-who-can-help-in-a-fight) is the proposed later combat-help consumer. It extends supplied request/consent semantics while keeping a trip separate from consent to fight and preserving independent withdrawal. PX04 is still a prerequisite, not repeated or marked complete by that allocation.
 
 - [ ] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
 - [ ] Deliver invitation, voluntary acceptance/refusal, travel, arrival and leaving; complete changed-work, interruption, privacy, blocked-route and save/replay acceptance.

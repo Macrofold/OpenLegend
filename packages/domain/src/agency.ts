@@ -1,4 +1,5 @@
 import { activitySpendCeiling } from './activity-hosts.js';
+import { person, type Narration } from './narration.js';
 import { itemFor } from './objects.js';
 import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
 import {
@@ -117,8 +118,10 @@ export interface PlanStep {
   status: 'queued' | 'running' | 'completed' | 'blocked' | 'cancelled';
   actionId?: string;
   outcome?: Outcome;
+  resultMemoryId?: string;
 }
 export interface ActorPlan {
+  resultMemoryId?: string;
   activity?: ActivityExecution;
   id: string;
   revision: number;
@@ -127,6 +130,7 @@ export interface ActorPlan {
   steps: PlanStep[];
 }
 export interface ActorAgency {
+  lastResultMemoryId?: string;
   attempts: {
     id: string;
     description: string;
@@ -155,6 +159,25 @@ export interface ActorAgency {
   history: PlanStep[];
   places?: RememberedPlace[];
 }
+/** Existing plan/history bounds limit these actor-local references. Retrieval applies
+ * correction, forgetting and retention; execution receipts cannot recreate lost evidence. */
+export function requiredOutcomeMemoryIds(world: WorldState, actorId: string): string[] {
+  const agency = world.entities[actorId]?.actor?.agency;
+  if (!agency) return [];
+  const plans = [agency.plan, agency.suspended];
+  return [
+    ...new Set(
+      [
+        agency.lastResultMemoryId,
+        ...plans.flatMap((plan) =>
+          plan ? [plan.resultMemoryId, ...plan.steps.map((step) => step.resultMemoryId)] : [],
+        ),
+        ...agency.history.map((step) => step.resultMemoryId),
+      ].filter((id): id is string => !!id),
+    ),
+  ];
+}
+
 export function seedAgency(objectives: string[] = []): ActorAgency {
   return {
     revision: 0,
@@ -472,6 +495,8 @@ function retirePlan(world: WorldState, actor: ActorComponent, actorId?: string):
   cancelPlan(world, actor, actorId);
   actor.agency.history.push(...current.steps.map(cloneValue));
   actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
+  // Retirement consumes the frontier; replacement must not archive it again.
+  actor.agency.plan = null;
 }
 /** Explicit replacement follows native cancellation: spent inputs are never refunded, and
  * work that was paused for later resumption is discarded too. */
@@ -539,12 +564,13 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
   if (restartId && !isSafeRecordId(restartId))
     return outcome(false, 'cannot-pause', 'This work has been paused too many times.');
   if (actor.action) {
-    endActivity(
-      world,
-      actorId,
-      actor.action.id,
-      outcome(false, 'paused', 'Paused for other work; this step restarts later.'),
-    );
+    if (step)
+      step.resultMemoryId = endActivity(
+        world,
+        actorId,
+        actor.action.id,
+        outcome(false, 'paused', 'Paused for other work; this step restarts later.'),
+      );
     releaseInvocationResources(world, actor.action.id);
     actor.action = null;
   }
@@ -555,7 +581,12 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
       outcome: outcome(false, 'paused', 'Paused for other work; restarted later as a new step.'),
     });
     actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
-    const { actionId: _action, outcome: _outcome, ...rest } = cloneValue(step);
+    const {
+      actionId: _action,
+      outcome: _outcome,
+      resultMemoryId: _memory,
+      ...rest
+    } = cloneValue(step);
     plan.steps[running] = {
       ...rest,
       id: restartId,
@@ -640,15 +671,31 @@ function resumeSuspended(world: WorldState, actorId: string): void {
   actor.agency.plan = paused;
   actor.agency.revision++;
   actor.planGeneration++;
-  appendMemory(world, actorId, {
+  recordPlanResult(world, actorId, paused, {
+    parts: [
+      person(actorId, 'possessive'),
+      reason
+        ? ` paused work (${name}) could not resume: ${reason} Nothing more of it was done.`
+        : ` paused work (${name}) resumed. The stopped step restarts from its beginning.`,
+    ],
+  });
+}
+
+/** Plan-control results use the same personal memory owner as physical outcomes. */
+export function recordPlanResult(
+  world: WorldState,
+  actorId: string,
+  plan: ActorPlan,
+  summary: string | Narration,
+): void {
+  plan.resultMemoryId = appendMemory(world, actorId, {
     kind: 'episode',
     source: 'internal',
-    summary: reason
-      ? `My paused work (${name}) could not resume: ${reason} Nothing more of it was done.`
-      : `I resumed my paused work: ${name}. The step I stopped restarts from its beginning.`,
+    importance: 6,
     entityIds: [actorId],
-    importance: 5,
+    summary,
   });
+  world.entities[actorId]!.actor!.agency.lastResultMemoryId = plan.resultMemoryId;
 }
 
 /** Cancellation and suspended-work discard share one terminal report. The marker
@@ -660,21 +707,31 @@ function summarizeStoppedActivity(
   reason?: string,
 ): void {
   const execution = plan.activity;
-  if (!execution?.control || execution.terminal) return;
+  const ownerId = actorId ?? plan.steps[0]?.command.actorId;
+  if (!execution?.control) {
+    if (ownerId)
+      recordPlanResult(world, ownerId, plan, {
+        parts: [
+          person(ownerId, 'possessive'),
+          ` chosen work was cancelled at simulation time ${world.simTime}. ${plan.steps.filter((step) => !step.actionId).length} queued steps never started. Previously committed effects and costs remain; no further result is claimed.`,
+        ],
+      });
+    return;
+  }
+  if (execution.terminal) return;
   execution.pending = [];
   execution.terminal = true;
   execution.reason =
     reason ??
     'The chosen activity was stopped. Completed transfers remain in their actual destination.';
-  const ownerId = actorId ?? plan.steps[0]?.command.actorId;
-  if (ownerId)
-    appendMemory(world, ownerId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: 6,
-      entityIds: [ownerId],
-      summary: `${execution.request?.name ?? 'My chosen activity'}: ${execution.reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts. The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' I was not attending throughout.' : ''}`,
-    });
+  if (ownerId) {
+    recordPlanResult(
+      world,
+      ownerId,
+      plan,
+      `${execution.request?.name ?? 'Chosen activity'}: ${execution.reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts. The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' Attendance was interrupted.' : ''}`,
+    );
+  }
 }
 
 /** An explicit stop ends paused work too; nothing of it resumes. The paused
@@ -715,7 +772,7 @@ export function cancelPlan(
         actor.planGeneration++;
       }
       if (step.actionId)
-        endActivity(
+        step.resultMemoryId = endActivity(
           world,
           step.command.actorId,
           step.actionId,
@@ -736,7 +793,7 @@ export function finishPlanAction(
   actionId: string,
   result: Outcome,
 ): void {
-  endActivity(world, actorId, actionId, result);
+  const resultMemoryId = endActivity(world, actorId, actionId, result);
   releaseInvocationResources(world, actionId);
   const actor = world.entities[actorId]!.actor!;
   const plan = actor.agency.plan;
@@ -759,6 +816,16 @@ export function finishPlanAction(
       throw new Error('Counted activity completion violated its trusted spending contract.');
     if (result.ok) plan!.activity.spent = (plan!.activity.spent ?? 0) + result.spent!;
   }
+  step.resultMemoryId =
+    resultMemoryId ??
+    appendMemory(world, actorId, {
+      kind: 'episode',
+      source: 'internal',
+      importance: 5,
+      entityIds: [actorId],
+      summary: `The requested action (${step.command.purpose ?? step.command.type}) ${result.ok ? 'reported completion' : 'was refused'}: ${result.message} Result code: ${result.code}.`,
+    });
+  actor.agency.lastResultMemoryId = step.resultMemoryId;
   step.outcome = result;
   // Key outputs by the producing node, never by whichever node ran last: a step queued
   // outside the activity must not overwrite an activity output binding.
@@ -782,37 +849,8 @@ export function finishPlanAction(
       : 'active';
   plan!.revision++;
   actor.agency.revision++;
-  // Exhausting chosen steps is meaningful feedback; ordinary intermediate progress
-  // remains native. This never completes the actor's broader goal.
-  if ((!result.ok || plan!.status === 'completed') && !plan!.activity?.control) {
-    // Name the actual finished work; a bare completion marker has no meaning
-    // when recalled without the plan. A completed attempt can still be a miss.
-    const children = plan!.steps
-      .filter((entry) => entry.status === 'completed' || entry.status === 'blocked')
-      .map(
-        (entry) =>
-          (entry.actionId && occurrenceFor(world, actorId, entry.actionId)?.view) || {
-            name: entry.command.purpose ?? entry.command.type,
-            facts: [],
-            result: entry.outcome!.message,
-          },
-      );
-    const purpose = plan!.activity
-      ? (plan!.activity.request?.name ??
-        world.actionExperience.methods[plan!.activity.methodId ?? '']?.name)
-      : plan!.steps.at(-1)?.command.purpose;
-    const results = renderActivity(
-      { name: purpose ?? 'Chosen actions', facts: [], children },
-      'What happened',
-    );
-    appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      summary: `${results}${plan!.activity && (plan!.activity.archivedSteps ?? 0) > 0 ? ' Earlier completed steps are recorded separately and are not repeated here.' : ''}`,
-      entityIds: [actorId],
-      importance: 6,
-    });
-  }
+  // Exact action results already belong to personal memories. The plan retains references,
+  // not another narrative of the same effects. Goal completion remains actor-declared.
 }
 export function readyPlanStep(world: WorldState, actorId: string): PlanStep | undefined {
   const actor = world.entities[actorId]!.actor!;
@@ -903,6 +941,7 @@ export function validateAgency(world: WorldState): void {
       throw new Error('Invalid saved remembered places.');
     if (
       !agency ||
+      (agency.lastResultMemoryId !== undefined && !isSafeRecordId(agency.lastResultMemoryId)) ||
       !Array.isArray(agency.attempts) ||
       agency.attempts.length > 4 ||
       !Number.isSafeInteger(agency.revision) ||
@@ -997,6 +1036,7 @@ export function validateAgency(world: WorldState): void {
       if (
         plan &&
         (!isSafeRecordId(plan.id) ||
+          (plan.resultMemoryId !== undefined && !isSafeRecordId(plan.resultMemoryId)) ||
           !Number.isSafeInteger(plan.revision) ||
           plan.revision < 1 ||
           !['active', 'blocked', 'completed', 'cancelled'].includes(plan.status) ||
@@ -1021,6 +1061,7 @@ export function validateAgency(world: WorldState): void {
       ...agency.history,
     ]) {
       if (
+        (step.resultMemoryId !== undefined && !isSafeRecordId(step.resultMemoryId)) ||
         (step.targetEpisodes !== undefined && !validActionTargets(step.targetEpisodes)) ||
         !isSafeRecordId(step.id) ||
         !isPlannedCommand(step.command) ||
@@ -1403,7 +1444,13 @@ export function proposeActionRevision(
     appendMemory(world, actorId, {
       kind: 'episode',
       source: 'internal',
-      summary: `A revised action needs my decision: ${fulfillment.executableDescription}. Not fulfilled: ${fulfillment.omitted.map((o) => o.requirement).join('; ')}.`,
+      summary: {
+        parts: [
+          'A revised action needs ',
+          person(actorId, 'possessive'),
+          ` decision: ${fulfillment.executableDescription}. Not fulfilled: ${fulfillment.omitted.map((o) => o.requirement).join('; ')}.`,
+        ],
+      },
       entityIds: [actorId],
       importance: 6,
     });

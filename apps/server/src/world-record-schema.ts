@@ -312,12 +312,14 @@ columns(
     at: numberColumn('at'),
     status: textColumn('status'),
     purpose_id: textColumn('parentId'),
+    result_memory_id: textColumn('resultMemoryId'),
   },
   [
     ['actor_id', 'position'],
     ['actor_id', 'source_id'],
     ['actor_id', 'status'],
     ['actor_id', 'purpose_id'],
+    ['actor_id', 'result_memory_id'],
   ],
 );
 columns(

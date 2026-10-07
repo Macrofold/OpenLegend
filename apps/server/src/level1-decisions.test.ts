@@ -924,12 +924,13 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(jobs).toHaveLength(1);
     const [job] = jobs;
     expect(request.requestId).toBe(`${job!.id}${ROUTE}`);
-    expect(job?.result).toMatchObject({ level1: { kind: 'act', rating: 0.9 } });
-    // The current native prerequisites reject the stale choice before it joins a plan.
-    expect(h.service.world.responseReceipts?.[job!.id]?.components['action']).toMatchObject({
-      ok: false,
-      code: 'not-edible',
+    // Dropping the food produced new personal evidence after preparation. The source
+    // fence refuses that stale decision before action admission; no paid retry follows.
+    expect(job?.status).toBe('failed');
+    expect((await h.trace(job!.id)).stage('Workflow failure')[0]?.input).toMatchObject({
+      reason: expect.stringContaining('Action outcomes changed'),
     });
+    expect(h.service.world.responseReceipts?.[job!.id]).toBeUndefined();
     await h.service.tick(0.1);
     await h.director.idle();
     expect(h.ada().agency.plan).toBeNull();

@@ -1,3 +1,4 @@
+import { subjectNarration } from './narration.js';
 import { mutateExperience } from './experience.js';
 import { draftWorld } from './draft.js';
 import { appendMemory, finish, outcome } from './events.js';
@@ -105,7 +106,7 @@ export function recordSpokenPromise(world: WorldState, event: WorldEvent): void 
   appendMemory(world, actorId, {
     kind: 'commitment',
     source: 'observed',
-    summary: event.text,
+    summary: subjectNarration(actorId, ['said: ', String(event.data?.['text'] ?? '')]),
     eventId: event.id,
     eventType: 'speech',
     speakerId: actorId,

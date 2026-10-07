@@ -1,4 +1,4 @@
-import { namePhrase, type Named } from '@open-legend/language';
+import { namePhrase, personalPronoun, type Named } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
 import { observerName, recognizesSubject } from './worlds/base/knowledge.js';
 import { hasMemory } from './living.js';
@@ -75,12 +75,12 @@ export function speechDescription(speech: PerceivedSpeech): string {
     : undefined;
   if (speech.perception === 'seen') return `${name ?? 'Someone'} appears to be speaking.`;
   const words = speechWords(speech);
-  if (speech.perception === 'self') return `I said: “${words}”`;
+  if (speech.perception === 'self') return `${personalPronoun('subject')} said: “${words}”`;
   if (speech.intelligibility === 'none')
     return name
       ? `${name} is ${speech.delivery === 'whisper' ? 'whispering' : speech.delivery === 'shout' ? 'shouting' : 'saying'} something; the words are unintelligible.`
-      : 'I hear indistinct speech nearby.';
-  return `${speech.intelligibility === 'partial' ? 'I partly heard' : 'I heard'} ${name ?? 'someone nearby'}: “${words}”${speech.intelligibility === 'partial' && speech.segments.some((part) => part.kind === 'unintelligible') ? ' Other words were unintelligible.' : ''}`;
+      : `${personalPronoun('subject')} hear indistinct speech nearby.`;
+  return `${personalPronoun('subject')} ${speech.intelligibility === 'partial' ? 'partly heard' : 'heard'} ${name ?? 'someone nearby'}: “${words}”${speech.intelligibility === 'partial' && speech.segments.some((part) => part.kind === 'unintelligible') ? ' Other words were unintelligible.' : ''}`;
 }
 /** Called once per utterance/listener inside event commitment, never during projection.
  * docs/hearing-and-speech.md#5-one-occurrence-listener-specific-evidence */

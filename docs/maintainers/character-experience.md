@@ -6,7 +6,15 @@ The first useful scope is one resident whose body experience, desire for contact
 
 ## CE01 — A coherent authored person in a supported world
 
-[PG02](parallel-batch-03-personal-game.md#pg02--coherent-attended-resident-behavior) proposes the next bounded attended-world integration: current concerns, actual outcomes, reconsideration and stopping through existing character owners. It excludes new psychological meters, family disclosure and unattended communities; the complete CE acceptance below remains open.
+[CF01/CF04](parallel-batch-06-rivals-and-contested-ground.md) propose hostile residents and voluntary combat help as further consumers of ordinary minds. Explicit authored initial purposes do not prove spontaneous motivation, and a biography must not prescribe the decision algorithm. Their planned evidence does not close this broader character-quality scope.
+
+The owner’s [authorship clarification](../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality) distinguishes evolving history/disposition from prescribed behavior and transient circumstances. Ada now has a simple observation preference; the supply-dependent clause, current camp assertion and generic reasoning/narration instructions are removed. The old stopping episode remains evidence for the old content and cannot qualify this revision. Whole-life acceptance remains open.
+
+[PG02](parallel-batch-03-personal-game.md#pg02--coherent-attended-resident-behavior) implements unified required experience selection and shared native perspective rendering. [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) demonstrates a freely chosen switch from cord work to hare observation with corrected content; contrary repetition remains explicit. [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) closes PG02’s last blocked execution check.
+
+- [x] Clarify character authorship versus behavior prescription and add the required development reading route; remove the rejected Ada clauses.
+- [x] Audit the other starter resident: replace the mercenary’s generic epistemic/current-clearing instruction with personal travel/work background. This checks current starter seeds, not every future character definition.
+- [x] Re-demonstrate a bounded freely chosen pursuit/switch with disposition-only content, retaining failed comparisons and complete cost. Repeatability remains CE05; no conditional instruction was restored.
 
 **Owners:** [base-world character content](base-world.md), [actor identity and relationships](actor-model.md) and [accepted personal knowledge](cognition-redesign.md). Coordinate ND04's later personality development without making that whole program a prerequisite.
 
@@ -18,6 +26,8 @@ The first useful scope is one resident whose body experience, desire for contact
 
 ## CE02 — Meaningful psychological experience and its lifetime
 
+[October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) retains live eating under hunger, sufficiently fed work/observation, ordinary welcome/refusal and interruption by bodily urgency. Ada independently chose hare-following after completed cord work in one compliant-content trial; others repeated stocking. Self-directed discomfort retains source and decay lifetime. These are bounded contrasts, not measured enjoyment/belonging or reliable satisfaction. No proximity/activity-based fulfillment or psychological quantity was added.
+
 **Owners:** [feeling and relationship foundations, ACT07/ACT08](actor-model.md#advanced-emotional-state-foundation), and [accepted mind/knowledge behavior](cognition-redesign.md); existing body and world-definition owners retain their consequences.
 
 - [ ] Specify how each initial experience becomes relevant, persists, changes, competes with other concerns and can subside or end. Hunger is experienced bodily pressure grounded in actual physiology. Wanting company, belonging and enjoyment must have intelligible causes and possible satisfaction, disappointment or reprioritization; proximity or an activity label alone does not guarantee fulfillment.
@@ -27,6 +37,11 @@ The first useful scope is one resident whose body experience, desire for contact
 **Exit:** the initial experiences have understandable beginnings, changes and endings through actual supported behavior, with existing feeling persistence, correction, privacy and authored-world boundaries preserved.
 
 ## CE03 — The world and inner experience enter attention coherently
+
+PG02 selects exact outcomes as required personal memories and keeps current/paused execution status separate. Optional relevance failure, cold storage, correction/forgetting, source freshness and literal quotes are qualified natively. [October 6 evidence](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) completes ordinary quiet reflection with corrected content, verified publication and a subsequent real greeting/cord action. It adds no changed files, goals, knowledge or feelings, so lasting content-specific influence remains unqualified. Displayed reflection thoughts alone remain presentation, not accepted knowledge. No new review cadence or scheduler was added.
+
+- [x] Unify required recent outcomes with source-linked personal experience selection; remove duplicated plan outcome prose while preserving bounded required evidence and explicit missing coverage.
+- [x] Share participant grammar across native memories/events, feelings, body/status, contacts, action results, speech and correction. Verify self/other/unknown attribution, personal/reflexive/possessive forms and literal quotes; arbitrary prose correctness remains separately governed.
 
 **Owners:** [cognition context, attention and reflection](cognition-redesign.md), [agency context and reconsideration, AG06/AG07](agent-agency.md), and existing perception/intake owners; [conversation work](narration-and-conversations.md) retains evidence and expression.
 
@@ -38,6 +53,8 @@ The first useful scope is one resident whose body experience, desire for contact
 
 ## CE04 — A complete life episode with continued activity
 
+PG02 now demonstrates a bounded cord-to-observation switch with disposition-only biography. Bodily urgency can replace unfinished work, retaining committed costs; native controls separately prove remaining-step resumption and exactly-once meal effects. A later live comparison returned to stockpiling after eating, so freely chosen resumption, reliable endings and a whole ordinary afternoon remain unqualified. [Evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices).
+
 **Owners:** existing [goals, plans and continuation](agent-agency.md), [conversation](narration-and-conversations.md), [recall](cognition-redesign.md) and [playable content](base-world.md). Reuse actor foundations and current action families.
 
 - [ ] Deliver the [complete behavioral flows](../projects/compelling-characters-feature-spec.md#complete-behavioral-flows) through ordinary player and NPC surfaces. Include a whole afternoon, social approach/refusal, solitary enjoyment, bodily reprioritization, purposeful repetition and interruption/resumption. These are open situations with legitimate alternatives, not a mandatory itinerary.
@@ -47,6 +64,8 @@ The first useful scope is one resident whose body experience, desire for contact
 **Exit:** one recognizable resident sustains meaningful, revisable pursuits across an observed episode and later return. Interaction is worthwhile without requiring constant emergencies, maximum action variety or compulsory player caretaking.
 
 ## CE05 — Integrated character quality and complete-cost qualification
+
+PG02 retains provider outages, invalid/confounded setups, unsuccessful interest/rubric/generation comparisons, stockpiling and rejected requests alongside successful native/live controls. Required memories and shared native grammar are delivered; the generalized action policy recognizes current interests in both shortlist and final selection. [October 5 comparisons](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) and [October 6 completion](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) record complete known cost and conservative uncertainty. Repeatability, lasting inner influence, freely chosen resumption and whole-life quality remain open.
 
 **Owners:** [behavioral evaluation, AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized), and [cognition qualification, CR12](cognition-redesign.md), remain the comparison and evidence owners. This tracker records whether their combined findings satisfy the feature; it creates no independent test program.
 

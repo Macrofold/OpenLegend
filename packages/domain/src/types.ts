@@ -288,6 +288,8 @@ export interface Entity extends Named {
   heat?: HeatComponent;
 }
 export interface MemoryRecord {
+  /** Actual native attempt that produced this personal result, not new execution authority. */
+  activityId?: string;
   obligation?: import('./commitments.js').Obligation;
   /** Native attribution survives event-log rotation; never supplied by model proposals. */
   eventType?: string;
@@ -318,6 +320,7 @@ export interface KnowledgeRecord {
  * docs/events-perception-and-reactions.md#4-scope-and-event-identity */
 export type EventScope = 'external' | 'private' | 'system';
 export interface WorldEvent {
+  narration?: import('./narration.js').Narration;
   scope?: EventScope;
   /** Committed occurrence origin, never recomputed from a source's later position. */
   origin?: Position;

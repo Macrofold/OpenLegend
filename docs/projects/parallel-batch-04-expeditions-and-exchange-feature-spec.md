@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — feature specification
 
-| Status      | Current progress                                                                                                          | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five follow-on assignments are defined; runtime delivery, the shelter design and the encounter prerequisites remain open. | 2026-10-03   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01 is delivered and qualified on the integrated encounter baseline; the other assignments retain their separate acceptance. | 2026-10-06   |
 
 [Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](parallel-batches.md)
 
@@ -43,6 +43,8 @@ These are uncertain one-engineer estimates, not a five-day promise or an inherit
 ## PX01 — A readable wilderness threat
 
 ### Scope and dependency
+
+**Delivered October 6:** the supplied PG05 implementation already contained the encounter and settled choices. [PX01 integration](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) adds the demonstrated escape-route correction and current-revision qualification. The original conditional allocation below remains the scope boundary. Under the approved PG05 revision, warning means physical signs and observable antler preparation; it is not consent enrollment or a guaranteed warning period.
 
 Implement the encounter specified by PG05 after its paired first-threat documents and consequential recovery choices are approved. Those documents are deliberately not duplicated here. The expected experience is one authored optional danger with observable warning, a viable avoidance route, a reason to approach or confront it, committed attacks and an understandable stopping/aftermath state. PG05 owns the selected creature, motives, geography, reward, escalation, pursuit ending and human recovery rules. If its approved experience differs from this expectation, reconcile this allocation before coding rather than silently substituting a generic combat demo.
 

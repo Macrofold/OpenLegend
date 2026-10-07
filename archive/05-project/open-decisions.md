@@ -198,3 +198,9 @@ Choose the first world's representation and supported satisfaction/recovery cond
 ## PG05 — October 4 owner decisions
 
 Mike selected the stag/cache, brutal observational PvE, same-name continuity, random half of distinct carried types with corpse looting, one-minute normal-walk campfire radius, removable scars, one-attempt final-blow review, no new indirect combat and five fully simulated vulnerable seconds. The implementation and delegated details are current in the [scoped record above](#pg05--proposed-first-encounter-choices). Earlier enrollment/collapse/automatic-retreat recommendations are superseded; broad D07/PS05 and BW15 choices remain open.
+
+## Batch 06 — NPC combat participation
+
+**Resolved October 6, 2026.** Mike answered **yes**: hostile NPCs may kill other NPCs, including Ada, under the existing death rules. [Lifecycle/protection](../../docs/worlds/base/lifecycle-and-protection.md#npc-combat-participation) owns this accepted target. [CF01/CF04/CF05](../../docs/maintainers/parallel-batch-06-rivals-and-contested-ground.md) now have completed dependent definitions and prompts; implementation remains open.
+
+The question arose because the selected stag targets participating players and excludes residents, while broader NPC participation had remained separate. The accepted expansion makes a companion mortal and consequential rather than an invulnerable tool. It does not change that stag's authored behavior or require every NPC to be hostile. Direct PvP denial, inactive protection, exact human lethal review and existing death/corpse/player-return rules are preserved. No automatic NPC resurrection, new collateral harm, property raids or resolution of broader luring/background fairness is implied. No further developer answer is needed for this bounded batch.

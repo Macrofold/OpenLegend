@@ -1,3 +1,5 @@
+import { validNarrationTemplate } from '@open-legend/language';
+import { narrationTemplate, renderNarration } from './narration.js';
 import { emit } from './events.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
@@ -25,11 +27,22 @@ export interface ConditionEpisode {
 export function conditionSeverity(policy: ConditionPolicy, value: number): number {
   return policy.bands.filter((b) => (b.inclusive ? value <= b.below : value < b.below)).length;
 }
-export function conditionText(definition: AttributeDefinition, value: unknown): string | undefined {
+export function conditionText(
+  world: WorldState,
+  entity: Entity,
+  definition: AttributeDefinition,
+  value: unknown,
+): string | undefined {
   const policy = definition.condition;
   if (!policy || typeof value !== 'number') return;
   const severity = conditionSeverity(policy, value);
-  return severity ? policy.bands[severity - 1]!.text : policy.clearText;
+  return renderNarration(
+    world,
+    narrationTemplate(severity ? policy.bands[severity - 1]!.text : policy.clearText, {
+      subject: entity,
+    }),
+    entity.id,
+  );
 }
 
 /** Whether an owner-private internal change can become conscious evidence now. While not,
@@ -97,7 +110,7 @@ export function reconcileConditions(world: WorldState, entity: Entity, events: W
         world,
         events,
         'body-condition',
-        conditionText(definition, value)!,
+        `${conditionText(world, entity, definition, value)!} ${definition.name}: ${value}${definition.schema.kind === 'number' ? definition.schema.unit : ''}.`,
         entity,
         undefined,
         { attributeId: definition.id, severity, value, change: 'recovery', importance: 3 },
@@ -108,7 +121,7 @@ export function reconcileConditions(world: WorldState, entity: Entity, events: W
         world,
         events,
         'body-condition',
-        conditionText(definition, value)!,
+        `${conditionText(world, entity, definition, value)!} ${definition.name}: ${value}${definition.schema.kind === 'number' ? definition.schema.unit : ''}.`,
         entity,
         undefined,
         {
@@ -165,7 +178,8 @@ export function validateConditionPolicy(definition: AttributeDefinition): void {
     policy.criticalSeverity < 1 ||
     policy.criticalSeverity > policy.bands.length ||
     typeof policy.clearText !== 'string' ||
-    policy.clearText.length > 160
+    policy.clearText.length > 160 ||
+    !validNarrationTemplate(policy.clearText, ['subject'])
   )
     throw new Error('Invalid condition policy.');
   for (const [index, band] of policy.bands.entries())
@@ -177,7 +191,8 @@ export function validateConditionPolicy(definition: AttributeDefinition): void {
       (band.inclusive !== undefined && typeof band.inclusive !== 'boolean') ||
       typeof band.text !== 'string' ||
       !band.text.trim() ||
-      band.text.length > 160
+      band.text.length > 160 ||
+      !validNarrationTemplate(band.text, ['subject'])
     )
       throw new Error('Invalid condition band.');
 }

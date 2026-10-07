@@ -1,8 +1,8 @@
 # Parallel batch 03 — Personal game — assignment tracker
 
-**Status: in progress October 6, 2026; PG03, scoped PG04 and PG05's encounter/death/danger delivery are complete; PG01's scoped live/browser journey and accounting repairs are complete except one exact billing confirmation; PG02 and combined batch acceptance remain open.**
+**Status: in progress October 6, 2026; bounded PG02, PG03, scoped PG04 and PG05's encounter/death/danger delivery are complete; PG01's scoped live/browser journey, arrow assertion, accounting, embedding pricing and recipe-explanation repairs pass; one interrupted call awaits exact billing confirmation, and combined batch acceptance remains open.**
 
-PG03 and the scoped offer/drop preview work are included here; PG02 and other PG04 work retain their independent acceptance.
+PG02’s bounded resident demonstration, PG03, scoped PG04 and PG05’s encounter/death/danger delivery are complete; combined batch acceptance and broader character/performance qualification remain open.
 
 [Feature scope and acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md) · [Technical definitions](../projects/parallel-batch-03-personal-game-tech-design.md) · [Standalone prompts](../projects/parallel-batch-03-personal-game-prompts.md)
 
@@ -24,8 +24,15 @@ Owners: INV-3/INV-14/INV-19 in [inventions](inventions-and-world-evolution.md); 
 
 ## PG02 — Coherent attended resident behavior
 
-- [ ] Deliver current-context, meaningful outcome and continuation improvements for bodily, social and solitary concerns under [PG02 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg02--one-resident-with-reasons-to-act-and-reasons-to-stop).
-- [ ] Demonstrate freely selected action, consequence, reconsideration and appropriate stopping through current owners; preserve unqualified whole-life and richer psychological scope.
+**Completed — bounded PG02 assignment, October 6, 2026.** [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) demonstrates an independent cord-to-hare-observation switch with corrected disposition-only biography, real effects, hunger interruption and native resumption. Other trials still stockpiled. The earlier workspace/queue failures remain recorded. [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) now completes with verified provider persistence, accepted publication and a subsequent real greeting/cord action. No prescribed biography condition was restored.
+
+Complete identity, exact permitted action results, stopping reasons and remaining paused work reach decisions through unified personal evidence. Shared native grammar replaces pronoun rewriting; optional attention cannot drop required outcomes. Linked cold-history correction/forgetting and stale-decision fencing are verified. Both action selection stages recognize current interests; streaming provider requests use a valid delivery mode. All known costs and uncertain commitments remain recorded.
+
+- [x] Deliver current-context, meaningful outcome and continuation improvements for bodily, social and solitary concerns under [PG02 acceptance](../projects/parallel-batch-03-personal-game-feature-spec.md#pg02--one-resident-with-reasons-to-act-and-reasons-to-stop).
+- [x] Demonstrate a bounded freely selected action, consequence and switch through current owners, preserving contrary repetitions and broader whole-life scope.
+- [x] Complete quiet reflection with corrected biography through the ordinary internal opportunity, verified provider persistence, accepted publication and following decision. Personal files remain unchanged; no lasting belief/goal influence is claimed.
+
+Whole-afternoon reliability, durable psychological influence and freely chosen suspended-work resumption remain with CE/AG12; native control success is not that behavioral claim. The two older failed-publication runs are now terminal; their historical charges and other unresolved holds remain in CR12 without blocking this demonstrated gameplay path. Existing [observer-reference population scaling](cognition-redesign.md#exact-entity-context-references) remains unmeasured; this slice adds no population scan or new scheduler. Family, D69 and unattended communities remain excluded.
 
 Owners: [CE01–CE05](character-experience.md), [AG06/AG07/AG12](agent-agency.md), [CR12](cognition-redesign.md), [BW18](base-world.md#bw18--ada-and-the-lean-starting-camp). D69 remains the owner of new psychological-law choices. This assignment neither includes nor closes family authoring. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg02--character-integration-definition).
 

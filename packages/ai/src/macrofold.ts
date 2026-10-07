@@ -7,6 +7,7 @@ export class MacrofoldHttpError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
+    readonly retryAfterMs?: number,
   ) {
     super(`Macrofold request failed (HTTP ${status}${code ? `: ${code}` : ''}).`);
   }
@@ -119,8 +120,13 @@ export class MacrofoldTransport {
         ...(matchVersion === undefined ? {} : { 'If-Match': JSON.stringify(matchVersion) }),
         ...(operationId ? { 'Idempotency-Key': operationId } : {}),
         // Queue bounded inference at the provider; the caller already polls the
-        // accepted Run and preserves its original deadline and cancellation.
-        ...(body !== undefined && path === '/v1/inferences' ? { Prefer: 'respond-async' } : {}),
+        // accepted Run and preserves its original deadline and cancellation. Streaming
+        // delivers directly and cannot be combined with asynchronous admission.
+        ...(body !== undefined &&
+        path === '/v1/inferences' &&
+        !(body && typeof body === 'object' && 'stream' in body && body.stream === true)
+          ? { Prefer: 'respond-async' }
+          : {}),
       },
       ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
       signal: control,
@@ -198,9 +204,16 @@ export class MacrofoldTransport {
         throw error;
       }
     }
+    const retryAfter = response.headers.get('retry-after');
+    const retryAt = retryAfter === null ? NaN : Date.parse(retryAfter);
+    const retrySeconds = retryAfter?.trim() ? Number(retryAfter) : NaN;
+    const retryMs = Number.isFinite(retrySeconds) ? retrySeconds * 1000 : retryAt - Date.now();
+    // A provider wait is advisory; the caller's original deadline still owns cancellation.
+    const retryAfterMs =
+      Number.isFinite(retryMs) && retryMs >= 0 ? Math.min(retryMs, 2_147_483_647) : undefined;
     const reader = response.body?.getReader();
     if (!reader) {
-      if (!response.ok) throw new MacrofoldHttpError(response.status, '');
+      if (!response.ok) throw new MacrofoldHttpError(response.status, '', retryAfterMs);
       throw new InvalidData('Macrofold returned an empty response.');
     }
     const chunks: Uint8Array[] = [];
@@ -221,7 +234,7 @@ export class MacrofoldTransport {
         chunks.push(chunk.value);
       }
     } catch (error) {
-      if (!response.ok) throw new MacrofoldHttpError(response.status, '');
+      if (!response.ok) throw new MacrofoldHttpError(response.status, '', retryAfterMs);
       throw error;
     } finally {
       control.removeEventListener('abort', cancel);
@@ -232,7 +245,7 @@ export class MacrofoldTransport {
     try {
       raw = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, length));
     } catch {
-      if (!response.ok) throw new MacrofoldHttpError(response.status, '');
+      if (!response.ok) throw new MacrofoldHttpError(response.status, '', retryAfterMs);
       throw new InvalidData('Invalid Macrofold response encoding.');
     }
     if (!response.ok) {
@@ -244,7 +257,7 @@ export class MacrofoldTransport {
       } catch {
         /* No untrusted response prose in errors or logs. */
       }
-      throw new MacrofoldHttpError(response.status, code);
+      throw new MacrofoldHttpError(response.status, code, retryAfterMs);
     }
     const value: unknown = JSON.parse(raw);
     serialize(value, maxResponseBytes);

@@ -1,7 +1,13 @@
 import { executeCommand, nativeOperationAvailable } from './kernel.js';
 import type { Command, WorldState } from './types.js';
 import type { ActorPlan, PlanStep } from './agency.js';
-import { isActivityCommand, stopCurrentWork, suspendCurrentWork, cancelPlan } from './agency.js';
+import {
+  isActivityCommand,
+  stopCurrentWork,
+  suspendCurrentWork,
+  cancelPlan,
+  recordPlanResult,
+} from './agency.js';
 import { captureActionTargets } from './action-targets.js';
 import { acquiredActivities, activityRoleCompatible } from './activity-learning.js';
 import {
@@ -16,7 +22,7 @@ import { cloneValue } from './draft.js';
 import { isSafeRecordId } from './records.js';
 import { accessiblePossession, possessionItems } from './object-access.js';
 import { seesEntity } from './perception.js';
-import { appendMemory, outcome } from './events.js';
+import { outcome } from './events.js';
 import {
   installedActivityHost,
   activityHostForCommand,
@@ -73,13 +79,12 @@ function finishControl(
   plan.status = completed ? 'completed' : 'blocked';
   plan.revision++;
   world.entities[actorId]!.actor!.agency.revision++;
-  appendMemory(world, actorId, {
-    kind: 'episode',
-    source: 'internal',
-    importance: 6,
-    entityIds: [actorId],
-    summary: `${execution.request?.name ?? 'My chosen activity'}: ${reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts.${execution.interrupted ? ' This activity was interrupted; I was not attending throughout.' : ''} Completed transfers and other actions remain recorded; no remaining work was performed.`,
-  });
+  recordPlanResult(
+    world,
+    actorId,
+    plan,
+    `${execution.request?.name ?? 'Chosen activity'}: ${reason} Used ${execution.spent ?? 0} selected units in ${execution.attempts ?? 0} attempts. The chosen stopping time was simulation time ${execution.control.deadline}.${execution.interrupted ? ' This activity was interrupted; attendance was not continuous.' : ''} Completed transfers and other actions remain recorded; no remaining work was performed.`,
+  );
 }
 /** Each fresh native admission counts once, including a restarted unfinished step. */
 export function admitActivityAttempt(
@@ -404,13 +409,12 @@ export function activityFrontier(
     plan.status = 'blocked';
     plan.revision++;
     world.entities[actorId]!.actor!.agency.revision++;
-    appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: 6,
-      entityIds: [actorId],
-      summary: `${method?.name ?? 'My chosen activity'} stopped: ${reason} Completed actions remain recorded separately; no remaining action was completed.`,
-    });
+    recordPlanResult(
+      world,
+      actorId,
+      plan,
+      `${method?.name ?? 'Chosen activity'} stopped: ${reason} Completed actions remain recorded separately; no remaining action was completed.`,
+    );
   };
   if (!method) {
     block('This method no longer has permitted supporting knowledge.');
@@ -426,18 +430,12 @@ export function activityFrontier(
       plan.status = 'completed';
       plan.revision++;
       world.entities[actorId]!.actor!.agency.revision++;
-      appendMemory(world, actorId, {
-        kind: 'episode',
-        source: 'internal',
-        importance: 6,
-        entityIds: [actorId],
-        summary: `${method.name}: all selected actions and conditions have ended. ${
-          plan.steps
-            .filter((step) => step.outcome)
-            .map((step) => `${step.command.purpose ?? step.command.type}: ${step.outcome!.message}`)
-            .join(' ') || 'No physical action was needed.'
-        }`,
-      });
+      recordPlanResult(
+        world,
+        actorId,
+        plan,
+        `${method.name}: all selected actions and conditions ended at simulation time ${world.simTime}. Actual action results are recorded separately.`,
+      );
       return;
     }
     const node = frame.node;
@@ -454,7 +452,7 @@ export function activityFrontier(
         const answer = predicate(world, actorId, execution, node.when);
         if (answer === undefined) {
           execution.pending.push(frame);
-          block('I cannot tell whether the next condition is met.');
+          block('Whether the next condition is met is unknown.');
           return;
         }
         const chosen = answer ? node.yes : node.no;

@@ -29,7 +29,7 @@ In authorized experiments, try explicit target goals, instructions to choose an 
 
 Ask what fact, intention, option or capability the successful control supplied. Remove assistance incrementally and fix its general owner: world facts/psychology in authored content, permitted evidence in context preparation, reusable judgment in shared rubrics, effects in native transitions. Follow [engine/world boundaries](../../../docs/engine-and-world-boundaries.md) for changed contracts. Avoid actor/item-name rules and hidden need-to-action controllers.
 
-Authored facts, values and useful action descriptions can be legitimate solutions. Explain their influence and what an option actually executes. Persisting a stronger persona or explicit goal changes the scenario: disclose it and preserve emergence requirements. A scripted recipe disguised as context is not general reasoning.
+Authored facts, values and useful action descriptions can be legitimate solutions. Explain their influence and what an option actually executes. Persisting a stronger persona or explicit goal changes the scenario: disclose it and preserve emergence requirements. A scripted recipe disguised as context is not general reasoning. Apply the [character-authorship boundary](../../../docs/projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality): a situation-to-action instruction remains diagnostic forcing when written as biography or a preference. Remove it before product qualification; test changed circumstances and competing concerns. Do not retain it because it produced the desired episode.
 
 ## Verify and finish
 

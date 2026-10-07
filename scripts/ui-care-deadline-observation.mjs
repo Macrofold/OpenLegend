@@ -9,7 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const expectedSource = {
-  'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
+  'apps/server/src/http.ts': '77ec66ebf3a78c9da940015149ec7b3ef185deb019b7de8715802e8c9a55ca23',
   'apps/server/src/world-service.ts':
     '5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c',
   'apps/server/src/activity-requests.ts':
@@ -21,13 +21,13 @@ const expectedSource = {
   'apps/client/src/ui/activity-object-field.tsx':
     'f3d04b26b7f2665e282bb9834550bb923e9d2f608a7696c90cfed2cd2530a3f8',
   'packages/domain/src/kernel.ts':
-    '55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6',
+    '10582d414a42aa56cf8b795ae505a17e20b2a3c803ae111a26dc9dbbfaeb12bb',
   'packages/domain/src/activity-execution.ts':
-    '47939664362dd2940596721f733e6ee8adbbd1a166eef0a63fd4c7b92189862b',
+    'b049c40c9d02cb349f4dd43e6bf1e96ec6c657e9639b0fa6f9ecdeb0e1a9dcc9',
   'packages/domain/src/worlds/base/camp-activity.ts':
     'abb0c0251261cea2f7bd336d72b62e49ea2e46a2137d8330308d5122f746f3c2',
   'packages/domain/src/worlds/base/fire.ts':
-    'deed0892de04002b67f3f8aa08633e066da6143b51ea08202da86f3be0c0c14b',
+    '650d2cf3969424806b555c8f1b02c0e63bf3e3d4b71231302c0fc263d923e858',
   'packages/domain/src/worlds/base/fire-rules.ts':
     '6f20cd53fcde0834da78c8e55fc5f895a2f12f1658081ed89d474d1ba3665e02',
   'tests/fixtures/database.ts': '3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92',

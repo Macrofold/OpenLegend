@@ -1,5 +1,9 @@
 import {
   activeAppraisals,
+  renderNarration,
+  subjectNarration,
+  person,
+  presentVerb,
   appraisalById,
   appraisalDefinition,
   appraisalPin,
@@ -7,9 +11,35 @@ import {
   type AppraisalBindings,
   type AppraisalChange,
   type AppraisalEvidence,
+  type WorldState,
 } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 import type { AppraisalProposal } from './cognition-contracts.js';
+
+/** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
+ * A missing target does not mean that the accepted feeling has an unknown cause.
+ * docs/projects/parallel-batch-03-personal-game-tech-design.md#representation-choices */
+export function decisionFeelings(world: WorldState, actorId: string): string {
+  return activeAppraisals(world, actorId)
+    .map((value) => {
+      return renderNarration(
+        world,
+        subjectNarration(actorId, [
+          presentVerb(actorId, 'feel'),
+          ` ${value.feeling}`,
+          ...(value.targetId && world.entities[value.targetId]
+            ? [
+                ' concerning ',
+                person(value.targetId, value.targetId === actorId ? 'reflexive' : 'object'),
+              ]
+            : []),
+          `. Source: ${value.coverage}; lifetime: ${value.lifetime}.`,
+        ]),
+        actorId,
+      );
+    })
+    .join(' ');
+}
 
 /** One request's source/subject/appraisal capabilities. Generated output can select
  * supplied handles, never fabricate canonical sources, pins or another actor's state. */

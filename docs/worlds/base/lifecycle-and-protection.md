@@ -30,15 +30,23 @@ NPC death preserves identity, history, relationships and the continuity needed f
 
 Reviving a beloved NPC is possible but difficult through ordinary gameplay. Existing authorized creator revival is a separate administrative capability and is not made difficult by this rule. Ghost persistence is continuity, not an automatic return to ordinary life.
 
+## NPC combat participation
+
+**Accepted target, October 6, 2026; CF01 implementation remains open.** Mike explicitly allows hostile NPCs to fight and kill other NPCs, including Ada, under the existing death rules. An ordinary NPC has no immunity because it is familiar, friendly or accompanying a player. Autonomous NPC attacks use normal body, observation, action, participation and injury requirements; they do not wait for a human final-blow modal. A human's deliberately selected attack retains its exact review even when a supported command names another performer.
+
+This extends eligibility for the new humanoid opponents, not the stag's authored target-selection behavior. It does not make every NPC hostile or tell a character whom to attack. Direct player-versus-player harm remains denied, inactive humans remain protected, and the current vulnerable departure interval and player recovery are unchanged. High-level voluntary help leaves the helper's individual actions independently chosen; it is not remote control or blanket permission for an exact attack.
+
+NPC death remains persistent with ordinary corpse/identity history and no automatic return. Ghosts and ordinary difficult revival remain separate unimplemented targets. This decision does not authorize raids on homes, property damage, new collateral harm or settle broader deliberate luring/background fairness. [Decision record](../../../archive/05-project/open-decisions.md#batch-06--npc-combat-participation); [scoped CF01/CF04 delivery](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md).
+
 ## Deliberate lethal consequences
 
 The main world must make killing consequential: these characters have histories and may matter to other players. Before a human intentionally commits a lethal action against a character, require clear confirmation, for example: “Are you sure you want to kill [character name]? They will remain dead until someone revives them, which is difficult.” Show meaningful permitted context about the loss. A friend count is a possible presentation, not authority to reveal private directional relationships or invent a relationship score.
 
 The selected first implementation confirms one potentially lethal ordinary strike/hunt, with no universal incapacitation or execution-only state. [Player Danger](player-danger.md#final-blow-confirmation) owns exact reviewed costs, target/source life, cancellation, staleness and persistent death. A distinct unconscious-target final blow remains a possible future design, not current behavior. Confirmation must bind to the current target/action and cannot authorize unrelated later killing. Track indirect hazards, queued attacks, NPC combat and permission changes explicitly so a modal is not mistaken for a complete lethal-action rule. Ordinary environmental consequences and risky creator law changes retain their own approved policies.
 
-## Proposed first encounter
+## First encounter delivery
 
-The original design-only PG05 proposal was superseded by Mike's October 4 runtime authorization and revised danger/death/logout choices. The [implemented stag encounter](first-threat-encounter.md) has an optional safe bypass, finite useful cache, natural contact, bounded observation-based pursuit, permanent displacement/death, one-attempt lethal review and recoverable player death. [Evidence](../../verification/first-threat-encounter.md) states actual native/service/browser checks and capacity limits. Broader BW14/D07, BW15 and PS05 remain open; ordinary PvP, inactive protection and property policy are not weakened.
+The original design-only PG05 proposal was superseded by Mike's October 4 runtime authorization and revised danger/death/logout choices. The [implemented stag encounter](first-threat-encounter.md) has an optional safe bypass, finite useful cache, natural contact, bounded observation-based pursuit, permanent displacement/death, one-attempt lethal review and recoverable player death. [Evidence](../../verification/first-threat-encounter.md) states actual native/service/browser checks and capacity limits; [PX01 integration](../../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) qualifies the combined delivery and its escape-route correction without revising those rules. Broader BW14/D07, BW15 and PS05 remain open; ordinary PvP, inactive protection and property policy are not weakened.
 
 ## Maintained records
 

@@ -9,7 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const expectedSource = {
-  'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
+  'apps/server/src/http.ts': '77ec66ebf3a78c9da940015149ec7b3ef185deb019b7de8715802e8c9a55ca23',
   'apps/server/src/world-service.ts':
     '5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c',
   'apps/server/src/authority.ts':
@@ -29,13 +29,13 @@ const expectedSource = {
   'apps/client/src/ui/container-opening.tsx':
     '4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684',
   'packages/domain/src/item-handling.ts':
-    '860d84e742fabf2efb401c0bd52f2742261957d4089722151d282e129876968a',
+    '4df86941dac3bca3abb9b764ce00048fe9cc3bd13892122a81a77cd422395c30',
   'packages/domain/src/objects.ts':
     'c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70',
   'packages/domain/src/object-access.ts':
     'e0682565e85a0133ffcba034e471fed9d175df8d61acb17f87f7a118a1cdd5b6',
   'packages/domain/src/kernel.ts':
-    '55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6',
+    '10582d414a42aa56cf8b795ae505a17e20b2a3c803ae111a26dc9dbbfaeb12bb',
   'tests/fixtures/database.ts': '3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92',
   'tests/fixtures/service.ts': 'e5322bfac774e1a952d3bced7569958389525adf271026a18d2512b1a73f21e7',
   'tests/fixtures/browser.ts': '61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2',

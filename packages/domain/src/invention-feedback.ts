@@ -34,7 +34,7 @@ export function recordInventionFeedback(
     world,
     events,
     'invention-feedback',
-    message.slice(0, 700),
+    message,
     world.entities[actorId],
     undefined,
     { requestId, semanticTrigger: true },

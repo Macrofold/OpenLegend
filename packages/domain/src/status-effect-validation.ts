@@ -1,4 +1,4 @@
-import { validNameTemplate } from '@open-legend/language';
+import { validNarrationTemplate } from '@open-legend/language';
 import { validateStatusInstallation } from './native-work.js';
 import { isSafeRecordId } from './records.js';
 import { canonicalJson, contentLabel } from './events.js';
@@ -259,7 +259,7 @@ export function validateStatusEffectPolicy(
         text(c.narration, 512);
         if (
           c.type !== 'stateChanged' ||
-          !validNameTemplate(c.narration, ['subject', 'source', 'actionTarget'])
+          !validNarrationTemplate(c.narration, ['subject', 'source', 'actionTarget'])
         )
           fail('event template.');
       }

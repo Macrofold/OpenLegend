@@ -127,7 +127,7 @@ export function readableDecisionContext(
           `## Private intent controls\n${JSON.stringify(context['intentActions'] ?? [])}\nUse a known action handle to accept the exact revised action or withdraw an unresolved intent. Withdrawal does not cancel physical work; neither control can be queued in a plan. Never accept for another actor.`,
         ]
       : []),
-    `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.`,
+    `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved. Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.`,
     `## Native navigation\n${context['navigation'] ?? ''}\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
     `## Current time\n${context['now']} (simulation seconds: ${context['simTime'] ?? 'unavailable'})`,
     ...(context['activityRequests']
@@ -291,6 +291,7 @@ function formatIntentions(value: unknown): string {
         plan?: unknown;
         paused?: unknown;
         planRevision?: number;
+        outcomeCoverage?: string;
         attempts?: { description: string }[];
       }
     | undefined;
@@ -298,6 +299,7 @@ function formatIntentions(value: unknown): string {
     ...(agency?.goals ?? []).map((goal) => `${goal.status} goal: ${goal.objective}`),
     typeof agency?.plan === 'string' ? agency.plan : 'No remaining work supplied.',
     ...(typeof agency?.paused === 'string' ? [agency.paused] : []),
+    ...(agency?.outcomeCoverage ? [agency.outcomeCoverage] : []),
     `For structured plan changes, current plan revision: ${agency?.planRevision ?? 0}.`,
     ...(agency?.goals?.length
       ? [

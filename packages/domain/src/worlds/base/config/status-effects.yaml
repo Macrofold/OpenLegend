@@ -104,12 +104,12 @@ definitions:
       emit:
         target: $subject
         type: stateChanged
-        narration: '{subject.name:definite} fell asleep.'
+        narration: '{subject.subject:definite} fell asleep.'
     onDeactivate:
       emit:
         target: $subject
         type: stateChanged
-        narration: '{subject.name:definite} woke up.'
+        narration: '{subject.subject:definite} woke up.'
   - id: wilderness:energy-expenditure
     type: statusEffect
     target: $subject

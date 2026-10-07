@@ -1,3 +1,4 @@
+import { subjectNarration, person } from '../../narration.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { isDraft, original } from 'immer';
 import { worldRootEntities } from '../../entity-index.js';
@@ -355,7 +356,7 @@ export function completeFireCare(
       world,
       events,
       'fire-extinguished',
-      `${namePhrase(actor, 'definite', { capitalize: true })} put out ${namePhrase(fire!, 'definite')}.`,
+      subjectNarration(actor, ['put out ', person(fire!, 'object', 'definite'), '.']),
       actor,
       fire!.id,
       {
@@ -401,7 +402,11 @@ export function completeFireCare(
       world,
       events,
       'fire-fueled',
-      `${namePhrase(actor, 'definite', { capitalize: true })} added ${namePhrase(definition, 'definite')} to ${namePhrase(fire!, 'definite')}.`,
+      subjectNarration(actor, [
+        `added ${namePhrase(definition, 'definite')} to `,
+        person(fire!, 'object', 'definite'),
+        '.',
+      ]),
       actor,
       fire!.id,
       { actionId },
@@ -420,7 +425,7 @@ export function completeFireCare(
     world,
     events,
     'fire-lit',
-    `${namePhrase(actor, 'definite', { capitalize: true })} lit ${namePhrase(fire!, 'definite')}.`,
+    subjectNarration(actor, ['lit ', person(fire!, 'object', 'definite'), '.']),
     actor,
     fire!.id,
     {

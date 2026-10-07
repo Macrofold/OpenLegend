@@ -9,7 +9,7 @@ import {
   appendedRecordCount,
   defaultStoryPolicy,
   selectStory,
-  memoryPerspective,
+  personalText,
   type StorySelection,
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
@@ -399,15 +399,7 @@ export class HistoryRepository {
               ? retained.evidence
               : {
                   ...retained.evidence,
-                  text: memoryPerspective(
-                    world,
-                    actorId,
-                    event.text,
-                    false,
-                    retained.evidence.sourceId,
-                    event.targetId,
-                    event.data?.['targetReference'] === true,
-                  ),
+                  text: personalText(world, actorId, event.narration ?? event.text),
                   content:
                     typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
                 };
