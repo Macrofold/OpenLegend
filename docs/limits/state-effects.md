@@ -32,7 +32,7 @@ Original recommendation: **Completed removals**.
 
 ## LA124
 
-**Historical — needs recheck · Restrictiveness: Liberal.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Liberal.**
 
 The minimum and maximum of a numeric character property cannot exceed a magnitude of 1 billion, and the quantity supplied by a source that refills a character property cannot exceed 1 billion.
 
@@ -44,9 +44,9 @@ Original recommendation: **Review**.
 
 ## LA125
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-A refillable character property, such as hunger or energy can drain or refill at no more than 100 units per second, and one refill action can last no more than 3,600 seconds.
+An attribute using the `reservoir-v1` implementation admits an authored drain from 0 to 100 units per game second, a strictly positive replenishment rate no greater than 100, and a strictly positive work duration no greater than 3,600 game seconds. These bounds do not apply to every numeric meter: a passive `number-v1` value has no automatic drain or refill, and status-rate operations have the separate LA131 bound. Replenishment still requires a compatible finite supply and an admitted action.
 
 **Reason / tradeoff:** Review these rates and durations as authored mechanics, with explicit processing checks rather than unexplained universal numbers.
 
@@ -56,9 +56,9 @@ Original recommendation: **Review**.
 
 ## LA126
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Attribute names, action labels and category names are limited to 64 characters; unit labels to 24; descriptions explaining why a character needs to restore a depleted property to 160.
+Attribute names, reservoir action labels and category names are limited to 64 characters; unit labels to 24; descriptions explaining why a character needs to restore a depleted property to 160.
 
 **Reason / tradeoff:** Keep labels readable while expanding descriptions that otherwise lose information required by the player or character model.
 
@@ -80,85 +80,85 @@ Original finding and recommendation superseded by the merged implementation; the
 
 ## LA128
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-One status-effect condition may contain at most 128 individual checks and combinations of checks, nested no deeper than 12 levels.
+Each separately validated status-condition tree permits at most 128 nodes, counting both checks and combination nodes. The root has depth zero and the maximum accepted depth is 12. Each required/activation/deactivation condition and each operation’s conditional tree receives its own allowance; 128 is not a total-node ceiling for the entire status definition. Aggregate installed/runtime work remains separately admitted.
 
 **Reason / tradeoff:** Keep a complexity bound so a deeply nested authored condition cannot monopolize validation or simulation time.
 
-[Implementation starting point](../../packages/domain/src/world-modules.ts).
+[Implementation starting point](../../packages/domain/src/status-effect-validation.ts).
 
 Original recommendation: **Keep**.
 
 ## LA129
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 One status effect can contain at most 32 ongoing operations and list at most 32 reasons that interrupt it.
 
 **Reason / tradeoff:** Expand richer effects only while keeping the cost of evaluating an active effect predictable.
 
-[Implementation starting point](../../packages/domain/src/world-modules.ts).
+[Implementation starting point](../../packages/domain/src/status-effect-validation.ts).
 
 Original recommendation: **Expand**.
 
 ## LA130
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 A status effect's delay before reactivation can be configured only from 0 to 86,400 game seconds.
 
 **Reason / tradeoff:** Review whether the world needs delays longer than a day; this maximum is not a necessary rule of status-effect execution.
 
-[Implementation starting point](../../packages/domain/src/world-modules.ts).
+[Implementation starting point](../../packages/domain/src/status-effect-validation.ts).
 
 Original recommendation: **Review**.
 
 ## LA131
 
-**Historical — needs recheck · Restrictiveness: Liberal.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Liberal.**
 
-A status effect can change a numeric attribute by at most 1,000,000 units in either direction per game second.
+Each supported `changeRate` operation admits a finite amount from −1,000,000 to +1,000,000 per game second on an installed writable numeric attribute. This is a per-operation bound, not a cap on the combined rate of every operation or simultaneous effect affecting that attribute. The owning attribute range, lifecycle and work-admission rules still apply.
 
 **Reason / tradeoff:** Check allowed rates against the arithmetic and behavior of each supported attribute, rather than assuming a large finite number is always safe.
 
-[Implementation starting point](../../packages/domain/src/world-modules.ts).
+[Implementation starting point](../../packages/domain/src/status-effect-validation.ts).
 
 Original recommendation: **Review**.
 
 ## LA132
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Status-effect labels default to 256 characters; interruption names allow 64, floating particle text 32 and activation/deactivation narration 512.
+Status-effect labels and their activate/deactivate action labels allow at most 256 characters, not a default truncation length. Interruption names and optional lifecycle-cause text allow 64, floating particle text 32 and activation/deactivation narration 512. These fields require nonblank text; narration additionally follows the supported name-template grammar. Reservoir action labels retain their separate 64-character bound in LA126.
 
 **Reason / tradeoff:** Keep display-specific lengths but expand text that must explain an effect correctly, with matching validation throughout the workflow.
 
-[Implementation starting point](../../packages/domain/src/world-modules.ts).
+[Implementation starting point](../../packages/domain/src/status-effect-validation.ts).
 
 Original recommendation: **Expand**.
 
 ## LA134
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-One request to change a character's bodily state directly may contain at most 64 changes, each with magnitude no greater than 100.
+The creator `POST /api/god/effects` request admits 1–64 body-effect entries, each with a finite amount from −100 to +100 and a supported effect kind. This is a request envelope, not a general ±100 limit on the resulting body value or a maximum for status rates. Revision checks and the body-effect owner still decide whether the complete requested change is valid.
 
 **Reason / tradeoff:** Allow larger valid transactions only after checking body-state validation and keeping all dependent changes consistent.
 
-[Implementation starting point](../../packages/domain/src/world-modules.ts).
+[Implementation starting point](../../apps/server/src/http.ts).
 
 Original recommendation: **Expand**.
 
 ## LA135
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-One owner-editor request may change at most 32 character attributes.
+The creator `POST /api/god/editor/attributes/save` request admits 1–32 attribute-value changes for its selected actor. Each retains the expected attribute revision, with generation and manifest checks on the request. This bounds that editor transaction, not the number of attributes a world can define or a character can hold; LA119 records the removed definition/binding caps.
 
 **Reason / tradeoff:** Expand editor transaction capacity when needed without bypassing attribute validation or partially saving an invalid batch.
 
-[Implementation starting point](../../packages/domain/src/world-modules.ts).
+[Implementation starting point](../../apps/server/src/http.ts).
 
 Original recommendation: **Expand**.
 
@@ -280,7 +280,7 @@ Source-sustained effects stop when the source is retired, dies if it is an actor
 
 **Reported · Restrictiveness: Medium.**
 
-An effect definition cannot be changed, disabled or removed while retained effect records reference its exact definition—even after those effects ended. Certain direct APIs also require complete historical records to be loaded first.
+An independent contribution’s definition cannot be changed, disabled or removed while retained contribution records reference it, including ended records. Direct policy replacement first requires complete contribution history when any definition changes. This does not freeze every ordinary status definition: changed native singleton effects are deactivated under their old definitions before replacement, unchanged episodes survive, and installed body/cognition references are checked separately. [Policy admission](../../packages/domain/src/status-effects.ts) · [Current contract](../status-effects.md).
 
 **Reason / tradeoff:** Preserve exact historical interpretation; immutable version retention could allow future versions without freezing authoring.
 
