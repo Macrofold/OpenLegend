@@ -2,7 +2,7 @@
 
 [Feature contract](../ai-providers.md) · [Implementation work](../maintainers/macrofold-worker-api.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
-Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
+Values describe the stated baseline, not approved future targets. Entries marked **source inspected 2026-10-06** were checked against review-branch source at `7fddcea7c7c1adf79bd53c1dfa16558111c772d3`; synchronization is deferred. Provider-limit claims and dated prices below retain their stated historical scope, not fresh vendor verification. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
 Implementation starting points: [validation.ts](../../packages/ai/src/validation.ts), [embedding.ts](../../packages/ai/src/embedding.ts), [config.ts](../../apps/server/src/config.ts).
 
@@ -10,11 +10,11 @@ The qualified Macrofold direct-conversation route uses one original structured i
 
 ## LA046
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-A Jev request's shared facts and all questions together are locally limited to 220,000 characters, estimated as 55,000 tokens.
+The serialized `{state, questions}` envelope is locally limited to 220,000 JavaScript string units, estimated as 55,000 tokens at four units per token. JSON structure and question text both count. This is a local heuristic before dispatch, not an exact tokenizer count or a freshly verified provider allowance.
 
-**Reason / tradeoff:** Keep protection for Jev's real 64,000-token total limit, but improve token estimates and split optional questions when necessary.
+**Reason / tradeoff:** Preserve the local margin established against the historical 64,000-token provider claim below. Verify the current provider contract before changing it; do not treat a fixed string-to-token estimate as proof of fit.
 
 [Implementation starting point](../../packages/ai/src/validation.ts).
 
@@ -22,11 +22,11 @@ Original recommendation: **Review**.
 
 ## LA047
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-A Jev request's shared facts plus its longest individual question are locally limited to 112,000 characters, estimated as 28,000 tokens.
+The serialized shared state plus the longest serialized individual question is locally limited to 112,000 JavaScript string units, estimated as 28,000 tokens. This check is separate from the complete envelope in LA046; it does not divide a large shared state among questions.
 
-**Reason / tradeoff:** Keep protection for Jev's real 32,000-token shared-facts-plus-question limit, and report which part makes an oversized request fail.
+**Reason / tradeoff:** Preserve the local margin established against the historical 32,000-token state/question claim below, report the oversized part, and verify the provider contract before changing the margin.
 
 [Implementation starting point](../../packages/ai/src/validation.ts).
 
@@ -34,7 +34,7 @@ Original recommendation: **Review**.
 
 ## LA048
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
 One Jev multiple-choice question may offer between 2 and 255 answer options.
 
@@ -46,7 +46,7 @@ Original recommendation: **Keep**.
 
 ## LA049
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
 One Jev scoring question uses between 2 and 10 described score levels.
 
@@ -58,9 +58,9 @@ Original recommendation: **Keep**.
 
 ## LA050
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
-The internal label identifying a question in a Jev request must contain 1–64 characters.
+A question identifier must contain 1–64 ASCII letters, digits, underscores or hyphens. The same identifiers match returned answers; they are bookkeeping, not a substitute for the actual model-visible question instructions.
 
 **Reason / tradeoff:** Keep question labels bounded and consistent with the labels used to match returned answers.
 
@@ -78,9 +78,9 @@ The former decoder required probability totals and named-choice agreement within
 
 ## LA052
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The generic AI request encoder permits at most 20,000 nested values, 20,000 entries in any array and 32 levels of nesting.
+The canonical JSON encoder permits at most 20,000 visited values, including containers and the root, and depth at most 32 with the root at zero. An array also has an explicit 20,000-entry guard, but its elements still consume the shared node budget. These are not independent allowances that can be multiplied. The same serializer also checks decoded direct/Macrofold JSON responses; cycles, nonfinite numbers and non-JSON values are rejected.
 
 **Reason / tradeoff:** Allow supported large requests to pass the value-count check, while retaining protection against excessively complex nested input.
 
@@ -90,69 +90,69 @@ Original recommendation: **Expand**.
 
 ## LA053
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The generic AI client accepts requests of 500,000 bytes by default, configurable up to 1,048,576 bytes.
+The direct AI client defaults to a 500,000-byte UTF-8 request allowance, configurable from 1 to 1,048,576. The game explicitly selects 500,000 bytes. Both context serialization and the final provider body use this bound; an individually fitting context can still exceed it once instructions, questions or schema are included.
 
 **Reason / tradeoff:** Align this network-payload limit with the actual model input allowance so a valid request is not rejected by an unrelated smaller check.
 
-[Implementation starting point](../../packages/ai/src/validation.ts).
+[Direct client](../../packages/ai/src/client.ts) · [Game adapter setup](../../apps/server/src/ai-director.ts).
 
 Original recommendation: **Review**.
 
 ## LA054
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The generic AI client accepts responses of 262,144 bytes by default, configurable up to 2,097,152; the game configures 500,000 bytes.
+The direct AI client defaults to a 262,144-byte response allowance, configurable from 1 to 2,097,152; the game selects 500,000 bytes. Streaming body reads stop above the configured byte limit, then parsed responses and generated values also pass canonical JSON complexity/size validation. These are direct-adapter bounds, distinct from Macrofold progress-stream transport in LA192.
 
 **Reason / tradeoff:** Keep a download-size guard that accommodates every response the game explicitly allows the model to generate.
 
-[Implementation starting point](../../packages/ai/src/validation.ts).
+[Direct client](../../packages/ai/src/client.ts) · [Game adapter setup](../../apps/server/src/ai-director.ts).
 
 Original recommendation: **Review**.
 
 ## LA055
 
-**Historical — needs recheck · Restrictiveness: Liberal.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Liberal.**
 
-The generic AI client defaults to 2,048 output tokens, allows configuration up to 16,384, and is configured by the game with an 8,192-token default.
+The direct AI client defaults to 2,048 output tokens, accepts a configured ceiling from 1 to 16,384, and is instantiated by the game with 8,192. A request-specific value must be a positive integer no larger than that client ceiling; lower per-task and semantic-level allowances remain separate. The generic ceiling is not a promise that every route can request 16,384.
 
 **Reason / tradeoff:** Choose output limits by task and model, with spending reserved before generation; do not assume these defaults describe every call.
 
-[Implementation starting point](../../packages/ai/src/validation.ts).
+[Direct client](../../packages/ai/src/client.ts) · [Game adapter setup](../../apps/server/src/ai-director.ts).
 
 Original recommendation: **Review**.
 
 ## LA056
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The generic AI client waits 20 seconds by default, with a configurable maximum of 120 seconds.
+The direct AI client defaults to a 20,000-millisecond timeout, configurable from 1 to 120,000 milliseconds. The earlier of that duration and an explicit absolute request deadline applies, including response-body reading. Application setup normally replaces the default with LA186; cancellation after dispatch does not prove that provider work stopped or cost nothing.
 
 **Reason / tradeoff:** Keep finite waiting times, but report whether a timeout might have occurred after the provider already started billable work.
 
-[Implementation starting point](../../packages/ai/src/validation.ts).
+[Direct client](../../packages/ai/src/client.ts).
 
 Original recommendation: **Review**.
 
 ## LA057
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
-The fallback name for the response-format definition sent to a model is cut to 64 characters.
+When no schema name is supplied, the direct client replaces non-ASCII identifier characters in the task name with underscores and truncates the result to 64 characters. An explicitly supplied schema name is instead validated against the 1–64-character ASCII letters/digits/underscore/hyphen form and rejected if invalid; it is not silently shortened. Neither path truncates instructions or game evidence.
 
 **Reason / tradeoff:** Keep short format names; this should never truncate the actual instructions, game facts or generated response.
 
-[Implementation starting point](../../packages/ai/src/validation.ts).
+[Direct schema-name admission](../../packages/ai/src/client.ts).
 
 Original recommendation: **Keep**.
 
 ## LA093
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The numerical representation used for meaning-based search defaults to 512 numbers per text and accepts configurations from 64 to 3,072.
+The game configures 512 embedding dimensions by default within the 64–3,072 range. The direct embedding adapter additionally requires an integer dimension and exact-length finite, nonzero vectors for every requested text. This configuration range does not establish that every provider/model supports every dimension.
 
 **Reason / tradeoff:** Keep a finite representation size and change it only when retrieval quality or storage measurements justify a different choice.
 
@@ -162,7 +162,7 @@ Original recommendation: **Keep**.
 
 ## LA094
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 One request to the service that converts text into numerical representations for meaning-based search accepts at most 33 text strings.
 
@@ -174,19 +174,19 @@ Original recommendation: **Keep**.
 
 ## LA095
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Requests to convert text into numerical representations for meaning-based search allow 8,000 bytes per text and 64,000 bytes per batch; action indexing packs batches to 60,000 bytes.
+The embedding adapter allows 8,000 UTF-8 bytes per text and 64,000 bytes for the exact JSON text array. Action retrieval separately packs that array to 60,000 bytes and at most 33 texts, including an initial query; later batches need their own spending admission. The action packer does not itself check each text against 8,000 bytes before dispatching to the adapter, so a fitting array can still be rejected there. Memory indexing uses the shared count-and-byte batcher instead; its limits do not automatically fix this separate caller.
 
 **Reason / tradeoff:** Align these size checks so a supported text or action description is not accepted by one stage and rejected by the next.
 
-[Implementation starting point](../../packages/ai/src/embedding.ts).
+[Embedding admission](../../packages/ai/src/embedding.ts) · [Action retrieval](../../apps/server/src/action-retrieval.ts) · [Memory batch packing](../../apps/server/src/embedding-batches.ts).
 
 Original recommendation: **Review**.
 
 ## LA096
 
-**Historical — needs recheck · Restrictiveness: Liberal.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Liberal.**
 
 A downloaded response from the service that converts text into numerical representations for meaning-based search is limited to 2,000,000 bytes.
 
@@ -198,9 +198,9 @@ Original recommendation: **Review**.
 
 ## LA097
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The client that requests numerical text representations for meaning-based search waits 15 seconds by default, unless its caller supplies another timeout.
+The embedding adapter defaults to a 15-second abort timeout and combines it with the caller's abort signal. Game callers such as action retrieval supply the configured AI timeout instead. This adapter does not independently consume the request's absolute `deadlineMs` field; a caller needing that earlier deadline must include it in its signal. Missing/uncertain completion retains the original accounting exposure and does not trigger a retry.
 
 **Reason / tradeoff:** Keep a finite wait for optional search preparation and preserve directly retrieved required facts when the service is unavailable.
 
@@ -216,13 +216,13 @@ Original recommendation: **Review**.
 
 ## LA183
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Default cost reservations are $0.005 per Jev call, $0.01 per call that prepares text for meaning-based search and $0.08 per text-generation model call; configuration ranges also impose per-call maximums.
+Configured reservation defaults are $0.005 for Jev, $0.01 for embeddings and $0.08 for generation. Each accepts a minimum of $0.000001; configured maxima are $1, $1 and $10 respectively. These are inputs to admission, not universal exact charges or the final reserved amount: direct decision/generation allowances may increase them using requested-model prices and the conservative floors in LA184/LA185.
 
 **Reason / tradeoff:** Estimate and reserve each call's cost before starting it, and align reservation limits with the actual request and authorized spending.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Configured floors](../../apps/server/src/config.ts) · [Allowance owner](../../apps/server/src/cognition-budget.ts).
 
 Original recommendation: **Review**.
 
@@ -230,25 +230,25 @@ Original recommendation: **Review**.
 
 **Current PW01 branch evidence · Restrictiveness: Safe.**
 
-Direct-model accounting reserves at least $0.25 per generation and keeps room for two text-generation calls, three relevance or classification judgments and one call to prepare text for meaning-based search for an interactive response.
+The direct generation-allowance helper has a $0.25 minimum before requested-model pricing can raise it. The general interactive-headroom calculation reserves room for two generation calls, three judgments and one embedding call; in Jev-only mode it instead retains three judgment allowances and no generation/embedding headroom. This is admission headroom, not an instruction to make all those calls or proof of actual cost.
 
 The shared allowance now selects the actual configured model's prices; an undecided route takes the maximum across configured default/mini/complex/summary models, including cache-rate premiums. The existing floor and interactive headroom remain; no added provider allowance is implied. [Evidence](../verification/level1-decisions.md#pw01-reliability-repairs--october-2-2026).
 
 **Reason / tradeoff:** Reduce unnecessarily large reservations using the actual planned calls without allowing background work to consume the money needed to answer the player.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Allowance owner](../../apps/server/src/cognition-budget.ts).
 
 Original recommendation: **Review**.
 
 ## LA185
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Some cost reservations assume up to 120,000 input tokens and 8,192 output tokens.
+The direct interactive-headroom calculation uses 120,000 input tokens and an 8,192-output-token generation allowance. The ordinary direct generation/decision allowance instead defaults to 500,000 input tokens, with 8,192 output tokens for generation. Both use the configured requested-model prices and their applicable minimums. These are conservative reservation calculations, not the actual model-context or response-size contract.
 
 **Reason / tradeoff:** Base reserved cost on the admitted request's actual maximum sizes instead of unrelated worst-case constants where practical.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Allowance owner](../../apps/server/src/cognition-budget.ts).
 
 Original recommendation: **Review**.
 
@@ -260,7 +260,7 @@ Original recommendation: **Review**.
 
 ## LA186
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 The game's configured AI-call timeout defaults to 35 seconds and accepts values from 5 to 120 seconds.
 
@@ -272,9 +272,9 @@ Original recommendation: **Review**.
 
 ## LA187
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
-A Macrofold remote-model run has a default spending allowance of $0.25, configurable from $0.000001 to $10.
+`MACROFOLD_RUN_MAX_USD` defaults to $0.25 and accepts $0.000001–$10 for ordinary native/model Run admission. The selected creator route has its separate `MACROFOLD_WORLD_RUN_MAX_USD` default of $1 and range $0.000001–$5. Neither is the shared workshop total, a Worker allocation-rate ceiling, or account-owner permission to spend.
 
 **Reason / tradeoff:** Keep a per-run spending ceiling and change its value only within the owner's authorized total budget.
 
@@ -284,21 +284,19 @@ Original recommendation: **Review**.
 
 ## LA188
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Removed by the Worker cutover — absence rechecked 2026-10-06 · Restrictiveness: — (removed).**
 
-Macrofold remote-compute spending is disabled by a $0 default allowance, configurable up to $100.
+The old `MACROFOLD_COMPUTE_MAX_USD` default of $0 and maximum of $100 belonged to finite Sandbox allocation. Current configuration does not read it. OpenLegend selects an existing operator-owned Worker; it does not allocate compute or translate that old allowance into an hourly Worker ceiling. Run/model limits do not cap shared allocation or idle spend.
 
-**Reason / tradeoff:** Keep explicit authorization before creating paid remote workers, regardless of what model inference itself costs.
+**Reason / tradeoff:** Preserve the [application/world compute owner's controls](../ai-providers.md#shared-worker-setup-and-cutover), explicit authorization and settlement of real historical obligations. The removal does not authorize unlimited compute, restoring a legacy allocator or refunding uncertain charges. The original **Review** recommendation is superseded by the accepted Worker ownership contract.
 
-[Implementation starting point](../../apps/server/src/config.ts).
-
-Original recommendation: **Review**.
+[Current configuration](../../apps/server/src/config.ts) · [Remaining deployment and accounting gates](../maintainers/macrofold-worker-api.md#mw04--remaining-deployment-and-qualification-gates).
 
 ## LA189
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Macrofold remote runs and queue waits default to a 300-second timeout, configurable from 5 to 300 seconds.
+Ordinary native Run queue and execution timeout parameters use `MACROFOLD_TIMEOUT_SECONDS`, default 300 seconds and range 5–300. Local waiting also retains its request deadline/cancellation. The creator route has a separate `MACROFOLD_WORLD_TIMEOUT_SECONDS`, default 900 and range 5–1,800; fast/complex direct inference uses LA186. Do not apply one route's default to every remote operation or add queue and execution allowances to claim a longer locally authorized wait.
 
 **Reason / tradeoff:** Keep a finite remote-work deadline and expose queue delay separately from model execution time.
 
@@ -308,69 +306,69 @@ Original recommendation: **Review**.
 
 ## LA190
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The complete prompt for the Macrofold full-cognition workflow cannot exceed 98,000 serialized characters.
+The non-fast/non-complex native generation path checks the serialized instructions/schema/context object against 98,000 UTF-8 bytes, not characters. It adds its response-format wrapper afterward, subject to the separate transport body bound. This check does not describe fast/complex direct inference or every reflection/creator prompt; those callers retain their own complete-input and workspace contracts.
 
 **Reason / tradeoff:** Align this prompt-size check with the remote service's actual allowance and the game's other model-input checks.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Native generation caller](../../apps/server/src/macrofold.ts).
 
 Original recommendation: **Review**.
 
 ## LA191
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 Macrofold Jev calls request 64 output tokens per question, with a minimum of 1,024 and maximum of 16,384 tokens.
 
 **Reason / tradeoff:** Ensure the permitted questions have enough answer space, and split work if the output ceiling is reached before the input ceiling.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Judgment inference caller](../../apps/server/src/macrofold.ts).
 
 Original recommendation: **Review**.
 
 ## LA192
 
-**Historical — needs recheck · Restrictiveness: Liberal.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Liberal.**
 
-The Macrofold API client limits request bodies to 500,000 bytes, response bodies to 1,000,000 bytes and ordinary calls to 30 seconds by default.
+Macrofold JSON requests use a 500,000-byte canonical body bound. Ordinary response reads default to 1,000,000 bytes; a caller can select a lower positive bound, and parsed JSON also passes complexity validation. The 30-second timeout is a fallback only when no caller signal is supplied, not an extra ceiling added to longer admitted Run waits. Direct inference progress uses a total wire-stream allowance of four times the selected response bound, a separate 1,000,000-byte frame bound and an accumulated text bound equal to the selected response limit. A failed preview follows the same accepted Run/receipt; it never launches replacement inference.
 
 **Reason / tradeoff:** Keep network-size and wait protections while aligning them with the remote operations the game officially supports.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Macrofold transport](../../packages/ai/src/macrofold.ts) · [Stream framing](../../packages/ai/src/event-stream.ts).
 
 Original recommendation: **Review**.
 
 ## LA194
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Macrofold event, resource and model listings request pages of 100 records, and billing inspection stops after 10 pages.
+Diagnostic event/billing inspection reads pages of 100, stopping after ten pages and exposing `truncated` and the remaining cursor. Authoritative Run settlement is different: it accepts at most one complete 100-row usage page with an explicit null cursor; incomplete coverage retains the original reservation. Native model discovery checks only its first 100-row listing, without following a cursor. Question/progress event replay can read four pages per pass and reduce page size when response bytes overflow; reflection tool-count inspection instead rejects an incomplete 100-event window. Workspace file listing uses the separate 20-entry rule in [LA042](memory.md#la042). These consumers must not borrow one another's completeness claims.
 
 **Reason / tradeoff:** Fetch further pages when complete discovery is required, or clearly report that inspection stopped before all records were read.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Discovery, event replay and billing](../../apps/server/src/macrofold.ts) · [Workspace listing](../../apps/server/src/workspace.ts).
 
 Original recommendation: **Review**.
 
 ## LA195
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Macrofold status checks run every 500 milliseconds, remote file checks every 300 milliseconds, and inspection calls use 10-second timeouts.
+Pending Run observation waits 500 milliseconds between passes; workspace operation polling waits 300 milliseconds. These delays follow the previous request/work, so they are not guaranteed fixed request rates. Diagnostic detail-page calls use a ten-second signal per page, while later receipt reconciliation uses one ten-second signal for its related completion/usage reads. Streaming progress and its publication window remain separate from status polling.
 
 **Reason / tradeoff:** Keep polling frequent enough for responsiveness without repeatedly querying a remote service faster than useful information changes.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Run observation and inspection](../../apps/server/src/macrofold.ts) · [Workspace operations](../../apps/server/src/workspace.ts).
 
 Original recommendation: **Keep**.
 
 ## LA196
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
-Configuration rejects provider token prices above $1,000 per million tokens.
+The named default `LLM_*_USD_PER_MILLION` and `JEV_INPUT_USD_PER_MILLION` settings accept $0–$1,000 per million tokens. Additional entries in trusted `OPENAI_MODEL_PRICES_JSON` instead require finite nonnegative rates with exact model/alias ownership; that catalogue schema has no $1,000 ceiling. These are configuration checks, not a global spending allowance; checked cost conversion and authoritative admission remain required.
 
 **Reason / tradeoff:** Treat the price ceiling as a configuration sanity check and do not confuse it with the authorized amount the game may spend.
 
