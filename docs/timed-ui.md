@@ -2,11 +2,11 @@
 
 ## Status and ownership
 
-Accepted presentation contract; current components and limitations are recorded in [Architecture](architecture.md#hearing-captions-and-perceived-events). This document owns reusable lifetime sampling and visual progress/remaining-time indicators. [Hearing and speech](hearing-and-speech.md) is the first caption consumer. Native work, cooldowns, game effects, and provider jobs keep their own authoritative owners. Implementation staging belongs in [the hearing tracker](maintainers/hearing-and-speech.md); deferred automated coverage belongs in [TODO](maintainers/TODO.md#hearing-captions-and-perceived-events--deferred-validation).
+Delivered caption foundation under the accepted presentation contract; current components and limitations are recorded in [Architecture](architecture.md#hearing-captions-and-perceived-events). This document owns reusable lifetime sampling and visual progress/remaining-time indicators. [Hearing and speech](hearing-and-speech.md) is the first caption consumer. Native work, cooldowns, game effects, and provider jobs keep their own authoritative owners. Implementation staging belongs in [the hearing tracker](maintainers/hearing-and-speech.md); deferred automated coverage belongs in [TODO](maintainers/TODO.md#hearing-captions-and-perceived-events--deferred-validation).
 
 ## 1. Two small reusable pieces
 
-Build a pure `ProgressRing` visual component and a small presentation lifetime utility. Do not create a universal world-timer service, an animation framework, or another scheduler.
+The caption path already uses a pure [`ProgressRing`](../apps/client/src/design-system/progress-ring.tsx) visual component and a small [presentation lifetime utility](../apps/client/src/ui-lifetime.ts). Reuse these owners instead of rebuilding them. Do not create a universal world-timer service, an animation framework, or another scheduler.
 
 `ProgressRing` accepts a finite clamped fraction, accessible-label/semantics options, size, and visual direction. Its first use is remaining fraction: full at appearance, empty at expiry. A work consumer may use elapsed fraction instead. The component does not know about speech, cooldown admission, dates, save files, actors, model calls or expiration effects.
 
@@ -23,7 +23,7 @@ type LifetimeSnapshot = {
 sampleLifetime(lifetime, nowMs): LifetimeSnapshot;
 ```
 
-The implementation may use deadline-plus-paused-offset or elapsed-time accumulation, not both independently writable. One overlay manager owns its clock and active entries. Resume preserves remaining time rather than restarting the ring. Rendering must not itself commit the expiry transition repeatedly.
+The current lifetime stores a duration and visible-start value on the overlay’s accumulated presentation clock; the [caption owner](../apps/client/src/speech-captions.tsx) offsets that start while a placed label is hidden by layout. The `paused` argument to `sampleLifetime` labels the returned state; it does not itself stop elapsed time. A consumer must freeze its clock or account for the paused interval before sampling. Keep one time authority, not independently writable deadline and elapsed counters. One overlay manager owns its clock and active entries. Resume preserves remaining time rather than restarting the ring. Rendering must not itself commit the expiry transition repeatedly.
 
 Unknown duration is not a fake countdown. Keep the existing indeterminate AI dots/spinner for unknown provider work. A zero duration is already expired. The current speech-caption caller computes bounded reading durations locally, samples `performance.now()` and starts lifetimes from its own accumulated clock; the pure lifetime helpers consume those trusted values without repeating numeric assertions. If a future consumer accepts durations or clock values from untrusted input, validate them at that input's owner rather than adding checks to every local sample. An intentionally persistent caption has no countdown ring.
 
@@ -39,7 +39,7 @@ Unknown duration is not a fake countdown. Keep the existing indeterminate AI dot
 
 For captions, one real second of active reading time advances one presentation second, regardless of 0.5×/1×/3×/8× simulation speed or the world's minutes-per-second ratio. Freeze active caption time while the game is manually paused or the document is hidden. Existing captions resume with their remaining reading budget; new historical events accumulated in a hidden tab are not queued for an old-speech avalanche.
 
-Provide a presentation-only pause/hide preference and reading-time multiplier. A persistent World Events history is the untimed source for missed text. Pause presentation must not pause NPC cognition, change actor hearing, or cancel native effects. Conversely, a generic ring reused for a game effect must not inherit caption-specific pause-on-hidden behavior.
+The caption consumer provides presentation-only pause/hide preferences and a reading-time multiplier. A persistent World Events history is the untimed source for missed text. Pause presentation must not pause NPC cognition, change actor hearing, or cancel native effects. Conversely, a generic ring reused for a game effect must not inherit caption-specific pause-on-hidden behavior.
 
 A consumer may separately bound how long deferred presentation stays relevant. [Speech queue residence](hearing-and-speech.md#7-caption-component-and-lifetime) uses the same presentation clock, but discarding a stale queued item does not pretend its reading ring reached zero or trigger a gameplay effect.
 
@@ -59,7 +59,7 @@ Reuse the existing scene frame callback for active world overlays and one manage
 
 Remove animation subscriptions, component roots and local queues on unmount/disposal. Bound active and queued entries at the consumer, not in the generic progress component. Lifetime disposal never deletes a world event or cancels a gameplay action.
 
-Start by sharing the pure fraction/ring and lifetime helper for speech. Adapt existing work indicators only where this removes real duplication without changing their continuous-bar appearance, server clock, or completion semantics. The quick-action bar's cooldown-ring rule remains specific to that bar.
+Speech already shares the pure fraction/ring and lifetime helper. This delivered foundation does not close the hearing tracker’s broader graphical and accessibility qualification. Adapt existing work indicators only where this removes real duplication without changing their continuous-bar appearance, server clock, or completion semantics. The quick-action bar's cooldown-ring rule remains specific to that bar.
 
 ## Reference basis
 
