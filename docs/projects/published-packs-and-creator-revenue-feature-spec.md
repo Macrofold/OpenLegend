@@ -171,6 +171,8 @@ A paid membership is not a promise of infinite instantaneous admission. Advertis
 
 In the selected first membership-allocation policy, a world whose valid directly paid premium access overlaps any part of that subscriber's allocation period is excluded from that subscriber's platform pool for that period. This uses the paid access interval, even if its purchase occurred earlier or renewal is already off; buying ordinary platform hosting for a world is a different expense. Show the effect before buying the standalone membership. This avoids paying twice through opaque overlapping benefits; other eligible selected worlds receive the pool, or it is returned as described below. A later explicit additional-support purchase would be its own product.
 
+A standalone-world offer does not acquire a hidden home-hosting prerequisite from [DG29's temporary-visit closure](visits-and-wider-participation-feature-spec.md#101-when-home-hosting-ends-during-a-commercial-visit). If that specific entry route is used, disclose its actual home-service dependency before sale. Home service ending cannot silently consume the destination's remaining paid access. Supply an already qualified independent entry route with the player's deliberate choice, or apply the existing remedy for undelivered access; never require an unpromised second subscription or fabricate another person.
+
 ## 9. A fixed member allocation that rewards wanted worlds
 
 ### 9.1 What qualifies

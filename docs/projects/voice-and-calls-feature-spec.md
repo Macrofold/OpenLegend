@@ -5,7 +5,7 @@
 | Product design complete | Researched behavior and independent critique are complete. Technical design, implementation and actual play, accessibility and cost qualification remain open. | 2026-10-07   |
 
 **Design group:** DG26 — ND15, the calls extension of ND14, and the decision boundary for selected ND16 hearing work.  
-**Assignment:** [Groups 26–30](product-design-groups-26-30.md).  
+**Assignment:** [Groups 26–30](completed/product-design-groups-26-30.md).  
 **Owners:** [Hearing](../hearing-and-speech.md), [conversations](../narration-and-conversations.md), [private text](world-text-messages-feature-spec.md), [PS04](../maintainers/product-scalability.md#ps04--coherent-scenes-and-limited-attention) and [AI spending](../ai-providers.md).
 
 ## 1. The experience worth building

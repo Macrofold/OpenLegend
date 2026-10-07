@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-10-07 — Complete groups 26–30 and reconcile commercial travel closure
+
+Completed the [third five-group assignment](projects/completed/product-design-groups-26-30.md) after sequential research/design, independent group reviews and a whole-package gameplay, economic and owner/status critique. The five proposals contain fifty-six primary research records and preserve independent useful first experiences; a marketplace, council, large crowd or unattended community is not a universal release prerequisite.
+
+The final economic review found and repaired the interaction between home-hosting expiry and an outstanding visit. [The conditional commercial visit](projects/visits-and-wider-participation-feature-spec.md#101-when-home-hosting-ends-during-a-commercial-visit) now closes through actual deposit/departure and held-home recovery, preserves pending death and deliberate Continue, distinguishes service-blocked recovery from declined choices, and requires finite permitted terminal handling before sale. A standalone destination purchase gains no hidden home-hosting prerequisite; qualified independent entry or the existing undelivered-service remedy preserves the paid promise. DG27/DG28, PS/PD delivery and limits/profile records agree. No new archive, deletion authority or development compatibility exception is introduced.
+
+Moved the assignment overview to completed projects and repaired its references. The full affected diff, original checklist states, relative links/anchors, project status, pinned Markdown formatting and exact committed files were verified. All 470 prior checkbox states remain, with thirty-three new open delivery items. Feature projects retain their actual unfinished technical/runtime/operating qualification. Actual paid spend was $0; no runtime, live play, payment or load experiment ran.
+
 ## 2026-10-07 — A conditional creator grant that pays for useful work
 
 Prepared DG30's [creator support and contributor-voice proposal](projects/creator-support-and-contributor-voice-feature-spec.md), [GF constraints](limits/creator-support.md) and one open PD10.7 operating gate, with twelve primary research records. One useful award, three invited concise proposals and a small accountable review can run before a grant portal, marketplace, council or corporate mission structure. The first optional consultation is bounded and unweighted; no purchase buys a vote.

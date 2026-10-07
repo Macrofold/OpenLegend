@@ -430,6 +430,6 @@ All records were retrieved on 2026-10-07 and independently opened for the produc
 - Limits and chosen first scope: [Creator support](../limits/creator-support.md).
 - Canonical direction: [Patrons, contributors and world history](../../archive/06-marketing/patrons-contributors-and-world-history.md).
 - Actual contribution terms: [CONTRIBUTING.md](../../CONTRIBUTING.md) and [LICENSING.md](../../LICENSING.md).
-- Assignment: [Groups 26–30](product-design-groups-26-30.md).
+- Assignment: [Groups 26–30](completed/product-design-groups-26-30.md).
 
 The first proposed operating process needs no new grant/voting architecture. Adoption, actual appropriation/people/agreements, outreach, payments, contributed runtime delivery and real outcome evidence remain separate from this documentation assignment.
