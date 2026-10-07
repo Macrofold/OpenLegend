@@ -362,7 +362,7 @@ export function applicableConsumption(
     : null;
 }
 export function bodyNarration(template: string, subject: Entity, item?: Named): Narration {
-  return narrationTemplate(template, { subject, item });
+  return narrationTemplate(template, { subject }, { item });
 }
 
 /** Exact eligibility inputs captured before background work; numeric meter drift is rechecked separately. */

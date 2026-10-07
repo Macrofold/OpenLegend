@@ -67,28 +67,9 @@ jobs:
             tests/browser/god-editor.spec.ts \
             tests/browser/time.spec.ts \
             --output test-results/interface
-      - name: Observe shared inventory competition and access
-        if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
-        timeout-minutes: 4
-        run: node --import tsx scripts/ui-shared-inventory-observation.mjs test-results/shared-inventory/evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: spatial-browser-evidence
           path: test-results/
           retention-days: 7
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: temporary-native-ui-observations
-          path: |
-            test-results/shared-inventory/evidence/*.json
-            test-results/shared-inventory/evidence/*.png
-          retention-days: 7
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: temporary-time-journey-trace
-          path: test-results/interface/time-time-settings-persist-f5572-gout-and-manual-world-pause/trace.zip
-          retention-days: 7
-          if-no-files-found: warn
