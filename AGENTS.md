@@ -27,7 +27,9 @@ Be concise by cutting filler, never by compressing wording at the expense of cla
 
 Apply the following requirements when reporting work; include only those relevant to the task and message.
 
-Report delivered scope/findings, major decisions and assumptions with reasons, actual evidence/limits and remaining gaps. Only implementation requests require closing **Open decisions/questions** and **Suggested next steps** sections, explicitly saying “None” when empty; omit these sections for other requests. Never claim unrun checks, fixture-based model quality or unmeasured scale.
+Report delivered scope/findings, major decisions and assumptions with reasons, actual evidence/limits and remaining gaps. Only implementation requests require closing **Open decisions/questions** and **Remaining work in this session** sections, explicitly saying “None” when empty; omit these sections for other requests. Never claim unrun checks, fixture-based model quality or unmeasured scale.
+
+**Remaining work in this session** answers “Is the current feature ready to merge into local `main`?” State readiness from the available evidence and list only unfinished work within the current agreed task: implementation, integration, documentation, review fixes, required verification, unresolved questions or blockers. Required checks that have not run remain open; do not claim readiness without them. Do not suggest net-new features, improvements or subsequent projects. Reporting remaining work does not replace [completing the authorized task](#completion-and-handoff--every-task).
 
 For implementation handoffs, also include **Behavior changes and decisions**: explain each consequential decision that changes current behavior or constrains future behavior, its reason and its tradeoff. Explicitly identify any previous decision or limit that was changed. Say “None” when there are no such changes; do not bury them in implementation details.
 
