@@ -67,12 +67,20 @@ export interface CommandInput {
   operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
   fireOperation?: 'light' | 'fuel' | 'extinguish';
-  handoverOperation?: 'offer' | 'accept' | 'decline' | 'withdraw';
+  handoverOperation?: 'offer' | 'counter' | 'accept' | 'decline' | 'withdraw';
   outingOperation?: 'invite' | 'accept' | 'decline' | 'leave';
   outingId?: string;
   outingMode?: 'enqueue' | 'replace' | 'interrupt';
   destinationId?: string;
   offerId?: string;
+  expectedOfferRevision?: number;
+  requestedItem?: {
+    itemId: string;
+    quantity: number;
+    expectedRevision?: number;
+    placementRevision?: number;
+    expectedContentsRevision?: number;
+  };
   targetId?: string;
   definitionId?: string;
   itemId?: string;
@@ -258,6 +266,7 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView extends Named {
+  trade?: ItemTradeView;
   /** Exact action offered for the controlled character's currently equipped item. */
   equippedAction?: ActionOption;
   contents?: Array<{
@@ -317,6 +326,63 @@ export interface InventoryItemView extends Named {
   equipped: boolean;
   tags: string[];
   actions: ActionOption[];
+}
+
+export interface TradeLotView {
+  id: string;
+  name: string;
+  label: string;
+  description: string;
+  quantity: number;
+  revision: number;
+  placementRevision: number;
+  contentsRevision?: number;
+  whole: boolean;
+}
+/** Participant-only pending terms and remembered disclosures, never other live stock. */
+export interface ItemTradeView {
+  scope: string;
+  personId: string;
+  personName: string;
+  labels: {
+    title: string;
+    newOffer: string;
+    review: string;
+    refresh: string;
+    choose: string;
+    whole: string;
+    giveQuantity: string;
+    receiveQuantity: string;
+    selectionHint: string;
+    into: string;
+    to: string;
+    remembered: string;
+    noTransfer: string;
+    draftChanged: string;
+    give: string;
+    receive: string;
+    offer: string;
+    accept: string;
+    decline: string;
+    withdraw: string;
+    counter: string;
+    gift: string;
+    waiting: string;
+    incoming: string;
+    changed: string;
+    unknown: string;
+  };
+  ownLots: TradeLotView[];
+  knownLots: TradeLotView[];
+  offers: {
+    id: string;
+    revision: number;
+    incoming: boolean;
+    give?: TradeLotView;
+    receive?: TradeLotView;
+    expiresAt: number;
+    actions: ActionOption[];
+  }[];
 }
 
 export interface RecipeView {

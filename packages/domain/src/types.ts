@@ -196,6 +196,8 @@ export interface ActorComponent {
   /** Attack recovery survives cancelling an already committed swing. */
   attackReadyAt?: number;
   inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
+  /** Explicitly disclosed offer terms, not a live view of another person's inventory. */
+  knownTradeLots?: Record<string, Record<string, import('./handover.js').KnownTradeLot>>;
   participation?: import('./participation-state.js').ParticipationState;
   senses?: string[];
   /** Receiver-private provenance, never part of a contact projection. */
@@ -528,7 +530,7 @@ export type Command = Envelope &
     | { type: 'cook'; itemId: string; heatId: string }
     | {
         type: 'handover';
-        operation: 'offer';
+        operation: 'offer' | 'counter';
         targetId: string;
         itemId: string;
         quantity: number;
@@ -537,12 +539,16 @@ export type Command = Envelope &
         placementRevision?: number;
         expectedContentsRevision?: number;
         targetRevision?: number;
+        requested?: import('./handover.js').RequestedLot;
+        offerId?: string;
+        expectedOfferRevision?: number;
       }
     | {
         type: 'handover';
         operation: 'accept' | 'decline' | 'withdraw';
         targetId: string;
         offerId: string;
+        expectedOfferRevision: number;
       }
     | {
         type: 'tend-fire';

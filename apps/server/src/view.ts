@@ -20,7 +20,8 @@ import { worldPosition, worldSupport } from '@open-legend/domain';
 import { privateDraftScopeKey, scopeKey, type RequestScope } from './authority.js';
 import { observerDescription, observerName, fireFuelDescription } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
-import { handoverOptions } from './handover-actions.js';
+import { handoverOptions, itemTradeView, tradeOwnLots } from './handover-actions.js';
+import { canHandleItems, offersBetween } from '@open-legend/domain';
 import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
 import { bodyPolicy, applicableConsumption, matchesStatusCondition } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
@@ -278,7 +279,19 @@ export async function projectView(
           // Fire care availability depends on the player's carried tinder, drill and fuel.
           entity.heat ? player.inventoryRevision : undefined,
           // Offer replies appear and disappear with pending offers between the two people.
-          entity.actor ? world.itemOffers : undefined,
+          ...(entity.actor
+            ? (() => {
+                const { incoming, outgoing } = offersBetween(world, scope.actorId, entity.id);
+                return [...incoming, ...outgoing];
+              })()
+            : []),
+          entity.actor ? actor.knownTradeLots?.[entity.id] : undefined,
+          entity.actor ? player.inventoryRevision : undefined,
+          // Starting/stopping work can bind a promised tool without changing its lot.
+          entity.actor ? actor.action : undefined,
+          // Manual action choices depend on physical form, not unrelated body conditions.
+          entity.actor ? actor.body?.plan : undefined,
+          entity.actor ? service.timelineId : undefined,
           world.itemDefinitions,
           active,
           paused,
@@ -569,6 +582,20 @@ export async function projectView(
                       }
                     : {}),
                   species: entity.actor.species,
+                  ...(entity.actor.alive && canHandleItems(world, entity)
+                    ? {
+                        trade: itemTradeView(
+                          world,
+                          scope.actorId,
+                          memo('tradeOwnLots', [observation.inventory, world.itemDefinitions], () =>
+                            tradeOwnLots(world, observation.inventory),
+                          ),
+                          entity,
+                          JSON.stringify([privateDraftScopeKey(scope), service.timelineId]),
+                          actions,
+                        ),
+                      }
+                    : {}),
                 }
               : {}),
             actions,

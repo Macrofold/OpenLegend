@@ -18,6 +18,7 @@ import { rangedApproachRange } from './worlds/base/actions.js';
 import {
   executeHandover,
   prepareItemOffer,
+  itemOfferReplyProblem,
   offerRecipientProblem,
   reconcileItemOffers,
 } from './handover.js';
@@ -1396,9 +1397,14 @@ function executeCommandNative(
       'unsupported-controller',
       'This entity has no installed native threat controller.',
     );
-  if (options.preview && command.type === 'handover' && command.operation === 'offer') {
-    const offer = prepareItemOffer(original, source, command);
-    if ('ok' in offer) return { world: original, events: [], outcome: offer };
+  if (options.preview && command.type === 'handover') {
+    if ('itemId' in command) {
+      const offer = prepareItemOffer(original, source, command);
+      if ('ok' in offer) return { world: original, events: [], outcome: offer };
+    } else {
+      const problem = itemOfferReplyProblem(original, source, command);
+      if (problem) return { world: original, events: [], outcome: problem };
+    }
   }
   if (command.type === 'outing') {
     const check = prepareOuting(original, command);
@@ -4107,6 +4113,7 @@ export function observeActor(
         delete copy.actor.contacts;
         delete copy.actor.conditions;
         delete copy.actor.inventoryInspection;
+        delete copy.actor.knownTradeLots;
         delete copy.actor.attackReadyAt;
         copy.actor.agency = seedAgency();
         delete copy.actor.initialGoals;

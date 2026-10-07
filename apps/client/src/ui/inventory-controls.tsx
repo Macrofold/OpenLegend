@@ -16,17 +16,21 @@ export function InventoryQuantity({
   maximum,
   disabled = false,
   error,
+  label = 'Quantity',
+  hint,
 }: {
   value: string;
   onChange(value: string): void;
   maximum?: number;
   disabled?: boolean;
   error?: string;
+  label?: string;
+  hint?: string;
 }) {
   const id = useId();
   return (
     <div className="ol-inventory-quantity">
-      <label htmlFor={id}>Quantity</label>
+      <label htmlFor={id}>{label}</label>
       <div className="ol-inventory-quantity-controls">
         <input
           id={id}
@@ -58,9 +62,10 @@ export function InventoryQuantity({
         </Button>
       </div>
       <p id={`${id}-hint`} className="ol-caption">
-        {maximum === undefined
-          ? 'Available quantity is unknown.'
-          : `${maximum} available whole units.`}{' '}
+        {hint ??
+          (maximum === undefined
+            ? 'Available quantity is unknown.'
+            : `${maximum} available whole units.`)}{' '}
         All and Half fill this draft; they do not move anything.
       </p>
       {error && (

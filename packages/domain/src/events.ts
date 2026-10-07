@@ -110,6 +110,37 @@ export function emit(
   );
 }
 
+/** A permitted observation with a named witness, preserving the actual acting person.
+ * Private item terms must wake the recipient as a directed action without reaching bystanders. */
+export function emitPrivateObservation(
+  world: WorldState,
+  events: WorldEvent[],
+  type: string,
+  observer: Entity,
+  text: string | Narration,
+  source: Entity,
+  targetId?: string,
+  data?: WorldEvent['data'],
+): WorldEvent {
+  return recordEvent(world, events, type, text, [observer.id], source, targetId, data, 'private');
+}
+
+/** Parties receive their own detailed receipt; bystanders learn only the witnessed act. */
+export function emitWitnessObservation(
+  world: WorldState,
+  events: WorldEvent[],
+  type: string,
+  text: string | Narration,
+  source: Entity,
+  targetId: string,
+  data?: WorldEvent['data'],
+): WorldEvent {
+  const witnesses = eventAudience(world, type, source, 'external').filter(
+    (id) => id !== source.id && id !== targetId,
+  );
+  return recordEvent(world, events, type, text, witnesses, source, targetId, data, 'external');
+}
+
 function eventAudience(
   world: WorldState,
   type: string,
@@ -385,7 +416,7 @@ function recordEvent(
         at: event.at,
         sequence: world.nextId,
         modality:
-          scope === 'private' && data?.['acquisition'] !== true
+          scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
             ? type === 'contact'
               ? 'felt'
               : type === 'encounter'

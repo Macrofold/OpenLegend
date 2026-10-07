@@ -1,11 +1,13 @@
 import type { ApiResult, GamePatch, GameView, OperationsView } from '@open-legend/protocol';
 
+import { clearTradeDrafts } from './trade-drafts';
 import { announceLogout, tabClientId, tabIdentityReady } from './tab-session';
 
 let presenceSequence = 0;
 let worldGeneration = '';
 let viewScope = '';
 let privateDraftNamespace = '';
+let privateDraftTimeline = '';
 let accessGeneration = 0;
 export class AccessError extends Error {}
 /** A missing session is a normal entry state, distinct from a refused world grant. */
@@ -25,6 +27,8 @@ export function clearAccess(): void {
   worldGeneration = '';
   viewScope = '';
   privateDraftNamespace = '';
+  privateDraftTimeline = '';
+  clearTradeDrafts();
   try {
     for (const key of Object.keys(localStorage))
       if (
@@ -48,11 +52,19 @@ export function acceptAccess(view: GameView): void {
   accessGeneration++;
   worldGeneration = generation;
   viewScope = scope;
+  // In-memory sharing must also be cleared when browser storage is unavailable.
+  if (
+    (privateDraftNamespace && privateDraftNamespace !== view.access?.privateDraftScope) ||
+    (privateDraftTimeline && privateDraftTimeline !== view.saveTimeline)
+  )
+    clearTradeDrafts();
   privateDraftNamespace = view.access?.privateDraftScope ?? '';
+  privateDraftTimeline = view.saveTimeline ?? '';
   try {
     const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
     const priorOwner = localStorage.getItem('open-legend:private-owner');
     if (priorOwner !== owner) {
+      clearTradeDrafts();
       for (const key of Object.keys(localStorage))
         if (
           key.startsWith('open-legend:world-agent:') ||
@@ -68,6 +80,7 @@ export function acceptAccess(view: GameView): void {
     const key = `open-legend:save-timeline:${view.worldId}`;
     const previous = sessionStorage.getItem(key);
     if (previous && previous !== view.saveTimeline) {
+      clearTradeDrafts();
       localStorage.removeItem(`open-legend:world-agent:${view.worldId}`);
       localStorage.removeItem(`open-legend:invention-draft:${view.worldId}`);
       sessionStorage.removeItem('open-legend:composer-draft:v2');

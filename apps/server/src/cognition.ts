@@ -254,14 +254,22 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
             mode: input.outingMode,
           };
     case 'handover':
-      return input.handoverOperation === 'offer'
+      return input.handoverOperation === 'offer' || input.handoverOperation === 'counter'
         ? {
             ...base,
             type: 'handover',
-            operation: 'offer',
+            operation: input.handoverOperation,
             targetId: input.targetId!,
             itemId: input.itemId!,
             quantity: input.quantity!,
+            expectedRevision: input.expectedRevision,
+            placementRevision: input.placementRevision,
+            expectedContentsRevision: input.expectedContentsRevision,
+            ...(input.requestedItem ? { requested: input.requestedItem } : {}),
+            ...(input.offerId ? { offerId: input.offerId } : {}),
+            ...(input.expectedOfferRevision !== undefined
+              ? { expectedOfferRevision: input.expectedOfferRevision }
+              : {}),
           }
         : {
             ...base,
@@ -269,6 +277,7 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
             operation: input.handoverOperation!,
             targetId: input.targetId!,
             offerId: input.offerId!,
+            expectedOfferRevision: input.expectedOfferRevision!,
           };
     case 'tend-fire':
       return {

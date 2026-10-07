@@ -15,6 +15,7 @@ import { Button, EmptyState, EntityRow, Section, Tag, symbol } from '../design-s
 import { Actions } from './panels';
 import { InventoryQuantity, exactQuantity } from './inventory-controls';
 import { InventoryDestinations } from './inventory-destinations';
+import { ItemTrade } from './item-trade';
 import './inventory.css';
 
 function InventoryHistory({
@@ -538,30 +539,10 @@ function InventoryWorkspace({
       return;
     }
     const target = transfer.destination;
-    const action =
-      target.kind === 'recipient'
-        ? {
-            id: `offer-${transfer.item.id}-${target.id}`,
-            label: `Offer to ${target.name}`,
-            enabled: canAct,
-            command: {
-              type: 'handover' as const,
-              handoverOperation: 'offer' as const,
-              targetId: target.id,
-              itemId: transfer.item.id,
-              quantity: transferAmount,
-              expectedRevision: transfer.source.revision,
-              placementRevision: transfer.source.placementRevision,
-              expectedContentsRevision: transfer.source.contentsRevision,
-              targetRevision: target.revision,
-            },
-          }
-        : arrange('transfer-item', transfer.item, target.id, target.revision, transferAmount);
+    if (target.kind === 'recipient') return;
     void dispatch(
-      action,
-      target.kind === 'recipient'
-        ? `Offered ${transferAmount} ${transfer.item.name} to ${namePhrase(target, 'definite')}. They must accept before anything moves.`
-        : `Moved ${transferAmount} ${transfer.item.name} from ${transfer.sourceName} to ${namePhrase(target, 'definite')}.`,
+      arrange('transfer-item', transfer.item, target.id, target.revision, transferAmount),
+      `Moved ${transferAmount} ${transfer.item.name} from ${transfer.sourceName} to ${namePhrase(target, 'definite')}.`,
     );
   };
   return (
@@ -1095,22 +1076,22 @@ function InventoryWorkspace({
                         >
                           Choose destination
                         </Button>
-                        <Button
-                          size="sm"
-                          disabled={
-                            !canAct ||
-                            transferStale ||
-                            !transfer.destination ||
-                            transferAmount === undefined ||
-                            transfer.destination.fit === 'blocked'
-                          }
-                          busy={pending}
-                          onPress={move}
-                        >
-                          {transfer.destination?.kind === 'recipient'
-                            ? 'Offer selected quantity'
-                            : 'Move selected quantity'}
-                        </Button>
+                        {transfer.destination?.kind !== 'recipient' && (
+                          <Button
+                            size="sm"
+                            disabled={
+                              !canAct ||
+                              transferStale ||
+                              !transfer.destination ||
+                              transferAmount === undefined ||
+                              transfer.destination.fit === 'blocked'
+                            }
+                            busy={pending}
+                            onPress={move}
+                          >
+                            Move selected quantity
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="quiet"
@@ -1133,6 +1114,32 @@ function InventoryWorkspace({
                       )}
                     </section>
                   )}
+                  {transfer?.destination?.kind === 'recipient' &&
+                    (() => {
+                      const trade = view.entities.find(
+                        (person) => person.id === transfer.destination!.id,
+                      )?.trade;
+                      return trade ? (
+                        <ItemTrade
+                          key={trade.scope}
+                          trade={trade}
+                          connected={canAct}
+                          command={command}
+                          initialQuantity={transfer.quantity}
+                          selected={{
+                            id: transfer.item.id,
+                            name: transfer.item.name,
+                            label: transfer.item.name,
+                            description: transfer.item.description,
+                            quantity: transfer.item.availableQuantity ?? transfer.item.quantity,
+                            revision: transfer.source.revision,
+                            placementRevision: transfer.source.placementRevision,
+                            contentsRevision: transfer.source.contentsRevision,
+                            whole: !!transfer.item.container || !!transfer.item.individual,
+                          }}
+                        />
+                      ) : null;
+                    })()}
                   {view.godMode && (
                     <details>
                       <summary>God mode · Declare ownership</summary>
