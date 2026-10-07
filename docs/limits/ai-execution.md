@@ -344,7 +344,7 @@ Original recommendation: **Review**.
 
 **Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Diagnostic event/billing inspection reads pages of 100, stopping after ten pages and exposing `truncated` and the remaining cursor. Authoritative Run settlement is different: it accepts at most one complete 100-row usage page with an explicit null cursor; incomplete coverage retains the original reservation. Native model discovery checks only its first 100-row listing, without following a cursor. Question/progress event replay can read four pages per pass and reduce page size when response bytes overflow; reflection tool-count inspection instead rejects an incomplete 100-event window. Workspace file listing uses the separate 20-entry rule in [LA042](memory.md#la042). These consumers must not borrow one another's completeness claims.
+Diagnostic event/billing inspection reads pages of 100, stopping after ten pages and exposing `truncated` and the remaining cursor. Authoritative Run settlement is different: it accepts at most one complete 100-row usage page with an explicit null cursor; incomplete coverage retains the original reservation. Native model discovery checks only its first 100-row listing, without following a cursor. Question/progress event replay can read four pages per pass and reduce page size when response bytes overflow; reflection tool-count inspection instead rejects an incomplete 100-event window. Workspace file listing uses the separate 20-entry rule in [LA193](memory.md#la193). These consumers must not borrow one another's completeness claims.
 
 **Reason / tradeoff:** Fetch further pages when complete discovery is required, or clearly report that inspection stopped before all records were read.
 
