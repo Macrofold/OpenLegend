@@ -27,6 +27,10 @@ Consider the permitted action path, automatic growth rate, hot-path frequency, p
 
 Original source-review baseline: `af1eb02`. The subsequent [implementation](../projects/immediate-gameplay-limits.md) adds runtime evidence; broader LA01–LA04 acceptance remains open. [Inspected work and protections](../limits/README.md#growth-path-review-coverage) defines coverage and its limits.
 
+<a id="c05"></a><a id="c23"></a><a id="c24"></a>
+
+**Delivered save candidates, no longer ranked:** C05's autosave controls/manual priority and restart-visible failure status are delivered ([SL08-A](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up), [SV23](../limits/persistence.md#sv23)); C24's durable capture ordering is delivered ([SB14](../limits/persistence.md#sb14)); C23's runtime checkpoint-worker watchdog and scoped slow-output qualification are delivered ([SB16](../limits/persistence.md#sb16), SL09-C). The inventories retain their rationale, limits and historical results. None closes the different large-vector restore failure, broad hosted capacity, or the command-line backup's separate snapshot limitation.
+
 ## Remove
 
 ### R01
@@ -101,7 +105,7 @@ The 256 MiB package and 1 MiB record ceilings can block saves; increasing them a
 
 Monitor natural history/vector growth and implement explicit archival/eviction policy before capacity exhaustion.
 
-Preserve meaningful evidence, correction provenance and uncertain paid work. Choose retention from consumer semantics and measured growth, not an arbitrary count that silently deletes memories. Disk exhaustion can ultimately stop durable play. [Inventory](../limits/memory.md#mh06) · [Work: D2 / PF08](production-data.md)
+Preserve meaningful evidence, correction provenance and uncertain paid work. Choose retention from consumer semantics and measured growth, not an arbitrary count that silently deletes memories. The declared thirty-day memory value has no active expiry consumer at the reviewed source ([LA016](../limits/memory.md#la016)); it is not protection against this growth and must not be activated as an unapproved deletion rule. Disk exhaustion can ultimately stop durable play. [Inventory](../limits/memory.md#mh06) · [Work: D2 / PF08](production-data.md)
 
 ### C04
 
@@ -110,14 +114,6 @@ Preserve meaningful evidence, correction provenance and uncertain paid work. Cho
 Restart a failed idle save worker under a bounded recovery policy; report uncertain in-flight captures without replaying them blindly.
 
 Saving otherwise stays unavailable until a server restart. [SB11](../limits/persistence.md#sb11) · [Work](save-and-load.md)
-
-### C05
-
-**P2. Soon: manual save overlaps capture; longer-term operator retention needs.** User gets a busy error or unsuitable recovery cadence; ordinary play can continue.
-
-Expose autosave enable/cadence/retention settings, initially retaining 5 minutes and 3 points as defaults; admit one pending manual save ahead of the next automatic capture.
-
-**Done 2026-09-28:** persisted enable/cadence/retention settings (defaults 5 minutes, keep 3; bounds [SV23](../limits/persistence.md#sv23)), one waiting manual save ahead of the next autosave, restart-surviving failure record with acknowledgment and bounded shutdown ([SV22](../limits/persistence.md#sv22)); [evidence](../verification/ordered-async-saves.md#save-recovery-stages-47). Operators need disk/recovery control; manual intent should not routinely fail behind an autosave. Qualify shutdown/failure behavior and make errors survive restart (SL08-A). Retention counts are not hard disk quotas and file-integrity checks are not restore qualification. [SV01](../limits/persistence.md#sv01), [SV02](../limits/persistence.md#sv02), [SB01](../limits/persistence.md#sb01), [SB02](../limits/persistence.md#sb02), [SB03](../limits/persistence.md#sb03), [LA167](../limits/persistence.md#la167) · [Work](save-and-load.md)
 
 ### C12
 
@@ -133,7 +129,7 @@ Audit connected producer/consumer contracts before raising limits. The 1,000-cha
 
 Replace positional truncation with relevant selection and explicit omissions across mind search, triggers and invention context.
 
-The first 8 lines/events, 24 recipes or 3 jobs may omit the fact needed now. Recheck historical paths before editing. [LA008](../limits/memory.md#la008), [LA032](../limits/cognition.md#la032), [LA038](../limits/cognition.md#la038), [LA100](../limits/inventions.md#la100), [LA101](../limits/inventions.md#la101), [LA102](../limits/cognition.md#la102), [LA103](../limits/inventions.md#la103), [LA104](../limits/inventions.md#la104), [LA105](../limits/inventions.md#la105) · [Work](cognition-redesign.md)
+The first 8 matching mind lines affect the later attention query, not the complete accepted mind or the retained-corpus query. Qualify an actual omission at that consumer before changing it. The other historical 8-event, 24-recipe and 3-job prefixes likewise need their current paths checked before expansion. [LA008](../limits/memory.md#la008), [LA032](../limits/cognition.md#la032), [LA038](../limits/cognition.md#la038), [LA100](../limits/inventions.md#la100), [LA101](../limits/inventions.md#la101), [LA102](../limits/cognition.md#la102), [LA103](../limits/inventions.md#la103), [LA104](../limits/inventions.md#la104), [LA105](../limits/inventions.md#la105) · [Work](cognition-redesign.md)
 
 ### C07
 
@@ -141,7 +137,7 @@ The first 8 lines/events, 24 recipes or 3 jobs may omit the fact needed now. Rec
 
 Separate durable private knowledge/goals/promises/plan history from per-decision selection and active execution budgets.
 
-A stored intention should not be rejected merely because 8 goals or 16 promises exist; keep bounded active work. [LA019](../limits/memory.md#la019), [LA020](../limits/memory.md#la020), [LA024](../limits/memory.md#la024), [LA027](../limits/memory.md#la027), [LA068](../limits/cognition.md#la068), [LA069](../limits/cognition.md#la069), [LA070](../limits/cognition.md#la070), [LA071](../limits/cognition.md#la071), [LA072](../limits/cognition.md#la072), [LA074](../limits/cognition.md#la074) · [Work](agent-agency.md) [Unbounded subject-note preparation](../limits/memory.md#kg01).
+A stored intention should not be rejected merely because 8 goals or 16 promises exist; keep bounded active work. Distinguish the current inner-world file and active goal/commitment owners from residual structured-mind helpers: LA024/LA027 do not authorize expanding an obsolete parallel mind representation. [LA019](../limits/memory.md#la019), [LA020](../limits/memory.md#la020), [LA024](../limits/memory.md#la024), [LA027](../limits/memory.md#la027), [LA068](../limits/cognition.md#la068), [LA069](../limits/cognition.md#la069), [LA070](../limits/cognition.md#la070), [LA071](../limits/cognition.md#la071), [LA072](../limits/cognition.md#la072), [LA074](../limits/cognition.md#la074) · [Work](agent-agency.md) [Unbounded subject-note preparation](../limits/memory.md#kg01).
 
 ### C10
 
@@ -157,7 +153,7 @@ Keep full retained diagnostic history separately from UI caches; cursor-page old
 
 Use durable job/receipt retention for duplicate protection before retiring the old 300-ID rings.
 
-Changing a ring size alone can re-enable old effects. Verify whether current persistence already supersedes each path. [LA028](../limits/memory.md#la028), [LA066](../limits/cognition.md#la066) · [Work](production-data.md)
+Changing a ring size alone can re-enable old effects. LA028 is the residual structured-mind helper, not the current inner-world publication route; current durable job evidence must be assessed at the actual caller. Remove compatibility-only consumers under DF04 rather than preserving a second workflow to enlarge its ring. [LA028](../limits/memory.md#la028), [LA066](../limits/cognition.md#la066) · [Work](production-data.md)
 
 ### C16
 
@@ -172,18 +168,6 @@ Carried objects cannot participate in existing continuous processing; source lif
 **P2. Failure recovery: operational restore fails after copying slots.** Database rollback can leave newly copied save files behind.
 
 Reconcile only the attempt’s newly installed files after failure, preserving pre-existing/referenced slots and safe retry evidence. **In-process reconciliation done 2026-09-28**; process death between copy and install and shared data directories remain. [SB18](../limits/persistence.md#sb18) · [Work: D1/D2 file reconciliation](production-data.md#remaining-d1d2-implementation-and-evidence).
-
-### C23
-
-**P2. Conditional: slow checkpoint output prolongs a database snapshot.** Worker/page bounds do not bound retained WAL/row versions or final filesystem stalls.
-
-Measure snapshot-held storage growth and command latency; add a bounded cancellation/recovery policy or separate publication from the snapshot if measurements justify it. Do not sacrifice a consistent cut. **Measured 2026-09-28 (shared host):** with output throttled, the existing two-minute capture deadline aborted the capture, released its snapshot and left no staging files; command latency did not rise materially while the snapshot was held, so no new cancellation was added. A stall inside one filesystem write, sync or rename remains unbounded. [SB16](../limits/persistence.md#sb16) · [Work: SL09-C](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
-
-### C24
-
-**P2. Conditional: the server clock moves backward or timestamps tie.** New captures can be ranked behind old ones during retention.
-
-Use a durable capture-order key for retention/cursors and wall-clock time for display; preserve immutable save IDs and verify clock-change behavior. **Done 2026-09-28.** [SB14](../limits/persistence.md#sb14) · [Work: SL09-B](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
 
 ### C03
 
@@ -237,11 +221,11 @@ Relevant entities/items/evidence may fit but still be omitted. Measure quality a
 
 ### E02
 
-**P2. Sustained: an actor's cognition needs older retained conversation evidence.** Model-facing recall may omit relevant older material; the player/inspector history views are delivered.
+**P2. Sustained: a real actor question needs older retained evidence omitted from its prepared context.** Qualify model-facing selection and any demonstrated need for additional retrieval; the player/inspector history views are delivered.
 
-Let actor recall reach older retained speech beyond the latest-512 verbatim pool and continue memory queries past one page; keep per-call output/model bytes bounded.
+The SQL recall path already searches retained eligible sources beyond the latest-512 protected verbatim-speech pool. That pool governs consolidation, not all recall. Preserve complete required/current-conversation evidence and qualify whether the initial optional selection answers representative older-history questions. Add scoped query continuation only under the existing [demonstrated-omission gate](../memory-architecture.md#why-multi-turn-execution-matters); keep per-call output/model bytes, privacy and spending bounded.
 
-Player and god-inspector paging and bounded search across all eligible retained speech and memory are delivered ([MH08](../limits/memory.md#mh08), [HR06](../limits/hearing-and-speech.md#hr06--history-paging-and-growth)); C11 is removed on the same delivery. The SQL raw-history preselection issue is already addressed; model-facing older-speech exposure and query continuation remain. [LA007](../limits/memory.md#la007), [LA029](../limits/memory.md#la029), [LA014](../limits/memory.md#la014) · [Work](cognition-redesign.md)
+Player and god-inspector paging and bounded search across all eligible retained speech and memory are delivered ([MH08](../limits/memory.md#mh08), [HR06](../limits/hearing-and-speech.md#hr06--history-paging-and-growth)); C11 is removed on the same delivery. The SQL raw-history preselection issue is addressed. The residual in-memory query's default/count ceiling is not evidence that current SQL recall cannot reach older speech, or a requirement to rebuild that older helper. [LA007](../limits/memory.md#la007), [LA029](../limits/memory.md#la029), [LA014](../limits/memory.md#la014) · [Work](cognition-redesign.md)
 
 ### E05
 
