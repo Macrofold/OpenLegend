@@ -145,7 +145,6 @@ function InventoryWorkspace({
   const [detailOpen, setDetailOpen] = useState(false);
   const [amountDraft, setAmountDraft] = useState<AmountDraft>();
   const [quantityError, setQuantityError] = useState('');
-  const [rightName, setRightName] = useState(openContainer?.name ?? 'Container');
   const [requestSeen, setRequestSeen] = useState(
     openContainer === null ? null : openContainer?.requestId,
   );
@@ -240,6 +239,11 @@ function InventoryWorkspace({
         ? 'This container moved or is no longer within permitted reach. Open it again from the world.'
         : undefined,
   });
+  const currentTitle =
+    right.page?.container.name ??
+    view.entities.find((entry) => entry.id === right.location.id)?.name ??
+    view.player.inventory.find((entry) => entry.id === right.location.id)?.name ??
+    'Container';
   const requestId = openContainer === null ? null : openContainer?.requestId;
   useLayoutEffect(() => {
     focusAvailable.current = visible && connected;
@@ -252,7 +256,6 @@ function InventoryWorkspace({
     setRequestSeen(requestId);
     if (openContainer !== undefined) {
       right.navigate(openContainer?.containerId ?? '');
-      setRightName(openContainer?.name ?? 'Container');
       setWorldRoot(
         openContainer?.containerId ? captureWorldRoot(openContainer.containerId) : undefined,
       );
@@ -729,7 +732,7 @@ function InventoryWorkspace({
           <span aria-hidden="true">↔</span>
           <div>
             <span className="ol-caption">Container</span>
-            <strong>{right.page?.container.name ?? rightName}</strong>
+            <strong>{currentTitle}</strong>
           </div>
         </div>
       )}
@@ -748,7 +751,7 @@ function InventoryWorkspace({
             <div key={side} className="ol-inventory-side">
               <InventoryCollection
                 side={side}
-                title={side === 'belongings' ? 'My belongings' : rightName}
+                title={side === 'belongings' ? 'My belongings' : currentTitle}
                 state={state}
                 selectedId={selection?.side === side ? selection.itemId : undefined}
                 onSelectedAnchor={(button) => {
@@ -982,7 +985,6 @@ function InventoryWorkspace({
                               variant="quiet"
                               disabled={busy}
                               onPress={() => {
-                                setRightName(item.name);
                                 setWorldRoot(undefined);
                                 setWorldInvalid(false);
                                 navigate('container', item.id);

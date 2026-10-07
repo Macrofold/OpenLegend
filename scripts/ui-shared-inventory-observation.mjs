@@ -19,7 +19,7 @@ const expectedSource = {
   'apps/client/src/main.tsx': '08c4e291889452e20d3d94ccd14f5ec66d3fb57322ee850039bc810bcbbd7e62',
   'apps/client/src/api.ts': 'eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e',
   'apps/client/src/ui/inventory.tsx':
-    'e2ba1e5b632bf2f585f0289fcd4820bc5f752c76f60132983b4f97b84b3c308e',
+    'cc0c163576ab2dcae2fe73e95704961fde05c847c0ec78456582110105052e4d',
   'apps/client/src/ui/inventory-collection.tsx':
     'd02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77',
   'apps/client/src/ui/use-inventory-collection.ts':
@@ -47,7 +47,27 @@ const report = {
   startedAt: new Date().toISOString(),
   checkout: process.env.GITHUB_SHA ?? 'unrecorded',
   scope:
-    'Two native account/character scopes use the redesigned paired inventory: one last-unit contest, visible access withdrawal, then an older permitted read held across another withdrawal.',
+    'Verify the corrected nested-container heading, search and accessible name during permitted reads and access withdrawal; retain the original two-account contest, receipt, late-read and final native checks.',
+  captureScope:
+    'One actual Inventory workspace locator screenshot after final access withdrawal. The world and animations remain enabled; the original 10-second capture allowance is unchanged.',
+  preservedObservation: {
+    commit: '0f449430a70f4c4d355bba28c602269b987c1b29',
+    nativeCheckout: 'ee04c033c34c0525ad1e6f86b176683b04b33ddd',
+    reportSha256: 'd01adf23ec89ad943844085f7a7c38ecac08f3061fae159021e2f92c810902e1',
+    outcome:
+      'Failed on the final full-page screenshot at 10 seconds; final native sweep not reached. No performance cause established.',
+    missingCapture: '03-revoked-pane-after-old-response.png',
+    reusedContestCaptures: [
+      {
+        file: 'docs/ui-ux/runtime/71-native-shared-contest-mike.png',
+        sha256: 'dae2474f51bc807a1a2dfc4a0062337589eaf3632199f51f490fe026c8d77b3d',
+      },
+      {
+        file: 'docs/ui-ux/runtime/72-native-shared-contest-ada.png',
+        sha256: 'ae2f5dec33f88ac2f20b9dfded537ca4264f5e8e76fe228f661e818c1ce12708',
+      },
+    ],
+  },
   limits: {
     workMs: 180000,
     hardMs: 210000,
@@ -230,7 +250,7 @@ try {
     const context = await browser.newContext({
       viewport: { width: 1440, height: 960 },
     });
-    const viewer = { context, actorId, accountId: account, commands: [] };
+    const viewer = { context, actorId, accountId: account, commands: [], inventoryReads: [] };
     viewers.push(viewer);
     if (token)
       await context.addCookies([
@@ -264,6 +284,7 @@ try {
       )
         report.unexpectedRequests.push(url.pathname);
       if (url.pathname === '/api/command') viewer.commands.push(request.postDataJSON());
+      if (url.pathname === '/api/inventory') viewer.inventoryReads.push(request.postDataJSON());
       if (headers['x-ol-client'] && headers['x-ol-scope'])
         viewer.headers = {
           Origin: base,
@@ -288,6 +309,30 @@ try {
   const bagId = 'uiux08-shared-bag',
     branchId = 'uiux08-last-branch',
     markerId = 'uiux08-private-marker';
+  async function collectionTitle(viewer, label, expectedName) {
+    await expect(viewer.right).toHaveAccessibleName(expectedName);
+    await expect(viewer.right.getByRole('heading', { level: 3 })).toHaveText(expectedName);
+    await expect(
+      viewer.right.getByRole('textbox', { name: 'Search ' + expectedName, exact: true }),
+    ).toBeVisible();
+    const currentRead = viewer.inventoryReads
+      .filter((read) => read.containerId !== viewer.actorId)
+      .at(-1);
+    assert.equal(
+      currentRead?.containerId,
+      bagId,
+      'The displayed right collection still reads the exact selected bag.',
+    );
+    assert.notEqual(expectedName, 'Items on the ground');
+    report.observations.push({
+      label,
+      actorId: viewer.actorId,
+      expectedName,
+      selectedContainerId: currentRead.containerId,
+      visibleHeading: await viewer.right.getByRole('heading', { level: 3 }).innerText(),
+      accessibleName: await viewer.right.getAttribute('aria-label'),
+    });
+  }
   const quantity = (owner, definition) =>
     itemsForOwner(game.service.world, owner)
       .filter((item) => item.definitionId === definition)
@@ -361,20 +406,25 @@ try {
       'Supple branch, 1',
     );
     await expect(right.locator('[data-item-id="' + markerId + '"]')).toBeVisible();
+    await collectionTitle(viewer, 'permitted-nested-bag-title', 'Woven bag');
     await expect(left).toHaveAttribute('aria-busy', 'false');
     assert.equal(viewer.commands.length, 0);
   }
   async function capture(viewer, name) {
-    assert.ok(report.captures.length < 3);
+    assert.equal(report.captures.length, 0);
     const started = Date.now();
     report.captureInProgress = name;
-    await viewer.page.screenshot({
+    const subject = viewer.page.locator('.ol-inventory-workspace');
+    const bounds = await subject.boundingBox();
+    await subject.screenshot({
       path: join(output, name),
       timeout: report.limits.captureMs,
     });
     report.captures.push({
       name,
       actorId: viewer.actorId,
+      scope: 'Actual Inventory workspace; locator .ol-inventory-workspace',
+      bounds,
       elapsedMs: Date.now() - started,
       sha256: await sha(join(output, name)),
     });
@@ -445,7 +495,7 @@ try {
       displayedBranchQuantity: ownedBranch.quantity,
     });
     await viewer.page.unroute('**/api/command');
-    await capture(viewer, '0' + (index + 1) + '-contest-' + viewer.actorId + '.png');
+    await collectionTitle(viewer, 'refreshed-contest-bag-title', 'Woven bag');
   }
   assert.equal(quantity(bagId, 'wood'), 0);
   assert.equal(quantity(bagId, 'prepared_fiber'), 1);
@@ -454,6 +504,13 @@ try {
     assert.equal(canAccessContainer(game.service.world, revoked.actorId, bagId), false);
     await expect(revoked.right.getByRole('alert')).toHaveText('This container is unavailable.');
     await expect(revoked.right.locator('[data-item-id]')).toHaveCount(0);
+    const current = await nativeRead(revoked, '/api/state');
+    assert.equal(current.player.id, revoked.actorId);
+    const currentName =
+      current.entities.find((entity) => entity.id === bagId)?.name ??
+      current.player.inventory.find((item) => item.id === bagId)?.name ??
+      'Container';
+    await collectionTitle(revoked, label + '-exact-current-title', currentName);
     const refusal = await nativeRead(revoked, '/api/inventory', { containerId: bagId }, 400);
     assert.equal(refusal.ok, false);
     assert.equal(refusal.items, undefined);
@@ -476,6 +533,7 @@ try {
   await denied('visible-row-withdrawal');
   await access('restore-for-held-read', [PLAYER_ID, NPC_ID]);
   await expect(revoked.right.locator('[data-item-id="' + markerId + '"]')).toBeVisible();
+  await collectionTitle(revoked, 'restored-nested-bag-title', 'Woven bag');
   // Fetch one genuinely permitted native response first; then hold only its browser delivery.
   const late = {
     gate: gate(),
@@ -533,7 +591,7 @@ try {
     visibleRowsAfterRelease: await revoked.right.locator('[data-item-id]').count(),
   };
   await revoked.page.unroute('**/api/inventory');
-  await capture(revoked, '03-revoked-pane-after-old-response.png');
+  await capture(revoked, '01-revoked-inventory-workspace-after-old-response.png');
   for (const [index, viewer] of viewers.entries()) {
     assert.equal(viewer.commands.length, 1);
     assert.equal(
@@ -554,6 +612,18 @@ try {
   assert.deepEqual(await store.recentJobs(), []);
   assert.equal(expired, false);
   assert.equal(report.failure, undefined);
+  report.final = {
+    branches: viewers.map((viewer) => ({
+      actorId: viewer.actorId,
+      quantity: quantity(viewer.actorId, 'wood'),
+      commands: viewer.commands.length,
+    })),
+    bagBranches: quantity(bagId, 'wood'),
+    bagMarker: quantity(bagId, 'prepared_fiber'),
+    nativeControlsAndProviderUsageChecked: true,
+    noPaidJobs: true,
+    simTime: game.service.world.simTime,
+  };
   report.passed = true;
 } catch (error) {
   fail(error);

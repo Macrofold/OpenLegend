@@ -17,7 +17,7 @@ const expectedSource = {
   'apps/server/src/view.ts': '959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b',
   'apps/client/src/main.tsx': '08c4e291889452e20d3d94ccd14f5ec66d3fb57322ee850039bc810bcbbd7e62',
   'apps/client/src/ui/camp-activity.tsx':
-    'd34320bfb66eb78c3eb12654840bfe95e4994d74ccd452ce93361fc13caaa438',
+    '80a06abf450c314ec73d537112570269e12d8b2f56c8cfd7c45cd958da72e16d',
   'apps/client/src/ui/activity-object-field.tsx':
     'f3d04b26b7f2665e282bb9834550bb923e9d2f608a7696c90cfed2cd2530a3f8',
   'packages/domain/src/kernel.ts':
@@ -400,6 +400,16 @@ try {
     assert.equal(fuelEvents().length, 1);
     assert.equal(requests.length, 1);
   }
+  async function terminalPresentation() {
+    await expect(task).toHaveAttribute('aria-label', 'Last task');
+    await expect(task.getByRole('heading', { name: 'Last task', exact: true })).toBeVisible();
+    await expect(task.locator('.ol-task-status')).toContainText(
+      'Chosen stopping time Day 1 · 08:01.',
+    );
+    await expect(task.locator('.ol-task-status')).not.toContainText('Stops at');
+    await expect(start).toBeHidden();
+    await expect(page.locator('.ol-current-work')).toBeHidden();
+  }
   terminal();
   assert.equal(completed.player.hasWork, false);
   assert.equal(completed.player.activity.status, 'completed');
@@ -407,6 +417,7 @@ try {
     'The chosen stopping time was reached.',
   );
   await expect(task.getByRole('button', { name: 'Stop all work', exact: true })).toBeHidden();
+  await terminalPresentation();
   report.observations.push({
     label: 'native deadline reached',
     planId,
@@ -428,6 +439,7 @@ try {
     'The chosen stopping time was reached.',
   );
   await expect(task.getByRole('button', { name: 'Stop all work', exact: true })).toBeHidden();
+  await terminalPresentation();
   terminal();
   assert.equal(JSON.stringify(actor().agency.plan), terminalPlan);
   report.observations.push({

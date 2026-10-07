@@ -296,6 +296,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const stoppable =
     !!activity && ['active', 'blocked', 'paused', 'queued', 'waiting'].includes(activity.status);
   const working = stoppable || view.player.hasWork;
+  const workTitle = activity && !working ? 'Last task' : 'Current work';
   const stopAction = view.player.actions.find((action) => action.command.type === 'cancel');
 
   function selectionKey(key: string) {
@@ -803,7 +804,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       ref={task}
       className="ol-camp-activities"
       role="group"
-      aria-label={preparing ? 'Task preparation' : 'Current work'}
+      aria-label={preparing ? 'Task preparation' : workTitle}
       tabIndex={-1}
       onKeyDown={(event) => {
         // Portaled pickers close their own layer before the task editor handles Escape.
@@ -835,7 +836,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         </div>
       )}
       {(!entry || activity || working || !preparing) && (
-        <Section title="Current work">
+        <Section title={workTitle}>
           {activity ? (
             <div className="ol-task-status" aria-live="polite">
               <p>
@@ -853,7 +854,8 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               )}
               {activity.deadline !== undefined && (
                 <p>
-                  Stops at <EventTime time={activity.deadline} />.
+                  {stoppable ? 'Stops at' : 'Chosen stopping time'}{' '}
+                  <EventTime time={activity.deadline} />.
                 </p>
               )}
               {activity.interrupted && (

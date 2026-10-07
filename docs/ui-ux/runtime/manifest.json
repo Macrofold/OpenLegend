@@ -707,6 +707,50 @@
       "captureScope": "app",
       "source": "inventory-pointer-contained-af369fc",
       "originalFile": "short-narrow-reachable-drop.png"
+    },
+    {
+      "id": "69-native-care-waiting-before-deadline",
+      "file": "69-native-care-waiting-before-deadline.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 1004665,
+      "sha256": "be9b388212c201697b5d5b3fc5715dff86bcb43212e1b46ddffb4f11b84f2174",
+      "captureScope": "app",
+      "source": "native-care-completion-0f44943",
+      "originalFile": "01-waiting-one-second-before-deadline.png"
+    },
+    {
+      "id": "70-native-care-completed-original-wording",
+      "file": "70-native-care-completed-original-wording.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 958089,
+      "sha256": "bee4ada6dc68cc08d75f4a4e3baae545f577d16e642d152584b8929989e22313",
+      "captureScope": "app",
+      "source": "native-care-completion-0f44943",
+      "originalFile": "02-completed-task-after-hide-and-reopen.png"
+    },
+    {
+      "id": "71-native-shared-contest-mike",
+      "file": "71-native-shared-contest-mike.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 766561,
+      "sha256": "dae2474f51bc807a1a2dfc4a0062337589eaf3632199f51f490fe026c8d77b3d",
+      "captureScope": "app",
+      "source": "native-shared-storage-0f44943",
+      "originalFile": "01-contest-entity-0001.png"
+    },
+    {
+      "id": "72-native-shared-contest-ada",
+      "file": "72-native-shared-contest-ada.png",
+      "width": 1440,
+      "height": 960,
+      "bytes": 779799,
+      "sha256": "ae2f5dec33f88ac2f20b9dfded537ca4264f5e8e76fe228f661e818c1ce12708",
+      "captureScope": "app",
+      "source": "native-shared-storage-0f44943",
+      "originalFile": "02-contest-entity-0002.png"
     }
   ],
   "appSource": {
@@ -2579,6 +2623,515 @@
         "interactionResult": "passed",
         "visualDefect": "Narrow detail begins at x=-120, clipping item name, Quantity and part of Drop."
       }
+    },
+    "native-care-completion-0f44943": {
+      "baseCommit": "0f449430a70f4c4d355bba28c602269b987c1b29",
+      "nativeCheckout": "ee04c033c34c0525ad1e6f86b176683b04b33ddd",
+      "workflowRunId": 37575596132,
+      "jobId": 112643659537,
+      "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37575596132/job/112643659537",
+      "sourceSha256": {
+        "apps/server/src/http.ts": "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+        "apps/server/src/world-service.ts": "5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c",
+        "apps/server/src/activity-requests.ts": "39117264f341c7a34dce19f37c04934dea5d1d73de1eb4eef375d211367055f7",
+        "apps/server/src/view.ts": "959cd104b3ac942dda98639fbf406526517ba785baf2d74341ea4965528dd04b",
+        "apps/client/src/main.tsx": "08c4e291889452e20d3d94ccd14f5ec66d3fb57322ee850039bc810bcbbd7e62",
+        "apps/client/src/ui/camp-activity.tsx": "d34320bfb66eb78c3eb12654840bfe95e4994d74ccd452ce93361fc13caaa438",
+        "apps/client/src/ui/activity-object-field.tsx": "f3d04b26b7f2665e282bb9834550bb923e9d2f608a7696c90cfed2cd2530a3f8",
+        "packages/domain/src/kernel.ts": "55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6",
+        "packages/domain/src/activity-execution.ts": "47939664362dd2940596721f733e6ee8adbbd1a166eef0a63fd4c7b92189862b",
+        "packages/domain/src/worlds/base/camp-activity.ts": "abb0c0251261cea2f7bd336d72b62e49ea2e46a2137d8330308d5122f746f3c2",
+        "packages/domain/src/worlds/base/fire.ts": "deed0892de04002b67f3f8aa08633e066da6143b51ea08202da86f3be0c0c14b",
+        "packages/domain/src/worlds/base/fire-rules.ts": "6f20cd53fcde0834da78c8e55fc5f895a2f12f1658081ed89d474d1ba3665e02",
+        "tests/fixtures/database.ts": "3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92",
+        "tests/fixtures/service.ts": "e5322bfac774e1a952d3bced7569958389525adf271026a18d2512b1a73f21e7",
+        "tests/fixtures/browser.ts": "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2"
+      },
+      "runnerSha256": "a9ea92fc66ddde9aee0a3aa993dd23c095587cb40edfcc0623a877e9a9402521",
+      "builtEntrySha256": "bc2303b37efaad72432fb623ce408618f8da527b1f9720d2b8e793c5ef87b31f",
+      "browser": "145.0.7632.6",
+      "artifact": {
+        "id": 11462598153,
+        "name": "temporary-native-ui-observations",
+        "bytes": 3505720,
+        "sha256": "a0eb9990ca7c1b3e0eff678697b81a1a164e32507a87f9975764bac8064dca28",
+        "digestAndCrcVerified": true,
+        "url": "https://github.com/Macrofold/OpenLegend/actions/runs/37575596132/artifacts/11462598153"
+      },
+      "fullEvidenceArtifact": {
+        "id": 11462513214,
+        "name": "spatial-browser-evidence",
+        "bytes": 49230560,
+        "sha256": "d90c7a4ab49cd5b7c5aa2e6e47aee0f1b2be24b27b3daca0272ccc2cf42b3dc3",
+        "url": "https://github.com/Macrofold/OpenLegend/actions/runs/37575596132/artifacts/11462513214",
+        "downloaded": false,
+        "traceArchivesInspected": false
+      },
+      "reportFile": "care-deadline/evidence/report.json",
+      "reportSha256": "8d39549e77d1f1fd3a74b56d29724d18eb48cedf9b31e8dd1f521c15f8ccaf58",
+      "transport": "Actual production App/PlayCanvas, native HTTP/server and disposable PostgreSQL. No mocked command, receipt, contents or permission response.",
+      "fixture": {
+        "beforePosition": {
+          "x": 11,
+          "y": 0,
+          "z": 13
+        },
+        "stance": {
+          "x": 11,
+          "y": 0,
+          "z": 11,
+          "surfaceId": "terrain"
+        },
+        "firePosition": {
+          "x": 11,
+          "y": 0,
+          "z": 10
+        },
+        "priorFuel": 172800,
+        "preparedFuel": 600,
+        "nativeCarriedBranches": 2
+      },
+      "commands": [
+        {
+          "input": "Enter on focused Start task",
+          "request": {
+            "commandId": "6304c5db-4833-4e86-a23d-087a7a6b6580",
+            "commandEpoch": "02dae04b-8e81-4d8a-801c-6df7445b8010",
+            "command": {
+              "type": "activity-request",
+              "activityFamilyId": "base:fire-watch",
+              "activityArguments": {
+                "sourceId": "entity-0001",
+                "fireId": "campfire",
+                "definitionId": "wood",
+                "minimumHeld": 1,
+                "mode": "enqueue",
+                "deadline": 60,
+                "maxUnits": 1
+              }
+            }
+          },
+          "result": {
+            "ok": true,
+            "code": "queued",
+            "message": "Started the task."
+          },
+          "receipt": {
+            "ok": true,
+            "scope": "c09280cad8d2ec23f7117286afccfd74b2df3598a8d1789b3d789f40e84244c4",
+            "status": "resolved",
+            "result": {
+              "ok": true,
+              "code": "queued",
+              "message": "Started the task."
+            }
+          }
+        }
+      ],
+      "observations": [
+        {
+          "label": "native deadline reached",
+          "planId": "gameplay:local-player:02dae04b-8e81-4d8a-801c-6df7445b8010:e2de45dc667250438ec286ffd5a3c837776acb0bf267d33a608f8f9459e9cd4a",
+          "completed": {
+            "name": "Watch this fire for one session",
+            "status": "completed",
+            "reason": "The chosen stopping time was reached.",
+            "spent": 1,
+            "maximumSpent": 1,
+            "spendingUnit": "fuel units",
+            "attempts": 1,
+            "interrupted": false,
+            "deadline": 60
+          },
+          "simTime": 60,
+          "visibleTaskText": "CURRENT WORK\n\ncompleted Watch this fire for one session\n\nThe chosen stopping time was reached.\n\nUsed 1 of at most 1 fuel units.\n\nStops at Day 1 · 08:01.\n\nStarted the task.\n\nPrepare another task",
+          "taskAccessibleName": "Current work",
+          "visibleHudCurrentWork": false
+        },
+        {
+          "label": "completed task reopened",
+          "visibleTaskText": "CURRENT WORK\n\ncompleted Watch this fire for one session\n\nThe chosen stopping time was reached.\n\nUsed 1 of at most 1 fuel units.\n\nStops at Day 1 · 08:01.\n\nStarted the task.\n\nPrepare another task",
+          "statusText": "completed Watch this fire for one session\n\nThe chosen stopping time was reached.\n\nUsed 1 of at most 1 fuel units.\n\nStops at Day 1 · 08:01.",
+          "taskAccessibleName": "Current work",
+          "visibleHudCurrentWork": false,
+          "headingText": ["Current work"]
+        }
+      ],
+      "captures": [
+        {
+          "name": "01-waiting-one-second-before-deadline.png",
+          "elapsedMs": 7537,
+          "bytes": 1004665,
+          "sha256": "be9b388212c201697b5d5b3fc5715dff86bcb43212e1b46ddffb4f11b84f2174"
+        },
+        {
+          "name": "02-completed-task-after-hide-and-reopen.png",
+          "elapsedMs": 6098,
+          "bytes": 958089,
+          "sha256": "bee4ada6dc68cc08d75f4a4e3baae545f577d16e642d152584b8929989e22313"
+        }
+      ],
+      "limits": {
+        "workMs": 120000,
+        "hardMs": 150000,
+        "actionMs": 10000,
+        "assertionMs": 5000,
+        "navigationMs": 20000,
+        "captureMs": 10000
+      },
+      "limitations": [
+        "Reachable player stance and 600 seconds of fire fuel are supplied fixture setup after real local App entry.",
+        "Native time is offered explicitly; this is not wall-clock pacing, walking, multiplayer, provider, assistive-input or human-usability evidence."
+      ],
+      "cleanup": {
+        "traceSaved": true,
+        "contextClosed": true,
+        "shutdown": {
+          "saved": true,
+          "durableRevision": 10,
+          "durableSimTime": 61,
+          "problems": []
+        },
+        "nativeShutdown": true,
+        "repositoryClosed": true,
+        "browserClosed": true,
+        "disposableDatabasesDropped": true
+      },
+      "passed": true,
+      "observationStartedAtUtc": "2026-10-07T05:22:44.424Z",
+      "observationFinishedAtUtc": "2026-10-07T05:23:25.580Z",
+      "elapsedMs": 41156,
+      "additionalJevCostUsd": 0,
+      "cumulativeJevCostUsd": 0,
+      "clocks": [
+        {
+          "label": "Half of the one admitted native fuel action",
+          "seconds": 10,
+          "before": 0,
+          "after": 10
+        },
+        {
+          "label": "Complete one native fuel action",
+          "seconds": 10,
+          "before": 10,
+          "after": 20
+        },
+        {
+          "label": "Remain attending until one second before the chosen deadline",
+          "seconds": 39,
+          "before": 20,
+          "after": 59
+        },
+        {
+          "label": "Reach the exact chosen stopping time without Stop or replacement",
+          "seconds": 1,
+          "before": 59,
+          "after": 60
+        },
+        {
+          "label": "No native restart or extra debit after reopen and preparation",
+          "seconds": 1,
+          "before": 60,
+          "after": 61
+        }
+      ],
+      "final": {
+        "simTime": 61,
+        "commands": 1,
+        "planId": "gameplay:local-player:02dae04b-8e81-4d8a-801c-6df7445b8010:e2de45dc667250438ec286ffd5a3c837776acb0bf267d33a608f8f9459e9cd4a",
+        "status": {
+          "name": "Watch this fire for one session",
+          "status": "completed",
+          "reason": "The chosen stopping time was reached.",
+          "spent": 1,
+          "maximumSpent": 1,
+          "spendingUnit": "fuel units",
+          "attempts": 1,
+          "interrupted": false,
+          "deadline": 60
+        },
+        "branches": 1,
+        "fuelEvents": ["event-59"],
+        "noRestart": true,
+        "noPaidJobs": true
+      },
+      "overallOutcome": "Native completion and no-restart observation passes in 41.156 seconds. The original completed panel still says Current work and Stops at; its completed status/reason, absent Stop and absent HUD work card are truthful. These original pixels precede the terminal-wording correction.",
+      "visualReview": "Both original captures inspected. Image 69 is waiting at simulation time 59 with Stop available; image 70 follows native completion and Hide/reopen at time 60. The earlier Started the task acknowledgement remains visible and is not another Start.",
+      "providerQualification": "Final native budget/usage and no-paid-job checks pass; one original UI command and one exact receipt read."
+    },
+    "native-shared-storage-0f44943": {
+      "baseCommit": "0f449430a70f4c4d355bba28c602269b987c1b29",
+      "nativeCheckout": "ee04c033c34c0525ad1e6f86b176683b04b33ddd",
+      "workflowRunId": 37575596132,
+      "jobId": 112643659537,
+      "jobUrl": "https://github.com/Macrofold/OpenLegend/actions/runs/37575596132/job/112643659537",
+      "sourceSha256": {
+        "apps/server/src/http.ts": "000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e",
+        "apps/server/src/world-service.ts": "5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c",
+        "apps/server/src/authority.ts": "1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb",
+        "apps/server/src/inventory-view.ts": "23a5b2e6e02c3204cb0881101251b2004d282b89932344869c66d9f3299db455",
+        "apps/client/src/main.tsx": "08c4e291889452e20d3d94ccd14f5ec66d3fb57322ee850039bc810bcbbd7e62",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/ui/inventory.tsx": "e2ba1e5b632bf2f585f0289fcd4820bc5f752c76f60132983b4f97b84b3c308e",
+        "apps/client/src/ui/inventory-collection.tsx": "d02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77",
+        "apps/client/src/ui/use-inventory-collection.ts": "bddeee69bd02e90d82269bdde2674401abc0453ee6a85ed713bbe1f59bf16b5e",
+        "apps/client/src/ui/use-inventory-command.ts": "596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e",
+        "apps/client/src/ui/container-opening.tsx": "4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684",
+        "packages/domain/src/item-handling.ts": "860d84e742fabf2efb401c0bd52f2742261957d4089722151d282e129876968a",
+        "packages/domain/src/objects.ts": "c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70",
+        "packages/domain/src/object-access.ts": "e0682565e85a0133ffcba034e471fed9d175df8d61acb17f87f7a118a1cdd5b6",
+        "packages/domain/src/kernel.ts": "55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6",
+        "tests/fixtures/database.ts": "3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92",
+        "tests/fixtures/service.ts": "e5322bfac774e1a952d3bced7569958389525adf271026a18d2512b1a73f21e7",
+        "tests/fixtures/browser.ts": "61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2"
+      },
+      "runnerSha256": "14637a266fcb5b923c7e2bd8d1e0f8322f036c5d09b43de518387b5241710d54",
+      "builtEntrySha256": "bc2303b37efaad72432fb623ce408618f8da527b1f9720d2b8e793c5ef87b31f",
+      "browser": "145.0.7632.6",
+      "artifact": {
+        "id": 11462598153,
+        "name": "temporary-native-ui-observations",
+        "bytes": 3505720,
+        "sha256": "a0eb9990ca7c1b3e0eff678697b81a1a164e32507a87f9975764bac8064dca28",
+        "digestAndCrcVerified": true,
+        "url": "https://github.com/Macrofold/OpenLegend/actions/runs/37575596132/artifacts/11462598153"
+      },
+      "fullEvidenceArtifact": {
+        "id": 11462513214,
+        "name": "spatial-browser-evidence",
+        "bytes": 49230560,
+        "sha256": "d90c7a4ab49cd5b7c5aa2e6e47aee0f1b2be24b27b3daca0272ccc2cf42b3dc3",
+        "url": "https://github.com/Macrofold/OpenLegend/actions/runs/37575596132/artifacts/11462513214",
+        "downloaded": false,
+        "traceArchivesInspected": false
+      },
+      "reportFile": "shared-inventory/evidence/report.json",
+      "reportSha256": "d01adf23ec89ad943844085f7a7c38ecac08f3061fae159021e2f92c810902e1",
+      "transport": "Actual production App/PlayCanvas, native HTTP/server and disposable PostgreSQL. No mocked command, receipt, contents or permission response.",
+      "fixture": {
+        "bagId": "uiux08-shared-bag",
+        "branchId": "uiux08-last-branch",
+        "markerId": "uiux08-private-marker",
+        "pileId": "pile-32",
+        "secondActorBefore": {
+          "x": 13,
+          "y": 0,
+          "z": 12
+        },
+        "secondActorStance": {
+          "x": 12,
+          "y": 0,
+          "z": 12,
+          "surfaceId": "terrain"
+        },
+        "nativeStartingBranches": [2, 2]
+      },
+      "commands": [
+        {
+          "actorId": "entity-0001",
+          "accountId": "local-player",
+          "scope": "dd5c7f9e4a50f6633521bd5a2c27882a615de2f15efd8a2baf4a2a5aecf771b0",
+          "input": "Shift+Enter",
+          "request": {
+            "commandId": "a7150f90-8da6-4053-a4ec-c96ba99c06b0",
+            "commandEpoch": "3783ffc8-c5fa-459e-9520-8e1cd1f1abe9",
+            "command": {
+              "type": "transfer-item",
+              "itemId": "uiux08-last-branch",
+              "targetId": "entity-0001",
+              "quantity": 1,
+              "expectedRevision": 0,
+              "placementRevision": 0,
+              "targetRevision": 10
+            }
+          },
+          "result": {
+            "ok": true,
+            "code": "items-arranged",
+            "message": "Possessions updated.",
+            "itemId": "item-5"
+          },
+          "receipt": {
+            "ok": true,
+            "scope": "dd5c7f9e4a50f6633521bd5a2c27882a615de2f15efd8a2baf4a2a5aecf771b0",
+            "status": "resolved",
+            "result": {
+              "ok": true,
+              "code": "items-arranged",
+              "message": "Possessions updated.",
+              "itemId": "item-5"
+            }
+          },
+          "displayedBranchQuantity": 3
+        },
+        {
+          "actorId": "entity-0002",
+          "accountId": "fixture-shared-inventory-b",
+          "scope": "127de82244d4742556c0322d01c87bdb04da4f6c249f40e373166297901810e5",
+          "input": "Shift+Enter",
+          "request": {
+            "commandId": "2a4dbfa8-5da5-4952-b2ae-69cbab5c4f87",
+            "commandEpoch": "3783ffc8-c5fa-459e-9520-8e1cd1f1abe9",
+            "command": {
+              "type": "transfer-item",
+              "itemId": "uiux08-last-branch",
+              "targetId": "entity-0002",
+              "quantity": 1,
+              "expectedRevision": 0,
+              "placementRevision": 0,
+              "targetRevision": 6
+            }
+          },
+          "result": {
+            "ok": false,
+            "code": "unavailable",
+            "message": "Choose an accessible item and destination."
+          },
+          "receipt": {
+            "ok": true,
+            "scope": "127de82244d4742556c0322d01c87bdb04da4f6c249f40e373166297901810e5",
+            "status": "resolved",
+            "result": {
+              "ok": false,
+              "code": "unavailable",
+              "message": "Choose an accessible item and destination."
+            }
+          },
+          "displayedBranchQuantity": 2
+        }
+      ],
+      "observations": [
+        {
+          "label": "initial-shared-access",
+          "result": {
+            "ok": true,
+            "code": "container-access",
+            "message": "Container access updated."
+          }
+        },
+        {
+          "label": "visible-revoke",
+          "result": {
+            "ok": true,
+            "code": "container-access",
+            "message": "Container access updated."
+          }
+        },
+        {
+          "label": "visible-row-withdrawal",
+          "freshNativeRefusal": {
+            "ok": false,
+            "code": "invalid-input",
+            "message": "This container is unavailable."
+          },
+          "visibleRevokedPane": "Items on the ground\nSearch Items on the ground\n\nThis container is unavailable.\n\nRefresh",
+          "retainedMarkerId": "uiux08-private-marker"
+        },
+        {
+          "label": "restore-for-held-read",
+          "result": {
+            "ok": true,
+            "code": "container-access",
+            "message": "Container access updated."
+          }
+        },
+        {
+          "label": "held-read-revoke",
+          "result": {
+            "ok": true,
+            "code": "container-access",
+            "message": "Container access updated."
+          }
+        },
+        {
+          "label": "current-denial-before-old-delivery",
+          "freshNativeRefusal": {
+            "ok": false,
+            "code": "invalid-input",
+            "message": "This container is unavailable."
+          },
+          "visibleRevokedPane": "Items on the ground\nSearch Items on the ground\n\nThis container is unavailable.\n\nRefresh",
+          "retainedMarkerId": "uiux08-private-marker"
+        },
+        {
+          "label": "current-denial-after-old-response-release",
+          "freshNativeRefusal": {
+            "ok": false,
+            "code": "invalid-input",
+            "message": "This container is unavailable."
+          },
+          "visibleRevokedPane": "Items on the ground\nSearch Items on the ground\n\nThis container is unavailable.\n\nRefresh",
+          "retainedMarkerId": "uiux08-private-marker"
+        }
+      ],
+      "captures": [
+        {
+          "name": "01-contest-entity-0001.png",
+          "actorId": "entity-0001",
+          "elapsedMs": 9988,
+          "sha256": "dae2474f51bc807a1a2dfc4a0062337589eaf3632199f51f490fe026c8d77b3d"
+        },
+        {
+          "name": "02-contest-entity-0002.png",
+          "actorId": "entity-0002",
+          "elapsedMs": 10028,
+          "sha256": "ae2f5dec33f88ac2f20b9dfded537ca4264f5e8e76fe228f661e818c1ce12708"
+        }
+      ],
+      "limits": {
+        "workMs": 180000,
+        "hardMs": 210000,
+        "actionMs": 10000,
+        "assertionMs": 5000,
+        "navigationMs": 20000,
+        "captureMs": 10000
+      },
+      "limitations": [
+        "The second identity is a supplied disposable fixture identity enrolled through native authority owners; this does not qualify OIDC login.",
+        "A native bag, one branch, one marker and a reachable stance are fixture setup; this does not qualify gathering, walking or access-grant UI.",
+        "Transport holds preserve real requests/responses. Browser cancellation is recorded as cancellation, not proof that an aborted response was consumed.",
+        "No provider, native assistive-input or uncoached-human usability claim."
+      ],
+      "cleanup": {
+        "heldRoutesSettled": true,
+        "trace-entity-0001": true,
+        "context-entity-0001": true,
+        "trace-entity-0002": true,
+        "context-entity-0002": true,
+        "shutdown": {
+          "saved": true,
+          "durableRevision": 16,
+          "durableSimTime": 0,
+          "problems": []
+        },
+        "nativeShutdown": true,
+        "repositoryClosed": true,
+        "browserClosed": true,
+        "disposableDatabasesDropped": true
+      },
+      "passed": false,
+      "observationStartedAtUtc": "2026-10-07T05:23:25.723Z",
+      "observationFinishedAtUtc": "2026-10-07T05:24:43.690Z",
+      "elapsedMs": 77967,
+      "additionalJevCostUsd": 0,
+      "cumulativeJevCostUsd": 0,
+      "lateRead": {
+        "nativePermittedItemIds": ["uiux08-private-marker"],
+        "fulfilled": true,
+        "browserAborted": true,
+        "abortReason": "net::ERR_ABORTED",
+        "visibleRowsAfterRelease": 0
+      },
+      "failure": "page.screenshot: Timeout 10000ms exceeded.\nCall log:\n  - taking page screenshot\n  - waiting for fonts to load...\n  - fonts loaded\n\n    at capture (/home/runner/work/OpenLegend/OpenLegend/scripts/ui-shared-inventory-observation.mjs:371:23)\n    at <anonymous> (/home/runner/work/OpenLegend/OpenLegend/scripts/ui-shared-inventory-observation.mjs:536:9)",
+      "missingCapture": "03-revoked-pane-after-old-response.png",
+      "overallOutcome": "Failed on the third screenshot at the original 10,000 ms capture bound, after the two-account contest, visible container-access withdrawal, current native denial and held-response cancellation checks. The final post-capture sweep did not run.",
+      "visualReview": "Both original contest captures inspected: Mike has three branches and success feedback; Ada retains two and native unavailable feedback. Both bag panes show only the prepared-fiber marker. Neither image depicts the later access withdrawal.",
+      "unreachedChecks": [
+        "Third revoked-pane screenshot",
+        "Final post-capture quantities, control, command counts and native AI-usage/job sweep"
+      ],
+      "providerQualification": "Startup asserts zero budget and empty provider credentials. The report declares zero provider cost; its final native AI-usage/job sweep was not reached.",
+      "lateResponseBoundary": "The earlier native permitted response was fulfilled in transport, but its browser request had net::ERR_ABORTED. Current native 400 denial and zero displayed rows remain; consumption of an older response payload is not established."
     }
   }
 }
