@@ -273,6 +273,8 @@ ND22, ND26's paid-offer/renewal experiment and a specifically selected ND24 supp
 
 **Start and parallel boundary:** Can move earlier for a real bounded paid test; use the actual demonstrated offering and existing payment gates. Continued-world promises consume DG17's funding decision. Patron benefits are optional and do not hold up an ordinary subscription; marketplace allocation is DG28 and grant governance DG30. **Existing owners:** PD10, billing/entitlement and INV-13, D17/D35/D37 and PS-D06.
 
+**Product design prepared, October 7, 2026:** [Customer and supporter offers](../projects/customer-and-supporter-offers-feature-spec.md) proposes one useful monthly hosted world, complete payment/renewal/cancellation/recovery, successful-objective invention counting and an independently optional bounded chronicle entry. PD10 and INV-13.8 retain delivery; [OF limits](../limits/customer-and-supporter-offers.md) records proposed terms. Actual price, quantities, operator, funded cohort and post-launch continuity remain activation inputs, with current development policy unchanged.
+
 #### DG28 — Published packs and creator revenue
 
 ND23 with ND12's broader publication/distribution, rights and cross-service access/retention integration. Design a selected catalogue and creator-payment model against actual reusable packs, with refunds/fraud, attribution and reconciliation.
@@ -690,6 +692,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 If an offer includes additional character slots, define switching, unattended behavior and compute funding. Simultaneous character control within the same world first needs the [RP05 embodiment-policy decision](revisitable-policies.md#rp05--prototype-account-and-native-work-operating-envelopes); extra slots do not implicitly change that policy.
 
+**DG27 coverage, October 7, 2026:** The [customer offer proposal](../projects/customer-and-supporter-offers-feature-spec.md) supplies the product terms above, including scope before charging, same-objective revisions, cross-world periods, overlap, uncertainty, cancellation and coherent service hold. No additional-character product or purchased top-up is selected. Actual offer quantities and operating authority remain PD01/PD10 inputs; INV-13.8 remains entitlement delivery.
+
 ### ND23 — Creator revenue allocation and marketplace operation
 
 **Decision before financial-system design.** Sources: [creator economy and mechanics packs](../../archive/06-marketing/creator-economy-and-mechanics-packs.md), [private-world package policy](../../archive/06-marketing/open-platform-and-private-worlds.md), D35/D36/D43/D44.
@@ -706,6 +710,8 @@ If an offer includes additional character slots, define switching, unattended be
 
 **Needed before an implementation project:** distinguish recurring benefits, one-time redemption, the physical object, historical dedication and original supporter. Define retry/restore-safe fulfillment, later transfers, name review/corrections, privacy consent and service/world retirement or export. Specify exactly what any permanence promise means. A transferred object must not silently renew a consumed dedication or rewrite original attribution; this work does not require tokens or NFTs.
 
+**DG27 coverage, October 7, 2026:** The [bounded chronicle proposal](../projects/customer-and-supporter-offers-feature-spec.md#9-one-optional-founding-chronicle-dedication) completes one selected acknowledgement with consent, review, single-use publication, correction, privacy, failed fulfillment and retirement. It selects no recurring patron reward, resale, collectible, vote or immortal object. Real edition/review capacity remains an optional PD10 activation input.
+
 ### ND25 — Creator grants and contributor/patron governance
 
 **Decision and operating-program design first.** Sources: [contributor voice and creator fund](../../archive/06-marketing/patrons-contributors-and-world-history.md), [money and mission proposals](../../archive/08-wellbeing-vision/13-money-and-mission.md); D37.
@@ -721,6 +727,8 @@ If an offer includes additional character slots, define switching, unattended be
 **Existing coverage:** draft copy, channel ideas and a business plan exist. PD01/PD09 own launch configuration and hosted qualification; they do not establish demand, willingness to pay or a sustainable support burden.
 
 **Needed before executing an experiment:** select the first audience and supported playable/creator loop, an actual budget and owner, review date, measures and stop/expand criteria. Design an honest repeatable demonstration of creation, refinement and reuse. Measure comprehension, first successful creation, return/renewal, costs and support. Do not make pack portability a prerequisite for a managed-hosting test when the business plan permits earlier learning. Outreach, publishing and ad spending require their own authorization.
+
+**DG27 paid-offer coverage, October 7, 2026:** The [sequence and activation brief](../projects/customer-and-supporter-offers-feature-spec.md#12-sequence-and-critique) defines a small owner-paid-world cohort, actual customer-paid renewals, complete cost/support review and stop/expand choices. It does not run outreach or select the missing cash/time/territory facts. DG03 retains the broader audience and repeatable demonstration work.
 
 ### ND37 — Public-world reporting, participation controls and operator authority
 

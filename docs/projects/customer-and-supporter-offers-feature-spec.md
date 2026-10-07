@@ -1,8 +1,8 @@
 # Customer and supporter offers
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | DG27's product proposal is drafted; independent critique and owner reconciliation are in progress, with technical design and commercial activation still open. | 2026-10-07 |
+| Status      | Current progress                                                                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG27's product proposal is drafted; independent critique and owner reconciliation are in progress, with technical design and commercial activation still open. | 2026-10-07   |
 
 ## 1. Purpose and selected experience
 
@@ -22,29 +22,29 @@ The accepted [business plan](../../archive/06-marketing/business-plan.md) seeks 
 
 The inherited product baseline is the completed designs through DG25, preserved on this task branch. The source audit also inspected current GitHub main at [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425). Reading that newer implementation does not import it into this branch.
 
-| Existing owner or evidence | Consequence for this offer |
-| --- | --- |
-| [Invention budgets](../invention-budgets.md), especially authoring, publication and entitlement rules | A successful invention, a real processing expense and the future expense of running a mechanic are different things. A unit never grants spending or permission. |
-| [World Agent product decisions](../world-agent-runtime.md#1-product-decisions) and [creation UI](../ui-ux/chat-and-invention.md) | Character creation shows abstract usage remaining, including held/unknown use. Do not translate a monetary allocation into a predicted number of inventions or expose provider jargon in play. |
+| Existing owner or evidence                                                                                                                                                                                                                                                          | Consequence for this offer                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Invention budgets](../invention-budgets.md), especially authoring, publication and entitlement rules                                                                                                                                                                               | A successful invention, a real processing expense and the future expense of running a mechanic are different things. A unit never grants spending or permission.                                                                                   |
+| [World Agent product decisions](../world-agent-runtime.md#1-product-decisions) and [creation UI](../ui-ux/chat-and-invention.md)                                                                                                                                                    | Character creation shows abstract usage remaining, including held/unknown use. Do not translate a monetary allocation into a predicted number of inventions or expose provider jargon in play.                                                     |
 | [Current server configuration](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/apps/server/src/config.ts), [usage accounting](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/apps/server/src/store.ts) | The default $50 AI guard is per actor per UTC calendar month, configurable from $0–$100. It is not an implemented customer subscription or shared world allowance. The default $5 workshop-root cap is another guard, not a purchased entitlement. |
-| [Current attempt reservations](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/apps/server/src/attempt-budget.ts) and [billing/reporting](../../archive/07-technical-architecture/billing-and-usage-reporting.md) | Settled, reserved and uncertain spending must remain distinguishable. Late provider cost belongs to the original incurred period; a service refund does not erase it. |
-| [Continuing lives](continuing-lives-feature-spec.md) | An empty world pauses by default. A separately funded unattended interval can run only within its selected terms. Buying hosting does not buy perpetual unseen thought. |
-| [Production deployment](production-deployment-feature-spec.md) and [PD01/PD10](../maintainers/production-deployment.md) | A sale requires actual operating authority, a measured service profile and complete payment/recovery behavior. Existing configuration ranges do not qualify a commercial claim. |
-| [World creation](world-creation-feature-spec.md), [restoration](world-restoration-feature-spec.md) and [private correspondence](world-text-messages-feature-spec.md) | Customer rights are distinct from power over a fictional world and access to other humans' private records. Billing history, consumed units and payment authority do not rewind with a world. |
+| [Current attempt reservations](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/apps/server/src/attempt-budget.ts) and [billing/reporting](../../archive/07-technical-architecture/billing-and-usage-reporting.md)                             | Settled, reserved and uncertain spending must remain distinguishable. Late provider cost belongs to the original incurred period; a service refund does not erase it.                                                                              |
+| [Continuing lives](continuing-lives-feature-spec.md)                                                                                                                                                                                                                                | An empty world pauses by default. A separately funded unattended interval can run only within its selected terms. Buying hosting does not buy perpetual unseen thought.                                                                            |
+| [Production deployment](production-deployment-feature-spec.md) and [PD01/PD10](../maintainers/production-deployment.md)                                                                                                                                                             | A sale requires actual operating authority, a measured service profile and complete payment/recovery behavior. Existing configuration ranges do not qualify a commercial claim.                                                                    |
+| [World creation](world-creation-feature-spec.md), [restoration](corrections-and-shared-restoration-feature-spec.md) and [private correspondence](world-text-messages-feature-spec.md)                                                                                               | Customer rights are distinct from power over a fictional world and access to other humans' private records. Billing history, consumed units and payment authority do not rewind with a world.                                                      |
 
-[INV-13.8](../maintainers/inventions-and-world-evolution.md#inv-13--episode-budgets-and-installed-cost-enforcement) remains the account entitlement delivery owner. PD10 coordinates the commercial offer. This proposal does not create a second wallet, entitlement authority or accounting model.
+[INV-13.8](../maintainers/inventions-and-world-evolution.md#inv-13--episode-budgets-and-installed-cost-enforcement) remains the account entitlement delivery owner. PD10 coordinates the commercial offer. This proposal does not create a second wallet, entitlement authority or accounting model. The [OF limits inventory](../limits/customer-and-supporter-offers.md) records its discretionary terms and unselected operating quantities.
 
 The engine remains open source under the repository's actual licensing terms. Managed hosting sells a service; it does not revoke rights to already licensed code or turn payment into ownership of all world content. Pack rights and creator revenue belong to DG28; a creator grant or governance role belongs to DG30.
 
 ## 3. Offer families and first-release scope
 
-| Offer | Customer receives | Explicit boundary |
-| --- | --- | --- |
-| Private world hosting — first experiment | One named active hosted world; the measured included native/AI/storage services; save and return; qualified owner/guest participation; published support and recovery terms | A finite service term and named population, not unlimited residents, parallel worlds, autonomous duration or founder labor |
-| Free player account — accepted recurring direction | A finite recurring number of successfully admitted inventions, ordinary rights to use existing eligible creations and permitted participation | Not free world hosting or unlimited attempts |
-| Personal invention plan — conditional later offer | A larger actual account invention allowance and only those authoring benefits explicitly included in its offer | Not a second body, world-owner powers, unlimited AI or implicit permission to spend a host's money |
-| Founding chronicle — optional one-time offer | One reviewed historical acknowledgement in one named official edition | No gameplay advantage, investment, lifetime service, collectible market or development veto |
-| Platform membership / premium world membership — later families | Their independently described service and any fixed creator allocation | Platform membership is not required to buy a standalone premium-world membership; DG28 owns allocation and content rights |
+| Offer                                                           | Customer receives                                                                                                                                                           | Explicit boundary                                                                                                          |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Private world hosting — first experiment                        | One named active hosted world; the measured included native/AI/storage services; save and return; qualified owner/guest participation; published support and recovery terms | A finite service term and named population, not unlimited residents, parallel worlds, autonomous duration or founder labor |
+| Free player account — accepted recurring direction              | A finite recurring number of successfully admitted inventions, ordinary rights to use existing eligible creations and permitted participation                               | Not free world hosting or unlimited attempts                                                                               |
+| Personal invention plan — conditional later offer               | A larger actual account invention allowance and only those authoring benefits explicitly included in its offer                                                              | Not a second body, world-owner powers, unlimited AI or implicit permission to spend a host's money                         |
+| Founding chronicle — optional one-time offer                    | One reviewed historical acknowledgement in one named official edition                                                                                                       | No gameplay advantage, investment, lifetime service, collectible market or development veto                                |
+| Platform membership / premium world membership — later families | Their independently described service and any fixed creator allocation                                                                                                      | Platform membership is not required to buy a standalone premium-world membership; DG28 owns allocation and content rights  |
 
 The first host offer includes use of the account's normal free invention allowance, not an extra stack of invention units for every world purchased. If a later bundle includes a higher account allowance, the purchase must explicitly name it and follow §6's overlap rules. Guests can use their existing free allowance. A host can delegate a bounded share of included authoring funding to them; delegation does not transfer invention units or permit them to alter the host's billing instructions.
 
@@ -84,17 +84,17 @@ The host chooses a bounded per-person funding delegation before allowing guest a
 
 One unit means **one distinct agreed invention objective successfully admitted for use**. The objective is explained during the existing proposal conversation, before paid work, with its expected unit count. A workshop/root identifier is evidence of the work's lineage, not the definition of a billable invention.
 
-| Scenario | Successful invention units |
-| --- | --- |
-| Clarifying an idea, inspecting a proposal, canceling it, or a rejected/failed attempt | Zero completed units; real attempted work may still cost money |
-| Admitting one usable new objective with its necessary supporting definitions | One |
-| Independently usable farming and banking systems requested in one sentence | Two, disclosed before funded work; the player may narrow the request |
-| Repairing, balancing, adding required art or replacing a revision within the same agreed objective | No extra unit; future work still needs available authoring funding |
-| Adding a genuinely independent objective or keeping a separately selectable new variant | A new unit, explained before work starts |
-| Using, crafting with, teaching or importing an unchanged eligible invention | Zero |
-| Ordinary item instances, generated images and visual states supporting that objective | Zero additional units |
-| A human asks an NPC to invent on that human's behalf | The originating human account; no evasion through an NPC intermediary |
-| An NPC independently originates an invention | Its world's autonomous funding policy, not an invented human subscription |
+| Scenario                                                                                           | Successful invention units                                                |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Clarifying an idea, inspecting a proposal, canceling it, or a rejected/failed attempt              | Zero completed units; real attempted work may still cost money            |
+| Admitting one usable new objective with its necessary supporting definitions                       | One                                                                       |
+| Independently usable farming and banking systems requested in one sentence                         | Two, disclosed before funded work; the player may narrow the request      |
+| Repairing, balancing, adding required art or replacing a revision within the same agreed objective | No extra unit; future work still needs available authoring funding        |
+| Adding a genuinely independent objective or keeping a separately selectable new variant            | A new unit, explained before work starts                                  |
+| Using, crafting with, teaching or importing an unchanged eligible invention                        | Zero                                                                      |
+| Ordinary item instances, generated images and visual states supporting that objective              | Zero additional units                                                     |
+| A human asks an NPC to invent on that human's behalf                                               | The originating human account; no evasion through an NPC intermediary     |
+| An NPC independently originates an invention                                                       | Its world's autonomous funding policy, not an invented human subscription |
 
 A clarification is required when independent objectives cannot be separated confidently. Do not run an extra model solely to decide how much to charge or reassess a completed result into a surprise larger bill. Once an objective and count are accepted, a scope change must be shown before the additional paid work. The person can keep the old scope.
 
@@ -138,11 +138,19 @@ A canceled hosting renewal does not cancel an already-funded invention automatic
 
 The initial optional expansion offers one larger personal allowance, avoiding a ladder of small tiers. Its quantity must be measured and selected before sale. It shares the account's existing monthly boundary.
 
-An immediate upgrade quotes the prorated price difference and the additional units for the remaining real fraction of the period; additional units round down. Show the exact additional count and next full-period terms before purchase. If the remaining fraction yields no whole additional unit, offer the next-period start without charging for a useless immediate upgrade. Consumed and held units remain counted; the upgrade adds only the quoted difference and never resets use.
+An immediate upgrade quotes the prorated price difference and the additional units for the remaining real fraction of the period; additional units round down. Show the exact additional count and next full-period terms before purchase. If the remaining fraction yields no whole additional unit, offer the next-period start without charging for a useless immediate upgrade. Consumed and held units remain counted; the upgrade adds only the quoted difference and never resets use. For a period with free allowance F, keep the highest full-month allowance Q already funded in that period. Upgrading to N adds floor((N − Q) × the remaining real fraction of that account month) units, and records N as the new funded ceiling. No positive increase means no additional units. The first optional plan has only one paid level; a later bundle must quote its credited allowance and price portion before purchase. Repeated notices, cancel/rejoin or switching between equal/lower bundles cannot lower that recorded ceiling and earn the difference again.
 
 Downgrades take effect at the next boundary. They do not remove the already-paid period's rights. Reversing a scheduled downgrade before that boundary restores renewal instructions, not a fresh allowance. Overlapping plans grant the largest included account allowance, not the sum of every host/world/platform plan; the checkout must show the overlap and avoid selling a benefit already fully supplied. Explicit additive purchases would need separately stated quantities, expiry and refund terms.
 
+An already-funded allowance increment remains valid through its account period even if an overlapping hosting benefit ends earlier; live world access still follows the hosting term. A refund removes only the unused increment for that refunded purchase, retains its settled/held history and does not reset the funded ceiling. Reinstating that same purchase can reinstate only its original unused entitlement, not mint another increment.
+
 No separately purchased top-up balance is selected for this first offer family. If later added, its purchased value must be visibly separate from expiring included allowance, with explicit spending consent, maximum liability and closure/refund terms before sale. It cannot inherit monthly expiry merely because included units expire [OF-R04].
+
+### 6.4 Personal-plan renewal, failure and exit
+
+The optional personal plan uses the same explicit renewal consent, seven-day notice and accessible cancellation/refund route as hosting, but its service is the account allowance. At the account boundary, confirmed renewal supplies the full selected paid allowance once. Otherwise the account receives its recurring free allowance; it does not lose existing inventions or independently purchased hosting. Old reservations settle in their original period. A late confirmed personal payment buys the quoted prorated remainder only after that amount is shown and accepted; an earlier full-period charge that cannot provide its promised period is refunded, not silently converted. No paid upgrade starts automatically from a failed old payment.
+
+Turning off renewal retains the current period. A first personal-plan purchase has the proposed seven-real-day voluntary full-refund remedy; an accidental renewal has the same seven-day remedy if no new paid-plan-dependent invention has been admitted in that period. A refund removes unused additional entitlement, preserves already reserved authorized work and completed creations, and prevents new paid-level reservations. If consumed/held units exceed the remaining free allowance, available units are zero, never a negative cash debt; the next normal free period still arrives. A personal-plan inactivity notice concerns deliberate authoring, not world-hosting use, and the two-unused-period rule stops its third charge independently. The separate world hosting bill and simulation are unaffected.
 
 ## 7. Renewal, inactivity, cancellation and refund
 
@@ -152,7 +160,7 @@ Show the current paid-through date, renewal on/off, exact next amount and a dire
 
 At renewal, confirmed payment grants the new term once. Unknown payment remains pending; it does not justify a second charge attempt or double allowance. A failed payment prompts a customer-controlled update/retry. The pilot does not adopt automatic repeated collection attempts from a processor's defaults.
 
-Already-paid service continues to its end. At that boundary, absent confirmed renewal, the world enters the coherent service hold described in §8. No new paid work is admitted. A late confirmed payment may make a new term available, but the paused world resumes only through the ordinary explicit resume path. Any charged interval during which the promised service was unavailable is restored or refunded; the customer does not lose purchased time to reconciliation.
+Already-paid service continues to its end. At that boundary, absent confirmed renewal, the world enters the coherent service hold described in §8. No new paid work is admitted. If renewal is confirmed before the existing term ends, the next month begins at that existing end. If confirmation and usable service occur only afterward, the new full month starts when service is again available, and the future hosting renewal anniversary moves to that start; no overlapping charge remains scheduled on the old anniversary. Availability starts paid time even if the customer chooses to keep the fictional world paused. The world resumes only through the ordinary explicit resume path. If the customer cancels while payment is unresolved, late payment is refunded rather than reviving service. This choice prevents both lost paid time and overlapping renewals.
 
 A price increase or material reduction in included service gets at least 30 real days' notice and explicit acceptance for the affected future term. Already-paid terms remain as purchased. Without acceptance, renewal stops at the existing paid-through date. Do not use a buried policy edit to create consent.
 
@@ -160,22 +168,22 @@ A price increase or material reduction in included service gets at least 30 real
 
 For an auto-renewing world with no deliberate human play or explicit hosting-management activity for one full paid period, send a quiet inactivity notice alongside the next renewal notice. Guest play counts: a host need not log in while friends enjoy the world. Automated NPC activity, background exports, bots and mere payment processing do not establish customer use.
 
-If a second consecutive paid period remains inactive and the payer has not affirmatively chosen to keep hosting, turn off the following renewal and show the date. An intentional “Keep hosting” resets the review. This is a proposed customer-friendly experiment rule, not a finding about applicable law [OF-R02]. It must not turn ordinary absence into a fictional penalty or publicly disclose who has been away.
+If a second consecutive paid period remains inactive and the payer has not affirmatively chosen to keep hosting, stop before collecting the third charge. The second period's seven-day renewal notice explains this conditional stop; recheck for actual use or explicit keep-hosting immediately before collection. Show the resulting paid-through date. An intentional “Keep hosting” resets the review. This is a proposed customer-friendly experiment rule, not a finding about applicable law [OF-R02]. It must not turn ordinary absence into a fictional penalty or publicly disclose who has been away.
 
 ### 7.3 Cancellation and refunds
 
 Cancellation requires the payer or their explicitly authorized billing delegate, from the account surface without entering the world. Show the end date, what remains available and the recovery schedule, then confirm immediately. Do not require a call, a survey, a conversation with an NPC, a retention offer or the founder's permission. Optional feedback comes afterward.
 
-| Event | Proposed outcome |
-| --- | --- |
-| Turn renewal off | Keep the paid term and remaining included rights; stop future recurring charges |
-| Resume renewal before paid term ends | Explicitly accept displayed future terms; no new immediate charge or allowance reset |
-| First hosting purchase refunded within seven real days of usable delivery | Full voluntary refund; stop further paid service at refund acceptance and provide the recovery window |
-| Accidental renewal refund requested within seven real days | Full voluntary refund if no deliberate human play or new customer-requested paid work occurred in the new term; inspecting/exporting the world or automatic background activity does not disqualify it |
-| Duplicate charge or unfulfilled order | Full refund of that charge, independently of any valid paid term |
-| Service cannot deliver a material purchased capability | Repair promptly or offer proportionate/full refund according to the actual failure; do not substitute unrelated credit without the customer's choice |
-| Payment disputed or reversed | Stop new spending attributable to the disputed funding, reconcile current obligations, protect permitted recovery and explain the affected order |
-| Account suspension for misuse | Apply the actual moderation/appeal owner; do not describe a restriction as a successful refund or silently rewrite historic ownership |
+| Event                                                                     | Proposed outcome                                                                                                                                                                                       |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Turn renewal off                                                          | Keep the paid term and remaining included rights; stop future recurring charges                                                                                                                        |
+| Resume renewal before paid term ends                                      | Explicitly accept displayed future terms; no new immediate charge or allowance reset                                                                                                                   |
+| First hosting purchase refunded within seven real days of usable delivery | Full voluntary refund; stop further paid service at refund acceptance and provide the recovery window                                                                                                  |
+| Accidental renewal refund requested within seven real days                | Full voluntary refund if no deliberate human play or new customer-requested paid work occurred in the new term; inspecting/exporting the world or automatic background activity does not disqualify it |
+| Duplicate charge or unfulfilled order                                     | Full refund of that charge, independently of any valid paid term                                                                                                                                       |
+| Service cannot deliver a material purchased capability                    | Repair promptly or offer proportionate/full refund according to the actual failure; do not substitute unrelated credit without the customer's choice                                                   |
+| Payment disputed or reversed                                              | Stop new spending attributable to the disputed funding, reconcile current obligations, protect permitted recovery and explain the affected order                                                       |
+| Account suspension for misuse                                             | Apply the actual moderation/appeal owner; do not describe a restriction as a successful refund or silently rewrite historic ownership                                                                  |
 
 These are proposed voluntary minimum remedies. The real operator and supported territories must establish applicable mandatory rights before sale; a proposed seven-day rule cannot limit stronger rights. Refunds adjust the financial obligation and future entitlement, not fictional history. They do not retroactively kill a crafted item, erase another player's valid contribution or claim incurred provider costs never existed.
 
@@ -201,7 +209,7 @@ Offer one reviewed entry in a specifically named official founding chronicle, wi
 
 The buyer sees a pseudonymous display name of up to 40 Unicode code points and 160 UTF-8 bytes, and an optional dedication of up to 120 code points and 480 bytes. Both bounds apply; count visible remaining capacity without splitting a Unicode sequence. Plain text only, no links, executable content or promotional embeds. Anonymous support is permitted. Do not demand a real name.
 
-One purchase grants one publication claim. The first edition permits one claim per account and no resale or transfers. A purchaser may dedicate to a consenting person, but attribution must distinguish the supporter from the dedication subject. Do not publish someone else's identifying name without their consent. An unconsented subject can be replaced or omitted; it is not permission to assign them an account or contact them automatically.
+One purchase grants one publication claim. The first edition permits one claim per account and no resale or transfers. The first edition uses the purchaser's own chosen pseudonym or anonymous credit. Dedication text may not identify another real person. Gifts and third-person named dedications are not selected for this edition; adding them would require a real consent and decline journey before sale. This keeps recognition useful without building an invitation or identity-verification workflow into the first offer.
 
 ### 9.2 Review and fulfillment
 
@@ -215,7 +223,7 @@ Publication consumes the claim once and gives the customer a stable way to find 
 
 ### 9.3 Corrections, privacy and closure
 
-Allow correction of a typo or display-name update through one open request at a time, with the same review capacity limit. A correction changes presentation; it does not rewrite who originally supported the project or create a new publication claim. Substantive new dedications are not included after fulfillment.
+Include one ordinary post-publication typo or display-name correction per claim, with one open request at a time and the same review deadline. Required privacy, moderation and factual-record corrections remain available independently and are never paywalled; they do not create an unlimited custom-writing benefit. A correction changes presentation; it does not rewrite who originally supported the project or create a new publication claim. Substantive new dedications are not included after fulfillment.
 
 A person can ask to remove identifying display text; show an anonymous historical acknowledgement where appropriate, or remove public display when the actual privacy/moderation owner requires it. The private financial record follows its own lawful retention. A removed public name must not keep appearing in search previews or newly generated summaries.
 
@@ -242,22 +250,22 @@ Useful implementation directions, without choosing an architecture:
 
 ## 11. Real-player walkthroughs and acceptance
 
-| Person and situation | Required observable behavior |
-| --- | --- |
-| Solo owner who never invites anyone | Completes the advertised loop, saves and returns; does not need a guild, marketplace or voice call to obtain value |
-| Guest with a free account | Joins qualified host-paid space; uses existing inventions freely; knows whether host-funded authoring and their own remaining units permit a new one |
-| Two worlds compete for the last unit | One reservation; the other draft survives; no hidden content or double grant |
-| A useful invention needs repairs | Same agreed objective has no extra completed-unit charge, but the next paid attempt still needs funding |
-| Player bundles unrelated systems | Receives the scope/count before work; can narrow it; no surprise bill on completion |
-| Expensive failure leaves units but no funding | Honest local failure, retained draft and existing play; no free retry loop |
-| Work finishes after renewal or cancellation | Original-period settlement once; no world restart or transfer of the result without authority |
-| Payment succeeds after the person saw a timeout | One fulfilled order or its stated refund; no second purchase needed to discover success |
-| Card fails while guests are playing | Already-paid term honored; coherent service hold at expiry, with no fictional starvation |
-| Customer cancels and later returns | Exact end/recovery dates remain visible; resume or buy a new term deliberately; consumed units stay consumed |
-| Owner requests a world export | Receives only material they may possess; others' private text is not a billing benefit |
-| Dedication rejected or subject declines consent | Edit/omit/refund route, no public exposure while pending |
-| Named physical representation later dies | History remains truthful; no revived object, repeated claim or implicit refund for an unpromised immortality |
-| Operator retires the service | Renewal ends, prepaid obligations resolved and promised permitted recovery offered |
+| Person and situation                                     | Required observable behavior                                                                                                                         |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Solo owner who never invites anyone                      | Completes the advertised loop, saves and returns; does not need a guild, marketplace or voice call to obtain value                                   |
+| Guest with a free account                                | Joins qualified host-paid space; uses existing inventions freely; knows whether host-funded authoring and their own remaining units permit a new one |
+| Two worlds compete for the last unit                     | One reservation; the other draft survives; no hidden content or double grant                                                                         |
+| A useful invention needs repairs                         | Same agreed objective has no extra completed-unit charge, but the next paid attempt still needs funding                                              |
+| Player bundles unrelated systems                         | Receives the scope/count before work; can narrow it; no surprise bill on completion                                                                  |
+| Expensive failure leaves units but no funding            | Honest local failure, retained draft and existing play; no free retry loop                                                                           |
+| Work finishes after renewal or cancellation              | Original-period settlement once; no world restart or transfer of the result without authority                                                        |
+| Payment succeeds after the person saw a timeout          | One fulfilled order or its stated refund; no second purchase needed to discover success                                                              |
+| Card fails while guests are playing                      | Already-paid term honored; coherent service hold at expiry, with no fictional starvation                                                             |
+| Customer cancels and later returns                       | Exact end/recovery dates remain visible; resume or buy a new term deliberately; consumed units stay consumed                                         |
+| Owner requests a world export                            | Receives only material they may possess; others' private text is not a billing benefit                                                               |
+| Dedication rejected or names another identifiable person | Edit/omit/refund route, no public exposure while pending; third-person named dedications are outside this first edition                              |
+| Named physical representation later dies                 | History remains truthful; no revived object, repeated claim or implicit refund for an unpromised immortality                                         |
+| Operator retires the service                             | Renewal ends, prepaid obligations resolved and promised permitted recovery offered                                                                   |
 
 Behavior acceptance also includes keyboard-accessible purchase/cancel flows, clear pending/error focus, local drafts surviving recoverable errors, accessible money/date/count presentation and a support route outside the game. No cancellation dark pattern is accepted as a growth experiment.
 
@@ -277,14 +285,14 @@ The third risk is promising cheap indefinite life from a monthly invoice. Explic
 
 The design does not depend on pretending these facts are already known. Before a specific paid offer is activated, PD01/PD10 must supply its dated operating record:
 
-| Real input still required | What it decides |
-| --- | --- |
-| Named accountable operator, actual supported territories/payment/tax/refund terms and customer support contact | Who can sell and fulfill the offer and which customer protections apply |
-| Founder-authorized cash ceiling, weekly labor ceiling and review/stop date | How much of the experiment can actually be run; no historical example appropriates money |
-| Measured workload, sustainable included funding and account invention quantities, actual price/currency and supported population/storage | The exact offer people can buy; averages and configuration maxima are insufficient |
-| Mike's explicit post-launch continuity/retention decision and demonstrated permitted export/recovery | Whether the future continuity promise can be made without violating the current development policy |
-| Verified payment/cancel/refund/uncertainty and INV-13.8 entitlement behavior | Whether the complete service lifecycle can be honored once |
-| Actual dedication edition, moderation capacity and refund reserve, if enabled | Whether that optional promise can be fulfilled within its stated dates |
+| Real input still required                                                                                                                | What it decides                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Named accountable operator, actual supported territories/payment/tax/refund terms and customer support contact                           | Who can sell and fulfill the offer and which customer protections apply                            |
+| Founder-authorized cash ceiling, weekly labor ceiling and review/stop date                                                               | How much of the experiment can actually be run; no historical example appropriates money           |
+| Measured workload, sustainable included funding and account invention quantities, actual price/currency and supported population/storage | The exact offer people can buy; averages and configuration maxima are insufficient                 |
+| Mike's explicit post-launch continuity/retention decision and demonstrated permitted export/recovery                                     | Whether the future continuity promise can be made without violating the current development policy |
+| Verified payment/cancel/refund/uncertainty and INV-13.8 entitlement behavior                                                             | Whether the complete service lifecycle can be honored once                                         |
+| Actual dedication edition, moderation capacity and refund reserve, if enabled                                                            | Whether that optional promise can be fulfilled within its stated dates                             |
 
 The bounded pilot review records actual play/return, cohort membership, customer-paid renewal opportunities and outcomes, cancellation intent, friction, refunds, full cash obligations, heavy-user cost and support minutes. Patreon illustrates why an “active member” count can include trials, gifts, retries and canceled-but-unexpired access [OF-R06]. Do not use that number as evidence of ten renewing customers.
 

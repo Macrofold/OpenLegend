@@ -4,6 +4,8 @@ Recorded September 19, 2026, following the founder's request to document the bus
 
 **Status: working launch plan.** The founder wants Open Legend to become profitable quickly, avoid an ongoing personal subsidy, and remain manageable alongside running an existing company. Prices, cost figures, allowances, and customer targets below are planning hypotheses to validate. No paid offering has launched.
 
+**DG27 product proposal — 7 October 2026:** [Customer and supporter offers](../../docs/projects/customer-and-supporter-offers-feature-spec.md) now develops one monthly private hosted-world experiment, account invention terms, cancellation/recovery and an independently optional founding-chronicle dedication. It preserves this plan's operating goals and historical examples; actual price, allowance quantities, founder budget, supported territory and post-launch continuity approval remain required before sale. Its [sequence and activation inputs](../../docs/projects/customer-and-supporter-offers-feature-spec.md#12-sequence-and-critique) distinguish a complete product proposal from permission or evidence to run the commercial experiment.
+
 ## Objective and operating constraints
 
 Build a small, paid hosted-world business that can cover its operating costs with tens of customers. Prioritize a narrow, enjoyable experience, predictable spending, and manageable support work.
@@ -50,6 +52,8 @@ Charge for a working, clearly described early-access experience. Avoid selling c
 “About one a day” describes the rough generosity of a 30-per-month allowance. It does not select a daily reset, daily cap or requirement to log in every day. Decide between a monthly allowance usable flexibly and any separate burst controls before publishing the offer. Do not advertise unlimited invention without a sustainable, explicit operating policy.
 
 This player entitlement is separate from the proposed owner-paid hosted-world plan above. A guest can use a free player allowance in a host-funded world without purchasing an individual subscription, subject to world permissions and available AI funding. How standalone premium-world memberships, host sponsorship or future add-ons grant extra invention allowance remains open; paying for world access must not silently imply an unlimited allowance or require a second subscription for already purchased benefits. These are managed-service packaging rules, not a mandatory subscription for running the open-source game independently.
+
+The [DG27 proposal](../../docs/projects/customer-and-supporter-offers-feature-spec.md#5-the-three-resource-promises) supplies candidate objective-counting, revision, overlap and account-period rules for the next offer; the notes below retain the earlier direction and its unresolved-at-the-time choices. Actual purchased account units belong in Billing, separately from the existing character's abstract creation-usage display and its independently enforced spending limits. [INV-13.8](../../docs/maintainers/inventions-and-world-evolution.md#inv-13--episode-budgets-and-installed-cost-enforcement) retains entitlement delivery.
 
 Proposed counting and renewal behavior:
 

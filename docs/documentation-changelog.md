@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-07 — A useful hosted world and bounded optional recognition
+
+Prepared DG27's researched [customer/supporter product proposal](projects/customer-and-supporter-offers-feature-spec.md), with [OF constraints](limits/customer-and-supporter-offers.md) and existing PD10/INV-13.8 delivery. One hosted world that works for a solo owner precedes optional personal upgrades, recognition and marketplace/grant expansion. The proposal separates successful invention objectives, real attempt costs and installed runtime expense; specifies monthly overlap, late fulfillment, renewal, cancellation, coherent service hold and proposed recovery; and defines one reviewed chronicle claim with privacy and retirement. Ten primary research records inform the choices.
+
+Historical prices and free quantities remain examples, real operating inputs remain unselected, and the development save policy is unchanged. These documents neither launch payments nor establish measured playability, economics or provider capacity.
+
 ## 2026-10-07 — Optional listening and deliberate private conversation
 
 Prepared DG26's researched [voice and calls product proposal](projects/voice-and-calls-feature-spec.md). Optional committed-text reading and reviewed dictation can complete independently before a two-human private submitted-turn slate call; resident participation remains separately qualified. Added open [HE07](maintainers/hearing-and-speech.md#he07--optional-listening-and-reviewed-dictation), [NC23](maintainers/narration-and-conversations.md#nc23--private-submitted-turn-calls) work and proposed [VC constraints](limits/voice-and-calls.md), with HE/NC/MP/PS04/queue/index forwarding. The gameplay critique keeps immediate text, quiet fresh call assent, actual device/body limits and complete recovery ahead of voice performance. Neutral permitted-fragment reading avoids hidden identity and unheard-word disclosure.

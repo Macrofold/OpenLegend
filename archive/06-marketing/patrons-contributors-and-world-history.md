@@ -2,6 +2,8 @@
 
 Recorded September 19, 2026. **Accepted direction:** recognize financial supporters and contributors, offer meaningful world dedications, give both groups a voice, and explore a creator fund. The following mechanics are proposals; no membership, entitlement, grant, or permanent-service promise has been sold.
 
+**DG27 product proposal — 7 October 2026:** [One optional founding-chronicle dedication](../../docs/projects/customer-and-supporter-offers-feature-spec.md#9-one-optional-founding-chronicle-dedication) defines a bounded first acknowledgement: reviewed public text, one consumed claim, consent/privacy corrections, unfulfilled-purchase refunds and stated retirement treatment. Its first edition offers no resale or claim transfer; the broader transfer examples below remain later possibilities. Ordinary hosting can launch independently when qualified. Recurring patron tiers, contributor influence and a creator fund remain separate directions; this proposal sells none of them and grants no perpetual-service promise.
+
 ## Patronage with concrete benefits
 
 Candidate message: **Help bring this world into existence, and become part of its history.**

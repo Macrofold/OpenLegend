@@ -170,6 +170,8 @@ Billing time is real dispatch/service time, independent of simulated time, pause
 
 Keep player invention quota reservations separate from monetary reservations. The entitlement service decides which successful admissions qualify, under a versioned policy. No tier price, unit amount, or renewal schedule is invented here.
 
+[DG27](projects/customer-and-supporter-offers-feature-spec.md#5-the-three-resource-promises) supplies the proposed customer-level counting, repair and renewal behavior, with actual offer prices and quantities still required before activation. Its account allowance does not replenish existing actor-month, workshop-session or other monetary scopes. [INV-13.8](maintainers/inventions-and-world-evolution.md#inv-13--episode-budgets-and-installed-cost-enforcement) retains their proposed delivery through the existing entitlement owner; §4's eligible publication of already-funded work and §10's abstract creation-usage display remain controlling.
+
 A qualifying admission commits its unit once. Definitive non-admission can release its quota hold; uncertain completion reconciles against durable admission before release. Concurrent requests across worlds must not spend the same last unit. Period rollover, plan changes, late completion, and lineage/fork treatment use the entitlement owner's explicit rules.
 
 A recipe's supporting art does not consume another invention unit. Ordinary depiction of a state, asset reuse, and compatible art improvement are not new mechanics. Player-directed work preserves player entitlement origin; autonomous NPC work follows separate world permissions/funding. Exhausting an invention allowance does not remove already admitted techniques or prevent ordinary use.
