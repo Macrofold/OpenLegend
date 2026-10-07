@@ -8,7 +8,7 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB01
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 **16 levels of containment globally.** Individual container definitions can choose a smaller maximum, but cannot exceed 16.
 
@@ -16,7 +16,7 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB02
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 **One additive packing model:** positive integer capacity; nonnegative integer load per item. Nested contents count toward every enclosing container. No fractional capacity, unlimited containers, separate weight/volume limits or alternative packing rules. Items whose packing load is unknown are refused by capacity-limited containers; fit cannot be established.
 
@@ -24,7 +24,7 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB04
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 **Only item entities can be contained or attached.** Actors cannot be passengers inside this model. Parents must be actors, ground piles or container items.
 
@@ -32,7 +32,7 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB05
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 Attachment supports only the existing `equipment` slot; no general attachment points or assemblies. One physical parent remains a placement invariant.
 
@@ -40,7 +40,7 @@ Attachment supports only the existing `equipment` slot; no general attachment po
 
 ## OB06
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 **Containers always have individual identities and quantity 1.** Even empty identical bags cannot stack; creation accepts one bag per operation.
 
@@ -48,7 +48,7 @@ Attachment supports only the existing `equipment` slot; no general attachment po
 
 ## OB07
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 Equipping separates one unit from a stack and **permanently makes it individual**. Unequipping does not make it stackable again.
 
@@ -56,7 +56,7 @@ Equipping separates one unit from a stack and **permanently makes it individual*
 
 ## OB08
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 Split/merge supports **stateless homogeneous stacks only**. Per-instance attributes, mechanism state, status state, reservations or references from active effects can prevent it.
 
@@ -64,7 +64,7 @@ Split/merge supports **stateless homogeneous stacks only**. Per-instance attribu
 
 ## OB09
 
-**Reported · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
 Merge requires exact matching definitions, units and ownership records—including ownership provenance/revision. No conversion or reference-rebinding policy.
 
@@ -72,7 +72,7 @@ Merge requires exact matching definitions, units and ownership records—includi
 
 ## OB10
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 The split command creates the result **in the same container**. Explicit merge takes the **whole selected stack**, with both stacks in the same container.
 
@@ -106,7 +106,7 @@ Ingredient, food, ammunition and tool discovery includes accessible nested posse
 
 ## OB14
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 Nonempty containers cannot be retired. Objects carrying unsupported per-instance state also cannot be retired through ordinary consumption. No spill/scatter policy.
 
@@ -114,15 +114,15 @@ Nonempty containers cannot be retired. Objects carrying unsupported per-instance
 
 ## OB15
 
-**Reported · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
-Declared ownership supports **one holder or no holder**, with public/private disclosure. No shared ownership or competing claims. Its editor only operates on items currently in your character’s custody.
+Declared ownership supports **one named holder or no holder**, with `public` or `custodian` disclosure; the latter follows physical custody, not a general arbitrary private audience. No shared ownership or competing claims are admitted. The creator ownership editor requires current create authority and an item in the controlled character’s custody; declaring title neither transfers the item nor grants physical access. [Declaration](../../packages/domain/src/objects.ts) · [Editor admission](../../apps/server/src/world-service.ts).
 
 **Reason / tradeoff:** Simple ownership declarations preserve separation from physical custody; shared/contested claims need another model.
 
 ## OB16
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 The older creator inventory editor cannot change a type’s total when it represents multiple stacks, individual objects or explicitly owned objects.
 
@@ -138,9 +138,9 @@ The older creator inventory editor cannot change a type’s total when it repres
 
 ## QU02
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Direct-contents query: **201 entries maximum**, including lookahead.
+The direct-contents query admits page sizes from **1 to 201**, defaulting to 201 so callers can retain a continuation lookahead. This bounds returned child IDs, not initial construction or rebuilding of the shared object index. [Query owner](../../packages/domain/src/queries.ts) · [Index owner](../../packages/domain/src/objects.ts).
 
 **Reason / tradeoff:** Bound one contents query, including continuation lookahead.
 
@@ -154,9 +154,9 @@ Inventory page: **40 results**, scanning at most **200 entries** before continua
 
 ## QU04
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Inventory search matches definition names within the **current container only**.
+Inventory search case-folds and matches the **definition name within the current container only**, not arbitrary item-instance names or recursively unopened contents. It continues through the QU03 scan windows, including empty windows with more children. Merge-target mode uses exact native merge eligibility instead of this text filter. [Page owner](../../apps/server/src/inventory-view.ts).
 
 **Reason / tradeoff:** Avoid recursive inventory search cost/semantics in the first UI.
 
@@ -170,47 +170,47 @@ The inventory merge control formerly offered targets from the **current page onl
 
 ## QU06
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Compact game snapshot: **60 accessible possession entries**, including nested items.
+The compact game snapshot projects the first **60 accessible possession entries**, including nested items, from the already assembled observation inventory. That is an output limit, not a bound on all inventory preparation, carried objects or available actions; the full-detail inventory uses its paginated path. [Projection](../../apps/server/src/view.ts) · [Possession traversal](../../packages/domain/src/object-access.ts).
 
 **Reason / tradeoff:** Keep routine snapshots compact; paginated inventory is the full-detail path.
 
 ## QU07
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-AI container-action suggestions: **24**.
+A selected-container decision supplies at most **24 admitted take/pack suggestions in total**, taking from the inspected page before considering packing accessible own inventory. Separately, at most **16 accessible known containers** receive inspect suggestions. Omitted known choices receive a coverage notice and can still be selected explicitly. The 24 bound counts accepted suggestions, not inspected candidates or native previews: many refused candidates can be examined before it is reached. [Context owner](../../apps/server/src/context.ts).
 
-**Reason / tradeoff:** Keep model action context small; relevant actions beyond the prefix may be omitted.
+**Reason / tradeoff:** Keep supplied choices finite without reporting an unexamined prefix as empty storage or impossibility. This is not a complete CPU/preparation bound or a new restriction on the number of containers.
 
 ## QU08
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Object history: **40 entries/page**, covering split/merge/consumption in the requesting character’s historical custody.
+Object history returns **40 entries per page**, querying 41 for continuation, for split/merge/consumption whose occurrence-time custodian matches the requesting character. Pages sort and continue by lineage-record slot, not a promised wall-clock chronology. Current authority is checked before and after the awaited history read; current possession or declared ownership alone does not grant historical custody. A named successor remains descriptive, never an actionable redirect. [History query](../../apps/server/src/world-records.ts) · [Request scope](../../apps/server/src/inventory-view.ts).
 
 **Reason / tradeoff:** Bound page size and expose only the requester’s permitted custody evidence.
 
 ## PB02
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 Inventory search: **160 characters maximum**.
 
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
-[Implementation starting point](../../packages/protocol/src/index.ts).
+[Request validation](../../apps/server/src/http.ts).
 
 ## PB03
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 Inventory/history cursor: **3,000 characters maximum**.
 
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
-[Implementation starting point](../../packages/protocol/src/index.ts).
+[Request validation](../../apps/server/src/http.ts).
 
 ## CC01 — Proposed invented camp containers
 
