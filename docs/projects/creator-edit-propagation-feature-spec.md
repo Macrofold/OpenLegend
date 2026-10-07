@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                    | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | General policy accepted; explicit dependency previews have earlier priority than optional memory convenience tools. | 2026-10-03   |
+| Not started | General policy accepted; explicit dependency previews have earlier priority than optional memory convenience tools. | 2026-10-06   |
 
 ## Accepted policy
 
@@ -20,7 +20,7 @@ Use paging/grouping for large lists while preserving the complete approved set a
 
 After an edit, optionally search permitted character memories by semantic vector similarity using the creator's selected scope and old/new descriptions. Results are suggestions, not proof that a memory is wrong. Let the creator multiselect memories and choose deletion, manual editing, or an AI-assisted bulk-edit proposal. Preview exact per-memory diffs and require approval before applying. Preserve unselected memories; allow cancellation and partial selection. AI generation requires the existing spending authority and cap, and never applies its own suggestions.
 
-Keep memory identity, speaker attribution, dates and uncertainty visible. Do not silently broaden into human-private memories or revive forgotten material. A stale result must be refreshed before mutation. This convenience feature is explicitly lower priority and not a prerequisite for family editing or dependency deletion.
+Keep memory identity, speaker attribution, dates and uncertainty visible. Approval does not broaden the existing editable fields: the generic memory tool cannot rewrite committed speech, change who said something, or erase evidence still required by an unresolved commitment. The [technical design](creator-edit-propagation-tech-design.md#optional-memory-tool) identifies the current edit and forgetting owners. Do not silently broaden into human-private memories or revive forgotten material. A stale result must be refreshed before mutation. This convenience feature is explicitly lower priority and not a prerequisite for family editing or dependency deletion.
 
 ## Acceptance
 
