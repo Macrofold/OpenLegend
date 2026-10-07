@@ -167,6 +167,12 @@ function App({
     ],
   );
   const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>([]);
+  const [activityRequest, setActivityRequest] = useState<{
+    id: string;
+    scope: string;
+    family: string;
+    arguments: Record<string, string>;
+  }>();
   const [inventoryOpened, setInventoryOpened] = useState(false);
   const [npcId, setNpcId] = useState<string | null>(null),
     [seed, setSeed] = useState<ComposerDraft | null>(null),
@@ -861,7 +867,16 @@ function App({
         command: a.intent.command,
         reason: a.reason,
       });
-    else if (a.intent.kind === 'compose') {
+    else if (a.intent.kind === 'activity' && view?.access) {
+      setActivityRequest({
+        id: crypto.randomUUID(),
+        scope: view.access.scope,
+        family: a.intent.family,
+        arguments: a.intent.arguments,
+      });
+      setPicker(null);
+      show('inventory');
+    } else if (a.intent.kind === 'compose') {
       if (a.intent.mode === 'invention') invent();
       else talk(a.intent.npcId ?? '');
     }
@@ -999,10 +1014,13 @@ function App({
               }
             />
             <CampActivity
+              initialRequest={
+                activityRequest?.scope === view.access?.scope ? activityRequest : undefined
+              }
               visible={
                 connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
               }
-              key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
+              key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.player.id}:${activityRequest?.id ?? ''}`}
               view={view}
               connected={connected}
               command={command}

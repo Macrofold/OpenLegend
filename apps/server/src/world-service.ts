@@ -176,6 +176,7 @@ export const commandInputSchema = z
       'cook',
       'tend-fire',
       'handover',
+      'outing',
       'eat',
       'status-effect',
       'replenish',
@@ -224,6 +225,10 @@ export const commandInputSchema = z
     effectOperation: z.enum(['activate', 'deactivate']).optional(),
     fireOperation: z.enum(['light', 'fuel', 'extinguish']).optional(),
     handoverOperation: z.enum(['offer', 'accept', 'decline', 'withdraw']).optional(),
+    outingOperation: z.enum(['invite', 'accept', 'decline', 'leave']).optional(),
+    outingId: id.optional(),
+    outingMode: z.enum(['enqueue', 'replace', 'interrupt']).optional(),
+    destinationId: id.optional(),
     offerId: id.optional(),
     targetId: id.optional(),
     definitionId: id.optional(),
@@ -3893,6 +3898,37 @@ export class WorldService {
     };
     let command: Command;
     switch (input.type) {
+      case 'outing':
+        if (input.outingOperation === 'invite' && input.targetId && input.outingMode)
+          return {
+            ...envelope,
+            type: 'outing',
+            operation: 'invite',
+            recipientId: input.targetId,
+            destinationId: input.destinationId,
+            destination: input.position,
+            mode: input.outingMode,
+          };
+        if (
+          (input.outingOperation === 'accept' ||
+            input.outingOperation === 'decline' ||
+            input.outingOperation === 'leave') &&
+          input.outingId &&
+          input.expectedRevision !== undefined
+        )
+          return {
+            ...envelope,
+            type: 'outing',
+            operation: input.outingOperation,
+            outingId: input.outingId,
+            expectedRevision: input.expectedRevision,
+            mode: input.outingMode,
+          };
+        return {
+          ok: false,
+          code: 'outing-choices',
+          message: 'Choose the exact invitation and reply.',
+        };
       case 'activity-request':
         if (!input.activityFamilyId || !input.activityArguments)
           return {
@@ -3900,10 +3936,15 @@ export class WorldService {
             code: 'activity-choices',
             message: 'Choose the activity and every required parameter.',
           };
-        return bindActivityRequest(this.world, actorId, commandId, {
-          family: input.activityFamilyId,
-          arguments: input.activityArguments,
-        });
+        {
+          const bound = bindActivityRequest(this.world, actorId, commandId, {
+            family: input.activityFamilyId,
+            arguments: input.activityArguments,
+          });
+          return 'ok' in bound
+            ? bound
+            : { ...bound, ...(input.purpose ? { purpose: input.purpose } : {}) };
+        }
       case 'activity':
         if (!input.methodId || !input.bindings)
           return {

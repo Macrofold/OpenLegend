@@ -1,6 +1,6 @@
 # Parallel batch 04 — Expeditions and exchange — assignment tracker
 
-**Status: in progress, October 7, 2026.** PX01 is delivered on the integrated PG05/embodied-feedback baseline; PX03 is delivered and reviewed. PX02, PX04 and PX05 remain open with their separate checks below. The original planning baseline was c4e18d91. Runtime tasks start from integrated prerequisites in the technical design, not merely from the planning commit.
+**Status: in progress, October 7, 2026.** PX01 is delivered on the integrated PG05/embodied-feedback baseline, PX03 discovery is delivered and reviewed, and PX04 paired outings are delivered; PX02 and PX05 retain their separate checks below. The original October 3 planning pass completed no runtime work; its local-main baseline was c4e18d91. Runtime tasks start from the integrated prerequisites in the technical design, not merely from the planning commit.
 
 [Feature/acceptance](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Technical definitions](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](../projects/parallel-batch-04-expeditions-and-exchange-prompts.md) · [Numbers and prior batches](../projects/parallel-batches.md)
 
@@ -38,13 +38,19 @@ Parents: [narration](narration-and-conversations.md), [spatial world](spatial-wo
 
 ## PX04 — Voluntary shared outings
 
-[CF04](parallel-batch-06-rivals-and-contested-ground.md#cf04--a-companion-who-can-help-in-a-fight) is the proposed later combat-help consumer. It extends supplied request/consent semantics while keeping a trip separate from consent to fight and preserving independent withdrawal. PX04 is still a prerequisite, not repeated or marked complete by that allocation.
+[CF04](parallel-batch-06-rivals-and-contested-ground.md#cf04--a-companion-who-can-help-in-a-fight) is the proposed later combat-help consumer. It extends supplied request/consent semantics while keeping a trip separate from consent to fight and preserving independent withdrawal. PX04's delivery below supplies that prerequisite; CF04 remains unimplemented.
 
-- [ ] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
-- [ ] Deliver invitation, voluntary acceptance/refusal, travel, arrival and leaving; complete changed-work, interruption, privacy, blocked-route and save/replay acceptance.
-- [ ] Reconcile the concrete AG05/AG06/AG07/AG12, CE and DG06/ND10 subsets; leave group institutions, promise management, follow-everywhere behavior and unattended communities open.
+- [x] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
+- [x] Deliver invitation, voluntary acceptance/refusal, travel, arrival and leaving; complete changed-work, interruption, privacy, blocked-route and save/replay acceptance.
+- [x] Reconcile the concrete AG05/AG06/AG07/AG12, CE and DG06/ND10 subsets; leave group institutions, promise management, follow-everywhere behavior and unattended communities open.
 
 Parents: [agency](agent-agency.md), [character experience](character-experience.md), [DG06](needs-design.md#dg06--reciprocal-exchange-and-small-cooperation). Uses destinations already available today; no dependency on PX03, barter or shelter construction.
+
+**October 6 delivery:** exact consent, current-work revalidation, two own walks, private company/arrival evidence, leaving and current-format restart are implemented. [Evidence](../verification/voluntary-outings.md) records 13 native cases, PostgreSQL reopening, real browser departure/Leave controls and bounded live acceptance, independent arrival eating, voluntary replacement and refusal. This closes PX04 only; broader parents remain incomplete.
+
+**Requested review:** command reconciliation now visits affected participants/destinations, accepted membership is indexed, duplicate personal accounts and repeated decision projections are removed, paused-work acceptance is explicit, valid long actor IDs remain saveable, and native wildlife cannot supply social consent. [Review evidence](../verification/voluntary-outings.md#post-delivery-review--october-6-2026) records the additional native/server/browser checks and matched measurements.
+
+- [ ] Before claiming population capacity, measure complete-server advance, persistence and projection with concurrent accepted walks and incoming invitations concentrated on one person; investigate tail latency and heap growth. Current views enumerate all incoming invitations, so qualify crowded-recipient usability and add scoped paging through the existing choice/view owners if that measured workload requires it. This is broader qualification, not an unimplemented two-person lifecycle. [AEL10](../limits/action-experience.md#ael10--outing-consent-and-own-movement)/[CG16](../limits/cognition.md#cg16--outing-choices-and-reconsideration) retain the current limits; repeatable character preferences and whole-life behavior remain AG12/CE work.
 
 ## PX05 — Editable shelter technical design
 

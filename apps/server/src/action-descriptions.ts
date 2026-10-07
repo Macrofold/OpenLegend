@@ -1,3 +1,4 @@
+import { BASE_OUTING } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import { nativeCatalogueView, strikeDefinition } from '@open-legend/domain';
 import { domainCommand } from './cognition.js';
@@ -18,6 +19,7 @@ import type { CommandInput } from '@open-legend/protocol';
  * presentation data; command previews and the kernel still own every prerequisite. */
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
   ...BASE_DEATH_COMMAND_DESCRIPTIONS,
+  outing: BASE_OUTING.description,
   'activity-request':
     'Choose every required parameter and review a supported activity before starting it.',
   'inspect-activities':
@@ -103,6 +105,7 @@ function describeCommand(
   const itemDefinition = item && definition(item.definitionId);
   const recipe = 'recipeId' in command ? read.recipes.get(command.recipeId ?? '') : undefined;
   const common = ACTION_DESCRIPTIONS[command.type];
+  if (command.type === 'outing') return BASE_OUTING.description;
   switch (command.type) {
     case 'strike': {
       if (itemDefinition?.melee) {

@@ -1,3 +1,4 @@
+import { OutingStatus } from './outing-status';
 import { namePhrase } from '@open-legend/language';
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
@@ -187,6 +188,7 @@ export function Character({
         view={view}
         connected={connected}
       />
+      <OutingStatus view={view} connected={connected} command={command} />
       <Section title="Condition">
         <Condition {...view.player} />
         {view.player.scars?.map((scar) => (

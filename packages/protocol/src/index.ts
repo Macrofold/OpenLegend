@@ -39,6 +39,7 @@ export interface CommandInput {
     | 'cook'
     | 'tend-fire'
     | 'handover'
+    | 'outing'
     | 'eat'
     | 'replenish'
     | 'status-effect'
@@ -67,6 +68,10 @@ export interface CommandInput {
   effectOperation?: 'activate' | 'deactivate';
   fireOperation?: 'light' | 'fuel' | 'extinguish';
   handoverOperation?: 'offer' | 'accept' | 'decline' | 'withdraw';
+  outingOperation?: 'invite' | 'accept' | 'decline' | 'leave';
+  outingId?: string;
+  outingMode?: 'enqueue' | 'replace' | 'interrupt';
+  destinationId?: string;
   offerId?: string;
   targetId?: string;
   definitionId?: string;
@@ -90,11 +95,26 @@ export interface CommandInput {
   preparation?: 'fiber' | 'cord';
 }
 
+export interface OutingView {
+  id: string;
+  revision: number;
+  destination: string;
+  companion: string;
+  distance: number;
+  purpose?: string;
+  status: 'pending' | 'traveling' | 'arrived';
+  company: string;
+  description: string;
+  choices: Array<{ id: string; label: string; description: string; command: CommandInput }>;
+}
+
 export interface ActivityRequestsView {
   ok: boolean;
   scope: string;
   simTime: number;
   requests: {
+    purposeLabel?: string;
+    submitLabel?: string;
     id: string;
     label: string;
     description: string;
@@ -102,6 +122,7 @@ export interface ActivityRequestsView {
       string,
       {
         type: 'entity' | 'definition' | 'integer' | 'time' | 'mode';
+        modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
         label: string;
         minimum?: number;
         maximum?: number;
@@ -186,6 +207,7 @@ export interface CatalogueAction {
   reason?: string;
   intent:
     | { kind: 'command'; command: CommandInput }
+    | { kind: 'activity'; family: string; arguments: Record<string, string> }
     | { kind: 'compose'; mode: 'chat' | 'invention'; npcId?: string }
     | { kind: 'unavailable' };
 }
@@ -573,6 +595,7 @@ export interface GameView {
     actionAttempts: PlayerActionAttempt[];
     /** The controlled actor's plain activity result; detailed steps remain God-only. */
     activity?: ActivityRequestsView['status'];
+    outings: OutingView[];
     /** The controlled character's plan steps and states; projected only in God mode. */
     work?: WorkView | null;
     /** Example typed requests in this world's own words, for the action form. */

@@ -1,3 +1,10 @@
+import {
+  BASE_OUTING,
+  outingInvitationProblem,
+  activityRequestHost,
+  observerDescription,
+} from '@open-legend/domain';
+import { outingActions } from './outing-view.js';
 import { namePhrase } from '@open-legend/language';
 import {
   accessiblePossession,
@@ -460,6 +467,36 @@ export function actionCatalogue(
           item.id,
         );
     }
+  }
+  if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
+    for (const target of actionTargets) {
+      if (!BASE_OUTING.participant(target) || target.id === scope.actorId) continue;
+      const refused = outingInvitationProblem(world, scope.actorId, target.id);
+      actions.push({
+        id: `invite-travel:${target.id}`,
+        label: BASE_OUTING.label,
+        category: 'Social',
+        description: BASE_OUTING.description,
+        keywords: [
+          'travel',
+          'company',
+          observerDescription(world, scope.actorId, target.id, 'definite'),
+        ],
+        targetId: target.id,
+        enabled: controlling && !refused,
+        ...(refused ? { reason: refused.message } : {}),
+        intent: {
+          kind: 'activity',
+          family: BASE_OUTING.family,
+          arguments: { recipientId: target.id },
+        },
+      });
+    }
+    for (const choice of outingActions(world, scope.actorId))
+      add(choice.id, choice.label, 'Social', choice.command, ['outing', 'travel'], undefined, {
+        description: choice.description,
+        availability: service.previewCommand(choice.command, scope.actorId),
+      });
   }
   // Each offer/reply binds its exact perceived person; the recipient alone can accept.
   for (const target of actionTargets) {

@@ -1,3 +1,4 @@
+import { outingViews } from './outing-view.js';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
@@ -995,6 +996,7 @@ export async function projectView(
         })),
       ),
       activity: projectActivityStatus(world, player.id),
+      outings: outingViews(world, player.id),
       // Step-by-step work states are a developer view (God mode); players use Stop current
       // work and the plain answers to their own requests. Owner decision, 2026-09-29.
       work:

@@ -57,6 +57,7 @@ import { canonicalJson, contentLabel, emit } from './events.js';
 import { hasRecordFields } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
+import { validateOutings } from './outings.js';
 
 export type AttributeValue = number | string;
 /** Consequences of advanceReservoirs and kernel's native replenish action. These
@@ -803,6 +804,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing or invalid saved invention origin.');
   }
   validateAgency(world);
+  validateOutings(world);
   validateActionExperience(world);
   validateModuleManifest(world.moduleManifest);
   validateBodyPolicy(

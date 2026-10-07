@@ -249,7 +249,7 @@ export function activityChoicePage(
       distance: separation,
       location: accessiblePossession(world, actor.id, id)
         ? 'Carried by you'
-        : `${source === 'materials' && inspection?.itemIds.includes(id) ? 'In inspected supply' : 'In sight'} · ${separation.toFixed(1)} m away · ${id}`,
+        : `${source === 'materials' && inspection?.itemIds.includes(id) ? 'In inspected supply' : 'In sight'} · ${separation.toFixed(1)} m away`,
     };
   };
   if (request.selectedId) {

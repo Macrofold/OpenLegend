@@ -1,3 +1,4 @@
+import { OutingStatus } from './outing-status';
 import { useEffect, useId, useRef, useState } from 'react';
 import type {
   ActionOption,
@@ -20,7 +21,7 @@ const workModes = [
   { id: 'enqueue', label: 'Queue after current work' },
   { id: 'interrupt', label: 'Pause current work, then resume it' },
   { id: 'replace', label: 'Replace current work' },
-];
+] as const;
 const timeModes = [
   { id: 'duration', label: 'After a duration' },
   { id: 'named', label: 'At the next named time' },
@@ -59,15 +60,32 @@ export function CampActivity({
   connected,
   visible = true,
   command,
+  initialRequest,
 }: {
+  initialRequest?: { family: string; arguments: Record<string, string> };
   view: GameView;
   connected: boolean;
   visible?: boolean;
   command(action: ActionOption): Promise<ApiResult | undefined>;
 }) {
   const draftKey = `open-legend:action-draft:camp:${view.access?.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
-  const [draft, setDraft] = useState(() => readDraft(draftKey));
-  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(() => {
+    const saved = readDraft(draftKey);
+    return initialRequest
+      ? {
+          ...saved,
+          family: initialRequest.family,
+          arguments: {
+            ...saved.arguments,
+            [initialRequest.family]: {
+              ...saved.arguments[initialRequest.family],
+              ...initialRequest.arguments,
+            },
+          },
+        }
+      : saved;
+  });
+  const [open, setOpen] = useState(!!initialRequest);
   const [choices, setChoices] = useState<ActivityRequestsView>();
   const [status, setStatus] = useState<{ value: StatusView; revision: number }>();
   const [operation, setOperation] = useState<
@@ -118,6 +136,9 @@ export function CampActivity({
     type: 'activity-request',
     activityFamilyId: draft.family,
     activityArguments: {},
+    ...(descriptor?.purposeLabel && values[':purpose']?.trim()
+      ? { purpose: values[':purpose'].trim() }
+      : {}),
   };
   const issues: Record<string, string> = {};
   for (const [key, field] of Object.entries(descriptor?.fields ?? {})) {
@@ -212,6 +233,7 @@ export function CampActivity({
 
   useEffect(() => {
     alive.current = true;
+    if (initialRequest) void refresh();
     return () => {
       alive.current = false;
       request.current++;
@@ -349,7 +371,9 @@ export function CampActivity({
     try {
       const result = await command({
         id: stop ? 'stop-chosen-activity' : `start-${draft.family}`,
-        label: stop ? 'Stop current activity' : `Start ${descriptor!.label}`,
+        label: stop
+          ? 'Stop current activity'
+          : (descriptor!.submitLabel ?? `Start ${descriptor!.label}`),
         command: stop ? { type: 'cancel' } : currentReview!.input,
         enabled: true,
       });
@@ -376,6 +400,7 @@ export function CampActivity({
 
   return (
     <div className="ol-camp-activities">
+      <OutingStatus view={view} connected={connected} command={command} />
       <Section title="Chosen activities">
         <Button
           variant="quiet"
@@ -457,6 +482,16 @@ export function CampActivity({
                 {descriptor && (
                   <>
                     <p>{descriptor.description}</p>
+                    {descriptor.purposeLabel && (
+                      <label>
+                        {descriptor.purposeLabel}
+                        <input
+                          maxLength={120}
+                          value={values[':purpose'] ?? ''}
+                          onChange={(event) => change(':purpose', event.target.value)}
+                        />
+                      </label>
+                    )}
                     {Object.entries(descriptor.fields).map(([key, field]) => {
                       return (
                         <div key={key}>
@@ -610,7 +645,10 @@ export function CampActivity({
                               placeholder={`Choose ${field.label.toLowerCase()}…`}
                               placement="bottom start"
                               value={values[key] ?? ''}
-                              options={workModes}
+                              options={workModes.map((mode) => ({
+                                ...mode,
+                                label: field.modeLabels?.[mode.id] ?? mode.label,
+                              }))}
                               onChange={(value) => change(key, value)}
                             />
                           ) : (
@@ -629,6 +667,11 @@ export function CampActivity({
                         aria-label="Activity review"
                       >
                         <strong>{descriptor.label}</strong>
+                        {currentReview.input.purpose && (
+                          <p>
+                            {descriptor.purposeLabel}: {currentReview.input.purpose}
+                          </p>
+                        )}
                         <dl>
                           {Object.entries(descriptor.fields).map(([key, field]) => (
                             <div key={key}>
@@ -637,7 +680,8 @@ export function CampActivity({
                                 {field.discovery ? (
                                   <>
                                     {selectedPage(key)?.selected?.label}
-                                    {field.type === 'entity' && ` · Reference: ${values[key]}`}
+                                    {selectedPage(key)?.selected?.location &&
+                                      ` · ${selectedPage(key)?.selected?.location}`}
                                   </>
                                 ) : field.type === 'time' ? (
                                   <EventTime
@@ -645,6 +689,9 @@ export function CampActivity({
                                   />
                                 ) : (
                                   (selectedPage(key)?.selected?.label ??
+                                  field.modeLabels?.[
+                                    values[key] as 'enqueue' | 'replace' | 'interrupt'
+                                  ] ??
                                   workModes.find((mode) => mode.id === values[key])?.label ??
                                   values[key])
                                 )}
@@ -689,7 +736,7 @@ export function CampActivity({
                           busy={operation === 'start'}
                           onPress={() => void submit()}
                         >
-                          Start activity
+                          {descriptor?.submitLabel ?? 'Start activity'}
                         </Button>
                       )}
                     </div>

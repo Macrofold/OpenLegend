@@ -1,6 +1,6 @@
 # Batch 04 proposed scope and constraints
 
-This inventory owns only the new **proposed** restrictions introduced by [batch 04](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md). PX-L02 is now delivered and points to its canonical spatial owner; the other entries remain proposed. On implementation, move the accepted mechanism-specific entry into its subsystem inventory and leave a link/disposition here; do not maintain two editable copies. Existing [base-world](base-world.md), [objects](objects.md), [narration](narration.md), [spatial](spatial.md), [action](action-experience.md) and [shelter](editable-shelters.md) limits retain their ownership and rationale.
+This inventory owns only the new **proposed** restrictions introduced by [batch 04](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md). PX-L02 and PX-L03 are delivered and point to their canonical subsystem owners below; the other entries remain proposed. On implementation, move the accepted mechanism-specific entry into its subsystem inventory and leave a link/disposition here; do not maintain two editable copies. Existing [base-world](base-world.md), [objects](objects.md), [narration](narration.md), [spatial](spatial.md), [action](action-experience.md) and [shelter](editable-shelters.md) limits retain their ownership and rationale.
 
 ## PX-L01 — One exact lot on each side of an immediate barter
 
@@ -14,9 +14,7 @@ Expansion trigger: a worthwhile exchange cannot be expressed without several lot
 
 ## PX-L03 — Two-person outing to one agreed destination
 
-**Proposed; intentionally narrow social activity.** A trip joins two consenting participants and has one fixed destination. Changing terms requires a new invitation. A participant has at most one accepted outing at a time through current activity admission; a changed active plan cannot remain enrolled in a hidden parallel trip. Pending invitation expiry reuses the world's existing social-offer lifetime, not a new wall-clock timer.
-
-This avoids party command, formation/navigation and multi-party-consent semantics before a pair is worth accompanying. Expand to more participants or itineraries only for a demonstrated shared activity; keep individual consent and movement ownership. Known navigation limits/deadlines apply. No infinite waiting, mandatory follow behavior or world-wide position polling is licensed. Due invitations/active participation need indexes/dependencies appropriate to their reachable growth; closed trips are ordinary experience records, not a growing secondary polling table.
+**Moved to current owner, October 6, 2026:** [BW14 — Paired outings](base-world.md#bw14--paired-outings) now owns the accepted pair/destination restriction, rationale, expansion trigger and invitation bounds. [AEL10](action-experience.md#ael10--outing-consent-and-own-movement) owns movement/storage limits; [CG16](cognition.md#cg16--outing-choices-and-reconsideration) owns decision/privacy limits. PX04 implements this scope without depending on PX03's learned-place list. This disposition preserves the proposal's narrow social meaning without a second editable copy.
 
 ## PX-L04 — Threat and construction boundaries retain their design owners
 

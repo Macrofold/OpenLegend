@@ -1,3 +1,4 @@
+import { captureOutingIndex } from './outing-index.js';
 import { captureExposureCache } from './encounter-cache.js';
 import { captureAppraisalIndex } from './appraisal-index.js';
 import { captureWorkAllocations } from './work-budget.js';
@@ -325,6 +326,21 @@ function publishedEntityCopies(world: WorldState): object[] | undefined {
   }
   return copies;
 }
+/** Conservative entity write set for consumers inside an unpublished transition. Reuse
+ * the publication audit; unknown builders/replacements fall back to a full check. */
+export function changedDraftEntityIds(world: WorldState): ReadonlySet<string> | undefined {
+  if (!isDraft(world)) return;
+  const entities = readOnlyDraftView(world).entities;
+  if (!isDraft(entities)) return entities === original(world)!.entities ? new Set() : undefined;
+  const state = (entities as unknown as Record<symbol, ImmerState | undefined>)[IMMER_STATE];
+  if (!state?.assigned_ || typeof state.assigned_ !== 'object') return;
+  const copies = publishedEntityCopies(world);
+  if (!copies) return;
+  return new Set([
+    ...Object.keys(state.assigned_),
+    ...copies.map((copy) => (copy as WorldState['entities'][string]).id),
+  ]);
+}
 /** Deep-freeze one owned history record without per-key entry allocation. */
 function frozenRecord<T>(value: T): T {
   freezeData(value);
@@ -381,6 +397,7 @@ export function finishWorld(world: WorldState): WorldState {
   const publishExposure = captureExposureCache(world);
   const publishObjects = captureObjectIndex(world);
   const publishAppraisals = captureAppraisalIndex(world);
+  const publishOutings = captureOutingIndex(world);
   const publishAllocations = captureWorkAllocations(world);
   const publishAppraisalResidency = captureAppraisalResidency(world);
   const publishChanges = captureSemanticChanges(world);
@@ -456,6 +473,7 @@ export function finishWorld(world: WorldState): WorldState {
   publishObjects(result, entityIds);
   publishExposure(result);
   publishAppraisals(result);
+  publishOutings(result);
   publishAllocations(result);
   publishAppraisalResidency(result);
   for (const [previous, change] of arrays) {

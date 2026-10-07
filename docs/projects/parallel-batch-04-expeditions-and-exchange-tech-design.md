@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — technical task definitions
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01 integration and PX03 discovery are delivered and reviewed; the other assignments and broader qualification remain open.          | 2026-10-07   |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | PX01 encounter integration, PX03 discovery and PX04 paired outings are delivered and reviewed; PX02, PX05 and broader qualification remain open. | 2026-10-07   |
 
 [Feature and acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Prompts](parallel-batch-04-expeditions-and-exchange-prompts.md)
 
@@ -133,6 +133,8 @@ Completion requires the full source/caller review, confirmed in-scope issues fix
 Confirmed review findings include per-observer SQL fan-out and source-family collisions in latest-place updates, whole-actor correction joins causing a bounded search to time out on fresh statistics, forgetting/correction arriving during narration storage reads, moved landmarks establishing an old site, broad memory changes expiring otherwise usable pages, malformed saved observation baselines, and native marker removal making its authored site unloadable. Fixes remain with the existing domain, history and memory owners. The saved definition can remain inactive after its marker is carried, retired or removed; current physical exposure and movement still require that marker. Bounded metadata reads and batched correction reads preserve the search window without repeated whole-actor joins; selected correction metadata is reused for hydration rather than read twice. [Review evidence](../verification/useful-discoveries.md#october-6-2026--requested-review) records verified scope and remaining qualification. The full review is complete: confirmed findings are fixed, native/read-workload/browser cancellation and selected static/existing checks pass, and broader qualification remains tracked under NC/SW/CR/PF.
 
 ## PX04 — Consenting travel companions
+
+**Implemented October 6, 2026:** `outings.ts` records exact consent and links two ordinary activities; the base installed host owns wording and scope. Native commands, ordinary actor-response publication and participation changes reconcile invalidated consent before a save can retain a superseded plan. [Current contract](../worlds/base/social.md#voluntary-outings), [completed implementation and review plan](completed/px04-voluntary-outings-plan.md) and [evidence](../verification/voluntary-outings.md) retain decisions and qualification limits.
 
 ### Exact invitation, separate agency
 

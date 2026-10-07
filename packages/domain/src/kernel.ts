@@ -265,6 +265,7 @@ import type {
   WorldEvent,
   WorldState,
 } from './types.js';
+import { prepareOuting, executeOuting, reconcileOutings } from './outings.js';
 
 export const SIMULATION_RULES = {
   version: 3,
@@ -714,6 +715,12 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   const reject = (code: string, message: string) => outcome(false, code, message);
   const source = getOwn(world.entities, command.actorId);
   if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
+  // Withdrawing consent needs no physical action, including while paused or unable to move.
+  if (
+    command.type === 'outing' &&
+    (command.operation === 'leave' || command.operation === 'decline')
+  )
+    return null;
   if (command.type === 'respawn') {
     if (world.paused) return reject('paused', 'Resume the world before continuing.');
     return source.actor.pendingDeath
@@ -1393,6 +1400,17 @@ function executeCommandNative(
     const offer = prepareItemOffer(original, source, command);
     if ('ok' in offer) return { world: original, events: [], outcome: offer };
   }
+  if (command.type === 'outing') {
+    const check = prepareOuting(original, command);
+    if ('ok' in check) return { world: original, events: [], outcome: check };
+    // Both real admissions repeat these checks; the preview never creates consent.
+    if (options.preview)
+      return {
+        world: original,
+        events: [],
+        outcome: outcome(true, 'available', 'The selected invitation choice is available.'),
+      };
+  }
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
@@ -1721,6 +1739,11 @@ function executeCommandNative(
           ),
           actor,
         );
+        break;
+      }
+      case 'outing': {
+        result = executeOuting(world, command, events);
+        if (!result.ok) return reject(result.code, result.message);
         break;
       }
       case 'handover': {
@@ -2115,6 +2138,10 @@ function executeCommandNative(
   if (!action && experience) endActivity(world, actor.id, command.id, result);
   if (!options.nativeController) world.commandReceipts[command.id] = { digest, outcome: result };
   reconcileConditions(world, actor, events);
+  // A queued child is marked running by its plan owner after this command returns.
+  // Direct changes and consent replies can reconcile now without mistaking that gap for departure.
+  if (!action || !component.agency.plan?.steps.some((step) => step.id === command.id))
+    reconcileOutings(world, events, { changedOnly: true });
   return finish(world, events, result);
 }
 
@@ -3266,6 +3293,7 @@ function* advanceWorldNative(
       if (advanceRemains(world, participants.ambient, events))
         participants = nativeParticipants(world);
       reconcileItemOffers(world, events);
+      reconcileOutings(world, events);
       advanceAppraisals(world, events);
       for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
       advanceCommitments(world, []);
@@ -3415,6 +3443,7 @@ function* advanceWorldNative(
       discardMechanics();
     if (perceiving !== undefined && perceivers() !== perceiving) {
       yield* updateEncounters(world, before, events, participants.actors);
+      reconcileOutings(world, events, { companyObserved: true });
       before = snapshotEncounters(world);
     }
     if (navigationBlocked(world, participants.actors)) break;
@@ -3683,6 +3712,7 @@ function* advanceWorldNative(
     if (sharedBoundary || fleeEnded || startedWork) discardMechanics();
     else localize(flightSources);
     yield* updateEncounters(world, before, events, participants.actors);
+    reconcileOutings(world, events, { companyObserved: true });
     advanceCommitments(world, events);
     reconcileConversations(world);
     // Control-only waits must observe endpoint changes even when this advance

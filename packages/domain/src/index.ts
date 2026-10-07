@@ -248,3 +248,6 @@ export * from './body-policy.js';
 export { DEFAULT_COGNITION_POLICY } from './worlds/base/cognition.js';
 
 export { basePlaytestMilestones } from './worlds/base/playtest.js';
+
+export * from './outings.js';
+export { BASE_OUTING } from './worlds/base/outing-policy.js';

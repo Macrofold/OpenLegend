@@ -5,6 +5,7 @@ import { outcome } from './events.js';
 import type { Outcome } from './types.js';
 import type { Command, WorldState, Entity, ItemInstance } from './types.js';
 import type { DefinitionPin } from './world-modules.js';
+import { BASE_OUTING_HOST } from './worlds/base/outing.js';
 
 /** Installed trusted support for reusable commands and actor-scoped conditions.
  * Recipe-family installation grants neither of these capabilities.
@@ -90,6 +91,8 @@ export interface ActivityRequest {
   arguments: Record<string, string | number | boolean>;
 }
 export interface ActivityRequestDescriptor {
+  purposeLabel?: string;
+  submitLabel?: string;
   id: string;
   label: string;
   description: string;
@@ -97,6 +100,7 @@ export interface ActivityRequestDescriptor {
     string,
     {
       type: 'entity' | 'definition' | 'integer' | 'time' | 'mode';
+      modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
       label: string;
       minimum?: number;
       maximum?: number;
@@ -128,7 +132,12 @@ export const STOCK_ACTIVITY_HOST: ActivityHostDescriptor = {
     },
   },
 };
-const trustedHosts = [STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST];
+const trustedHosts = [
+  STOCK_ACTIVITY_HOST,
+  BASE_FIRE_ACTIVITY_HOST,
+  BASE_CAMP_ACTIVITY_HOST,
+  BASE_OUTING_HOST,
+];
 export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
   return world.moduleManifest.activityHosts.flatMap(
     (pin) => installedActivityHost(world, pin)?.definition.requests ?? [],

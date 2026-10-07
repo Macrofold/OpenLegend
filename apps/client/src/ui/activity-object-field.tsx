@@ -184,10 +184,7 @@ export function ActivityObjectField({
       )}
       {selected && (
         <>
-          <p className="ol-caption">
-            {selected.location}
-            {selected.kind === 'entity' ? ` · Reference: ${selected.id}` : ''}
-          </p>
+          <p className="ol-caption">{selected.location}</p>
           {selected.reason && <p className="ol-caption">{selected.reason}</p>}
           <div className="ol-actions">
             {selected.needsApproach && (

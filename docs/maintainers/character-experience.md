@@ -26,6 +26,8 @@ The owner’s [authorship clarification](../projects/compelling-characters-featu
 
 ## CE02 — Meaningful psychological experience and its lifetime
 
+PX04 supplies an actual optional social activity with exact consent and withdrawal. It adds no belonging/contact meter or automatic satisfaction; the lifetime and psychological effects below remain open.
+
 [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) retains live eating under hunger, sufficiently fed work/observation, ordinary welcome/refusal and interruption by bodily urgency. Ada independently chose hare-following after completed cord work in one compliant-content trial; others repeated stocking. Self-directed discomfort retains source and decay lifetime. These are bounded contrasts, not measured enjoyment/belonging or reliable satisfaction. No proximity/activity-based fulfillment or psychological quantity was added.
 
 **Owners:** [feeling and relationship foundations, ACT07/ACT08](actor-model.md#advanced-emotional-state-foundation), and [accepted mind/knowledge behavior](cognition-redesign.md); existing body and world-definition owners retain their consequences.
@@ -37,6 +39,8 @@ The owner’s [authorship clarification](../projects/compelling-characters-featu
 **Exit:** the initial experiences have understandable beginnings, changes and endings through actual supported behavior, with existing feeling persistence, correction, privacy and authored-world boundaries preserved.
 
 ## CE03 — The world and inner experience enter attention coherently
+
+PX04 connects invitation terms, own travel outcomes and observed loss of company to existing personal evidence and ordinary decisions. The [outing report](../verification/voluntary-outings.md) distinguishes observable consent from private interpretation; no new inner-state or reflection scheduler is introduced.
 
 PG02 selects exact outcomes as required personal memories and keeps current/paused execution status separate. Optional relevance failure, cold storage, correction/forgetting, source freshness and literal quotes are qualified natively. [October 6 evidence](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) completes ordinary quiet reflection with corrected content, verified publication and a subsequent real greeting/cord action. It adds no changed files, goals, knowledge or feelings, so lasting content-specific influence remains unqualified. Displayed reflection thoughts alone remain presentation, not accepted knowledge. No new review cadence or scheduler was added.
 
@@ -53,6 +57,8 @@ PG02 selects exact outcomes as required personal memories and keeps current/paus
 
 ## CE04 — A complete life episode with continued activity
 
+PX04 delivers the narrow voluntary travel episode: invitation, separately owned movement, arrival and independent next choices, with leaving and interruption. [Evidence](../verification/voluntary-outings.md) does not close the full-afternoon, enjoyment, satisfaction or broader resumption requirements below.
+
 PG02 now demonstrates a bounded cord-to-observation switch with disposition-only biography. Bodily urgency can replace unfinished work, retaining committed costs; native controls separately prove remaining-step resumption and exactly-once meal effects. A later live comparison returned to stockpiling after eating, so freely chosen resumption, reliable endings and a whole ordinary afternoon remain unqualified. [Evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices).
 
 **Owners:** existing [goals, plans and continuation](agent-agency.md), [conversation](narration-and-conversations.md), [recall](cognition-redesign.md) and [playable content](base-world.md). Reuse actor foundations and current action families.
@@ -64,6 +70,8 @@ PG02 now demonstrates a bounded cord-to-observation switch with disposition-only
 **Exit:** one recognizable resident sustains meaningful, revisable pursuits across an observed episode and later return. Interaction is worthwhile without requiring constant emergencies, maximum action variety or compulsory player caretaking.
 
 ## CE05 — Integrated character quality and complete-cost qualification
+
+[PX04’s comparison report](../verification/voluntary-outings.md) retains limited live decisions, native/browser evidence and all known cost. It qualifies this concrete small-cooperation slice, not repeatable personality quality or the complete character flows.
 
 PG02 retains provider outages, invalid/confounded setups, unsuccessful interest/rubric/generation comparisons, stockpiling and rejected requests alongside successful native/live controls. Required memories and shared native grammar are delivered; the generalized action policy recognizes current interests in both shortlist and final selection. [October 5 comparisons](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) and [October 6 completion](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) record complete known cost and conservative uncertainty. Repeatability, lasting inner influence, freely chosen resumption and whole-life quality remain open.
 

@@ -233,6 +233,26 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       };
     case 'cook':
       return { ...base, type: 'cook', itemId: input.itemId!, heatId: input.targetId! };
+    case 'outing':
+      return input.outingOperation === 'invite'
+        ? {
+            ...base,
+            type: 'outing',
+            operation: 'invite',
+            recipientId: input.targetId!,
+            destinationId: input.destinationId,
+            destination: input.position,
+            mode: input.outingMode!,
+            purpose: input.purpose,
+          }
+        : {
+            ...base,
+            type: 'outing',
+            operation: input.outingOperation as 'accept' | 'decline' | 'leave',
+            outingId: input.outingId!,
+            expectedRevision: input.expectedRevision!,
+            mode: input.outingMode,
+          };
     case 'handover':
       return input.handoverOperation === 'offer'
         ? {

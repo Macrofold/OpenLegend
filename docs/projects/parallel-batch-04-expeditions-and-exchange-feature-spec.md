@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — feature specification
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01 integration and PX03 discovery are delivered and reviewed; the other assignments and broader qualification remain open.          | 2026-10-07   |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | PX01 encounter integration, PX03 discovery and PX04 paired outings are delivered and reviewed; PX02, PX05 and broader qualification remain open. | 2026-10-07   |
 
 [Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](parallel-batches.md)
 
@@ -82,6 +82,8 @@ An ordinary arrival and an unfamiliar carried-item inspection produce grounded i
 
 ## PX04 — Take a voluntary outing together
 
+**Delivered October 6, 2026:** integrated PG02/PG03/PG04 supply ordinary choices and action interfaces. [Current social behavior](../worlds/base/social.md#voluntary-outings) and [native/browser/live evidence](../verification/voluntary-outings.md) qualify this pair/fixed-destination slice, including a context-grounded refusal and freely chosen replacement work that ends travel. Broader social/psychological scope remains open.
+
 ### Scope and player journey
 
 Invite a nearby person to travel with you to a specific known, reachable destination for an optional stated purpose: see a place, gather there, or show an invention there. The offer contains a fixed destination and readable known distance; accepting it commits only to the trip. Gathering, handing over items or fighting at the destination remain independent choices. The NPC may decline, accept, reconsider or leave. A person accepting company is not granting control over their body, inventory, goals or future activity.
@@ -104,5 +106,5 @@ Settle the specific representation, support/coverage calculation, navigation inv
 
 - Implementation status and parent reconciliation: [PX tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md).
 - Mechanisms, source map, dependencies and handoff contracts: [technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md).
-- Limits: [batch proposal constraints](../limits/parallel-batch-04-expeditions-and-exchange.md), linking canonical subsystem inventories. These are proposed new restrictions, not current runtime behavior.
+- Limits: [batch proposal constraints](../limits/parallel-batch-04-expeditions-and-exchange.md), linking canonical subsystem inventories. Undelivered restrictions remain proposals; accepted PX-L03 now links the current paired-outing limits.
 - Priorities: [design needs](../maintainers/needs-design.md), [selection principles](../repertoires/selection-and-scale.md) and [batch register](parallel-batches.md). Broader parents retain their unmet acceptance.

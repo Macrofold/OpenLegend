@@ -101,6 +101,8 @@ Conditional ND28: one skippable closing or return experience, personal preferenc
 
 #### DG06 — Reciprocal exchange and small cooperation
 
+**Delivered small-cooperation subset:** [PX04](parallel-batch-04-expeditions-and-exchange.md#px04--voluntary-shared-outings) implements voluntary paired travel to one fixed permitted destination, exact assent, independent movement and withdrawal. [Current social contract](../worlds/base/social.md#voluntary-outings) and [evidence](../verification/voluntary-outings.md) define its limits. It creates no shared ownership, obligation, persistent group or institution; recurring arrangements and the remaining DG06/ND10 scope stay incomplete.
+
 ND09's immediate barter and ND10's first small recurring arrangement: offers, acceptance, shared supplies/responsibilities and understandable withdrawal. Design the nearby social activity and its resource/consent boundaries together.
 
 **Start and parallel boundary:** Use existing custody, exact-agreement and commitment contracts. No currency, house system or government is required. Durable credit/economy rules and broader institutions belong to DG22/DG32. **Existing owners:** INV-20, PO, BW17 and relevant social owners.
@@ -495,6 +497,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Needed before an implementation project:** select the first reciprocal barter family and player/NPC negotiation journey, mapping its actual items, quantities, offer presentation and fulfillment onto the existing agreement lifecycle. Select whether currency belongs in the first slice; if so, define issuance, sinks, theft/loss and ownership. Choose which deferred delivery, default and dispute consequences that world supports; escrow and interest remain optional. Reuse existing assent/amendment/settlement contracts. Fictional currency is separate from ND22–ND23 real-money accounts.
 
 ### ND10 — Persistent groups, shared ownership and in-world institutions
+
+PX04 now supplies the narrow [paired-outing subset of DG06](#dg06--reciprocal-exchange-and-small-cooperation); the persistent institutional scope below remains incomplete.
 
 **Conditional scoped design.** Source: [institutions without a mandatory government system](../../archive/03-design-proposals/world-and-player-experience.md#institutions-without-a-mandatory-government-system), with D18's unsettled starting social organization.
 

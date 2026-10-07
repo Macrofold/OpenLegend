@@ -364,6 +364,8 @@ export interface WorldState {
   /** Deadline authority is owned by participation, separate from operational presence. */
   exitExposures?: Record<string, number>;
   resourceReservations?: Record<string, import('./resource-claims.js').ResourceReservation>;
+  /** Live exact consent, separate from each participant's ordinary movement plan. */
+  outings?: Record<string, import('./outings.js').Outing>;
   /** Pending offers only, bounded per offerer; saved with the world settings record. */
   itemOffers?: Record<string, import('./handover.js').ItemOffer>;
   knowledgeRevisions?: Record<string, number>;
@@ -440,6 +442,7 @@ interface Envelope {
 }
 export type Command = Envelope &
   (
+    | import('./outings.js').OutingCommand
     | {
         type: 'activity';
         methodId: string;

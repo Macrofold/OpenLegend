@@ -1,13 +1,16 @@
 ---
 name: openlegend-performance
 description: >-
-  Investigate or change OpenLegend hot paths, perception queries, scheduling, scaling or browser
-  latency. Not prose-only mentions of performance or routine cosmetic edits.
+  Add or change work on shared OpenLegend command, simulation or publication paths; investigate
+  hot paths, perception queries, scheduling, scaling or browser latency. Not prose-only mentions
+  of performance or routine cosmetic edits.
 ---
 
 # Bound work, preserve meaning, measure
 
 Identify the workload and critical path: population/density/history, cold versus warm state, requested simulation speed, host/device and responsiveness. Distinguish 8× simulation speed from 8× workload size using the task and current contract. Define a measurable target with native/server/renderer headroom; speed configuration alone is no benchmark.
+
+For work added to a shared execution path, estimate caller frequency × candidates visited × work per candidate, including nested queries. Include uneven relationships in relevant stress workloads: many invitations reaching one person can cost differently from the same number of disjoint pairs. A per-sender bound does not bound recipient work. Measure through the actual callers and mutation/publication lifecycle, preserving production cache eligibility (including mutable versus frozen state); an isolated helper benchmark cannot qualify that path. Count visited or recomputed items when timings alone do not explain the cost.
 
 For server/native work read the applicable [performance contract](../../../docs/performance.md) and tracker; use the [native stress guide](../../../docs/maintainers/performance-profiling.md) only for native simulation experiments. Browser work uses browser/renderer measurements; an unrelated native benchmark provides no evidence. Compare matched inputs/versions/machines, including setup, tail latency, memory and elapsed work. Native headroom excludes persistence, browser and AI orchestration.
 

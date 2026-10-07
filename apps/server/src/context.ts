@@ -1,3 +1,4 @@
+import { outingActions } from './outing-view.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { learnedActivityCandidates } from './activity-context.js';
 import { consumptionDescription } from './body-services.js';
@@ -593,6 +594,10 @@ export function npcCandidates(
       if (isOffer) offerCandidates++;
       actions.push({ id: option.id, description: option.description, command: option.command });
     }
+  }
+  for (const choice of outingActions(service.world, actorId)) {
+    if (service.previewCommand(choice.command, actorId).ok)
+      actions.push({ id: choice.id, description: choice.description, command: choice.command });
   }
   // Starting another timed task would discard actual work/materials. The actor can
   // explicitly cancel work; listing alternatives must not silently interrupt it.

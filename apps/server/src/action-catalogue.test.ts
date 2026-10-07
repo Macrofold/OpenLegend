@@ -82,6 +82,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     `punch-${NPC_ID}`,
     `knife-${NPC_ID}:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'knife')!.id}`,
     `talk-${NPC_ID}`,
+    `invite-travel:${NPC_ID}`,
     'teach',
   ]);
   // Offers are listed for the selected person and remain unavailable out of arm's reach.

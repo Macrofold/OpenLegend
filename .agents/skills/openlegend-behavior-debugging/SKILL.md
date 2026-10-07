@@ -23,6 +23,8 @@ Record the hypothesis, baseline, exact intervention, predicted distinguishing re
 
 Select comparisons from the [experiment repertoire](references/experiments.md) as evidence warrants; do not exhaust every variation. Prefer matched snapshots/seeds and one meaningful change. A combined positive control can establish possibility; then remove its changes individually. Keep authoritative state, cached context and goals consistent. Identical repeated calls measure variation, not diagnosis.
 
+Before dispatching a paid comparison, inspect the final assembled context/options and verify the intended intervention survived authoring, projection and cache preparation. Changing a source field alone does not establish that the character's decision input changed. Repair a missing intervention before interpreting the result as a preference or buying another judgment.
+
 ## Work backward from hardcoded success
 
 In authorized experiments, try explicit target goals, instructions to choose an action, simplified choices, supplied causal facts, altered personalities and forced typed answers/native actions. Label each intervention and what it bypasses. Keep experiments reversible and separate from normal content; preserve privacy and native authority. Mark hypothetical facts instead of presenting them as actual observations or mechanics.

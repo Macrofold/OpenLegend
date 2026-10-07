@@ -13,6 +13,7 @@ import { isSafeRecordId } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
 import type { Entity } from './types.js';
+import { reconcileOutings } from './outings.js';
 export { activelyParticipates, type ParticipationState } from './participation-state.js';
 
 function interruptDepartureWork(world: WorldState, entity: Entity): void {
@@ -40,6 +41,7 @@ function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): v
   if (support && canStand(spatialMap(world), support, bodyProfile(entity)))
     state.returnAnchor = support;
   state.phase = 'inactive';
+  reconcileOutings(world, events, { changedOnly: true });
   if (world.exitExposures) delete world.exitExposures[entity.id];
   emit(
     world,
@@ -173,6 +175,7 @@ export function changeParticipation(
         { significant: true },
       );
   }
+  reconcileOutings(world, events, { changedOnly: true });
   return finish(
     world,
     events,
