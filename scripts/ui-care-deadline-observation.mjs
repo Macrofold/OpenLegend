@@ -360,7 +360,8 @@ try {
     'Half of the one admitted native fuel action',
     BASE_FIRE_CARE.fuel.workSeconds / 2,
   );
-  assert.equal(partial.player.action.progress, 0.5);
+  // Native advancement sums fractional ticks; allow only floating-point roundoff.
+  assert.ok(Math.abs(partial.player.action.progress - 0.5) <= Number.EPSILON);
   assert.equal(wood(), 2);
   assert.equal(fuelEvents().length, 0);
   const fueled = await advance(

@@ -71,9 +71,23 @@ jobs:
         if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
         timeout-minutes: 3
         run: node --import tsx scripts/ui-care-deadline-observation.mjs test-results/care-deadline/evidence
+      - name: Observe shared inventory competition and access
+        if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
+        timeout-minutes: 4
+        run: node --import tsx scripts/ui-shared-inventory-observation.mjs test-results/shared-inventory/evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: spatial-browser-evidence
           path: test-results/
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: temporary-native-ui-observations
+          path: |
+            test-results/care-deadline/evidence/*.json
+            test-results/care-deadline/evidence/*.png
+            test-results/shared-inventory/evidence/*.json
+            test-results/shared-inventory/evidence/*.png
           retention-days: 7

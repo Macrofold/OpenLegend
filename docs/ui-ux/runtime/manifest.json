@@ -1,5 +1,5 @@
 {
-  "reviewed": "2026-10-06",
+  "reviewed": "2026-10-07",
   "scope": "Requested Open Legend implementation screenshots. Separate from external game references and design proposals. See README for revisions, controlled transport, native App/server/PostgreSQL captures and the limits of each observation.",
   "images": [
     {
@@ -674,6 +674,39 @@
       "captureScope": "app",
       "source": "activity-recovery-first-bb537aaa",
       "originalFile": "01-original-activity-result-first.png"
+    },
+    {
+      "id": "66-inventory-narrow-clipped-detail",
+      "file": "66-inventory-narrow-clipped-detail.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 185547,
+      "sha256": "90a82088627d46ae80b909a4025fce9ed1ab0827c4adc2b3060e7412cbae0e18",
+      "captureScope": "app",
+      "source": "inventory-pointer-before-placement-da67d55",
+      "originalFile": "narrow-fresh-quantity-after-pointer-close.png"
+    },
+    {
+      "id": "67-inventory-narrow-contained-detail",
+      "file": "67-inventory-narrow-contained-detail.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 149541,
+      "sha256": "ebad6dcde19bb7c40d269cfac7283de6aba82703c5f03899cc650c7a2b435efb",
+      "captureScope": "app",
+      "source": "inventory-pointer-contained-af369fc",
+      "originalFile": "narrow-fresh-quantity-after-pointer-close.png"
+    },
+    {
+      "id": "68-inventory-short-contained-detail",
+      "file": "68-inventory-short-contained-detail.png",
+      "width": 390,
+      "height": 480,
+      "bytes": 76017,
+      "sha256": "8651c2a09beacce0faa0c4a0b6cbe5bf6b3deeae161c90f934a26579167a5470",
+      "captureScope": "app",
+      "source": "inventory-pointer-contained-af369fc",
+      "originalFile": "short-narrow-reachable-drop.png"
     }
   ],
   "appSource": {
@@ -2316,6 +2349,236 @@
       "observationFinishedAtUtc": "2026-10-06T15:04:15.736Z",
       "additionalJevCostUsd": 0,
       "cumulativeJevCostUsd": 0
+    },
+    "inventory-pointer-before-placement-da67d55": {
+      "baseCommit": "da67d557e1e5e394c7ff32b8910f9c5ec415f6b9",
+      "sourceSha256": {
+        "apps/client/src/main.tsx": "4ebd7a6c1308c5ca9976574833f308fbf9222258c8593abe95f06a21d956d5d0",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/client/src/world-renderer.ts": "f3d52217c0ccd1cbc0fa9acf543103c5adf28996be362a40e64edf412ca34ec0",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/design-system/components.css": "7938c50a3d89c3000b047f07551f3c9925ee2476245091b5ba5432152e4dd5ac",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/design-system/tokens/tokens.css": "c164e46f1a00cd636f87c6be30c1249a02c2d232e3d64d4cc67dd5dca27bbe95",
+        "apps/client/src/ui/inventory.tsx": "5797024ebcd530385027a89318a9de2c669f8ccc8d67c55c1ae87079f391d99c",
+        "apps/client/src/ui/inventory.css": "6da9cb89b2a5bc159e897b9772b8af360c850b95307b8f8aa83da7840bbf48ca",
+        "apps/client/src/ui/inventory-collection.tsx": "d02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77",
+        "apps/client/src/ui/inventory-controls.tsx": "1570933c143b8e0374965fa133d1f47c5b8e37743ef106c5d71524cc747870ed",
+        "apps/client/src/ui/use-inventory-collection.ts": "bddeee69bd02e90d82269bdde2674401abc0453ee6a85ed713bbe1f59bf16b5e",
+        "apps/client/src/ui/use-inventory-command.ts": "596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e",
+        "apps/client/src/ui/inventory-details.tsx": "f7cb52e82903e4a1cd055a43fdc1ac27a7ce4c7c0d96f9a3d379669d8ab21a55",
+        "apps/client/src/ui/container-opening.tsx": "4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684",
+        "playwright.config.ts": "d9c9391fafc2f2501930f742e319725d46bc1b5b46408948b444560baf88168a",
+        "pnpm-lock.yaml": "99592e42db86ec571dbb8694db84df34e166ab5bfae55f0feeb0081de25b8a41"
+      },
+      "assetSha256": {
+        "dist/client/assets/atkinson-hyperlegible-next-latin-wght-italic-DC5MiAaX.woff2": "4a5037bfaf6680f40147407407ec09fa42925774bde809a579283d27f9f08106",
+        "dist/client/assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2": "18b2a1a39a2fa298b0ba5390aca68462669826c90925656f1c1f6796e0e1bbaf",
+        "dist/client/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2": "36ad966cb653de70ba37355c41003b02de8940b2df6cbcd46480a6ad8cadd65d",
+        "dist/client/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2": "a5888696e9eb1b4bbbecc8eb3922b8369f49d4bddb72263e033cbd17f399be76",
+        "dist/client/assets/cinzel-latin-500-normal-B-2dbOfA.woff2": "2864b2c9db377e10db43d3ca1ab268c0e10cf3ee94b1a325d104b8e4a74dc7da",
+        "dist/client/assets/cinzel-latin-600-normal-Dd5YO2UX.woff2": "61efc27ceb7d08bb841652fa8979c0b6833b92548b7f9544c07968a6c02f28e4",
+        "dist/client/assets/cormorant-garamond-latin-500-italic-Y14P-dkT.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
+        "dist/client/assets/cormorant-garamond-latin-500-normal-BsRWmXhO.woff2": "8197bf53615ddc8c423f444c7f0eec63b7fa0ba093fcfbec60dfdd28429b0fc8",
+        "dist/client/assets/cormorant-garamond-latin-600-normal-Co1r35X9.woff2": "ae062b6d5ae308e7edf61b28b07b9984bbb6e961b1f34d9b2c2f4389c33f21ea",
+        "dist/client/assets/cormorant-garamond-latin-700-normal-DajfzrDU.woff2": "21a0fc1c5c22708cf4aa0c147fd32982e25bf9e21efec0ca31a4495ba41753eb",
+        "dist/client/assets/ibm-plex-mono-latin-400-normal-DMJ8VG8y.woff2": "08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7",
+        "dist/client/assets/ibm-plex-mono-latin-500-normal-DSY6xOcd.woff2": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22",
+        "dist/client/assets/index-C9C7SSc_.js": "bec131c01443434fe5ab5664e91ea45687db67b2627becd275f68ffbd939b180",
+        "dist/client/assets/index-nCSv_-GT.css": "783c4b1ea4de47e7f3db826d2de8374ab12d56d7ac8d0240034dab840a50d6e4",
+        "dist/client/assets/mercenary-Dsf8sYmp.glb": "cfd519287b4ebcc6233ffd269ea10cc455780f3f52c5c4e789f2db245f444ab6",
+        "dist/client/index.html": "7afd8911ac2723359f008af84e77ee7c8364e1c3bd90115802612ea3c81e811c"
+      },
+      "inputManifestSha256": "6edccca8807dc62c802e9c8596efad5c9d2d179c6dbb41db52494e262a7c1901",
+      "runnerSha256": "140b9d98080293036cc7414dc8de3845184ae0ff86ab83164150cd8ee131b5bd",
+      "hostSha256": "116b5310d51c04f4c0bf0452cff3dbc071a237d042aec7da09a0ec6c13706d9b",
+      "passiveObserverSha256": "ba8e8e56e94d62b7b692b328d1883758269e9bd4f3494d6328473a5ebd609268",
+      "reportSha256": "8fbf6da7ac8d70dac4f054be7fcc608d9f9b8e5556685af8c49064f873aa7760",
+      "traceSha256": "f908855dc9a09bca28cc3a9e91bce04d505f76e9f37ac0fd5c91ac90701490d4",
+      "traceIntegrity": {
+        "completeArchive": true,
+        "entries": 68,
+        "crcFailures": 0,
+        "bytes": 15656565
+      },
+      "transport": "Actual production App/PlayCanvas with byte-exact native-recorded /api/state. /api/inventory is a controlled collection envelope around the recorded view.player.inventory, name, actor identity and inventory revision. Entry/presence acknowledgements and idle SSE are controlled; all command, receipt and unplanned API paths are refused and recorded. No current native server, database, provider or newly accepted game effect.",
+      "nativeInputProvenance": {
+        "archiveSha256": "6d3dac5ead7b0be023d1a3c3b9b228f114f3e87f1f6247a4a5080dcaf03b2491",
+        "traceEntry": "interface/time-time-settings-persist-f5572-gout-and-manual-world-pause/trace.zip",
+        "traceSha256": "07dff5de080497380ce09180803b6cd935f4ab77813e02086c35381522fb5afa",
+        "resource": "resources/8cf0b50faa6942be2b2868a9c987afafc6646cd9.json",
+        "sha256": "aaed3d9d7d3d8ce60582afeec47146cd928e287ba6472daf908d9339335abf3d",
+        "bytes": 326057,
+        "requestMethod": "GET",
+        "requestPath": "/api/state",
+        "status": 200,
+        "revision": 23
+      },
+      "observations": [
+        "Normal pointer Close discards an unsent amount of three, returns focus to the original stone and reopening starts with the available six on desktop and at 390×844.",
+        "An unsent amount of three survives the desktop-to-narrow resize before Close.",
+        "Zero commands, receipt reads, unexpected API requests, canvas pointer/click events, browser errors or warnings during these Inventory controls."
+      ],
+      "geometry": {
+        "desktopPopover": {
+          "x": 860,
+          "y": 275,
+          "width": 432,
+          "height": 396
+        },
+        "narrowViewport": {
+          "width": 390,
+          "height": 844
+        },
+        "narrowPopover": {
+          "x": -120,
+          "width": 366,
+          "right": 246
+        }
+      },
+      "overallOutcome": "Two finite pointer groups pass in 26.113 seconds, but visual inspection reveals the narrow popover clips the item heading, Quantity and part of Drop offscreen. Full popover containment was not asserted.",
+      "visualReview": "The left edge lies 120px outside the viewport while Close remains visible. The original screenshot follows Close/reopen and does not show the retained three.",
+      "limits": [
+        "Controlled client presentation, with no new native transfer, admission, effect or receipt.",
+        "Canvas silence applies to these Inventory controls only; an exposed-world outside-dismissal click was not exercised.",
+        "The older 3bbfc7b pre-dispatch five-second pointer failure remains undiagnosed; current successes do not establish its cause or a performance repair.",
+        "No forced clicks, animation disabling, zoom reset, timeout extension, operating-system input, assistive-device or uncoached-player acceptance.",
+        "Raw reports/traces and ad hoc harness remain outside the repository."
+      ],
+      "observationStartedAtUtc": "2026-10-07T04:59:41.216Z",
+      "observationFinishedAtUtc": "2026-10-07T05:00:08.058Z",
+      "additionalJevCostUsd": 0,
+      "cumulativeJevCostUsd": 0
+    },
+    "inventory-pointer-contained-af369fc": {
+      "baseCommit": "af369fc2c7ba55d6621d49c18cff47f7513f7bf4",
+      "sourceSha256": {
+        "apps/client/src/main.tsx": "08c4e291889452e20d3d94ccd14f5ec66d3fb57322ee850039bc810bcbbd7e62",
+        "apps/client/src/api.ts": "eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e",
+        "apps/client/src/tab-control.ts": "3b967c36211861e083adbb788ac65c6ae78542715a3437b42aa5ed7c03b44c72",
+        "apps/client/src/tab-session.ts": "0d5af0e21acbd0eadd539c51552901c13a7587a12a66c6175267410266b6d1b3",
+        "apps/client/src/scene.ts": "f366535f8b5553abb5b8c6bbbfd9f6ad85a7ddc3f906c8130497dc21bd687481",
+        "apps/client/src/world-renderer.ts": "f3d52217c0ccd1cbc0fa9acf543103c5adf28996be362a40e64edf412ca34ec0",
+        "apps/client/src/design-system/components.tsx": "6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc",
+        "apps/client/src/design-system/components.css": "7938c50a3d89c3000b047f07551f3c9925ee2476245091b5ba5432152e4dd5ac",
+        "apps/client/src/design-system/layout.css": "75ab195e102ad7a1cfe9415dfcd06a771e26f5e345b99179796cd48ab15bfd61",
+        "apps/client/src/design-system/tokens/tokens.css": "c164e46f1a00cd636f87c6be30c1249a02c2d232e3d64d4cc67dd5dca27bbe95",
+        "apps/client/src/ui/inventory.tsx": "e2ba1e5b632bf2f585f0289fcd4820bc5f752c76f60132983b4f97b84b3c308e",
+        "apps/client/src/ui/inventory.css": "6da9cb89b2a5bc159e897b9772b8af360c850b95307b8f8aa83da7840bbf48ca",
+        "apps/client/src/ui/inventory-collection.tsx": "d02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77",
+        "apps/client/src/ui/inventory-controls.tsx": "1570933c143b8e0374965fa133d1f47c5b8e37743ef106c5d71524cc747870ed",
+        "apps/client/src/ui/use-inventory-collection.ts": "bddeee69bd02e90d82269bdde2674401abc0453ee6a85ed713bbe1f59bf16b5e",
+        "apps/client/src/ui/use-inventory-command.ts": "596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e",
+        "apps/client/src/ui/inventory-details.tsx": "f7cb52e82903e4a1cd055a43fdc1ac27a7ce4c7c0d96f9a3d379669d8ab21a55",
+        "apps/client/src/ui/container-opening.tsx": "4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684",
+        "playwright.config.ts": "d9c9391fafc2f2501930f742e319725d46bc1b5b46408948b444560baf88168a",
+        "pnpm-lock.yaml": "99592e42db86ec571dbb8694db84df34e166ab5bfae55f0feeb0081de25b8a41"
+      },
+      "assetSha256": {
+        "dist/client/assets/atkinson-hyperlegible-next-latin-wght-italic-DC5MiAaX.woff2": "4a5037bfaf6680f40147407407ec09fa42925774bde809a579283d27f9f08106",
+        "dist/client/assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2": "18b2a1a39a2fa298b0ba5390aca68462669826c90925656f1c1f6796e0e1bbaf",
+        "dist/client/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2": "36ad966cb653de70ba37355c41003b02de8940b2df6cbcd46480a6ad8cadd65d",
+        "dist/client/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2": "a5888696e9eb1b4bbbecc8eb3922b8369f49d4bddb72263e033cbd17f399be76",
+        "dist/client/assets/cinzel-latin-500-normal-B-2dbOfA.woff2": "2864b2c9db377e10db43d3ca1ab268c0e10cf3ee94b1a325d104b8e4a74dc7da",
+        "dist/client/assets/cinzel-latin-600-normal-Dd5YO2UX.woff2": "61efc27ceb7d08bb841652fa8979c0b6833b92548b7f9544c07968a6c02f28e4",
+        "dist/client/assets/cormorant-garamond-latin-500-italic-Y14P-dkT.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
+        "dist/client/assets/cormorant-garamond-latin-500-normal-BsRWmXhO.woff2": "8197bf53615ddc8c423f444c7f0eec63b7fa0ba093fcfbec60dfdd28429b0fc8",
+        "dist/client/assets/cormorant-garamond-latin-600-normal-Co1r35X9.woff2": "ae062b6d5ae308e7edf61b28b07b9984bbb6e961b1f34d9b2c2f4389c33f21ea",
+        "dist/client/assets/cormorant-garamond-latin-700-normal-DajfzrDU.woff2": "21a0fc1c5c22708cf4aa0c147fd32982e25bf9e21efec0ca31a4495ba41753eb",
+        "dist/client/assets/ibm-plex-mono-latin-400-normal-DMJ8VG8y.woff2": "08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7",
+        "dist/client/assets/ibm-plex-mono-latin-500-normal-DSY6xOcd.woff2": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22",
+        "dist/client/assets/index-CfsDdI6-.js": "971efc4b0453c41035d59e00237d0604ea705e21c9d9bd8ff831f1466adccdb1",
+        "dist/client/assets/index-nCSv_-GT.css": "783c4b1ea4de47e7f3db826d2de8374ab12d56d7ac8d0240034dab840a50d6e4",
+        "dist/client/assets/mercenary-Dsf8sYmp.glb": "cfd519287b4ebcc6233ffd269ea10cc455780f3f52c5c4e789f2db245f444ab6",
+        "dist/client/index.html": "bc2303b37efaad72432fb623ce408618f8da527b1f9720d2b8e793c5ef87b31f"
+      },
+      "inputManifestSha256": "6e725760fdf5e2688f41c9e9f71095ebf2e4570eb20abb0a5584744772b23b0d",
+      "runnerSha256": "12bead5794cb3c97685d07d540d571edae9159aa097492fd08c066ac4414cb50",
+      "hostSha256": "116b5310d51c04f4c0bf0452cff3dbc071a237d042aec7da09a0ec6c13706d9b",
+      "passiveObserverSha256": "ba8e8e56e94d62b7b692b328d1883758269e9bd4f3494d6328473a5ebd609268",
+      "reportSha256": "186e758cc9b43f17b9f3c5bf39fb570c1ae1a40a6e9672062cdf8172c4c41515",
+      "traceSha256": "c36c442487297c4c935934df22e26066c42088c3987debbfd1b4bf2632f189c1",
+      "traceIntegrity": {
+        "completeArchive": true,
+        "entries": 75,
+        "crcFailures": 0,
+        "bytes": 15887103
+      },
+      "transport": "Actual production App/PlayCanvas with byte-exact native-recorded /api/state. /api/inventory is a controlled collection envelope around the recorded view.player.inventory, name, actor identity and inventory revision. Entry/presence acknowledgements and idle SSE are controlled; all command, receipt and unplanned API paths are refused and recorded. No current native server, database, provider or newly accepted game effect.",
+      "nativeInputProvenance": {
+        "archiveSha256": "6d3dac5ead7b0be023d1a3c3b9b228f114f3e87f1f6247a4a5080dcaf03b2491",
+        "traceEntry": "interface/time-time-settings-persist-f5572-gout-and-manual-world-pause/trace.zip",
+        "traceSha256": "07dff5de080497380ce09180803b6cd935f4ab77813e02086c35381522fb5afa",
+        "resource": "resources/8cf0b50faa6942be2b2868a9c987afafc6646cd9.json",
+        "sha256": "aaed3d9d7d3d8ce60582afeec47146cd928e287ba6472daf908d9339335abf3d",
+        "bytes": 326057,
+        "requestMethod": "GET",
+        "requestPath": "/api/state",
+        "status": 200,
+        "revision": 23
+      },
+      "observations": [
+        "Normal pointer Close discards an unsent amount of three, returns focus to the original stone and reopening starts with the available six on desktop and at 390×844.",
+        "An unsent amount of three survives the desktop-to-narrow resize before Close.",
+        "Zero commands, receipt reads, unexpected API requests, canvas pointer/click events, browser errors or warnings during these Inventory controls.",
+        "At 390×480, three remains selected and full heading/Quantity/Drop/Close bounds pass; an upward wheel leaves scrollTop 0 because no scrolling is needed. Normal pointer Close afterward returns focus to the stone.",
+        "Original ordinary five-second pointer and assertion bounds are unchanged. Desktop screenshot bytes match the original run and are not added to the gallery."
+      ],
+      "geometry": {
+        "desktopPopover": {
+          "x": 860,
+          "y": 275,
+          "width": 432,
+          "height": 396
+        },
+        "narrowViewport": {
+          "width": 390,
+          "height": 844
+        },
+        "narrowPopover": {
+          "x": 12,
+          "width": 366,
+          "right": 378,
+          "y": 71,
+          "height": 396,
+          "bottom": 467
+        },
+        "shortViewport": {
+          "width": 390,
+          "height": 480
+        },
+        "shortPopover": {
+          "x": 12,
+          "y": 71,
+          "width": 366,
+          "height": 396,
+          "right": 378,
+          "bottom": 467
+        }
+      },
+      "overallOutcome": "All three finite pointer, draft-retention and complete-bounds groups pass in 26.994 seconds. Twenty source pins and sixteen build pins remain exact; trace, context, browser and host cleanup pass.",
+      "visualReview": "Both narrow and short screenshots show the complete Small stone heading, Quantity, Drop, Close and unsent-quantity explanation inside the viewport. The narrow capture follows Close/reopen with six; the short capture precedes final Close with retained three.",
+      "limits": [
+        "Controlled client presentation, with no new native transfer, admission, effect or receipt.",
+        "Canvas silence applies to these Inventory controls only; an exposed-world outside-dismissal click was not exercised.",
+        "The older 3bbfc7b pre-dispatch five-second pointer failure remains undiagnosed; current successes do not establish its cause or a performance repair.",
+        "No forced clicks, animation disabling, zoom reset, timeout extension, operating-system input, assistive-device or uncoached-player acceptance.",
+        "Raw reports/traces and ad hoc harness remain outside the repository."
+      ],
+      "observationStartedAtUtc": "2026-10-07T05:07:14.891Z",
+      "observationFinishedAtUtc": "2026-10-07T05:07:42.557Z",
+      "additionalJevCostUsd": 0,
+      "cumulativeJevCostUsd": 0,
+      "preservedEarlierAttempt": {
+        "sourceCommit": "da67d557e1e5e394c7ff32b8910f9c5ec415f6b9",
+        "source": "inventory-pointer-before-placement-da67d55",
+        "image": "66-inventory-narrow-clipped-detail.png",
+        "interactionResult": "passed",
+        "visualDefect": "Narrow detail begins at x=-120, clipping item name, Quantity and part of Drop."
+      }
     }
   }
 }

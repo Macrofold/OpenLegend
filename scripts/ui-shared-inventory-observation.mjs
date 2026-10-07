@@ -1,0 +1,605 @@
+// Temporary J06–J08 observation; run from repository cwd with node --import tsx.
+// Usage: node --import tsx /path/observe-shared-inventory.mjs test-results/shared-inventory/evidence
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { dirname, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const expectedSource = {
+  'apps/server/src/http.ts': '000a7e52fce26595ac4dacef53b23c6dcf1dc2f3c1013dfc4ee863356263232e',
+  'apps/server/src/world-service.ts':
+    '5ad4f9e65d5d5f32a81d0d1b624f4646cb41372a77bd8450418d842fb23ec06c',
+  'apps/server/src/authority.ts':
+    '1ec633ddef35250b863d52e48bae91276a938aaabee7ed861c5914190efbadbb',
+  'apps/server/src/inventory-view.ts':
+    '23a5b2e6e02c3204cb0881101251b2004d282b89932344869c66d9f3299db455',
+  'apps/client/src/main.tsx': '08c4e291889452e20d3d94ccd14f5ec66d3fb57322ee850039bc810bcbbd7e62',
+  'apps/client/src/api.ts': 'eda3e86f6e17e0c48733de3254c6d0ffeef76c46bacaa5c6b66b6d64e59a011e',
+  'apps/client/src/ui/inventory.tsx':
+    'e2ba1e5b632bf2f585f0289fcd4820bc5f752c76f60132983b4f97b84b3c308e',
+  'apps/client/src/ui/inventory-collection.tsx':
+    'd02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77',
+  'apps/client/src/ui/use-inventory-collection.ts':
+    'bddeee69bd02e90d82269bdde2674401abc0453ee6a85ed713bbe1f59bf16b5e',
+  'apps/client/src/ui/use-inventory-command.ts':
+    '596930ac2c27c67d2e561bcede45099a8cc98a04117116403b7e1885ccdc480e',
+  'apps/client/src/ui/container-opening.tsx':
+    '4a56a299a9058dfd3ff1162f39c017ceea4600855e263e25aa3ce35795015684',
+  'packages/domain/src/item-handling.ts':
+    '860d84e742fabf2efb401c0bd52f2742261957d4089722151d282e129876968a',
+  'packages/domain/src/objects.ts':
+    'c6a926a563eb760a3a5633482fa2a5090a0b5d60c61c755f792e36de29a8fd70',
+  'packages/domain/src/object-access.ts':
+    'e0682565e85a0133ffcba034e471fed9d175df8d61acb17f87f7a118a1cdd5b6',
+  'packages/domain/src/kernel.ts':
+    '55b21d7ef2796aeb97baaa5f624ddce3292cd8926953d6b8655ad87dc374b3f6',
+  'tests/fixtures/database.ts': '3566c92c90fe0122e01da0177eefa3142836e1ed6c86b845526348c54c16ac92',
+  'tests/fixtures/service.ts': 'e5322bfac774e1a952d3bced7569958389525adf271026a18d2512b1a73f21e7',
+  'tests/fixtures/browser.ts': '61673a8e30aa3431bc91a4f1149778ef7da26c68cd827541048478b6c59f38b2',
+};
+const output = resolve(process.argv[2] ?? 'test-results/shared-inventory/evidence');
+await mkdir(dirname(output), { recursive: true });
+await mkdir(output); // Preserve evidence from every distinct invocation.
+const report = {
+  startedAt: new Date().toISOString(),
+  checkout: process.env.GITHUB_SHA ?? 'unrecorded',
+  scope:
+    'Two native account/character scopes use the redesigned paired inventory: one last-unit contest, visible access withdrawal, then an older permitted read held across another withdrawal.',
+  limits: {
+    workMs: 180000,
+    hardMs: 210000,
+    actionMs: 10000,
+    assertionMs: 5000,
+    navigationMs: 20000,
+    captureMs: 10000,
+  },
+  limitations: [
+    'The second identity is a supplied disposable fixture identity enrolled through native authority owners; this does not qualify OIDC login.',
+    'A native bag, one branch, one marker and a reachable stance are fixture setup; this does not qualify gathering, walking or access-grant UI.',
+    'Transport holds preserve real requests/responses. Browser cancellation is recorded as cancellation, not proof that an aborted response was consumed.',
+    'No provider, native assistive-input or uncoached-human usability claim.',
+  ],
+  commands: [],
+  observations: [],
+  captures: [],
+  pageErrors: [],
+  unexpectedRequests: [],
+  cleanup: {},
+  passed: false,
+  providerCostUsd: 0,
+  cumulativeTaskProviderCostUsd: 0,
+};
+let browser,
+  game,
+  store,
+  database,
+  base,
+  expired = false;
+const viewers = [],
+  releases = [],
+  activeRoutes = [];
+const errorText = (error) =>
+  error instanceof Error ? (error.stack ?? error.message) : String(error);
+const fail = (error) => {
+  report.failure ??= errorText(error);
+  report.passed = false;
+};
+const workTimer = setTimeout(() => {
+  expired = true;
+  fail(new Error('Original 180-second observation work bound expired.'));
+  for (const release of releases) release();
+  void browser?.close().catch(fail);
+}, report.limits.workMs);
+const hardTimer = setTimeout(() => {
+  fail(new Error('Original 210-second hard bound expired; cleanup is incomplete.'));
+  report.cleanup.forcedTermination = true;
+  writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+  process.exit(1);
+}, report.limits.hardMs);
+const nativeImport = (path) => import(pathToFileURL(resolve(path)).href);
+const sha = async (path) =>
+  createHash('sha256')
+    .update(await readFile(path))
+    .digest('hex');
+function gate() {
+  let release;
+  const wait = new Promise((resolve) => {
+    release = resolve;
+  });
+  releases.push(release);
+  return { wait, release };
+}
+function routeWork(action) {
+  return (route) => {
+    const pending = action(route).catch(async (error) => {
+      fail(error);
+      await route.abort().catch(() => {});
+    });
+    activeRoutes.push(pending);
+    return pending;
+  };
+}
+try {
+  for (const [path, expected] of Object.entries(expectedSource))
+    assert.equal(await sha(path), expected, 'Source pin: ' + path);
+  report.sourceSha256 = expectedSource;
+  report.runnerSha256 = await sha(new URL(import.meta.url));
+  report.builtEntrySha256 = await sha('dist/client/index.html');
+  const { chromium, expect: baseExpect } = createRequire(resolve('package.json'))(
+    '@playwright/test',
+  );
+  const expect = baseExpect.configure({ timeout: report.limits.assertionMs });
+  const [http, db, fixture, entry, domain, handling, spatialState, spatial, capability] =
+    await Promise.all([
+      nativeImport('apps/server/src/http.ts'),
+      nativeImport('tests/fixtures/database.ts'),
+      nativeImport('tests/fixtures/service.ts'),
+      nativeImport('tests/fixtures/browser.ts'),
+      nativeImport('packages/domain/src/index.ts'),
+      nativeImport('packages/domain/src/item-handling.ts'),
+      nativeImport('packages/domain/src/spatial-state.ts'),
+      nativeImport('packages/spatial/src/index.ts'),
+      nativeImport('packages/domain/src/action-capabilities.ts'),
+    ]);
+  database = db;
+  const { PLAYER_ID, NPC_ID, createItemLot, itemFor, itemsForOwner, canAccessContainer } = domain;
+  const config = db.readConfig({
+    WORLD_SEED: '73',
+    AI_BUDGET_USD: '0',
+    OPEN_LEGEND_GOD_MODE: 'false',
+    OPEN_LEGEND_AUTH_MODE: 'local',
+  });
+  assert.equal(config.budgetUsd, 0);
+  assert.equal(config.godMode, false);
+  for (const key of [
+    'jevKey',
+    'llmKey',
+    'embeddingKey',
+    'macrofoldKey',
+    'macrofoldProviderConnectionId',
+    'macrofoldJevConnectionId',
+    'macrofoldWorldConnectionId',
+  ])
+    assert.equal(config[key], '');
+  store = await db.testRepository();
+  const fixedNow = Date.now();
+  game = await http.createGameServer({
+    config,
+    store,
+    production: true,
+    tick: false,
+    now: () => fixedNow,
+  });
+  await new Promise((resolve, reject) => {
+    game.server.once('error', reject);
+    game.server.listen(0, '127.0.0.1', resolve);
+  });
+  base = 'http://127.0.0.1:' + game.server.address().port;
+  // Supply an identity through the existing durable enrollment/session owners; never replace HTTP authentication.
+  const identity = {
+    issuer: 'https://fixture.openlegend.invalid',
+    subject: 'shared-inventory-b',
+  };
+  const accountId = await game.service.authenticationMutation(() =>
+    store.authority.account(identity, 'fixture-shared-inventory-b'),
+  );
+  const enrolled = await game.service.enrollCharacter(NPC_ID, accountId, () =>
+    store.authority.insertGrant({
+      worldId: game.service.world.id,
+      accountId,
+      actorId: NPC_ID,
+      revision: 1,
+      capabilities: ['play'],
+    }),
+  );
+  assert.equal(enrolled.ok, true, enrolled.message);
+  const login = await game.service.authenticationMutation(() =>
+    store.authority.login(
+      identity,
+      fixedNow,
+      config.authentication.sessionMs,
+      config.capacity.sessions,
+    ),
+  );
+  browser = await chromium.launch({
+    headless: true,
+    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+  });
+  report.browser = browser.version();
+  async function nativeRead(viewer, path, body, status = 200) {
+    assert.equal(expired, false);
+    assert.ok(viewer.headers, 'Use authority observed from this actual App.');
+    const options = { headers: viewer.headers, timeout: 10000 };
+    const response =
+      body === undefined
+        ? await viewer.page.request.get(base + path, options)
+        : await viewer.page.request.post(base + path, {
+            ...options,
+            data: body,
+          });
+    assert.equal(response.status(), status, path);
+    return response.json();
+  }
+  for (const [actorId, account, token] of [
+    [PLAYER_ID, 'local-player', undefined],
+    [NPC_ID, accountId, login.token],
+  ]) {
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 960 },
+    });
+    const viewer = { context, actorId, accountId: account, commands: [] };
+    viewers.push(viewer);
+    if (token)
+      await context.addCookies([
+        {
+          name: 'ol_session',
+          value: token,
+          url: base,
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+      ]);
+    await context.tracing.start({
+      screenshots: false,
+      snapshots: true,
+      sources: true,
+    });
+    viewer.tracing = true;
+    const page = await context.newPage();
+    viewer.page = page;
+    page.setDefaultTimeout(report.limits.actionMs);
+    page.setDefaultNavigationTimeout(report.limits.navigationMs);
+    page.on('pageerror', (error) => report.pageErrors.push({ actorId, message: error.message }));
+    page.on('request', (request) => {
+      const url = new URL(request.url()),
+        headers = request.headers();
+      if (url.origin !== base && !['data:', 'blob:'].includes(url.protocol))
+        report.unexpectedRequests.push(url.origin + url.pathname);
+      if (
+        /^\/api\/(?:god|chat|invent|inventions|world-agent)(?:\/|$)/.test(url.pathname) &&
+        request.method() === 'POST'
+      )
+        report.unexpectedRequests.push(url.pathname);
+      if (url.pathname === '/api/command') viewer.commands.push(request.postDataJSON());
+      if (headers['x-ol-client'] && headers['x-ol-scope'])
+        viewer.headers = {
+          Origin: base,
+          'X-OL-Client': headers['x-ol-client'],
+          'X-OL-Scope': headers['x-ol-scope'],
+        };
+    });
+    await page.goto(base + (token ? '/' : '/auth/login'));
+    await entry.enterGame(page);
+    await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+    assert.equal((await nativeRead(viewer, '/api/session')).accountId, account);
+    const state = await nativeRead(viewer, '/api/state');
+    assert.equal(state.player.id, actorId);
+    assert.equal(state.access.controlling, true);
+    assert.equal(state.clock.paused, false);
+    viewer.scope = state.access.scope;
+    viewer.left = page.locator('.ol-inventory-collection[data-side="belongings"]');
+    viewer.right = page.locator('.ol-inventory-collection[data-side="container"]');
+  }
+  assert.notEqual(viewers[0].scope, viewers[1].scope);
+  assert.notEqual(viewers[0].headers['X-OL-Client'], viewers[1].headers['X-OL-Client']);
+  const bagId = 'uiux08-shared-bag',
+    branchId = 'uiux08-last-branch',
+    markerId = 'uiux08-private-marker';
+  const quantity = (owner, definition) =>
+    itemsForOwner(game.service.world, owner)
+      .filter((item) => item.definitionId === definition)
+      .reduce((sum, item) => sum + item.quantity, 0);
+  const baseline = viewers.map((viewer) => quantity(viewer.actorId, 'wood'));
+  report.fixture = await fixture.editWorld(game.service, (world) => {
+    createItemLot(world, PLAYER_ID, 'woven_bag', 1, bagId);
+    createItemLot(world, bagId, 'wood', 1, branchId);
+    createItemLot(world, bagId, 'prepared_fiber', 1, markerId);
+    const events = [];
+    assert.equal(handling.dropItems(world, world.entities[PLAYER_ID], bagId, 1, events), null);
+    const pileId = itemFor(world, bagId).ownerId,
+      person = world.entities[NPC_ID],
+      pile = world.entities[pileId];
+    const before = spatialState.worldPosition(person),
+      stance = capability.targetApproachPoint(world, person, pile, world.itemHandling.reach);
+    assert.ok(stance);
+    assert.equal(
+      spatial.canStand(
+        spatialState.spatialMap(world),
+        stance,
+        spatial.BODY_PROFILES[person.spatial.bodyProfileId],
+      ),
+      true,
+    );
+    spatialState.setSpatialPosition(world, person, stance, stance.surfaceId);
+    for (const viewer of viewers)
+      assert.equal(canAccessContainer(world, viewer.actorId, bagId), true);
+    return {
+      bagId,
+      branchId,
+      markerId,
+      pileId,
+      secondActorBefore: before,
+      secondActorStance: stance,
+      nativeStartingBranches: baseline,
+    };
+  });
+  async function access(label, actors) {
+    const result = await game.service.transition((world) =>
+      handling.setContainerAccess(world, {
+        id: 'uiux08-' + label,
+        itemId: bagId,
+        expectedRevision: world.entities[bagId].inventoryRevision ?? 0,
+        actors,
+      }),
+    );
+    assert.equal(result.ok, true, result.message);
+    report.observations.push({ label, result });
+  }
+  await access('initial-shared-access', [PLAYER_ID, NPC_ID]);
+  for (const viewer of viewers) {
+    const { page, right, left } = viewer;
+    await page.getByRole('button', { name: 'In view', exact: true }).click();
+    const nearby = page.locator('#nearbyPanel');
+    await nearby
+      .locator('[data-entity="' + report.fixture.pileId + '"]')
+      .getByRole('button')
+      .click();
+    await nearby.getByRole('button', { name: 'Open Items on the ground', exact: true }).click();
+    await right.locator('[data-item-id="' + bagId + '"]').click();
+    await page
+      .getByRole('dialog', {
+        name: 'Woven bag actions and details',
+        exact: true,
+      })
+      .getByRole('button', { name: /^Open / })
+      .click();
+    await expect(right.locator('[data-item-id="' + branchId + '"]')).toHaveAttribute(
+      'aria-label',
+      'Supple branch, 1',
+    );
+    await expect(right.locator('[data-item-id="' + markerId + '"]')).toBeVisible();
+    await expect(left).toHaveAttribute('aria-busy', 'false');
+    assert.equal(viewer.commands.length, 0);
+  }
+  async function capture(viewer, name) {
+    assert.ok(report.captures.length < 3);
+    const started = Date.now();
+    report.captureInProgress = name;
+    await viewer.page.screenshot({
+      path: join(output, name),
+      timeout: report.limits.captureMs,
+    });
+    report.captures.push({
+      name,
+      actorId: viewer.actorId,
+      elapsedMs: Date.now() - started,
+      sha256: await sha(join(output, name)),
+    });
+    delete report.captureInProgress;
+  }
+  // Hold each actual Shift+Enter request before dispatch; both still refer to the same last unit.
+  const contests = viewers.map(() => ({
+    gate: gate(),
+    entered: false,
+    done: false,
+  }));
+  for (const [index, viewer] of viewers.entries())
+    await viewer.page.route(
+      '**/api/command',
+      routeWork(async (route) => {
+        const contest = contests[index];
+        assert.equal(contest.entered, false);
+        contest.entered = true;
+        contest.request = route.request().postDataJSON();
+        await contest.gate.wait;
+        const response = await route.fetch({ timeout: 10000, maxRetries: 0 });
+        assert.equal(response.status(), 200);
+        contest.result = await response.json();
+        await route.fulfill({ response });
+        contest.done = true;
+      }),
+    );
+  await Promise.all(
+    viewers.map((viewer) =>
+      viewer.right.locator('[data-item-id="' + branchId + '"]').press('Shift+Enter'),
+    ),
+  );
+  await expect.poll(() => contests.every((contest) => contest.entered)).toBe(true);
+  assert.equal(quantity(bagId, 'wood'), 1);
+  for (const contest of contests) contest.gate.release();
+  await expect.poll(() => contests.every((contest) => contest.done)).toBe(true);
+  assert.equal(contests.filter((contest) => contest.result.ok).length, 1);
+  assert.notEqual(contests[0].request.commandId, contests[1].request.commandId);
+  for (const [index, viewer] of viewers.entries()) {
+    const { request, result } = contests[index];
+    assert.equal(viewer.commands.length, 1);
+    assert.equal(request.command.type, 'transfer-item');
+    assert.equal(request.command.itemId, branchId);
+    assert.equal(request.command.targetId, viewer.actorId);
+    assert.equal(request.command.quantity, 1);
+    const receipt = await nativeRead(viewer, '/api/command/receipt', request);
+    assert.equal(receipt.status, 'resolved');
+    assert.deepEqual(receipt.result, result);
+    assert.equal(quantity(viewer.actorId, 'wood'), baseline[index] + (result.ok ? 1 : 0));
+    await expect(viewer.right.locator('[data-item-id="' + branchId + '"]')).toHaveCount(0);
+    await expect(viewer.right.locator('[data-item-id="' + markerId + '"]')).toBeVisible();
+    await expect(viewer.page.locator('.ol-inventory-feedback')).toContainText(result.message);
+    const ownedBranch = itemsForOwner(game.service.world, viewer.actorId).find(
+      (item) => item.definitionId === 'wood',
+    );
+    await expect(viewer.left.locator('[data-item-id="' + ownedBranch.id + '"]')).toHaveAttribute(
+      'aria-label',
+      'Supple branch, ' + ownedBranch.quantity,
+    );
+    report.commands.push({
+      actorId: viewer.actorId,
+      accountId: viewer.accountId,
+      scope: viewer.scope,
+      input: 'Shift+Enter',
+      request,
+      result,
+      receipt,
+      displayedBranchQuantity: ownedBranch.quantity,
+    });
+    await viewer.page.unroute('**/api/command');
+    await capture(viewer, '0' + (index + 1) + '-contest-' + viewer.actorId + '.png');
+  }
+  assert.equal(quantity(bagId, 'wood'), 0);
+  assert.equal(quantity(bagId, 'prepared_fiber'), 1);
+  const [revoked, retained] = viewers;
+  async function denied(label) {
+    assert.equal(canAccessContainer(game.service.world, revoked.actorId, bagId), false);
+    await expect(revoked.right.getByRole('alert')).toHaveText('This container is unavailable.');
+    await expect(revoked.right.locator('[data-item-id]')).toHaveCount(0);
+    const refusal = await nativeRead(revoked, '/api/inventory', { containerId: bagId }, 400);
+    assert.equal(refusal.ok, false);
+    assert.equal(refusal.items, undefined);
+    const readable = await nativeRead(retained, '/api/inventory', {
+      containerId: bagId,
+    });
+    assert.deepEqual(
+      readable.items.map((item) => item.id),
+      [markerId],
+    );
+    await expect(retained.right.locator('[data-item-id="' + markerId + '"]')).toBeVisible();
+    report.observations.push({
+      label,
+      freshNativeRefusal: refusal,
+      visibleRevokedPane: await revoked.right.innerText(),
+      retainedMarkerId: markerId,
+    });
+  }
+  await access('visible-revoke', [retained.actorId]);
+  await denied('visible-row-withdrawal');
+  await access('restore-for-held-read', [PLAYER_ID, NPC_ID]);
+  await expect(revoked.right.locator('[data-item-id="' + markerId + '"]')).toBeVisible();
+  // Fetch one genuinely permitted native response first; then hold only its browser delivery.
+  const late = {
+    gate: gate(),
+    entered: false,
+    fetched: false,
+    finished: false,
+    fulfilled: false,
+    aborted: false,
+  };
+  revoked.page.on('requestfailed', (request) => {
+    if (request === late.request) {
+      late.aborted = true;
+      late.abortReason = request.failure()?.errorText;
+    }
+  });
+  await revoked.page.route(
+    '**/api/inventory',
+    routeWork(async (route) => {
+      if (late.entered || route.request().postDataJSON().containerId !== bagId)
+        return route.continue();
+      late.entered = true;
+      late.request = route.request();
+      const response = await route.fetch({ timeout: 10000, maxRetries: 0 });
+      assert.equal(response.status(), 200);
+      late.body = await response.json();
+      assert.deepEqual(
+        late.body.items.map((item) => item.id),
+        [markerId],
+      );
+      late.fetched = true;
+      await late.gate.wait;
+      try {
+        await route.fulfill({ response });
+        late.fulfilled = true;
+      } catch (error) {
+        if (!late.aborted || late.abortReason !== 'net::ERR_ABORTED') throw error;
+        late.fulfillmentError = errorText(error);
+      }
+      late.finished = true;
+    }),
+  );
+  await revoked.right.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect.poll(() => late.fetched).toBe(true);
+  await access('held-read-revoke', [retained.actorId]);
+  await denied('current-denial-before-old-delivery');
+  late.gate.release();
+  await expect.poll(() => late.finished).toBe(true);
+  await denied('current-denial-after-old-response-release');
+  report.lateRead = {
+    nativePermittedItemIds: late.body.items.map((item) => item.id),
+    fulfilled: late.fulfilled,
+    browserAborted: late.aborted,
+    abortReason: late.abortReason,
+    fulfillmentError: late.fulfillmentError,
+    visibleRowsAfterRelease: await revoked.right.locator('[data-item-id]').count(),
+  };
+  await revoked.page.unroute('**/api/inventory');
+  await capture(revoked, '03-revoked-pane-after-old-response.png');
+  for (const [index, viewer] of viewers.entries()) {
+    assert.equal(viewer.commands.length, 1);
+    assert.equal(
+      quantity(viewer.actorId, 'wood'),
+      baseline[index] + (contests[index].result.ok ? 1 : 0),
+    );
+    const state = await nativeRead(viewer, '/api/state');
+    assert.equal(state.player.id, viewer.actorId);
+    assert.equal(state.access.controlling, true);
+    assert.equal(state.ai.budget.spentUsd, 0);
+    assert.equal(state.ai.budget.reservedUsd, 0);
+    assert.equal(state.ai.usage.llmCalls + state.ai.usage.jevCalls, 0);
+  }
+  assert.equal(quantity(bagId, 'wood'), 0);
+  assert.equal(quantity(bagId, 'prepared_fiber'), 1);
+  assert.deepEqual(report.pageErrors, []);
+  assert.deepEqual(report.unexpectedRequests, []);
+  assert.deepEqual(await store.recentJobs(), []);
+  assert.equal(expired, false);
+  assert.equal(report.failure, undefined);
+  report.passed = true;
+} catch (error) {
+  fail(error);
+} finally {
+  clearTimeout(workTimer);
+  for (const release of releases) release();
+  async function cleanup(name, action) {
+    try {
+      await action();
+      report.cleanup[name] = true;
+    } catch (error) {
+      report.cleanup[name] = errorText(error);
+      fail(error);
+    }
+  }
+  await cleanup('heldRoutesSettled', () => Promise.all(activeRoutes));
+  for (const viewer of viewers) {
+    if (viewer.tracing)
+      await cleanup('trace-' + viewer.actorId, () =>
+        viewer.context.tracing.stop({
+          path: join(output, 'trace-' + viewer.actorId + '.zip'),
+        }),
+      );
+    await cleanup('context-' + viewer.actorId, () => viewer.context.close());
+  }
+  if (game)
+    await cleanup('nativeShutdown', async () => {
+      const result = await game.shutdown();
+      report.cleanup.shutdown = result;
+      assert.equal(result.saved, true);
+      assert.deepEqual(result.problems, []);
+    });
+  if (store) await cleanup('repositoryClosed', () => store.close());
+  if (browser) await cleanup('browserClosed', () => browser.close());
+  if (database) await cleanup('disposableDatabasesDropped', () => database.closeTestDatabases());
+  report.finishedAt = new Date().toISOString();
+  report.elapsedMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
+  await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+  hardTimer.unref(); // Do not keep a clean process alive; fail if an owned handle prevents exit.
+}
+console.log(
+  JSON.stringify({
+    passed: report.passed,
+    output,
+    failure: report.failure,
+    elapsedMs: report.elapsedMs,
+  }),
+);
+process.exitCode = report.passed ? 0 : 1;
