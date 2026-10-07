@@ -10,7 +10,7 @@ The product goal is real dimensionality with detailed pixel-art output and progr
 
 ## Ownership and parent tracking
 
-This is a focused child tracker for the proposed 3D appearance pipeline. [SW13](spatial-world.md#sw13--invention-and-generated-art-integration) owns generated-art/spatial integration, SW18 owns presentation semantics and visual qualification, and SW19/PF retain full-stack scaling. [INV-3.4 and INV-4.6/4.9](inventions-and-world-evolution.md) own invention presentation and confirmed conjuring/coordination. INV-5 owns mechanical revision/activation and INV-8 owns invention portability. [PO](persistent-objects.md) remains the owner of real items, equipment placement, containers and custody. EWF owns new trusted family capability integration.
+This is a focused child tracker for the proposed 3D appearance pipeline. [SW13](spatial-world.md#sw13--invention-and-generated-art-integration) owns generated-art/spatial integration, SW18 owns presentation semantics and visual qualification, and SW19/PF retain full-stack scaling. [INV-3.4 and INV-4.6/4.9](inventions-and-world-evolution.md) own invention presentation and confirmed conjuring/coordination. INV-5 owns mechanical revision/activation and INV-8 owns invention portability. [INV-12](inventions-and-world-evolution.md#inv-12--progressive-in-game-art-and-compatible-publication) owns staged art delivery under [the runtime art contract](../invention-art-pipeline.md); V3D07–V3D10 supply its proposed 3D-pipeline implementation, not another publication or spending authority. [PO](persistent-objects.md) remains the owner of real items, equipment placement, containers and custody. EWF owns new trusted family capability integration.
 
 Use these task IDs for appearance-specific deliverables and link evidence back to the relevant parent. Do not duplicate whole parent task bodies or mark an entire SW/INV/PO task complete because one renderer case passes. Same-version save integrity, privacy, funding, and lifecycle are required in every affected slice rather than deferred to a final hardening phase.
 
@@ -111,10 +111,10 @@ The owner supplied the mercenary study and authorized its [default-scene integra
 **Owners:** existing INV workshop/UI and appearance service. **Depends on:** relevant delivered asset stages and INV authority.
 
 - [ ] Expose natural-language appearance reuse/edit requests, current model/sprite preview, mechanical-envelope distinction, state/fit/provenance findings, exact review revision and spending plan through existing scoped services.
-- [ ] Preserve ordinary automatic supported-invention policy versus explicit confirmed conjuring and consequential mechanical revision. Invoke missing art after the appropriate existing authorization, without a second invention debit or unconditional extra confirmation.
+- [ ] Preserve ordinary automatic supported-recipe admission separately from the current creator session’s exact human review before its first live write. Broader automatic creator-session approval remains [INV-18.2](../world-agent-runtime.md#7-interaction-and-approval), not permission supplied by an art tool. Confirmed conjuring and consequential mechanical revisions retain their own approval requirements. Invoke optional missing art only within authorized funding, without a second invention debit or unconditional extra confirmation for ordinary recipes.
 - [ ] Add optional bounded harness coordination only when needed; yield while waiting for art/review. Handle revoked grants, canceled conversations, stale candidates, partial success and private technical status.
 
-**Exit:** a creator can request a distinctive supported object or appearance refinement without manually authoring JSON, while art, mechanics and instance creation remain separately truthful. No new broad workshop service is required.
+**Exit:** a creator can request a distinctive supported object or appearance refinement without manually authoring JSON, while art, mechanics and instance creation remain separately truthful. Continue play with an adequate native representation while optional polish waits; a new family lacking an adequate permitted fallback remains unusable until its required representation is ready. No new broad workshop service is required.
 
 ## V3D10 — Retained reuse and portable appearance dependencies
 
