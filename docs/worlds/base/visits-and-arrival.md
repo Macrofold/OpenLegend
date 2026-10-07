@@ -52,9 +52,11 @@ The product owner selects a 60-real-second ready offer and reconnect reservation
 
 Hold one real home-return admission for each admitted outbound visitor and count it against the home world's offered capacity. The person's stored history does not need active simulation. If both humans depart from their own homes at once, the profile still counts both return obligations; the operator cannot sell those places again.
 
+If absence is already known after committed movement but before destination activation, retain the traveler inactive there until eligible control returns. Do not activate an absent body for a new fade. If destination participation already began, ordinary departure applies.
+
 After arrival, current destination participation and death rules apply. Real death leaves its actual corpse and retained/lost possessions there. Explicit Continue uses that world's actual rest-spot evaluation, new physical life and scars; return never substitutes for it. If service cannot currently evaluate recovery, keep the pending person protected and explain the service wait. No remote corpse collection or invented resurrection occurs.
 
-A normal return carries the resulting actual living person, with fresh home-local identity and explicit continuity. A full home uses its held admission. A paused/expired home can receive the person into its coherent held state without starting unpaid simulation. An unavailable/blocked home uses the funded protected inactive custody described by the product owner, with no survival debt or duplicate embodiment.
+A normal return carries the resulting actual living person, with fresh home-local identity and explicit continuity, including existing local property/device rights, contacts, blocks/mutes, read evidence and used allowances. Crossing supplies no fresh social identity or reset. A full home uses its held admission. A paused/expired home can receive the person into its coherent held state without starting unpaid simulation. An unavailable/blocked home uses the funded protected inactive custody described by the product owner, with no survival debt or duplicate embodiment.
 
 For the first no-sale development proof, use current-format authority and preserve exact trip state until recovery completes. An ongoing customer offer additionally requires the actual adopted DG27 continuity/recovery terms; the prototype does not make that commercial promise.
 

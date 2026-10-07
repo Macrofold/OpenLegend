@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26–DG28's researched product proposals and reviews are complete; DG29 and DG30 continue in order. | 2026-10-07   |
+| Status      | Current progress                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG26–DG29's researched product proposals and reviews are complete; DG30 continues next. | 2026-10-07   |
 
 ## Assignment and exact baseline
 
@@ -69,6 +69,12 @@ Independent critique corrected repeated/overlapping allowance grants, the distin
 [The product specification](published-packs-and-creator-revenue-feature-spec.md) completes curated eligible publication, exact acquisition and retained rights, explicit installation/use, updates/withdrawal/exceptional remedies, separately enabled paid packs and standalone worlds, and fixed member allocation. Twelve primary records support immutable-release, permission, customer-access and explainable financial decisions. The actual source audit distinguishes delivered local attribution from the still-open account-library/pack path, including invention Apply teaching and private operational-backup contents.
 
 The game-first review keeps the useful free craft/use journey ahead of payouts. It repairs partial-month and normal-renewal pool funding, component-only unused-amount refunds, premium paid-through overlap, beneficiary-first rounding and explicit first-party treatment. INV-8.1a/8.2a/8.3a–b and PD10.5–6 remain open; EWF11 forwards without duplicate acceptance. Original licenses, prior checked states and historic commercial examples remain intact. The draft checkpoint is [2e61a08b](https://github.com/Macrofold/OpenLegend/commit/2e61a08b90384994b6efea1dbc281afeb2848eb6). No marketplace, payment or live-use result is claimed.
+
+### DG29 — Visits and wider participation
+
+[The product specification](visits-and-wider-participation-feature-spec.md) and [prepared two-world profile](../worlds/base/visits-and-arrival.md) complete the first same-person visit/return, actual local work and finite food/treatment/learning, no-cargo custody, explicit waiting/reservations, domain powers, current departure/Continue, protected recovery and connected-history restore boundaries. Ten primary sources inform useful social population, finite reservation, honest queues, transfer bursts and concrete incident failure.
+
+The independent critique repaired every possible Continue destination, known absence before activation, existing world-scoped contacts/blocks/allowances, continued recovery-facility obligations and the distinction between a current-format development proof and an ongoing commercial promise. The exact mixed-population and growth ambitions remain unqualified, separate from the reported ticking-disabled 100-account burst. Nine new open PS05–PS08 children consume existing MP/PF/SL owners; no separate performance project or campaign prerequisite is introduced. [PS-L34–PS-L43](../limits/product-scalability.md#ps-l34--first-prepared-visit) records the proposed restrictions. The draft checkpoint is [e1dabdd5](https://github.com/Macrofold/OpenLegend/commit/e1dabdd58339568ba80262eefe2d4189dabac403). No runtime, travel or paid qualification ran.
 
 ## Maintained records
 

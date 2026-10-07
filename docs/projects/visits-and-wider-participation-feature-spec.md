@@ -1,8 +1,8 @@
 # Visits and wider participation
 
-| Status                  | Current progress                                                                                                                                                         | Last updated |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Proposed product design | DG29 product and behavior draft; source and research review complete, independent draft critique in progress. Technical delivery and capacity qualification remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                                             | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG29 researched product design and independent critique complete; technical delivery and capacity qualification remain open. | 2026-10-07   |
 
 ## 1. The experience worth building
 
@@ -87,6 +87,8 @@ Once movement is committed, the source cannot resume another active person or in
 
 ### 5.3 Reconnection and wider queues
 
+If movement committed but absence is known before destination active participation begins, the destination retains the person inactive until eligible control returns. It does not activate an absent human merely to run another exposure for a loading screen. If active participation already began before absence, apply the destination's ordinary departure law. Source exposure and all previously committed consequences remain actual.
+
 Reconnect resolves the person's current actual location first. During a visit, the destination remains that location unless a return actually completed. A stale home bookmark gives a route to the visitor, not an old controllable body. A person inactive in the destination remains protected under its installed law and may await safe placement without progressing hunger or replaying elapsed offline actions.
 
 An active admission may be held for 60 real seconds after the last connection is lost, but it cannot be released while the body's required departure work still occupies the qualified scope. Afterwards, preserved residency/history does not itself consume a live scene slot. A reconnect without a held place waits safely for admission or requests the preserved return route; it cannot evict another human.
@@ -98,6 +100,8 @@ The initial invited community adds no automatic idle eviction for reading, think
 ## 6. One continuous person and real local relationships
 
 The visitor retains their name, actual bodily condition, physical-life continuity, scars, legitimate knowledge and relevant personal history. A destination local reference is new on every crossing, including home return; explicit provenance reconnects the person's actual history and grants. Reusing a familiar name or the old home object cannot establish identity. The existing [data ownership contract](../../archive/07-technical-architecture/data-delivery-and-scale.md#3-growth-stages-and-triggers) remains the technical responsibility; this document selects behavior, not a new schema.
+
+Fresh local references must reconnect this same person's existing world-scoped property rights, slate/device binding, contacts, blocks/mutes, read evidence, rate allowances and local relationship references through actual continuity. A round trip does not grant a fresh allowance, evade a block or orphan the slate left at home. Other worlds' separate contacts/private threads remain in their own scope; no new remote sending is implied.
 
 The departed source representation is historical/inactive provenance, with no second controllable body, duplicate inventory or autonomous stand-in. Source witnesses may perceive an actual departure under ordinary evidence. They do not learn account status or destination secrets. The destination only reports an arrival after it actually occurs.
 
@@ -263,6 +267,7 @@ These are proposed acceptance cases for later implementation and actual play, no
 | Queue during source play            | Work and conversation remain usable. Expiry/cancellation loses no money/material. Duplicate tabs get one place.                                                                               |
 | Pause during departure              | No simulated exposure is spent by wall time; reservation expiry cannot grant early immunity. Actual source custody remains clear.                                                             |
 | Damage or death before crossing     | Actual source consequence stands. Current Continue is required; no destination activation or corpse collection.                                                                               |
+| Absence known before activation     | Confirmed destination custody remains inactive until eligible control returns; no automatic second fade or catch-up action.                                                                   |
 | Lost arrival acknowledgement        | One actual person and one decision; status/reconnect recover the same destination without repeating costs or rewards.                                                                         |
 | Destination death                   | Corpse/possession partition and scars remain real; explicit local Continue precedes ordinary return. Unavailable service preserves pending recovery.                                          |
 | Full, held or offline home          | Counted reservation or disclosed safe waiting applies. No forced purchase, duplicate home body or active exposure while no world owns simulation.                                             |
@@ -281,6 +286,8 @@ Preparation must remain short and understandable. A prepared compatible pair sho
 Protection is necessary for a dependable arrival, but a protected yard need not become an entire risk-free game. It is the first supported place to meet and use tools. Exploration beyond it is a later explicitly qualified option; local worlds retain meaningful danger and consequences.
 
 No completion reward, attendance streak, portal toll, mandatory group timetable or interworld chore is added to justify travel. More players are valuable when they create choices and stories. If larger numbers mostly create noise or waiting, improve the actual gathering and measured envelope before expanding the offered count.
+
+Independent draft/source critique produced five concrete repairs: qualify every possible actual Continue result; keep a known-absent arrival inactive until eligible control; reconnect existing world-scoped social/device/rate restrictions; retain return/recovery facilities while protected custody still depends on them; and separate the current-format no-sale proof from future commercial continuity terms. Carried-output/gift/nested growth now also participates in reserved local-deposit admission. These repairs preserve useful local play and real consequences without adding a general transfer marketplace.
 
 ## 15. Primary research
 
