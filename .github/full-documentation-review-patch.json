@@ -1,0 +1,1 @@
+{"files":[{"path":"docs/limits/ai-execution.md","summary":"link workspace listing bounds to their actual LA193 owner","before_sha256":"38240227ccf929168b023f0db010542454cc98f66033ca5f13a84699f377bcb1","after_sha256":"12edb30318b323a540556756a2623cf4f2a017a6abcf1955d71e9d634fda295b","edits":[[24884,24908,"[LA193](memory.md#la193)"]]}]}
