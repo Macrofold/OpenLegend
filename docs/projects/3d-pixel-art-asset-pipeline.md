@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                            | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The runtime generation and publication pipeline remains proposed; importing the fixed mercenary asset did not implement it. | 2026-10-04   |
+| Not started | The runtime generation and publication pipeline remains proposed; importing the fixed mercenary asset did not implement it. | 2026-10-07   |
 
 **Status: proposed, no provider integration or live generation performed.** This document specifies art production during play, including optional 2D-first/3D-later delivery. It proposes an implementation of the direction in the [feature specification](3d-pixel-art-feature-spec.md) through the [technical contracts](3d-pixel-art-tech-design.md); it does not authorize mechanical invention, spending, or arbitrary generated code by itself.
 
@@ -10,7 +10,7 @@
 
 - Implementation: [V3D07–V3D10](../maintainers/3d-pixel-art.md).
 - Capacity and staged-work limits: [A3D inventory](../limits/3d-pixel-art.md). Shared [AI execution](../limits/ai-execution.md), [invention](../limits/inventions.md), and [persistence](../limits/persistence.md) limits remain controlling.
-- Existing policy: [art generated during play](../../archive/03-design-proposals/visual-direction.md#art-generated-during-play), [INV workflow](../maintainers/inventions-and-world-evolution.md), and [AI/provider boundary](../ai-providers.md).
+- Existing policy: [runtime art and publication](../invention-art-pipeline.md), [shared episode funding](../invention-budgets.md), [INV workflow](../maintainers/inventions-and-world-evolution.md), and [AI/provider boundary](../ai-providers.md). The [original visual direction](../../archive/03-design-proposals/visual-direction.md#art-generated-during-play) retains artistic intent, not a competing publication or spending contract.
 - Visual coverage: [appearance families](3d-pixel-art-appearance-families.md). Evidence: [qualification](3d-pixel-art-validation.md).
 
 ## 1. The pipeline is demand-driven, not a simulation loop
@@ -112,7 +112,7 @@ Validate in layers: structural safety; geometry/anchor fit; appearance identity;
 
 Render controlled turntables and the target gameplay-scale previews in neutral, daylight, and local firelight profiles. Check that distinctive features and dimensions remain consistent with the accepted brief/sprite, textures are not fighting new light directions, and thin tools/limbs remain readable. For rigs, evaluate representative poses, clipping, joint extremes, item grips, feet and supported death/rest states. For assemblies, inspect intended separations and functional openings.
 
-Initially require creator review of the new production families and genuinely novel silhouettes/rigs. Exact approved reuse and deterministic variants within an already reviewed envelope need no repeated manual approval. A later opt-in automatic-publication policy can cover qualified low-risk families after its false-accept/rejection evidence exists. Keep it distinct from mechanical admission and art-budget authorization; do not introduce a mandatory confirmation on every ordinary valid invention. Awaiting review never blocks gameplay.
+Initially require creator review of the new production families and genuinely novel silhouettes/rigs. Exact approved reuse and deterministic variants within an already reviewed envelope need no repeated manual approval. A later opt-in automatic-publication policy can cover qualified low-risk families after its false-accept/rejection evidence exists. Keep it distinct from mechanical admission and art-budget authorization; do not introduce a mandatory confirmation on every ordinary valid invention. Awaiting optional polish does not block continued play with an already adequate representation. A new family without a permitted adequate fallback cannot become usable merely because its mechanics passed validation; hold the affected capability until [presentation adequacy](../invention-art-pipeline.md#21-adequacy-versus-polish) is satisfied, while unrelated native play continues.
 
 ## 7. Atomic publication and current-state binding
 
