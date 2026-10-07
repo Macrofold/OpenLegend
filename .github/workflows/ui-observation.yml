@@ -1,0 +1,90 @@
+name: Bounded whole-interface observations
+on:
+  push:
+    branches: [diagnostics/ui-continuation-20261007]
+permissions:
+  contents: read
+concurrency:
+  group: ui-observation-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  native-observations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: openlegend
+          POSTGRES_PASSWORD: fixture
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openlegend -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: build
+        run: pnpm run build
+      - id: browser
+        run: pnpm exec playwright install --with-deps chromium
+      - id: time_inputs
+        name: Freeze the unchanged Time source and current build
+        run: node scripts/ui-observation/pin-build.mjs
+      - name: Attribute the unchanged Time journey
+        if: ${{ !cancelled() && steps.time_inputs.outcome == 'success' }}
+        timeout-minutes: 4
+        run: node scripts/ui-observation/run.mjs
+      - id: time_cleanup
+        name: Require a finished Time process before the independent journey
+        if: ${{ !cancelled() && steps.time_inputs.outcome == 'success' }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFile } from 'node:fs/promises';
+          const result = JSON.parse(await readFile('test-results/time-profile-attempt-01/result.json', 'utf8'));
+          assert.equal(result.status, 'finished');
+          assert.equal(result.sourceAndBuildUnchanged, true);
+          assert.ok(!result.outerDeadlineReached && !result.signal && !result.spawnError && !result.cleanupUncertain,
+            'Time cleanup is uncertain; do not start another browser on this runner.');
+          JS
+      - id: journey_inputs
+        name: Freeze the native Character and history journey
+        if: ${{ !cancelled() && steps.time_cleanup.outcome == 'success' }}
+        run: node scripts/ui-observation/prepare-setup.mjs "$RUNNER_TEMP/openlegend-journey-setup.json"
+      - name: Observe Character, shortcuts, current work and retained history
+        if: ${{ !cancelled() && steps.journey_inputs.outcome == 'success' }}
+        timeout-minutes: 6
+        run: >-
+          timeout --signal=TERM --kill-after=15s 330s
+          pnpm exec tsx scripts/ui-observation/run-native-journey.mjs
+          "$RUNNER_TEMP/openlegend-journey-setup.json"
+          "$RUNNER_TEMP/openlegend-journey-attempt-01"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-time-profile
+          path: |
+            test-results/time-profile-attempt-01/
+            scripts/ui-observation/compiled-inputs.json
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-native-journey
+          path: |
+            ${{ runner.temp }}/openlegend-journey-setup.json
+            ${{ runner.temp }}/openlegend-journey-attempt-01/
+          retention-days: 7
