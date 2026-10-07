@@ -1,8 +1,8 @@
 # Creator support and contributor voice
 
-| Status                  | Current progress                                                                                                                                                                 | Last updated |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Proposed product design | DG30 operating-program draft with current-source review and primary research; independent draft critique follows. No fund, application round or governance program is activated. | 2026-10-07   |
+| Status                  | Current progress                                                                                                                                                                                | Last updated |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Proposed product design | DG30 researched product proposal and independent critique are complete; adoption and actual operating qualification remain open. No fund, application round or governance program is activated. | 2026-10-07   |
 
 ## 1. Pay for something that improves the game
 
@@ -288,15 +288,15 @@ The first operating cycle uses existing documents and payment records. Automatin
 
 Before the corresponding live step, the actual owner supplies:
 
-| Input                                                                                                                                            | Required before                                                               |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Named operating entity, real appropriation and contingency, actual review/support hours and spending authority.                                  | Publishing a funded pilot or inviting promised applications.                  |
-| Actual supported recipient territories, agreement/payment/tax/retention terms and private support route.                                         | Requesting payment identity and offering an award.                            |
-| Wanted current brief, actual amount/range, fair invited selection basis, dates, two available reviewers and separated reconsideration authority. | The first invitation.                                                         |
-| Exact recipient, scope/exclusions, milestone/partial values, optional advance reconciliation inputs, current integration target and rights.      | Signing and starting work.                                                    |
-| Bounded actual hosting/inference and evidence access, where the chosen deliverable needs them.                                                   | Incurring those costs or making the corresponding acceptance promise.         |
-| Accepted evidence, current recipient/payment details and actual approved settlement.                                                             | Paying, with uncertain and duplicate outcomes handled by the financial owner. |
-| Complete financial/private-data closure and actual results.                                                                                      | Claiming cycle completion or authorizing another round.                       |
+| Input                                                                                                                                                      | Required before                                                               |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Named operating entity, real appropriation and contingency, actual review/support hours and spending authority.                                            | Publishing a funded pilot or inviting promised applications.                  |
+| Actual supported recipient territories, agreement/payment/tax/retention terms and private support route.                                                   | Requesting payment identity and offering an award.                            |
+| Wanted current brief, actual amount/range, fair invited selection basis, dates, two available reviewers and separated reconsideration authority.           | The first invitation.                                                         |
+| Exact recipient, scope/exclusions, milestone/partial values, early closure and any advance reconciliation inputs, current integration target and rights.   | Signing and starting work.                                                    |
+| Bounded actual hosting/inference and evidence access, where the chosen deliverable needs them.                                                             | Incurring those costs or making the corresponding acceptance promise.         |
+| Signed award for its agreed advance, or accepted milestone/closure evidence for earned payments; current recipient details and actual approved settlement. | Paying, with uncertain and duplicate outcomes handled by the financial owner. |
+| Complete financial/private-data closure and actual results.                                                                                                | Claiming cycle completion or authorizing another round.                       |
 
 These facts remain unselected in this design task. They are concrete inputs, not reasons to invent a budget or ask the user to authorize a hypothetical transfer now. A small funded native contribution does not need live marketplace software or all DG27–DG29 runtime work.
 
@@ -426,7 +426,7 @@ All records were retrieved on 2026-10-07 and independently opened for the produc
 ## 17. Maintained records
 
 - Queue: [DG30](../maintainers/needs-design.md#dg30--a-creator-fund-and-contributor-governance), [ND25](../maintainers/needs-design.md#nd25--creator-grants-and-contributorpatron-governance).
-- Existing conditional delivery: [PD10](../maintainers/production-deployment.md), coordinated with actual program, finance, rights and private-data owners.
+- Existing conditional delivery: [PD10.7](../maintainers/production-deployment.md), coordinated with actual program, finance, rights and private-data owners.
 - Limits and chosen first scope: [Creator support](../limits/creator-support.md).
 - Canonical direction: [Patrons, contributors and world history](../../archive/06-marketing/patrons-contributors-and-world-history.md).
 - Actual contribution terms: [CONTRIBUTING.md](../../CONTRIBUTING.md) and [LICENSING.md](../../LICENSING.md).

@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-10-07 — A conditional creator grant that pays for useful work
+
+Prepared DG30's [creator support and contributor-voice proposal](projects/creator-support-and-contributor-voice-feature-spec.md), [GF constraints](limits/creator-support.md) and one open PD10.7 operating gate, with twelve primary research records. One useful award, three invited concise proposals and a small accountable review can run before a grant portal, marketplace, council or corporate mission structure. The first optional consultation is bounded and unweighted; no purchase buys a vote.
+
+Independent review made early earned work independent of advance choice, protected delivery time from operator-controlled waits, bounded offers and stalled startup/review, and reconciled settlement on the award currency's gross basis. Manual proposals use concise length guidance without byte-count machinery. Actual appropriation, staffing, recipient/territory/rights/payment facts remain unselected; existing customer and creator obligations cannot fund the program. Historical D37 and wellbeing ideation retain their statuses. No intake, outreach, payment, runtime change or actual grant outcome is claimed.
+
 ## 2026-10-07 — Useful visits, dependable return and honest capacity
 
 Prepared DG29's [product proposal](projects/visits-and-wider-participation-feature-spec.md), [authored two-world profile](worlds/base/visits-and-arrival.md) and [PS-L34–PS-L43](limits/product-scalability.md#ps-l34--first-prepared-visit), with ten primary research records. A visit to meet a friend and use actual local resources can complete before cargo, federation, campaigns or large crowds. Current condition, explicit Continue, private knowledge, local custody, real return capacity and independent-restore boundaries are preserved.

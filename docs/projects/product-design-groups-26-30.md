@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26–DG29's researched product proposals and reviews are complete; DG30 continues next. | 2026-10-07   |
+| Status      | Current progress                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | All five researched product proposals and independent group reviews are complete; final package review and verification are closing. | 2026-10-07   |
 
 ## Assignment and exact baseline
 
@@ -75,6 +75,12 @@ The game-first review keeps the useful free craft/use journey ahead of payouts. 
 [The product specification](visits-and-wider-participation-feature-spec.md) and [prepared two-world profile](../worlds/base/visits-and-arrival.md) complete the first same-person visit/return, actual local work and finite food/treatment/learning, no-cargo custody, explicit waiting/reservations, domain powers, current departure/Continue, protected recovery and connected-history restore boundaries. Ten primary sources inform useful social population, finite reservation, honest queues, transfer bursts and concrete incident failure.
 
 The independent critique repaired every possible Continue destination, known absence before activation, existing world-scoped contacts/blocks/allowances, continued recovery-facility obligations and the distinction between a current-format development proof and an ongoing commercial promise. The exact mixed-population and growth ambitions remain unqualified, separate from the reported ticking-disabled 100-account burst. Nine new open PS05–PS08 children consume existing MP/PF/SL owners; no separate performance project or campaign prerequisite is introduced. [PS-L34–PS-L43](../limits/product-scalability.md#ps-l34--first-prepared-visit) records the proposed restrictions. The draft checkpoint is [e1dabdd5](https://github.com/Macrofold/OpenLegend/commit/e1dabdd58339568ba80262eefe2d4189dabac403). No runtime, travel or paid qualification ran.
+
+### DG30 — Creator support and contributor voice
+
+[The product specification](creator-support-and-contributor-voice-feature-spec.md) completes a conditional manual program: one funded useful result, at most three invited concise proposals, two nonconflicted reviewers, actual rights, early/final milestones, optional advance, acceptance, payment, cancellation and financial/privacy closure. Twelve primary sources inform earned deliverables, actual spendable money, transparent authority, conflicts and payment states. Contributor/supporter input is unweighted and bounded; a paid acknowledgment buys no vote and no broad creator standard is adopted.
+
+Independent review repairs advance-independent early earned work, operator-controlled review/payment/resource waits, offer and startup expiry, gross-currency settlement and finite consultation coverage. It removes applicant-facing byte counting from the small manual process. [PD10.7](../maintainers/production-deployment.md) and [GF-L01–GF-L12](../limits/creator-support.md) retain actual activation and qualification. The draft checkpoint is [530377d8](https://github.com/Macrofold/OpenLegend/commit/530377d8108392da36e8efb38cae98df230328d5); the first review reconciliation is [12517419](https://github.com/Macrofold/OpenLegend/commit/125174190a71ba6ce74cf298770f00d0a0bf0e0f). No application, recipient contact, grant, payment or runtime experiment ran.
 
 ## Maintained records
 

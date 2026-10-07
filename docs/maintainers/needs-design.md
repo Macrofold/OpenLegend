@@ -297,6 +297,8 @@ Conditional ND25: a real fund budget, eligibility, milestones, rights, payout ev
 
 **Start and parallel boundary:** Start when a concrete program and sustainable funding are selected; it may run alongside marketplace or supporter design using their existing rights/payment meanings. Neither subscriptions nor dedications automatically creates a grant or voting program. **Existing owners:** D37, program/financial/rights and platform-authority owners.
 
+**Product design prepared, October 7, 2026:** [Creator support and contributor voice](../projects/creator-support-and-contributor-voice-feature-spec.md) defines one conditional funded award, up to three invited concise proposals, two nonconflicted reviewers and finite optional public advice. It completes eligibility, rights, early/final milestones, optional advance, acceptance independent of discretionary merge, partial work, operator delay, cancellation, settlement, disputes and closure. The first program uses ordinary documents and actual payment authority; it creates no ballot, grant portal or broad creator standard. [GF-L01–GF-L12](../limits/creator-support.md) records proposed bounds and **PD10.7** retains actual appropriation/people/terms and operating qualification. Ordinary contribution, free publication and a useful game need not wait for the fund.
+
 ### Band 7 — Choose deeper society and generativity
 
 #### DG31 — Generations and deeper biology
@@ -727,6 +729,8 @@ If an offer includes additional character slots, define switching, unattended be
 **Existing coverage:** subscriber allocation, marketplace purchases and platform authority have separate owners. The proposed creator fund and advisory/voting rights are not defined by those mechanisms.
 
 **Needed before implementation:** choose a sustainable fund budget, applicant/contributor eligibility, deliverables, rights, milestones and payout evidence. Specify advisory versus binding decisions, patron/contributor influence, overlapping membership, conflicts and abuse handling. Decide whether any proposed creator standard is wanted. Start with an understandable operating process; build grant or voting software only when that process needs it. Mission locks and corporate structures remain optional decisions, not engine prerequisites.
+
+**DG30 coverage, October 7, 2026:** The [conditional first-cycle proposal](../projects/creator-support-and-contributor-voice-feature-spec.md) supplies the operating behavior above, with advance-independent earned work, honest failed experimentation, bounded advisory input and private reconsideration. Actual appropriation, recipient territories, agreements, reviewers and spending authority remain unselected activation facts. A binding fund vote, dedicated restricted fundraising, broader creator standard or recurring/open grant program still requires its own selected scope within this entry and D37; none is needed for the first award.
 
 ### ND26 — A bounded commercial test and repeatable product demonstration
 
