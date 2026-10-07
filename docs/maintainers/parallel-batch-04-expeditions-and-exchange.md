@@ -26,7 +26,7 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 
 ## PX03 — Useful discoveries and known places
 
-[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) proposes an occupied-site discovery/return consumer of this place owner. Its merge dependency remains explicit; the new batch does not supply a duplicate memory store or change PX03 completion evidence.
+[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) proposes an occupied-site discovery/return consumer of this place owner. PX03 is available on local main at `699417835`, so it is a reuse reference rather than an open CF05 prerequisite. The new batch does not supply a duplicate memory store or change PX03 completion evidence.
 
 - [x] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
 - [x] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.

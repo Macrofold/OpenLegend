@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                        | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | All five implementation assignments are specified following the NPC combat decision; runtime delivery and listed prerequisite integrations remain open. | 2026-10-06   |
+| Not started | All five implementation assignments are specified following the NPC combat decision; runtime delivery and listed prerequisite integrations remain open. | 2026-10-07   |
 
 ## Purpose and planning horizon
 
@@ -108,13 +108,13 @@ The combined walkthrough enters the watchpost, identifies the two occupants from
 
 These are rough implementation ranges, including callers, UI, current-format persistence, relevant qualification and documentation. They are not a staffing promise or an AI speed multiplier. Existing prerequisite delivery is excluded; if those contracts change, re-estimate their consumers.
 
-| Assignment | Changed production logic lines | Engineer-days | Independent start and final dependency                                                                                                                                                        |
-| ---------- | ------------------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CF01       | 1,200–2,200                    | 5–8           | Existing agency/targeting/content first; supplied AV02, CF02 and CF03 complete equipped ranged/evasive behavior.                                                                              |
-| CF02       | 1,600–2,800                    | 6–10          | Animal aim/flight first; AV02 defense, AV03 practice and CF01 humanoid eligibility for final integration.                                                                                     |
-| CF03       | 650–1,150                      | 3–5           | Stag/motion first; AV02 guard and CF02 moving-shot acceptance later.                                                                                                                          |
-| CF04       | 900–1,600                      | 4–7           | Existing request/agency investigation and permitted offers; PX04's supplied consent/trip contract before extending it, then CF01/AV02 and supplied CF02/CF03 for the combined combat choices. |
-| CF05       | 500–900                        | 3–5           | Site/route/stock authoring first; PX03/AV01 and CF01–CF04 for complete gameplay and combined qualification.                                                                                   |
+| Assignment | Changed production logic lines | Engineer-days | Independent start and final dependency                                                                                              |
+| ---------- | ------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| CF01       | 1,200–2,200                    | 5–8           | Existing agency/targeting/content first; supplied AV02, CF02 and CF03 complete equipped ranged/evasive behavior.                    |
+| CF02       | 1,600–2,800                    | 6–10          | Animal aim/flight first; AV02 defense, AV03 practice and CF01 humanoid eligibility for final integration.                           |
+| CF03       | 650–1,150                      | 3–5           | Stag/motion first; AV02 guard and CF02 moving-shot acceptance later.                                                                |
+| CF04       | 900–1,600                      | 4–7           | Extend delivered PX04 requests/consent now; CF01/AV02 and CF02/CF03 are required for final armed-help integration.                  |
+| CF05       | 500–900                        | 3–5           | Site/route/stock authoring and delivered PX03 discovery first; AV01 and CF01–CF04 for complete gameplay and combined qualification. |
 
 Five branches can advance without duplicating earlier tasks. CF01's target-permission extension is delivered independently of its later ranged demonstration; CF02's flight is independent of CF01's NPC choices. This staged contract avoids a circular implementation prerequisite. CF05 performs the combined encounter acceptance, while each other assignment owns its local behavior and supplied consumers. The owner supplies prerequisite revisions; prompts grant no merging or worker communication.
 

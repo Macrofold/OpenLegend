@@ -11,13 +11,24 @@ Include the following, tailoring length to the actual task:
 - **A plain-language assignment:** explain what becomes possible or reliable, then identify the matching task IDs. A task number or internal code name alone is not an explanation.
 - **Specific work:** name included deliverables, important decisions, constraints and exclusions. Group related work in the order it should be approached. Do not transcribe entire specs when an exact section is sufficient.
 - **An ordered reading map:** repository-relative paths and headings for the relevant design, implementation brief, canonical behavior, source entrypoints, limits and maintainer requirements. Explain why a less obvious reference matters. Avoid giant reading lists or sending every worker through unrelated projects.
-- **Dependency facts:** apply [unfinished-prerequisite planning](../../openlegend-prioritize/SKILL.md#plan-around-unfinished-prerequisites). Name each required open deliverable, task/design reference, completion/merge status and evidence, what it blocks and what can proceed independently. Include this inside the affected prompt, not only in a shared preamble. A complete conditional prompt is valid for unfinished or unconfirmed-merged work; do not call it immediately runnable. Never make a worker find another chat to obtain its specification.
+- **Start readiness and genuine blockers:** apply [unfinished-prerequisite planning](../../openlegend-prioritize/SKILL.md#plan-around-unfinished-prerequisites) and the [blocker-only prerequisite format](#make-open-prerequisites-a-start-decision) below. Put the start decision and any required waits inside each affected prompt, not only in a shared preamble. Never make a worker find another chat to obtain its specification.
 - **Completion meaning:** describe the real integrated result and important negative cases. Reference the design's complete acceptance and current `AGENTS.md` rather than imposing a new test-writing or command-running routine.
 - **Synchronized documentation:** name the canonical docs and all overlapping maintainer entries. Require the changes to those records that the existing documentation policy calls for: completed scope, still-open scope, changed behavior/decisions, dependencies and actual verification limits.
 
 Use relative paths inside the copyable prompt so it works in the recipient's checkout. Verify paths and headings. If a file must be present on the starting branch, say so; check the planning files' actual Git status when the user is preparing new branches. Explain to the owner if uncommitted planning files would be absent from new worktrees. Do not silently commit, branch or create tasks merely to write the prompts.
 
 Each prompt must stand alone: it cannot depend on an earlier prompt, this conversation, a shared preamble the owner may omit, or another agent's message. Shared documentation is appropriate because each prompt references it explicitly. If a new copyable prompt is requested after the project changes, reconcile it against current source and accepted decisions rather than replaying old assignment text.
+
+## Make Open prerequisites a start decision
+
+The owner uses **Open prerequisites** to decide whether another task must finish before starting this assignment. Keep it a short list of genuine external blockers: required work assigned to another task that is unfinished or not confirmed available on the intended base, and without which some specified part of this assignment must wait. A different assignment in the same batch is external for this purpose.
+
+- Start each prompt with **Start readiness: Ready**, **Partial start only**, or **Wait before starting**, followed by the concrete reason. For a partial start, name the useful independent portion and say that full completion still waits; do not imply the entire assignment can run uninterrupted.
+- Each prerequisite names the other task and deliverable, its current implementation/merge status and evidence/reference, and exactly what waits. Label whether it **blocks starting** or **blocks a named later part/completion**. If none qualifies, write **Open prerequisites: None.**
+- Exclude already available work, resolved developer decisions, work this assignment will implement itself, optional enhancements and broader unfinished quality/scale work that blocks none of this assignment. Put useful reuse guidance in implementation details and necessary evidence qualifications in the design/acceptance references, outside this list.
+- Refresh facts when revising prompts. Distinguish unfinished implementation from completed work awaiting merge/supply; do not tell the owner to wait for a task whose required result is already present. A supplied alternative base can satisfy availability there without implying a merge into `main`.
+
+Keep the full dependency history in the owning design/tracker. Do not repeat it in the quick blocker list or hide an actual wait to make a task look ready. Where tasks consume each other's partial deliveries, identify the exact independently deliverable part and later integration; do not invent a circular requirement for both whole tasks to finish first.
 
 ## Name a new branch in each prompt
 
@@ -49,8 +60,10 @@ Implement [plain-language outcome and the specific scoped work]. Follow AGENTS.m
 
 After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch [exact descriptive branch name for this assignment].
 
+Start readiness: [Ready / Partial start only / Wait before starting, with the concrete independent scope or reason to wait.]
+
 Open prerequisites:
-- [Each required unfinished or unconfirmed-merged deliverable, task/reference, current completion/merge status and evidence, blocked work, and independent work allowed. Say None when there are none.]
+- [Only a required deliverable owned by another task that actually blocks starting or a named later part; include task/reference, current implementation/merge evidence and the exact wait. Say None when there are none.]
 
 Scope and intended result:
 - [Current problem and the exact behavior to deliver, followed by task IDs.]
@@ -76,6 +89,6 @@ If the requested deliverable is findings or design rather than implementation, c
 
 Verify the requested number and focus, readable descriptions, real references, complete task definitions and coherent combined outcome. A task can span categories, and multiple tasks can share a category. Any capacity figures must match the user's request and disclose assumptions.
 
-Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, exact new branch name, design decisions, completion criteria and documentation obligations? Remove unsupported assumptions and instructions requiring sibling communication. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
+Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, exact new branch name, design decisions, completion criteria and documentation obligations? Check that Open prerequisites contains only actual waits on another task, and that available work, this task's own deliverables and nonblocking qualifications appear elsewhere. Remove unsupported assumptions and instructions requiring sibling communication. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
 
 Present one clearly labeled copyable block per assignment, with a short allocation/dependency explanation for the owner where useful. Do not create chats, dispatch work or start runtime implementation unless separately requested. Report genuine readiness gaps plainly; a polished prompt does not resolve them.
