@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                                                           | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26 and DG27 are complete as product proposals; DG28 is being drafted from researched publication and commerce contracts. | 2026-10-08   |
+| Status      | Current progress                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------- | ------------ |
+| In progress | DG26, DG27 and DG28 are complete as product proposals; DG29 is next. | 2026-10-08   |
 
 ## Assignment and baseline
 
@@ -28,13 +28,13 @@ Research findings, design inferences, proposed defaults, owner-approved policies
 
 ## Sequential work and ownership
 
-| Group | Product question                                                                                                                | Existing responsibilities to reuse                                                                          | Progress                                                                   |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| DG26  | How does speaking or hearing improve an actual exchange while every person receives only their permitted meaning?               | HE/NC/MP, DG24 contacts, spatial and world hearing, PS04 timing, existing spending and privacy.             | Product proposal complete; technical/runtime work remains open.            |
-| DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Product proposal complete; actual offer adoption and delivery remain open. |
-| DG28  | How does a creator publish something reusable, retain appropriate rights and receive an understandable share of actual revenue? | DG12 publication/provenance, INV-8/EWF11, DG27 commerce, PD10 and D35/D36/D43/D44.                          | Source audit and research complete; detailed product proposal in progress. |
-| DG29  | How can a person join or visit a wanted place and return safely as demand and world histories grow?                             | PS05–PS08, MP access/participation, transfer/data, time, performance and applicable DG12/DG25 boundaries.   | Pending DG28.                                                              |
-| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Pending DG29.                                                              |
+| Group | Product question                                                                                                                | Existing responsibilities to reuse                                                                          | Progress                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| DG26  | How does speaking or hearing improve an actual exchange while every person receives only their permitted meaning?               | HE/NC/MP, DG24 contacts, spatial and world hearing, PS04 timing, existing spending and privacy.             | Product proposal complete; technical/runtime work remains open.                  |
+| DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Product proposal complete; actual offer adoption and delivery remain open.       |
+| DG28  | How does a creator publish something reusable, retain appropriate rights and receive an understandable share of actual revenue? | DG12 publication/provenance, INV-8/EWF11, DG27 commerce, PD10 and D35/D36/D43/D44.                          | Product proposal complete; rights, commercial adoption and delivery remain open. |
+| DG29  | How can a person join or visit a wanted place and return safely as demand and world histories grow?                             | PS05–PS08, MP access/participation, transfer/data, time, performance and applicable DG12/DG25 boundaries.   | Next after the completed DG28 proposal.                                          |
+| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Pending DG29.                                                                    |
 
 Within the active group, independent readers may research sources and critique consistency in parallel. The five designs themselves are developed and committed sequentially. Commit pending task changes at least every five minutes, as requested by the owner, with accurate checkpoint labels.
 
@@ -45,6 +45,10 @@ Within the active group, independent readers may research sources and critique c
 ## Completed group 27
 
 [Customer and supporter offers](customer-and-supporter-offers-feature-spec.md) records ten primary sources, a small hosted-world offer, concrete account-period/revision rules, full payment/exhaustion/cancellation/retrieval journeys and one separately optional external dedication. Review corrected fresh authority for late admission, the first-service refund across a calendar renewal, equal one-term eligibility, meaningful finite public recognition and the difference between retail debit authority and supplier cost. It also requires the advertised live invention/resident experience and identifies DG03 as preparation, not demonstrated evidence. CO01–CO06 and CO-L01–CO-L08 retain actual commercial adoption, technical/payment/recovery work and the ten-renewal experiment; no price, sale or customer evidence is claimed.
+
+## Completed group 28
+
+[Published packs and creator revenue](published-packs-and-creator-revenue-feature-spec.md) records eleven primary sources and starts with useful free reuse before a two-entry curated catalog or paid enrollment. It specifies exact retained releases, complete eligible dependencies, creator/publisher grants, install-without-teaching, acquired-version recovery, a single bounded subscriber allocation, agreed contributor shares and complete payout/refund/exit behavior. Review removed a monthwide premium-world exclusion that complicated voluntary support, corrected refund-fee arithmetic and fractional-share loss, and preserved the source's pre-join terms and scoped lock authority. PACK01–PACK06 and PACK-L01–PACK-L08 retain actual rights/price/payment adoption, technical work and measured service/economics. Free self-hosting and existing open grants are preserved; a marketplace, cross-service provenance network or grant fund is not a prerequisite for the first useful game.
 
 ## Completion criteria and verification plan
 

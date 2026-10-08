@@ -1,8 +1,8 @@
 # Published packs and creator revenue
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | DG28 product proposal; selected grants, commercial values, technical design, runtime publication/import and paid qualification remain open. | 2026-10-08 |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG28 product proposal; selected grants, commercial values, technical design, runtime publication/import and paid qualification remain open. | 2026-10-08   |
 
 ## 1. A useful invention should travel
 
@@ -18,10 +18,10 @@ The accepted [creator-economy direction](../../archive/06-marketing/creator-econ
 
 Begin with two curated entries in the supported managed-operator environment, each leading to a known compatible destination and a real useful action. The free proof and paid-sale qualification are separate stages. An author can publish an eligible free release without completing bank/tax onboarding, joining a revenue program or operating a popular world.
 
-| Initial entry | Useful promise | Qualification and boundary |
-| --- | --- | --- |
-| Field sling reference | Reuse one exact admitted sling recipe and its complete eligible requirements | Free reference release. The character still learns, gathers, crafts and uses it; this does not replace the first-playable live-invention proof with a canned recipe. |
-| Camp kit | Reuse one woven-container recipe with its exact cordage producer and other required definitions, then organize a small expedition's supplies | The candidate first commercial listing after a free portability proof and actual rights/price adoption. Existing freely released versions keep their grants. Its price must buy a useful reviewed package, not a renamed duplicate. |
+| Initial entry         | Useful promise                                                                                                                               | Qualification and boundary                                                                                                                                                                                                          |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field sling reference | Reuse one exact admitted sling recipe and its complete eligible requirements                                                                 | Free reference release. The character still learns, gathers, crafts and uses it; this does not replace the first-playable live-invention proof with a canned recipe.                                                                |
+| Camp kit              | Reuse one woven-container recipe with its exact cordage producer and other required definitions, then organize a small expedition's supplies | The candidate first commercial listing after a free portability proof and actual rights/price adoption. Existing freely released versions keep their grants. Its price must buy a useful reviewed package, not a renamed duplicate. |
 
 The [authored container](../worlds/base/camp-containers.md) organizes possessions and permits ordinary packing, carrying and voluntary sharing. It gives no extra carrying strength, preservation, waterproofing or theft protection. The [cordage family](../worlds/base/items.md#cordage-manufacture-and-reuse) supports one positively checked material-production edge, not arbitrary recursive crafting. Describe these actual benefits. If arranging supplies in a kit is not useful enough to justify buying it, retain the free example and test another demonstrated need before opening paid sales.
 
@@ -45,16 +45,16 @@ Eligible account contribution history is retained automatically under DG12's tar
 
 For independently licensable original content, propose a nonexclusive creator-use grant attached to the acquired exact release. The customer sees this plain-language matrix beside the release; actual legal terms and component eligibility still require adoption before publication or sale.
 
-| Permission | Proposed managed creator-use grant |
-| --- | --- |
-| Play/use | Operate the acquired behavior in authorized compatible worlds, including paid worlds; normal participants need no individual pack purchase |
-| Install | The account may propose installation in destinations where it has actual editing authority; acquisition grants no such authority by itself |
-| Modify | Make permitted private adaptations, retaining provenance and inherited notices; substantial changes are separately reviewed definitions |
-| Export/self-host | Obtain the complete eligible acquired release for authorized independent hosting and recovery; hosted-service availability is a separate promise |
-| Collaborate | Authorized collaborators may access what the named project requires under the recorded grant, without automatically receiving unrelated personal-library rights |
-| General redistribution/resale | Not granted for otherwise restricted original content; separately open components retain their actual redistribution rights |
-| Installed destination continuity | Each authorized admitted destination retains its recorded operating grant for that exact release if the purchasing account later leaves |
-| Future releases/support | Not automatically included forever; the listing states included updates and funded support/download service |
+| Permission                       | Proposed managed creator-use grant                                                                                                                              |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Play/use                         | Operate the acquired behavior in authorized compatible worlds, including paid worlds; normal participants need no individual pack purchase                      |
+| Install                          | The account may propose installation in destinations where it has actual editing authority; acquisition grants no such authority by itself                      |
+| Modify                           | Make permitted private adaptations, retaining provenance and inherited notices; substantial changes are separately reviewed definitions                         |
+| Export/self-host                 | Obtain the complete eligible acquired release for authorized independent hosting and recovery; hosted-service availability is a separate promise                |
+| Collaborate                      | Authorized collaborators may access what the named project requires under the recorded grant, without automatically receiving unrelated personal-library rights |
+| General redistribution/resale    | Not granted for otherwise restricted original content; separately open components retain their actual redistribution rights                                     |
+| Installed destination continuity | Each authorized admitted destination retains its recorded operating grant for that exact release if the purchasing account later leaves                         |
+| Future releases/support          | Not automatically included forever; the listing states included updates and funded support/download service                                                     |
 
 The proposal places no per-cast royalty or license meter in ordinary simulation and no extra pack fee per guest. It grants no unlimited hosting or future technical compatibility. An already admitted destination may retain authorized operational/recovery copies; that does not let its operator resell a restricted package as a standalone product. A new unrelated destination needs an appropriate acquisition or other sufficient grant. Sharing an installed world and distributing its reusable definitions are different actions.
 
@@ -64,7 +64,7 @@ The paid camp-kit candidate may only use the restricted-original part of this ma
 
 ### 3.3 Contributions and free-use worlds
 
-For a new selected free-use world, propose requiring a nonexclusive contribution grant sufficient for hosting, participant modification, commercial operation and redistribution of the complete eligible pack under its chosen compatible release terms. Show it before the first affected contribution and an effective future change. Declining leaves ordinary permitted play and prior contribution history available; it does not create a right to add new work under rejected terms.
+For a new selected free-use world, propose requiring a nonexclusive contribution grant sufficient for hosting, participant modification, commercial operation and redistribution of the complete eligible pack under its chosen compatible release terms. Show both invention-lock settings and the contribution/sharing terms before joining, then again before the first affected contribution or an effective future change. Declining leaves ordinary permitted play and prior contribution history available; it does not create a right to add new work under rejected terms.
 
 Do not label an existing world free-use until its full inventory and dependency closure actually support that promise. An eligible subset can be released as a named partial pack. Missing consent remains a blocker; changing a world setting cannot appropriate older contributions. Exact standard license wording and contribution agreements remain the rights owner's adoption work. Free price, joint account ownership and a world-creator title are not substitute grants.
 
@@ -104,7 +104,7 @@ Select the exact destination before claiming compatibility. Review body/action f
 
 Present five useful outcomes: usable unchanged; needs a supported binding; needs an explicit adaptation; forbidden by this world's policy; unsupported by this host. Each has a specific next action. Preserve the original on refusal. Missing dependencies, unknown origin or an over-limit closure must not lead to partial execution or a weaker copied invention advertised as equivalent.
 
-The creator reviews the exact addition and any consequential difference. Current authority, invention locks, dependencies and funding are checked again before admission. A permission valid at purchase is not frozen forever. If the host locks invention during preparation, retain the permitted package/proposal and block admission; unlocking does not automatically retry it. Ordinary play can continue while optional import preparation waits under the existing world-change policy.
+The creator reviews the exact addition and any consequential difference. Current authority, invention locks, dependencies and funding are checked again before admission. A permission valid at purchase is not frozen forever. If the applicable origin lock closes and no supported creator/scoped authority permits this import independently, retain the permitted package/proposal and block admission. Changing only the other group's lock does not invalidate an otherwise permitted request. The accepted full-invention grant must not be assumed implemented; use actual supported authority. Unlocking does not automatically retry the request. Ordinary play can continue while optional preparation waits under the existing world-change policy.
 
 Installation adds behavior. It neither creates an item nor teaches every resident, gives a player skill, supplies resources or appropriates a body. A new-world creator can separately provide reviewed initial knowledge and a finite endowment. In an existing world, learning, gathering, crafting and access follow native rules. The pack browser does not secretly run a paid NPC lesson.
 
@@ -176,15 +176,17 @@ Propose a marketplace fee of 15% of a pack's tax-excluded price after applicable
 
 Before enabling sales, obtain one financial mandate with at most five direct payees and percentages totaling 100% of the creator proceeds. Use already sufficient grants for other credited contributors; a royalty-free dependency can require credit without a new payment share. Every affected payee approves the amount basis, split, refunds and payout conditions. An unresolved required financial agreement blocks new paid sales, not unrelated free publication or prior earned rights. Steam's group-split requirement supplies a useful precedent for resolving assent before paying. [PR28-05](#pr28-05--steam-workshop-revenue-terms)
 
+Five limits the first service's direct payouts, not credited contributors or rights holders. A larger group may designate an authorized publisher or legal entity to receive and distribute its agreed amount under a documented mandate; that does not transfer authorship or waive required grants. Without that supported mandate, paid enrollment explains the five-payee limit and remains blocked until the group chooses a valid route or expanded payout service is qualified. Eligible free publication remains available.
+
 Record the agreement applying to each sale. A later collaborator departure, copied mechanic or world ownership transfer cannot divert earlier earnings. A participating world's agreement is fixed for its earning month; a successor takes effect prospectively at a disclosed next boundary unless the affected parties approve a precise lawful adjustment. Public contribution credit remains separate from private bank/tax identity. Aggregate small fractional creator shares before payment and carry residual entitlement rather than repeatedly rounding it away. Actual distributions use the stable residual rule and cannot mint cents.
 
 ### 9.2 Earned, held, payable and paid
 
 Statements distinguish gross receipts, taxes, actual fees, refunds/reversals, attributed creator proceeds, ordinary hold, dispute hold, payable balance, transfer processing and confirmed paid amount. Estimates remain labeled. An available payout is not proof that a bank cannot later reverse the originating transaction. The operator preserves funds for creator obligations separately from hosting and prepaid AI.
 
-Propose a 30-real-day ordinary hold after the later of verified payment settlement or the relevant earning-period close, followed by a monthly payout run. Eligible undisputed balances of at least $25 are paid through the selected supported method. These values need actual fee/risk qualification; 30 days is not a guarantee of finality. A material dispute can hold only the affected amount with an explanation, review status and next step. Unrelated mature earnings remain payable where safe and permitted.
+For the initial program, earning periods are real UTC calendar months: pack and premium-access receipts use their verified collection month, while subscriber allocations use their covered membership month. Propose a 30-real-day ordinary hold after the later of verified payment settlement or that earning-period close, followed by a monthly payout run. Publish the run date before enrollment and show each balance's next scheduled run. Eligible undisputed balances of at least $25 are paid through the selected supported method. These values need actual fee/risk qualification; 30 days is not a guarantee of finality. A material dispute can hold only the affected amount with an explanation, review status and next step. Unrelated mature earnings remain payable where safe and permitted.
 
-Below-threshold balances stay visible. Pay them at account/program exit once ordinary holds resolve, and at least annually even if the creator stays below $25. The platform absorbs the standard supported transfer fee; optional extra conversion or alternative-service charges require their own disclosure and consent. Before onboarding, qualify a route for small final payments. If no lawful supported route is available, keep a clearly reported obligation and resolution path under applicable handling requirements rather than quietly treating it as platform income.
+Below-threshold balances stay visible. At account/program exit, pay them in the first scheduled run after applicable holds resolve; pay them at least annually even if the creator stays below $25 and continues participating. The platform absorbs the standard supported transfer fee; optional extra conversion or alternative-service charges require their own disclosure and consent. Before onboarding, qualify a route for small final payments. If no lawful supported route is available, keep a clearly reported obligation and resolution path under applicable handling requirements rather than quietly treating it as platform income.
 
 For example, a creator earning $1 a month does not have to wait more than two years or create unnecessary sales to pass $25. The annual or exit settlement gives their small contribution a complete lifecycle. The cost of that settlement belongs in the platform's economics. Itch's documented thresholds and aging make the exit problem concrete, without selecting its fee or dormant-balance policy. [PR28-04](#pr28-04--itch-payments)
 
