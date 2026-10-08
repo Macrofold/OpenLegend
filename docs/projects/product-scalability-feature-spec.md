@@ -1,8 +1,8 @@
 # Product scalability — feature specification
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The shared design foundation is delivered; detailed child designs and all PS02–PS08 runtime qualification remain open. | 2026-10-04   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The shared design is delivered; existing native activities are prerequisites, while PS02–PS08 integration and qualification remain open. | 2026-10-07   |
 
 **Status: accepted strategic direction, proposed detailed product requirements, October 2, 2026. Documentation only; runtime delivery and capacity remain unqualified.**
 
