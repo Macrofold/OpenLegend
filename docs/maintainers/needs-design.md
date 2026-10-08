@@ -273,7 +273,7 @@ ND22, ND26's paid-offer/renewal experiment and a specifically selected ND24 supp
 
 **Start and parallel boundary:** Can move earlier for a real bounded paid test; use the actual demonstrated offering and existing payment gates. Continued-world promises consume DG17's funding decision. Patron benefits are optional and do not hold up an ordinary subscription; marketplace allocation is DG28 and grant governance DG30. **Existing owners:** PD10, billing/entitlement and INV-13, D17/D35/D37 and PS-D06.
 
-**DG27 product work, October 8, 2026:** [Customer and supporter offers](../projects/customer-and-supporter-offers-feature-spec.md) specifies a small owner-paid test, separate account units and operating funding, complete purchase/cancellation/recovery behavior and one optional reviewed historical dedication. [CO01–CO06](commercial-offers.md) and [CO-L01–CO-L06](../limits/commercial-offers.md) retain adoption, actual commercial values, technical work, implementation and measured renewal evidence. Platform/premium-world directions remain; actual creator allocation is DG28 and a funded grant/governance program DG30.
+**DG27 product work, October 8, 2026:** [Customer and supporter offers](../projects/customer-and-supporter-offers-feature-spec.md) specifies a small owner-paid test, separate account units and operating funding, complete purchase/cancellation/recovery behavior and one optional reviewed historical dedication. [CO01–CO06](commercial-offers.md) and [CO-L01–CO-L08](../limits/commercial-offers.md) retain adoption, actual commercial values, technical work, implementation and measured renewal evidence. Platform/premium-world directions remain; actual creator allocation is DG28 and a funded grant/governance program DG30.
 
 #### DG28 — Published packs and creator revenue
 
@@ -726,7 +726,7 @@ If an offer includes additional character slots, define switching, unattended be
 
 **Needed before executing an experiment:** select the first audience and supported playable/creator loop, an actual budget and owner, review date, measures and stop/expand criteria. Design an honest repeatable demonstration of creation, refinement and reuse. Measure comprehension, first successful creation, return/renewal, costs and support. Do not make pack portability a prerequisite for a managed-hosting test when the business plan permits earlier learning. Outreach, publishing and ad spending require their own authorization.
 
-**DG27 paid-test coverage:** [The offer specification](../projects/customer-and-supporter-offers-feature-spec.md) and [CO05](commercial-offers.md) refine the ten-renewing-customer test, real cost/support exposure and stop/change/expand decisions. They consume the earlier DG03 demonstration work and do not claim customers, renewals, payments or permission to execute outreach.
+**DG27 paid-test coverage:** [The offer specification](../projects/customer-and-supporter-offers-feature-spec.md) and [CO05](commercial-offers.md) refine the ten-renewing-customer test, real cost/support exposure and stop/change/expand decisions. They consume DG03’s earlier demonstration preparation scope and do not claim a completed demonstration, customers, renewals, payments or permission to execute outreach.
 
 ### ND37 — Public-world reporting, participation controls and operator authority
 

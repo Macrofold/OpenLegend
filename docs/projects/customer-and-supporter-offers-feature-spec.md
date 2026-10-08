@@ -8,7 +8,7 @@
 
 Sell a game people want to return to, with a promise the operator can afford to keep. The first useful offer is one small, attended, owner-funded world whose ordinary play, saving, resumption and spending boundaries have been demonstrated. Friends may join within its disclosed participation profile without buying another hosting subscription. A marketplace, a grant program, a complete premium-world catalog and elaborate patron packages are unnecessary prerequisites.
 
-This specification refines ND22, ND24 and the paid-offer portion of ND26. Delivery belongs to [CO01–CO06](../maintainers/commercial-offers.md), consuming [PD10](../maintainers/production-deployment.md#conditional-launch-and-expansion), [INV-13](../maintainers/inventions-and-world-evolution.md#inv-13--episode-budgets-and-installed-cost-enforcement) and the existing [billing and entitlement proposal](../../archive/07-technical-architecture/billing-and-usage-reporting.md). Discretionary bounds belong to [CO-L01–CO-L06](../limits/commercial-offers.md); this document does not create another billing system.
+This specification refines ND22, ND24 and the paid-offer portion of ND26. Delivery belongs to [CO01–CO06](../maintainers/commercial-offers.md), consuming [PD10](../maintainers/production-deployment.md#conditional-launch-and-expansion), [INV-13](../maintainers/inventions-and-world-evolution.md#inv-13--episode-budgets-and-installed-cost-enforcement) and the existing [billing and entitlement proposal](../../archive/07-technical-architecture/billing-and-usage-reporting.md). Discretionary bounds belong to [CO-L01–CO-L07](../limits/commercial-offers.md); this document does not create another billing system.
 
 The accepted directions remain a finite recurring free invention tier, larger paid allowances, platform membership with a fixed creator allocation, independently branded premium worlds, host-paid operating costs and separately bounded optional art. Those directions do not adopt a price, allowance quantity, payment provider or launch date. All particular policies below are recommendations for adoption. At the inspected branch baseline, partial invention cost controls and local usage reporting do not constitute delivered account subscriptions, payment fulfillment or a tested commercial service.
 
@@ -82,7 +82,7 @@ Unused units do not roll over. Explain this before purchase and in Billing witho
 
 For a midmonth paid activation or upgrade, offer a prorated price and floor the proportional allowance uplift. Show the exact additional units, total available after existing use/holds, price and short first term before confirmation. Use the difference between the old and new allowance, not another complete grant. If the uplift is zero, do not advertise an immediate invention increase: offer to start at the next full month, or explicitly describe any other immediate benefit the customer actually values. Repeated upgrades, cancellations or world changes cannot repeat a grant within the same period.
 
-An attempt authorized before the boundary remains attributed to that original period. It may finish within its existing bounded authorization and then consume that reserved original-period unit. It does not use the new month's unit as well. A released old-period hold does not become a new-month bonus. A customer who canceled still receives the result of already authorized work, subject to the original world permission, rights and spending envelope; cancellation authorizes no fresh continuation or paid retry. Technical qualification must demonstrate this boundary before recurring authoring is sold.
+An attempt authorized before the boundary remains attributed to that original period. It may finish within its existing bounded authorization and consume that reserved original-period unit only on successful admission under current permission and admission rules. It does not use the new month's unit as well. A released old-period hold does not become a new-month bonus. A customer who canceled can recover the permitted result of already authorized work within its original spending envelope; cancellation authorizes no fresh continuation or paid retry. A held world or revoked permission can prevent admission, leaving a recoverable proposal rather than an installed invention, as the timeline below specifies. Technical qualification must demonstrate this boundary before recurring authoring is sold.
 
 The first proposal has no invention-unit top-ups, annual bundle, rollover bank or automatic overage. That keeps the offer explainable and limits burst liabilities. If real players repeatedly need one more useful invention, revisit the allowance or a separately designed add-on rather than disguising it as an AI funding purchase.
 
@@ -96,4 +96,174 @@ Renewal notices identify the actual offer and impending amount. A failed renewal
 
 ## 5. Purchase, fulfillment and recovery
 
-Draft completion checkpoint: the remaining lifecycle, exhaustion, retention, dedication, economics, sequencing, acceptance and primary-research sections are being completed in the same design task. This is an in-progress product proposal, not an offer available for purchase.
+Before confirmation, show the named benefit, beneficiary account/world, current term, price, renewal instruction, included units/funding, known overlap, cancellation and remedy terms. A payer explicitly authorizes the money and purpose. Character control, creator status or possession of a shared device does not grant billing authority. Available balance in another world is not implied permission to bill its host.
+
+| Customer state | Honest presentation and available action |
+| --- | --- |
+| Reviewing | Nothing charged; revise or leave the offer |
+| Payment processing | One purchase is pending; return to its status or cancel where still possible; no duplicate checkout as recovery |
+| Payment failed | Explain the payment failure and whether any authorization is still unresolved; the previously valid offer remains intact |
+| Paid, preparing access | Payment received, specific benefit not yet usable; retain the receipt, recover fulfillment or request the applicable remedy |
+| Ready | State which benefit is active, its exact end/renewal time and remaining allocation |
+| Renewal stopped | Current paid-through benefit remains; future renewal is off |
+| Expired or revoked | State the affected future permission and retained-work path; unrelated rights remain separately visible |
+| Refund approved, processing, completed or failed | Show the actual stage and traceable support path; approval alone does not mean money arrived |
+
+A closed tab after payment returns to the same purchase. Repeated or late payment notifications cannot repeat an allowance, extend a term twice or publish a second dedication. A late success after cancellation must respect current renewal authority. These are customer guarantees motivated by payment systems' delayed settlement, repeated delivery and unordered events, rather than a specification of provider integration. [S27-06](#s27-06--stripe-fulfillment) [S27-07](#s27-07--stripe-event-delivery)
+
+Normal cancellation is self-service and identifies the exact subscription. Show other independently continuing purchases without forcing their cancellation. A failed upgrade leaves the old paid tier intact. Changing the payer requires the appropriate explicit new payment authority; neither a guest nor a new character controller silently inherits a bill.
+
+Propose one voluntary full-refund request within 14 real days of the first managed hosting or platform service activation, once per paying account across those offers. A one-term host purchase qualifies equally; enabling automatic renewal is not required. Before payment, identify exactly which purchase uses this first-purchase promise and its deadline. A refunded trial ends its future paid service at the disclosed point and stops renewal; it preserves the retrieval route and legitimately produced history. Retained delivered value is a cost of this offer, not something to confiscate from other players. This recommendation is separate from applicable statutory rights and from duplicate-charge, misdescription or failed-delivery remedies, which must be qualified for the actual offer and jurisdiction before sale. Ordinary cancellation after that window does not itself refund an already delivered term.
+
+An unfulfilled charge receives recovery or refund; do not substitute future roadmap benefits without agreement. A duplicate charge is corrected without removing the correctly purchased service. Refunds name the purchase and affected future benefit. They do not restore consumed invention units, a redeemed naming claim or a fresh prepaid balance, and do not erase another person's traded item. Keep the original use/receipt history and record the adjustment. Approved refunds can remain pending or fail, so preserve responsibility for completing the remedy rather than displaying success prematurely. [S27-08](#s27-08--stripe-refunds)
+
+A bank dispute or chargeback suspends new spending dependent on the disputed funding while its state is resolved. Do not assume the customer is fraudulent or destroy the shared world as punishment. Protect unrelated paid rights. Required service that can no longer be funded follows the coherent continuation/hold policy; retained work and authorized retrieval remain available under their terms. Refund and dispute handling must not reimburse the same purchase twice. Billing support uses necessary account and transaction metadata, not private conversations or NPC minds.
+
+## 6. Exhaustion, funding and a playable boundary
+
+Three failures require three different explanations. “Your monthly invention allowance is used” blocks new qualifying authoring but leaves existing mechanics usable. “Invention is closed in this world” reflects world authority; paying cannot unlock it. “This world's AI funding is unavailable” identifies the responsible funding boundary without exposing another payer's private finances. Show the requester's own unit hold and a useful return path; do not make every failure an upsell.
+
+The host offer includes a stated AI allocation. Optional purchased AI credit is explicitly scoped to that world and eligible purpose. Consume included allocation before purchased credit, with current payer authorization for the latter. Included unused allocation expires with its service term and has no cash value except under the selected remedy. Unspent purchased credit is refundable on request after outstanding exposure is reconciled. At hosting expiry it is frozen; renewal within retrieval can reuse it if not refunded. World retirement triggers reconciliation and refund of the unused purchased amount. No perpetual wallet, automatic refill or borrowing from an art budget is implied.
+
+Known spending, unresolved exposure and remaining authorized commitments all occupy the envelope. A timeout does not release money by itself. A top-up confirms its amount, payer, world and effect on available funding; it grants no invention units and does not automatically resume simulation. New purchase intake can pause when payment reconciliation or service capacity is full. Existing paid obligations retain a recovery path. Exact per-purchase, outstanding-credit, provider-request and aggregate limits require the real release workload under CO-L03/06; a short form or page size is not a financial bound.
+
+At zero AI, supported native play includes permitted movement, established actions and recipes, use of existing items/inventions, known information and saved progress. Fresh inference-dependent conversation, invention and deliberation cannot pretend to succeed. Already valid bounded actions retain their normal rules; no stale plan is silently promoted into a new intelligent decision. UI explains the unavailable service in its explicit controls, not through invented character dialogue.
+
+For example, a returning owner can inspect the settlement, walk to storage, collect already produced supplies and craft a known cloak using existing materials without buying a new invention. If a resident now needs required reasoning to respond to a new threat, the product must apply the selected coherent pause/recovery policy before presenting a fictional response. It cannot continue selectively, strand that resident in a dangerous missing-AI state, or claim a random choice is their decision. Actual consequences of knowingly chosen available native play still occur; subscription status grants no immunity.
+
+The [continuing-lives specification](continuing-lives-feature-spec.md#15-dg17--a-first-funded-unattended-community) owns optional unattended periods. Their renewal remains off by default, requires a finite reviewed horizon and funding, and does not resume merely because money arrives. Membership, prepaid credit and recurring hosting do not buy perpetual autonomous life. Foreground funded play and the independently chosen unattended period remain distinguishable. Existing [product scalability limits](../limits/product-scalability.md) also require complete-world funding and coherent service outcomes rather than relying on per-character caps alone.
+
+When funding returns, display the current held state and available next action. The authorized person explicitly resumes where required. Do not catch up fictitious offline time, replay failed purchases or issue hidden paid retries. A complete zero-AI outing and a truthful return to funded play must be demonstrated; a generic claim of graceful degradation is insufficient.
+
+## 7. Expiry, retention and real history
+
+### 7.1 A finite return promise
+
+Propose 30 real days of authorized world retrieval after paid hosting ends. The world is held; retrieval is not free simulation, fresh generation or continued guest hosting. Before purchase, show the exact paid-through date, resulting retrieval deadline, included authorized export, compatible format/runtime requirement and retirement outcome. Reminders belong in account/service surfaces and permitted notices, not fictional danger manufactured to induce renewal.
+
+If the operator prevents retrieval during that period, suspend its expiry for the unavailable interval and give the customer the remaining usable window once recovery succeeds. The operator must fund that obligation. If recovery is impossible, explain the actual loss and fulfill the applicable remedy; a download button pointing at a broken archive is not delivery. Resubscription before retirement can resume the retained compatible world after current authority and funding checks; it does not erase outstanding costs or grant fictional catch-up.
+
+After the disclosed retrieval period, the adopted retirement policy may remove the hosted copy and its scoped backups. This requires an explicit release/retention decision before any sale. The repository's rejection of incompatible development saves is not silently replaced by a migration promise: qualify a supported compatible release and restore path for the sold term plus retrieval, or keep the offer unavailable. Do not promise every future engine can load every historical save. Security or unrecoverable service changes require a disclosed replacement/export/remedy, not forced acceptance of missing history.
+
+Hosting expiry does not erase an account's eligible invention-library work or revoke already granted published/open rights. Exact export includes only authorized definitions, dependencies and history; identify blockers rather than claiming an incomplete package is a complete world. Other people's private records and official private content are not portable by virtue of paying for hosting. Library retention, pack access and broader portability retain their existing owners and disclosed terms. Neither a license nor a historical receipt requires the operator to fund unlimited storage or computation. Minecraft's finite retrieval window supports this style of explicit promise, not this proposed duration. [S27-01](#s27-01--minecraft-realms)
+
+### 7.2 A boundary case with one original request
+
+At 23:59 UTC, Lea authorizes her final invention and its funded bounded work. At midnight her platform tier downgrades and the host's paid term ends. Submitted work may settle against its original authorization; no new spending beyond the retained bounded commitment follows. If the world is held, the result remains a retained, unadmitted result for later permitted review. It is not presented as installed and does not consume a successful-admission unit yet.
+
+If the host renews and current permissions still allow admission within the original valid authorization, the recovered request can complete against its original held unit. If permission was revoked, the result is invalid or its admission authorization expires, stop fresh execution and resolve it as nonadmitted when authoritative. Preserve any permitted draft and incurred cost; release the unit only after the uncertain outcome is resolved. A later fresh proposal requires current rights and its own visible authorization. Admission already completed before midnight remains completed regardless of a later cost settlement, cancellation or fictional restore.
+
+All payment receipts, completed uses, holds, refunds, dedication redemptions, current permission revocations and erasure restrictions follow real history. [Save/load](../save-and-load.md) cannot mint a refunded balance, undo a charge, revive a canceled subscription or recreate a once-used entitlement. Recovery checks current commercial authority before new paid work. Private billing access is scoped to the payer/delegate, not granted by creator or god inspection. Export and support must respect the existing human-private content boundary.
+
+## 8. One optional supporter dedication
+
+### 8.1 The purchased thing
+
+Offer one reviewed entry in an external public founding chronicle associated with one explicitly named official project/world. It acknowledges support under an approved pseudonym and short dedication. It is outside the simulation: no automatic event, readable world book, NPC knowledge or playable item is created. Any later in-world representation requires separately authored content and normal perception rules. This small choice gives supporters a recognizable contribution without constructing a paid gameplay system.
+
+The entry records one original supporter attribution, approved public text, selected venue and fulfillment date under the accepted terms. Legal name, payment amount, account identity and contact details remain private by default. Support can remain publicly anonymous. Earned contributor credit remains separately available for genuine work; buying a dedication does not buy contribution credentials, extra character/control slots, moderation privilege or authority over another world.
+
+A one-time dedication is separate from recurring membership. The first scope permits one account-bound, nontransferable original entry per supporter account in that named chronicle. An existing recipient cannot accidentally purchase the same benefit again. Membership may provide explicitly selected active benefits later, but another renewal does not create another original dedication. No grant vote, investment return, tradable financial asset, NFT, speculative scarcity or perpetual operating promise is included. DG30 owns any separately adopted fund and governance proposal. EVE's bounded monument campaign is a useful example of distinguishing a new name from another recognition of an existing name; it is not a reason to add urgency marketing. [S27-10](#s27-10--eve-monument)
+
+### 8.2 Review, payment and fulfillment
+
+First show the exact venue and a preview of the proposed public text. Obtain public-display consent and approve the name/content before taking payment. The customer can edit, choose anonymous recognition or abandon a rejected request without a charge. Explain relevant rejection reasons without exposing another person's private report. Approving text is not yet redemption, a charge or a guarantee of an unselected placement.
+
+After approval, checkout names that approved entry. Successful payment leads to one publication and a receipt linking to it. Paid but unpublished remains visibly unfulfilled. If fulfillment cannot be completed, offer recovery of the approved entry or refund; do not substitute a creature, placeholder name or future badge. A later text change needs fresh review and consent before publication. Review capacity and exact text/media bounds must be qualified before opening intake; pause new sales when the operator cannot deliver the stated service window.
+
+Publication consumes the naming/dedication claim once. The receipt preserves that redemption even if an old world snapshot predates it. Repeated payment events, rejoining and restore cannot duplicate it. A fulfilled historical entry has no routine repeat claim and no automatic buyer-remorse refund under the separate recurring-service trial. Publish its exact remedy terms before sale; applicable requirements, misdescription and failed fulfillment still matter. Refunding an entry records the adjustment without creating another naming entitlement.
+
+### 8.3 Correction, fictional fate and retirement
+
+Allow correction of a misspelled public name and withdrawal of public identity. The service can display an anonymous/redacted historical acknowledgment while keeping only the lawful operational record required for fulfillment/accounting. Do not promise literal immutable publication. Material content changes need review; abuse or rights violations can require removal under disclosed terms, with an explanation and applicable remedy. Current privacy restrictions constrain restored copies and exports.
+
+The first benefit has no object to steal, trade or destroy. A future commemorative object would follow its world's ordinary rules: a dragon can die and a monument can crumble. The object's owner is not thereby the original sponsor. Giving it away does not transfer an already consumed naming claim or renew a membership. Second Life's distinction between creator, current owner and transfer permissions supports keeping those concepts separate; no resale service is adopted here. [S27-09](#s27-09--second-life-object-permissions)
+
+The public chronicle is maintained while its named service remains active under the sold terms, without a promise of perpetual servers or mandatory display in forks. Before retirement, offer an authorized static export of the entry and its public context during the same proposed 30-day retrieval window; protect that window against operator-caused retrieval failure. The receipt and permitted historical record describe what was delivered. If the promised acknowledgment was never delivered, refund it. Optional expanded placement or a future badge is not compensation already received. AI Dungeon's retired-tier history reinforces the need to state the actual replacement benefit and its delivery status. [S27-05](#s27-05--ai-dungeon-retired-tier)
+
+## 9. Economics that constrain the promise
+
+Price must cover the entire sold experience, including bad outcomes. For a period let R be earned service revenue, A the fixed creator allocation owed where that offer applies, H hosting/storage/delivery cost, G all paid generation including failed attempts, M payment/refund/support cash cost, and F allocated fixed overhead. Cash contribution is R − A − H − G − M − F. A host-only test does not invent a creator allocation that is absent from its offer; the eventual platform membership cannot omit its accepted allocation to improve the apparent margin.
+
+Cash received is not all earned or freely spendable. Unused purchased AI, undelivered prepaid service, amounts owed to creators, approved refunds and uncertain execution exposure represent different obligations. Keep them visible without counting one reservation twice. A useful funding condition is K + Q + C + c ≤ B: known incurred cost K, conservative unresolved exposure Q, remaining already committed work C and a proposed new commitment c must fit authorized budget B. Settlement moves an amount between categories; it does not make a second charge. World and whole-service authority both apply.
+
+An illustrative sensitivity calculation, with invented assumptions rather than adopted prices: ten hosts at $40 per month produce $400 of service revenue. If each costs $9 hosting, $8 paid execution and $2 payment/support cash, their variable cost is $190. With $150 fixed overhead, $60 remains before founder labor, taxes and reserves. If heavy usage raises execution to $18 per host, contribution becomes −$40. If these were platform offers also owing $5 per subscriber to creators, another $50 would be unavailable to the operator. These cases cannot establish profitability; they show why the offer type and heavy-use tail matter.
+
+At two founder hours per customer per month, the same ten customers require 20 hours before shared operations and development. Choosing an illustrative $30 hourly value makes that $600 of labor exposure, even if nobody pays a salary yet. Record actual weekly hours alongside cash. The archive's ten-renewal objective demands sustainable founder time as well as positive receipts.
+
+For authoring, compare expected paid cost per admitted invention with the whole attempt distribution. If paid attempts average an assumed $0.20 and only one in four reaches qualifying admission, the simplistic generation component is $0.80 per admission before nested work, support or difficult outliers. Failed attempts cost money despite consuming no completed unit. A finite invention allowance alone therefore does not cap AI spending; retain independent request, session, world and service funding bounds.
+
+For a dedication, expected obligation includes initial review, publication, likely correction/support, record/export storage and remedy reserve. It cannot be priced as a free string because it uses no model. For hosting, retain enough operational capacity for expiry, retrieval, payment reconciliation and refunds after new sales stop. When aggregate demand approaches the qualified envelope, close optional sales or new extras first and honor existing obligations; silently weakening already purchased service is not an economic optimization.
+
+## 10. Paid validation and game-first sequence
+
+No paid test is run by this specification. Before execution, the accountable operator must approve the actual audience and territory, precise offer/price/counts, participant/workload profile, payment/refund method, funded spending ceiling, available weekly hours, review date, supported release/restore scope, retrieval/deletion terms and applicable rights requirements. Record the real funds and who can authorize spending. A placeholder amount, benchmark or willingness to pay is not that authorization. Keep the offer closed while essential delivery inputs remain unqualified.
+
+First demonstrate one enjoyable attended loop and complete no-cost product walkthroughs of buy/use/exhaust/cancel/return. Qualify the bounded payment and restore/reconciliation behaviors separately before accepting customer money. Then invite the authorized small paid audience, observe actual costs and play, and evaluate the source objective of ten renewing customers over their actual renewal opportunities. A first charge or ten expressions of support is insufficient. Do not infer demand from purchased dedication receipts.
+
+Measure who voluntarily returns, what playable activity they value, why they cancel, and whether the sustainable allowance interrupts that activity. Count successful and failed authoring, uncertainty duration, total service cost, heavy use, refunds, support cases and founder hours. Track completed play and wanted creations rather than maximizing generated text, calls or billable attempts. Compare remaining cash and time with outstanding liabilities before expanding the cohort. If the approved envelope cannot cover commitments, stop new sales and resolve existing service before it is exhausted.
+
+The order is deliberate: useful native game; one attended host offer; complete account/billing recovery; evidence of renewal; optional dedication; then separately qualified platform/premium expansion with DG28. DG30's fund is independent. Voice, constant autonomous activity and a storefront full of packs do not repair a weak return-to-play loop. If customers mainly want to craft and explore, reduce authoring ceremony. If no one values historical recognition, omit that offer. If no sustainable price supports required AI behavior, change the playable scope or economics before selling an impossible promise.
+
+The selected monthly/no-rollover policy sacrifices some flexibility for clear obligations, and proration may make a late-month purchase unattractive. The schedule-next-month choice is honest, but observed confusion can justify changing the period policy before launch. The one-unit material-revision rule also needs play observation: if ordinary iteration repeatedly feels like repurchasing the same idea, refine classification or allowance rather than charging for implementation fragments. A complete design is not evidence these choices already work.
+
+## 11. Acceptance and unresolved delivery
+
+Product review and later delivery must demonstrate these outcomes with real state evidence where implementation is required:
+
+- A free guest joins a funded world and completes established native play without a second hosting purchase; premium entry does not require platform membership.
+- A player can explain units, world AI, optional art and hosting from the offer and Billing. Exhausting each changes only its appropriate permission or service behavior.
+- Helpers, independent bundles, material revisions, repairs, rejected attempts and imports receive the stated classification before costly work; dispute correction is visible.
+- Two worlds requesting the last unit, a month boundary, permission revocation, late settlement and restore produce one reconciled request and no duplicated unit or charge.
+- Closing checkout, receiving duplicate/out-of-order events, failed upgrades and late canceled payments preserve the correct current benefit and useful receipt.
+- Cancellation retains paid-through service; expiry produces a coherent held world, working authorized retrieval and the adopted compatible-release path. A blocked export states its actual missing rights.
+- Refund approval, execution failure and chargeback overlap stay traceable, protect unrelated participants' history and do not regrant spent benefits.
+- An approved dedication is published once or remedied; correction/privacy withdrawal and retirement exports work without creating NPC knowledge or gameplay privilege.
+- The operator can account for incurred cost, outstanding exposure, unused prepaid obligations, creator allocations and actual founder hours under the selected funding/time envelope.
+- Observed customers renew for a game they enjoy at a sustainable scope. If they do not, CO05 records the failure and changes or stops the offer rather than declaring the mechanics complete.
+
+These are acceptance obligations, not tests claimed to have passed. Adoption, technical payment/entitlement design, implementation, compatible recovery qualification, capacity measurement and actual paid validation remain open under CO01–CO06. The review below informs the proposal without selecting vendors or converting another product's policy into Open Legend's terms.
+
+## 12. Primary research and design inferences
+
+Sources were checked October 8, 2026. These official product/support/documentation pages establish their stated behavior, not measured Open Legend outcomes. No purchase, payment integration or customer study was performed. Living support pages may change; historical announcements are identified as such. Each record separates the relevant observation from the proposed design inference.
+
+### S27-01 — Minecraft Realms
+
+Source: [Minecraft Realms](https://www.minecraft.net/en-us/realms). **Observed:** the host purchases the Realm; invited members do not each need the subscription. The FAQ states a finite post-expiry world-download window. **Inference:** separate payer, guest access, hosting and retrieval, with an explicit deadline. Minecraft's 18-month policy does not justify that duration or cost for Open Legend. **Access:** official FAQ/product comparison read; no purchase or preservation test.
+
+### S27-02 — FFXIV cancellation
+
+Source: [Square Enix cancellation FAQ](https://support.na.square-enix.com/faqarticle.php?id=5382&kid=68504). **Observed:** canceling renewal preserves play through the paid period; the selected service account matters. **Inference:** show exact paid-through access and the offer being canceled. Its refund policy is not Open Legend's recommendation or a legal rule. **Access:** full official FAQ read; no displayed publication date or account operation.
+
+### S27-03 — Patreon subscription billing
+
+Source: [Patreon Subscription Billing FAQ](https://support.patreon.com/hc/en-us/articles/8779192853261-Subscription-Billing-FAQ). **Observed:** this billing model explains immediate upgrade differences, future downgrades, paid-through reactivation and failed-payment consequences. **Inference:** distinguish term changes from grants, and explain late settlement without duplicate entitlement. Immediate revocation is not automatically suitable for a shared ongoing world. **Access:** official member-experience sections read; findings apply to the named billing model.
+
+### S27-04 — AI Dungeon credits
+
+Source: [What are Credits?](https://help.aidungeon.com/faq/what-are-image-credits). **Observed:** credits purchase images or additional context on selected models; eligible actions and retries can spend them. **Inference:** name the actual spending unit and explain retry cost. Keep successful invention admission distinct from provider spend and optional art. No free fallback model or provider cost is established for Open Legend. **Access:** full official article read; its examples are publisher illustrations.
+
+### S27-05 — AI Dungeon retired tier
+
+Source: [Steam and Traveler tier retrospective](https://help.aidungeon.com/faq/what-happened-to-the-travelers-tier). **Observed:** benefits of a former one-time tier changed as some capabilities became free; replacement benefits and an explored early-support badge are described. **Inference:** retirement needs actual remedies and delivered recognition, without perpetual compute promises. The possible badge is not evidence of completed fulfillment. **Access:** full official retrospective read; it covers historical 2022–2024 events and later updates.
+
+### S27-06 — Stripe fulfillment
+
+Source: [Fulfill orders](https://docs.stripe.com/checkout/fulfillment). **Observed:** checkout completion can precede delayed payment success; customers can lose the redirect; fulfillment must handle repeated/concurrent execution. **Inference:** distinguish processing, paid-unfulfilled and ready, and recover the same purchase after disconnection. **Access:** relevant official hosted-checkout documentation read; no provider selected or API/payment called.
+
+### S27-07 — Stripe event delivery
+
+Source: [Receive Stripe events](https://docs.stripe.com/webhooks). **Observed:** deliveries can repeat, retries can continue, and arrival order is not guaranteed. **Inference:** preserve the current valid subscription/claim state despite late events and saved-world replay; last arrival cannot define authority. **Access:** official ordering, duplicate and retry sections read. This supports recovery behavior without adopting an implementation.
+
+### S27-08 — Stripe refunds
+
+Source: [Refund and cancel payments](https://docs.stripe.com/refunds). **Observed:** refunds can be pending or fail, and concurrent disputes can create duplicate reimbursement risks. **Inference:** approval and completion need distinct statuses, funded remedy responsibility and scoped benefit adjustments. Its method-specific rules do not select the voluntary refund offer. **Access:** relevant official pending/failure/dispute sections read; no refund performed.
+
+### S27-09 — Second Life object permissions
+
+Source: [Building Tools](https://wiki.secondlife.com/wiki/Building_Tools). **Observed:** creator, current owner and subsequent-owner permissions are distinct object properties. **Inference:** possession, original attribution and redeemed naming rights should have separate meanings. This does not prove immutable credit, authorize resale or grant rights to others' work. **Access:** project-hosted wiki properties read; editable historical documentation, not a current commercial guarantee.
+
+### S27-10 — EVE monument
+
+Source: [Last chance to get on the monument](https://www.eveonline.com/news/view/last-chance-to-get-on-the-monument). **Observed:** the May 24, 2023 campaign distinguishes adding new names from chevrons for existing names and states a bounded eligibility window. **Inference:** define first attribution and repeat recognition precisely, preserving applicable terms without scarcity pressure or perpetual-hosting claims. **Access:** complete official historical announcement read; no claim about current monument maintenance.
