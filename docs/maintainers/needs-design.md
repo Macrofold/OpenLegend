@@ -263,6 +263,8 @@ ND15, ND14's calls and the selected ND16 propagation/recognition families. Settl
 
 **Start and parallel boundary:** Phone calls consume DG24's contact/delivery choices; local voice does not need phones. Room effects use actual geometry. A narrow earlier need for waking, language or rooms may pull only that ND16 slice forward. Text remains complete and no full acoustics catalogue is required. **Existing owners:** HE/NC/MP, spatial/world-family and spending owners; PS04 for timed speech.
 
+**Product proposal, October 8, 2026:** [Voice and calls](../projects/voice-and-calls-feature-spec.md) separates optional playback of already permitted committed words, reviewed microphone drafts, an explicitly enabled private two-human slate conversation, a later timed doorway exchange and separately qualified raw human voice. It preserves current text/caption timing, incomplete hearing, unknown identity and complete text participation. [HE07](hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions), [NC23](narration-and-conversations.md#nc23--consented-private-slate-calls), existing PS04 and the [world profile](../worlds/base/voice-and-calls.md) retain their respective stages. Technical/runtime qualification and D10 adoption remain open; no media provider or primitive-start phone is selected.
+
 ### Band 6 — Offer sustainable service and wider participation
 
 #### DG27 — Customer and supporter offers
@@ -811,3 +813,4 @@ The game-inspiration library and game dossiers, worldbuilding research library, 
 Prefer current canonical owners and concrete project/tracker evidence over old blanket status statements. Examples found during this pass include earlier inactive-world pause assumptions versus the newer continuing-world direction; earlier timing/camera descriptions versus current owners; and old "no art study" or pre-foundation implementation claims. Those sources were left in place. The register preserves the useful future intent without adopting superseded behavior or undertaking unrelated documentation cleanup.
 
 The [root development-save policy](../../AGENTS.md#development-save-policy), current privacy/authority boundaries, and existing acceptance requirements remain controlling. Future portability, live-definition changes, retention or service promises must be designed within those constraints; an entry here does not change them.
+

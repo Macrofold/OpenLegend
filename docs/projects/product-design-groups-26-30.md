@@ -54,3 +54,4 @@ Within the active group, independent readers may research sources and critique c
 - Constraints: [Limits inventory system](../limits/README.md); each group links its applicable inventory.
 - Prior completed assignment: [Groups 21–25](completed/product-design-groups-21-25.md).
 - Governing structure: [Feature documentation](../feature-documentation.md) and [engine/world boundaries](../engine-and-world-boundaries.md).
+

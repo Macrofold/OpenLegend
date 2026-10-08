@@ -53,3 +53,27 @@ Current source inspection of the main/hearing integration, 2026-09-27. Values ar
 ## HC-L05 — Current authority and neighboring consequences
 
 **Proposed · Restrictiveness: preserve semantic ownership.** Current speaker control, access, erasure and restore generation govern references and submissions. A link cannot amend an agreement, remove an injury or waive a claim. Administrative correction's conservative derived-state invalidation stays explicitly separate; CE02 is later selected convenience, not automatic propagation. Supported restore preserves actual new-event order at its cut; no historical acoustics reconstruction or development-save compatibility expansion.
+
+## VO-L01 — Optional committed-speech playback
+
+**Proposed DG26 · Restrictiveness: Medium.** First audio renders already committed listener-permitted text only, not NP05 previews or a future physical speaking process. Playback is optional and enabled for a selected exchange; text remains complete. Unidentified sources use neutral nonidentifying presentation, partial words use only retained fragments and content-neutral gaps, and no independent listener cap is introduced. This limits expression to preserve actual knowledge. Expand only with a supported recognition/timed-speech consumer. [Product](../projects/voice-and-calls-feature-spec.md) · [HE07](../maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions).
+
+## VO-L02 — Playback queue and freshness
+
+**Proposed · Restrictiveness: Safe.** One active utterance and one pending utterance per listening client; a pending utterance may begin only within ten real seconds of its commitment. Stop, skip, overflow or expiry removes optional playback, never heard evidence; history remains available. Do not displace the active utterance merely to chase every new line. No automatic replay after hidden-tab return, reconnect or restore. This bounds stale conversation and optional synthesis admission, not total heard history or source population. Explicit historical reading is a separate deliberate request; current access/spending still apply. Revisit after an observed missed-useful-line or overlap problem, not to maximize audio minutes.
+
+## VO-L03 — Microphone draft capture
+
+**Proposed · Restrictiveness: Safe.** One explicitly active capture/draft operation per controlling person; automatic capture stops at thirty real seconds, retaining the resulting editable draft. Input/submit limits remain the selected channel's existing limits; there is no auto-split or auto-send. Thirty seconds is a convenience/work envelope, not a bound on encoded request bytes. Complete encoded upload, response, concurrency and provider reservation bounds are still unselected technical gates before offering capture. At any admission boundary preserve editable text and let the player type; silence or failed transcription creates no speech. [HE07.2](../maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) owns qualification and reconsideration if natural short dictation is repeatedly cut.
+
+## VO-L04 — Media retention and paid reuse
+
+**Proposed · Restrictiveness: Very safe for stored media.** No permanent recording, voice cloning, public reusable audio link or background-world synthesis in the first scope. Raw capture is transient for the expressly requested draft; synthesized audio is transient presentation. Exact permitted renderings may reuse work only while authority, content, identity and licensed voice meaning match; distinct partial projections are not one unredacted asset. Concrete total cache bytes, expiry, connection deadlines, vendor retention terms and retry/uncertain-cost accounting remain required before media launch. Existing text retention and authorized erasure are not narrowed by deleting transient media. Stop admitting optional work before the funded ceiling; queued or failed work does not become free.
+
+## VO-L05 — Timed speech and raw voice remain separate capabilities
+
+**Proposed · Restrictiveness: Very safe.** Current instantaneous speech remains usable. First selected timed consumer is a small doorway exchange with reviewed words and synthetic rendering, under PS04/HE/NC. Raw human audio, unreviewed authoritative transcripts, voice-familiarity learning, language translation, loud-sound waking and indirect-room propagation are not silently enabled by playback. Raw voice needs a world contract acknowledging actual voice-identity disclosure and an enforceable per-listener media policy. The restriction trades spontaneous vocal expression for truthful current evidence; the product specifies the later journey and its adoption/technical qualifications without claiming it has shipped.
+
+## VO-L06 — Aggregate growth is not solved by short playback
+
+**Proposed assessment · Restrictiveness: Too liberal until measured and admitted.** Actual utterances, complete audible audiences and retained text grow with play; potential partial audio variants can grow with listeners, while connected silent media sessions and delivery fan-out add independent costs. A two-item client queue does not bound these dimensions. Existing HE/NC/PS/spending owners must qualify total prepared work, connections, request bytes, transient media bytes, egress and retained histories. Optional media is withheld before admission at its limit; required text/evidence is not silently truncated. No universal population, lifetime-text or model-cost number is selected by this proposal.

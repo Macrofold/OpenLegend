@@ -284,3 +284,9 @@ These sources support acoustic and accessibility concepts, not the proposed game
 - Limits and constraints: [hearing, captions and perceived history](limits/hearing-and-speech.md).
 - Related contracts: [Timed UI](timed-ui.md) and [perceived history](perceived-world-events.md).
 - Current integration evidence: [combined verification](verification/hearing-main-integration.md).
+
+## Optional media product proposal
+
+[DG26's voice and call specification](projects/voice-and-calls-feature-spec.md) proposes optional synthesis of exactly the listener's already committed evidence and private reviewed microphone composition. It does not change this document's instantaneous speech, partial words, identity, full audible audience, caption clocks or current NP05 preview boundary. A quiet or unidentified rendering never contains hidden original words or a secretly identifying voice.
+
+[HE07](maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) owns the independently useful media/input stages; a later actual timed doorway exchange consumes PS04's existing time/overlap owner. [NC23](maintainers/narration-and-conversations.md#nc23--consented-private-slate-calls) owns the separately enabled private slate conversation. These are product proposals with adoption, technical/runtime and qualification still open, not delivered media. [VO constraints](limits/hearing-and-speech.md#vo-l01--optional-committed-speech-playback) retain the selected restrictions and unresolved aggregate media bounds.

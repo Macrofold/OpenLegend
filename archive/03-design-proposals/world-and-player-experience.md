@@ -144,7 +144,7 @@ Spatial voice needs proximity-based subscription permissions, playback positioni
 
 [DG24's product specification](../../docs/projects/world-text-messages-feature-spec.md) now selects a complete optional asynchronous-text journey: two real people acquire actual devices, exchange contacts locally by mutual assent, pursue separate activities, and read a private note when they choose. The [message-slate profile](../../docs/worlds/base/text-messages.md) openly authors magical same-world reach with no battery, postage or artificial delay. It does not add a phone to the primitive start.
 
-Submission is distinct from private arrival and reading; there is no sender-facing presence or read surveillance. Human-private evidence remains participant-restricted through NPC derivatives and save/export. The first two-human experience precedes independently qualified NPC correspondence. The broader phone and call ideas above remain future options under DG26; asynchronous text does not require media, a carrier economy or relay infrastructure.
+Submission is distinct from private arrival and reading; there is no sender-facing presence or read surveillance. Human-private evidence remains participant-restricted through NPC derivatives and save/export. The first two-human experience precedes independently qualified NPC correspondence. The [DG26 voice/call proposal](../../docs/projects/voice-and-calls-feature-spec.md) now develops the separate media/call journey: permitted committed-word playback and reviewed dictation first; an explicitly enabled two-human slate exchange, timed speech and raw human voice remain independently scoped later capabilities. [The call profile](../../docs/worlds/base/voice-and-calls.md) specifies consent, private words without automatic local emission, active-conversation choice and ended-call recovery. Asynchronous text remains independently useful and does not require media, a carrier economy or relay infrastructure.
 
 ## Bounded sectors and a growing world
 
@@ -155,3 +155,4 @@ Add biomes and scenarios only when existing residents can use them meaningfully.
 ## Product boundaries for the first release
 
 The first loop combines survival, social choices and discovery. Built-in gathering/eating/resting, meaningful needs and NPC death, and an explicit accelerated clock belong in the initial foundation. Combat depth, inheritance, intensive farming, extensive anatomy, businesses, advanced lifecycle simulation, phones, and spatial voice can follow. Quota exhaustion should leave movement, known interactions, basic needs management, and social continuity playable. The archive's [roadmap](../05-project/roadmap.md) proposes concrete gates for adding each layer.
+
