@@ -116,6 +116,8 @@ Do not expand a configuration whose sustainable budget makes NPCs incoherent, wh
 
 A successful early result is a compelling small community with bounded background cost, truthful transitions, fair admission, and memorable relationships. Broader concurrency then becomes an incremental measured program rather than a product promise funded by hypothetical efficiency.
 
+The [DG29 admission and travel proposal](../projects/participants-and-world-travel-feature-spec.md) joins the ordinary visit to complete overload, recovery and mature-history qualification. Its one-request and ready-offer candidates are service proposals, not capacity results. The accepted shared-world population and concentration targets remain; many small worlds, a queue or a restricted social proof cannot replace them. Complete cost includes retained worlds, legitimate audience preparation, failed/uncertain work, recovery and operator time, alongside useful participant-hours. [PT01–PT06](../maintainers/participants-and-world-travel.md) owns the focused consumer while PS06/PS08 retain wider evidence.
+
 ## Maintained records
 
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).

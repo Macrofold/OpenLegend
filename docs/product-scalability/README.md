@@ -104,6 +104,8 @@ This suite composes [engine/world boundaries](../engine-and-world-boundaries.md)
 
 Operational distribution remains in [delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md); account participation and access remain in the [multiplayer-authority design](../projects/multiplayer-authority-tech-design.md). This work neither promises literal consciousness nor requires a scientific definition of sentience: the product contract concerns autonomous fictional characters with durable, scoped memory and consistent behavior.
 
+The researched [participant and world-travel proposal](../projects/participants-and-world-travel-feature-spec.md) makes a first PS05–PS08 consumer concrete: a useful same-world camp visit, then a restricted same-operator compatible-world route, complete custody/return and a carried-bundle expansion. It preserves the accepted concentrated shared-world targets and adds qualification for many small worlds, mass return and mature histories. [PT01–PT06](../maintainers/participants-and-world-travel.md) consumes these existing owners; [PS-L34–PS-L41](../limits/product-scalability.md#ps-l34--first-useful-visit-scope) contains the proposed scope and service values. Adoption and runtime evidence remain open.
+
 ## Maintained records
 
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
