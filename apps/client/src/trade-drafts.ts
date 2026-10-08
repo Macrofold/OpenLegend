@@ -1,4 +1,5 @@
 import { useSyncExternalStore, type SetStateAction } from 'react';
+import { readInventoryCommand } from './inventory-command-record';
 import type { ItemTradeView, TradeLotView } from '@open-legend/protocol';
 
 export interface TradeDraft {
@@ -47,14 +48,13 @@ function readDraft(key: string): SavedTradeDraft | undefined {
   }
 }
 
+type TradeState = SavedTradeDraft & { pending: boolean; inventoryReadBlocked: boolean };
+type InventoryRecovery = { key?: string; scope: string };
 interface TradeDraftStore {
-  getSnapshot(): SavedTradeDraft & { pending: boolean };
+  recovery?: InventoryRecovery;
+  getSnapshot(): TradeState;
   subscribe(listener: () => void): () => void;
-  update(
-    change: (
-      previous: SavedTradeDraft & { pending: boolean },
-    ) => SavedTradeDraft & { pending: boolean },
-  ): void;
+  update(change: (previous: TradeState) => TradeState): void;
   start(): boolean;
   active: boolean;
 }
@@ -74,6 +74,7 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
       uncertain: false,
     }),
     pending: false,
+    inventoryReadBlocked: false,
   };
   const listeners = new Set<() => void>();
   const releaseUnused = () =>
@@ -90,7 +91,22 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
     });
   const store: TradeDraftStore = {
     active: true,
-    getSnapshot: () => value,
+    getSnapshot: () => {
+      if (store.recovery) {
+        const original = store.recovery.key
+          ? readInventoryCommand(store.recovery.key)
+          : { status: 'unknown' as const };
+        const blocked = !!original && !original.request;
+        const receipt =
+          original?.request?.tradeScope === store.recovery.scope
+            ? original.request.commandId
+            : undefined;
+        const inventoryReceipt = blocked ? value.inventoryReceipt : receipt;
+        if (value.inventoryReadBlocked !== blocked || value.inventoryReceipt !== inventoryReceipt)
+          value = { ...value, inventoryReadBlocked: blocked, inventoryReceipt };
+      }
+      return value;
+    },
     subscribe(listener) {
       listeners.add(listener);
       return () => {
@@ -105,7 +121,7 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
       if (next === value) return;
       value = next;
       try {
-        const { pending: _pending, ...saved } = value;
+        const { pending: _pending, inventoryReadBlocked: _blocked, ...saved } = value;
         sessionStorage.setItem(key, JSON.stringify(saved));
       } catch {
         /* Browser storage is optional; sharing still works without it. */
@@ -114,7 +130,15 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
       if (!listeners.size) releaseUnused();
     },
     start() {
-      if (!store.active || value.pending || value.uncertain || value.inventoryReceipt) return false;
+      store.getSnapshot();
+      if (
+        !store.active ||
+        value.pending ||
+        value.uncertain ||
+        value.inventoryReceipt ||
+        value.inventoryReadBlocked
+      )
+        return false;
       store.update((previous) => ({ ...previous, pending: true }));
       return true;
     },
@@ -123,8 +147,13 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
   return store;
 }
 /** One draft and submission guard for the Inventory and person views of the same offer. */
-export function useTradeDraft(key: string, offers: ItemTradeView['offers']) {
+export function useTradeDraft(
+  key: string,
+  offers: ItemTradeView['offers'],
+  recovery?: InventoryRecovery,
+) {
   const store = tradeDraftStore(key, offers);
+  store.recovery = recovery;
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const field = <K extends keyof typeof state>(name: K, next: SetStateAction<(typeof state)[K]>) =>
     store.update((previous) => ({
@@ -158,7 +187,7 @@ export function prepareTradeInventoryReceiptResolution(scope: string, commandId:
     (current.inventoryReceipt && current.inventoryReceipt !== commandId)
   )
     throw new Error('The retained trade receipt changed. Check its original result.');
-  const { pending: _pending, ...retained } = current;
+  const { pending: _pending, inventoryReadBlocked: _blocked, ...retained } = current;
   const serialized = JSON.stringify({ ...retained, inventoryReceipt: undefined, uncertain: false });
   // Keep the live guard until Inventory has also removed its original request.
   // A failed write/read-back leaves that exact request available for another receipt check.
@@ -167,7 +196,7 @@ export function prepareTradeInventoryReceiptResolution(scope: string, commandId:
     throw new Error('The resolved trade receipt could not be retained. Check its original result.');
   return () => {
     store.update((value) =>
-      value.inventoryReceipt === commandId
+      value.inventoryReceipt === commandId || value.inventoryReceipt === undefined
         ? { ...value, inventoryReceipt: undefined, uncertain: false }
         : value,
     );

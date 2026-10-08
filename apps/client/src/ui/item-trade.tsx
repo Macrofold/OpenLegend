@@ -11,12 +11,14 @@ export function ItemTrade({
   command,
   selected,
   initialQuantity,
+  inventoryRequestKey,
 }: {
   trade: ItemTradeView;
   connected: boolean;
   command(action: ActionOption): Promise<ApiResult>;
   selected?: TradeLotView;
   initialQuantity?: string;
+  inventoryRequestKey?: string;
 }) {
   const labels = trade.labels;
   // The server scopes this key to account, character and save timeline, independent
@@ -27,13 +29,14 @@ export function ItemTrade({
     reviewed,
     uncertain,
     inventoryReceipt,
+    inventoryReadBlocked,
     pending,
     setDraft,
     setReviewed,
     setUncertain,
     setPending,
     start,
-  } = useTradeDraft(draftKey, trade.offers);
+  } = useTradeDraft(draftKey, trade.offers, { key: inventoryRequestKey, scope: trade.scope });
   const [message, setMessage] = useState('');
   useEffect(() => {
     if (
@@ -72,7 +75,7 @@ export function ItemTrade({
           }
         : value,
     );
-    if (!inventoryReceipt) setUncertain(false);
+    if (!inventoryReceipt && !inventoryReadBlocked) setUncertain(false);
   }
   const giveQuantity = draft && exactQuantity(draft.giveQuantity, draft.give?.quantity);
   const receiveQuantity =
@@ -220,6 +223,7 @@ export function ItemTrade({
                         !connected ||
                         pending ||
                         !!inventoryReceipt ||
+                        inventoryReadBlocked ||
                         uncertain ||
                         !action.enabled ||
                         (changed && action.command.handoverOperation === 'accept')
@@ -233,7 +237,9 @@ export function ItemTrade({
                 ))}
                 <Button
                   variant="quiet"
-                  disabled={!connected || pending || !!inventoryReceipt || uncertain}
+                  disabled={
+                    !connected || pending || !!inventoryReceipt || inventoryReadBlocked || uncertain
+                  }
                   onPress={() => begin(offer)}
                 >
                   {labels.counter}
@@ -244,7 +250,9 @@ export function ItemTrade({
         })}
         <Button
           variant="quiet"
-          disabled={!connected || pending || !!inventoryReceipt || uncertain}
+          disabled={
+            !connected || pending || !!inventoryReceipt || inventoryReadBlocked || uncertain
+          }
           onPress={() => {
             if (draft) setDraft((value) => (value ? { ...value, prior: undefined } : value));
             else begin();
@@ -255,7 +263,9 @@ export function ItemTrade({
         {selected && (
           <Button
             variant="quiet"
-            disabled={!connected || pending || !!inventoryReceipt || uncertain}
+            disabled={
+              !connected || pending || !!inventoryReceipt || inventoryReadBlocked || uncertain
+            }
             onPress={() => begin()}
           >
             Use {initialQuantity ?? selected.quantity} × {selected.label} in a new offer
@@ -376,7 +386,13 @@ export function ItemTrade({
               }
               <Button
                 disabled={
-                  !connected || pending || !!inventoryReceipt || uncertain || !valid || stale
+                  !connected ||
+                  pending ||
+                  !!inventoryReceipt ||
+                  inventoryReadBlocked ||
+                  uncertain ||
+                  !valid ||
+                  stale
                 }
                 busy={pending}
                 onPress={submit}
@@ -386,10 +402,11 @@ export function ItemTrade({
             </div>
           </div>
         )}
-        {inventoryReceipt && (
+        {(inventoryReceipt || inventoryReadBlocked) && (
           <p role="status">
-            An Inventory trade request needs its original receipt checked. Open Inventory and check
-            the original result before trading again.
+            {inventoryReadBlocked
+              ? 'The original Inventory request could not be read. Restore browser storage and open Inventory to recover it before trading again.'
+              : 'An Inventory trade request needs its original receipt checked. Open Inventory and check the original result before trading again.'}
           </p>
         )}
         {message && <p role="status">{message}</p>}

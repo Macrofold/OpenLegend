@@ -5,54 +5,14 @@ import {
   retainTradeInventoryReceipt,
   prepareTradeInventoryReceiptResolution,
 } from '../trade-drafts';
-import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
+import type { CommandDispatcher } from '../command-request';
+import {
+  inventoryCommandStorageKey,
+  readInventoryCommand as restore,
+  type PendingCommand,
+} from '../inventory-command-record';
 
-type PendingCommand = CommandRequestIdentity & {
-  command: unknown;
-  label: string;
-  tradeScope?: string;
-};
 type PendingState = { request?: PendingCommand; status: 'sending' | 'unknown' | 'checking' };
-
-function restore(key: string): PendingState | undefined {
-  // Stored commands are only ever sent to the read-only receipt lookup. They are never
-  // reconstructed as executable ActionOptions after a connection/control remount.
-  try {
-    const text = sessionStorage.getItem(key);
-    if (!text) return undefined;
-    if (text.length > 65536) return { status: 'unknown' };
-    const value: unknown = JSON.parse(text);
-    if (
-      typeof value === 'object' &&
-      value !== null &&
-      'commandId' in value &&
-      typeof value.commandId === 'string' &&
-      value.commandId.length <= 200 &&
-      'commandEpoch' in value &&
-      typeof value.commandEpoch === 'string' &&
-      value.commandEpoch.length <= 200 &&
-      'label' in value &&
-      typeof value.label === 'string' &&
-      value.label.length <= 2000 &&
-      'command' in value &&
-      (!('tradeScope' in value) ||
-        (typeof value.tradeScope === 'string' && value.tradeScope.length <= 2000))
-    )
-      return {
-        status: 'unknown',
-        request: {
-          commandId: value.commandId,
-          commandEpoch: value.commandEpoch,
-          label: value.label,
-          command: value.command,
-          ...('tradeScope' in value ? { tradeScope: value.tradeScope as string } : {}),
-        },
-      };
-  } catch {
-    /* Keep the unresolved guard even when its saved request cannot be read. */
-  }
-  return { status: 'unknown' };
-}
 
 /** Keep uncertain custody changes across permitted reconnects. A missing receipt does
  * not justify a fresh gesture: it cannot prove that the earlier move did not happen. */
@@ -77,10 +37,10 @@ export function useInventoryCommand({
   command: CommandDispatcher;
   onResolved(result: ApiResult): void;
 }) {
-  const storageKey = recoveryScope
-    ? `open-legend:inventory-command:${JSON.stringify([recoveryScope, worldId, actorId, timeline])}`
-    : undefined;
-  const [pending, setPending] = useState(() => (storageKey ? restore(storageKey) : undefined));
+  const storageKey = inventoryCommandStorageKey(recoveryScope, worldId, actorId, timeline);
+  const [pending, setPending] = useState<PendingState | undefined>(() =>
+    storageKey ? restore(storageKey) : undefined,
+  );
   const [message, setMessage] = useState('');
   const guard = useRef(!!pending);
   const activeCommandId = useRef(pending?.request?.commandId);
@@ -104,6 +64,10 @@ export function useInventoryCommand({
     const saved = restore(storageKey);
     if (saved && !saved.request)
       throw new Error('The retained inventory request could not be read.');
+    if (saved?.request && saved.request.commandId !== commandId)
+      throw new Error(
+        'The retained inventory request changed. Its original result must be checked.',
+      );
     // A response from a former component can arrive after reconnect recovered that
     // command and the current component started another one. It cannot erase the latter.
     const releaseTrade = tradeScope

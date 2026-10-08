@@ -1,3 +1,4 @@
+import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { ItemTrade } from './item-trade';
 import { OutingStatus } from './outing-status';
 import { namePhrase } from '@open-legend/language';
@@ -214,6 +215,12 @@ export function EntityDetail({
         <ItemTrade
           key={entity.trade.scope}
           trade={entity.trade}
+          inventoryRequestKey={inventoryCommandStorageKey(
+            view.access?.commandRecoveryScope,
+            view.worldId,
+            view.player.id,
+            view.saveTimeline,
+          )}
           connected={connected}
           command={command}
         />

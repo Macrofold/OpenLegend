@@ -67,6 +67,31 @@ jobs:
             tests/browser/god-editor.spec.ts \
             tests/browser/time.spec.ts \
             --output test-results/interface
+      # Temporary finite observations for the October 8 requested PR review.
+      # Preserve every ordinary result; these steps cannot turn a failed gate green.
+      - name: Observe review corrections through native owners
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        run: node --import tsx scripts/oct8-review-native.mjs test-results/oct8-review/native
+      - name: Observe review corrections through actual components
+        if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
+        timeout-minutes: 3
+        run: node --import tsx scripts/oct8-review-components/observe-components.mjs
+        env:
+          OPENLEGEND_OBSERVATION_OUTPUT: test-results/oct8-review/components
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oct8-review-evidence
+          path: test-results/oct8-review/
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oct8-review-failure-traces
+          path: test-results/interface/**/trace.zip
+          if-no-files-found: ignore
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:

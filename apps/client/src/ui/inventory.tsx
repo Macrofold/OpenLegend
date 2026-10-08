@@ -1,3 +1,4 @@
+import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { namePhrase } from '@open-legend/language';
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from 'react';
 import { Dialog, Popover } from 'react-aria-components';
@@ -972,6 +973,12 @@ function InventoryWorkspace({
                                 <ItemTrade
                                   key={trade.scope}
                                   trade={trade}
+                                  inventoryRequestKey={inventoryCommandStorageKey(
+                                    view.access?.commandRecoveryScope,
+                                    view.worldId,
+                                    view.player.id,
+                                    view.saveTimeline,
+                                  )}
                                   connected={canAct && !draftStale}
                                   command={(action) => send(action, selection.side, trade.scope)}
                                   initialQuantity={amountDraft.value}
