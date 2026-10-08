@@ -26,13 +26,13 @@ A candidate first experience is a small wilderness group with survival knowledge
 
 Test **one plan around $39 per month per world owner**. This is a premium-price hypothesis, not a selected public price or evidence of demand.
 
-| Included benefit | Proposed boundary |
-|---|---|
-| One private hosted world | Small, explicitly defined population and operating limits |
-| God controls and persistent history | Controls apply to the owner's world; save and recovery behavior is explained |
-| Conversations, inventions, and autonomous deliberation | A meaningful included AI allowance shared across the world |
-| Additional AI usage | Optional prepaid usage with a hard spending limit; no automatic overages by default |
-| Guest access, once multiplayer is ready | The owner funds the world's allowance; each guest need not subscribe |
+| Included benefit                                       | Proposed boundary                                                                   |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| One private hosted world                               | Small, explicitly defined population and operating limits                           |
+| God controls and persistent history                    | Controls apply to the owner's world; save and recovery behavior is explained        |
+| Conversations, inventions, and autonomous deliberation | A meaningful included AI allowance shared across the world                          |
+| Additional AI usage                                    | Optional prepaid usage with a hard spending limit; no automatic overages by default |
+| Guest access, once multiplayer is ready                | The owner funds the world's allowance; each guest need not subscribe                |
 
 Select population limits and included usage after measuring real play. Customers should understand the allowance without counting tokens during gameplay. Explain when it replenishes, what consumes it, and what happens when it runs out. Normal play needs to feel generous; if a sustainable allowance produces a frustrating experience, change the product, implementation, or price before expanding.
 
@@ -42,10 +42,10 @@ Charge for a working, clearly described early-access experience. Avoid selling c
 
 **Accepted direction — September 19, 2026:** give each player a recurring invention allowance based on their subscription tier. Free players can invent a limited number of things; paid tiers can include larger allowances. This refines F28/D17. Exact tier names, prices, counts and renewal rules remain undecided, and no subscription quota is implemented.
 
-| Player tier | Invention benefit | Choices still open |
-|---|---|---|
-| Free | A finite recurring allowance | **10 or 30 inventions per month** are alternative examples, not selected limits |
-| Paid tier(s) | Larger finite allowances appropriate to the subscription | Number of tiers, monthly quantities, prices and other included benefits |
+| Player tier  | Invention benefit                                        | Choices still open                                                              |
+| ------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Free         | A finite recurring allowance                             | **10 or 30 inventions per month** are alternative examples, not selected limits |
+| Paid tier(s) | Larger finite allowances appropriate to the subscription | Number of tiers, monthly quantities, prices and other included benefits         |
 
 “About one a day” describes the rough generosity of a 30-per-month allowance. It does not select a daily reset, daily cap or requirement to log in every day. Decide between a monthly allowance usable flexibly and any separate burst controls before publishing the offer. Do not advertise unlimited invention without a sustainable, explicit operating policy.
 
@@ -62,7 +62,7 @@ Proposed counting and renewal behavior:
 
 Show the current tier, included invention count, used/reserved/remaining units and next renewal time in [Billing / AI costs](../03-design-proposals/playability-and-controls.md#billing-menu-and-cost-breakdown). Distinguish **invention allowance exhausted**, **player invention locked**, and **AI spending unavailable**. Buying more AI funding does not automatically add invention units, and an available invention unit never authorizes spending or overrides a world lock. Any combined offer must say exactly what it includes.
 
-The prototype's world-wide lifetime cap of 64 techniques is a separate temporary registry bound. It is not the subscription allowance, is not per player, and does not renew. The [billing contract](../07-technical-architecture/billing-and-usage-reporting.md#player-invention-entitlements) describes the proposed separate entitlement check. This packaging direction does not expand first-playable acceptance or commit to launching every tier alongside the initial hosted-world test.
+The historical prototype registry cap of 64 techniques was separate from the proposed account allowance. The [LA108 inventory](../../docs/limits/inventions.md#la108) records that stored-count limit as removed; this document does not independently reverify runtime behavior. It must not be used as a current subscription quantity or recurring product restriction. The [billing contract](../07-technical-architecture/billing-and-usage-reporting.md#player-invention-entitlements) describes the proposed separate entitlement check. This packaging direction does not expand first-playable acceptance or commit to launching every tier alongside the initial hosted-world test.
 
 The accepted [runtime-art direction](../03-design-proposals/visual-direction.md#art-generated-during-play) uses a separate, bounded art spending allocation. Ordinary visual consequences, such as a dead rabbit, and generated variants of existing mechanics do not consume invention units. Supporting artwork for a new invention does not consume a second unit. Decide included image-generation benefits and prices separately; no tier currently promises unlimited images. Reuse persisted assets and keep immediate visual effects available when optional generation funding runs out.
 
@@ -70,7 +70,7 @@ The accepted [runtime-art direction](../03-design-proposals/visual-direction.md#
 
 An owner who accelerates time, creates many interactions, or leaves autonomous residents running can generate substantial costs. Bound spending for each world and across the service.
 
-- **Pause inactive worlds by default.** Offer background simulation only within an explicit operating budget. Stored history still incurs storage costs, which must be included in the plan.
+- **Scope absence promises to the offered world.** The first ordinary private-hosting offer may pause without active play under its disclosed profile. Optional continued communities use [DG17’s finite provisioned periods](../../docs/projects/continuing-lives-feature-spec.md#15-dg17--a-first-funded-unattended-community), explicit funding and coherent stop/resume; no monthly renewal itself promises background progression. Stored history still incurs costs. This is not a new universal absence rule for every authored world.
 - **Use ordinary code for established mechanics.** Gathering, needs, resting, and known interactions should not require fresh model calls each time. Reserve AI for useful conversation, deliberation, interpretation, and novel mechanics.
 - **Cap AI spending per world.** Include model tokens, tool calls, retries, memory processing, and autonomous background work. A cap must cover all workflows spending on behalf of that world.
 - **Keep accelerated time within the same spending ceiling.** Faster simulation cannot silently authorize more AI expenditure. Any reduction in deliberation frequency or optional paid background activity should be understandable to the owner.
@@ -83,13 +83,13 @@ These are behavioral requirements, not a prescribed vendor or agent framework. T
 
 The following numbers are budget assumptions, not measured costs or a revenue forecast. They assume each paying customer owns one world.
 
-| Item | Monthly assumption |
-|---|---:|
-| Price per paying world | $39 |
-| Variable cost per world, including AI, infrastructure, storage, and payment fees | $10 |
-| Contribution per world | $29 |
-| Shared fixed operating costs | $150 |
-| Paying worlds needed to cover those costs | 6 |
+| Item                                                                             | Monthly assumption |
+| -------------------------------------------------------------------------------- | -----------------: |
+| Price per paying world                                                           |                $39 |
+| Variable cost per world, including AI, infrastructure, storage, and payment fees |                $10 |
+| Contribution per world                                                           |                $29 |
+| Shared fixed operating costs                                                     |               $150 |
+| Paying worlds needed to cover those costs                                        |                  6 |
 
 Break-even worlds = round up(shared fixed costs / (price per world − variable cost per world)).
 
@@ -99,13 +99,13 @@ Validate the $10 variable-cost allowance and the $150 fixed-cost assumption with
 
 ## Launch and validation sequence
 
-| Stage | Work | Evidence needed to proceed |
-|---|---|---|
-| Establish boundaries | Set a personal spending ceiling, weekly time budget, and review date; instrument world costs | Scope and experimentation fit the founder's available resources |
-| Build the first paid experience | Deliver one enjoyable small-world loop with persistence, bounded AI, and basic recovery | Someone can use it and understand its value without constant founder intervention |
-| Recruit 5–10 paying early users | Demonstrate actual gameplay and invite relevant simulation enthusiasts and worldbuilders personally | People pay for the functioning experience and return to their worlds |
-| Evaluate renewals | Observe repeat use, cancellations, costs, and support burden | Ten renewing customers, positive monthly cash flow, and a sustainable time commitment |
-| Expand selectively | Add capacity or features responding to demonstrated demand | Margins and support remain manageable as usage grows |
+| Stage                           | Work                                                                                                | Evidence needed to proceed                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Establish boundaries            | Set a personal spending ceiling, weekly time budget, and review date; instrument world costs        | Scope and experimentation fit the founder's available resources                       |
+| Build the first paid experience | Deliver one enjoyable small-world loop with persistence, bounded AI, and basic recovery             | Someone can use it and understand its value without constant founder intervention     |
+| Recruit 5–10 paying early users | Demonstrate actual gameplay and invite relevant simulation enthusiasts and worldbuilders personally | People pay for the functioning experience and return to their worlds                  |
+| Evaluate renewals               | Observe repeat use, cancellations, costs, and support burden                                        | Ten renewing customers, positive monthly cash flow, and a sustainable time commitment |
+| Expand selectively              | Add capacity or features responding to demonstrated demand                                          | Margins and support remain manageable as usage grows                                  |
 
 Early acquisition should use concrete stories and short gameplay clips: a resident remembers an event, an invention changes survival, or an intervention has a surprising consequence. Test interest among people who already enjoy simulation and worldbuilding. Treat the effectiveness of each channel as an experiment.
 
@@ -115,13 +115,13 @@ At the review date, reduce scope, change the offer, or pause further investment 
 
 ## Revenue opportunities to sequence later
 
-| Opportunity | Treatment in this plan |
-|---|---|
-| Patron recognition and founder packs | Possible supplemental early funding if benefits are inexpensive and clearly bounded; avoid lifetime hosting or unlimited AI promises |
-| Platform memberships and independent premium-world memberships | Preserve as longer-term product directions; first validate the owner-paid hosted offering |
-| Paid mechanics packs and marketplace fees | Add after repeat use and demand for sharing; do not make marketplace liquidity a prerequisite for early revenue |
-| Creator payouts, subscription revenue allocation, and creator funds | Defer operational commitments until the core business supports them |
-| Advertising and token-based funding | Excluded from the initial revenue assumptions |
+| Opportunity                                                         | Treatment in this plan                                                                                                               |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Patron recognition and founder packs                                | Possible supplemental early funding if benefits are inexpensive and clearly bounded; avoid lifetime hosting or unlimited AI promises |
+| Platform memberships and independent premium-world memberships      | Preserve as longer-term product directions; first validate the owner-paid hosted offering                                            |
+| Paid mechanics packs and marketplace fees                           | Add after repeat use and demand for sharing; do not make marketplace liquidity a prerequisite for early revenue                      |
+| Creator payouts, subscription revenue allocation, and creator funds | Defer operational commitments until the core business supports them                                                                  |
+| Advertising and token-based funding                                 | Excluded from the initial revenue assumptions                                                                                        |
 
 This launch plan brings paid hosted-world validation forward relative to the earlier sequence in [creator worlds and mechanics packs](creator-economy-and-mechanics-packs.md). Portable packs and free sharing need not precede that commercial test. The broader creator/community directions remain available for later releases.
 
@@ -150,3 +150,7 @@ Sources checked during the September 19, 2026 business-model discussion:
 - [AI Dungeon credits](https://help.aidungeon.com/faq/what-are-image-credits) provides a precedent for subscriptions with included credits and additional credit purchases. This supports considering the packaging pattern, not assuming the same usage costs or customer behavior.
 
 Related planning: [earlier business ideation](../04-ideation/business-and-future-directions.md), [creator economy](creator-economy-and-mechanics-packs.md), [patrons and world history](patrons-contributors-and-world-history.md), and [marketing experiments](ideas-channels-and-experiments.md).
+
+## DG27 customer-offer product proposal
+
+The October 8 [customer and supporter offers specification](../../docs/projects/customer-and-supporter-offers-feature-spec.md) refines counting, periods, overlapping benefits, exhaustion, fulfillment, cancellation, remedies and a separately optional historical dedication. [CO01–CO06](../../docs/maintainers/commercial-offers.md) stages the first paid renewal test under existing PD10/INV-13. All actual prices, unit quantities, service/retention commitments, operator budget and time allowance still require adoption for the real offer. The historical arithmetic above remains an illustration; ten renewing customers, positive cash flow and sustainable operator effort require observed evidence.

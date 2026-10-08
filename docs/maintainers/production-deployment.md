@@ -34,6 +34,8 @@ This is the cross-functional release checklist under [D5/D6](production-data.md)
 
 - [ ] **PD12 — Shared-world and global expansion.** Follow D6's working sets → regional CPU ownership → storage distribution sequence, with explicit crossing/time/perception/resource protocols. Add geography, specialized search, rented vLLM capacity or bare-metal baseload only on measured triggers. **Owners:** D6/PF/EPR/SW/CR and existing scaling LT tasks; **dependency:** named bottleneck and authorized scope. **Exit:** stage-specific load/fault/quality/cost evidence, including the busiest shared scene and failure reserve; independent-world throughput never certifies a single hot scene or millions of concurrent participants.
 
+The optional DG27 [commercial-offer consumer](commercial-offers.md) refines PD10 for one owner-paid offer, account allowances, cancellation/recovery and one optional dedication. CO01–CO06 consumes the existing payment, rights and operating gates; product design does not enable sales or close PD10.
+
 ## Research record
 
 Prepared from main `b9a08a05` and the pinned `research/massive-scale-readiness` head `d2fa69bd`, then expanded against production branch `ca804cc8` with primary-source research on 2 October 2026. The additional main commit inspected at `6664144a` only formats unrelated UI/UX documents. The five production documents separate requirements, technical decisions, deployment procedures, task state and limits; the technical design and playbook retain their source references.

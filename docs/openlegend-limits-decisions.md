@@ -10,6 +10,8 @@ Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchang
 
 Start with [the tracking system](limits/README.md). Feature inventories retain limits, reasons and removal decisions; [Remove / Change / Expand](maintainers/limits-audit.md) contains only pending recommendations. [Feature documentation requirements](feature-documentation.md) explain how future changes keep both synchronized.
 
+Proposed [customer and supporter offers](projects/customer-and-supporter-offers-feature-spec.md): [CO-L01–CO-L06](limits/commercial-offers.md) records first-offer scope, account allowance policies, explicit spending, finite service/retention, one optional dedication and growing obligations. [CO01–CO06](maintainers/commercial-offers.md) consumes PD10/INV-13; actual launch quantities, prices, operating inputs and qualification remain open.
+
 ## Feature inventories
 
 | Feature                                                                                               | Inventory                         | Implementation tasks                                     |

@@ -303,6 +303,8 @@ PW03/PW10 add a concrete 6.1–6.3 consumer through the existing object/resource
 - [ ] **13.8 Integrate separate entitlement accounting.** Use the billing/entitlement contract for qualifying invention-unit reservations and consumption, separately from real costs. Test final-unit concurrency, rejected versus uncertain completion and policy-defined period handling before shared accounts launch. Existing-mechanic art/state variants must not debit a second invention unit.
 - [ ] **13.9 Preserve non-rewindable authority.** Coordinate SL/production-data recovery so actual costs, uncertain attempts, current revocations and external receipts survive gameplay load. Lowered limits report encumbrance and stop new dispatch; they do not refund charges. Missing recovered accounting fails closed for paid work, not for unrelated native play.
 
+The DG27 [customer-offer proposal](../projects/customer-and-supporter-offers-feature-spec.md) supplies proposed invention counting and period/lifecycle behavior to 13.8; [CO02](commercial-offers.md) is its commercial consumer. Real costs, uncertain work and authoring rights remain with these existing owners. This does not create an additional quota ledger or close the account entitlement service.
+
 **Completion gate:** no concurrent/revised/restored workflow exceeds its enforceable authorized allowance through double spending or forgotten uncertainty; known and unknown costs remain distinguishable; a cheap-to-author but unbounded recurring mechanic cannot be admitted as sustainable.
 
 ### INV-14 — Integrated qualification and staged release

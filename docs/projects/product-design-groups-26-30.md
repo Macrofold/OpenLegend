@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                           | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------ | ------------ |
-| In progress | DG26 is researched, specified and reviewed; DG27–DG30 remain in the sequential assignment. | 2026-10-08   |
+| In progress | DG26 is complete as a product proposal; DG27 is being drafted from researched commercial and billing contracts. | 2026-10-08   |
 
 ## Assignment and baseline
 
@@ -31,7 +31,7 @@ Research findings, design inferences, proposed defaults, owner-approved policies
 | Group | Product question                                                                                                                | Existing responsibilities to reuse                                                                          | Progress                                                        |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | DG26  | How does speaking or hearing improve an actual exchange while every person receives only their permitted meaning?               | HE/NC/MP, DG24 contacts, spatial and world hearing, PS04 timing, existing spending and privacy.             | Product proposal complete; technical/runtime work remains open. |
-| DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Ready to begin after DG26 commit.                               |
+| DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Research and source audit complete; detailed product proposal in progress.                               |
 | DG28  | How does a creator publish something reusable, retain appropriate rights and receive an understandable share of actual revenue? | DG12 publication/provenance, INV-8/EWF11, DG27 commerce, PD10 and D35/D36/D43/D44.                          | Pending DG27.                                                   |
 | DG29  | How can a person join or visit a wanted place and return safely as demand and world histories grow?                             | PS05–PS08, MP access/participation, transfer/data, time, performance and applicable DG12/DG25 boundaries.   | Pending DG28.                                                   |
 | DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Pending DG29.                                                   |
