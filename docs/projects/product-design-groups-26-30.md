@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26–DG29 product proposals are complete; DG30 creator funding and contributor governance is next. | 2026-10-08   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG26–DG29 product proposals are complete; DG30 creator funding and contributor governance is in progress. | 2026-10-08   |
 
 ## Assignment and baseline
 
@@ -34,7 +34,7 @@ Research findings, design inferences, proposed defaults, owner-approved policies
 | DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Product proposal complete; actual offer adoption and delivery remain open.                         |
 | DG28  | How does a creator publish something reusable, retain appropriate rights and receive an understandable share of actual revenue? | DG12 publication/provenance, INV-8/EWF11, DG27 commerce, PD10 and D35/D36/D43/D44.                          | Product proposal complete; rights, commercial adoption and delivery remain open.                   |
 | DG29  | How can a person join or visit a wanted place and return safely as demand and world histories grow?                             | PS05–PS08, MP access/participation, transfer/data, time, performance and applicable DG12/DG25 boundaries.   | Product proposal complete; adoption, technical integration and capacity qualification remain open. |
-| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Next sequential design group.                                                                      |
+| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Full source audit, primary research and operating-program design in progress.                      |
 
 Within the active group, independent readers may research sources and critique consistency in parallel. The five designs themselves are developed and committed sequentially. Commit pending task changes at least every five minutes, as requested by the owner, with accurate checkpoint labels.
 

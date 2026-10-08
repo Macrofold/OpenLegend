@@ -297,6 +297,8 @@ Conditional ND25: a real fund budget, eligibility, milestones, rights, payout ev
 
 **Start and parallel boundary:** Start when a concrete program and sustainable funding are selected; it may run alongside marketplace or supporter design using their existing rights/payment meanings. Neither subscriptions nor dedications automatically creates a grant or voting program. **Existing owners:** D37, program/financial/rights and platform-authority owners.
 
+**DG30 product work, October 8, 2026:** [Creator funding and contributor governance](../projects/creator-fund-and-contributor-governance-feature-spec.md) develops a finite operating round, complete applicant/grantee/payment/rights journeys, bounded community voice and conflicts, and sustainable closure. [FUND01–FUND06](creator-fund-and-contributor-governance.md) retains actual budget, program adoption, agreements, execution and evidence. The design assignment does not open a fund.
+
 ### Band 7 — Choose deeper society and generativity
 
 #### DG31 — Generations and deeper biology

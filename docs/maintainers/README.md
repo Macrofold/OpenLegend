@@ -8,6 +8,8 @@ DG28 uses [published packs and creator revenue](published-packs-and-creator-reve
 
 DG29 uses [participants and world travel](participants-and-world-travel.md) under PS05–PS08, with the existing product-scalability inventory. A worthwhile small visit and coherent return precede any broader advertised capacity or federation.
 
+DG30 uses [creator funding and contributor governance](creator-fund-and-contributor-governance.md), with actual operating-budget, rights and platform-authority adoption separate from the product proposal. A finite manual round can finish before grant or voting software.
+
 ## Product design groups 21–25
 
 [The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent optional extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. The source audit also reads newer main without changing this branch's ancestry.
