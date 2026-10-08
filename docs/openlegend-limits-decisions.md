@@ -12,6 +12,8 @@ Start with [the tracking system](limits/README.md). Feature inventories retain l
 
 Proposed [customer and supporter offers](projects/customer-and-supporter-offers-feature-spec.md): [CO-L01–CO-L08](limits/commercial-offers.md) records first-offer scope, account allowance policies, explicit spending, finite service/retention, one optional dedication and growing obligations. [CO01–CO06](maintainers/commercial-offers.md) consumes PD10/INV-13; actual launch quantities, prices, operating inputs and qualification remain open.
 
+Proposed [published packs and creator revenue](projects/published-packs-and-creator-revenue-feature-spec.md): [PACK-L01–PACK-L08](limits/published-packs-and-creator-revenue.md) records curated scope, consumed complete-transfer limits, acquired-version service, bounded human-selected allocation, proposed fee/payout policy and aggregate review/privacy/federation boundaries. [PACK01–PACK06](maintainers/published-packs-and-creator-revenue.md) consumes INV-8/EWF11/PD10; existing WC limits and actual component grants remain controlling.
+
 ## Feature inventories
 
 | Feature                                                                                               | Inventory                         | Implementation tasks                                     |

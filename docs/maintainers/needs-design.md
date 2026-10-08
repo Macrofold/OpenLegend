@@ -281,6 +281,8 @@ ND23 with ND12's broader publication/distribution, rights and cross-service acce
 
 **Start and parallel boundary:** Reuse DG12's dependency/provenance/permission vocabulary and DG27's applicable offer/payment decisions. Free libraries and noncommercial publication do not wait for payouts; self-hosted synchronization may be scoped independently when requested. A creator fund is a different program in DG30. **Existing owners:** INV-8/EWF11, PD10, rights/payment owners and D35/D36/D43/D44.
 
+**DG28 product proposal, October 8, 2026:** [Published packs and creator revenue](../projects/published-packs-and-creator-revenue-feature-spec.md) supplies a small curated catalog, clear rights/complete dependencies, one-time acquired-version continuity, human-selected fixed allocations, collaborator shares and full payout/remedy behavior. [PACK01–PACK06](published-packs-and-creator-revenue.md) and [PACK limits](../limits/published-packs-and-creator-revenue.md) retain adoption, technical/delivery work and measured usefulness/economics. It consumes DG12 and DG27 without requiring payment onboarding for free sharing or changing inherited open grants.
+
 #### DG29 — More participants and travel between worlds
 
 PS06's wider measured admission/economics and PS07's regions, protected domains, visits, imports, clocks and safe return; refine the applicable PS05 transition rules. Include PS08's comparison of concentrated demand, many small worlds, mass return and long histories.
@@ -566,6 +568,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Scoped product design prepared, 5 October 2026:** [DG12’s library journey](../projects/world-creation-feature-spec.md#15-dg12-expansion--a-useful-invention-follows-its-creator) specifies a same-author local proof and a known-recipient eligible free release, scoped private provenance, retained-copy/reference distinctions, complete dependency checks and failure/update/removal behavior. [WC-L06–WC-L12](../limits/world-creation.md#wc-l06--first-library-and-publication-scope) records the proposed envelope. General contribution terms and cross-operator provenance remain unselected expansions under INV-8.3/D44; technical design and unchecked import/account-library work stay open.
 
+**Broader DG28 product proposal, 8 October 2026:** [The catalog and acquired-pack journey](../projects/published-packs-and-creator-revenue-feature-spec.md) now specifies contributor/publisher mandates, useful discovery, exact release rights, retained operating/export access, exceptional removal and a scoped path for later cross-operator provenance. [PACK01–PACK06](published-packs-and-creator-revenue.md) consumes INV-8/EWF11. Actual grants/standard terms, remote identity proof and qualified delivery remain open; existing DG12 free-transfer choices are preserved.
+
 ### ND13 — Stable action recommendations and complete control customization
 
 **Needs scoped design for the remaining extension.** Sources: [frequent actions and stable recommendations](../../archive/03-design-proposals/playability-and-controls.md#frequent-actions-and-stable-recommendations), [quick slots, categories and key bindings](../../archive/03-design-proposals/playability-and-controls.md#quick-slots-categories-and-key-bindings), [planned keyboard additions](../../archive/03-design-proposals/world-and-player-experience.md#planned-keyboard-additions), [F57/F58](../../archive/01-requirements/product-baseline.md) and [D46/D47](../../archive/05-project/open-decisions.md#invention-governance-controls-and-workshop).
@@ -699,6 +703,8 @@ If an offer includes additional character slots, define switching, unattended be
 **Existing coverage:** ND12 points to INV-8/EWF11 for technical library/pack portability; [PD10](production-deployment.md) recognizes marketplace payout gates. A valid exported pack does not settle commercial rights or payment operations.
 
 **Needed before an implementation project:** choose qualifying participation, the subscriber allocation formula, premium-world overlap, fees, payout eligibility, fraud/refund handling and financial reconciliation. Set use/modification/redistribution terms and continuing access after cancellation in coordination with rights-aware publication. The [well-being funding alternatives](../../archive/08-wellbeing-vision/13-money-and-mission.md) are proposals, not a replacement for accepted membership direction; illustrative allocations are not prices or payout commitments.
+
+**DG28 product coverage:** [Published packs and creator revenue](../projects/published-packs-and-creator-revenue-feature-spec.md) provides a concrete proposed allocation/overlap model, fees, agreed collaborator splits, payout/reversal/exit behavior and acquired-version rights. [PACK04–PACK06](published-packs-and-creator-revenue.md) retains actual amount/terms adoption and financial/experience qualification. A product recommendation does not commit funds, verify payees, publish a catalog or launch grants.
 
 ### ND24 — Patron recognition, dedications and durable attribution
 

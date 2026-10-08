@@ -36,6 +36,8 @@ This is the cross-functional release checklist under [D5/D6](production-data.md)
 
 The optional DG27 [commercial-offer consumer](commercial-offers.md) refines PD10 for one owner-paid offer, account allowances, cancellation/recovery and one optional dedication. CO01–CO06 consumes the existing payment, rights and operating gates; product design does not enable sales or close PD10.
 
+The optional DG28 [published-pack and creator-revenue consumer](published-packs-and-creator-revenue.md) stages rights-aware catalog release, acquisition and creator payouts under PD10. Qualify only the enabled commercial features after proven free reuse. Fixed subscriber allocation, pending creator earnings and a marketplace fee are separate from hosting revenue and the conditional DG30 fund.
+
 ## Research record
 
 Prepared from main `b9a08a05` and the pinned `research/massive-scale-readiness` head `d2fa69bd`, then expanded against production branch `ca804cc8` with primary-source research on 2 October 2026. The additional main commit inspected at `6664144a` only formats unrelated UI/UX documents. The five production documents separate requirements, technical decisions, deployment procedures, task state and limits; the technical design and playbook retain their source references.

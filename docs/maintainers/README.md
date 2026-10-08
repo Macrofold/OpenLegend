@@ -4,6 +4,8 @@
 
 [The sequential five-group assignment](../projects/product-design-groups-26-30.md) starts from the requested groups 21–25 branch. DG26 uses [HE07](hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) and [NC23](narration-and-conversations.md#nc23--consented-private-slate-calls) for optional speech media and private calls. DG27 uses [commercial offers](commercial-offers.md) under PD10/INV-13. These are researched product proposals; individual adoption, technical work, runtime delivery and measured experience remain open. The assignment records the remaining sequential work and its exact inspected baseline.
 
+DG28 uses [published packs and creator revenue](published-packs-and-creator-revenue.md) under INV-8/EWF11/PD10. Its free portability proof, curated listing, paid acquisition and creator allocation/payout stages remain independently scoped; no marketplace or grants become prerequisites for useful free reuse.
+
 ## Product design groups 21–25
 
 [The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent optional extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. The source audit also reads newer main without changing this branch's ancestry.

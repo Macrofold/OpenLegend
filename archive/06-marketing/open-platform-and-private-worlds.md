@@ -56,3 +56,8 @@ Candidate positioning: **“An open platform for worlds with their own rules.”
 The core license is settled. Before launching proprietary executable packs or making broader ownership promises, resolve extension compatibility/additional permissions; individual starter/pack licenses; collaboration and player-contribution terms; creator exports; pack access after cancellation; and moving eligible content into the open library. Existing Apache grants are not revoked by the new license. Review the actual extension design rather than relying on a data-versus-code label.
 
 See [creator economy and packs](creator-economy-and-mechanics-packs.md) for memberships, standalone premium games and the import workflow, and [patrons/contributors](patrons-contributors-and-world-history.md) for recognition and grants.
+
+
+## DG28 selected distribution proposal
+
+The [published-pack feature proposal](../../docs/projects/published-packs-and-creator-revenue-feature-spec.md) recommends a plain-language matrix for acquired-version use, private modification, paid-world operation, eligible self-host export and separately granted redistribution. Actual independent-content eligibility and legal terms still require review; covered AGPL work and inherited grants retain their obligations. The first camp-kit candidate cannot be advertised as proprietary merely because it is sold. Ordinary delisting, membership expiry, exceptional restriction and service retirement have distinct effects. [PACK02/03](../../docs/maintainers/published-packs-and-creator-revenue.md) retains delivery without changing the current repository license.

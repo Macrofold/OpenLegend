@@ -61,3 +61,8 @@ The license must distinguish use in a paid world, modification, exporting, and r
 Prove a playable creator loop, then portable packs and free sharing, managed-world economics, and a curated paid marketplace. Community governance, public grants, and broader revenue allocation can follow evidence of repeat use. These are later product directions, not additions to the first playable milestone.
 
 Related: [patrons and history](patrons-contributors-and-world-history.md), [private worlds](open-platform-and-private-worlds.md), [funding exploration](tokens-and-community-funding.md).
+
+
+## DG28 product recommendations
+
+The October 8 [published-packs and creator-revenue specification](../../docs/projects/published-packs-and-creator-revenue-feature-spec.md) gives the accepted direction concrete reviewable catalog, rights, acquired-version, subscriber-choice and creator-payment behavior. Its initial proposed allocation is one bounded real-period amount divided equally among at most three eligible played-world choices; it does not reward simulated time or invent a second pool. The proposed marketplace fee, ordinary payout hold/threshold, unused-allocation refund, premium overlap and collaborator terms remain recommendations pending adoption and qualification. [PACK01–PACK06](../../docs/maintainers/published-packs-and-creator-revenue.md) consumes INV-8/EWF11/PD10 and [DG27 commercial offers](../../docs/projects/customer-and-supporter-offers-feature-spec.md). Free sharing remains independently useful; no creator fund, proprietary executable exception, actual amount or profit is implied.

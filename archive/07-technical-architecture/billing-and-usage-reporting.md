@@ -72,3 +72,7 @@ First define attribution and durable cost facts, then implement Macrofold aggreg
 ## DG27 product-policy consumer
 
 The [customer and supporter offers feature specification](../../docs/projects/customer-and-supporter-offers-feature-spec.md) proposes the detailed customer meanings for qualifying revisions/bundles, real allowance periods, changes, exhaustion, checkout recovery and refunds. It consumes this accounting/reporting contract and INV-13; it does not adopt a provider, implement a subscription service or change real dispatch-time reporting. [CO02/CO03](../../docs/maintainers/commercial-offers.md) retains the consumer acceptance, including original-period reconciliation, no repeated grants after restore and separate invention, cash, access and art entitlements.
+
+## DG28 creator-revenue consumer
+
+The [published-pack and creator-revenue proposal](../../docs/projects/published-packs-and-creator-revenue-feature-spec.md) consumes the same real-world accounting for one-time acquisitions, fixed subscriber earmarks, approved collaborator shares and payout/refund reconciliation. An allocation is part of a specific subscriber payment, not extra income created by visits. Estimated, held, payable and paid creator amounts are distinct; no fictional restore or duplicated receipt repeats a share. Customer-priced debits, supplier costs, host revenue, creator payables and DG30 grants remain separate purposes. [PACK04/05](../../docs/maintainers/published-packs-and-creator-revenue.md) adds product acceptance, not a second ledger or an implemented payment route.
