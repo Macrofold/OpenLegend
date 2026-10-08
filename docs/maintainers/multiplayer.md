@@ -185,7 +185,6 @@ NC22 must qualify device loss/recovery, cross-tab duplicate outcomes, private re
 
 Private fictional messages/read/evidence restore coherently, but current account/private ownership, blocks, erasure, device revocations and anti-abuse allowances constrain them. Fictional item access/title and agreements restore with their world. Preserve current protected pre-load recovery and original-operation outcomes; no post-cut command replay, alternate history, copied later body or creator plaintext exposure. SL's focused checklist retains qualification; MP's original completed/open states are unchanged.
 
-
 ## Optional wider participation and travel consumer
 
 [DG29](../projects/participants-and-world-travel-feature-spec.md) and [PT01–PT06](participants-and-world-travel.md) refine PS05–PS08 using current account/access/control, MP04 inactive participation and safe-return authority. Membership, occupancy, an invitation and a carried character grant different rights; travel does not automatically create a second controlled body or disclose another human's history. Current scopes and operational receipts still constrain delayed completion and gameplay restore. The first product scope does not silently enable dangerous-logout continuation, opt-in PvP or protected-building policy. Cross-world identity/possession transfer and broader admission remain their existing data and operational owners' unqualified delivery work.
