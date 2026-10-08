@@ -1,6 +1,6 @@
 # Product scalability delivery tracker
 
-**Status: documentation foundation only, October 2, 2026. All runtime work below is proposed and unqualified.** This is the single tracker for integrating the cross-cutting product direction; existing subsystem trackers retain their own implementation detail and evidence.
+**Status: shared design foundation delivered; PS02–PS08 cross-owner integration and qualification remain open.** Existing goals, finite plans, chosen activities and scoped evidence are delivered foundations, not implementation tasks to restart. This is the single tracker for integrating the cross-cutting product direction; existing subsystem trackers retain their own implementation detail and evidence.
 
 ## Maintained records
 
@@ -11,7 +11,7 @@
 
 ## Scope and authorization
 
-The current task writes and integrates documentation on `docs/product-scalability` from main commit `8005f7c7245cfecec128652efe3ef07926604e0a`. It changes zero production logic and authorizes no runtime implementation, paid-model work, save conversion, or deployment. Population examples are design workloads, not delivered capacity.
+The original October 2 documentation task used `docs/product-scalability` from main commit `8005f7c7245cfecec128652efe3ef07926604e0a` and changed no production logic. That historical task record neither authorizes PS02–PS08 implementation nor cancels later owner-approved work. Current authorization follows the [root task policy](../../AGENTS.md#task-scope-and-authorization). Population examples remain design workloads, not delivered capacity.
 
 Do not create parallel task queues in every linked topic. Update the relevant existing agency, perception, hearing, conversation, time, participation, performance, and data trackers when implementation of that owner is actually scheduled. This tracker records the cross-owner dependency and product acceptance only.
 
@@ -28,7 +28,7 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Owners:** agency, native action/resource owners, perception/reaction intake, simulation time. **Depends on:** current admitted work and scoped event foundations; reconcile their actual implemented state rather than duplicate them.
 
-- [ ] Retain a chosen activity and supported continuation/interruption conditions through the existing goal/plan owner.
+- [ ] Integrate and qualify the [delivered goals, finite plans and selected activities](../agent-agency.md#learned-activities-and-action-history) in the PS02 life episode. Reuse their persisted continuation, interruption and actual-result records; add only conditions the selected activity needs and its owner does not yet support. Existing retention does not establish believable choice, alarm handling or the complete interruption/restart matrix below.
 - [ ] Demonstrate a useful supported activity interrupted by a legitimately heard alarm, without omniscient reaction or speculative completion beyond it. Gathering or finite crafting can establish the first personal contribution; retain roof progress as a later construction case when that family is supported.
 - [ ] Exercise depletion, missing resource, geometry change, damage, cancellation, restart, and simultaneous boundaries.
 - [ ] Qualify no per-step generation without silently restoring a hardcoded alternative personality or invalidating current Jev-only choices.
