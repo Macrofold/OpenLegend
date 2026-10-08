@@ -42,7 +42,13 @@ People watching an actual departure or arrival may perceive its admitted event. 
 
 ## 3. The first useful visit
 
-Mira and Theo already have valid participation in two prepared camps. Theo invites Mira to see a small workshop and talk with its resident. Mira's source has a supported departure point and an actual place she can choose to leave goods under known ordinary rules. Before departure she sees the destination's identity, the hosting and entry conditions, the permitted return route, the actual clock relationship, and any belongings or capabilities that cannot cross. The review names the few decisions she must make; it does not expose a dependency manifest as gameplay.
+### 3.1 Walk to another camp in the same world
+
+Mira and Theo already participate in the same world. Theo invites Mira to see the workshop at his actual camp. Mira walks there with her normal belongings, notices what is happening now, and uses ordinary Talk and native actions to discuss or demonstrate something useful. Its resident chooses whether to engage. They might compare a carrying tool, share a wanted observation or simply enjoy the visit. Mira returns through ordinary movement when she chooses. No cross-world transfer, travel modal, inventory deposit or new custody service is needed. This complete small outing is the first useful delivery; the following transfer stages are separate expansions.
+
+### 3.2 The later restricted cross-world proof
+
+For the separate cross-world proof, Mira and Theo have the valid current relationships needed by the two prepared worlds. Theo invites Mira to see a small workshop and talk with its resident. Mira's source has a supported departure point and an actual place she can choose to leave goods under known ordinary rules. Before departure she sees the destination's identity, the hosting and entry conditions, the permitted return route, the actual clock relationship, and any belongings or capabilities that cannot cross. The review names the few decisions she must make; it does not expose a dependency manifest as gameplay.
 
 Mira voluntarily stores an incompatible carried object. Nothing is confiscated, silently copied or converted into a travel token. If its available custody does not meet the arrangement she is willing to accept, she keeps it and does not depart. The first cross-world social proof admits no detachable goods: its person retains the existing native body and intrinsic presentation, without inventing clothing equipment. Actual worn items, where a world models them, are goods and require the carried-bundle stage below. Existing knowledge is not re-taught on arrival; knowing a technique does not install a missing definition or make a prohibited capability usable.
 
