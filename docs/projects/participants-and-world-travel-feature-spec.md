@@ -1,12 +1,12 @@
 # Participants, world travel and sustainable communities
 
-| Field | Value |
-| --- | --- |
-| Status | In progress — researched product proposal; adoption, technical design and runtime qualification remain open |
-| Design group | DG29 — measured admission, transitions, protected domains, compatible visits and wider scalability |
-| Delivery owners | [PT01–PT06](../maintainers/participants-and-world-travel.md), consuming [PS05–PS08](../maintainers/product-scalability.md) and the existing multiplayer, time, perception and persistence owners |
-| Policy and tuning | [Product-scalability limits](../limits/product-scalability.md); proposed authored [visiting camps](../worlds/base/visiting-camps.md) |
-| Inspected foundation | Branch baseline `671d52d724db5dfe39403ebe46f7c1ee24d6ec52`, with DG26–DG28 product proposals on this design branch |
+| Field                | Value                                                                                                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Status               | In progress — researched product proposal; adoption, technical design and runtime qualification remain open                                                                                      |
+| Design group         | DG29 — measured admission, transitions, protected domains, compatible visits and wider scalability                                                                                               |
+| Delivery owners      | [PT01–PT06](../maintainers/participants-and-world-travel.md), consuming [PS05–PS08](../maintainers/product-scalability.md) and the existing multiplayer, time, perception and persistence owners |
+| Policy and tuning    | [Product-scalability limits](../limits/product-scalability.md); proposed authored [visiting camps](../worlds/base/visiting-camps.md)                                                             |
+| Inspected foundation | Branch baseline `671d52d724db5dfe39403ebe46f7c1ee24d6ec52`, with DG26–DG28 product proposals on this design branch                                                                               |
 
 ## 1. The experience worth scaling
 
@@ -26,13 +26,13 @@ This design expands the preparation for PS05–PS08. It does not redefine their 
 
 Separate five relationships that players experience differently:
 
-| Relationship | Product meaning | What it does not grant |
-| --- | --- | --- |
-| Account membership or world permission | The account may request the specified participation under current access rules | A body, an immediate capacity place, private knowledge or a paid service |
-| Historical character binding | An account has the existing relationship to this particular person | Transfer of that person's ownership to a new controller or a copy in another world |
-| Active embodied presence | One authoritative body participates in current mechanics at a valid place | A second embodiment because another browser or destination is open |
-| Attention and control | A permitted controller can act and receive the current scoped experience | Omniscient observation, permanent control merely because a connection exists, or the right to make every nearby mind deliberate |
-| Residence and belonging | The person has a continuing home, relationships and history | Unlimited instantaneous admission or infinite free hosting |
+| Relationship                           | Product meaning                                                                | What it does not grant                                                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Account membership or world permission | The account may request the specified participation under current access rules | A body, an immediate capacity place, private knowledge or a paid service                                                        |
+| Historical character binding           | An account has the existing relationship to this particular person             | Transfer of that person's ownership to a new controller or a copy in another world                                              |
+| Active embodied presence               | One authoritative body participates in current mechanics at a valid place      | A second embodiment because another browser or destination is open                                                              |
+| Attention and control                  | A permitted controller can act and receive the current scoped experience       | Omniscient observation, permanent control merely because a connection exists, or the right to make every nearby mind deliberate |
+| Residence and belonging                | The person has a continuing home, relationships and history                    | Unlimited instantaneous admission or infinite free hosting                                                                      |
 
 At the inspected baseline, multiplayer already distinguishes current control, browser return, bounded departure and historical human ownership. A player invite binds an eligible existing living person; signing in does not manufacture a new character. Characterless promotion, public signup and new-character invitation remain their existing open product choices. This proposal must not smuggle those choices into a travel button.
 
@@ -80,7 +80,7 @@ Existing skills and knowledge remain those of the same person. Destination law d
 
 ### 4.3 The next useful carried-bundle journey
 
-The next selected expansion allows the traveler to take the real compatible belongings they choose, including actual contents and worn items when supported. It changes custody of existing objects; it is not the [DG12 reusable-definition import](world-creation-feature-spec.md) or [DG28 acquired-pack](published-packs-and-creator-revenue-feature-spec.md) journey. A purchased pack grants its stated use rights, not a physical stock of its products. Transferring a tool does not install its recipe in every mind.
+The next selected expansion allows the traveler to take the real compatible belongings they choose, including actual contents and worn items when supported. It changes custody of existing objects; it is not the [DG12 reusable-definition import](world-creation-feature-spec.md) or [DG28 acquired-pack](published-packs-and-creator-revenue-feature-spec.md) journey. A purchased pack grants its stated use rights, not a physical stock of its products. Transferring a tool does not install its recipe in every mind. It also does not change historical invention-owner accounts, create a new payee agreement or disclose a private origin world; DG12/DG28 attribution and grants remain scoped to their actual rights.
 
 Preparation identifies the actual carried closure: object identities, quantities, nested contents where those mechanics exist, ownership and custody restrictions, installed definitions and dependencies, condition, finite resources and active effects. The player sees actionable exceptions rather than every internal reference. “This container contains an unsupported object; leave that object or choose another destination” is useful only when the player already has authority to know its contents. A sealed or private payload cannot be opened by travel review. Where inspection or trusted validation is insufficient, say the bundle cannot be admitted without revealing the protected content.
 
@@ -98,7 +98,7 @@ First qualify a modest real bundle selected from already supported items, then a
 
 ### 5.1 Request, wait, offer, depart
 
-The proposed first service allows one pending destination request per person. Selecting another explicitly replaces the first; several tabs observe the same request. Waiting is account service state outside fictional rewind, while the person remains in their current real source participation. It creates no destination body, NPC greeting, travel payment or advance knowledge. A request that cannot fit the route's qualified body/activity profile is refused promptly, rather than placed in a queue that can never admit it.
+The proposed first service allows one pending destination request per person. Selecting another explicitly replaces the first; several tabs observe the same request. Cancellation or a changed destination ends its ordinary waiting age, so a new request joins at its actual new time. Waiting is account service state outside fictional rewind, while the person remains in their current real source participation. It creates no destination body, NPC greeting, travel payment or advance knowledge. A request that cannot fit the route's qualified body/activity profile is refused promptly, rather than placed in a queue that can never admit it.
 
 Requests for the same ordinary admission class proceed in stable request order. A later premium subscriber, prominent creator or person with a larger AI allowance does not jump ahead. Returning residents are not evicted to satisfy visitors. An accepted transfer's recovery and current control reconciliation are completion obligations, not fresh speculative visits competing to start. They do not imply an indefinite reservation of a vacant physical home place.
 
@@ -144,19 +144,19 @@ An entry ban, full world or unavailable home may deny ordinary embodied play. It
 
 ### 7.2 Complete failure dispositions
 
-| Event | Required outcome |
-| --- | --- |
-| Request is cancelled or ready offer expires before departure | Release offered capacity; keep the person and belongings in their actual source state; no successful-travel claim or invented destination evidence. |
-| Existing destination character or unsupported characterless grant conflicts with visit authority | Refuse before departure. Preserve both people and existing grants; normal account switching is not transport, and an ordinary invitation is not a promotion or rebind. |
-| Permission, bundle or geometry changes before commit | Revalidate; explain the actionable current problem to the authorized person, and retain a coherent source result. Hidden host reasons stay private. |
-| Transfer response is lost | Recover the original transfer outcome. Keep one authority and withhold conflicting control; neither retry nor source restore creates another person. |
-| Client disconnects after arrival | Apply current destination departure, then current return to that same person. Do not repeat the travel, greeting or reward. |
-| One host crashes while transfer is uncertain | Hold new conflicting travel and recover the durable custody outcome before reopening either side. Missing evidence is not proof that nothing transferred. |
-| Visitor is removed or permission expires | Stop new discretionary visitor actions, reconcile already accepted actions, and complete supported return or safe inactivity. The peer sees only the appropriate generic removal result; no private moderator evidence leaks. |
-| Visitor's lawful goods remain after removal | Preserve actual title/custody and offer supported scoped retrieval or recovery. Retrieval authority is narrower than a fresh right to roam or inspect other people's stores. |
-| Host retires or an operating term ends | Close new visits, notify through authorized service surfaces, honor accepted custody and the sold recovery/retention terms. Do not sell permanent physical entry or make an expiring subscription hold a person hostage. |
-| World rules or compatible runtime cannot represent the person | Refuse new transfers; maintain the supported recovery path for accepted ones. Never run an arbitrary old save on a new release or silently replace the person. |
-| Return is denied by present access policy | Retain safe recovery access outside ordinary world entry; explain alternatives without undoing the ban or granting administrative control. |
+| Event                                                                                            | Required outcome                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Request is cancelled or ready offer expires before departure                                     | Release offered capacity; keep the person and belongings in their actual source state; no successful-travel claim or invented destination evidence.                                                                           |
+| Existing destination character or unsupported characterless grant conflicts with visit authority | Refuse before departure. Preserve both people and existing grants; normal account switching is not transport, and an ordinary invitation is not a promotion or rebind.                                                        |
+| Permission, bundle or geometry changes before commit                                             | Revalidate; explain the actionable current problem to the authorized person, and retain a coherent source result. Hidden host reasons stay private.                                                                           |
+| Transfer response is lost                                                                        | Recover the original transfer outcome. Keep one authority and withhold conflicting control; neither retry nor source restore creates another person.                                                                          |
+| Client disconnects after arrival                                                                 | Apply current destination departure, then current return to that same person. Do not repeat the travel, greeting or reward.                                                                                                   |
+| One host crashes while transfer is uncertain                                                     | Hold new conflicting travel and recover the durable custody outcome before reopening either side. Missing evidence is not proof that nothing transferred.                                                                     |
+| Visitor is removed or permission expires                                                         | Stop new discretionary visitor actions, reconcile already accepted actions, and complete supported return or safe inactivity. The peer sees only the appropriate generic removal result; no private moderator evidence leaks. |
+| Visitor's lawful goods remain after removal                                                      | Preserve actual title/custody and offer supported scoped retrieval or recovery. Retrieval authority is narrower than a fresh right to roam or inspect other people's stores.                                                  |
+| Host retires or an operating term ends                                                           | Close new visits, notify through authorized service surfaces, honor accepted custody and the sold recovery/retention terms. Do not sell permanent physical entry or make an expiring subscription hold a person hostage.      |
+| World rules or compatible runtime cannot represent the person                                    | Refuse new transfers; maintain the supported recovery path for accepted ones. Never run an arbitrary old save on a new release or silently replace the person.                                                                |
+| Return is denied by present access policy                                                        | Retain safe recovery access outside ordinary world entry; explain alternatives without undoing the ban or granting administrative control.                                                                                    |
 
 If mandatory storage or custody service fails, show an operational failure and keep admission closed. There is no fictional “the gate ate your belongings” explanation unless that was a separately selected world mechanic with an actual admitted outcome. Contacting support can resolve evidence or grant an authorized recovery action, but it cannot excuse a design that routinely needs manual database reconstruction. Qualification must include the ordinary operator journey and its work cost.
 
@@ -204,7 +204,7 @@ After a shared outage or announced gathering, returns are correlated. Do not ass
 
 Repeated refresh, reconnect or cancellation cannot improve priority or purchase extra attempts. Status is a read of the existing request. A failed attempt whose outcome remains uncertain is reconciled rather than blindly retried. Full waiting capacity requires an explicit retry-later outcome, not an apparently accepted request that was silently discarded. The service should explain when it will update the player without requiring continuous polling. No promise of an unbounded free queue follows from retaining a small status record.
 
-Current time-debt and durability guarantees remain. Never make overload appear solved by deleting unadvanced game time, dropping accepted effects or acknowledging changes before the promised durable boundary. Later time dilation is optional and requires consistent action, biology, status, cross-boundary and external-deadline rules. EVE's historical overload reports illustrate that even a selected slowdown floor can exhaust its benefit [PT-R04, PT-R11]. It is not the first answer to a useful camp visit.
+Current time-debt and durability guarantees remain. Never make overload appear solved by deleting unadvanced game time, dropping accepted effects or acknowledging changes before the promised durable boundary. Later time dilation is optional and requires consistent action, biology, status, cross-boundary and external-deadline rules. EVE's historical overload reports illustrate that even a selected slowdown floor can exhaust its benefit ([PT-R04](#pt-r04--eve-slowing-down-still-has-a-limit), [PT-R11](#pt-r11--eve-name-each-clock)). It is not the first answer to a useful camp visit.
 
 ## 10. Long histories and a meaningful return
 
@@ -214,7 +214,7 @@ A mature resident's relevant experience can enrich an encounter without placing 
 
 A visitor may recognize the host from a former trip, but the host's NPC can know only its own actual experience or a legitimate report. An absent human does not acquire all destination events by reconnecting. A report that the workshop changed hands is testimony until supported by the relevant current access or observed facts. The character can ask questions, be mistaken or decline further conversation; there is no compulsory return greeting, attendance bonus or repair-the-town chore list.
 
-Mature-world entry must include cold memories, large permitted history, changed geometry and retained objects in qualification. Factorio's documented join-readiness issue is a useful reminder that connecting is not the same as being ready to play [PT-R05]. Open Legend should finish the actual admitted preparation before exposing an arriving person to consequences requiring unavailable control or perception, without pausing all existing players for every newcomer. The exact admitted boundary must remain coherent for everybody already there.
+Mature-world entry must include cold memories, large permitted history, changed geometry and retained objects in qualification. Factorio's documented join-readiness issue is a useful reminder that connecting is not the same as being ready to play [PT-R05](#pt-r05--factorio-connected-is-not-ready). Open Legend should finish the actual admitted preparation before exposing an arriving person to consequences requiring unavailable control or perception, without pausing all existing players for every newcomer. The exact admitted boundary must remain coherent for everybody already there.
 
 World retirement and retained data follow the actual service and rights contracts in [DG27](customer-and-supporter-offers-feature-spec.md) and [DG28](published-packs-and-creator-revenue-feature-spec.md). An eligible library contribution or acquired definition grant can survive the host, but neither proves portability of a complete living character, private memory or another person's records. Show what can actually be retrieved, the compatible runtime/format required, and any blockers. Do not promise a permanent playable copy merely because a receipt or static artifact can be retained cheaply.
 
@@ -252,20 +252,20 @@ These stages are useful stopping points, not a five-part release that blocks the
 
 ### 12.2 Evidence the product must collect
 
-| Scenario | Required observation and failure condition |
-| --- | --- |
-| Ordinary invited outing | Player can explain why they visited, choose a worthwhile interaction and leave without completing an invented chore. Compare preparation time with useful time; ask whether they would voluntarily visit again. |
-| Resident declines or pursues another interest | The visitor retains another ordinary activity or can return. No forced affection, compulsory care, repeated greeting reward or fabricated service refusal. |
-| Queue becomes ready during work | Work is not interrupted automatically. Cancellation, expiry and changed terms preserve truthful state and a usable waiting identity. Measure offer churn, accepted readiness, waiting and abandonment separately. |
-| Two people approach the same activity | One present, one resource history and scoped separate evidence; leaving one observer does not demote needed detail or complete work twice. |
-| Hidden hazard or revoked domain right | Refusal/exit does not print private reasons, teleport to arbitrary advantage, expose neighboring property or grant new hostile immunity. |
-| Compatible goods change while waiting | Updated current review; consumed quantity stays spent, nested incompatibility is caught without privacy leakage, return evaluates the new bundle. |
-| Lost response, crash, duplicate tab and restore | Exactly one person/custody outcome; no repeated transfer, inventory, teaching, paid dispatch or creator allocation. Unsupported pre-trip restore is refused. |
-| Home full, banned, unfunded or retiring | Ordinary entry and safe retained recovery are distinct. The person remains recoverable under the actual finite service promise with an actionable next step. |
-| Equal rate but paused source | Return retains visited condition and remaining durations; no catch-up hunger, age reversal or multiplied output from clock origins. |
-| Long-history return | Responsive useful current play, relevant permitted context and no full-life replay; actual cold-read, storage and restore cost reported. |
-| Concentrated demand versus many worlds | Same declared useful behavior and populations, with actual admitted concurrency and no omitted evidence. Queued bodies do not count as simulated participants. |
-| Mass reconnect and repeated retries | Recovery remains available, ordinary request order remains understandable, finite waiting work stays bounded and retry frequency buys no advantage. |
+| Scenario                                        | Required observation and failure condition                                                                                                                                                                        |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary invited outing                         | Player can explain why they visited, choose a worthwhile interaction and leave without completing an invented chore. Compare preparation time with useful time; ask whether they would voluntarily visit again.   |
+| Resident declines or pursues another interest   | The visitor retains another ordinary activity or can return. No forced affection, compulsory care, repeated greeting reward or fabricated service refusal.                                                        |
+| Queue becomes ready during work                 | Work is not interrupted automatically. Cancellation, expiry and changed terms preserve truthful state and a usable waiting identity. Measure offer churn, accepted readiness, waiting and abandonment separately. |
+| Two people approach the same activity           | One present, one resource history and scoped separate evidence; leaving one observer does not demote needed detail or complete work twice.                                                                        |
+| Hidden hazard or revoked domain right           | Refusal/exit does not print private reasons, teleport to arbitrary advantage, expose neighboring property or grant new hostile immunity.                                                                          |
+| Compatible goods change while waiting           | Updated current review; consumed quantity stays spent, nested incompatibility is caught without privacy leakage, return evaluates the new bundle.                                                                 |
+| Lost response, crash, duplicate tab and restore | Exactly one person/custody outcome; no repeated transfer, inventory, teaching, paid dispatch or creator allocation. Unsupported pre-trip restore is refused.                                                      |
+| Home full, banned, unfunded or retiring         | Ordinary entry and safe retained recovery are distinct. The person remains recoverable under the actual finite service promise with an actionable next step.                                                      |
+| Equal rate but paused source                    | Return retains visited condition and remaining durations; no catch-up hunger, age reversal or multiplied output from clock origins.                                                                               |
+| Long-history return                             | Responsive useful current play, relevant permitted context and no full-life replay; actual cold-read, storage and restore cost reported.                                                                          |
+| Concentrated demand versus many worlds          | Same declared useful behavior and populations, with actual admitted concurrency and no omitted evidence. Queued bodies do not count as simulated participants.                                                    |
+| Mass reconnect and repeated retries             | Recovery remains available, ordinary request order remains understandable, finite waiting work stays bounded and retry frequency buys no advantage.                                                               |
 
 Report offered, accepted, physically ready, cancelled, failed and uncertain journeys separately. Measure time to usable control, ordinary command/interaction tails, achieved simulation progress, largest blocking interval, return completion, data loss/correctness incidents, full cost and operator intervention. Publish the actual hardware/service conditions and selected acceptance thresholds before the run; favorable averages cannot hide an unusable tail, dropped outcomes or population excluded by admission. The existing performance owners retain their actual numerical targets. This document supplies no substitute benchmark.
 

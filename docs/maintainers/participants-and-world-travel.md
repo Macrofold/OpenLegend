@@ -1,8 +1,8 @@
 # Participants and travel between worlds
 
-| Status      | Current progress                                                                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG29 source audit and researched product design underway; adoption, technical integration, runtime delivery and complete qualification remain open. | 2026-10-08   |
+| Status      | Current progress                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | DG29 researched product proposal complete; adoption, technical integration, runtime delivery and complete qualification remain open. | 2026-10-08   |
 
 ## Ownership and purpose
 

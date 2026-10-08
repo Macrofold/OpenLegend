@@ -30,6 +30,8 @@ Any goods left behind remain in actual source-world custody. The player can use 
 
 This restriction must earn its inconvenience. Prefer the same-world outing when it provides the desired experience with ordinary belongings. If cross-world stowing feels like the main activity, keep the narrow proof internal and qualify the feature specification's complete compatible carried-bundle journey before advertising regular physical travel. That next journey leaves only genuinely incompatible possessions behind and preserves the whole admitted container/dependency closure under its actual rights and world rules.
 
+The first cross-world profile refuses an account already bound to a distinct destination person, or an existing characterless grant that the current invitation flow cannot promote. It preserves both actual people and existing grants. The applicable multiplayer owner must support the proposed visitor relationship before the route is available; no profile permission silently overwrites a binding or creates a new character.
+
 ## Leave and return deliberately
 
 The readable review states the destination, participation rights, actual clock relationship, belongings policy, service funding and return arrangement. Still-valid grants are reused. While waiting for readiness, the person stays in the source and can continue ordinary supported play. A later ready offer needs an intentional departure from a valid site; it does not interrupt a new activity automatically.

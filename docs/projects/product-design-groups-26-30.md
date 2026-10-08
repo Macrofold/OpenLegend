@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26–DG28 product proposals are complete; DG29 participation and travel design is in progress. | 2026-10-08   |
+| Status      | Current progress                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG26–DG29 product proposals are complete; DG30 creator funding and contributor governance is next. | 2026-10-08   |
 
 ## Assignment and baseline
 
@@ -28,13 +28,13 @@ Research findings, design inferences, proposed defaults, owner-approved policies
 
 ## Sequential work and ownership
 
-| Group | Product question                                                                                                                | Existing responsibilities to reuse                                                                          | Progress                                                                         |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| DG26  | How does speaking or hearing improve an actual exchange while every person receives only their permitted meaning?               | HE/NC/MP, DG24 contacts, spatial and world hearing, PS04 timing, existing spending and privacy.             | Product proposal complete; technical/runtime work remains open.                  |
-| DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Product proposal complete; actual offer adoption and delivery remain open.       |
-| DG28  | How does a creator publish something reusable, retain appropriate rights and receive an understandable share of actual revenue? | DG12 publication/provenance, INV-8/EWF11, DG27 commerce, PD10 and D35/D36/D43/D44.                          | Product proposal complete; rights, commercial adoption and delivery remain open. |
-| DG29  | How can a person join or visit a wanted place and return safely as demand and world histories grow?                             | PS05–PS08, MP access/participation, transfer/data, time, performance and applicable DG12/DG25 boundaries.   | Full source audit, primary research and product design in progress.              |
-| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Pending DG29.                                                                    |
+| Group | Product question                                                                                                                | Existing responsibilities to reuse                                                                          | Progress                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| DG26  | How does speaking or hearing improve an actual exchange while every person receives only their permitted meaning?               | HE/NC/MP, DG24 contacts, spatial and world hearing, PS04 timing, existing spending and privacy.             | Product proposal complete; technical/runtime work remains open.                                    |
+| DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Product proposal complete; actual offer adoption and delivery remain open.                         |
+| DG28  | How does a creator publish something reusable, retain appropriate rights and receive an understandable share of actual revenue? | DG12 publication/provenance, INV-8/EWF11, DG27 commerce, PD10 and D35/D36/D43/D44.                          | Product proposal complete; rights, commercial adoption and delivery remain open.                   |
+| DG29  | How can a person join or visit a wanted place and return safely as demand and world histories grow?                             | PS05–PS08, MP access/participation, transfer/data, time, performance and applicable DG12/DG25 boundaries.   | Product proposal complete; adoption, technical integration and capacity qualification remain open. |
+| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Next sequential design group.                                                                      |
 
 Within the active group, independent readers may research sources and critique consistency in parallel. The five designs themselves are developed and committed sequentially. Commit pending task changes at least every five minutes, as requested by the owner, with accurate checkpoint labels.
 
@@ -49,6 +49,10 @@ Within the active group, independent readers may research sources and critique c
 ## Completed group 28
 
 [Published packs and creator revenue](published-packs-and-creator-revenue-feature-spec.md) records eleven primary sources and starts with useful free reuse before a two-entry curated catalog or paid enrollment. It specifies exact retained releases, complete eligible dependencies, creator/publisher grants, install-without-teaching, acquired-version recovery, a single bounded subscriber allocation, agreed contributor shares and complete payout/refund/exit behavior. Review removed a monthwide premium-world exclusion that complicated voluntary support, corrected refund-fee arithmetic and fractional-share loss, and preserved the source's pre-join terms and scoped lock authority. PACK01–PACK06 and PACK-L01–PACK-L08 retain actual rights/price/payment adoption, technical work and measured service/economics. Free self-hosting and existing open grants are preserved; a marketplace, cross-service provenance network or grant fund is not a prerequisite for the first useful game.
+
+## Completed group 29
+
+[Participants and world travel](participants-and-world-travel-feature-spec.md) records eleven primary sources and selects a useful same-world camp visit before a restricted same-operator transfer and a complete carried-bundle expansion. It preserves one real traveler, current absence/time meanings, scoped property rights, actual conditions and goods, finite funded recovery, and refusal of unreconciled pre-trip restoration even for social-only visits. The larger concentrated shared-world targets remain intact alongside many-world, mass-return and mature-history qualification. Review corrected stale queue priority, separated the ready-slot timer from untimed material review, preserved useful source play while bounding offer churn, and refused conflicting destination character bindings. PT01–PT06 and PS-L34–PS-L41 retain actual adoption, technical work and the full runtime/economics evidence; protected homes, different clocks, party/NPC travel and independent operators remain distinct expansions.
 
 ## Completion criteria and verification plan
 
