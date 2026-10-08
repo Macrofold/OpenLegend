@@ -51,7 +51,7 @@ The authoritative policy record must contain a world ID, revision, independent a
 | Jev/LLM result proposing a new declaration                       | Check the originating group's lock; model confidence or execution backend cannot override it                     |
 | Background job, cache hit, delayed completion or recovered draft | Retain origin; recheck its applicable lock and current authority before activation                               |
 | Ordinary import, revision or automatic library update            | Retain the initiating authority and applicable lock; unattributed automation has no implied admission permission |
-| Explicit owner workshop change                                   | Use explicit creator or scoped special invention authority; always validate and audit the edit   |
+| Explicit owner workshop change                                   | Use explicit creator or scoped special invention authority; always validate and audit the edit                   |
 
 Enforce this at the server/domain admission boundary, not just by hiding an icon. Check the applicable lock before reserving/dispatching generation and again atomically when admitting the result against the current policy revision. Enabling that lock while its workflow is running prevents later activation; request cancellation where possible and reconcile incurred usage. Changing only the other group's lock requires revalidation against the new revision but must not by itself reject or cancel an otherwise permitted attempt. An attempt invalidated by its own lock is not revived by a subsequent unlock. A canceled/rejected candidate may remain in permitted draft history but must not become an executable definition or teach a character a successful invention.
 
@@ -128,7 +128,6 @@ Store special permissions as typed, extensible server-owned grants, with subject
 Full invention freedom does not grant creator inspection of human-private content, save/load, account administration, spending authorization, arbitrary executable code, or unsupported engine capabilities. Shared laws still apply coherently across their declared scope. The player uses the same preview, explicit activation and risk-acceptance workflow as a creator for changes the grant authorizes. Check current scope and revision before dispatch and inside the activation transaction; revocation fences pending changes without undoing historical effects or repeating paid work.
 
 Authoring, activation, character learning, possession and crafting remain separate. Forbidden ordinary proposals receive a clear explanation; uncertain proposals remain proposals until resolved or deliberately accepted through authorized law editing. No new definition automatically teaches all characters or creates its resources. The [law-change contract](../07-technical-architecture/declarations-and-evolution.md#accepted-live-change-and-risk-policy) owns version behavior and risky activation.
-
 
 ## DG28 publishing and commercial consumer
 

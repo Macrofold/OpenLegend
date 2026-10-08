@@ -4,14 +4,14 @@ Status: **accepted AGPL engine and open/private product direction**, September 1
 
 ## Proposed product split
 
-| Layer | Candidate availability | Practical meaning |
-|---|---|---|
-| Core simulation engine and authoritative game/application server | AGPL-3.0-only | Developers can inspect, modify and run the platform; covered engine changes carry AGPL obligations |
-| Standalone creator SDKs, integration libraries and examples | Apache-2.0 when explicitly designated and independently packaged | Future components need their own license/metadata; none are released in this category yet |
-| Starter mechanic library and redistributable starter assets | Explicit open licenses and pinned versions | Self-hosters receive usable fundamentals such as supported gathering, interactions and basic fire behavior |
-| Official world's current state, history, private records and distinctive content | Not automatically included in a code release | Running the platform does not copy the live official world |
-| Advanced official mechanic/content packs | Private, separately licensed, paid, or selectively released | Access to the platform and access to each pack are separate |
-| Creator-authored world definitions and packages | Creator-controlled access and distribution, subject to applicable rights | A creator can keep a package private or choose sharing terms |
+| Layer                                                                            | Candidate availability                                                   | Practical meaning                                                                                          |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Core simulation engine and authoritative game/application server                 | AGPL-3.0-only                                                            | Developers can inspect, modify and run the platform; covered engine changes carry AGPL obligations         |
+| Standalone creator SDKs, integration libraries and examples                      | Apache-2.0 when explicitly designated and independently packaged         | Future components need their own license/metadata; none are released in this category yet                  |
+| Starter mechanic library and redistributable starter assets                      | Explicit open licenses and pinned versions                               | Self-hosters receive usable fundamentals such as supported gathering, interactions and basic fire behavior |
+| Official world's current state, history, private records and distinctive content | Not automatically included in a code release                             | Running the platform does not copy the live official world                                                 |
+| Advanced official mechanic/content packs                                         | Private, separately licensed, paid, or selectively released              | Access to the platform and access to each pack are separate                                                |
+| Creator-authored world definitions and packages                                  | Creator-controlled access and distribution, subject to applicable rights | A creator can keep a package private or choose sharing terms                                               |
 
 The open version should remain a useful starting product. Describe a new world created from the public starter library accurately; do not promise a clone of the current official world if proprietary dependencies are omitted.
 
@@ -56,7 +56,6 @@ Candidate positioning: **“An open platform for worlds with their own rules.”
 The core license is settled. Before launching proprietary executable packs or making broader ownership promises, resolve extension compatibility/additional permissions; individual starter/pack licenses; collaboration and player-contribution terms; creator exports; pack access after cancellation; and moving eligible content into the open library. Existing Apache grants are not revoked by the new license. Review the actual extension design rather than relying on a data-versus-code label.
 
 See [creator economy and packs](creator-economy-and-mechanics-packs.md) for memberships, standalone premium games and the import workflow, and [patrons/contributors](patrons-contributors-and-world-history.md) for recognition and grants.
-
 
 ## DG28 selected distribution proposal
 

@@ -1,8 +1,8 @@
 # Published packs and creator revenue
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | DG28 source audit and researched product design in progress; adoption, technical work, publication, payments and qualification remain open. | 2026-10-08 |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG28 source audit and researched product design in progress; adoption, technical work, publication, payments and qualification remain open. | 2026-10-08   |
 
 ## Ownership and useful first delivery
 

@@ -8,13 +8,13 @@ An official public world, a managed creator world, and a self-hosted world are s
 
 Creators may brand and market a premium world as its own game. Standalone access should not require buying the Open Legend platform subscription. Hosting revenue comes from providing useful operation, reliability, backups, and support. Open source does not force a self-hoster or a competing operator to purchase Macrofold, Open Legend hosting, or a marketplace listing.
 
-| Revenue stream | Buyer / funding source | Recipient / purpose |
-|---|---|---|
-| Managed-world hosting | World operator | Platform pays operating costs and earns a margin |
-| Platform membership | Player | Access/benefits plus a bounded allocation to participating worlds |
-| Premium-world membership | Player, including standalone customers | World operator, subject to clearly stated service/payment fees |
-| Mechanics-pack purchase | Creator or operator | Pack author, with any disclosed marketplace fee |
-| Creator fund | Platform budget and any explicitly allocated patron funding | Grants for new worlds, mechanics, and useful contributions |
+| Revenue stream           | Buyer / funding source                                      | Recipient / purpose                                               |
+| ------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| Managed-world hosting    | World operator                                              | Platform pays operating costs and earns a margin                  |
+| Platform membership      | Player                                                      | Access/benefits plus a bounded allocation to participating worlds |
+| Premium-world membership | Player, including standalone customers                      | World operator, subject to clearly stated service/payment fees    |
+| Mechanics-pack purchase  | Creator or operator                                         | Pack author, with any disclosed marketplace fee                   |
+| Creator fund             | Platform budget and any explicitly allocated patron funding | Grants for new worlds, mechanics, and useful contributions        |
 
 Hosting costs and creator earnings are separate. A popular world is not automatically profitable. The provider, fees, refunds, payout eligibility, accounting, and cancellation terms are undecided.
 
@@ -61,7 +61,6 @@ The license must distinguish use in a paid world, modification, exporting, and r
 Prove a playable creator loop, then portable packs and free sharing, managed-world economics, and a curated paid marketplace. Community governance, public grants, and broader revenue allocation can follow evidence of repeat use. These are later product directions, not additions to the first playable milestone.
 
 Related: [patrons and history](patrons-contributors-and-world-history.md), [private worlds](open-platform-and-private-worlds.md), [funding exploration](tokens-and-community-funding.md).
-
 
 ## DG28 product recommendations
 
