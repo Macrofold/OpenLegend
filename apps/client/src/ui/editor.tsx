@@ -239,7 +239,7 @@ export function EditorPanel({
                 closing.
               </p>
               <div className="ol-creator-window-tools">
-                <Button variant="quiet" onPress={() => setConfirmClose(false)}>
+                <Button variant="quiet" disabled={saving} onPress={() => setConfirmClose(false)}>
                   Keep editing
                 </Button>
                 <Button

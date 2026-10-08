@@ -166,9 +166,9 @@ export function Settings({
             Left-drag does not pan or act on release.
           </p>
           <p>
-            With the world canvas focused, use arrows to pan, Page Up / Page Down to zoom, and Home
-            to recenter. The camera toolbar also provides these controls. Sight and Hearing show the
-            permitted range guides.
+            With the world canvas focused, use Left / Right to rotate, Up / Down to tilt, Page Up /
+            Page Down to change the focused level, and Home to recenter. The camera toolbar also
+            provides these controls. Sight and Hearing show the permitted range guides.
           </p>
         </Section>
         <Section title="Keyboard shortcuts">

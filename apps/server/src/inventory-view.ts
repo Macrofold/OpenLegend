@@ -931,7 +931,8 @@ function projectInventoryItem(
           },
         }
       : {}),
-    ...(declaration
+    ...(declaration &&
+    (declaration.disclosure === 'public' || custodian(world, item.id) === scope.actorId)
       ? {
           declaredOwner: {
             name: declaration.holderId

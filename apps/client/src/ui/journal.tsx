@@ -65,7 +65,7 @@ export function Journal({
         <h3 className="ol-heading">Known places</h3>
         <KnownPlaces
           key={`${captionScope(view)}:${view.historyEpoch}`}
-          revision={view.historyRevision}
+          revision={view.historyRevision ?? ''}
           visible={visible && section === 'places'}
           command={command}
           focus={focus}

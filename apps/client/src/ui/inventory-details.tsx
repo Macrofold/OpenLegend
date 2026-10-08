@@ -145,15 +145,20 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
       </>
     );
   const targets = current.page?.items ?? [];
-  const target = targets.find((other) => other.id === targetId) ?? targets[0];
-  if (!target && !current.page?.next && !cursor && !loading) return null;
+  const target = targetId ? targets.find((other) => other.id === targetId) : targets[0];
+  if (!target && !targetId && !current.page?.next && !cursor && !loading) return null;
   return (
     <div className="ol-actions" aria-busy={loading}>
-      {target ? (
+      {target || targetId ? (
         <>
           <label>
             Merge into{' '}
-            <select value={target.id} onChange={(event) => setTargetId(event.target.value)}>
+            <select value={target?.id ?? ''} onChange={(event) => setTargetId(event.target.value)}>
+              {!target && (
+                <option value="" disabled>
+                  Selected stack unavailable — choose another
+                </option>
+              )}
               {targets.map((other, index) => (
                 <option key={other.id} value={other.id}>
                   {other.name} × {other.quantity} · matching lot {index + 1}
@@ -164,8 +169,8 @@ function MatchingLots({ item, containerId, pageKey, canAct, visible, onMerge }: 
           <Button
             size="sm"
             variant="quiet"
-            disabled={!canAct || loading}
-            onPress={() => onMerge(target)}
+            disabled={!canAct || loading || !target}
+            onPress={() => target && onMerge(target)}
           >
             Merge lots
           </Button>

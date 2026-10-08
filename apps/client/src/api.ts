@@ -50,6 +50,11 @@ export function clearAccess(options?: { preservePendingCommands?: boolean }): vo
   // Each store can be unavailable independently; local storage must not prevent session cleanup.
   clearSessionDrafts(options?.preservePendingCommands);
   try {
+    if (!options?.preservePendingCommands) sessionStorage.removeItem('open-legend:private-owner');
+  } catch {
+    /* Session storage can fail independently of local storage. */
+  }
+  try {
     for (const key of Object.keys(localStorage))
       if (
         key.startsWith('open-legend:world-agent:') ||
@@ -79,12 +84,25 @@ export function acceptAccess(view: GameView): void {
     clearTradeDrafts();
   privateDraftNamespace = view.access?.privateDraftScope ?? '';
   privateDraftTimeline = view.saveTimeline ?? '';
+  const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
+  const timelineKey = `open-legend:save-timeline:${view.worldId}`;
+  // Each store owns its markers. Failure in one must never erase recovery in the other.
   try {
-    const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
-    const priorOwner = localStorage.getItem('open-legend:private-owner');
-    if (priorOwner !== owner) {
+    const previousOwner = sessionStorage.getItem('open-legend:private-owner');
+    const previousTimeline = sessionStorage.getItem(timelineKey);
+    if (previousOwner !== owner || (previousTimeline && previousTimeline !== view.saveTimeline)) {
       clearTradeDrafts();
       clearSessionDrafts();
+    }
+    sessionStorage.setItem('open-legend:private-owner', owner);
+    if (view.saveTimeline) sessionStorage.setItem(timelineKey, view.saveTimeline);
+  } catch {
+    /* Session storage is optional; local cleanup still runs. */
+  }
+  try {
+    const previousOwner = localStorage.getItem('open-legend:private-owner');
+    const previousTimeline = localStorage.getItem(timelineKey);
+    if (previousOwner !== owner) {
       for (const key of Object.keys(localStorage))
         if (
           key.startsWith('open-legend:world-agent:') ||
@@ -92,19 +110,14 @@ export function acceptAccess(view: GameView): void {
           key.startsWith('open-legend:invention-draft:')
         )
           localStorage.removeItem(key);
-      localStorage.setItem('open-legend:private-owner', owner);
-    }
-    const key = `open-legend:save-timeline:${view.worldId}`;
-    const previous = sessionStorage.getItem(key);
-    if (previous && previous !== view.saveTimeline) {
-      clearTradeDrafts();
-      clearSessionDrafts();
+    } else if (previousTimeline && previousTimeline !== view.saveTimeline) {
       localStorage.removeItem(`open-legend:world-agent:${view.worldId}`);
       localStorage.removeItem(`open-legend:invention-draft:${view.worldId}`);
     }
-    if (view.saveTimeline) sessionStorage.setItem(key, view.saveTimeline);
+    localStorage.setItem('open-legend:private-owner', owner);
+    if (view.saveTimeline) localStorage.setItem(timelineKey, view.saveTimeline);
   } catch {
-    /* Browser storage is optional. */
+    /* Local storage is optional and cannot invalidate session recovery. */
   }
 }
 export function eventsUrl(view: GameView): string {

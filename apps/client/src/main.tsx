@@ -656,7 +656,10 @@ function App({
     request?: CommandRequestIdentity,
     acknowledgement: 'notice' | 'inventory' | 'activity' = 'notice',
   ): Promise<ApiResult> {
-    if (isPaused() || !latest.current?.access?.controlling) {
+    if (
+      (isPaused() && action.command.type !== 'inspect-inventory') ||
+      !latest.current?.access?.controlling
+    ) {
       return { ok: false, code: 'paused', message: 'Resume here to play.' };
     }
     if (!connected) {
