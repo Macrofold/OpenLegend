@@ -2,6 +2,7 @@ import { inventionPermission } from './invention-policy.js';
 import { canonicalJson } from './events.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { updateWorld } from './draft.js';
+import type { EncounterExposure, PlaceDefinition } from './places.js';
 
 export interface StoryPolicy {
   id: string;
@@ -10,7 +11,12 @@ export interface StoryPolicy {
   enabled: boolean;
   fields: Record<
     string,
-    { minimum: number; maximum: number; default: number; appliesTo: ('actor' | 'object')[] }
+    {
+      minimum: number;
+      maximum: number;
+      default: number;
+      appliesTo: ('actor' | 'object' | 'place')[];
+    }
   >;
   introductions: { enabled: boolean; field: string; threshold: number };
   eventRules: {
@@ -40,7 +46,12 @@ export const defaultStoryPolicy = (): StoryPolicy => ({
   evaluator: 'story_importance_v1',
   enabled: true,
   fields: {
-    story_importance: { minimum: 0, maximum: 10, default: 0, appliesTo: ['actor', 'object'] },
+    story_importance: {
+      minimum: 0,
+      maximum: 10,
+      default: 0,
+      appliesTo: ['actor', 'object', 'place'],
+    },
   },
   introductions: { enabled: true, field: 'story_importance', threshold: 7 },
   eventRules: [],
@@ -90,7 +101,7 @@ export function validateStoryPolicy(p: StoryPolicy): void {
     if (
       !Array.isArray(f.appliesTo) ||
       !f.appliesTo.length ||
-      f.appliesTo.some((v) => !['actor', 'object'].includes(v))
+      f.appliesTo.some((v) => !['actor', 'object', 'place'].includes(v))
     )
       throw new Error('Unsupported field applicability.');
   }
@@ -130,15 +141,21 @@ export function validateStoryPolicy(p: StoryPolicy): void {
 }
 export function storyField(
   p: StoryPolicy,
-  entity: Entity | undefined,
+  entity: Entity | PlaceDefinition | undefined,
   field: string,
 ): number | undefined {
   const f = p.fields[field];
-  if (!entity || !f?.appliesTo.includes(entity.actor || entity.animal ? 'actor' : 'object'))
+  if (
+    !entity ||
+    !f?.appliesTo.includes(
+      'landmarkId' in entity ? 'place' : entity.actor || entity.animal ? 'actor' : 'object',
+    )
+  )
     return undefined;
   return entity.mechanismFields?.[p.id]?.[field] ?? f.default;
 }
 export interface StorySelectionInput {
+  exposure?: EncounterExposure;
   viewerId: string;
   event: WorldEvent;
   sourceText: string;
@@ -170,6 +187,21 @@ const evaluators: Record<StoryPolicy['evaluator'], Evaluator> = {
             : `event:${e.id}`,
     });
     if (e.type === 'encounter' && e.actorId === i.viewerId && i.target && p.introductions.enabled) {
+      if (i.exposure) {
+        const exposure = i.exposure;
+        const declaration = p.fields[p.introductions.field];
+        const applies = exposure.kind === 'place' ? 'place' : 'object';
+        const value = declaration?.appliesTo.includes(applies)
+          ? (exposure.mechanismFields?.[p.id]?.[p.introductions.field] ?? declaration.default)
+          : undefined;
+        return value !== undefined && value >= p.introductions.threshold
+          ? candidate(
+              value,
+              'Observed introduction',
+              exposure.kind === 'place' ? `place:${exposure.id}` : exposure.introductionKey,
+            )
+          : silent('Observed subject is not nominated for an introduction.');
+      }
       const value = storyField(p, i.target, p.introductions.field);
       if (value !== undefined && value >= p.introductions.threshold)
         return candidate(value, 'Designated introduction', `encounter:${i.target.id}`);

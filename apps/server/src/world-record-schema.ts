@@ -119,9 +119,12 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       objectLineage: map('sim_object_lineage'),
       resourceReservations: map('sim_resource_reservations'),
       workState: one('sim_work_state', { invocations: map('sim_work_invocations') }),
+      outings: map('activity_outings'),
       itemDefinitions: map('definition_items'),
       recipes: map('definition_recipes'),
       flightRoutes: map('sim_flight_routes'),
+      places: map('definition_places'),
+      visiblePlaces: actorMaps('mind_visible_places'),
       memories: actorLists('mind_memories', 'id'),
       minds: map('mind_state', {
         documents: list('mind_documents', 'id'),

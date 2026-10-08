@@ -130,7 +130,10 @@ function fieldSelection(
     }));
   } else if (field.type === 'mode') {
     if (name !== 'mode') return;
-    options = Object.entries(modes).map(([result, label]) => ({ label, result }));
+    options = Object.entries(field.modeLabels ?? modes).map(([result, label]) => ({
+      label,
+      result,
+    }));
   } else {
     const bounds = durationBounds(field);
     if (!bounds || !Number.isFinite(simTime) || simTime < 0) return;

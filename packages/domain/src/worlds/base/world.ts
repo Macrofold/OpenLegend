@@ -38,6 +38,7 @@ import { BASE_CAMP_ACTIVITY_HOST } from './camp-activity.js';
 import { BASE_WORLD_PRESENTATION } from './presentation.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
+import { BASE_PLACES } from './places.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
 import traitBank from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
@@ -135,6 +136,8 @@ export function createWorld(
     cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
     storyPolicy: defaultStoryPolicy(),
     visibleObjects: {},
+    places: structuredClone(BASE_PLACES),
+    visiblePlaces: {},
     id: `wilderness-${normalizedSeed}`,
     seed: normalizedSeed,
     rngState: normalizedSeed || 0x6d2b79f5,

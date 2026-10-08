@@ -38,6 +38,6 @@ Use ordinary, non-symlink guidance files and versioned link targets; newly creat
 
 Size reports cover the root, longest AGENTS ancestry and total skill discovery text (names, descriptions and paths). They exclude harness overhead and loaded topic bodies, and are bytes, not tokens. Assess representative task context as well; a smaller root can still trigger excessive reading. Keep native skills directly under `.agents/skills/<name>/SKILL.md`, with shallow links to details rather than a deep skill-folder hierarchy.
 
-Expected routing: a Jev rubric change loads server, TypeScript, AI and verification; a camera change loads client, TypeScript, PlayCanvas and verification; a typo-only document correction loads documentation. A cross-boundary change loads the applicable union. Reading guidance for maintenance does not activate every procedure it describes.
+Expected routing: code work first applies the [root performance read requirement](../AGENTS.md#performance-guidance-before-code-work). A Jev rubric change also loads server, TypeScript, AI and verification; a camera change also loads client, TypeScript, PlayCanvas and verification; a typo-only document correction loads documentation. A cross-boundary change loads the applicable union. Reading guidance for maintenance does not activate every procedure it describes.
 
 No generated wrapper copies, skill installers, permission changes or model settings are included. Review and pin vendor skills only when they add missing context; whole collections are not prerequisites to contributing.

@@ -1,3 +1,4 @@
+import { outingContext } from './outing-view.js';
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
@@ -72,6 +73,7 @@ function activityDecisionFacts(
   const available = activityRequestChoices(world, actorId, observed);
   return {
     simTime: world.simTime,
+    outing: outingContext(world, actorId),
     activityRequests: {
       requests: activityRequestDescriptors(world),
       choices: available.choices.map(({ id, kind, ...choice }) => ({

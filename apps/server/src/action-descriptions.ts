@@ -1,5 +1,11 @@
+import { BASE_OUTING } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
-import { nativeCatalogueView, strikeDefinition } from '@open-legend/domain';
+import {
+  nativeCatalogueView,
+  strikeDefinition,
+  describeItemOffer,
+  BASE_HANDOVER,
+} from '@open-legend/domain';
 import { domainCommand } from './cognition.js';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
 import { BASE_DEATH_COMMAND_DESCRIPTIONS } from '@open-legend/domain';
@@ -19,6 +25,7 @@ import type { CommandInput } from '@open-legend/protocol';
  * presentation data; command previews and the kernel still own every prerequisite. */
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
   ...BASE_DEATH_COMMAND_DESCRIPTIONS,
+  outing: BASE_OUTING.description,
   'activity-request':
     'Choose every required parameter and review a supported activity before starting it.',
   'inspect-activities':
@@ -93,6 +100,7 @@ function describeCommand(
   const itemDefinition = item && definition(item.definitionId);
   const recipe = 'recipeId' in command ? read.recipes.get(command.recipeId ?? '') : undefined;
   const common = ACTION_DESCRIPTIONS[command.type];
+  if (command.type === 'outing') return BASE_OUTING.description;
   switch (command.type) {
     case 'strike': {
       if (itemDefinition?.melee) {
@@ -137,9 +145,14 @@ function describeCommand(
     case 'cook':
       return target ? `${common} Use ${namePhrase(target, 'definite')} for this portion.` : common;
     case 'handover': {
+      if (command.offerId) {
+        const offer = world.itemOffers?.[command.offerId];
+        if (offer && [offer.offererId, offer.recipientId].includes(observation.actor.id))
+          return describeItemOffer(world, offer) + '. ' + BASE_HANDOVER.text.decision;
+      }
       const what =
         item && itemDefinition ? `${command.quantity ?? item.quantity} ${itemDefinition.name}` : '';
-      return command.handoverOperation === 'offer'
+      return command.handoverOperation === 'offer' || command.handoverOperation === 'counter'
         ? `Offer ${what || 'these items'} to ${target ? namePhrase(target, 'definite') : 'this person'}. Nothing moves unless they accept; you keep the items meanwhile and can withdraw the offer.`
         : command.handoverOperation === 'accept'
           ? `Take the offered items from ${target ? namePhrase(target, 'definite') : 'this person'}. You must be within arm's reach of each other.`

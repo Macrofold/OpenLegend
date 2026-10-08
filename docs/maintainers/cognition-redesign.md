@@ -141,6 +141,8 @@ Owner: server attention/retrieval, generic Jev execution. Depends on: CR01–CR0
 
 ### CR05 — Awareness and one experience source
 
+PX03’s [private place/item observation contract](../memory-architecture.md#personal-perspective-and-acquisition) extends this existing owner. Its Known places projection consumes cold retained evidence and responds to forgetting/correction without a second writable memory collection; authored place retention is separate from story importance. [Scoped native/browser/query evidence](../verification/useful-discoveries.md) closes this consumer subset of CR05–CR06, not CR12’s broad memory/model acceptance or longer-term personality behavior.
+
 Proposed [EPR03](events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) owns perception-acquisition integration and [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns change-fed intake. Recall/awareness behavior and its unique verification remain here.
 
 - [x] Add event-time awareness links for every actor, including the player. Store one shared event plus actor-specific perceived text/detail when needed; never expose a raw event through the join.

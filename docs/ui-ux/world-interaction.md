@@ -93,6 +93,8 @@ The menu distinguishes loading, checking, a failed read, no matches, hidden unav
 
 ## Navigation and world search
 
+Journal’s current **Known places** follows the character’s retained observations, including learned description and last-observed supported location. Search uses stable pages; Inspect opens remembered details and an admitted movement choice, while **Focus last-known location** only changes the camera and turns off following the player so the remembered location stays in view. A separate **Move to last-known location** request passes through the ordinary native admission and route owner. Refusals preserve the observation and explain that it cannot currently be used, without showing unseen changes. Keyboard inspection and pending movement keep focus in the details; long labels and descriptions wrap in the existing panel.
+
 When world search or a map is expanded, let players move from **known name → result → focus/pin → inspect → optional action**. Searching or focusing is not teleportation or movement. Show floor/region and relevant uncertainty where permitted. Provide a textual/list route to places and entities rather than making every task depend on precise map pointing.
 
 Factorio's chart search and pins illustrate task-oriented spatial retrieval: find a known thing, orient to it and retain a reference. That does not authorize Open Legend to expose an omniscient map or remotely interact with everything. [G07](research.md#g07)
@@ -116,3 +118,5 @@ Exercise a world-edge popup, two open panels at enlarged UI scale, an active cha
 ## Paused game tabs
 
 A sole game tab enters automatically on opening, reload and refocus. Only switching between open game tabs presents a blocking dialog: heading **Game Paused**, subtext **OpenLegend is open in another tab.**, primary **Resume Here**, secondary **Log Out**. Preserve this exact copy and capitalization. Escape, outside clicks and game shortcuts cannot dismiss it or act behind it. Show pending actions and readable retry errors in place; distinguish logout from resuming. Logout clears the shared login and private game presentation in every tab. Do not describe connection failures as another tab. Manual world pause remains a separate clock control. See the [feature contract](../projects/completed/tab-resume-feature-spec.md).
+
+Manual world pause still permits deliberate inventory inspection and reading/focusing remembered places. Inspection records only the selected permitted item or admitted contents page at the frozen game time. It does not perform a physical action or advance time; movement remains disabled until play resumes.

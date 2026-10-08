@@ -688,14 +688,28 @@ export function recordPlanResult(
   plan: ActorPlan,
   summary: string | Narration,
 ): void {
-  plan.resultMemoryId = appendMemory(world, actorId, {
-    kind: 'episode',
-    source: 'internal',
-    importance: 6,
-    entityIds: [actorId],
-    summary,
-  });
-  world.entities[actorId]!.actor!.agency.lastResultMemoryId = plan.resultMemoryId;
+  linkPlanResult(
+    world,
+    actorId,
+    plan,
+    appendMemory(world, actorId, {
+      kind: 'episode',
+      source: 'internal',
+      importance: 6,
+      entityIds: [actorId],
+      summary,
+    }),
+  );
+}
+/** Retain existing personal evidence without writing a second account of the occurrence. */
+export function linkPlanResult(
+  world: WorldState,
+  actorId: string,
+  plan: ActorPlan,
+  evidenceId: string | undefined,
+): void {
+  plan.resultMemoryId = evidenceId;
+  world.entities[actorId]!.actor!.agency.lastResultMemoryId = evidenceId;
 }
 
 /** Cancellation and suspended-work discard share one terminal report. The marker

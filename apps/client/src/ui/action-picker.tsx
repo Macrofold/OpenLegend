@@ -429,6 +429,11 @@ export function ActionPicker({
             query={query}
             presentation="menu"
             onMatchCount={setTaskMatches}
+            excludeFamilies={actions.flatMap((action) =>
+              action.targetId === subject.id && action.intent.kind === 'activity'
+                ? [action.intent.family]
+                : [],
+            )}
           />
         )}
         {showInspect && (

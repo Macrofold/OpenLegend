@@ -40,6 +40,7 @@ export interface CommandInput {
     | 'cook'
     | 'tend-fire'
     | 'handover'
+    | 'outing'
     | 'eat'
     | 'replenish'
     | 'status-effect'
@@ -67,8 +68,20 @@ export interface CommandInput {
   operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
   fireOperation?: 'light' | 'fuel' | 'extinguish';
-  handoverOperation?: 'offer' | 'accept' | 'decline' | 'withdraw';
+  handoverOperation?: 'offer' | 'counter' | 'accept' | 'decline' | 'withdraw';
+  outingOperation?: 'invite' | 'accept' | 'decline' | 'leave';
+  outingId?: string;
+  outingMode?: 'enqueue' | 'replace' | 'interrupt';
+  destinationId?: string;
   offerId?: string;
+  expectedOfferRevision?: number;
+  requestedItem?: {
+    itemId: string;
+    quantity: number;
+    expectedRevision?: number;
+    placementRevision?: number;
+    expectedContentsRevision?: number;
+  };
   targetId?: string;
   definitionId?: string;
   itemId?: string;
@@ -76,6 +89,8 @@ export interface CommandInput {
   attributeId?: string;
   ammunitionId?: string;
   position?: SurfacePoint;
+  /** Resolve the retained observer evidence on the server; the client supplies no location. */
+  knownPlace?: { id: string; sourceId: string; revision: string };
   distance?: number;
   attemptId?: string;
   scarId?: string;
@@ -97,6 +112,7 @@ export type ActivityRequestPresentation = {
   workMode: string;
 } & (
   | { kind: 'replenish-session' }
+  | { kind: 'outing-invitation'; destination: string }
   | {
       kind: 'resource-care';
       supply: string;
@@ -120,6 +136,19 @@ export interface ActivityEntry {
   label: string;
   description: string;
 }
+export interface OutingView {
+  id: string;
+  revision: number;
+  destination: string;
+  companion: string;
+  distance: number;
+  purpose?: string;
+  status: 'pending' | 'traveling' | 'arrived';
+  company: string;
+  description: string;
+  choices: Array<{ id: string; label: string; description: string; command: CommandInput }>;
+}
+
 export interface ActivityRequestsView {
   ok: boolean;
   scope: string;
@@ -127,6 +156,8 @@ export interface ActivityRequestsView {
   /** Applicable tasks for the exact permitted target supplied to this read. */
   entries: ActivityEntry[];
   requests: {
+    purposeLabel?: string;
+    submitLabel?: string;
     id: string;
     label: string;
     description: string;
@@ -135,6 +166,7 @@ export interface ActivityRequestsView {
       string,
       {
         type: 'entity' | 'definition' | 'integer' | 'time' | 'mode';
+        modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
         label: string;
         minimum?: number;
         maximum?: number;
@@ -225,6 +257,7 @@ export interface CatalogueAction {
   reason?: string;
   intent:
     | { kind: 'command'; command: CommandInput }
+    | { kind: 'activity'; family: string; arguments: Record<string, string> }
     | { kind: 'compose'; mode: 'chat' | 'invention'; npcId?: string }
     | { kind: 'unavailable' };
 }
@@ -278,6 +311,7 @@ export interface EntityView extends Named {
   icon?: string;
   /** Native root placement is public; contents revision requires current contents access. */
   storage?: { containerId: string; placementRevision: number; revision?: number };
+  trade?: ItemTradeView;
   /** Exact action offered for the controlled character's currently equipped item. */
   equippedAction?: ActionOption;
   contents?: Array<{
@@ -338,6 +372,63 @@ export interface InventoryItemView extends Named {
   equipped: boolean;
   tags: string[];
   actions: ActionOption[];
+}
+
+export interface TradeLotView {
+  id: string;
+  name: string;
+  label: string;
+  description: string;
+  quantity: number;
+  revision: number;
+  placementRevision: number;
+  contentsRevision?: number;
+  whole: boolean;
+}
+/** Participant-only pending terms and remembered disclosures, never other live stock. */
+export interface ItemTradeView {
+  scope: string;
+  personId: string;
+  personName: string;
+  labels: {
+    title: string;
+    newOffer: string;
+    review: string;
+    refresh: string;
+    choose: string;
+    whole: string;
+    giveQuantity: string;
+    receiveQuantity: string;
+    selectionHint: string;
+    into: string;
+    to: string;
+    remembered: string;
+    noTransfer: string;
+    draftChanged: string;
+    give: string;
+    receive: string;
+    offer: string;
+    accept: string;
+    decline: string;
+    withdraw: string;
+    counter: string;
+    gift: string;
+    waiting: string;
+    incoming: string;
+    changed: string;
+    unknown: string;
+  };
+  ownLots: TradeLotView[];
+  knownLots: TradeLotView[];
+  offers: {
+    id: string;
+    revision: number;
+    incoming: boolean;
+    give?: TradeLotView;
+    receive?: TradeLotView;
+    expiresAt: number;
+    actions: ActionOption[];
+  }[];
 }
 
 export interface RecipeView {
@@ -420,6 +511,32 @@ export interface MemoryHistoryPage {
   next: string | null;
   /** A search examined its per-request window without filling the page. */
   scanLimited: boolean;
+}
+
+export interface KnownPlaceView {
+  id: string;
+  sourceId: string;
+  revision: string;
+  label: string;
+  description: string;
+  locationLabel: string;
+  position: SurfacePoint;
+  time: number;
+  corrected: boolean;
+}
+export interface KnownPlacesPage {
+  ok: true;
+  worldId: string;
+  generation: string;
+  entries: KnownPlaceView[];
+  next: string | null;
+  scanLimited: boolean;
+}
+export interface KnownPlaceInspection {
+  ok: true;
+  place: KnownPlaceView;
+  move: ActionOption;
+  moveDescription: string;
 }
 
 export interface PublicEvent {
@@ -596,6 +713,7 @@ export interface GameView {
     actionAttempts: PlayerActionAttempt[];
     /** The controlled actor's plain activity result; detailed steps remain God-only. */
     activity?: ActivityRequestsView['status'];
+    outings: OutingView[];
     /** The controlled character's plan steps and states; projected only in God mode. */
     work?: WorkView | null;
     /** Example typed requests in this world's own words, for the action form. */
@@ -907,6 +1025,8 @@ export interface IntelligenceCall {
 }
 
 export interface TranscriptItem {
+  /** Committed observation wording used when optional generation is unavailable. */
+  authoredFallback?: boolean;
   speech?: PerceivedSpeech;
   id: string;
   kind: 'speech' | 'event' | 'narration';

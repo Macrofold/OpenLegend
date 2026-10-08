@@ -23,6 +23,10 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [Useful place and inspected-item discoveries](verification/useful-discoveries.md): private observed facts, introduction fallback, Known places, correction/forgetting, unavailable destinations and current-format reload.
+
+- [Voluntary outings](verification/voluntary-outings.md): exact consent, independent travel, interruption/privacy, PostgreSQL restart, browser departure/leave and bounded live acceptance/refusal/arrival choices with complete cost.
+
 - [NPC reply previews](verification/npc-reply-preview.md): corrected configured-route gate, actual early browser speech, private decoding/native-history/recovery checks, exact estimated/reserved spending and remaining NP05 qualification.
 
 - [World-configured survival](verification/world-configured-survival.md): matched native outcomes, body/meter/alternate-world checks, current cost measurements and combined UI acceptance status.
@@ -40,6 +44,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Injury, aftermath and direct interaction](verification/embodied-feedback.md): native death/decay/cleanup/revival, exact tool use, browser feedback/targeting/fire memory and bounded escape/guide costs.
 - [Whole-interface interaction redesign](verification/game-interaction-redesign.md): paired inventory and object opening, broader player/creator/operations presentation, native and controlled interface evidence, upstream integration and remaining composed-gameplay/input/player qualification.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
+- [Reciprocal barter](verification/reciprocal-barter.md): exact two-sided consent, changed goods/work/claims, private terms, actual shared drafts and controls, PostgreSQL rollback/replay, matched server measurements and controlled live accept/refuse costs.
 - [Camp fire care and sharing](verification/camp-life.md): native, PostgreSQL service and fixture-Jev evidence for lighting, fuelling and putting out fires, and for consent-aware offers. [October 2 containers and chosen activities](verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) records current family/watch/inspection/aging and actual injected-director results, the corrected frozen-world stress diagnostic and historical mutable-fixture timeout, and separate browser/live/integration gaps.
 - [Actor agency and invention workflows](verification/actor-agency-and-inventions.md): identity, native attempts, plans and supported invention loops.
 - [Invention foundation](verification/invention-foundation.md): crafting, gathering, proposal revision and provider evidence.

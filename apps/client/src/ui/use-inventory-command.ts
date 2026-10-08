@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ActionOption, ApiResult, CommandReceiptResult } from '@open-legend/protocol';
 import { post } from '../api';
+import { retainTradeInventoryReceipt, resolveTradeInventoryReceipt } from '../trade-drafts';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 
-type PendingCommand = CommandRequestIdentity & { command: unknown; label: string };
+type PendingCommand = CommandRequestIdentity & {
+  command: unknown;
+  label: string;
+  tradeScope?: string;
+};
 type PendingState = { request?: PendingCommand; status: 'sending' | 'unknown' | 'checking' };
 
 function restore(key: string): PendingState | undefined {
@@ -26,7 +31,9 @@ function restore(key: string): PendingState | undefined {
       'label' in value &&
       typeof value.label === 'string' &&
       value.label.length <= 2000 &&
-      'command' in value
+      'command' in value &&
+      (!('tradeScope' in value) ||
+        (typeof value.tradeScope === 'string' && value.tradeScope.length <= 2000))
     )
       return {
         status: 'unknown',
@@ -35,6 +42,7 @@ function restore(key: string): PendingState | undefined {
           commandEpoch: value.commandEpoch,
           label: value.label,
           command: value.command,
+          ...('tradeScope' in value ? { tradeScope: value.tradeScope as string } : {}),
         },
       };
   } catch {
@@ -81,7 +89,12 @@ export function useInventoryCommand({
     };
   }, []);
 
-  function finish(result: ApiResult, commandId: string) {
+  useLayoutEffect(() => {
+    const request = pending?.request;
+    if (request?.tradeScope) retainTradeInventoryReceipt(request.tradeScope, request.commandId);
+  }, [pending?.request?.commandId]);
+
+  function finish(result: ApiResult, commandId: string, tradeScope?: string) {
     if (!storageKey) return;
     // If storage becomes unavailable, retain the guard. The native result remains
     // recoverable, and a remount cannot accidentally repeat the unresolved request.
@@ -92,6 +105,7 @@ export function useInventoryCommand({
     // command and the current component started another one. It cannot erase the latter.
     if (saved?.request?.commandId === commandId) sessionStorage.removeItem(storageKey);
     if (activeCommandId.current !== commandId) return;
+    if (tradeScope && alive.current) resolveTradeInventoryReceipt(tradeScope, commandId);
     activeCommandId.current = undefined;
     guard.current = false;
     if (alive.current) {
@@ -101,42 +115,71 @@ export function useInventoryCommand({
     }
   }
 
-  async function dispatch(action: ActionOption) {
-    if (guard.current || !connected || !epoch || !action.enabled) return;
+  async function dispatch(action: ActionOption, tradeScope?: string): Promise<ApiResult> {
+    if (guard.current || !connected || !epoch || !action.enabled)
+      return {
+        ok: false,
+        code: guard.current ? 'unconfirmed' : 'unavailable',
+        message: guard.current
+          ? 'Resolve the retained inventory request before acting again.'
+          : 'Reconnect with current character control before acting. Nothing was sent.',
+      };
     if (!storageKey) {
       setMessage('Refresh character access before changing possessions.');
-      return;
+      return {
+        ok: false,
+        code: 'unavailable',
+        message: 'Refresh character access before changing possessions. Nothing was sent.',
+      };
     }
     const request: PendingCommand = {
       commandId: crypto.randomUUID(),
       commandEpoch: epoch,
       command: action.command,
       label: action.label,
+      ...(tradeScope ? { tradeScope } : {}),
     };
     try {
       sessionStorage.setItem(storageKey, JSON.stringify(request));
     } catch {
       setMessage('This browser could not retain the request. Nothing was sent.');
-      return;
+      return {
+        ok: false,
+        code: 'unavailable',
+        message: 'This browser could not retain the request. Nothing was sent.',
+      };
     }
+    if (tradeScope) retainTradeInventoryReceipt(tradeScope, request.commandId);
     guard.current = true;
     activeCommandId.current = request.commandId;
     setPending({ request, status: 'sending' });
     setMessage('');
+    let outcome: ApiResult = {
+      ok: false,
+      code: 'unconfirmed',
+      message: 'The outcome is unknown. Check the original receipt before acting again.',
+    };
     try {
       const result = await command(action, request);
       if (!['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code)) {
-        finish(result, request.commandId);
-        return;
+        finish(result, request.commandId, request.tradeScope);
+        return result;
       }
+      outcome = result;
       if (alive.current && activeCommandId.current === request.commandId)
         setMessage(result.message);
     } catch (error: unknown) {
+      outcome = {
+        ok: false,
+        code: 'unconfirmed',
+        message: error instanceof Error ? error.message : 'The outcome is unknown.',
+      };
       if (alive.current && activeCommandId.current === request.commandId)
         setMessage(error instanceof Error ? error.message : 'The outcome is unknown.');
     }
     if (alive.current && activeCommandId.current === request.commandId)
       setPending({ request, status: 'unknown' });
+    return outcome;
   }
 
   async function check() {
@@ -153,7 +196,7 @@ export function useInventoryCommand({
       if (receipt.scope !== scope) {
         setMessage('Character access changed. Reconnect before checking the result.');
       } else if (receipt.status === 'resolved') {
-        finish(receipt.result, request.commandId);
+        finish(receipt.result, request.commandId, request.tradeScope);
         return;
       } else setMessage(receipt.message);
     } catch (error: unknown) {

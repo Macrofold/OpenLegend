@@ -1,3 +1,10 @@
+import {
+  BASE_OUTING,
+  outingInvitationProblem,
+  activityRequestHost,
+  observerDescription,
+} from '@open-legend/domain';
+import { outingActions } from './outing-view.js';
 import { namePhrase } from '@open-legend/language';
 import {
   accessiblePossession,
@@ -466,6 +473,36 @@ export function actionCatalogue(
         );
     }
   }
+  if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
+    for (const target of actionTargets) {
+      if (!BASE_OUTING.participant(target) || target.id === scope.actorId) continue;
+      const refused = outingInvitationProblem(world, scope.actorId, target.id);
+      actions.push({
+        id: `invite-travel:${target.id}`,
+        label: BASE_OUTING.label,
+        category: 'Social',
+        description: BASE_OUTING.description,
+        keywords: [
+          'travel',
+          'company',
+          observerDescription(world, scope.actorId, target.id, 'definite'),
+        ],
+        targetId: target.id,
+        enabled: controlling && !refused,
+        ...(refused ? { reason: refused.message } : {}),
+        intent: {
+          kind: 'activity',
+          family: BASE_OUTING.family,
+          arguments: { recipientId: target.id },
+        },
+      });
+    }
+    for (const choice of outingActions(world, scope.actorId))
+      add(choice.id, choice.label, 'Social', choice.command, ['outing', 'travel'], undefined, {
+        description: choice.description,
+        availability: service.previewCommand(choice.command, scope.actorId),
+      });
+  }
   // Each offer/reply binds its exact perceived person; the recipient alone can accept.
   for (const target of actionTargets) {
     for (const option of target.actor
@@ -479,7 +516,18 @@ export function actionCatalogue(
             : {},
         )
       : [])
-      add(option.id, option.label, 'Social', option.command, ['offer', 'give', 'share'], target.id);
+      add(
+        option.id,
+        option.label,
+        'Social',
+        option.command,
+        ['offer', 'give', 'share'],
+        target.id,
+        {
+          availability: service.previewCommand(option.command, scope.actorId),
+          description: option.description,
+        },
+      );
     // Fire care binds the exact selected fire; one of light/put out applies to its current state.
     for (const option of target.heat
       ? fireCareOptions(world, itemUses, target, { eachLot: !!context.catalogue })

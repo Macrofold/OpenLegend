@@ -216,15 +216,14 @@ Original recommendation: **Expand**.
 
 **Current · Restrictiveness: Very safe.**
 
-Player history and standalone narration show “Narration failed.” on generation failure;
-they do not substitute descriptions or offer Regenerate narration. No failure or restart
+Player history and standalone narration ordinarily show “Narration failed.” on generation failure and offer no Regenerate narration. PX03’s admitted place/item introductions instead preserve their mandatory observed description as a useful authored fallback; learning already occurred before selection. Other failed passages retain the explicit failure entry. No failure or restart
 automatically retries generation. The existing explicit API remains available to authorized
 callers, with its source checks, revision identity and accounting fences.
 
 **Reason / tradeoff:** The September 27, 2026 product decision removes the player retry
 control and fallback prose so a failed generation is explicit and causes no hidden spending.
 It sacrifices an in-game regeneration shortcut; original evidence and actual impacts remain
-saved. Deterministic conversation lifecycle notices are not generation failures.
+saved. Deterministic conversation lifecycle notices are not generation failures. The October 5 PX03 instruction explicitly changes the former blanket no-fallback decision for grounded place/item introductions only, so a provider outage cannot remove their practical explanation. Existing selection/cooldown/source and spending checks still apply; no retry is added.
 
 [Contract](../narration-and-conversations.md#9-triggers-ordering-and-transcript-reconstruction) ·
 [Implementation work](../maintainers/narration-and-conversations.md) ·

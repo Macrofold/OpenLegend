@@ -1220,7 +1220,14 @@ function App({
         command: a.intent.command,
         reason: a.reason,
       });
-    else if (a.intent.kind === 'compose') {
+    else if (a.intent.kind === 'activity' && a.targetId && a.enabled) {
+      openActivity({
+        familyId: a.intent.family,
+        targetId: a.targetId,
+        label: a.label,
+        description: a.description,
+      });
+    } else if (a.intent.kind === 'compose') {
       if (a.intent.mode === 'invention') invent();
       else talk(a.intent.npcId ?? '');
     }
@@ -1352,7 +1359,7 @@ function App({
     const props = {
       view,
       connected,
-      command: (a: ActionOption) => void command(a),
+      command: (a: ActionOption) => command(a),
     };
     switch (id) {
       case 'inventory':
@@ -1537,6 +1544,13 @@ function App({
               view={view}
               visible={visible}
               storyRequest={storyRequest}
+              command={command}
+              focus={(point) => {
+                const renderer = scene.current;
+                if (!renderer) return;
+                if (renderer.cameraState().following) renderer.cameraCommand({ type: 'follow' });
+                renderer.cameraCommand({ type: 'focus', point });
+              }}
             />
           </>
         );

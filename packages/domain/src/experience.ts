@@ -48,6 +48,8 @@ export const EXPERIENCE_LIMITS = {
   historyDays: 30,
 } as const;
 export interface Awareness {
+  /** Exact observable facts learned at encounter/inspection time, not generated prose. */
+  exposure?: import('./places.js').EncounterExposure;
   entityEpisodes?: Record<string, string>;
   speech?: import('./speech.js').PerceivedSpeech;
   eventId: string;

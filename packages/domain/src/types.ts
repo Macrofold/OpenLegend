@@ -32,6 +32,7 @@ export interface ItemDefinition extends Named {
   icon?: string;
   /** The installed gathering capability's shortcut label, independent of its identity. */
   gatherLabel?: string;
+  mechanismFields?: Record<string, Record<string, number>>;
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
@@ -199,6 +200,8 @@ export interface ActorComponent {
   /** Attack recovery survives cancelling an already committed swing. */
   attackReadyAt?: number;
   inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
+  /** Explicitly disclosed offer terms, not a live view of another person's inventory. */
+  knownTradeLots?: Record<string, Record<string, import('./handover.js').KnownTradeLot>>;
   participation?: import('./participation-state.js').ParticipationState;
   senses?: string[];
   /** Receiver-private provenance, never part of a contact projection. */
@@ -321,6 +324,7 @@ export interface KnowledgeRecord {
 export type EventScope = 'external' | 'private' | 'system';
 export interface WorldEvent {
   narration?: import('./narration.js').Narration;
+  exposure?: import('./places.js').EncounterExposure;
   scope?: EventScope;
   /** Committed occurrence origin, never recomputed from a source's later position. */
   origin?: Position;
@@ -361,6 +365,9 @@ export interface CommandReceipt {
 export interface WorldState {
   /** Optional authored public wording; unnamed worlds use generic interface headings. */
   presentation?: { worldName: string; locationName: string; timeLabel: string };
+  places: Record<string, import('./places.js').PlaceDefinition>;
+  /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
+  visiblePlaces?: Record<string, Record<string, number>>;
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: {
@@ -371,6 +378,8 @@ export interface WorldState {
   /** Deadline authority is owned by participation, separate from operational presence. */
   exitExposures?: Record<string, number>;
   resourceReservations?: Record<string, import('./resource-claims.js').ResourceReservation>;
+  /** Live exact consent, separate from each participant's ordinary movement plan. */
+  outings?: Record<string, import('./outings.js').Outing>;
   /** Pending offers only, bounded per offerer; saved with the world settings record. */
   itemOffers?: Record<string, import('./handover.js').ItemOffer>;
   knowledgeRevisions?: Record<string, number>;
@@ -447,6 +456,7 @@ interface Envelope {
 }
 export type Command = Envelope &
   (
+    | import('./outings.js').OutingCommand
     | {
         type: 'activity';
         methodId: string;
@@ -532,7 +542,7 @@ export type Command = Envelope &
     | { type: 'cook'; itemId: string; heatId: string }
     | {
         type: 'handover';
-        operation: 'offer';
+        operation: 'offer' | 'counter';
         targetId: string;
         itemId: string;
         quantity: number;
@@ -541,12 +551,16 @@ export type Command = Envelope &
         placementRevision?: number;
         expectedContentsRevision?: number;
         targetRevision?: number;
+        requested?: import('./handover.js').RequestedLot;
+        offerId?: string;
+        expectedOfferRevision?: number;
       }
     | {
         type: 'handover';
         operation: 'accept' | 'decline' | 'withdraw';
         targetId: string;
         offerId: string;
+        expectedOfferRevision: number;
       }
     | {
         type: 'tend-fire';
@@ -567,6 +581,7 @@ export type Command = Envelope &
       }
     | {
         type: 'inspect-inventory';
+        itemId?: string;
         containerId?: string;
         after?: string;
         expectedRevision?: number;

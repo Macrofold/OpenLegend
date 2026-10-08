@@ -1,3 +1,4 @@
+import { nextOutingDeadline } from './outings.js';
 import { nextItemOfferDeadline } from './handover.js';
 import { nextRemainsDeadline } from './remains.js';
 import { nextActivityBoundary } from './activity-execution.js';
@@ -210,6 +211,7 @@ export function nativeInterval(
   at(nextResourceReservationDeadline(world));
   at(nextAppraisalDeadline(world));
   at(nextItemOfferDeadline(world));
+  at(nextOutingDeadline(world));
   for (const process of Object.values(world.appraisalProcesses ?? {})) at(process.nextAt);
   if (world.conversations) {
     const timeout = world.socialPolicy?.conversationInactivitySeconds ?? 1800;

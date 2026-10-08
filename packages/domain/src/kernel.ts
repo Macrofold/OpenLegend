@@ -18,6 +18,7 @@ import { rangedApproachRange } from './worlds/base/actions.js';
 import {
   executeHandover,
   prepareItemOffer,
+  itemOfferReplyProblem,
   offerRecipientProblem,
   reconcileItemOffers,
 } from './handover.js';
@@ -143,7 +144,12 @@ import {
   itemsForOwner,
 } from './item-handling.js';
 import { strikeDefinition, supportsStrike } from './strikes.js';
-import { inspectPossessions, inspectedContainer } from './inventory-inspection.js';
+import {
+  inspectPossessions,
+  inspectedContainer,
+  recordInspectedItems,
+} from './inventory-inspection.js';
+import { exposedPlaces, placeLandmarkIndex } from './places.js';
 import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
 import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
@@ -156,6 +162,7 @@ import {
   interpolate,
   MOVEMENT,
   SPATIAL_LIMITS,
+  surfaceById,
   type RoutePlan,
   type NavigationRequest,
   type NavigationResult,
@@ -216,7 +223,15 @@ import {
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
+import {
+  appendMemory,
+  canonicalJson,
+  emit,
+  encounterEmitter,
+  acquireExposure,
+  finish,
+  outcome,
+} from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -251,6 +266,7 @@ import type {
   WorldEvent,
   WorldState,
 } from './types.js';
+import { prepareOuting, executeOuting, reconcileOutings } from './outings.js';
 
 export const SIMULATION_RULES = {
   version: 3,
@@ -700,6 +716,12 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   const reject = (code: string, message: string) => outcome(false, code, message);
   const source = getOwn(world.entities, command.actorId);
   if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
+  // Withdrawing consent needs no physical action, including while paused or unable to move.
+  if (
+    command.type === 'outing' &&
+    (command.operation === 'leave' || command.operation === 'decline')
+  )
+    return null;
   if (command.type === 'respawn') {
     if (world.paused) return reject('paused', 'Resume the world before continuing.');
     return source.actor.pendingDeath
@@ -731,7 +753,8 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     return reject('capability-restricted', 'Speech is unavailable.');
   if (command.type === 'move' && capabilityBlocked(world, source, 'locomotion'))
     return reject('capability-restricted', 'Movement is unavailable.');
-  if (world.paused && command.type !== 'cancel') return reject('paused', 'The world is paused.');
+  if (world.paused && command.type !== 'cancel' && command.type !== 'inspect-inventory')
+    return reject('paused', 'The world is paused.');
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
   if (
@@ -1209,6 +1232,7 @@ function prepareNativeOperation(
           command.expectedRevision,
           command.containerId,
           command.expectedScope,
+          command.itemId,
         );
       } catch (error) {
         return reject(
@@ -1373,9 +1397,25 @@ function executeCommandNative(
       'unsupported-controller',
       'This entity has no installed native threat controller.',
     );
-  if (options.preview && command.type === 'handover' && command.operation === 'offer') {
-    const offer = prepareItemOffer(original, source, command);
-    if ('ok' in offer) return { world: original, events: [], outcome: offer };
+  if (options.preview && command.type === 'handover') {
+    if ('itemId' in command) {
+      const offer = prepareItemOffer(original, source, command);
+      if ('ok' in offer) return { world: original, events: [], outcome: offer };
+    } else {
+      const problem = itemOfferReplyProblem(original, source, command);
+      if (problem) return { world: original, events: [], outcome: problem };
+    }
+  }
+  if (command.type === 'outing') {
+    const check = prepareOuting(original, command);
+    if ('ok' in check) return { world: original, events: [], outcome: check };
+    // Both real admissions repeat these checks; the preview never creates consent.
+    if (options.preview)
+      return {
+        world: original,
+        events: [],
+        outcome: outcome(true, 'available', 'The selected invitation choice is available.'),
+      };
   }
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
@@ -1641,8 +1681,10 @@ function executeCommandNative(
             command.expectedRevision,
             command.containerId,
             command.expectedScope,
+            command.itemId,
           );
           component.inventoryInspection = cursor;
+          recordInspectedItems(world, events, actor.id, { ...cursor, page });
           const container = inspectedContainer(world, actor.id);
           const packing =
             container?.load !== undefined && container.capacity !== undefined
@@ -1703,6 +1745,11 @@ function executeCommandNative(
           ),
           actor,
         );
+        break;
+      }
+      case 'outing': {
+        result = executeOuting(world, command, events);
+        if (!result.ok) return reject(result.code, result.message);
         break;
       }
       case 'handover': {
@@ -2103,6 +2150,10 @@ function executeCommandNative(
   if (!action && experience) endActivity(world, actor.id, command.id, result);
   if (!options.nativeController) world.commandReceipts[command.id] = { digest, outcome: result };
   reconcileConditions(world, actor, events);
+  // A queued child is marked running by its plan owner after this command returns.
+  // Direct changes and consent replies can reconcile now without mistaking that gap for departure.
+  if (!action || !component.agency.plan?.steps.some((step) => step.id === command.id))
+    reconcileOutings(world, events, { changedOnly: true });
   return finish(world, events, result);
 }
 
@@ -3254,6 +3305,7 @@ function* advanceWorldNative(
       if (advanceRemains(world, participants.ambient, events))
         participants = nativeParticipants(world);
       reconcileItemOffers(world, events);
+      reconcileOutings(world, events);
       advanceAppraisals(world, events);
       for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
       advanceCommitments(world, []);
@@ -3403,6 +3455,7 @@ function* advanceWorldNative(
       discardMechanics();
     if (perceiving !== undefined && perceivers() !== perceiving) {
       yield* updateEncounters(world, before, events, participants.actors);
+      reconcileOutings(world, events, { companyObserved: true });
       before = snapshotEncounters(world);
     }
     if (navigationBlocked(world, participants.actors)) break;
@@ -3671,6 +3724,7 @@ function* advanceWorldNative(
     if (sharedBoundary || fleeEnded || startedWork) discardMechanics();
     else localize(flightSources);
     yield* updateEncounters(world, before, events, participants.actors);
+    reconcileOutings(world, events, { companyObserved: true });
     advanceCommitments(world, events);
     reconcileConversations(world);
     // Control-only waits must observe endpoint changes even when this advance
@@ -3734,12 +3788,16 @@ function* updateEncounters(
   actorIds: readonly string[],
 ): Generator<void> {
   const encounter = encounterEmitter(world, events);
+  const placesChanged =
+    original.places !== (isDraft(world.places) ? current(world.places) : world.places);
+  let placeIndex: ReturnType<typeof placeLandmarkIndex> | undefined;
   // Loss of sensory/memory participation cannot retain a recognition grant.
   for (const id of actorIds) {
     const observer = world.entities[id];
     if (observer?.actor?.alive && hasMemory(observer) && activelyParticipates(observer)) continue;
     if (world.visiblePeople?.[id]?.length) world.visiblePeople[id] = [];
     if (world.visibleObjects?.[id]?.length) world.visibleObjects[id] = [];
+    if (Object.keys(world.visiblePlaces?.[id] ?? {}).length) world.visiblePlaces![id] = {};
     retirePerceptionEpisodes(world, id);
     if (observer?.actor && Object.keys(observer.actor.contacts ?? {}).length)
       observer.actor.contacts = {};
@@ -3761,7 +3819,7 @@ function* updateEncounters(
     const contacts = Object.values(actor.entity.actor!.contacts ?? {});
     const movingContacts = contacts.some((contact) => contact.detail === 'moving');
     const blocked = capabilityBlocked(world, actor.entity, 'perception');
-    if (!frame.affected.has(actor.id) && !movingContacts) {
+    if (!frame.affected.has(actor.id) && !movingContacts && !placesChanged) {
       countDomainWork('observersSkipped');
       continue;
     }
@@ -3778,6 +3836,8 @@ function* updateEncounters(
     if (radius === 0 || blocked) {
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
+      if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
+        world.visiblePlaces![actor.id] = {};
       retirePerceptionEpisodes(world, actor.id);
       continue;
     }
@@ -3802,6 +3862,39 @@ function* updateEncounters(
           objectIds.every((id, i) => id === previousObjects[i])));
     if (samePeople) seen = previous;
     if (sameObjects) objectIds = previousObjects!;
+    placeIndex ??= placeLandmarkIndex(world.places);
+    const places = exposedPlaces(world, actor.entity, objectIds, placeIndex);
+    const previousPlaces = original.visiblePlaces?.[actor.id] ?? {};
+    if (
+      places.some((place) => previousPlaces[place.id] !== place.revision) ||
+      places.length !== Object.keys(previousPlaces).length
+    ) {
+      const exposure: Record<string, number> = ((world.visiblePlaces ??= {})[actor.id] = {});
+      for (const place of places) {
+        exposure[place.id] = place.revision;
+        if (previousPlaces[place.id] === place.revision) continue;
+        acquireExposure(
+          world,
+          events,
+          actor.entity,
+          place.landmarkId,
+          {
+            kind: 'place',
+            id: place.id,
+            revision: place.revision,
+            label: place.label,
+            description: place.description,
+            point: { ...place.point },
+            locationLabel:
+              surfaceById(spatialMap(world), place.point.surfaceId)?.name ?? 'Observed support',
+            landmarkId: place.landmarkId,
+            ...(place.mechanismFields ? { mechanismFields: place.mechanismFields } : {}),
+          },
+          place.exposure.importance,
+        );
+        yield;
+      }
+    }
     // Arrivals, departures and brief returns (EPR03) read this observer's latest private
     // sighting records once, and only when its visible people changed.
     const sightings = samePeople
@@ -4026,6 +4119,7 @@ export function observeActor(
         delete copy.actor.contacts;
         delete copy.actor.conditions;
         delete copy.actor.inventoryInspection;
+        delete copy.actor.knownTradeLots;
         delete copy.actor.attackReadyAt;
         copy.actor.agency = seedAgency();
         delete copy.actor.initialGoals;

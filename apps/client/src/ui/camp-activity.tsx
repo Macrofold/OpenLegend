@@ -15,6 +15,7 @@ import { post } from '../api';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 import { Button, Icon, Section, SelectField, Tag } from '../design-system/components';
 import { ActivityObjectField } from './activity-object-field';
+import { OutingStatus } from './outing-status';
 import { clockParts, EventTime } from './event-time';
 import './camp-activity.css';
 
@@ -40,6 +41,8 @@ function storedCommand(value: unknown): value is CommandInput {
   if (value.type === 'activity-request')
     return (
       typeof value.activityFamilyId === 'string' &&
+      (value.purpose === undefined ||
+        (typeof value.purpose === 'string' && value.purpose.length <= 120)) &&
       record(value.activityArguments) &&
       Object.values(value.activityArguments).every(
         (item) =>
@@ -103,6 +106,7 @@ export function ActivityEntries({
   query = '',
   presentation,
   onMatchCount,
+  excludeFamilies = [],
 }: {
   view: GameView;
   targetId: string;
@@ -111,6 +115,7 @@ export function ActivityEntries({
   query?: string;
   presentation?: 'menu';
   onMatchCount?(count: number): void;
+  excludeFamilies?: readonly string[];
 }) {
   const [refresh, setRefresh] = useState(0);
   const [result, setResult] = useState<{
@@ -132,8 +137,10 @@ export function ActivityEntries({
   ]);
   const current = result?.key === key ? result : undefined;
   const search = query.trim().toLocaleLowerCase();
-  const entries = (current?.entries ?? []).filter((entry) =>
-    `${entry.label} ${entry.description}`.toLocaleLowerCase().includes(search),
+  const entries = (current?.entries ?? []).filter(
+    (entry) =>
+      !excludeFamilies.includes(entry.familyId) &&
+      `${entry.label} ${entry.description}`.toLocaleLowerCase().includes(search),
   );
   const matchCount = permitted ? entries.length : 0;
   useEffect(() => {
@@ -269,6 +276,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const unavailable = !connected || view.access?.controlling === false || !view.player.alive;
   const descriptor = choices?.requests.find((request) => request.id === entry?.familyId);
   const presentation = descriptor?.presentation;
+  const invitation = presentation?.kind === 'outing-invitation';
   const bound =
     !!entry &&
     choices?.entries.some(
@@ -278,7 +286,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   if (presentation && entry && descriptor) {
     values[presentation.target] = entry.targetId;
     values[presentation.workMode] = mode;
-    if (presentation.kind !== 'replenish-session')
+    if (presentation.kind === 'resource-care' || presentation.kind === 'gather-store-use')
       values[presentation.reserve] ??= String(
         descriptor.fields[presentation.reserve]?.minimum ?? '',
       );
@@ -420,8 +428,13 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     type: 'activity-request',
     activityFamilyId: entry?.familyId,
     activityArguments: {},
+    ...(descriptor?.purposeLabel && values[':purpose']?.trim()
+      ? { purpose: values[':purpose'].trim() }
+      : {}),
   };
   const issues: Record<string, string> = {};
+  if (input.purpose && input.purpose.length > 120)
+    issues[':purpose'] = 'Keep the stated purpose within 120 characters.';
   for (const [key, field] of Object.entries(descriptor?.fields ?? {})) {
     const value = values[key] ?? '';
     if (field.type === 'time') {
@@ -673,7 +686,11 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     return selectedPage(key)?.selected?.label ?? 'Choose';
   }
   function amountSummary() {
-    if (!presentation || presentation.kind === 'replenish-session') return null;
+    if (
+      !presentation ||
+      (presentation.kind !== 'resource-care' && presentation.kind !== 'gather-store-use')
+    )
+      return null;
     const quantity =
       values[
         presentation.kind === 'resource-care' ? presentation.budget : presentation.quantity
@@ -700,9 +717,16 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       </>
     );
   }
-  const scheduling = working && entry && presentation && bound && (
+  const modeLabels = presentation
+    ? descriptor?.fields[presentation.workMode]?.modeLabels
+    : undefined;
+  const scheduling = (working || invitation) && entry && presentation && bound && (
     <div className="ol-task-replacement">
-      <p>Preparing this task leaves current work unchanged.</p>
+      <p>
+        {invitation
+          ? 'If the invitation is accepted, handle my current work as chosen below. Sending changes no work.'
+          : 'Preparing this task leaves current work unchanged.'}
+      </p>
       <div className="ol-actions">
         <Button
           size="sm"
@@ -710,7 +734,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           disabled={disabled}
           onPress={() => setMode('enqueue')}
         >
-          After current work
+          {modeLabels?.enqueue ?? 'After current work'}
         </Button>
         <Button
           size="sm"
@@ -718,7 +742,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           disabled={disabled}
           onPress={() => setMode('replace')}
         >
-          Prepare replacement
+          {modeLabels?.replace ?? 'Prepare replacement'}
         </Button>
         <Button
           size="sm"
@@ -726,7 +750,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           disabled={disabled}
           onPress={() => setMode('interrupt')}
         >
-          Pause and resume current work
+          {modeLabels?.interrupt ?? 'Pause and resume current work'}
         </Button>
       </div>
     </div>
@@ -819,6 +843,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       }}
       onPointerDown={(event) => event.stopPropagation()}
     >
+      <OutingStatus view={view} connected={!disabled} command={(action) => void command(action)} />
       {unresolved && (
         <div className="ol-task-recovery" role="status">
           <p>
@@ -887,7 +912,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               )}
             </>
           )}
-          {preparing && scheduling}
+          {preparing && !invitation && scheduling}
         </Section>
       )}
       {error && <p role="alert">{error}</p>}
@@ -923,7 +948,31 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       ) : (
         <Section title={descriptor.label}>
           <div className="ol-task-context">{objectChoice(presentation.target, true)}</div>
-          {presentation.kind === 'replenish-session' ? (
+          {presentation.kind === 'outing-invitation' ? (
+            <div className="ol-task-overview">
+              {objectChoice(presentation.destination)}
+              {descriptor.purposeLabel && (
+                <details>
+                  <summary>{descriptor.purposeLabel}</summary>
+                  <label className="ol-task-amount">
+                    <span>{descriptor.purposeLabel}</span>
+                    <input
+                      maxLength={120}
+                      value={values[':purpose'] ?? ''}
+                      disabled={disabled}
+                      onChange={(event) => change(':purpose', event.target.value)}
+                    />
+                  </label>
+                </details>
+              )}
+              {scheduling}
+              <p>
+                Sending an invitation moves nobody. Your companion may accept or decline. The
+                agreement is only to travel; other activities remain separate choices.
+              </p>
+              {input.purpose && <p>Stated purpose: “{input.purpose}”</p>}
+            </div>
+          ) : presentation.kind === 'replenish-session' ? (
             <div className="ol-task-overview">
               <p>{descriptor.description}</p>
             </div>
@@ -1079,20 +1128,24 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               )}
             </>
           )}
-          {mode === 'replace' && (
+          {!invitation && mode === 'replace' && (
             <p>
               Starting this replacement stops current work. Completed effects and spent materials
               remain.
             </p>
           )}
-          {mode === 'interrupt' && (
+          {!invitation && mode === 'interrupt' && (
             <p>Starting pauses current work; resuming it later still requires valid conditions.</p>
           )}
           <div className="ol-task-summary" aria-live="polite">
             {currentReview ? (
               currentReview.result.ok ? (
                 <details>
-                  <summary>Supplies and conditions checked</summary>
+                  <summary>
+                    {invitation
+                      ? 'Invitation conditions checked'
+                      : 'Supplies and conditions checked'}
+                  </summary>
                   <p>{currentReview.result.message}</p>
                   {presentation.kind === 'resource-care' && (
                     <p>Waiting does not extend the checked stopping time.</p>
@@ -1102,7 +1155,11 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
                 <p role="alert">{currentReview.result.message}</p>
               )
             ) : ready ? (
-              <p>Checking current supplies and conditions…</p>
+              <p>
+                {invitation
+                  ? 'Checking invitation conditions…'
+                  : 'Checking current supplies and conditions…'}
+              </p>
             ) : (
               <p>{Object.values(issues)[0]}</p>
             )}
@@ -1114,8 +1171,9 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
             <summary>About this task</summary>
             <p>{descriptor.description}</p>
             <p>
-              Starting rechecks current conditions. Later work can stop if supplies, access or the
-              target change.
+              {invitation
+                ? 'Sending rechecks the companion and destination. Acceptance rechecks both people’s chosen work; changed work needs a new invitation. Either person may leave the outing.'
+                : 'Starting rechecks current conditions. Later work can stop if supplies, access or the target change.'}
             </p>
           </details>
         </Section>
@@ -1129,13 +1187,14 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
             busy={operation === 'start'}
             onPress={() => void start()}
           >
-            {mode === 'replace'
-              ? 'Replace current work and start'
-              : mode === 'interrupt'
-                ? 'Pause current work and start'
-                : working
-                  ? 'Start after current work'
-                  : 'Start task'}
+            {descriptor.submitLabel ??
+              (mode === 'replace'
+                ? 'Replace current work and start'
+                : mode === 'interrupt'
+                  ? 'Pause current work and start'
+                  : working
+                    ? 'Start after current work'
+                    : 'Start task')}
           </Button>
           <Button
             variant="quiet"

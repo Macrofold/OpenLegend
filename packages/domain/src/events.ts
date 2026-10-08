@@ -110,6 +110,37 @@ export function emit(
   );
 }
 
+/** A permitted observation with a named witness, preserving the actual acting person.
+ * Private item terms must wake the recipient as a directed action without reaching bystanders. */
+export function emitPrivateObservation(
+  world: WorldState,
+  events: WorldEvent[],
+  type: string,
+  observer: Entity,
+  text: string | Narration,
+  source: Entity,
+  targetId?: string,
+  data?: WorldEvent['data'],
+): WorldEvent {
+  return recordEvent(world, events, type, text, [observer.id], source, targetId, data, 'private');
+}
+
+/** Parties receive their own detailed receipt; bystanders learn only the witnessed act. */
+export function emitWitnessObservation(
+  world: WorldState,
+  events: WorldEvent[],
+  type: string,
+  text: string | Narration,
+  source: Entity,
+  targetId: string,
+  data?: WorldEvent['data'],
+): WorldEvent {
+  const witnesses = eventAudience(world, type, source, 'external').filter(
+    (id) => id !== source.id && id !== targetId,
+  );
+  return recordEvent(world, events, type, text, witnesses, source, targetId, data, 'external');
+}
+
 function eventAudience(
   world: WorldState,
   type: string,
@@ -124,6 +155,34 @@ function eventAudience(
 }
 
 const eventEncoder = new TextEncoder();
+
+/** The caller has admitted the observation or inspection. Narration is a later consumer. */
+export function acquireExposure(
+  world: WorldState,
+  events: WorldEvent[],
+  observer: Entity,
+  targetId: string,
+  exposure: import('./places.js').EncounterExposure,
+  importance = 6,
+): WorldEvent {
+  const text =
+    exposure.kind === 'place'
+      ? `I reached ${exposure.label}. ${exposure.description}`
+      : `I inspected ${exposure.label}. ${exposure.description}`;
+  return recordEvent(
+    world,
+    events,
+    'encounter',
+    text,
+    [observer.id],
+    observer,
+    targetId,
+    { acquisition: true, change: 'onset', importance, urgency: 0 },
+    'private',
+    undefined,
+    exposure,
+  );
+}
 
 /** Acquiring evidence is private, not an observable act by the observer.
  * Batch only this fixed-position phase through the existing experience owner;
@@ -198,6 +257,7 @@ function recordEvent(
   data: WorldEvent['data'],
   scope: EventScope,
   awarenessBatch?: ExperienceMutation[],
+  exposure?: import('./places.js').EncounterExposure,
 ): WorldEvent {
   const text = typeof narration === 'string' ? narration : renderNarration(world, narration);
   const boundedMetric = (value: unknown, fallback: number) =>
@@ -229,6 +289,7 @@ function recordEvent(
     ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
   );
   const event: WorldEvent = {
+    ...(exposure ? { exposure: cloneValue(exposure) } : {}),
     ...(source
       ? {
           // Copy the committed pose without walking a live draft through proxy traps.
@@ -348,13 +409,14 @@ function recordEvent(
       const perceivedText =
         typeof narration === 'string' ? narration : renderNarration(world, narration, actorId);
       const awareness: Awareness = {
+        ...(event.exposure ? { exposure: cloneValue(event.exposure) } : {}),
         eventId: event.id,
         actorId,
         text: perceivedText,
         at: event.at,
         sequence: world.nextId,
         modality:
-          scope === 'private' && data?.['acquisition'] !== true
+          scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
             ? type === 'contact'
               ? 'felt'
               : type === 'encounter'

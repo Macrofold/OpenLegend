@@ -1,13 +1,13 @@
 ---
 name: create-parallel-tasks
 description: >-
-  Prioritize OpenLegend work from plans, TODOs and current code; define complete parallel
-  assignments and standalone implementation prompts, defaulting to five tasks.
+  Prioritize OpenLegend work from plans, TODOs and current code; define independently
+  completable parallel assignments and standalone prompts, defaulting to five tasks.
 ---
 
 # Create useful parallel assignments
 
-Define important, implementable tasks that separate agents can carry out once their stated prerequisites are met, without this conversation or communication with each other. This skill writes plans and instructions; it does not dispatch tasks or implement them.
+Define important, implementable tasks that separate agents can each finish independently from their stated starting base, including required integration and verification. No assignment may need messages, intermediate deliveries or progress from another agent in the same batch. This skill writes plans and instructions; it does not dispatch tasks or implement them.
 
 Follow [AGENTS.md](../../../AGENTS.md) and [documentation ownership](../../rules/documentation.md). Those sources own development workflow, authorization, verification, spending and completion. Do not reproduce or extend those policies in this skill's output.
 
@@ -23,9 +23,9 @@ Follow [AGENTS.md](../../../AGENTS.md) and [documentation ownership](../../rules
 
 When choosing or reprioritizing the assignments, first apply [experience-led prioritization](../openlegend-prioritize/SKILL.md). Do not restart selection for a prompts-only handoff of an unchanged agreed plan. When selecting, expanding or specifying the assignments, read [planning and task definitions](references/planning.md). Inspect current TODOs, accepted plans, relevant code and active work before deciding what remains. The four areas to consider are established-system bugs, engine/world foundations, world-specific gameplay and presentation. **They are search lenses, not quotas:** any number of assignments, including all of them, may come from one area. For the world-specific gameplay category, explicitly perform [the repertoire-priority check](../openlegend-prioritize/SKILL.md#check-repertoire-priorities-when-selecting-gameplay) before choosing its next entries; consulting general repertoire ideas alone is insufficient.
 
-Rank by the project's priorities, impact, urgency, dependencies and risk of building on a weak foundation. Avoid low-value padding, obsolete fixes and duplicate ongoing work. Make a cohesive parallel allocation with concrete completion criteria and realistic shared dependencies. Use the existing [design workflow](../openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) when feature/technical specifications need creating or strengthening; its canonical document and approval rules remain controlling.
+Rank by the project's priorities, impact, urgency, dependencies and risk of building on a weak foundation. Avoid low-value padding, obsolete fixes and duplicate ongoing work. Apply [independent completion](references/planning.md#divide-the-work-so-agents-can-act-independently): keep interleaving work together in one assignment, even when ambitious, and give each assignment concrete completion criteria. Use the existing [design workflow](../openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) when feature/technical specifications need creating or strengthening; its canonical document and approval rules remain controlling.
 
-Apply [unfinished-prerequisite planning](../openlegend-prioritize/SKILL.md#plan-around-unfinished-prerequisites): batches may depend on earlier unfinished work or work not confirmed fully merged into `main`. Explicitly list the specific open prerequisites, completion/merge evidence, affected work and independent starting scope in the batch and each affected prompt. Do not label conditional work ready now or exclude it merely because its prerequisite remains open.
+Apply [unfinished-prerequisite planning](../openlegend-prioritize/SKILL.md#plan-around-unfinished-prerequisites): a future batch may depend on earlier unfinished work or work not confirmed available on its starting base. Such prerequisites must be supplied before launching the affected assignment, not partway through it. Use the [blocker-only prerequisite format](references/task-prompts.md#make-open-prerequisites-a-start-decision) to distinguish Ready from Wait before starting. Dependencies between assignments in the same batch require regrouping, not a partial-start label. Keep available work, this task's own implementation and nonblocking qualifications out of Open prerequisites.
 
 ## Name and register the allocation
 
@@ -37,8 +37,8 @@ Keep the number when revising an existing allocation or preparing its prompts; p
 
 Read [standalone task prompts](references/task-prompts.md) when writing the copy/paste instructions. Default output is a prioritized allocation, linked task definitions/designs and one complete prompt per assignment. Honor narrower requested deliverables.
 
-The assignments **must not communicate with one another**. Settle shared contracts in the planning documents. Explain sequencing to the owner when one task depends on another; do not instruct workers to negotiate interfaces, message peers, poll other chats, send status to an integration agent or orchestrate sibling tasks. Shared files are acceptable when responsibilities and the intended combined behavior are clear.
+The assignments **must not communicate with one another or stop to await another assignment**. Settle shared contracts in the planning documents; do not instruct workers to negotiate interfaces, message peers, poll chats/branches/shared files, exchange partial implementations through the owner, or orchestrate sibling tasks. Shared files and later merge-conflict resolution are acceptable; unfinished required behavior from another assignment is not.
 
 Prompts define work and point to helpful evidence. Every copyable task prompt must instruct creation of a specifically named new branch describing its changes, under [the prompt branch rule](references/task-prompts.md#name-a-new-branch-in-each-prompt). Beyond that requested branch instruction, do not invent Git/integration powers or development procedures, tell agents to write tests, or grant spending. Defer those matters to current `AGENTS.md` and explicit user instructions. Include the concrete results that need demonstrating, without turning them into a new testing policy.
 
-Check count, focus, priorities, prerequisites, acceptance and links. Reconcile affected records under the documentation policy. Report unresolved design or unavailable dependencies rather than claim readiness.
+Check count, focus, priorities, prerequisites, acceptance and links, and apply the independent-completion check to every assignment. Reconcile affected records under the documentation policy. Report unresolved design or unavailable dependencies rather than claim readiness.

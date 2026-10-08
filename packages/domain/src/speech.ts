@@ -211,6 +211,7 @@ export type EventEvidence = Pick<
   | 'speech'
   | 'importance'
   | 'urgency'
+  | 'exposure'
 >;
 export type ActorEvent = WorldEvent & { speech?: PerceivedSpeech; modality: Awareness['modality'] };
 export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence): ActorEvent {
@@ -227,6 +228,7 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
     text: evidence.text,
     audience: [evidence.actorId],
     modality: evidence.modality,
+    ...(evidence.exposure ? { exposure: evidence.exposure } : {}),
     ...(evidence.sourceId ? { actorId: evidence.sourceId } : {}),
     ...(evidence.targetId ? { targetId: evidence.targetId } : {}),
     importance: evidence.importance,

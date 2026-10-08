@@ -1,6 +1,6 @@
 # Parallel batch 04 — Expeditions and exchange — assignment tracker
 
-**Status: in progress, October 6, 2026.** PX01 is delivered on the integrated PG05/embodied-feedback baseline; the other assignments retain their separate checks below. The original planning baseline was c4e18d91. Runtime tasks start from the integrated prerequisites in the technical design, not merely from the planning commit.
+**Status: in progress, October 7, 2026.** PX01 encounter integration, PX02 immediate barter, PX03 discoveries and PX04 voluntary outings are complete with the scoped evidence below; PX05 remains open. The original October 3 planning pass completed no runtime work; its local-main baseline was c4e18d91. Runtime tasks start from integrated prerequisites in the technical design, not merely from the planning commit.
 
 [Feature/acceptance](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Technical definitions](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](../projects/parallel-batch-04-expeditions-and-exchange-prompts.md) · [Numbers and prior batches](../projects/parallel-batches.md)
 
@@ -18,31 +18,41 @@ Parents: [PG05](parallel-batch-03-personal-game.md#pg05--first-threat-encounter-
 
 ## PX02 — Reciprocal barter
 
-- [ ] Extend current handover/custody to exact, revisioned, consensual two-sided exchange, preserving gifts under [PX02 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract).
-- [ ] Deliver readable player and actor choices without exposing private inventory; complete atomicity, changed-terms, refusal, replay and restart acceptance.
-- [ ] Reconcile BW20, immediate-barter DG06/ND09 and the relevant INV-20/PO portions; retain standing reservations, credit, currency, promise management and institutions as separate open scope.
+- [x] Extend current handover/custody to exact, revisioned, consensual two-sided exchange, preserving gifts under [PX02 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px02--reciprocal-offer-contract).
+- [x] Deliver readable player and actor choices without exposing private inventory; complete atomicity, changed-terms, refusal, replay and restart acceptance.
+- [x] Reconcile BW20, immediate-barter DG06/ND09 and the relevant INV-20/PO portions; retain standing reservations, credit, currency, promise management and institutions as separate open scope.
+
+**Delivered October 5:** the [completed implementation plan](../projects/completed/px02-reciprocal-barter-plan.md) records decisions and the development base. One exact lot/quantity per side, replacement revisions and participant-only disclosed terms use the existing handover and ordinary object/claim owners. Current gifts retain sufficient-quantity behavior. [Verification](../verification/reciprocal-barter.md) records 26 native checks, authenticated command/projection, PostgreSQL rollback/reopening and lost-acknowledgment replay, actual narrow/keyboard/draft recovery and controlled voluntary resident acceptance/refusal. The [October 6 review](../verification/reciprocal-barter.md#october-6-review-and-matched-server-measurements) fixes work-dependent controls, open-offer disclosure retention, Inventory quantity maxima and shared draft recovery, and records reduced pending lookup/projection work. General preference/population acceptance, offer-table/lifecycle work and every broader economic/cooperation parent remain open. [BW11](../limits/base-world.md#bw11) owns the adopted PX-L01 first-family bounds.
 
 Parents: [base world](base-world.md), [persistent objects](persistent-objects.md), [inventions](inventions-and-world-evolution.md), [DG06](needs-design.md#dg06--reciprocal-exchange-and-small-cooperation). Consumes integrated PG03/PG04 action surfaces; does not depend on another PX task.
 
 ## PX03 — Useful discoveries and known places
 
-[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) proposes an occupied-site discovery/return consumer of this place owner. Its merge dependency remains explicit; the new batch does not supply a duplicate memory store or change PX03 completion evidence.
+[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) proposes an occupied-site discovery/return consumer of this place owner. PX03 is available on local main at `699417835`, so it is a reuse reference rather than an open CF05 prerequisite. The new batch does not supply a duplicate memory store or change PX03 completion evidence.
 
-- [ ] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
-- [ ] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.
-- [ ] Reconcile NC09–NC12's exposure subset, DG01/ND18 and relevant SW/memory work. Preserve broader narration, story and world-map acceptance.
+- [x] Add grounded place-arrival and inventory-inspection evidence to existing encounter/story/experience ownership under [PX03 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px03--discover-useful-places-and-objects) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px03--encounter-evidence-and-known-places).
+- [x] Deliver the scoped Known places view with explicit focus/inspect/move, honest last-known information and current-format persistence; complete repeated-exposure, two-observer, privacy and stale-destination acceptance.
+- [x] Reconcile NC09–NC12's exposure subset, DG01/ND18 and relevant SW/memory work. Preserve broader narration, story and world-map acceptance.
+
+**PX03 completed and reviewed:** private discovery, useful introductions and Known places are delivered. The October 6 review fixes late forgetting/correction, moved/removed marker integrity, source-family collisions, unstable continuation and SQL amplification, with a canceled-inspection browser check. Native lifecycle, scoped query/stress, keyboard and compact/enlarged browser checks pass; the linked report retains planner and broader qualification limits. [Evidence](../verification/useful-discoveries.md) records current results and limits.
 
 Parents: [narration](narration-and-conversations.md), [spatial world](spatial-world.md), [DG01/ND18](needs-design.md#dg01--actions-and-first-encounters). PG03 excludes this new encounter scope; its action presentation remains a consumed prerequisite.
 
 ## PX04 — Voluntary shared outings
 
-[CF04](parallel-batch-06-rivals-and-contested-ground.md#cf04--a-companion-who-can-help-in-a-fight) is the proposed later combat-help consumer. It extends supplied request/consent semantics while keeping a trip separate from consent to fight and preserving independent withdrawal. PX04 is still a prerequisite, not repeated or marked complete by that allocation.
+[CF04](parallel-batch-06-rivals-and-contested-ground.md#cf04--a-companion-who-can-help-in-a-fight) is the proposed later combat-help consumer. It extends supplied request/consent semantics while keeping a trip separate from consent to fight and preserving independent withdrawal. PX04's delivery below supplies that prerequisite; CF04 remains unimplemented.
 
-- [ ] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
-- [ ] Deliver invitation, voluntary acceptance/refusal, travel, arrival and leaving; complete changed-work, interruption, privacy, blocked-route and save/replay acceptance.
-- [ ] Reconcile the concrete AG05/AG06/AG07/AG12, CE and DG06/ND10 subsets; leave group institutions, promise management, follow-everywhere behavior and unattended communities open.
+- [x] Supply integrated PG02's ordinary decision and continuation behavior; define exact trip consent and independent current action ownership under [PX04 scope](../projects/parallel-batch-04-expeditions-and-exchange-feature-spec.md#px04--take-a-voluntary-outing-together) and [contract](../projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#px04--consenting-travel-companions).
+- [x] Deliver invitation, voluntary acceptance/refusal, travel, arrival and leaving; complete changed-work, interruption, privacy, blocked-route and save/replay acceptance.
+- [x] Reconcile the concrete AG05/AG06/AG07/AG12, CE and DG06/ND10 subsets; leave group institutions, promise management, follow-everywhere behavior and unattended communities open.
 
 Parents: [agency](agent-agency.md), [character experience](character-experience.md), [DG06](needs-design.md#dg06--reciprocal-exchange-and-small-cooperation). Uses destinations already available today; no dependency on PX03, barter or shelter construction.
+
+**October 6 delivery:** exact consent, current-work revalidation, two own walks, private company/arrival evidence, leaving and current-format restart are implemented. [Evidence](../verification/voluntary-outings.md) records 13 native cases, PostgreSQL reopening, real browser departure/Leave controls and bounded live acceptance, independent arrival eating, voluntary replacement and refusal. This closes PX04 only; broader parents remain incomplete.
+
+**Requested review:** command reconciliation now visits affected participants/destinations, accepted membership is indexed, duplicate personal accounts and repeated decision projections are removed, paused-work acceptance is explicit, valid long actor IDs remain saveable, and native wildlife cannot supply social consent. [Review evidence](../verification/voluntary-outings.md#post-delivery-review--october-6-2026) records the additional native/server/browser checks and matched measurements.
+
+- [ ] Before claiming population capacity, measure complete-server advance, persistence and projection with concurrent accepted walks and incoming invitations concentrated on one person; investigate tail latency and heap growth. Current views enumerate all incoming invitations, so qualify crowded-recipient usability and add scoped paging through the existing choice/view owners if that measured workload requires it. This is broader qualification, not an unimplemented two-person lifecycle. [AEL10](../limits/action-experience.md#ael10--outing-consent-and-own-movement)/[CG16](../limits/cognition.md#cg16--outing-choices-and-reconsideration) retain the current limits; repeatable character preferences and whole-life behavior remain AG12/CE work.
 
 ## PX05 — Editable shelter technical design
 
@@ -56,4 +66,4 @@ Parents: [shelter proposal](../projects/editable-shelters-feature-spec.md), [INV
 
 ## Completion and reconciliation
 
-Task-specific acceptance belongs to the feature/design pair above; this tracker owns checkbox state and parent disposition. [Proposed constraints](../limits/parallel-batch-04-expeditions-and-exchange.md) remain proposals until adopted into subsystem owners. The whole batch completes only after all five agreed assignments, their integration and actual required evidence are finished; drafting this allocation does not satisfy runtime scope. The owner integrates assignments without requiring task-to-task communication. Wider historical qualification is neither silently closed nor restarted by numbering this batch.
+Task-specific acceptance belongs to the feature/design pair above; this tracker owns checkbox state and parent disposition. [Constraint dispositions](../limits/parallel-batch-04-expeditions-and-exchange.md) record PX-L01 adoption into BW11; the other new constraints remain proposals until adopted into subsystem owners. The whole batch completes only after all five agreed assignments, their integration and actual required evidence are finished; drafting this allocation does not satisfy runtime scope. The owner integrates assignments without requiring task-to-task communication. Wider historical qualification is neither silently closed nor restarted by numbering this batch.

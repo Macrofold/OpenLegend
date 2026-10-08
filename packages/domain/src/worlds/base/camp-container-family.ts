@@ -1,6 +1,6 @@
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
 import type { RecipeCandidate } from '../../types.js';
-import { BASE_BINDING_MATERIAL } from './items.js';
+import { BASE_BINDING_MATERIAL, CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
 
 /** Authored tradeoffs, included in the trusted family pin. Descriptions, validation
  * and output compilation share these rules; names never grant container effects.
@@ -132,6 +132,7 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
     return {
       workSeconds,
       outputDefinition: {
+        mechanismFields: structuredClone(CONSTRUCTED_ITEM_STORY_FIELDS),
         portable: true,
         packingLoad,
         properties: ['fiber', 'pouch'],

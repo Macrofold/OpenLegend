@@ -1,9 +1,11 @@
-import { canAccessContainer, possessionItems } from './object-access.js';
+import { accessiblePossession, canAccessContainer, possessionItems } from './object-access.js';
+import { acquireExposure } from './events.js';
+import { cloneValue } from './draft.js';
 import { itemFor, objectAncestors } from './objects.js';
 import { contentsQuery } from './queries.js';
 import { worldPosition } from './spatial-state.js';
 import { observerName } from './worlds/base/knowledge.js';
-import type { ItemDefinition, ItemInstance, WorldState } from './types.js';
+import type { ItemDefinition, ItemInstance, WorldState, WorldEvent } from './types.js';
 
 export interface InventoryInspection {
   revision: number;
@@ -130,12 +132,43 @@ export function inspectPossessions(
   expectedRevision?: number,
   containerId?: string,
   expectedScope?: string,
+  selectedItemId?: string,
 ) {
   const entity = world.entities[actorId];
   if (!entity?.actor) throw new Error('Actor unavailable.');
   const selected = world.entities[containerId ?? actorId]!;
   const scope = inventoryInspectionScope(world, actorId, containerId);
   const revision = selected.inventoryRevision ?? 0;
+  if (selectedItemId) {
+    const item = itemFor(world, selectedItemId);
+    if (
+      !item ||
+      (containerId
+        ? item.ownerId !== containerId
+        : !accessiblePossession(world, actorId, item.id)) ||
+      (expectedRevision !== undefined && expectedRevision !== revision)
+    )
+      throw new Error(
+        'This item or its access changed. Refresh the contents before inspecting it.',
+      );
+    const description = describePossession(
+      item,
+      world.itemDefinitions[item.definitionId]!,
+      entity.actor.equippedItemId === item.id,
+      containerId ? 'in the selected accessible container' : 'accessible possession',
+    );
+    if (new TextEncoder().encode(description).length > 8000)
+      throw new Error('This possession description exceeds the inspection allowance.');
+    return {
+      revision,
+      scope,
+      ...(containerId ? { containerId } : {}),
+      after: item.id,
+      more: false,
+      itemIds: [item.id],
+      page: [description],
+    };
+  }
   const prior = entity.actor.inventoryInspection;
   if (
     after &&
@@ -196,4 +229,33 @@ export function inspectPossessions(
     itemIds,
     page,
   };
+}
+
+/** Only the exact admitted inspection page becomes evidence. Opening the outer bag
+ * alone never traverses or introduces its contents. */
+export function recordInspectedItems(
+  world: WorldState,
+  events: WorldEvent[],
+  actorId: string,
+  inspection: Pick<InventoryInspection, 'itemIds'> & { page: string[] },
+): void {
+  const observer = world.entities[actorId]!;
+  for (const [index, id] of inspection.itemIds.entries()) {
+    const item = itemFor(world, id)!;
+    const definition = world.itemDefinitions[item.definitionId]!;
+    acquireExposure(world, events, observer, id, {
+      kind: 'inventory-item',
+      id,
+      definition: { id: definition.id, version: definition.version },
+      label: definition.name,
+      description: inspection.page[index]!,
+      introductionKey:
+        item.individuality === 'individual'
+          ? `inventory-item:${id}`
+          : `inventory-definition:${definition.id}`,
+      ...(definition.mechanismFields
+        ? { mechanismFields: cloneValue(definition.mechanismFields) }
+        : {}),
+    });
+  }
 }

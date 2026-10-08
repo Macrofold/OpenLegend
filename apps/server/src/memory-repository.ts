@@ -22,7 +22,7 @@ import type {
   ExperienceSummary,
   MemoryRecord,
 } from '@open-legend/domain';
-import { EXPERIENCE_LIMITS } from '@open-legend/domain';
+import { EXPERIENCE_LIMITS, validEncounterExposure } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase } from './store.js';
 import type { RecordChanges } from './world-records.js';
@@ -33,7 +33,9 @@ export const MEMORY_SOURCE_TABLES = {
   summary: 'mind_summaries',
 } as const;
 const sourceTables = MEMORY_SOURCE_TABLES;
-export type MemoryChanges = Map<string, Set<string> | null>;
+export type MemoryChanges = Map<string, Set<string> | null> & {
+  placeIds?: Map<string, Set<string>>;
+};
 type SourceKind = keyof typeof sourceTables;
 // Payload/text bodies must not leak into metadata selection before byte admission.
 const sourceColumnNames = [
@@ -52,6 +54,8 @@ const sourceColumnNames = [
   'required',
   'eligible',
   'sequence',
+  'place_id',
+  'place_label',
 ];
 const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
 const sourceRevision = (payload: string) => createHash('sha256').update(payload).digest('hex');
@@ -162,6 +166,10 @@ export interface RetrievedMemory {
   revision: string;
   score?: number;
 }
+export interface KnownPlaceSource extends RetrievedMemory {
+  correctionId?: string;
+  correction?: string;
+}
 export interface MemoryVector {
   id: string;
   revision: string;
@@ -261,7 +269,7 @@ export class MemoryRepository {
     // Actual observations still arrive through mind_awareness in this same commit.
     const affectsMemory = (table: string) =>
       table.startsWith('mind_') &&
-      !/^mind_(exposure|visible_objects|visible_people)(?:_owners)?$/.test(table);
+      !/^mind_(exposure|visible_objects|visible_people|visible_places)(?:_owners)?$/.test(table);
     const mark = (id: string) => {
       const path = JSON.parse(id) as string[];
       const actor = path[path[1] === 'experience' ? 3 : 2];
@@ -333,6 +341,7 @@ export class MemoryRepository {
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
+        place_id TEXT, place_label TEXT, place_latest BIGINT NOT NULL DEFAULT 0,
         search_text TEXT NOT NULL DEFAULT '',
         search_vector tsvector NOT NULL DEFAULT ''::tsvector,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
@@ -340,6 +349,8 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS recall_source_validation ON recall_sources(world_id,actor_id,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_context_rank ON recall_sources(world_id,actor_id,eligible,required DESC,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_actor_recent ON recall_sources(world_id,actor_id,eligible,at DESC,id);
+      CREATE INDEX IF NOT EXISTS recall_place_evidence ON recall_sources(world_id,actor_id,place_id,eligible,at DESC,sequence DESC,id DESC) WHERE place_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS recall_places ON recall_sources(world_id,actor_id,place_id) INCLUDE(id) WHERE place_latest=1 AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_world_event ON recall_sources(world_id,event_id,actor_id);
       CREATE INDEX IF NOT EXISTS recall_actor_event ON recall_sources(world_id,actor_id,event_id);
@@ -400,6 +411,14 @@ export class MemoryRepository {
     archive = true,
   ): Promise<MemoryChanges> {
     const affected: MemoryChanges = new Map();
+    const placeIds = (affected.placeIds = new Map());
+    const touchPlace = (actorId: string, value: Record<string, unknown>) => {
+      const exposure = value['exposure'] as Awareness['exposure'];
+      if (exposure?.kind !== 'place') return;
+      const ids = placeIds.get(actorId) ?? new Set<string>();
+      ids.add(exposure.id);
+      placeIds.set(actorId, ids);
+    };
     const invalidateConversations = new Set<string>();
     const touch = (actor: string, id: string) => {
       if (affected.get(actor) === null) return;
@@ -447,6 +466,11 @@ export class MemoryRepository {
           .all(worldId, ...batch);
         for (const row of old) {
           touch(String(row['actor_id']), String(row['source_id']));
+          if (kind === 'awareness')
+            touchPlace(
+              String(row['actor_id']),
+              JSON.parse(String(row['payload'])) as Record<string, unknown>,
+            );
           if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
         }
         await insertRows(
@@ -483,6 +507,8 @@ export class MemoryRepository {
         const actorId = kind === 'memory' ? path[2]! : path[3]!;
         const value = JSON.parse(row.payload) as Record<string, unknown>;
         const id = String(value[kind === 'awareness' ? 'eventId' : 'id']);
+        const exposure = value['exposure'] as Awareness['exposure'];
+        if (kind === 'awareness') touchPlace(actorId, value);
         sourceRows.push([
           worldId,
           actorId,
@@ -499,6 +525,8 @@ export class MemoryRepository {
           value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
           0,
           value['sequence'] ?? 0,
+          kind === 'awareness' && exposure?.kind === 'place' ? exposure.id : null,
+          kind === 'awareness' && exposure?.kind === 'place' ? exposure.label : null,
           value[kind === 'memory' ? 'summary' : 'text'] ?? '',
           lexicalVector(String(value[kind === 'memory' ? 'summary' : 'text'] ?? '')),
         ]);
@@ -645,6 +673,166 @@ export class MemoryRepository {
         )
         .run(...params, worldId, worldId);
     }
+    await this.reconcilePlaces(worldId, changes);
+  }
+
+  /** Keep the latest retained observation in the existing recall projection. Batch
+   * observers together: a shared arrival must not add two SQL round trips per witness. */
+  private async reconcilePlaces(worldId: string, changes: MemoryChanges) {
+    const pairs: [string, string][] = [];
+    const flush = async () => {
+      if (!pairs.length) return;
+      const changed = `WITH changed(actor_id,place_id) AS (VALUES ${pairs.map(() => '(?,?)').join(',')})`;
+      await this.db
+        .prepare(
+          `${changed} UPDATE recall_sources r SET place_latest=0
+          FROM changed c WHERE r.world_id=? AND r.actor_id=c.actor_id AND r.place_id=c.place_id AND r.place_latest=1`,
+        )
+        .run(...pairs.flat(), worldId);
+      await this.db
+        .prepare(
+          `${changed}, latest AS MATERIALIZED (
+          SELECT c.actor_id,source.id,source.source_kind FROM changed c CROSS JOIN LATERAL (
+            SELECT id,source_kind FROM recall_sources WHERE world_id=? AND actor_id=c.actor_id
+            AND eligible=1 AND place_id=c.place_id ORDER BY at DESC,sequence DESC,id DESC LIMIT 1
+          ) source)
+          UPDATE recall_sources r SET place_latest=1 FROM latest l
+          WHERE r.world_id=? AND r.actor_id=l.actor_id AND r.id=l.id AND r.source_kind=l.source_kind`,
+        )
+        .run(...pairs.flat(), worldId, worldId);
+      pairs.length = 0;
+    };
+    // Ordinary visits touch only their places. Explicit history-wide edits and
+    // restoration enumerate metadata in pages; no historical bodies are hydrated.
+    for (const [actorId, ids] of changes) {
+      const places = changes.placeIds?.get(actorId);
+      if (ids !== null && !places?.size) continue;
+      let after = '';
+      do {
+        const page: string[] =
+          ids === null
+            ? (
+                await this.db
+                  .prepare(
+                    `SELECT DISTINCT place_id FROM recall_sources WHERE world_id=? AND actor_id=? AND place_id>? ORDER BY place_id LIMIT 250`,
+                  )
+                  .all(worldId, actorId, after)
+              ).map((row) => String(row['place_id']))
+            : [...places!];
+        if (!page.length) break;
+        for (const placeId of page) {
+          pairs.push([actorId, placeId]);
+          if (pairs.length === 250) await flush();
+        }
+        after = page.at(-1)!;
+        if (ids !== null || page.length < 250) break;
+      } while (true);
+    }
+    await flush();
+  }
+
+  /** One current retained observation per place. Filter a bounded metadata window before
+   * hydration; continuation reaches every known place regardless of total history. */
+  async knownPlaces(
+    scope: MemoryScope,
+    options: { after?: string; terms?: string[]; placeId?: string; limit: number; scan: number },
+  ) {
+    type PlaceRow = Record<string, unknown> & {
+      correction_id?: string;
+      correction_source?: Record<string, unknown>;
+    };
+    // Keep table-estimate errors from multiplying whole-actor joins. Read the
+    // bounded page, then batch its correction metadata in the same snapshot.
+    // Selected correction metadata is reused for body hydration.
+    // docs/limits/spatial.md#sp08--static-named-places-and-private-known-places
+    const rowsAfter = async (after: string | undefined, count: number): Promise<PlaceRow[]> => {
+      const rows = await this.db
+        .prepare(
+          `SELECT ${sourceColumns},r.search_text FROM recall_sources r
+        WHERE ${this.eligible} AND r.source_kind='awareness' AND r.place_id IS NOT NULL AND r.place_latest=1${after ? ' AND r.place_id>?' : ''}${options.placeId ? ' AND r.place_id=?' : ''}
+        ORDER BY r.place_id LIMIT ?`,
+        )
+        .all(
+          ...this.params(scope),
+          ...(after ? [after] : []),
+          ...(options.placeId ? [options.placeId] : []),
+          count,
+        );
+      if (!rows.length) return rows;
+      const corrections = await this.db
+        .prepare(
+          `SELECT source_id,correction_id FROM mind_corrections
+        WHERE world_id=? AND actor_id=? AND source_id IN (${rows.map(() => '?').join(',')})`,
+        )
+        .all(scope.worldId, scope.actorId, ...rows.map((row) => row['id']));
+      if (!corrections.length) return rows;
+      const correctionIds = [...new Set(corrections.map((row) => String(row['correction_id'])))];
+      const correctionSources = await this.db
+        .prepare(
+          `SELECT ${sourceColumns},r.search_text FROM recall_sources r
+        WHERE ${this.eligible} AND r.source_kind='awareness' AND r.id IN (${correctionIds.map(() => '?').join(',')})`,
+        )
+        .all(...this.params(scope), ...correctionIds);
+      const byId = new Map(correctionSources.map((row) => [String(row['id']), row])),
+        bySource = new Map(
+          corrections.map((row) => [String(row['source_id']), String(row['correction_id'])]),
+        );
+      return rows.map((row) => {
+        const id = bySource.get(String(row['id']));
+        if (!id) return row;
+        const correction = byId.get(id);
+        return {
+          ...row,
+          correction_id: id,
+          correction_source: correction,
+          search_text: `${row['place_label']} Corrected observation ${
+            correction?.['search_text'] ??
+            'This observation was corrected. Its original description is no longer established information.'
+          }`,
+        };
+      });
+    };
+    return this.snapshot(async () => {
+      const result = options.terms
+        ? await scanMatches<PlaceRow>(
+            (row, count) => rowsAfter(row ? String(row['place_id']) : options.after, count),
+            (row) => matchesSearch(options.terms!, String(row['search_text'])),
+            options.limit,
+            options.scan,
+          )
+        : {
+            matched: await rowsAfter(options.after, options.limit + 1),
+            last: undefined,
+            scanLimited: false,
+          };
+      const page = result.matched.slice(0, options.limit);
+      const hydrated = await this.hydrate(page);
+      const correctionRows = new Map<string, Record<string, unknown>>(),
+        correctionBySource = new Map<string, string>();
+      for (const row of page) {
+        if (row.correction_id) correctionBySource.set(String(row['id']), row.correction_id);
+        if (row.correction_source)
+          correctionRows.set(String(row.correction_source['id']), row.correction_source);
+      }
+      const correctionBodies = await this.hydrate([...correctionRows.values()]);
+      const entries: KnownPlaceSource[] = hydrated.map((entry) => {
+        const id = correctionBySource.get(entry.memory.id),
+          correction = correctionBodies.find((body) => body.memory.id === id);
+        return {
+          ...entry,
+          ...(id
+            ? { correctionId: id, ...(correction ? { correction: correction.memory.summary } : {}) }
+            : {}),
+        };
+      });
+      const after =
+        result.matched.length > options.limit
+          ? String(page.at(-1)!['place_id'])
+          : result.scanLimited && result.last
+            ? String(result.last['place_id'])
+            : undefined;
+      return { entries, after, scanLimited: result.scanLimited };
+    });
   }
 
   private async refreshQueue(worldId: string, actorId: string, ids: Set<string> | null) {
@@ -1351,6 +1539,8 @@ export class MemoryRepository {
           let awareness: Awareness | undefined;
           if (kind === 'awareness') {
             awareness = JSON.parse(payload) as Awareness;
+            if (awareness.exposure !== undefined && !validEncounterExposure(awareness.exposure))
+              throw new Error('Invalid stored encounter evidence. Existing data was not replaced.');
             memory = {
               id: awareness.eventId,
               eventId: awareness.eventId,

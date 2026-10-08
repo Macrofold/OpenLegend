@@ -4,6 +4,8 @@
  * docs/maintainers/events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership
  */
 export const DOMAIN_COUNTERS = [
+  'outingIndexed',
+  'outingChecked',
   /** Sensory input preparation, certified draft coverage, affected observers and recovery. */
   'sensoryCaptures',
   'sensoryComparisons',

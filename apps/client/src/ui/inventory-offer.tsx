@@ -75,8 +75,7 @@ export function InventoryOffer({
   return (
     <section className="ol-inventory-offer" aria-label="Offer to a person">
       <p>
-        Choose a person to offer these items. They keep their possessions; nothing changes hands
-        until they accept.
+        Choose a person to review an offer or exchange. Nothing changes hands before acceptance.
       </p>
       <label htmlFor={searchId}>Find a person</label>
       <input
@@ -100,7 +99,7 @@ export function InventoryOffer({
               }
               onPress={() => onOffer(person)}
             >
-              Offer to {namePhrase(person, 'definite')}
+              Trade with {namePhrase(person, 'definite')}
             </Button>
             {person.reason && <p className="ol-caption">{person.reason}</p>}
           </li>

@@ -1,3 +1,5 @@
+import { ItemTrade } from './item-trade';
+import { OutingStatus } from './outing-status';
 import { namePhrase } from '@open-legend/language';
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
@@ -9,7 +11,7 @@ import { MemoryHistory } from './memory-history';
 import { ActivityHistory } from './activity-history';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
 import { Button as AriaButton, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
-import type { ActionOption, EntityView, GameView } from '@open-legend/protocol';
+import type { ActionOption, ApiResult, EntityView, GameView } from '@open-legend/protocol';
 import {
   Button,
   Condition,
@@ -151,7 +153,7 @@ export function EntityDetail({
   entity: EntityView;
   view: GameView;
   connected: boolean;
-  command(a: ActionOption): void;
+  command(a: ActionOption): Promise<ApiResult>;
   talk(id: string): void;
   openContainer(entity: EntityView): void;
   openActivity(entry: ActivityEntry): void;
@@ -199,7 +201,23 @@ export function EntityDetail({
         connected={connected}
         onOpen={openActivity}
       />
-      <Actions actions={entity.actions} command={command} connected={connected} />
+      <Actions
+        actions={
+          entity.trade
+            ? entity.actions.filter((action) => action.command.type !== 'handover')
+            : entity.actions
+        }
+        command={command}
+        connected={connected}
+      />
+      {entity.trade && (
+        <ItemTrade
+          key={entity.trade.scope}
+          trade={entity.trade}
+          connected={connected}
+          command={command}
+        />
+      )}
       {godControls && (
         <GodCharacterActions entity={entity} connected={connected} controls={godControls} />
       )}
@@ -302,6 +320,7 @@ export function Character({
           )}
         </TabPanel>
         <TabPanel id="capabilities" shouldForceMount className="ol-character-page">
+          <OutingStatus view={view} connected={connected} command={command} />
           <ActionAttempts
             key={`${view.access?.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
             view={view}

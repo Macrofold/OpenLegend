@@ -89,6 +89,8 @@ PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters
 
 ### AG05 — Resolve unlisted attempts to existing mechanics
 
+- [x] PX04 adds the installed exact destination invitation and immediate accept/decline/leave commands through current typed request and ordinary action surfaces; own finite movement remains the existing activity owner. This does not close general following or unlisted-proposal work.
+
 - [x] Offer body-admitted one-shot approaches to visible entities, including cognitive animals, through native movement. Preserve separate target descriptions when approach destinations coincide.
 - [ ] Extend locomotion with sustained target following when that behavior is taken on; keep it distinct from one-time destination movement and define target-loss/reacquisition behavior at the existing perception boundary.
 
@@ -107,6 +109,8 @@ PW03/PW10 preserve AG04's existing admission owner: explicit activity parameters
 **Exit evidence:** differently worded requests resolve to the same supported behavior; existing compositions do not create needless definitions. Unsupported attempts cause no fictional success. “I take the gold” cannot use expression admission to transfer inventory, and a guessed hidden target is rejected without leaking its location.
 
 ### AG06 — Goal/plan-aware context and derived interests
+
+- [x] PX04 supplies exact own outing terms/progress and permitted companion visibility in ordinary decision/activity context, without the companion’s private work or hidden location. Current reply candidates share native prerequisites.
 
 PG02’s [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) qualifies exact recent outcomes through required memory selection, remaining paused work, source-linked correction/forgetting and shared personal grammar. Complete identity remains required. Current interests, needs and chosen intentions use one shared action rating policy in shortlisting and final selection; thresholds, interest compilation and native eligibility remain unchanged.
 
@@ -130,6 +134,8 @@ PW03/PW10 add a narrow AG06 inspection consumer: one currently accessible select
 ### AG07 — Meaningful feedback, survival and bounded reconsideration
 
 [CF01/CF04](parallel-batch-06-rivals-and-contested-ground.md) propose combat choices and voluntary help through this same feedback/plan owner, consuming PG02 rather than replacing it with an enemy or companion controller. No runtime or broader quality criterion closes through those definitions.
+
+- [x] PX04 invitation, arrival, separation and termination produce private actual-outcome evidence through existing reconsideration; unchanged motion makes no paid request. Native refusal/replay/departure checks are recorded in [outing evidence](../verification/voluntary-outings.md).
 
 PG02’s native/live episodes connect actual completion with ordinary reconsideration. Corrected-content Ada switched from cord work to hare observation; a repeated trial instead stocked further. Material hunger can explicitly abandon unfinished work without refunding costs; native interruption separately resumes remaining steps. An unchanged opportunity buys no request. [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) completes verified publication and ordinary subsequent action with corrected content. No scheduler or automatic goal completion was added ([evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices)).
 
@@ -220,6 +226,8 @@ The [October 2 Engineer 3 report](../verification/camp-life.md#engineer-3--conta
 | Crowded scene and long history        | Bounded candidates and diagnostics; relevant protected evidence and fair admission survive                                                                    |
 
 ### AG12 — Behavioral value and cost, separately authorized
+
+PX04 adds [bounded outing comparisons](../verification/voluntary-outings.md): freely selected invitations, actual independent travel and separate arrival decisions, with failures and complete cost retained. This narrows the social-episode evidence only; matched broad evaluation, repeatability, whole-life quality and unattended-community scope below remain open.
 
 PG02’s [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) distinguishes live choices/effects, native supplied controls, confounded setups and provider failure. Independent observation is re-demonstrated without conditional biography; contrary stockpiling, failed prompt variants and actual costs remain. Reliable endings, freely chosen suspended-work resumption and whole-life quality remain open. [October 6 publication](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) now passes, while unchanged personal files and empty knowledge/goal changes leave lasting content-specific influence unqualified.
 

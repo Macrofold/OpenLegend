@@ -47,6 +47,7 @@ import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 import type { ActivityNode, ActivityPredicate } from './action-experience.js';
+import { reconcileOutings } from './outings.js';
 
 export interface ResponseOperation {
   note?: KnowledgeEdit | null;
@@ -641,7 +642,7 @@ export function commitActorResponse(
         input.entities[actorId]!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (bound.type === 'compose') {
+      else if (bound.type === 'compose' || bound.type === 'outing') {
         if (bound.mode !== act.mode)
           components[localId] = outcome(
             false,
@@ -677,6 +678,7 @@ export function commitActorResponse(
           'conversation',
           'teach',
           'handover',
+          'outing',
           'transfer-item',
           'cancel',
           'recover',
@@ -908,6 +910,7 @@ export function commitActorResponse(
             'conversation',
             'teach',
             'handover',
+            'outing',
             'transfer-item',
             'cancel',
             'recover',
@@ -1057,6 +1060,9 @@ export function commitActorResponse(
         );
     }
   }
+  // A selected replacement plan is saved before its first physical step. Retire any
+  // superseded trip here so its consent never points at work the actor no longer owns.
+  reconcileOutings(world, events, { changedOnly: true });
   if (appendOnlyCommands && world.events !== input.events) {
     // All command prefixes were proved; expressions only append. Seal the composed suffix
     // once so intermediate metadata forks do not force durable history to diff the old prefix.

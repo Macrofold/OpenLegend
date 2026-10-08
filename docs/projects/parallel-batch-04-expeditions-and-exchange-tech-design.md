@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — technical task definitions
 
-| Status      | Current progress                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01 integration and navigation review are qualified; the other assignments retain their separate acceptance. | 2026-10-06   |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01 encounter integration, PX02 barter, PX03 discoveries and PX04 paired outings are delivered and reviewed; PX05 and broader qualification remain open. | 2026-10-07   |
 
 [Feature and acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Prompts](parallel-batch-04-expeditions-and-exchange-prompts.md)
 
@@ -54,9 +54,11 @@ Completion requires the formerly refused southward escape to produce an actual m
 
 ## PX02 — Reciprocal offer contract
 
+**Delivered October 5:** the implementation follows the immediate offer contract below. [Social rules](../worlds/base/social.md#offering-and-accepting-possessions) now own current behavior; [BW11](../limits/base-world.md#bw11) owns adopted PX-L01 bounds and recent explicit disclosures. [Evidence](../verification/reciprocal-barter.md) covers native, PostgreSQL, actual client and controlled voluntary resident decisions. Broader generalized agreements, currency, promises, standing reservations and population qualification remain outside PX02.
+
 ### Current owner and intended model
 
-`packages/domain/src/handover.ts` currently owns proposal, recipient reply, lapse and one-way custody. Extend that semantic owner, extracting local pure checks where useful. Update all current callers together; do not add compatibility readers for the old one-item offer format. Existing gifts become an offered side with no requested side, retaining their accepted behavior and visible text.
+`packages/domain/src/handover.ts` owns proposal, recipient reply, lapse and now both gift and reciprocal custody. Extend that semantic owner, extracting local pure checks where useful. Update all current callers together; do not add compatibility readers for the old one-item offer format. Existing gifts become an offered side with no requested side, retaining their accepted behavior and visible text.
 
 A pending reciprocal offer carries stable offer identity, revision, proposer, recipient, exact give/receive lot and quantity, definition/contents pins needed by current item semantics, and game-clock creation/expiry. The proposer’s explicit submission is consent to that revision. The named recipient's **Accept** command consents to the same revision. A counteroffer replaces the terms with a higher revision and makes its author the proposer; prior acceptance is invalid. Mutation requests carry expected offer revision plus the normal authenticated command/receipt identity. The proposer cannot accept their own offer for the other person.
 
@@ -64,7 +66,7 @@ Terms come from actor-permitted references. No response or choice catalogue may 
 
 ### Commit, lifecycle and observations
 
-- Offer creation moves/reserves nothing. Reuse applicable existing handover expiry/admission policies from the world; the proposed added cardinality is in the [batch constraints](../limits/parallel-batch-04-expeditions-and-exchange.md). References on both sides participate in conflict/lapse checks; no live proposal can promise the same lot twice through a gift/barter loophole.
+- Offer creation moves/reserves nothing. Reuse applicable existing handover expiry/admission policies from the world; the adopted added cardinality is in [BW11](../limits/base-world.md#bw11), with [PX-L01 disposition](../limits/parallel-batch-04-expeditions-and-exchange.md#px-l01--one-exact-lot-on-each-side-of-an-immediate-barter). References on both sides participate in conflict/lapse checks; no live proposal can promise the same lot twice through a gift/barter loophole.
 - Before acceptance, validate both actors' authority/participation/reach, exact terms, accessible custody, free units, current work, whole-object rules and container contents/access. Evaluate the **final joint placement**, including both sides' capacity if applicable. A valid reciprocal swap must not fail just because a hypothetical one-sided intermediate inventory would be full.
 - Perform both moves in one draft/transition through `objects.ts`/resource-claim helpers. Failure discards the whole draft. Avoid self/ancestor container cycles and overlapping offered/requested subtrees. Native exceptions or storage failure must not publish half an exchange. Effects and the command receipt commit together through current service persistence.
 - Acceptance closes the offer and emits the actual exchange. Decline/withdraw/expiry/lapse are distinct no-transfer endings. Ordinary perception supplies witnesses; only the two participants receive private terms. Memory stores what was actually experienced; speech claiming a deal is not evidence of transfer.
@@ -104,7 +106,37 @@ Source map: `packages/domain/src/story-selection.ts`, `events.ts`, perception/ex
 
 **Reconcile:** NC09–NC12's place/item exposure subset in [narration tracking](../maintainers/narration-and-conversations.md), DG01/ND18, relevant [SW](../maintainers/spatial-world.md) and memory ownership. PG03 action clarity is a prerequisite, not duplicated completion. Update [narration limits](../limits/narration.md), [spatial limits](../limits/spatial.md) and relevant cognition constraints; do not close whole narration or map programs.
 
+### PX03 implementation plan — October 5, 2026
+
+Mike authorized this child delivery. Development starts at refreshed `Macrofold/OpenLegend` `origin/main`, commit `34233ae24365eb8911fe1995c9c232bd57f34616`, including integrated PG03/PG04. Estimated scope is 900–1,400 changed logic lines excluding verification. The material risks are disclosure across observers or nested containers, stale navigation authority, and remembered facts outliving forgetting/correction; all changes use their existing owners.
+
+1. Add serializable static place definitions over an existing supported point and visible landmark, with an arrival footprint and authored observable wording. Extend the existing perception phase at affected-observer boundaries, using an index by landmark rather than scanning all places. Record the observed definition, label, supported point and description in private encounter evidence; existing experience is the sole knowledge authority.
+2. Extend explicit inventory inspection to an exact selected item as well as existing admitted inspection pages. Record only inspected accessible items, with exact lot and definition identity. Use authored introduction nomination and existing recognition granularity, without automatic possession discovery or recursive bag disclosure.
+3. Extend the existing pure story selector and durable milestone policy to these exposure families. Revalidate source permission and selection before dispatch/publication; use the committed authored observation as a useful no-provider fallback. Learning remains independent of story capacity, cooldown and provider availability.
+4. Extend the existing memory repository with indexed, actor-scoped place-observation selection and bounded keyset pages/search. Derive last-known places from retained evidence, including cold sources, without a second writable knowledge collection or a cap on stored places. Fence forgetting, correction, restore and actor scope across reads. Bind a separate move request to its selected evidence and use current native preview/admission and navigation.
+5. Compose a compact searchable Known places surface in the existing Journal panel family. Show learned description, last-observed supported location and time, deliberate Focus and Inspect, and separate movement with truthful refusal/failure feedback. Camera focus uses the existing renderer interface and never changes character location or visibility.
+6. Reconcile PX03, NC09–NC12's delivered subset, DG01/ND18, spatial/memory tasks, canonical behavior, limits and project status. Inspect the full diff and fix in-scope findings. Make task-scoped checkpoint/final commits without pushing or modifying the main checkout.
+
+Verification uses focused existing checks after inspecting fixtures, TypeScript/build and changed-file formatting, plus one small disposable PostgreSQL scenario for newly exposed behavior. Exercise first exposure, quiet repeat, an unfamiliar admitted invented item, same-name identity, two observers, forgetting/correction, denied contents, changed/removed destination, failed navigation and current-format reload. Inspect the actual UI with keyboard interaction and a narrow viewport. A bounded place/history workload verifies query/candidate behavior without claiming broad spatial or cognition qualification. Native checks use `AI_BUDGET_USD=0`; fixtures cannot establish live narration quality. Completion requires every PX03 journey, its integration/documentation/review and required checks, with no task-owned uncommitted changes.
+
+### PX03 review plan — October 6, 2026
+
+Mike requested a full review and in-scope improvements of the delivered child. The review starts from the complete PX03 diff, approximately 1,200 runtime logic lines excluding verification, rebased onto refreshed `Macrofold/OpenLegend` `origin/main` at `0a3ab79b7a698a7f1941dc23722f89220d1ba425`. The existing checkout and `codex/px03-grounded-discoveries` branch retain all edits. The reconciliation preserves the upstream lethal-attack review and PX03's source-bound movement/manual-pause inspection; the main checkout is not changed.
+
+1. Trace authored place and inspected-item evidence through domain perception, private experience, story selection, asynchronous publication, repository persistence, correction/forgetting and current-format restoration. Check observer scope, exact identity, stale completion and newly integrated death/recovery behavior.
+2. Trace Known places search, paging, inspection and movement through authenticated HTTP, command retries, native admission and client focus/request lifecycle. Reuse existing owners and remove related duplication or unnecessary work when a concrete finding justifies it.
+3. Inspect costs as authored places, observers and retained history grow: lookup/index invalidation, per-observer perception work, database update fan-out, bounded descriptions/search, query plans and serialization. Use one matched disposable workload for any meaningful performance fix; report elapsed work and plan limits without claiming population capacity.
+4. Fix confirmed in-scope findings, extending this plan if a consequential contract change is needed. Expected follow-up scope is up to a few hundred logic lines; privacy/authority/correction risks justify this durable plan rather than treating the review as cosmetic. Preserve static-place scope, current story policy, exact identity, privacy, spending and no legacy support.
+5. Verify fixes through relevant existing checks and the actual downstream native/server callers. Reuse the existing small disposable PostgreSQL journey where compatible, add only the scenarios needed by findings, use `AI_BUDGET_USD=0`, and run TypeScript/build and pinned formatting. Client changes require actual interaction/visual verification. Reuse valid earlier evidence for unchanged behavior.
+6. Review the complete resulting diff and affected documentation. Mark delivered fixes accurately; place concrete unimplemented findings and verification gaps with their existing NC/SW/CR/PF owners, preserving broader projects. Finish with task-scoped commits and no task-owned uncommitted changes; no push is authorized.
+
+Completion requires the full source/caller review, confirmed in-scope issues fixed, selected checks passing, canonical contracts/tracker/limits reconciled and an honest account of unmeasured scale or provider quality.
+
+Confirmed review findings include per-observer SQL fan-out and source-family collisions in latest-place updates, whole-actor correction joins causing a bounded search to time out on fresh statistics, forgetting/correction arriving during narration storage reads, moved landmarks establishing an old site, broad memory changes expiring otherwise usable pages, malformed saved observation baselines, and native marker removal making its authored site unloadable. Fixes remain with the existing domain, history and memory owners. The saved definition can remain inactive after its marker is carried, retired or removed; current physical exposure and movement still require that marker. Bounded metadata reads and batched correction reads preserve the search window without repeated whole-actor joins; selected correction metadata is reused for hydration rather than read twice. [Review evidence](../verification/useful-discoveries.md#october-6-2026--requested-review) records verified scope and remaining qualification. The full review is complete: confirmed findings are fixed, native/read-workload/browser cancellation and selected static/existing checks pass, and broader qualification remains tracked under NC/SW/CR/PF.
+
 ## PX04 — Consenting travel companions
+
+**Implemented October 6, 2026:** `outings.ts` records exact consent and links two ordinary activities; the base installed host owns wording and scope. Native commands, ordinary actor-response publication and participation changes reconcile invalidated consent before a save can retain a superseded plan. [Current contract](../worlds/base/social.md#voluntary-outings), [completed implementation and review plan](completed/px04-voluntary-outings-plan.md) and [evidence](../verification/voluntary-outings.md) retain decisions and qualification limits.
 
 ### Exact invitation, separate agency
 

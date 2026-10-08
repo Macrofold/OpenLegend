@@ -292,6 +292,8 @@ A later tool-using planning harness can use the same scoped discovery/preview po
 
 **Required when designing, implementing or reviewing action behavior, prerequisites, availability or execution.** An availability check answers whether a particular character can start the exact selected action now. Menus, NPC choices and plan selection need that answer, not the action's effects or a prediction of eventual success.
 
+For cooperative actions that ask another actor to join or change work, also read [Exact social consent with separate movement](#exact-social-consent-with-separate-movement) and the applicable world's cooperation contract before changing proposal, reply or execution paths. The outing family's eligibility and pair limits remain world-specific.
+
 Prefer shared read-only checks over starting the action in a temporary world draft and discarding its changes. There is no permanent category of action that requires temporary execution: the distinction is whether its current shared checks cover every reason starting the action can refuse. Retaining temporary execution because it has not been qualified is different from demonstrating that a later check still requires it. [Current implementation](architecture.md#action-discovery-and-player-preferences), [initial PG04 measurements](verification/command-frame-spikes.md#pg04--pure-prerequisite-previews-october-3-2026) and the [meter/follow extension](verification/command-frame-spikes.md#pg04--meter-refilling-and-following-october-4-2026) describe the delivered scope, not an exhaustive list of eligible families.
 
 Before changing an action or an availability caller:
@@ -367,6 +369,14 @@ Allowed failure policies are finite and explicit: stop, wait for a named depende
 An ongoing activity may legitimately last indefinitely in simulated time while performing bounded work per native step. Persistent does not mean unbounded CPU, subscriptions, outputs, inference or authority. Bind a finite scope, cancellation policy, per-step budget and maximum active work. A “forever” standing routine is not an always-running provider session.
 
 Unbounded fan-out, recursive plans, dynamically spawned unlimited watchers, unknown executable nodes, user-authored evaluator code and arbitrary SQL/JSON-path predicates are rejected. Full parallel graph execution is not part of the initial foundation; it becomes available only when the relevant family/resource-channel interface is implemented.
+
+### Exact social consent with separate movement
+
+The installed base outing family compiles a typed invitation containing one permitted person, fixed destination and explicit current-work handling. The ordinary request picker and NPC parameter selector share the descriptor, including world-authored handling labels; optional purpose stays untrusted descriptive text. Native read-only admission and actual execution share checks. Accept/decline/leave are exact immediate social commands, including while already working; they are not queued physical steps.
+
+Acceptance checks both captured work generations and admits each actor's own ordinary finite `move` composition atomically. The consent record stores the resulting plan identities, never a second movement authority. Replacement, failure, participation departure and fixed-place changes reconcile those identities; only matching remaining trip work is cancelled. Native route preparation, private outcomes, receipt replay and current-format validation remain with their existing owners. [Social behavior](worlds/base/social.md#voluntary-outings) and [AEL10](limits/action-experience.md#ael10--outing-consent-and-own-movement) define the supported family and limits.
+
+When extending this lifecycle, trace every caller that can invalidate the agreement, including direct commands, ordinary character decisions and participation changes. The invalidating change and consent closure must be published together; waiting for the next physical simulation step can expose or save an already-invalid trip. Consent still grants only the exact agreed action, not continuing control of either participant.
 
 ## 9. Integration with the existing action and plan owners
 

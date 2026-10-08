@@ -1,5 +1,7 @@
+import type { WorldPoint } from '@open-legend/spatial';
+import { KnownPlaces } from './known-places';
 import { useEffect, useState } from 'react';
-import type { GameView } from '@open-legend/protocol';
+import type { ActionOption, ApiResult, GameView } from '@open-legend/protocol';
 import { SegmentedControl, Tag } from '../design-system/components';
 import { History } from './history';
 import { Promises } from './promises';
@@ -10,10 +12,14 @@ export function Journal({
   view,
   visible,
   storyRequest = 0,
+  command,
+  focus,
 }: {
   view: GameView;
   visible: boolean;
   storyRequest?: number;
+  command(action: ActionOption): Promise<ApiResult>;
+  focus(point: WorldPoint): void;
 }) {
   const [section, setSection] = useState('promises');
   useEffect(() => {
@@ -29,6 +35,7 @@ export function Journal({
           { value: 'promises', label: 'Promises' },
           { value: 'beginnings', label: 'Beginnings' },
           { value: 'story', label: 'Your story' },
+          { value: 'places', label: 'Places' },
         ]}
       />
       <div className="ol-journal-section" hidden={section !== 'promises'}>
@@ -53,6 +60,16 @@ export function Journal({
           </article>
         ))}
         {!view.milestones.length && <p>No suggested beginnings are recorded for this world.</p>}
+      </div>
+      <div className="ol-journal-section" hidden={section !== 'places'}>
+        <h3 className="ol-heading">Known places</h3>
+        <KnownPlaces
+          key={`${captionScope(view)}:${view.historyEpoch}`}
+          revision={view.historyRevision}
+          visible={visible && section === 'places'}
+          command={command}
+          focus={focus}
+        />
       </div>
       <div className="ol-journal-section ol-journal-story" hidden={section !== 'story'}>
         <h3 className="ol-heading">Your story</h3>

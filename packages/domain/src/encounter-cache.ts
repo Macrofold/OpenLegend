@@ -156,7 +156,7 @@ interface ExposureCache {
 }
 export type EncounterBaseline = Pick<
   WorldState,
-  'visiblePeople' | 'visibleObjects' | 'perceptionEpisodes'
+  'visiblePeople' | 'visibleObjects' | 'perceptionEpisodes' | 'places' | 'visiblePlaces'
 > & { positions: Pick<ReadonlyMap<string, Position>, 'get'>; contacts: Map<string, unknown> };
 // Tokens fence ownership without retaining an abandoned draft and its uncommitted records.
 const ownerTokens = new WeakMap<object, object>();
@@ -502,6 +502,8 @@ export function snapshotEncounters(world: WorldState): EncounterBaseline {
   const knownPositions =
     available && available.dirty?.complete !== false && !available.dirty?.overflow;
   const result: EncounterBaseline = {
+    places: snapshot(world.places),
+    ...(world.visiblePlaces ? { visiblePlaces: snapshot(world.visiblePlaces) } : {}),
     positions: knownPositions
       ? {
           get: (id) => {

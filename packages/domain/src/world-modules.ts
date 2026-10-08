@@ -7,6 +7,7 @@ import {
   validateNarration,
 } from './narration.js';
 import { validName } from '@open-legend/language';
+import { validatePlaces } from './places.js';
 import { validateFamilyTree } from './worlds/base/family.js';
 import { validateAppraisalPolicy, validateAppraisals, type AppraisalPolicy } from './appraisals.js';
 import { BASE_APPRAISAL_POLICY } from './worlds/base/appraisals.js';
@@ -56,6 +57,7 @@ import { canonicalJson, contentLabel, emit } from './events.js';
 import { hasRecordFields } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
+import { validateOutings } from './outings.js';
 
 export type AttributeValue = number | string;
 /** Consequences of advanceReservoirs and kernel's native replenish action. These
@@ -785,6 +787,7 @@ export function validateWorldModules(world: WorldState): void {
   validateNativeWork(world);
   validateSpatialWorld(world);
   validatePerceptionState(world);
+  validatePlaces(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
@@ -812,6 +815,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing or invalid saved invention origin.');
   }
   validateAgency(world);
+  validateOutings(world);
   validateActionExperience(world);
   validateModuleManifest(world.moduleManifest);
   validateBodyPolicy(

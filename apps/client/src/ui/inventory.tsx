@@ -7,6 +7,7 @@ import type {
   GameView,
   InventoryItemView,
   InventoryTransferSource,
+  ApiResult,
 } from '@open-legend/protocol';
 import { post } from '../api';
 import type { CommandDispatcher } from '../command-request';
@@ -15,6 +16,7 @@ import { InventoryCollection, type InventorySide } from './inventory-collection'
 import { InventoryHistory, MergeTargets } from './inventory-details';
 import { InventoryQuantity, exactQuantity } from './inventory-controls';
 import { InventoryOffer } from './inventory-offer';
+import { ItemTrade } from './item-trade';
 import { useInventoryCollection } from './use-inventory-collection';
 import { useInventoryCommand } from './use-inventory-command';
 import './inventory.css';
@@ -40,6 +42,7 @@ type AmountDraft = {
   target?: ContainerPage['container'];
   action?: ActionOption;
   value: string;
+  recipientId?: string;
 };
 type DragIntention = {
   token: string;
@@ -142,6 +145,7 @@ function InventoryWorkspace({
     (InputFocus & { side: InventorySide; containerId: string }) | undefined
   >(undefined);
   const [selection, setSelection] = useState<Selection>();
+  const inspectedSelection = useRef<string | undefined>(undefined);
   const [detailOpen, setDetailOpen] = useState(false);
   const [amountDraft, setAmountDraft] = useState<AmountDraft>();
   const [quantityError, setQuantityError] = useState('');
@@ -310,6 +314,18 @@ function InventoryWorkspace({
   const item = selectedCollection?.page?.items.find((entry) => entry.id === selection?.itemId);
   const target = selection && opposite(selection.side).page?.container;
   const selectedContainer = selectedCollection?.page?.container;
+  if (
+    !selection ||
+    !selectedContainer ||
+    inspectedSelection.current !==
+      JSON.stringify([
+        selection.side,
+        selectedContainer.id,
+        selectedContainer.revision,
+        selection.itemId,
+      ])
+  )
+    inspectedSelection.current = undefined;
   const amount = amountDraft && exactQuantity(amountDraft.value, item?.availableQuantity);
   const draftStale =
     !!amountDraft &&
@@ -397,6 +413,7 @@ function InventoryWorkspace({
     scheduleCollectionFocus(captureCollectionFocus(side));
   }
   function closeDetail(restoreFocus = true) {
+    inspectedSelection.current = undefined;
     setDetailOpen(false);
     setSelection(undefined);
     setAmountDraft(undefined);
@@ -470,6 +487,43 @@ function InventoryWorkspace({
       setAmountDraft(undefined);
       setQuantityError('');
     }
+    const source = collection(side).page;
+    if (
+      connected &&
+      view.access?.controlling &&
+      source &&
+      collection(side).available &&
+      !collection(side).loading
+    ) {
+      const identity = JSON.stringify([
+        side,
+        source.container.id,
+        source.container.revision,
+        selected.id,
+      ]);
+      inspectedSelection.current = identity;
+      void command({
+        id: `inspect:${selected.id}`,
+        label: `Inspect ${selected.name}`,
+        enabled: true,
+        command: {
+          type: 'inspect-inventory',
+          itemId: selected.id,
+          containerId: source.container.id,
+          expectedRevision: source.container.revision,
+        },
+      })
+        .then((result) => {
+          if (alive.current && inspectedSelection.current === identity && !result.ok)
+            operations.setMessage(result.message);
+        })
+        .catch((error: unknown) => {
+          if (alive.current && inspectedSelection.current === identity)
+            operations.setMessage(
+              error instanceof Error ? error.message : 'Inspection could not be confirmed.',
+            );
+        });
+    }
   }
   function openItemContext(
     side: InventorySide,
@@ -533,8 +587,19 @@ function InventoryWorkspace({
       `Move ${current.availableQuantity} ${current.name} to ${namePhrase(destination, 'definite')}`,
     );
   }
-  function send(action: ActionOption, side: InventorySide) {
-    if (!canAct || !action.enabled) return;
+  function send(
+    action: ActionOption,
+    side: InventorySide,
+    tradeScope?: string,
+  ): Promise<ApiResult> {
+    if (!canAct || !action.enabled)
+      return Promise.resolve({
+        ok: false,
+        code: operations.pending ? 'unconfirmed' : 'unavailable',
+        message: operations.pending
+          ? 'Resolve the retained inventory request before acting again.'
+          : 'This action is not currently available. Nothing was sent.',
+      });
     const source = collection(side).page;
     actionInput.current = captureCollectionFocus(side);
     if (source) {
@@ -547,7 +612,7 @@ function InventoryWorkspace({
     }
     stopDrag();
     if (!selection) focusCollection(side);
-    void operations.dispatch(action);
+    return operations.dispatch(action, tradeScope);
   }
   function quickMove(side: InventorySide, sourceItem: InventoryItemView) {
     if (ignoreClick.current) return;
@@ -894,34 +959,65 @@ function InventoryWorkspace({
                         Refresh available amount
                       </Button>
                     )}
-                    {amountDraft.operation === 'offer' && amount !== undefined && (
-                      <InventoryOffer
-                        source={transferSource(amountDraft.item, amountDraft.source, amount)}
-                        scope={view.access?.scope ?? ''}
-                        active={canAct && !draftStale}
-                        onOffer={(recipient) =>
-                          send(
-                            {
-                              id: `offer-${amountDraft.item.id}-${recipient.id}`,
-                              label: `Offer ${amount} ${amountDraft.item.name} to ${namePhrase(recipient, 'definite')}`,
-                              enabled: true,
-                              command: {
-                                type: 'handover',
-                                handoverOperation: 'offer',
-                                targetId: recipient.id,
-                                itemId: amountDraft.item.id,
-                                quantity: amount,
-                                expectedRevision: amountDraft.item.revision,
-                                placementRevision: amountDraft.item.placementRevision,
-                                expectedContentsRevision: amountDraft.item.container?.revision,
-                                targetRevision: recipient.revision,
-                              },
-                            },
-                            selection.side,
-                          )
-                        }
-                      />
-                    )}
+                    {amountDraft.operation === 'offer' &&
+                      amount !== undefined &&
+                      (amountDraft.recipientId ? (
+                        (() => {
+                          const trade = view.entities.find(
+                            (person) => person.id === amountDraft.recipientId,
+                          )?.trade;
+                          return (
+                            <>
+                              {trade ? (
+                                <ItemTrade
+                                  key={trade.scope}
+                                  trade={trade}
+                                  connected={canAct && !draftStale}
+                                  command={(action) => send(action, selection.side, trade.scope)}
+                                  initialQuantity={amountDraft.value}
+                                  selected={{
+                                    id: amountDraft.item.id,
+                                    name: amountDraft.item.name,
+                                    label: amountDraft.item.name,
+                                    description: amountDraft.item.description,
+                                    quantity:
+                                      amountDraft.item.availableQuantity ??
+                                      amountDraft.item.quantity,
+                                    revision: amountDraft.item.revision,
+                                    placementRevision: amountDraft.item.placementRevision,
+                                    contentsRevision: amountDraft.item.container?.revision,
+                                    whole:
+                                      !!amountDraft.item.container || !!amountDraft.item.individual,
+                                  }}
+                                />
+                              ) : (
+                                <p role="status">
+                                  This person is no longer available for trade. Choose a current
+                                  recipient.
+                                </p>
+                              )}
+                              <Button
+                                variant="quiet"
+                                disabled={busy}
+                                onPress={() =>
+                                  setAmountDraft({ ...amountDraft, recipientId: undefined })
+                                }
+                              >
+                                Choose another person
+                              </Button>
+                            </>
+                          );
+                        })()
+                      ) : (
+                        <InventoryOffer
+                          source={transferSource(amountDraft.item, amountDraft.source, amount)}
+                          scope={view.access?.scope ?? ''}
+                          active={canAct && !draftStale}
+                          onOffer={(recipient) =>
+                            setAmountDraft({ ...amountDraft, recipientId: recipient.id })
+                          }
+                        />
+                      ))}
                     <div className="ol-actions">
                       {amountDraft.operation !== 'offer' && (
                         <Button disabled={!canAct || draftStale} onPress={submitAmount}>

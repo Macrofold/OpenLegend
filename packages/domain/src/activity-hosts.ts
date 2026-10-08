@@ -6,6 +6,7 @@ import { outcome } from './events.js';
 import type { Outcome } from './types.js';
 import type { Command, WorldState, Entity, ItemInstance } from './types.js';
 import type { DefinitionPin } from './world-modules.js';
+import { BASE_OUTING_HOST } from './worlds/base/outing.js';
 
 /** Installed trusted support for reusable commands and actor-scoped conditions.
  * Recipe-family installation grants neither of these capabilities.
@@ -97,6 +98,7 @@ export type ActivityRequestPresentation = {
   workMode: string;
 } & (
   | { kind: 'replenish-session' }
+  | { kind: 'outing-invitation'; destination: string }
   | {
       kind: 'resource-care';
       supply: string;
@@ -115,6 +117,8 @@ export type ActivityRequestPresentation = {
     }
 );
 export interface ActivityRequestDescriptor {
+  purposeLabel?: string;
+  submitLabel?: string;
   id: string;
   label: string;
   description: string;
@@ -123,6 +127,7 @@ export interface ActivityRequestDescriptor {
     string,
     {
       type: 'entity' | 'definition' | 'integer' | 'time' | 'mode';
+      modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
       label: string;
       minimum?: number;
       maximum?: number;
@@ -159,6 +164,7 @@ const trustedHosts = [
   BASE_FIRE_ACTIVITY_HOST,
   BASE_CAMP_ACTIVITY_HOST,
   RESERVOIR_ACTIVITY_HOST,
+  BASE_OUTING_HOST,
 ];
 export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
   return world.moduleManifest.activityHosts.flatMap(

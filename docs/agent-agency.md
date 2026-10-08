@@ -99,6 +99,12 @@ Once the actor knows a technique, native bookkeeping may enumerate the missing i
 
 Plans may be useful without being optimal. Actors can pursue aesthetic, social, exploratory or eccentric goals, not just maximize nutrition. The engine's authority over possible actions is separate from the controller's preference for sensible behavior. Prototype survival prioritization is a controller policy, not a claim that hunger makes all other thoughts physically impossible.
 
+### Voluntary company on a trip
+
+The bundled world's [outing contract](worlds/base/social.md#voluntary-outings) lets a person accept or decline an exact destination invitation. Acceptance admits each participant's own finite walk through the existing activity owner, checking both people's unchanged work. Consent is separate from movement, goals, possessions and promises. Each person can leave; changed work or a blocked trip cannot remain enrolled in hidden parallel travel.
+
+Terms, own progress and permitted company observations enter ordinary activity/decision context. Invitation, arrival, separation and ending are private personal evidence that can wake existing reconsideration. A linked plan retains the same event evidence for required recall; it does not create a second account. Exact outing terms appear once in decision facts, separately from descriptions of current or paused work. There is no new planner or per-tick inference. Arrival does not choose gathering or conversation. [PX04 evidence](verification/voluntary-outings.md) is a bounded social episode, not completion of broader [AG12](maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) or psychological needs.
+
 ## 5. Trying something outside the shortlist
 
 The actor can describe a desired attempt in ordinary language, with relevant known targets and a proposed method where available. The application resolves the attempt into one of the supported outcomes defined in the runtime contract.
