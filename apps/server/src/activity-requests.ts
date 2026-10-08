@@ -1,5 +1,6 @@
 import {
   activityRequestHost,
+  activityHostForCommand,
   accessiblePossession,
   canAccessContainer,
   currentInventoryInspection,
@@ -67,6 +68,9 @@ export function projectActivityStatus(
     ...(execution.control
       ? {
           spent: execution.spent ?? 0,
+          maximumSpent: execution.control.budget.maximumSpent,
+          spendingUnit: activityHostForCommand(world, execution.control.budget.command)?.definition
+            .spending?.unit,
           attempts: execution.attempts ?? 0,
           interrupted: execution.interrupted ?? false,
           deadline: execution.control.deadline,
@@ -74,8 +78,35 @@ export function projectActivityStatus(
       : {}),
   };
 }
-export function activityRequests(service: WorldService, scope: RequestScope): ActivityRequestsView {
+export function activityRequests(
+  service: WorldService,
+  scope: RequestScope,
+  targetId?: string,
+): ActivityRequestsView {
+  service.assertScope(scope);
   const requests = activityRequestDescriptors(service.world);
+  // Reuse exact role reads: selection supplies context, never permission or a nearby scan.
+  const entries = targetId
+    ? requests.flatMap((request) => {
+        const target = request.presentation?.target;
+        if (!target || request.fields[target]?.type !== 'entity') return [];
+        const page = activityChoicePage(service, scope, {
+          family: request.id,
+          field: target,
+          selectedId: targetId,
+        });
+        return page.selected?.accessible
+          ? [
+              {
+                familyId: request.id,
+                targetId,
+                label: request.label,
+                description: request.description,
+              },
+            ]
+          : [];
+      })
+    : [];
   const timing = requests
     .flatMap((request) => Object.values(request.fields))
     .filter(
@@ -87,6 +118,7 @@ export function activityRequests(service: WorldService, scope: RequestScope): Ac
   return {
     ...activityStatus(service, scope),
     requests,
+    entries,
     ...(timing.length
       ? {
           timeOptions: {

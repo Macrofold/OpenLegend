@@ -45,20 +45,25 @@ function PromiseItem({ promise }: { promise: OwnPromise }) {
 /** Read-only list of the player's own spoken promises: exact words, what the world checks
  * and what happened. Changing or cancelling promises is not offered (open decision D64).
  * docs/projects/readable-promises-feature-spec.md */
-export function Promises() {
+export function Promises({ visible = true, revision }: { visible?: boolean; revision?: string }) {
   const [page, setPage] = useState<OwnPromisePage | null>(null);
   const [past, setPast] = useState<OwnPromise[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const request = useRef(0);
+  const loadedRevision = useRef(revision);
+  const failedCursor = useRef<string | undefined>(undefined);
   async function load(cursor?: string) {
     const id = ++request.current;
+    const atRevision = revision;
+    failedCursor.current = cursor;
     setBusy(true);
     setError('');
     try {
       const result = await post<Result>('/api/commitments', cursor ? { cursor } : {});
       if (id !== request.current) return;
       if (!result.ok) throw new Error(result.message ?? 'Promises are unavailable.');
+      if (!cursor) loadedRevision.current = atRevision;
       setPast((current) => (cursor ? [...current, ...result.past] : result.past));
       setPage((current) => (cursor && current ? { ...current, next: result.next } : result));
     } catch (failure) {
@@ -69,15 +74,17 @@ export function Promises() {
     }
   }
   useEffect(() => {
-    void load();
+    if (visible && !page) void load();
+    if (!visible) setBusy(false);
     return () => {
       request.current++;
     };
-  }, []);
+  }, [visible]);
   const full = !!page && page.counted >= page.openLimit;
   const unlisted = page ? page.counted - page.open.length : 0;
   return (
     <div className="ol-promises" aria-busy={busy}>
+      <p className="ol-caption">Your spoken words, their terms and the recorded outcome.</p>
       <p className="ol-meta" role="status">
         {busy && !page
           ? 'Loading promises…'
@@ -95,11 +102,24 @@ export function Promises() {
               }`
             : ''}
       </p>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <div className="ol-reading-error">
+          <p role="alert">{error}</p>
+          <Button
+            size="sm"
+            variant="quiet"
+            isDisabled={busy}
+            onPress={() => void load(failedCursor.current)}
+          >
+            Retry reading promises
+          </Button>
+        </div>
+      )}
+      {!!page?.open.length && <h4 className="ol-heading">Unresolved</h4>}
       {page?.open.map((promise) => (
         <PromiseItem key={promise.id} promise={promise} />
       ))}
-      {!!past.length && <p className="ol-meta">Earlier promises</p>}
+      {!!past.length && <h4 className="ol-heading">Earlier promises</h4>}
       {past.map((promise) => (
         <PromiseItem key={promise.id} promise={promise} />
       ))}
@@ -116,15 +136,16 @@ export function Promises() {
           </Button>
         )}
         <Button size="sm" variant="quiet" isPending={busy} onPress={() => void load()}>
-          Refresh
+          {page && loadedRevision.current !== revision
+            ? 'Check for updated promises'
+            : 'Refresh promises'}
         </Button>
       </div>
       <details>
-        <summary>What this world tracks</summary>
+        <summary>About this record</summary>
         <p className="ol-caption">
-          Only speech that begins “I promise to …” is recorded as a promise. Only “I promise to
-          gather” followed by one item's name is checked automatically, when you gather that item.
-          Other promises stay open. This list shows promises; it cannot change or cancel them.
+          Each promise shows the terms this world recorded and any evidence of its outcome. This is
+          a record of your promises; reading it does not change or cancel them.
         </p>
       </details>
     </div>

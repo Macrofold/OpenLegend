@@ -1,221 +1,124 @@
+import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { namePhrase } from '@open-legend/language';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from 'react';
+import { Dialog, Popover } from 'react-aria-components';
 import type {
   ActionOption,
   ContainerPage,
-  ObjectHistoryPage,
   GameView,
   InventoryItemView,
-  ApiResult,
-  InventoryDestination,
   InventoryTransferSource,
+  ApiResult,
 } from '@open-legend/protocol';
 import { post } from '../api';
-import { Button, EmptyState, EntityRow, Section, Tag, symbol } from '../design-system/components';
-import { Actions } from './panels';
+import type { CommandDispatcher } from '../command-request';
+import { Button, Icon, Tag, symbol } from '../design-system/components';
+import { InventoryCollection, type InventorySide } from './inventory-collection';
+import { InventoryHistory, MergeTargets } from './inventory-details';
 import { InventoryQuantity, exactQuantity } from './inventory-controls';
-import { InventoryDestinations } from './inventory-destinations';
+import { InventoryOffer } from './inventory-offer';
 import { ItemTrade } from './item-trade';
+import { useInventoryCollection } from './use-inventory-collection';
+import { useInventoryCommand } from './use-inventory-command';
 import './inventory.css';
-
-function InventoryHistory({
-  scope,
-  revision,
-  visible,
-  readRevision,
-}: {
-  scope: string;
-  revision: number;
-  visible: boolean;
-  readRevision: number;
-}) {
-  const [open, setOpen] = useState(false),
-    [cursor, setCursor] = useState<string>();
-  const [result, setResult] = useState<{ key: string; page?: ObjectHistoryPage; error?: string }>();
-  const key = JSON.stringify([scope, revision, cursor, readRevision]);
-  useEffect(() => {
-    if (!open || !visible) return;
-    const controller = new AbortController();
-    void post<ObjectHistoryPage>('/api/inventory/history', { cursor }, controller.signal)
-      .then((page) => {
-        if (!controller.signal.aborted)
-          setResult({
-            key,
-            ...(page.ok ? { page } : { error: page.message ?? 'History unavailable.' }),
-          });
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) setResult({ key, error: String(error) });
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [open, key, visible]);
-  const current = result;
-  const loading = result?.key !== key;
-  return (
-    <details onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary>Object history</summary>
-      <p className="ol-caption">
-        Recorded splits, merges and consumption while in your character’s custody.
-      </p>
-      {loading && open && <p role="status">Loading history…</p>}
-      {current?.error && <p role="alert">{current.error}</p>}
-      {current?.page?.entries.map((entry) => (
-        <p key={entry.id}>
-          {entry.name} · {entry.quantity}{' '}
-          {entry.type === 'consume'
-            ? 'consumed'
-            : entry.type === 'merge'
-              ? 'merged into another lot'
-              : 'split into a new lot'}
-        </p>
-      ))}
-      {current?.page && !current.page.entries.length && <p>No object history on this page.</p>}
-      {cursor && (
-        <Button disabled={loading || !visible} onPress={() => setCursor(undefined)}>
-          First history page
-        </Button>
-      )}
-      {current?.page?.next && (
-        <Button disabled={loading || !visible} onPress={() => setCursor(current.page!.next)}>
-          More history
-        </Button>
-      )}
-    </details>
-  );
-}
-
-/** Matching lots anywhere in this container, found by the server with the merge admission
- * rules rather than only among the displayed page (docs/limits/objects.md#qu05). */
-function MergeTargets({
-  item,
-  containerId,
-  pageKey,
-  canAct,
-  visible,
-  onMerge,
-}: {
-  item: InventoryItemView;
-  containerId: string;
-  pageKey: string;
-  canAct: boolean;
-  visible: boolean;
-  onMerge(target: InventoryItemView): void;
-}) {
-  const [cursor, setCursor] = useState<string>();
-  const [targetId, setTargetId] = useState('');
-  const [result, setResult] = useState<{ key: string; page?: ContainerPage; error?: string }>();
-  const key = JSON.stringify([pageKey, containerId, item.id, item.revision, cursor]);
-  useEffect(() => {
-    if (!visible) return;
-    const controller = new AbortController();
-    void post<ContainerPage>(
-      '/api/inventory',
-      { containerId, mergeSourceId: item.id, cursor },
-      controller.signal,
-    )
-      .then((page) => {
-        if (!controller.signal.aborted)
-          setResult({
-            key,
-            ...(page.ok ? { page } : { error: page.message ?? 'Matching lots are unavailable.' }),
-          });
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) setResult({ key, error: String(error) });
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [key, visible]);
-  // While another page loads, keep the previous controls so keyboard focus stays in place;
-  // merging waits for the current result.
-  const loading = result?.key !== key;
-  const current = result;
-  if (!current) return <p role="status">Finding matching lots…</p>;
-  if (current.error && !loading) return <p role="alert">{current.error}</p>;
-  const targets = current.page?.items ?? [];
-  const target = targets.find((other) => other.id === targetId) ?? targets[0];
-  if (!target && !current.page?.next && !cursor && !loading) return null;
-  return (
-    <div className="ol-actions" aria-busy={loading}>
-      {target ? (
-        <>
-          <label>
-            Merge into{' '}
-            <select value={target.id} onChange={(event) => setTargetId(event.target.value)}>
-              {targets.map((other, index) => (
-                <option key={other.id} value={other.id}>
-                  {other.name} × {other.quantity} · matching lot {index + 1}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Button
-            size="sm"
-            variant="quiet"
-            disabled={!canAct || loading}
-            onPress={() => onMerge(target)}
-          >
-            Merge lots
-          </Button>
-        </>
-      ) : (
-        <p className="ol-caption">No matching lot in this part of the container.</p>
-      )}
-      <span className="ol-caption" role="status">
-        {loading ? 'Finding matching lots…' : ''}
-      </span>
-      {current.page?.next && (
-        <Button size="sm" variant="quiet" onPress={() => setCursor(current.page!.next)}>
-          Search more lots
-        </Button>
-      )}
-      {cursor && (
-        <Button size="sm" variant="quiet" onPress={() => setCursor(undefined)}>
-          First matching lots
-        </Button>
-      )}
-    </div>
-  );
-}
 
 type InventoryProps = {
   view: GameView;
   addItem(): void;
   browseActions?(item: InventoryItemView, opener: HTMLElement): void;
   contextMenu(item: InventoryItemView, point: { x: number; y: number }, opener: HTMLElement): void;
-  command(action: ActionOption): Promise<ApiResult>;
+  command: CommandDispatcher;
   connected: boolean;
   visible: boolean;
+  narrow: boolean;
+  showHeading?: boolean;
+  openContainer?: { requestId: string; containerId: string | null; name: string } | null;
+  onTalkAbout?(context: { itemId: string; name: string; recipientId?: string }): void;
 };
-
-type SelectedPossession = {
+type Selection = { side: InventorySide; itemId: string; actions: boolean };
+type AmountDraft = {
+  operation: 'move' | 'split' | 'drop' | 'offer';
   item: InventoryItemView;
-  container: ContainerPage['container'];
-  quantity: string;
-  query: string;
+  source: ContainerPage['container'];
+  target?: ContainerPage['container'];
+  action?: ActionOption;
+  value: string;
+  recipientId?: string;
 };
-type TransferDraft = {
-  source: InventoryTransferSource;
-  item: InventoryItemView;
-  sourceName: string;
-  destination?: InventoryDestination;
-  quantity: string;
-  rootRevision: number;
+type DragIntention = {
+  token: string;
+  side: InventorySide;
+  action: ActionOption;
+  targetId: string;
+  targetRevision: number;
 };
+type WorldRoot = { id: string; placementRevision?: number; position?: string };
+type InputFocus = { origin: HTMLElement; opener?: HTMLElement; generation: number };
+type CollectionFocus = InputFocus & { recipient: HTMLElement };
+const dragFormat = 'application/x-open-legend-possession';
 
-/** A changed authority/timeline remounts private local work before it can render in another
- * character's inventory. Layout changes never change this identity. */
+function sameItem(left: InventoryItemView, right: InventoryItemView) {
+  return (
+    left.id === right.id &&
+    left.revision === right.revision &&
+    left.placementRevision === right.placementRevision &&
+    left.container?.revision === right.container?.revision &&
+    left.availableQuantity === right.availableQuantity
+  );
+}
+function arrange(
+  type: 'transfer-item' | 'merge-item',
+  item: InventoryItemView,
+  targetId: string,
+  targetRevision: number,
+  quantity: number,
+  label: string,
+): ActionOption {
+  return {
+    id: `${type}-${item.id}-${targetId}`,
+    label,
+    enabled: true,
+    command: {
+      type,
+      itemId: item.id,
+      targetId,
+      quantity,
+      expectedRevision: item.revision,
+      placementRevision: item.placementRevision,
+      expectedContentsRevision: item.container?.revision,
+      targetRevision,
+    },
+  };
+}
+function transferSource(
+  item: InventoryItemView,
+  container: ContainerPage['container'],
+  quantity: number,
+): InventoryTransferSource {
+  return {
+    itemId: item.id,
+    revision: item.revision,
+    placementRevision: item.placementRevision,
+    contentsRevision: item.container?.revision,
+    containerId: container.id,
+    containerRevision: container.revision,
+    quantity,
+  };
+}
+
+/** Private ownership owns editable work; connection/control scope owns permitted reads.
+ * Regaining control refreshes the pages without discarding an unsubmitted amount. */
 export function Inventory(props: InventoryProps) {
-  const scope = JSON.stringify([
+  const access = props.view.access;
+  if (!access?.scope || !access.privateDraftScope)
+    return <p role="status">Refresh character access before opening belongings.</p>;
+  const privateOwner = JSON.stringify([
     props.view.worldId,
     props.view.player.id,
-    props.view.access?.scope,
+    access.privateDraftScope,
     props.view.saveTimeline,
   ]);
-  return <InventoryWorkspace key={scope} {...props} scope={scope} />;
+  return <InventoryWorkspace key={privateOwner} {...props} scope={access.scope} />;
 }
 
 function InventoryWorkspace({
@@ -226,69 +129,81 @@ function InventoryWorkspace({
   command,
   connected,
   visible,
+  narrow,
+  showHeading = true,
+  openContainer,
+  onTalkAbout,
   scope,
 }: InventoryProps & { scope: string }) {
-  const [location, setLocation] = useState<{ id: string; cursor?: string }>({ id: view.player.id });
-  const [query, setQuery] = useState('');
-  const [selection, setSelection] = useState<SelectedPossession>();
-  const [refresh, setRefresh] = useState(0);
-  const [readVisibility, setReadVisibility] = useState({ visible, revision: 0 });
-  // Adjust before rendering children: a reopened workspace cannot reuse a former
-  // visible receipt as fresh, while selected objects, draft text and DOM anchors remain.
-  if (readVisibility.visible !== visible)
-    setReadVisibility({ visible, revision: readVisibility.revision + 1 });
-  const [result, setResult] = useState<{
-    key: string;
-    base: string;
-    page?: ContainerPage;
-    error?: string;
-  }>();
-  const [transfer, setTransfer] = useState<TransferDraft>();
-  const [picker, setPicker] = useState<'browse' | 'move'>();
-  const [message, setMessage] = useState('');
+  const workspace = useRef<HTMLDivElement>(null);
+  const anchor = useRef<HTMLButtonElement>(null);
+  const detail = useRef<HTMLDivElement>(null);
+  const focusGeneration = useRef(0);
+  const focusFrame = useRef<number | undefined>(undefined);
+  const focusAvailable = useRef(false);
+  const actionInput = useRef<CollectionFocus | undefined>(undefined);
+  const navigationInput = useRef<
+    (InputFocus & { side: InventorySide; containerId: string }) | undefined
+  >(undefined);
+  const [selection, setSelection] = useState<Selection>();
+  const inspectedSelection = useRef<string | undefined>(undefined);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [amountDraft, setAmountDraft] = useState<AmountDraft>();
   const [quantityError, setQuantityError] = useState('');
+  const [requestSeen, setRequestSeen] = useState(
+    openContainer === null ? null : openContainer?.requestId,
+  );
+  function captureWorldRoot(id: string): WorldRoot {
+    const entity = view.entities.find((entry) => entry.id === id);
+    return {
+      id,
+      placementRevision: entity?.storage?.placementRevision,
+      position: entity ? JSON.stringify([entity.position, entity.supportSurfaceId]) : undefined,
+    };
+  }
+  const [worldRoot, setWorldRoot] = useState<WorldRoot | undefined>(() =>
+    openContainer?.containerId ? captureWorldRoot(openContainer.containerId) : undefined,
+  );
+  const [worldInvalid, setWorldInvalid] = useState(false);
+  const currentWorldRoot = worldRoot && view.entities.find((entry) => entry.id === worldRoot.id);
+  const worldRootValid =
+    !worldRoot ||
+    !!(
+      currentWorldRoot?.storage &&
+      currentWorldRoot.storage.containerId === worldRoot.id &&
+      currentWorldRoot.storage.revision !== undefined &&
+      currentWorldRoot.storage.placementRevision === worldRoot.placementRevision &&
+      JSON.stringify([currentWorldRoot.position, currentWorldRoot.supportSurfaceId]) ===
+        worldRoot.position
+    );
+  const [drag, setDrag] = useState<DragIntention>();
+  const dragRef = useRef<DragIntention | undefined>(undefined);
+  const ignoreClick = useRef(false);
+  const actionFocus = useRef<
+    { side: InventorySide; containerId: string; neighborId?: string } | undefined
+  >(undefined);
+  const [resolvedFocus, setResolvedFocus] = useState<{
+    side: InventorySide;
+    containerId: string;
+    neighborId?: string;
+    itemId?: string;
+    input?: CollectionFocus;
+  }>();
+  const [ownerBusy, setOwnerBusy] = useState(false);
+  const ownerGuard = useRef(false);
   const [holder, setHolder] = useState(view.player.id);
   const [disclosure, setDisclosure] = useState<'custodian' | 'public'>('custodian');
-  const [pending, setPending] = useState(false);
-  const pendingRef = useRef(false),
-    alive = useRef(true);
-  const selectedPossession = useRef(selection);
-  selectedPossession.current = selection;
-  const collection = useRef<HTMLDivElement>(null);
-  const workspace = useRef<HTMLDivElement>(null);
-  const detail = useRef<HTMLElement>(null);
-  const pickerOpener = useRef<HTMLButtonElement | null>(null);
-  const search = useRef<HTMLInputElement>(null);
-  const selectedButton = useRef<HTMLButtonElement | null>(null);
-  useEffect(
-    () => () => {
-      alive.current = false;
-    },
-    [],
-  );
+  const alive = useRef(true);
   useEffect(() => {
-    if (!visible) return;
-    const element = workspace.current;
-    if (!element) return;
-    const observer = new ResizeObserver(() => {
-      if (
-        collection.current?.contains(document.activeElement) &&
-        getComputedStyle(collection.current).display === 'none'
-      )
-        detail.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [visible]);
-  const base = JSON.stringify([
-    scope,
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  // These are permitted native changes, not world-clock ticks. Exterior storage loses its
+  // revision hint on lost reach/access; that invalidates any previously readable contents.
+  const revisionKey = JSON.stringify([
     view.player.inventoryRevision,
-    view.player.inventory.map((entry) => [
-      entry.id,
-      entry.equipped,
-      entry.characteristics,
-      entry.comparison,
-    ]),
     view.player.canUseInventory,
     view.clock.paused,
     view.access?.controlling,
@@ -299,901 +214,1144 @@ function InventoryWorkspace({
     view.player.position,
     view.player.supportSurfaceId,
     view.map.spatial.revision,
+    view.player.inventory.map((item) => [
+      item.id,
+      item.equipped,
+      item.container?.revision,
+      item.characteristics,
+      item.comparison,
+    ]),
+    view.entities.filter((entity) => entity.storage).map((entity) => [entity.id, entity.storage]),
     view.recipes.map((recipe) => recipe.id),
-    location.id,
-    query,
-    refresh,
-    readVisibility.revision,
   ]);
-  const key = JSON.stringify([base, location.cursor]);
-  const current = result?.base === base ? result : undefined;
-  const page =
-    current?.page ?? (result?.page?.container.id === location.id ? result.page : undefined);
-  const loading = current?.key !== key;
-  useEffect(() => {
-    if (!visible) return;
-    const controller = new AbortController();
-    const timer = setTimeout(
-      () => {
-        void post<ContainerPage>(
-          '/api/inventory',
-          { containerId: location.id, cursor: location.cursor, query },
-          controller.signal,
-        )
-          .then((response) => {
-            if (controller.signal.aborted) return;
-            if (response.ok)
-              setSelection((selected) => {
-                if (!selected || selected.container.id !== response.container.id) return selected;
-                const inspected = response.items.find((entry) => entry.id === selected.item.id);
-                return inspected
-                  ? { ...selected, item: inspected, container: response.container }
-                  : selected;
-              });
-            setResult((previous) => {
-              if (!response.ok)
-                return { key, base, error: response.message ?? 'Inventory unavailable.' };
-              const prior =
-                location.cursor && previous?.base === base ? (previous.page?.items ?? []) : [];
-              const items = new Map(prior.map((entry) => [entry.id, entry]));
-              for (const entry of response.items) items.set(entry.id, entry);
-              return { key, base, page: { ...response, items: [...items.values()] } };
-            });
-          })
-          .catch((error: unknown) => {
-            if (!controller.signal.aborted)
-              setResult({
-                key,
-                base,
-                error: error instanceof Error ? error.message : 'Inventory unavailable.',
-              });
-          });
-      },
-      query ? 150 : 0,
-    );
+  const left = useInventoryCollection({
+    initialId: view.player.id,
+    scope,
+    revisionKey,
+    visible,
+    connected,
+    expectedRootId: view.player.id,
+  });
+  const right = useInventoryCollection({
+    initialId: openContainer?.containerId ?? '',
+    scope,
+    revisionKey,
+    visible,
+    connected,
+    expectedRootId: worldRoot?.id ?? view.player.id,
+    blockedReason:
+      worldInvalid || !worldRootValid
+        ? 'This container moved or is no longer within permitted reach. Open it again from the world.'
+        : undefined,
+  });
+  const currentTitle =
+    right.page?.container.name ??
+    view.entities.find((entry) => entry.id === right.location.id)?.name ??
+    view.player.inventory.find((entry) => entry.id === right.location.id)?.name ??
+    'Container';
+  const requestId = openContainer === null ? null : openContainer?.requestId;
+  useLayoutEffect(() => {
+    focusAvailable.current = visible && connected;
     return () => {
-      controller.abort();
-      clearTimeout(timer);
+      focusAvailable.current = false;
+      cancelCollectionFocus();
     };
-  }, [key, visible]);
-  const refreshedItem = selection && page?.items.find((entry) => entry.id === selection.item.id);
-  const compactItem =
-    selection &&
-    view.player.inventory.find(
-      (entry) =>
-        entry.id === selection.item.id &&
-        entry.revision === selection.item.revision &&
-        entry.placementRevision === selection.item.placementRevision,
-    );
-  const item =
-    refreshedItem ??
-    (selection &&
-    page?.container.id === selection.container.id &&
-    page.container.revision === selection.container.revision
-      ? (compactItem ?? selection.item)
-      : undefined);
-  // A filter or a continuation-only window cannot certify absence from the container.
-  const selectedMissing =
-    !!selection &&
-    !!current?.page &&
-    !loading &&
-    !item &&
-    !query.trim() &&
-    !location.cursor &&
-    !page?.next;
-  const selectedUncertain = !!selection && !!current?.page && !loading && !item && !selectedMissing;
-  const canAct = visible && connected && view.player.canUseInventory && !pending && !loading;
-  const amount = exactQuantity(selection?.quantity ?? '', item?.availableQuantity);
-  const transferAmount = exactQuantity(transfer?.quantity ?? '', transfer?.item.availableQuantity);
-  const transferStale =
-    !!transfer &&
-    (transfer.rootRevision !== view.player.inventoryRevision ||
-      (page?.container.id === transfer.source.containerId &&
-        page.container.revision !== transfer.source.containerRevision));
-  const navigate = (id: string) => {
-    if (pendingRef.current) return;
-    setLocation({ id });
-    setQuery('');
-    setSelection(undefined);
-    setTransfer(undefined);
-    setPicker(undefined);
-    setQuantityError('');
-    if (collection.current) collection.current.scrollTop = 0;
-  };
-  const returnToContents = () => {
-    setSelection(undefined);
-    setTransfer(undefined);
-    setPicker(undefined);
-    setQuantityError('');
-    requestAnimationFrame(() => {
-      if (selectedButton.current?.isConnected) selectedButton.current.focus();
-      else collection.current?.focus();
-    });
-  };
-  const dismissPicker = () => {
-    setPicker(undefined);
-    requestAnimationFrame(() => {
-      if (pickerOpener.current?.isConnected) pickerOpener.current.focus();
-      else detail.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    });
-  };
-  const dispatch = async (action: ActionOption, success?: string) => {
-    if (pendingRef.current || !connected || !action.enabled) return;
-    // Pending controls become disabled, which otherwise drops focus to the world
-    // before the receipt arrives. The detail container survives the whole request.
-    if (workspace.current?.contains(document.activeElement))
-      detail.current?.focus({ preventScroll: true });
-    pendingRef.current = true;
-    setPending(true);
-    setMessage('');
-    try {
-      const receipt = await command(action);
-      if (!alive.current) return;
-      setMessage(receipt.ok ? (success ?? receipt.message) : receipt.message);
-      if (receipt.ok) {
-        setTransfer(undefined);
-        setPicker(undefined);
-        setLocation((value) => ({ id: value.id }));
-        setRefresh((value) => value + 1);
-      }
-    } catch (error: unknown) {
-      if (alive.current)
-        setMessage(
-          `${error instanceof Error ? error.message : 'The result is unavailable.'} Refresh possessions before repeating this action.`,
-        );
-    } finally {
-      pendingRef.current = false;
-      if (alive.current) {
-        setPending(false);
-        requestAnimationFrame(() => {
-          if (
-            document.activeElement !== detail.current ||
-            !workspace.current?.getClientRects().length
-          )
-            return;
-          detail.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
-        });
-      }
+  }, [visible, connected, requestId]);
+  if (requestId !== requestSeen) {
+    setRequestSeen(requestId);
+    if (openContainer !== undefined) {
+      right.navigate(openContainer?.containerId ?? '');
+      setWorldRoot(
+        openContainer?.containerId ? captureWorldRoot(openContainer.containerId) : undefined,
+      );
+      setWorldInvalid(false);
+      setSelection(undefined);
+      setAmountDraft(undefined);
+      setDrag(undefined);
+      dragRef.current = undefined;
     }
-  };
-  const arrange = (
-    type: 'transfer-item' | 'merge-item',
-    source: InventoryItemView,
-    targetId: string,
-    targetRevision: number,
-    quantity: number,
-  ): ActionOption => ({
-    id: `${type}-${source.id}-${targetId}`,
-    label: type === 'merge-item' ? 'Merge lots' : 'Move',
-    enabled: canAct,
-    command: {
-      type,
-      itemId: source.id,
-      targetId,
-      quantity,
-      expectedRevision: source.revision,
-      placementRevision: source.placementRevision,
-      expectedContentsRevision: source.container?.revision,
-      targetRevision,
+  } else if (!worldRootValid && !worldInvalid) {
+    setWorldInvalid(true);
+  }
+  const operations = useInventoryCommand({
+    worldId: view.worldId,
+    actorId: view.player.id,
+    timeline: view.saveTimeline,
+    scope: view.access?.scope ?? '',
+    recoveryScope: view.access?.commandRecoveryScope,
+    epoch: view.commandEpoch,
+    connected,
+    command,
+    onResolved(result) {
+      left.refresh();
+      right.refresh();
+      if (result.ok) {
+        closeDetail(false);
+        scheduleCollectionFocus(actionInput.current);
+      }
+      if (actionFocus.current)
+        setResolvedFocus({
+          ...actionFocus.current,
+          itemId: result.itemId,
+          input: actionInput.current,
+        });
+      actionFocus.current = undefined;
+      actionInput.current = undefined;
     },
   });
-  async function saveOwnership(selectedItem: InventoryItemView) {
-    if (pendingRef.current) return;
-    pendingRef.current = true;
-    setPending(true);
-    setMessage('');
-    try {
-      const response = await post('/api/god/ownership', {
-        id: crypto.randomUUID(),
-        itemId: selectedItem.id,
-        expectedRevision: selectedItem.declaredOwner?.revision ?? 0,
-        holderId: holder || null,
-        disclosure,
-      });
-      if (!alive.current) return;
-      setMessage(
-        response.message ?? (response.ok ? 'Ownership updated.' : 'Ownership was not changed.'),
-      );
-      if (response.ok) setRefresh((value) => value + 1);
-    } catch (error: unknown) {
-      if (alive.current)
-        setMessage(error instanceof Error ? error.message : 'Ownership unavailable.');
-    } finally {
-      pendingRef.current = false;
-      if (alive.current) setPending(false);
+  const busy = !!operations.pending || ownerBusy;
+  const canAct = visible && connected && view.player.canUseInventory && !busy;
+  const collection = (side: InventorySide) => (side === 'belongings' ? left : right);
+  const opposite = (side: InventorySide) => (side === 'belongings' ? right : left);
+  useLayoutEffect(() => {
+    const input = navigationInput.current;
+    if (!input || collection(input.side).location.id !== input.containerId) return;
+    navigationInput.current = undefined;
+    // Opening a bag beside belongings creates this recipient only at this commit.
+    const recipient = workspace.current?.querySelector<HTMLElement>(`[data-side="${input.side}"]`);
+    if (recipient) scheduleCollectionFocus({ ...input, recipient });
+  }, [left.location.id, right.location.id]);
+  const selectedCollection = selection && collection(selection.side);
+  const item = selectedCollection?.page?.items.find((entry) => entry.id === selection?.itemId);
+  const target = selection && opposite(selection.side).page?.container;
+  const selectedContainer = selectedCollection?.page?.container;
+  if (
+    !selection ||
+    !selectedContainer ||
+    inspectedSelection.current !==
+      JSON.stringify([
+        selection.side,
+        selectedContainer.id,
+        selectedContainer.revision,
+        selection.itemId,
+      ])
+  )
+    inspectedSelection.current = undefined;
+  const amount = amountDraft && exactQuantity(amountDraft.value, item?.availableQuantity);
+  const draftStale =
+    !!amountDraft &&
+    (!item ||
+      !selectedContainer ||
+      !sameItem(amountDraft.item, item) ||
+      amountDraft.source.id !== selectedContainer.id ||
+      amountDraft.source.revision !== selectedContainer.revision ||
+      (amountDraft.operation === 'move' &&
+        (!target ||
+          target.id !== amountDraft.target?.id ||
+          target.revision !== amountDraft.target?.revision)));
+
+  useEffect(() => {
+    if (!resolvedFocus) return;
+    const state = collection(resolvedFocus.side);
+    if (state.loading) return;
+    const region = workspace.current?.querySelector<HTMLElement>(
+      `[data-side="${resolvedFocus.side}"]`,
+    );
+    // Do not steal focus from a search, a reopened object or another panel while a receipt
+    // was in flight. The identity returned by a merge can differ from the source identity.
+    if (
+      focusAvailable.current &&
+      resolvedFocus.input?.generation === focusGeneration.current &&
+      region &&
+      region === resolvedFocus.input.recipient &&
+      region === document.activeElement &&
+      state.page?.container.id === resolvedFocus.containerId
+    ) {
+      const buttons = Array.from(region.querySelectorAll<HTMLButtonElement>('[data-item-id]'));
+      const button =
+        buttons.find((entry) => entry.dataset.itemId === resolvedFocus.neighborId) ??
+        buttons.find((entry) => entry.dataset.itemId === resolvedFocus.itemId) ??
+        buttons[0];
+      button?.focus();
+    }
+    setResolvedFocus(undefined);
+  }, [resolvedFocus, left.key, left.page, right.key, right.page]);
+
+  function cancelCollectionFocus() {
+    focusGeneration.current++;
+    navigationInput.current = undefined;
+    if (focusFrame.current !== undefined) window.cancelAnimationFrame(focusFrame.current);
+    focusFrame.current = undefined;
+  }
+  function captureInputFocus(): InputFocus | undefined {
+    const origin = document.activeElement;
+    if (
+      !focusAvailable.current ||
+      !(origin instanceof HTMLElement) ||
+      (!workspace.current?.contains(origin) && !detail.current?.contains(origin))
+    )
+      return;
+    return {
+      origin,
+      opener: detail.current?.contains(origin) ? (anchor.current ?? undefined) : undefined,
+      generation: focusGeneration.current,
+    };
+  }
+  function captureCollectionFocus(side: InventorySide): CollectionFocus | undefined {
+    const input = captureInputFocus();
+    const recipient = workspace.current?.querySelector<HTMLElement>(`[data-side="${side}"]`);
+    return input && recipient ? { ...input, recipient } : undefined;
+  }
+  function scheduleCollectionFocus(focus: CollectionFocus | undefined) {
+    if (!focus) return;
+    const ownsInput = () =>
+      focusAvailable.current &&
+      focus.generation === focusGeneration.current &&
+      focus.recipient.isConnected &&
+      (document.activeElement === focus.origin ||
+        document.activeElement === focus.recipient ||
+        (!focus.origin.isConnected && document.activeElement === focus.opener) ||
+        (document.activeElement === document.body &&
+          (!focus.origin.isConnected || focus.origin.matches(':disabled'))));
+    if (!ownsInput()) return;
+    if (focusFrame.current !== undefined) window.cancelAnimationFrame(focusFrame.current);
+    focusFrame.current = window.requestAnimationFrame(() => {
+      focusFrame.current = undefined;
+      if (ownsInput()) focus.recipient.focus();
+    });
+  }
+  function focusCollection(side: InventorySide) {
+    scheduleCollectionFocus(captureCollectionFocus(side));
+  }
+  function closeDetail(restoreFocus = true) {
+    inspectedSelection.current = undefined;
+    setDetailOpen(false);
+    setSelection(undefined);
+    setAmountDraft(undefined);
+    setQuantityError('');
+    if (restoreFocus) {
+      if (anchor.current?.isConnected) anchor.current.focus();
+      else if (selection) focusCollection(selection.side);
     }
   }
-  const startMove = () => {
-    if (!selection || !item || !page) return;
-    if (amount === undefined) {
-      setQuantityError('Choose an available whole quantity before moving.');
+  function stopDrag() {
+    dragRef.current = undefined;
+    setDrag(undefined);
+    // HTML drag completion may synthesize a click. It must not inspect or move again.
+    window.setTimeout(() => {
+      ignoreClick.current = false;
+    }, 0);
+  }
+  useEffect(() => {
+    const cancel = () => {
+      stopDrag();
+      cancelCollectionFocus();
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && dragRef.current) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        cancel();
+      }
+    };
+    // A later input owns its own focus, even if the prior receipt has not arrived.
+    document.addEventListener('pointerdown', cancelCollectionFocus, true);
+    document.addEventListener('keydown', cancelCollectionFocus, true);
+    window.addEventListener('blur', cancel);
+    window.addEventListener('keydown', escape, true);
+    return () => {
+      document.removeEventListener('pointerdown', cancelCollectionFocus, true);
+      document.removeEventListener('keydown', cancelCollectionFocus, true);
+      window.removeEventListener('blur', cancel);
+      window.removeEventListener('keydown', escape, true);
+    };
+  }, []);
+  useEffect(() => {
+    if (!visible || !connected) stopDrag();
+    else if (selection && amountDraft) setDetailOpen(true);
+  }, [visible, connected]);
+
+  function navigate(side: InventorySide, id: string) {
+    if (busy) return;
+    closeDetail(false);
+    stopDrag();
+    if (side === 'container' && !id) {
+      setWorldRoot(undefined);
+      setWorldInvalid(false);
+    }
+    const input = captureInputFocus();
+    navigationInput.current = input ? { ...input, side, containerId: id } : undefined;
+    collection(side).navigate(id);
+  }
+  function choose(
+    side: InventorySide,
+    selected: InventoryItemView,
+    button: HTMLButtonElement,
+    actions: boolean,
+  ) {
+    if (ignoreClick.current || busy) return;
+    anchor.current = button;
+    setDetailOpen(true);
+    const retained = selection?.side === side && selection.itemId === selected.id;
+    setSelection({ side, itemId: selected.id, actions });
+    if (!retained) {
+      setAmountDraft(undefined);
+      setQuantityError('');
+    }
+    const source = collection(side).page;
+    if (
+      connected &&
+      view.access?.controlling &&
+      source &&
+      collection(side).available &&
+      !collection(side).loading
+    ) {
+      const identity = JSON.stringify([
+        side,
+        source.container.id,
+        source.container.revision,
+        selected.id,
+      ]);
+      inspectedSelection.current = identity;
+      void command({
+        id: `inspect:${selected.id}`,
+        label: `Inspect ${selected.name}`,
+        enabled: true,
+        command: {
+          type: 'inspect-inventory',
+          itemId: selected.id,
+          containerId: source.container.id,
+          expectedRevision: source.container.revision,
+        },
+      })
+        .then((result) => {
+          if (alive.current && inspectedSelection.current === identity && !result.ok)
+            operations.setMessage(result.message);
+        })
+        .catch((error: unknown) => {
+          if (alive.current && inspectedSelection.current === identity)
+            operations.setMessage(
+              error instanceof Error ? error.message : 'Inspection could not be confirmed.',
+            );
+        });
+    }
+  }
+  function openItemContext(
+    side: InventorySide,
+    selected: InventoryItemView,
+    button: HTMLButtonElement,
+    open: (item: InventoryItemView, opener: HTMLElement) => void,
+  ) {
+    const state = collection(side);
+    const source = state.page;
+    if (
+      ignoreClick.current ||
+      busy ||
+      ownerGuard.current ||
+      !visible ||
+      !connected ||
+      !view.access?.controlling ||
+      view.access.scope !== scope ||
+      !state.available ||
+      state.loading ||
+      !source ||
+      source.container.id !== state.location.id
+    )
+      return;
+    const current = source.items.find((entry) => entry.id === selected.id);
+    if (!current || !sameItem(current, selected)) return;
+    choose(side, current, button, true);
+    // The native item catalogue accepts possessions, including carried bags.
+    // World-container contents keep their exact local transfer/details route.
+    if (!source.breadcrumbs.some((entry) => entry.id === view.player.id)) return;
+    setDetailOpen(false);
+    open(current, button);
+  }
+  function moveIntention(
+    side: InventorySide,
+    sourceItem: InventoryItemView,
+  ): ActionOption | undefined {
+    const source = collection(side).page;
+    const destination = opposite(side).page?.container;
+    if (
+      !canAct ||
+      !source ||
+      !destination ||
+      source.container.id === destination.id ||
+      destination.id === sourceItem.id
+    )
+      return;
+    const current = source.items.find((entry) => entry.id === sourceItem.id);
+    if (!current || !sameItem(current, sourceItem)) return;
+    if (current.availableQuantity === undefined || current.availableQuantity < 1) {
+      operations.setMessage(
+        'No inspected quantity is available to move. Inspect the item for its current availability.',
+      );
       return;
     }
-    setQuantityError('');
-    setTransfer({
-      source: {
-        itemId: item.id,
-        revision: item.revision,
-        placementRevision: item.placementRevision,
-        contentsRevision: item.container?.revision,
-        containerId: page.container.id,
-        containerRevision: page.container.revision,
-        quantity: amount,
-      },
-      item,
-      sourceName: namePhrase(page.container, 'definite'),
-      quantity: selection.quantity,
-      rootRevision: view.player.inventoryRevision,
-    });
-    setPicker('move');
-  };
-  const selectDestination = (destination: InventoryDestination) => {
-    if (picker === 'browse') navigate(destination.id);
-    else setTransfer((draft) => (draft ? { ...draft, destination } : draft));
-    dismissPicker();
-  };
-  const move = () => {
-    if (!transfer || !transfer.destination || transferStale || !canAct) return;
-    if (transferAmount === undefined) {
-      setQuantityError('Choose an available whole quantity.');
-      return;
-    }
-    const target = transfer.destination;
-    if (target.kind === 'recipient') return;
-    void dispatch(
-      arrange('transfer-item', transfer.item, target.id, target.revision, transferAmount),
-      `Moved ${transferAmount} ${transfer.item.name} from ${transfer.sourceName} to ${namePhrase(target, 'definite')}.`,
+    return arrange(
+      'transfer-item',
+      current,
+      destination.id,
+      destination.revision,
+      current.availableQuantity,
+      `Move ${current.availableQuantity} ${current.name} to ${namePhrase(destination, 'definite')}`,
     );
-  };
+  }
+  function send(
+    action: ActionOption,
+    side: InventorySide,
+    tradeScope?: string,
+  ): Promise<ApiResult> {
+    if (!canAct || !action.enabled)
+      return Promise.resolve({
+        ok: false,
+        code: operations.pending ? 'unconfirmed' : 'unavailable',
+        message: operations.pending
+          ? 'Resolve the retained inventory request before acting again.'
+          : 'This action is not currently available. Nothing was sent.',
+      });
+    const source = collection(side).page;
+    actionInput.current = captureCollectionFocus(side);
+    if (source) {
+      const index = source.items.findIndex((entry) => entry.id === action.command.itemId);
+      actionFocus.current = {
+        side,
+        containerId: source.container.id,
+        neighborId: source.items[index + 1]?.id ?? source.items[index - 1]?.id,
+      };
+    }
+    stopDrag();
+    if (!selection) focusCollection(side);
+    return operations.dispatch(action, tradeScope);
+  }
+  function quickMove(side: InventorySide, sourceItem: InventoryItemView) {
+    if (ignoreClick.current) return;
+    const action = moveIntention(side, sourceItem);
+    if (action) send(action, side);
+  }
+  function beginDrag(
+    side: InventorySide,
+    sourceItem: InventoryItemView,
+    event: DragEvent<HTMLButtonElement>,
+  ) {
+    event.stopPropagation();
+    const action = moveIntention(side, sourceItem);
+    const destination = opposite(side).page?.container;
+    if (!action || !destination) {
+      event.preventDefault();
+      return;
+    }
+    closeDetail(false);
+    ignoreClick.current = true;
+    const intention = {
+      token: crypto.randomUUID(),
+      side,
+      action,
+      targetId: destination.id,
+      targetRevision: destination.revision,
+    };
+    dragRef.current = intention;
+    setDrag(intention);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData(dragFormat, intention.token);
+  }
+  function drop(side: InventorySide, event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    const intention = dragRef.current;
+    const destination = collection(side).page?.container;
+    if (
+      intention &&
+      intention.side !== side &&
+      event.dataTransfer.getData(dragFormat) === intention.token &&
+      destination?.id === intention.targetId &&
+      destination.revision === intention.targetRevision
+    )
+      send(intention.action, intention.side);
+    stopDrag();
+  }
+  function chooseAmount(operation: AmountDraft['operation'], action?: ActionOption) {
+    if (!item || !selectedContainer || !selection) return;
+    setQuantityError('');
+    setAmountDraft({
+      operation,
+      item,
+      source: selectedContainer,
+      target: operation === 'move' ? target : undefined,
+      action,
+      value: operation === 'split' ? '1' : String(item.availableQuantity ?? ''),
+    });
+  }
+  function submitAmount() {
+    if (!selection || !amountDraft || draftStale) return;
+    if (
+      amount === undefined ||
+      (amountDraft.operation === 'split' && amount >= amountDraft.item.quantity)
+    ) {
+      setQuantityError(
+        amountDraft.operation === 'split'
+          ? 'Choose a whole amount that leaves some units in this stack.'
+          : 'Choose an available whole amount.',
+      );
+      return;
+    }
+    if (amountDraft.operation === 'move' && amountDraft.target) {
+      send(
+        arrange(
+          'transfer-item',
+          amountDraft.item,
+          amountDraft.target.id,
+          amountDraft.target.revision,
+          amount,
+          `Move ${amount} ${amountDraft.item.name} to ${namePhrase(amountDraft.target, 'definite')}`,
+        ),
+        selection.side,
+      );
+    } else if (amountDraft.action)
+      send(
+        { ...amountDraft.action, command: { ...amountDraft.action.command, quantity: amount } },
+        selection.side,
+      );
+  }
+  async function ownerWrite(path: string, body: object) {
+    if (!canAct || ownerGuard.current) return;
+    ownerGuard.current = true;
+    setOwnerBusy(true);
+    try {
+      const receipt = await post(path, body);
+      if (alive.current) {
+        operations.setMessage(receipt.message);
+        left.refresh();
+        right.refresh();
+      }
+    } catch (error: unknown) {
+      if (alive.current)
+        operations.setMessage(
+          `${error instanceof Error ? error.message : 'No result received.'} Refresh and inspect the declaration before repeating this edit.`,
+        );
+    } finally {
+      ownerGuard.current = false;
+      if (alive.current) setOwnerBusy(false);
+    }
+  }
+
   return (
     <div
       ref={workspace}
       className="ol-inventory-workspace"
-      data-detail={!!selection || undefined}
-      onWheel={(event) => event.stopPropagation()}
-      onKeyDown={(event) => event.stopPropagation()}
+      onDragOver={(event) => event.stopPropagation()}
+      onDrop={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        stopDrag();
+      }}
     >
       <header className="ol-inventory-header">
-        <h2 className="ol-heading">
-          {page?.container.name ??
-            (location.id === view.player.id ? 'My possessions' : 'Container')}
-        </h2>
-        {page?.container.location && <p className="ol-caption">{page.container.location}</p>}
-        <nav aria-label="Container path" className="ol-actions">
-          <Button
-            size="sm"
-            variant="quiet"
-            disabled={pending}
-            onPress={() => navigate(view.player.id)}
-          >
-            My possessions
-          </Button>
-          {page?.breadcrumbs
-            .filter((entry) => entry.id !== view.player.id)
-            .map((entry) => (
-              <Button
-                key={entry.id}
-                size="sm"
-                variant="quiet"
-                disabled={pending}
-                onPress={() => navigate(entry.id)}
-              >
-                {entry.name}
-              </Button>
-            ))}
-        </nav>
-        {page?.container.capacity !== undefined && (
-          <p className="ol-caption">
-            Packing load: {page.container.load ?? 'Unknown'} / {page.container.capacity}
-            {page.container.load !== undefined
-              ? ` · ${page.container.capacity - page.container.load} available`
-              : ''}
-          </p>
-        )}
-        <div className="ol-actions">
-          <Button
-            size="sm"
-            variant="quiet"
-            disabled={!connected || pending}
-            onPress={(event) => {
-              pickerOpener.current =
-                event.target instanceof HTMLButtonElement ? event.target : null;
-              setPicker('browse');
-            }}
-          >
-            Browse nearby storage
-          </Button>
-          <Button
-            size="sm"
-            variant="quiet"
-            disabled={!connected || pending}
-            onPress={() => {
-              setLocation({ id: location.id });
-              setRefresh((value) => value + 1);
-            }}
-          >
-            Refresh contents
-          </Button>
-          {view.godMode && (
-            <Button
-              size="sm"
-              variant="quiet"
-              icon="ui.plus"
-              disabled={!connected || pending}
-              onPress={addItem}
-            >
-              God mode · Add item
-            </Button>
-          )}
-        </div>
-        <div className="ol-inventory-search">
-          <label htmlFor="inventory-contents-search">Search this container</label>
-          <div>
-            <input
-              ref={search}
-              id="inventory-contents-search"
-              type="text"
-              value={query}
-              maxLength={160}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setLocation({ id: location.id });
-              }}
-            />
-            {query && (
-              <Button
-                size="sm"
-                variant="quiet"
-                onPress={() => {
-                  setQuery('');
-                  setLocation({ id: location.id });
-                  search.current?.focus();
-                }}
-              >
-                Clear
+        {(showHeading || view.godMode) && (
+          <div className="ol-inventory-toolbar">
+            {showHeading && <h2 className="ol-heading">Belongings</h2>}
+            {view.godMode && (
+              <Button size="sm" variant="quiet" disabled={busy || !connected} onPress={addItem}>
+                God mode · Add item
               </Button>
             )}
           </div>
-        </div>
-        {picker === 'move' && transfer && (
-          <p className="ol-caption">
-            Moving {transfer.quantity || '…'} {transfer.item.name} from {transfer.sourceName}
-          </p>
         )}
-      </header>
-      {picker && (
-        <InventoryDestinations
-          scope={scope}
-          visible={visible}
-          source={picker === 'move' ? transfer?.source : undefined}
-          connected={connected && !pending}
-          onSelect={selectDestination}
-          onCancel={dismissPicker}
-        />
-      )}
-      <div className="ol-inventory-panes">
-        <div
-          ref={collection}
-          className="ol-inventory-collection"
-          role="region"
-          tabIndex={-1}
-          aria-label="Container contents"
-          aria-busy={loading}
-        >
-          {loading && <p role="status">Loading possessions…</p>}
-          {page?.items.map((entry) => (
-            <div
-              key={entry.id}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                if (!loading && !pendingRef.current)
-                  contextMenu(
-                    entry,
-                    { x: event.clientX, y: event.clientY },
-                    event.currentTarget.querySelector('button') ?? event.currentTarget,
-                  );
-              }}
-              onKeyDown={(event) => {
-                if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
-                event.preventDefault();
-                if (loading || pendingRef.current) return;
-                const rect = event.currentTarget.getBoundingClientRect();
-                contextMenu(
-                  entry,
-                  { x: rect.left, y: rect.bottom },
-                  event.currentTarget.querySelector('button') ?? event.currentTarget,
-                );
-              }}
-              ref={(node) => {
-                if (node && selection?.item.id === entry.id)
-                  selectedButton.current = node.querySelector('button');
-              }}
-            >
-              <EntityRow
-                name={entry.name}
-                meta={entry.equipped ? 'Equipped' : entry.container ? 'Container' : entry.category}
-                count={entry.quantity}
-                icon={symbol(entry.definitionId)}
-                selected={selection?.item.id === entry.id}
-                onPress={() => {
-                  if (loading || pendingRef.current) return;
-                  setSelection({
-                    item: entry,
-                    container: page.container,
-                    quantity: String(entry.availableQuantity ?? entry.quantity),
-                    query,
-                  });
-                  setTransfer(undefined);
-                  setQuantityError('');
-                  setMessage('');
-                  if (connected && view.access?.controlling) {
-                    void command({
-                      id: `inspect:${entry.id}`,
-                      label: `Inspect ${entry.name}`,
-                      enabled: true,
-                      command: {
-                        type: 'inspect-inventory',
-                        itemId: entry.id,
-                        containerId: page.container.id,
-                        expectedRevision: page.container.revision,
-                      },
-                    }).then((result) => {
-                      if (
-                        alive.current &&
-                        !result.ok &&
-                        selectedPossession.current?.item.id === entry.id &&
-                        selectedPossession.current.container.id === page.container.id &&
-                        selectedPossession.current.container.revision === page.container.revision
-                      )
-                        setMessage(result.message);
-                    });
-                  }
-                  requestAnimationFrame(() => {
-                    if (
-                      collection.current &&
-                      getComputedStyle(collection.current).display === 'none'
-                    )
-                      detail.current?.querySelector<HTMLButtonElement>('button')?.focus();
-                  });
-                }}
-              />
-            </div>
-          ))}
-          {page && !page.items.length && !loading && (
-            <EmptyState
-              title={
-                page.next
-                  ? 'No match in this part of the search.'
-                  : query
-                    ? 'No matching possessions.'
-                    : 'This container is empty.'
-              }
-            >
-              {page.next
-                ? 'More contents remain to search.'
-                : query
-                  ? 'Clear the search to see other contents.'
-                  : 'Open another container or gather materials.'}
-            </EmptyState>
-          )}
-          {page?.next && (
-            <Button
-              size="sm"
-              variant="quiet"
-              disabled={loading}
-              onPress={() => setLocation({ id: location.id, cursor: page.next })}
-            >
-              Load more contents
-            </Button>
-          )}
-          {location.cursor && (
-            <Button
-              size="sm"
-              variant="quiet"
-              disabled={loading}
-              onPress={() => setLocation({ id: location.id })}
-            >
-              First contents
-            </Button>
-          )}
-        </div>
-        <section
-          ref={detail}
-          tabIndex={-1}
-          className="ol-inventory-detail"
-          aria-label="Selected possession"
-        >
-          {selection ? (
-            <>
-              <Button
-                size="sm"
-                variant="quiet"
-                icon="ui.back"
-                disabled={pending}
-                onPress={returnToContents}
-              >
-                Back to contents
-              </Button>
-              <h3 className="ol-heading">
-                {item?.name ?? selection.item.name}
-                {item ? ` × ${item.quantity}` : ''}
-              </h3>
-              {!item && (
-                <p className="ol-caption">Last inspected quantity: {selection.item.quantity}.</p>
-              )}
-              {selectedMissing ? (
-                <p role="status">
-                  This selected item is no longer in the current contents. It may have moved or been
-                  used. Your list position is retained; choose an item again.
-                </p>
-              ) : selectedUncertain ? (
-                <>
-                  <p role="status">
-                    This search page does not establish whether the selected item is still in this
-                    container. Your quantity draft is retained.
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="quiet"
-                    onPress={() => {
-                      setQuery(selection.query);
-                      setLocation({ id: selection.container.id });
-                      setRefresh((value) => value + 1);
-                      detail.current?.querySelector<HTMLButtonElement>('button')?.focus();
-                    }}
-                  >
-                    Return to this item’s search
-                  </Button>
-                </>
-              ) : !item ? (
-                <p role="status">
-                  {current?.error
-                    ? 'The selected item’s current facts are unavailable. Your draft is retained; refresh or return to contents.'
-                    : 'Refreshing this selected item’s facts…'}
-                </p>
-              ) : (
-                <>
-                  <p className="ol-prose">{item.description}</p>
-                  <div className="ol-traits">
-                    {item.tags.map((tag) => (
-                      <Tag key={tag}>{tag}</Tag>
-                    ))}
-                    {item.individual && <Tag>Individual object</Tag>}
-                    {item.equipped && <Tag>Equipped</Tag>}
-                  </div>
-                  {item.declaredOwner && <p>Declared owner: {item.declaredOwner.name}</p>}
-                  <p className="ol-caption">
-                    Packing requirement:{' '}
-                    {item.packingLoad === undefined
-                      ? 'Unknown'
-                      : `${item.packingLoad} units${item.container ? ' including contents' : ' per item'}`}
-                  </p>
-                  {!!item.characteristics?.length && (
-                    <dl className="ol-inventory-facts">
-                      {item.characteristics.map((fact) => (
-                        <div key={fact.id}>
-                          <dt>{fact.label}</dt>
-                          <dd>
-                            {fact.value === null ? 'Unknown' : fact.value}
-                            {fact.value !== null && fact.unit ? ` ${fact.unit}` : ''}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  )}
-                  {item.comparison && !item.equipped && (
-                    <details>
-                      <summary>
-                        Compare with {namePhrase(item.comparison, 'definite')} (equipped)
-                      </summary>
-                      <table className="ol-inventory-comparison">
-                        <caption>
-                          {item.name} compared with {namePhrase(item.comparison, 'definite')}{' '}
-                          (equipped)
-                        </caption>
-                        <thead>
-                          <tr>
-                            <th scope="col">Characteristic</th>
-                            <th scope="col">{item.name}</th>
-                            <th scope="col">{item.comparison.name}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {item.characteristics?.flatMap((fact) => {
-                            const other = item.comparison!.characteristics.find(
-                              (value) => value.id === fact.id && value.unit === fact.unit,
-                            );
-                            return other
-                              ? [
-                                  <tr key={fact.id}>
-                                    <th scope="row">
-                                      {fact.label}
-                                      {fact.unit ? ` (${fact.unit})` : ''}
-                                    </th>
-                                    <td>{fact.value ?? 'Unknown'}</td>
-                                    <td>{other.value ?? 'Unknown'}</td>
-                                  </tr>,
-                                ]
-                              : [];
-                          })}
-                        </tbody>
-                      </table>
-                      <p className="ol-caption">
-                        Only known characteristics with matching meanings and units are compared.
-                        These are separate tradeoffs, not a total equipment score.
-                      </p>
-                    </details>
-                  )}
-                  {item.container && (
-                    <Button
-                      size="sm"
-                      variant="quiet"
-                      disabled={pending}
-                      onPress={() => navigate(item.id)}
-                    >
-                      Open container · {item.container.load} / {item.container.capacity}
-                    </Button>
-                  )}
-                  {!transfer && (
-                    <>
-                      {browseActions && (
-                        <Button
-                          size="sm"
-                          variant="quiet"
-                          onPress={(event) => {
-                            if (event.target instanceof HTMLElement)
-                              browseActions(item, event.target);
-                          }}
-                        >
-                          Explore uses and targets
-                        </Button>
-                      )}
-                      <InventoryQuantity
-                        value={selection.quantity}
-                        onChange={(quantity) => {
-                          setSelection((current) => (current ? { ...current, quantity } : current));
-                          setQuantityError('');
-                        }}
-                        maximum={item.availableQuantity}
-                        disabled={pending}
-                        error={quantityError}
-                      />
-                      <div className="ol-inventory-primary">
-                        <Button
-                          size="sm"
-                          disabled={!canAct}
-                          onPress={(event) => {
-                            pickerOpener.current =
-                              event.target instanceof HTMLButtonElement ? event.target : null;
-                            startMove();
-                          }}
-                        >
-                          Move or offer
-                        </Button>
-                      </div>
-                      <Actions
-                        connected={connected && !pending && !loading}
-                        command={(action) => void dispatch(action)}
-                        actions={item.actions.map((action) =>
-                          ['drop', 'split-item'].includes(action.command.type)
-                            ? {
-                                ...action,
-                                enabled:
-                                  action.enabled &&
-                                  amount !== undefined &&
-                                  (action.command.type !== 'split-item' || amount < item.quantity),
-                                command: { ...action.command, quantity: amount },
-                                reason:
-                                  amount === undefined
-                                    ? 'Choose an available whole quantity.'
-                                    : action.command.type === 'split-item' &&
-                                        amount >= item.quantity
-                                      ? 'Leave some units in the original lot.'
-                                      : action.reason,
-                              }
-                            : action,
-                        )}
-                      />
-                      {!item.individual && !item.container && !item.equipped && (
-                        <MergeTargets
-                          key={item.id}
-                          item={item}
-                          containerId={page!.container.id}
-                          pageKey={key}
-                          canAct={canAct}
-                          visible={visible}
-                          onMerge={(target) =>
-                            void dispatch(
-                              arrange(
-                                'merge-item',
-                                item,
-                                target.id,
-                                target.revision,
-                                item.quantity,
-                              ),
-                            )
-                          }
-                        />
-                      )}
-                    </>
-                  )}
-                  {transfer && (
-                    <section className="ol-inventory-transfer" aria-label="Exact transfer draft">
-                      <h4 className="ol-heading">
-                        {transfer.destination?.kind === 'recipient' ? 'Offer' : 'Move'}{' '}
-                        {transfer.item.name}
-                      </h4>
-                      <p>
-                        From {transfer.sourceName} →{' '}
-                        {transfer.destination?.name ?? 'Choose a destination'}
-                      </p>
-                      {transfer.destination?.location && (
-                        <p className="ol-caption">{transfer.destination.location}</p>
-                      )}
-                      <InventoryQuantity
-                        value={transfer.quantity}
-                        onChange={(quantity) => {
-                          setTransfer((draft) =>
-                            draft ? { ...draft, quantity, destination: undefined } : draft,
-                          );
-                          setQuantityError('');
-                        }}
-                        maximum={transfer.item.availableQuantity}
-                        disabled={pending}
-                        error={quantityError}
-                      />
-                      {transferStale && (
-                        <p role="status">
-                          The source possessions changed. Cancel this move and select the item
-                          again.
-                        </p>
-                      )}
-                      {transfer.destination?.reason && (
-                        <p className="ol-caption">{transfer.destination.reason}</p>
-                      )}
-                      <div className="ol-actions">
-                        <Button
-                          size="sm"
-                          variant="quiet"
-                          disabled={!connected || pending || transferStale}
-                          onPress={(event) => {
-                            if (transferAmount === undefined) {
-                              setQuantityError('Choose an available whole quantity.');
-                              return;
-                            }
-                            pickerOpener.current =
-                              event.target instanceof HTMLButtonElement ? event.target : null;
-                            setTransfer((draft) =>
-                              draft
-                                ? {
-                                    ...draft,
-                                    source: { ...draft.source, quantity: transferAmount },
-                                  }
-                                : draft,
-                            );
-                            setPicker('move');
-                          }}
-                        >
-                          Choose destination
-                        </Button>
-                        {transfer.destination?.kind !== 'recipient' && (
-                          <Button
-                            size="sm"
-                            disabled={
-                              !canAct ||
-                              transferStale ||
-                              !transfer.destination ||
-                              transferAmount === undefined ||
-                              transfer.destination.fit === 'blocked'
-                            }
-                            busy={pending}
-                            onPress={move}
-                          >
-                            Move selected quantity
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="quiet"
-                          disabled={pending}
-                          onPress={() => {
-                            setTransfer(undefined);
-                            setPicker(undefined);
-                            setQuantityError('');
-                          }}
-                        >
-                          Cancel move
-                        </Button>
-                      </div>
-                      {transfer.destination?.capacity !== undefined && (
-                        <p className="ol-caption">
-                          Destination packing load: {transfer.destination.load ?? 'Unknown'} /{' '}
-                          {transfer.destination.capacity}. The server checks current space on
-                          confirmation.
-                        </p>
-                      )}
-                    </section>
-                  )}
-                  {transfer?.destination?.kind === 'recipient' &&
-                    (() => {
-                      const trade = view.entities.find(
-                        (person) => person.id === transfer.destination!.id,
-                      )?.trade;
-                      return trade ? (
-                        <ItemTrade
-                          key={trade.scope}
-                          trade={trade}
-                          connected={canAct}
-                          command={command}
-                          initialQuantity={transfer.quantity}
-                          selected={{
-                            id: transfer.item.id,
-                            name: transfer.item.name,
-                            label: transfer.item.name,
-                            description: transfer.item.description,
-                            quantity: transfer.item.availableQuantity ?? transfer.item.quantity,
-                            revision: transfer.source.revision,
-                            placementRevision: transfer.source.placementRevision,
-                            contentsRevision: transfer.source.contentsRevision,
-                            whole: !!transfer.item.container || !!transfer.item.individual,
-                          }}
-                        />
-                      ) : null;
-                    })()}
-                  {view.godMode && (
-                    <details>
-                      <summary>God mode · Declare ownership</summary>
-                      <p>
-                        This records a declared owner. It does not move the object or grant access.
-                      </p>
-                      <label>
-                        Holder{' '}
-                        <select value={holder} onChange={(event) => setHolder(event.target.value)}>
-                          <option value="">No declared owner</option>
-                          <option value={view.player.id}>{view.player.name}</option>
-                          {view.entities
-                            .filter((entity) => entity.kind === 'actor')
-                            .map((entity) => (
-                              <option key={entity.id} value={entity.id}>
-                                {entity.name}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                      <label>
-                        Disclosure{' '}
-                        <select
-                          value={disclosure}
-                          onChange={(event) =>
-                            setDisclosure(event.target.value as typeof disclosure)
-                          }
-                        >
-                          <option value="custodian">Current custodian</option>
-                          <option value="public">Public declaration</option>
-                        </select>
-                      </label>
-                      <Button
-                        size="sm"
-                        disabled={!visible || !connected || pending || loading}
-                        onPress={() => void saveOwnership(item)}
-                      >
-                        Save declaration
-                      </Button>
-                    </details>
-                  )}
-                </>
-              )}
-            </>
-          ) : (
-            <p className="ol-caption">
-              Select an item to inspect its known facts and choose an exact action.
+        <details className="ol-inventory-controls">
+          <summary>Inventory controls</summary>
+          <p className="ol-caption">
+            Select an item to inspect it. With two containers open, drag between them or Shift-click
+            to move its available units. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to
+            move.
+          </p>
+          {!right.location.id && (
+            <p>
+              Open a container in the world to see it beside your belongings. You can also open one
+              of your bags beside them.
             </p>
           )}
-        </section>
+        </details>
+        {view.player.inventory.some((entry) => entry.equipped) && (
+          <section className="ol-inventory-equipment" aria-label="Equipped items">
+            <strong>Equipped</strong>
+            {view.player.inventory
+              .filter((entry) => entry.equipped)
+              .map((entry) => (
+                <div key={entry.id}>
+                  <Icon name={symbol(entry.icon ?? '')} fallbackLabel={entry.name} />
+                  <span>{entry.name}</span>
+                  {entry.actions
+                    .filter((action) => action.command.type === 'unequip')
+                    .map((action) => (
+                      <Button
+                        key={action.id}
+                        size="sm"
+                        variant="quiet"
+                        disabled={!canAct || !action.enabled}
+                        onPress={() => send(action, 'belongings')}
+                      >
+                        Unequip
+                      </Button>
+                    ))}
+                </div>
+              ))}
+          </section>
+        )}
+      </header>
+      {!!right.location.id && (
+        <div className="ol-inventory-context" role="group" aria-label="Open inventory containers">
+          <div>
+            <span className="ol-caption">Belongings</span>
+            <strong>{left.page?.container.name ?? view.player.name}</strong>
+          </div>
+          <span aria-hidden="true">↔</span>
+          <div>
+            <span className="ol-caption">Container</span>
+            <strong>{currentTitle}</strong>
+          </div>
+        </div>
+      )}
+      {selectedCollection?.page && !item && (
+        <p className="ol-inventory-unavailable" role="status">
+          The selected item is not on this page of these contents. Change the search or page, or
+          select another item.{amountDraft && ' Your entered amount is retained.'}
+        </p>
+      )}
+      <div className="ol-inventory-panes" data-paired={!!right.location.id || undefined}>
+        {(['belongings', 'container'] as const).map((side) => {
+          const state = collection(side);
+          if (side === 'container' && !state.location.id) return null;
+          const other = opposite(side);
+          return (
+            <div key={side} className="ol-inventory-side">
+              <InventoryCollection
+                side={side}
+                title={side === 'belongings' ? 'My belongings' : currentTitle}
+                state={state}
+                selectedId={selection?.side === side ? selection.itemId : undefined}
+                onSelectedAnchor={(button) => {
+                  if (button) anchor.current = button;
+                }}
+                busy={busy}
+                canMove={
+                  canAct && !!state.page && !!other.page && state.location.id !== other.location.id
+                }
+                dropActive={
+                  !!drag &&
+                  drag.side !== side &&
+                  drag.targetId === state.page?.container.id &&
+                  drag.targetRevision === state.page.container.revision &&
+                  canAct
+                }
+                onNavigate={(id) => navigate(side, id)}
+                onSelect={(selected, button, actions) => choose(side, selected, button, actions)}
+                onContextMenu={(selected, button, point) =>
+                  openItemContext(side, selected, button, (current, opener) =>
+                    contextMenu(current, point, opener),
+                  )
+                }
+                onQuickMove={(selected) => quickMove(side, selected)}
+                onDragStart={(selected, event) => beginDrag(side, selected, event)}
+                onDragEnd={stopDrag}
+                onDrop={(event) => drop(side, event)}
+              />
+              {side === 'container' && (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  disabled={busy}
+                  onPress={() => navigate('container', '')}
+                >
+                  Close container
+                </Button>
+              )}
+            </div>
+          );
+        })}
       </div>
+      <Popover
+        triggerRef={anchor}
+        isOpen={detailOpen && !!selection && !!item && visible && connected}
+        onOpenChange={(open) => {
+          setDetailOpen(open);
+        }}
+        isNonModal
+        className="ol-root ol-inventory-popover"
+        // A sheet leaves no room beside its item; vertical placement lets the
+        // overlay owner keep the same detail and draft within the viewport width.
+        placement={narrow ? 'bottom start' : 'right top'}
+        shouldFlip
+      >
+        <div
+          ref={detail}
+          onKeyDownCapture={(event) => {
+            if (event.key === 'Escape' && amountDraft && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              event.stopPropagation();
+              setAmountDraft(undefined);
+              setQuantityError('');
+            }
+          }}
+        >
+          <Dialog
+            className="ol-inventory-detail"
+            aria-label={item ? `${item.name} actions and details` : 'Item details'}
+          >
+            <div className="ol-inventory-toolbar">
+              <h3 className="ol-heading">{item?.name ?? 'Item details'}</h3>
+              <Button size="sm" variant="quiet" onPress={() => closeDetail()}>
+                Close
+              </Button>
+            </div>
+            {operations.pending && (
+              <p className="ol-caption">
+                {operations.pending.status === 'sending'
+                  ? 'Sending this action…'
+                  : 'The outcome is unresolved. Use Check result in the inventory.'}
+              </p>
+            )}
+            {operations.message && <p className="ol-caption">{operations.message}</p>}
+            {item && selectedContainer && selection && (
+              <>
+                <p className="ol-caption">
+                  {selectedContainer.name} · {item.quantity} units {item.equipped && '· Equipped'}
+                </p>
+                {amountDraft ? (
+                  <>
+                    <h4>
+                      {amountDraft.operation === 'move'
+                        ? `Move to ${amountDraft.target ? namePhrase(amountDraft.target, 'definite') : 'container'}`
+                        : amountDraft.operation === 'offer'
+                          ? 'Offer to a person'
+                          : amountDraft.operation === 'split'
+                            ? 'Split this stack'
+                            : 'Drop items'}
+                    </h4>
+                    <InventoryQuantity
+                      value={amountDraft.value}
+                      onChange={(value) => {
+                        setAmountDraft({ ...amountDraft, value });
+                        setQuantityError('');
+                      }}
+                      maximum={item.availableQuantity}
+                      disabled={busy}
+                      error={quantityError}
+                    />
+                    {draftStale && (
+                      <p role="status">
+                        These contents changed. Refresh the available amount before acting; the
+                        entered quantity stays in place.
+                      </p>
+                    )}
+                    {draftStale && (
+                      <Button
+                        variant="quiet"
+                        disabled={
+                          !canAct ||
+                          !item ||
+                          !selectedContainer ||
+                          (amountDraft.operation === 'move' &&
+                            target?.id !== amountDraft.target?.id)
+                        }
+                        onPress={() => {
+                          setAmountDraft({
+                            ...amountDraft,
+                            item,
+                            source: selectedContainer,
+                            target: amountDraft.operation === 'move' ? target : undefined,
+                            action: amountDraft.action
+                              ? item.actions.find((entry) => entry.id === amountDraft.action?.id)
+                              : undefined,
+                          });
+                          setQuantityError('');
+                        }}
+                      >
+                        Refresh available amount
+                      </Button>
+                    )}
+                    {amountDraft.operation === 'offer' &&
+                      amount !== undefined &&
+                      (amountDraft.recipientId ? (
+                        (() => {
+                          const trade = view.entities.find(
+                            (person) => person.id === amountDraft.recipientId,
+                          )?.trade;
+                          return (
+                            <>
+                              {trade ? (
+                                <ItemTrade
+                                  key={trade.scope}
+                                  trade={trade}
+                                  inventoryRequestKey={inventoryCommandStorageKey(
+                                    view.access?.commandRecoveryScope,
+                                    view.worldId,
+                                    view.player.id,
+                                    view.saveTimeline,
+                                  )}
+                                  connected={canAct && !draftStale}
+                                  command={(action) => send(action, selection.side, trade.scope)}
+                                  initialQuantity={amountDraft.value}
+                                  selected={{
+                                    id: amountDraft.item.id,
+                                    name: amountDraft.item.name,
+                                    label: amountDraft.item.name,
+                                    description: amountDraft.item.description,
+                                    quantity:
+                                      amountDraft.item.availableQuantity ??
+                                      amountDraft.item.quantity,
+                                    revision: amountDraft.item.revision,
+                                    placementRevision: amountDraft.item.placementRevision,
+                                    contentsRevision: amountDraft.item.container?.revision,
+                                    whole:
+                                      !!amountDraft.item.container || !!amountDraft.item.individual,
+                                  }}
+                                />
+                              ) : (
+                                <p role="status">
+                                  This person is no longer available for trade. Choose a current
+                                  recipient.
+                                </p>
+                              )}
+                              <Button
+                                variant="quiet"
+                                disabled={busy}
+                                onPress={() =>
+                                  setAmountDraft({ ...amountDraft, recipientId: undefined })
+                                }
+                              >
+                                Choose another person
+                              </Button>
+                            </>
+                          );
+                        })()
+                      ) : (
+                        <InventoryOffer
+                          source={transferSource(amountDraft.item, amountDraft.source, amount)}
+                          scope={view.access?.scope ?? ''}
+                          active={canAct && !draftStale}
+                          onOffer={(recipient) =>
+                            setAmountDraft({ ...amountDraft, recipientId: recipient.id })
+                          }
+                        />
+                      ))}
+                    <div className="ol-actions">
+                      {amountDraft.operation !== 'offer' && (
+                        <Button disabled={!canAct || draftStale} onPress={submitAmount}>
+                          {amountDraft.operation === 'move'
+                            ? 'Move amount'
+                            : amountDraft.operation === 'split'
+                              ? 'Split stack'
+                              : 'Drop amount'}
+                        </Button>
+                      )}
+                      <Button
+                        variant="quiet"
+                        onPress={() => {
+                          setAmountDraft(undefined);
+                          setQuantityError('');
+                        }}
+                      >
+                        Back to item
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="ol-inventory-item-actions">
+                      {target && target.id !== selectedContainer.id && target.id !== item.id && (
+                        <>
+                          <Button
+                            disabled={
+                              !canAct ||
+                              item.availableQuantity === undefined ||
+                              item.availableQuantity < 1
+                            }
+                            onPress={() => quickMove(selection.side, item)}
+                          >
+                            {item.availableQuantity !== item.quantity
+                              ? `Move ${item.availableQuantity ?? 'available'} available to ${namePhrase(target, 'definite')}`
+                              : `Move to ${namePhrase(target, 'definite')}`}
+                          </Button>
+                          {!item.individual && item.quantity > 1 && (
+                            <Button
+                              variant="quiet"
+                              disabled={!canAct}
+                              onPress={() => chooseAmount('move')}
+                            >
+                              Move an amount…
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      {item.container && (
+                        <>
+                          <Button
+                            variant="quiet"
+                            disabled={busy}
+                            onPress={() => navigate(selection.side, item.id)}
+                          >
+                            Open {namePhrase(item, 'definite')}
+                          </Button>
+                          {selection.side === 'belongings' && !right.location.id && (
+                            <Button
+                              variant="quiet"
+                              disabled={busy}
+                              onPress={() => {
+                                setWorldRoot(undefined);
+                                setWorldInvalid(false);
+                                navigate('container', item.id);
+                              }}
+                            >
+                              Open beside belongings
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      <Button
+                        variant="quiet"
+                        disabled={
+                          !canAct ||
+                          item.availableQuantity === undefined ||
+                          item.availableQuantity < 1
+                        }
+                        onPress={() => chooseAmount('offer')}
+                      >
+                        Offer to a person…
+                      </Button>
+                      {onTalkAbout && (
+                        <Button
+                          variant="quiet"
+                          onPress={() => {
+                            onTalkAbout({ itemId: item.id, name: item.name });
+                            closeDetail();
+                          }}
+                        >
+                          Talk about {namePhrase(item, 'definite')}
+                        </Button>
+                      )}
+                      {browseActions &&
+                        selectedCollection?.page?.breadcrumbs.some(
+                          (entry) => entry.id === view.player.id,
+                        ) && (
+                          <Button
+                            size="sm"
+                            variant="quiet"
+                            disabled={
+                              busy ||
+                              !connected ||
+                              !selectedCollection.available ||
+                              selectedCollection.loading
+                            }
+                            onPress={() => {
+                              if (anchor.current?.isConnected)
+                                openItemContext(
+                                  selection.side,
+                                  item,
+                                  anchor.current,
+                                  browseActions,
+                                );
+                            }}
+                          >
+                            Explore uses and targets
+                          </Button>
+                        )}
+                      {item.actions.map((action) => (
+                        <div key={action.id}>
+                          <Button
+                            variant="quiet"
+                            disabled={!canAct || !action.enabled}
+                            onPress={() =>
+                              action.command.type === 'split-item'
+                                ? chooseAmount('split', action)
+                                : action.command.type === 'drop' && item.quantity > 1
+                                  ? chooseAmount('drop', action)
+                                  : send(action, selection.side)
+                            }
+                          >
+                            {action.command.type === 'split-item'
+                              ? 'Split stack…'
+                              : action.command.type === 'drop' && item.quantity > 1
+                                ? 'Drop an amount…'
+                                : action.label}
+                          </Button>
+                          {!action.enabled && action.reason && (
+                            <p className="ol-caption">{action.reason}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <details open={!selection.actions}>
+                      <summary>Known details</summary>
+                      <p>{item.description}</p>
+                      <div className="ol-tags">
+                        {item.tags.map((tag) => (
+                          <Tag key={tag}>{tag}</Tag>
+                        ))}
+                        {item.individual && <Tag>Individual object</Tag>}
+                      </div>
+                      <p className="ol-caption">
+                        Available: {item.availableQuantity ?? 'Unknown'} · Packing load:{' '}
+                        {item.packingLoad ?? 'Unknown'}
+                        {item.container ? ' including its contents' : ' per unit'}
+                      </p>
+                      {item.declaredOwner && <p>Declared owner: {item.declaredOwner.name}</p>}
+                      <dl className="ol-inventory-facts">
+                        {item.characteristics?.map((fact) => (
+                          <div key={fact.id}>
+                            <dt>{fact.label}</dt>
+                            <dd>
+                              {fact.value ?? 'Unknown'} {fact.unit}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </details>
+                    {item.comparison && (
+                      <details>
+                        <summary>
+                          Compare with {namePhrase(item.comparison, 'definite')} (equipped)
+                        </summary>
+                        <table className="ol-inventory-comparison">
+                          <caption>
+                            Compared with {namePhrase(item.comparison, 'definite')} (equipped)
+                          </caption>
+                          <thead>
+                            <tr>
+                              <th>Characteristic</th>
+                              <th>{item.name}</th>
+                              <th>{item.comparison.name}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {item.characteristics?.flatMap((fact) => {
+                              const other = item.comparison?.characteristics.find(
+                                (entry) => entry.id === fact.id && entry.unit === fact.unit,
+                              );
+                              return other
+                                ? [
+                                    <tr key={fact.id}>
+                                      <th>
+                                        {fact.label} {fact.unit}
+                                      </th>
+                                      <td>{fact.value ?? 'Unknown'}</td>
+                                      <td>{other.value ?? 'Unknown'}</td>
+                                    </tr>,
+                                  ]
+                                : [];
+                            })}
+                          </tbody>
+                        </table>
+                        <p className="ol-caption">
+                          Only matching meanings and units are compared. Unknown facts stay unknown;
+                          there is no total equipment score.
+                        </p>
+                      </details>
+                    )}
+                    {!item.individual && !item.container && !item.equipped && (
+                      <MergeTargets
+                        key={item.id}
+                        item={item}
+                        containerId={selectedContainer.id}
+                        pageKey={selectedCollection?.key ?? ''}
+                        canAct={canAct && item.availableQuantity === item.quantity}
+                        visible={visible && connected}
+                        onMerge={(match) =>
+                          send(
+                            arrange(
+                              'merge-item',
+                              item,
+                              match.id,
+                              match.revision,
+                              item.quantity,
+                              'Merge stacks',
+                            ),
+                            selection.side,
+                          )
+                        }
+                      />
+                    )}
+                    {view.godMode && (
+                      <details>
+                        <summary>God mode · Declare ownership</summary>
+                        <p>
+                          A declaration records an owner; it does not move the object or grant
+                          access.
+                        </p>
+                        <label>
+                          Holder{' '}
+                          <select
+                            value={holder}
+                            onChange={(event) => setHolder(event.target.value)}
+                          >
+                            <option value="">No declared owner</option>
+                            <option value={view.player.id}>{view.player.name}</option>
+                            {view.entities
+                              .filter((entry) => entry.kind === 'actor')
+                              .map((entry) => (
+                                <option key={entry.id} value={entry.id}>
+                                  {entry.name}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
+                        <label>
+                          Disclosure{' '}
+                          <select
+                            value={disclosure}
+                            onChange={(event) => {
+                              if (
+                                event.target.value === 'custodian' ||
+                                event.target.value === 'public'
+                              )
+                                setDisclosure(event.target.value);
+                            }}
+                          >
+                            <option value="custodian">Current custodian</option>
+                            <option value="public">Public declaration</option>
+                          </select>
+                        </label>
+                        <Button
+                          disabled={!canAct}
+                          onPress={() =>
+                            void ownerWrite('/api/god/ownership', {
+                              id: crypto.randomUUID(),
+                              itemId: item.id,
+                              expectedRevision: item.declaredOwner?.revision ?? 0,
+                              holderId: holder || null,
+                              disclosure,
+                            })
+                          }
+                        >
+                          Save declaration
+                        </Button>
+                      </details>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </Dialog>
+        </div>
+      </Popover>
       <footer className="ol-inventory-feedback">
-        {current?.error && <p role="alert">{current.error}</p>}
-        {message && <p role="status">{message}</p>}
+        {operations.pending && (
+          <section className="ol-inventory-pending" aria-label="Unresolved inventory action">
+            <p role="status">
+              {operations.pending.status === 'sending'
+                ? `Sending ${operations.pending.request?.label ?? 'inventory action'}…`
+                : operations.pending.status === 'checking'
+                  ? 'Checking the recorded result…'
+                  : `The result of ${operations.pending.request?.label ?? 'an earlier inventory action'} is unknown. Further inventory actions are paused to avoid repeating it.`}
+            </p>
+            {operations.pending.status === 'unknown' && (
+              <Button
+                disabled={!connected || !operations.pending.request}
+                onPress={() => {
+                  if (actionFocus.current)
+                    actionInput.current = captureCollectionFocus(actionFocus.current.side);
+                  void operations.check();
+                }}
+              >
+                Check result
+              </Button>
+            )}
+            <p className="ol-caption">
+              Checking reads the existing result. It never sends the action again.
+            </p>
+          </section>
+        )}
+        {operations.message && <p role="status">{operations.message}</p>}
         {!view.player.canUseInventory && (
           <p className="ol-caption">
             {view.clock.paused
@@ -1201,49 +1359,33 @@ function InventoryWorkspace({
               : 'Current character control and the ability to handle possessions are required.'}
           </p>
         )}
-        {view.godMode && page?.container.capacity !== undefined && (
-          <Button
-            size="sm"
-            variant="quiet"
-            disabled={!visible || !connected || pending || loading}
-            onPress={() => {
-              if (pendingRef.current) return;
-              pendingRef.current = true;
-              setPending(true);
-              void post('/api/god/container-access', {
-                id: crypto.randomUUID(),
-                itemId: page.container.id,
-                expectedRevision: page.container.revision,
-                actors: page.container.restricted ? null : [view.player.id],
-              })
-                .then((receipt) => {
-                  if (alive.current) {
-                    setMessage(receipt.message ?? 'Access updated.');
-                    if (receipt.ok) setRefresh((value) => value + 1);
-                  }
-                })
-                .catch((error: unknown) => {
-                  if (alive.current)
-                    setMessage(
-                      error instanceof Error ? error.message : 'Access could not be updated.',
-                    );
-                })
-                .finally(() => {
-                  pendingRef.current = false;
-                  if (alive.current) setPending(false);
-                });
-            }}
-          >
-            {page.container.restricted
-              ? 'God mode · Make shared'
-              : 'God mode · Restrict to my character'}
-          </Button>
-        )}
+        {view.godMode &&
+          [left, right].map((state) => {
+            const container = state.page?.container;
+            return container?.capacity !== undefined ? (
+              <Button
+                key={container.id}
+                size="sm"
+                variant="quiet"
+                disabled={!canAct}
+                onPress={() =>
+                  void ownerWrite('/api/god/container-access', {
+                    id: crypto.randomUUID(),
+                    itemId: container.id,
+                    expectedRevision: container.revision,
+                    actors: container.restricted ? null : [view.player.id],
+                  })
+                }
+              >
+                God mode · {container.restricted ? 'Share' : 'Restrict'} {container.name}
+              </Button>
+            ) : null;
+          })}
         <InventoryHistory
           scope={scope}
           revision={view.player.inventoryRevision}
-          visible={visible}
-          readRevision={readVisibility.revision}
+          visible={visible && connected}
+          readRevision={`${left.key}:${right.key}`}
         />
       </footer>
     </div>

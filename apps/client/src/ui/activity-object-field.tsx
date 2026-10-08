@@ -27,6 +27,7 @@ export function ActivityObjectField({
   connected,
   working,
   busy,
+  readOnly = false,
   onRead,
   onChange,
   onAction,
@@ -44,6 +45,8 @@ export function ActivityObjectField({
   connected: boolean;
   working: boolean;
   busy: boolean;
+  /** The initiating world object supplies this role; reading it must not ask for it again. */
+  readOnly?: boolean;
   onRead(key: string, page: ActivityChoicePage): void;
   onChange(choice: ActivityChoice): void;
   onAction(input: CommandInput, label: string): Promise<ApiResult | undefined>;
@@ -52,7 +55,6 @@ export function ActivityObjectField({
   const errorKey = JSON.stringify([scope, family, fieldId, value, witnessId, sourceId]);
   const [error, setError] = useState<{ key: string; message: string }>();
   const [acting, setActing] = useState(false);
-  const trigger = useRef<HTMLDivElement>(null);
   const alive = useRef(true);
   const latestRead = useRef(readKey);
   latestRead.current = readKey;
@@ -99,7 +101,6 @@ export function ActivityObjectField({
   const selected = page?.selected;
   const close = () => {
     setOpen(false);
-    requestAnimationFrame(() => trigger.current?.querySelector('button')?.focus());
   };
   const choose = (choice: ActivityChoice) => {
     onChange(choice);
@@ -159,16 +160,23 @@ export function ActivityObjectField({
       if (alive.current) setActing(false);
     }
   }
+  if (readOnly)
+    return (
+      <p className="ol-task-bound-target">
+        {field.label}: <strong>{selected?.label ?? 'Selected object'}</strong>
+        {selected?.location && <> · {selected.location}</>}
+        {value && !page && <> · Rechecking…</>}
+        {value && page && !selected && <> · {page.message ?? 'No longer available.'}</>}
+      </p>
+    );
   return (
     <div className="ol-camp-object">
       <span>{field.label}</span>
-      <div ref={trigger}>
+      <div>
         <Button variant="secondary" disabled={!connected || busy} onPress={() => setOpen(true)}>
           {selected
-            ? `${field.label}: ${selected.label}`
-            : value
-              ? `${field.label}: recheck or choose again`
-              : `Choose ${field.label.toLowerCase()}…`}
+            ? `Change ${field.label.toLowerCase()}: ${selected.label}`
+            : `Choose ${field.label.toLowerCase()}…`}
         </Button>
       </div>
       {value && !page && (
@@ -186,26 +194,32 @@ export function ActivityObjectField({
         <>
           <p className="ol-caption">{selected.location}</p>
           {selected.reason && <p className="ol-caption">{selected.reason}</p>}
-          <div className="ol-actions">
-            {selected.needsApproach && (
-              <Button
-                size="sm"
-                disabled={busy || acting || !connected}
-                onPress={() => void act(true)}
-              >
-                {working ? 'Replace current action and approach' : 'Approach'}
-              </Button>
-            )}
-            {selected.canInspect && (
-              <Button size="sm" disabled={busy || acting || !connected} onPress={() => void act()}>
-                Inspect contents
-              </Button>
-            )}
-          </div>
+          {(selected.needsApproach || selected.canInspect) && (
+            <div className="ol-actions">
+              {selected.needsApproach && (
+                <Button
+                  size="sm"
+                  disabled={busy || acting || !connected}
+                  onPress={() => void act(true)}
+                >
+                  {working ? 'Replace current action and approach' : 'Approach'}
+                </Button>
+              )}
+              {selected.canInspect && (
+                <Button
+                  size="sm"
+                  disabled={busy || acting || !connected}
+                  onPress={() => void act()}
+                >
+                  Inspect contents
+                </Button>
+              )}
+            </div>
+          )}
           {selected.needsApproach && (
             <p className="ol-caption">
               Ordinary movement replaces current physical work and keeps completed effects. Arrival
-              does not inspect or start camp work. Recheck access after arrival.
+              does not inspect or start the task. Recheck access after arrival.
             </p>
           )}
           {page?.inspection && (
@@ -214,7 +228,7 @@ export function ActivityObjectField({
               <ul>
                 {page.inspection.items.map((item) => (
                   <li key={item.id}>
-                    {item.quantity} × {item.name} · {item.id}
+                    {item.quantity} × {item.name}
                   </li>
                 ))}
               </ul>
@@ -239,8 +253,8 @@ export function ActivityObjectField({
       )}
       {error?.key === errorKey && <p role="alert">{error.message}</p>}
       <ModalOverlay
-        className="ol-root ol-modal-overlay"
-        isOpen={open && visible}
+        className="ol-root ol-modal-overlay ol-activity-picker-overlay"
+        isOpen={open && visible && connected && !readOnly}
         isDismissable
         onOpenChange={(next) => {
           if (!next) close();
@@ -450,7 +464,7 @@ function RoleSearch({
         </Button>
       </div>
       <p className="ol-caption">
-        Searching and choosing change only your draft. Review and Start recheck current conditions.
+        Searching and choosing change only your draft. Starting rechecks current conditions.
       </p>
     </section>
   );

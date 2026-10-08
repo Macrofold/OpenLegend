@@ -179,6 +179,8 @@ export class WildernessScene implements WorldRenderer {
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
   private suspended = false;
+  private readonly pendingFrames = new Set<Promise<unknown>>();
+  private redrawPending = false;
   private readonly frameRateMeter = new FrameRateMeter();
   private readyRequested = false;
   private presentation!: WorldPresentation;
@@ -274,6 +276,9 @@ export class WildernessScene implements WorldRenderer {
       document.addEventListener('visibilitychange', this.resetFrameRate);
       this.app.on('update', (dt: number) => this.update(dt));
       this.app.on('postrender', this.recordFrame);
+      this.app.on('framerender', this.prepareRender);
+      this.app.on('postrender', this.finishRender);
+      this.app.graphicsDevice.on('devicelost', this.resetRenderQueue);
       this.resize();
       this.placeCamera();
       this.app.start();
@@ -282,6 +287,35 @@ export class WildernessScene implements WorldRenderer {
       throw error;
     }
   }
+
+  // Keep slow GPUs from queuing old views while input and scene updates continue.
+  // Two submitted frames retain overlap without accumulating seconds of stale images.
+  private prepareRender = (): void => {
+    this.redrawPending ||= this.app.renderNextFrame;
+    const ready = this.pendingFrames.size < 2;
+    this.app.autoRender = !this.suspended && ready;
+    this.app.renderNextFrame = this.redrawPending && ready;
+  };
+  private finishRender = (): void => {
+    this.redrawPending = false;
+    const device = this.app.graphicsDevice;
+    if (this.destroyed || !(device instanceof pc.WebglGraphicsDevice)) return;
+    let fence: Promise<unknown>;
+    try {
+      fence = device.clientWaitAsync(0, 4);
+    } catch {
+      // Failed or lost contexts must not strand the renderer behind a pending slot.
+      return;
+    }
+    this.pendingFrames.add(fence);
+    const release = () => this.pendingFrames.delete(fence);
+    // Completion owns only its own slot, even after context loss or scene disposal.
+    void fence.then(release, release);
+  };
+  private resetRenderQueue = (): void => {
+    this.pendingFrames.clear();
+    this.redrawPending = true;
+  };
 
   private resetFrameRate = (): void => this.frameRateMeter.reset();
   private recordFrame = (): void => {
@@ -318,7 +352,9 @@ export class WildernessScene implements WorldRenderer {
   setView(view: GameView): void {
     this.view = view;
     this.perception.setView(view);
-    const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
+    // The public landscape survives a control transfer, while a restored timeline
+    // can replace geometry without changing its saved spatial revision.
+    const key = `${view.worldId}:${view.saveTimeline}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
     const worldKey = `${view.worldId}:${view.saveTimeline}:${view.access?.scope}`;
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
@@ -327,7 +363,6 @@ export class WildernessScene implements WorldRenderer {
       this.selected = null;
       this.initialized = false;
       this.worldKey = worldKey;
-      this.mapKey = '';
       this.cutawayKey = '';
     }
     if (this.mapKey !== key) {
@@ -443,7 +478,8 @@ export class WildernessScene implements WorldRenderer {
     if (!this.readyRequested) {
       this.readyRequested = true;
       // An existing WebGL context alone does not prove that the world rendered.
-      this.app.once('frameend', () => {
+      this.app.renderNextFrame = true;
+      this.app.once('postrender', () => {
         if (!this.destroyed) this.canvas.dataset.ready = 'true';
       });
     }
@@ -474,6 +510,7 @@ export class WildernessScene implements WorldRenderer {
     return { ...this.cameraSettings, focus: { ...this.cameraSettings.focus } };
   }
   cameraCommand(command: CameraCommand): void {
+    if (!this.view) return;
     if (
       command.type === 'level' &&
       command.id &&
@@ -1843,6 +1880,11 @@ export class WildernessScene implements WorldRenderer {
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
   private pointerDown = (event: PointerEvent): void => {
+    if (!this.view) {
+      // A rejected press must not open a delayed native menu after the first view arrives.
+      this.pointerContextHandled = true;
+      return;
+    }
     if (event.button > 2 || this.drag) return;
     this.canvas.focus({ preventScroll: true });
     this.pointerContextHandled = false;
@@ -1987,6 +2029,7 @@ export class WildernessScene implements WorldRenderer {
     this.openContextMenu(event);
   };
   private openContextMenu(event: MouseEvent): void {
+    if (!this.view) return;
     const local = this.local(event);
     const keyboard =
       !Number.isFinite(event.clientX) ||
@@ -2036,6 +2079,11 @@ export class WildernessScene implements WorldRenderer {
     window.removeEventListener('blur', this.blur);
     document.removeEventListener('visibilitychange', this.resetFrameRate);
     this.app.off('postrender', this.recordFrame);
+    this.app.off('framerender', this.prepareRender);
+    this.app.off('postrender', this.finishRender);
+    this.app.graphicsDevice.off('devicelost', this.resetRenderQueue);
+    this.pendingFrames.clear();
+    this.redrawPending = false;
     this.cancelDrag();
     this.shadowBatches?.destroy();
     this.hoveredId = null;

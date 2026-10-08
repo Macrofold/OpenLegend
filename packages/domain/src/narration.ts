@@ -83,10 +83,12 @@ export function renderNarration(
   return text;
 }
 /** World-authored templates retain their vocabulary; only grammatical participant tokens
- * are interpreted. Item/name text is inserted literally, never parsed as another template. */
+ * are interpreted. Entity bindings use observer identity; named values are inserted literally,
+ * even when they carry definition IDs, and are never parsed as another template. */
 export function narrationTemplate(
   template: string,
-  bindings: Record<string, Entity | Named | undefined>,
+  entities: Record<string, Entity | undefined>,
+  names: Record<string, Named | undefined> = {},
 ): Narration {
   const parts: NarrationPart[] = [];
   let end = 0;
@@ -94,17 +96,18 @@ export function narrationTemplate(
     const token = parseNarrationToken(match[1]!);
     if (!token) continue;
     parts.push(template.slice(end, match.index));
-    const value = bindings[token.binding];
+    const entity = entities[token.binding];
+    const value = names[token.binding];
     if (token.verb) {
       parts.push(
-        value && 'id' in value
-          ? presentVerb(value.id, token.verb)
+        entity
+          ? presentVerb(entity.id, token.verb)
           : presentTense(token.verb, false, value?.nameForm === 'plural'),
       );
-    } else if (value && 'id' in value) {
+    } else if (entity) {
       // Even explicit name tokens pass through observer identity, never global names.
       parts.push({
-        entityId: value.id,
+        entityId: entity.id,
         role: token.role!,
         ...(token.article ? { article: token.article } : {}),
       });

@@ -41,6 +41,12 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
       {
         id: BASE_OUTING.family,
         label: BASE_OUTING.label,
+        presentation: {
+          kind: 'outing-invitation',
+          target: 'recipientId',
+          destination: 'destinationId',
+          workMode: 'mode',
+        },
         purposeLabel: 'Stated purpose (optional)',
         submitLabel: 'Send invitation',
         description: BASE_OUTING.description,

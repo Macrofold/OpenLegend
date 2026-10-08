@@ -1,6 +1,7 @@
 import { canonicalJson, contentLabel } from './events.js';
 import { BASE_FIRE_ACTIVITY_HOST } from './worlds/base/fire-activity.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './worlds/base/camp-activity.js';
+import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 import { outcome } from './events.js';
 import type { Outcome } from './types.js';
 import type { Command, WorldState, Entity, ItemInstance } from './types.js';
@@ -90,12 +91,38 @@ export interface ActivityRequest {
   family: string;
   arguments: Record<string, string | number | boolean>;
 }
+/** Trusted task presentations bind world-authored roles, never arbitrary form schemas.
+ * docs/projects/game-interaction-redesign-tech-design.md#replace-generic-activity-forms-with-semantic-presentations */
+export type ActivityRequestPresentation = {
+  target: string;
+  workMode: string;
+} & (
+  | { kind: 'replenish-session' }
+  | { kind: 'outing-invitation'; destination: string }
+  | {
+      kind: 'resource-care';
+      supply: string;
+      stop: string;
+      budget: string;
+      material: string;
+      reserve: string;
+    }
+  | {
+      kind: 'gather-store-use';
+      source: string;
+      destination: string;
+      quantity: string;
+      material: string;
+      reserve: string;
+    }
+);
 export interface ActivityRequestDescriptor {
   purposeLabel?: string;
   submitLabel?: string;
   id: string;
   label: string;
   description: string;
+  presentation?: ActivityRequestPresentation;
   fields: Record<
     string,
     {
@@ -136,6 +163,7 @@ const trustedHosts = [
   STOCK_ACTIVITY_HOST,
   BASE_FIRE_ACTIVITY_HOST,
   BASE_CAMP_ACTIVITY_HOST,
+  RESERVOIR_ACTIVITY_HOST,
   BASE_OUTING_HOST,
 ];
 export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
@@ -220,9 +248,6 @@ export function activityHostPin(host: ActivityHostDescriptor): DefinitionPin {
     version: host.definition.version,
     digest: contentLabel(canonicalJson(host.definition)),
   };
-}
-export function activityHostPins(): DefinitionPin[] {
-  return trustedHosts.map(activityHostPin);
 }
 export function validateActivityHostPins(pins: readonly DefinitionPin[]): void {
   if (!Array.isArray(pins) || pins.length > trustedHosts.length)

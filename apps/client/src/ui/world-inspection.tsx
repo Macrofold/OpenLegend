@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RelationshipNode, RelationshipPage, RelationshipRef } from '@open-legend/protocol';
 import { Button, Tag } from '../design-system/components';
 import { post } from '../api';
+import './creator-workspaces.css';
 
 type Trace = {
   nodes: RelationshipNode[];
@@ -26,12 +27,15 @@ export function WorldInspection({ actorId }: { actorId: string }) {
   const [trace, setTrace] = useState<Trace>();
   const [cursor, setCursor] = useState<string | null>(null),
     [submitted, setSubmitted] = useState('');
+  const [searched, setSearched] = useState(false);
+  const [trail, setTrail] = useState<Array<{ ref: RelationshipRef; label: string }>>([]);
   const [inspection, setInspection] = useState<Inspection>(),
-    [extra, setExtra] = useState<unknown>();
+    [extra, setExtra] = useState<{ title: string; value: unknown }>();
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   const alive = useRef(true),
     pending = useRef(false);
+  const queryInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -59,9 +63,19 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       if (alive.current) setBusy(false);
     }
   }
-  const inspect = (ref: { kind: string; id: string; version?: string }) =>
-    void read<Inspection>('ol_inspect', ref, (value) => {
+  const inspect = (ref: { kind: string; id: string; version?: string }, newPath = false) =>
+    void read<Inspection>('ol_inspect', { ...ref, sections: ['relationships'] }, (value) => {
       setInspection(value);
+      const resolved = value.node?.ref ?? value.ref;
+      if (resolved)
+        setTrail((previous) => {
+          const entry = { ref: resolved, label: value.node?.label ?? resolved.id };
+          if (newPath) return [entry];
+          const existing = previous.findIndex(
+            (item) => item.ref.kind === resolved.kind && item.ref.id === resolved.id,
+          );
+          return existing < 0 ? [...previous, entry] : [...previous.slice(0, existing), entry];
+        });
       setDirection(ref.kind === 'entity' || ref.kind === 'item' ? 'both' : 'out');
       setExtra(undefined);
       setTrace(undefined);
@@ -73,6 +87,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       (value) => {
         setNodes(value.nodes);
         setCursor(value.nextCursor);
+        setSearched(true);
         if (!next) setSubmitted(query);
       },
     );
@@ -95,13 +110,20 @@ export function WorldInspection({ actorId }: { actorId: string }) {
   const [direction, setDirection] = useState<'out' | 'in' | 'both'>('out');
   const page = inspection?.relationships;
   return (
-    <section className="ol-inventions" aria-label="World-owner relationship inspection">
-      <Tag>World-owner inspection · no paid calls</Tag>
-      <p>
-        This reads world records, not your character’s knowledge. Relationships are source-backed,
-        but not a complete interaction proof.
-      </p>
+    <section
+      className="ol-inventions ol-creator-page"
+      aria-label="World-owner relationship inspection"
+    >
+      <header className="ol-creator-context">
+        <Tag tone="highlight">God mode · Read-only inspection</Tag>
+        <h3>World relationships</h3>
+        <p>
+          This reads world records, not your character’s knowledge. Relationships are source-backed,
+          but not a complete interaction proof. Reading uses no creation allowance.
+        </p>
+      </header>
       <form
+        className="ol-inspection-search"
         onSubmit={(event) => {
           event.preventDefault();
           search();
@@ -116,6 +138,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
               setSearchKind(event.target.value === 'entities' ? 'entities' : 'definitions');
               setNodes([]);
               setCursor(null);
+              setSearched(false);
             }}
           >
             <option value="definitions">Definitions</option>
@@ -124,27 +147,66 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         </label>
         <label>
           Name or ID{' '}
-          <input value={query} maxLength={200} onChange={(event) => setQuery(event.target.value)} />
+          <input
+            ref={queryInput}
+            value={query}
+            maxLength={200}
+            onChange={(event) => setQuery(event.target.value)}
+          />
         </label>
-        <Button type="submit" size="sm" disabled={busy}>
-          Search
-        </Button>
+        <div className="ol-agent-tools">
+          <Button type="submit" size="sm" disabled={busy}>
+            Search
+          </Button>
+          {query && (
+            <Button
+              type="button"
+              variant="quiet"
+              size="sm"
+              disabled={busy}
+              onPress={() => {
+                setQuery('');
+                setNodes([]);
+                setCursor(null);
+                setSearched(false);
+                queryInput.current?.focus();
+              }}
+            >
+              Clear search
+            </Button>
+          )}
+        </div>
       </form>
       <div className="ol-agent-tools">
-        <Button size="sm" disabled={busy} onPress={() => inspect({ kind: 'entity', id: actorId })}>
-          Inspect current actor
+        <Button
+          size="sm"
+          variant="quiet"
+          disabled={busy}
+          onPress={() => inspect({ kind: 'entity', id: actorId }, true)}
+        >
+          Inspect your character
         </Button>
         <Button
           size="sm"
           disabled={busy}
-          onPress={() => void read('ol_activity', { actorId }, setExtra)}
+          variant="quiet"
+          onPress={() =>
+            void read('ol_activity', { actorId }, (value) =>
+              setExtra({ title: 'Your character’s current work', value }),
+            )
+          }
         >
           Current work
         </Button>
         <Button
           size="sm"
           disabled={busy}
-          onPress={() => void read('ol_evidence', { actorId, limit: 10 }, setExtra)}
+          variant="quiet"
+          onPress={() =>
+            void read('ol_evidence', { actorId, limit: 10 }, (value) =>
+              setExtra({ title: 'Retained evidence for your character', value }),
+            )
+          }
         >
           Retained evidence
         </Button>
@@ -155,7 +217,15 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         </p>
       )}
       {busy && <p role="status">Reading current records…</p>}
-      <ul aria-label="World search results">
+      {searched && (
+        <p className="ol-caption">
+          {submitted ? `Results for “${submitted}”` : 'Records in the selected search scope'}
+        </p>
+      )}
+      {searched && !nodes.length && !busy && !error && (
+        <p role="status">No matching records on this search page. Try another name or ID.</p>
+      )}
+      <ul className="ol-inspection-list" aria-label="World search results">
         {nodes.map((node) => (
           <li key={key(node.ref)}>
             <Button
@@ -164,7 +234,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
               disabled={busy}
               onPress={() => {
                 setDirection('out');
-                inspect(node.ref);
+                inspect(node.ref, true);
               }}
             >
               {node.label}
@@ -180,11 +250,47 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       )}
       {root && page && (
         <>
+          <nav className="ol-inspection-breadcrumbs" aria-label="Inspection path">
+            {trail.map((entry, index) =>
+              index === trail.length - 1 ? (
+                <span key={key(entry.ref)} aria-current="page">
+                  {entry.label}
+                </span>
+              ) : (
+                <Button
+                  key={key(entry.ref)}
+                  size="sm"
+                  variant="quiet"
+                  disabled={busy}
+                  onPress={() => inspect(entry.ref)}
+                >
+                  {entry.label}
+                </Button>
+              ),
+            )}
+            {trail.length > 1 && (
+              <Button
+                size="sm"
+                variant="quiet"
+                disabled={busy}
+                onPress={() => {
+                  const prior = trail.at(-2);
+                  if (prior) inspect(prior.ref);
+                }}
+              >
+                Back one source
+              </Button>
+            )}
+          </nav>
           <h3>{inspection.node?.label ?? root.id}</h3>
           <p className="ol-caption">
             {root.kind} · {root.id} · version {root.version.slice(0, 12)}
           </p>
-          <div className="ol-agent-tools">
+          <div
+            className="ol-agent-tools ol-creator-views"
+            role="group"
+            aria-label="Source relationship controls"
+          >
             <Button
               size="sm"
               disabled={busy}
@@ -197,7 +303,8 @@ export function WorldInspection({ actorId }: { actorId: string }) {
                 size="sm"
                 key={value}
                 disabled={busy}
-                variant={direction === value ? 'primary' : 'quiet'}
+                variant="quiet"
+                aria-pressed={direction === value}
                 onPress={() => {
                   setDirection(value);
                   relationships(value);
@@ -236,7 +343,13 @@ export function WorldInspection({ actorId }: { actorId: string }) {
               <li key={text}>{text}</li>
             ))}
           </ul>
-          <ul aria-label="Relationships">
+          {!page.edges.length && (
+            <p>
+              No relationships are recorded in this projected page. This does not prove the subject
+              has no other relationships.
+            </p>
+          )}
+          <ul className="ol-inspection-list" aria-label="Relationships">
             {page.edges.map((edge) => {
               const target = key(edge.source) === key(root) ? edge.target : edge.source;
               const node = page.nodes.find((node) => key(node.ref) === key(target));
@@ -281,6 +394,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
           )}
           <details>
             <summary>Exact source record</summary>
+            <p className="ol-caption">Source revision: {root.version}</p>
             <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {JSON.stringify(inspection.data, null, 2)}
             </pre>
@@ -327,9 +441,9 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       )}
       {extra !== undefined && (
         <details open>
-          <summary>Current work / retained evidence</summary>
+          <summary>{extra.title}</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(extra, null, 2)}
+            {JSON.stringify(extra.value, null, 2)}
           </pre>
         </details>
       )}

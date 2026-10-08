@@ -19,13 +19,27 @@ export const AutoTextarea = forwardRef<
     const textarea = element.current;
     if (!textarea || typeof ResizeObserver === 'undefined') return;
     let width = textarea.clientWidth;
+    let frame: number | null = null;
     const observer = new ResizeObserver(() => {
       if (textarea.clientWidth === width) return;
       width = textarea.clientWidth;
-      resize(textarea);
+      if (frame !== null) {
+        cancelAnimationFrame(frame);
+        frame = null;
+      }
+      // Resizing the observed box during delivery produces a ResizeObserver loop.
+      // Keep hidden drafts intact, and measure once after this layout delivery finishes.
+      if (!width) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        resize(textarea);
+      });
     });
     observer.observe(textarea);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, []);
 
   return (

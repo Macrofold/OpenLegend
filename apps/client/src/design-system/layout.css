@@ -137,6 +137,74 @@ body,
 .ol-player-state {
   margin: 0 !important;
 }
+.ol-character-link.ol-btn {
+  padding: 0;
+  min-height: var(--control-md);
+  height: auto;
+  justify-content: space-between;
+  inline-size: 100%;
+  gap: var(--space-2);
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.2;
+  white-space: normal;
+  text-align: start;
+}
+.ol-survival-name {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+}
+.ol-character-link.ol-btn > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  inline-size: 100%;
+}
+.ol-current-work {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-start: var(--space-3);
+  margin-block-start: var(--space-3);
+  border-block-start: 1px solid var(--line);
+}
+.ol-current-work strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ol-current-work .ol-btn {
+  justify-self: start;
+}
+.ol-save-failure {
+  color: var(--danger);
+}
+.ol-save-failure .ol-btn {
+  display: block;
+  margin-block-start: var(--space-2);
+}
+.ol-subject-picking {
+  position: absolute;
+  inset-block-start: var(--hud-inset);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  inline-size: min(420px, calc(100% - 2 * var(--hud-inset)));
+  padding: var(--space-4);
+  z-index: calc(var(--z-sheet) + 1);
+}
+.ol-subject-picking > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.ol-hud[data-picking='true']
+  :is(.ol-clock-position, .ol-quick-position, .ol-launcher-rails, .ol-rail, .ol-top-tools) {
+  visibility: hidden;
+}
+.ol-hud[data-picking='true'] .ol-survival {
+  visibility: hidden;
+}
 .ol-clock-position {
   position: absolute;
   top: var(--hud-inset);
@@ -195,6 +263,9 @@ body,
   gap: var(--space-2);
   border-radius: var(--radius-md);
   background: var(--surface-glass);
+}
+.ol-launcher-rails {
+  display: contents;
 }
 .ol-rail {
   position: absolute;
@@ -725,7 +796,8 @@ body,
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-panel);
-  /* Expanded action details can reach the clock and active panel sheets. */
+  /* The shared picker also opens from full-height task sheets. It follows the
+   * docks in the HUD, above their contents and below the modal boundary. */
   z-index: calc(var(--z-sheet) + 1);
   display: flex;
   flex-direction: column;
@@ -850,12 +922,20 @@ body,
 .ol-fact {
   display: contents;
 }
+.ol-world-controls {
+  display: contents;
+}
 .ol-quick-position {
   position: absolute;
   left: 50%;
   bottom: var(--space-8);
   transform: translateX(-50%);
   z-index: var(--z-panel);
+}
+.ol-quick-position:has(.ol-shortcut-picker, .ol-quick-source, .ol-quick-reason) {
+  /* Lift the owner of these nonportaled controls above an expanded task sheet;
+   * raising a child alone cannot escape this transformed stacking context. */
+  z-index: calc(var(--z-sheet) + 1);
 }
 .ol-fps-counter {
   position: absolute;
@@ -1435,6 +1515,10 @@ body,
 .ol-hud[data-narrow='true'] {
   --hud-inset: var(--space-3);
   --status-scale: 0.72;
+  /* Keep Game and the open-task tabs above the sheet at enlarged text sizes. */
+  --sheet-top: calc(
+    var(--space-3) + var(--control-sm) + var(--space-2) + var(--control-md) + 2 * var(--space-1)
+  );
   --dock-top: max(230px, calc(var(--status-bottom) + var(--space-3) + 56px + var(--space-3)));
 }
 .ol-hud[data-narrow='true'] .ol-survival {
@@ -1507,18 +1591,9 @@ body,
 .ol-hud[data-narrow='true'] .ol-panel[data-workspace] {
   width: 100%;
 }
-.ol-hud[data-narrow='true']
-  .ol-dock:has(.ol-panel-slot:not([hidden]) > :is(.ol-panel[data-workspace], #composerPanel)) {
-  /* Conversations need the same readable sheet as Work, especially at enlarged text sizes. */
-  top: auto;
-  height: calc(100% - 70px);
-}
-.ol-hud[data-narrow='true']:has(
-    .ol-panel-slot:not([hidden]) > :is(.ol-panel[data-workspace], #composerPanel)
-  )
-  .ol-mobile-tabs {
-  top: auto;
-  bottom: calc(100% - 70px);
+/* Both workspace widths use the same narrow sheet. Keep its Close control visible. */
+.ol-hud[data-narrow='true'] .ol-panel-expand {
+  display: none;
 }
 .ol-hud[data-narrow='true'] .ol-mobile-tabs {
   position: absolute;
@@ -2752,14 +2827,6 @@ body,
   font-size: 16px;
   line-height: 20px;
 }
-.ol-hud[data-narrow='true'] .ol-dock:has(.ol-panel-slot:not([hidden]) > #composerPanel) {
-  top: auto;
-  height: calc(100% - 70px);
-}
-.ol-hud[data-narrow='true']:has(.ol-panel-slot:not([hidden]) > #composerPanel) .ol-mobile-tabs {
-  top: auto;
-  bottom: calc(100% - 70px);
-}
 
 /* Conversation is an explicit reading task: give it useful height instead of
  * forcing the transcript into the gap below the condition card. */
@@ -2820,13 +2887,6 @@ body,
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera > :not(.ol-range-toggle) {
   display: none;
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
-  bottom: calc(var(--control-md) + 2 * var(--space-3));
-}
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock:has(.ol-panel[data-workspace]),
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock:has(#composerPanel) {
-  height: calc(100% - 70px - var(--control-md) - 2 * var(--space-3));
-}
 .ol-perception-hint {
   position: fixed;
   max-width: min(360px, calc(100vw - 16px));
@@ -2844,24 +2904,68 @@ body,
   }
 }
 
-.ol-hud[data-narrow='true']:not([data-tight='true']):not(
-    :has(.ol-panel-slot:not([hidden]) > #composerPanel)
-  ):not(:has(.ol-panel[data-workspace]))
-  .ol-mobile-tabs {
-  bottom: calc(55% + var(--control-md) + 2 * var(--space-3));
-}
-
 /* Focusing a clipped descendant must never scroll the entire game viewport. */
 #app {
   overflow: clip;
 }
-.ol-hud[data-tight='true']:has(.ol-mobile-tabs) .ol-dock {
-  top: auto;
-  height: calc(100% - 70px - var(--control-md) - 2 * var(--space-3));
+/* A narrow sheet reserves one scrolling launcher strip and the open-task tabs.
+   They share the sheet's geometry instead of sitting behind its reading area. */
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) {
+  --sheet-tabs-space: calc(var(--control-md) + 2 * var(--space-1));
+  --sheet-top: calc(
+    var(--space-3) + var(--control-sm) + var(--space-2) + var(--control-md) + 2 * var(--space-1) +
+      var(--sheet-tabs-space)
+  );
 }
-.ol-hud[data-tight='true']:has(.ol-mobile-tabs) .ol-mobile-tabs {
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs[data-single='true']) {
+  --sheet-tabs-space: 0px;
+}
+.ol-hud[data-narrow='true'] .ol-mobile-tabs[data-single='true'] {
+  display: none;
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-top-tools {
+  flex-direction: row;
+}
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs)) .ol-launcher-rails {
+  position: absolute;
+  top: calc(var(--space-3) + var(--control-sm) + var(--space-2));
+  left: var(--hud-inset);
+  right: var(--hud-inset);
+  display: flex;
+  gap: var(--space-2);
+  min-height: var(--control-md);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  pointer-events: auto;
+  z-index: var(--z-sheet);
+}
+.ol-hud[data-tight='true']:not(:has(.ol-mobile-tabs)) .ol-launcher-rails {
+  top: var(--dock-top);
+}
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs)) .ol-rail {
+  position: static;
+  flex: none;
+  flex-direction: row;
+  gap: var(--space-1);
+}
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs)) .ol-launcher {
+  flex: none;
+  width: var(--control-md);
+  height: var(--control-md);
+}
+/* Keep the shared focus ring inside the horizontal strip's clipping edges. */
+.ol-hud[data-narrow='true']:is([data-tight='true'], :has(.ol-mobile-tabs))
+  .ol-launcher:focus-visible {
+  outline-offset: -2px;
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
+  top: var(--sheet-top);
+  bottom: calc(var(--control-md) + 2 * var(--space-3));
+  height: calc(100% - var(--sheet-top) - var(--control-md) - 2 * var(--space-3));
+}
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-mobile-tabs {
   top: auto;
-  bottom: calc(100% - 70px);
+  bottom: calc(100% - var(--sheet-top));
 }
 
 @media (max-height: 600px) {
@@ -2877,13 +2981,73 @@ body,
 .ol-hud[data-narrow='true'] .ol-clock-position {
   transform: none;
 }
-.ol-hud[data-narrow='true']:not([data-tight='true']):not(:has(.ol-mobile-tabs)) .ol-camera {
-  right: calc(2 * var(--space-3) + var(--control-md));
+/* Closed narrow views share one bounded lower region. Scrolling keeps every
+ * camera/shortcut control reachable when the short viewport cannot show them all. */
+.ol-world-controls[data-bounded] {
+  position: absolute;
+  inset-inline: calc(var(--hud-inset) + var(--control-md) + var(--space-2));
+  bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-inline-size: 460px;
+  margin-inline: auto;
+  max-block-size: max(
+    calc(var(--control-sm) + 2 * var(--space-1)),
+    calc(100% - var(--dock-top) - var(--control-md) - 2 * var(--space-3))
+  );
+  min-block-size: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  pointer-events: auto;
+  z-index: var(--z-panel);
 }
-@media (max-width: 720px) {
-  .ol-hud[data-narrow='true']:not([data-tight='true']):not(:has(.ol-mobile-tabs)) .ol-camera {
-    bottom: calc(var(--control-md) + 3 * var(--space-3));
-  }
+.ol-hud[data-tight='true'] .ol-world-controls[data-bounded] {
+  inset-inline: var(--hud-inset);
+}
+.ol-hud[data-picking='true'] .ol-world-controls[data-bounded] > .ol-quick-position {
+  display: none;
+}
+.ol-world-controls[data-bounded] > :is(.ol-quick-position, .ol-camera) {
+  position: static;
+  flex: none;
+  inline-size: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
+  transform: none;
+}
+.ol-world-controls[data-bounded] .ol-camera {
+  grid-template-columns: repeat(6, minmax(var(--control-sm), 1fr));
+}
+.ol-world-controls[data-bounded] .ol-qabar {
+  display: flex;
+  inline-size: 100%;
+  box-sizing: border-box;
+  align-items: start;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: var(--space-1);
+}
+.ol-world-controls[data-bounded] :is(.ol-qa-section, .ol-qadivider) {
+  flex: none;
+}
+.ol-world-controls[data-bounded] .ol-qa-wrap {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+.ol-world-controls[data-bounded] .ol-qa-edit {
+  position: static;
+  opacity: 1;
+}
+.ol-world-controls[data-bounded] :is(.ol-shortcut-picker, .ol-quick-source, .ol-quick-reason) {
+  position: static;
+  inset: auto;
+  translate: none;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  max-block-size: none;
+  box-sizing: border-box;
 }
 
 /* Family inspection is a modal creator task with its own bounded reading area. */

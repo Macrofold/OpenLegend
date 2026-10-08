@@ -2,6 +2,12 @@
 
 [Handbook](README.md) · [React](react.md) · [Verification](verification.md)
 
+## Start with the player's interaction
+
+For ordinary play, first identify the world object and immediate intention. Opening a chest, moving a stack, using an item or choosing a known recipe should not become a form because the native command has parameters. Context supplies already-known values; the interface asks only for consequential unresolved choices. Grids, direct item actions, short object menus and a small requested quantity control are the preferred interaction for inventory. [Object-opened inventory](inventory.md#open-the-object-and-keep-both-inventories-visible) · [Activity design](world-interaction.md#object-opening-and-contextual-activity)
+
+The control guidance below applies after that interaction is chosen. A well-built combobox cannot make a routine nearby-container selector the right game flow. Forms remain appropriate for explicit settings, creator editing and genuinely complex decisions. They are not the default presentation of gameplay capability schemas. [Screenshot-backed research](research.md#game-interface-screenshot-atlas)
+
 ## Choose the semantic control first
 
 | Player intent                                   | Preferred pattern                                                                            | Avoid                                                                   |
@@ -55,6 +61,12 @@ Do not make focused, highlighted, selected and saved visually or semantically in
 Announce results/loading without reading every keystroke. Distinguish no matches from unavailable search. Restart on scope changes, ignore stale completions, deduplicate pages by ID and prevent selecting stale results. Current [SubjectPicker](../../apps/client/src/ui/subject-picker.tsx) already implements several protections; preserve them.
 
 Use only permitted names/facts; do not broaden scope to obtain a nicer label. Preserve the eight-visible-row leaf-picker convention where applicable without turning it into a total-result cap. Results can scroll and the popup can flip/clamp, stay anchored and avoid scrolling the world. Follow APG and the installed React Aria implementation, not the latest upstream code blindly. [F07](research.md#f07) [F08](research.md#f08)
+
+## Text composition and game shortcuts
+
+**IME** means **input method editor**: a writing system that composes characters, for example by letting someone type a pronunciation and select Chinese or Japanese text. Enter may confirm that composition instead of sending a message. Composition keys belong to text entry, not movement, numbered actions or parent-form submission. [MDN describes composition sessions](https://developer.mozilla.org/en-US/docs/Web/API/Element/compositionstart_event) and the [`isComposing` state](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/isComposing).
+
+Native IME qualification means using the actual operating-system input method through a complete chat/search/editor task, including candidate confirmation and cancellation. Simulated insertion and ordinary keyboard tests cannot certify it. Keep that unrun evidence separate from the existence of a composition guard. The same task must retain its draft, recipient/subject and focus while composing; [J47](../projects/game-interaction-redesign-feature-spec.md#whole-interface-journeys) includes this broader input work.
 
 ## Clear-X: explicit, quiet and singular
 

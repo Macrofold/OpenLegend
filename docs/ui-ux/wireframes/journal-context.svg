@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1020" viewBox="0 0 1400 1020" role="img" aria-labelledby="title desc">
+<title id="title">Journal, history and known context — Design proposal — not runtime evidence</title>
+<desc id="desc">03 · A readable record of this character’s experience, without an omniscient quest log. Original Open Legend proposal. All values and names are illustrative. This is a static diagram.</desc>
+<rect x="0" y="0" width="1400" height="1020" rx="0" fill="#0b1916" stroke="none" stroke-width="1"/>
+<text x="32" y="35" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">OPEN LEGEND  /  Design proposal — not runtime evidence</text>
+<text x="32" y="81" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="32" font-weight="700">Journal, history and known context</text>
+<text x="32" y="116" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="400">03 · A readable record of this character’s experience, without an omniscient quest log.</text>
+<rect x="28" y="146" width="1344" height="668" rx="8" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<rect x="52" y="171" width="1294" height="616" rx="8" fill="#142820" stroke="#385348" stroke-width="1"/>
+<text x="76" y="209" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="28" font-weight="700">Mike’s journal</text>
+<text x="76" y="235" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">The first clearing</text>
+<rect x="1200" y="186" width="122" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1214" y="212.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Close</text>
+<rect x="76" y="259" width="126" height="38" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="89" y="284" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Story</text>
+<rect x="210" y="259" width="139" height="38" rx="5" fill="#142820" stroke="#d1b675" stroke-width="1"/>
+<text x="223" y="284" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="700">Promises</text>
+<rect x="357" y="259" width="142" height="38" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="370" y="284" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Memories</text>
+<rect x="507" y="259" width="190" height="38" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="520" y="284" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Perceived events</text>
+<line x1="76" y1="320" x2="1322" y2="320" stroke="#385348" stroke-width="1"/>
+<rect x="76" y="342" width="393" height="349" rx="8" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="96" y="375" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="700">Your spoken promises</text>
+<text x="96" y="402" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Shown as recorded; read-only here.</text>
+<rect x="93" y="426" width="359" height="87" rx="8" fill="#2a3a2c" stroke="#d1b675" stroke-width="1"/>
+<text x="109" y="454" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="700">Bring wood to Ada</text>
+<text x="109" y="480" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Open · Due before dusk</text>
+<text x="109" y="500" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="400">Day 1 · You spoke this promise</text>
+<text x="109" y="555" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="400">Return the borrowed cup</text>
+<text x="109" y="582" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Completed · Day 1, 07:40</text>
+<text x="109" y="638" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">2 shown · Load older promises</text>
+<text x="500" y="378" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="25" font-weight="700">Bring wood to Ada</text>
+<rect x="500" y="395" width="115" height="27" rx="13" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="511" y="414" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="400">Open promise</text>
+<text x="500" y="456" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="23" font-weight="400">“I will bring you wood before dusk.”</text>
+<text x="500" y="489" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Spoken by you to Ada · Day 1, 08:02</text>
+<line x1="500" y1="520" x2="1322" y2="520" stroke="#385348" stroke-width="1"/>
+<text x="500" y="553" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="700">Terms</text>
+<text x="500" y="583" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">Bring wood to Ada before dusk.</text>
+<text x="500" y="628" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="700">Recorded evidence</text>
+<text x="500" y="656" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">No completion has been recorded. This is a remembered commitment, not a</text>
+<text x="500" y="679" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">command to begin moving.</text>
+<rect x="984" y="348" width="338" height="104" rx="8" fill="#142820" stroke="#385348" stroke-width="1"/>
+<text x="1004" y="379" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="700">Related context</text>
+<text x="1004" y="408" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Ada · A person known to Mike</text>
+<text x="1004" y="433" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Open known relationship</text>
+<line x1="76" y1="716" x2="1322" y2="716" stroke="#385348" stroke-width="1"/>
+<text x="76" y="748" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">History stays where you were reading.</text>
+<rect x="817" y="731" width="227" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="831" y="757.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Refresh recorded status</text>
+<rect x="1060" y="731" width="262" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1074" y="757.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Return to conversation</text>
+<text x="32" y="848" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="700">DESIGN NOTES  /  Outside the proposed game interface</text>
+<text x="32" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">Keep evidence types distinct</text>
+<text x="32" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Promises, personal story, memories and</text>
+<text x="32" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">perceived events remain named views. A promise</text>
+<text x="32" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">is not a new quest system or editable</text>
+<text x="32" y="972" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">objective.</text>
+<text x="482" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">Known does not mean located</text>
+<text x="482" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Related context uses the character’s permitted</text>
+<text x="482" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">knowledge. No hidden thoughts, global family</text>
+<text x="482" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">tree or off-screen current position is</text>
+<text x="482" y="972" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">inferred.</text>
+<text x="932" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">Reading must survive updates</text>
+<text x="932" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Refresh, older records and scoped search keep</text>
+<text x="932" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">position and selection. New content does not</text>
+<text x="932" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">silently jump the reader to the end.</text>
+<text x="32" y="998" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Static proposal • Illustrative content • Native permissions, world rules and saved results remain authoritative</text>
+</svg>

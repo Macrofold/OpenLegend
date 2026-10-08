@@ -217,6 +217,7 @@ export function FamilyEditor({
             <div>
               <Tag tone="highlight">God mode</Tag>
               <h2 className="ol-heading">{view?.policy.title ?? title}</h2>
+              {view && <p className="ol-caption">Recorded family of {view.actor.label}</p>}
             </div>
             <Button variant="quiet" disabled={busy} onPress={close}>
               Close
@@ -225,6 +226,16 @@ export function FamilyEditor({
           <div className="ol-family-body">
             {view && (
               <>
+                {focus !== actorId && (
+                  <Button
+                    variant="quiet"
+                    size="sm"
+                    disabled={locked || loading}
+                    onPress={() => navigate(actorId)}
+                  >
+                    Return to the original person
+                  </Button>
+                )}
                 <p>{view.policy.guidance}</p>
                 <FamilyPersonPicker
                   onOpenChange={setPickerOpen}
@@ -247,6 +258,7 @@ export function FamilyEditor({
                 />
                 {parent && (
                   <div className="ol-family-confirm">
+                    <p className="ol-caption">Proposed relationship · not saved</p>
                     <p>{view.preview ?? 'Loading preview…'}</p>
                     <Button
                       variant="primary"

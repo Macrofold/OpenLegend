@@ -17,6 +17,15 @@ export function useChatHistory(
   const [openingRevision, setOpeningRevision] = useState(0);
   const [error, setError] = useState('');
   const request = useRef(0);
+  const lifetime = useRef({ key, alive: true, visible });
+  lifetime.current.key = key;
+  lifetime.current.visible = visible;
+  useEffect(() => {
+    lifetime.current.alive = true;
+    return () => {
+      lifetime.current.alive = false;
+    };
+  }, []);
   const busy = useRef(false);
   const openingPending = useRef(false);
   const historyRevision = useRef(view.historyRevision);
@@ -24,7 +33,14 @@ export function useChatHistory(
   const latestPage = useRef(page);
   latestPage.current = page;
   async function load(older = false) {
-    if (!participantId || busy.current) return;
+    if (
+      !lifetime.current.alive ||
+      !lifetime.current.visible ||
+      lifetime.current.key !== key ||
+      !participantId ||
+      busy.current
+    )
+      return;
     const generation = ++request.current;
     busy.current = true;
     setLoading(true);
@@ -78,7 +94,7 @@ export function useChatHistory(
     busy.current = false;
     setError('');
     setLoading(false);
-    openingPending.current = visible && !!participantId;
+    openingPending.current = visible && !!participantId && !latestPage.current;
     if (!visible || !participantId) return;
     historyRevision.current = view.historyRevision;
     void load();

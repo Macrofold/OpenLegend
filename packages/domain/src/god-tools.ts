@@ -42,7 +42,7 @@ import type {
   Entity,
   GodPersonEdit,
   GodPersonEditorDraft,
-  GodSpawnDraft,
+  GodSpawnRequest,
   MemoryRecord,
   Transition,
   WorldEvent,
@@ -56,7 +56,18 @@ function reject(world: WorldState, code: string, message: string): Transition {
   return { world, events: [], outcome: outcome(false, code, message) };
 }
 
-export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Transition {
+export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest): Transition {
+  if (!isSafeRecordId(request.id))
+    return reject(original, 'identity', 'This creation request is invalid.');
+  const { id, ...draft } = request;
+  const digest = canonicalJson({ operation: 'spawn', draft });
+  const previous = getOwn(original.commandReceipts, id);
+  // Recover before mutable admission: the first creation now occupies this position.
+  // docs/projects/game-interaction-redesign-tech-design.md#recover-item-person-and-environment-creation
+  if (previous)
+    return previous.digest === digest
+      ? { world: original, events: [], outcome: previous.outcome }
+      : reject(original, 'identity', 'That request identity was already used.');
   if (!GOD_SPAWN_OPTIONS.some((option) => option.id === draft.type))
     return reject(original, 'unsupported', 'That object type cannot be added.');
   if (
@@ -135,11 +146,12 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
   // Admission owns initial conditions: a newly created hungry person gets one 'initial'
   // notice now, not a fabricated crossing at the next step (EPR04).
   reconcileConditions(world, entity, events);
-  return finish(
-    world,
-    events,
-    outcome(true, 'spawned', `${namePhrase(entity, 'definite', { capitalize: true })} added.`),
-  );
+  const result = {
+    ...outcome(true, 'spawned', `${namePhrase(entity, 'definite', { capitalize: true })} added.`),
+    entityId: entity.id,
+  };
+  world.commandReceipts[id] = { digest, outcome: result };
+  return finish(world, events, result);
 }
 
 export function reviveActor(

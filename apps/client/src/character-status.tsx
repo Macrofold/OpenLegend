@@ -31,6 +31,7 @@ export class CharacterStatuses {
   private previous: GameView | null = null;
   private seen = new Set<string>();
   private activityId: string | null = null;
+  private destroyed = false;
   private dirty = false;
   private project?: (id: string) => { x: number; y: number } | null;
   private anchors = new Map<string, { id: string; node: HTMLDivElement; offset: number }>();
@@ -46,6 +47,7 @@ export class CharacterStatuses {
     this.root = createRoot(this.layer);
   }
   upsert(entityId: string, statusId: string, status: StatusPresentation) {
+    if (this.destroyed) return;
     if (!status.text.trim()) return;
     if (status.progress !== undefined && status.progress >= 1) {
       this.remove(entityId, statusId);
@@ -116,6 +118,7 @@ export class CharacterStatuses {
   }
 
   observe(view: GameView): void {
+    if (this.destroyed) return;
     const previous = this.previous;
     this.previous = view;
     // A control, timeline or history change starts a new baseline so old events are not
@@ -296,6 +299,7 @@ export class CharacterStatuses {
     return Math.min(t.duration, t.elapsed + (Math.max(0, now - t.at) / 1000) * t.rate);
   }
   update(project: (id: string) => { x: number; y: number } | null) {
+    if (this.destroyed) return;
     this.project = project;
     const now = performance.now();
     for (const [id, q] of this.queues) {
@@ -322,6 +326,7 @@ export class CharacterStatuses {
     this.paint(now);
   }
   private anchor(key: string, id: string, node: HTMLDivElement | null, offset = 0) {
+    if (this.destroyed && node) return;
     if (node) {
       this.anchors.set(key, { id, node, offset });
       this.place(node, this.project?.(id) ?? null, offset);
@@ -442,10 +447,17 @@ export class CharacterStatuses {
     this.deltas.clear();
   }
   destroy() {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.layer.remove();
     this.clear();
-    this.root.unmount();
+    this.previous = null;
+    this.seen.clear();
+    this.project = undefined;
     this.anchors.clear();
     this.projected.clear();
-    this.layer.remove();
+    // Scene teardown can run during the parent React root's cleanup. Remove the
+    // private layer now, then release its nested root after that commit finishes.
+    queueMicrotask(() => this.root.unmount());
   }
 }

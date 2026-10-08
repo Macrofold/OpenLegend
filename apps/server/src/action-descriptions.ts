@@ -12,6 +12,7 @@ import { BASE_DEATH_COMMAND_DESCRIPTIONS } from '@open-legend/domain';
 import { consumptionDescription } from './body-services.js';
 import {
   BASE_FIRE_CARE,
+  BASE_ACTION_DESCRIPTIONS,
   fireFuelDescription,
   gatheringYield,
   NATIVE_ITEMS,
@@ -50,30 +51,19 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   follow:
     'Follow a currently perceived actor, stopping when the target is lost or the activity is interrupted. No attack or stealth is implied.',
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',
-  gather:
-    'Approach a resource and collect a small batch into your inventory. Supplies at each source are finite.',
-  prepare: 'Turn gathered plant material into usable fibers or cord for crafting.',
-  craft:
-    'Make an item using a technique you know. Materials are consumed when work begins and are not refunded if you stop.',
-  equip:
-    'Select one individual tool from your inventory. A ranged tool needs compatible ammunition before you can fire.',
+  ...BASE_ACTION_DESCRIPTIONS,
   strike:
     'Approach the target and perform one strike. Damage requires a living target in range with a clear line of effect at impact.',
-  hunt: 'Approach a living animal and attempt one shot with your equipped ranged tool. Each attempt consumes ammunition and can miss. A killed animal leaves harvestable remains.',
-  harvest:
-    'Use a cutting point to collect the remaining materials from animal remains. Each set of remains can be harvested once.',
-  cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',
   handover:
     'Offer carried items to a person within reach, or accept, decline or withdraw an offer. Nothing changes hands unless the recipient accepts; an unanswered offer expires.',
-  'tend-fire':
-    'Light a campfire that has fuel laid, add one piece of carried fuel, or put it out. Materials are used only when the work finishes; unburnt fuel stays in a fire that is put out.',
   eat: 'Consume one accessible portion through the installed body service.',
   replenish:
     'Approach a compatible supply and transfer its finite resource into your reservoir over time. Stopping keeps only the amount already transferred.',
   'status-effect': 'Activate or end an applicable state on the selected target.',
   'inspect-inventory':
     'Inspect a bounded page of your own possessions or one selected reachable container; further pages require another explicit request and current access.',
-  cancel: 'Stop your current movement or work. Materials already consumed are not returned.',
+  cancel:
+    'Stop all current and paused work. Completed effects remain; materials already consumed are not returned.',
   recover:
     'Use the installed recovery service. Your current action ends; world history is retained.',
   teach:

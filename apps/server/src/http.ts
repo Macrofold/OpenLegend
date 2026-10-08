@@ -79,7 +79,12 @@ import { WorldService, commandInputSchema, requestIdSchema } from './world-servi
 import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
-import { containerPage, inventoryDestinationPage, objectHistoryPage } from './inventory-view.js';
+import {
+  containerPage,
+  inventoryAccess,
+  inventoryDestinationPage,
+  objectHistoryPage,
+} from './inventory-view.js';
 import { activityRequests, activityStatus, activityChoicePage } from './activity-requests.js';
 
 const clientId = z
@@ -1472,9 +1477,10 @@ async function initializeGameServer(
                 catalogue: actionCatalogue(service, context, scope),
               });
             }
-            case '/api/activity-requests':
-              z.object({}).strict().parse(body);
-              return send(response, 200, activityRequests(service, scope));
+            case '/api/activity-requests': {
+              const value = z.object({ targetId: requestIdSchema.optional() }).strict().parse(body);
+              return send(response, 200, activityRequests(service, scope, value.targetId));
+            }
             case '/api/activity-choices': {
               const value = z
                 .object({
@@ -1540,6 +1546,13 @@ async function initializeGameServer(
                 .parse(body);
               return send(response, 200, containerPage(service, scope, value));
             }
+            case '/api/inventory/access': {
+              const value = z
+                .object({ containerId: requestIdSchema, approach: z.boolean().optional() })
+                .strict()
+                .parse(body);
+              return send(response, 200, inventoryAccess(service, scope, value));
+            }
             case '/api/inventory/destinations': {
               const value = z
                 .object({
@@ -1585,6 +1598,19 @@ async function initializeGameServer(
                     value.commandEpoch,
                     scope,
                   ),
+                ),
+              );
+            }
+            case '/api/command/receipt': {
+              const value = command.required({ commandEpoch: true }).parse(body);
+              return send(
+                response,
+                200,
+                await service.commandReceipt(
+                  value.commandId,
+                  value.command,
+                  value.commandEpoch,
+                  scope,
                 ),
               );
             }
@@ -1802,27 +1828,37 @@ async function initializeGameServer(
             case '/api/god/spawn': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
-              const value = z.object({ type: godSpawnType, position }).strict().parse(body);
-              return send(response, 200, await service.spawn(value));
+              const value = z
+                .object({ id: requestIdSchema, type: godSpawnType, position })
+                .strict()
+                .parse(body);
+              return send(response, 200, await service.spawn(value, scope));
             }
             case '/api/god/person': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
-              const value = godPerson.extend({ position }).strict().parse(body);
+              const value = godPerson
+                .extend({ id: requestIdSchema, position })
+                .strict()
+                .parse(body);
               return send(
                 response,
                 200,
-                await service.spawn({
-                  type: 'person',
-                  position: value.position,
-                  person: {
-                    name: value.name,
-                    personality: value.personality,
-                    backstory: value.backstory,
-                    traitIds: value.traitIds,
-                    initialGoals: value.initialGoals,
+                await service.spawn(
+                  {
+                    id: value.id,
+                    type: 'person',
+                    position: value.position,
+                    person: {
+                      name: value.name,
+                      personality: value.personality,
+                      backstory: value.backstory,
+                      traitIds: value.traitIds,
+                      initialGoals: value.initialGoals,
+                    },
                   },
-                }),
+                  scope,
+                ),
               );
             }
             case '/api/god/editor/attributes': {

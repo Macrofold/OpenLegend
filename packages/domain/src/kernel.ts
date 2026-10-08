@@ -1900,6 +1900,11 @@ function executeCommandNative(
         break;
       }
       case 'cancel': {
+        if (
+          command.expectedActionId !== undefined &&
+          component.action?.id !== command.expectedActionId
+        )
+          return reject('stale-action', 'That action has ended or been replaced.');
         interruptStatusEffects(world, actor, events, 'voluntary');
         if (component.action?.type === 'status-effect')
           return reject('cannot-interrupt', 'This state does not allow voluntary interruption.');
@@ -2107,6 +2112,7 @@ function executeCommandNative(
         outcome(false, 'cancelled', 'Replaced by newly chosen work; committed effects remain.'),
       );
     component.action = action;
+    result = { ...result, actionId: action.id };
     if (experience && action.stage === 'approaching')
       experience.view.children = [
         {

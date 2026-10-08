@@ -154,6 +154,18 @@ export const privateDraftScopeKey = (scope: RequestScope) => {
   } = scope;
   return hash(JSON.stringify(privateScope));
 };
+/** Receipt recovery survives reconnect and control replacement, but retains every private
+ * access boundary. These fields identify retained requests; they grant no request authority. */
+export const commandRecoveryFields = (scope: RequestScope) => {
+  const {
+    connectionId: _connectionId,
+    controlGeneration: _controlGeneration,
+    ...privateScope
+  } = scope;
+  return privateScope;
+};
+export const commandRecoveryScopeKey = (scope: RequestScope) =>
+  hash(JSON.stringify(commandRecoveryFields(scope)));
 const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
 
 /** Current authority is deliberately outside WorldRecords and every gameplay save.

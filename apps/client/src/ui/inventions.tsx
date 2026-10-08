@@ -78,6 +78,8 @@ export function Inventions({
     saveForm(next);
   }
   const [requests, setRequests] = useState<InventionRequestView[]>([]);
+  const [view, setView] = useState<'idea' | 'recipes' | 'history'>('idea');
+  const focusIdea = useRef(false);
   const [next, setNext] = useState<InventionHistory['next']>();
   const [pending, setPending] = useState(false),
     [error, setError] = useState('');
@@ -90,13 +92,21 @@ export function Inventions({
   const dismissed = useRef(new Set<string>());
   const composer = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    if (seed && seed.id !== formRef.current.seedId)
+    if (visible && view === 'idea' && focusIdea.current) {
+      focusIdea.current = false;
+      composer.current?.focus();
+    }
+  }, [view, visible]);
+  useEffect(() => {
+    if (seed && seed.id !== formRef.current.seedId) {
+      setView('idea');
       setForm({
         text: seed.text,
         requestId: crypto.randomUUID(),
         conversationId: seed.id,
         seedId: seed.id,
       });
+    }
   }, [seed]);
   useEffect(() => {
     if (!visible) return;
@@ -150,7 +160,7 @@ export function Inventions({
       });
       if (!result.ok && !result.jobId) throw new Error(result.message);
       // A late response may clear only the submitted draft, never a newly opened request.
-      if (formRef.current.requestId === submission.requestId)
+      if (formRef.current.requestId === submission.requestId) {
         setForm({
           ...formRef.current,
           text: '',
@@ -158,6 +168,8 @@ export function Inventions({
           continuation: undefined,
           requestId: crypto.randomUUID(),
         });
+        setView('history');
+      }
       if (submission.continuation) dismissed.current.add(submission.continuation.parentId);
       setChoiceId(undefined);
       setRefresh((value) => value + 1);
@@ -197,8 +209,13 @@ export function Inventions({
     setChoiceId(undefined);
     if (['reuse', 'new', 'search', 'apply'].includes(action)) void submit(draft);
     else {
-      composer.current?.focus();
-      composer.current?.scrollIntoView({ block: 'nearest' });
+      focusIdea.current = true;
+      setView('idea');
+      if (view === 'idea') {
+        focusIdea.current = false;
+        composer.current?.focus();
+        composer.current?.scrollIntoView({ block: 'nearest' });
+      }
     }
   }
   async function older() {
@@ -219,14 +236,33 @@ export function Inventions({
     (request) => request.id === choiceId && !request.continuedBy && request.currentTimeline,
   );
   return (
-    <div className="ol-inventions">
-      <p>
-        Describe an invention and its materials. The installed world determines which techniques are
-        supported. Learning a recipe makes its technique available; crafting still consumes
-        materials and time.
-      </p>
-      <section aria-label="Learned recipes">
+    <div className="ol-inventions ol-player-workshop">
+      <nav className="ol-creator-views" aria-label="Your workshop views">
+        <Button variant="quiet" aria-pressed={view === 'idea'} onPress={() => setView('idea')}>
+          New idea
+        </Button>
+        <Button
+          variant="quiet"
+          aria-pressed={view === 'recipes'}
+          onPress={() => setView('recipes')}
+        >
+          Learned recipes · {recipes.length}
+        </Button>
+        <Button
+          variant="quiet"
+          aria-pressed={view === 'history'}
+          onPress={() => setView('history')}
+        >
+          Saved requests
+        </Button>
+      </nav>
+      {error && <p role="alert">{error}</p>}
+      <section hidden={view !== 'recipes'} className="ol-creator-page" aria-label="Learned recipes">
         <h3>Learned recipes</h3>
+        <p className="ol-caption">
+          A learned technique is available to this character. Crafting still uses the required
+          materials and time.
+        </p>
         {recipes.length ? (
           recipes.map((recipe) => (
             <LearnedRecipeCard
@@ -240,244 +276,279 @@ export function Inventions({
           <p>No recipes known by this character yet.</p>
         )}
       </section>
-      <label>
-        <input
-          type="checkbox"
-          checked={form.mode === 'workshop'}
-          disabled={pending || form.continuation?.action === 'apply'}
-          onChange={(event) =>
-            setForm({
-              ...formRef.current,
-              mode: event.target.checked ? 'workshop' : undefined,
-              requestId: crypto.randomUUID(),
-            })
-          }
-        />
-        Review in workshop before installing
-      </label>
-      <p className="ol-caption">
-        Workshop can inspect known recipes and supported systems, explain limitations and prepare a
-        saved draft. Apply is a separate action; existing objects never change automatically.
-      </p>
-      <Button
-        size="sm"
-        variant="quiet"
-        onPress={async () => {
-          try {
-            const response = await post<{
-              ok: boolean;
-              message?: string;
-              result: { families: Array<{ id: string; description: string; limitation: string }> };
-            }>('/api/world-agent/tools', {
-              worldId,
-              tool: { operation: 'catalogue', recipeId: null, candidateJson: null, offset: 0 },
-            });
-            if (!response.ok) throw new Error(response.message);
-            setCatalogue(response.result.families);
-          } catch (error) {
-            setError(String(error));
-          }
-        }}
+      <section
+        hidden={view !== 'idea'}
+        className="ol-creator-page"
+        aria-label="Develop an invention"
       >
-        What can I build?
-      </Button>
-      {catalogue && (
-        <div>
-          <p>You can currently make:</p>
-          {catalogue.map((family) => (
-            <p key={family.id}>
-              <strong>{family.description}</strong> {family.limitation}
-            </p>
-          ))}
-        </div>
-      )}
-      {form.continuation && (
-        <p>
-          Follow-up:{' '}
-          {form.continuation.action === 'modify'
-            ? 'describe the changes to the selected technique'
-            : 'revise the purpose and method below'}
-          . The earlier proposal stays saved.
+        {form.continuation && (
+          <p>
+            Follow-up:{' '}
+            {form.continuation.action === 'modify'
+              ? 'describe the changes to the selected technique'
+              : 'revise the purpose and method'}
+            . The earlier proposal stays saved.
+          </p>
+        )}
+        <label>
+          What would you like to make?
+          <textarea
+            ref={composer}
+            rows={3}
+            aria-label="Invention request"
+            value={form.text}
+            maxLength={2000}
+            disabled={pending}
+            placeholder="Describe what it should do and any materials you have in mind…"
+            onChange={(event) =>
+              setForm({
+                ...formRef.current,
+                text: event.target.value,
+                requestId: crypto.randomUUID(),
+              })
+            }
+          />
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.mode === 'workshop'}
+            disabled={pending || form.continuation?.action === 'apply'}
+            onChange={(event) =>
+              setForm({
+                ...formRef.current,
+                mode: event.target.checked ? 'workshop' : undefined,
+                requestId: crypto.randomUUID(),
+              })
+            }
+          />
+          Review in workshop before installing
+        </label>
+        <p className="ol-caption">
+          {form.mode === 'workshop'
+            ? 'Keep a saved proposal for review. Apply installs it when you choose.'
+            : 'A supported recipe may be learned from this request. Crafting comes later.'}
         </p>
-      )}
-      <label>
-        Invention request
-        <textarea
-          ref={composer}
-          rows={4}
-          aria-label="Invention request"
-          value={form.text}
-          maxLength={2000}
-          disabled={pending}
-          onChange={(event) =>
-            setForm({
-              ...formRef.current,
-              text: event.target.value,
-              requestId: crypto.randomUUID(),
-            })
-          }
-        />
-      </label>
-      <details>
-        <summary>Supply a complete proposal</summary>
-        <p>
-          A supplied proposal is validated exactly as written, without paid rewriting. Leave empty
-          to describe an invention normally.
-        </p>
-        <textarea
-          aria-label="Complete invention proposal JSON"
-          rows={6}
-          value={form.candidateJson ?? ''}
-          disabled={pending}
-          maxLength={12000}
-          onChange={(event) =>
-            setForm({
-              ...formRef.current,
-              candidateJson: event.target.value,
-              requestId: crypto.randomUUID(),
-            })
-          }
-        />
-      </details>
-      <Button onPress={() => void submit()} isDisabled={pending || !form.text.trim()}>
-        {form.continuation
-          ? 'Send follow-up'
-          : form.mode === 'workshop'
-            ? 'Prepare workshop draft'
-            : 'Request invention'}
-      </Button>
-      {form.continuation && (
         <Button
-          variant="quiet"
-          isDisabled={pending}
-          onPress={() =>
-            setForm({
-              ...form,
-              text: '',
-              candidateJson: undefined,
-              continuation: undefined,
-              requestId: crypto.randomUUID(),
-              conversationId: crypto.randomUUID(),
-            })
-          }
+          variant="primary"
+          onPress={() => void submit()}
+          isDisabled={pending || !form.text.trim()}
         >
-          Start a separate invention
+          {form.continuation
+            ? 'Send follow-up'
+            : form.mode === 'workshop'
+              ? 'Prepare workshop draft'
+              : 'Request invention'}
         </Button>
-      )}
-      <Button variant="quiet" onPress={() => setRefresh((value) => value + 1)}>
-        Refresh saved results
-      </Button>
-      {error && <p role="alert">{error}</p>}
-      {requests.map((request) => {
-        const recipe = request.installed
-          ? recipes.find((entry) => entry.id === request.recipeId)
-          : undefined;
-        return (
-          <article key={request.id} id={`invention-${request.id}`}>
-            <h3>{request.intent}</h3>
-            <Tag>{active(request) ? request.status : request.code}</Tag>
-            {request.parentId && (
-              <p className="ol-caption">
-                Saved follow-up in this invention.{' '}
-                {requests.some((entry) => entry.id === request.parentId) && (
-                  <a href={`#invention-${request.parentId}`}>Earlier request and feedback</a>
-                )}
+        {form.continuation && (
+          <Button
+            variant="quiet"
+            isDisabled={pending}
+            onPress={() =>
+              setForm({
+                ...form,
+                text: '',
+                candidateJson: undefined,
+                continuation: undefined,
+                requestId: crypto.randomUUID(),
+                conversationId: crypto.randomUUID(),
+              })
+            }
+          >
+            Start a separate invention
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="quiet"
+          onPress={async () => {
+            try {
+              const response = await post<{
+                ok: boolean;
+                message?: string;
+                result: {
+                  families: Array<{ id: string; description: string; limitation: string }>;
+                };
+              }>('/api/world-agent/tools', {
+                worldId,
+                tool: { operation: 'catalogue', recipeId: null, candidateJson: null, offset: 0 },
+              });
+              if (!response.ok) throw new Error(response.message);
+              setCatalogue(response.result.families);
+            } catch (error) {
+              setError(String(error));
+            }
+          }}
+        >
+          What can I build?
+        </Button>
+        {catalogue && (
+          <div>
+            <p>You can currently make:</p>
+            {catalogue.map((family) => (
+              <p key={family.id}>
+                <strong>{family.description}</strong> {family.limitation}
               </p>
-            )}
-            <p>{request.message}</p>
-            {request.validation && (
-              <details>
-                <summary>Native checks and supported effects</summary>
-                <p>{request.validation.summary}</p>
-                {request.validation.errors.map((error, index) => (
-                  <p key={index}>{error}</p>
-                ))}
-                <p>
-                  Definition dependencies:{' '}
-                  {request.validation.dependencies
-                    .map((entry) => `${entry.id} v${entry.version} (${entry.role})`)
-                    .join(' · ') || 'None resolved.'}
+            ))}
+          </div>
+        )}
+        <details>
+          <summary>Supply a complete proposal</summary>
+          <p>
+            A supplied proposal is validated exactly as written, without paid rewriting. Leave empty
+            to describe an invention normally.
+          </p>
+          <textarea
+            aria-label="Complete invention proposal JSON"
+            rows={6}
+            value={form.candidateJson ?? ''}
+            disabled={pending}
+            maxLength={12000}
+            onChange={(event) =>
+              setForm({
+                ...formRef.current,
+                candidateJson: event.target.value,
+                requestId: crypto.randomUUID(),
+              })
+            }
+          />
+        </details>
+      </section>
+      <section
+        hidden={view !== 'history'}
+        className="ol-creator-page"
+        aria-label="Saved invention requests"
+      >
+        <h3>Saved requests</h3>
+        <p className="ol-caption">
+          Read the result, revise the idea, or apply a saved proposal. Opening a result does not
+          repeat its request.
+        </p>
+        <Button variant="quiet" onPress={() => setRefresh((value) => value + 1)}>
+          Refresh saved results
+        </Button>
+        {requests.map((request) => {
+          const recipe = request.installed
+            ? recipes.find((entry) => entry.id === request.recipeId)
+            : undefined;
+          return (
+            <article key={request.id} id={`invention-${request.id}`}>
+              <h3>{request.intent}</h3>
+              <Tag>{active(request) ? request.status : request.code}</Tag>
+              {request.parentId && (
+                <p className="ol-caption">
+                  Saved follow-up in this invention.{' '}
+                  {requests.some((entry) => entry.id === request.parentId) && (
+                    <a href={`#invention-${request.parentId}`}>Earlier request and feedback</a>
+                  )}
                 </p>
-                {request.validation.limits.map((limit, index) => (
-                  <p key={index}>{limit}</p>
-                ))}
-              </details>
-            )}
-            {request.recipeId && (
-              <p>
-                {request.installed
-                  ? 'Available in Crafting.'
-                  : 'Historical result; this technique is not available in the current world.'}
-              </p>
-            )}
-            {recipe && (
-              <LearnedRecipeCard recipe={recipe} command={command} connected={connected} />
-            )}
-            {!request.currentTimeline && <p>Requested before the current save timeline.</p>}
-            {request.candidate !== undefined && (
-              <details>
-                <summary>Inspect saved proposal</summary>
-                <pre>{JSON.stringify(request.candidate, null, 2)}</pre>
-              </details>
-            )}
-            {request.continuedBy ? (
-              <p className="ol-caption">Continued in a later saved request.</p>
-            ) : (
-              !active(request) &&
-              request.currentTimeline &&
-              request.conversationId && (
-                <>
-                  {request.code === 'draft-ready' && request.candidateDigest && (
-                    <Button size="sm" isDisabled={pending} onPress={() => follow(request, 'apply')}>
-                      Apply saved proposal
+              )}
+              <p>{request.message}</p>
+              {request.validation && (
+                <details>
+                  <summary>Native checks and supported effects</summary>
+                  <p>{request.validation.summary}</p>
+                  {request.validation.errors.map((error, index) => (
+                    <p key={index}>{error}</p>
+                  ))}
+                  <p>
+                    Definition dependencies:{' '}
+                    {request.validation.dependencies
+                      .map((entry) => `${entry.id} v${entry.version} (${entry.role})`)
+                      .join(' · ') || 'None resolved.'}
+                  </p>
+                  {request.validation.limits.map((limit, index) => (
+                    <p key={index}>{limit}</p>
+                  ))}
+                </details>
+              )}
+              {request.recipeId && (
+                <p>
+                  {request.installed
+                    ? 'Available in Crafting.'
+                    : 'Historical result; this technique is not available in the current world.'}
+                </p>
+              )}
+              {recipe && (
+                <LearnedRecipeCard recipe={recipe} command={command} connected={connected} />
+              )}
+              {!request.currentTimeline && <p>Requested before the current save timeline.</p>}
+              {request.candidate !== undefined && (
+                <details>
+                  <summary>Inspect saved proposal</summary>
+                  <pre>{JSON.stringify(request.candidate, null, 2)}</pre>
+                </details>
+              )}
+              {request.continuedBy ? (
+                <p className="ol-caption">Continued in a later saved request.</p>
+              ) : (
+                !active(request) &&
+                request.currentTimeline &&
+                request.conversationId && (
+                  <>
+                    {request.code === 'draft-ready' && request.candidateDigest && (
+                      <Button
+                        size="sm"
+                        isDisabled={pending}
+                        onPress={() => follow(request, 'apply')}
+                      >
+                        Apply saved proposal
+                      </Button>
+                    )}
+                    {request.search && (
+                      <Button
+                        size="sm"
+                        isDisabled={pending}
+                        onPress={() => setChoiceId(request.id)}
+                      >
+                        Review choices
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="quiet"
+                      isDisabled={pending}
+                      onPress={() =>
+                        follow(
+                          request,
+                          request.code === 'needs-clarification' ? 'clarify' : 'revise',
+                        )
+                      }
+                    >
+                      {request.code === 'needs-clarification'
+                        ? 'Answer clarification'
+                        : 'Revise request'}
                     </Button>
-                  )}
-                  {request.search && (
-                    <Button size="sm" isDisabled={pending} onPress={() => setChoiceId(request.id)}>
-                      Review choices
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="quiet"
-                    isDisabled={pending}
-                    onPress={() =>
-                      follow(request, request.code === 'needs-clarification' ? 'clarify' : 'revise')
+                  </>
+                )
+              )}
+              {active(request) && (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  onPress={async () => {
+                    try {
+                      const result = await post('/api/ai/cancel', { jobId: request.id });
+                      if (!result.ok) setError(result.message);
+                      setRefresh((value) => value + 1);
+                    } catch (error) {
+                      setError(String(error));
                     }
-                  >
-                    {request.code === 'needs-clarification'
-                      ? 'Answer clarification'
-                      : 'Revise request'}
-                  </Button>
-                </>
-              )
-            )}
-            {active(request) && (
-              <Button
-                size="sm"
-                variant="quiet"
-                onPress={async () => {
-                  try {
-                    const result = await post('/api/ai/cancel', { jobId: request.id });
-                    if (!result.ok) setError(result.message);
-                    setRefresh((value) => value + 1);
-                  } catch (error) {
-                    setError(String(error));
-                  }
-                }}
-              >
-                Cancel request
-              </Button>
-            )}
-          </article>
-        );
-      })}
-      {!requests.length && <p>No saved invention requests for this character.</p>}
-      {next && (
-        <Button variant="quiet" onPress={() => void older()}>
-          Older requests
-        </Button>
-      )}
+                  }}
+                >
+                  Cancel request
+                </Button>
+              )}
+            </article>
+          );
+        })}
+        {!requests.length && <p>No saved invention requests for this character.</p>}
+        {next && (
+          <Button variant="quiet" onPress={() => void older()}>
+            Older requests
+          </Button>
+        )}
+      </section>
       {visible && choice?.search && (
         <ModalOverlay
           className="ol-root ol-modal-overlay"

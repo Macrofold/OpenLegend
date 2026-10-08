@@ -14,6 +14,8 @@ import { DEFAULT_SENSES as BASE_SENSES } from './perception.js';
 import type { BodyPolicy } from './body-policy.js';
 import { livingBody } from './living.js';
 import type { WorldState } from './types.js';
+import { activityHostPin } from './activity-hosts.js';
+import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 
 /** Reviewed native demonstration data, not a generated invention or electrical solver. */
 export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
@@ -55,6 +57,11 @@ export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
 export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
   const world = createWorld(seed, accounts);
   world.id = `reservoir-demo-${seed}`;
+  world.presentation = {
+    worldName: 'Clockwork inhabitants',
+    locationName: 'The clockwork camp',
+    timeLabel: 'Time in this world',
+  };
   const integrity: AttributeDefinition = {
     id: 'clockwork:integrity',
     version: 1,
@@ -94,6 +101,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     BASE_SENSES,
     policy,
     world.moduleManifest.recipeFamilies,
+    [activityHostPin(RESERVOIR_ACTIVITY_HOST)],
   );
   world.statusEffectPolicy = { revision: 1, clockOffsetHours: 0, namedTimes: {}, definitions: [] };
   world.cognitionPolicy = { ...world.cognitionPolicy, dream: null };
@@ -117,6 +125,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     }
   }
   world.entities['charge-bank'] = {
+    icon: 'meter.energy',
     spatial: { bodyProfileId: 'object', heading: 0 },
     id: 'charge-bank',
     name: 'Charged capacitor',
@@ -138,6 +147,7 @@ export function createTouchDemo(seed = 73, accounts?: WorldCreationAccounts): Wo
     [...DEFAULT_SENSES, COARSE_TOUCH],
     manifest.bodyPolicy,
     manifest.recipeFamilies,
+    manifest.activityHosts,
   );
   const resident = world.entities[defaultResidentEntityId(world)]!;
   resident.actor!.senses = [COARSE_TOUCH.id];

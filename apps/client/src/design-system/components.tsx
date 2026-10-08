@@ -610,7 +610,12 @@ export function Panel({
         </div>
         <div className="ol-panel-tools">
           {workspace && (
-            <Button size="sm" variant="quiet" onPress={workspace.onToggle}>
+            <Button
+              className="ol-panel-expand"
+              size="sm"
+              variant="quiet"
+              onPress={workspace.onToggle}
+            >
               {workspace.expanded ? 'Compact workspace' : 'Expand workspace'}
             </Button>
           )}
@@ -767,20 +772,6 @@ export function SegmentedControl({
 }
 export function symbol(id: string): string {
   const native: Record<string, string> = {
-    raw_fiber: 'resource.reed',
-    prepared_fiber: 'resource.fiber',
-    cord: 'resource.cord',
-    wood: 'resource.branch',
-    stone: 'resource.pebble',
-    stone_tool: 'resource.flint',
-    berries: 'resource.berry',
-    raw_meat: 'resource.meat',
-    cooked_meat: 'resource.meat',
-    hare: 'creature.hare',
-    deer: 'creature.deer',
-    player: 'person.wayfarer',
-    npc: 'person.wayfarer',
-    campfire: 'action.fire',
     move: 'action.walk',
     prepare: 'action.craft',
     harvest: 'action.gather',
@@ -795,5 +786,8 @@ export function symbol(id: string): string {
     recover: 'meter.health',
     teach: 'action.talk',
   };
-  return native[id] ?? (id in icons ? id : `action.${id}`);
+  return (
+    (Object.hasOwn(native, id) ? native[id] : undefined) ??
+    (Object.hasOwn(icons, id) ? id : `action.${id}`)
+  );
 }

@@ -21,7 +21,11 @@ import { statusEffectActions } from './status-effect-actions.js';
 import { ammoFor, availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
-import { NATIVE_PREPARATIONS } from '@open-legend/domain';
+import {
+  nativePreparationOptions,
+  BASE_COOKING_PRESENTATION,
+  nativeActionIcon,
+} from '@open-legend/domain';
 import { bodyPolicy } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions } from './handover-actions.js';
@@ -99,6 +103,7 @@ export function actionCatalogue(
         return {
           id: option.id,
           label: option.label,
+          icon: option.icon ?? nativeActionIcon(option.command.type),
           category: 'Possessions',
           description: descriptions.describe(option.command),
           facts: descriptions.facts(option.command),
@@ -150,6 +155,7 @@ export function actionCatalogue(
     actions.push({
       id,
       label,
+      icon: nativeActionIcon(command.type),
       category,
       description: provided?.description ?? descriptions.describe(command),
       facts: descriptions.facts(command),
@@ -256,18 +262,17 @@ export function actionCatalogue(
     self.agency.plan?.status === 'active' ||
     self.agency.plan?.status === 'blocked'
   )
-    add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
-  else missing('cancel', 'Stop current work', 'Movement', 'No work to stop.');
+    add('cancel', 'Stop all work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
+  else missing('cancel', 'Stop all work', 'Movement', 'No work to stop.');
   const recovery = bodyPolicy(world)?.recovery;
   if (recovery) add('recover', recovery.label, 'Body', { type: 'recover' }, ['recovery']);
-  for (const key of Object.keys(NATIVE_PREPARATIONS) as Array<keyof typeof NATIVE_PREPARATIONS>) {
-    add(
-      `prepare-${key}`,
-      key === 'fiber' ? 'Clean fibers' : 'Twist cord',
-      'Create',
-      { type: 'prepare', preparation: key },
-      ['prepare', 'craft', key, 'binding'],
-    );
+  for (const { key, label } of nativePreparationOptions(world)) {
+    add(`prepare-${key}`, label, 'Create', { type: 'prepare', preparation: key }, [
+      'prepare',
+      'craft',
+      key,
+      'binding',
+    ]);
   }
 
   for (const target of actionTargets) {
@@ -446,11 +451,11 @@ export function actionCatalogue(
         { type: 'eat', itemId: item.id },
         [],
       );
-    if (item.definitionId === 'raw_meat') {
+    if (item.definitionId === BASE_COOKING_PRESENTATION.input) {
       for (const fire of fires)
         add(
           `cook-${item.id}-${fire.id}`,
-          `Cook meat at ${fire.name}`,
+          `${BASE_COOKING_PRESENTATION.targetLabel} ${fire.name}`,
           'Create',
           { type: 'cook', itemId: item.id, targetId: fire.id },
           ['food', 'meal', 'fire'],
@@ -459,9 +464,9 @@ export function actionCatalogue(
       if (!fires.length)
         missing(
           'cook',
-          'Cook meat',
+          BASE_COOKING_PRESENTATION.familyLabel,
           'Create',
-          'A visible lit campfire is needed.',
+          BASE_COOKING_PRESENTATION.missingTarget,
           `cook-${item.id}`,
           undefined,
           item.id,
@@ -538,12 +543,15 @@ export function actionCatalogue(
       [recipe.description, recipe.sourceCandidate.family.id, 'make'],
     );
 
-  if (selected?.heat && !observation.inventory.some((item) => item.definitionId === 'raw_meat'))
+  if (
+    selected?.heat &&
+    !observation.inventory.some((item) => item.definitionId === BASE_COOKING_PRESENTATION.input)
+  )
     missing(
       'cook',
-      `Cook meat at ${selected.name}`,
+      `${BASE_COOKING_PRESENTATION.targetLabel} ${selected.name}`,
       'Create',
-      'Carry raw meat to cook.',
+      BASE_COOKING_PRESENTATION.missingInput,
       'cook',
       selected.id,
     );
@@ -573,7 +581,12 @@ export function actionCatalogue(
   family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
   const consumption = bodyPolicy(world)?.consumption;
   if (consumption) family('eat', consumption.label, 'Body', consumption.unavailableText);
-  family('cook', 'Cook meat', 'Create', 'Carry raw meat and find a lit campfire.');
+  family(
+    'cook',
+    BASE_COOKING_PRESENTATION.familyLabel,
+    'Create',
+    BASE_COOKING_PRESENTATION.unavailable,
+  );
   family(
     'tend-fire',
     'Tend a campfire',

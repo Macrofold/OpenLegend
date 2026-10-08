@@ -1,8 +1,6 @@
 import { namePhrase } from '@open-legend/language';
 import { FamilyEditor } from './ui/family-editor';
-import { WorldVisualSettings } from './ui/world-visual-settings';
 import { WorldEvents } from './ui/world-events';
-import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { OperationsConsole } from './ui/operations-console';
 import { EntryScreen, type EntryStatus } from './ui/entry-screen';
@@ -12,11 +10,19 @@ import { TabResumeDialog } from './ui/tab-resume';
 import { LethalAttackDialog } from './ui/lethal-attack-dialog';
 import { DeathNotice } from './ui/death-notice';
 import { useTabControl, type TabControl } from './tab-control';
-import { History, Narrator } from './ui/history';
-import { KnownPlaces } from './ui/known-places';
+import { Narrator } from './ui/history';
+import { Journal } from './ui/journal';
+import { Settings } from './ui/settings';
 import { createRoot } from 'react-dom/client';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import type {
   ActionOption,
   ApiResult,
@@ -30,6 +36,7 @@ import {
   AccessError,
   SignInRequiredError,
   CharacterlessError,
+  WorldLoadingError,
   clearAccess,
   acceptAccess,
   eventsUrl,
@@ -40,14 +47,13 @@ import {
   startPresence,
   logOut,
 } from './api';
-import { aiSetupReason } from './ai-readiness';
+import type { CommandRequestIdentity } from './command-request';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
 import type { ScreenRect, WorldRenderer, ShadowQuality } from './world-renderer';
 import { observeHudLayout } from './ui/hud-layout';
 import { WorldHover } from './ui/world-hover';
 import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
-import { Promises } from './ui/promises';
 import { captionScope } from './speech-captions';
 import { CameraControls } from './ui/camera-controls';
 import { FpsCounter } from './ui/fps-counter';
@@ -67,6 +73,7 @@ import {
   symbol,
 } from './design-system/components';
 import { ItemCreationModal, type ItemCreationTarget } from './ui/item-creation';
+import { CreationRecoveryModal, useCreationRequest } from './ui/creation-request';
 import { ActionPicker, type PickerContext } from './ui/action-picker';
 import {
   PersonCreationModal,
@@ -76,14 +83,13 @@ import {
 } from './ui/god-tools';
 import { QuickActions } from './ui/quick-actions';
 import { WorldAgent } from './ui/world-agent';
-import { Composer } from './ui/composer';
+import { Composer, type ComposerEntry } from './ui/composer';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
-import { CampActivity } from './ui/camp-activity';
+import { CampActivity, type ActivityEntry } from './ui/camp-activity';
+import { ContainerOpening, useContainerOpening } from './ui/container-opening';
 import { Diagnostics, Mind, type DiagnosticSelection } from './ui/diagnostics';
 import { useLocal } from './ui/storage';
-import { readDraft, type ComposerDraft } from './draft';
-import icons from './design-system/icons/icons.json';
 import './design-system/tokens/tokens.css';
 import './design-system/components.css';
 import './design-system/layout.css';
@@ -91,9 +97,11 @@ import './design-system/layout.css';
 type PanelId =
   | 'inventory'
   | 'crafting'
+  | 'activity'
   | 'character'
   | 'agent'
   | 'game'
+  | 'checkpoints'
   | 'nearby'
   | 'journal'
   | 'events'
@@ -106,22 +114,32 @@ const timeSpeeds = [0.5, 1, 3, 8];
 const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?: boolean }> = {
   inventory: { title: 'Inventory', side: 'left' },
   crafting: { title: 'Crafting', side: 'left' },
+  activity: { title: 'Current task', side: 'left', wide: true },
   character: { title: 'Character', side: 'left' },
-  agent: { title: 'World agent', side: 'right', wide: true },
+  agent: { title: 'Create', side: 'right', wide: true },
   game: { title: 'Game', side: 'right' },
+  checkpoints: { title: 'Checkpoints', side: 'right', wide: true },
   nearby: { title: 'In view', side: 'right' },
-  journal: { title: 'Journal', side: 'left' },
-  events: { title: 'World Events', side: 'left' },
-  ai: { title: 'AI & allowance', side: 'right' },
+  journal: { title: 'Journal', side: 'left', wide: true },
+  events: { title: 'World Events', side: 'left', wide: true },
+  ai: { title: 'Intelligence & allowance', side: 'right' },
   intelligence: { title: 'Intelligence', side: 'right', wide: true },
   composer: { title: 'Conversation', side: 'left', wide: true },
-  help: { title: 'Settings & help', side: 'right' },
+  help: { title: 'Settings & help', side: 'right', wide: true },
   mind: { title: 'Private mind', side: 'right', wide: true },
 };
 type GodEditorWindow =
   | { id: string; type: 'person'; actorId: string }
   | { id: string; type: 'world-events' }
   | { id: string; type: 'family'; actorId: string };
+function taskScope(view: GameView) {
+  return JSON.stringify([
+    view.access?.privateDraftScope,
+    view.worldId,
+    view.saveTimeline,
+    view.player.id,
+  ]);
+}
 function App({
   resetApplication,
   onCharacterless,
@@ -135,21 +153,29 @@ function App({
     [transportReady, setConnected] = useState(false),
     [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: 'loading' }),
     [sceneError, setSceneError] = useState(''),
+    [sceneCreated, setSceneCreated] = useState(false),
     [notice, setNotice] = useState('');
   const [itemCreation, setItemCreation] = useState<{
     target: ItemCreationTarget;
     definitionId?: string;
   } | null>(null);
+  const [creationEntryScope, setCreationEntryScope] = useState<string | null>(null);
   const [cameraView, setCameraView] = useState<
     Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>
-  >({ projection: 'orthographic', levelId: null, rotationLocked: false, following: true });
+  >({
+    projection: 'orthographic',
+    levelId: null,
+    rotationLocked: false,
+    following: true,
+  });
   const [open, setOpen] = useState<PanelId[]>([]),
     [selected, setSelected] = useState<string | null>(null),
     [targeting, setTargeting] = useState(false),
     [picker, setPicker] = useState<PickerContext | null>(null),
-    [hover, setHover] = useState<{ entity: EntityView; point: { x: number; y: number } } | null>(
-      null,
-    );
+    [hover, setHover] = useState<{
+      entity: EntityView;
+      point: { x: number; y: number };
+    } | null>(null);
   const [lethalReview, setLethalReview] = useState<{
     review: NonNullable<ApiResult['lethalReview']>;
     action: ActionOption;
@@ -166,17 +192,29 @@ function App({
       view?.player.alive,
     ],
   );
-  const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>([]);
-  const [activityRequest, setActivityRequest] = useState<{
-    id: string;
-    scope: string;
-    family: string;
-    arguments: Record<string, string>;
-  }>();
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>(['inventory']);
   const [inventoryOpened, setInventoryOpened] = useState(false);
+  const [activityOpened, setActivityOpened] = useState(false);
+  const [activityEntry, setActivityEntry] = useState<ActivityEntry>();
+  const [retainedPanels, setRetainedPanels] = useState<PanelId[]>([]);
+  const [actionSubject, setActionSubject] = useState<EntityView | null>(null);
+  const [actionEntry, setActionEntry] = useState(0);
+  const [conditionEntry, setConditionEntry] = useState(0);
+  const [workEntry, setWorkEntry] = useState(0);
+  const [choosingActionSubject, setChoosingActionSubject] = useState(false);
+  const subjectReturnPanels = useRef<PanelId[]>([]);
+  const [storyRequest, setStoryRequest] = useState(0);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [gameError, setGameError] = useState('');
+  const [mindDirty, setMindDirty] = useState(false);
+  const [mindSwitchMessage, setMindSwitchMessage] = useState('');
   const [npcId, setNpcId] = useState<string | null>(null),
-    [seed, setSeed] = useState<ComposerDraft | null>(null),
-    [inventionSeed, setInventionSeed] = useState<{ id: string; text: string } | null>(null),
+    [composerEntry, setComposerEntry] = useState<ComposerEntry | null>(null),
+    [talkRevision, setTalkRevision] = useState(0),
+    [inventionSeed, setInventionSeed] = useState<{
+      id: string;
+      text: string;
+    } | null>(null),
     [mindId, setMindId] = useState<string | null>(null),
     [intelligenceSelection, setIntelligenceSelection] = useState<DiagnosticSelection | null>(null),
     [personPosition, setPersonPosition] = useState<{
@@ -232,6 +270,11 @@ function App({
     1,
     (v): v is number => typeof v === 'number' && [1, 1.5, 2, 3].includes(v),
   );
+  const [performance, setPerformance] = useLocal(
+    'open-legend:show-performance',
+    false,
+    (value): value is boolean => typeof value === 'boolean',
+  );
   const [captionOcclusions, setCaptionOcclusions] = useState<ScreenRect[]>([]);
   const missedCaptions = useMissedCaptions(captionsEnabled);
   const [eventsType, setEventsType] = useState('all');
@@ -265,8 +308,12 @@ function App({
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.reduceMotion = String(reduce);
   }, [theme, reduce]);
+  useEffect(() => {
+    document.title = view ? `Open Legend · ${view.presentation.worldName}` : 'Open Legend';
+  }, [view?.presentation.worldName]);
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling;
+  const creation = useCreationRequest(view, connected);
   const accept = useCallback(
     (next: GameView, reset = false) => {
       const previous = latest.current;
@@ -284,14 +331,21 @@ function App({
         (previous.access?.scope !== next.access?.scope ||
           previous.saveTimeline !== next.saveTimeline)
       ) {
-        // Security/character/timeline changes remount private panels. A control
-        // transfer only invalidates in-flight requests and queued intentions;
-        // rebuilding GPU assets for each Resume would add needless latency.
+        // Keep the scene and private drafts through a same-owner control transfer.
+        // A security/character/timeline change remounts private panels; only exact
+        // unresolved command receipts may survive when their native owner still matches.
         if (
           previous.access?.privateDraftScope !== next.access?.privateDraftScope ||
           previous.saveTimeline !== next.saveTimeline
         ) {
-          clearAccess();
+          const samePrivateOwner =
+            !!previous.access?.commandRecoveryScope &&
+            previous.access.commandRecoveryScope === next.access?.commandRecoveryScope &&
+            previous.worldId === next.worldId &&
+            previous.access.actorId === next.access?.actorId &&
+            previous.player.id === next.player.id &&
+            previous.saveTimeline === next.saveTimeline;
+          clearAccess({ preservePendingCommands: samePrivateOwner });
           resetApplication();
           return;
         }
@@ -368,21 +422,33 @@ function App({
         if (source === connection) schedule(6000);
       };
     }
-    async function bootstrap() {
+    async function bootstrap(foreground = false) {
       const attempt = ++bootstrapVersion;
       clearTimeout(timer);
       source?.close();
       source = undefined;
-      try {
-        const initial = await getState();
-        if (!active || attempt !== bootstrapVersion) return;
-        streamView = initial;
+      const acceptBootstrapView = (next: GameView) => {
+        if (!active || attempt !== bootstrapVersion) return false;
+        streamView = next;
         scene.current?.resetTransientCaptions();
-        accept(initial, true);
+        accept(next, true);
         setConnected(true);
         setEntryStatus({ kind: 'loading' });
+        return true;
+      };
+      try {
+        // Entry already reads fresh authority. Record a new foreground intent
+        // before another lookup lets an older automatic attempt commit again.
+        if (foreground && isPaused()) {
+          await enter(acceptBootstrapView);
+          return;
+        }
+        const initial = await getState();
+        if (!acceptBootstrapView(initial)) return;
         if (isPaused()) {
-          await enter((next) => accept(next, true));
+          await enter((next) => {
+            if (active && attempt === bootstrapVersion) accept(next, true);
+          });
           return;
         }
         if (initial.access?.controlling) {
@@ -392,6 +458,15 @@ function App({
       } catch (e) {
         if (active && attempt === bootstrapVersion) {
           setConnected(false);
+          if (e instanceof WorldLoadingError) {
+            // A load can remount the App before native restoration releases state reads.
+            // Wait only for that explicit temporary state, under this entry's lifetime.
+            setEntryStatus({ kind: 'loading' });
+            timer = setTimeout(() => {
+              if (active && attempt === bootstrapVersion) void bootstrap(foreground);
+            }, 250);
+            return;
+          }
           if (e instanceof CharacterlessError) {
             clearAccess();
             onCharacterless();
@@ -409,7 +484,9 @@ function App({
             stop = undefined;
           }
           if (e instanceof AccessError) {
-            setEntryStatus({ kind: e instanceof SignInRequiredError ? 'signed-out' : 'forbidden' });
+            setEntryStatus({
+              kind: e instanceof SignInRequiredError ? 'signed-out' : 'forbidden',
+            });
             return;
           }
           setEntryStatus({
@@ -433,7 +510,7 @@ function App({
         if (e.persisted) void bootstrap();
       };
     const focus = () => {
-      if (isPaused()) void bootstrap();
+      if (isPaused()) void bootstrap(true);
     };
     window.addEventListener('focus', focus);
     window.addEventListener('pagehide', hide);
@@ -454,6 +531,19 @@ function App({
   const needsSheet = (nextWidth: number, nextHeight: number) =>
     nextWidth / scale < 720 || nextHeight / scale <= 600;
   const narrow = needsSheet(width, height);
+  const inventoryFeedbackVisible = useRef(false);
+  const activityFeedbackVisible = useRef(false);
+  useLayoutEffect(() => {
+    // A delayed acknowledgement belongs to the panel currently shown, not its dispatch closure.
+    inventoryFeedbackVisible.current =
+      connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory');
+    activityFeedbackVisible.current =
+      connected && open.includes('activity') && (!narrow || open.at(-1) === 'activity');
+    return () => {
+      inventoryFeedbackVisible.current = false;
+      activityFeedbackVisible.current = false;
+    };
+  }, [connected, narrow, open]);
   useEffect(() => {
     const resize = () => {
       if (!narrow && needsSheet(innerWidth, innerHeight)) {
@@ -485,11 +575,21 @@ function App({
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, [scale, narrow]);
-  const hasView = view !== null;
+  const worldVisible = view !== null && (!tabPaused || tab.blocked);
   useEffect(() => {
-    if (!hasView || !survival.current || !hud.current || !canvas.current) return;
+    if (!worldVisible || !survival.current || !hud.current || !canvas.current) return;
     return observeHudLayout(hud.current, canvas.current, survival.current, setCaptionOcclusions);
-  }, [hasView, width, height, scale, open, timeSettings, expandedWorkspaces]);
+  }, [
+    worldVisible,
+    width,
+    height,
+    scale,
+    open,
+    timeSettings,
+    expandedWorkspaces,
+    choosingActionSubject,
+    tabPaused,
+  ]);
   const workspaceWidth = Math.min(792, Math.max(336, width / scale - 184));
   function fit(panels: PanelId[]) {
     const available = width / scale;
@@ -507,29 +607,55 @@ function App({
     return result;
   }
   function show(id: PanelId) {
+    if (
+      ['character', 'journal', 'events', 'help', 'checkpoints', 'mind', 'intelligence'].includes(id)
+    )
+      setRetainedPanels((current) => (current.includes(id) ? current : [...current, id]));
     if (id === 'inventory') setInventoryOpened(true);
+    if (id === 'activity') setActivityOpened(true);
     // Opening speech history is the recovery path, so it settles the missed-caption notice.
     if (id === 'events') missedCaptions.clear();
     setOpen((v) => fit([...v.filter((p) => p !== id), id]));
   }
   function hide(id: PanelId) {
+    if (id === 'inventory') containerOpening.cancel();
+    const focused = document.activeElement;
+    const ownsFocus =
+      focused === document.body ||
+      (focused instanceof HTMLElement &&
+        focused.closest(`#${id === 'nearby' ? 'nearbyPanel' : `${id}Panel`}`));
     setOpen((v) => v.filter((p) => p !== id));
-    requestAnimationFrame(() =>
-      document
-        .querySelector<HTMLButtonElement>(`.ol-launcher[aria-label="${panelInfo[id].title}"]`)
-        ?.focus(),
-    );
+    if (ownsFocus)
+      requestAnimationFrame(() => {
+        if (document.activeElement !== document.body && document.activeElement !== focused) return;
+        const launcher = document.querySelector<HTMLButtonElement>(
+          `.ol-launcher[aria-label="${panelInfo[id].title}"]`,
+        );
+        (launcher ?? document.getElementById('gameMenuButton') ?? canvas.current)?.focus({
+          preventScroll: true,
+        });
+        // Toolbar entry restores its remembered child synchronously. An explicit
+        // panel return must finish on its own launcher without changing Tab reentry.
+        if (
+          launcher &&
+          document.activeElement !== launcher &&
+          launcher.closest('[role="toolbar"]')?.contains(document.activeElement)
+        )
+          launcher.focus({ preventScroll: true });
+        if (launcher && document.activeElement === launcher)
+          launcher.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      });
   }
   function toggle(id: PanelId) {
     if (open.includes(id)) hide(id);
     else show(id);
   }
   useEffect(() => setOpen((v) => fit(v)), [width, height, scale, expandedWorkspaces]);
-  // The event filter lasts while World Events is open, as it did when the panel owned it.
-  useEffect(() => {
-    if (!open.includes('events')) setEventsType('all');
-  }, [open]);
-  async function command(action: ActionOption) {
+  async function sendCommand(
+    action: ActionOption,
+    request?: CommandRequestIdentity,
+    acknowledgement: 'notice' | 'inventory' | 'activity' = 'notice',
+  ): Promise<ApiResult> {
     if (
       (isPaused() && action.command.type !== 'inspect-inventory') ||
       !latest.current?.access?.controlling
@@ -552,10 +678,15 @@ function App({
     setTargeting(false);
     const requestedLife = latest.current?.player.life;
     const requestedScope = latest.current?.access?.scope;
+    // A task switch replaces this group; its pending result still belongs to the original reader.
+    const activityFeedback =
+      acknowledgement === 'activity'
+        ? hud.current?.querySelector('#activityPanel .ol-camp-activities')
+        : null;
     try {
       const r = await post('/api/command', {
-        commandId: crypto.randomUUID(),
-        commandEpoch: view?.commandEpoch,
+        commandId: request?.commandId ?? crypto.randomUUID(),
+        commandEpoch: request?.commandEpoch ?? view?.commandEpoch,
         command: action.command,
       });
       if (
@@ -567,7 +698,16 @@ function App({
         setLethalReview({ review: r.lethalReview, action });
         return r;
       }
-      if (!r.ok || r.code !== 'accepted') notify(r.message);
+      const feedback =
+        acknowledgement === 'inventory' && inventoryFeedbackVisible.current
+          ? hud.current?.querySelector('#inventoryPanel .ol-inventory-feedback')
+          : acknowledgement === 'activity' &&
+              activityFeedbackVisible.current &&
+              activityFeedback?.isConnected
+            ? activityFeedback
+            : null;
+      const localReceipt = feedback && !feedback.closest('[hidden], [inert], [aria-hidden="true"]');
+      if (!r.ok || (r.code !== 'accepted' && !localReceipt)) notify(r.message);
       return r;
     } catch (e) {
       notify(`${String(e)} Check the journal before repeating this action.`);
@@ -577,6 +717,28 @@ function App({
         message: `${String(e)} Check the journal before repeating this action.`,
       };
     }
+  }
+  const containerOpening = useContainerOpening(view, connected, sendCommand);
+  function command(
+    action: ActionOption,
+    request?: CommandRequestIdentity,
+    acknowledgement: 'notice' | 'inventory' | 'activity' = 'notice',
+  ): Promise<ApiResult> {
+    if (connected && action.enabled) containerOpening.stopFollowing();
+    return sendCommand(action, request, acknowledgement);
+  }
+  function openContainer(entity: EntityView) {
+    setExpandedWorkspaces((current) =>
+      current.includes('inventory') ? current : [...current, 'inventory'],
+    );
+    show('inventory');
+    setPicker(null);
+    containerOpening.open(entity);
+  }
+  function openActivity(entry?: ActivityEntry) {
+    setActivityEntry(entry);
+    show('activity');
+    setPicker(null);
   }
   async function confirmLethalAttack() {
     if (!lethalReview || lethalBusy) return;
@@ -593,14 +755,98 @@ function App({
   }
   function talk(id: string) {
     setNpcId(id);
-    setSeed({ text: readDraft().text, mode: 'chat' });
+    setComposerEntry(null);
+    setTalkRevision((value) => value + 1);
     show('composer');
     setPicker(null);
   }
-  function invent(text = readDraft().text) {
+  function chooseRecipient(id: string) {
+    if (!latest.current?.entities.some((entity) => entity.id === id && entity.canTalk)) return;
+    setNpcId(id);
+    setComposerEntry((entry) =>
+      entry ? { ...entry, id: crypto.randomUUID(), recipientId: id } : null,
+    );
+    setTalkRevision((value) => value + 1);
+  }
+  function talkAbout(item: { itemId: string; name: string; recipientId?: string }) {
+    const recipient = latest.current?.entities.find(
+      (entity) => entity.canTalk && entity.id === (item.recipientId ?? npcId),
+    );
+    setNpcId(recipient?.id ?? null);
+    setComposerEntry({
+      id: crypto.randomUUID(),
+      ...(recipient ? { recipientId: recipient.id } : {}),
+      item: { itemId: item.itemId, name: item.name },
+    });
+    setTalkRevision((value) => value + 1);
+    show('composer');
+    setPicker(null);
+  }
+  function invent(text = '') {
     setInventionSeed({ id: crypto.randomUUID(), text });
     show('agent');
     setPicker(null);
+  }
+  function describeAction(subject: EntityView | null) {
+    setActionSubject(subject);
+    setActionEntry((value) => value + 1);
+    setPicker(null);
+    show('character');
+  }
+  function chooseActionSubject() {
+    setTargeting(false);
+    subjectReturnPanels.current = open;
+    setChoosingActionSubject(true);
+    setPicker(null);
+    setOpen([]);
+    requestAnimationFrame(() => canvas.current?.focus());
+  }
+  function closePicker() {
+    const opener = picker?.opener;
+    setPicker(null);
+    if (opener?.isConnected && opener.getClientRects().length) {
+      opener.focus({ preventScroll: true });
+    } else canvas.current?.focus();
+  }
+  function finishActionSubject(subject?: EntityView) {
+    if (subject) {
+      const current = latest.current;
+      const permitted =
+        current &&
+        (subject.id === current.player.id ||
+          current.entities.some((entity) => entity.id === subject.id));
+      if (!permitted) return notify('That subject is no longer in view. Choose another or cancel.');
+      setActionSubject(subject);
+      setActionEntry((value) => value + 1);
+    }
+    setChoosingActionSubject(false);
+    setOpen(fit([...subjectReturnPanels.current.filter((id) => id !== 'character'), 'character']));
+  }
+  function readStory() {
+    setStoryRequest((value) => value + 1);
+    show('journal');
+  }
+  function openMind(actorId: string) {
+    if (mindDirty && mindId !== actorId) {
+      setMindSwitchMessage('Save or discard these notes before inspecting someone else.');
+      show('mind');
+      return;
+    }
+    setMindSwitchMessage('');
+    setMindId(actorId);
+    show('mind');
+  }
+  async function leaveAccount() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setGameError('');
+    try {
+      await logOut();
+    } catch (error) {
+      setGameError(error instanceof Error ? error.message : 'Could not log out. Try again.');
+    } finally {
+      setLoggingOut(false);
+    }
   }
   function inspect(entity: EntityView) {
     const current = latest.current;
@@ -622,6 +868,7 @@ function App({
   }
   handlers.current = {
     target: (entity) => {
+      if (choosingActionSubject) return;
       const action = latest.current?.entities.find(
         (target) => target.id === entity.id,
       )?.equippedAction;
@@ -633,6 +880,10 @@ function App({
       void command(action);
     },
     select: (entity, point, ground) => {
+      if (choosingActionSubject) {
+        if (entity) finishActionSubject(entity);
+        return;
+      }
       if (point) {
         setPicker({
           context: {
@@ -648,7 +899,8 @@ function App({
         clearSelection();
       }
     },
-    move: (position) =>
+    move: (position) => {
+      if (choosingActionSubject) return;
       void command({
         id: 'move',
         label: 'Walk',
@@ -656,13 +908,52 @@ function App({
         // Loaded worlds start paused; blocked movement is not a lost connection.
         reason: latest.current?.clock.paused ? 'Press Play to resume the world.' : undefined,
         command: { type: 'move', position },
-      }),
+      });
+    },
   };
+  const failScene = useCallback((error: unknown) => {
+    scene.current?.destroy();
+    scene.current = null;
+    setSceneCreated(false);
+    setSceneError(`${String(error)}. The In view list still provides interactions.`);
+  }, []);
   useEffect(() => {
-    if (!view || !canvas.current || sceneError) return;
-    try {
-      if (!scene.current)
-        scene.current = createWorldRenderer(canvas.current, {
+    const initial = latest.current;
+    const surface = canvas.current;
+    if (!initial || !surface || sceneError || scene.current || tabPaused) return;
+    let cancelled = false;
+    let frame = 0;
+    let task: number | undefined;
+    let allocated: WorldRenderer | null = null;
+    const discard = () => {
+      allocated?.destroy();
+      allocated = null;
+    };
+    const current = () => {
+      const next = latest.current;
+      return (
+        !cancelled &&
+        !isPaused() &&
+        canvas.current === surface &&
+        next?.worldId === initial.worldId &&
+        next.saveTimeline === initial.saveTimeline &&
+        next.access?.scope === initial.access?.scope &&
+        next.player.id === initial.player.id
+      );
+    };
+    // Graphics allocation and the first world draw can each block. Give input
+    // and paint a turn between them, without postponing ordinary view updates.
+    const schedule = (next: () => void) => {
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          task = window.setTimeout(next, 0);
+        });
+      });
+    };
+    schedule(() => {
+      if (!current()) return;
+      try {
+        allocated = createWorldRenderer(surface, {
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
           target: (entity) => handlers.current.target(entity),
@@ -687,22 +978,77 @@ function App({
                 : { projection, levelId, rotationLocked, following },
             ),
         });
+        allocated.setSuspended(true);
+        schedule(() => {
+          if (!current()) {
+            discard();
+            return;
+          }
+          scene.current = allocated;
+          allocated = null;
+          setSceneCreated(true);
+        });
+      } catch (error) {
+        discard();
+        failScene(error);
+      }
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      clearTimeout(task);
+      discard();
+    };
+  }, [
+    view?.worldId,
+    view?.saveTimeline,
+    view?.access?.scope,
+    view?.player.id,
+    sceneError,
+    tabPaused,
+    isPaused,
+    failScene,
+  ]);
+  useEffect(() => {
+    if (!view || !scene.current || sceneError) return;
+    try {
       scene.current.setSuspended(tabPaused);
       scene.current.setShadowQuality(shadowQuality);
-      scene.current.setPerceptionOptions({ vision: visionGuide, hearing: hearingGuide });
+      scene.current.setPerceptionOptions({
+        vision: visionGuide,
+        hearing: hearingGuide,
+      });
       scene.current.setView(view);
-    } catch (e) {
-      scene.current?.destroy();
-      scene.current = null;
-      setSceneError(`${String(e)}. The In view list still provides interactions.`);
+    } catch (error) {
+      failScene(error);
     }
-  }, [view, sceneError, shadowQuality, tabPaused]);
+  }, [view, sceneError, shadowQuality, tabPaused, sceneCreated, failScene]);
   useEffect(() => {
-    scene.current?.setPerceptionOptions({ vision: visionGuide, hearing: hearingGuide });
-  }, [hasView, sceneError, visionGuide, hearingGuide]);
+    // List inspection can precede graphics. Replay once; inspect/clear own later selections.
+    if (
+      sceneCreated &&
+      selected &&
+      (selected === view?.player.id || view?.entities.some((entity) => entity.id === selected))
+    )
+      scene.current?.select(selected);
+  }, [sceneCreated]);
   useEffect(() => {
-    scene.current?.setTargeting(targeting && connected && !tabPaused);
-  }, [targeting, connected, tabPaused, hasView, sceneError]);
+    scene.current?.setPerceptionOptions({
+      vision: visionGuide,
+      hearing: hearingGuide,
+    });
+  }, [worldVisible, sceneCreated, sceneError, visionGuide, hearingGuide]);
+  useEffect(() => {
+    scene.current?.setTargeting(targeting && connected && !tabPaused && !choosingActionSubject);
+  }, [
+    targeting,
+    connected,
+    tabPaused,
+    worldVisible,
+    sceneCreated,
+    sceneError,
+    choosingActionSubject,
+  ]);
   useEffect(() => {
     setTargeting(false);
   }, [view?.access?.scope, view?.saveTimeline, tabPaused, connected]);
@@ -717,7 +1063,9 @@ function App({
       occlusions: captionOcclusions,
     });
   }, [
-    hasView,
+    worldVisible,
+    tabPaused,
+    sceneCreated,
     sceneError,
     captionsEnabled,
     captionsPaused,
@@ -760,11 +1108,19 @@ function App({
   }, [timeSettings]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || isPaused() || document.querySelector('[aria-modal="true"]')) return;
+      if (
+        e.defaultPrevented ||
+        e.isComposing ||
+        isPaused() ||
+        document.querySelector('[aria-modal="true"]')
+      )
+        return;
       if (e.key === 'Escape') {
-        if (picker) {
-          setPicker(null);
-          canvas.current?.focus();
+        if (choosingActionSubject) {
+          e.preventDefault();
+          finishActionSubject();
+        } else if (picker) {
+          closePicker();
         } else if (targeting) {
           setTargeting(false);
           e.preventDefault();
@@ -773,9 +1129,8 @@ function App({
         else if (open.length) hide(open.at(-1)!);
         return;
       }
+      if (choosingActionSubject) return;
       if (
-        e.defaultPrevented ||
-        e.isComposing ||
         (e.target instanceof Element &&
           e.target.closest(
             'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"], [role="dialog"], [role="listbox"], [role="menu"]',
@@ -812,6 +1167,7 @@ function App({
         }
         return;
       }
+      if (choosingActionSubject || e.repeat) return;
       const ids: Record<string, PanelId> = {
         i: 'inventory',
         c: 'crafting',
@@ -867,15 +1223,13 @@ function App({
         command: a.intent.command,
         reason: a.reason,
       });
-    else if (a.intent.kind === 'activity' && view?.access) {
-      setActivityRequest({
-        id: crypto.randomUUID(),
-        scope: view.access.scope,
-        family: a.intent.family,
-        arguments: a.intent.arguments,
+    else if (a.intent.kind === 'activity' && a.targetId && a.enabled) {
+      openActivity({
+        familyId: a.intent.family,
+        targetId: a.targetId,
+        label: a.label,
+        description: a.description,
       });
-      setPicker(null);
-      show('inventory');
     } else if (a.intent.kind === 'compose') {
       if (a.intent.mode === 'invention') invent();
       else talk(a.intent.npcId ?? '');
@@ -919,7 +1273,11 @@ function App({
             editPerson: () =>
               setGodEditors((current) => [
                 ...current,
-                { id: crypto.randomUUID(), type: 'person' as const, actorId: target.id },
+                {
+                  id: crypto.randomUUID(),
+                  type: 'person' as const,
+                  actorId: target.id,
+                },
               ]),
             ...(view.godTools?.familyLabel
               ? {
@@ -931,10 +1289,7 @@ function App({
                     ]),
                 }
               : {}),
-            inspectMind: () => {
-              setMindId(target.id);
-              show('mind');
-            },
+            inspectMind: () => openMind(target.id),
           }
         : {}),
     };
@@ -943,24 +1298,42 @@ function App({
     type: string,
     position: { x: number; y: number; z: number; surfaceId: string },
   ) {
-    if (!connected) return notify('Reconnect to the world.');
-    try {
-      const result = await post('/api/god/spawn', { type, position });
+    const opened = currentPicker.current;
+    const result = await creation.create({
+      kind: 'environment',
+      body: { type, position },
+      label: `Create ${view?.godTools?.spawnOptions.find((option) => option.id === type)?.label ?? type}`,
+      destinationLabel: `On the selected ground at ${position.x.toFixed(1)}, ${position.z.toFixed(1)}.`,
+    });
+    if (result) {
       notify(result.message);
-      if (result.ok) setPicker(null);
-    } catch (reason) {
-      notify(String(reason));
+      if (result.ok && currentPicker.current === opened) setPicker(null);
     }
   }
   async function createPerson(
     position: { x: number; y: number; z: number; surfaceId: string },
     draft: PersonDraft,
   ) {
-    if (!connected)
-      return { ok: false, code: 'offline', message: 'Reconnect to the world.' } as const;
-    const result = await post('/api/god/person', { position, ...draft });
-    notify(result.message);
+    const result = await creation.create({
+      kind: 'person',
+      body: { position, ...draft },
+      label: `Create ${draft.name}`,
+      destinationLabel: `On the selected ground at ${position.x.toFixed(1)}, ${position.z.toFixed(1)}.`,
+    });
+    if (result?.ok) notify(result.message);
     return result;
+  }
+  function openItemCreation(value: NonNullable<typeof itemCreation>) {
+    if (!creation.openEntry()) return;
+    setCreationEntryScope(creation.key);
+    setPersonPosition(null);
+    setItemCreation(value);
+  }
+  function closeCreationRecovery() {
+    creation.hide();
+    setItemCreation(null);
+    setPersonPosition(null);
+    setPicker(null);
   }
   const entity =
     view &&
@@ -968,26 +1341,38 @@ function App({
       ? playerEntity(view)
       : view.entities.find((e) => e.id === selected));
   const title = (id: PanelId) =>
-    id === 'nearby' && entity
-      ? namePhrase(entity, 'indefinite')
-      : id === 'intelligence' && intelligenceSelection
-        ? `${intelligenceSelection.actorName ?? 'World agent'} request`
-        : panelInfo[id].title;
+    id === 'activity' && activityEntry
+      ? activityEntry.label
+      : id === 'nearby' && choosingActionSubject
+        ? 'Choose a subject'
+        : id === 'nearby' && entity
+          ? namePhrase(entity, 'indefinite')
+          : id === 'intelligence' && intelligenceSelection
+            ? `${intelligenceSelection.actorName ?? 'World agent'} request`
+            : panelInfo[id].title;
   function content(id: PanelId) {
     if (!view) return null;
     // Keep editable drafts mounted, but close readers with their own polling.
     if (
       (tabPaused || !view.access?.controlling) &&
-      !['inventory', 'agent', 'composer'].includes(id)
+      !['inventory', 'activity', 'agent', 'composer', ...retainedPanels].includes(id)
     )
       return null;
-    const props = { view, connected, command: (a: ActionOption) => void command(a) };
+    const visible = connected && open.includes(id) && (!narrow || open.at(-1) === id);
+    const props = {
+      view,
+      connected,
+      command: (a: ActionOption) => command(a),
+    };
     switch (id) {
       case 'inventory':
         return (
           <>
+            <ContainerOpening state={containerOpening} paused={view.clock.paused} />
             <Inventory
               {...props}
+              narrow={narrow}
+              showHeading={false}
               browseActions={(item, opener) => {
                 const bounds = opener.getBoundingClientRect();
                 setPicker({
@@ -998,11 +1383,13 @@ function App({
                   opener,
                 });
               }}
-              command={command}
+              command={(action, request) => command(action, request, 'inventory')}
+              openContainer={containerOpening.openContainer}
+              onTalkAbout={talkAbout}
               visible={
                 connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
               }
-              addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
+              addItem={() => openItemCreation({ target: { actorId: view.player.id } })}
               contextMenu={(item, point, opener) =>
                 setPicker({
                   context: { itemId: item.id },
@@ -1013,19 +1400,19 @@ function App({
                 })
               }
             />
-            <CampActivity
-              initialRequest={
-                activityRequest?.scope === view.access?.scope ? activityRequest : undefined
-              }
-              visible={
-                connected && open.includes('inventory') && (!narrow || open.at(-1) === 'inventory')
-              }
-              key={`${view.access?.scope}:${view.worldId}:${view.saveTimeline}:${view.player.id}:${activityRequest?.id ?? ''}`}
-              view={view}
-              connected={connected}
-              command={command}
-            />
           </>
+        );
+      case 'activity':
+        return (
+          <CampActivity
+            view={view}
+            connected={connected}
+            command={(action, request) => command(action, request, 'activity')}
+            entry={activityEntry}
+            visible={
+              connected && open.includes('activity') && (!narrow || open.at(-1) === 'activity')
+            }
+          />
         );
       case 'crafting':
         return <Crafting {...props} invent={() => invent()} />;
@@ -1033,31 +1420,57 @@ function App({
         return (
           <Character
             {...props}
+            key={taskScope(view)}
+            visible={visible}
+            actionSubject={actionSubject}
+            actionEntry={actionEntry}
+            conditionEntry={conditionEntry}
+            workEntry={workEntry}
+            chooseActionSubject={chooseActionSubject}
+            clearActionSubject={() => setActionSubject(null)}
+            openInventory={() => show('inventory')}
             godControls={characterGodControls(playerEntity(view))}
-            openMind={() => {
-              setMindId(view.player.id);
-              show('mind');
-            }}
+            openActivity={() => openActivity()}
+            openMind={() => openMind(view.player.id)}
           />
         );
       case 'nearby':
-        return entity ? (
+        return entity && !choosingActionSubject ? (
           <EntityDetail
             entity={entity}
             {...props}
-            command={command}
             talk={talk}
+            openContainer={openContainer}
+            openActivity={openActivity}
             godControls={characterGodControls(entity)}
           />
         ) : (
           <>
-            <p className="ol-meta">Within your character’s sight.</p>
+            <p className="ol-meta">
+              {choosingActionSubject
+                ? 'Choose the exact subject for your action. This does not act or move your character.'
+                : 'Within your character’s sight. Select a name to look closer, or right-click for actions.'}
+            </p>
+            {choosingActionSubject && (
+              <Button onPress={() => finishActionSubject(playerEntity(view))}>
+                Choose {view.player.name} (you)
+              </Button>
+            )}
+            {!view.entities.length && (
+              <EmptyState title="Nothing else in view">
+                Only currently visible objects appear here.
+              </EmptyState>
+            )}
             {view.entities.map((e) => (
               <div
                 key={e.id}
                 data-entity={e.id}
                 onContextMenu={(event) => {
                   event.preventDefault();
+                  if (choosingActionSubject) {
+                    finishActionSubject(e);
+                    return;
+                  }
                   setPicker({
                     entity: e,
                     context: { targetId: e.id },
@@ -1067,10 +1480,10 @@ function App({
               >
                 <EntityRow
                   name={e.name}
-                  icon={symbol(e.subtype)}
+                  icon={symbol(e.icon ?? '')}
                   meta={e.status}
                   count={e.quantity}
-                  onPress={() => inspect(e)}
+                  onPress={() => (choosingActionSubject ? finishActionSubject(e) : inspect(e))}
                 />
               </div>
             ))}
@@ -1099,7 +1512,10 @@ function App({
           <Composer
             {...props}
             npcId={npcId}
-            seed={seed}
+            entry={composerEntry}
+            talkRevision={talkRevision}
+            chooseRecipient={chooseRecipient}
+            clearEntry={() => setComposerEntry(null)}
             setup={() => show('ai')}
             notify={notify}
             visible={
@@ -1112,7 +1528,8 @@ function App({
       case 'events':
         return (
           <WorldEvents
-            key={eventsReset}
+            key={`${captionScope(view)}:${eventsReset}`}
+            visible={visible}
             scope={captionScope(view)}
             revision={view.worldEventsRevision}
             type={eventsType}
@@ -1122,36 +1539,22 @@ function App({
       case 'journal':
         return (
           <>
-            <Section title="Known places">
-              <KnownPlaces
-                key={`${captionScope(view)}:${view.historyEpoch}`}
-                revision={view.historyRevision ?? ''}
-                focus={(point) => {
-                  const renderer = scene.current;
-                  if (!renderer) return;
-                  if (renderer.cameraState().following) renderer.cameraCommand({ type: 'follow' });
-                  renderer.cameraCommand({ type: 'focus', point });
-                }}
-                command={command}
-              />
-            </Section>
-            <Section title="A possible beginning">
-              {view.milestones.map((m) => (
-                <p key={m.id}>
-                  <Icon name={m.done ? 'ui.check' : 'ui.more'} size={16} /> {m.label}
-                </p>
-              ))}
-            </Section>
-            <Section title="Promises">
-              <Promises key={captionScope(view)} />
-            </Section>
-            <Section title="Your story">
-              <History
-                key={captionScope(view)}
-                epoch={view.historyEpoch}
-                revision={`${view.historyRevision}:${JSON.stringify(view.narrator)}`}
-              />
-            </Section>
+            <Button size="sm" variant="quiet" onPress={() => show('events')}>
+              World Events · what you perceived
+            </Button>
+            <Journal
+              key={taskScope(view)}
+              view={view}
+              visible={visible}
+              storyRequest={storyRequest}
+              command={command}
+              focus={(point) => {
+                const renderer = scene.current;
+                if (!renderer) return;
+                if (renderer.cameraState().following) renderer.cameraCommand({ type: 'follow' });
+                renderer.cameraCommand({ type: 'focus', point });
+              }}
+            />
           </>
         );
       case 'intelligence':
@@ -1161,153 +1564,92 @@ function App({
             worldId={view.worldId}
             selection={intelligenceSelection}
             onSelect={setIntelligenceSelection}
+            visible={visible}
+            readScope={view.access?.scope}
           />
         ) : (
           <p>God inspection is disabled.</p>
         );
       case 'mind':
         return mindId && (view.godMode || mindId === view.player.id) ? (
-          <Mind
-            key={`${view.worldId}:${mindId}`}
-            actorId={mindId}
-            owned={mindId === view.player.id}
-          />
+          <>
+            {mindSwitchMessage && <p role="status">{mindSwitchMessage}</p>}
+            <Mind
+              key={`${taskScope(view)}:${mindId}`}
+              actorId={mindId}
+              owned={mindId === view.player.id}
+              visible={visible}
+              onDirtyChange={setMindDirty}
+              readScope={view.access?.scope}
+            />
+          </>
         ) : null;
       case 'game':
-        return view.access?.canManageSaves ? <GameSavesPanel /> : null;
-      case 'help':
         return (
-          <>
-            {view.access?.canOperate && (
-              <a href="/?view=operations" target="_blank" rel="noopener">
-                Open World operations
-              </a>
-            )}
+          <div className="ol-game-menu">
+            <p>
+              {view.presentation.worldName} · playing as {view.player.name}
+            </p>
+            <Button variant="primary" onPress={() => hide('game')}>
+              Back to the world
+            </Button>
+            <Section title="Your game">
+              <p role={view.persistence.status === 'error' ? 'alert' : undefined}>
+                {view.persistence.message}
+              </p>
+              {view.access?.canManageSaves && (
+                <Button onPress={() => show('checkpoints')}>Checkpoints</Button>
+              )}
+              <Button onPress={() => show('help')}>Settings & help</Button>
+              <Button onPress={() => show('ai')}>Intelligence & allowance</Button>
+            </Section>
+            <Section title="Creation and inspection">
+              <Button onPress={() => show('agent')}>Create</Button>
+              <p className="ol-caption">
+                Open your invention workshop
+                {view.godMode ? ' and the world-owner conversation' : ''}.
+              </p>
+              {view.godMode && (
+                <Button onPress={() => show('intelligence')}>
+                  God mode · Intelligence diagnostics
+                </Button>
+              )}
+              {view.access?.canOperate && (
+                <a href="/?view=operations" target="_blank" rel="noopener">
+                  World operations · opens separately
+                </a>
+              )}
+            </Section>
             {view.player.departureNotice && <p>{view.player.departureNotice}</p>}
-            <Button onPress={() => void logOut().catch((error: unknown) => notify(String(error)))}>
+            <Button busy={loggingOut} onPress={() => void leaveAccount()}>
               Log Out
             </Button>
-            <InventionSettings view={view} />
-            <WorldVisualSettings
-              view={view}
-              shadowQuality={shadowQuality}
-              setShadowQuality={setShadowQuality}
-            />
-            <Section title="Appearance">
-              <label>
-                World theme
-                <select
-                  aria-label="World theme"
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value)}
-                >
-                  <option value="wilderness">Wilderness</option>
-                  <option value="fantasy">Fantasy</option>
-                  <option value="scifi">Sci-fi</option>
-                </select>
-              </label>
-              <SegmentedControl
-                label="UI scale"
-                options={[0.9, 1, 1.15, 1.3].map((n) => ({
-                  value: String(n),
-                  label: `${Math.round(n * 100)}%`,
-                }))}
-                value={String(scale)}
-                onChange={(v) => setScale(Number(v))}
-              />
-              <label>
-                <input
-                  type="checkbox"
-                  checked={reduce}
-                  onChange={(e) => setReduce(e.target.checked)}
-                />{' '}
-                Reduce motion
-              </label>
-            </Section>
-            <Section title="Speech captions">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={captionsEnabled}
-                  onChange={(e) => setCaptionsEnabled(e.target.checked)}
-                />{' '}
-                Show speech captions
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={captionsPaused}
-                  onChange={(e) => setCaptionsPaused(e.target.checked)}
-                />{' '}
-                Pause caption countdowns
-              </label>
-              <label>
-                Reading time{' '}
-                <select
-                  aria-label="Caption reading time"
-                  value={captionReadingScale}
-                  onChange={(e) => setCaptionReadingScale(Number(e.target.value))}
-                >
-                  {[1, 1.5, 2, 3].map((value) => (
-                    <option key={value} value={value}>
-                      {value}×
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p>
-                These controls do not change hearing or world time. Speech remains in World Events.
-              </p>
-            </Section>
-            <Section title="Controls">
-              <p>
-                Click ground to walk. Click an object to look closer. Right-click or Control-click
-                for actions. Right-drag to rotate and tilt. Hold Shift while right-dragging to pan,
-                or use middle-drag. Scroll to zoom. Left-drag does not pan or act on release.
-              </p>
-              <p>
-                I Inventory · C Crafting · K Character · W World agent · V In view · J Journal · 1–3
-                Shortcuts · P Pause / Resume · Shift + ] Faster · Shift + [ Slower · Escape Back /
-                Close
-              </p>
-            </Section>
-            <Section title="Credits">
-              <p>Open Legend · AGPL-3.0-only</p>
-              <details>
-                <summary>Icon and font credits</summary>
-                <p>
-                  <a
-                    href="https://creativecommons.org/licenses/by/3.0/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Game-icons.net · CC BY 3.0
-                  </a>
-                  . Silhouettes adapted to inherit interface color.
-                </p>
-                <ul>
-                  {Object.entries(icons)
-                    .filter(([, icon]) => 'author' in icon)
-                    .map(([id, icon]) => {
-                      const credit = icon as { source: string; author: string; url: string };
-                      return (
-                        <li key={id}>
-                          <a href={credit.url} target="_blank" rel="noreferrer">
-                            {credit.source}
-                          </a>{' '}
-                          — {credit.author}
-                        </li>
-                      );
-                    })}
-                </ul>
-                <p>Lucide utility icons — Lucide contributors, ISC.</p>
-                <p>
-                  Self-hosted fonts: Cormorant Garamond, Atkinson Hyperlegible Next, IBM Plex Mono,
-                  Cinzel and Chakra Petch. SIL Open Font License 1.1.
-                </p>
-              </details>
-            </Section>
-          </>
+            {gameError && <p role="alert">{gameError}</p>}
+          </div>
+        );
+      case 'checkpoints':
+        return view.access?.canManageSaves ? <GameSavesPanel visible={visible} /> : null;
+      case 'help':
+        return (
+          <Settings
+            view={view}
+            theme={theme}
+            setTheme={setTheme}
+            scale={scale}
+            setScale={setScale}
+            reduce={reduce}
+            setReduce={setReduce}
+            captionsEnabled={captionsEnabled}
+            setCaptionsEnabled={setCaptionsEnabled}
+            captionsPaused={captionsPaused}
+            setCaptionsPaused={setCaptionsPaused}
+            captionReadingScale={captionReadingScale}
+            setCaptionReadingScale={setCaptionReadingScale}
+            shadowQuality={shadowQuality}
+            setShadowQuality={setShadowQuality}
+            performance={performance}
+            setPerformance={setPerformance}
+          />
         );
     }
   }
@@ -1318,7 +1660,7 @@ function App({
         ref={canvas}
         tabIndex={view ? 0 : -1}
         aria-hidden={!view}
-        aria-label="Wilderness world"
+        aria-label={view?.presentation.worldName ?? 'World'}
       />
       <div
         ref={hud}
@@ -1328,6 +1670,7 @@ function App({
         data-narrow={narrow}
         data-compact={width / scale < 1200}
         data-tight={width / scale < 360}
+        data-picking={choosingActionSubject}
         style={{ '--ui-scale': scale } as CSSProperties}
       >
         {!view || (tabPaused && !tab.blocked) ? (
@@ -1348,12 +1691,22 @@ function App({
             <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
               <div className="ol-survival-top">
                 <span id="saveStatus" className="ol-caption" title={view.persistence.message}>
-                  {view.persistence.status === 'saved' ? 'Saved' : 'Save error'}
+                  {view.persistence.status === 'saved' ? 'World saved' : 'World save failed'}
                 </span>
               </div>
               <div className="ol-survival-name">
-                <h3 className="ol-heading">{view.player.name}</h3>
-                <span className="ol-meta">The first clearing</span>
+                <Button
+                  variant="quiet"
+                  className="ol-character-link"
+                  onPress={() => {
+                    setConditionEntry((value) => value + 1);
+                    show('character');
+                  }}
+                >
+                  {view.player.name}
+                  <Icon name="ui.character" size={16} />
+                </Button>
+                <span className="ol-meta">{view.presentation.locationName}</span>
               </div>
               <Condition {...view.player} />
               <p className="ol-caption ol-player-state">
@@ -1363,9 +1716,52 @@ function App({
                     ? 'Preparing to leave'
                     : !view.player.alive
                       ? 'Life has ended'
-                      : 'In the wild'}
+                      : 'In the world'}
               </p>
+              {view.player.hasWork && (
+                <div className="ol-current-work">
+                  <span className="ol-caption">Current work</span>
+                  <strong>
+                    {view.player.action?.label ?? view.player.activity?.name ?? 'Work is waiting'}
+                  </strong>
+                  {view.player.activity?.reason && (
+                    <span className="ol-caption">{view.player.activity.reason}</span>
+                  )}
+                  <Button
+                    size="sm"
+                    onPress={() => {
+                      setWorkEntry((value) => value + 1);
+                      show('character');
+                    }}
+                  >
+                    Review current work
+                  </Button>
+                </div>
+              )}
+              {view.persistence.status === 'error' && (
+                <p className="ol-save-failure" role="alert">
+                  {view.persistence.message}
+                  {view.access?.canManageSaves && (
+                    <Button size="sm" onPress={() => show('checkpoints')}>
+                      Open recovery
+                    </Button>
+                  )}
+                </p>
+              )}
             </section>
+            {choosingActionSubject && (
+              <section className="ol-card ol-subject-picking" aria-label="Choose action subject">
+                <strong>Choose a subject</strong>
+                <p>
+                  Click an object in the world, or choose from In view. Your action will be prepared
+                  for that exact subject.
+                </p>
+                <div>
+                  <Button onPress={() => show('nearby')}>In view</Button>
+                  <Button onPress={() => finishActionSubject()}>Cancel</Button>
+                </div>
+              </section>
+            )}
             <div className="ol-clock-position">
               <div className="ol-card ol-timebar" aria-label="Time">
                 <div className="ol-timebar-when">
@@ -1385,7 +1781,7 @@ function App({
                           : 'Paused'
                         : view.clock.preparingNavigation
                           ? 'Preparing navigation…'
-                          : 'Time in the wilderness'}
+                          : view.presentation.timeLabel}
                     </div>
                   </div>
                 </div>
@@ -1400,7 +1796,10 @@ function App({
                 />
                 <SegmentedControl
                   label="Time speed"
-                  options={timeSpeeds.map((n) => ({ value: String(n), label: `${n}×` }))}
+                  options={timeSpeeds.map((n) => ({
+                    value: String(n),
+                    label: `${n}×`,
+                  }))}
                   value={String(view.clock.speed)}
                   disabled={!connected || speedPending}
                   onChange={(v) => void changeSpeed(Number(v))}
@@ -1419,8 +1818,8 @@ function App({
                     started playing in another tab.
                   </p>
                   <p className="ol-caption">
-                    1×: one real second is one game minute. Manual pause always wins. P pauses or
-                    resumes; Shift + ] speeds up; Shift + [ slows down.
+                    1×: one real second is {view.clock.baseRatio} game seconds. Manual pause always
+                    wins. P pauses or resumes; Shift + ] speeds up; Shift + [ slows down.
                   </p>
                 </div>
               )}
@@ -1430,66 +1829,69 @@ function App({
               </div>
             </div>
             <div className="ol-top-tools">
-              <Button id="aiLabel" size="sm" variant="quiet" onPress={() => toggle('ai')}>
-                {aiSetupReason(view.ai)
-                  ? 'AI needs setup'
-                  : view.ai.mode === 'fixture'
-                    ? 'Fixture mode'
-                    : 'AI connected'}
+              <Button id="gameMenuButton" size="sm" variant="quiet" onPress={() => toggle('game')}>
+                Game
               </Button>
               <IconButton icon="ui.help" label="Settings and help" onPress={() => toggle('help')} />
             </div>
-            {(['left', 'right'] as const).map((side) => (
-              <Toolbar
-                key={side}
-                className={`ol-rail ol-rail-${side}`}
-                orientation="vertical"
-                aria-label={`${side} panels`}
-              >
-                {(side === 'left'
-                  ? (['inventory', 'crafting', 'character', 'journal', 'events'] as PanelId[])
-                  : ([
-                      'agent',
-                      ...(view.access?.canManageSaves ? ['game' as PanelId] : []),
-                      'nearby',
-                      ...(view.godMode ? ['intelligence' as PanelId] : []),
-                    ] as PanelId[])
-                ).map((id) => (
-                  <Launcher
-                    key={id}
-                    icon={
-                      {
-                        inventory: 'ui.inventory',
-                        crafting: 'ui.crafting',
-                        character: 'ui.character',
-                        journal: 'ui.journal',
-                        events: 'ui.journal',
-                        agent: 'ui.agent',
-                        game: 'ui.settings',
-                        nearby: 'ui.inview',
-                        intelligence: 'ui.star',
-                      }[id as 'inventory']
-                    }
-                    label={panelInfo[id].title}
-                    open={open.includes(id)}
-                    side={side}
-                    shortcut={
-                      {
-                        inventory: 'I',
-                        crafting: 'C',
-                        character: 'K',
-                        agent: 'W',
-                        nearby: 'V',
-                        journal: 'J',
-                      }[id as 'inventory']
-                    }
-                    onPress={() => toggle(id)}
-                  />
-                ))}
-              </Toolbar>
-            ))}
+            <div className="ol-launcher-rails">
+              {(['left', 'right'] as const).map((side) => (
+                <Toolbar
+                  key={side}
+                  className={`ol-rail ol-rail-${side}`}
+                  orientation={
+                    width / scale < 360 || (narrow && open.length > 0) ? 'horizontal' : 'vertical'
+                  }
+                  aria-label={
+                    side === 'left' ? 'Your character and records' : 'World actions and creation'
+                  }
+                >
+                  {(side === 'left'
+                    ? (['inventory', 'character', 'journal', 'composer'] as PanelId[])
+                    : (['nearby', 'crafting', 'agent'] as PanelId[])
+                  ).map((id) => (
+                    <Launcher
+                      key={id}
+                      icon={
+                        {
+                          inventory: 'ui.inventory',
+                          crafting: 'ui.crafting',
+                          character: 'ui.character',
+                          journal: 'ui.journal',
+                          events: 'ui.journal',
+                          composer: 'action.talk',
+                          agent: 'ui.agent',
+                          game: 'ui.settings',
+                          nearby: 'ui.inview',
+                          intelligence: 'ui.star',
+                        }[id as 'inventory']
+                      }
+                      label={panelInfo[id].title}
+                      open={open.includes(id)}
+                      side={side}
+                      shortcut={
+                        {
+                          inventory: 'I',
+                          crafting: 'C',
+                          character: 'K',
+                          agent: 'W',
+                          nearby: 'V',
+                          journal: 'J',
+                        }[id as 'inventory']
+                      }
+                      onPress={() => toggle(id)}
+                    />
+                  ))}
+                </Toolbar>
+              ))}
+            </div>
             {narrow && open.length > 0 && (
-              <div className="ol-mobile-tabs" role="toolbar" aria-label="Open panels">
+              <div
+                className="ol-mobile-tabs"
+                data-single={open.length === 1 ? 'true' : undefined}
+                role="toolbar"
+                aria-label="Open panels"
+              >
                 {open.map((id) => (
                   <Button
                     key={id}
@@ -1520,7 +1922,9 @@ function App({
                         draggable={!narrow && ['agent', 'composer', 'intelligence'].includes(id)}
                         resizable={!narrow && id === 'intelligence'}
                         workspace={
-                          id === 'inventory' || id === 'agent'
+                          ['inventory', 'agent', 'journal', 'events', 'character', 'mind'].includes(
+                            id,
+                          )
                             ? {
                                 expanded: expandedWorkspaces.includes(id),
                                 width: workspaceWidth,
@@ -1551,6 +1955,8 @@ function App({
                         {id === 'agent' ||
                         id === 'composer' ||
                         (id === 'inventory' && inventoryOpened) ||
+                        (id === 'activity' && activityOpened) ||
+                        retainedPanels.includes(id) ||
                         open.includes(id)
                           ? content(id)
                           : null}
@@ -1559,77 +1965,130 @@ function App({
                   ))}
               </div>
             ))}
-            <QuickActions
-              key={view.worldId}
-              view={view}
-              connected={connected}
-              command={(a) => void command(a)}
-              talk={talk}
-            />
-            <Narrator item={view.narrator} />
-            {!tabPaused && <FpsCounter renderer={scene} />}
-            <CameraControls
-              overlays={{ vision: visionGuide, hearing: hearingGuide }}
-              toggleOverlay={(sense) =>
-                sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
-              }
-              levels={view.map.spatial.levels}
-              state={cameraView}
-              send={(command) => scene.current?.cameraCommand(command)}
-              center={() => scene.current?.center()}
-            />
-            {!tabPaused && picker && (
+            <div
+              className="ol-world-controls"
+              data-bounded={narrow && open.length === 0 ? '' : undefined}
+            >
+              <QuickActions
+                key={`quick:${captionScope(view)}`}
+                view={view}
+                connected={connected && !choosingActionSubject}
+                command={(a) => void command(a)}
+                talk={talk}
+              />
+              <CameraControls
+                overlays={{ vision: visionGuide, hearing: hearingGuide }}
+                toggleOverlay={(sense) =>
+                  sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
+                }
+                levels={view.map.spatial.levels}
+                state={cameraView}
+                send={(command) => scene.current?.cameraCommand(command)}
+                center={() => scene.current?.center()}
+              />
+            </div>
+            {!tabPaused && (
+              <Narrator
+                key={`narrator:${captionScope(view)}`}
+                item={view.narrator}
+                onReadStory={readStory}
+              />
+            )}
+            {!tabPaused && performance && <FpsCounter renderer={scene} />}
+            {!tabPaused && picker && !creation.visible && (
               <ActionPicker
                 createItem={(definitionId, position) => {
-                  setItemCreation({ definitionId, target: { position } });
+                  openItemCreation({ definitionId, target: { position } });
                   setPicker(null);
                 }}
                 key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.saveTimeline}:${picker.point.x}:${picker.point.y}:${picker.entity?.id}:${picker.context.itemId}`}
                 picker={picker}
                 view={view}
                 connected={connected}
-                close={() => {
-                  setPicker(null);
-                  if (picker.opener?.isConnected) picker.opener.focus();
-                  else canvas.current?.focus();
-                }}
+                close={closePicker}
                 run={run}
                 invent={invent}
-                requestAction={() => {
-                  setPicker(null);
-                  show('character');
-                  requestAnimationFrame(() =>
-                    document
-                      .querySelector<HTMLTextAreaElement>('#characterPanel textarea')
-                      ?.focus(),
-                  );
-                }}
+                describeAction={describeAction}
                 inspect={inspect}
+                openContainer={openContainer}
+                openActivity={openActivity}
                 preference={preference}
                 revive={(target) => void revive(target)}
                 enableCognition={(target) => void enableCognition(target)}
                 spawn={(type, position) => void spawn(type, position)}
                 createPerson={(position) => {
                   setPicker(null);
+                  if (!creation.openEntry()) return;
+                  setCreationEntryScope(creation.key);
+                  setItemCreation(null);
                   setPersonPosition(position);
                 }}
               />
             )}
-            {!tabPaused && view.godMode && itemCreation && (
-              <ItemCreationModal
-                options={view.godTools?.itemOptions ?? []}
-                target={itemCreation.target}
-                initialDefinitionId={itemCreation.definitionId}
-                close={() => setItemCreation(null)}
-                notify={notify}
-              />
-            )}
-            {!tabPaused && personPosition && view.godMode && (
-              <PersonCreationModal
-                position={personPosition}
-                traits={view.godTools?.traits ?? []}
-                create={(draft) => createPerson(personPosition, draft)}
-                close={() => setPersonPosition(null)}
+            {!tabPaused &&
+              view.godMode &&
+              itemCreation &&
+              creationEntryScope === creation.key &&
+              !creation.visible && (
+                <ItemCreationModal
+                  key={`item:${creation.key}`}
+                  options={view.godTools?.itemOptions ?? []}
+                  target={itemCreation.target}
+                  targetLabel={
+                    'actorId' in itemCreation.target
+                      ? itemCreation.target.actorId === view.player.id
+                        ? view.player.name
+                        : view.entities.find(
+                            (entity) =>
+                              entity.id ===
+                              ('actorId' in itemCreation.target
+                                ? itemCreation.target.actorId
+                                : undefined),
+                          )?.name
+                      : undefined
+                  }
+                  initialDefinitionId={itemCreation.definitionId}
+                  enabled={creation.enabled}
+                  close={() => setItemCreation(null)}
+                  create={async (definitionId, quantity) => {
+                    const target = itemCreation.target;
+                    const result = await creation.create({
+                      kind: 'item',
+                      body: { definitionId, quantity, destination: target },
+                      label: `Create ${quantity} ${view.godTools?.itemOptions.find((option) => option.id === definitionId)?.label ?? definitionId}`,
+                      destinationLabel:
+                        'actorId' in target
+                          ? `In ${target.actorId === view.player.id ? view.player.name : (view.entities.find((entity) => entity.id === target.actorId)?.name ?? 'the selected character')}’s inventory.`
+                          : `On the selected ground at ${target.position.x.toFixed(1)}, ${target.position.z.toFixed(1)}.`,
+                    });
+                    if (result?.ok) notify(result.message);
+                    return result;
+                  }}
+                />
+              )}
+            {!tabPaused &&
+              personPosition &&
+              view.godMode &&
+              creationEntryScope === creation.key &&
+              !creation.visible && (
+                <PersonCreationModal
+                  key={`person:${creation.key}`}
+                  position={personPosition}
+                  traits={view.godTools?.traits ?? []}
+                  enabled={creation.enabled}
+                  create={(draft) => createPerson(personPosition, draft)}
+                  close={() => setPersonPosition(null)}
+                />
+              )}
+            {!tabPaused && view.godMode && creation.visible && (
+              <CreationRecoveryModal
+                key={creation.key}
+                recovery={creation}
+                close={closeCreationRecovery}
+                resolved={(result) => {
+                  notify(result.message);
+                  closeCreationRecovery();
+                }}
               />
             )}
             {!tabPaused &&

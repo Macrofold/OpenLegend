@@ -1,6 +1,6 @@
 import {
-  NATIVE_PREPARATIONS,
-  quantityOf,
+  nativeInventoryActions,
+  nativeActionIcon,
   activityRequestHost,
   currentInventoryInspection,
   visionRadius,
@@ -29,6 +29,7 @@ import {
   capabilityBlocked,
   custodian,
   objectAncestors,
+  targetApproachPoint,
   offerRecipientProblem,
   type ItemInstance,
 } from '@open-legend/domain';
@@ -40,6 +41,8 @@ import type {
   InventoryDestination,
   InventoryDestinationPage,
   InventoryDestinationRequest,
+  InventoryAccessView,
+  EntityView,
 } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import type { WorldService } from './world-service.js';
@@ -103,6 +106,98 @@ const cursorSchema = z
     after: z.string(),
   })
   .strict();
+
+/** Call only for an already perceived world root; never project private bag descendants. */
+export function inventoryStorageHint(
+  service: WorldService,
+  scope: RequestScope,
+  id: string,
+): EntityView['storage'] {
+  const target = service.world.entities[id];
+  if (
+    !target ||
+    target.retirement ||
+    target.placement?.mode !== 'world' ||
+    !(target.container || target.kind === 'item-pile' || target.remains)
+  )
+    return;
+  return {
+    containerId: id,
+    placementRevision: target.placement.revision,
+    ...(canAccessContainer(service.world, scope.actorId, id)
+      ? { revision: target.inventoryRevision ?? 0 }
+      : {}),
+  };
+}
+
+/** Exact selected-target read: inspection never walks or exposes inaccessible contents. */
+export function inventoryAccess(
+  service: WorldService,
+  scope: RequestScope,
+  request: { containerId: string; approach?: boolean },
+): InventoryAccessView {
+  service.assertScope(scope);
+  const world = service.world,
+    actor = world.entities[scope.actorId],
+    target = world.entities[request.containerId];
+  const unavailable: InventoryAccessView = {
+    ok: false,
+    scope: scopeKey(scope),
+    status: 'unavailable',
+    message: 'This container is unavailable. Refresh after its location or access changes.',
+  };
+  if (
+    !actor ||
+    !target ||
+    target.retirement ||
+    !(target.id === actor.id || target.container || target.kind === 'item-pile' || target.remains)
+  )
+    return unavailable;
+  const root = objectAncestors(world, target.id).at(-1);
+  if (!root || root.placement?.mode !== 'world') return unavailable;
+  const accessible = canAccessContainer(world, actor.id, target.id);
+  const visibleExterior =
+    (target.placement?.mode === 'world' && seesEntity(world, actor, target)) ||
+    ((root.kind === 'item-pile' || root.remains) &&
+      target.placement?.mode === 'contained' &&
+      target.placement.parentEntityId === root.id &&
+      seesEntity(world, actor, root));
+  if (!accessible && !visibleExterior) return unavailable;
+  const container = {
+    id: target.id,
+    name: observerDescription(world, scope.actorId, target.id),
+    location: containerLocation(service, scope, target.id),
+    rootId: root.id,
+    placementRevision: root.placement.revision,
+    geometryRevision: world.map.spatial.revision,
+  };
+  if (accessible)
+    return {
+      ok: true,
+      scope: scopeKey(scope),
+      status: 'ready',
+      container: { ...container, revision: target.inventoryRevision ?? 0 },
+    };
+  if (canReachEntity(world, actor, root, world.itemHandling.reach))
+    return { ...unavailable, container, message: 'You cannot access this container.' };
+  // Native stance selection uses this world's handling reach and current geometry. It is
+  // requested only by Walk to and open, never for every visible object or view update.
+  const stance = request.approach
+    ? targetApproachPoint(world, actor, root, world.itemHandling.reach)
+    : null;
+  return {
+    ok: true,
+    scope: scopeKey(scope),
+    status: 'out-of-reach',
+    container,
+    ...(stance ? { stance } : {}),
+    message:
+      request.approach && !stance
+        ? 'No approach is currently available. Refresh the target before trying again.'
+        : 'Move within reach, then recheck access before opening.',
+  };
+}
+
 /** Live pages restart on any inventory/custody revision. Search scans at most 200
  * permitted children; a continuation is returned even when that window has no match.
  * With `mergeSourceId`, the same windows list only lots that source can merge into,
@@ -155,7 +250,7 @@ export function containerPage(
   const page = contentsQuery(world, containerId, scopeKey(scope), after);
   if (page.status !== 'complete')
     throw new Error('Contents are temporarily unavailable. Refresh before continuing.');
-  const items: InventoryItemView[] = [],
+  const items: ItemInstance[] = [],
     children = page.values;
   let scanned = 0,
     next: string | undefined;
@@ -184,7 +279,7 @@ export function containerPage(
         : !query ||
           world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query))
     )
-      items.push(inventoryItemView(service, scope, item));
+      items.push(item);
   }
   return {
     ok: true,
@@ -209,7 +304,7 @@ export function containerPage(
         ...observerName(world, scope.actorId, parent.id),
         revision: parent.inventoryRevision ?? 0,
       })),
-    items,
+    items: inventoryItemsView(service, scope, items),
     ...(next ? { next } : {}),
   };
 }
@@ -225,7 +320,7 @@ function containerLocation(service: WorldService, scope: RequestScope, id: strin
     .map((entry) => observerDescription(world, scope.actorId, entry.id));
   const path = enclosing.length ? `In ${enclosing.join(' › ')} · ` : '';
   if (rootId === scope.actorId) return `${path}Carried by you`;
-  if (root.actor)
+  if (root.actor && !root.remains)
     return `${path}Carried by ${observerDescription(world, scope.actorId, rootId, 'definite')}`;
   const separation = distance(
     effectivePosition(world, scope.actorId),
@@ -287,7 +382,7 @@ export function activityStorageReader(
     const groundAppearance =
       target.placement?.mode === 'contained' &&
       target.placement.parentEntityId === root.id &&
-      root.kind === 'item-pile' &&
+      (root.kind === 'item-pile' || root.remains) &&
       seesEntity(world, actor, root);
     const visible =
       (target.placement?.mode === 'world' && seesEntity(world, actor, target)) || groundAppearance;
@@ -582,16 +677,17 @@ export function inventoryDestinationPage(
       scanned++;
       const target = candidate.value;
       if (target.id === scope.actorId) continue;
-      if (request.activity && !target.actor) {
+      // A corpse retains its actor component; its storage follows native remains access.
+      if (request.activity && (!target.actor || target.remains)) {
         if (!seesEntity(world, actor, target)) continue;
         if (target.container) add(target.id);
-        if (target.kind === 'item-pile') {
+        if (target.kind === 'item-pile' || target.remains) {
           cursor.phase = 'ground';
           cursor.grantActorId = target.id;
           cursor.grantRevision = target.inventoryRevision ?? 0;
           cursor.after = '';
         }
-      } else if (target.actor) {
+      } else if (target.actor && !target.remains) {
         if (
           !seesEntity(world, actor, target) ||
           !canReachEntity(world, actor, target, world.itemHandling.reach)
@@ -608,7 +704,7 @@ export function inventoryDestinationPage(
         cursor.grantActorId = target.id;
         cursor.grantRevision = target.inventoryRevision ?? 0;
       } else if (
-        (target.container || target.kind === 'item-pile') &&
+        (target.container || target.kind === 'item-pile' || target.remains) &&
         canAccessContainer(world, scope.actorId, target.id)
       )
         add(target.id);
@@ -669,6 +765,37 @@ export function inventoryItemView(
   scope: RequestScope,
   item: ItemInstance,
 ): InventoryItemView {
+  return projectInventoryItem(service, scope, item, (command) =>
+    service.previewCommand(command, scope.actorId),
+  );
+}
+
+/** Split lots can offer the same native preparation. Reuse its admission result
+ * only within this synchronous batch, with the same world and controlling actor. */
+export function inventoryItemsView(
+  service: WorldService,
+  scope: RequestScope,
+  items: ItemInstance[],
+): InventoryItemView[] {
+  const previews = new Map<string, ReturnType<WorldService['previewCommand']>>();
+  const preview = (command: ActionOption['command']) => {
+    const key = JSON.stringify(command);
+    let result = previews.get(key);
+    if (!result) {
+      result = service.previewCommand(command, scope.actorId);
+      previews.set(key, result);
+    }
+    return result;
+  };
+  return items.map((item) => projectInventoryItem(service, scope, item, preview));
+}
+
+function projectInventoryItem(
+  service: WorldService,
+  scope: RequestScope,
+  item: ItemInstance,
+  preview: (command: ActionOption['command']) => ReturnType<WorldService['previewCommand']>,
+): InventoryItemView {
   const world = service.world,
     player = world.entities[scope.actorId]!,
     actor = player.actor!;
@@ -682,6 +809,7 @@ export function inventoryItemView(
   ): ActionOption => ({
     id,
     label,
+    icon: nativeActionIcon(command.type),
     command,
     enabled: active && possible,
     ...(!active
@@ -714,30 +842,26 @@ export function inventoryItemView(
     applicableConsumption(world, player)
   ) {
     const command = { type: 'eat' as const, itemId: item.id };
-    const preview = service.previewCommand(command, player.id);
+    const availability = preview(command);
     actions.push(
       action(
         `eat-${item.id}`,
         applicableConsumption(world, player)!.label,
         command,
-        preview.ok,
-        preview.ok ? undefined : preview.message,
+        availability.ok,
+        availability.ok ? undefined : availability.message,
       ),
     );
   }
   // Cooking needs an exact perceived fire. Explore uses and targets offers that
   // choice rather than dispatching a shortcut that silently picks a world fire.
-  for (const [key, recipe] of Object.entries(NATIVE_PREPARATIONS))
-    if (accessiblePossession(world, player.id, item.id) && recipe.input === item.definitionId)
+  if (accessiblePossession(world, player.id, item.id))
+    for (const option of nativeInventoryActions(world, item)) {
+      const availability = preview(option.command);
       actions.push(
-        action(
-          `prepare-${key}`,
-          key === 'fiber' ? 'Clean fibers' : 'Twist cord',
-          { type: 'prepare', preparation: key as 'fiber' | 'cord' },
-          quantityOf(world, player.id, recipe.input) >= recipe.inputQuantity,
-          `Requires ${recipe.inputQuantity} ${world.itemDefinitions[recipe.input]!.name} across carried supplies.`,
-        ),
+        action(option.id, option.label, option.command, availability.ok, availability.message),
       );
+    }
   if (item.individuality === 'homogeneous' && item.quantity > 1)
     actions.push(
       action(
@@ -807,7 +931,8 @@ export function inventoryItemView(
           },
         }
       : {}),
-    ...(declaration
+    ...(declaration &&
+    (declaration.disclosure === 'public' || custodian(world, item.id) === scope.actorId)
       ? {
           declaredOwner: {
             name: declaration.holderId
@@ -818,6 +943,7 @@ export function inventoryItemView(
         }
       : {}),
     definitionId: item.definitionId,
+    ...(definition.icon ? { icon: definition.icon } : {}),
     name: definition.name,
     nameForm: definition.nameForm,
     indefiniteArticle: definition.indefiniteArticle,

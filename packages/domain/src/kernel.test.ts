@@ -419,7 +419,9 @@ describe('bounded invented mechanisms', () => {
       false,
     );
     candidate.inputs[0]!.definitionId = 'stone';
-    expect(validateDeclaration(world, candidate).length).toBeGreaterThan(0);
+    expect(validateDeclaration(world, candidate)).toEqual([
+      'This material cannot fill the selected role.',
+    ]);
     expect(
       validateDeclaration(createWorld(), candidate).includes(
         'This material cannot fill the selected role.',

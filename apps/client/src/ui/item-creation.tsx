@@ -1,45 +1,52 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
-import type { SurfacePoint } from '@open-legend/protocol';
-import { post } from '../api';
+import type { ApiResult, SurfacePoint } from '@open-legend/protocol';
 import { Button, IconButton, SelectField, Tag } from '../design-system/components';
 export type ItemCreationTarget = { actorId: string } | { position: SurfacePoint };
 export function ItemCreationModal({
   options,
   target,
+  targetLabel,
   initialDefinitionId,
+  enabled,
   close,
-  notify,
+  create,
 }: {
   options: Array<{ id: string; label: string; description: string }>;
   target: ItemCreationTarget;
+  targetLabel?: string;
   initialDefinitionId?: string;
+  enabled: boolean;
   close(): void;
-  notify(text: string): void;
+  create(definitionId: string, quantity: number): Promise<ApiResult | undefined>;
 }) {
   const [definitionId, setDefinitionId] = useState(initialDefinitionId ?? '');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState('1');
+  const amount = Number(quantity);
+  const validAmount = !!quantity.trim() && Number.isSafeInteger(amount) && amount >= 1;
   const [saving, setSaving] = useState(false),
     [error, setError] = useState('');
-  // An uncertain HTTP result can be retried without duplicating creation.
-  const attempt = useRef<{ body: string; id: string } | null>(null);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (saving || !definitionId || !Number.isSafeInteger(quantity) || quantity < 1) return;
-    const body = JSON.stringify({ definitionId, quantity, destination: target });
-    if (attempt.current?.body !== body) attempt.current = { body, id: crypto.randomUUID() };
+    if (saving || !enabled || !definitionId || !validAmount) return;
     setSaving(true);
     setError('');
     try {
-      const result = await post('/api/god/items', { ...JSON.parse(body), id: attempt.current.id });
-      if (result.ok) {
-        notify(result.message);
-        close();
-      } else setError(result.message);
+      const result = await create(definitionId, amount);
+      if (!alive.current || !result) return;
+      if (result.ok) close();
+      else setError(result.message);
     } catch (reason) {
-      setError(String(reason));
+      if (alive.current) setError(String(reason));
     } finally {
-      setSaving(false);
+      if (alive.current) setSaving(false);
     }
   }
   return (
@@ -47,15 +54,16 @@ export function ItemCreationModal({
       className="ol-root ol-modal-overlay"
       isOpen
       isDismissable={!saving}
+      isKeyboardDismissDisabled={saving}
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
-        <Dialog className="ol-person-dialog" aria-label="Add item">
+        <Dialog className="ol-person-dialog" aria-label="Create item">
           <form onSubmit={(event) => void submit(event)}>
             <header className="ol-modal-head">
               <div>
                 <Tag tone="highlight">God mode</Tag>
-                <h2 className="ol-heading">Add item</h2>
+                <h2 className="ol-heading">Create item</h2>
               </div>
               <IconButton
                 icon="ui.close"
@@ -65,6 +73,11 @@ export function ItemCreationModal({
               />
             </header>
             <fieldset className="ol-person-form" disabled={saving} style={{ border: 0, margin: 0 }}>
+              <p className="ol-caption">
+                {'actorId' in target
+                  ? `Create new belongings in ${targetLabel ? `${targetLabel}’s` : 'the selected character’s'} inventory.`
+                  : `Create on the selected ground at ${target.position.x.toFixed(1)}, ${target.position.z.toFixed(1)}.`}
+              </p>
               <SelectField
                 label="Item"
                 value={definitionId}
@@ -80,17 +93,20 @@ export function ItemCreationModal({
                   max={Number.MAX_SAFE_INTEGER}
                   step={1}
                   value={quantity}
-                  onChange={(event) => setQuantity(Number(event.target.value))}
+                  onChange={(event) => setQuantity(event.target.value)}
                 />
               </label>
-              <p className="ol-caption">
-                {'actorId' in target
-                  ? 'Add to this character’s inventory.'
-                  : 'Place on the selected ground surface.'}
-              </p>
+              {!validAmount && (
+                <p className="ol-caption">Enter a whole quantity of at least one.</p>
+              )}
               {error && (
                 <p role="alert" className="ol-form-error">
                   {error}
+                </p>
+              )}
+              {!enabled && (
+                <p role="status">
+                  Reconnect with control of this character and God mode to create.
                 </p>
               )}
             </fieldset>
@@ -101,9 +117,11 @@ export function ItemCreationModal({
               <Button
                 type="submit"
                 busy={saving}
-                disabled={!definitionId || !Number.isSafeInteger(quantity) || quantity < 1}
+                disabled={!enabled || !definitionId || !validAmount}
               >
-                Add item
+                {validAmount
+                  ? `Create ${amount} ${amount === 1 ? 'item' : 'items'}`
+                  : 'Create item'}
               </Button>
             </footer>
           </form>

@@ -2,7 +2,7 @@ import { addItem } from '../../data.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { rootMembershipChanged } from '../../entity-index.js';
 import { nativeActor } from './bodies.js';
-import { starterGroundAt } from './landscape.js';
+import { FIRST_THREAT_LOCATIONS, starterGroundAt } from './landscape.js';
 import type { StrikeDefinition } from '../../strikes.js';
 import type { Entity, WorldState } from '../../types.js';
 
@@ -24,8 +24,8 @@ export const STAG_CONTACT: StrikeDefinition = {
 /** Optional authored detour; ordinary prey and the camp's resources stay independent. */
 export function installFirstThreat(world: WorldState): void {
   const layout = world.map.spatial;
-  const home = starterGroundAt(layout, 32, 28),
-    refuge = starterGroundAt(layout, 38, 31);
+  const home = starterGroundAt(layout, ...FIRST_THREAT_LOCATIONS.home),
+    refuge = starterGroundAt(layout, ...FIRST_THREAT_LOCATIONS.refuge);
   const stag: Entity = {
     id: 'territorial-stag',
     name: 'Territorial stag',
@@ -80,7 +80,7 @@ export function installFirstThreat(world: WorldState): void {
       repathAt: 0,
     },
   };
-  const cachePosition = starterGroundAt(layout, 36.8, 26);
+  const cachePosition = starterGroundAt(layout, ...FIRST_THREAT_LOCATIONS.cache);
   stag.actor!.naturalStrikeIds = [STAG_CONTACT.id];
   const content: Entity[] = [
     stag,
@@ -98,15 +98,13 @@ export function installFirstThreat(world: WorldState): void {
           'stag-tracks',
           'Deep hoof tracks',
           'Broad, fresh hoofprints churn the ground. Several gouges run sideways as if an animal repeatedly stamped here.',
-          28,
-          24,
+          ...FIRST_THREAT_LOCATIONS.tracks,
         ],
         [
           'stag-brush',
           'Shredded foliage',
           'Twigs and foliage are torn and battered at antler height. The disturbed ground leads toward a secluded clearing.',
-          30,
-          24,
+          ...FIRST_THREAT_LOCATIONS.brush,
         ],
       ] as const
     ).map(([id, name, description, x, z]): Entity => {
@@ -128,7 +126,7 @@ export function installFirstThreat(world: WorldState): void {
   addItem(world, 'stag-cache', 'prepared_fiber', 4);
   addItem(world, 'stag-cache', 'cord', 2);
   addItem(world, 'stag-cache', 'stone', 8);
-  const ground = starterGroundAt(layout, 29.5, 28);
+  const ground = starterGroundAt(layout, ...FIRST_THREAT_LOCATIONS.screen);
   layout.blockers.push({
     id: 'stag-rock-screen',
     material: 'stone',

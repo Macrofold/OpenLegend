@@ -209,6 +209,7 @@ function populateGroup(
     let accepted = false;
     while (cursor < positions.length) {
       const result = spawnWorldEntity(world, {
+        id: `profile-spawn:${groupId}:${index}`,
         type: index < scenario.people ? 'person' : 'deer',
         position: { ...positions[cursor++]!, surfaceId: 'terrain' },
         ...(index < scenario.people

@@ -41,6 +41,8 @@ import {
 } from '@open-legend/domain';
 import {
   AuthorityError,
+  commandRecoveryFields,
+  scopeKey,
   type RequestScope,
   type Capability,
   type LoginSession,
@@ -124,7 +126,7 @@ import {
   type DeclarationDraft,
   type DeclarationProvenance,
   type Transition,
-  type GodSpawnDraft,
+  type GodSpawnRequest,
   type GodMemoryEdit,
   type GodPersonDraft,
   type GodPersonEditorDraft,
@@ -135,6 +137,7 @@ import {
 import type {
   ApiResult,
   CommandInput,
+  CommandReceiptResult,
   GodPersonEditorView,
   GodWorldEventsEditorView,
   MaintenanceWindowView,
@@ -262,6 +265,7 @@ export const commandInputSchema = z
       .optional(),
     knownPlace: knownPlaceReference.optional(),
     expectedRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+    expectedActionId: id.optional(),
     placementRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     expectedContentsRevision: z
       .number()
@@ -275,6 +279,13 @@ export const commandInputSchema = z
   })
   .strict();
 export const requestIdSchema = id;
+
+function commandRecoveryFingerprint(input: CommandInput, scope: RequestScope): string {
+  // A reconnect may read its committed result after taking control again. It cannot execute
+  // through this fingerprint, nor cross a login, grant, character or restored timeline.
+  // docs/projects/game-interaction-redesign-tech-design.md#direct-transfer-without-weaker-authority
+  return digest({ input, scope: commandRecoveryFields(scope) });
+}
 
 function actorMilestones(
   saved: SavedWorld,
@@ -907,37 +918,47 @@ export class WorldService {
     connected: boolean,
     scope = this.localScope,
   ): Promise<void> {
-    return this.mutate(async () => {
-      await this.ready;
+    // Transport callbacks can inherit the context of the write that closes a stream.
+    // Give them their own queue turn without borrowing that write's request authority.
+    return this.mutationContext.exit(() =>
+      this.authorityContext.run(undefined, () =>
+        this.mutate(async () => {
+          await this.ready;
 
-      if (connected) {
-        this.assertScope(scope);
-        if (this.connections.size >= this.config.capacity.connections)
-          throw new Error('Connection capacity reached.');
-        this.connections.set(connectionId, scope);
-        this.connectionPreferences.set(
-          scope.accountId,
-          (await this.profileFor(scope)).preferences.pauseWhenHidden,
-        );
-      } else {
-        const previous = this.connections.get(connectionId);
-        this.connections.delete(connectionId);
-        if (
-          previous &&
-          ![...this.connections.values()].some(
-            (item) => this.presenceKey(item) === this.presenceKey(previous),
-          )
-        ) {
-          this.presence.delete(this.presenceKey(previous));
-          this.presenceOrders.delete(this.presenceKey(previous));
-          if (![...this.connections.values()].some((item) => item.accountId === previous.accountId))
-            this.connectionPreferences.delete(previous.accountId);
-        }
-      }
-      await this.reconcileDisconnectedConversation();
-      await this.reconcileParticipation();
-      if (this.world.paused !== this.paused) await this.syncPause();
-    });
+          if (connected) {
+            this.assertScope(scope);
+            if (this.connections.size >= this.config.capacity.connections)
+              throw new Error('Connection capacity reached.');
+            this.connections.set(connectionId, scope);
+            this.connectionPreferences.set(
+              scope.accountId,
+              (await this.profileFor(scope)).preferences.pauseWhenHidden,
+            );
+          } else {
+            const previous = this.connections.get(connectionId);
+            this.connections.delete(connectionId);
+            if (
+              previous &&
+              ![...this.connections.values()].some(
+                (item) => this.presenceKey(item) === this.presenceKey(previous),
+              )
+            ) {
+              this.presence.delete(this.presenceKey(previous));
+              this.presenceOrders.delete(this.presenceKey(previous));
+              if (
+                ![...this.connections.values()].some(
+                  (item) => item.accountId === previous.accountId,
+                )
+              )
+                this.connectionPreferences.delete(previous.accountId);
+            }
+          }
+          await this.reconcileDisconnectedConversation();
+          await this.reconcileParticipation();
+          if (this.world.paused !== this.paused) await this.syncPause();
+        }),
+      ),
+    );
   }
   private async reconcileDisconnectedConversation(): Promise<void> {
     if (this.config.authentication.mode !== 'local') return;
@@ -2223,6 +2244,8 @@ export class WorldService {
         this.presence.clear();
         this.presenceOrders.clear();
         await this.authorityContext.run(undefined, () => this.reconcileParticipation());
+        // The restored world may be installed even when its follow-up save fails.
+        if (this.storageError) throw new Error(this.storageError);
         this.debtSeconds = 0;
         this.memoryBacklog = null;
         this.notify();
@@ -2972,6 +2995,7 @@ export class WorldService {
       const receipt: GameplayReceipt = {
         id,
         fingerprint,
+        recoveryFingerprint: null,
         epoch: 0,
         expiresAt: Number.MAX_SAFE_INTEGER,
         result: result.outcome,
@@ -3138,6 +3162,7 @@ export class WorldService {
         {
           id,
           fingerprint,
+          recoveryFingerprint: null,
           epoch: this.epoch.generation,
           expiresAt: this.now() + COMMAND_RETRY_MS,
           result,
@@ -3318,8 +3343,11 @@ export class WorldService {
     });
   }
 
-  async spawn(draft: GodSpawnDraft): Promise<ApiResult> {
-    return await this.godTransition((world) => spawnWorldEntity(world, draft));
+  async spawn(request: GodSpawnRequest, scope = this.localScope): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      this.assertScope(scope, 'create');
+      return spawnWorldEntity(world, request);
+    });
   }
 
   async godInventionPolicy(
@@ -3875,10 +3903,51 @@ export class WorldService {
           id,
           epoch: this.epoch.generation,
           fingerprint,
+          recoveryFingerprint: scope ? commandRecoveryFingerprint(input, scope) : null,
           expiresAt: this.now() + COMMAND_RETRY_MS,
         },
         scope ?? this.localScope,
       );
+    });
+  }
+
+  /** Resolve an original request without re-admitting it under changed control. */
+  async commandReceipt(
+    commandId: string,
+    input: CommandInput,
+    epoch: string,
+    scope: RequestScope,
+  ): Promise<CommandReceiptResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      this.assertScope(scope);
+      const audience = scopeKey(scope);
+      const id = `gameplay:${scope.accountId}:${epoch}:${digest(commandId)}`;
+      const prior = await this.store.commands?.get(this.world.id, id);
+      this.assertScope(scope);
+      if (!prior)
+        return {
+          ok: false,
+          scope: audience,
+          status: epoch === this.commandEpoch ? 'unknown' : 'expired',
+          message:
+            'The original result is not available. This does not confirm whether it happened.',
+        };
+      if (prior.recoveryFingerprint !== commandRecoveryFingerprint(input, scope))
+        return {
+          ok: false,
+          scope: audience,
+          status: 'unavailable',
+          message: 'This result is unavailable for the current access and original request.',
+        };
+      if (this.now() >= prior.expiresAt)
+        return {
+          ok: false,
+          scope: audience,
+          status: 'expired',
+          message: 'The original result has expired. Its outcome remains unconfirmed.',
+        };
+      return { ok: true, scope: audience, status: 'resolved', result: prior.result };
     });
   }
 
@@ -3996,6 +4065,9 @@ export class WorldService {
         if (!input.position)
           return { ok: false, code: 'position', message: 'Choose a destination.' };
         command = { ...envelope, type: 'move', destination: input.position };
+        break;
+      case 'cancel':
+        command = { ...envelope, type: 'cancel', expectedActionId: input.expectedActionId };
         break;
       case 'status-effect':
         if (!input.targetId || !input.definitionId || !input.effectOperation)

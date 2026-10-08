@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import type { GameView, WorkState, WorkStepView } from '@open-legend/protocol';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import type { EntityView, GameView, WorkState, WorkStepView } from '@open-legend/protocol';
 import { post } from '../api';
-import { Button, Section, Tag } from '../design-system/components';
+import { playerEntity } from '../entity-view';
+import { Button, IconButton, Section, Tag } from '../design-system/components';
+import './character-actions.css';
 
 type Mode = 'enqueue' | 'replace' | 'interrupt';
 const STATE_LABELS: Record<WorkState, [string, string]> = {
@@ -40,31 +42,52 @@ function Steps({ steps }: { steps: WorkStepView[] }) {
   );
 }
 
-/** Keyed by access/control/world/timeline/actor in Character; stale asynchronous replies die with that scope.
+/** Keyed by private owner/world/timeline/actor in Character. The API rejects stale
+ * access replies while a permitted same-owner Resume preserves this private draft.
  * docs/architecture.md#action-fulfillment-and-revision-approval
  */
-export function ActionAttempts({ view, connected }: { view: GameView; connected: boolean }) {
-  const draftKey = `open-legend:action-draft:${view.access?.accountId}:${view.worldId}:${view.saveTimeline}:${view.player.id}`;
+export function ActionAttempts({
+  view,
+  connected,
+  subject,
+  entry,
+  workEntry,
+  chooseSubject,
+  clearSubject,
+  openActivity,
+  visible = true,
+  children,
+}: {
+  view: GameView;
+  connected: boolean;
+  subject?: EntityView | null;
+  entry?: number;
+  workEntry?: number;
+  chooseSubject?(): void;
+  clearSubject?(): void;
+  openActivity?(): void;
+  visible?: boolean;
+  children?: ReactNode;
+}) {
+  const draftKey = view.access?.privateDraftScope
+    ? `open-legend:action-draft:${view.access.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`
+    : null;
   const [text, setText] = useState(() => {
     try {
-      return sessionStorage.getItem(draftKey) ?? '';
+      return draftKey ? (sessionStorage.getItem(draftKey) ?? '') : '';
     } catch {
       return '';
     }
   });
-  const [targetId, setTargetId] = useState('');
+  const [editing, setEditing] = useState(!!text);
   const [mode, setMode] = useState<Mode>('enqueue');
-  // Optional exact details: they travel as references, not re-derived from the wording.
-  const [itemId, setItemId] = useState('');
-  const [instrumentId, setInstrumentId] = useState('');
-  const [recipientId, setRecipientId] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [quantityMode, setQuantityMode] = useState<'exact' | 'held'>('exact');
-  const [until, setUntil] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [requestId, setRequestId] = useState<string | null>(null);
   const alive = useRef(true);
+  const composer = useRef<HTMLTextAreaElement>(null);
+  const openerId = useId();
+  const returnToOpener = useRef(false);
   const inFlight = useRef(false);
   const submission = useRef<{ id: string; body: string } | null>(null);
   const decision = useRef<{
@@ -73,32 +96,41 @@ export function ActionAttempts({ view, connected }: { view: GameView; connected:
     epoch?: string;
   } | null>(null);
   const job = view.ai.jobs.find((entry) => entry.id === requestId && entry.kind === 'action');
-  const unavailable = !connected || view.access?.controlling === false || view.clock.paused;
-  const inView = new Set(view.entities.map((entity) => entity.id));
-  const targetMissing = !!targetId && !inView.has(targetId);
-  const pileItems = view.entities.flatMap((entity) =>
-    entity.kind === 'item-pile'
-      ? (entity.contents ?? []).filter((item) => item.portable).map((item) => ({ ...item }))
-      : [],
-  );
-  const references = [itemId, instrumentId, recipientId].filter(Boolean);
-  const carried = new Set(view.player.inventory.map((item) => item.id));
-  const reachable = new Set([...carried, ...pileItems.map((item) => item.id)]);
-  const beings = view.entities.filter(
-    (entity) =>
-      (entity.kind === 'actor' || entity.kind === 'animal') && entity.id !== view.player.id,
-  );
-  const staleItem = !!itemId && !reachable.has(itemId);
-  const staleTool = !!instrumentId && !carried.has(instrumentId);
-  const staleRecipient = !!recipientId && !beings.some((entity) => entity.id === recipientId);
-  const staleUntil = !!until && !view.clock.namedTimes.includes(until);
-  const staleReference = staleItem || staleTool || staleRecipient || staleUntil;
-  const amount = quantity.trim() ? Number(quantity) : null;
-  const invalidAmount =
-    amount !== null && (!Number.isSafeInteger(amount) || amount < 1 || amount > 999);
+  const unavailable = !connected
+    ? 'Reconnect to act.'
+    : view.access?.controlling === false
+      ? 'Resume control here to act.'
+      : !view.player.alive
+        ? 'This character cannot act now.'
+        : view.clock.paused
+          ? 'Resume the world to act.'
+          : '';
+  const targetId = subject?.id;
+  const currentSubject = targetId
+    ? targetId === view.player.id
+      ? playerEntity(view)
+      : view.entities.find((entity) => entity.id === targetId)
+    : undefined;
+  const targetMissing = !!targetId && !currentSubject;
   const work = view.player.work;
-  // Examples come in this world's own words; the engine form states none of its own.
+  // Availability still belongs to the native cancel capability. The separate
+  // work summary survives a paused world without exposing creator-only steps.
+  const stopAction = view.player.actions.find((action) => action.command.type === 'cancel');
+  const hasWork = view.player.hasWork;
+  const activeActivity =
+    view.player.activity &&
+    ['active', 'blocked', 'paused', 'queued', 'waiting'].includes(view.player.activity.status)
+      ? view.player.activity
+      : undefined;
+  const workLabel = activeActivity?.name ?? view.player.action?.label ?? work?.label;
+  // Examples come in this world's own words, not a second client action grammar.
   const examples = view.player.actionWording?.examples ?? [];
+  const wordingNotice =
+    view.ai.mode === 'fixture'
+      ? 'Uses configured test responses.'
+      : !view.ai.jevConfigured || !view.ai.llmConfigured || view.ai.budget.limitUsd <= 0
+        ? 'Familiar wording only.'
+        : 'May use intelligence allowance.';
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -106,6 +138,7 @@ export function ActionAttempts({ view, connected }: { view: GameView; connected:
     };
   }, []);
   useEffect(() => {
+    if (!draftKey) return;
     try {
       sessionStorage.setItem(draftKey, text);
     } catch {
@@ -115,26 +148,25 @@ export function ActionAttempts({ view, connected }: { view: GameView; connected:
   useEffect(() => {
     if (job) setMessage(job.message);
   }, [job?.id, job?.status, job?.message]);
-
-  const slots =
-    references.length || amount !== null || until
-      ? {
-          itemId: itemId || null,
-          instrumentId: instrumentId || null,
-          recipientId: recipientId || null,
-          quantity: amount,
-          quantityMode: amount === null ? null : quantityMode,
-          until: until || null,
-          method: null,
-        }
-      : undefined;
+  useEffect(() => {
+    if (entry) setEditing(true);
+  }, [entry]);
+  useEffect(() => {
+    if (workEntry) setEditing(false);
+  }, [workEntry]);
+  useEffect(() => {
+    if (editing && visible) composer.current?.focus();
+    else if (visible && returnToOpener.current) {
+      returnToOpener.current = false;
+      document.getElementById(openerId)?.focus();
+    }
+  }, [editing, entry, visible]);
   const send = async () => {
-    if (inFlight.current || unavailable || targetMissing || staleReference || invalidAmount) return;
+    if (inFlight.current || unavailable || targetMissing || !text.trim()) return;
     const body = JSON.stringify({
       text: text.trim(),
       targetId: targetId || undefined,
-      mode,
-      slots,
+      mode: hasWork ? mode : 'enqueue',
     });
     if (!submission.current || submission.current.body !== body)
       submission.current = { id: crypto.randomUUID(), body };
@@ -195,191 +227,199 @@ export function ActionAttempts({ view, connected }: { view: GameView; connected:
       { type: accept ? 'confirm-attempt' : 'withdraw-attempt', attemptId },
       'Decision submitted.',
     );
-  const stoppable =
-    !!work && (['queued', 'running', 'waiting', 'blocked'].includes(work.state) || !!work.paused);
-  const workKey = work?.id ?? '';
+  const workKey = work?.id ?? view.player.action?.id ?? view.player.activity?.name ?? 'current';
+  const closeEditor = () => {
+    returnToOpener.current = true;
+    setEditing(false);
+  };
   return (
-    <Section title="Take an action">
-      {work && (
-        <div className="ol-proposal" role="region" aria-label="Current work">
-          <p>
-            <StateTag state={work.state} /> <strong>{work.label}</strong>
+    <div className="ol-character-actions">
+      {hasWork && !editing && (
+        <Section title="Current work">
+          <p className="ol-character-work-name">
+            <strong>{workLabel ?? 'Work is in progress.'}</strong>
           </p>
-          {work.reason && <p className="ol-caption">{work.reason}</p>}
-          {work.steps.length > 0 && <Steps steps={work.steps} />}
-          {work.paused && (
-            <>
-              <p>
-                <StateTag state="paused" /> <strong>{work.paused.label}</strong>
-              </p>
-              <p className="ol-caption">
-                Resumes, after rechecking its targets, when the current work ends. Stopping or
-                replacing work discards it.
-              </p>
-              {work.paused.steps.length > 0 && <Steps steps={work.paused.steps} />}
-            </>
-          )}
-          {stoppable && (
+          {activeActivity && <Tag>{activeActivity.status}</Tag>}
+          {activeActivity?.reason && <p>{activeActivity.reason}</p>}
+          <div className="ol-actions">
+            {openActivity && activeActivity && (
+              <Button variant="quiet" onPress={openActivity}>
+                View task
+              </Button>
+            )}
             <Button
               variant="quiet"
-              disabled={busy || unavailable}
-              // A retry reuses the identity only while the same work is shown; stopping
-              // later work is a new command, never a replay of an earlier stop.
+              disabled={busy || !!unavailable || !stopAction?.enabled}
               onPress={() => void command(`stop:${workKey}`, { type: 'cancel' }, 'Stopped.')}
             >
               Stop all work
             </Button>
+          </div>
+          <p className="ol-caption">Stopping also discards work paused for later.</p>
+          {!stopAction?.enabled && stopAction?.reason && (
+            <p className="ol-caption">{stopAction.reason}</p>
+          )}
+          {work && (
+            <details className="ol-character-work-details">
+              <summary>God mode · Work steps</summary>
+              <p>
+                <StateTag state={work.state} /> {work.label}
+              </p>
+              {work.reason && <p>{work.reason}</p>}
+              {!!work.steps.length && <Steps steps={work.steps} />}
+              {work.paused && (
+                <>
+                  <p>
+                    <StateTag state="paused" /> {work.paused.label}
+                  </p>
+                  <p className="ol-caption">
+                    Resumes after rechecking its targets when current work ends. Stopping or
+                    replacing work discards it.
+                  </p>
+                  {!!work.paused.steps.length && <Steps steps={work.paused.steps} />}
+                </>
+              )}
+            </details>
+          )}
+        </Section>
+      )}
+      <div className="ol-character-native" hidden={editing}>
+        {children}
+      </div>
+      <Button
+        id={openerId}
+        className={editing ? 'ol-action-opener-hidden' : ''}
+        variant="quiet"
+        aria-expanded={editing}
+        onPress={() => (editing ? closeEditor() : setEditing(true))}
+      >
+        Describe an action
+      </Button>
+      <div
+        className="ol-action-intention"
+        hidden={!editing}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && !event.defaultPrevented && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            event.stopPropagation();
+            closeEditor();
+          }
+        }}
+      >
+        <strong>{view.player.name} · Action</strong>
+        <div className="ol-action-subject">
+          {subject ? (
+            <>
+              <span>
+                With <strong>{currentSubject?.name ?? subject.name}</strong>
+              </span>
+              {clearSubject && (
+                <IconButton icon="ui.close" label="Remove action subject" onPress={clearSubject} />
+              )}
+            </>
+          ) : (
+            <span>Subject comes from your words.</span>
+          )}
+          {chooseSubject && (
+            <Button variant="quiet" size="sm" onPress={chooseSubject}>
+              {subject ? 'Change subject' : 'Choose subject'}
+            </Button>
           )}
         </div>
-      )}
-      <p className="ol-caption">
-        Describe your character's action, not dialogue
-        {examples.length ? <>, for example {examples.map((e) => `“${e}”`).join(', ')}</> : ''}.
-        Coordinates use X,Z; left and right mean your character's own left and right. Wording the
-        game does not recognize may use your configured AI allowance.
-      </p>
-      <textarea
-        aria-label="Action intention"
-        maxLength={500}
-        value={text}
-        placeholder={view.player.actionWording?.placeholder ?? ''}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <label>
-        Target reference{' '}
-        <select value={targetId} onChange={(e) => setTargetId(e.target.value)}>
-          <option value="">Resolve from text</option>
-          {targetMissing && (
-            <option value={targetId} disabled>
-              Previously selected target is no longer in view
-            </option>
-          )}
-          {view.entities
-            .filter((entity) => entity.id !== view.player.id)
-            .map((entity) => (
-              <option key={entity.id} value={entity.id}>
-                {entity.name}
-              </option>
-            ))}
-        </select>
-      </label>
-      <details>
-        <summary>Exact details (optional)</summary>
-        <label>
-          Item{' '}
-          <select value={itemId} onChange={(e) => setItemId(e.target.value)}>
-            <option value="">From text</option>
-            {staleItem && (
-              <option value={itemId} disabled>
-                Previously chosen item is no longer available
-              </option>
-            )}
-            {view.player.inventory.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.quantity} × {item.name} (carried)
-              </option>
-            ))}
-            {pileItems.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.quantity} × {item.name} (on the ground)
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Tool{' '}
-          <select value={instrumentId} onChange={(e) => setInstrumentId(e.target.value)}>
-            <option value="">Any suitable</option>
-            {staleTool && (
-              <option value={instrumentId} disabled>
-                Previously chosen tool is no longer carried
-              </option>
-            )}
-            {view.player.inventory.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          For{' '}
-          <select value={recipientId} onChange={(e) => setRecipientId(e.target.value)}>
-            <option value="">No one in particular</option>
-            {staleRecipient && (
-              <option value={recipientId} disabled>
-                Previously chosen being is no longer in view
-              </option>
-            )}
-            {beings.map((entity) => (
-              <option key={entity.id} value={entity.id}>
-                {entity.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Amount{' '}
-          <input
-            aria-label="Amount"
-            inputMode="numeric"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            placeholder="none"
-          />
-          <select
-            aria-label="Amount means"
-            value={quantityMode}
-            onChange={(e) => setQuantityMode(e.target.value as 'exact' | 'held')}
-          >
-            <option value="exact">exactly this many</option>
-            <option value="held">until I carry this many</option>
-          </select>
-        </label>
-        {(view.clock.namedTimes.length > 0 || staleUntil) && (
-          <label>
-            Stop at{' '}
-            <select value={until} onChange={(e) => setUntil(e.target.value)}>
-              <option value="">No set time</option>
-              {staleUntil && (
-                <option value={until} disabled>
-                  Previously chosen time is not one this world names
-                </option>
-              )}
-              {/* This world's own named times; a world may name none. */}
-              {view.clock.namedTimes.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
+        {targetMissing && (
+          <p role="status">
+            {subject?.name} is no longer in view. Change or remove this subject before sending.
+          </p>
         )}
-      </details>
-      {(staleReference || invalidAmount) && (
-        <p role="alert" className="ol-caption">
-          {invalidAmount
-            ? 'Amount must be a whole number from 1 to 999.'
-            : 'A chosen exact detail is no longer available; choose another or reset it.'}
+        <div className="ol-action-fields">
+          <label className="ol-action-composer">
+            What do you want to do?
+            <textarea
+              ref={composer}
+              aria-label="Action intention"
+              maxLength={500}
+              value={text}
+              placeholder={view.player.actionWording?.placeholder ?? ''}
+              onChange={(event) => setText(event.target.value)}
+            />
+          </label>
+          {hasWork && (
+            <fieldset className="ol-action-scheduling">
+              <legend>When should this happen?</legend>
+              <p className="ol-caption">Current work: {workLabel ?? 'In progress'}.</p>
+              {(
+                [
+                  ['enqueue', 'After current work'],
+                  ['interrupt', 'Pause current work, then resume'],
+                  ['replace', 'Replace current work'],
+                ] as const
+              ).map(([value, label]) => (
+                <label key={value}>
+                  <input
+                    type="radio"
+                    name={`action-mode-${view.player.id}`}
+                    value={value}
+                    checked={mode === value}
+                    onChange={() => setMode(value)}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+              {mode === 'replace' && (
+                <p className="ol-caption">
+                  Replaces current and paused work. Effects and materials already spent stay spent.
+                </p>
+              )}
+              {mode === 'interrupt' && (
+                <p className="ol-caption">
+                  Current work resumes afterward only if its conditions still hold.
+                </p>
+              )}
+            </fieldset>
+          )}
+          <details>
+            <summary>Examples and wording</summary>
+            {examples.length > 0 && <p>{examples.map((example) => `“${example}”`).join(' · ')}</p>}
+            <p className="ol-caption">
+              Describe an action here; use Conversation to speak. Coordinates use X,Z. Left and
+              right refer to your character.
+            </p>
+          </details>
+          {unavailable && <p role="status">{unavailable}</p>}
+          {message && (
+            <p role="status" className="ol-action-result">
+              {message}
+            </p>
+          )}
+        </div>
+        <div className="ol-actions ol-action-submit">
+          <Button
+            variant="primary"
+            disabled={!!unavailable || !text.trim() || targetMissing}
+            isPending={busy}
+            onPress={() => void send()}
+          >
+            {busy
+              ? 'Sending action…'
+              : !hasWork
+                ? 'Attempt action'
+                : mode === 'replace'
+                  ? 'Replace work'
+                  : mode === 'interrupt'
+                    ? 'Pause and attempt'
+                    : 'Queue action'}
+          </Button>
+          <Button variant="quiet" onPress={closeEditor}>
+            Cancel
+          </Button>
+        </div>
+        <p className="ol-caption">{wordingNotice} Cancel keeps this draft.</p>
+      </div>
+      {message && !editing && (
+        <p role="status" className="ol-action-result">
+          {message}
         </p>
       )}
-      <label>
-        Current work{' '}
-        <select value={mode} onChange={(e) => setMode(e.target.value as Mode)}>
-          <option value="enqueue">Queue after current work</option>
-          <option value="interrupt">Pause current work, then resume it</option>
-          <option value="replace">Replace current work</option>
-        </select>
-      </label>
-      <Button
-        disabled={
-          busy || unavailable || !text.trim() || targetMissing || staleReference || invalidAmount
-        }
-        onPress={() => void send()}
-      >
-        Attempt action
-      </Button>
-      {message && <p role="status">{message}</p>}
       {view.player.actionAttempts.map((attempt) => (
         <div className="ol-proposal" key={attempt.id}>
           <p>{attempt.description}</p>
@@ -401,7 +441,10 @@ export function ActionAttempts({ view, connected }: { view: GameView; connected:
                     ? 'Acceptance will pause your current work and resume it afterwards.'
                     : 'Acceptance will queue after your current work.'}
               </p>
-              <Button disabled={busy || unavailable} onPress={() => void decide(attempt.id, true)}>
+              <Button
+                disabled={busy || !!unavailable}
+                onPress={() => void decide(attempt.id, true)}
+              >
                 Accept revised action
               </Button>
             </>
@@ -414,18 +457,27 @@ export function ActionAttempts({ view, connected }: { view: GameView; connected:
               No executable binding yet. Revise or explicitly resubmit the request, or withdraw it.
             </p>
           )}
-          <Button variant="quiet" onPress={() => setText(attempt.description)}>
+          <Button
+            variant="quiet"
+            onPress={() => {
+              setText(attempt.description);
+              setMode(attempt.mode);
+              clearSubject?.();
+              setEditing(true);
+              composer.current?.focus();
+            }}
+          >
             Edit as new request
           </Button>
           <Button
             variant="quiet"
-            disabled={busy || unavailable}
+            disabled={busy || !!unavailable}
             onPress={() => void decide(attempt.id, false)}
           >
             Decline / withdraw
           </Button>
         </div>
       ))}
-    </Section>
+    </div>
   );
 }

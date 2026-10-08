@@ -21,6 +21,7 @@
 }
 .ol-operations-links {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-4);
   margin-left: auto;
@@ -36,6 +37,125 @@
 }
 .ol-operations-card {
   padding: var(--space-4) var(--space-5);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-operations-workspace {
+  display: grid;
+  gap: var(--space-5);
+  max-inline-size: 1200px;
+  margin-inline: auto;
+}
+.ol-operations-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+}
+.ol-operations .ol-operations-summary h2,
+.ol-operations .ol-operations-summary p {
+  margin: 0 0 var(--space-2);
+}
+.ol-operations-summary-actions {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-2);
+}
+.ol-operations-entry {
+  max-inline-size: 600px;
+  margin-inline: auto;
+}
+.ol-operations-task-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-end: var(--space-4);
+}
+.ol-operations-task {
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 2px solid transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.ol-operations-task[data-selected] {
+  border-color: var(--highlight);
+  color: var(--ink);
+  background: var(--highlight-quiet);
+}
+.ol-operations-task[data-focus-visible],
+.ol-operations-task-panel[data-focus-visible] {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ol-operations-task-panel[data-inert] {
+  display: none;
+}
+.ol-operations-task-panel {
+  min-inline-size: 0;
+}
+.ol-operations-task-panel > .ol-sheet-section {
+  max-inline-size: 800px;
+}
+.ol-operations .ol-sheet-section > p,
+.ol-operations-form > p {
+  margin-block: 0;
+}
+.ol-operations-form label {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--space-2);
+}
+.ol-operations-form label:has(input[type='checkbox']) {
+  display: flex;
+  align-items: start;
+}
+.ol-operations-form input,
+.ol-operations-form select,
+.ol-operations-form textarea {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.ol-operations-form summary {
+  cursor: pointer;
+}
+.ol-maintenance-editor > summary {
+  cursor: pointer;
+  padding-block: var(--space-4);
+  color: var(--accent);
+}
+.ol-operations-link-result,
+.ol-operations-confirm {
+  display: grid;
+  gap: var(--space-3);
+  border-inline-start: 2px solid var(--highlight);
+  padding: var(--space-3) var(--space-4);
+  margin-block: var(--space-3);
+}
+.ol-operations-link-result > .ol-btn {
+  justify-self: start;
+}
+.ol-operations .ol-operations-confirm p,
+.ol-operations .ol-operations-link-result p {
+  margin: 0;
+}
+.ol-operations .ol-btn {
+  block-size: auto;
+  min-block-size: var(--control-md);
+  white-space: normal;
+}
+@media (max-width: 640px) {
+  .ol-operations {
+    padding: var(--space-3);
+  }
+  .ol-operations-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-operations-links {
+    margin-inline-start: 0;
+  }
+  .ol-operations-task {
+    flex: 1 1 45%;
+  }
 }
 .ol-operations-clock {
   font-family: var(--font-mono);
@@ -150,9 +270,15 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-4);
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+.ol-entry-notice > div {
+  flex: 1;
+  min-inline-size: min(180px, 100%);
 }
 .ol-entry-notice p {
-  flex: 1;
+  margin-block: var(--space-1) 0;
 }
 .ol-operations .ol-entry-notice {
   max-width: 720px;

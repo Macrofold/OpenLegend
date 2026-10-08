@@ -63,6 +63,8 @@ Preserve safe navigation through Back/Forward or panel return when supported, in
 
 Do not announce every stage or duplicate one event as toast, banner, modal and chat. Deduplicate by identity, not equal text. Aggregate repetitive low-importance events with access to underlying permitted history. Avoid escalating quiet simulation updates into attention alarms.
 
+Inventory and Current work keep a successful command's existing receipt beside the visible task. If the player hides that task before completion, a global notice remains available. An Activity result also belongs to the original task: opening another task must not silence the earlier result merely because the Activity panel is still open. Refusals and uncertain outcomes retain their existing local recovery and global notice. This follows task ownership, not matching message text, and does not certify that a status inside a scrollable panel is currently within the viewport. The [implementation decision](../projects/game-interaction-redesign-tech-design.md#keep-activity-success-with-the-current-task) records the lifetime distinction.
+
 Carbon's notification distinctions reinforce selecting the surface by context, action and persistence. Do not import a version-specific notification's automatic focus behavior wholesale. A background completion should not steal focus or displace typed text; reserve intentional focus moves for an active task/error/decision that requires them. [S10](research.md#s10)
 
 Respect current per-character notice/history limits, including [LA223](../limits/interface.md#la223) and hearing/caption owners. Three overhead notices is not a universal license to discard all later notifications; critical failures and missed information need recovery.
@@ -70,6 +72,8 @@ Respect current per-character notice/history limits, including [LA223](../limits
 A timed notice cannot be the sole important failure/action route. Use live regions deliberately: polite normal status; assertive only when interruption is warranted. Per-tick meters must not continually interrupt screen readers. Reduced motion removes animation, not the information.
 
 ## Settings, menus and preference persistence
+
+The [whole-interface design](../projects/game-interaction-redesign-feature-spec.md#settings-controls-help-and-accessibility) applies this to the existing entry, settings/help, graphics/profile, invention-policy, save/load and operations surfaces. Keep device preferences, player-profile writes, world policy and account/access actions visibly distinct. Preserve automatic sole-tab entry and the existing other-tab Resume contract; a loading/error screen must distinguish denied access, connection failure and broken rendering. The [coverage map](interface-coverage.md#entry-settings-and-world-administration) identifies actual owners and evidence instead of assuming a new generic settings flow replaces them.
 
 Group by goals: controls/camera, readability/accessibility, audio/captions, gameplay preferences and authorized creator/operator settings. Keep accessibility discoverable before the player is stuck. Settings search should take them to the real setting/group.
 
@@ -80,6 +84,8 @@ Account/device presentation preferences stay separate from gameplay saves where 
 Advanced is for specialist options with summaries of hidden non-defaults. Do not bury text size, captions, camera recovery, help or the only load/recovery route behind unlabeled overflow. Essential configuration should not require console commands or pasted scripts; Blizzard's Classic UI follow-up illustrates replacing temporary script workarounds with discoverable settings. This is a design direction, not authorization to add every imagined setting. [F16](research.md#f16) [S20](research.md#s20)
 
 ## Save UI: show what is durable
+
+The current checkpoint and automatic-protection owners already supply catalogue/compatibility, named Load/Delete confirmation, Before last load protection, queued/writing state and persistent failure acknowledgement. The [redesign](../projects/game-interaction-redesign-feature-spec.md#saves-checkpoints-and-recovery) makes their scope and return route legible; it does not replace the save mechanism. Acknowledging a failure means it was read, not repaired. Operations overview remains public and read-only, while invitation/access and maintenance forms retain deliberate authorization, revision and timezone choices.
 
 Saving is a trust contract. Distinguish **queued**, **capturing/writing**, **durably saved**, **failed** and **outcome not confirmed** where the backend has those states. Dispatch or a disabled button is not a receipt. Retain the last confirmed save independently of a pending one.
 

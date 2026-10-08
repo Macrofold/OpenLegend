@@ -30,7 +30,10 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
         <EntryNotice />
         <div className="ol-entry-message" role={status.kind === 'failed' ? 'alert' : 'status'}>
           {signedOut ? (
-            <p>Sign in to enter your world.</p>
+            <>
+              <h2>Enter your world</h2>
+              <p>Sign in with an account that has access to this world.</p>
+            </>
           ) : forbidden ? (
             <>
               <h2>No access to this world</h2>
@@ -40,7 +43,14 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
               </p>
             </>
           ) : loading ? (
-            <p>Connecting to your world…</p>
+            <>
+              <h2>
+                {retryLabel === 'Check access again' ? 'Checking your access…' : 'Connecting…'}
+              </h2>
+              <p>
+                Your character or permitted World operations will open when the connection is ready.
+              </p>
+            </>
           ) : (
             <>
               <h2>We couldn’t connect to your world</h2>

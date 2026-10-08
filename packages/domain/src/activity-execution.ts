@@ -617,7 +617,7 @@ export function startLearnedActivity(
     const preview = nativeOperationAvailable(world, first.command);
     if (!preview.ok) return preview;
   }
-  return outcome(true, 'queued', 'The learned activity was selected; no result is promised.');
+  return outcome(true, 'queued', 'Selected the learned task.');
 }
 
 function timeConditions(node: ActivityNode): number[] {
@@ -781,11 +781,7 @@ export function startRequestedActivity(
     current.revision++;
     actor.agency.revision++;
     actor.planGeneration++;
-    return outcome(
-      true,
-      'queued',
-      'The activity will start after the current work; no result is promised.',
-    );
+    return outcome(true, 'queued', 'Added the task after your current work.');
   }
   if (command.mode === 'replace') stopCurrentWork(world, actorId);
   else if (command.mode === 'interrupt') {
@@ -813,16 +809,11 @@ export function startRequestedActivity(
   };
   actor.agency.revision++;
   actor.planGeneration++;
-  if (afterDirect)
-    return outcome(
-      true,
-      'queued',
-      'The activity will start after the current work; no result is promised.',
-    );
+  if (afterDirect) return outcome(true, 'queued', 'Added the task after your current work.');
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
     const preview = nativeOperationAvailable(world, first.command);
     if (!preview.ok) return preview;
   }
-  return outcome(true, 'queued', 'The requested activity was admitted; no result is promised.');
+  return outcome(true, 'queued', 'Started the task.');
 }

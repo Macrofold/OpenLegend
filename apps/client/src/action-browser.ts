@@ -15,7 +15,13 @@ export function filterActions(
       action.facts
         ?.filter(([label]) => label === 'Tool' || label === 'Target')
         .map(([, value]) => value) ?? [];
-    const text = [action.label, action.category, ...action.keywords, ...identity]
+    const text = [
+      action.label,
+      action.description,
+      action.category,
+      ...action.keywords,
+      ...identity,
+    ]
       .join(' ')
       .normalize('NFKC')
       .toLocaleLowerCase();

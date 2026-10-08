@@ -11,6 +11,16 @@ import type { Entity, WorldState } from '../../types.js';
 
 /** Authored new-world composition; no live save is reseeded. */
 export const STARTER_EXTENT = { width: 62, depth: 54 } as const;
+/** Shared authored sites keep seeded terrain clear beneath the installed encounter. */
+export const FIRST_THREAT_LOCATIONS = {
+  home: [32, 28],
+  refuge: [38, 31],
+  cache: [36.8, 26],
+  tracks: [28, 24],
+  brush: [30, 24],
+  screen: [29.5, 28],
+} as const;
+const firstThreatLocations = Object.values(FIRST_THREAT_LOCATIONS);
 const WOODLAND_ANIMALS: Array<['hare' | 'deer' | 'wolf' | 'bear', number, number]> = [
   ['hare', 30, 19],
   ['hare', 27, 33],
@@ -96,7 +106,8 @@ export function starterTiles(seed: number, width: number, depth: number): Terrai
         tiles[z]![x] === 'grass' &&
         noise(seed + 29, x, z) < 0.009 &&
         !WOODLAND_ANIMALS.some(([, ax, az]) => Math.hypot(x - ax, z - az) < 1.5) &&
-        !WOODLAND_PATCHES.some(([, , px, pz]) => Math.hypot(x - px, z - pz) < 1.5)
+        !WOODLAND_PATCHES.some(([, , px, pz]) => Math.hypot(x - px, z - pz) < 1.5) &&
+        !firstThreatLocations.some(([px, pz]) => Math.hypot(x - px, z - pz) < 1.5)
       )
         tiles[z]![x] = 'rock';
   return tiles;

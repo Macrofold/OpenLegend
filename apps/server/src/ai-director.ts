@@ -367,6 +367,7 @@ export class AiDirector {
           };
         if (
           targetId &&
+          targetId !== actorId &&
           !this.service.observe(actorId)?.visibleEntities.some((e) => e.id === targetId)
         )
           return {

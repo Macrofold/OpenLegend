@@ -2,7 +2,13 @@ import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
-import { advanceWorld, inventoryFor, quantityOf, type DeclarationDraft } from '@open-legend/domain';
+import {
+  advanceWorld,
+  executeCommand,
+  inventoryFor,
+  quantityOf,
+  type DeclarationDraft,
+} from '@open-legend/domain';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import {
   buildContext,
@@ -13,6 +19,7 @@ import {
 } from './context.js';
 import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
+import { domainCommand } from './cognition.js';
 
 const stores: SqlGameRepository[] = [];
 async function setup(): Promise<WorldService> {
@@ -39,11 +46,14 @@ function select(
   return candidate!;
 }
 async function perform(service: WorldService, candidate: CandidateAction): Promise<void> {
-  const result = await service.command(
-    `test:${service.world.sequence}:${candidate.id}`,
+  // These are the NPC's own candidates, so use its native command binder rather
+  // than the human command endpoint that requires a lethal-attack confirmation.
+  const command = domainCommand(
     candidate.command!,
     NPC_ID,
+    `test:${service.world.sequence}:${candidate.id}`,
   );
+  const result = await service.transition((world) => executeCommand(world, command));
   expect(result.ok, result.message).toBe(true);
 }
 afterEach(async () => {

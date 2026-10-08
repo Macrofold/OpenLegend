@@ -56,13 +56,14 @@ describe('local HTTP boundary', () => {
     expect(
       (
         await ordinary.post('/api/god/spawn', {
+          id: 'denied-spawn',
           type: 'hare',
           position: { y: 0, surfaceId: 'terrain', x: 24, z: 5 },
         })
       ).status,
     ).toBe(403);
   });
-  it('uses the event connection for opted-in background play and pauses when it closes', async () => {
+  it('uses opted-in background play and pauses after the closed connection finishes departure', async () => {
     const { game, base, cookie, post } = await start();
     const controller = new AbortController();
     try {
@@ -86,9 +87,17 @@ describe('local HTTP boundary', () => {
       await game.service.tick(1);
       expect(game.service.world.simTime).toBe(30);
       controller.abort();
-      await expect.poll(() => game.service.paused).toBe(true);
+      await expect
+        .poll(() => game.service.world.entities[PLAYER_ID]!.actor!.participation?.phase)
+        .toBe('exiting');
+      expect(game.service.paused).toBe(false);
+      const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
+      expect(game.service.world.exitExposures?.[PLAYER_ID]).toBe(30 + exposure);
+      // Absence no longer skips the world's simulated vulnerable departure.
+      await game.service.tick(exposure / 30, 0);
+      expect(game.service.paused).toBe(true);
       await game.service.tick(1);
-      expect(game.service.world.simTime).toBe(30);
+      expect(game.service.world.simTime).toBe(30 + exposure);
     } finally {
       controller.abort();
     }
@@ -181,8 +190,15 @@ describe('local HTTP boundary', () => {
     await post('/api/presence', { clientId: 'returning-tab', visible: false, sequence: 1 });
     expect(game.service.paused).toBe(false);
     await post('/api/presence', { clientId: 'returning-tab', visible: false, sequence: 3 });
-    expect(game.service.pauseReason).toBe('away');
+    expect(game.service.present).toBe(false);
+    expect(game.service.paused).toBe(false);
+    expect(game.service.world.entities[PLAYER_ID]!.actor!.participation?.phase).toBe('exiting');
+    const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
+    expect(game.service.world.exitExposures?.[PLAYER_ID]).toBe(60 + exposure);
     await post('/api/presence', { clientId: 'returning-tab', visible: true, sequence: 2 });
+    expect(game.service.present).toBe(false);
+    expect(game.service.world.exitExposures?.[PLAYER_ID]).toBe(60 + exposure);
+    await game.service.tick(exposure / 60, 0);
     expect(game.service.pauseReason).toBe('away');
   });
   it('does not renew presence from speed changes or while manually pausing', async () => {

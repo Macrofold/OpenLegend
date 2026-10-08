@@ -1,58 +1,100 @@
-const storageKey = 'open-legend:composer-draft:v2';
-const legacyStorageKey = 'open-legend:composer-draft:v1';
+import type { GameView } from '@open-legend/protocol';
+
 type DraftStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 type GetStorage = () => DraftStorage;
 export type ComposerMode = 'chat' | 'invention';
+export interface ComposerItem {
+  itemId: string;
+  name: string;
+}
 export interface ComposerDraft {
   text: string;
-  mode: ComposerMode;
+  revision: string;
+  item?: ComposerItem;
 }
-const emptyDraft = (): ComposerDraft => ({ text: '', mode: 'chat' });
+export const emptyDraft = (): ComposerDraft => ({ text: '', revision: '' });
 
-/** Session storage keeps a draft through server restarts without sharing it between tabs. */
-export function readDraft(getStorage: GetStorage = () => window.sessionStorage): ComposerDraft {
+/** Connection scope can change without changing whose private draft this is. */
+export function composerDraftScope(view: GameView): string | null {
+  const access = view.access;
+  if (
+    !access?.privateDraftScope ||
+    !access.controlling ||
+    access.actorId !== view.player.id ||
+    view.player.participation === 'inactive'
+  )
+    return null;
+  return JSON.stringify([
+    access.privateDraftScope,
+    view.worldId,
+    access.actorId,
+    view.saveTimeline ?? '',
+  ]);
+}
+
+export function composerDraftKey(
+  scope: string | null,
+  mode: ComposerMode,
+  recipientId: string | null,
+): string | null {
+  if (!scope || (mode === 'chat' && !recipientId)) return null;
+  return `open-legend:composer-draft:${JSON.stringify([scope, mode, mode === 'chat' ? recipientId : null])}`;
+}
+
+/** Session storage keeps exact text in this tab, for this character and recipient only. */
+export function readDraft(
+  key: string | null,
+  getStorage: GetStorage = () => window.sessionStorage,
+): ComposerDraft {
+  if (!key) return emptyDraft();
   try {
-    const storage = getStorage();
-    const saved = storage.getItem(storageKey);
-    if (saved) {
-      try {
-        const draft: unknown = JSON.parse(saved);
-        if (
-          typeof draft === 'object' &&
-          draft !== null &&
-          'text' in draft &&
-          typeof draft.text === 'string' &&
-          'mode' in draft &&
-          (draft.mode === 'chat' || draft.mode === 'invention')
-        )
-          return { text: draft.text.slice(0, 1000), mode: draft.mode };
-      } catch {
-        // A malformed newer record must not erase an older recoverable draft.
-      }
+    const saved = getStorage().getItem(key);
+    if (!saved) return emptyDraft();
+    const draft: unknown = JSON.parse(saved);
+    if (
+      typeof draft !== 'object' ||
+      draft === null ||
+      !('text' in draft) ||
+      typeof draft.text !== 'string' ||
+      !('revision' in draft) ||
+      typeof draft.revision !== 'string'
+    )
+      return emptyDraft();
+    if ('item' in draft && draft.item !== undefined) {
+      const item = draft.item;
+      if (
+        typeof item !== 'object' ||
+        item === null ||
+        !('itemId' in item) ||
+        typeof item.itemId !== 'string' ||
+        !('name' in item) ||
+        typeof item.name !== 'string'
+      )
+        return emptyDraft();
+      return {
+        text: draft.text,
+        revision: draft.revision,
+        item: { itemId: item.itemId, name: item.name },
+      };
     }
-    // Earlier clients saved plain text with no mode; preserve it under their Talk default.
-    return { text: (storage.getItem(legacyStorageKey) ?? '').slice(0, 1000), mode: 'chat' };
+    return { text: draft.text, revision: draft.revision };
   } catch {
-    // Some embedded/private browsers disable storage; editing must still work.
+    // Privacy and quota failures must not prevent editing in memory.
     return emptyDraft();
   }
 }
 
 export function saveDraft(
+  key: string | null,
   draft: ComposerDraft,
   getStorage: GetStorage = () => window.sessionStorage,
 ): void {
+  if (!key) return;
   try {
     const storage = getStorage();
-    // Save intent with text so returning from setup cannot turn an invention into speech.
-    if (draft.text)
-      storage.setItem(
-        storageKey,
-        JSON.stringify({ text: draft.text.slice(0, 1000), mode: draft.mode }),
-      );
-    else storage.removeItem(storageKey);
-    storage.removeItem(legacyStorageKey);
+    if (draft.text || draft.item) storage.setItem(key, JSON.stringify(draft));
+    else storage.removeItem(key);
   } catch {
-    // Quota/privacy failures must not break input or change submission behavior.
+    // Storage is optional; never change a draft or its send behavior to fit it.
   }
 }

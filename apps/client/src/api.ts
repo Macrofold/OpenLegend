@@ -22,13 +22,38 @@ export function privateDraftScope(): string {
 }
 /** The signed-in account's grant has no character here; it uses World operations instead. */
 export class CharacterlessError extends AccessError {}
-export function clearAccess(): void {
+/** A restore is still replacing the world; entry must wait for a fresh view. */
+export class WorldLoadingError extends Error {}
+function clearSessionDrafts(preservePendingCommands = false): void {
+  try {
+    for (const key of Object.keys(sessionStorage))
+      if (
+        key.startsWith('open-legend:composer-draft:') ||
+        key.startsWith('open-legend:action-draft:') ||
+        key.startsWith('open-legend:creation-request:') ||
+        (!preservePendingCommands &&
+          (key.startsWith('open-legend:inventory-command:') ||
+            key.startsWith('open-legend:activity-command:')))
+      )
+        sessionStorage.removeItem(key);
+  } catch {
+    /* Browser storage is optional. */
+  }
+}
+export function clearAccess(options?: { preservePendingCommands?: boolean }): void {
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
   privateDraftNamespace = '';
   privateDraftTimeline = '';
   clearTradeDrafts();
+  // Each store can be unavailable independently; local storage must not prevent session cleanup.
+  clearSessionDrafts(options?.preservePendingCommands);
+  try {
+    if (!options?.preservePendingCommands) sessionStorage.removeItem('open-legend:private-owner');
+  } catch {
+    /* Session storage can fail independently of local storage. */
+  }
   try {
     for (const key of Object.keys(localStorage))
       if (
@@ -37,10 +62,9 @@ export function clearAccess(): void {
         key.startsWith('open-legend:invention-draft:')
       )
         localStorage.removeItem(key);
-    sessionStorage.removeItem('open-legend:composer-draft:v2');
-    for (const key of Object.keys(sessionStorage))
-      if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
-    localStorage.removeItem('open-legend:private-owner');
+    // The caller may retain unresolved receipts only after proving the same native private owner
+    // and save timeline. Keep that owner marker so the next view does not erase those receipts.
+    if (!options?.preservePendingCommands) localStorage.removeItem('open-legend:private-owner');
   } catch {
     /* Browser storage is optional. */
   }
@@ -52,7 +76,7 @@ export function acceptAccess(view: GameView): void {
   accessGeneration++;
   worldGeneration = generation;
   viewScope = scope;
-  // In-memory sharing must also be cleared when browser storage is unavailable.
+  // In-memory sharing also expires when browser storage is unavailable.
   if (
     (privateDraftNamespace && privateDraftNamespace !== view.access?.privateDraftScope) ||
     (privateDraftTimeline && privateDraftTimeline !== view.saveTimeline)
@@ -60,11 +84,25 @@ export function acceptAccess(view: GameView): void {
     clearTradeDrafts();
   privateDraftNamespace = view.access?.privateDraftScope ?? '';
   privateDraftTimeline = view.saveTimeline ?? '';
+  const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
+  const timelineKey = `open-legend:save-timeline:${view.worldId}`;
+  // Each store owns its markers. Failure in one must never erase recovery in the other.
   try {
-    const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
-    const priorOwner = localStorage.getItem('open-legend:private-owner');
-    if (priorOwner !== owner) {
+    const previousOwner = sessionStorage.getItem('open-legend:private-owner');
+    const previousTimeline = sessionStorage.getItem(timelineKey);
+    if (previousOwner !== owner || (previousTimeline && previousTimeline !== view.saveTimeline)) {
       clearTradeDrafts();
+      clearSessionDrafts();
+    }
+    sessionStorage.setItem('open-legend:private-owner', owner);
+    if (view.saveTimeline) sessionStorage.setItem(timelineKey, view.saveTimeline);
+  } catch {
+    /* Session storage is optional; local cleanup still runs. */
+  }
+  try {
+    const previousOwner = localStorage.getItem('open-legend:private-owner');
+    const previousTimeline = localStorage.getItem(timelineKey);
+    if (previousOwner !== owner) {
       for (const key of Object.keys(localStorage))
         if (
           key.startsWith('open-legend:world-agent:') ||
@@ -72,24 +110,14 @@ export function acceptAccess(view: GameView): void {
           key.startsWith('open-legend:invention-draft:')
         )
           localStorage.removeItem(key);
-      sessionStorage.removeItem('open-legend:composer-draft:v2');
-      for (const key of Object.keys(sessionStorage))
-        if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
-      localStorage.setItem('open-legend:private-owner', owner);
-    }
-    const key = `open-legend:save-timeline:${view.worldId}`;
-    const previous = sessionStorage.getItem(key);
-    if (previous && previous !== view.saveTimeline) {
-      clearTradeDrafts();
+    } else if (previousTimeline && previousTimeline !== view.saveTimeline) {
       localStorage.removeItem(`open-legend:world-agent:${view.worldId}`);
       localStorage.removeItem(`open-legend:invention-draft:${view.worldId}`);
-      sessionStorage.removeItem('open-legend:composer-draft:v2');
-      for (const key of Object.keys(sessionStorage))
-        if (key.startsWith('open-legend:action-draft:')) sessionStorage.removeItem(key);
     }
-    if (view.saveTimeline) sessionStorage.setItem(key, view.saveTimeline);
+    localStorage.setItem('open-legend:private-owner', owner);
+    if (view.saveTimeline) localStorage.setItem(timelineKey, view.saveTimeline);
   } catch {
-    /* Browser storage is optional. */
+    /* Local storage is optional and cannot invalidate session recovery. */
   }
 }
 export function eventsUrl(view: GameView): string {
@@ -123,6 +151,11 @@ export async function getState(signal?: AbortSignal): Promise<GameView> {
     signal,
     headers: { 'X-OL-Client': tabClientId() },
   });
+  if (response.status === 409) {
+    const body: unknown = await response.json().catch(() => null);
+    if (body && typeof body === 'object' && 'code' in body && body.code === 'loading')
+      throw new WorldLoadingError('A saved world is loading. Please wait.');
+  }
   if (response.status === 403) {
     const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
     if (body.code === 'characterless')
@@ -174,9 +207,11 @@ export async function getOperations(): Promise<OperationsView> {
   const result = (await response.json().catch(() => ({}))) as Partial<OperationsView> & {
     message?: string;
   };
-  if (response.status === 401) throw new AccessError('Sign in to continue.');
-  if (!response.ok || !result.ok)
+  if (response.status === 401) throw new SignInRequiredError('Sign in to continue.');
+  if (response.status === 403)
     throw new AccessError(result.message ?? 'This account has no access to this world.');
+  if (!response.ok || !result.ok)
+    throw new Error(result.message ?? 'World operations could not be loaded. Try again.');
   const view = result as OperationsView;
   // Mutations carry this audience; a changed scope or world generation invalidates in-flight work.
   if (view.generation !== worldGeneration || view.scope !== viewScope) {

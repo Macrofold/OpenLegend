@@ -28,6 +28,10 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition extends Named {
+  /** Authored semantic key; clients resolve only their trusted icon catalogue. */
+  icon?: string;
+  /** The installed gathering capability's shortcut label, independent of its identity. */
+  gatherLabel?: string;
   mechanismFields?: Record<string, Record<string, number>>;
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
@@ -259,6 +263,8 @@ export interface HeatComponent {
   lit: boolean;
 }
 export interface Entity extends Named {
+  /** Authored appearance hint only; never evidence of capability or identity. */
+  icon?: string;
   /** Authored outward detail, disclosed only with the perceived entity. */
   description?: string;
   threat?: import('./territorial-threat.js').TerritorialThreat;
@@ -345,14 +351,20 @@ export interface Outcome {
   message: string;
   recipeId?: string;
   itemId?: string;
+  /** The exact entity created by this result, even if it has since moved. */
+  entityId?: string;
   goalId?: string;
   planId?: string;
+  /** Exact action started by this result; command identity is a separate receipt key. */
+  actionId?: string;
 }
 export interface CommandReceipt {
   digest: string;
   outcome: Outcome;
 }
 export interface WorldState {
+  /** Optional authored public wording; unnamed worlds use generic interface headings. */
+  presentation?: { worldName: string; locationName: string; timeLabel: string };
   places: Record<string, import('./places.js').PlaceDefinition>;
   /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
   visiblePlaces?: Record<string, Record<string, number>>;
@@ -576,7 +588,9 @@ export type Command = Envelope &
         expectedScope?: string;
       }
     | { type: 'inspect-activities'; after: number; methodAfter?: number }
-    | { type: 'cancel' | 'recover' | 'respawn' }
+    | { type: 'cancel'; expectedActionId?: string }
+    | { type: 'recover' }
+    | { type: 'respawn' }
     | {
         type: 'say';
         text: string;
@@ -631,6 +645,10 @@ export interface GodSpawnDraft {
   type: GodSpawnType;
   position: SurfacePoint;
   person?: GodPersonDraft;
+}
+
+export interface GodSpawnRequest extends GodSpawnDraft {
+  id: string;
 }
 
 export type ExperienceEntry =

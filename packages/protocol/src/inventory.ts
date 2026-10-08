@@ -1,4 +1,25 @@
 import type { Named } from '@open-legend/language';
+import type { SurfacePoint } from '@open-legend/spatial';
+
+/** Exterior access is separate from contents. A stance is a current intention, not a route guarantee. */
+export interface InventoryAccessView {
+  ok: boolean;
+  scope: string;
+  status: 'ready' | 'out-of-reach' | 'unavailable';
+  container?: {
+    id: string;
+    name: string;
+    location: string;
+    /** Root identity prevents coincident placement revisions after a custody change. */
+    rootId: string;
+    placementRevision: number;
+    geometryRevision: number;
+    revision?: number;
+  };
+  stance?: SurfacePoint;
+  message?: string;
+}
+
 /** Observer-safe facts for one inspected possession. Null is a known unknown, never zero. */
 export interface InventoryCharacteristic {
   id: string;

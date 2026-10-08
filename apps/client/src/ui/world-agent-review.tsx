@@ -187,7 +187,7 @@ export function WorldAgentReview({
         if (!open) onClose();
       }}
     >
-      <Modal className="ol-modal">
+      <Modal className="ol-modal ol-agent-work-review-modal">
         <Dialog
           ref={dialog}
           className="ol-person-dialog ol-agent-work-review"
@@ -195,34 +195,44 @@ export function WorldAgentReview({
         >
           <div className="ol-agent-work-review-heading">
             <h2>Review exact change</h2>
+            {review && (
+              <p className="ol-caption">
+                Revision {review.draft.revision} · {review.plan.status}
+              </p>
+            )}
           </div>
           <div className="ol-agent-work-review-body">
             {!review && !error && <p role="status">Loading exact review…</p>}
             {review && (
               <>
-                <Tag>
-                  {review.draft.kind} · revision {review.draft.revision} · {review.plan.status}
-                </Tag>
-                <p>{review.draft.intent}</p>
-                <WorldAgentPreparationDetails
-                  preparation={review.plan.preparation ?? review.draft.preparation}
-                  preparationRevision={review.plan.revision}
-                  validation={review.plan.validation}
-                />
+                <Tag>{review.draft.kind}</Tag>
+                <h3>{review.draft.title ?? review.draft.intent}</h3>
                 <p>Affected records: {review.plan.impact.affected}.</p>
                 <p>
                   {review.plan.status === 'applied'
-                    ? 'This exact change has been applied; its native receipt remains below.'
+                    ? 'This exact change has been applied.'
                     : 'This is a saved review. The change has not been applied.'}
                   {review.draft.kind === 'recipe' &&
                     ' Installing a recipe does not create an item. Crafting is separate.'}
                 </p>
+                {review.plan.result && <p role="status">{review.plan.result.message}</p>}
                 {review.plan.status !== 'applied' &&
                   review.plan.validation.activationRequiresResume && (
                     <p>
                       Applying this change requires a running world. Approval does not resume it.
                     </p>
                   )}
+                {review.draft.title && (
+                  <details>
+                    <summary>Original purpose</summary>
+                    <p>{review.draft.intent}</p>
+                  </details>
+                )}
+                <WorldAgentPreparationDetails
+                  preparation={review.plan.preparation ?? review.draft.preparation}
+                  preparationRevision={review.plan.revision}
+                  validation={review.plan.validation}
+                />
                 <details>
                   <summary>Exact candidate</summary>
                   <pre className="ol-agent-json">
@@ -239,11 +249,17 @@ export function WorldAgentReview({
                     )}
                   </pre>
                 </details>
-                {review.plan.result && <p role="status">{review.plan.result.message}</p>}
               </>
             )}
           </div>
           <div className="ol-agent-work-review-footer">
+            {review && review.plan.status !== 'applied' && (
+              <p className="ol-caption ol-creator-save-status">
+                {review.plan.status === 'approved'
+                  ? 'Approved for this exact revision. Apply makes the change.'
+                  : 'Approval records your decision. Apply remains a separate action.'}
+              </p>
+            )}
             {mutationReason && <p role="status">{mutationReason}</p>}
             {!canApply && !mutationReason && (
               <p role="status">This session is currently read-only.</p>

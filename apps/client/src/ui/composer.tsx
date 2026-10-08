@@ -1,6 +1,7 @@
 import { namePhrase } from '@open-legend/language';
 import { useChatHistory } from './use-chat-history';
 import { useReplyPreview } from './use-reply-preview';
+import { useComposerDraft } from './use-composer-draft';
 import { useEffect, useRef, useState } from 'react';
 import { Label, Slider, SliderOutput, SliderTrack, SliderThumb } from 'react-aria-components';
 import type { GameView, SpeechVolume } from '@open-legend/protocol';
@@ -8,7 +9,13 @@ import { Button, Tag, SegmentedControl } from '../design-system/components';
 import { aiSetupReason } from '../ai-readiness';
 import { post } from '../api';
 import { useLocal } from './storage';
-import { readDraft, saveDraft, type ComposerDraft } from '../draft';
+import {
+  composerDraftKey,
+  composerDraftScope,
+  type ComposerItem,
+  type ComposerMode,
+} from '../draft';
+import './composer.css';
 import {
   ConversationComposer,
   ConversationMessage,
@@ -20,11 +27,20 @@ import {
 const activeReply = (status: string | undefined) =>
   status !== undefined && ['queued', 'judging', 'generating'].includes(status);
 
+export interface ComposerEntry {
+  id: string;
+  recipientId?: string;
+  item: ComposerItem;
+}
+
 export function Composer({
   view,
   connected,
   npcId,
-  seed,
+  entry,
+  talkRevision,
+  chooseRecipient,
+  clearEntry,
   setup,
   notify,
   visible,
@@ -32,13 +48,37 @@ export function Composer({
   view: GameView;
   connected: boolean;
   npcId: string | null;
-  seed: ComposerDraft | null;
+  entry: ComposerEntry | null;
+  talkRevision: number;
+  chooseRecipient(id: string): void;
+  clearEntry(): void;
   setup(): void;
   notify(text: string): void;
   visible: boolean;
 }) {
-  const [draft, setDraft] = useState(readDraft),
-    [sending, setSending] = useState(false);
+  const [mode, setMode] = useState<ComposerMode>('chat');
+  const scope = composerDraftScope(view);
+  const draftKey = composerDraftKey(scope, mode, npcId);
+  const currentScope = useRef(scope);
+  currentScope.current = scope;
+  const [sendIssues, setSendIssues] = useState<{
+    scope: string | null;
+    records: Record<string, string>;
+  }>({ scope, records: {} });
+  if (sendIssues.scope !== scope) setSendIssues({ scope, records: {} });
+  const sendIssue =
+    sendIssues.scope === scope && draftKey ? sendIssues.records[draftKey] : undefined;
+  function recordSendIssue(key: string, message?: string) {
+    setSendIssues((current) => {
+      const records = current.scope === scope ? { ...current.records } : {};
+      if (message) records[key] = message;
+      else delete records[key];
+      return { scope, records };
+    });
+  }
+  const { draft, edit, clearSent } = useComposerDraft(scope, draftKey);
+  const [sending, setSending] = useState(false);
+  const sendLock = useRef(false);
   const [volume, setVolume] = useLocal<SpeechVolume>(
     'open-legend:speech-volume',
     'normal',
@@ -72,37 +112,60 @@ export function Composer({
     }
   }
   useEffect(() => {
-    if (seed) {
-      setDraft(seed);
+    setMode('chat');
+    input.current?.focus();
+  }, [talkRevision]);
+  const npc = npcId ? view.entities.find((e) => e.id === npcId) : undefined;
+  const entryOwner = useRef({ id: entry?.id, scope });
+  if (entryOwner.current.id !== entry?.id) entryOwner.current = { id: entry?.id, scope };
+  const currentEntry = entry && scope && entryOwner.current.scope === scope ? entry : null;
+  const consumedEntry = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!entry || consumedEntry.current === entry.id) return;
+    if (!currentEntry) {
+      consumedEntry.current = entry.id;
+      clearEntry();
+      return;
+    }
+    if (!entry.recipientId) return;
+    if (mode !== 'chat') return;
+    consumedEntry.current = entry.id;
+    if (entry.recipientId === npcId && npc?.canTalk && draftKey) {
+      edit({ item: entry.item });
       input.current?.focus();
     }
-  }, [seed]);
-  useEffect(() => saveDraft(draft), [draft]);
-  const npc = npcId
-    ? view.entities.find((e) => e.id === npcId)
-    : view.entities.find((e) => e.canTalk);
-  const nativeSpeech = draft.mode === 'chat' && npc?.talkRequiresAi === false;
+    clearEntry();
+  }, [entry, scope, mode, npcId, npc?.canTalk, draftKey]);
+  const pendingItem = !npcId && !currentEntry?.recipientId ? currentEntry?.item : undefined;
+  const mention = mode === 'chat' ? (draft.item ?? pendingItem) : undefined;
+  // The chat API accepts words, not an item attachment. The visible prefix is sent as speech.
+  const spokenText = `${mode === 'chat' && draft.item ? `About ${draft.item.name}: ` : ''}${draft.text.trim()}`;
+  const limitReason =
+    spokenText.length > 1000
+      ? `Message and item mention are ${spokenText.length} characters. Shorten to 1,000 to send.`
+      : null;
+  const nativeSpeech = mode === 'chat' && npc?.talkRequiresAi === false;
   const reason = nativeSpeech ? null : aiSetupReason(view.ai);
   const job =
     !nativeSpeech &&
     view.ai.jobs.find(
       (j) =>
-        j.kind === (draft.mode === 'chat' ? 'chat' : 'invention') &&
+        j.kind === (mode === 'chat' ? 'chat' : 'invention') &&
         ['queued', 'judging', 'generating'].includes(j.status),
     );
   const actorBlocked =
-    draft.mode !== 'chat'
+    mode !== 'chat'
       ? view.inventionPolicy.playerLocked
         ? 'Player invention is locked. Existing crafts remain available.'
         : null
       : !npc
         ? npcId
           ? 'This person is no longer in view.'
-          : 'Move within hearing of someone to talk.'
+          : 'Choose someone to talk to.'
         : (npc.talkUnavailableReason ?? null);
   const blocked = !connected
     ? 'Reconnect to the world.'
-    : view.access?.controlling === false || view.player.participation === 'inactive'
+    : !scope
       ? 'Take control of your character to speak.'
       : view.clock.paused
         ? 'Resume the world before sending a message.'
@@ -111,15 +174,15 @@ export function Composer({
           : !view.player.alive
             ? 'Recover at camp to continue.'
             : null;
-  const history = useChatHistory(view, npcId ?? npc?.id, visible && draft.mode === 'chat');
+  const history = useChatHistory(view, npcId ?? undefined, visible && mode === 'chat');
   const replyMessage = history.messages.filter((message) => !!message.replyRequestId).at(-1);
   const preview = useReplyPreview(
     view,
-    npcId ?? npc?.id,
+    npcId ?? undefined,
     replyMessage?.replyRequestId,
     visible &&
       connected &&
-      draft.mode === 'chat' &&
+      mode === 'chat' &&
       view.access?.controlling !== false &&
       view.player.alive &&
       view.player.participation !== 'inactive' &&
@@ -175,35 +238,38 @@ export function Composer({
       ),
   }));
   async function submit() {
+    if (blocked || sendLock.current || job || !scope || !draftKey || limitReason) return;
     if (reason) {
       setup();
       return;
     }
-    if (blocked || sending || job || !draft.text.trim()) return;
-    const sent = draft;
+    if (!draft.text.trim()) return;
+    const sent = { scope, key: draftKey, revision: draft.revision };
+    sendLock.current = true;
     setSending(true);
+    recordSendIssue(sent.key);
     try {
       const result = nativeSpeech
         ? await post('/api/command', {
             commandId: crypto.randomUUID(),
             commandEpoch: view.commandEpoch,
-            command: { type: 'say', text: sent.text.trim(), targetId: npc!.id, volume },
+            command: { type: 'say', text: spokenText, targetId: npc?.id, volume },
           })
-        : await post(sent.mode === 'chat' ? '/api/chat' : '/api/invent', {
+        : await post(mode === 'chat' ? '/api/chat' : '/api/invent', {
             requestId: crypto.randomUUID(),
-            text: sent.text.trim(),
-            ...(sent.mode === 'chat' ? { npcId: npc?.id, volume } : {}),
+            text: spokenText,
+            ...(mode === 'chat' ? { npcId: npc?.id, volume } : {}),
           });
-      if (result.ok)
-        setDraft((current) =>
-          current.text === sent.text && current.mode === sent.mode
-            ? { ...current, text: '' }
-            : current,
-        );
-      else notify(result.message);
+      if (result.ok) clearSent(sent);
+      else if (currentScope.current === sent.scope) recordSendIssue(sent.key, result.message);
     } catch (e) {
-      notify(`${String(e)} Check recent work before submitting again.`);
+      if (currentScope.current === sent.scope)
+        recordSendIssue(
+          sent.key,
+          `${String(e)} Sending was not confirmed. Check ${mode === 'chat' ? 'the conversation' : 'your recent invention work'} before sending again. Your draft is retained.`,
+        );
     } finally {
+      sendLock.current = false;
       setSending(false);
     }
   }
@@ -216,23 +282,32 @@ export function Composer({
             { value: 'chat', label: 'Talk' },
             { value: 'invention', label: 'Invent something' },
           ]}
-          value={draft.mode}
-          onChange={(v) => setDraft({ ...draft, mode: v as ComposerDraft['mode'] })}
+          value={mode}
+          onChange={(value) => {
+            setMode(value as ComposerMode);
+            if (value !== 'chat' && pendingItem) clearEntry();
+          }}
         />
-        {draft.mode === 'chat' && (
+        {mode === 'chat' && (
           <p className="ol-meta ol-conversation-recipient">
-            {npc ? `With ${namePhrase(npc, 'definite')}` : 'Find someone to talk to.'}
+            {npc
+              ? `To ${namePhrase(npc, 'definite')}`
+              : npcId
+                ? 'This person is no longer in view.'
+                : 'Choose someone to talk to.'}
+            {npc && <span className="ol-caption">Others within hearing may hear you.</span>}
           </p>
         )}
       </div>
-      <div className="ol-conversation-body" data-mode={draft.mode}>
-        {draft.mode === 'chat' ? (
+      <div className="ol-conversation-body" data-mode={mode}>
+        {mode === 'chat' ? (
           <>
             <div className="ol-conversation-history">
               {history.error && <p role="alert">{history.error}</p>}
               <ConversationThread
                 id="conversation"
-                conversationKey={`${view.worldId}:${npcId ?? npc?.id ?? 'nearby'}`}
+                conversationKey={draftKey ?? 'no-recipient'}
+                preserveReading
                 items={messages}
                 openingRevision={history.openingRevision}
                 contentRevision={`${preview?.generation ?? ''}:${preview?.sequence ?? 0}`}
@@ -249,11 +324,34 @@ export function Composer({
                   ) : undefined
                 }
                 empty={
-                  <p className="ol-meta">
-                    {history.loading
-                      ? 'Loading conversation…'
-                      : 'No saved messages with this person yet.'}
-                  </p>
+                  !npcId ? (
+                    <div className="ol-composer-people">
+                      <p className="ol-meta">
+                        Choose someone nearby, or use Talk on a person in the world.
+                      </p>
+                      {view.entities
+                        .filter((person) => person.canTalk)
+                        .map((person) => (
+                          <Button
+                            key={person.id}
+                            variant="secondary"
+                            onPress={() => chooseRecipient(person.id)}
+                            isDisabled={!scope}
+                          >
+                            Talk to {namePhrase(person, 'definite')}
+                          </Button>
+                        ))}
+                      {!view.entities.some((person) => person.canTalk) && (
+                        <p className="ol-meta">No one is available to talk right now.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="ol-meta">
+                      {history.loading
+                        ? 'Loading conversation…'
+                        : 'No saved messages with this person yet.'}
+                    </p>
+                  )
                 }
                 ariaLabel={
                   npc ? `Conversation with ${namePhrase(npc, 'definite')}` : 'Conversation'
@@ -312,26 +410,61 @@ export function Composer({
           </div>
         )}
       </div>
+      {mention && (
+        <div className="ol-composer-item">
+          <span>About {mention.name}:</span>
+          <Button
+            size="sm"
+            variant="quiet"
+            aria-label={`Remove mention of ${mention.name}`}
+            onPress={() => (draft.item ? edit({ item: undefined }) : clearEntry())}
+          >
+            Remove
+          </Button>
+          <p className="ol-caption">
+            {pendingItem
+              ? 'Choose a person before writing your message.'
+              : 'This name will begin your message.'}
+          </p>
+        </div>
+      )}
+      {sendIssue && (
+        <div className="ol-composer-send-issue">
+          <p role="alert">{sendIssue}</p>
+          {mode === 'chat' && (
+            <Button
+              size="sm"
+              variant="quiet"
+              isDisabled={history.loading}
+              onPress={() => void history.refresh()}
+            >
+              Refresh conversation
+            </Button>
+          )}
+        </div>
+      )}
       <ConversationComposer
         formId="messageForm"
         textareaId="message"
         inputRef={input}
-        ariaLabel={draft.mode === 'chat' ? 'Your message' : 'Your invention'}
-        placeholder={draft.mode === 'chat' ? 'Say something…' : 'Describe what you want to invent…'}
+        ariaLabel={mode === 'chat' ? 'Your message' : 'Your invention'}
+        placeholder={mode === 'chat' ? 'Say something…' : 'Describe what you want to invent…'}
         maxLength={1000}
         value={draft.text}
-        onChange={(text) => setDraft({ ...draft, text })}
+        onChange={(text) => edit({ text })}
         onSubmit={submit}
-        submitIcon={reason ? 'ui.settings' : 'ui.send'}
-        submitLabel={reason ? 'Set up AI' : 'Send'}
-        disabled={!reason && (sending || !!blocked || !!job || !draft.text.trim())}
-        inputDisabled={!!actorBlocked}
-        inputDisabledReason={actorBlocked}
+        submitIcon={reason && !blocked ? 'ui.settings' : 'ui.send'}
+        submitLabel={reason && !blocked ? 'Set up AI' : 'Send'}
+        disabled={sending || !!blocked || !!job || !!limitReason || (!reason && !draft.text.trim())}
+        inputDisabled={!scope || !!actorBlocked}
+        inputDisabledReason={!scope ? 'Take control of your character to speak.' : actorBlocked}
       />
       <p id="composerReadiness" className="ol-caption">
-        {reason
-          ? 'AI needs setup. Open settings to continue.'
-          : (blocked ?? 'Enter to send · Shift + Enter for a new line')}
+        {blocked ??
+          limitReason ??
+          (reason
+            ? 'AI needs setup. Open settings to continue.'
+            : 'Enter to send · Shift + Enter for a new line')}
       </p>
     </div>
   );

@@ -3,16 +3,30 @@ import { Button } from '../design-system/components';
 import './operations.css';
 
 /** Outcome of an invite link, reported by the sign-in callback as `?entry=`. */
-const MESSAGES: Record<string, string> = {
-  'invite-accepted':
-    'Invitation accepted. If it included a character, choose Resume here to enter the world.',
-  'invite-unavailable':
-    'This invitation link is invalid, expired, revoked or already used. Ask the world operator for a new one.',
-  'already-member':
-    'This account already has access to this world, so the invitation was not used.',
-  'character-unavailable':
-    'The character offered by this invitation is no longer available. Ask for a new invitation.',
-  storage: 'The invitation could not be completed. Try the link again later.',
+const MESSAGES: Record<string, { title: string; detail: string }> = {
+  'invite-accepted': {
+    title: 'Invitation accepted',
+    detail:
+      'The invitation was accepted for this account. Your character or World operations opens according to your current access.',
+  },
+  'invite-unavailable': {
+    title: 'This invitation is unavailable',
+    detail:
+      'The link is invalid, expired, revoked or already used. Ask the world operator for a new invitation.',
+  },
+  'already-member': {
+    title: 'This account already has access',
+    detail: 'The invitation was not used. Continue with this account’s existing access.',
+  },
+  'character-unavailable': {
+    title: 'The invited character is unavailable',
+    detail:
+      'That character can no longer be assigned by this invitation. Ask the world operator for a new invitation.',
+  },
+  storage: {
+    title: 'Invitation result not confirmed',
+    detail: 'The invitation could not be completed. Try the original invitation link again later.',
+  },
 };
 
 export function EntryNotice() {
@@ -21,7 +35,10 @@ export function EntryNotice() {
   if (!message) return null;
   return (
     <div className="ol-card ol-entry-notice" role="status">
-      <p>{message}</p>
+      <div>
+        <strong>{message.title}</strong>
+        <p>{message.detail}</p>
+      </div>
       <Button
         size="sm"
         variant="quiet"

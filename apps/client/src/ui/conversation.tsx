@@ -82,8 +82,9 @@ export function ConversationThread({
   visible = true,
   contentRevision = '',
   liveAnnouncements = 'polite',
-  newMessageLabel = 'New Message',
+  newMessageLabel = 'New messages',
   preserveReading = false,
+  renderNewMessageControl,
 }: {
   conversationKey: string;
   items: ConversationItem[];
@@ -97,6 +98,7 @@ export function ConversationThread({
   liveAnnouncements?: 'polite' | 'off';
   newMessageLabel?: string;
   preserveReading?: boolean;
+  renderNewMessageControl?: (onPress: () => void, label: string) => ReactNode;
 }) {
   const log = useRef<HTMLDivElement>(null);
   const previous = useRef<{ key: string; count: number; latestId: string } | null>(null);
@@ -196,13 +198,21 @@ export function ConversationThread({
         id={id}
         ref={log}
         className="ol-thread"
+        // This reader restores prepended history itself; native anchoring would apply it twice.
+        style={{ overflowAnchor: 'none' }}
         role="log"
         aria-label={ariaLabel}
         aria-live={liveAnnouncements}
         onScroll={(event) => {
           const element = event.currentTarget;
+          previousHeight.current = element.scrollHeight;
           const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight <= 2;
           followingBottom.current = atBottom;
+          if (!atBottom && scrollFrame.current !== null) {
+            // A deliberate move into history cancels the pending follow-bottom frame.
+            cancelAnimationFrame(scrollFrame.current);
+            scrollFrame.current = null;
+          }
           if (atBottom && unread.current) {
             unread.current = false;
             setShowNewMessage(false);
@@ -217,11 +227,15 @@ export function ConversationThread({
           </div>
         ))}
       </div>
-      {showNewMessage && (
-        <Button className="ol-new-message" size="sm" variant="solid" onPress={scrollToBottom}>
-          {newMessageLabel} <Icon name="ui.next" size={14} />
-        </Button>
-      )}
+      {showNewMessage &&
+        (renderNewMessageControl ? (
+          // A control placed outside this reader must still follow its visibility.
+          visible && renderNewMessageControl(scrollToBottom, newMessageLabel)
+        ) : (
+          <Button className="ol-new-message" size="sm" variant="solid" onPress={scrollToBottom}>
+            {newMessageLabel} <Icon name="ui.next" size={14} />
+          </Button>
+        ))}
     </div>
   );
 }
@@ -257,12 +271,14 @@ export function ConversationComposer({
   submitLabel?: string;
   submitIcon?: string;
 }) {
+  const composing = useRef(false);
   return (
     <form
       id={formId}
       className="ol-composer"
       onSubmit={(event) => {
         event.preventDefault();
+        if (composing.current || disabled || inputDisabled) return;
         void onSubmit();
       }}
     >
@@ -280,11 +296,25 @@ export function ConversationComposer({
             maxLength={maxLength}
             value={value}
             disabled={inputDisabled}
+            onCompositionStart={() => {
+              composing.current = true;
+            }}
+            onCompositionEnd={() => {
+              composing.current = false;
+            }}
+            onBlur={() => {
+              composing.current = false;
+            }}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+              if (
+                event.key === 'Enter' &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing &&
+                !composing.current
+              ) {
                 event.preventDefault();
-                void onSubmit();
+                if (!disabled && !inputDisabled) void onSubmit();
               }
             }}
           />

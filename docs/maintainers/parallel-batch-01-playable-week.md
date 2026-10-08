@@ -61,13 +61,13 @@ No fixed building, encumbrance progression, preservation, locked cache, food res
 - [ ] Adaptive collection/detail layout preserves exact selection, scope, scroll position and drafts across width changes.
 - [ ] Display current capacity, relevant item characteristics and meaningful equipment comparison through permitted projections, with unknowns distinct from zero.
 - [ ] Complete carried and ground-pile/container navigation plus exact transfer with source/destination/quantity, reachable blockers and actual server receipts.
-- [x] Read transfer destinations only when the player opens Move, through bounded indexed/spatial discovery; remove the world-root scan from each ordinary contents page. All/Half set a quantity draft, never move items without confirmation.
+- [x] Historical delivery: read transfer destinations only when Move is opened through bounded indexed/spatial discovery, removing the ordinary contents-page world-root scan; All/Half fill a draft. The routine chooser/review interaction is superseded by [UIUX08](ui-ux.md#uiux08); direct moves still require intentional input and native admission.
 - [ ] Preserve current-container search/paging; qualify long and duplicate names, more than one page, stale scope, empty quantity, removed items and delayed responses.
 - [ ] Inspect and exercise desktop/short/narrow/enlarged layouts, keyboard/IME, focus, popup dismissal and world-input isolation. Repair reproduced clear-control defects only; retain unrun assistive-device qualification explicitly.
 
 **NP04 contribution:** ordinary camp searches now page permitted role results and shared storage, retain exact duplicate identities, and explicitly approach/inspect dropped bags. Its native-backed camp effects and scoped input/layout/privacy cases are [recorded separately](../verification/camp-life.md#np04--camp-supply-discovery-october-3-2026). This completes the selected camp connection; the remaining PW04 collection/detail, recipient, native IME, assistive-device and wider content matrix stays open.
 
-No blanket theme replacement, decorative grid mandate, bulk trading or unscoped search. Own shared UI primitives/CSS touched by PW05 so both surfaces use the same interaction rules.
+The original scope excluded a decorative grid mandate; Mike’s October 3 direction explicitly selected grids and object-opened paired inventory. That replacement is implemented on the redesign branch beneath the existing PO/BW/AC semantics; [UIUX08](ui-ux.md#uiux08) owns its remaining qualification and the [redesign report](../verification/game-interaction-redesign.md) records actual evidence. Earlier picker/review observations remain historical delivery evidence and do not qualify the replacement. PW04’s unchecked wider-content, input, recipient and current-server requirements remain open. No blanket theme replacement, bulk trading or unscoped search is implied. Own shared UI primitives/CSS touched by PW05 so both surfaces use the same interaction rules.
 
 ## PW05 — Streamed World Agent replies
 
