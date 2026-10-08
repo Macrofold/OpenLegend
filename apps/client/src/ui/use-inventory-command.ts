@@ -1,7 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ActionOption, ApiResult, CommandReceiptResult } from '@open-legend/protocol';
 import { post } from '../api';
-import { retainTradeInventoryReceipt, resolveTradeInventoryReceipt } from '../trade-drafts';
+import {
+  retainTradeInventoryReceipt,
+  prepareTradeInventoryReceiptResolution,
+} from '../trade-drafts';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 
 type PendingCommand = CommandRequestIdentity & {
@@ -95,7 +98,7 @@ export function useInventoryCommand({
   }, [pending?.request?.commandId]);
 
   function finish(result: ApiResult, commandId: string, tradeScope?: string) {
-    if (!storageKey) return;
+    if (!storageKey || !alive.current || activeCommandId.current !== commandId) return;
     // If storage becomes unavailable, retain the guard. The native result remains
     // recoverable, and a remount cannot accidentally repeat the unresolved request.
     const saved = restore(storageKey);
@@ -103,9 +106,17 @@ export function useInventoryCommand({
       throw new Error('The retained inventory request could not be read.');
     // A response from a former component can arrive after reconnect recovered that
     // command and the current component started another one. It cannot erase the latter.
-    if (saved?.request?.commandId === commandId) sessionStorage.removeItem(storageKey);
-    if (activeCommandId.current !== commandId) return;
-    if (tradeScope && alive.current) resolveTradeInventoryReceipt(tradeScope, commandId);
+    const releaseTrade = tradeScope
+      ? prepareTradeInventoryReceiptResolution(tradeScope, commandId)
+      : undefined;
+    if (saved?.request?.commandId === commandId) {
+      sessionStorage.removeItem(storageKey);
+      if (sessionStorage.getItem(storageKey) !== null)
+        throw new Error(
+          'The retained Inventory request could not be cleared. Check its result again.',
+        );
+    }
+    releaseTrade?.();
     activeCommandId.current = undefined;
     guard.current = false;
     if (alive.current) {

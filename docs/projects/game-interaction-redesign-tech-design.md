@@ -1,8 +1,8 @@
 # Open Legend: whole-interface technical design
 
-| Status      | Current progress                                                                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Whole-interface implementation and selected native journeys are delivered; remaining corrections, browser and broader input/player qualification remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Whole-interface implementation and current-main integration are delivered; finite review corrections and native/browser/input/player qualification remain open. | 2026-10-08   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
@@ -11,6 +11,8 @@
 The requested whole-PR review starts at `19e90d59f322c8893ac0f4c20caee145f6bac913`, with recorded base `63cd42fc2555dd97b1cd9ec5c03dcf84e6d2ef36`. The freshly resolved PR target is `Macrofold/OpenLegend` main `741e8cf7e0e3f4ab7b1eea47d32d33e5f483eda6`. Preserve the published branch through the established two-parent integration merge. Upstream adds reciprocal barter, remembered places and voluntary outings in the same player surfaces; its native feature evidence remains scoped to its original sources.
 
 The review includes the complete PR text diff, source producers/callers, documentation links, screenshot manifests and follow-up ownership. Reuse unchanged original-image and native evidence; neither source inspection nor manifest reconciliation is a new image inspection or player qualification. Every actionable unimplemented finding must have a concrete task in the existing UIUX/native tracker.
+
+**Current review checkpoint:** main `741e8cf7` is integrated at `8d35bdf`, followed by corrections at `dabdcf75`. Local full/production TypeScript and the direct generated-configuration check pass; the ordinary local build stops on tsx IPC EPERM before a full bundle. Integration CI's optional Journal revision mismatch has a source correction, with required checks still pending. Nine actual-API injected-Storage scenarios and one server-rendered observation of the creation/Inventory hooks pass their bounded restoration assertions; they run no browser effects, native dispatch or provider request. The [October 8 verification record](../verification/game-interaction-redesign.md#requested-full-pr-review-and-current-main-integration--october-8-2026) records exact scope and hashes. Search-description deduplication and durable clearing of the linked Inventory/trade receipt remain current PR corrections with focused qualification; no broader acceptance is closed.
 
 ### Integration and correction plan
 
@@ -21,7 +23,8 @@ This is a cross-layer review correction and integration, estimated at 250–400 
 3. Separate browser-store ownership validation. Session request/draft cleanup must use its own session owner/timeline evidence even when localStorage fails. Preserve original unresolved creation/inventory/activity identities on same-owner return; explicit access loss and timeline/owner change still clear the appropriate records, and the existing pending-command exception remains narrow. Keep main's shared trade cleanup and timeline semantics.
 4. Admit the exact controlled actor as an explicitly selected action subject, preserving current perceived-target checks for every other subject and all downstream native/typed admission.
 5. Retain an explicitly chosen merge survivor when it disappears as unavailable; require deliberate reselection instead of substituting the first compatible stack. Refuse stale conversation refresh callbacks before they start a read or replace a new recipient's page. Disable Keep editing during pending Save and Close. Correct camera-help text to the existing keyboard bindings.
-6. Make Time, the missing denied-storage image and completed-task density follow-ups independently actionable. Track the inherited action-attempt reload identity gap under UIUX12 with its specific decision/job owner; the broader action-recovery change is not silently substituted with gameplay receipt lookup. Restore the source-backed IW03 record already requested on main, correct current gallery counts and add only the three newly integrated source groups. Preserve historical evidence and native-owner completion scopes.
+6. Preserve displayed-description discovery when deduplicating a native activity family. Complete a shared Inventory/trade result only after clearing and verifying its matching saved trade lock; retain the original Inventory request and in-memory guard on a failed durable clear. Qualify these exact success/refusal/storage boundaries without broadening native semantics.
+7. Make Time, the missing denied-storage image and completed-task density follow-ups independently actionable. Track the inherited action-attempt reload identity gap under UIUX12 with its specific decision/job owner; the broader action-recovery change is not silently substituted with gameplay receipt lookup. Restore the source-backed IW03 record already requested on main, correct current gallery counts and add only the three newly integrated source groups. Preserve historical evidence and native-owner completion scopes.
 
 ### Cost, invalidation and verification
 

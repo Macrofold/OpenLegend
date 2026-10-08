@@ -146,11 +146,30 @@ export function retainTradeInventoryReceipt(scope: string, commandId: string) {
   const store = tradeDraftStore('open-legend:action-draft:trade:' + scope, []);
   store.update((value) => ({ ...value, inventoryReceipt: commandId }));
 }
-export function resolveTradeInventoryReceipt(scope: string, commandId: string) {
-  const store = tradeDraftStore('open-legend:action-draft:trade:' + scope, []);
-  store.update((value) =>
-    value.inventoryReceipt === commandId
-      ? { ...value, inventoryReceipt: undefined, uncertain: false }
-      : value,
-  );
+export function prepareTradeInventoryReceiptResolution(scope: string, commandId: string) {
+  const key = 'open-legend:action-draft:trade:' + scope;
+  const store = tradeDraftStore(key, []);
+  const current = store.getSnapshot();
+  const raw = sessionStorage.getItem(key);
+  const saved = raw === null ? undefined : readDraft(key);
+  if (raw !== null && !saved) throw new Error('The retained trade draft could not be read.');
+  if (
+    (saved?.inventoryReceipt && saved.inventoryReceipt !== commandId) ||
+    (current.inventoryReceipt && current.inventoryReceipt !== commandId)
+  )
+    throw new Error('The retained trade receipt changed. Check its original result.');
+  const { pending: _pending, ...retained } = current;
+  const serialized = JSON.stringify({ ...retained, inventoryReceipt: undefined, uncertain: false });
+  // Keep the live guard until Inventory has also removed its original request.
+  // A failed write/read-back leaves that exact request available for another receipt check.
+  sessionStorage.setItem(key, serialized);
+  if (sessionStorage.getItem(key) !== serialized)
+    throw new Error('The resolved trade receipt could not be retained. Check its original result.');
+  return () => {
+    store.update((value) =>
+      value.inventoryReceipt === commandId
+        ? { ...value, inventoryReceipt: undefined, uncertain: false }
+        : value,
+    );
+  };
 }

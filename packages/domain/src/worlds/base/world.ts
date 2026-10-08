@@ -35,6 +35,7 @@ import { initializeAttributes, createModuleManifest } from '../../world-modules.
 import { activityHostPin, STOCK_ACTIVITY_HOST } from '../../activity-hosts.js';
 import { BASE_FIRE_ACTIVITY_HOST } from './fire-activity.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './camp-activity.js';
+import { BASE_OUTING_HOST } from './outing.js';
 import { BASE_WORLD_PRESENTATION } from './presentation.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
@@ -131,7 +132,9 @@ export function createWorld(
       DEFAULT_SENSES,
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
-      [STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST].map(activityHostPin),
+      [STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST, BASE_OUTING_HOST].map(
+        activityHostPin,
+      ),
     ),
     cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
     storyPolicy: defaultStoryPolicy(),
