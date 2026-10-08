@@ -24,7 +24,7 @@ The first cohort uses existing documents, contribution review, ordinary private 
 
 ## 2. What is accepted, proposed and separate
 
-[D37](../../archive/05-project/open-decisions.md) accepts recognition, a voice for useful contributors and financial supporters, and exploration of a creator fund. It does not adopt this cohort size, review weights, prices, voting rights, payout schedule or budget. [Patrons and world history](../../archive/06-marketing/patrons-contributors-and-world-history.md) describes grants as an expense for new work, distinct from purchases. [The business plan](../../archive/06-marketing/business-plan.md) defers operating commitments until the core business can support them and values founder time separately from cash flow.
+[D37](../../archive/05-project/open-decisions.md) accepts recognition, a voice for useful contributors and financial supporters, and the direction to establish a creator fund. [C08's original direction](../../archive/00-source/open-source-and-community-followups.md) preserves that ambition while leaving this program's terms and execution open. It does not adopt this cohort size, review weights, prices, voting rights, payout schedule or budget. [Patrons and world history](../../archive/06-marketing/patrons-contributors-and-world-history.md) describes grants as an expense for new work, distinct from purchases. [The business plan](../../archive/06-marketing/business-plan.md) defers operating commitments until the core business can support them and values founder time separately from cash flow.
 
 This proposal preserves those distinctions:
 
@@ -138,7 +138,7 @@ If the operator changes the relevant game version, no-compatibility development 
 
 ### 7.1 Pay the award as an award
 
-The program pays accepted amounts within seven real days after acceptance and complete required payment instructions, subject to a disclosed provider settlement range. Show separately Awarded, Earned/accepted, Payment submitted, Payment uncertain and Settled. The promised amount is in the agreement's named currency. The program bears its normal chosen transfer costs; any recipient-side bank or conversion treatment must be clear before signing, including an offered supported alternative. It must not quietly reduce a small award through a new fee discovered at payout.
+The operator submits the full authorized payment within seven real days after acceptance and receipt of complete required payment instructions. Before signing, disclose the separate expected provider settlement range; submission is not proof that the recipient has received the money. If that range passes without confirmed receipt, initiate the original-payment recovery process and give the recipient its status and next review date. The initial grant still must be confirmed available before the six-week work clock starts. Show separately Awarded, Earned/accepted, Payment submitted, Payment uncertain and Settled. The promised amount is in the agreement's named currency, with any applicable legally required withholding and the expected gross-versus-net treatment disclosed through the adopted payment terms before signing. The program bears its normal chosen transfer costs; any recipient-side bank or conversion treatment must be clear before signing, including an offered supported alternative. It must not quietly reduce a small award through a new fee discovered at payout.
 
 DG28's 15% marketplace fee, monthly payout calendar, ordinary 30-day hold and $25 threshold do not apply to these grants. There is no minimum accumulated grant balance that traps a small earned payment. Team payments follow the agreed named arrangement, with consent to shares totaling the applicable award amount. A lead receiving and distributing collaborators' money must have that mandate; credit and ownership do not automatically prescribe a 50/50 split. Changes affect future unearned portions by agreement, never somebody else's already earned share.
 
@@ -152,7 +152,7 @@ Price useful separable subparts in the agreement where feasible. If the full mid
 
 Good-faith recipient withdrawal keeps earned mobilization and accepted amounts, pays any separately accepted partial value, and ends unearned milestones. Return only genuinely unused refundable expense advances under their own terms. The recipient supplies the agreed handoff for paid work and identifies incomplete parts, then has no continuing duty to finish the abandoned project for free. An illness or unavoidable personal interruption need not become a public explanation; the public status can say the scope closed early.
 
-For operator-caused cancellation or a material roadmap change, preserve all earned amounts, settle accepted partial value, and pay a proposed cancellation allowance of up to 10% of the total award for reserved work not yet accepted. It comes from the still-unearned award balance and cannot exceed that balance; the total award cap stays intact. For the ordinary first contract, pay the full available 10% allowance without demanding receipts for the recipient's lost availability. No allowance is owed on already fully paid work. This is a proposed commercial rule, not a statutory remedy; the actual agreement and applicable requirements remain controlling.
+For operator-caused cancellation or a material roadmap change, preserve all earned amounts and settle accepted partial value. Cancellation or a missed review never extinguishes the right to review work already submitted, or evidenced as completed before cancellation, against its original criteria. Keep the full potentially earned milestone amount reserved while that review or dispute is unresolved; the operator cannot delay acceptance to buy a cheaper cancellation. After resolving that work, pay a proposed cancellation allowance of up to 10% of the total award for reserved work not yet accepted. It comes from the still-unearned award balance and cannot exceed that balance; the total award cap stays intact. For the ordinary first contract, pay the full available 10% allowance without demanding receipts for the recipient's lost availability. No allowance is owed on already fully paid work. This is a proposed commercial rule, not a statutory remedy; the actual agreement and applicable requirements remain controlling.
 
 If the operator cancels a $1,000 example after the $200 start and $400 midpoint were earned, it pays those $600 plus $100 cancellation allowance, unless more accepted partial value consumes that remaining headroom. If another $350 of final work has already been accepted, $950 is earned and only $50 remains available for cancellation. The operator cannot reclaim prior $600 because the roadmap changed, and the creator cannot collect $1,050 by stacking the allowance on a full award. Exact separate approved expenses remain separately accounted for.
 
@@ -160,7 +160,7 @@ Fraud, rights infringement or undisclosed material conflicts require a scoped re
 
 ### 7.3 Dispute and appeal
 
-The recipient or applicant can request one written review within 14 real days of the challenged decision, identifying the specific factual, criteria, conflict or payment error. This is a voluntary program process, not a deadline extinguishing other applicable rights. A different unconflicted reviewer acknowledges within seven days and issues a reasoned response within 14 further days, or a specific explanation of the missing evidence and dated next step. Reserve that review effort before opening the round.
+The recipient, applicant or affected advisor can request one written review within 14 real days of the challenged decision, identifying the specific factual, criteria, conflict or payment error. This is a voluntary program process, not a deadline extinguishing other applicable rights. A different unconflicted reviewer acknowledges within seven days and issues a reasoned response within 14 further days, or a specific explanation of the missing evidence and dated next step. Reserve that review effort before opening the round.
 
 The reviewer can confirm the decision, require correction, recommend an accepted partial amount, or identify that the accountable owner must authorize a contractual remedy. They cannot invent new spending authority. If no independent person can decide within the funded reserve, stop new awards and obtain authorized review or hold the affected decision unresolved; do not declare the original reviewer independent by convenience. Undisputed accepted payments proceed where the payment authority permits them. Public reporting states a dispute is pending without exposing private allegations as established facts.
 
@@ -186,9 +186,9 @@ At closure, provide each recipient the final agreed public record and their own 
 
 ### 9.1 What the voice can change
 
-For the pilot, appoint at most one useful-contributor advisor and one financial-supporter advisor for the round. Each supplies one optional written recommendation of at most 600 words during the seven-day advisory window and one clarifying reply if requested. They can recommend a feasible proposal, challenge an assumption, identify an overlooked player need or advise making no award. There is no required meeting, attendance score, campaigning assignment or monthly vote.
+For the pilot, appoint at most one useful-contributor advisor and one financial-supporter advisor for the round. Each supplies one optional written recommendation of at most 600 words during the seven-day advisory window and one clarifying reply if requested. They can recommend a feasible proposal, challenge an assumption, identify an overlooked player need or advise making no award. Each appointment is an explicitly voluntary commitment of at most one hour for the round; required accessibility assistance comes from the program's approved operating allowance. Do not add recurring meetings or required extra unpaid tasks to that consent. There is no required meeting, attendance score, campaigning assignment or monthly vote.
 
-The advisor role is a bounded listening channel, not a claim that one person speaks for every creator or supporter. The steward publishes the selection basis and, with consent, the advisor's relevant relationship. A contributor qualifies through at least one documented useful accepted contribution; paid and unpaid work can qualify, including non-code work. A financial supporter qualifies through a settled, nonreversed voluntary support/dedication payment under its actual terms, without a minimum spend or amount-weighted influence. An ordinary product customer can give ordinary product feedback without being reclassified as a donor. If no eligible supporter exists, leave that seat vacant; do not sell an advisory position to fill it.
+The advisor role is a bounded listening channel, not a claim that one person speaks for every creator or supporter. The steward publishes the selection basis and, with consent, the advisor's relevant relationship. A contributor qualifies through at least one documented useful accepted contribution; paid and unpaid work can qualify, including non-code work. A financial supporter qualifies through a settled, nonreversed voluntary support/dedication payment under its actual terms, without a minimum spend or amount-weighted influence. An ordinary product customer can give ordinary product feedback without being reclassified as a donor. If no eligible supporter exists, leave that seat vacant; do not sell an advisory position to fill it. Eligibility is checked at appointment; ordinary later cancellation of a subscription does not rewrite already supplied advice or purchase a new influence period. A material reversal, false eligibility claim or newly discovered conflict uses the same current review/removal process, without erasing the historical record of the advice.
 
 A person eligible through both routes chooses one role and supplies one recommendation, never two weights. An advisor cannot seek an award in the same round. Existing ordinary public feedback routes remain available, but the pilot does not promise a new unlimited grant-comment service or full individual responses outside its bounded review. The steward can surface relevant existing feedback with consent and without duplicating a person's influence through several identities.
 
@@ -204,4 +204,211 @@ Ordinary prior contribution, a properly completed past grant or general membersh
 
 Two independent relevant reviews and an authorized unconflicted award decision remain required. Replace a conflicted participant within the funded time/contingency or leave the affected proposal unawarded. If the budget owner is conflicted and no genuinely authorized independent decision maker exists, that award cannot proceed. An advisor vacancy does not block the whole round; a missing independent acceptance reviewer can block the affected payment decision while undisputed earned obligations remain owed. Recusal cannot be waived by a popularity poll.
 
+An advisor can withdraw at any time without losing ordinary community standing; the seat may remain vacant rather than delay the decision. Disagreement or criticism is not a reason for removal. A material conflict, false eligibility claim or actual misconduct can suspend the affected role through a reasoned private notice and the same independent correction/appeal route, with only an appropriate public explanation. Supplied advice remains accurately attributed unless current privacy/removal requirements change its display.
+
 Appointments end with the round. Recognition for prior useful work or support remains its historical fact, without permanent control or a promise of reappointment. The next round, if any, reconsiders voices and reviewer independence. Do not allow a small familiar group to become an implicit permanent governing body merely because arranging the first round was convenient.
+
+## 10. Full-cost economics and public accounting
+
+The available new-award amount is settled eligible funding minus existing signed unpaid obligations, unresolved payment exposure, restricted-fund remedies, operating and closeout reserves. It is not total money visible in an account. An initial start payment decreases both cash and the unpaid portion of the same award; it does not reduce the award's reserved later milestones twice. Failed or uncertain transfers retain their actual obligations and costs until reconciled.
+
+For an illustrative pilot with paid program operations, suppose the complete authorized ceiling were $5,000:
+
+| Purpose | Illustrative amount | Assumption, not an adopted rate |
+| --- | ---: | --- |
+| At most two awards | $2,000 | Two $1,000 awards, with their milestone shares inside this total |
+| Steward/owner administration | $1,120 | Two hours/week for 14 weeks at an assumed $40/hour |
+| Two reviewers | $480 | Six hours each across selection and review at $40/hour |
+| Specific acceptance/accessibility help | $320 | Eight additional nonoverlapping hours at $40/hour |
+| Financial reconciliation and closeout | $120 | Three additional hours at $40/hour |
+| Normal transfer/currency costs | $80 | A provisional complete-round allowance |
+| Program-owned demonstration/evaluation expense | $200 | Separately authorized costs, excluding any expense already included in an award |
+| Contingency and exceptional closeout | $680 | A reserved buffer for agreed remedies, payment problems or independent review |
+| **Total** | **$5,000** | **No actual funds or spending authority exist by virtue of this example** |
+
+The named paid labor lines total 51 distinct hours. The two separately consenting advisors add at most two voluntary hours, recorded as participant effort rather than hidden free operating labor. If the same person performs several roles, do not count the same hour twice. Volunteer or founder time can reduce actual cash spending only by an explicit finite agreement; record its opportunity cost separately rather than claim the work became free. Conversely, paying a reviewer does not buy a favorable recommendation. State fixed role compensation before they see applications.
+
+This arithmetic exposes a serious tradeoff: only 40% of the example funds reaches awards. That can be acceptable for one learning pilot, but is a poor recurring product if the process never becomes simpler or awards never become more useful. At half the assumed labor rate, those 51 hours still cost $1,020. At double the rate they cost $4,080, consuming another $2,040 that the stated ceiling does not contain. The operator must simplify scope, reduce the offered awards prospectively or approve an actual larger budget before opening; it cannot absorb the discrepancy by paying recipients less after signing.
+
+Measure recipient burden too. Twelve applications taking 30 minutes each consume six unpaid hours before any award; a compulsory six-hour demo would consume 72. Those are illustrative effort assumptions, not measurements of these applicants. Record actual reported preparation and clarification time so a “small” fund does not extract more unpaid work than it finances. Existing artifacts and concise concepts are the intended application evidence.
+
+If a reviewer conflict requires another four paid hours at the example rate, $160 can fit the stated contingency when no other obligation already claims it. If several failed transfers, disputes or provider tasks exhaust that reserve, stop new discretionary program work and seek explicit additional authority; do not spend customer credit or assume a future sponsor will cover it. Existing earned obligations remain owed. Scope a lawful funded closeout, rather than silently charging another program or describing insolvency as recipient failure.
+
+Publish an opening budget and a closing statement with separate totals for settled funding, restricted sources, awards committed, amounts earned, settled payments, uncertain payments, operating cost, remaining obligations and genuinely uncommitted funds. Gross gifts, recurring receipts and one-time support remain distinct. Godot's reporting correction is a concrete reminder that a dashboard total can be mistaken for recurring income ([CF-R05](#cf-r05--godot-distinguish-support-totals-from-spendable-cash)). Public accounting can explain a correction without exposing bank documents or pretending the original figure never appeared.
+
+Success is the useful outcome at sustainable full cost. Count whether the result actually enables a wanted next action, is reusable by someone other than its author, meets its evidence/rights promise, and can be maintained or deliberately left complete without continuing subsidy. Also measure reviewer/steward hours, time to decision and payment, applicant burden, conflict substitutions and disputes. Do not define success as spending the full pool, number of commits, published words or an increase in playtime.
+
+## 11. Complete journeys and adverse cases
+
+**The newcomer with a useful idea.** A person without a subscription is invited because they identified a concrete problem relevant to the round. They submit the short concept and existing example, privately ask for an accessible application format, and receive the same review. Selection does not depend on their ability to finance a live demo. If selected, payment eligibility and the exact scope are settled before they are asked to begin.
+
+**The declined contributor.** A useful long-standing contributor proposes a much larger system whose dependencies do not fit six weeks. The decision explains that this round cannot fund the scope and, if genuine, names a smaller independently worthwhile result that could be considered in a future authorized process. It offers no unfunded assignment. Their attribution, ordinary contribution rights and existing pack income remain intact; declining to resubmit is harmless.
+
+**The funded prototype that says stop.** A recipient delivers the agreed small experiment and honest evidence that the added mechanic makes play more tedious. Reviewers accept the exploration milestone when its evidence and artifacts meet the signed promise. The public result explains the conclusion. The operator may choose not to build the feature, while paying the accepted work; the fund has avoided a larger bad investment.
+
+**The useful patch awaiting merge.** The agreed standalone result passes its relevant existing checks and demonstrates the exact player outcome. A maintainer is unavailable or chooses a later integration schedule. The grant's accepted milestone is paid; it does not override merge authority or force the recipient into unpaid adaptation to every subsequent main-branch change. A paid integration extension would be a separate prospective agreement.
+
+**The midpoint is real, the final goal is not reached.** The recipient has earned the start and usable midpoint, then cannot complete the final requirement. Review actual separable partial value, use the finite correction/exit path, and keep earlier accepted pay. The public record distinguishes usable work from incomplete promises. Do not rewrite the midpoint into failure to recover cash or pretend the full feature shipped.
+
+**A supporter wants their preferred world funded.** They can provide their one advisory recommendation when eligible, state the material interest and accept recusal where relevant. The owner publishes the authorized reasoned selection. Purchasing another dedication does not create another seat, and threatening to cancel a future subscription cannot redirect money already owed to a grantee.
+
+**The contributor and supporter are the same person.** They choose one advisory role. Their useful work and support can both be acknowledged, but there is one human recommendation. If they decide to apply for an award, they cannot act as advisor/reviewer in that round. An ordinary former grantee can advise a later round when no present material conflict exists.
+
+**The sponsor fails after an award is signed.** The first pilot should already have settled reserved platform funding, so a later withdrawn pledge cannot have been counted as its cash. In a later sponsored program, the original payer remains responsible for signed recipient obligations under the actual agreement; the operator does not retroactively demand free work or seize customer funds. Stop new awards and disclose the financial change at an appropriate level while resolving the actual obligation.
+
+**A payment appears missing.** The steward records it as uncertain and checks the original attempt through the authorized financial owner. The recipient sees the next review date and can correct a genuine destination error privately. A second transfer waits for a supported outcome or independently funded reconciliation decision. Nonrefunded fees stay in program costs, and a provider problem does not reduce earned grant value silently.
+
+**Everyone knows the applicant.** Familiarity alone is assessed rather than banned, but material current conflicts remove the affected people from the decision. If the remaining two independent reviews and authorized decision cannot be supplied within the actual reserve, the program leaves that proposal unawarded or arranges an explicitly funded independent substitute. It does not lower the standard because the applicant is popular.
+
+**The fund ends early.** The owner stops future invitations, tells pending applicants which decisions are cancelled, and contacts signed recipients individually with the applicable closeout path. Earned amounts, accepted partial value, agreed operator-cancellation payments and financial uncertainty remain funded. Free contributions and acquired open rights keep their own status; no public vote can erase them. The archive shows actual partial closure instead of a celebratory completed-cohort label.
+
+## 12. Launch, revision and game-first judgment
+
+Before execution, adopt the actual named payer, settled reserve, roles and time allowances, eligible territory/payment path, award agreements, exact component licenses, retention notice, reference game and outcome brief. These are concrete inputs to the recommended operating process, not authority supplied by this document. Do not send invitations, collect donations, enroll recipients, announce benefits or pay anyone as part of the current design task.
+
+The first round can be prepared and reviewed using ordinary documents. If there are no independent reviewers, no plausible independently useful proposal or no sustainable remaining money after existing obligations, the program stays unlaunched. That preserves the accepted fund direction while respecting the earlier business constraint. A profitable monthly hosting sample does not by itself justify an annual grant promise.
+
+Complete one round before promising recurrence. Review the actual game value, administration ratio, award adequacy, applicant burden, diversity of invited perspectives, clarity of decline reasons, reviewer independence and payment reliability. A small useful output can justify continuing even without immediate commercial revenue. Conversely, a popular launch announcement with no adopted useful result is insufficient. Let accepted prototypes that recommend stopping count honestly.
+
+Change later rounds prospectively. A larger open call needs a full intake and selection-capacity policy, funded screening and a fair oversubscription approach before it is advertised; the invited pilot does not prove that service. A binding community budget needs actual delegated authority and conflict-safe decision rules. Dedicated patron fundraising needs explicit restrictions, recipient remedies, cancellation and reporting terms. None is an automatic second-stage software project.
+
+The leading critique of this design is its administrative cost. Two small awards can be buried under applications, public explanation and review. Keep each artifact brief, avoid bespoke unpaid demonstrations and accept existing good evidence. If a useful outcome could be obtained through a clear ordinary commission with less burden, choose that arrangement and call it what it is. If the community already voluntarily produces the desired contribution, a grant should not manufacture a contest merely to pay for activity.
+
+A second risk is patron capture disguised as participation. Equal bounded advisory roles and published responses make the voice real while keeping award authority explicit. They do not establish democratic legitimacy for company decisions. Do not expand advisory feedback into control over independent worlds, human privacy, licensing or customer money. If the actual community is too small for two genuine constituencies, acknowledge vacancies and learn from the people who are present.
+
+A third risk is rewarding visible complexity. Prefer an understandable result that somebody uses over a sprawling mechanics package, a formal council or an impressive volume of generated code. A creator's experimentation, artistic judgment and accessible explanation can add more value than another subsystem. This grant-specific standard should help the game remain playable and enjoyable, not turn every proposal into a moral compliance exercise.
+
+The recommended stop conditions are concrete: no actual reserve, unacceptable rights/private-data dependency, no independent decision, required unpaid bespoke work, a budget that cannot preserve signed obligations, or a result whose supposed benefit depends on misleading demonstration. Pause expansion when ordinary review/payment repeatedly misses its promise, recipient burden dominates useful work or nobody wants to use the accepted results. Adjust the scope and operating process before building a grant portal, increasing awards or announcing permanent governance.
+
+## 13. Primary research and limits of comparison
+
+Sources were checked October 8, 2026. These records describe other organizations' stated policies or documented corrections, not measured success in Open Legend. No program, payment, application or outreach was executed. Findings and this proposal's inferences are separate; no source establishes Open Legend's legal form, tax treatment or actual funding.
+
+### CF-R01 — NLnet: useful milestones and recipient cash flow
+
+**Sources:** [Commons Fund FAQ](https://nlnet.nl/commonsfund/faq/) and [office-hour answers](https://nlnet.nl/officehour/), official living guidance.
+
+**Observed:** The guidance pays completed priced milestones, supports public aliases with private identity checks, and can leave money unallocated. The Q&A describes no advance and permits a tested standalone milestone where upstream merge is separate.
+
+**Inference:** Choose reviewable useful results and separate grant acceptance from merge. This proposal deliberately adds a bounded earned start payment to reduce the applicant cash-flow barrier; it does not claim NLnet uses that policy.
+
+**Access limit:** Relevant bodies read; the Q&A combines programs/dates. No universal territory, tax or success claim follows.
+
+### CF-R02 — NLnet: proportionate changes
+
+**Source:** [Amendment policy](https://nlnet.nl/foundation/policies/amendment/), version 1.0, February 2022.
+
+**Observed:** Major changes receive external review; some same-scope adjustments do not repeat it. Written amendments remain with the agreement.
+
+**Inference:** Permit practical method changes without a new campaign. Changing the outcome, rights or material cost needs actual prospective authority; never rewrite a failed criterion after the fact merely to declare success.
+
+**Access limit:** The policy was read, not its operational compliance. Its own numerical thresholds are not adopted here.
+
+### CF-R03 — PSF: a budget can run out early
+
+**Source:** [Official 2025 grant-pause announcement and staff explanation](https://discuss.python.org/t/the-psf-has-paused-our-grants-program/101288), August 2025.
+
+**Observed:** PSF paused after reaching the annual cap early; staff described increased request counts/amounts and a prospective quarterly approach.
+
+**Inference:** Record commitments when approved, publish a finite round and tell pending applicants what closure means. Do not wait for the bank balance to reach zero before noticing signed future obligations.
+
+**Access limit:** The linked blog was blocked; evidence comes from the official forum announcement and staff replies. Community allegations are not adopted, and the historical pause is not described as permanent.
+
+### CF-R04 — PSF: a limited return can be honest
+
+**Source:** [PSF grants program](https://www.python.org/psf/grants/), current 2026 round information.
+
+**Observed:** The page describes a limited $90,000 round with narrower eligibility and set application/review dates, rather than full permanent reopening. Recipients provide payment information and a short report.
+
+**Inference:** A small finite pilot can be useful without promising every future year. Differentiate application receipt, award and payment, and budget volunteer review capacity explicitly.
+
+**Access limit:** Living page read after its August intake closed; its budget, legal requirements and event categories belong to PSF.
+
+### CF-R05 — Godot: distinguish support totals from spendable cash
+
+**Source:** [How we calculate donations](https://godot.foundation/2025/01/07/how-we-calculate-donations/), January 7, 2025.
+
+**Observed:** Godot separated one-time gifts from recurring totals after prorating confused readers. Sponsor counts could include noncash help; dashboard totals excluded some costs.
+
+**Inference:** Public support, recurring revenue and available grant cash are different. Report actual settled funds, restrictions and commitments, and visibly correct misleading measures.
+
+**Access limit:** A retrospective reporting explanation, not a finding about every fund's solvency or Open Legend's finances.
+
+### CF-R06 — Godot: authority and effective recusal
+
+**Source:** [Key policies](https://godot.foundation/policies-and-procedures/key-policies), current official funding/conflict sections.
+
+**Observed:** Requests state purpose, amount, timing and outcomes; restricted gifts have written purposes. Conflicted decision makers disclose and abstain from influence, discussion and voting, with quorum consequences.
+
+**Inference:** Separate advice, commitment and payment authority. Recusal must have a workable independent replacement or stop the affected award, rather than merely hiding a vote.
+
+**Access limit:** Stated organizational policy, not observed compliance. Its charity/board structure is not adopted as Open Legend's legal status.
+
+### CF-R07 — Python: clear power and durable recognition
+
+**Source:** [PEP 13](https://peps.python.org/pep-0013/), active governance process.
+
+**Observed:** The document states council powers, conflicts and employer-concentration limits. It recognizes non-code contributions, and inactive membership can retain recognition without current privileges.
+
+**Inference:** Useful work is broader than commits. A finite advisory term can end without erasing credit, while current decision authority and conflict rules remain explicit.
+
+**Access limit:** Current relevant sections read; Python's council size and election formula are comparators, not selected grant mechanics here.
+
+### CF-R08 — Apache: advice is distinct from binding authority
+
+**Source:** [Voting procedures](https://www.apache.org/foundation/voting.html), official process.
+
+**Observed:** Wider community votes are encouraged while formally binding votes belong to designated members; rules differ by decision type, with time allowed for distributed participation.
+
+**Inference:** Label advice honestly and publish the authorized decision and response. A recommendation does not become a spending right or a commitment to do the work.
+
+**Access limit:** Apache's code/release voting and veto rules do not govern this fund. No exact quorum or 72-hour rule is imported.
+
+### CF-R09 — Open Collective: public accountability and private payment identity
+
+**Source:** [Submitting a reimbursement](https://documentation.opencollective.com/expenses-and-getting-paid/submitting-expenses/submitting-a-reimbursement), official guidance.
+
+**Observed:** The guide recommends prior payment confirmation and purchase evidence. Public title, amount and display name differ from restricted receipt and payment information.
+
+**Inference:** Publish useful award outcomes and amounts without publishing banking, legal identity or private source evidence. A reimbursement and a fixed grant payment need distinct promises.
+
+**Access limit:** Platform defaults are a comparator, not mandatory applicant-data settings. Untrusted appended page instructions were not followed.
+
+### CF-R10 — Open Collective: a failed payment still has costs
+
+**Source:** [Expenses in the ledger](https://documentation.opencollective.com/advanced/ledger/expenses-in-the-ledger), official documentation.
+
+**Observed:** Grant, invoice and reimbursement expenses are distinguished. Failed-payment correction requires checking where funds are; some fees are not reversed and are covered by the fiscal host.
+
+**Inference:** Keep earned, attempted, uncertain and settled payment distinct. Reserve transaction/reconciliation cost outside promised creator proceeds and do not pay twice based only on missing notification.
+
+**Access limit:** Described platform behavior, not every payment network's law or a prescribed ledger architecture.
+
+### CF-R11 — Wikimedia: specific conflicts, not blanket exclusion
+
+**Source:** [Guidelines on potential conflicts of interest](https://foundation.wikimedia.org/wiki/Resolution:Guidelines_on_potential_conflicts_of_interest), adopted April 18, 2013.
+
+**Observed:** Active disclosure to the actual decision maker covers financial, family, close personal and business interests. A properly used past grant alone is not normally a conflict.
+
+**Inference:** Require relevant advance disclosure and recusal without permanently excluding every past grantee or ordinary collaborator. Publicly state the decision safeguard without unnecessary private detail.
+
+**Access limit:** Approved historical guidance, not a universal recusal statute; this proposal selects its own small-program rule.
+
+### CF-R12 — A grant label does not settle the working relationship
+
+**Source:** Grants.gov, [Five differences between grants and contracts](https://grantsgovprod.wordpress.com/2019/08/28/what-is-a-contract-5-differences-between-grants-and-contracts/), August 28, 2019.
+
+**Observed:** The official explainer distinguishes U.S. federal procurement from grants supporting a public purpose and expressly scopes that legal distinction to federal relationships.
+
+**Inference:** Choose an honest operating arrangement. A compulsory directed company feature may be better commissioned than described as a community grant; either way it needs finite paid obligations.
+
+**Access limit:** This supports a product distinction, not legal classification of Open Legend's private agreements or application of federal procurement rules to them.
+
+## Maintained records
+
+- Delivery: [FUND01–FUND06](../maintainers/creator-fund-and-contributor-governance.md); [DG30 / ND25 preparation](../maintainers/needs-design.md#dg30--a-creator-fund-and-contributor-governance).
+- Policy and quantitative proposals: [Creator-fund and contributor-governance limits](../limits/creator-fund-and-contributor-governance.md), FUND-L01–FUND-L10; actual financial/rights authority remains with its existing owner.
+- Accepted direction: [D37](../../archive/05-project/open-decisions.md), [C07/C08](../../archive/00-source/open-source-and-community-followups.md), [patrons and world history](../../archive/06-marketing/patrons-contributors-and-world-history.md).
+- Neighboring product obligations: [DG27 customer/supporter offers](customer-and-supporter-offers-feature-spec.md), [DG28 publication and creator revenue](published-packs-and-creator-revenue-feature-spec.md), and [DG29 finite participation/service promises](participants-and-world-travel-feature-spec.md).
+- Contribution and rights: [CONTRIBUTING](../../CONTRIBUTING.md), [LICENSING](../../LICENSING.md), [DG12 reusable work](world-creation-feature-spec.md), [business-plan economics](../../archive/06-marketing/business-plan.md). Money/mission and token essays remain ideation rather than adopted platform law.
+- This specification completes a product proposal, not a launch, donation request, grant award, legal agreement, expenditure, corporate-governance change or software implementation.
