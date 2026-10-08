@@ -1,8 +1,8 @@
 # Creator fund and contributor governance
 
-| Status      | Current progress                                                                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG30 source audit, primary research and operating-program design underway; actual program adoption, funding, agreements, payments and observed outcomes remain open. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG30 product proposal and independent reviews complete; actual program adoption, funding, agreements, payments and observed outcomes remain open. | 2026-10-08   |
 
 ## Ownership and purpose
 

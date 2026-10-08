@@ -1,12 +1,12 @@
 # Creator fund and contributor governance
 
-| Field | Value |
-| --- | --- |
-| Status | In progress — proposed operating program; adoption, actual funding, contracting and execution remain open |
-| Design group | DG30 / ND25 — a useful creator fund and bounded voice for contributors and financial supporters |
-| Delivery owner | [FUND01–FUND06](../maintainers/creator-fund-and-contributor-governance.md), under D37 and existing financial, rights and platform authority |
-| Limits and policy | [Creator-fund and contributor-governance inventory](../limits/creator-fund-and-contributor-governance.md) |
-| Foundation inspected | Baseline `671d52d724db5dfe39403ebe46f7c1ee24d6ec52`, plus DG27–DG29 proposals on this branch |
+| Field                | Value                                                                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Status               | In progress — proposed operating program; adoption, actual funding, contracting and execution remain open                                   |
+| Design group         | DG30 / ND25 — a useful creator fund and bounded voice for contributors and financial supporters                                             |
+| Delivery owner       | [FUND01–FUND06](../maintainers/creator-fund-and-contributor-governance.md), under D37 and existing financial, rights and platform authority |
+| Limits and policy    | [Creator-fund and contributor-governance inventory](../limits/creator-fund-and-contributor-governance.md)                                   |
+| Foundation inspected | Baseline `671d52d724db5dfe39403ebe46f7c1ee24d6ec52`, plus DG27–DG29 proposals on this branch                                                |
 
 ## 1. Fund something people will be glad exists
 
@@ -28,14 +28,14 @@ The first cohort uses existing documents, contribution review, ordinary private 
 
 This proposal preserves those distinctions:
 
-| Flow | What it pays for | What DG30 does not infer |
-| --- | --- | --- |
-| Hosting or platform purchase | Its specifically sold service and benefits | A donation, ownership of the company or automatic grant authority |
-| DG27 historical dedication | One approved recognition benefit and its stated remedies | A grant vote, compulsory future funding or permanent governance seat |
-| DG28 fixed subscriber allocation | One bounded amount directed among qualifying worlds | Spare money that can be diverted into a fund when unselected |
-| Pack purchase and creator earnings | An acquired release and its actual seller/collaborator proceeds | A grant, compulsory assignment or permission to spend earned balances |
-| This creator grant | New work or a specified exploration under an agreed award | Guaranteed popularity, perpetual support, a financial return to supporters or an entitlement for every applicant |
-| Useful unpaid contribution | Work voluntarily offered under its actual terms | An automatic invoice, retroactive grant or purchase requirement to participate |
+| Flow                               | What it pays for                                                | What DG30 does not infer                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Hosting or platform purchase       | Its specifically sold service and benefits                      | A donation, ownership of the company or automatic grant authority                                                |
+| DG27 historical dedication         | One approved recognition benefit and its stated remedies        | A grant vote, compulsory future funding or permanent governance seat                                             |
+| DG28 fixed subscriber allocation   | One bounded amount directed among qualifying worlds             | Spare money that can be diverted into a fund when unselected                                                     |
+| Pack purchase and creator earnings | An acquired release and its actual seller/collaborator proceeds | A grant, compulsory assignment or permission to spend earned balances                                            |
+| This creator grant                 | New work or a specified exploration under an agreed award       | Guaranteed popularity, perpetual support, a financial return to supporters or an entitlement for every applicant |
+| Useful unpaid contribution         | Work voluntarily offered under its actual terms                 | An automatic invoice, retroactive grant or purchase requirement to participate                                   |
 
 DG27 customer refunds, paid-through service, purchased AI value and retention obligations remain owed. DG28's unallocated subscriber amount returns under its chosen policy; it never becomes the fund's default revenue. Earned creator shares, payout holds and their dispute rules retain their own owners. A creator can receive a grant and later legitimate pack or participation revenue when the rights and disclosed terms allow it. The same cost or deliverable cannot be secretly invoiced twice to two grant sponsors.
 
@@ -214,17 +214,17 @@ The available new-award amount is settled eligible funding minus existing signed
 
 For an illustrative pilot with paid program operations, suppose the complete authorized ceiling were $5,000:
 
-| Purpose | Illustrative amount | Assumption, not an adopted rate |
-| --- | ---: | --- |
-| At most two awards | $2,000 | Two $1,000 awards, with their milestone shares inside this total |
-| Steward/owner administration | $1,120 | Two hours/week for 14 weeks at an assumed $40/hour |
-| Two reviewers | $480 | Six hours each across selection and review at $40/hour |
-| Specific acceptance/accessibility help | $320 | Eight additional nonoverlapping hours at $40/hour |
-| Financial reconciliation and closeout | $120 | Three additional hours at $40/hour |
-| Normal transfer/currency costs | $80 | A provisional complete-round allowance |
-| Program-owned demonstration/evaluation expense | $200 | Separately authorized costs, excluding any expense already included in an award |
-| Contingency and exceptional closeout | $680 | A reserved buffer for agreed remedies, payment problems or independent review |
-| **Total** | **$5,000** | **No actual funds or spending authority exist by virtue of this example** |
+| Purpose                                        | Illustrative amount | Assumption, not an adopted rate                                                 |
+| ---------------------------------------------- | ------------------: | ------------------------------------------------------------------------------- |
+| At most two awards                             |              $2,000 | Two $1,000 awards, with their milestone shares inside this total                |
+| Steward/owner administration                   |              $1,120 | Two hours/week for 14 weeks at an assumed $40/hour                              |
+| Two reviewers                                  |                $480 | Six hours each across selection and review at $40/hour                          |
+| Specific acceptance/accessibility help         |                $320 | Eight additional nonoverlapping hours at $40/hour                               |
+| Financial reconciliation and closeout          |                $120 | Three additional hours at $40/hour                                              |
+| Normal transfer/currency costs                 |                 $80 | A provisional complete-round allowance                                          |
+| Program-owned demonstration/evaluation expense |                $200 | Separately authorized costs, excluding any expense already included in an award |
+| Contingency and exceptional closeout           |                $680 | A reserved buffer for agreed remedies, payment problems or independent review   |
+| **Total**                                      |          **$5,000** | **No actual funds or spending authority exist by virtue of this example**       |
 
 The named paid labor lines total 51 distinct hours. The two separately consenting advisors add at most two voluntary hours, recorded as participant effort rather than hidden free operating labor. If the same person performs several roles, do not count the same hour twice. Volunteer or founder time can reduce actual cash spending only by an explicit finite agreement; record its opportunity cost separately rather than claim the work became free. Conversely, paying a reviewer does not buy a favorable recommendation. State fixed role compensation before they see applications.
 

@@ -1,8 +1,8 @@
 # Product designs for groups 26–30
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG26–DG29 product proposals are complete; DG30 creator funding and contributor governance is in progress. | 2026-10-08   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | All five product proposals are complete; the final cross-group critique and documentation verification are in progress. | 2026-10-08   |
 
 ## Assignment and baseline
 
@@ -34,7 +34,7 @@ Research findings, design inferences, proposed defaults, owner-approved policies
 | DG27  | What clear, sustainable offer can someone buy, use, renew, cancel or support without surprise charges or fictional promises?    | PD10, billing/entitlements, INV-13, D17/D35/D37 and PS-D06.                                                 | Product proposal complete; actual offer adoption and delivery remain open.                         |
 | DG28  | How does a creator publish something reusable, retain appropriate rights and receive an understandable share of actual revenue? | DG12 publication/provenance, INV-8/EWF11, DG27 commerce, PD10 and D35/D36/D43/D44.                          | Product proposal complete; rights, commercial adoption and delivery remain open.                   |
 | DG29  | How can a person join or visit a wanted place and return safely as demand and world histories grow?                             | PS05–PS08, MP access/participation, transfer/data, time, performance and applicable DG12/DG25 boundaries.   | Product proposal complete; adoption, technical integration and capacity qualification remain open. |
-| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Full source audit, primary research and operating-program design in progress.                      |
+| DG30  | What small, funded creator program produces worthwhile work and gives contributors a clear, bounded voice?                      | D37, existing financial/rights and platform-authority owners; separate from ordinary subscriber allocation. | Product proposal complete; actual funded program, contracting and observed outcomes remain open.   |
 
 Within the active group, independent readers may research sources and critique consistency in parallel. The five designs themselves are developed and committed sequentially. Commit pending task changes at least every five minutes, as requested by the owner, with accurate checkpoint labels.
 
@@ -53,6 +53,10 @@ Within the active group, independent readers may research sources and critique c
 ## Completed group 29
 
 [Participants and world travel](participants-and-world-travel-feature-spec.md) records eleven primary sources and selects a useful same-world camp visit before a restricted same-operator transfer and a complete carried-bundle expansion. It preserves one real traveler, current absence/time meanings, scoped property rights, actual conditions and goods, finite funded recovery, and refusal of unreconciled pre-trip restoration even for social-only visits. The larger concentrated shared-world targets remain intact alongside many-world, mass-return and mature-history qualification. Review corrected stale queue priority, separated the ready-slot timer from untimed material review, preserved useful source play while bounding offer churn, and refused conflicting destination character bindings. PT01–PT06 and PS-L34–PS-L41 retain actual adoption, technical work and the full runtime/economics evidence; protected homes, different clocks, party/NPC travel and independent operators remain distinct expansions.
+
+## Completed group 30
+
+[Creator fund and contributor governance](creator-fund-and-contributor-governance-feature-spec.md) records twelve primary research entries and a complete finite manual pilot with at most two awards, an honestly invited cohort of up to twelve applicants, full funding and labor reserves, useful milestones and equal bounded contributor/supporter advice. Review distinguishes the earned start grant from refundable expense advances, preserves original-criteria review of work completed before cancellation, separates payment submission from settlement, and keeps real authority, component rights, private evidence and closure explicit. Its illustrative administration ratio is deliberately visible; a simpler commission, one or zero awards, or no launch can serve the game better. FUND01–FUND06 and FUND-L01–FUND-L10 retain actual funding, contracting, program adoption and observed results. No customer/creator obligation becomes grant money, and the pilot creates no permanent governing body.
 
 ## Completion criteria and verification plan
 
