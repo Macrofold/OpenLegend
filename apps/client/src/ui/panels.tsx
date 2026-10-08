@@ -70,7 +70,9 @@ export function Crafting({
 }) {
   const [creatorFilter, setCreatorFilter] = useState('all');
   const recipes = view.recipes.filter(
-    (recipe) => creatorFilter === 'all' || recipe.npcCreated === (creatorFilter === 'npc'),
+    (recipe) =>
+      creatorFilter === 'all' ||
+      (!recipe.worldAuthored && recipe.npcCreated === (creatorFilter === 'npc')),
   );
   return (
     <>
@@ -92,7 +94,13 @@ export function Crafting({
             <details className="ol-proposal" key={r.id}>
               <summary>
                 <span className="ol-heading">{r.name}</span>{' '}
-                <Tag>{r.npcCreated ? 'NPC-created' : 'Player-created'}</Tag>
+                <Tag>
+                  {r.worldAuthored
+                    ? 'World method'
+                    : r.npcCreated
+                      ? 'NPC-created'
+                      : 'Player-created'}
+                </Tag>
               </summary>
               <RecipeDetails recipe={r} />
               <Actions actions={r.actions} command={command} connected={connected} />

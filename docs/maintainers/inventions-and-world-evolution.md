@@ -1,6 +1,6 @@
 # Inventions and world evolution implementation tracker
 
-**Next playable consumers:** [Batch 05](parallel-batch-05-adventure-defense-and-home.md) proposes exact recipe-record learning (AV01), an admitted shield consumer (AV02), selected shelter delivery after PX05 (AV04), and finite fishing/world-defined preparation (AV05). The [technical reconciliation map](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#documentation-reconciliation-map) identifies the INV-4/INV-7, family-admission and INV-6.4 subsets. No broader invention, materials, library or live-generation requirement is closed by this plan.
+**Batch 05 consumers:** [AV05](parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking) delivers a trusted compatible tool family and finite installed preparation through current manufacture/work owners. Ordinary authored starting knowledge is distinct from invention and grants no supplies. AV01 recipe-record learning, AV02 shield and AV04 shelter remain open. The [technical reconciliation map](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#documentation-reconciliation-map) identifies scoped parent work; broader invention, materials, library and live-generation acceptance is unchanged.
 
 [Batch 04](parallel-batch-04-expeditions-and-exchange.md) now delivers PX02 immediate barter within INV-20 using existing custody; PX05 remains the proposed assignment supplying the missing editable-shelter technical design beneath INV-6.4. Neither closes these parents or implements currency, construction or wider structural families.
 
@@ -174,6 +174,8 @@ Coordinate module/save integration with [EWF07](extensible-world-foundation.md#e
 **Completion gate:** a workshop revision changes actual behavior while preserving existing resources and progress; rejected or interrupted activation never leaves mixed definitions/state.
 
 ### INV-6 — Composable materials, assemblies and passive world processes
+
+**AV05 finite preparation subset delivered, October 6:** installed exact ingredients/products/work/lit heat use one cooking owner; a contrasting multi-input/multi-output definition executes without a food-name branch. The tool family uses supported native materials and the same recipe compiler/pins. [Contract](../food-preparation.md), [limits](../limits/food-preparation.md) and [evidence](../verification/river-meal.md) establish this finite consumer, not arbitrary material composition, passive processes, generated cooking programs or INV-6.4 shelter completion.
 
 **October 5 DG13 product refinement:** the same [shelter specification](../projects/editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) now specifies a concrete build/use/edit/reclaim journey and two open-canopy arrangements, with [world-owned materials and tuning](../worlds/base/editable-shelters.md). Reversible cords, actual garment continuity, explicit construction-use grants and unchanged ordinary rest avoid fabricated material/permission/benefit. This is product input to PX05, not its missing technical counterpart or closure of any 6.4 runtime task.
 

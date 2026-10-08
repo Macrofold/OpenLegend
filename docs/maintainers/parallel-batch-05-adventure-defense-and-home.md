@@ -1,6 +1,6 @@
 # Batch 05 — Adventure, defense and a home
 
-**Proposed October 5, 2026; no runtime implementation or verification is closed by this plan.** Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
+**In progress, October 6, 2026: AV05's river meal is delivered and qualified; AV01–AV04 and combined integration remain open.** Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
 
 ## AV01 — Rewarding expeditions
 
@@ -44,12 +44,16 @@
 
 ## AV05 — River fishing and world-defined cooking
 
-- [ ] Replace the meat-only cooking assumption with installed world preparation definitions through one existing work/effect owner, preserving current meat behavior.
-- [ ] Deliver the known tool, two real bank sources, one finite chosen cast, conserved stock/randomness and ordinary catch items under the [world profile](../worlds/base/river-fishing.md).
-- [ ] Deliver cook/eat/pack/offer integration, relevant voluntary NPC choices and complete empty/exhausted/blocked/canceled/concurrent/heat-loss/restore acceptance.
-- [ ] Reconcile BW06's specific cooking boundary and affected AC/INV-6/PO/AE/AG13 food scope; retain broader ecology and autonomy acceptance.
+**Second requested review completed, October 7:** distinct recipe/source/tool choices survive embedded-ID delimiters; referenced ingredient/product replacement invalidates old cooking choices; queued cooking shares executable validation; structured facts and preflight preserve current-format records for larger recipes and refuse oversized ones before costs. Gathering shortcuts consume actual permitted offers and avoid repeated source sorting. [New native/SQL/player checks and scoped timings](../verification/river-meal.md#second-requested-review--october-7-2026) retain the existing broader AC11/PF05/AG qualification boundaries.
 
-**Readiness:** current main plus this plan. Uses an exact reserved work tool, not AV02's new held slot. No dependence on barter, shelters, competence or PX03 to fish/cook/eat. [AV05 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av05--finite-casts-and-preparation-definitions).
+**Requested implementation review completed, October 6:** exact saved water bounds and executable ingredient-role names are enforced; selected food retains its missing-fire explanation and stale recipes cannot display replacement instructions. Repeated ingredient assignment across fires, duplicate definition reads and repeated NPC fire sorting are removed through the existing preparation owner. [Review evidence and remaining scale qualification](../verification/river-meal.md#requested-implementation-review) are reconciled with FP-L01/AC11/PF05; broader parent acceptance remains open.
+
+- [x] Replace the meat-only cooking assumption with installed world preparation definitions through one existing work/effect owner, preserving current meat behavior.
+- [x] Deliver the known tool, two real bank sources, one finite chosen cast, conserved stock/randomness and ordinary catch items under the [world profile](../worlds/base/river-fishing.md).
+- [x] Deliver cook/eat/pack/offer integration, relevant voluntary NPC choices and complete empty/exhausted/blocked/canceled/concurrent/heat-loss/restore acceptance.
+- [x] Reconcile BW06's specific cooking boundary and affected AC/INV-6/PO/AE/AG13 food scope; retain broader ecology and autonomy acceptance.
+
+**Delivered:** `codex/av05-river-meal`, using an exact held work tool independently of AV02's equipment changes. [Current preparation/cast contract](../food-preparation.md) and [native, SQL, browser and separate live-choice evidence](../verification/river-meal.md) cover the agreed journey. One live NPC chose cooking among permitted offers; a complete live autonomous fishing meal and broader ecology/scale reliability remain outside this scoped completion. There is no dependence on barter, shelters, competence or PX03. [AV05 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av05--finite-casts-and-preparation-definitions).
 
 ## Combined completion
 

@@ -1,12 +1,14 @@
 # Batch 05 — Adventure, defense and a home
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Five implementation assignments are specified; incoming encounter work and the earlier shelter design remain explicit prerequisites. | 2026-10-05   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV05’s river meal and second review are delivered and qualified; the other four assignments and combined integration remain open. | 2026-10-07   |
+
+Current AV05 delivery: [installed preparation/cast contract](../food-preparation.md), [river profile](../worlds/base/river-fishing.md) and [native/player/live-choice evidence](../verification/river-meal.md). Other assignments retain their prerequisite and acceptance requirements.
 
 ## Purpose and selection
 
-After the previous batches, the player should have reasons to leave camp, a choice besides attacking or running, something useful to learn, a place to make their own, and another enjoyable way to obtain food. This batch delivers those experiences through five assignments. It is a proposed implementation allocation, not runtime delivery or authorization to execute these prompts in the planning chat.
+After the previous batches, the player should have reasons to leave camp, a choice besides attacking or running, something useful to learn, a place to make their own, and another enjoyable way to obtain food. This batch delivers those experiences through five assignments. This remains the batch’s implementation allocation; only AV05 is delivered so far. The original planning chat did not authorize executing the other prompts.
 
 The [technical definitions](parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](parallel-batch-05-adventure-defense-and-home-prompts.md) and [AV01–AV05 tracker](../maintainers/parallel-batch-05-adventure-defense-and-home.md) are the handoff. Start from a revision containing this documentation and the supplied prerequisites, not a stale historical hash.
 

@@ -1,6 +1,5 @@
 import type { BodyPolicy } from '../../body-policy.js';
 import type { StatusCondition } from '../../status-effects.js';
-import { BASE_FAMILY_FACTS } from './actions.js';
 import { BASE_REINCARNATION_POLICY } from './death.js';
 const below = (attribute: string, value: number): StatusCondition => ({
   compare: { target: '$subject', attribute, operator: 'lessThan', value },
@@ -42,9 +41,7 @@ export const BASE_BODY_POLICY: BodyPolicy = {
   consumption: {
     attributeId: 'wilderness:fullness',
     quantityProperty: 'nutrition',
-    refusals: [
-      { itemType: BASE_FAMILY_FACTS.cooking.input, reason: 'Cook raw meat before eating.' },
-    ],
+    refusals: [{ itemType: 'raw_meat', reason: 'Cook raw meat before eating.' }],
     label: 'Eat one',
     narration: '{subject.subject:definite} ate {item.name:definite}.',
     successText: 'Food restored fullness.',

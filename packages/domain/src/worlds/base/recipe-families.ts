@@ -10,6 +10,7 @@ import { CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
 
 import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
 import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
+import { RIVER_LINE_FAMILY } from './river-fishing.js';
 
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
@@ -374,4 +375,5 @@ export const BASE_RECIPE_FAMILIES: readonly RecipeFamilyDescriptor[] = [
   gathering,
   BASE_CAMP_CONTAINER_FAMILY,
   BASE_CORDAGE_FAMILY,
+  RIVER_LINE_FAMILY,
 ];

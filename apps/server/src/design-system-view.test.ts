@@ -12,9 +12,9 @@ it('native fixture: look-closer prose and berry facts describe actual resource m
     ['Yields', '2 Wild berries'],
     ['Time', '30 seconds of game time, plus travel'],
   ]);
-  expect(describeEntity(world.entities['berries-west']!, world.itemDefinitions)).toContain(
-    'Familiar edible berries',
-  );
+  expect(
+    describeEntity(world.entities['berries-west']!, world.itemDefinitions, world.castDefinitions),
+  ).toContain('Familiar edible berries');
   world.memories[NPC_ID]!.push({
     id: 'secret',
     actorId: NPC_ID,
@@ -25,7 +25,9 @@ it('native fixture: look-closer prose and berry facts describe actual resource m
     entityIds: [],
     importance: 1,
   });
-  expect(describeEntity(world.entities[NPC_ID]!, world.itemDefinitions)).not.toContain('secret');
+  expect(
+    describeEntity(world.entities[NPC_ID]!, world.itemDefinitions, world.castDefinitions),
+  ).not.toContain('secret');
 });
 
 it('native fixture: preparation facts have material costs and exclude travel', () => {

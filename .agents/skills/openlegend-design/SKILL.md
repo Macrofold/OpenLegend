@@ -29,6 +29,8 @@ Trace relevant ownership, units, permitted reads/writes, triggers, work bounds, 
 
 Challenge claimed composability with a genuinely different scenario. Localize necessary v1 specificity with its owner, limit, seam and extraction trigger instead of building an unused framework. Logical modularity does not require new packages, services or an ECS replacement.
 
+When replacing a fixed world behavior with installed definitions, trace availability, parameter binding, NPC offers, player details, resource effects, reusable methods and saves to the same definition owner. Vary the contrasting example's real requirements, input/output cardinality or duration, not only its name; include shared-material requirements and stale or missing prerequisites when applicable. A generalized executor alone does not prove that downstream consumers stopped assuming the original recipe.
+
 ## Approval to implementation
 
 Use [root task authorization](../../../AGENTS.md#task-scope-and-authorization). Interpret chat approval of the discussed project plan from context: “approved,” “looks good,” “yes,” “go ahead,” “start work,” “implement” or “do it” can suffice; no repeated spec filenames are needed. GitHub PR approval or a document-status change is not that chat instruction.

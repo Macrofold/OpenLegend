@@ -37,6 +37,7 @@ export interface CommandInput {
     | 'hunt'
     | 'harvest'
     | 'cook'
+    | 'fish'
     | 'tend-fire'
     | 'handover'
     | 'outing'
@@ -101,6 +102,10 @@ export interface CommandInput {
   expectedContentsRevision?: number;
   targetRevision?: number;
   preparation?: 'fiber' | 'cord';
+  preparationId?: string;
+  preparationVersion?: number;
+  preparationDigest?: string;
+  inputs?: Record<string, string>;
 }
 
 export interface OutingView {
@@ -387,6 +392,7 @@ export interface ItemTradeView {
 
 export interface RecipeView {
   npcCreated: boolean;
+  worldAuthored: boolean;
   id: string;
   name: string;
   description: string;

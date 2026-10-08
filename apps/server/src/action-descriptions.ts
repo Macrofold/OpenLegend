@@ -1,4 +1,5 @@
 import { BASE_OUTING } from '@open-legend/domain';
+import { castDefinition, preparationDefinition } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   nativeCatalogueView,
@@ -8,7 +9,7 @@ import {
 } from '@open-legend/domain';
 import { domainCommand } from './cognition.js';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
-import { BASE_DEATH_COMMAND_DESCRIPTIONS } from '@open-legend/domain';
+import { BASE_DEATH_COMMAND_DESCRIPTIONS, BASE_FOOD_ACTION_WORDING } from '@open-legend/domain';
 import { consumptionDescription } from './body-services.js';
 import {
   BASE_FIRE_CARE,
@@ -62,7 +63,8 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   hunt: 'Approach a living animal and attempt one shot with your equipped ranged tool. Each attempt consumes ammunition and can miss. A killed animal leaves harvestable remains.',
   harvest:
     'Use a cutting point to collect the remaining materials from animal remains. Each set of remains can be harvested once.',
-  cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',
+  cook: BASE_FOOD_ACTION_WORDING.cookingDescription,
+  fish: BASE_FOOD_ACTION_WORDING.fishingDescription,
   handover:
     'Offer carried items to a person within reach, or accept, decline or withdraw an offer. Nothing changes hands unless the recipient accepts; an unanswered offer expires.',
   'tend-fire':
@@ -123,7 +125,7 @@ function describeCommand(
         : common;
     }
     case 'gather':
-      if (!target?.resource) return common;
+      if (!target?.resource || target.resource.cast) return common;
       return `${common} ${namePhrase(target, 'definite', { capitalize: true })} has ${target.resource.quantity} units of ${name(target.resource.definitionId).toLowerCase()} remaining.`;
     case 'prepare': {
       if (!command.preparation) return common;
@@ -152,8 +154,16 @@ function describeCommand(
       return target.remains.harvested
         ? `${namePhrase(target, 'definite', { capitalize: true })} has already been harvested. No materials remain.`
         : `${common} ${namePhrase(target, 'definite', { capitalize: true })} yields: ${target.remains.yields.map((yielded) => `${yielded.quantity} ${name(yielded.definitionId).toLowerCase()}`).join(', ')}.`;
-    case 'cook':
-      return target ? `${common} Use ${namePhrase(target, 'definite')} for this portion.` : common;
+    case 'cook': {
+      const native = domainCommand(command, observation.actor.id, 'cook-description');
+      const preparation =
+        native?.type === 'cook' ? preparationDefinition(world, native) : undefined;
+      return preparation
+        ? `${preparation.description} ${preparation.workSeconds} game seconds after approach.${target ? ` Use ${namePhrase(target, 'definite')}.` : ''} Spent ingredients are not returned on interruption.`
+        : common;
+    }
+    case 'fish':
+      return target ? (castDefinition(world, target)?.description ?? common) : common;
     case 'handover': {
       if (command.offerId) {
         const offer = world.itemOffers?.[command.offerId];
@@ -207,7 +217,7 @@ export function commandFacts(
   const name = (id: string) => read.definitions.get(id)?.name ?? NATIVE_ITEMS[id]?.name ?? id;
   const duration = (seconds: number) =>
     `${seconds < 60 ? `${seconds} seconds` : `${Number((seconds / 60).toFixed(1))} minutes`} of game time`;
-  if (command.type === 'gather' && target?.resource)
+  if (command.type === 'gather' && target?.resource && !target.resource.cast)
     return [
       [
         'Yields',

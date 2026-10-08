@@ -429,7 +429,13 @@ function lotCarriesState(entity: Entity): boolean {
 function identityBound(world: WorldState, id: string): boolean {
   const action = world.entities[custodian(world, id)]?.actor?.action;
   return (
-    (!!action && [action.itemId, action.weaponItemId, action.ammoItemId].includes(id)) ||
+    (!!action &&
+      [
+        action.itemId,
+        action.weaponItemId,
+        action.ammoItemId,
+        ...Object.values(action.foodPreparation?.inputs ?? {}),
+      ].includes(id)) ||
     Object.values(world.entities[id]?.statusEffects ?? {}).some((state) => state.active)
   );
 }

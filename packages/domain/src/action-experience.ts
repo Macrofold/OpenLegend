@@ -1,3 +1,4 @@
+import { activityCommandFields, isCookingInputField } from './food-preparation.js';
 import { person, personalText } from './narration.js';
 import type { Command, Outcome, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
@@ -26,6 +27,7 @@ export const ACTIVITY_LIMITS = {
   /** One game day, so "until dawn" is expressible from any hour. */
   waitSeconds: 86400,
   facts: 48,
+  detailEntries: 16,
   text: 500,
   outputs: 16,
   links: 64,
@@ -289,7 +291,8 @@ export function projectActivity(
     if (typeof value === 'string' && value.length > ACTIVITY_LIMITS.text)
       throw new Error('Activity detail text exceeded.');
     if (value && typeof value === 'object') {
-      if (Object.keys(value).length > 16) throw new Error('Activity detail size exceeded.');
+      if (Object.keys(value).length > ACTIVITY_LIMITS.detailEntries)
+        throw new Error('Activity detail size exceeded.');
       for (const [label, child] of Object.entries(value)) {
         if (
           !Array.isArray(value) &&
@@ -413,7 +416,7 @@ export function beginActivity(
   actionId: string,
   view: ActivityView,
   parentId?: string,
-): ActivityOccurrence {
+): ActivityOccurrence | Outcome {
   // A learned success may reproduce the physical action, never a human's one-attack consent.
   const { humanInitiated: _human, ...recordable } = command;
   command = recordable;
@@ -426,9 +429,9 @@ export function beginActivity(
   const existing = entries.find((entry) => entry.commandId === command.id);
   if (existing) return existing;
   const objects: ActivityOccurrence['objects'] = {};
-  for (const [field, value] of Object.entries(command)) {
+  for (const [field, value] of Object.entries(activityCommandFields(command))) {
     if (
-      ![
+      (![
         'targetId',
         'itemId',
         'weaponItemId',
@@ -436,7 +439,8 @@ export function beginActivity(
         'heatId',
         'sourceId',
         'destinationId',
-      ].includes(field) ||
+      ].includes(field) &&
+        !isCookingInputField(field)) ||
       typeof value !== 'string'
     )
       continue;
@@ -486,6 +490,8 @@ export function beginActivity(
     if (name) record.parentName = name;
     if (method) record.methodId = method.id;
   }
+  const problem = activityRecordProblem(record);
+  if (problem) return problem;
   entries.push(record);
   state.admitted++;
   state.current[command.actorId] = actionId;
@@ -534,23 +540,7 @@ export function connectActivityItem(
     sources.some((source) => source.ambiguous) ||
     sources.reduce((sum, source) => sum + source.quantity, 0) < sourceSize;
   if (type === 'consume' && entry) {
-    for (const source of sources) {
-      if (source.actorId !== entry.actorId || source.occurrenceId === entry.id) continue;
-      if (entry.connections.length >= ACTIVITY_LIMITS.links) break;
-      entry.connections.push({
-        from: source.occurrenceId,
-        relation: 'material',
-        port: source.port,
-        ...(!ambiguous ? { quantity: Math.min(quantity, source.quantity) } : {}),
-      });
-    }
-    if (ambiguous) entry.incomplete = true;
-    if (ambiguous)
-      entry.view.facts.push({
-        name: 'ingredients',
-        value: 'This stack contains mixed sources; individual units cannot be traced exactly',
-        critical: true,
-      });
+    recordConsumedSources(entry, sources, quantity, ambiguous);
   }
   if (targetId) {
     const target = (state.items[targetId] ??= []);
@@ -585,6 +575,30 @@ export function connectActivityItem(
     source.ambiguous ||= ambiguous;
   }
   if (sources.every((source) => source.quantity === 0)) delete state.items[sourceId];
+}
+function recordConsumedSources(
+  entry: ActivityOccurrence,
+  sources: ActionExperienceState['items'][string],
+  quantity: number,
+  ambiguous: boolean,
+): void {
+  for (const source of sources) {
+    if (source.actorId !== entry.actorId || source.occurrenceId === entry.id) continue;
+    if (entry.connections.length >= ACTIVITY_LIMITS.links) break;
+    entry.connections.push({
+      from: source.occurrenceId,
+      relation: 'material',
+      port: source.port,
+      ...(!ambiguous ? { quantity: Math.min(quantity, source.quantity) } : {}),
+    });
+  }
+  if (ambiguous) entry.incomplete = true;
+  if (ambiguous && !entry.view.facts.some((fact) => fact.name === 'ingredient history'))
+    entry.view.facts.push({
+      name: 'ingredient history',
+      value: 'This stack contains mixed sources; individual units cannot be traced exactly',
+      critical: true,
+    });
 }
 export function connectActivityState(
   world: WorldState,
@@ -682,10 +696,7 @@ export function endActivity(
 ): string | undefined {
   const entry = occurrenceFor(world, actorId, actionId);
   if (!entry || entry.status !== 'running') return entry?.resultMemoryId;
-  entry.status = result.ok ? 'completed' : result.code === 'cancelled' ? 'cancelled' : 'blocked';
-  entry.endedAt = world.simTime;
-  entry.outcome = result;
-  entry.outputs = result.outputs ?? entry.outputs;
+  applyActivityResult(world, entry, result);
   for (const output of entry.outputs) {
     const sources = (world.actionExperience.items[output.itemId] ??= []);
     if (sources.length < ACTIVITY_LIMITS.links)
@@ -699,14 +710,6 @@ export function endActivity(
   delete world.actionExperience.active[actionId];
   if (world.actionExperience.current[actorId] === actionId)
     delete world.actionExperience.current[actorId];
-  entry.view.result = result.message;
-  const last = entry.view.children?.at(-1);
-  if (last && !last.result) last.result = result.message;
-  for (const fact of entry.view.facts) {
-    if (fact.name === 'health') fact.name = 'health before the attempt';
-    if (fact.name === 'distance') fact.name = 'distance before the attempt';
-  }
-  entry.view.facts.push(...activityResultFacts(world, entry.outputs));
   // Forgetting a running attempt revokes its personal evidence, not its already
   // admitted physical work. Completion must not recreate the forgotten episode.
   if (!entry.revoked && !world.experience?.forgotten[actorId]?.includes(entry.id)) {
@@ -729,6 +732,62 @@ export function endActivity(
   if (!cursor.pending.includes(entry.id)) cursor.pending.push(entry.id);
   if (cursor.pending.length > ACTIVITY_LIMITS.page) cursor.pending.shift();
   return entry.resultMemoryId;
+}
+function applyActivityResult(world: WorldState, entry: ActivityOccurrence, result: Outcome): void {
+  entry.status = result.ok ? 'completed' : result.code === 'cancelled' ? 'cancelled' : 'blocked';
+  entry.endedAt = world.simTime;
+  entry.outcome = result;
+  entry.outputs = result.outputs ?? entry.outputs;
+  entry.view.result = result.message;
+  const last = entry.view.children?.at(-1);
+  if (last && !last.result) last.result = result.message;
+  for (const fact of entry.view.facts) {
+    if (fact.name === 'health') fact.name = 'health before the attempt';
+    if (fact.name === 'distance') fact.name = 'distance before the attempt';
+  }
+  entry.view.facts.push(...activityResultFacts(world, entry.outputs));
+}
+/** Refuse an unsaveable native capture before it replaces work or spends resources. */
+function activityRecordProblem(entry: ActivityOccurrence): Outcome | null {
+  if (new TextEncoder().encode(JSON.stringify(entry)).length > ACTIVITY_LIMITS.recordBytes)
+    return {
+      ok: false,
+      code: 'experience-capacity',
+      message: 'Required action history exceeds the stored-record allowance.',
+    };
+  try {
+    renderActivity(entry.view);
+  } catch {
+    return {
+      ok: false,
+      code: 'experience-capacity',
+      message: 'Required action facts exceed the display allowance.',
+    };
+  }
+  return null;
+}
+/** Check the same completed facts and known material links without issuing items,
+ * memories or evidence. Actual consumption remains their sole writable owner. */
+export function activityCompletionProblem(
+  world: WorldState,
+  entry: ActivityOccurrence,
+  result: Outcome,
+  materials: readonly { itemId: string; quantity: number }[] = [],
+): Outcome | null {
+  const proposed = cloneValue(entry);
+  for (const material of materials) {
+    const sources = world.actionExperience.items[material.itemId];
+    if (!sources?.length) continue;
+    const ambiguous =
+      sources.length > 1 ||
+      sources.some((source) => source.ambiguous) ||
+      sources.reduce((sum, source) => sum + source.quantity, 0) <
+        (world.entities[material.itemId]?.item?.quantity ?? 0);
+    recordConsumedSources(proposed, sources, material.quantity, ambiguous);
+  }
+  applyActivityResult(world, proposed, result);
+  proposed.resultMemoryId ??= `memory-${Number.MAX_SAFE_INTEGER}`;
+  return activityRecordProblem(proposed);
 }
 /** Executable fields are closed even when a save or a model supplies extra JSON.
  * This describes existing native commands, never installs a new executor. */
@@ -755,7 +814,8 @@ const invocationFields: Partial<
   strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId'] },
   hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
   'treat-scar': { required: ['targetId', 'scarId'] },
-  cook: { required: ['itemId', 'heatId'] },
+  cook: { required: ['preparationId', 'preparationVersion', 'preparationDigest', 'heatId'] },
+  fish: { required: ['targetId', 'itemId'] },
   'tend-fire': {
     required: ['targetId', 'operation'],
     optional: [
@@ -881,7 +941,11 @@ export function validateActivityNode(root: ActivityNode): void {
           fields.required.some((field) => !(field in node.args))
         )
           throw new Error('Invalid activity invocation.');
-        exactFields(node.args, [...fields.required, ...(fields.optional ?? [])]);
+        const inputFields =
+          node.command === 'cook' ? Object.keys(node.args).filter(isCookingInputField) : [];
+        if (node.command === 'cook' && !inputFields.length)
+          throw new Error('Cooking needs exact input bindings.');
+        exactFields(node.args, [...fields.required, ...(fields.optional ?? []), ...inputFields]);
         for (const [field, arg] of Object.entries(node.args)) {
           if (!arg || typeof arg !== 'object') throw new Error('Invalid activity argument.');
           if ('role' in arg) {
@@ -890,7 +954,8 @@ export function validateActivityNode(root: ActivityNode): void {
           } else if ('output' in arg) {
             exactFields(arg, ['output', 'port', 'quantity']);
             if (
-              !['itemId', 'weaponItemId', 'ammoItemId'].includes(field) ||
+              (!['itemId', 'weaponItemId', 'ammoItemId'].includes(field) &&
+                !isCookingInputField(field)) ||
               !keys.has(arg.output) ||
               !ports.get(arg.output)?.has(arg.port) ||
               !isSafeRecordId(arg.port) ||
@@ -911,7 +976,8 @@ export function validateActivityNode(root: ActivityNode): void {
                 'destinationId',
                 'destination',
                 'text',
-              ].includes(field)
+              ].includes(field) ||
+              isCookingInputField(field)
             )
               throw new Error('Personal activity values must use private bindings.');
             exactFields(arg, ['literal']);
@@ -1161,7 +1227,7 @@ export function validateActionExperience(world: WorldState): void {
               'destinationId',
               'destination',
               'text',
-            ].includes(field),
+            ].includes(field) && !isCookingInputField(field),
         ) ||
         (rule.kind === 'place' && rule.commandFields.some((field) => field !== 'destination')) ||
         (rule.kind === 'text' && rule.commandFields.some((field) => field !== 'text')) ||

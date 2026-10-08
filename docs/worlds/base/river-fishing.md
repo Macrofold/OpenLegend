@@ -1,6 +1,6 @@
 # A river catch becomes a meal
 
-**Proposed base-world content, October 5, 2026; not implemented.** [AV05](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking) delivers one peaceful food activity. This profile does not introduce thirst, boats or a living fish-population simulation.
+**Implemented base-world content, October 6, 2026.** [AV05](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking) delivers one peaceful food activity, with [native, PostgreSQL, browser and separate live-choice evidence](../../verification/river-meal.md). This profile does not introduce thirst, boats or a living fish-population simulation.
 
 ## Tool and places
 
@@ -18,18 +18,18 @@ One catch unit produces one **Raw river fish** item. Stock is finite with no reg
 
 No input consumable is spent per cast; the cost is time and choosing this activity over another. No durability or bait is added merely to justify a sink. A released empty cast has a real result and may inform reconsideration, but it does not automatically retry. Player choices and goal-relevant NPC offers use the same native action. No actor is told to fish at a hunger threshold.
 
-Saving during work retains the exact pending attempt and due simulation time. A completed receipt cannot roll again after reconnect. A thrown-away outcome, unseen miss or another actor's private decision must not be converted into omniscient fishing knowledge.
+Saving during work retains the exact pending attempt and due simulation time. A completed receipt cannot roll again after reconnect. Closing the player's control follows the existing departure rule and cancels unfinished physical work; reopening does not undo that departure. A thrown-away outcome, unseen miss or another actor's private decision must not be converted into omniscient fishing knowledge.
 
 ## Cooking and useful food
 
-Raw river fish is a distinct item, currently not edible under this profile. **Cook river fish** converts one exact raw fish into one **Cooked river fish**, requiring a currently usable lit heat source and 90 game seconds. Cooked fish supplies 30 fullness points through the existing bounded consumption owner. These are proposed balance values, not a new hunger law. Existing raw-meat to cooked-meat behavior and its nutrition remain unchanged.
+Raw river fish is a distinct item, currently not edible under this profile. **Cook river fish** converts one exact raw fish into one **Cooked river fish**, requiring a currently usable lit heat source and 90 game seconds. Cooked fish supplies 30 fullness points through the existing bounded consumption owner. These are current authored balance values, not a new hunger law. Existing raw-meat to cooked-meat behavior and its nutrition remain unchanged.
 
-The world owns preparation definitions: exact supported input roles/quantities, output definitions/quantities, work time, heat requirement and text. Native cooking resolves those definitions and commits their real item effects. It must not contain a list of meat/fish names. A second lawful definition with a genuinely different input/output/work requirement must work through the same consumer; that is a contract check, not a demand to add a second public food chain.
+The world owns preparation definitions: exact supported input roles/quantities, output definitions/quantities, work time, heat requirement and text. [The preparation owner](../../food-preparation.md) resolves those definitions and commits their real item effects. Both installed foods use that same cooking consumer. A contrasting multi-input/multi-output definition passed native execution and recorded-command reuse; it remains diagnostic content rather than a second public food chain.
 
 Changing or extinguishing heat, spending the selected input, losing permission or replacing the action follows the same work/hold owner as existing cooking. Do not introduce a second refund or rollback policy. A completed cooked item can be packed, dropped, offered, accepted or eaten normally; fish does not receive a separate inventory UI or food meter.
 
 ## Maintained records
 
 - Scope: [AV05 feature](../../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md#av05--catch-and-cook-a-river-meal); mechanism: [technical definition](../../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av05--finite-casts-and-preparation-definitions).
-- Tasks: [AV05](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking); limits: [AV-L03](../../limits/parallel-batch-05-adventure-defense-and-home.md#av-l03--finite-river-casts-and-preparation).
+- Tasks: [AV05](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking); limits: [AV-L03](../../limits/food-preparation.md#av-l03--finite-river-casts-and-preparation).
 - Existing world behavior: [survival](survival.md), [items](items.md), [actions](actions.md).

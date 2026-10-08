@@ -23,6 +23,27 @@ export const BASE_BINDING_MATERIAL: MaterialInterface = {
 export const CONSTRUCTED_ITEM_STORY_FIELDS = { story_importance: { story_importance: 8 } };
 
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
+  raw_river_fish: {
+    id: 'raw_river_fish',
+    version: 1,
+    portable: true,
+    packingLoad: 1,
+    name: 'Raw river fish',
+    description: 'A river catch; cook it over a lit fire before eating.',
+    properties: ['food'],
+    cooked: false,
+  },
+  cooked_river_fish: {
+    id: 'cooked_river_fish',
+    version: 1,
+    portable: true,
+    packingLoad: 1,
+    name: 'Cooked river fish',
+    description: 'A river fish cooked through over a dependable fire.',
+    properties: ['food'],
+    nutrition: 30,
+    cooked: true,
+  },
   knife: {
     mechanismFields: { story_importance: { story_importance: 7 } },
     id: 'knife',

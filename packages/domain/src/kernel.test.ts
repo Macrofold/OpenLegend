@@ -1,3 +1,4 @@
+import { cookingChoices } from './food-preparation.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
@@ -24,7 +25,7 @@ import {
 } from './index.js';
 import type { Command, DeclarationDraft, WorldState } from './types.js';
 
-/** Test-only specimens. Production seeds contain no finished recipe composition. */
+/** Invented test specimens; the bundled world separately supplies known authored methods. */
 const sling = (): DeclarationDraft => ({
   family: { id: 'base:swing', version: 1 },
   name: 'Woven river sling',
@@ -128,8 +129,12 @@ describe('authoritative pure world', () => {
   it('starts in wilderness with knowledge and possessions but no invented recipe', () => {
     const world = createWorld();
     expect(world).toEqual(createWorld());
-    expect(world.recipes).toEqual({});
-    expect(world.knowledge[NPC_ID]).toEqual([]);
+    expect(Object.values(world.recipes).map((recipe) => recipe.provenance.source)).toEqual([
+      'world-authored',
+    ]);
+    expect(world.knowledge[NPC_ID]?.map((record) => record.recipeId)).toEqual(
+      Object.keys(world.recipes),
+    );
     expect(quantityOf(world, PLAYER_ID, 'cord')).toBeGreaterThan(0);
     expect(JSON.parse(JSON.stringify(world))).toEqual(world);
   });
@@ -315,7 +320,15 @@ describe('bounded invented mechanisms', () => {
         itemId: itemId(world, 'raw_meat'),
       }).outcome.code,
     ).toBe('not-edible');
-    world = command(world, { type: 'cook', itemId: itemId(world, 'raw_meat'), heatId: 'campfire' });
+    world = command(
+      world,
+      cookingChoices(
+        world,
+        inventoryFor(world, PLAYER_ID),
+        'campfire',
+        itemId(world, 'raw_meat'),
+      )[0]!,
+    );
     world = advanceWorld(world, 200).world;
     expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(1);
     expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(1);

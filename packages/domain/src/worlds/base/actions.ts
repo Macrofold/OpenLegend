@@ -13,7 +13,6 @@ export const BASE_ACTION_DEFAULTS = {
   ...WILDERNESS_NEEDS,
   gatherQuantity: BASE_GATHER_QUANTITY,
   harvestSeconds: 84,
-  cookSeconds: 90,
   shotSeconds: 18,
 } as const;
 
@@ -33,20 +32,21 @@ export function gatheringDescription(
 /** Facts about the bundled world's action families that engine code reads instead of
  * restating: which completed steps yield an item a later step may use, which command fields
  * name the tool a request chose, which families handle one unit per command, which cannot
- * pause once working, and what cooking turns into what. docs/worlds/base/actions.md */
+ * pause once working. Cooking transformations are installed separately through
+ * food preparation definitions. docs/worlds/base/actions.md */
 export const BASE_FAMILY_FACTS = {
   /** Completed steps whose item a later step may use (harvest only through a named port). */
-  itemOutputs: ['gather', 'prepare', 'craft', 'cook', 'harvest'],
+  itemOutputs: ['gather', 'prepare', 'craft', 'cook', 'fish', 'harvest'],
   /** Of those, the ones that record a single item receipt a plain later step can use. */
-  singleItemReceipt: ['gather', 'prepare', 'craft', 'cook'],
+  singleItemReceipt: ['gather', 'prepare', 'craft', 'cook', 'fish'],
   toolFields: {
     strike: ['weaponItemId'],
     hunt: ['weaponItemId', 'ammoItemId'],
     equip: ['itemId'],
+    fish: ['itemId'],
   } as Readonly<Record<string, readonly string[]>>,
   unitPerCommand: ['eat'],
   unpausableWhileWorking: ['strike', 'hunt'],
-  cooking: { input: 'raw_meat', output: 'cooked_meat' },
 } as const;
 
 /** Wind-up safety margin shared by ranged admission and the offered description. */

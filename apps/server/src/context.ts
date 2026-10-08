@@ -1,4 +1,6 @@
 import { outingActions } from './outing-view.js';
+import { cookingOptions, fishingOptions, fishingTools } from './food-actions.js';
+import { cookingPreparations } from '@open-legend/domain';
 import { namePhrase, type Named } from '@open-legend/language';
 import { learnedActivityCandidates } from './activity-context.js';
 import { consumptionDescription } from './body-services.js';
@@ -171,7 +173,18 @@ export function buildContext(
       name: excerpt(entity.name, 40),
       kind: entity.actor ? (entity.actor.species ?? 'human') : entity.kind,
       position: worldPosition(entity),
-      ...(entity.resource ? { resource: entity.resource } : {}),
+      ...(entity.resource
+        ? {
+            resource: entity.resource.cast
+              ? {
+                  definitionId: entity.resource.definitionId,
+                  available: entity.resource.quantity > 0,
+                  description:
+                    service.world.castDefinitions[entity.resource.cast.definitionId]?.description,
+                }
+              : entity.resource,
+          }
+        : {}),
       ...(entity.animal
         ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.danger > 0 } }
         : {}),
@@ -311,6 +324,7 @@ export function npcCandidates(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );
   const inventory = observed.inventory.filter((item) => item.quantity > 0);
+  const castTools = fishingTools(service.world, inventory);
   const gatheringTools = carriedGatheringTools(observed);
   const quantity = (definitionId: string) =>
     inventory
@@ -782,7 +796,7 @@ export function npcCandidates(
         });
       }
     }
-    if (entity.resource && entity.resource.quantity > 0)
+    if (entity.resource && !entity.resource.cast && entity.resource.quantity > 0)
       actions.push({
         id: `gather:${entity.id}`,
         description: gatherDescription(
@@ -810,6 +824,13 @@ export function npcCandidates(
           .join(', ')} from ${namePhrase(entity, 'definite')} using a carried cutting tool.`,
         command: { type: 'harvest', targetId: entity.id },
       });
+    for (const option of fishingOptions(service.world, castTools, entity))
+      if (service.previewCommand(option.command, actorId).ok)
+        actions.push({
+          id: option.id,
+          description: `${option.label} at ${entity.name}. ${option.description}`,
+          command: option.command,
+        });
     // Fire care is offered per perceived fire from current state; native admission rechecks it.
     if (entity.heat)
       for (const option of fireCareOptions(service.world, inventory, entity))
@@ -837,18 +858,21 @@ export function npcCandidates(
       });
     }
   }
-  const cookingFire = fires
-    .filter((fire) => fire.fuelSeconds > fire.travelSeconds + SIMULATION_RULES.cookSeconds + 2)
-    .sort((a, b) => a.travelSeconds - b.travelSeconds || a.id.localeCompare(b.id))[0];
-  if (cookingFire)
-    for (const item of inventory) {
-      if (item.definitionId === 'raw_meat')
-        actions.push({
-          id: `cook:${item.id}`,
-          description: 'Cook one raw meat over the nearby lit campfire before eating it.',
-          command: { type: 'cook', itemId: item.id, targetId: cookingFire.id },
-        });
-    }
+  fires.sort((a, b) => a.travelSeconds - b.travelSeconds || a.id.localeCompare(b.id));
+  for (const preparation of fires.length ? cookingPreparations(service.world, inventory) : []) {
+    const cookingFire = fires.find(
+      (fire) => fire.fuelSeconds > fire.travelSeconds + preparation.definition.workSeconds + 2,
+    );
+    if (!cookingFire) continue;
+    const option = cookingOptions([preparation], cookingFire.id)[0]!;
+    const command = option.command;
+    if (service.previewCommand(command, actorId).ok)
+      actions.push({
+        id: option.id,
+        description: `${option.definition.description} Work takes ${option.definition.workSeconds} game seconds after approach; spent inputs are not returned on interruption.`,
+        command,
+      });
+  }
   for (const recipe of observed.knownRecipes) {
     const required = new Map<string, number>();
     for (const input of recipe.inputs)
@@ -875,7 +899,7 @@ export function planningCandidates(
   const gatheringTools = carriedGatheringTools(observed);
   return describeTargets(service, actorId, [
     ...observed.visibleEntities
-      .filter((entity) => entity.resource && entity.resource.quantity > 0)
+      .filter((entity) => entity.resource && !entity.resource.cast && entity.resource.quantity > 0)
       .map((entity) => ({
         id: `plan-gather:${entity.id}`,
         description: gatherDescription(

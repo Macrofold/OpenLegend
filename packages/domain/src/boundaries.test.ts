@@ -1,3 +1,5 @@
+import { cookingChoices } from './food-preparation.js';
+import { inventoryFor } from './index.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot } from './index.js';
 import { describe, expect, it } from 'vitest';
@@ -84,7 +86,7 @@ describe('untrusted dictionary identifiers', () => {
       { type: 'eat', itemId: id },
       { type: 'hunt', targetId: id },
       { type: 'hunt', targetId: 'hare-1', weaponItemId: id },
-      { type: 'cook', itemId: 'fixture-raw', heatId: id },
+      { ...cookingChoices(world, inventoryFor(world, PLAYER_ID), id, 'fixture-raw')[0]! },
       { type: 'prepare', preparation: id },
       { type: 'teach', targetId: NPC_ID, recipeId: id },
       { type: 'say', targetId: id, text: 'This should not be spoken.' },
@@ -153,6 +155,8 @@ describe('untrusted dictionary identifiers', () => {
 
   it('rejects an incapacitated inventor at the pure admission boundary', () => {
     const world = createWorld();
+    const recipes = structuredClone(world.recipes);
+    const knowledge = structuredClone(world.knowledge[PLAYER_ID]);
     world.entities[PLAYER_ID]!.actor!.incapacitated = true;
     const result = admitDeclaration(world, draft(), {
       actorId: PLAYER_ID,
@@ -162,7 +166,7 @@ describe('untrusted dictionary identifiers', () => {
     });
     expect(result.outcome.code).toBe('invalid-provenance');
     expect(result.world).toBe(world);
-    expect(world.recipes).toEqual({});
-    expect(world.knowledge[PLAYER_ID]).toEqual([]);
+    expect(world.recipes).toEqual(recipes);
+    expect(world.knowledge[PLAYER_ID]).toEqual(knowledge);
   });
 });

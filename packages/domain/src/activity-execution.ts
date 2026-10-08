@@ -1,3 +1,4 @@
+import { isCookingInputField } from './food-preparation.js';
 import { executeCommand, nativeOperationAvailable } from './kernel.js';
 import type { Command, WorldState } from './types.js';
 import type { ActorPlan, PlanStep } from './agency.js';
@@ -377,15 +378,20 @@ export function bindActivityCommand(
     Record<string, unknown>;
   for (const [field, value] of Object.entries(node.args)) {
     if (['id', 'actorId', 'type', '__proto__', 'constructor', 'prototype'].includes(field)) return;
-    if ('role' in value) command[field] = execution.bindings[value.role];
-    else if ('literal' in value) command[field] = value.literal;
+    let bound: unknown;
+    if ('role' in value) bound = execution.bindings[value.role];
+    else if ('literal' in value) bound = value.literal;
     else {
       const output = execution.outputs[value.output]?.find(
         (output) => output.port === value.port && output.quantity >= value.quantity,
       );
       if (!output) return;
-      command[field] = output.itemId;
+      bound = output.itemId;
     }
+    if (node.command === 'cook' && isCookingInputField(field)) {
+      const inputs = (command.inputs ??= {}) as Record<string, unknown>;
+      inputs[field.slice(6)] = bound;
+    } else command[field] = bound;
   }
   return isActivityCommand(command) ? command : undefined;
 }

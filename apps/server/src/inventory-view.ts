@@ -839,7 +839,7 @@ export function inventoryItemView(
       ? { packingLoad: itemPackingLoad(world, item.id, 1) }
       : {}),
     category:
-      definition.launcher || definition.melee || definition.gatheringTool
+      definition.launcher || definition.melee || definition.gatheringTool || definition.fishingTool
         ? 'equipment'
         : definition.ammunition
           ? 'ammunition'

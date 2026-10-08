@@ -35,6 +35,7 @@ export interface ItemDefinition extends Named {
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
   portable?: boolean;
   gatheringTool?: { resourceId: string; quantity: number };
+  fishingTool?: { kind: string };
   packingLoad?: number;
   container?: { capacity: number; maximumDepth: number };
   id: string;
@@ -104,7 +105,16 @@ export interface RecipeDefinition {
   digest: string;
   outputDefinitionId: string;
   admittedAt: number;
-  provenance: DeclarationProvenance;
+  provenance:
+    | DeclarationProvenance
+    | {
+        source: 'world-authored';
+        requestId: string;
+        actorId?: never;
+        authority?: never;
+        model?: never;
+        derivedFrom?: never;
+      };
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
@@ -118,6 +128,7 @@ export type ActionType =
   | 'hunt'
   | 'harvest'
   | 'cook'
+  | 'fish'
   | 'status-effect'
   | 'treat-scar'
   | 'replenish'
@@ -130,6 +141,8 @@ export interface Action {
   scarId?: string;
   /** The manufacturing meaning chosen when work started, independent of later authoring. */
   recipePin?: import('./world-modules.js').DefinitionPin;
+  foodPreparation?: import('./food-preparation.js').FoodPreparationBinding;
+  fishing?: import('./finite-casts.js').CastBinding;
   strikePhase?: 'windup' | 'recovery';
   strikeOutcome?: 'hit' | 'miss';
   follow?: {
@@ -240,6 +253,7 @@ export interface AnimalComponent {
   wanderSeconds: number;
 }
 export interface ResourceComponent {
+  cast?: import('./finite-casts.js').CastSource;
   revision?: number;
   definitionId: string;
   quantity: number;
@@ -307,7 +321,7 @@ export interface MemoryRecord {
 export interface KnowledgeRecord {
   recipeId: string;
   learnedAt: number;
-  source: 'invented' | 'taught' | 'practiced';
+  source: 'invented' | 'taught' | 'practiced' | 'authored';
   evidenceId: string;
 }
 /** Closed, trusted occurrence scope; only native/server code assigns it.
@@ -414,6 +428,8 @@ export interface WorldState {
   objectState: { revision: number };
   objectLineage?: Record<string, import('./objects.js').ObjectLineage>;
   itemDefinitions: Record<string, ItemDefinition>;
+  foodPreparations: Record<string, import('./food-preparation.js').FoodPreparationDefinition>;
+  castDefinitions: Record<string, import('./finite-casts.js').CastDefinition>;
   recipes: Record<string, RecipeDefinition>;
   memories: Record<string, MemoryRecord[]>;
   minds?: Record<string, ActorMind>;
@@ -527,7 +543,15 @@ export type Command = Envelope &
         lethalPermission?: import('./combat-consent.js').LethalPermission;
       }
     | { type: 'treat-scar'; scarId: string; targetId: string }
-    | { type: 'cook'; itemId: string; heatId: string }
+    | {
+        type: 'cook';
+        preparationId: string;
+        preparationVersion: number;
+        preparationDigest: string;
+        inputs: Record<string, string>;
+        heatId: string;
+      }
+    | { type: 'fish'; targetId: string; itemId: string }
     | {
         type: 'handover';
         operation: 'offer' | 'counter';

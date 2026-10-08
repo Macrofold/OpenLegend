@@ -15,7 +15,7 @@ import { recordSemanticChange } from './dependencies.js';
 import { validateNativeWork } from './native-work.js';
 import { validateWorkState } from './work-budget.js';
 import { validateParticipation } from './participation.js';
-import { isDraft, original, freeze } from 'immer';
+import { isDraft, original, current, freeze } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
 import { validateKnowledge } from './knowledge.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
@@ -38,6 +38,8 @@ import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
+import { validateFoodPreparations } from './food-preparation.js';
+import { validateFiniteCasts } from './finite-casts.js';
 import { validateActionExperience } from './action-experience.js';
 import { validateActivityHostPins } from './activity-hosts.js';
 import { activityHostForCommand } from './activity-hosts.js';
@@ -186,12 +188,18 @@ const definitionPins = new WeakMap<object, DefinitionPin>();
 export function definitionPin(definition: { id: string; version: number }): DefinitionPin {
   const cached = definitionPins.get(definition);
   if (cached) return cached;
+  // An unchanged draft shares its immutable definition. A modified draft gets
+  // a fresh snapshot, so native preflight can reuse pins without hiding edits.
+  // docs/food-preparation.md#persistence-ownership-and-work-growth
+  const value = isDraft(definition) ? current(definition) : definition;
+  const existing = definitionPins.get(value);
+  if (existing) return existing;
   const pin = {
-    id: definition.id,
-    version: definition.version,
-    digest: contentLabel(canonicalJson(definition)),
+    id: value.id,
+    version: value.version,
+    digest: contentLabel(canonicalJson(value)),
   };
-  if (!isDraft(definition) && Object.isFrozen(definition)) definitionPins.set(definition, pin);
+  if (Object.isFrozen(value)) definitionPins.set(value, pin);
   return pin;
 }
 export function createModuleManifest(
@@ -786,6 +794,8 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
   validateGatheringTools(world);
+  validateFoodPreparations(world);
+  validateFiniteCasts(world);
   for (const definition of Object.values(world.itemDefinitions)) {
     if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))
@@ -793,6 +803,7 @@ export function validateWorldModules(world: WorldState): void {
   }
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
+    if (recipe.provenance?.source === 'world-authored') continue;
     const authority = recipe.provenance?.authority;
     if (
       !authority ||

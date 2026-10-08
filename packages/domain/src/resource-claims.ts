@@ -45,6 +45,7 @@ export interface ResourceGroup {
   fulfillment: 'all-or-nothing' | 'bounded-partial';
   operations: readonly ResourceOperation[];
 }
+export const RESOURCE_GROUP_OPERATION_LIMIT = 256;
 export type ResourceFailure =
   | 'invalid'
   | 'stale'
@@ -408,7 +409,7 @@ function planGroup(
     !isSafeRecordId(group.invocationId) ||
     !Array.isArray(group.operations) ||
     !group.operations.length ||
-    group.operations.length > 256 ||
+    group.operations.length > RESOURCE_GROUP_OPERATION_LIMIT ||
     !['all-or-nothing', 'bounded-partial'].includes(group.fulfillment) ||
     (group.fulfillment === 'bounded-partial' &&
       (group.operations.length !== 1 || !group.operations[0]?.destination))

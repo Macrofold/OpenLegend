@@ -8,6 +8,8 @@ import {
   acquiredActivities,
   bindActivityRequest,
   reviewActivityRequest,
+  isCookingInputRole,
+  BASE_FOOD_ACTION_WORDING,
 } from '@open-legend/domain';
 import { resolveKnownPlaceMove, knownPlaceReference } from './known-places.js';
 import type { StoryJob } from './history.js';
@@ -174,6 +176,7 @@ export const commandInputSchema = z
       'hunt',
       'harvest',
       'cook',
+      'fish',
       'tend-fire',
       'handover',
       'outing',
@@ -272,6 +275,13 @@ export const commandInputSchema = z
     targetRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     quantity: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
     preparation: z.enum(['fiber', 'cord']).optional(),
+    preparationId: id.optional(),
+    preparationVersion: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+    preparationDigest: z.string().min(1).max(128).optional(),
+    inputs: z
+      .record(z.string().refine(isCookingInputRole), id)
+      .refine((value) => JSON.stringify(value).length <= ACTIVITY_LIMITS.recordBytes)
+      .optional(),
   })
   .strict();
 export const requestIdSchema = id;
@@ -4129,15 +4139,39 @@ export class WorldService {
         command = { ...envelope, type: input.type, itemId: input.itemId };
         break;
       case 'cook': {
-        if (!input.itemId) return { ok: false, code: 'item', message: 'Choose raw food to cook.' };
-        const heatId =
-          input.targetId ??
-          Object.values(this.world.entities).find((entity) => entity.heat?.lit)?.id;
-        if (!heatId)
-          return { ok: false, code: 'heat', message: 'There is no supported lit cooking fire.' };
-        command = { ...envelope, type: 'cook', itemId: input.itemId, heatId };
+        if (
+          !input.targetId ||
+          !input.preparationId ||
+          input.preparationVersion === undefined ||
+          !input.preparationDigest ||
+          !input.inputs
+        )
+          return {
+            ok: false,
+            code: 'preparation',
+            message:
+              'Choose a current preparation, its exact ingredients and a perceived heat source.',
+          };
+        command = {
+          ...envelope,
+          type: 'cook',
+          preparationId: input.preparationId,
+          preparationVersion: input.preparationVersion,
+          preparationDigest: input.preparationDigest,
+          inputs: input.inputs,
+          heatId: input.targetId,
+        };
         break;
       }
+      case 'fish':
+        if (!input.targetId || !input.itemId)
+          return {
+            ok: false,
+            code: 'binding',
+            message: BASE_FOOD_ACTION_WORDING.fishingBindingText,
+          };
+        command = { ...envelope, type: 'fish', targetId: input.targetId, itemId: input.itemId };
+        break;
       case 'tend-fire':
         // Always an explicitly chosen perceived fire; never a world-wide search.
         if (!input.targetId || !input.fireOperation)

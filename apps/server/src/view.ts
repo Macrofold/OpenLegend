@@ -1,8 +1,10 @@
 import { outingViews } from './outing-view.js';
+import { cookingOptions, fishingOptions, fishingTools } from './food-actions.js';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
   basePlaytestMilestones,
+  cookingPreparations,
   BASE_FAMILY_POLICY,
   equippedTargetAction,
 } from '@open-legend/domain';
@@ -181,6 +183,12 @@ export async function projectView(
         .filter((recipe) => !!recipe),
     ),
   };
+  const castTools = memo('castTools', [observation.inventory, world.itemDefinitions], () =>
+    fishingTools(world, observation.inventory),
+  );
+  // Lazily share exact ingredients across rebuilt fire panels within this snapshot.
+  // No longer-lived cache: reservation changes can alter which lot is usable.
+  let preparations: ReturnType<typeof cookingPreparations> | undefined;
   const pileContents = memo(
     'pileContents',
     [observation.visibleEntities, world.objectState, world.itemDefinitions],
@@ -277,7 +285,9 @@ export async function projectView(
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
           entity.kind === 'item-pile' || entity.remains ? pileContents.get(entity.id) : undefined,
           // Fire care availability depends on the player's carried tinder, drill and fuel.
-          entity.heat ? player.inventoryRevision : undefined,
+          entity.heat || entity.resource?.cast ? player.inventoryRevision : undefined,
+          entity.heat ? world.foodPreparations : undefined,
+          entity.resource?.cast ? world.castDefinitions : undefined,
           // Offer replies appear and disappear with pending offers between the two people.
           ...(entity.actor
             ? (() => {
@@ -395,7 +405,7 @@ export async function projectView(
               );
             }
           }
-          if (entity.resource)
+          if (entity.resource && !entity.resource.cast)
             actions.push(
               action(
                 `gather-${entity.id}`,
@@ -405,6 +415,18 @@ export async function projectView(
                 'This source is depleted.',
               ),
             );
+          for (const option of fishingOptions(world, castTools, entity)) {
+            const preview = service.previewCommand(option.command, scope.actorId);
+            actions.push(
+              action(
+                option.id,
+                option.label,
+                option.command,
+                preview.ok,
+                preview.ok ? undefined : preview.message,
+              ),
+            );
+          }
           if (entity.animal && entity.actor?.alive)
             actions.push(
               action(
@@ -433,6 +455,22 @@ export async function projectView(
               const preview = service.previewCommand(option.command, scope.actorId);
               actions.push(
                 action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
+              );
+            }
+          if (entity.heat)
+            for (const option of cookingOptions(
+              (preparations ??= cookingPreparations(world, observation.inventory)),
+              entity.id,
+            )) {
+              const preview = service.previewCommand(option.command, scope.actorId);
+              actions.push(
+                action(
+                  option.id,
+                  option.label,
+                  option.command,
+                  preview.ok,
+                  preview.ok ? undefined : preview.message,
+                ),
               );
             }
           if (entity.heat)
@@ -479,7 +517,11 @@ export async function projectView(
             ...(entity.kind === 'item-pile' || entity.remains
               ? { contents: pileContents.get(entity.id) ?? [] }
               : {}),
-            description: describeEntity({ ...entity, ...display }, world.itemDefinitions),
+            description: describeEntity(
+              { ...entity, ...display },
+              world.itemDefinitions,
+              world.castDefinitions,
+            ),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
             subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
@@ -534,6 +576,7 @@ export async function projectView(
                         strike: 'Striking',
                         harvest: 'Harvesting',
                         cook: 'Cooking',
+                        fish: 'Fishing',
                         'tend-fire': 'Tending a fire',
                         'treat-scar': 'Treating an injury',
                         prepare: 'Preparing',
@@ -565,9 +608,17 @@ export async function projectView(
                       : entity.kind === 'item-pile'
                         ? `${pileContents.get(entity.id)?.length ?? 0} item stack${pileContents.get(entity.id)?.length === 1 ? '' : 's'}`
                         : entity.resource
-                          ? 'Gatherable'
+                          ? entity.resource.cast
+                            ? entity.resource.quantity > 0
+                              ? world.castDefinitions[entity.resource.cast.definitionId]!
+                                  .availableText
+                              : world.castDefinitions[entity.resource.cast.definitionId]!
+                                  .exhaustedText
+                            : 'Gatherable'
                           : '',
-            ...(entity.resource ? { quantity: entity.resource.quantity } : {}),
+            ...(entity.resource && !entity.resource.cast
+              ? { quantity: entity.resource.quantity }
+              : {}),
             ...(entity.actor
               ? {
                   attributes: projectAttributes(world, entity, 'public'),
@@ -804,7 +855,8 @@ export async function projectView(
     harvest: `Harvesting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     strike: `Striking${targetName ? ` ${targetName}` : ''}`,
     hunt: `Hunting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
-    cook: 'Cooking meat',
+    cook: 'Cooking',
+    fish: 'Fishing',
     'tend-fire':
       work?.fireOperation === 'light'
         ? 'Lighting the fire'
@@ -1072,7 +1124,8 @@ export async function projectView(
           );
           return {
             id: recipe.id,
-            npcCreated: knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated,
+            npcCreated: knownRecipeAttribution(world, player.id, recipe.id)?.npcCreated ?? false,
+            worldAuthored: recipe.provenance.source === 'world-authored',
             name: recipe.name,
             description: recipe.description,
             output: recipe.output,
@@ -1088,7 +1141,10 @@ export async function projectView(
               role: input.role,
             })),
             workSeconds: recipe.workSeconds,
-            provenance: `${recipe.provenance.source} · ${recipe.provenance.model ?? 'test fixture'}`,
+            provenance:
+              recipe.provenance.source === 'world-authored'
+                ? 'Ordinary world method'
+                : `${recipe.provenance.source} · ${recipe.provenance.model ?? 'supplied proposal'}`,
             actions: [
               action(
                 `craft-${recipe.id}`,

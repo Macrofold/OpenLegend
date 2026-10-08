@@ -18,6 +18,12 @@ Learning or installing a technique creates no supplies and teaches only its inve
 
 [NP03 evidence](../../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) covers actual gathered/prepared stock, two names and container sizes, conservation/cancellation, private ingredients, forged/stale/malformed inputs, native alternate fiber, browser Apply/Craft/storage and PostgreSQL active-work reopening. It establishes native and supplied-proposal behavior; live model invention or autonomous chain selection is unqualified. [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families) owns the finite interface scope and expansion trigger; [NP03](../../maintainers/parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material) tracks delivery.
 
+## Ordinary authored methods and river food
+
+The [river profile](river-fishing.md) supplies a starting known River line method and one compatible trusted tool family. This ordinary world-authored knowledge is labelled **World method**, without an invented-by attribution. Installing/knowing it creates no tool, materials or fish; real crafting uses the same family compiler, definition pins and ingredient consumption as other manufacture. Live invention remains separately admitted and attributed.
+
+Raw and cooked river fish are real portable lots. The raw catch has no edible nutrition; its cooked output uses ordinary eating, packing, carrying, drop/pickup and recipient-consent offering. [Installed preparation](../../food-preparation.md) owns the generic transformation; the profile owns exact content and tuning.
+
 ## Ground piles
 
 A pile is a spatial entity holding item entities. Each active lot has one tagged placement: a world root, contained custody or an equipment attachment. Actor inventories, piles and admitted bags hold direct children without a second inventory list. Custody does not mean account authorship or legal ownership. Pickup/drop transfers existing quantities without creation or consumption. A complete unmerged transfer retains its identity; splitting allocates a new lot with lineage. Merge requires exact definition/unit pins, homogeneous state, matching ownership/provenance and no incompatible holds or active identity references. Individual objects and bags do not merge.

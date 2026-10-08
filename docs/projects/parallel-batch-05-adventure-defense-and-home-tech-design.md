@@ -1,8 +1,10 @@
 # Batch 05 — Technical definitions for adventure, defense and a home
 
-| Status      | Current progress                                                                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Implementation responsibilities and acceptance are defined; supplied encounter and shelter prerequisites still gate their dependent work. | 2026-10-05   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV05’s river meal and second review are delivered and qualified; the other four assignments and combined integration remain open. | 2026-10-07   |
+
+Current AV05 delivery: [installed preparation/cast contract](../food-preparation.md), [river profile](../worlds/base/river-fishing.md) and [native/player/live-choice evidence](../verification/river-meal.md). Other assignments retain their prerequisite and acceptance requirements.
 
 ## Scope and baseline
 

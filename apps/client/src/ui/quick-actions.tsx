@@ -7,39 +7,49 @@ import { Icon, IconButton, SelectField, Toolbar, symbol } from '../design-system
 import { useLocal } from './storage';
 
 export function gatherQuickActions(view: GameView, pins: string[]): ActionOption[] {
-  const resources = view.entities.filter((e) => e.kind === 'resource');
+  const nearest = new Map<
+    string,
+    {
+      available?: { entity: GameView['entities'][number]; action: ActionOption; distance: number };
+      unavailable?: {
+        entity: GameView['entities'][number];
+        action: ActionOption;
+        distance: number;
+      };
+    }
+  >();
+  // Offers establish gathering support and current availability. A resource's
+  // appearance or withheld stock cannot grant Gather or prove depletion.
+  // Group and select once per view rather than filtering/sorting every material.
+  for (const entity of view.entities) {
+    const action = entity.actions.find((offer) => offer.command.type === 'gather');
+    if (!action) continue;
+    const distance = distance3D(entity.position, view.player.position);
+    if (distance > view.vision.radius) continue;
+    const group = nearest.get(entity.subtype) ?? {};
+    const key = action.enabled ? 'available' : 'unavailable';
+    const previous = group[key];
+    if (
+      !previous ||
+      distance < previous.distance ||
+      (distance === previous.distance && entity.id.localeCompare(previous.entity.id) < 0)
+    )
+      group[key] = { entity, action, distance };
+    nearest.set(entity.subtype, group);
+  }
   const types = new Set([
-    ...resources.map((e) => e.subtype),
+    ...nearest.keys(),
     ...pins.filter((id) => id.startsWith('gather-type:')).map((id) => id.slice(12)),
   ]);
   return [...types].map((type) => {
-    const sources = resources
-      .filter(
-        (e) =>
-          e.subtype === type && distance3D(e.position, view.player.position) <= view.vision.radius,
-      )
-      .sort(
-        (a, b) =>
-          distance3D(a.position, view.player.position) -
-            distance3D(b.position, view.player.position) || a.id.localeCompare(b.id),
-      );
-    const stocked = sources.filter((e) => (e.quantity ?? 0) > 0);
-    const target =
-      stocked.find((e) => e.actions.some((a) => a.command.type === 'gather' && a.enabled)) ??
-      stocked[0];
-    const action = target?.actions.find((a) => a.command.type === 'gather');
+    const group = nearest.get(type);
+    const action = (group?.available ?? group?.unavailable)?.action;
     return {
       id: `gather-type:${type}`,
       label: `Gather ${type.replaceAll('_', ' ')}`,
       command: action?.command ?? { type: 'gather', targetId: '' },
       enabled: action?.enabled ?? false,
-      reason:
-        action?.reason ??
-        (!target
-          ? sources.length
-            ? 'All sources in range are depleted.'
-            : 'No sources in range.'
-          : undefined),
+      reason: action?.reason ?? (!action ? 'No sources in range.' : undefined),
     };
   });
 }
@@ -91,7 +101,7 @@ export function QuickActions({
   ];
   const options = [...new Map(native.map((a) => [a.id, a])).values()].map((a) => {
     const resource =
-      a.command.type === 'gather'
+      a.command.type === 'gather' && !a.id.startsWith('gather-type:')
         ? view.entities.find((e) => e.id === a.command.targetId)
         : undefined;
     return {

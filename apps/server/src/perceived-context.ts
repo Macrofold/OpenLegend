@@ -26,6 +26,7 @@ const activities: Record<Action['type'], string | undefined> = {
   hunt: 'hunting',
   harvest: 'harvesting',
   cook: 'cooking',
+  fish: 'fishing',
   strike: 'striking',
   replenish: 'replenishing a supply',
   'tend-fire': 'tending a fire',
@@ -58,7 +59,14 @@ export function perceivedEntityText(
     const activity = action.stage === 'approaching' ? 'moving' : activities[action.type];
     if (activity) facts.push(`It is ${activity}.`);
   }
-  if (entity.resource) {
+  if (entity.resource?.cast) {
+    const definition = world.castDefinitions[entity.resource.cast.definitionId];
+    if (definition)
+      facts.push(
+        definition.description,
+        entity.resource.quantity > 0 ? definition.supplyUnknownText : definition.exhaustedText,
+      );
+  } else if (entity.resource) {
     const item = definitions.get(entity.resource.definitionId);
     facts.push(
       `${entity.resource.quantity} units of ${item?.name ?? 'unidentified material'} remain.`,

@@ -55,6 +55,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       itemHandling: one('config_item_handling'),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
+      foodPreparations: map('config_food_preparations'),
+      castDefinitions: map('config_cast_definitions'),
       exitExposures: map('sim_exit_exposures'),
       statusEffectPolicy: one('config_status_effects'),
       authorship: one('world_authorship', {

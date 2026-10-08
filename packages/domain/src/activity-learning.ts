@@ -1,3 +1,8 @@
+import {
+  activityCommandFields,
+  isCookingInputField,
+  preparationDefinition,
+} from './food-preparation.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { cloneValue } from './draft.js';
 import { isActivityCommand } from './agency.js';
@@ -177,6 +182,9 @@ export function normalizeActivity(
         !supportedStockOccurrence(entry) ||
         (entry.command.type === 'tend-fire' && entry.command.onlyWhenLow === true) ||
         (entry.status !== 'completed' && !entry.outputs.length) ||
+        // Preserve historical records, but do not infer current ingredient quantities
+        // for a reusable method from a preparation whose meaning has since changed.
+        (entry.command.type === 'cook' && !preparationDefinition(world, entry.command)) ||
         !isActivityCommand(entry.command),
     )
   )
@@ -188,14 +196,20 @@ export function normalizeActivity(
   const children: ActivityNode[] = [];
   for (const [index, entry] of entries.entries()) {
     const args: Extract<ActivityNode, { kind: 'invoke' }>['args'] = {};
-    for (const [field, value] of Object.entries(entry.command)) {
+    for (const [field, value] of Object.entries(activityCommandFields(entry.command))) {
       if (['id', 'actorId', 'type', 'purpose'].includes(field) || value === undefined) continue;
       // An absolute deadline belongs to one occasion, not a reusable method.
       if (entry.command.type === 'follow' && field === 'until') return;
-      if (typeof value === 'string' && roleFields.has(field)) {
+      if (typeof value === 'string' && (roleFields.has(field) || isCookingInputField(field))) {
         const produced = outputs.get(value);
-        if (produced && field === 'itemId') {
-          args[field] = { output: produced.step, port: produced.port, quantity: 1 };
+        if (produced && (field === 'itemId' || isCookingInputField(field))) {
+          const required =
+            entry.command.type === 'cook' && isCookingInputField(field)
+              ? (world.foodPreparations[entry.command.preparationId]?.inputs.find(
+                  (input) => `input:${input.role}` === field,
+                )?.quantity ?? 1)
+              : 1;
+          args[field] = { output: produced.step, port: produced.port, quantity: required };
           continue;
         }
         const self = ['sourceId', 'destinationId'].includes(field) && value === actorId;

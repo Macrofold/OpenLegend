@@ -1,3 +1,10 @@
+import {
+  isCookingInputRole,
+  preparationDefinition,
+  validCookCommand,
+  validCookReference,
+  validCookingInputs,
+} from './food-preparation.js';
 import { activitySpendCeiling } from './activity-hosts.js';
 import { person, type Narration } from './narration.js';
 import { itemFor } from './objects.js';
@@ -52,10 +59,14 @@ export const ITEM_OUTPUT_FAMILIES: readonly string[] = [
 /** Families whose outputs a later step may use through a named output port. */
 const PORT_OUTPUT_FAMILIES: readonly string[] = [...BASE_FAMILY_FACTS.itemOutputs, 'pickup'];
 /** The item kind a producing step yields when that is known before it runs, from the step's
- * own target or the world's family facts (cooking's output). */
+ * own target or the world's installed preparation definition. */
 export function producedItemDefinition(world: WorldState, command: Command): string | undefined {
   if (command.type === 'gather') return world.entities[command.targetId]?.resource?.definitionId;
-  if (command.type === 'cook') return BASE_FAMILY_FACTS.cooking.output;
+  if (command.type === 'cook') {
+    const outputs = preparationDefinition(world, command)?.outputs;
+    return outputs?.length === 1 ? outputs[0]!.definitionId : undefined;
+  }
+  if (command.type === 'fish') return world.entities[command.targetId]?.resource?.definitionId;
   if (command.type === 'pickup' && command.itemId)
     return itemFor(world, command.itemId)?.definitionId;
   return undefined;
@@ -107,6 +118,11 @@ export type ItemOutputCommand = {
   outputPort?: string;
   quantity?: number;
   heatId?: string;
+  preparationId?: string;
+  preparationVersion?: number;
+  preparationDigest?: string;
+  inputRole?: string;
+  inputs?: Record<string, string>;
 };
 export type PlannedCommand = Command | ItemOutputCommand;
 export interface PlanStep {
@@ -1295,8 +1311,10 @@ export function isPhysicalCommand(command: Command): boolean {
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId)) &&
         (command.ammoItemId === undefined || isSafeRecordId(command.ammoItemId))
       );
+    case 'fish':
+      return isSafeRecordId(command.targetId) && isSafeRecordId(command.itemId);
     case 'cook':
-      return isSafeRecordId(command.itemId) && isSafeRecordId(command.heatId);
+      return validCookCommand(command);
     case 'tend-fire':
       return isFireCareCommand(command);
     case 'status-effect':
@@ -1336,7 +1354,12 @@ function isPlannedCommand(command: PlannedCommand): boolean {
     (command.quantity === undefined ||
       (Number.isSafeInteger(command.quantity) && command.quantity > 0)) &&
     ['equip', 'eat', 'cook'].includes(command.type) &&
-    (command.type === 'cook' ? isSafeRecordId(command.heatId) : command.heatId === undefined)
+    (command.type === 'cook'
+      ? isSafeRecordId(command.heatId) &&
+        validCookReference(command) &&
+        isCookingInputRole(command.inputRole) &&
+        (command.inputs === undefined || validCookingInputs(command.inputs))
+      : command.heatId === undefined)
   );
 }
 function validOutputReferences(commands: PlannedCommand[]): boolean {
@@ -1374,9 +1397,28 @@ export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | u
         : producer.outcome.itemId
       : undefined;
   if (!itemId) return;
-  const { itemFromStep: _, outputPort: _port, quantity: _quantity, heatId, ...base } = command;
+  const {
+    itemFromStep: _,
+    outputPort: _port,
+    quantity: _quantity,
+    heatId,
+    inputRole,
+    inputs,
+    preparationId,
+    preparationVersion,
+    preparationDigest,
+    ...base
+  } = command;
   return base.type === 'cook'
-    ? { ...base, type: 'cook', itemId, heatId: heatId! }
+    ? {
+        ...base,
+        type: 'cook',
+        preparationId: preparationId!,
+        preparationVersion: preparationVersion!,
+        preparationDigest: preparationDigest!,
+        inputs: { ...inputs, [inputRole!]: itemId },
+        heatId: heatId!,
+      }
     : { ...base, type: base.type, itemId };
 }
 
