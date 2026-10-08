@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-10-08 — Review the whole-interface candidate and its remaining work
+
+The requested [whole-PR review](verification/game-interaction-redesign.md#requested-full-pr-review-and-current-main-integration--october-8-2026) covers the documentation, full text diff and affected implementation owners. Main `741e8cf7` is integrated with published history preserved. Reciprocal barter retains the exact shared Inventory/person draft, voluntary outings use contextual preparation and explicit consent, and Known places joins the retained Journal. The current source map has 63 interface groups; the existing 98 digital reference screenshots and 74 runtime capture records retain their original evidence scopes.
+
+Review corrections protect private ownership facts, preserve unresolved work when one browser store fails, recover the original trade before either entry permits another exchange, retain a vanished merge choice, reject obsolete conversation refreshes and prevent dismissal of an editor while its save is pending. Self-directed actions retain native admission, camera help matches the existing controls, and the installed travel invitation remains discoverable by its displayed description. Bounded native/component results and source-specific CI outcomes are recorded separately; a passing Time run does not explain or erase a later failure under its unchanged deadline.
+
+The [UI/UX tracker](maintainers/ui-ux.md) now opens with an index of explicit remaining work and its existing owners. It separates unimplemented action/checkpoint reload recovery, composed-interface checks, the missing denied-container capture, completed-task layout and broader native/input/player qualification. Checked review tasks close only the behavior actually observed; the project and PR remain in progress. Temporary October 8 observation scripts and extra workflow packaging are removed after preserving their evidence, restoring the original ordinary workflow.
+
 ## October 7, 2026 — Carry PX03 review lessons into guidance
 
 Native character-knowledge and introduction work now explicitly reads the existing memory/story contracts even without AI. Performance guidance distinguishes bounded results from physical SQL work; history projections use complete record identity, and adding a saved reference triggers lifecycle review of ordinary custody/removal. These targeted routes and procedures carry [PX03 findings](verification/useful-discoveries.md#october-6-2026--requested-review) into future work without duplicating its feature rules. [CG19](maintainers/agent-guidance.md) records delivery; CG05 retains installed-agent dispatch verification. Game behavior and the protected development-save policy are unchanged.
