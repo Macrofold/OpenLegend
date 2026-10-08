@@ -101,12 +101,28 @@ try {
     store.authority.login(identity, now, config.authentication.sessionMs, config.capacity.sessions),
   );
   const session = await store.authority.authenticate(login.token, now);
-  const guest = await store.authority.scope(
+  let guest = await store.authority.scope(
     session,
     service.world.id,
     service.timelineId,
     'inventory-admission-guest',
   );
+  const entered = await bounded(
+    'native guest control acquisition',
+    service.changeEmbodiment(guest, {
+      id: 'review-guest-entry',
+      expectedGeneration: guest.controlGeneration,
+      operation: 'replace',
+    }),
+  );
+  assert.equal(entered.ok, true, entered.message);
+  guest = service.refreshScope(guest);
+  await bounded(
+    'native guest presence',
+    service.setPresence(guest.connectionId, true, undefined, guest),
+  );
+  assert.equal(service.currentScope(guest, 'play', true), true);
+  assert.equal(service.world.entities[NPC_ID].actor.participation.phase, 'active');
   const bagId = 'review-disclosure-bag',
     itemId = 'review-disclosure-fiber';
   await fixture.editWorld(service, (world) => {
@@ -134,6 +150,22 @@ try {
     assert.equal(result.ok, true, result.message);
   };
   await access([PLAYER_ID, NPC_ID]);
+  report.guestSetup = {
+    entered,
+    controlling: service.currentScope(guest, 'play', true),
+    participation: service.world.entities[NPC_ID].actor.participation.phase,
+    seesCustodian: domain.seesEntity(
+      service.world,
+      service.world.entities[NPC_ID],
+      service.world.entities[PLAYER_ID],
+    ),
+    reachesCustodian: domain.canReachEntity(
+      service.world,
+      service.world.entities[NPC_ID],
+      service.world.entities[PLAYER_ID],
+      service.world.itemHandling.reach,
+    ),
+  };
   assert.equal(custodian(service.world, itemId), PLAYER_ID);
   assert.equal(canAccessContainer(service.world, NPC_ID, bagId), true);
   const declare = async (disclosure, holderId) => {
