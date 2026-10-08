@@ -76,6 +76,8 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   cancel: 'Stop your current movement or work. Materials already consumed are not returned.',
   recover:
     'Use the installed recovery service. Your current action ends; world history is retained.',
+  'learn-record':
+    'Learn the exact production method from a currently inspected accessible record. This grants knowledge only, without making an item or consuming the record.',
   teach:
     'Share a learned crafting technique with a nearby person so they can use it themselves. Teaching shares knowledge, not an item.',
   talk: 'Open a conversation with a nearby person. You can review and edit your message before sending it.',

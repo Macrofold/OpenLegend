@@ -2,6 +2,7 @@ import type { Outcome, WorldState } from './types.js';
 import { recordSemanticChange } from './dependencies.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { outcome } from './events.js';
+import type { KnowledgeRecord } from './types.js';
 
 export interface KnowledgeDocument {
   subjectId: string | null;
@@ -18,6 +19,20 @@ export interface KnowledgePolicy {
   maxCharacters: { general: number; subject: number };
 }
 export type ActorKnowledge = Record<string, KnowledgeDocument>;
+/** Callers own admission; this is the single mutation for exact learned recipe knowledge. */
+export function learnRecipe(
+  world: WorldState,
+  actorId: string,
+  recipeId: string,
+  source: KnowledgeRecord['source'],
+  evidenceId: string,
+): 'acquired' | 'already-known' {
+  const records = (world.knowledge[actorId] ??= []);
+  if (records.some((record) => record.recipeId === recipeId)) return 'already-known';
+  records.push({ recipeId, source, evidenceId, learnedAt: world.simTime });
+  advanceKnowledgeRevision(world, actorId);
+  return 'acquired';
+}
 export function advanceKnowledgeRevision(world: WorldState, actorId: string): void {
   if (!Number.isSafeInteger((world.knowledgeRevisions?.[actorId] ?? 0) + 1))
     throw new Error('Knowledge revision exhausted.');

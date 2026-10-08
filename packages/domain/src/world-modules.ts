@@ -790,9 +790,16 @@ export function validateWorldModules(world: WorldState): void {
     if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))
       throw new Error('Invalid melee definition.');
+    if (
+      definition.recipeRecord &&
+      (definition.recipeRecord.disclosure !== 'method' ||
+        !isDefinitionPin(definition.recipeRecord.method))
+    )
+      throw new Error('Invalid recipe-record capability.');
   }
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
+    if (recipe.provenance.source === 'authored-world') continue;
     const authority = recipe.provenance?.authority;
     if (
       !authority ||

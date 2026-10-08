@@ -1,17 +1,25 @@
 # Batch 05 — Adventure, defense and a home
 
-**Proposed October 5, 2026; no runtime implementation or verification is closed by this plan.** Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
+**In progress, October 7, 2026.** AV01 delivers two discoverable sites, finite rewards and exact record learning/manufacture/use through current equipment; AV02 two-hand integration and the other assignments remain open. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
 
 ## AV01 — Rewarding expeditions
 
+**Second review completed, October 7:** an independently changed inspection now immediately clears obsolete method facts and learning controls from the selected record. Unchanged immutable method identities share one calculation; compiled validation, access and stock remain current. The browser case, full native journey/restart and 37 existing checks pass. [Actual publication/record evidence](../verification/rewarding-expeditions.md#second-requested-review--october-7-2026) records the narrow improvement and variable server tails; wider PF05 qualification remains open. The [completed plan](../projects/completed/rewarding-expeditions-implementation.md#second-requested-review--october-7) records the unchanged checkout/base.
+
 [CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) later reuses this field-sling method, workshop note and physical-learning owner at a contested destination. It waits for the supplied AV01 result; the follow-on allocation does not complete or reimplement this work.
 
-- [ ] Deliver two reachable, distinctive destinations, truthful physical clues, a finite usable spear and an exact learnable production method under the [world profile](../worlds/base/rewarding-expeditions.md).
-- [ ] Deliver recipe-record inspection/learning through ordinary object, knowledge and action owners; never grant stock, fabrication, unrelated knowledge or hidden contents.
-- [ ] Consume supplied PX03 known-place behavior and incoming PG05/PX01 threat rules; complete the route → reward use → recipe → real manufacture/use journey and the feature's meaningful failure/continuity cases.
-- [ ] Reconcile the technical design's parent map and record actual player/native/model evidence separately.
+**Requested review, October 6:** stale recipe-detail refresh and source-receipt consistency are corrected; exact method validation and accessible carried-material totals now share immutable reads through existing owners. The complete native journey/restart and 37 selected existing checks pass. [Matched review evidence](../verification/rewarding-expeditions.md#requested-review--october-6-2026) separates cheaper record pages from the complete-menu cost still tracked in [PF05](performance.md#pf05--public-view-and-browser-responsiveness). The [review plan](../projects/completed/rewarding-expeditions-implementation.md#requested-review--october-6) retains scope and base reconciliation.
 
-**Readiness:** physical content/record work can start on the inspected main. Full discovery needs PX03; dangerous-route qualification needs incoming threat integration; final two-handed spear integration consumes AV02. **Parents:** NC09–NC12's exposure subset, INV-4/INV-7, AC09/AC11, BW authored content and PO custody. Exact implementation and acceptance: [AV01 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av01--sites-rewards-and-physical-recipe-records).
+- [x] Deliver two reachable, distinctive destinations, truthful physical clues, a finite usable spear and an exact learnable production method under the [world profile](../worlds/base/rewarding-expeditions.md).
+- [x] Deliver recipe-record inspection/learning through ordinary object, knowledge and action owners; never grant stock, fabrication, unrelated knowledge or hidden contents.
+- [x] Consume supplied PX03 known-place behavior and incoming PG05/PX01 threat rules; complete the route → reward use → recipe → real manufacture/use journey and the feature's meaningful failure/continuity cases.
+- [x] Reconcile the technical design's parent map and record actual player/native/model evidence separately.
+
+**Delivered scope:** this task started from local PX03 `613a597b` and integrated local PX01 `a7ece950` in merge `3cc53f58`; the requested review refreshed local PX03 to `56f2f2ea` with integration merge `5233fec17`, preserving the expedition runtime and incoming threat. [Native and production-browser evidence](../verification/rewarding-expeditions.md) covers the clues, real traversal, spear use, exact learning, manufacture/use, two observers and PostgreSQL continuity; engineer-assessed second-trip value is separate from uncoached enjoyment. No live provider calls were made.
+
+- [ ] Integrate the spear with AV02's supplied two-hand equipment rule and qualify the final equipment comparison; current single-tool use is delivered, not this shared dependency.
+
+**Remaining qualification:** uncoached enjoyment/balance and broader model/device/scale evidence remain separate; none is inferred from the native journey. **Readiness:** AV02 supplies final two-handed spear integration. **Parents:** NC09–NC12's exposure subset, INV-4/INV-7, AC09/AC11, BW authored content and PO custody. Exact implementation and acceptance: [AV01 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av01--sites-rewards-and-physical-recipe-records).
 
 ## AV02 — Shield defense and compatible equipment
 

@@ -2,7 +2,8 @@
 name: openlegend-design
 description: >-
   Create paired feature specs and technical designs, execute a project plan after chat approval,
-  or design changed engine/world contracts; not routine fixes.
+  or design changed engine/world contracts and gameplay discoveries, rewards, knowledge or progression;
+  not routine fixes or prose corrections.
 ---
 
 # Design from playable behavior
@@ -12,6 +13,12 @@ For prioritized parallel assignments or standalone task prompts, use [create-par
 Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Follow the [root planning requirement](../../../AGENTS.md#plan-before-implementation), scaling detail to the task.
 
 Apply [the developer-question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work) to design as well as code: complete the independent parts, then obtain the developer's answers before developing the dependent specification. An open-decisions section records remaining questions; it does not replace asking them or authorize designing around assumed answers.
+
+## Discoveries, rewards and earned progress
+
+For gameplay discovery/reward/knowledge/progression work, read the relevant [knowledge contract](../../../docs/knowledge.md) and authored-world profile before planning changes. Distinguish finding a place, inspecting an object, learning a method, taking stock, manufacturing and using the result; one does not imply the others. Compose existing custody, knowledge, admission and manufacture owners, with the world's profile selecting rewards, grants and tuning. A physical record discloses its exact admitted method through [the record contract](../../../docs/knowledge.md#physical-production-method-records); it is not a hidden substitute for live invention. Keep origin and qualifying action evidence durable and consistent across receipts, repeated requests, persistence and player labels. Progress must credit what actually happened, not merely the presence of equivalent knowledge or an output item.
+
+Name the useful option or tradeoff the reward adds and a worthwhile stopping point where the feature allows partial participation. Exercise the reward through ordinary manufacture/use and verify actual remaining stock, repeat inspection and private second-visitor consequences under the selected world rules. Record mechanical correctness separately from engineer-assessed usefulness, uncoached enjoyment and balance; one successful scripted journey does not prove the latter. [Expedition evidence](../../../docs/verification/rewarding-expeditions.md#practical-value-of-the-second-trip) records that distinction rather than making finite rewards or a two-site route universal engine laws.
 
 ## Feature-spec or technical-design requests
 

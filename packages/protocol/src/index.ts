@@ -49,6 +49,7 @@ export interface CommandInput {
     | 'recover'
     | 'respawn'
     | 'treat-scar'
+    | 'learn-record'
     | 'teach';
   purpose?: string;
   activityFamilyId?: string;
@@ -85,6 +86,7 @@ export interface CommandInput {
   definitionId?: string;
   itemId?: string;
   recipeId?: string;
+  recordPin?: { id: string; version: number; digest: string };
   attributeId?: string;
   ammunitionId?: string;
   position?: SurfacePoint;
@@ -319,6 +321,7 @@ export interface InventoryItemView extends Named {
   availableQuantity?: number;
   /** The admitted requirement for one unit, including contents for an indivisible bag. */
   packingLoad?: number;
+  recipeRecord?: { method?: RecipeDetailsView; message: string };
   characteristics?: InventoryCharacteristic[];
   comparison?: Named & { id: string; characteristics: InventoryCharacteristic[] };
   category: 'material' | 'food' | 'equipment' | 'ammunition';
@@ -385,9 +388,7 @@ export interface ItemTradeView {
   }[];
 }
 
-export interface RecipeView {
-  npcCreated: boolean;
-  id: string;
+export interface RecipeDetailsView {
   name: string;
   description: string;
   family: string;
@@ -396,6 +397,10 @@ export interface RecipeView {
   limitations: string[];
   ingredients: Array<{ name: string; quantity: number; available: number; role: string }>;
   workSeconds: number;
+}
+export interface RecipeView extends RecipeDetailsView {
+  id: string;
+  origin: 'authored' | 'player' | 'npc';
   provenance: string;
   actions: ActionOption[];
 }

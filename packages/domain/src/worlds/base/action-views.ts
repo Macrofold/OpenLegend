@@ -94,6 +94,7 @@ function activityView(
     'treat-scar': 'Treat a scar',
     say: 'Speak',
     teach: 'Teach',
+    'learn-record': 'Learn a recorded method',
   };
   const view: ActivityView = { name: command.purpose ?? names[command.type] ?? 'Act', facts: [] };
   if (command.type === 'treat-scar') {

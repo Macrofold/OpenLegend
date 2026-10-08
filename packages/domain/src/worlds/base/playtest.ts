@@ -27,8 +27,26 @@ export function basePlaytestMilestones(
     },
     {
       id: 'invent',
-      label: 'Invent a sling',
-      done: known.some((item) => item?.launcher?.mechanism === 'swing'),
+      label: 'Invent a sling with live AI',
+      // An independent live proposal can reuse a method the actor previously read.
+      // Keep its original knowledge evidence; the admitted event credits this experience.
+      done:
+        events.some(
+          (event) =>
+            event.type === 'declaration-admitted' &&
+            event.actorId === actorId &&
+            event.data?.source === 'live-model' &&
+            world.itemDefinitions[
+              world.recipes[String(event.data.recipeId)]?.outputDefinitionId ?? ''
+            ]?.launcher?.mechanism === 'swing',
+        ) ||
+        (world.knowledge[actorId] ?? []).some(
+          (knowledge) =>
+            knowledge.source === 'invented' &&
+            world.declarationReceipts[knowledge.evidenceId]?.source === 'live-model' &&
+            world.itemDefinitions[world.recipes[knowledge.recipeId]?.outputDefinitionId ?? '']
+              ?.launcher?.mechanism === 'swing',
+        ),
     },
     // Preserve the earlier saved flag's broader equipped-item completion while the live card
     // asks for a launcher. Narrowing historical playtest progress is unrelated to extraction.

@@ -3,6 +3,8 @@ import {
   quantityOf,
   activityRequestHost,
   currentInventoryInspection,
+  readRecipeRecord,
+  definitionPin,
   visionRadius,
   canAccessContainer,
   accessiblePossession,
@@ -48,6 +50,7 @@ import { HistoryCursorError } from './perceived-events.js';
 import { countMetric } from './performance.js';
 import { createHash } from 'node:crypto';
 import { sealCursor, openCursor } from './scoped-cursor.js';
+import { recipeDetailsView } from './recipe-view.js';
 
 /** A historical successor is descriptive only; no redirect to an actionable object. */
 export async function objectHistoryPage(
@@ -697,6 +700,41 @@ export function inventoryItemView(
 
   const definition = world.itemDefinitions[item.definitionId]!;
   const actions: ActionOption[] = [];
+  let recipeRecord: InventoryItemView['recipeRecord'];
+  if (
+    definition.recipeRecord &&
+    currentInventoryInspection(world, player.id)?.itemIds.includes(item.id)
+  ) {
+    const read = readRecipeRecord(world, player.id, item.id);
+    if ('recipe' in read) {
+      const known = world.knowledge[player.id]?.some(
+        (knowledge) => knowledge.recipeId === read.recipe.id,
+      );
+      recipeRecord = {
+        method: recipeDetailsView(world, read.recipe, (id) => quantityOf(world, player.id, id)),
+        message: known
+          ? 'This exact method is already known. Reading again grants no items or additional knowledge.'
+          : 'This record discloses one exact method. Choose Learn this method to retain it; manufacture still requires real materials and work.',
+      };
+      const command = {
+        type: 'learn-record' as const,
+        itemId: item.id,
+        expectedRevision: item.revision!,
+        placementRevision: item.placementRevision!,
+        recordPin: definitionPin(definition),
+      };
+      const preview = service.previewCommand(command, player.id);
+      actions.push(
+        action(
+          `learn-record-${item.id}`,
+          'Learn this method',
+          command,
+          preview.ok,
+          preview.ok ? undefined : preview.message,
+        ),
+      );
+    } else recipeRecord = { message: read.message };
+  }
   const workReason = inventoryWorkReason(world, player.id, item.id);
   if (definition.portable === true && accessiblePossession(world, player.id, item.id)) {
     const command = { type: 'drop' as const, itemId: item.id, quantity: item.quantity };
@@ -822,6 +860,7 @@ export function inventoryItemView(
     nameForm: definition.nameForm,
     indefiniteArticle: definition.indefiniteArticle,
     quantity: item.quantity,
+    ...(recipeRecord ? { recipeRecord } : {}),
     characteristics,
     ...(equipped && equippedDefinition && comparable
       ? {

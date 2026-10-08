@@ -324,6 +324,16 @@ Historical rationale connects meaningful silhouettes, effect readability and vis
 
 Official posts discuss shared modern UI infrastructure, player-facing regressions, native settings replacing temporary scripts, and restoring deliberate rather than always-on equipment comparison. Staff statements are distinct from player replies. Inspect other callers after shared-component changes, make settings discoverable and avoid unsolicited comparisons obscuring the task. A modifier-key shortcut cannot be the sole accessible comparison method.
 
+## Project observations
+
+### O01
+
+**OpenLegend expedition implementation/review, October 6, 2026.** [Native and production-browser evidence](../verification/rewarding-expeditions.md#production-browser-interaction) · [requested review](../verification/rewarding-expeditions.md#requested-review--october-6-2026).
+
+Selecting the record initially retained its pre-inspection detail, and the compact inventory separately retained obsolete facts/known-method wording after inspection or learning. Corrected client refresh preserves selection and rejects late reads; the server includes inspection and learned knowledge in its display dependencies. Transfer this lesson to mutation-driven detail and derived projections: list identity or quantity alone cannot describe all permitted facts. This is observed project evidence, not a new external standard, general device qualification or proof of player enjoyment. Destination: [React mutation guidance](react.md#effects-asynchronous-work-and-mutations).
+
+The [October 7 second review](../verification/rewarding-expeditions.md#second-requested-review--october-7-2026) reproduced a further missing client dependency: an independent native inspection cleared the server's recipe facts, but the open selected record retained its old method and Learn button. Including the supplied recipe detail in the existing refresh key fixes immediate removal while preserving the selected item and quantity draft. Fresh inspection restores it; keyboard learning and repeat feedback update without ticking. This reinforces the same existing guidance rather than adding another policy or claiming broader accessibility qualification.
+
 ## Original player feedback
 
 ### P01

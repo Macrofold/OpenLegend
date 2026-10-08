@@ -24,7 +24,7 @@ import {
 } from './index.js';
 import type { Command, DeclarationDraft, WorldState } from './types.js';
 
-/** Test-only specimens. Production seeds contain no finished recipe composition. */
+/** Test-only specimens. Authored methods remain undisclosed; these specimens exercise independent invention. */
 const sling = (): DeclarationDraft => ({
   family: { id: 'base:swing', version: 1 },
   name: 'Woven river sling',
@@ -128,7 +128,9 @@ describe('authoritative pure world', () => {
   it('starts in wilderness with knowledge and possessions but no invented recipe', () => {
     const world = createWorld();
     expect(world).toEqual(createWorld());
-    expect(world.recipes).toEqual({});
+    expect(Object.values(world.recipes).map((recipe) => recipe.provenance.source)).toEqual([
+      'authored-world',
+    ]);
     expect(world.knowledge[NPC_ID]).toEqual([]);
     expect(quantityOf(world, PLAYER_ID, 'cord')).toBeGreaterThan(0);
     expect(JSON.parse(JSON.stringify(world))).toEqual(world);
@@ -204,7 +206,11 @@ describe('bounded invented mechanisms', () => {
   it('admits a new composition idempotently and teaches only its inventor', () => {
     const original = createWorld();
     const admitted = addRecipe(original);
-    expect(original.recipes).toEqual({});
+    expect(
+      Object.values(original.recipes).every(
+        (recipe) => recipe.provenance.source === 'authored-world',
+      ),
+    ).toBe(true);
     expect(admitted.world.knowledge[PLAYER_ID]).toHaveLength(1);
     expect(admitted.world.knowledge[NPC_ID]).toHaveLength(0);
     const repeated = admitDeclaration(admitted.world, sling(), {

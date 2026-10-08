@@ -73,7 +73,7 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
   }
 });
 
-it('restores a saved elevated route and native flight through PostgreSQL and manual slots', async () => {
+it('preserves elevated position and manual route snapshots while departure cancels walking', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-spatial-'));
   const config = readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_DATA_DIR: directory });
   let game = await createGameServer({
@@ -104,6 +104,7 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
     await game.service.createSave('On the ramp', id);
     const stored = await game.service.store.saves!.read(game.service.world.id, id);
     expect(stored.format).toBe(SAVE_FORMAT);
+    expect(stored.state.world.entities[actorId]!.actor!.action).toEqual(snapshot!.actor!.action);
     await game.close();
     game = await createGameServer({
       config,
@@ -115,9 +116,25 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
     await enterLocalWorld(game.service);
     expect(game.service.world.entities[actorId]).toEqual({
       ...snapshot,
-      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
+      actor: {
+        ...snapshot!.actor,
+        action: null,
+        planGeneration: snapshot!.actor!.planGeneration + 1,
+        participation: expect.objectContaining({ phase: 'active' }),
+      },
     });
     await game.service.control({ paused: false, clientId: 'save-fixture' });
+    // The integrated departure policy stops unfinished human work; saved position survives.
+    // docs/worlds/base/player-danger.md#five-simulated-seconds-to-leave
+    await game.service.command('resumed-ramp', {
+      type: 'move',
+      position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
+    });
+    await expect
+      .poll(() => game.service.world.entities[actorId]!.actor!.action?.navigation, {
+        timeout: 10_000,
+      })
+      .toBeUndefined();
     await game.service.transition((world) => advanceWorld(world, 150));
     expect(worldPosition(game.service.world.entities[actorId]!).y).toBe(3);
     const epoch = game.service.generation;
@@ -128,7 +145,12 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
     );
     expect(game.service.world.entities[actorId]).toEqual({
       ...snapshot,
-      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'exiting' }) },
+      actor: {
+        ...snapshot!.actor,
+        action: null,
+        planGeneration: snapshot!.actor!.planGeneration + 1,
+        participation: expect.objectContaining({ phase: 'exiting' }),
+      },
     });
     expect(game.service.world.paused).toBe(true);
     expect(game.service.generation).not.toBe(epoch);

@@ -46,6 +46,11 @@ export interface ItemDefinition extends Named {
   launcher?: Launcher;
   ammunition?: Ammunition;
   recipeId?: string;
+  /** Trusted disclosure of one exact installed method; prose grants no execution. */
+  recipeRecord?: {
+    method: import('./world-modules.js').DefinitionPin;
+    disclosure: 'method';
+  };
   /** Trusted compiler output, never independent proof of reusable material eligibility. */
   material?: import('./invention-families.js').MaterialInterface;
 }
@@ -89,6 +94,10 @@ export interface DeclarationProvenance {
   model?: string;
   evidence?: string[];
 }
+export interface AuthoredRecipeProvenance {
+  source: 'authored-world';
+  profile: { id: string; version: number };
+}
 export interface RecipeDefinition {
   name: string;
   description: string;
@@ -104,7 +113,7 @@ export interface RecipeDefinition {
   digest: string;
   outputDefinitionId: string;
   admittedAt: number;
-  provenance: DeclarationProvenance;
+  provenance: DeclarationProvenance | AuthoredRecipeProvenance;
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
@@ -307,7 +316,7 @@ export interface MemoryRecord {
 export interface KnowledgeRecord {
   recipeId: string;
   learnedAt: number;
-  source: 'invented' | 'taught' | 'practiced';
+  source: 'invented' | 'taught' | 'practiced' | 'record';
   evidenceId: string;
 }
 /** Closed, trusted occurrence scope; only native/server code assigns it.
@@ -429,6 +438,7 @@ export interface WorldState {
     {
       digest: string;
       recipeId: string;
+      source: DeclarationProvenance['source'];
       attribution: import('./invention-attribution.js').InventionAttribution;
     }
   >;
@@ -510,6 +520,13 @@ export type Command = Envelope &
     | { type: 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }
+    | {
+        type: 'learn-record';
+        itemId: string;
+        expectedRevision: number;
+        placementRevision: number;
+        recordPin: import('./world-modules.js').DefinitionPin;
+      }
     | { type: 'replenish'; targetId: string; attributeId: string }
     | { type: 'equip' | 'eat'; itemId: string }
     | {

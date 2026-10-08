@@ -8,6 +8,7 @@ import { outingActions } from './outing-view.js';
 import { namePhrase } from '@open-legend/language';
 import {
   accessiblePossession,
+  inspectedRecipeRecords,
   worldSupport,
   worldPosition,
   strikeDefinition,
@@ -529,6 +530,15 @@ export function actionCatalogue(
       : [])
       add(option.id, option.label, 'Survival', option.command, ['fire'], target.id);
   }
+  for (const { recipe, command, item } of inspectedRecipeRecords(world, scope.actorId))
+    add(
+      `learn-record-${item.id}`,
+      `Learn ${recipe.name}`,
+      'Knowledge',
+      command,
+      ['read', 'learn', recipe.name],
+      item.ownerId,
+    );
   for (const recipe of observation.knownRecipes)
     add(
       `craft-${recipe.id}`,

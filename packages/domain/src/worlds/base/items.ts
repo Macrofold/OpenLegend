@@ -17,6 +17,13 @@ export const BASE_BINDING_MATERIAL: MaterialInterface = {
   version: 1,
   unitsPerItem: 1,
 };
+const CONTACT_CHARACTERISTICS: ItemDefinition['characteristics'] = [
+  { key: 'damage', label: 'Damage', path: 'melee.damage', unit: 'health points' },
+  { key: 'range', label: 'Reach', path: 'melee.range', unit: 'metres' },
+  { key: 'accuracy', label: 'Base accuracy', path: 'melee.accuracy', unit: 'probability' },
+  { key: 'preparation', label: 'Preparation', path: 'melee.windupSeconds', unit: 'game seconds' },
+  { key: 'recovery', label: 'Recovery', path: 'melee.recoverySeconds', unit: 'game seconds' },
+];
 
 /** Unfamiliar constructed objects can earn an introduction; ordinary materials
  * remain quiet. The story selector still owns all admission. */
@@ -32,11 +39,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     name: 'Knife',
     description: 'A small sharp blade for close-range cutting and stabbing.',
     properties: ['rigid', 'point'],
-    characteristics: [
-      { key: 'damage', label: 'Damage', path: 'melee.damage', unit: 'health points' },
-      { key: 'range', label: 'Range', path: 'melee.range', unit: 'metres' },
-      { key: 'accuracy', label: 'Base accuracy', path: 'melee.accuracy', unit: 'probability' },
-    ],
+    characteristics: CONTACT_CHARACTERISTICS,
     melee: {
       damage: 8,
       accuracy: 0.75,
@@ -45,6 +48,26 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
       windupSeconds: 6,
       recoverySeconds: 18,
     },
+  },
+  spear: {
+    id: 'spear',
+    version: 1,
+    portable: true,
+    packingLoad: 2,
+    name: 'Lookout spear',
+    description:
+      'A long wooden spear left at the lookout. It reaches farther than the knife but prepares and recovers more slowly. Equip it for an ordinary contact attack.',
+    properties: ['rigid', 'shaft', 'point'],
+    characteristics: CONTACT_CHARACTERISTICS,
+    melee: {
+      damage: 10,
+      accuracy: 0.8,
+      range: 2.2,
+      approachRange: 1.8,
+      windupSeconds: 18,
+      recoverySeconds: 36,
+    },
+    mechanismFields: { story_importance: { story_importance: 8 } },
   },
   woven_bag: {
     id: 'woven_bag',

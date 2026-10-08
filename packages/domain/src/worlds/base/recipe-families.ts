@@ -48,9 +48,9 @@ const materialPolicy = {
   excludedDefinitionIds: ['raw_meat'],
 };
 const commonGuidance = [
-  'Choose actual registered materials, quantities and a fitting name; finished recipes are generated during play.',
+  'Choose actual registered materials, quantities and a fitting name for a new method. Installed authored methods require their own permitted learning; they are distinct from live invention.',
   'Inputs are consumed when crafting starts; one output is made on completion; interruption does not refund materials.',
-  'Installation teaches the technique and never creates an item. Ordinary work expenditure applies.',
+  'An admitted actor invention teaches its inventor and never creates an item. Ordinary work expenditure applies.',
   'No scripts, free sources, nutrition, fuel, sleep/status effects or autonomous machines are supported.',
 ];
 function definition(

@@ -1,4 +1,6 @@
 import { outingViews } from './outing-view.js';
+
+import { recipeDetailsView } from './recipe-view.js';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
@@ -56,6 +58,7 @@ import {
   visionRadius,
   nearbyEntities,
   inventoryFor,
+  quantityOf,
   canRecoverAtCamp,
   GOD_SPAWN_OPTIONS,
   TRAIT_BANK,
@@ -207,10 +210,7 @@ export async function projectView(
   );
   const player = world.entities[scope.actorId]!;
   const actor = player.actor!;
-  const quantity = (definitionId: string) =>
-    observation.inventory
-      .filter((item) => item.definitionId === definitionId)
-      .reduce((sum, item) => sum + item.quantity, 0);
+  const quantity = (definitionId: string) => quantityOf(world, player.id, definitionId);
   const active =
     actor.participation?.phase !== 'inactive' &&
     !paused &&
@@ -251,6 +251,8 @@ export async function projectView(
       world.resourceReservations,
       world.itemDefinitions,
       world.recipes,
+      actor.inventoryInspection,
+      world.knowledge[player.id],
       actor.equippedItemId,
       actor.action,
       world.itemHandling,
@@ -1072,23 +1074,17 @@ export async function projectView(
           );
           return {
             id: recipe.id,
-            npcCreated: knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated,
-            name: recipe.name,
-            description: recipe.description,
-            output: recipe.output,
-            facts: recipe.facts,
-            limitations: [
-              recipeFamily(world, recipe.sourceCandidate.family.id)!.definition.limitation,
-            ],
-            family: recipeFamily(world, recipe.sourceCandidate.family.id)!.definition.name,
-            ingredients: recipe.inputs.map((input) => ({
-              name: world.itemDefinitions[input.definitionId]!.name,
-              quantity: input.quantity,
-              available: quantity(input.definitionId),
-              role: input.role,
-            })),
-            workSeconds: recipe.workSeconds,
-            provenance: `${recipe.provenance.source} · ${recipe.provenance.model ?? 'test fixture'}`,
+            ...recipeDetailsView(world, recipe, quantity),
+            origin:
+              recipe.provenance.source === 'authored-world'
+                ? 'authored'
+                : knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated
+                  ? 'npc'
+                  : 'player',
+            provenance:
+              recipe.provenance.source === 'authored-world'
+                ? 'Known authored method; learned through an admitted disclosure.'
+                : `${recipe.provenance.source} · ${recipe.provenance.model ?? 'supplied proposal'}`,
             actions: [
               action(
                 `craft-${recipe.id}`,

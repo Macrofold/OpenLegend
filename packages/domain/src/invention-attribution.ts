@@ -64,6 +64,7 @@ export function validateInventionAttribution(world: WorldState): void {
     // Historical attribution is immutable; later membership/controller changes cannot rewrite it.
     if (
       !a ||
+      !['live-model', 'test-fixture', 'supplied-proposal'].includes(receipt.source) ||
       a.worldId !== world.id ||
       !isSafeRecordId(a.inventorActorId) ||
       typeof a.npcCreated !== 'boolean' ||
@@ -77,6 +78,14 @@ export function validateInventionAttribution(world: WorldState): void {
       throw new Error('Invalid saved invention attribution.');
   }
   for (const recipe of Object.values(world.recipes)) {
+    if (recipe.provenance.source === 'authored-world') {
+      if (
+        recipe.provenance.profile.id !== world.profile.id ||
+        recipe.provenance.profile.version !== world.profile.version
+      )
+        throw new Error('Invalid saved authored method provenance.');
+      continue;
+    }
     const base = recipe.provenance.derivedFrom;
     if (
       base &&
@@ -90,6 +99,7 @@ export function validateInventionAttribution(world: WorldState): void {
       !receipt ||
       receipt.recipeId !== recipe.id ||
       receipt.digest !== recipe.digest ||
+      receipt.source !== recipe.provenance.source ||
       receipt.attribution.inventorActorId !== recipe.provenance.actorId
     )
       throw new Error('Missing original invention attribution.');
@@ -105,7 +115,7 @@ export function knownRecipeAttribution(
   const knowledge = world.knowledge[actorId]?.find((entry) => entry.recipeId === recipeId);
   if (!knowledge) return;
   const recipe = getOwn(world.recipes, recipeId);
-  if (!recipe) return;
+  if (!recipe || recipe.provenance.source === 'authored-world') return;
   const own =
     knowledge.source === 'invented'
       ? getOwn(world.declarationReceipts, knowledge.evidenceId)

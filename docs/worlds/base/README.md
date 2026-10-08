@@ -5,7 +5,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 ## Mechanics
 
 - [Starting wilderness, terrain and population](landscape.md)
-- [Useful discoveries beyond the clearing](rewarding-expeditions.md) — proposed finite expedition rewards and physical recipe learning for AV01.
+- [Useful discoveries beyond the clearing](rewarding-expeditions.md) — implemented finite expedition rewards and physical recipe learning, with AV02 equipment integration still tracked.
 - [Held shields and chosen defense](shield-defense.md) — proposed compatible equipment and finite contact guard for AV02.
 - [A river catch becomes a meal](river-fishing.md) — proposed finite fishing and world-defined cooking for AV05.
 - [Items, ground piles and possession](items.md)

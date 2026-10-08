@@ -36,6 +36,7 @@ import { activityHostPins } from '../../activity-hosts.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
 import { BASE_PLACES } from './places.js';
+import { installExpeditions } from './expeditions.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
 import traitBank from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
@@ -391,6 +392,7 @@ export function createWorld(
   });
   populateOuterWilderness(world);
   installFirstThreat(world);
+  installExpeditions(world);
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);

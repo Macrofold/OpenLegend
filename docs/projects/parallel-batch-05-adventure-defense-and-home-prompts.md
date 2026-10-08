@@ -1,8 +1,8 @@
 # Batch 05 — Five implementation prompts
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five standalone prompts define implementation work and the prerequisite revisions the owner must supply. | 2026-10-05   |
+| Status      | Current progress                                                                                                                                      | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV01 content and the record/travel/manufacture/use journey are implemented and reviewed; AV02 two-hand integration and other assignments remain open. | 2026-10-07   |
 
 Use a branch containing this batch's committed documentation. [Allocation and sequencing](parallel-batch-05-adventure-defense-and-home-feature-spec.md#allocation-and-sequencing) explains readiness: AV03 and AV05 can start from the inspected main; AV01 can start independent content work but needs PX03/threat integration to finish; AV02 needs the incoming threat/lifecycle delivery; AV04 needs PX05 and later AV02's equipment integration. These prompts do not execute the assignments from the planning chat.
 

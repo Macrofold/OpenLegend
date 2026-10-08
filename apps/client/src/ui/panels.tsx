@@ -70,19 +70,20 @@ export function Crafting({
 }) {
   const [creatorFilter, setCreatorFilter] = useState('all');
   const recipes = view.recipes.filter(
-    (recipe) => creatorFilter === 'all' || recipe.npcCreated === (creatorFilter === 'npc'),
+    (recipe) => creatorFilter === 'all' || recipe.origin === creatorFilter,
   );
   return (
     <>
       <Section title="Known recipes" count={recipes.length}>
         <label>
-          Created by{' '}
+          Method source{' '}
           <select
-            aria-label="Recipe creator"
+            aria-label="Method source"
             value={creatorFilter}
             onChange={(event) => setCreatorFilter(event.target.value)}
           >
-            <option value="all">Everyone</option>
+            <option value="all">All methods</option>
+            <option value="authored">Authored methods</option>
             <option value="player">Players</option>
             <option value="npc">NPCs</option>
           </select>
@@ -92,7 +93,13 @@ export function Crafting({
             <details className="ol-proposal" key={r.id}>
               <summary>
                 <span className="ol-heading">{r.name}</span>{' '}
-                <Tag>{r.npcCreated ? 'NPC-created' : 'Player-created'}</Tag>
+                <Tag>
+                  {r.origin === 'authored'
+                    ? 'Authored method'
+                    : r.origin === 'npc'
+                      ? 'NPC-created'
+                      : 'Player-created'}
+                </Tag>
               </summary>
               <RecipeDetails recipe={r} />
               <Actions actions={r.actions} command={command} connected={connected} />
@@ -101,11 +108,13 @@ export function Crafting({
           ))
         ) : (
           <EmptyState
-            title={view.recipes.length ? 'No recipes match this filter.' : 'Nothing invented yet.'}
+            title={
+              view.recipes.length ? 'No recipes match this filter.' : 'No methods learned yet.'
+            }
           >
             {view.recipes.length
-              ? 'Choose another creator filter.'
-              : 'Describe a useful tool and discover a way to make it.'}
+              ? 'Choose another method source.'
+              : 'Learn from an accessible recipe record, or describe a useful tool to invent a method with live AI.'}
           </EmptyState>
         )}
       </Section>

@@ -222,6 +222,13 @@ export function isRecordedActivityCommand(command: Command): boolean {
   if (isActivityCommand(command)) return true;
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
   if (command.type === 'recover') return true;
+  if (command.type === 'learn-record')
+    return (
+      isSafeRecordId(command.itemId) &&
+      Number.isSafeInteger(command.expectedRevision) &&
+      Number.isSafeInteger(command.placementRevision) &&
+      isDefinitionPin(command.recordPin)
+    );
   if (command.type === 'teach')
     return isSafeRecordId(command.targetId) && isSafeRecordId(command.recipeId);
   if (command.type === 'unequip')

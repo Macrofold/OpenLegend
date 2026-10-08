@@ -36,6 +36,8 @@ Parents: [base world](base-world.md), [persistent objects](persistent-objects.md
 
 **PX03 completed and reviewed:** private discovery, useful introductions and Known places are delivered. The October 6 review fixes late forgetting/correction, moved/removed marker integrity, source-family collisions, unstable continuation and SQL amplification, with a canceled-inspection browser check. Native lifecycle, scoped query/stress, keyboard and compact/enlarged browser checks pass; the linked report retains planner and broader qualification limits. [Evidence](../verification/useful-discoveries.md) records current results and limits.
 
+[AV01](parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions) now supplies the camp marker, lookout reward and workshop through PX03's existing permitted arrival/inspection owner; it creates no second place-knowledge or navigation store. [Its journey evidence](../verification/rewarding-expeditions.md) covers actual ramp/bank travel and optional-threat avoidance.
+
 Parents: [narration](narration-and-conversations.md), [spatial world](spatial-world.md), [DG01/ND18](needs-design.md#dg01--actions-and-first-encounters). PG03 excludes this new encounter scope; its action presentation remains a consumed prerequisite.
 
 ## PX04 — Voluntary shared outings

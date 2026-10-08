@@ -1,4 +1,5 @@
 export * from './types.js';
+export * from './recipe-records.js';
 export { BASE_DEATH_COMMAND_DESCRIPTIONS } from './worlds/base/death.js';
 export * from './reincarnation.js';
 export * from './combat-consent.js';

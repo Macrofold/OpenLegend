@@ -162,7 +162,9 @@ describe('untrusted dictionary identifiers', () => {
     });
     expect(result.outcome.code).toBe('invalid-provenance');
     expect(result.world).toBe(world);
-    expect(world.recipes).toEqual({});
+    expect(
+      Object.values(world.recipes).every((recipe) => recipe.provenance.source === 'authored-world'),
+    ).toBe(true);
     expect(world.knowledge[PLAYER_ID]).toEqual([]);
   });
 });

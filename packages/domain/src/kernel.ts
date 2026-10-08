@@ -1,4 +1,6 @@
 import { subjectNarration, person, presentVerb } from './narration.js';
+import { prepareRecipeLearning, readRecipeRecord } from './recipe-records.js';
+import { learnRecipe } from './knowledge.js';
 import { namePhrase } from '@open-legend/language';
 import {
   ACTIVITY_LIMITS,
@@ -277,10 +279,27 @@ export const SIMULATION_RULES = {
 export function inventoryFor(world: WorldState, actorId: string): ItemInstance[] {
   return [...possessionItems(world, actorId)];
 }
+const quantitySnapshots = new WeakMap<WorldState, Map<string, Map<string, number>>>();
+/** Count only this actor's accessible possessions, once per immutable snapshot.
+ * Mutable work must see each debit, transfer and access change immediately.
+ * docs/performance.md#shared-entity-queries-and-cognition-work */
 export function quantityOf(world: WorldState, actorId: string, definitionId: string): number {
-  return inventoryFor(world, actorId)
-    .filter((item) => item.definitionId === definitionId)
-    .reduce((sum, item) => sum + item.quantity, 0);
+  if (!Object.isFrozen(world)) {
+    let total = 0;
+    for (const item of possessionItems(world, actorId))
+      if (item.definitionId === definitionId) total += item.quantity;
+    return total;
+  }
+  let actors = quantitySnapshots.get(world);
+  if (!actors) quantitySnapshots.set(world, (actors = new Map()));
+  let totals = actors.get(actorId);
+  if (!totals) {
+    totals = new Map();
+    for (const item of possessionItems(world, actorId))
+      totals.set(item.definitionId, (totals.get(item.definitionId) ?? 0) + item.quantity);
+    actors.set(actorId, totals);
+  }
+  return totals.get(definitionId) ?? 0;
 }
 function itemClaims(
   world: WorldState,
@@ -858,7 +877,7 @@ function prepareNativeOperation(
   options: { executing?: boolean; skipLethalReview?: true } = {},
 ): Action | Outcome {
   const reject = (code: string, message: string) => outcome(false, code, message);
-  if (!isActivityCommand(command))
+  if (!isActivityCommand(command) && command.type !== 'learn-record')
     return reject('invalid-plan', 'Only supported native physical work can be queued.');
   const problem = nativeActorProblem(world, command);
   if (problem) return problem;
@@ -1223,6 +1242,11 @@ function prepareNativeOperation(
       if (fuel?.id ?? command.itemId) action.itemId = fuel?.id ?? command.itemId;
       break;
     }
+    case 'learn-record': {
+      const read = prepareRecipeLearning(world, command);
+      if (!('recipe' in read)) return read;
+      break;
+    }
     case 'inspect-inventory': {
       try {
         inspectPossessions(
@@ -1363,9 +1387,10 @@ function executeCommandNative(
     return receipt.digest === digest
       ? { world: original, events: [], outcome: { ...receipt.outcome, code: 'duplicate' } }
       : reject('idempotency-conflict', 'This command ID was already used with another body.');
-  const prepared = isActivityCommand(command)
-    ? prepareNativeOperation(original, command, { executing: true })
-    : nativeActorProblem(original, command);
+  const prepared =
+    isActivityCommand(command) || command.type === 'learn-record'
+      ? prepareNativeOperation(original, command, { executing: true })
+      : nativeActorProblem(original, command);
   if (prepared && 'ok' in prepared && !prepared.ok)
     return { world: original, events: [], outcome: prepared };
   const action = prepared && !('ok' in prepared) ? prepared : undefined;
@@ -1391,6 +1416,8 @@ function executeCommandNative(
       events: [],
       outcome: result,
     };
+  if (options.preview && standalone && command.type === 'learn-record')
+    return { world: original, events: [], outcome: result };
   const source = getOwn(original.entities, command.actorId)!;
   if (options.nativeController && (source.actor?.controller !== 'native' || !source.threat))
     return reject(
@@ -1685,6 +1712,31 @@ function executeCommandNative(
           );
           component.inventoryInspection = cursor;
           recordInspectedItems(world, events, actor.id, { ...cursor, page });
+          if (
+            command.itemId &&
+            world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.recipeRecord
+          ) {
+            const read = readRecipeRecord(world, actor.id, command.itemId);
+            if ('recipe' in read) {
+              emit(
+                world,
+                events,
+                'recipe-record-inspected',
+                `I read ${read.definition.name}: ${read.recipe.name}. ${read.recipe.description} Makes one ${read.recipe.output.name}. Requires ${read.recipe.inputs.map((input) => `${input.quantity} ${world.itemDefinitions[input.definitionId]!.name} (${input.role})`).join(', ')} and ${read.recipe.workSeconds} game seconds of manufacture. ${read.recipe.facts.map((fact) => `${fact.label}: ${fact.value}${fact.unit ? ` ${fact.unit}` : ''}`).join('; ')}. Reading grants no knowledge or item; I can explicitly learn this exact method.`,
+                actor,
+                undefined,
+                {
+                  itemId: read.item.id,
+                  recipeId: read.recipe.id,
+                  methodVersion: read.definition.recipeRecord!.method.version,
+                  methodDigest: read.definition.recipeRecord!.method.digest,
+                  recordRevision: read.item.revision!,
+                  placementRevision: read.item.placementRevision!,
+                },
+                'private',
+              );
+            }
+          }
           const container = inspectedContainer(world, actor.id);
           const packing =
             container?.load !== undefined && container.capacity !== undefined
@@ -2044,6 +2096,42 @@ function executeCommandNative(
         if (!result.ok) return reject(result.code, result.message);
         break;
       }
+      case 'learn-record': {
+        const read = prepareRecipeLearning(world, command);
+        if (!('recipe' in read)) return reject(read.code, read.message);
+        const learned = learnRecipe(world, actor.id, read.recipe.id, 'record', command.id);
+        emit(
+          world,
+          events,
+          'method-learned',
+          learned === 'acquired'
+            ? `I learned the exact method for ${read.recipe.name} from ${read.definition.name}. No item was made.`
+            : `I checked ${read.definition.name}; I already know the exact method for ${read.recipe.name}.`,
+          actor,
+          undefined,
+          {
+            recipeId: read.recipe.id,
+            itemId: read.item.id,
+            methodVersion: read.definition.recipeRecord!.method.version,
+            methodDigest: read.definition.recipeRecord!.method.digest,
+            recordRevision: read.item.revision!,
+            placementRevision: read.item.placementRevision!,
+            learned,
+          },
+          'private',
+        );
+        result = {
+          ...outcome(
+            true,
+            learned,
+            learned === 'acquired'
+              ? `${read.recipe.name} learned. Gather its ingredients and choose Craft to make it.`
+              : `${read.recipe.name} is already known. No knowledge or items were duplicated.`,
+          ),
+          recipeId: read.recipe.id,
+        };
+        break;
+      }
       case 'teach': {
         if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
         const target = getOwn(world.entities, command.targetId);
@@ -2057,14 +2145,7 @@ function executeCommandNative(
           return reject('not-heard', 'Teaching needs a nearby listener.');
         if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
           return reject('not-learned', 'You cannot teach a technique you do not know.');
-        const knowledge = world.knowledge[target.id] ?? (world.knowledge[target.id] = []);
-        if (!knowledge.some((record) => record.recipeId === recipe.id))
-          knowledge.push({
-            recipeId: recipe.id,
-            learnedAt: world.simTime,
-            source: 'taught',
-            evidenceId: command.id,
-          });
+        learnRecipe(world, target.id, recipe.id, 'taught', command.id);
         emit(
           world,
           events,
@@ -4146,8 +4227,11 @@ export function observeActor(
     itemDefinitions: [...definitionIds].flatMap((id) => {
       const definition = world.itemDefinitions[id];
       if (!definition) return [];
-      if (!definition.recipeId || knownRecipeIds.has(definition.recipeId)) return [definition];
-      const { recipeId, ...visible } = definition;
+      const disclosed = definition.recipeRecord
+        ? (({ recipeRecord: _record, ...facts }) => facts)(definition)
+        : definition;
+      if (!definition.recipeId || knownRecipeIds.has(definition.recipeId)) return [disclosed];
+      const { recipeId, ...visible } = disclosed;
       return [visible];
     }),
     knownRecipes,

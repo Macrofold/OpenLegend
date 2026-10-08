@@ -248,6 +248,6 @@ describe('local HTTP boundary', () => {
       await post('/api/invent', { requestId: 'sling', text: 'Invent a sling.' })
     ).json();
     expect(result.code).toBe('unconfigured');
-    expect(game.service.world.recipes).toEqual({});
+    expect(game.service.world.knowledge[PLAYER_ID]).toEqual([]);
   });
 });

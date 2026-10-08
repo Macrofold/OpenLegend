@@ -1,3 +1,4 @@
+import { RecipeDetails } from './recipe-details';
 import { namePhrase } from '@open-legend/language';
 import { useEffect, useRef, useState } from 'react';
 import type {
@@ -288,6 +289,8 @@ function InventoryWorkspace({
       entry.equipped,
       entry.characteristics,
       entry.comparison,
+      // Another inspection can revoke this detail without changing the item or recipe IDs.
+      entry.recipeRecord,
     ]),
     view.player.canUseInventory,
     view.clock.paused,
@@ -740,12 +743,15 @@ function InventoryWorkspace({
                     }).then((result) => {
                       if (
                         alive.current &&
-                        !result.ok &&
                         selectedPossession.current?.item.id === entry.id &&
                         selectedPossession.current.container.id === page.container.id &&
                         selectedPossession.current.container.revision === page.container.revision
-                      )
-                        setMessage(result.message);
+                      ) {
+                        // Inspection can disclose method facts without moving the item.
+                        // Read the selected container again after its admitted disclosure.
+                        if (result.ok) setRefresh((value) => value + 1);
+                        else setMessage(result.message);
+                      }
                     });
                   }
                   requestAnimationFrame(() => {
@@ -854,6 +860,15 @@ function InventoryWorkspace({
               ) : (
                 <>
                   <p className="ol-prose">{item.description}</p>
+                  {item.recipeRecord && (
+                    <section aria-label="Recorded production method">
+                      <h4>{item.recipeRecord.method?.name ?? 'Recorded method unavailable'}</h4>
+                      <p>{item.recipeRecord.message}</p>
+                      {item.recipeRecord.method && (
+                        <RecipeDetails recipe={item.recipeRecord.method} />
+                      )}
+                    </section>
+                  )}
                   <div className="ol-traits">
                     {item.tags.map((tag) => (
                       <Tag key={tag}>{tag}</Tag>

@@ -287,6 +287,22 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         targetId: input.targetId!,
         ...(input.itemId ? { itemId: input.itemId } : {}),
       };
+    case 'learn-record':
+      if (
+        !input.itemId ||
+        input.expectedRevision === undefined ||
+        input.placementRevision === undefined ||
+        !input.recordPin
+      )
+        throw new Error('A current exact recipe record is required.');
+      return {
+        ...base,
+        type: 'learn-record',
+        itemId: input.itemId,
+        expectedRevision: input.expectedRevision,
+        placementRevision: input.placementRevision,
+        recordPin: input.recordPin,
+      };
     case 'teach':
       return { ...base, type: 'teach', targetId: input.targetId!, recipeId: input.recipeId! };
   }

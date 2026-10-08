@@ -20,6 +20,8 @@ Learning or installing a technique creates no supplies and teaches only its inve
 
 ## Ground piles
 
+The [rewarding expedition profile](rewarding-expeditions.md) adds a finite portable lookout case and workshop satchel through the same ordinary ground-pile/container owner. Only permitted deliberate inspection shows actual nested stock; moving the case or record moves that same physical item, with no restock or hidden copy. The profile owns spear/method tuning and AV02's still-pending two-hand integration.
+
 A pile is a spatial entity holding item entities. Each active lot has one tagged placement: a world root, contained custody or an equipment attachment. Actor inventories, piles and admitted bags hold direct children without a second inventory list. Custody does not mean account authorship or legal ownership. Pickup/drop transfers existing quantities without creation or consumption. A complete unmerged transfer retains its identity; splitting allocates a new lot with lineage. Merge requires exact definition/unit pins, homogeneous state, matching ownership/provenance and no incompatible holds or active identity references. Individual objects and bags do not merge.
 
 Several item types and multiple units may occupy one pile. Coincident placements on the same support merge; the initial positional tolerance is 0.01 world units. Nearby floors never share a pile. Removing the last stack removes the pile. Empty piles have no separate lifetime or inventory copy.

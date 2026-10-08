@@ -1,8 +1,8 @@
 # Batch 05 — Adventure, defense and a home
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Five implementation assignments are specified; incoming encounter work and the earlier shelter design remain explicit prerequisites. | 2026-10-05   |
+| Status      | Current progress                                                                                                                                      | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV01 content and the record/travel/manufacture/use journey are implemented and reviewed; AV02 two-hand integration and other assignments remain open. | 2026-10-07   |
 
 ## Purpose and selection
 

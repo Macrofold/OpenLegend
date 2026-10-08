@@ -187,6 +187,7 @@ export const commandInputSchema = z
       'respawn',
       'treat-scar',
       'teach',
+      'learn-record',
     ]),
     purpose: z.string().trim().min(1).max(120).optional(),
     activityFamilyId: id.optional(),
@@ -249,6 +250,10 @@ export const commandInputSchema = z
     lethalReviewId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
+    recordPin: z
+      .object({ id, version: z.number().int().positive(), digest: z.string().min(1).max(128) })
+      .strict()
+      .optional(),
     attributeId: id.optional(),
     ammunitionId: id.optional(),
     position: z
@@ -4246,6 +4251,27 @@ export class WorldService {
           type: 'treat-scar',
           targetId: input.targetId,
           scarId: input.scarId,
+        };
+        break;
+      case 'learn-record':
+        if (
+          !input.itemId ||
+          input.expectedRevision === undefined ||
+          input.placementRevision === undefined ||
+          !input.recordPin
+        )
+          return {
+            ok: false,
+            code: 'record',
+            message: 'Inspect and choose an exact current recipe record.',
+          };
+        command = {
+          ...envelope,
+          type: 'learn-record',
+          itemId: input.itemId,
+          expectedRevision: input.expectedRevision,
+          placementRevision: input.placementRevision,
+          recordPin: input.recordPin,
         };
         break;
       case 'teach':

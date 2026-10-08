@@ -9,6 +9,7 @@ import {
   itemFor,
   canAccessContainer,
   currentInventoryInspection,
+  inspectedRecipeRecords,
   inspectedContainer,
   availableItemQuantity,
   effectivePosition,
@@ -369,6 +370,19 @@ export function npcCandidates(
           },
         ]
       : []),
+    ...inspectedRecipeRecords(service.world, actorId).flatMap(({ definition, recipe, command }) => {
+      if (service.world.knowledge[actorId]?.some((record) => record.recipeId === recipe.id))
+        return [];
+      return service.previewCommand(command, actorId).ok
+        ? [
+            {
+              id: `learn-record-${command.itemId}`,
+              description: `Learn ${recipe.name} from the inspected ${definition.name}. ${recipe.description} Learning makes no item and consumes no record; manufacture later needs the exact ingredients and work.`,
+              command,
+            },
+          ]
+        : [];
+    }),
     ...replenishments,
     ...observed.visibleEntities.flatMap((target) =>
       pickupActions(service.world, observed.actor, target, (command) =>

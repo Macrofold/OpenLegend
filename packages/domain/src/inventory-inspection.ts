@@ -31,7 +31,7 @@ export function describePossession(
     const melee = definition.melee;
     facts = [
       definition.description,
-      `Properties: ${definition.properties.join(', ')}.`,
+      definition.properties.length ? `Properties: ${definition.properties.join(', ')}.` : '',
       definition.nutrition ? `Edible now; restores ${definition.nutrition} nourishment.` : '',
       melee ? 'Can be equipped for close-range attacks.' : '',
     ]

@@ -1,12 +1,10 @@
 # Batch 05 proposed constraints
 
-This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **All are unimplemented proposals as of October 5, 2026.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
+This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **As of October 6, 2026, AV-L01 is adopted; AV-L02 and AV-L03 remain unimplemented proposals.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
 
 ## AV-L01 — Finite authored expeditions
 
-Two selected static destinations, one finite equipment reward and one exact installed-method record are the first content set. [The world profile](../worlds/base/rewarding-expeditions.md) owns stock, weapon/method tuning and learning eligibility. This is restrictive content scope, not a runtime cap on places, recipes or memories. No restock, currency, procedural dungeon or quest framework. New sites require useful content and measured discovery behavior, not an engine change to a global site whitelist.
-
-World creation installs this content once; restored saves are not reseeded. Location/reward lookup uses exact object references and PX03's permitted discovery, not a whole-world or full-history scan per action. A finite output count must not conceal unbounded source preparation. Large site/history capacity remains unmeasured; use existing spatial/knowledge paging rather than truncate retained knowledge. AV01 owns delivery.
+**Adopted October 6, 2026.** The current entry moved to [bundled-world limits](base-world.md#av-l01--finite-authored-expeditions); this section retains its disposition only.
 
 ## AV-L02 — Equipment and finite contact guard
 

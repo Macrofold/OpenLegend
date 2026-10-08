@@ -2,7 +2,7 @@
 
 Optional human-outcome research: [well-being evidence inventory](limits/wellbeing-evidence.md) and [HE delivery](maintainers/wellbeing-evidence.md). These are finite proposed study constraints, not current collection or a game-wide well-being policy.
 
-Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md) and [batch 05 — Adventure, defense and a home](limits/parallel-batch-05-adventure-defense-and-home.md). These scope bounds are not current runtime policy.
+Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md) and [batch 05 — Adventure, defense and a home](limits/parallel-batch-05-adventure-defense-and-home.md). Unadopted bounds remain proposals; the adopted AV-L01 expedition entry now lives with [bundled-world limits](limits/base-world.md#av-l01--finite-authored-expeditions).
 
 Defined conflict allocation: [batch 06 — Rivals and contested ground](limits/parallel-batch-06-rivals-and-contested-ground.md) records proposed projectile/evasion/help/encounter bounds and the accepted NPC participation target; runtime delivery remains open.
 
