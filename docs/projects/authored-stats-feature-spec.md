@@ -1,10 +1,10 @@
 # World-authored stats, checks and consequences — product and behavior specification
 
-| Status      | Current progress                                                                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG14's useful sling competence, practice and coaching are designed; product review is complete; technical design and runtime delivery remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The selected sling practice and coaching consumer is delivered and reviewed; human appreciation and broader optional stats/checks remain open. | 2026-10-07   |
 
-**Status: proposed detailed behavior, October 3, expanded for DG14 on October 5, 2026.** This develops ND03 and now ND04's selected practical-skill slice. Typed attributes and state ownership already have implemented foundations; configurable contested checks and the complete behavior proposed here remain future work. Technical design is deferred. Existing action, state, knowledge, invention, world-policy and accounting owners remain authoritative.
+**Status: selected DG14 consumer delivered October 6, 2026; broader examples remain proposals.** This develops ND03 and ND04's selected practical-skill slice. The [scoped technical counterpart](authored-stats-tech-design.md) and [qualification](../verification/practical-competence.md) cover section 16's sling releases, target, private progress and voluntary coaching. Human appreciation remains open. Configurable contested checks, the roof/2d6 example and other stats remain future work. Existing action, state, knowledge, invention, world-policy and accounting owners remain authoritative.
 
 ## 1. The experience and recommendation
 
@@ -250,7 +250,7 @@ The service model used to choose an action is separate from the fictional stat. 
 
 The player can make meaningful progress by learning a method, inventing and keeping useful equipment, understanding an animal's behavior, becoming better prepared, building a chosen place or following through on a shared plan. NPCs can retain permitted experience and respond to the actual relationship. Those payoffs matter even without a level-up screen; each still requires its supported action, knowledge or relationship behavior.
 
-Observed success/failure can become actual experience and evidence. The October 3 proposal supplied **no automatic numerical skill gain, experience-point award or personality rewrite**. The October 5 DG14 expansion now selects one explicit exception: finite practice can earn a narrow sling-handling improvement under the [base-world rule](../worlds/base/practical-competence.md). This is proposed new behavior, not current automatic learning, and it awards no general XP or personality change. ND04's broader progression and [action experience](../maintainers/action-experience.md)'s learned-method responsibilities remain separate.
+Observed success/failure can become actual experience and evidence. The October 3 proposal supplied **no automatic numerical skill gain, experience-point award or personality rewrite**. The October 5 DG14 expansion now selects one explicit exception: finite practice can earn a narrow sling-handling improvement under the [base-world rule](../worlds/base/practical-competence.md). The selected release/coaching consumer is now implemented; it awards no general XP or personality change and does not grant a learned activity. ND04's broader progression and [action experience](../maintainers/action-experience.md)'s learned-method responsibilities remain separate.
 
 ## 10. Authoring the rule without programming
 
@@ -456,13 +456,13 @@ The roof dependency applies only to the optional roof example. The existing type
 
 ### 16.1 Selected first consumer and why it earns consideration
 
-The selected proposal is **practiced sling handling that improves the existing hunting shot's accuracy**, with a short independent practice route and optional willing coaching. The beginner keeps today's ordinary sling performance. A practiced person becomes more dependable with the same real tool; weapon quality and the animal's existing behavior remain consequential.
+The implemented selected consumer is **practiced sling handling that improves the existing hunting shot's accuracy**, with a short independent practice route and optional willing coaching. The beginner keeps today's ordinary sling performance. A practiced person becomes more dependable with the same real tool; weapon quality and the animal's existing behavior remain consequential.
 
 The [base-world competence owner](../worlds/base/practical-competence.md) supplies the exact two-state scale, finite practice requirements, modifier, inert target and coaching values. This specification owns the player experience and shared product boundaries. The original roof/2d6 candidate remains available for later comparison; it is not the chosen consumer and no new die is added to the sling's existing hit resolution.
 
 This choice follows an explicit rejection during review. Reducing the already short native cord-making or cooking duration would demonstrate a state-to-action connection, but at the current world clock the improvement could be almost imperceptible. A bulk-work queue or a longer compulsory craft would not rescue that weak payoff. A shot's success instead affects the real projectile spent, whether prey is injured and escapes, and what the player does next.
 
-The improvement is modest and finite. It does not unlock the sling only after a training quest, replace the quality of an invented sling, increase every source of damage, or turn a quiet player into a required hunter. A reusable inert target offers the same practice without harming animals. The target and practice action are explicitly new supported consumers; current hunting accepts a living animal and does not already support firing at a ground mark.
+The improvement is modest and finite. It does not unlock the sling only after a training quest, replace the quality of an invented sling, increase every source of damage, or turn a quiet player into a required hunter. A reusable inert target offers the same practice without harming animals. The prepared first scene now contains the real inert target, with a separate one-shot action. Ordinary hunting still accepts living animals; target practice uses its own safe-clearance checks.
 
 Progression can be a reason to revisit a useful activity, but withholding the activity itself would work against that goal. Guild Wars 2's specialization correction provides a concrete example of players wanting to enjoy new capabilities during the expansion rather than only after it. Its broader mastery design also emphasizes meaningful interactions. Those are reasons to preserve a capable beginner, not to copy account-wide fictional experience. [ST-R21](#st-r21), [ST-R22](#st-r22)
 
@@ -519,7 +519,7 @@ Progress follows the supported sling mechanism across eligible admitted items. D
 
 The resulting accuracy change preserves the equipment's ordering and does not rewrite its definition. An excellent sling remains better than a crude one for the same person. The animal's existing condition still applies afterward. This is an improvement to handling, not a promise of a fixed reduction in all misses or guaranteed food.
 
-The degree of improvement and the practice counts are proposed tuning. They are deliberately visible to the creator and inspectable by the learner. The game does not quietly raise the requirement after a successful shot, grant hidden catch-up because someone purchased a subscription, or change the odds because the service is busy.
+The degree of improvement and the practice counts are implemented authored tuning, subject to human game-value qualification. They are deliberately visible to the creator and inspectable by the learner. The game does not quietly raise the requirement after a successful shot, grant hidden catch-up because someone purchased a subscription, or change the odds because the service is busy.
 
 Observation and hearsay have useful but different consequences. Watching can let someone notice a method or form a belief under existing knowledge rules; hearing advice can give them something to try. Neither increments their performed-release count. A completed coaching episode has a defined narrower mechanical effect because both people actually participated. Learning a private recipe remains under its own explicit knowledge/disclosure route.
 
@@ -551,7 +551,7 @@ The NPC can choose to practice, ignore it, coach, decline to coach or prefer a b
 
 ### 16.8 Interruption, departure and correction
 
-An invalid release supplies no practice even if its intention was good. A real released miss does. The action result must make that difference clear so the player does not believe their history was lost. The new practice action follows a selected finish-or-cancel rule: once windup begins, it cannot be suspended for unrelated physical work. Explicit cancellation or a permitted replacing action before release ends preparation with no projectile debit or practice credit; elapsed time remains spent. After release, its actual projectile debit, result and credit remain. Saving/reopening a still-active action preserves that same action and rechecks its real conditions; it is not a player-controlled paused shot, a refund or a replay.
+An invalid release supplies no practice even if its intention was good. A real released miss does. The action result must make that difference clear so the player does not believe their history was lost. The new practice action follows a selected finish-or-cancel rule: once windup begins, it cannot be suspended for unrelated physical work. Explicit cancellation or a permitted replacing action before release ends preparation with no projectile debit or practice credit; elapsed time remains spent. After release, its actual projectile debit, result and credit remain. Saving/reopening preserves a still-active action under its existing participation contract and rechecks its real conditions; it is not a player-controlled paused shot, a refund or a replay. Continuously present NPC actions resume once. Existing human departure/load rules cancel unfinished preparation or feedback while preserving completed releases and coaching; this delivery does not alter presence policy.
 
 During an unfinished lesson, loss of actual observation, required communication, learner participation or coach capability prevents completion. Previously valid shots remain. Once the episode is complete, ordinary separation does not revoke it or create a return appointment.
 
@@ -571,7 +571,7 @@ The reviewable proposal identifies applicability, initial state, what counts as 
 
 The base-world numbers are one authored profile. They do not establish a universal engine skill system or permit arbitrary formula execution. A creator renaming the skill preserves its meaning; changing the family, effect or learning rule requires a real supported revision. A social-stat request cannot reuse a physical accuracy modifier to force consent.
 
-The proposed competence fits the current generic typed-state and permitted-presentation foundations, but needs actual action/evidence consumers and the new target/coaching behavior. Existing checked EWF tasks are not proof those consumers are delivered. The missing engineering work belongs to the focused [practical-competence tracker](../maintainers/practical-competence.md), with the established action/state/knowledge owners.
+The selected competence now uses the existing typed-state, permitted-presentation and action/evidence owners, with the real target and finite coaching episode. The [scoped technical design](authored-stats-tech-design.md) describes that integration. The [practical-competence tracker](../maintainers/practical-competence.md) distinguishes delivered native, SQL, UI and genuine-choice evidence from remaining human appreciation and broader work; unrelated checked EWF tasks are not substitute evidence.
 
 ### 16.10 Affordable operation and retained evidence
 
@@ -586,6 +586,8 @@ The narrow progress record references its real supporting events; it does not co
 An AI resident doing actual permitted shots may legitimately improve while the human is elsewhere, if the world's current execution and funding policies support those actions. Time passing, being offline or paying for a richer model does not itself perform practice. No per-resident background training schedule is created. The publisher's Ultima Online explanation usefully distinguishes time passing from the action that can actually award learning, without supplying this game's advancement clock. [ST-R25](#st-r25)
 
 ### 16.11 Product acceptance and reasons to simplify
+
+The [October 6 report](../verification/practical-competence.md) supplies native comparisons, current-format continuity, private UI and separate genuine NPC choices. It does not establish that players notice or appreciate the improvement. That criterion remains open in PC06; finite arithmetic is not human evidence.
 
 These stories define future product acceptance. They are not reports of runtime or human-playtest evidence.
 

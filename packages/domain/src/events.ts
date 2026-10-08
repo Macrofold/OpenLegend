@@ -1,3 +1,4 @@
+import { reconcileCoaching } from './coaching.js';
 import { renderNarration, subjectNarration, personalText, type Narration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { countDomainWork } from './diagnostic-counters.js';
@@ -472,6 +473,7 @@ function recordEvent(
   return event;
 }
 export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {
+  reconcileCoaching(world, events);
   advanceCommitments(world, events);
   reconcileConversations(world);
   world.sequence++;

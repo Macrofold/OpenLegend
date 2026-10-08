@@ -125,6 +125,8 @@ export type ActionType =
   | 'prepare'
   | 'craft'
   | 'hunt'
+  | 'practice-shot'
+  | 'coaching'
   | 'harvest'
   | 'cook'
   | 'status-effect'
@@ -132,6 +134,8 @@ export type ActionType =
   | 'replenish'
   | 'tend-fire';
 export interface Action {
+  competencePin?: import('./world-modules.js').DefinitionPin;
+  coachingEpisodeId?: string;
   requiresLethalReview?: boolean;
   /** A physical life, rather than the continuing identity, is an attack's target. */
   targetLife?: number;
@@ -195,6 +199,8 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  practice?: Record<string, import('./practical-competence.js').PracticeProgress>;
+  coachingEpisodeId?: string;
   /** Authored natural actions for bodies that do not use the manual-work family. */
   naturalStrikeIds?: string[];
   /** Identity/history survive a replacement body; unfinished effects do not. */
@@ -268,6 +274,7 @@ export interface HeatComponent {
   lit: boolean;
 }
 export interface Entity extends Named {
+  practiceTarget?: { attributeId: string };
   /** Authored outward detail, disclosed only with the perceived entity. */
   description?: string;
   threat?: import('./territorial-threat.js').TerritorialThreat;
@@ -276,7 +283,16 @@ export interface Entity extends Named {
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
   mechanismFields?: Record<string, Record<string, number>>;
   id: string;
-  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile' | 'item';
+  kind:
+    | 'player'
+    | 'npc'
+    | 'animal'
+    | 'resource'
+    | 'campfire'
+    | 'remains'
+    | 'item-pile'
+    | 'item'
+    | 'practice-target';
   inventoryRevision?: number;
   placement?: import('./spatial-state.js').Placement;
   item?: import('./objects.js').ItemLot;
@@ -365,6 +381,7 @@ export interface WorldState {
   places: Record<string, import('./places.js').PlaceDefinition>;
   /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
   visiblePlaces?: Record<string, Record<string, number>>;
+  coachingEpisodes?: Record<string, import('./coaching.js').CoachingEpisode>;
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: {
@@ -455,6 +472,14 @@ interface Envelope {
 export type Command = Envelope &
   (
     | import('./outings.js').OutingCommand
+    | { type: 'practice-shot'; targetId: string; weaponItemId?: string; ammoItemId?: string }
+    | {
+        type: 'coaching';
+        targetId: string;
+        attributeId: string;
+        operation: 'request' | 'accept' | 'decline' | 'withdraw' | 'feedback';
+        episodeId?: string;
+      }
     | {
         type: 'activity';
         methodId: string;

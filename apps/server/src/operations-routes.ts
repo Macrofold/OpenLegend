@@ -65,6 +65,7 @@ const CATEGORY: Record<Entity['kind'], WorldOverview['bodies'][number]['category
   animal: 'animal',
   resource: 'resource',
   campfire: 'fire',
+  'practice-target': 'object',
   remains: 'object',
   'item-pile': 'object',
   item: 'object',

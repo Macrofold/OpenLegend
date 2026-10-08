@@ -73,6 +73,7 @@ import {
   rottingArt,
   random,
   resourceArt,
+  practiceTargetArt,
   sceneryArt,
   predatorArt,
 } from './art';
@@ -905,9 +906,11 @@ export class WildernessScene implements WorldRenderer {
             ? `person:${view.id !== game.player.id}:${equipped}:${view.bodyState ?? ''}`
             : view.kind === 'animal' || view.kind === 'remains'
               ? `animal:${view.subtype}:${view.appearance}:${view.bodyState ?? ''}`
-              : view.kind === 'station'
-                ? 'fire'
-                : `resource:${JSON.stringify([view.subtype + view.name, resourceSeed])}`;
+              : view.kind === 'practice-target'
+                ? 'practice-target'
+                : view.kind === 'station'
+                  ? 'fire'
+                  : `resource:${JSON.stringify([view.subtype + view.name, resourceSeed])}`;
     let width =
       view.kind === 'item-pile'
         ? 1
@@ -973,9 +976,11 @@ export class WildernessScene implements WorldRenderer {
                         ? predatorArt(bear, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead)
                         : animalArt(deer, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead),
                   )
-                : view.kind === 'station'
-                  ? [0, 1, 2].map(fireArt)
-                  : [resourceArt(view.subtype + view.name, resourceSeed)];
+                : view.kind === 'practice-target'
+                  ? [practiceTargetArt()]
+                  : view.kind === 'station'
+                    ? [0, 1, 2].map(fireArt)
+                    : [resourceArt(view.subtype + view.name, resourceSeed)];
       const materials = crate
         ? [this.material('#a17a4d'), this.material('#564631')]
         : images.map((source) => {

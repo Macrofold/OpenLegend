@@ -230,7 +230,7 @@ const attributeDefinition = z
     version: z.number().int().positive(),
     name: text(64),
     meaning: z.string().max(1600).optional(),
-    implementation: z.enum(['number-v1', 'reservoir-v1', 'category-v1']),
+    implementation: z.enum(['number-v1', 'reservoir-v1', 'category-v1', 'finite-practice-v1']),
     disclosure: z.enum(['public', 'owner']),
     presentation: z.object({ icon: text(64), color: text(64) }).strict(),
     schema: z.union([
@@ -277,6 +277,26 @@ const attributeDefinition = z
     critical: criticalPresentation.optional(),
     editorCritical: criticalPresentation.optional(),
     condition: conditionPolicy.optional(),
+    practice: z
+      .object({
+        family: z
+          .object({ id: text(120), version: z.number().int().positive(), digest: text(128) })
+          .strict(),
+        independentReleases: z.number().int().positive(),
+        coachedReleases: z.number().int().positive(),
+        missReduction: finite.min(0).lt(1),
+        windupSeconds: finite.positive(),
+        feedbackSeconds: finite.positive(),
+        communicationRange: finite.positive(),
+        laneMargin: finite.positive(),
+        practiceLabel: text(1000),
+        coachingLabel: text(1000),
+        scope: text(1000),
+        guidance: text(1000),
+        improvedText: text(1000),
+      })
+      .strict()
+      .optional(),
     reservoir: z
       .object({
         drainPerSecond: finite.nonnegative().max(100),

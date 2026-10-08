@@ -213,11 +213,16 @@ export function admitAttributeDeclaration(
   if (!permission.ok) return { world: original, events: [], outcome: permission };
   const id = request.definition?.id ?? request.removeId!;
   const previous = attributeDefinition(original, id);
-  if (previous && HOST_IMPLEMENTATIONS[previous.implementation].storage !== 'attributes')
+  if (
+    previous &&
+    !['attributes', 'practice'].includes(HOST_IMPLEMENTATIONS[previous.implementation].storage)
+  )
     return reject('Body-backed bindings cannot be edited.');
   const users = Object.values(original.entities).filter(
     (e) =>
       e.actor?.attributes?.[id] ||
+      e.actor?.practice?.[id] ||
+      e.practiceTarget?.attributeId === id ||
       e.replenisher?.attributeId === id ||
       e.actor?.action?.attributeId === id ||
       e.actor?.agency.plan?.steps.some(
@@ -245,6 +250,9 @@ export function admitAttributeDeclaration(
       users.some(
         (e) =>
           e.actor?.action?.attributeId === id ||
+          e.actor?.action?.competencePin?.id === id ||
+          (e.actor?.coachingEpisodeId &&
+            original.coachingEpisodes?.[e.actor.coachingEpisodeId]?.pin.id === id) ||
           e.actor?.agency.plan?.steps.some(
             (step) =>
               ['queued', 'running'].includes(step.status) &&

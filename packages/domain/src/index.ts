@@ -252,3 +252,10 @@ export { basePlaytestMilestones } from './worlds/base/playtest.js';
 
 export * from './outings.js';
 export { BASE_OUTING } from './worlds/base/outing-policy.js';
+export * from './practical-competence.js';
+export * from './coaching.js';
+export {
+  SLING_HANDLING,
+  SLING_TARGET,
+  BASE_PRACTICE_COMMAND_DESCRIPTIONS,
+} from './worlds/base/practical-competence.js';

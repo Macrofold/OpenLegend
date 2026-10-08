@@ -23,6 +23,8 @@ const activities: Record<Action['type'], string | undefined> = {
   gather: 'gathering',
   prepare: 'preparing materials',
   craft: 'crafting',
+  'practice-shot': 'practicing a shot',
+  coaching: 'participating in guided feedback',
   hunt: 'hunting',
   harvest: 'harvesting',
   cook: 'cooking',

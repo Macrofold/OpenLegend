@@ -1,3 +1,22 @@
+import {
+  competenceValue,
+  toolPracticeDefinition,
+  practiceDefinition,
+  handlingAccuracy,
+  creditRelease,
+  practiceLaneProblem,
+} from './practical-competence.js';
+import {
+  applyCoaching,
+  coachingProblem,
+  coachingFor,
+  registerFeedback,
+  observeCoachedRelease,
+  completeFeedback,
+  feedbackWaiting,
+  reconcileActorCoaching,
+} from './coaching.js';
+import { hasOtherTargetUser } from './entity-index.js';
 import { subjectNarration, person, presentVerb } from './narration.js';
 import { prepareRecipeLearning, readRecipeRecord } from './recipe-records.js';
 import { learnRecipe } from './knowledge.js';
@@ -389,7 +408,7 @@ function actionReach(world: WorldState, action: Action): number {
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
     return definition?.approachRange ?? definition?.range ?? 0;
   }
-  if (action.type !== 'hunt') return SIMULATION_RULES.interactionRadius;
+  if (!['hunt', 'practice-shot'].includes(action.type)) return SIMULATION_RULES.interactionRadius;
   const range =
     world.itemDefinitions[itemFor(world, action.weaponItemId ?? '')?.definitionId ?? '']?.launcher
       ?.range ?? 0;
@@ -679,9 +698,9 @@ function startWork(
   const experience = occurrenceFor(world, actor.id, action.id);
   if (experience?.view.children?.[0])
     experience.view.children[0].result = 'Reached the required working distance.';
-  if (experience && ['strike', 'hunt'].includes(action.type))
+  if (experience && ['strike', 'hunt', 'practice-shot'].includes(action.type))
     (experience.view.children ??= []).push({
-      name: action.type === 'hunt' ? 'Shoot once' : 'Attack once',
+      name: ['hunt', 'practice-shot'].includes(action.type) ? 'Shoot once' : 'Attack once',
       facts: [],
     });
   action.consumed = requirements;
@@ -777,9 +796,18 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
   if (
-    (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
-      command.type,
-    ) ||
+    ([
+      'gather',
+      'prepare',
+      'craft',
+      'equip',
+      'hunt',
+      'practice-shot',
+      'coaching',
+      'harvest',
+      'cook',
+      'strike',
+    ].includes(command.type) ||
       command.type === 'tend-fire' ||
       command.type === 'treat-scar') &&
     !supportsManualWork(source) &&
@@ -803,9 +831,17 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
-            command.type,
-          ) ||
+      : ([
+            'gather',
+            'harvest',
+            'hunt',
+            'practice-shot',
+            'replenish',
+            'strike',
+            'pickup',
+            'follow',
+          ].includes(command.type) ||
+            (command.type === 'coaching' && !['decline', 'withdraw'].includes(command.operation)) ||
             command.type === 'tend-fire' ||
             command.type === 'treat-scar') &&
           'targetId' in command
@@ -895,6 +931,18 @@ function prepareNativeOperation(
     consumed: [],
   });
   switch (command.type) {
+    case 'coaching': {
+      const problem = coachingProblem(world, actor, command);
+      if (problem) return problem;
+      if (command.operation === 'feedback') {
+        const definition = practiceDefinition(world, command.attributeId)!;
+        action = temporary('coaching', definition.practice!.feedbackSeconds);
+        action.targetId = command.targetId;
+        action.coachingEpisodeId = command.episodeId;
+        action.competencePin = definitionPin(definition);
+      }
+      break;
+    }
     case 'say': {
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
       if (!isSpeechVolume(command.volume ?? 'normal'))
@@ -1106,6 +1154,7 @@ function prepareNativeOperation(
         return reject('not-equippable', 'Choose a free tool in this inventory.');
       break;
     }
+    case 'practice-shot':
     case 'hunt': {
       if ((component.attackReadyAt ?? 0) > world.simTime)
         return reject(
@@ -1113,10 +1162,14 @@ function prepareNativeOperation(
           'Finish recovering from the last swing before attacking again.',
         );
       const target = getOwn(world.entities, command.targetId);
-      if (!(target?.animal && target.actor?.alive))
-        return reject('not-huntable', 'Choose a living animal.');
+      const practice = command.type === 'practice-shot';
+      if (!target || (practice ? !target.practiceTarget : !(target.animal && target.actor?.alive)))
+        return reject(
+          'invalid-target',
+          practice ? 'Choose a supported inert practice target.' : 'Choose a living animal.',
+        );
       if (!visible(world, actor, target))
-        return reject('not-visible', 'The animal is out of sight.');
+        return reject('not-visible', 'The target is out of sight.');
       const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
       const item = itemFor(world, weaponItemId);
       const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
@@ -1125,16 +1178,52 @@ function prepareNativeOperation(
       const ammo = ammoFor(world, actor.id, launcher.ammunitionKind, command.ammoItemId);
       if (!ammo)
         return reject('no-ammunition', `Need compatible ${launcher.ammunitionKind} ammunition.`);
-      action = temporary('hunt', SIMULATION_RULES.shotSeconds);
+      const competence = toolPracticeDefinition(world, world.itemDefinitions[item.definitionId]!);
+      if (competence && competenceValue(component, competence) === undefined)
+        return reject(
+          'competence-unavailable',
+          'This character’s handling is unavailable. The world creator must restore it before this shot.',
+        );
+      if (practice) {
+        if (!competence || target!.practiceTarget!.attributeId !== competence.id)
+          return reject(
+            'unsupported-tool',
+            'This practice target requires its supported tool mechanism.',
+          );
+        if (hasOtherTargetUser(world, actor.id, 'practice-shot', target.id))
+          return reject(
+            'target-in-use',
+            'Another person is using this practice target. Choose a shot after they finish.',
+          );
+        if (canReachEntity(world, actor, target!, rangedApproachRange(launcher.range))) {
+          const safety = practiceLaneProblem(
+            world,
+            actor,
+            target!,
+            launcher.range,
+            competence.practice!.laneMargin,
+          );
+          if (safety) return safety;
+        }
+      }
+      action = temporary(
+        command.type,
+        competence?.practice?.windupSeconds ?? SIMULATION_RULES.shotSeconds,
+      );
+      if (competence) action.competencePin = definitionPin(competence);
       action.targetId = target.id;
       action.weaponItemId = item.id;
       action.ammoItemId = ammo.id;
-      action.targetLife = target.actor.physicalLife ?? 0;
-      action.lethalPermission = command.lethalPermission;
-      action.requiresLethalReview = command.humanInitiated;
+      if (command.type === 'hunt') {
+        action.targetLife = target!.actor!.physicalLife ?? 0;
+        action.lethalPermission = command.lethalPermission;
+        action.requiresLethalReview = command.humanInitiated;
+      }
       const review = options.skipLethalReview
         ? null
-        : attackReviewProblem(world, actor, target, action);
+        : practice
+          ? null
+          : attackReviewProblem(world, actor, target!, action);
       if (review) return review;
       break;
     }
@@ -1307,7 +1396,7 @@ function prepareNativeOperation(
       return reject('unsupported', 'This command is not supported.');
   }
   if (action) {
-    if (action.type !== 'follow' && !['prepare', 'craft'].includes(action.type)) {
+    if (action.type !== 'follow' && !['prepare', 'craft', 'coaching'].includes(action.type)) {
       const error = approach(world, actor, action);
       if (error) return error;
     }
@@ -1407,9 +1496,18 @@ function executeCommandNative(
     options.preview &&
     standalone &&
     action &&
-    ['move', 'strike', 'gather', 'hunt', 'harvest', 'pickup', 'replenish', 'follow'].includes(
-      action.type,
-    )
+    [
+      'move',
+      'strike',
+      'gather',
+      'hunt',
+      'practice-shot',
+      'coaching',
+      'harvest',
+      'pickup',
+      'replenish',
+      'follow',
+    ].includes(action.type)
   )
     return {
       world: original,
@@ -1495,6 +1593,10 @@ function executeCommandNative(
     );
   if (!action)
     switch (command.type) {
+      case 'coaching':
+        result = applyCoaching(world, actor, command, events);
+        if (!result.ok) return { world: original, events: [], outcome: result };
+        break;
       case 'activity':
         if (command.interrupt && !command.resume) {
           const refused = suspendCurrentWork(world, actor.id);
@@ -2188,6 +2290,7 @@ function executeCommandNative(
         outcome(false, 'cancelled', 'Replaced by newly chosen work; committed effects remain.'),
       );
     component.action = action;
+    if (action.type === 'coaching') registerFeedback(world, actor, action);
     if (experience && action.stage === 'approaching')
       experience.view.children = [
         {
@@ -2214,7 +2317,7 @@ function executeCommandNative(
             )
           : subjectNarration(
               actor,
-              `started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+              `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
             ),
       actor,
       action.targetId,
@@ -2499,17 +2602,23 @@ function completeAction(
       );
       break;
     }
+    case 'coaching':
+      completeFeedback(world, actor, action, events);
+      return;
+    case 'practice-shot':
     case 'hunt': {
+      const practice = action.type === 'practice-shot';
       const target = world.entities[action.targetId ?? ''];
       const weapon = itemFor(world, action.weaponItemId ?? '');
       const launcher = weapon && world.itemDefinitions[weapon.definitionId]?.launcher;
       if (
-        !(target?.animal && target.actor?.alive) ||
+        !target ||
+        (practice ? !target.practiceTarget : !(target.animal && target.actor?.alive)) ||
         !weapon ||
         !accessiblePossession(world, actor.id, weapon.id) ||
         !launcher
       ) {
-        failAction(world, actor, events, 'the animal or ranged tool is no longer available.');
+        failAction(world, actor, events, 'the target or ranged tool is no longer available.');
         return;
       }
       const ammunition = ammoFor(world, actor.id, launcher.ammunitionKind, action.ammoItemId);
@@ -2518,11 +2627,42 @@ function completeAction(
         return;
       }
       if (!canReachEntity(world, actor, target, launcher.range)) {
-        failAction(world, actor, events, 'the animal moved out of range.');
+        failAction(world, actor, events, 'the target is outside clear firing range.');
         return;
       }
       const bonus = world.itemDefinitions[ammunition.definitionId]!.ammunition!.damageBonus;
-      const review = attackReviewProblem(world, actor, target, action);
+      const definition = world.itemDefinitions[weapon.definitionId]!;
+      const handling = handlingAccuracy(world, actor, definition);
+      if (
+        action.competencePin &&
+        (!handling.definition ||
+          !sameDefinitionPin(action.competencePin, definitionPin(handling.definition)))
+      ) {
+        failAction(world, actor, events, 'the selected handling rule changed; choose a new shot.');
+        return;
+      }
+      if (handling.definition && handling.competence === undefined) {
+        failAction(world, actor, events, 'the applicable handling record is unavailable.');
+        return;
+      }
+      if (practice && target.practiceTarget!.attributeId !== handling.definition?.id) {
+        failAction(
+          world,
+          actor,
+          events,
+          'the target no longer supports the selected handling rule.',
+        );
+        return;
+      }
+      const review = practice
+        ? practiceLaneProblem(
+            world,
+            actor,
+            target!,
+            launcher.range,
+            handling.definition!.practice!.laneMargin,
+          )
+        : attackReviewProblem(world, actor, target!, action);
       if (review) {
         failAction(world, actor, events, review.message);
         return;
@@ -2532,34 +2672,34 @@ function completeAction(
         return;
       }
       const accuracy =
-        launcher.accuracy *
-        ((
-          target.threat
-            ? target.threat.mode === 'return' && !!target.actor.action
-            : target.animal.danger > 0
-        )
+        handling.accuracy *
+        (!practice &&
+        (target.threat
+          ? target.threat.mode === 'return' && !!target.actor?.action
+          : (target.animal?.danger ?? 0) > 0)
           ? 0.85
           : 1);
       const hit = nextRandom(world) < accuracy;
       action.strikeOutcome = hit ? 'hit' : 'miss';
-      const damage = hit
-        ? (launcher.damage + bonus) * scarFactor(world, actor, 'outgoingInjuryFactor')
-        : 0;
+      const damage =
+        hit && !practice
+          ? (launcher.damage + bonus) * scarFactor(world, actor, 'outgoingInjuryFactor')
+          : 0;
       const actualDamage = Math.min(
-        target.actor!.health,
+        target.actor?.health ?? 0,
         damage *
-          target.actor!.body!.susceptibility.injury *
+          (target.actor?.body?.susceptibility.injury ?? 0) *
           scarFactor(world, target, 'incomingInjuryFactor'),
       );
-      if (!target.threat) rememberAttack(world, target, actor);
-      emit(
+      if (!practice && !target.threat) rememberAttack(world, target, actor);
+      const released = emit(
         world,
         events,
         'shot',
         subjectNarration(actor, [
           hit ? 'hit ' : 'missed ',
           person(target, actor.id === target.id ? 'reflexive' : 'object'),
-          `${hit ? ` for ${actualDamage} damage` : ''}. One projectile was used.`,
+          `${hit && !practice ? ` for ${actualDamage} damage` : ''}. One projectile was used.`,
         ]),
         actor,
         target.id,
@@ -2571,6 +2711,22 @@ function completeAction(
           targetReference: true,
         },
       );
+      const occurrence = occurrenceFor(world, actor.id, action.id);
+      if (occurrence)
+        occurrence.release = {
+          eventId: released.id,
+          tool: definitionPin(definition),
+          ...(handling.definition ? { family: handling.definition.practice!.family } : {}),
+          ...(handling.competence === undefined ? {} : { competence: handling.competence }),
+          accuracy,
+          ammunitionItemId: ammunition.id,
+          ammunitionDefinitionId: ammunition.definitionId,
+          quantity: 1,
+          hit,
+          damage: actualDamage,
+        };
+      const support = creditRelease(world, actor, definition, released, events);
+      observeCoachedRelease(world, actor, released, support, events);
       if (actualDamage > 0)
         commitBodyEffects(
           world,
@@ -2653,7 +2809,7 @@ function completeAction(
       true,
       action.strikeOutcome ?? 'completed',
       action.strikeOutcome
-        ? `The ${action.type === 'hunt' ? 'shot' : 'strike'} ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; this one attempt has ended.`
+        ? `The ${['hunt', 'practice-shot'].includes(action.type) ? 'shot' : 'strike'} ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; this one attempt has ended.`
         : (completion ?? `${action.type} completed.`),
     ),
     ...(outputItemId ? { itemId: outputItemId } : {}),
@@ -2995,6 +3151,10 @@ function advanceAction(
     action.transferred = (action.transferred ?? 0) + amount;
     if (value + amount === definition.schema.max || target.replenisher.remaining === 0)
       action.remainingSeconds = 0;
+  }
+  if (action.type === 'coaching') {
+    reconcileActorCoaching(world, actor.id, events);
+    if (actor.actor!.action !== action || feedbackWaiting(world, actor, action)) return;
   }
   if (action.type === 'status-effect') return; // Effect conditions own completion; docs/status-effects.md#transitions.
   action.remainingSeconds = Math.max(0, action.remainingSeconds - seconds);

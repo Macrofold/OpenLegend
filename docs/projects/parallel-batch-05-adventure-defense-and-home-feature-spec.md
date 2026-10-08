@@ -1,8 +1,8 @@
 # Batch 05 — Adventure, defense and a home
 
-| Status      | Current progress                                                                                                                                      | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | AV01 content and the record/travel/manufacture/use journey are implemented and reviewed; AV02 two-hand integration and other assignments remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                                                                 | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | AV01 expeditions and AV03 sling practice/coaching are implemented and reviewed; AV02 integration, human value and other assignments remain open. | 2026-10-08   |
 
 ## Purpose and selection
 

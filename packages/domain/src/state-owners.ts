@@ -15,7 +15,7 @@ import {
   type DefinitionPin,
 } from './world-modules.js';
 import { setBodyHealth } from './body-state.js';
-import { reconcileBody } from './living.js';
+import { reconcileBody, supportsManualWork } from './living.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 
 export interface StateAddress {
@@ -90,9 +90,14 @@ export function stateOwnerCapabilities(world: WorldState) {
     definition: definitionPin(definition),
     owner: HOST_IMPLEMENTATIONS[definition.implementation].owner,
     valueKind: definition.schema.kind,
-    operations: definition.schema.kind === 'number' ? ['replace', 'increment'] : ['replace'],
-    initialization:
-      HOST_IMPLEMENTATIONS[definition.implementation].storage === 'attributes'
+    operations: definition.practice
+      ? []
+      : definition.schema.kind === 'number'
+        ? ['replace', 'increment']
+        : ['replace'],
+    initialization: definition.practice
+      ? 'explicit-authored-starting-support'
+      : HOST_IMPLEMENTATIONS[definition.implementation].storage === 'attributes'
         ? 'explicit-owner-initialization'
         : 'native-body-applicability',
     disclosure: definition.disclosure,
@@ -118,6 +123,7 @@ function revision(entity: Entity, definition: AttributeDefinition): number {
   if (storage === 'attributes')
     return (entity.actor?.attributes ?? entity.attributes)?.[definition.id]?.revision ?? 0;
   if (storage === 'health') return entity.actor?.body?.revision ?? 0;
+  if (storage === 'practice') return entity.actor?.practice?.[definition.id]?.revision ?? 0;
   return 0;
 }
 
@@ -142,7 +148,13 @@ export function readState(
       ? entity.attributes?.[definition.id]?.value
       : undefined;
   if (value === undefined)
-    return { status: storage === 'attributes' ? 'uninitialized' : 'not-applicable' };
+    return {
+      status:
+        storage === 'attributes' ||
+        (storage === 'practice' && entity.actor && supportsManualWork(entity))
+          ? 'uninitialized'
+          : 'not-applicable',
+    };
   return { status: 'known', value, revision: revision(entity, definition) };
 }
 
@@ -184,6 +196,7 @@ export function writeState(
   if (value === prior.value) return { status: 'unchanged', value, revision: prior.revision };
   if (!Number.isSafeInteger(prior.revision + 1)) return { status: 'invalid' };
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
+  if (storage === 'practice') return { status: 'unsupported' };
   if (storage === 'attributes') {
     try {
       setAttribute(world, entity, definition, value, events, conditionTiming);

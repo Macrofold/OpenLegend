@@ -35,6 +35,8 @@ export interface CommandInput {
     | 'equip'
     | 'strike'
     | 'hunt'
+    | 'practice-shot'
+    | 'coaching'
     | 'harvest'
     | 'cook'
     | 'tend-fire'
@@ -68,6 +70,8 @@ export interface CommandInput {
   operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
   fireOperation?: 'light' | 'fuel' | 'extinguish';
+  coachingOperation?: 'request' | 'accept' | 'decline' | 'withdraw' | 'feedback';
+  episodeId?: string;
   handoverOperation?: 'offer' | 'counter' | 'accept' | 'decline' | 'withdraw';
   outingOperation?: 'invite' | 'accept' | 'decline' | 'leave';
   outingId?: string;
@@ -282,7 +286,7 @@ export interface EntityView extends Named {
   statusEffects?: StatusEffectView[];
   attributes?: AttributeView[];
   id: string;
-  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station' | 'item-pile';
+  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station' | 'item-pile' | 'practice-target';
   subtype: string;
   position: Position;
   supportSurfaceId: string | null;
@@ -644,6 +648,7 @@ export interface GameView {
     heading: number;
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
+    practice: PracticeProgressView[];
     actionAnimation?: ActionAnimation | null;
     /** Configured applicable suggestions in authoritative presentation order. */
     suggestedActionIds: string[];
@@ -1329,4 +1334,18 @@ export interface FamilyView {
   }>;
   next: string | null;
   preview?: string;
+}
+
+export interface PracticeProgressView {
+  id: string;
+  name: string;
+  value: 0 | 1;
+  starting: boolean;
+  releases: number;
+  independentRequired: number;
+  coachedRequired: number;
+  coached: boolean;
+  scope: string;
+  effect: string;
+  evidence: { occurrenceId: string; eventId: string; description: string }[];
 }

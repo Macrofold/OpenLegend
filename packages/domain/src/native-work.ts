@@ -1,4 +1,5 @@
 import { initializeAppraisalWork, ownsAppraisalWork } from './appraisals.js';
+import { ownsCoachingWork } from './coaching.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { isDraft, original } from 'immer';
 import { worldRootEntities } from './entity-index.js';
@@ -214,6 +215,16 @@ export function validateNativeWork(world: WorldState): void {
   for (const invocation of Object.values(world.workState?.invocations ?? {})) {
     if (invocation.parentId) continue;
     if (ownsAppraisalWork(world, invocation.id, invocation.actorId, invocation.definitionPin))
+      continue;
+    if (
+      ownsCoachingWork(
+        world,
+        invocation.id,
+        invocation.actorId,
+        invocation.definitionPin,
+        invocation.moduleId,
+      )
+    )
       continue;
     const entity = world.entities[invocation.actorId];
     let active = episodes.get(invocation.actorId);

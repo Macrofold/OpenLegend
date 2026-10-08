@@ -45,7 +45,7 @@ export const BASE_FAMILY_FACTS = {
     equip: ['itemId'],
   } as Readonly<Record<string, readonly string[]>>,
   unitPerCommand: ['eat'],
-  unpausableWhileWorking: ['strike', 'hunt'],
+  unpausableWhileWorking: ['strike', 'hunt', 'practice-shot', 'coaching'],
   cooking: { input: 'raw_meat', output: 'cooked_meat' },
 } as const;
 

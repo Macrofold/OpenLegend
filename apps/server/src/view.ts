@@ -1,6 +1,14 @@
 import { outingViews } from './outing-view.js';
 
 import { recipeDetailsView } from './recipe-view.js';
+import { competenceOptions, waitingForFeedback } from './competence-actions.js';
+import {
+  ownPractice,
+  occurrenceFor,
+  renderActivity,
+  type PracticeView,
+  type ActivityOccurrence,
+} from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
@@ -210,6 +218,46 @@ export async function projectView(
   );
   const player = world.entities[scope.actorId]!;
   const actor = player.actor!;
+  const generation = service.generation;
+  const historyEpoch = service.historyEpoch;
+  const practice = await memo<Promise<PracticeView[]>>(
+    'practice',
+    [actor.practice, world.moduleManifest, generation, historyEpoch],
+    async () => {
+      const progress = ownPractice(world, player);
+      const missing = progress.flatMap((p) =>
+        p.evidence
+          .filter((e) => !occurrenceFor(world, player.id, e.occurrenceId))
+          .map((e) => e.occurrenceId),
+      );
+      const recorded = new Map<string, ActivityOccurrence>();
+      if (service.store.records)
+        for (let offset = 0; offset < missing.length; offset += 128) {
+          const rows = await service.store.records.activityPage(
+            world.id,
+            player.id,
+            -1,
+            missing.slice(offset, offset + 128),
+            128,
+          );
+          for (const row of rows) if (!row.entry.revoked) recorded.set(row.entry.id, row.entry);
+        }
+      return progress.map((p) => ({
+        ...p,
+        evidence: p.evidence.map((e) => ({
+          ...e,
+          description: recorded.has(e.occurrenceId)
+            ? renderActivity(recorded.get(e.occurrenceId)!.view, 'What happened')
+            : e.description,
+        })),
+      }));
+    },
+  );
+  // A correction can revoke retained evidence while SQL inspection is pending.
+  // Recheck even a cached promise before publishing pre-correction private text.
+  if (generation !== service.generation || historyEpoch !== service.historyEpoch)
+    throw new Error('The world changed during practice inspection.');
+  service.assertScope(scope);
   const quantity = (definitionId: string) => quantityOf(world, player.id, definitionId);
   const active =
     actor.participation?.phase !== 'inactive' &&
@@ -424,6 +472,17 @@ export async function projectView(
                   : `Carry compatible ${launcher.ammunitionKind} ammunition.`,
               ),
             );
+          for (const option of competenceOptions(
+            world,
+            scope.actorId,
+            entity,
+            observation.inventory,
+          )) {
+            const preview = service.previewCommand(option.command, scope.actorId);
+            actions.push(
+              action(option.id, option.label, option.command, preview.ok, preview.message),
+            );
+          }
           if (entity.actor)
             for (const option of handoverOptions(
               world,
@@ -463,8 +522,9 @@ export async function projectView(
                   recipeId: recipe.id,
                 }),
               );
-          const kind: EntityView['kind'] =
-            entity.kind === 'item-pile'
+          const kind: EntityView['kind'] = entity.practiceTarget
+            ? 'practice-target'
+            : entity.kind === 'item-pile'
               ? 'item-pile'
               : entity.remains
                 ? 'remains'
@@ -533,6 +593,8 @@ export async function projectView(
                         gather: 'Gathering',
                         'status-effect': 'Active state',
                         hunt: 'Hunting',
+                        'practice-shot': 'Practicing a shot',
+                        coaching: 'Giving/receiving guided feedback',
                         strike: 'Striking',
                         harvest: 'Harvesting',
                         cook: 'Cooking',
@@ -805,6 +867,10 @@ export async function projectView(
     gather: `Gathering${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     harvest: `Harvesting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     strike: `Striking${targetName ? ` ${targetName}` : ''}`,
+    'practice-shot': 'Preparing one practice shot',
+    coaching: waitingForFeedback(world, player)
+      ? 'Waiting for the other person to choose feedback'
+      : 'Guided feedback',
     hunt: `Hunting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     cook: 'Cooking meat',
     'tend-fire':
@@ -910,7 +976,10 @@ export async function projectView(
       position: worldPosition(player),
       supportSurfaceId: worldSupport(player),
       heading: player.spatial.heading,
-      attributes: projectAttributes(world, player, 'owner'),
+      attributes: projectAttributes(world, player, 'owner').filter(
+        (attribute) => !attributeDefinition(world, attribute.id)?.practice,
+      ),
+      practice,
       actionAnimation: actionAnimation(world, player),
       suggestedActionIds,
       alive: actor.alive,
@@ -961,6 +1030,8 @@ export async function projectView(
                   'harvest',
                   'treat-scar',
                   'hunt',
+                  'practice-shot',
+                  'coaching',
                   'strike',
                   'replenish',
                   'tend-fire',
@@ -970,7 +1041,8 @@ export async function projectView(
               actor.action.stage === 'working'
                 ? actor.action.totalSeconds - actor.action.remainingSeconds
                 : 0,
-            advancing: !paused && actor.action.stage === 'working',
+            advancing:
+              !paused && actor.action.stage === 'working' && !waitingForFeedback(world, player),
             label: actor.action.navigation
               ? 'Preparing route'
               : (workLabels[actor.action.type] ?? 'Working'),

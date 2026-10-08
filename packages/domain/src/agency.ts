@@ -1289,11 +1289,19 @@ export function isPhysicalCommand(command: Command): boolean {
         isSafeRecordId(command.definitionId) &&
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId))
       );
+    case 'practice-shot':
     case 'hunt':
       return (
         isSafeRecordId(command.targetId) &&
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId)) &&
         (command.ammoItemId === undefined || isSafeRecordId(command.ammoItemId))
+      );
+    case 'coaching':
+      return (
+        isSafeRecordId(command.targetId) &&
+        isSafeRecordId(command.attributeId) &&
+        ['request', 'accept', 'decline', 'withdraw', 'feedback'].includes(command.operation) &&
+        (command.operation === 'request' || isSafeRecordId(command.episodeId))
       );
     case 'cook':
       return isSafeRecordId(command.itemId) && isSafeRecordId(command.heatId);

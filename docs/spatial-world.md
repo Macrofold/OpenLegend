@@ -62,6 +62,8 @@ Being located at a point and being supported by a surface are different facts. A
 
 A ground actor's position denotes its support anchor, normally the feet. Body extents and eye, ear, and interaction anchors are derived from admitted body profiles. A flying actor uses the same position convention; its body remains above that anchor according to its profile. “Altitude above ground” is a derived measurement relative to a specified surface below, not a second independently writable position.
 
+Candidate queries must conservatively include every body that could satisfy the following exact check. A point index stores anchors, not occupied body volume: expand bounds for the admitted widths, heights and anchor offsets used by the consumer, then test the actual body/segment. A centre outside a segment endpoint or feet below a short elevated segment do not prove the body is clear. Test endpoint crossings, height/cell boundaries and zero horizontal length where applicable. Filter physically irrelevant object kinds before exact work, without filtering legitimate blockers by what a character notices. [Sling review](verification/practical-competence.md#requested-review--october-6-2026) demonstrates both endpoint and lower-cell failures; it does not establish new projectile physics.
+
 Facing belongs to the actor, not the camera. Turning the view must not turn the person, change a sensory cone, redirect an attack, or alter an animal's intent. Initial ground actors can remain upright with one authoritative heading. Full arbitrary bodily rotation is an extension, not a prerequisite for 3D coordinates.
 
 ## Ground, structures, and levels
