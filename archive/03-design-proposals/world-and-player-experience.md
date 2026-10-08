@@ -155,4 +155,3 @@ Add biomes and scenarios only when existing residents can use them meaningfully.
 ## Product boundaries for the first release
 
 The first loop combines survival, social choices and discovery. Built-in gathering/eating/resting, meaningful needs and NPC death, and an explicit accelerated clock belong in the initial foundation. Combat depth, inheritance, intensive farming, extensive anatomy, businesses, advanced lifecycle simulation, phones, and spatial voice can follow. Quota exhaustion should leave movement, known interactions, basic needs management, and social continuity playable. The archive's [roadmap](../05-project/roadmap.md) proposes concrete gates for adding each layer.
-

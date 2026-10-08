@@ -580,7 +580,7 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** choose how remote communication becomes available in a world, beginning with contacts/asynchronous text if useful. Define addressing, delivery/read status, availability, blocking, offline retention and who may learn each message. Calls additionally need schedules, missed/interrupted calls and private media delivery coordinated with ND15. A connection must not expose unrelated remote conversations or grant fictional knowledge from account metadata.
 
-**DG24 product disposition, October 6, 2026:** The [researched asynchronous-text proposal](../projects/world-text-messages-feature-spec.md) now answers the contacts/text portion through a selected optional message-slate world profile. It adds no current primitive equipment or delivered remote capability. [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns implementation and privacy qualification; DG26 retains calls and their separate media journey. This design completion leaves the original decision/implementation status above explicit.
+**DG24 product disposition, October 6, 2026:** The [researched asynchronous-text proposal](../projects/world-text-messages-feature-spec.md) now answers the contacts/text portion through a selected optional message-slate world profile. It adds no current primitive equipment or delivered remote capability. [NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) owns implementation and privacy qualification; [DG26](#dg26--voice-calls-and-selected-hearing-extensions) now supplies the separate researched call proposal under NC23, with its optional authored profile and media stages. Both proposals leave technical/runtime adoption and qualification open; the original decision/implementation statuses above remain explicit.
 
 ### ND15 — Audible NPC dialogue, microphone input and proximity voice
 
@@ -590,6 +590,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before an implementation project:** select NPC playback, microphone-to-text, human proximity voice or a bounded combination. Define the relationship between audio, transcripts, committed utterances, interruptions and simulation speed. Media must preserve each listener's permitted words and recognized speaker identity; audience membership alone cannot authorize the full utterance. Specify synthesis/transcription reuse, enforceable audiences, permission denial, mute/revocation/reconnect, media retention, rights, cost and latency. Deliver paired designs and staged work through HE/NC/MP and existing spending owners.
 
+**DG26 product disposition, October 8, 2026:** [The product-only proposal](../projects/voice-and-calls-feature-spec.md) now selects independently useful permitted readback and reviewed microphone drafting, with explicit later call/timed/raw-voice boundaries. [HE07](hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) retains technical design and actual delivery; source research does not select a provider or close D10.
+
 ### ND16 — Hearing and communication beyond direct-path speech
 
 **Conditional scoped design.** Sources: [deliberate hearing extension boundaries](../hearing-and-speech.md#12-deliberate-extension-boundaries), [HE deferred expansion](hearing-and-speech.md#deferred-expansion), and [hearing limits](../limits/hearing-and-speech.md).
@@ -597,6 +599,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Existing coverage:** present hearing, recognition uncertainty and captions are specified. PS04/PS-D02 already own crowd competition, aggregate commotion, stable focus and the timing choice needed for overlapping speech; do not duplicate those tasks here.
 
 **Needed before an implementation project:** select a concrete additional need such as rooms/portals, voice familiarity, language comprehension, amplification or sound-triggered waking. Define propagation or recognition inputs, partial/late listening where relevant, what the listener actually learns, native reactions and saved state. Establish bounded update/query work and meaningful scenarios. Frequency-level acoustics, lip-reading and other listed extensions remain options rather than one required simulation package.
+
+**DG26 product disposition, October 8, 2026:** [The doorway consumer](../projects/voice-and-calls-feature-spec.md#8-the-selected-doorway-extension) starts with two current speech events around actual movement/door changes, then scopes genuine phrase-timed speech only with a qualified common mechanical pace. It adds no mandatory indirect propagation, waking, recognition or language system; PS04/HE07 retain the selected extension and its unperformed evidence.
 
 ### ND17 — Correcting speech that characters have already perceived
 
@@ -813,4 +817,3 @@ The game-inspiration library and game dossiers, worldbuilding research library, 
 Prefer current canonical owners and concrete project/tracker evidence over old blanket status statements. Examples found during this pass include earlier inactive-world pause assumptions versus the newer continuing-world direction; earlier timing/camera descriptions versus current owners; and old "no art study" or pre-foundation implementation claims. Those sources were left in place. The register preserves the useful future intent without adopting superseded behavior or undertaking unrelated documentation cleanup.
 
 The [root development-save policy](../../AGENTS.md#development-save-policy), current privacy/authority boundaries, and existing acceptance requirements remain controlling. Future portability, live-definition changes, retention or service promises must be designed within those constraints; an entry here does not change them.
-
