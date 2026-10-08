@@ -1,10 +1,10 @@
 # Product scalability — technical design and staged plan
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The shared design foundation is delivered; detailed child designs and all PS02–PS08 runtime qualification remain open. | 2026-10-04   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The shared design is delivered; existing native activities are prerequisites, while PS02–PS08 integration and qualification remain open. | 2026-10-07   |
 
-**Status: proposed implementation design supporting accepted product direction, October 2, 2026. The current task delivers documentation only. No runtime work, new service, database migration, paid experiment, or deployment is authorized by this document.**
+**Status: proposed implementation design supporting accepted product direction, October 2, 2026. The original suite-authoring task delivered documentation only. This document does not itself authorize runtime work, a new service, a database migration, paid experiments or deployment, and does not cancel later owner-approved work under the [root task policy](../../AGENTS.md#task-scope-and-authorization).**
 
 ## Maintained records
 
@@ -107,7 +107,7 @@ A shared campaign owns bounded canonical strategic facts. Local encounters stay 
 
 **PS01: preserve the target and reconcile owners.** Deliver this documentation suite and explicitly distinguish current execution from future policy. No runtime changes.
 
-**PS02: one interruptible life.** First improve one resident’s useful follow-through in the running personal game. Extend one existing activity family and its agency continuation rather than waiting for an unattended community or a new construction family. Demonstrate work, resource exhaustion, alarm, damage, cancellation, and restart with scoped evidence and no per-step generation. Decide the smallest policy vocabulary from these cases.
+**PS02: one interruptible life.** First improve one resident’s useful follow-through in the running personal game. Reuse one supported activity family and its existing agency continuation rather than waiting for an unattended community or a new construction family. Extend only the concrete completion or interruption conditions that the selected episode needs and the current owner lacks; retained goals and plans are already available, not new PS02 machinery. Demonstrate work, resource exhaustion, alarm, damage, cancellation, and restart with scoped evidence and no per-step generation. Decide the smallest policy vocabulary from these cases.
 
 **PS03: one cheap unattended community.** Add low-power initiative and a small set of coarse-capable activities, with viable needs, obligations, bounded background scheduling, and no accumulated optional-thought debt. Prove travel and partly completed construction can resume in detail. Isolate unsupported mechanics explicitly.
 
