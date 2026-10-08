@@ -14,6 +14,8 @@ Proposed [customer and supporter offers](projects/customer-and-supporter-offers-
 
 Proposed [published packs and creator revenue](projects/published-packs-and-creator-revenue-feature-spec.md): [PACK-L01–PACK-L08](limits/published-packs-and-creator-revenue.md) records curated scope, consumed complete-transfer limits, acquired-version service, bounded human-selected allocation, proposed fee/payout policy and aggregate review/privacy/federation boundaries. [PACK01–PACK06](maintainers/published-packs-and-creator-revenue.md) consumes INV-8/EWF11/PD10; existing WC limits and actual component grants remain controlling.
 
+Proposed [creator funding and contributor governance](projects/creator-fund-and-contributor-governance-feature-spec.md): [FUND-L01–FUND-L10](limits/creator-fund-and-contributor-governance.md) records the finite invited round, full funding/labor reserve, bounded application, staged award, review/payment, advisory authority, conflicts, funded-work criteria, private evidence and closure. [FUND01–FUND06](maintainers/creator-fund-and-contributor-governance.md) consumes D37/C08; actual budget, program/contracting adoption and observed results remain open. No customer or creator liability becomes grant money.
+
 ## Feature inventories
 
 | Feature                                                                                               | Inventory                         | Implementation tasks                                     |
