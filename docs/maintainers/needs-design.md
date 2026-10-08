@@ -289,6 +289,8 @@ PS06's wider measured admission/economics and PS07's regions, protected domains,
 
 **Start and parallel boundary:** Consume the actual offered workloads: ordinary local behavior from DG02, with DG17/DG18 extensions only where relevant, plus applicable protection, admission and entry decisions and DG12's carried-definition/rights boundary. Shared gameplay restoration uses the DG25 decision if offered. A small visit need not wait for unattended communities, crowds, a marketplace or a campaign. **Existing owners:** PS05–PS08, MP/access, transfer/data, time and performance owners.
 
+**DG29 product work, October 8, 2026:** [Participants and world travel](../projects/participants-and-world-travel-feature-spec.md) develops the complete small visit, protected-domain rights, travel/import/clock boundaries, fair admission and safe return, with broader workload/economics comparisons. [PT01–PT06](participants-and-world-travel.md) refines PS05–PS08; actual adoption, technical integration, implementation and supported capacity remain open.
+
 #### DG30 — A creator fund and contributor governance
 
 Conditional ND25: a real fund budget, eligibility, milestones, rights, payout evidence, conflicts and advisory versus binding influence. Design the operating program before deciding whether software is needed.

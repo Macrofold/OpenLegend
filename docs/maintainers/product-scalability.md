@@ -105,6 +105,8 @@ The DG17 proposal deliberately uses today's mechanical clock and current MP04 ab
 
 **Exit:** transitions do not create contradiction, death traps, logout immunity, duplicate identities, or invented private player actions.
 
+**DG29 product consumer:** [Participants and world travel](../projects/participants-and-world-travel-feature-spec.md) and [PT01–PT06](participants-and-world-travel.md) refine the selected readiness, placement, departure/return, clock and connected-outcome journey. They reuse current MP04 for the first supported visit; future dangerous-logout or independent-calendar behavior still needs its own adopted policy and complete delivery. Existing checked participation work is not reopened.
+
 ## PS06 — Capacity and sustainable economics
 
 **Owners:** encounter scaling, work admission, accounting, player UX. **Depends on:** supported behaviors from earlier stages.
@@ -123,9 +125,13 @@ DG17's proposed first operating envelope adds the following qualification; it do
 
 **Exit:** publish only measured supported envelopes with a viable quality/cost balance, not a generic number of players per region.
 
+**DG29 admission and cost consumer:** PT04/PT06 retain full-workload qualification, visible source-side waiting, coherent arrival/return, after-entry effect growth, correlated reconnects and complete service cost. A small visit supplies a product case; it neither qualifies nor replaces the accepted first/growth shared-world workloads in [data delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product).
+
 ## PS07 — Federation and forecast canonical campaigns
 
 **Owners:** access/domain rules, world relationships, campaign coordination, existing data/transfer owners. **Depends on:** PS05–PS06 for relevant travel, participation, and capacity.
+
+[DG29](../projects/participants-and-world-travel-feature-spec.md) develops the travel/property/import part through PT01–PT03/PT05. A small real visit can finish independently of the campaign tasks below. The visitor enters the destination's actual history, and broad commercial, cross-operator and canonical-campaign connections remain separately qualified consumers.
 
 - [ ] Establish protected personal/guild spaces and compatible opt-in participation/import/clock rules.
 - [ ] Demonstrate visits to actual histories without copying companions or merging contradictory timelines.
@@ -156,3 +162,4 @@ The [central decision register](../../archive/05-project/open-decisions.md#produ
 PS01 is documentation-only completion. Review covered all newly authored topics and both project files, the branch's complete documentation delta from `8005f7c7245cfecec128652efe3ef07926604e0a`, and the relevant unchanged consumer contracts. The original changelog was restored using its exact stored blob in commit `3254190ebe5cd4c178ac2925ee6fc255160f3c56`; the final update adds only the product-scalability entry while preserving all earlier historical text byte for byte.
 
 Final checks require exact-source patch guards, preservation of all previous requirements except the explicitly superseded D22 topology proposal, valid newly introduced relative links/anchors, pinned Prettier 3.6.2 on changed Markdown, unchanged runtime/configuration/agent instructions, and PS02–PS08 remaining unchecked. Temporary checking helpers are removed from the final tree. Check output belongs in the task's CI evidence and handoff, not committed raw reports. Repository-wide CI results are reported separately; no runtime, live-model or population qualification follows from PS01.
+

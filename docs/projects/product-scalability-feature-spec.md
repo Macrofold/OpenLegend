@@ -15,6 +15,8 @@
 - Proposed product detail: [continuing NPC lives](continuing-lives-feature-spec.md) develops PS02–PS03 with researched behavior, economics, scenarios and acceptance. Its new recommendations remain proposals; technical design and runtime delivery are not completed by that document.
 - Proposed attention detail: [attention, crowds and scenes](attention-and-scenes-feature-spec.md) develops PS04/PS-D02 with stable focus, character-led scenes, exact-language exceptions and a separately staged timed-speech proposal. Existing hearing and time policy remain authoritative until approved changes are delivered.
 
+- Proposed wider participation detail: [participants and world travel](participants-and-world-travel-feature-spec.md) refines PS05–PS08 through the focused [PT consumer](../maintainers/participants-and-world-travel.md), preserving the parent coordination and single scalability limits inventory. Small useful visits remain independent of broad population, unattended, campaign and marketplace delivery.
+
 ## 1. Purpose and audience
 
 Enable persistent, consequential lives across very large populations without making each world, character, or minute of unattended history a permanent full-cost simulation obligation. This specification is about the player's relationship with the world: belonging, attention, absence, risk, local capacity, and participation in shared events. It is not a replacement deployment, replication, backup, or networking plan.
