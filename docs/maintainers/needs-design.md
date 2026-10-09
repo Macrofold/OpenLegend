@@ -315,7 +315,7 @@ ND10's broader authored institutions and any selected ND09 credit, escrow, inter
 
 **Start and parallel boundary:** Build on relevant DG06/DG22 agreement/group rules. This can proceed alongside generations without depending on biology or a compulsory currency. Fictional power never grants platform moderation, billing or private-data authority. **Existing owners:** INV-20, PO/social/world-policy owners and D11/D18.
 
-**October 9 product design in progress:** [DG32's shared-equipment service](../projects/shared-equipment-and-institutions-feature-spec.md) selects a real bow loan, voluntary participation, owner-issued keeper authority, exact return without a present keeper, departure/loss/closure and optional held collateral. [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) and [INST limits](../limits/shared-equipment-and-institutions.md) retain adoption, actual PO consumers, implementation and whole-service evidence. Corporate title, currency and a starting government remain separate choices.
+**October 9 product proposal:** [DG32's shared-equipment service](../projects/shared-equipment-and-institutions-feature-spec.md) selects a real bow loan, voluntary participation, owner-issued keeper authority, exact return without a present keeper, departure/loss/closure and optional held collateral. [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) and [INST limits](../limits/shared-equipment-and-institutions.md) retain adoption, actual PO consumers, implementation and whole-service evidence. Corporate title, currency and a starting government remain separate choices.
 
 #### DG33 — Extraordinary minds and life after death
 
