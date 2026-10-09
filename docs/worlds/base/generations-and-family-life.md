@@ -26,6 +26,8 @@ The starting ages above are deliberately authored context, not measurements of e
 
 No newly selected birthday rule reduces health, movement, learning, fertility or life expectancy. No automatic retirement, forced death or transfer of the player's controls is selected. Age can affect an individual's authored perspective or independently chosen purpose without making all adults of that age alike. A movement limitation, illness or age-derived bodily transition requires its own worthwhile selected behavior and actual world capability; a gray-haired presentation cannot supply it.
 
+The first optional age consumer is qualified within one world. Later compatible travel must preserve age across different calendar origins: label original dates by their world/calendar, count each actual elapsed interval once, and never derive a traveler's new age by subtracting an origin birth date from a destination date. Source and destination progression cannot both be credited for the same interval. A held traveler gains no invented lived time. Any claimed calendar-age display during protected absence remains distinct from bodily aging.
+
 The optional age record must respect the actual body's participation and protection rules. A protected absent human cannot silently accumulate bodily deterioration or catch-up harm. The current contract does not guarantee that an NPC relative pauses with them. If a later lifecycle needs biological age to differ from world chronology, that is an explicit clock decision under PS-D03, not an invisible multiplier. DG31's current independent scope adopts no such multiplier or long-range time skip.
 
 ## Food, help and leaving
@@ -42,10 +44,17 @@ On return, a person learns through permitted present evidence and what someone a
 
 This profile consumes the mortality dependency explicitly identified by [DG21](../../projects/recovery-and-care-feature-spec.md): newer inspected main `0a3ab79b` uses actual death and a Human Continue path into a new physical life with retained identity. That inspected behavior is a dependency of this proposal, not a claim it was merged into this older design branch. Do not combine it with the branch's older collapse wording as if both are simultaneous rules.
 
-A death does not make ancestry public, turn a relative into a controllable replacement, award their property automatically or erase a lived relationship. Memory and actual objects can remain meaningful. A person can mourn, choose company, continue work or feel something more complicated through the ordinary appraisal/agency owners; there is no compulsory mourning chore or automatic settlement-wide productivity penalty. Ordinary ghosts, revival and unusual shared identities remain DG33's separately selected scope.
+A permitted dead-person description retains age at death and, where known, time since death as distinct facts; it does not imply continuously lived years while the identity is retained. A death does not make ancestry public, turn a relative into a controllable replacement, award their property automatically or erase a lived relationship. Memory and actual objects can remain meaningful. A person can mourn, choose company, continue work or feel something more complicated through the ordinary appraisal/agency owners; there is no compulsory mourning chore or automatic settlement-wide productivity penalty. Ordinary ghosts, revival and unusual shared identities remain DG33's separately selected scope.
 
 ## Reserved reproductive and dependent-care scope
 
 The original PG presentation requirement remains intact. D16 still reserves the actual player audience and related content boundary, and ND06 requires that choice before the affected feature design. This profile does not choose conception, pregnancy, birth, new child interactions, heredity, dependent-care autonomy, population-growth rates or an accelerated family clock around an assumed answer.
 
 The [feature's research and decision preparation](../../projects/generations-and-family-life-feature-spec.md) must inform that remaining choice. Actual new population would require real food, capable willing care, permitted access, attention, whole service cost and a credible interruption/absence outcome before admission. Those are identified dependencies, not a completed dependent-child policy or an assurance of automatic survival.
+
+## Maintained records
+
+- Product behavior and research: [DG31 feature specification](../../projects/generations-and-family-life-feature-spec.md).
+- Implementation and unfinished design: [GEN01–GEN04](../../maintainers/generations-and-family-life.md).
+- Proposed limits and growth gaps: [GEN-L01–GEN-L06](../../limits/generations-and-family-life.md).
+- Shared current meaning: [social facts](social.md), [simulation time](../../simulation-time.md), and the mortality baseline explicitly identified by [recovery and care](../../projects/recovery-and-care-feature-spec.md).

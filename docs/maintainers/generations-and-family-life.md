@@ -14,7 +14,7 @@ Reuse [ACT04](actor-model.md), [BW16](base-world.md#bw16--family-authoring-and-i
 
 ## GEN02 — Truthful adult age and selected bodily consequences
 
-- [ ] Preserve deliberately authored starting ages separately in meaning from events actually lived. Advance any enabled age record only with supported elapsed life, with readable time/participation meaning and correct save, pause, absence, death and physical-life boundaries.
+- [ ] Preserve deliberately authored starting ages separately in meaning from events actually lived. Advance any enabled age record only with supported elapsed life, with readable calendar-versus-bodily meaning and correct save, pause, absence, age-at-death and physical-life boundaries. Qualify one-world chronology first; later compatible travel must preserve origins and count each actual interval once without age reset or invented held life.
 - [ ] Keep this proposal's lack of automatic birthday decline, forced retirement, fertility rules and control succession explicit. If one later adult bodily consequence is selected, first identify a worthwhile activity it changes and specify its actual cause, visibility, progression, interruption and useful response through the existing body/care owners.
 - [ ] Resolve any required new chronological/biological clock assignment through PS-D03 before using it. Do not infer mature behavior, learning, food, money or remembered years from a calendar label or a restored timestamp.
 

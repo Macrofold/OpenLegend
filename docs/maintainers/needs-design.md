@@ -307,6 +307,8 @@ ND06's remaining life stages, reproduction/families, population change and careg
 
 **Start and parallel boundary:** Use current food, clock and lifecycle contracts for a bounded first design. Consume DG17's new clock/population-funding decisions and DG19's resource rules only where the selected lifecycle needs those extensions, and the actual DG13/DG21 housing/care capabilities used. Resolve audience/family-content choices before the affected feature. It does not require new spoilage, a full ecosystem, government or universal anatomy. **Existing owners:** ACT/BW, PS, housing/care consumers and D16/D23/D27.
 
+**October 9 partial product design:** [Generations and family life](../projects/generations-and-family-life-feature-spec.md) supplies the independently useful adult-family scenario, age/time and cost analysis, and primary-source research. D16’s reserved audience answer and the affected reproductive/dependent-care design remain unfinished under [GEN04](generations-and-family-life.md#gen04--resolve-the-reserved-audience-choice-and-finish-generations). This is partial DG31 coverage, not completion or implementation.
+
 #### DG32 — Larger institutions and economic obligations
 
 ND10's broader authored institutions and any selected ND09 credit, escrow, interest or dispute structures. Start from one real organization or transaction need; define only the authority, property and obligations that it uses.
@@ -324,8 +326,6 @@ ND11's NPC ghost/summoning/ordinary-revival slice and ND21's selected mental-eff
 PS07's forecast canonical campaigns, timing/revision promises, local participation and contribution recognition, with the relevant PS08 mature-scale and recovery evidence.
 
 **Start and parallel boundary:** Use DG29's cross-world/travel contracts where the selected campaign spans worlds, plus the actual participation/capacity rules. Do not require governments, generations or special mental powers merely because a campaign has many people. Local opportunities can be designed against current supported worlds first. **Existing owners:** PS07/PS08, campaign/access/time, data and existing scale owners.
-
-**October 9 partial product design:** [Generations and family life](../projects/generations-and-family-life-feature-spec.md) supplies the independently useful adult-family scenario, age/time and cost analysis, and primary-source research. D16’s reserved audience answer and the affected reproductive/dependent-care design remain unfinished under [GEN04](generations-and-family-life.md#gen04--resolve-the-reserved-audience-choice-and-finish-generations). This is partial DG31 coverage, not completion or implementation.
 
 ### Band 8 — Insert other expansion only at its trigger
 

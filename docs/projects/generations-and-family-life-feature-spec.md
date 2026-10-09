@@ -108,7 +108,7 @@ The selected older and younger adults make an intergenerational relationship ava
 
 For the optional chronological-age consumer, an authorized creator supplies a coherent starting age and reference date, or a usable birth date, before that value drives a display or rule. Missing age stays unknown. Contradictory or unsupported input is explained during that authoring; it must not repair the existing family tree by deleting links or make the application invent a missing parent. Historical background may explain an unusual age or lineage in another authored world. A generic mechanism cannot assume every species has a human lifespan.
 
-The proposed adult chronology uses actual advancing game time. A game day of progression adds one day to elapsed chronological age. Pause and downtime add none. A changed speed alters future advancement, not the already lived interval. Where a displayed year needs conversion, use the selected world's explicitly defined calendar; no new calendar length is adopted merely by the two example ages. The familiar 365-day calculations below are comparisons, not a new installed calendar.
+The proposed optional record means **calendar chronology since the authored reference date, not a counter of bodily participation or experienced life**. It uses actual advancing world game time. A game day of progression adds one day to chronological age, including for an inactive human if that world continues; this has no new bodily effect. Pause and downtime add none. A changed speed alters future advancement, not the preceding interval. Where a displayed year needs conversion, use the selected world's explicitly defined calendar; no new calendar length is adopted merely by the two example ages. The familiar 365-day calculations below are comparisons, not a new installed calendar. Without this optional consumer, the scenario states its age **at the start**, rather than advertising that fixed number as an eternally current age.
 
 An actor's age, biological condition, accumulated experience and remembered history remain distinct. A person created as 64 can have an authored past but does not receive 64 years of generated memories, free production or paid inference. A human absent from a continuing world may have a larger elapsed calendar age without having lived the corresponding activity. That arithmetic does not authorize bodily depletion or harmful aging during protected absence. The selected first scope has no automatic biological aging effect on either controller.
 
@@ -195,3 +195,193 @@ Current-format save and restore must keep the exact people, known ages/reference
 The [development-save policy](../../AGENTS.md#development-save-policy) still rejects incompatible development state without automatic deletion or reset; this is not permission to build old-save migration. Fictional restoration does not restore spent provider money, repeal current privacy or access, or reopen a refunded commercial benefit. DG25 owns coupled shared restoration and DG29 owns travel consequences. A social visit can leave external memories even without transferred goods, so a family reunion is not an excuse to bypass their reconciliation limits.
 
 Service interruption remains visible as service interruption. Current unavailable cognition can leave a resident unfed; there is no hidden family-care autopilot. The later selected isolated unattended profile has its own proposed coherent whole-world hold. Do not import that hold into a contested public world, freeze only a favored relative or label a failed provider choice as deliberate neglect.
+
+## 8. Population, food and the cost of particular people
+
+### 8.1 A small scene is not a sustainable settlement
+
+The chosen scene has two NPC adults and one human acquaintance. In a fresh scenario those adults replace the selected cast; they are not an undisclosed addition to Ada and the Mercenary. Adding relatives to a running world is actual additional population. A creator preview must make that distinction clear before any creation, including actual starting supplies, independent character service and retained identity costs.
+
+There is no new family-size cap, birth quota, reserved population percentage or universal residents-per-host promise. Existing admission and capacity owners still decide whether a supported addition can be accepted. A failure to admit another actor is an operational result for the creator, not a fictional death, missing person or proof that somebody is unwanted. Preserve the existing people and ordinary funded play.
+
+The first authored scene needs usable real supplies rather than a requirement that the human stock a household as an entry fee. A prepared scenario may explicitly create finite provisions once. Selecting, restarting an action or revisiting the scenario cannot refill the same world's stock. A different new world is a different history, not a way to bring duplicated provisions into this one. No particular new stocking quantity is selected in this feature; the scene's ordinary episode and current action costs must determine its authored provisions during qualification.
+
+For continuously active ordinary adults, daily nourishment demand is:
+
+`adult consumers × 0.003 fullness/game-second × 86,400 game-seconds/day`.
+
+Two adults therefore consume 518.4 fullness per game day; three consume 777.6. DG19's proposed four-patch renewal ceiling is 576 points/day before travel, access, waste or missed eating. It can nominally cover about 2.22 such adult consumers, not the ordinary three-person camp. Its native current sources are finite, and its optional renewal is not installed by this proposal. A successful meal or a full starting inventory is not evidence of a sustainable population.
+
+Even a short meeting has a cost. Ten real minutes at the current normal rate span ten game hours. Three continuously participating adults lose 324 fullness points in that interval, excluding different applicable body rules. That equals about 8.53 ordinary 38-point cooked-meat portions before eating waste, although their actual starting bodily reserves can supply part of the interval. This is arithmetic, not a compulsory ten-minute scene or prescribed meal count. It demonstrates why reading, conversation and family help must be evaluated inside the actual game clock.
+
+The response to a poor episode should not automatically be more agriculture. A player may prefer a shorter meeting, a different activity or ordinary session play. If hunger repeatedly obscures the desired relationship, improve the actual shared pacing through its owner. Do not add a family meal buff, secretly slow relatives' metabolism or make care a new means of manufacturing food.
+
+### 8.2 Pay for the whole encounter
+
+For operating economics, count active native simulation, character decisions, required dependent replies, optional narration, memory work, private-history storage, delivery and human support. Include failed, stale and uncertain provider work. A family scene with few spoken lines may still be expensive if its residents repeatedly reconsider the same goal or fetch large histories.
+
+As an illustration, twenty useful complete character workflows plus five unusable or repeated workflows cost $0.05, $0.25 or $1.25 when the assumed average complete workflow cost is respectively $0.002, $0.01 or $0.05. These are hypothetical prices and counts, not provider quotes or a proposed allowance. Native hosting, retained data, optional art, support and return delivery are additional. Compare complete episodes, including preparation and recovery, rather than the price of one attractive reply.
+
+The same fixed cast can support many worthwhile meetings without generating a new relative on every return. Reusing valid perceived facts and actual learned activity reduces unnecessary work while preserving each person's independent interpretation. Equivalent unchanged concerns should not produce paid reconsideration just because a family panel was opened. No family panel is needed initially.
+
+Age arithmetic and retained ancestry need no recurring model call. A newly elapsed day does not require a diary, a birthday scene or a full biography rewrite. A real chosen conversation can be worth paying for; generating one for every pair of relatives at a fixed cadence is not evidence of life. Optional narration can fail while the actual action and understandable interface result remain available under its current owner.
+
+Existing [commercial offers](customer-and-supporter-offers-feature-spec.md), [creator revenue](published-packs-and-creator-revenue-feature-spec.md) and billing contracts keep funding, entitlements and real receipts separate from fictional family. A relative does not inherit an account allowance, reset a monthly cap, become a new subscriber or redirect costs to a human who accepted a meal. Host-paid operation does not require each fictional household member to own a subscription. No child or elder premium, affection purchase, revival bundle or speculative family asset is proposed.
+
+### 8.3 Bound aggregate work without erasing a family
+
+Two inspected relatives do not bound all the work needed to find them. Total ancestry, shared ancestors, retained deceased people, queries across multiple paths, long histories and simultaneous observers can grow. A bounded page must say when more permitted results exist rather than call a partial result a complete family. The current two-parent rule does not limit descendants or accumulated family history.
+
+Keep active population, retained identities and remembered experience distinct in capacity reporting. A dead person need not remain an actively simulated invisible actor, but their identity and supported links still have a cost. Existing memory retention and forgetting remain controlling; family does not demand eternal raw conversation retention. Conversely, deleting an inconvenient relative or private memory to meet a new hidden quota is not an acceptable optimization.
+
+Qualification must include a normal scene, several concurrent family scenes, a mature ancestry with repeated paths, long permitted personal history, cold return and same-format restore. Measure useful completed interaction, lateness, failed attempts and actual cost separately. The small scene does not replace the accepted shared-world workload targets or establish a new maximum population. The [GEN limits inventory](../limits/generations-and-family-life.md) records the deliberate absence of new family-wide counts and the resulting larger-world evidence gap.
+
+## 9. Concrete journeys and difficult cases
+
+**A pleasant disagreement at the lookout.** Mara would enjoy the familiar view; Ivo wants to try a different route with a newly made carrying object. The player suggests demonstrating it first. The actual object must exist and its supported use must work. Either relative can prefer another plan. A shorter outing, separate activities or a shared laugh at an unsuccessful demonstration are valid outcomes. The lesson is not that every family agrees, but that ordinary choices have recognizable people behind them.
+
+**The parent learns from the adult child.** Ivo explains a supported technique Mara does not know. She may listen, ask a question, practice later or decline. Only the supported communicated knowledge is acquired. She does not lose her own experience or become generally subordinate, and Ivo earns no universal teacher rank or claim over her future inventions. If the learning consumer is unavailable, the episode can remain an ordinary demonstration; the product must not claim mastery.
+
+**The older relative wants company, not treatment.** Mara prefers meeting nearby while finishing her own task. No hidden health deficit is invented to justify it. The human can bring their activity nearer, visit later or decline. A capable older person is a complete portrayal; a frailty system is not needed to explain a preference.
+
+**Actual injury interrupts a visit.** A participant suffers supported harm. The applicable current recovery route determines what they can do. If DG21's care is installed, its real treatment may help; otherwise the family feature exposes no pretend medical success. A relative may offer specific assistance or have their own urgent need. The outing can end without imposing a second obligatory care quest.
+
+**Food was promised but never transferred.** Ivo says he has enough to share, then consumes a portion or leaves. Mara cannot eat the unaccepted offer. The player can observe or ask about what happened, acquire another meal or choose another activity. No supply is duplicated to preserve the scene's intended warmth. A repeated inability to share through supported actions is a defect to fix, not a reason to make kinship override custody.
+
+**The player leaves during a favor.** Departure applies the human's real interruption rules. A completed transfer remains; an unfinished action is not completed by an absent surrogate. NPCs continue or stop according to actual world participation and service. They cannot be told the human intentionally abandoned them merely from a disconnected account. A later report can state the observed unfinished help without inventing a real-world motive.
+
+**Two people remember the same outing differently.** Each account uses that person's evidence and retained interpretation. A creator inspection may reveal objective records where authorized, but cannot automatically settle the disagreement inside the fiction. The player can compare reports, discuss it or let it go. The feature needs no dispute tribunal or official family memory ledger.
+
+**A person no longer wants the family profession.** Ivo stops making the sort of object Mara expected and chooses another interest. Existing material, promises and completed work remain real; the goal changes under Ivo's own agency. Mara may object without gaining power to rewrite his goal. Later chosen collaboration remains possible, and neither person's learning is permanently determined by the starting biography.
+
+**A relative dies or returns in a supported new physical life.** Perceived or reported death has ordinary knowledge consequences. Ancestry and actual past work survive, while current bodily authority prevents late treatment or actions from affecting the wrong physical life. A supported Continue or revival retains the same person under its owner; it does not duplicate an inheritance or replay an old celebration. The first scene offers no new ghost interaction.
+
+**A long absence produces little news.** If the world was held, there were no hidden years to recount. If it ran, only actual outcomes can be reported. A quiet return remains valid. The player can enjoy familiar company without paying for a generated saga or repairing a mandatory list of relationship deficits.
+
+**An owner changes the law or cast.** Ordinary creator authority remains distinct from the relatives' consent. A changed age, body law, material access or character service invalidates any affected readiness claim. The game must not preserve an old projected outcome by inventing access or meals. Changes follow the existing live-authoring and persistence owners; this feature supplies no universal undo or compatible-save conversion.
+
+## 10. Delivery, evidence and stop conditions
+
+The first delivery is the authored adult episode using current capabilities: introduce the actual people and known history, allow a meaningful activity and real refusal, preserve its result, leave and return. It can ship without enabling age arithmetic. If it feels indistinguishable from an ordinary NPC with an extra label, improve the situation and independent character quality rather than build a larger tree browser.
+
+The optional next consumer makes deliberately authored adult age truthful across actual progression and supported restoration. It must be justified by a wanted creator or player use, such as maintaining an explicitly chosen cohort's chronology. It does not automatically enable biological effects. Test authored starting dates, unknown age, pause, speed changes, human absence, actor death and reference corrections. A birthday UI alone does not establish player value.
+
+Optional deeper adult bodily change requires a separate selected episode and complete support before adoption. It cannot be smuggled into the age display or a care animation. The first useful scope may remain independent of it indefinitely while the larger accepted lifecycle ambition stays tracked.
+
+The D16-dependent branch is not complete. After the required answer, design and reconcile the selected reproductive/dependent-family experience through GEN04 and the existing world/body/time/agency owners. Do not mark it implemented or fully specified because this document contains research and decision options. No technical architecture is supplied here.
+
+Acceptance for the selected adult episode requires all of the following outcomes, through the real player and resident paths:
+
+- A player can encounter the people, understand a wanted activity, participate or decline, and leave without a newly imposed family chore.
+- At least one actual independent purpose affects what a relative does; a refusal and a different choice remain possible. Canned agreement or a fluent private monologue cannot substitute.
+- A demonstrated or shared object is real; any claimed taught method is actually supported. No item, skill, emotional change or history is fabricated to satisfy the story.
+- A later permitted encounter can use a relevant actual consequence while preserving differing views, forgotten detail and private knowledge.
+- Ordinary food, rest, interruption, control and applicable death/recovery remain correct. The complete episode fits the offered pacing without assuming instantaneous model replies.
+- Failure, absence, current-format restore and unavailable service produce truthful recoverable states and retain actual real costs.
+
+Observe how much effort the player spends on wanted activity versus feeding, repeated offers, explanation and waiting. Ask whether they would voluntarily meet either person again and what they would want to do. These are questions for a small actual playtest, not an invented measured satisfaction score or authority to collect real-life family data.
+
+Stop expansion if the scene needs guaranteed affectionate replies to work, if ordinary refusal leaves no worthwhile play, or if domestic management displaces the player's own goals. Reconsider a proposed mechanical aging rule if it makes older characters poor investments, if a family feels like a source of labor slots, or if restoration/capacity depends on deleting unwanted people. Improve the selected experience or keep the simpler one; more biology is not the default repair.
+
+## 11. The remaining generational decision
+
+### 11.1 What is already required
+
+[F04](../../archive/01-requirements/product-baseline.md) records PG intimacy, reproduction, pregnancy, birth and growing populations as required direction with release timing open. The original brief explicitly asked for PG animation and language while leaving audience restrictions to later consideration. Neither that wording nor the unadopted wellbeing essays chooses the audience now. D16 and ND06 explicitly require the unresolved choice before affected design.
+
+The remaining developer question is narrow: **should the official family/generations experience initially address adults only, or also younger players, and what related family-content boundary should that selection require?** The recommendation to review is an adult audience initially with non-explicit PG presentation. That is a proposal awaiting the answer, not an adopted age gate, a legal rating conclusion or a declaration that child characters are prohibited. Existing adult company does not require importing the archive's unrelated therapeutic or Resident Code proposals.
+
+Two reviewable release options preserve the PG ambition. An adult-audience first release can evaluate the family interactions with a narrower intended participant group. A broader audience can be chosen, but its age-appropriate character interactions, disclosure, account participation and operating constraints need their own explicit selection. In either case, choosing audience does not itself implement dependent care or authorize a paid public pilot. Reproductive mechanics may still be staged after a worthwhile adult-family experience; release timing is distinct from abandoning the required direction.
+
+### 11.2 Decisions that the answer must unlock
+
+The subsequent design must choose a complete playable benefit and lifecycle, not automatically reproduce every comparator's system. Candidate benefits include a voluntarily chosen growing family, an adult helping an existing younger relative become independent, or a longer community story spanning generations. These remain options for selection. This document assigns no conception rule, gestation duration, child age band, childhood action, care autonomy, harm outcome, heredity probability or population-growth rate.
+
+The selected design will need answers about who may choose reproductive involvement, whose body is affected, what each participant can know and refuse, and how a human's absent body is treated. It must decide the child's independent agency and controller, ordinary care and food access, handoff, growing capability, family separation and eventual adulthood. Objective ancestry, social parenthood, practical responsibility, control and private knowledge must not be conflated. These are dependencies to resolve, not completed rules hidden in this paragraph.
+
+Its time comparison should include the uniform current clock, an explicitly different authored lifecycle and a deliberate longer-range progression experience. Each option has costs: uniform time preserves coherent ordinary units but does not give a quick generational arc; faster development changes the relationship between practice, care and maturity; a chapter jump needs a supported truthful account of intervening resources and people. No option is selected by the eighteen-year arithmetic.
+
+Likewise, a population review must address actual accessible food, willing capable care, habitat where relevant, native load, independent character service, retention and failure recovery. Existing living people and proposed additions are different obligations. The future design must not treat a technical capacity refusal as a medical event or pretend that a paid allowance alone establishes viability. How admission and ongoing responsibility work is still part of that unfinished design.
+
+### 11.3 What the evidence can and cannot settle
+
+RimWorld's developer materials connect compressed age with learning and nutrition, while later corrections show stage, frozen-time and family-return defects. EA's infant update and later repairs show that added care depth can require fewer births, less repeated handling and clearer causes of failure. One Hour One Life illustrates both intergenerational meaning and simultaneous dependency pressure. These sources justify examining whole lifecycles; they do not select Open Legend's audience, authorize unattended care or establish medical developmental facts. [GF-R01](#gf-r01--development-is-more-than-a-delayed-worker), [GF-R02](#gf-r02--stage-boundaries-and-family-return), [GF-R03](#gf-r03--care-reliability-is-part-of-the-feature), [GF-R05](#gf-r05--care-depth-changes-population-load), [GF-R07](#gf-r07--concurrent-dependency-and-admission).
+
+The product assignment therefore remains partially unfinished pending D16. The independently useful adult proposal is reviewable now. Completing other independent design work and asking the required question is the correct continuation; inventing an audience answer, silently omitting the reproductive ambition, or calling this a complete generations design would be inaccurate.
+
+## 12. Primary research and its limits
+
+Sources were retrieved October 9, 2026. Historical developer statements describe the stated design or reported corrections at that time; they are not current-game tests or measured evidence of enjoyment. None supplies medical developmental facts, an audience decision or an Open Legend capacity result. The inference in each record is this proposal's judgment. Child-related evidence informs decision preparation only.
+
+### GF-R01 — Development is more than a delayed worker
+
+[Ludeon, Biotech preview 3, October 15, 2022](https://ludeon.com/blog/2022/10/biotech-preview-3-reproduction-children-genetic-modification-release-date/). **Observed:** The preview connects delegated childcare, varied learning activities, adjustable age compression and nutritional tradeoffs. **Inference:** Evaluate a person's changing life and available company rather than merely the date they become a worker. **Access:** Developer preview read; no gameplay or present balance verified. Its reproductive and genetic options are not adopted here.
+
+### GF-R02 — Stage boundaries and family return
+
+[Ludeon, 1.4 integration update, November 21, 2022](https://ludeon.com/blog/2022/11/1-4-content-update-adds-more-integration-between-expansions/). **Observed:** The developer describes starting from wanted play stories. Corrections address distorted age transitions, learning accruing while frozen, unsafe activity locations and a baby missing a parent's return. **Inference:** If deeper generations are selected, qualify transitions, held time and return as one complete experience. **Access:** Historical developer article and changelog read; fixes are reported rather than independently verified.
+
+### GF-R03 — Care reliability is part of the feature
+
+[EA, The Sims 4 update, May 12, 2026](https://www.ea.com/games/the-sims/the-sims-4/news/update-5-12-2026). **Observed:** The patch reports care interruptions, frozen or repeated handling, shorter care and milestone burdens, clearer waking causes and off-lot need changes; it also names unresolved cases. **Inference:** Repetitive handling and broken handoff are product failures, not realistic caregiving. **Access:** Actual patch read. Its single-player off-lot treatment is not adopted as shared-world immunity.
+
+### GF-R04 — Background change needs an explicit scope
+
+[EA, Neighborhood Stories, March 15, 2022](https://www.ea.com/games/the-sims/the-sims-4/news/neighborhood-stories-system). **Observed:** Background household changes have save-wide and household controls; the described default protects played households from automatic changes, with a separate recent-events surface. **Inference:** Family facts alone do not authorize autonomous life changes. Return information must still respect Open Legend's knowledge boundaries. **Access:** Relevant official locale article read after a direct-link error; historical product description, not a current test.
+
+### GF-R05 — Care depth changes population load
+
+[EA, infant update, March 14, 2023](https://www.ea.com/games/the-sims/the-sims-4/news/update-03-14-2023). **Observed:** The new infant stage arrived with reduced background newborn arrivals, fewer intrusive baby-related calls and fewer automatic checks interrupting other activity. **Inference:** Deeper care changes both population capacity and the acceptable attention burden; old rates cannot be assumed neutral. **Access:** Released historical patch read. It establishes no optimal Open Legend birth rate or care policy.
+
+### GF-R06 — A contribution can outlast a life
+
+[Jason Rohrer, One Hour One Life](https://www.onehouronelife.com/). **Observed:** The official description frames a short life as a contribution to a continuing civilization, with player parents/children and useful inherited places and tools. **Inference:** Generational meaning can come from actual useful work and relationships, without a hereditary power ladder. **Access:** Undated product description accessed October 9, 2026; marketing framing, not measured outcomes. Its forced brief human lives differ materially from Open Legend's retained human character.
+
+### GF-R07 — Concurrent dependency and admission
+
+[Jason Rohrer, developer reply in “Family survival,” April 14, 2020](https://onehouronelife.com/forums/viewtopic.php?id=9480). **Observed:** The developer distinguishes simultaneous baby load from lifetime birth count and discusses founder admission and repeated infant death incentives. **Inference:** A future population design must inspect concurrent obligations and repeated admission paths. **Access:** Developer-marked reply and context read; other participants' demographic explanations are excluded. No corresponding Open Legend admission rule is selected.
+
+### GF-R08 — Population costs affect the whole food cycle
+
+[Jason Rohrer, update, May 30, 2020](https://onehouronelife.com/forums/viewtopic.php?id=9833). **Observed:** Dependent animal growth was changed to require feeding, meat yield changed with it, and founder placement addressed depleted starting resources. **Inference:** New population costs require complete supply-cycle arithmetic and useful arrival conditions. **Access:** Developer's opening post read; later comments excluded. Animal husbandry rules do not determine human family policy.
+
+### GF-R09 — A small household must be worth living in
+
+[Shining Rock Software, “Tweaks, Changes, and Balance,” July 18, 2013](https://shiningrocksoftware.com/2013-07-18-tweaks-changes-and-balance/). **Observed:** The developer rejected persistently poor happiness in small towns and described how a new thirst need changed hauling and work balance. **Inference:** Family enjoyment should not require a complete service economy, and every bodily addition must justify the time it displaces. **Access:** Pre-release developer account read; its proposed balance was still awaiting playtesting.
+
+### GF-R10 — Shared activity before succession
+
+[Render Cube/Toplitz, Heir public-stage notes, August 4, 2022](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1660226487&feed=steam_community_announcements). **Observed:** Family activities and conversation accompany an explicitly irreversible adult-heir handover. **Inference:** Give relatives worthwhile things to do now; control succession, if ever selected, requires a separate deliberate choice. **Access:** Official historical Steam feed read. A later release page exposed no article body and a press-page request failed; no claim is made about current final-release behavior.
+
+### GF-R11 — Later learning and permanent childhood results
+
+[Paradox, Crusader Kings III developer diary 131, June 20, 2023](https://store.steampowered.com/news/posts/?appgroupname=Crusader+Kings+III&appids=1158310&enddate=1687345457&feed=steam_community_announcements). **Observed:** The university-visit preview addresses adult characters whose earlier education had become fixed beyond the current player's influence. **Inference:** Later learning and new ambitions should remain meaningful; a missed early scene need not define permanent inferiority. **Access:** Full named diary read in the official feed after its direct article link failed; historical preview, not an outcome study.
+
+### GF-R12 — Time to understand a choice
+
+[Microsoft, Xbox Accessibility Guideline 116](https://learn.microsoft.com/en-us/xbox/accessibility/xbox-accessibility-guidelines/116), updated March 4, 2026. **Observed:** The guideline addresses essential, communicated and adjustable non-core interface deadlines, with specific real-time gameplay exceptions. **Inference:** Family explanations and optional choice surfaces should remain reviewable without a new speed-reading test. **Access:** Guidance and exceptions read. This does not require pausing shared gameplay or change the current native item-offer expiry; broader timing remains its owner.
+
+### GF-R13 — Retirement and the pressure to reroll
+
+[Worldwalker Games, developer discussion reply, January 21, 2020](https://steamcommunity.com/app/763890/discussions/0/3949028823317388988/?ctp=2). **Observed:** The developer acknowledged complaints that variable career length encouraged character optimization and discussed preserving turnover without that pressure. **Inference:** Do not make attachment to an older adult an economically foolish choice merely to force generations. **Access:** Developer-marked Early Access replies read; community numbers are not verified mechanics, and the reply reports no completed solution.
+
+### GF-R14 — Continuity after an ending
+
+[Worldwalker Games, Wildermyth 1.1 update, August 17, 2021](https://wildermyth.itch.io/wildermyth/devlog/284868/patch-notes-11345-aremella-errowlair). **Observed:** Peace duration, retirement experience handoff and recruitment were revised together; corrections included misdirected experience and duplicate legacy entry. **Inference:** Qualify retained value and new possibilities together, and test whether success accidentally accelerates unwanted loss. **Access:** Released historical notes read; no current gameplay or measured improvement verified. Automatic retirement and ability inheritance are not adopted.
+
+## 13. Game-first critique and resulting choices
+
+The largest risk is building a family-management game inside a survival-adventure that has not yet earned it. A date, parent link and care schedule can be perfectly consistent and still offer little reason to play. The chosen scene therefore starts with people doing something wanted, a real realized object or useful encounter, and the freedom to disagree. The human has their own adventure. Family provides meaning to an activity rather than replacing activity with administration.
+
+The second risk is mistaking age for decline. The initial older adult receives no automatic penalty. Reciprocal teaching, different priorities and recognizable history can already make generations present. If eventual aging only removes beloved characters or imposes waiting, choose a different scope before adding permanent compensating bonuses and inheritance machinery. Wildermyth and One Hour One Life demonstrate different generational premises; neither can be imported without changing Open Legend's own promise.
+
+The third risk is care becoming a test of constant human attendance. This independent proposal uses capable adults and occasional actual help. It does not claim to have solved dependent care, fund future autonomous service, or require a relative to survive from the player's absent inventory. The research makes those later obligations more visible; it does not justify proceeding past the reserved audience decision.
+
+The resulting sequence is deliberately modest: a complete adult-family episode; optional truthful chronology only where useful; a separately justified adult bodily consumer if it earns its costs; then the D16-selected generational design and its complete qualification. That sequence leaves useful play intact if an optional layer is declined. It also leaves DG31's unfinished ambition honest rather than replacing it with an easier completed claim.
+
+## Maintained records
+
+- Product delivery: [GEN01–GEN04](../maintainers/generations-and-family-life.md), under existing ACT/BW, agency, knowledge, time and participation owners. GEN04 retains the unanswered D16-dependent design.
+- Limits and constraints: [GEN-L01–GEN-L06](../limits/generations-and-family-life.md), with current [base-world](../limits/base-world.md), [cognition](../limits/cognition.md), [memory](../limits/memory.md), [product scalability](../limits/product-scalability.md) and [persistence](../limits/persistence.md) inventories.
+- Authored scenario: [Generations and family life](../worlds/base/generations-and-family-life.md). The selected cast is optional content, not an engine family or population law.
+- Remaining decisions: [D16/D23/D27](../../archive/05-project/open-decisions.md), [DG31/ND06](../maintainers/needs-design.md#dg31--generations-and-deeper-biology), and the [question rule](../../AGENTS.md#resolve-developer-questions-before-dependent-work). Product completion of the audience-dependent scope, adoption, technical design and runtime evidence remain open.
