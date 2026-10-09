@@ -1,8 +1,8 @@
 # Shared campaigns with local opportunities
 
-| Status      | Current progress                                                                                                                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG34 product proposal completed for review: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-09   |
+| Status      | Current progress                                                                                                                                                                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG34 product proposal and twelve-source research independently reviewed: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-09   |
 
 ## 1. The Ash Road: something worth doing before the battle
 

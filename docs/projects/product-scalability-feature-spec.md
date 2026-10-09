@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                  | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-03   |
+| In progress | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-09   |
 
 **Status: accepted strategic direction, proposed detailed product requirements, October 2, 2026. Documentation only; runtime delivery and capacity remain unqualified.**
 
