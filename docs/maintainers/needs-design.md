@@ -341,6 +341,8 @@ Conditional ND34 and the applicable later ND13 device/control extensions. Distin
 
 **Start and parallel boundary:** Insert at the point where audience or production evidence warrants it, not automatically after P7. Reuse current rendering/input and account contracts. Offline operation separately needs a local host/provider policy; a desktop package does not require offline AI or a new engine. **Existing owners:** SW10, UIUX/AC, MP/PD and host/provider owners.
 
+**October 9 independent scope:** the [platform and offline decision brief](../projects/platform-and-offline-decision-brief.md) records the actual source audit, primary precedents, distinct options, common behavior requirements and equivalent-play comparison. No inspected evidence supplies the required additional-platform audience or production problem. DG35 remains incomplete until that premise is answered and its selected feature is designed; the current browser target and D09 stay unchanged.
+
 #### DG36 — One useful application beyond the game
 
 Conditional ND32: select one learning, rehearsal, writing, agent-evaluation or external-developer use case, its actual user and evidence of useful transfer or repeated demand.
@@ -564,6 +566,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **Needed before the affected implementation projects:** choose human opt-in presentation, incapacitation/final-blow behavior, indirect hazards, rescue/return and cooldowns. Separately specify where an NPC ghost exists, what summoning permits, embodiment/duration, retained relationships and a difficult ordinary revival loop. Coordinate property/background protection with PS rather than inventing a blanket building-protection rule or reopening permanent human death.
 
+DG33's [selected NPC product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) now covers voluntary summoning, local manifestation, dormancy and finite-resource ordinary return through [BW15 children](base-world.md#dg33--voluntary-spirits-and-ordinary-revival). These proposed D15 mechanics require adoption and actual qualification. The unresolved human conflict/recovery choices above are not answered by an NPC ghost family.
+
 ### ND33 — Food freshness, spoilage and preservation
 
 **Conditional scoped design.** Sources: [food state in the survival proposal](../../archive/03-design-proposals/survival-baseline.md#native-survival-package) and the [current camp-container scope](../projects/parallel-batch-01-playable-week-feature-spec.md#what-it-means-in-this-world), which explicitly excludes food aging and preservation.
@@ -575,8 +579,6 @@ These refinements should be completed in the existing PS project and decision ow
 **October 6 food-state proposal:** [Changing supplies](../projects/changing-supplies-feature-spec.md) defines a concrete attended preservation/cache journey, inherited condition through work and lot operations, visible edibility, interruption and current-clock behavior. Its gameplay review puts a credible wanted benefit ahead of adopting aging and keeps renewal independently deliverable with current nonperishable food. [Authored tuning](../worlds/base/changing-supplies.md), [CS delivery](changing-supplies.md) and [CS limits](../limits/changing-supplies.md) preserve the product/runtime distinction. Technical design and the stateful material consumer remain open.
 
 ## Creation, controls and communication
-
-DG33's [selected NPC product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) now covers voluntary summoning, local manifestation, dormancy and finite-resource ordinary return through [BW15 children](base-world.md#dg33--voluntary-spirits-and-ordinary-revival). These proposed D15 mechanics require adoption and actual qualification. The unresolved human conflict/recovery choices above are not answered by an NPC ghost family.
 
 ### ND12 — Cross-world invention libraries and usable pack publishing
 
@@ -654,6 +656,8 @@ DG33's [selected NPC product proposal](../projects/extraordinary-minds-and-after
 
 **Needed before a selected platform project:** establish the actual audience or production need, then choose a bounded desktop package, native/console client or offline capability. Define ordinary controller/text interaction, accessibility, accounts, suspend/reconnect, packaging/updates, store integration and platform qualification as applicable. Offline play separately needs a local simulation host or deliberate port and a policy for provider-dependent behavior. Compare one equivalent playable slice and its maintenance cost before committing to a replacement; neither another engine nor a general client SDK is selected here.
 
+**October 9 source and decision work:** [DG35's decision brief](../projects/platform-and-offline-decision-brief.md) prepares the input-independent comparison. Existing evidence supports a recoverable browser pilot and current-client qualification, not a newly selected desktop, console, engine or offline audience. The explicit decision-before-design dependency remains; this research does not close ND34 or the applicable later ND13 device controls.
+
 ## Memory, shared history and advanced authored behavior
 
 ### ND19 — Older-memory transformation and dream reinterpretation
@@ -682,6 +686,8 @@ DG33's [selected NPC product proposal](../projects/extraordinary-minds-and-after
 
 **Needed before a selected feature project:** for one useful mental effect, choose targets, resistance, disclosure, human control policy, conflicting effects, lifetime and interruption. For a shared mind, choose individual/colony control, membership/compartments, source/time attribution, partial connectivity, former-member recollection and resource arbitration. Preserve actual history and target-owned changes; do not concatenate private minds or restore stale whole-goal snapshots on expiry. Route implementation through existing INV/AG/CR/EPR/data owners.
 
+DG33's [deliberate telepathy proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) selects one willing known living pair, explicit chosen text, current range/consent, quiet owner-local ending, shared admission and protected derivatives. [EWF10T](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates actual delivery through existing owners. It supplies no compulsion, passive mind reading, shared memory or colony control; those retain the conditional selection criteria above.
+
 ### ND35 — Shared-world restoration and private history
 
 **Decision before design; conditional shared/cloud extension.** Sources: [D60](../../archive/05-project/open-decisions.md#d60--gameplay-save-and-load-policy) and [external work, privacy and shared authority](../save-and-load.md#external-work-privacy-and-shared-authority), including the remaining D48 private-channel choices.
@@ -703,8 +709,6 @@ DG33's [selected NPC product proposal](../projects/extraordinary-minds-and-after
 **October 5 DG15 scope:** the [researched product specification](../projects/story-perspectives-feature-spec.md) now selects that permission for one external familiar activity in a single-human private world, with [SP01–SP08](../limits/narration.md#sp01--selected-external-perspective) and [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective). The source policy is a new proposed consumer, not inherited omniscience. Private internal stimuli, other-human information and broader cutaways still require separate selection; implementation and qualification remain open.
 
 ## Commercial service, creator ecosystem and launch learning
-
-DG33's [deliberate telepathy proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) selects one willing known living pair, explicit chosen text, current range/consent, quiet owner-local ending, shared admission and protected derivatives. [EWF10T](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates actual delivery through existing owners. It supplies no compulsion, passive mind reading, shared memory or colony control; those retain the conditional selection criteria above.
 
 ### ND22 — Commercial offers and the customer entitlement lifecycle
 

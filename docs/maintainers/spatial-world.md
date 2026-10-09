@@ -174,6 +174,8 @@ SW14–SW16 accompany each slice; they are not a final cleanup phase. No milesto
 
 The [client replacement path](../spatial-world.md#client-replacement-path) explains how this boundary supports a future renderer or native-client change. SW10 does not deliver an Unreal client, console support or offline play; engine reconsideration uses the existing visual proof and D02/D09 evidence.
 
+The October 9 [DG35 decision brief](../projects/platform-and-offline-decision-brief.md) compares the actual player problems and common behavior requirements without selecting a new audience or platform. ND34 still requires that premise before scoped design. The existing browser pilot and the development-only refresh observation below do not establish a production reason to replace the renderer; no SW10 item is completed or broadened by this research.
+
 **Owners:** client renderer/art adapter. **Depends on:** SW02 and the existing art contract; SW03 geometry input for surfaces. **Touchpoints:** `scene.ts`, `art.ts`, `main.tsx`, renderer tests.
 
 - [ ] **SW10.1** Extract a small `WorldRenderer` interface and plain authorized RenderWorldView mapping. Implement PlayCanvas behind it and use a no-GPU test renderer. Do not build a universal graphics abstraction or require a second real engine.

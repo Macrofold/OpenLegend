@@ -87,6 +87,8 @@ The cognition direction is accepted in [Memory architecture](../../docs/memory-a
 
 ## Decisions requiring creator taste rather than more browsing
 
+The October 9 [DG35 platform/offline decision brief](../../docs/projects/platform-and-offline-decision-brief.md) preserves D09 and the browser/PlayCanvas direction. Its source review did not find a selected audience or observed production problem for an additional platform. ND34 requires that premise before scoped design; researched alternatives and common recovery/input requirements do not select an operating system, store, engine or offline provider policy.
+
 M10/M11 settle the first-playable scope and initial absence policy: [live AI and generated survival tools](first-playable-mvp.md) are required, with no offline catch-up; the later accepted time setting allows connected background progression when explicitly enabled. They select Jev integration direction without establishing provider access or performance. The earlier optional-Jev and bundle-only first-release interpretations are superseded; exact operating limits remain open.
 
 The [architecture review](../../docs/maintainers/README.md) adds proposed initial policies without settling open product choices: one sector, fixed-step committed batches, finite trusted G1 templates, conservative dependency rechecks and one configured execution backend. Step size, process fallback values, automatic admission thresholds, reaction/aging policies and budget ceilings remain open. Broader task workflows, optimized dependency indexes, staged world migrations and G2 are gated extensions, not prerequisites.
