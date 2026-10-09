@@ -1,6 +1,6 @@
 # Batch 06 — Rivals and contested ground
 
-**Definitions complete; readiness refreshed October 7, 2026; runtime implementation not started.** Five next priorities assume earlier batches delivered for selection while recording actual open prerequisites. Mike's yes to NPC-to-NPC lethality, including Ada, resolves the developer-input gate. All five implementation prompts are complete; dispatch remains conditional on the supplied dependencies below.
+**One assignment defined; readiness refreshed October 8, 2026; runtime implementation not started.** CF01–CF05 retain their full scope as internal work parts on `codex/rivals-and-contested-ground`. Earlier required implementations are on local main at `fcea9e572`; Open prerequisites: None on that base. The owner's accepted NPC lethality, including Ada, remains unchanged. [Readiness evidence and internal order](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites) replace the five partial-start handoffs.
 
 [Feature and priorities](../projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md) · [Technical definitions and dependency evidence](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md) · [Prompts](../projects/parallel-batch-06-rivals-and-contested-ground-prompts.md) · [Limits](../limits/parallel-batch-06-rivals-and-contested-ground.md) · [Number register](../projects/parallel-batches.md)
 
@@ -11,7 +11,7 @@
 - [ ] Demonstrate actual hostile selection, adverse-result adaptation, observation-bounded pursuit, finite ammo and the contrasting peaceful resident/alternative weapon; qualify ordinary NPC-to-NPC injury/death including Ada, stale/replay/restore/privacy and supplied AV02/CF02/CF03 integration.
 - [ ] Reconcile the [technical parent map](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#documentation-and-parent-reconciliation): BW14/DG07, AC, CE/AG, action experience/recall and launcher scope. Broader PvP, indirect harm, revival, personality and capacity remain open.
 
-Readiness: PG02's bounded ordinary decision/evidence work is on main at `b1357b37`. Start target eligibility and ordinary melee/agency independently; AV02 equipment is merged into local main from `codex/av02-shield-defense` at `0884679cd`, while CF02/CF03 are new open assignments for final ranged/evasive behavior. Deliver eligibility before consuming their later results; do not duplicate their owners. [Complete definition](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf01--purposeful-opponents-through-ordinary-agency). Branch: `codex/purposeful-armed-opponents`.
+Internal order: implement common attack permissions and ordinary melee first, then finish opponent choices after CF02/CF03 in this same assignment. Existing PG02 decisions and AV02 equipment are available; no external handoff is needed.
 
 ## CF02 — Aim, projectiles and real cover
 
@@ -20,7 +20,7 @@ Readiness: PG02's bounded ordinary decision/evidence work is on main at `b1357b3
 - [ ] Consume AV02's equipment/guard resolver and AV03's competence/release evidence; complete current-format persistence and the complete acceptance in the feature/design pair.
 - [ ] Reconcile AC02/AC09/AC10/AC11, AE, INV-3/INV-6, SW04/SW07/SW15/SW16, AV02 and AV03/PC scoped criteria and actual evidence. Retain broader parent acceptance.
 
-Readiness: independent implementation can start against current lawful animal targets. AV02 equipment/guard is available on local main from `codex/av02-shield-defense` at `0884679cd`. AV03 (`codex/av03-practical-competence` at `659029347`) remains reported on a separate branch, not inspected main; its supply remains a wait for final integration. CF01 owns the accepted but unimplemented NPC target-policy extension; independent physical-shot work need not wait, while final humanoid-target acceptance consumes its result. Branch instruction: `codex/aim-projectiles-and-cover`.
+Internal order: implement after CF01's attack permissions. Integrate available AV02 equipment/guard and AV03 practice, then supply flight to the remaining work within this same assignment.
 
 ## CF03 — Evade and exploit an opening
 
@@ -29,7 +29,7 @@ Readiness: independent implementation can start against current lawful animal ta
 - [ ] Complete the existing-stag encounter, blocked/interrupted/replay/current-format cases, AV02 guard integration and CF02 projectile/evasion combined qualification.
 - [ ] Reconcile AC04/AC08/AC09/AC10/AC11, SW05/SW06/SW07/SW15/SW16, BW23, AG07 and AV02's scoped consumer, preserving broader open work.
 
-Readiness: current main permits independent stag/motion implementation. AV02 guard/equipment is available on local main from `codex/av02-shield-defense` at `0884679cd`; reuse it for guard integration. CF02 is a new unimplemented task; only the combined shot-evasion acceptance depends on it, not ordinary evasion. Branch instruction: `codex/evasion-and-counterplay`.
+Internal order: reuse existing movement and AV02 guard; integrate the CF02 flight implemented earlier in this assignment for complete evasion acceptance.
 
 ## CF04 — A companion who can help in a fight
 
@@ -38,21 +38,22 @@ Readiness: current main permits independent stag/motion implementation. AV02 gua
 - [ ] Demonstrate acceptance/refusal, useful independent help, changed priority/withdrawal, lost contact, participant/opponent death/departure, exact life changes, committed-effect preservation, restore and a second helper; finish supplied combat integration.
 - [ ] Reconcile PX04's scoped consumer, CE/AG/action experience, BW14/DG06/DG07, communication/privacy, persistence and limits without closing unrelated social or rescue work.
 
-Readiness: PX04 consent/outings is delivered on local main at `fe86301a3`, and PG02's ordinary decisions are available. Help requests, refusal and withdrawal can extend those owners now. Actual armed helping still waits for CF01 permissions, CF02 shots, CF03 evasion; AV02 equipment/guard is already available on local main (`0884679cd`). [Complete definition](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf04--voluntary-help-against-one-known-opponent). Branch: `codex/voluntary-combat-companions`.
+Internal order: extend available PX04 consent and PG02 decisions after CF01–CF03 combat is ready. The same assignment implements and qualifies help; no separate combat delivery is awaited.
 
 ## CF05 — A contested ruin and a victory that lasts
 
 - [ ] Author Broken Watchpost's two supported routes, actual visible cover, discovery note, CF01 occupants and finite stock in one world-owned new-start source.
 - [ ] Reuse PX03 place knowledge and AV01 physical method learning; preserve actual equipment/cache custody and death/remains, without victory flags, resets, duplicate rewards or automatic revenge.
-- [ ] Complete the full ordinary-player encounter after CF01–CF04 arrive: approaches, opponent choice, cover/evasion/guard, voluntary help, reward use and persistent revisit; include loss/return, NPC loss, non-double-kill outcome and competing visitors.
+- [ ] Complete the full ordinary-player encounter after implementing CF01–CF04: approaches, opponent choice, cover/evasion/guard, voluntary help, reward use and persistent revisit; include loss/return, NPC loss, non-double-kill outcome and competing visitors.
 - [ ] Reconcile BW/DG01/DG07, PX03, AV01, physical-object custody, relevant repertoire scope and limits; record actual selected-scene quality/capacity limits without claiming general scale or enjoyment.
 
-Readiness: location/routes/ordinary stock can start now and PX03 discovery is delivered on local main at `699417835`. The workshop clue/physical learning waits for AV01's required runtime from unmerged `codex/av01-rewarding-expeditions` at `6db757618`; full conflict/help gameplay waits for CF01–CF04. Their own listed equipment/progression waits remain explicit, not new work assigned to CF05. [Complete definition](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf05--one-physical-destination-and-persistent-aftermath). Branch: `codex/contested-ruin-aftermath`.
+Internal order: reuse available PX03 discovery and AV01 learning. The same assignment authors the site and qualifies the full encounter after implementing CF01–CF04; it also owns their combined acceptance.
 
 ## Planning and combined completion
 
-- [x] Resolve NPC participation with Mike and finish all five feature/technical definitions, exact branch prompts, dependencies, estimates and scoped acceptance. Planning is complete; October 7 prompt cleanup separates true external blockers from already available work and each task's own implementation. No runtime criterion closes through this checkbox.
-- [ ] Confirm required earlier deliveries and complete all five runtime assignments and their combined acceptance; then reconcile actual evidence and every scoped parent requirement.
+- [x] Resolve NPC participation with Mike and finish all five feature/technical definitions, dependencies, estimates and scoped acceptance. The October 8 consolidation replaces five interdependent prompts with one complete named-branch assignment, preserving every runtime requirement. No runtime criterion closes through this checkbox.
+- [x] Confirm the required earlier deliveries are available on the documented local-main base; retain broader unrelated qualifications with their owners.
+- [ ] Complete all five runtime work parts and their combined acceptance in the one assignment; then reconcile actual evidence and every scoped parent requirement.
 - [ ] Only after the entire agreed runtime scope is complete, mark the batch Completed and move its project documents under the repository completion policy.
 
-No worker communication or separate integration agent is required. The owner supplies prerequisite revisions and order. The resolved developer answer is recorded in the lifecycle owner and decision register; implementation/merge dependencies remain explicit.
+No worker communication, intermediate deliveries or separate integration agent is required. CF01–CF05 keep separate code responsibilities and acceptance tracking inside one assignment; internal sequencing is not a reason to pause for another task. The resolved developer answer remains in the lifecycle owner and decision register.

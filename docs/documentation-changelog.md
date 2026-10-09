@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 8, 2026 — Consolidate Batch 06 into one complete assignment
+
+At the owner's request, [Batch 06](projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md) now has [one implementation prompt](projects/parallel-batch-06-rivals-and-contested-ground-prompts.md) covering CF01–CF05. The previous five assignments required partial deliveries and repeated handoffs; combining them lets one agent own the full permissions → projectiles → evasion → opponents → help → encounter sequence. Existing feature scope, modular code responsibilities and acceptance criteria remain intact; the tradeoff is one larger assignment rather than five independently finishable tasks that the old split did not actually provide.
+
+The [dependency record](projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites) now confirms required expedition learning, equipment/defense and practice implementations on local main at `fcea9e572`. Those are available foundations, while their new combat integrations belong to this assignment. Earlier broader qualification remains open with its owners. The [tracker](maintainers/parallel-batch-06-rivals-and-contested-ground.md) retains every unimplemented gameplay criterion; this documentation change implements no runtime behavior.
+
 ## October 7, 2026 — Carry expedition implementation lessons into guidance
 
 Repeated/list readers, per-item validation and derived caches now trigger performance guidance before implementation or review, including new consumers in any layer. That guidance distinguishes immutable method validity from current inspection, knowledge, access and executable stock, requires complete display dependencies and checks immediate downstream feedback. React guidance explicitly refreshes affected detail after a successful mutation while preserving selection and fencing late reads. These changes carry [AV01's confirmed review findings](verification/rewarding-expeditions.md#requested-review--october-6-2026) into the next feature instead of waiting for a reported slowdown.

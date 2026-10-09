@@ -1,8 +1,8 @@
 # Batch 06 — Rivals and contested ground
 
-| Status      | Current progress                                                                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | All five implementation assignments are specified following the NPC combat decision; runtime delivery and listed prerequisite integrations remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | One assignment covers all five work parts; required earlier implementations are on local main, and all runtime acceptance remains open. | 2026-10-08   |
 
 ## Purpose and planning horizon
 
@@ -10,15 +10,15 @@ Make venturing out create conflict worth engaging with: an opponent wants someth
 
 At Mike's request, **assume all previously suggested assignments are delivered when deciding what to select next**. That is a planning horizon, not evidence that their branches have merged. The [dependency ledger](parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites) records actual readiness separately. No previous task is marked complete by this allocation.
 
-The request authorizes planning documents and future implementation prompts, not implementation or task dispatch. The mechanics below are proposals, not current behavior. All five assignments include implementation and qualification; none is a design-only substitute.
+The request authorizes planning documents and future implementation prompts, not implementation or task dispatch. The mechanics below are proposals, not current behavior. The owner consolidated the five interdependent assignments into one implementation assignment on October 8. CF01–CF05 retain their complete scope and acceptance as internal work parts, not separate workers or design-only substitutes.
 
 ## Why this batch
 
 After the earlier batches, the game would offer a dangerous animal, shields, usable equipment, rewarding exploration, fishing, a home, practice, barter and voluntary outings. Another food source or maintenance chore adds less than an opponent who contests what the player wants. We should develop conflict through reusable actions and real people, not a scripted battle whose conclusion ignores the world.
 
-The selection follows [gameplay priorities](../repertoires/gameplay-priorities.md) and [whole-game coverage](../repertoires/coverage.md). Core entries are alternatives to combine into worthwhile play, not a requirement to implement every weapon or every opponent. The five assignments deliberately concentrate on conflict; the planning categories are not staffing quotas.
+The selection follows [gameplay priorities](../repertoires/gameplay-priorities.md) and [whole-game coverage](../repertoires/coverage.md). Core entries are alternatives to combine into worthwhile play, not a requirement to implement every weapon or every opponent. The five work parts deliberately concentrate on conflict; they now form one cohesive assignment rather than a staffing quota.
 
-| Assignment                                       | Intended experience                                                                                                                       | Repertoire priority and scope                                                                                                                          | Why now / burden                                                                                                                                                                                                                       |
+| Work part                                        | Intended experience                                                                                                                       | Repertoire priority and scope                                                                                                                          | Why now / burden                                                                                                                                                                                                                       |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CF01 — Armed opponents with their own purpose    | Meet a speaking opponent who values a position or prize and can fight, withdraw or refuse cooperation using real equipment and knowledge. | **Core:** CR-122 defender, CR-123 ranged opponent, RSH-144 genuinely hostile rival; CB-112 is inspiration, not mandatory lore or a copied character.   | Distinct human opposition follows the animal encounter. Uses the accepted NPC participation policy and supplied ordinary character decisions; a biography alone is insufficient.                                                       |
 | CF02 — Aim, projectiles and real cover           | Aim without firing, release one finite projectile, and hit or miss because of its actual path, moving target and obstacles.               | **Core:** CR-001, CR-002, CR-061, CR-242; bounded straight projectile flight, not every ballistic behavior.                                            | Current ranged attacks only target animals and resolve an accuracy draw directly into injury. Real flight and cover supply counterplay to future ranged opponents. Higher mechanical and persistence cost than another weapon variant. |
@@ -62,7 +62,7 @@ The shot locks the last permitted aim point at release. Its travel intersects ac
 
 An already released projectile continues after the shooter cancels or moves, and its ammunition stays spent. A target leaving the line can be missed. Losing current sight before release prevents firing at secretly refreshed coordinates. The interface must distinguish aiming, released, stopped, missed and hit, and never report a kill at release. Save/load preserves an in-flight shot and cannot return its ammunition or land it twice.
 
-The independent mechanical starting case uses today's permitted animal targets. General projectile mechanics and scoped presentation must not encode animal-only assumptions. CF01 owns the accepted NPC eligibility extension; CF02 integrates that supplied result for its final humanoid-target acceptance.
+Animal targeting remains a useful mechanical case, but projectile mechanics and scoped presentation must not encode animal-only assumptions. Implement CF01's accepted NPC eligibility extension first within this assignment, then qualify CF02 against both animal and humanoid targets.
 
 **Completion:** exercise aim/cancel, finite release, moving target miss, real cover and intervening body, stale equipment/life/review, departure protection, shield consumption after AV02, current-format restore and unchanged hunting/competence callers. Demonstrate the ordinary player path; distinguish native correctness from model choice and enjoyment. Detailed contracts and existing source entrypoints are in [CF02](parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf02--one-ranged-execution-owner).
 
@@ -74,7 +74,7 @@ Choosing evasion can abandon a preparing attack or guard through existing interr
 
 Use the existing stag as the first complete opponent. This work adds no new target class; it consumes CF01 eligibility when combined with humanoid encounters. Later humanoids consume the same motion and public attack phases. AI characters can choose evasion when it is supported and relevant; native code does not automatically dodge on their behalf.
 
-**Completion:** evade a committed stag attack, fail to evade through a wall/occupied destination, preserve recovery when canceling, avoid duplicate displacement, preserve current-format motion/cooldown, retain normal walking, and make a genuine recovery opening visible without revealing a hidden attacker. AV02's shield coexistence is an explicit final integration prerequisite. [CF03 technical definition](parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf03--evasion-through-authoritative-movement) owns mechanics.
+**Completion:** evade a committed stag attack, fail to evade through a wall/occupied destination, preserve recovery when canceling, avoid duplicate displacement, preserve current-format motion/cooldown, retain normal walking, and make a genuine recovery opening visible without revealing a hidden attacker. AV02's shield implementation is already available; its coexistence with evasion remains required integration in this assignment. [CF03 technical definition](parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf03--evasion-through-authoritative-movement) owns mechanics.
 
 ## CF04 — A companion who can help in a fight
 
@@ -94,29 +94,29 @@ The useful prize is physical equipment: a usable bow and its arrows can be taken
 
 The player can retreat, take an opportunity to reach the cache, fight, or arrive with a willing companion. Opponents may choose to defend, leave or use their own equipment. Actual blocked sight and travel govern access. Losing uses ordinary death/corpse/return rules. Winning leaves the people dead or displaced and the actual items where they were taken or dropped. Returning after a save/load shows that aftermath; it never restores the encounter automatically. Another visitor can take the remaining stock.
 
-**Completion:** ordinary entry/discovery, both traversable routes, useful cover, real opposition, optional exit, actual finite reward use, player loss/return, NPC loss, and a later visit with preserved custody and no duplicate reward. Also show an outcome without killing both occupants; no guaranteed peaceful bargain is required. CF05 owns the combined encounter qualification once CF01–CF04 and the required previous deliveries are supplied. [Technical scope](parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf05--one-physical-destination-and-persistent-aftermath).
+**Completion:** ordinary entry/discovery, both traversable routes, useful cover, real opposition, optional exit, actual finite reward use, player loss/return, NPC loss, and a later visit with preserved custody and no duplicate reward. Also show an outcome without killing both occupants; no guaranteed peaceful bargain is required. CF05 covers the combined encounter qualification after this same assignment implements CF01–CF04, reusing the already available earlier foundations. [Technical scope](parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf05--one-physical-destination-and-persistent-aftermath).
 
 ## Presentation and combined experience
 
 Extend the current action picker, target inspection and current-action display. Target/tool names and decisive cost/blocker stay on the row; optional detail stays in the existing disclosure. Aiming uses a compact persistent action strip with explicit Shoot/Cancel, not a modal that blocks movement or swallows the chat draft. Only current permitted target/trajectory information is shown; a camera angle does not grant knowledge.
 
-Use ordinary responsive panels and design-system spacing, wrapping long names and preserving usable controls in narrow/short layouts and at enlarged text. Details scroll, but active cancellation remains reachable. Keyboard, reduced motion and text outcomes carry the same information as animation. Preserve final-blow modal focus and all explicit-send/chat shortcut boundaries. Each worker owns the usability of its feature; no sixth UI or integration assignment is implied.
+Use ordinary responsive panels and design-system spacing, wrapping long names and preserving usable controls in narrow/short layouts and at enlarged text. Details scroll, but active cancellation remains reachable. Keyboard, reduced motion and text outcomes carry the same information as animation. Preserve final-blow modal focus and all explicit-send/chat shortcut boundaries. The same assignment owns usable controls across all five work parts and their combined experience; no separate UI or integration worker is implied.
 
-The combined walkthrough enters the watchpost, identifies the two occupants from permitted evidence, chooses an approach, uses real ranged cover/evasion, optionally requests voluntary help, obtains and uses a physical reward, leaves and revisits. A contrasting loss/withdrawal run preserves real consequences. All five task definitions are complete; dispatch readiness is conditional on the specific open implementation and merge dependencies, not on another developer answer.
+The combined walkthrough enters the watchpost, identifies the two occupants from permitted evidence, chooses an approach, uses real ranged cover/evasion, optionally requests voluntary help, obtains and uses a physical reward, leaves and revisits. A contrasting loss/withdrawal run preserves real consequences. All five work definitions remain required. The consolidated assignment can start on the documented local-main base without another developer answer or another Batch 06 agent delivering work.
 
 ## Estimates and sequencing
 
 These are rough implementation ranges, including callers, UI, current-format persistence, relevant qualification and documentation. They are not a staffing promise or an AI speed multiplier. Existing prerequisite delivery is excluded; if those contracts change, re-estimate their consumers.
 
-| Assignment | Changed production logic lines | Engineer-days | Independent start and final dependency                                                                                              |
-| ---------- | ------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| CF01       | 1,200–2,200                    | 5–8           | Existing agency/targeting/content first; supplied AV02, CF02 and CF03 complete equipped ranged/evasive behavior.                    |
-| CF02       | 1,600–2,800                    | 6–10          | Animal aim/flight first; AV02 defense, AV03 practice and CF01 humanoid eligibility for final integration.                           |
-| CF03       | 650–1,150                      | 3–5           | Stag/motion first; AV02 guard and CF02 moving-shot acceptance later.                                                                |
-| CF04       | 900–1,600                      | 4–7           | Extend delivered PX04 requests/consent now; CF01/AV02 and CF02/CF03 are required for final armed-help integration.                  |
-| CF05       | 500–900                        | 3–5           | Site/route/stock authoring and delivered PX03 discovery first; AV01 and CF01–CF04 for complete gameplay and combined qualification. |
+| Work part | Changed production logic lines | Engineer-days | Order inside the one assignment                                                                  |
+| --------- | ------------------------------ | ------------- | ------------------------------------------------------------------------------------------------ |
+| CF01      | 1,200–2,200                    | 5–8           | Attack permissions and melee first; finish ranged/evasive character choices after CF02/CF03.     |
+| CF02      | 1,600–2,800                    | 6–10          | Follow common attack permissions; integrate already available equipment, guard and practice.     |
+| CF03      | 650–1,150                      | 3–5           | Follow flight for complete shot-evasion acceptance; reuse existing movement and guard.           |
+| CF04      | 900–1,600                      | 4–7           | Extend existing voluntary consent after combat and opponent choices work together.               |
+| CF05      | 500–900                        | 3–5           | Compose the site and finite rewards, then qualify the complete encounter and persistent revisit. |
 
-Five branches can advance without duplicating earlier tasks. CF01's target-permission extension is delivered independently of its later ranged demonstration; CF02's flight is independent of CF01's NPC choices. This staged contract avoids a circular implementation prerequisite. CF05 performs the combined encounter acceptance, while each other assignment owns its local behavior and supplied consumers. The owner supplies prerequisite revisions; prompts grant no merging or worker communication.
+The prior estimates total roughly **4,850–8,650 production logic lines and 21–35 engineer-days** for the full scope; consolidating responsibility does not remove work or promise a duration. Reassess against the actual base under AGENTS.md. This is intentionally one ambitious assignment on `codex/rivals-and-contested-ground`, replacing five partial-start branches. Implement the permission part of CF01, then CF02, CF03, the remaining CF01 choices, CF04 and CF05. All integrations and acceptance are owned by the same task; no intermediate handoff, peer message or wait for another Batch 06 worker is required. The existing modular code responsibilities remain separate even though staffing is combined.
 
 The priority hypothesis is that readable opposition and persistent stakes earn another expedition. Evidence that would change the recommendation includes opponents requiring constant author rescue, controls that prevent timely choices, rewards that are not useful, or repeated permanent losses overwhelming the attraction. Small successful native scenarios cannot establish fun or autonomous decision quality.
 
@@ -125,4 +125,4 @@ The priority hypothesis is that readable opposition and persistent stakes earn a
 - Implementation and open gates: [CF01–CF05](../maintainers/parallel-batch-06-rivals-and-contested-ground.md).
 - Limits and constraints: [batch 06 inventory](../limits/parallel-batch-06-rivals-and-contested-ground.md).
 - Mechanisms and dependencies: [technical design](parallel-batch-06-rivals-and-contested-ground-tech-design.md).
-- Five standalone implementation prompts: [prompt document](parallel-batch-06-rivals-and-contested-ground-prompts.md).
+- One complete implementation prompt: [prompt document](parallel-batch-06-rivals-and-contested-ground-prompts.md).
