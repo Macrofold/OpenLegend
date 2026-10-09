@@ -1,8 +1,8 @@
 # Product designs for groups 31–35
 
-| Status      | Current progress                                                                                                | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG31 independent scope and DG32–DG33 reviewed. D16-dependent family scope remains unfinished; DG34–DG35 follow. | 2026-10-09   |
+| Status      | Current progress                                                                                                                    | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG31 independent scope and DG32–DG33 reviewed; DG34 source audit and research underway. D16-dependent family scope and DG35 remain. | 2026-10-09   |
 
 ## Assignment and baseline
 
@@ -35,7 +35,7 @@ Apply the [root question rule](../../AGENTS.md#resolve-developer-questions-befor
 | DG31  | How can relationships across a life add companionship, change and meaningful choices without compulsory household supervision?                          | ACT/BW lifecycle, delivered BW16 ancestry, PS clocks/population, actual food, shelter and care; D16/D23/D27. | Independent adult-family product design and review complete; affected audience-dependent content awaits the reserved decision.      |
 | DG32  | What real shared undertaking benefits from an institution or enforceable obligation, and how can participants join, dissent, leave and resolve failure? | DG06/DG22 groups and agreements, INV-20, social/property/world authority; D11/D18.                           | Comprehensive product proposal, twelve-source research and independent reviews complete; technical/runtime delivery remains open.   |
 | DG33  | What wanted encounter justifies an extraordinary mind or retained dead person while identity, control, evidence and recovery remain coherent?           | BW15, ACT/AG/CR, EWF10/INV, scoped knowledge, privacy and current mortality/recovery.                        | Comprehensive product proposal, thirteen-source research and review complete; actual family delivery and qualification remain open. |
-| DG34  | How can a known shared campaign create rewarding local opportunities for people with different schedules and resources?                                 | PS07/PS08, world/campaign access and time, mature data/scale, DG29 travel only where needed.                 | Not started.                                                                                                                        |
+| DG34  | How can a known shared campaign create rewarding local opportunities for people with different schedules and resources?                                 | PS07/PS08, world/campaign access and time, mature data/scale, DG29 travel only where needed.                 | Source audit and primary research underway; first same-world linked communities precede a separate cross-world extension.           |
 | DG35  | Which concrete device or offline problem deserves a separately selected capability, and what complete promise can it support?                           | SW10, UI/accessibility, account/participation, hosting/provider and distribution owners.                     | Not started.                                                                                                                        |
 
 Within the active group, delegate independent source research and adversarial review. One author owns a feature file at a time; the root owns integration, commits and shared records. Read the complete released draft before reconciliation. A genuine source-reserved question does not permit inventing its answer; keep dependent scope visible while progressing through work that does not require it.
