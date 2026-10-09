@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| In progress | DG34 product proposal in preparation: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-09 |
+| In progress | DG34 product proposal completed for review: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-09 |
 
 ## 1. The Ash Road: something worth doing before the battle
 
@@ -69,7 +69,7 @@ The east gate can likewise be opened physically before or after disconnecting it
 | Both relays connected | The dormant Warden's shutdown access is warded; it has two possible powered routes, not two bodies. | Either gate can be opened by actual work, but remains eligible for a later Warden closure. |
 | Exactly one connected | Shutdown access becomes operable; only an actually open still-connected gate is a valid destination for the one proposed operation. | The severed gate can be opened by actual work and cannot be reclosed by this Warden; its route is not opened by narration. |
 | Neither connected before launch | Activation is prevented; the unique Warden remains inert and can be permanently disabled through ordinary shutdown work. | Both routes are secured against this machine; actual gate opening and carrying can still be worthwhile. |
-| Last connection removed during the operation | The Warden loses powered work and stops at its actual supported position. | Completed movement and gate changes remain; unfinished closing does not complete itself. |
+| Chosen destination's connection removed during the operation | The fixed-target attempt ends spent at its actual supported position, even if the other relay remains connected. | Completed movement and gate changes remain; unfinished closing does not complete itself, and no retargeting occurs. |
 | Warden permanently shut down | It cannot launch or operate either gate again. | Remaining fixtures do not vanish; disconnected parts are not replenished. |
 
 A disconnected relay cannot be rearmed in the first profile. This is a finite one-way dismantling of an obsolete mechanism, openly stated before commitment. It is not a universal rule that players may never repair machines. A future repair or adversarial restoration would need real components, permission, timing, outcome revision and a useful reason; it is not introduced merely to preserve repeated battles.
@@ -82,7 +82,7 @@ The profile proposes one coupling from each relay and one crank total. These are
 
 The first Warden has one stored operation charge. It does not replenish from time, donations, player attention or a reset. The two relays are necessary connections, not inexhaustible material sources. Launch commits that charge to one attempt. Cancellation after actual launch does not refund it; refusal before launch spends nothing. A crash with an uncertain launch must recover the actual result before admitting another request.
 
-The operation's purpose is to close one currently open, connected campaign gate. The Warden receives only the declared fixture signals: whether its two relays remain connected and their associated gates' operational positions. This narrowly authored link is not a general sense of people, supplies, private plans or hidden activity. It follows an actual supported route from its workshop, carrying no conjured army. If both eligible gates are open, the first profile uses the shorter currently supported route; an exact tie uses the fixed authored western preference. The published conditional forecast explains this rule once that information is legitimately available.
+The operation's purpose is to close one currently open, connected campaign gate. The Warden receives only the declared fixture signals: whether its two relays remain connected and their associated gates' operational positions. This narrowly authored link is not a general sense of people, supplies, private plans or hidden activity. It follows an actual supported route from its workshop, carrying no conjured army. If both eligible gates are open, the first profile uses the shorter currently supported route; an exact tie uses the fixed authored western preference. The published conditional forecast explains this rule once that information is legitimately available. The destination is fixed at actual launch. Disconnecting that destination's relay ends the attempt, spent at its actual position, even if the other relay remains connected. There is no surprise retargeting or second front. Closing the target gate before the Warden reaches it likewise leaves no new closure to perform and ends that attempt without a replacement target.
 
 The initial qualification proposes a movement speed of 0.011 world units per game second and an operation budget of 3,600 game seconds including movement and fixture work. These are provisional content choices: at normal speed the machine has at most one real minute of active work. The actual route must fit that budget with useful visible approach, and the numbers must change if the result is a tedious procession or an unreadable rush. A faster world clock shortens the real interval; qualification at normal speed does not establish a fair 8× encounter.
 
@@ -102,7 +102,7 @@ If both relays remain connected, the control is visibly warded to someone who ca
 
 All work resolves against the actual current world. If a relay disconnects just before gate closure, the work cannot complete with power it no longer has. If the gate closed first, disconnecting later does not retroactively open it. If two actors complete shutdown and disconnection together, there is one machine outcome and each actual distinct action can be recognized. The campaign record never pays twice for the same physical success or treats a cancelled attempt as a successful contributor.
 
-The first permanent shutdown is the canonical ending of that adversary. Its dormant, spent or broken object can remain in the world; later removal is not another defeat. A ceremonial retelling may be proposed later as explicitly noncanonical content. New players do not get a restored Cinder Warden merely because they did not see the original operation.
+The first permanent shutdown records the final core condition. If the one operation was already spent, this is cleanup of an ended threat, not a second victory. Its dormant, spent or broken object can remain in the world; later removal is not another defeat. A ceremonial retelling may be proposed later as explicitly noncanonical content. New players do not get a restored Cinder Warden merely because they did not see the original operation.
 
 ### 4.3 Meaningful outcomes without mandatory victory
 
@@ -206,7 +206,7 @@ Use the existing multiplayer and [DG29 admission](participants-and-world-travel-
 
 For an advertised optional peak, reserve a named finite number of arrival places for residents who accepted that particular offer before admitting optional visitors against the remainder. Those commitments must fit the measured envelope alongside people already there, normal local work and valid reconnects. The actual number must be published from the qualified workload before invitation; this design does not invent a percentage that supposedly proves capacity. The first exercise needs only its two actual participants. No home owner receives an unlimited perpetual reservation.
 
-A resident reservation lasts until the advertised window opens plus fifteen real minutes, unless they explicitly release it sooner. This proposed check-in allowance is for an optional event place, not a deadline on ordinary world access or a grace extension for an already present body. Unclaimed places then enter ordinary admission order. A late resident keeps their home and history but cannot evict a visitor who lawfully took the released place. Do not require repeated check-in clicks to hold a reservation once actually admitted.
+A resident reservation is an **entry reservation**, not a seat at the unique operation. Before acceptance, show for example: “Entry reserved until 18:15; the operation may begin 18:00 and finish before you arrive.” Early prevention can also remove the operation entirely. The entry reservation lasts until the advertised window opens plus fifteen real minutes, unless the person explicitly releases it sooner. This proposed check-in allowance is for an optional event place, not a deadline on ordinary world access or a grace extension for an already present body. Unclaimed places then enter ordinary admission order. A late resident keeps their home and history but cannot evict a visitor who lawfully took the released place. Do not require repeated check-in clicks to hold a reservation once actually admitted.
 
 When several ordinary arrivals are eligible, use the existing single-request, oldest-ready order and fresh departure offer rather than a campaign-specific priority currency. The DG29 thirty-second ready offer and one missed-offer grace apply only where that supported arrival service is actually used. Changed material terms return to untimed review. A person can keep playing at a useful source while waiting. No subscription, donated supplies, public fame or contribution total buys queue priority.
 
@@ -238,7 +238,7 @@ A contribution is a particular completed effect or properly attributed report, n
 
 Canonical physical state, a person's own action result, public attribution and another character's knowledge are separate. A native result can establish that the west relay is disconnected. It may not establish that an unrecognized passerby was Mike, that a private letter inspired the work, or that Nessa now remembers it. A public history names only identity and details that may actually be disclosed.
 
-People can choose whether their public contribution uses their permitted character identity, a disclosed group attribution where authorized, or no personal name. It never publishes the account's legal name, payment amount, private thoughts or precise hidden movements. Declining recognition does not undo the effect or disqualify the work. A group leader cannot reveal a private member through a shared credit entry without the applicable permission.
+Public contribution attribution defaults to no personal name. People can explicitly choose their permitted character identity or a disclosed group attribution where authorized; the public fixture fact is still reported when identity is withheld. It never publishes the account's legal name, payment amount, private thoughts or precise hidden movements. Declining recognition does not undo the effect or disqualify the work. A group leader cannot reveal a private member through a shared credit entry without the applicable permission.
 
 The first record is a short factual history with expandable permitted details, not a ranked scoreboard. “The west connection was severed, exposing the Warden's control” is sufficient where attribution is withheld. “Orrin reports that…” remains a report unless the product has actual confirming evidence. Corrections preserve the prior public statement where lawful and explain the change; they do not silently rewrite a dispute as unanimous agreement.
 
@@ -308,11 +308,11 @@ Use a complete cost account:
 
 Baseline world service is not free just because the campaign is a small addition. Count the actual marginal campaign costs and disclose any shared hosting allocation rather than assigning every unrelated world expense to the event or hiding it outside the denominator. Compare cost per useful local outing, per genuinely served participant-hour and per resolved campaign, not registered followers versus concurrent activity.
 
-An illustrative attempt with eight resident exchanges, two chosen reconsiderations and two optional summaries has twelve complete workflows. At assumed all-in averages of0.002,0.01 or0.05 currency units per workflow, the respective generation-related totals are0.024,0.12 or0.60. These are sensitivity assumptions, not provider prices, approved funds or quality evidence. Include selection, context preparation, failed calls, tools, memory work and uncertain charges in each measured workflow; a short visible line can cost more than one request.
+An illustrative attempt with eight resident exchanges, two chosen reconsiderations and two optional summaries has twelve complete workflows. At assumed all-in averages of 0.002, 0.01 or 0.05 currency units per workflow, the respective generation-related totals are 0.024, 0.12 or 0.60. These are sensitivity assumptions, not provider prices, approved funds or quality evidence. Include selection, context preparation, failed calls, tools, memory work and uncertain charges in each measured workflow; a short visible line can cost more than one request.
 
-If fifty campaigns each retain two30KiB public accounts plus ten10KiB private contribution records, that illustrative content alone is about7.8MiB before indices, replicated storage, native world state, full source evidence and backups. Small totals do not justify collecting private histories indefinitely. Permission-safe cold retrieval, revisions, erasure and long-lived unresolved claims can dominate later work. Existing privacy and retention owners select those policies; this proposal adds no arbitrary automatic deletion.
+If fifty campaigns each retain two 30 KiB public accounts plus ten 10 KiB private contribution records, that illustrative content alone is about 7.8 MiB before indices, replicated storage, native world state, full source evidence and backups. Small totals do not justify collecting private histories indefinitely. Permission-safe cold retrieval, revisions, erasure and long-lived unresolved claims can dominate later work. Existing privacy and retention owners select those policies; this proposal adds no arbitrary automatic deletion.
 
-The operator's time can dominate the AI bill. Thirty minutes of preparation/reconciliation at an assumed30currency units per hour costs15 before hosting, while a two-hour staffed availability window at the same assumption costs60 even if the physical procession lasts one minute. A replacement can add another such window. Do not present a low inference total as proof that an advertised campaign service is economical. A private asynchronous route project without staffed launch may deliver more fun per unit of cost.
+The operator's time can dominate the AI bill. Thirty minutes of preparation/reconciliation at an assumed 30 currency units per hour costs 15 before hosting, while a two-hour staffed availability window at the same assumption costs 60 even if the physical procession lasts one minute. A replacement can add another such window. Do not present a low inference total as proof that an advertised campaign service is economical. A private asynchronous route project without staffed launch may deliver more fun per unit of cost.
 
 Before a paid public trial, state the actual payer, approved spend ceiling, operator hours, promised access/recovery/retention and minimum remaining reserve for accepted obligations. None is authorized by this document. Exhaustion stops optional new offers and generation before it compromises owed work. No automatic top-up, grant-fund allocation or platform-subscriber pool is implied. Performance admission and money admission are separate: a funded workload can still be too dense to execute correctly.
 
@@ -360,15 +360,160 @@ Deliver and evaluate the local campaign in this order:
 
 1. **A useful road and two distinct outings.** With generation unavailable, one person can open a gate, discover a relay method, disconnect it, retain the correct tool/object and understand the other site's changed option. A second person later sees the actual consequence without a private-history leak. Refusal and departure remain ordinary choices.
 2. **Complete early prevention.** Both sources can be severed and the unique core disabled before any public window. The record calls this prevention, never a failed event. No charge, source, object or recognition repeats after reconnect, crash or a duplicate attempt.
-3. **One actual optional operation.** Qualify the real route, sweep, source loss, moving shutdown, blocked body, spent position and usable bypass. At0.011units/game-second, the route plus120game-seconds of closure fits the3,600game-second budget. Exercise other speeds before offering them as equally usable play.
+3. **One actual optional operation.** Qualify the real route, sweep, source loss, moving shutdown, blocked body, spent position and usable bypass. At 0.011 units/game-second, the route plus 120 game seconds of closure fits the 3,600-game-second budget. Exercise other speeds before offering them as equally usable play.
 4. **An advertised service worth its effort.** Check real notice, fresh readiness, resident reservations, configured reconnect grace, revised estimates, missed windows, maximum one replacement and honest closure. Verify ordinary world play outside the window and no missed-operation catch-up.
 5. **Wider campaigns only for demonstrated demand.** Add a wanted new front, intelligent adversary or cross-world connection only with its actual rights, costs, clocks, harm law, recovery and PS08 evidence.
 
 The first evaluation should observe whether people voluntarily use the reopened route, can explain why one community's work mattered to the other, find both outings different enough to enjoy, and choose another visit without a reward prompt. Ask someone who missed the procession whether their earlier action still felt worthwhile. Ask someone who arrived later whether the changed place offered a useful decision without falsely claiming their participation in the original victory.
 
-The acceptance matrix includes: opposite simultaneous relay actions; opening a connected gate then letting the Warden close it; all gates already closed; one person preventing closure by physical obstruction; a tool carried away; a moved bag blocking the sweep; permission revoked midwork; a private contributor declining public identity; a misleading resident report; budget exhaustion; actual save failure; pause spanning the whole service window; an accepted arrival losing capacity; a late resident after a released reservation; a crashed launch with uncertain charge; same-world coherent rewind; and an exported report making pre-export local rewind unsupported.
+The acceptance matrix includes: opposite simultaneous relay actions; opening a connected gate then letting the Warden close it; all gates already closed; the selected relay severed while the other remains connected; a target closed by someone else after launch; one person preventing closure by physical obstruction; a tool carried away; a moved bag blocking the sweep; permission revoked midwork; a private contributor declining public identity; a misleading resident report; budget exhaustion; actual save failure; pause spanning the whole service window; an accepted arrival losing capacity; a late resident after a released reservation; a crashed launch with uncertain charge; same-world coherent rewind; and an exported report making pre-export local rewind unsupported.
 
-Measure completed meaningful work and end-to-end latency/cost, not merely requests accepted. Include native execution, perception, required NPC choices, network delivery, persistence, client responsiveness, queue recovery and operator effort. The accepted wider workload remains100humans,100agents,100animals and1,000objects, half of each in one scene; growth retains10,000concurrent humans and200humans plus agents in a scene with other populations declared. The small Ash Road exercise, many idle accounts or people kept outside a full scene satisfy none of those broader targets.
+Measure completed meaningful work and end-to-end latency/cost, not merely requests accepted. Include native execution, perception, required NPC choices, network delivery, persistence, client responsiveness, queue recovery and operator effort. The accepted wider workload remains 100 humans, 100 agents, 100 animals and 1,000 objects, half of each in one scene; growth retains 10,000 concurrent humans and 200 humans plus agents in a scene with other populations declared. The small Ash Road exercise, many idle accounts or people kept outside a full scene satisfy none of those broader targets.
 
 Stop or simplify if the relay work feels like a repeated click tax; if the shorter road has no wanted destination; if the operation adds only scheduling anxiety; if people cannot distinguish a service time from arrival; if ordinary food/cognition cost overwhelms the outing; or if the host must constantly invent recovery exceptions. First remove the optional advertised launch, preserve the useful route and causal cooperation, and measure again. Do not respond by adding mandatory loot, longer timers or more relays to justify the campaign machinery.
 
+## 14. Research and the choices it informs
+
+These twelve primary records were retrieved on **2026-10-09 UTC**. Observations describe what the named developer published; inferences are Open Legend recommendations. Historical announcements do not establish current balance or measured enjoyment. No foreign event price, reward rate, population cap or schedule becomes an Open Legend rule by citation.
+
+### SC-R01 — Difficulty and admission are different problems
+
+**Source:** ArenaNet, [ArenaNet Studio Update: April 2022](https://www.guildwars2.com/en/news/arenanet-studio-update-april-2022/).
+
+**Observed:** The studio reported Dragon's End clear rates rising from roughly 15% in early March to over 60% after adjustments and player adaptation. It separately judged rewards insufficient for time/difficulty and described a queue bug that could send people to the back.
+
+**Design inference:** Evaluate the complete attempt, including access and unsuccessful work. Better rewards cannot fix an unfair queue, and a higher completion rate alone does not prove the encounter is enjoyable.
+
+**Access/status:** Historical April 2022 developer update; relevant body available. The extraction did not establish an exact publication day. Rates are developer-reported for that period, not causal evidence for our design.
+
+### SC-R02 — Late opportunities need a deliberate policy
+
+**Source:** Hello Games, [Expeditions Revisited](https://www.nomanssky.com/2021/11/expeditions-revisited/), 2021-11-24.
+
+**Observed:** The developer acknowledged that limited-time expeditions were difficult for some players to attend. It announced another opportunity through adjusted two-week runs, with changed routes and starting planets, calling this a one-off at that time.
+
+**Design inference:** Missing a peak should not remove every worthwhile later activity. Our unique canonical history calls for actual aftermath or an explicitly different retelling, rather than silently repeating the same victory.
+
+**Access/status:** Relevant historical announcement read. It establishes that announced rerun policy, not a current guarantee, measured result or proof of which late-player alternative Open Legend should use.
+
+### SC-R03 — A completed place can remain useful
+
+**Source:** Square Enix, [Ishgardian Restoration](https://na.finalfantasyxiv.com/lodestone/ishgardian_restoration/).
+
+**Observed:** The current public guide describes completed reconstruction, continuing material/craft rewards, a record of past progress, scheduled celebratory activities and a monument reflecting crafting-class contributions.
+
+**Design inference:** Preserve the changed place and its readable history. Later play can be useful without pretending the original work never finished. An unlimited material reward programme is a separate economic choice that this campaign does not adopt.
+
+**Access/status:** Relevant guide body available; no publication date assigned. This is published feature behaviour, not a live verification or evidence of an affordable Open Legend reward supply.
+
+### SC-R04 — The local result should explain the shared schedule
+
+**Source:** Square Enix, [Patch 5.11 Notes](https://na.finalfantasyxiv.com/lodestone/topics/detail/879013bc3883733ae78f8ad1ca6cf3784b6fda9f).
+
+**Observed:** The November 2019 notes described separate world stockpiles, sufficient stock scheduling concerted works, a board showing the appointment, and successful work visibly changing a district. Delivery and activity rewards were distinct.
+
+**Design inference:** Explain what a contribution actually enables and which place benefits. Preserve the earlier contributor's result even if they cannot attend the later appointment. A changing counter is less convincing than an actual usable route.
+
+**Access/status:** Relevant historical notes read, including displayed November 13/19 updates. Their original cross-world access policy is not treated as current or adopted here.
+
+### SC-R05 — Late contributions and recovery need independent treatment
+
+**Source:** Digital Extremes, [Operation: Scarlet Spear: Hotfix 27.3.3](https://www.warframe.com/en/patch-notes/pc/27-3-3), 2020-03-25.
+
+**Observed:** The bonus changed from rank tiers to capped contribution-based payment, explicitly addressing late arrivals without time to reach a rank. Victory before expiry still mattered. The notes also documented payment discrepancies and score progression fixes after host migration.
+
+**Design inference:** Preserve a small accepted contribution and its actual settlement through failure and recovery. Correct the actual accepted outcome rather than merely updating a displayed total.
+
+**Access/status:** Relevant historical patch body read. These are recorded past fixes, not claims of current defects or proof that any particular reward formula produces fair play.
+
+### SC-R06 — Failure can create another actual opportunity
+
+**Source:** ArenaNet, [Dynamic Events](https://www.guildwars2.com/en/the-game/dynamic-events/).
+
+**Observed:** The official feature description explains joining without a formal party, individual rewards, difficulty responding to group presence, and subsequent events reflecting victory or defeat, including regrouping after failure.
+
+**Design inference:** Let a person help locally without a compulsory campaign organisation. A failed closure defense can leave real recovery work instead of merely resetting a success counter. Preserve the actual failure while making the next choice understandable.
+
+**Access/status:** Current undated feature description read. It is not measured enjoyment, an unlimited-capacity claim or a source for our unique-outcome policy. Repeatable event chains are a different historical model.
+
+### SC-R07 — Participation can coexist with ordinary play
+
+**Source:** Hello Games, [Omega Update](https://www.nomanssky.com/omega-update/), confirmed by its [2024-02-15 announcement](https://www.nomanssky.com/2024/02/no-mans-sky-omega-update/).
+
+**Observed:** The update allowed expeditions from an existing save, pausing to return to the primary save, and later returning selected goods and recorded earnings/discoveries. It also described controllable mission guidance.
+
+**Design inference:** Preserve an understandable way to continue ordinary play and retain actual results. Do not require the event to monopolise attention. Its copying/transfer policy cannot be imported into our conserved shared world or create a second canonical person.
+
+**Access/status:** Relevant historical update and dated official announcement read. No claim of current inventory rules or measured retention is made.
+
+### SC-R08 — Shared outcomes and personal earnings are separate
+
+**Source:** Digital Extremes, [Operation: Belly of the Beast Coming Soon](https://www.warframe.com/en/news/operation-belly-of-the-beast-coming-soon), 2026-04-24.
+
+**Observed:** The announced May 4–June 1 event offered multiple routes for earning event currency. Aggregate collection unlocked cosmetic variants for purchase; personal balances and purchase caps remained separate, with stated story prerequisites.
+
+**Design inference:** Keep shared progress, individual accepted work, spendable property and eligibility distinct. A global success does not establish what every player did or automatically grant each one a reward. Alternatives still need real access rules.
+
+**Access/status:** Full relevant historical announcement read. It provides no completion rate, profitability result or authority for Open Legend to add a recurring currency.
+
+### SC-R09 — A unique opening has an attendance tradeoff
+
+**Source:** Blizzard Entertainment, [WoW Classic 20th Anniversary Edition Phase 5 Now Live](https://worldofwarcraft.blizzard.com/en-us/news/24213950/wow-classic-20th-anniversary-edition-phase-5-now-live), 2025-07-10.
+
+**Observed:** Realm resource collection preceded transport and a player-triggered opening. The announcement disclosed automatic supply arrival after fifteen days and a ten-hour reward window after the first gong, alongside a later reward path for eligible people who missed it.
+
+**Design inference:** State any assistance honestly rather than crediting invented donations. Unique recognition and universal attendance cannot both be guaranteed; later useful participation need not recreate the canonical opening.
+
+**Access/status:** Complete en-us body retrieved after a shorter route failed; the year was confirmed through the official en-gb result. This dated contract is a contrast, not our event policy.
+
+### SC-R10 — Recognition need not expire with a season
+
+**Source:** Mojang Studios, Per Landin with lead designer Laura De Llorens, [Cloudy Climb explained](https://www.minecraft.net/en-us/article/cloudy-climb-explained), 2021-11-26.
+
+**Observed:** The pre-release explanation described seasonal progress through ordinary play, free and paid cosmetic tracks, and rewards remaining available after later seasons arrived.
+
+**Design inference:** Recognition does not inherently require a deadline that pressures attendance. Preserve useful later play while distinguishing actual historical participants. Persistent cosmetic progress is not the same as replaying a unique canonical event.
+
+**Access/status:** Official article body and date read. No improved-retention result, current entitlement or reason to sell campaign advantage is inferred from this historical description.
+
+### SC-R11 — People may prefer the story choice to the intended reward
+
+**Source:** Arrowhead, [Community Update: July 2024](https://store.steampowered.com/news/app/553850/view/4339865428700306191), published 2024-08-01; [readable official feed](https://store.steampowered.com/news/posts/?enddate=1722517657&feed=steam_community_announcements).
+
+**Observed:** The developers expected the mine-material option to win, but players chose a hospital's children. They acknowledged the community's running anti-mine joke and also discussed a weapon unlock associated with recovered plans.
+
+**Design inference:** Do not force a preferred reward path after people choose a different outcome. Prevention may be the story people want more than the staged encounter.
+
+**Access/status:** Relevant developer feed body read because the direct article exposed only an image in one retrieval. This retrospective is not measured altruism or a representative preference study.
+
+### SC-R12 — Compatibility must be clear before preparation
+
+**Source:** Frontier Developments, *Update 13, Narrative and Access to 4.0*, 2022-08-03, [official developer feed](https://store.steampowered.com/news/posts/?appids=359320&enddate=1659711816&feed=steam_community_announcements).
+
+**Observed:** The announcement planned no-additional-cost 4.0 access for PC Horizons while leaving Odyssey optional and 3.8 available. Later narrative required 4.0, while on-foot portions could require Odyssey.
+
+**Design inference:** Continued access to a world does not imply eligibility for every new campaign role. Explain actual compatible rules and available alternatives before a person travels or acquires supplies; do not promise identical outcomes for incompatible configurations.
+
+**Access/status:** Historical official article read through the developer feed. Inaccessible direct campaign/Galnet pages support no claim. This is not verification of current entitlements or evidence that forcing upgrades improves enjoyment.
+
+## 15. Final critique and selected cuts
+
+The first draft risked a campaign that merely sent a machine to close a gate already locked shut. The selected design instead lets people open connected gates immediately; disconnecting is a separate choice that prevents a genuine later setback and helps the other community. That correction gives preparation, partial success and failure actual different meanings.
+
+The Warden remains intentionally modest. It threatens a useful route, not lives, and its operation may be prevented by preparation or a person standing in its way. That is acceptable if the shared outing is enjoyable. Making it lethal to defeat an imagined exploit would import unresolved harm and absence rules and change the experience. Its finite active budget bounds the attempt; a safe real bypass removes the need for a new heavy-object recovery system.
+
+The most questionable part is the advertised spectacle. Twenty-four hours of notice and a staffed two-hour window may be excessive for one harmless minute of machine activity. The design therefore keeps the local cooperative story independently complete and treats that public service as an experiment that must earn its cost. A small group can enjoy the road's history without adopting an event calendar. Entry reservations explicitly do not promise peak attendance, and early prevention remains valid even after people planned to visit.
+
+The other cuts are deliberate: no mandatory association, global reputation rank, attendance currency, infinite donation sink, automatic strategist, army simulation, copied boss, forced NPC praise, paid queue priority or automatic recurring season. These cuts preserve space for exploration, invention, ordinary relationships and a world changed by someone else's useful act. Larger campaigns remain an ambition with concrete authority, resource, clock and recovery requirements, not a prerequisite to that first experience.
+
+The remaining risks are empirical: the short road may not be worth opening; both local mechanisms may feel too similar; the harmless opponent may add little; public attribution may be uninteresting; and meaningful NPC response may cost more than expected. The first qualification should be willing to keep the best local encounter and discard its campaign presentation. More elaborate coordination is justified only when players want the actual shared consequence it enables.
+
+## Maintained records
+
+- Accepted source direction: [Shared campaigns, local sieges and canonical adversaries](../product-scalability/shared-campaigns.md); [worlds and belonging](../product-scalability/worlds-and-belonging.md).
+- Delivery: [PS07.1–PS07.7](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities), with broader experience and scale qualification under [PS08](../maintainers/product-scalability.md#ps08--broader-experience-and-scale-qualification).
+- Proposed values and discretionary choices: [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign); wider PS-D05 remains in the [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).
+- Authored first consumer: [The Ash Road profile](../worlds/base/shared-campaigns.md).
+- Current clocks and authority: [Simulation time](../simulation-time.md), [multiplayer authority](multiplayer-authority-feature-spec.md), [save/load](../save-and-load.md) and [engine/world boundaries](../engine-and-world-boundaries.md).
+- Related product consumers: [DG29 travel](participants-and-world-travel-feature-spec.md), [DG25 coherent restoration](corrections-and-shared-restoration-feature-spec.md), [DG17 continuing lives](continuing-lives-feature-spec.md), [DG18 attention and scenes](attention-and-scenes-feature-spec.md), [DG22 agreements](durable-agreements-feature-spec.md) and [DG27 offers](customer-and-supporter-offers-feature-spec.md).
+- Queue scope: [DG34 — Shared campaigns with local opportunities](../maintainers/needs-design.md#dg34--shared-campaigns-with-local-opportunities).
