@@ -1,3 +1,12 @@
+import { equipmentEquipOutcome, BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
+import { atomicObjects } from './item-handling.js';
+import { equippedItem, equipmentConflicts, equipmentProblem, isEquipped } from './equipment.js';
+import {
+  commitContactImpact,
+  currentGuardProfile,
+  recoverGuard,
+  combatRecoveryDeadline,
+} from './contact-defense.js';
 import { subjectNarration, person, presentVerb } from './narration.js';
 import { prepareRecipeLearning, readRecipeRecord } from './recipe-records.js';
 import { learnRecipe } from './knowledge.js';
@@ -777,7 +786,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
   if (
-    (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
+    (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike', 'guard'].includes(
       command.type,
     ) ||
       command.type === 'tend-fire' ||
@@ -803,7 +812,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
+      : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow', 'guard'].includes(
             command.type,
           ) ||
             command.type === 'tend-fire' ||
@@ -874,7 +883,7 @@ export function lethalAttackOffer(
 function prepareNativeOperation(
   world: WorldState,
   command: Command,
-  options: { executing?: boolean; skipLethalReview?: true } = {},
+  options: { skipLethalReview?: true } = {},
 ): Action | Outcome {
   const reject = (code: string, message: string) => outcome(false, code, message);
   if (!isActivityCommand(command) && command.type !== 'learn-record')
@@ -998,17 +1007,18 @@ function prepareNativeOperation(
       if (!definition) return reject('unknown-action', 'Choose a registered strike.');
       if (!supportsStrike(actor, definition))
         return reject('unsupported-body', 'This body cannot perform that natural strike.');
-      if ((component.attackReadyAt ?? 0) > world.simTime)
-        return reject(
-          'attack-recovery',
-          'Finish recovering from the last swing before attacking again.',
-        );
+      if (combatRecoveryDeadline(world, actor) > world.simTime)
+        return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
       if (
         command.weaponItemId &&
-        (component.equippedItemId !== command.weaponItemId ||
+        ((!equippedItem(world, actor.id, 'melee', command.weaponItemId) && !command.autoEquip) ||
           !accessiblePossession(world, actor.id, command.weaponItemId))
       )
         return reject('weapon-unavailable', 'Equip that exact accessible weapon first.');
+      if (command.weaponItemId && command.autoEquip) {
+        const problem = equipmentProblem(world, actor.id, command.weaponItemId, 'melee');
+        if (problem) return reject('weapon-unavailable', problem);
+      }
       if (!target?.actor?.alive || target.id === actor.id)
         return reject('invalid-target', 'Choose another living actor.');
       if (!definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range))
@@ -1029,6 +1039,48 @@ function prepareNativeOperation(
         action.strikePhase = 'windup';
       break;
     }
+    case 'guard': {
+      if (combatRecoveryDeadline(world, actor) > world.simTime)
+        return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
+      if (component.action?.type === 'guard') return reject('guard-active', BASE_GUARD_TEXT.active);
+      const shield = command.autoEquip
+        ? itemFor(world, command.itemId)
+        : equippedItem(world, actor.id, 'guard', command.itemId);
+      const definition = shield && world.itemDefinitions[shield.definitionId];
+      const profile = definition?.contactDefense;
+      if (!profile || !accessiblePossession(world, actor.id, command.itemId))
+        return reject('shield-unavailable', BASE_GUARD_TEXT.unavailable);
+      if (command.autoEquip) {
+        const problem = equipmentProblem(world, actor.id, command.itemId, 'guard');
+        if (problem) return reject('shield-unavailable', problem);
+      }
+      const target = command.targetId ? world.entities[command.targetId] : undefined;
+      const position = target && worldPosition(target);
+      const origin = worldPosition(actor);
+      if (
+        target &&
+        (target.id === actor.id ||
+          !visible(world, actor, target) ||
+          Math.hypot(position!.x - origin.x, position!.z - origin.z) <= 1e-8)
+      )
+        return reject('guard-facing', BASE_GUARD_TEXT.distinctDirection);
+      const facing = position
+        ? Math.atan2(position.x - origin.x, position.z - origin.z)
+        : command.facing;
+      if (facing === undefined || !Number.isFinite(facing))
+        return reject('guard-facing', BASE_GUARD_TEXT.facing);
+      action = temporary('guard', profile.preparationSeconds);
+      action.itemId = command.itemId;
+      action.guard = {
+        phase: 'preparing',
+        profile: definitionPin(definition),
+        physicalLife: component.physicalLife ?? 0,
+        facing,
+        readyAt: world.simTime + profile.preparationSeconds,
+        expiresAt: world.simTime + profile.preparationSeconds + profile.readySeconds,
+      };
+      break;
+    }
     case 'treat-scar': {
       const problem = scarTreatmentProblem(world, actor, command.scarId, command.targetId);
       if (problem) return reject('treatment-unavailable', problem);
@@ -1046,7 +1098,7 @@ function prepareNativeOperation(
       if (command.itemId) {
         const tool = itemFor(world, command.itemId);
         if (
-          component.equippedItemId !== command.itemId ||
+          !equippedItem(world, actor.id, 'gather', command.itemId) ||
           !accessiblePossession(world, actor.id, command.itemId) ||
           !tool ||
           world.itemDefinitions[tool.definitionId]?.gatheringTool?.resourceId !==
@@ -1095,33 +1147,38 @@ function prepareNativeOperation(
       if (
         !item ||
         !accessiblePossession(world, actor.id, item.id) ||
-        !(
-          world.itemDefinitions[item.definitionId]?.launcher ||
-          world.itemDefinitions[item.definitionId]?.melee ||
-          world.itemDefinitions[item.definitionId]?.gatheringTool
-        )
+        !world.itemDefinitions[item.definitionId]?.equipment
       )
         return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
-      if (itemHasReservations(world, item.id) || (options.executing && component.action))
+      if (itemHasReservations(world, item.id) || component.action)
         return reject('not-equippable', 'Choose a free tool in this inventory.');
+      const problem = equipmentProblem(world, actor.id, item.id);
+      if (problem) return reject('not-equippable', problem);
       break;
     }
     case 'hunt': {
-      if ((component.attackReadyAt ?? 0) > world.simTime)
-        return reject(
-          'attack-recovery',
-          'Finish recovering from the last swing before attacking again.',
-        );
+      if (combatRecoveryDeadline(world, actor) > world.simTime)
+        return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
       const target = getOwn(world.entities, command.targetId);
       if (!(target?.animal && target.actor?.alive))
         return reject('not-huntable', 'Choose a living animal.');
       if (!visible(world, actor, target))
         return reject('not-visible', 'The animal is out of sight.');
-      const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
+      const weaponItemId =
+        command.weaponItemId ?? equippedItem(world, actor.id, 'ranged')?.id ?? '';
       const item = itemFor(world, weaponItemId);
       const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
-      if (!item || !accessiblePossession(world, actor.id, item.id) || !launcher)
+      if (
+        !item ||
+        !accessiblePossession(world, actor.id, item.id) ||
+        !launcher ||
+        (!equippedItem(world, actor.id, 'ranged', item.id) && !command.autoEquip)
+      )
         return reject('no-weapon', 'Equip a suitable ranged tool first.');
+      if (command.autoEquip) {
+        const problem = equipmentProblem(world, actor.id, item.id, 'ranged');
+        if (problem) return reject('weapon-unavailable', problem);
+      }
       const ammo = ammoFor(world, actor.id, launcher.ammunitionKind, command.ammoItemId);
       if (!ammo)
         return reject('no-ammunition', `Need compatible ${launcher.ammunitionKind} ammunition.`);
@@ -1307,7 +1364,7 @@ function prepareNativeOperation(
       return reject('unsupported', 'This command is not supported.');
   }
   if (action) {
-    if (action.type !== 'follow' && !['prepare', 'craft'].includes(action.type)) {
+    if (action.type !== 'follow' && !['prepare', 'craft', 'guard'].includes(action.type)) {
       const error = approach(world, actor, action);
       if (error) return error;
     }
@@ -1389,7 +1446,7 @@ function executeCommandNative(
       : reject('idempotency-conflict', 'This command ID was already used with another body.');
   const prepared =
     isActivityCommand(command) || command.type === 'learn-record'
-      ? prepareNativeOperation(original, command, { executing: true })
+      ? prepareNativeOperation(original, command)
       : nativeActorProblem(original, command);
   if (prepared && 'ok' in prepared && !prepared.ok)
     return { world: original, events: [], outcome: prepared };
@@ -1407,9 +1464,17 @@ function executeCommandNative(
     options.preview &&
     standalone &&
     action &&
-    ['move', 'strike', 'gather', 'hunt', 'harvest', 'pickup', 'replenish', 'follow'].includes(
-      action.type,
-    )
+    [
+      'move',
+      'strike',
+      'gather',
+      'hunt',
+      'harvest',
+      'pickup',
+      'replenish',
+      'follow',
+      'guard',
+    ].includes(action.type)
   )
     return {
       world: original,
@@ -1448,6 +1513,8 @@ function executeCommandNative(
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
+  if (component.action?.guard && world.simTime >= component.action.guard.expiresAt)
+    recoverGuard(world, actor, component.action.guard.expiresAt);
   // A drop preview still checks the structural transfer, but never installs its action
   // record. Capacity admission above remains identical; other families retain bookkeeping.
   // docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary
@@ -1470,14 +1537,14 @@ function executeCommandNative(
   if (
     experience &&
     (command.type === 'strike' || command.type === 'hunt') &&
-    component.equippedItemId
+    command.weaponItemId
   ) {
     const prior = [...(world.actionExperience.occurrences[actor.id] ?? [])]
       .reverse()
       .find(
         (entry) =>
           entry.command.type === 'equip' &&
-          entry.command.itemId === component.equippedItemId &&
+          entry.command.itemId === command.weaponItemId &&
           entry.status === 'completed',
       );
     if (prior) experience.connections.push({ from: prior.id, relation: 'support' });
@@ -1605,13 +1672,13 @@ function executeCommandNative(
         const equipped = itemFor(world, command.itemId);
         if (
           !equipped ||
-          component.equippedItemId !== equipped.id ||
+          !isEquipped(world, actor.id, equipped.id) ||
           equipped.revision !== command.expectedRevision ||
           equipped.placementRevision !== command.placementRevision
         )
           return reject('stale', 'The selected equipment changed. Refresh before releasing it.');
         try {
-          unequipLot(world, actor.id);
+          unequipLot(world, actor.id, command.itemId);
         } catch (error) {
           if (error instanceof WorkBudgetError) throw error;
           return reject(
@@ -1772,8 +1839,11 @@ function executeCommandNative(
         const item = itemFor(world, command.itemId);
         if (!item) return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
         let equippedId: string;
+        const stowed = equipmentConflicts(world, actor.id, item.id);
         try {
-          equippedId = equipLot(world, actor.id, item.id, command.id);
+          equippedId = atomicObjects(world, (candidate) =>
+            equipLot(candidate, actor.id, item.id, command.id),
+          );
         } catch (error) {
           if (error instanceof WorkBudgetError) throw error;
           return reject(
@@ -1781,22 +1851,18 @@ function executeCommandNative(
             error instanceof Error ? error.message : 'Equipment unavailable.',
           );
         }
+        const description = equipmentEquipOutcome(
+          world,
+          equippedId,
+          stowed.map((i) => i.id),
+        );
         result = {
           ok: true,
           code: 'equipped',
-          message: `Equipped ${namePhrase(world.itemDefinitions[item.definitionId]!, 'definite')}.`,
+          message: description.message,
           itemId: equippedId,
         };
-        emit(
-          world,
-          events,
-          'equipped',
-          subjectNarration(
-            actor,
-            `equipped ${namePhrase(world.itemDefinitions[item.definitionId]!, 'definite')}.`,
-          ),
-          actor,
-        );
+        emit(world, events, 'equipped', subjectNarration(actor, description.narration), actor);
         break;
       }
       case 'outing': {
@@ -2167,6 +2233,46 @@ function executeCommandNative(
     }
   if (action) {
     if (experience) bindActivityAction(world, experience, action.id);
+    const toolId =
+      command.type === 'guard'
+        ? command.itemId
+        : command.type === 'strike' || command.type === 'hunt'
+          ? command.weaponItemId
+          : undefined;
+    if (
+      toolId &&
+      'autoEquip' in command &&
+      command.autoEquip &&
+      !isEquipped(world, actor.id, toolId)
+    ) {
+      const conflicts = equipmentConflicts(world, actor.id, toolId);
+      const equippedId = atomicObjects(world, (candidate) => {
+        // The chosen physical action replaces current work in this same transaction. Pure
+        // admission already checked real reservations on the selected/conflicting items.
+        candidate.entities[actor.id]!.actor!.action = null;
+        return equipLot(candidate, actor.id, toolId, command.id);
+      });
+      if (command.type === 'guard') action.itemId = equippedId;
+      else action.weaponItemId = equippedId;
+      const description = equipmentEquipOutcome(
+        world,
+        equippedId,
+        conflicts.map((i) => i.id),
+      );
+      result.message = description.message;
+      emit(
+        world,
+        events,
+        'equipped',
+        subjectNarration(actor, description.narration),
+        actor,
+        undefined,
+        {
+          actionId: action.id,
+          itemId: equippedId,
+        },
+      );
+    }
     if (action.stage === 'working' && action.type !== 'follow') {
       const error = startWork(world, actor, action, events);
       if (error) return { world: original, events: [], outcome: error };
@@ -2188,6 +2294,7 @@ function executeCommandNative(
         outcome(false, 'cancelled', 'Replaced by newly chosen work; committed effects remain.'),
       );
     component.action = action;
+    if (action.guard) actor.spatial.heading = action.guard.facing;
     if (experience && action.stage === 'approaching')
       experience.view.children = [
         {
@@ -2460,26 +2567,20 @@ function completeAction(
         );
         return;
       }
-      const before = target.actor.health;
       const review = attackReviewProblem(world, actor, target, action);
       if (review) {
         failAction(world, actor, events, review.message);
         return;
       }
-      commitBodyEffects(
+      const contact = commitContactImpact(
         world,
+        actor,
         target,
-        [
-          {
-            targetId: target.id,
-            kind: 'injury',
-            amount: definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
-          },
-        ],
+        definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
         action.id,
         events,
       );
-      const damage = before - target.actor.health;
+      const damage = contact.damage;
       if (target.animal && target.actor.alive) {
         if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
         else rememberAttack(world, target, actor);
@@ -2491,11 +2592,21 @@ function completeAction(
         subjectNarration(actor, [
           `${definition.pastTense} `,
           person(target, actor.id === target.id ? 'reflexive' : 'object'),
-          ` for ${damage} damage.`,
+          '. The contact blow connected.',
         ]),
         actor,
         target.id,
-        { definitionId: definition.id, damage, actionId: action.id, targetReference: true },
+        {
+          definitionId: definition.id,
+          damage,
+          contactInjury: true,
+          preventedInjury: contact.preventedInjury,
+          rawInjury: contact.rawInjury,
+          healthBefore: contact.healthBefore,
+          healthAfter: contact.healthAfter,
+          actionId: action.id,
+          targetReference: true,
+        },
       );
       break;
     }
@@ -2715,10 +2826,37 @@ function advanceAction(
 ): void {
   const action = actor.actor!.action;
   if (!action) return;
+  if (action.type === 'guard') {
+    const profile = currentGuardProfile(world, actor);
+    if (!profile || capabilityBlocked(world, actor, 'actions')) {
+      failAction(world, actor, events, BASE_GUARD_TEXT.interrupted);
+      return;
+    }
+    const guard = action.guard!;
+    if (guard.phase !== 'recovery' && world.simTime >= guard.expiresAt)
+      recoverGuard(world, actor, guard.expiresAt);
+    else if (guard.phase === 'preparing' && world.simTime >= guard.readyAt) guard.phase = 'ready';
+    const deadline =
+      guard.phase === 'preparing'
+        ? guard.readyAt
+        : guard.phase === 'ready'
+          ? guard.expiresAt
+          : guard.recoveryUntil!;
+    action.remainingSeconds = Math.max(0, deadline - world.simTime);
+    action.totalSeconds =
+      guard.phase === 'preparing'
+        ? profile.preparationSeconds
+        : guard.phase === 'ready'
+          ? profile.readySeconds
+          : profile.recoverySeconds;
+    if (guard.phase === 'recovery' && action.remainingSeconds === 0)
+      completeAction(world, actor, action, events);
+    return;
+  }
   if (action.strikePhase === 'recovery') {
     action.remainingSeconds = Math.max(
       0,
-      (actor.actor!.attackReadyAt ?? world.simTime) - world.simTime,
+      (actor.actor!.combatReadyAt ?? world.simTime) - world.simTime,
     );
     if (action.remainingSeconds === 0) completeAction(world, actor, action, events);
     return;
@@ -2772,7 +2910,7 @@ function advanceAction(
   if (
     action.type === 'strike' &&
     ((action.weaponItemId &&
-      (actor.actor!.equippedItemId !== action.weaponItemId ||
+      (!equippedItem(world, actor.id, 'melee', action.weaponItemId) ||
         !accessiblePossession(world, actor.id, action.weaponItemId))) ||
       capabilityBlocked(world, actor, 'actions') ||
       !world.entities[action.targetId!]?.actor?.alive ||
@@ -2789,7 +2927,7 @@ function advanceAction(
   if (action.type === 'gather' && action.itemId) {
     const tool = itemFor(world, action.itemId);
     if (
-      actor.actor!.equippedItemId !== action.itemId ||
+      !equippedItem(world, actor.id, 'gather', action.itemId) ||
       !accessiblePossession(world, actor.id, action.itemId) ||
       !tool ||
       world.itemDefinitions[tool.definitionId]?.gatheringTool?.resourceId !==
@@ -3016,22 +3154,17 @@ function advanceAction(
     const inRange = target.actor!.alive && canReachEntity(world, actor, target, definition.range);
     const accuracy = definition.accuracy ?? 1;
     const hit = inRange && (accuracy === 1 || nextRandom(world) < accuracy);
-    const before = target.actor!.health;
-    if (hit)
-      commitBodyEffects(
-        world,
-        target,
-        [
-          {
-            targetId: target.id,
-            kind: 'injury',
-            amount: definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
-          },
-        ],
-        action.id,
-        events,
-      );
-    const damage = before - target.actor!.health;
+    const contact = hit
+      ? commitContactImpact(
+          world,
+          actor,
+          target,
+          definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
+          action.id,
+          events,
+        )
+      : undefined;
+    const damage = contact?.damage ?? 0;
     if (target.animal && target.actor!.alive) {
       if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
       else rememberAttack(world, target, actor);
@@ -3040,7 +3173,7 @@ function advanceAction(
     action.strikePhase = 'recovery';
     action.totalSeconds = definition.recoverySeconds!;
     action.remainingSeconds = definition.recoverySeconds!;
-    actor.actor!.attackReadyAt = world.simTime + definition.recoverySeconds!;
+    actor.actor!.combatReadyAt = world.simTime + definition.recoverySeconds!;
     // The shared event owner records the world outcome and the actor's own awareness.
     // A completed miss is evidence for another choice, never an automatic retry.
     emit(
@@ -3050,7 +3183,7 @@ function advanceAction(
       subjectNarration(actor, [
         `${hit ? definition.pastTense : 'missed'} `,
         person(target, actor.id === target.id ? 'reflexive' : 'object'),
-        `.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
+        `.${hit ? ' The contact blow connected.' : inRange ? '' : ' The target moved out of reach.'}`,
       ]),
       actor,
       target.id,
@@ -3060,6 +3193,15 @@ function advanceAction(
         actionId: action.id,
         hit,
         damage,
+        ...(contact
+          ? {
+              contactInjury: true,
+              preventedInjury: contact.preventedInjury,
+              rawInjury: contact.rawInjury,
+              healthBefore: contact.healthBefore,
+              healthAfter: contact.healthAfter,
+            }
+          : {}),
         reason: hit ? 'hit' : inRange ? 'accuracy' : 'out-of-range',
         targetReference: true,
         semanticTrigger: true,
@@ -4164,6 +4306,7 @@ export function observeActor(
                       id: entity.actor.action.id,
                       type: entity.actor.action.type,
                       stage: entity.actor.action.stage,
+                      strikePhase: entity.actor.action.strikePhase,
                       remainingSeconds: entity.actor.action.remainingSeconds,
                       totalSeconds: entity.actor.action.totalSeconds,
                       path: [],
@@ -4195,13 +4338,12 @@ export function observeActor(
         delete copy.actor.conditions;
         delete copy.actor.inventoryInspection;
         delete copy.actor.knownTradeLots;
-        delete copy.actor.attackReadyAt;
+        delete copy.actor.combatReadyAt;
         copy.actor.agency = seedAgency();
         delete copy.actor.initialGoals;
         delete copy.actor.personality;
         delete copy.actor.backstory;
         delete copy.actor.participation;
-        copy.actor.equippedItemId = null;
         copy.actor.planGeneration = 0;
       }
       if (copy.resource) definitionIds.add(copy.resource.definitionId);

@@ -1,3 +1,4 @@
+import { equippedItems } from './equipment.js';
 import { canStand, distance3D, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { validNameTemplate } from '@open-legend/language';
@@ -7,7 +8,7 @@ import { leaveConversation } from './conversations.js';
 import { recordSemanticChange } from './dependencies.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
 import { emit, outcome } from './events.js';
-import { directChildIds, itemFor, moveLot, setItemQuantity } from './objects.js';
+import { directChildIds, itemFor, moveLot, setItemQuantity, unequipLot } from './objects.js';
 import { releaseInvocationResources, availableItemQuantity } from './resource-claims.js';
 import {
   bodyProfile,
@@ -84,6 +85,9 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   cancelPlan(world, actor, entity.id);
   discardSuspended(world, actor, entity.id);
   leaveConversation(world, entity.id, 'disconnect');
+  actor.action = null;
+  for (const item of equippedItems(world, entity.id)) unequipLot(world, entity.id, item.id);
+  delete actor.combatReadyAt;
   const corpseId = nextId(world, 'body');
   const body = actor.body!;
   const corpse: Entity = {
@@ -110,7 +114,6 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
       bornAt: actor.bornAt,
       physicalLife: actor.physicalLife ?? 0,
       action: null,
-      equippedItemId: null,
       planGeneration: 0,
       agency: seedAgency(),
     },
@@ -159,7 +162,6 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
         false,
       );
   }
-  actor.equippedItemId = null;
   const scar = policy.scars.length
     ? policy.scars[Math.floor(nextRandom(world) * policy.scars.length)]
     : undefined;
@@ -267,7 +269,7 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
   setBodyHealth(actor, actor.body!.maxHealth);
   actor.action = null;
-  delete actor.attackReadyAt;
+  delete actor.combatReadyAt;
   delete actor.pendingDeath;
   delete entity.spatial.flight;
   delete entity.spatial.fallVelocity;

@@ -206,7 +206,15 @@ export {
   setItemQuantity,
   validateObjects,
 } from './objects.js';
-export { upgradeObjects } from './object-migration.js';
+export * from './equipment.js';
+export * from './contact-defense.js';
+export {
+  guardDescription,
+  guardWorkLabel,
+  guardChoiceLabel,
+  BASE_GUARD_TEXT,
+  equipmentChangeDescription,
+} from './worlds/base/shield-defense.js';
 
 export * from './dependencies.js';
 export { worldRootEntities } from './entity-index.js';

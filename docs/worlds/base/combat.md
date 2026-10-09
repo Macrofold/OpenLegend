@@ -2,13 +2,19 @@
 
 ## Equipped melee
 
-The knife is an installed item profile consumed by the general contact-strike family. It must be explicitly equipped; each chosen action approaches once, winds up, resolves one hit/miss and recovers. [BW08](../../limits/base-world.md#bw08) owns the numerical balance. The normal player/NPC/plan admission path binds the exact item and target; neither hunger nor an animal's presence selects it automatically.
+The knife is an installed item profile consumed by the general contact-strike family. It must be held as an exact compatible item; an offered attack can atomically equip it and show which conflicting items were put away. Each chosen action approaches once, winds up, resolves one hit/miss and recovers. [BW08](../../limits/base-world.md#bw08) owns the numerical balance. The normal player/NPC/plan admission path binds the exact item and target; neither hunger nor an animal's presence selects it automatically.
 
 A miss produces a real `struck` outcome and the attacker's private awareness, including why no damage occurred. Surviving prey can flee after the attempt. Another strike needs another chosen action or an explicitly admitted plan step. Native moving-prey, alternate-profile and restore checks pass; [live Jev-only hunting and miss-aware retries are demonstrated](../../verification/embodied-survival.md#minimal-context-and-equipment-derived-hunting). Visual acceptance and broader behavioral reliability remain open under [AG13](../../maintainers/agent-agency.md#ag13--embodied-survival-demonstration).
 
 The base world's initial unarmed strike is **Punch**: definition `punch`, version 1, reach 1.3 world units, automatic approach, 30 simulation seconds of wind-up, 5 injury damage and `punch` presentation. At the base clock its wind-up is half a real second. It requires a supported biped and a living, perceived target. Equipping a weapon does not modify this strike.
 
 The authored definition lives in `packages/domain/src/worlds/base/strikes.ts`. These are base-world balance choices. The [targeted-strike runtime](../../targeted-actions.md) owns admission, approach, hit revalidation, body effects, persistence and presentation. This initial mechanic specifies one strike, not autonomous aggression or repeated attacks.
+
+## Chosen contact defense
+
+The [shield profile](shield-defense.md) owns compatible hand use, ordinary manufacture, finite guard timing, coverage and reduction. Knife and shield may remain held together, but guarding and striking are separate chosen actions. Contact strikes and the territorial stag use one injury calculation after ordinary hit legality; the body owner then applies susceptibility, scars, clamping, interruption and death once. A successful guard consumes one contact and starts recovery; missed, late or uncovered blows receive no reduction. Projectiles and unrelated bodily hazards retain their existing effects.
+
+The exact contact-injury/prevention report is participant-private; observers receive only their perceivable physical account. Public health views and recorded observed health effects still follow the installed health definition’s disclosure policy. Guarding grants no PvP consent or hidden attacker identity. [AV02 evidence](../../verification/shield-defense.md) separates actual native/browser outcomes from untested model preference and wider combat qualification.
 
 ## Accepted lethal-action direction
 

@@ -1,6 +1,7 @@
 import { accessiblePossession, canAccessContainer, possessionItems } from './object-access.js';
 import { acquireExposure } from './events.js';
 import { cloneValue } from './draft.js';
+import { isEquipped } from './equipment.js';
 import { itemFor, objectAncestors } from './objects.js';
 import { contentsQuery } from './queries.js';
 import { worldPosition } from './spatial-state.js';
@@ -154,7 +155,7 @@ export function inspectPossessions(
     const description = describePossession(
       item,
       world.itemDefinitions[item.definitionId]!,
-      entity.actor.equippedItemId === item.id,
+      isEquipped(world, actorId, item.id),
       containerId ? 'in the selected accessible container' : 'accessible possession',
     );
     if (new TextEncoder().encode(description).length > 8000)
@@ -205,7 +206,7 @@ export function inspectPossessions(
     const text = describePossession(
       item,
       world.itemDefinitions[item.definitionId]!,
-      entity.actor.equippedItemId === item.id,
+      isEquipped(world, actorId, item.id),
       containerId ? 'in the selected accessible container' : 'accessible possession',
     );
     const size = new TextEncoder().encode(text).length;

@@ -371,6 +371,7 @@ function recordEvent(
       'fire-fueled',
       'fire-extinguished',
       'struck',
+      'guarded',
       'shot',
       'body-effect',
       'moved',

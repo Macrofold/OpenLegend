@@ -1,6 +1,6 @@
 # Batch 05 — Adventure, defense and a home
 
-**In progress, October 7, 2026.** AV01 delivers two discoverable sites, finite rewards and exact record learning/manufacture/use through current equipment; AV02 two-hand integration and the other assignments remain open. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
+**In progress, October 8, 2026.** AV01 delivers two discoverable sites, finite rewards and exact record learning/manufacture/use through current equipment; AV02 compatible equipment and shield defense are now merged; combined qualification and the other assignments retain their scoped acceptance. [Shield evidence](../verification/shield-defense.md) records the prior native, PostgreSQL and browser checks. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
 
 ## AV01 — Rewarding expeditions
 
@@ -17,20 +17,23 @@
 
 **Delivered scope:** this task started from local PX03 `613a597b` and integrated local PX01 `a7ece950` in merge `3cc53f58`; the requested review refreshed local PX03 to `56f2f2ea` with integration merge `5233fec17`, preserving the expedition runtime and incoming threat. [Native and production-browser evidence](../verification/rewarding-expeditions.md) covers the clues, real traversal, spear use, exact learning, manufacture/use, two observers and PostgreSQL continuity; engineer-assessed second-trip value is separate from uncoached enjoyment. No live provider calls were made.
 
-- [ ] Integrate the spear with AV02's supplied two-hand equipment rule and qualify the final equipment comparison; current single-tool use is delivered, not this shared dependency.
+- [x] Integrate the spear with AV02's two-hand equipment rule and qualify the native comparison: switching from knife and shield stows both exact items without loss.
+- [ ] Qualify the final player-facing spear/equipment comparison; browser testing was not repeated during merge reconciliation.
 
-**Remaining qualification:** uncoached enjoyment/balance and broader model/device/scale evidence remain separate; none is inferred from the native journey. **Readiness:** AV02 supplies final two-handed spear integration. **Parents:** NC09–NC12's exposure subset, INV-4/INV-7, AC09/AC11, BW authored content and PO custody. Exact implementation and acceptance: [AV01 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av01--sites-rewards-and-physical-recipe-records).
+**Remaining qualification:** uncoached enjoyment/balance and broader model/device/scale evidence remain separate; none is inferred from the native journey. **Readiness:** AV02's two-handed spear integration is on local main; the player-facing comparison above remains unqualified. **Parents:** NC09–NC12's exposure subset, INV-4/INV-7, AC09/AC11, BW authored content and PO custody. Exact implementation and acceptance: [AV01 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av01--sites-rewards-and-physical-recipe-records).
 
 ## AV02 — Shield defense and compatible equipment
 
 [Batch 06](parallel-batch-06-rivals-and-contested-ground.md) consumes this equipment/guard owner. CF02 owns the later supported-projectile extension; CF03 interruption and CF01/CF04 loadouts consume the existing contract. These open consumers do not expand AV02 into a duplicate defense implementation or establish its completion.
 
-- [ ] Replace single-equipped-item authority with admitted body-port attachment through the existing object owner; update all current callers, cleanup and current-format validation together.
-- [ ] Deliver known shield manufacture, finite family authoring, readable knife/shield versus two-handed equipment, auto-equip conflict explanation and one chosen guard.
-- [ ] Integrate one current contact-defense/damage owner; complete real front/late/rear/miss/cancel/expiry/concurrent-impact and lifecycle/transfer/restore acceptance.
-- [ ] Reconcile AC/PO/EWF/INV/BW/UIUX affected requirements and the [shield profile](../worlds/base/shield-defense.md), preserving supplied death/PvP decisions.
+- [x] Replace single-equipped-item authority with admitted body-port attachment through the existing object owner; update all current callers, cleanup and current-format validation together.
+- [x] Deliver known shield manufacture, finite family authoring, readable knife/shield versus two-handed equipment, auto-equip conflict explanation and one chosen guard.
+- [x] Integrate one current contact-defense/damage owner; complete real front/late/rear/miss/cancel/expiry/concurrent-impact and lifecycle/transfer/restore acceptance.
+- [x] Reconcile AC/PO/EWF/INV/BW/UIUX affected requirements and the [shield profile](../worlds/base/shield-defense.md), preserving supplied death/PvP decisions.
 
-**Readiness:** starts after the owner supplies integrated incoming threat/lifecycle work (`codex/pg05-first-threat` inspected at `75e8c82e`). Do not duplicate PG05/PX01. **Consumers:** AV04's cloak uses this equipment owner; AV03/AV05 do not create alternate equipment stores. [AV02 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
+**Delivered on `codex/av02-shield-defense`:** supplied local `main` at `51d43e3f4a91e7ceed1404add65123b331d97358` already contained the incoming encounter and lifecycle owners. The [shield profile](../worlds/base/shield-defense.md) and [verification report](../verification/shield-defense.md) own current behavior and evidence. This does not claim the branch is merged. **Consumers:** AV04's cloak uses this equipment owner; AV03/AV05 do not create alternate equipment stores. [AV02 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
+
+**October 7 second review:** current resident attack/equipment admission, truthful Equip refusals, complete body-port descriptions and namespace-safe attachment validation are implemented and qualified. [Evidence](../verification/shield-defense.md#second-implementation-review--october-7-2026) records complete action-list measurements and the existing CG01/C17 inventory-preparation gap; wider population/model qualification remains open.
 
 ## AV03 — Useful competence and voluntary coaching
 

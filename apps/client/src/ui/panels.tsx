@@ -86,6 +86,7 @@ export function Crafting({
             <option value="authored">Authored methods</option>
             <option value="player">Players</option>
             <option value="npc">NPCs</option>
+            <option value="authored">Known world methods</option>
           </select>
         </label>
         {recipes.length ? (

@@ -1,3 +1,4 @@
+import { isEquipped } from './equipment.js';
 import { executeCommand, nativeOperationAvailable } from './kernel.js';
 import type { Command, WorldState } from './types.js';
 import type { ActorPlan, PlanStep } from './agency.js';
@@ -362,7 +363,7 @@ function predicate(
     case 'alive':
       return entity.actor?.alive;
     case 'equipped':
-      return actor.actor?.equippedItemId === id;
+      return isEquipped(world, actor.id, id);
     case 'lit':
       return entity.heat?.lit;
   }
@@ -522,11 +523,7 @@ export function activityFrontier(
           block('A required actual output or compatible binding is unavailable.');
           return;
         }
-        if (
-          command.type === 'equip' &&
-          world.entities[actorId]!.actor!.equippedItemId === command.itemId
-        )
-          continue;
+        if (command.type === 'equip' && isEquipped(world, actorId, command.itemId)) continue;
         const step: PlanStep = {
           id,
           command,

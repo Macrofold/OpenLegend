@@ -114,8 +114,8 @@ function addRecipe(
   expect(result.outcome.ok, result.outcome.message).toBe(true);
   return { world: result.world, recipeId: result.outcome.recipeId! };
 }
-function makeSling(seed = 73): WorldState {
-  const admitted = addRecipe(createWorld(seed));
+function makeSling(seed = 73, draft = sling()): WorldState {
+  const admitted = addRecipe(createWorld(seed), draft);
   let world = command(admitted.world, { type: 'craft', recipeId: admitted.recipeId });
   world = advanceWorld(world, 60).world;
   return command(world, {
@@ -128,10 +128,10 @@ describe('authoritative pure world', () => {
   it('starts in wilderness with knowledge and possessions but no invented recipe', () => {
     const world = createWorld();
     expect(world).toEqual(createWorld());
-    expect(Object.values(world.recipes).map((recipe) => recipe.provenance.source)).toEqual([
-      'authored-world',
-    ]);
-    expect(world.knowledge[NPC_ID]).toEqual([]);
+    expect(
+      Object.values(world.recipes).every((recipe) => recipe.provenance.source === 'authored-world'),
+    ).toBe(true);
+    expect(world.knowledge[NPC_ID]!.every((record) => record.source === 'authored')).toBe(true);
     expect(quantityOf(world, PLAYER_ID, 'cord')).toBeGreaterThan(0);
     expect(JSON.parse(JSON.stringify(world))).toEqual(world);
   });
@@ -211,8 +211,12 @@ describe('bounded invented mechanisms', () => {
         (recipe) => recipe.provenance.source === 'authored-world',
       ),
     ).toBe(true);
-    expect(admitted.world.knowledge[PLAYER_ID]).toHaveLength(1);
-    expect(admitted.world.knowledge[NPC_ID]).toHaveLength(0);
+    expect(
+      admitted.world.knowledge[PLAYER_ID]!.filter((record) => record.source === 'invented'),
+    ).toHaveLength(1);
+    expect(
+      admitted.world.knowledge[NPC_ID]!.filter((record) => record.source === 'invented'),
+    ).toHaveLength(0);
     const repeated = admitDeclaration(admitted.world, sling(), {
       actorId: PLAYER_ID,
       requestId: 'request-sling',
@@ -243,7 +247,9 @@ describe('bounded invented mechanisms', () => {
       targetId: NPC_ID,
       recipeId: admitted.recipeId,
     });
-    expect(taught.knowledge[NPC_ID]?.[0]?.source).toBe('taught');
+    expect(
+      taught.knowledge[NPC_ID]?.find((record) => record.recipeId === admitted.recipeId)?.source,
+    ).toBe('taught');
   });
   it('rejects invented sources, overpowered effects, missing roles and unknown fields atomically', () => {
     const world = createWorld();
@@ -362,13 +368,10 @@ describe('bounded invented mechanisms', () => {
     ).toBe(true);
   });
   it('records misses, spends one projectile and makes the animal react', () => {
-    let world = makeSling();
+    const draft = sling();
+    draft.parameters.accuracy = 0.6;
+    let world = makeSling(73, draft);
     world.rngState = 12345;
-    const weapon =
-      world.itemDefinitions[
-        itemFor(world, world.entities[PLAYER_ID]!.actor!.equippedItemId!)!.definitionId
-      ]!;
-    weapon.launcher!.accuracy = 0.6;
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 20).world;
     expect(world.events.some((event) => event.type === 'shot' && event.data?.hit === false)).toBe(

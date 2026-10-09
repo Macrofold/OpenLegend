@@ -32,11 +32,11 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB05
 
-**Reported · Restrictiveness: Very safe.**
+**Changed October 6, 2026 · Restrictiveness: Medium.**
 
-Attachment supports only the existing `equipment` slot; no general attachment points or assemblies. One physical parent remains a placement invariant.
+**Removed single-slot restriction; current admitted body-port equipment.** One item may occupy multiple places declared by its pinned profile, and compatible items may remain held together. Only supported held uses are implemented; missing body ports or overlapping occupied ports refuse before effects. There is no engine-fixed number of hands or saved equipment mirror. General assemblies remain unsupported. One physical parent remains a placement invariant.
 
-**Reason / tradeoff:** Preserve unique physical placement; the single equipment slot is the discretionary supported-feature boundary.
+**Reason / tradeoff:** AV02 replaces the former single `equipment` slot so a knife and shield can coexist and one two-handed launcher can conflict with both. Exact-item checks read the selected placement directly; a rebuilt attachment subset bounds warm discovery by held items, rather than all carried supplies. Neither introduces saved authority. Extension needs a real authored body/equipped consumer and its permissions. [World profile](../worlds/base/shield-defense.md#compatible-equipment), [native/browser/SQL and isolated lookup evidence](../verification/shield-defense.md).
 
 ## OB06
 

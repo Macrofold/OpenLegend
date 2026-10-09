@@ -118,14 +118,12 @@ it('preserves elevated position and manual route snapshots while departure cance
       ...snapshot,
       actor: {
         ...snapshot!.actor,
-        action: null,
-        planGeneration: snapshot!.actor!.planGeneration + 1,
         participation: expect.objectContaining({ phase: 'active' }),
       },
     });
     await game.service.control({ paused: false, clientId: 'save-fixture' });
-    // The integrated departure policy stops unfinished human work; saved position survives.
-    // docs/worlds/base/player-danger.md#five-simulated-seconds-to-leave
+    // Paused startup preserves committed work; reconnecting may choose a replacement route.
+    // docs/save-and-load.md#continuation-and-identity
     await game.service.command('resumed-ramp', {
       type: 'move',
       position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
@@ -145,12 +143,7 @@ it('preserves elevated position and manual route snapshots while departure cance
     );
     expect(game.service.world.entities[actorId]).toEqual({
       ...snapshot,
-      actor: {
-        ...snapshot!.actor,
-        action: null,
-        planGeneration: snapshot!.actor!.planGeneration + 1,
-        participation: expect.objectContaining({ phase: 'exiting' }),
-      },
+      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
     });
     expect(game.service.world.paused).toBe(true);
     expect(game.service.generation).not.toBe(epoch);

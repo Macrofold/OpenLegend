@@ -10,6 +10,8 @@ import { CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
 
 import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
 import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
+import { BASE_GATHER_EQUIPMENT, BASE_LAUNCHER_EQUIPMENT } from './equipment.js';
+import { BASE_SHIELD_FAMILY } from './shield-family.js';
 
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
@@ -213,6 +215,7 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
             range: numeric(candidate, 'range'),
             accuracy: numeric(candidate, 'accuracy'),
           },
+          equipment: structuredClone(BASE_LAUNCHER_EQUIPMENT),
         },
         facts: [
           workFact(candidate),
@@ -342,6 +345,7 @@ const gathering: RecipeFamilyDescriptor = {
       outputDefinition: {
         ...baseOutput(world, candidate),
         gatheringTool: { resourceId, quantity: numeric(candidate, 'quantity') },
+        equipment: structuredClone(BASE_GATHER_EQUIPMENT),
       },
       facts: [
         workFact(candidate),
@@ -374,4 +378,5 @@ export const BASE_RECIPE_FAMILIES: readonly RecipeFamilyDescriptor[] = [
   gathering,
   BASE_CAMP_CONTAINER_FAMILY,
   BASE_CORDAGE_FAMILY,
+  BASE_SHIELD_FAMILY,
 ];

@@ -32,6 +32,8 @@ export interface ItemDefinition extends Named {
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
+  equipment?: import('./equipment.js').EquipmentProfile;
+  contactDefense?: import('./contact-defense.js').ContactDefenseProfile;
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
   portable?: boolean;
   gatheringTool?: { resourceId: string; quantity: number };
@@ -117,6 +119,7 @@ export interface RecipeDefinition {
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
+  | 'guard'
   | 'pickup'
   | 'strike'
   | 'follow'
@@ -141,6 +144,7 @@ export interface Action {
   recipePin?: import('./world-modules.js').DefinitionPin;
   strikePhase?: 'windup' | 'recovery';
   strikeOutcome?: 'hit' | 'miss';
+  guard?: import('./contact-defense.js').GuardState;
   follow?: {
     distance: number;
     nextRepathAt: number;
@@ -202,8 +206,8 @@ export interface ActorComponent {
   pendingDeath?: import('./reincarnation.js').PendingDeath;
   scars?: Record<string, number>;
   conditions?: Record<string, import('./conditions.js').ConditionEpisode>;
-  /** Attack recovery survives cancelling an already committed swing. */
-  attackReadyAt?: number;
+  /** Committed strike/defense recovery belongs to this body and survives action cancellation. */
+  combatReadyAt?: number;
   inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
   /** Explicitly disclosed offer terms, not a live view of another person's inventory. */
   knownTradeLots?: Record<string, Record<string, import('./handover.js').KnownTradeLot>>;
@@ -236,7 +240,6 @@ export interface ActorComponent {
   /** Legacy animals have no recorded birth time; bornAt is only a placeholder then. */
   birthTimeKnown?: boolean;
   action: Action | null;
-  equippedItemId: string | null;
   planGeneration: number;
 }
 export interface AnimalComponent {
@@ -316,7 +319,7 @@ export interface MemoryRecord {
 export interface KnowledgeRecord {
   recipeId: string;
   learnedAt: number;
-  source: 'invented' | 'taught' | 'practiced' | 'record';
+  source: 'authored' | 'invented' | 'taught' | 'practiced' | 'record';
   evidenceId: string;
 }
 /** Closed, trusted occurrence scope; only native/server code assigns it.
@@ -529,8 +532,10 @@ export type Command = Envelope &
       }
     | { type: 'replenish'; targetId: string; attributeId: string }
     | { type: 'equip' | 'eat'; itemId: string }
+    | { type: 'guard'; itemId: string; targetId?: string; facing?: number; autoEquip?: boolean }
     | {
         type: 'strike';
+        autoEquip?: boolean;
         definitionId: string;
         targetId: string;
         weaponItemId?: string;
@@ -538,6 +543,7 @@ export type Command = Envelope &
       }
     | {
         type: 'hunt';
+        autoEquip?: boolean;
         targetId: string;
         weaponItemId?: string;
         ammoItemId?: string;

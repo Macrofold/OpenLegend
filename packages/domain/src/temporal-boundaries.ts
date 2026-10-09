@@ -103,6 +103,12 @@ export function nativeInterval(
       actor = entity?.actor;
     if (!entity || !actor?.alive || actor.incapacitated) continue;
     const action = actor.action;
+    if (action?.guard) {
+      const g = action.guard;
+      at(
+        g.phase === 'preparing' ? g.readyAt : g.phase === 'ready' ? g.expiresAt : g.recoveryUntil!,
+      );
+    }
     const plan = actor.agency.plan;
     if (plan?.status === 'active' && plan.activity)
       at(nextActivityBoundary(world, id, plan.activity));

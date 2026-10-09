@@ -2,19 +2,19 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Five prompts separate useful partial starts from actual waits on other tasks; completed dependencies are documented outside the blocker lists. | 2026-10-07   |
+| Not started | Five prompts separate useful partial starts from actual waits on other tasks; completed dependencies are documented outside the blocker lists. | 2026-10-08   |
 
 These prompts are future assignments, not authorization for the planning agent to execute them. [Priority and scope](parallel-batch-06-rivals-and-contested-ground-feature-spec.md), [technical definitions](parallel-batch-06-rivals-and-contested-ground-tech-design.md), [tracker](../maintainers/parallel-batch-06-rivals-and-contested-ground.md). Readiness was refreshed on October 7 against local main `fe86301a3` and the specific prerequisite branches recorded in the technical design. **Open prerequisites lists only work another task must supply before a named part can proceed.** A partial start is useful work now, not an uninterrupted route to full completion. Known places (PX03), voluntary outings (PX04) and ordinary resident decisions (PG02) are already available; they are reuse references, not open prerequisites.
 
 ## Allocation and branch names
 
-| Assignment                                       | Planned new branch                  | Start readiness / actual waits                                                                                                    |
-| ------------------------------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| CF01 — Armed opponents with their own purpose    | `codex/purposeful-armed-opponents`  | Partial start: attack permissions and current melee choices. Equipped/ranged/evasive behavior waits for AV02, CF02 and CF03.      |
-| CF02 — Aim, projectiles and real cover           | `codex/aim-projectiles-and-cover`   | Partial start: aiming and animal-target flight. Shield/practice/humanoid integration waits for AV02, AV03 and CF01's permissions. |
-| CF03 — Evade and exploit an opening              | `codex/evasion-and-counterplay`     | Partial start: evading the stag. Shield and projectile integration waits for AV02 and CF02.                                       |
-| CF04 — A companion who can help in a fight       | `codex/voluntary-combat-companions` | Partial start: help requests and independent consent. Armed helping waits for CF01–CF03 and AV02.                                 |
-| CF05 — A contested ruin and a victory that lasts | `codex/contested-ruin-aftermath`    | Partial start: location, routes and ordinary supplies. Reward-learning and complete encounter wait for AV01 and CF01–CF04.        |
+| Assignment                                       | Planned new branch                  | Start readiness / actual waits                                                                                                             |
+| ------------------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| CF01 — Armed opponents with their own purpose    | `codex/purposeful-armed-opponents`  | Partial start: attack permissions and current melee choices. Ranged/evasive behavior waits for CF02 and CF03; AV02 equipment is available. |
+| CF02 — Aim, projectiles and real cover           | `codex/aim-projectiles-and-cover`   | Partial start: aiming and animal-target flight. Practice/humanoid integration waits for AV03 and CF01's permissions; AV02 is available.    |
+| CF03 — Evade and exploit an opening              | `codex/evasion-and-counterplay`     | Partial start: evading the stag. Projectile integration waits for CF02; AV02 shield/equipment is available.                                |
+| CF04 — A companion who can help in a fight       | `codex/voluntary-combat-companions` | Partial start: help requests and independent consent. Armed helping waits for CF01–CF03; AV02 equipment is available.                      |
+| CF05 — A contested ruin and a victory that lasts | `codex/contested-ruin-aftermath`    | Partial start: location, routes and ordinary supplies. Reward-learning and complete encounter wait for AV01 and CF01–CF04.                 |
 
 These branch names were not present in inspected local/remote refs. No branch is created by this document. The owner supplies prerequisite revisions; each assignment has its own responsibility rather than an instruction to negotiate with another chat.
 
@@ -23,14 +23,13 @@ These branch names were not present in inspected local/remote refs. No branch is
 ```text
 Implement CF01: speaking opponents pursue their own authored starting purposes through ordinary character decisions, actual equipment and shared combat rules. They can choose to fight, refuse, withdraw or change their approach; a scripted proximity attacker or behavior prescribed inside a biography is not completion. Follow AGENTS.md and applicable repository guidance.
 
-After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/purposeful-armed-opponents. The starting branch must include the batch 06 planning documents referenced below.
+After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/purposeful-armed-opponents. The starting branch must include the batch 06 planning documents referenced below. AV02 compatible equipment and contact shield defense are available on local main from the October 8 merge of codex/av02-shield-defense at 0884679cd; reuse that implementation.
 
 The owner answered yes to hostile NPCs killing other NPCs, including Ada, under existing death rules. No further policy question blocks this scope. Direct PvP, inactive-human protection, exact human lethal review and existing death/remains/recovery remain controlling; ghosts, ordinary revival, collateral harm and home raids are outside this assignment.
 
 Start readiness: Partial start only. Attack permissions and ordinary melee/character decisions can start now; finishing the equipped ranged/evasive opponents waits on the other tasks below.
 
 Open prerequisites:
-- AV02 — Compatible equipment and shield defense. Reported delivered on codex/av02-shield-defense at 98bf8d797; not merged into inspected main. Blocks shield/loadout integration. See docs/maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment and the batch 06 technical dependency ledger.
 - CF02 — Aim, projectiles and real cover. Not implemented. Blocks ranged-opponent execution and choice qualification; CF02 needs only this task's independently deliverable target-permission change before its humanoid-target checks, not this whole task completed.
 - CF03 — Evasion and counterplay. Not implemented. Blocks the opponents' evasive-choice integration and qualification. Both CF task definitions are in docs/projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md.
 
@@ -55,12 +54,11 @@ Reconcile only delivered scope in lifecycle/protection, combat and authored worl
 ```text
 Implement CF02: a character can aim without firing, release one finite projectile, and hit or miss through real target movement, cover and shield contact. Follow AGENTS.md and the applicable repository guidance.
 
-After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/aim-projectiles-and-cover. The starting branch must include the batch 06 planning documents referenced below.
+After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/aim-projectiles-and-cover. The starting branch must include the batch 06 planning documents referenced below. AV02 compatible equipment and contact shield defense are available on local main from the October 8 merge of codex/av02-shield-defense at 0884679cd; reuse that implementation.
 
-Start readiness: Partial start only. Aim and projectile flight against currently permitted animals can start now; finishing shield, practice and humanoid-target integration waits on the other tasks below.
+Start readiness: Partial start only. Aim and projectile flight against currently permitted animals can start now; finishing practice and humanoid-target integration waits on the other tasks below.
 
 Open prerequisites:
-- AV02 — Compatible equipment and shield defense. Reported delivered on codex/av02-shield-defense at 98bf8d797; not merged into inspected main. Blocks final shield/equipment integration.
 - AV03 — Sling-use progression and coaching. Required runtime reported delivered on codex/av03-practical-competence at 659029347; not merged into inspected main. Blocks integrating actual projectile release with existing practice/progress.
 - CF01 — Common NPC attack permissions. Not implemented. Blocks final humanoid-target integration. Only its independently deliverable permission change is required, not completion of its later ranged-opponent demonstration.
 For exact scope and branch evidence, see docs/projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites; AV task definitions are in docs/maintainers/parallel-batch-05-adventure-defense-and-home.md.
@@ -88,12 +86,11 @@ Keep documentation synchronized: targeted actions, base-world survival/actions a
 ```text
 Implement CF03: deliberate short evasive movement that can avoid an attack through actual position, with readable observed recovery that the player or character may choose to exploit. Follow AGENTS.md and applicable repository guidance.
 
-After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/evasion-and-counterplay. The starting branch must include the batch 06 planning documents referenced below.
+After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/evasion-and-counterplay. The starting branch must include the batch 06 planning documents referenced below. AV02 compatible equipment and contact shield defense are available on local main from the October 8 merge of codex/av02-shield-defense at 0884679cd; reuse that implementation.
 
 Start readiness: Partial start only. Ordinary evasion and feedback against the existing stag can start now; finishing shield interruption and moving-projectile qualification waits on the other tasks below.
 
 Open prerequisites:
-- AV02 — Compatible equipment and shield defense. Reported delivered on codex/av02-shield-defense at 98bf8d797; not merged into inspected main. Blocks final guard-interruption/equipment integration. See docs/maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment.
 - CF02 — Aim, projectiles and real cover. Not implemented. Blocks only the combined check that evasion moves a target out of an actual released shot. See docs/projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf02--one-ranged-execution-owner.
 
 Reuse and ownership: this task implements evasion through existing movement; do not duplicate projectile flight. CF05's later humanoid encounter consumes these movement rules, but does not block this assignment. NPC target policy, PvP, indirect harm and revival remain with their existing owners.
@@ -119,13 +116,12 @@ Reconcile targeted actions, world ranged-counterplay, AC04/AC08/AC09/AC10/AC11, 
 ```text
 Implement CF04: a nearby person can voluntarily accept or refuse help against one known opponent, choose their own actions, and withdraw without the player controlling their body. Follow AGENTS.md and applicable repository guidance. Ada and other NPCs can die under the accepted rules; no companion immunity is selected.
 
-After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/voluntary-combat-companions. The starting branch must include the batch 06 planning documents referenced below.
+After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/voluntary-combat-companions. The starting branch must include the batch 06 planning documents referenced below. AV02 compatible equipment and contact shield defense are available on local main from the October 8 merge of codex/av02-shield-defense at 0884679cd; reuse that implementation.
 
 Start readiness: Partial start only. Help requests, consent, refusal and withdrawal can extend the already-delivered outing/request system now; finishing actual armed helping waits on the other tasks below.
 
 Open prerequisites:
 - CF01 — Common NPC attack permissions. Not implemented. Blocks admitting and qualifying NPC-to-NPC combat help; only the permission change is required to begin that integration.
-- AV02 — Compatible equipment and shield defense. Reported delivered on codex/av02-shield-defense at 98bf8d797; not merged into inspected main. Blocks helper equipment/guard integration.
 - CF02 — Aim, projectiles and real cover. Not implemented. Blocks ranged-helper execution and committed-shot cancellation checks.
 - CF03 — Evasion and counterplay. Not implemented. Blocks evasive-helper integration.
 See docs/projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites and its CF01–CF04 definitions; AV02 is tracked in docs/maintainers/parallel-batch-05-adventure-defense-and-home.md.
@@ -153,7 +149,7 @@ Reconcile CF04, PX04's combat-consent consumer, relevant agency/character experi
 ```text
 Implement CF05: Broken Watchpost, an optional occupied destination with two meaningful approaches, finite useful rewards, real conflict and persistent aftermath. Follow AGENTS.md and applicable repository guidance. This is authored world content and complete gameplay integration, not a new quest engine or scripted winner.
 
-After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/contested-ruin-aftermath. The starting branch must include the batch 06 planning documents referenced below.
+After selecting and refreshing the development base under AGENTS.md, create and switch to the new branch codex/contested-ruin-aftermath. The starting branch must include the batch 06 planning documents referenced below. AV02 compatible equipment and contact shield defense are available on local main from the October 8 merge of codex/av02-shield-defense at 0884679cd; reuse that implementation.
 
 Start readiness: Partial start only. Author the physical location, routes and ordinary finite supplies now; finishing reward-learning and the complete encounter waits on the other tasks below.
 

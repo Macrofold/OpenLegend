@@ -217,6 +217,18 @@ export type ActorEvent = WorldEvent & { speech?: PerceivedSpeech; modality: Awar
 export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence): ActorEvent {
   if (event.type === 'speech' && !evidence.speech)
     throw new Error('Speech is missing its committed listener perspective.');
+  const privateMetrics =
+    event.type === 'body-effect'
+      ? ['healthDelta', 'injuryDelta', 'wetnessDelta', 'burningDelta']
+      : event.data?.['contactInjury'] === true
+        ? ['rawInjury', 'preventedInjury', 'healthBefore', 'healthAfter', 'damage']
+        : [];
+  const data =
+    event.data && privateMetrics.length && evidence.actorId !== event.targetId
+      ? Object.fromEntries(
+          Object.entries(event.data).filter(([key]) => !privateMetrics.includes(key)),
+        )
+      : event.data;
   return {
     id: event.id,
     sequence: event.sequence,
@@ -247,6 +259,6 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
               : {}),
           },
         }
-      : { data: event.data }),
+      : { data }),
   };
 }

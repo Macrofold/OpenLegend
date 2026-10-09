@@ -11,7 +11,7 @@
 - [ ] Demonstrate actual hostile selection, adverse-result adaptation, observation-bounded pursuit, finite ammo and the contrasting peaceful resident/alternative weapon; qualify ordinary NPC-to-NPC injury/death including Ada, stale/replay/restore/privacy and supplied AV02/CF02/CF03 integration.
 - [ ] Reconcile the [technical parent map](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#documentation-and-parent-reconciliation): BW14/DG07, AC, CE/AG, action experience/recall and launcher scope. Broader PvP, indirect harm, revival, personality and capacity remain open.
 
-Readiness: PG02's bounded ordinary decision/evidence work is on main at `b1357b37`. Start target eligibility and ordinary melee/agency independently; AV02 equipment is reported delivered on `codex/av02-shield-defense` at `98bf8d797` but not merged into inspected main and CF02/CF03 are new open assignments for final ranged/evasive behavior. Deliver eligibility before consuming their later results; do not duplicate their owners. [Complete definition](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf01--purposeful-opponents-through-ordinary-agency). Branch: `codex/purposeful-armed-opponents`.
+Readiness: PG02's bounded ordinary decision/evidence work is on main at `b1357b37`. Start target eligibility and ordinary melee/agency independently; AV02 equipment is merged into local main from `codex/av02-shield-defense` at `0884679cd`, while CF02/CF03 are new open assignments for final ranged/evasive behavior. Deliver eligibility before consuming their later results; do not duplicate their owners. [Complete definition](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf01--purposeful-opponents-through-ordinary-agency). Branch: `codex/purposeful-armed-opponents`.
 
 ## CF02 — Aim, projectiles and real cover
 
@@ -20,7 +20,7 @@ Readiness: PG02's bounded ordinary decision/evidence work is on main at `b1357b3
 - [ ] Consume AV02's equipment/guard resolver and AV03's competence/release evidence; complete current-format persistence and the complete acceptance in the feature/design pair.
 - [ ] Reconcile AC02/AC09/AC10/AC11, AE, INV-3/INV-6, SW04/SW07/SW15/SW16, AV02 and AV03/PC scoped criteria and actual evidence. Retain broader parent acceptance.
 
-Readiness: independent implementation can start against current lawful animal targets. AV02 (`codex/av02-shield-defense` at `98bf8d797`) and AV03 (`codex/av03-practical-competence` at `659029347`) have reported required runtime delivery on separate branches, not inspected main; their supply remains an actual wait for final integration. CF01 owns the accepted but unimplemented NPC target-policy extension; independent physical-shot work need not wait, while final humanoid-target acceptance consumes its result. Branch instruction: `codex/aim-projectiles-and-cover`.
+Readiness: independent implementation can start against current lawful animal targets. AV02 equipment/guard is available on local main from `codex/av02-shield-defense` at `0884679cd`. AV03 (`codex/av03-practical-competence` at `659029347`) remains reported on a separate branch, not inspected main; its supply remains a wait for final integration. CF01 owns the accepted but unimplemented NPC target-policy extension; independent physical-shot work need not wait, while final humanoid-target acceptance consumes its result. Branch instruction: `codex/aim-projectiles-and-cover`.
 
 ## CF03 — Evade and exploit an opening
 
@@ -29,7 +29,7 @@ Readiness: independent implementation can start against current lawful animal ta
 - [ ] Complete the existing-stag encounter, blocked/interrupted/replay/current-format cases, AV02 guard integration and CF02 projectile/evasion combined qualification.
 - [ ] Reconcile AC04/AC08/AC09/AC10/AC11, SW05/SW06/SW07/SW15/SW16, BW23, AG07 and AV02's scoped consumer, preserving broader open work.
 
-Readiness: current main permits independent stag/motion implementation. AV02 guard/equipment is reported delivered at `98bf8d797` on its separate branch; final guard integration waits for that unmerged result. CF02 is a new unimplemented task; only the combined shot-evasion acceptance depends on it, not ordinary evasion. Branch instruction: `codex/evasion-and-counterplay`.
+Readiness: current main permits independent stag/motion implementation. AV02 guard/equipment is available on local main from `codex/av02-shield-defense` at `0884679cd`; reuse it for guard integration. CF02 is a new unimplemented task; only the combined shot-evasion acceptance depends on it, not ordinary evasion. Branch instruction: `codex/evasion-and-counterplay`.
 
 ## CF04 — A companion who can help in a fight
 
@@ -38,7 +38,7 @@ Readiness: current main permits independent stag/motion implementation. AV02 gua
 - [ ] Demonstrate acceptance/refusal, useful independent help, changed priority/withdrawal, lost contact, participant/opponent death/departure, exact life changes, committed-effect preservation, restore and a second helper; finish supplied combat integration.
 - [ ] Reconcile PX04's scoped consumer, CE/AG/action experience, BW14/DG06/DG07, communication/privacy, persistence and limits without closing unrelated social or rescue work.
 
-Readiness: PX04 consent/outings is delivered on local main at `fe86301a3`, and PG02's ordinary decisions are available. Help requests, refusal and withdrawal can extend those owners now. Actual armed helping still waits for CF01 permissions, CF02 shots, CF03 evasion and unmerged AV02 equipment/guard (`98bf8d797`). [Complete definition](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf04--voluntary-help-against-one-known-opponent). Branch: `codex/voluntary-combat-companions`.
+Readiness: PX04 consent/outings is delivered on local main at `fe86301a3`, and PG02's ordinary decisions are available. Help requests, refusal and withdrawal can extend those owners now. Actual armed helping still waits for CF01 permissions, CF02 shots, CF03 evasion; AV02 equipment/guard is already available on local main (`0884679cd`). [Complete definition](../projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf04--voluntary-help-against-one-known-opponent). Branch: `codex/voluntary-combat-companions`.
 
 ## CF05 — A contested ruin and a victory that lasts
 

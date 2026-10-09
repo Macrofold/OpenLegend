@@ -1,5 +1,9 @@
 # Embodied survival: technical design
 
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-07   |
+
 **Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** [Feature specification](embodied-survival-feature-spec.md) owns the proposed experience. Required directions are distinguished there from recommended content and tuning.
 
 ## Baseline, scope and risk
@@ -40,7 +44,7 @@ Apply the [boundary decision procedure](../engine-and-world-boundaries.md#5-a-re
 
 The narrow new computation is band-transition evaluation and weapon-bound timed hit resolution. Prefer existing state/policy and action adapters; do not require a general expression language, arbitrary callbacks, dynamic package loader or new service. A trusted finite predicate can compare a typed number to authored boundaries; the text explaining it is not executable policy.
 
-Localize the current human/biped and single-equipped-item limitations in the existing handling/strike adapters. Another body using this family must declare supported manipulation and locomotion; “rigid” or “point” material properties alone cannot grant attack authority. Extend those adapters when a real non-biped or multi-hand mechanic needs them, under AC/EWF, rather than pretending this slice solves all anatomy.
+AV02 replaces the former single-equipped-item restriction with declared body ports and exact attached items through the existing object owner; [current equipment/defense contract](../worlds/base/shield-defense.md) and [evidence](../verification/shield-defense.md) describe the extension. The reviewed human/biped physical-work boundary remains: another body must declare supported manipulation, equipment places and locomotion; “rigid” or “point” material properties alone cannot grant attack authority. Further anatomy needs a real consumer under AC/EWF.
 
 ## Body descriptions and transition lifecycle
 

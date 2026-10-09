@@ -11,6 +11,8 @@ Read the [system guide](../../README.md) and affected instructions, not every sk
 
 Choose the narrowest owner: root for universal constraints/top-level routes, scoped `AGENTS.md` for local boundaries, `.agents/rules/` for policy, skills for procedures, normal docs for full specs, code comments for local reasons. Keep one body; adapters reference it. Add an explicit conditional route from the root or an applicable operational parent. Optional references are not routes. Keep native skill entrypoints under `.agents/skills/<name>/SKILL.md` for shared discovery; put detailed topic hierarchy behind links.
 
+Before broadening a required read, check its target for stale implementation, version or authority directions and reconcile them with current owners. A reachable document that teaches obsolete behavior does not complete the routing change.
+
 Use standard YAML frontmatter with a directory-matched unique name and a precise description. Plain, quoted and block strings are valid; do not constrain authors to a custom parser dialect. Descriptions cost discovery context even when bodies stay unloaded; measure representative total context, not root size alone. Keep reference chains shallow and supporting detail directly reachable from its topic. Preserve qualifications and exact meaning while trimming redundancy. Size warnings prompt review, never truncation or a ban on needed context.
 
 Check official sources and actual tool/dependency versions before adopting advice. Review vendor licensing, scripts and permissions before pinning; never run an unreviewed installer. Separate stable principles from volatile APIs. Do not universalize temporary task instructions, consent conventions, spending grants or benchmark targets.

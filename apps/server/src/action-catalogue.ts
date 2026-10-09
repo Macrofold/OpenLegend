@@ -1,4 +1,7 @@
 import {
+  isEquipped,
+  guardChoiceLabel,
+  BASE_GUARD_TEXT,
   BASE_OUTING,
   outingInvitationProblem,
   activityRequestHost,
@@ -161,6 +164,33 @@ export function actionCatalogue(
       intent: { kind: 'command', command },
     });
   };
+  for (const shield of itemUses.filter(
+    (item) => world.itemDefinitions[item.definitionId]?.contactDefense,
+  )) {
+    const definition = world.itemDefinitions[shield.definitionId]!;
+    if (context.catalogue || selected?.id === scope.actorId || context.itemId)
+      add(
+        `guard:${shield.id}:facing`,
+        guardChoiceLabel(definition.name),
+        'Defense',
+        {
+          type: 'guard',
+          itemId: shield.id,
+          facing: observation.actor.spatial.heading,
+          autoEquip: true,
+        },
+        BASE_GUARD_TEXT.keywords,
+      );
+    for (const target of actionTargets.filter((e) => e.actor?.alive))
+      add(
+        `guard:${shield.id}:${target.id}`,
+        guardChoiceLabel(definition.name, target.name),
+        'Defense',
+        { type: 'guard', itemId: shield.id, targetId: target.id, autoEquip: true },
+        BASE_GUARD_TEXT.keywords,
+        target.id,
+      );
+  }
   if (selected?.actor?.alive && selected.id !== scope.actorId)
     add(
       `follow:${selected.id}`,
@@ -308,7 +338,7 @@ export function actionCatalogue(
       for (const definition of [
         ...availableStrikes(world, scope.actorId, target),
         ...tools.flatMap((item) => {
-          if (item.id === self.equippedItemId) return [];
+          if (isEquipped(world, scope.actorId, item.id)) return [];
           const strike = strikeDefinition(item.definitionId, world, item.id, target);
           return strike ? [strike] : [];
         }),
@@ -319,6 +349,7 @@ export function actionCatalogue(
           'Combat',
           {
             type: 'strike',
+            autoEquip: true,
             definitionId: definition.id,
             itemId: definition.weaponItemId,
             targetId: target.id,
@@ -357,7 +388,7 @@ export function actionCatalogue(
           `hunt-${target.id}`,
           `Hunt ${target.name}`,
           'Hunt',
-          { type: 'hunt', targetId: target.id },
+          { type: 'hunt', autoEquip: true, targetId: target.id },
           ['shoot', 'attack', 'ranged'],
           target.id,
         );
@@ -368,6 +399,7 @@ export function actionCatalogue(
           'Hunt',
           {
             type: 'hunt',
+            autoEquip: true,
             targetId: target.id,
             itemId: item.id,
             ammunitionId: projectiles.get(
@@ -431,7 +463,7 @@ export function actionCatalogue(
             },
           );
     }
-    if (definition.launcher || definition.melee || definition.gatheringTool)
+    if (definition.equipment)
       add(
         `equip-${item.id}`,
         `Equip ${definition.name}`,

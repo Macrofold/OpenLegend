@@ -34,6 +34,12 @@ function slingFixture() {
   };
 }
 
+function inventedRecipes(world: WorldState) {
+  return Object.values(world.recipes).filter(
+    (recipe) => recipe.provenance.source !== 'authored-world',
+  );
+}
+
 function receipt(
   requestId: string,
   provider: 'jev' | 'openai',
@@ -156,6 +162,7 @@ async function harness(
   };
   const director = new AiDirector(service, client, () => now);
   const jobIds = new Map<string, string>();
+  const searchParents = new Map<string, string>();
   cleanup.push(async () => {
     await director.close();
     await store.close();
@@ -185,6 +192,25 @@ async function harness(
       if (result.jobId) jobIds.set(args[1], result.jobId);
       return result;
     },
+    async inventNew(id: string, text: string) {
+      // A starting character now knows a world-authored method. With embeddings disabled,
+      // explicitly choose Invent new after the normal search reports it is unavailable.
+      let parentId = searchParents.get(id);
+      if (!parentId) {
+        const search = await director.submit('invention', `${id}:search`, text);
+        if (!search.jobId) return search;
+        await director.idle();
+        expect((await store.getJob(search.jobId))?.invention?.code).toBe('search-unavailable');
+        parentId = search.jobId;
+        searchParents.set(id, parentId);
+      }
+      const result = await director.submit('invention', id, text, undefined, undefined, undefined, {
+        parentId,
+        action: 'new',
+      });
+      if (result.jobId) jobIds.set(id, result.jobId);
+      return result;
+    },
     job: (id: string) => store.getJob(jobIds.get(id) ?? id),
     calls,
     change,
@@ -194,32 +220,25 @@ async function harness(
 describe('AI director with explicit fixtures, no live calls', () => {
   it('admits a generated declaration with fixture provenance and private ownership', async () => {
     const h = await harness({
-      judge: (request) => {
-        const question = request.questions['route'];
-        if (!question || question.type !== 'choice') throw new Error('Expected choice');
-        const reuse = Object.keys(question.criteria).find((key) => key.startsWith('reuse:'));
-        return judgment(request, reuse ?? 'base:swing');
-      },
+      judge: (request) => judgment(request, 'base:swing'),
     });
-    expect(
-      Object.values(h.service.world.recipes).filter(
-        (recipe) => recipe.provenance.source !== 'authored-world',
-      ),
-    ).toEqual([]);
-    expect((await h.submit('invention', 'invent-1', 'Make a cord-and-fiber sling.')).ok).toBe(true);
+    expect(inventedRecipes(h.service.world)).toEqual([]);
+    expect((await h.inventNew('invent-1', 'Make a cord-and-fiber sling.')).ok).toBe(true);
     await h.director.idle();
     expect((await h.job('invent-1'))?.status).toBe('completed');
-    const [recipe] = Object.values(h.service.world.recipes).filter(
-      (recipe) => recipe.provenance.source !== 'authored-world',
-    );
+    const [recipe] = inventedRecipes(h.service.world);
     expect(recipe?.provenance).toMatchObject({
       source: 'test-fixture',
       authority: { origin: 'player', policyRevision: 1 },
       model: 'openai-fixture',
     });
     expect(h.director.executionSource).toBe('test-fixture');
-    expect(h.service.world.knowledge[PLAYER_ID]).toHaveLength(1);
-    expect(h.service.world.knowledge[NPC_ID]).toHaveLength(0);
+    expect(
+      h.service.world.knowledge[PLAYER_ID]!.filter((record) => record.source === 'invented'),
+    ).toHaveLength(1);
+    expect(
+      h.service.world.knowledge[NPC_ID]!.filter((record) => record.source === 'invented'),
+    ).toHaveLength(0);
     expect(
       allItems(h.service.world).some((item) => item.definitionId === recipe?.outputDefinitionId),
     ).toBe(false);
@@ -229,21 +248,17 @@ describe('AI director with explicit fixtures, no live calls', () => {
   it('prevents duplicate IDs from dispatching again and rejects changed input under the same ID', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
     const h = await harness({ judge: () => wait.promise });
-    await h.submit('invention', 'same-id', 'A sling.');
-    expect((await h.submit('invention', 'same-id', 'A sling.')).ok).toBe(true);
-    expect((await h.submit('invention', 'same-id', 'A bow.')).code).toBe('idempotency-conflict');
+    await h.inventNew('same-id', 'A sling.');
+    expect((await h.inventNew('same-id', 'A sling.')).ok).toBe(true);
+    expect((await h.inventNew('same-id', 'A bow.')).code).toBe('idempotency-conflict');
     await expect.poll(() => h.calls.judges.length).toBe(1);
     wait.resolve(judgment(h.calls.judges[0]!, 'base:swing'));
     await h.director.idle();
-    await h.submit('invention', 'same-id', 'A sling.');
+    await h.inventNew('same-id', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(1);
-    expect(
-      Object.values(h.service.world.recipes).filter(
-        (recipe) => recipe.provenance.source !== 'authored-world',
-      ),
-    ).toHaveLength(1);
+    expect(inventedRecipes(h.service.world)).toHaveLength(1);
   });
 
   it('holds a late explicit result while paused and admits it only after resume', async () => {
@@ -255,25 +270,17 @@ describe('AI director with explicit fixtures, no live calls', () => {
         return wait.promise;
       },
     });
-    await h.submit('invention', 'paused-late', 'A sling.');
+    await h.inventNew('paused-late', 'A sling.');
     await started.promise;
     await h.service.control({ paused: true });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', slingFixture()));
     await Promise.resolve();
     await Promise.resolve();
-    expect(
-      Object.values(h.service.world.recipes).filter(
-        (recipe) => recipe.provenance.source !== 'authored-world',
-      ),
-    ).toEqual([]);
+    expect(inventedRecipes(h.service.world)).toEqual([]);
     await h.service.control({ paused: false });
     await h.director.idle();
     expect((await h.job('paused-late'))?.status).toBe('completed');
-    expect(
-      Object.values(h.service.world.recipes).filter(
-        (recipe) => recipe.provenance.source !== 'authored-world',
-      ),
-    ).toHaveLength(1);
+    expect(inventedRecipes(h.service.world)).toHaveLength(1);
     expect((await h.store.usage(h.config.budgetUsd)).usage.llmCalls).toBe(1);
     expect((await h.store.usage(h.config.budgetUsd)).budget.spentUsd).toBeGreaterThan(0);
   });
@@ -288,22 +295,20 @@ describe('AI director with explicit fixtures, no live calls', () => {
         draft.inputs.push({ definitionId: 'bone', quantity: 1, role: 'point' });
       const h = await harness({ generate: (request) => value(request.requestId, 'openai', draft) });
       const beforeItems = structuredClone(allItems(h.service.world));
-      await h.submit('invention', `invalid-${fault}`, 'A physical sling.');
+      const beforeRecipes = structuredClone(h.service.world.recipes);
+      const beforeKnowledge = structuredClone(h.service.world.knowledge[PLAYER_ID]);
+      await h.inventNew(`invalid-${fault}`, 'A physical sling.');
       await h.director.idle();
       expect((await h.job(`invalid-${fault}`))?.status).toBe('failed');
-      expect(
-        Object.values(h.service.world.recipes).filter(
-          (recipe) => recipe.provenance.source !== 'authored-world',
-        ),
-      ).toEqual([]);
+      expect(h.service.world.recipes).toEqual(beforeRecipes);
       expect(allItems(h.service.world)).toEqual(beforeItems);
-      expect(h.service.world.knowledge[PLAYER_ID]).toEqual([]);
+      expect(h.service.world.knowledge[PLAYER_ID]).toEqual(beforeKnowledge);
     },
   );
 
   it('fails without dispatch when the budget cannot reserve the next call', async () => {
     const h = await harness({ config: { budgetUsd: 0 } });
-    await h.submit('invention', 'budget-zero', 'A sling.');
+    await h.inventNew('budget-zero', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
     expect(h.calls.generations).toHaveLength(0);
@@ -312,7 +317,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
 
   it('cannot bypass the minimum reservation by lowering configured per-call reserves', async () => {
     const h = await harness({ config: { budgetUsd: 0.001, jevReserveUsd: 0.000001 } });
-    await h.submit('invention', 'budget-small', 'A sling.');
+    await h.inventNew('budget-small', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
     expect((await h.job('budget-small'))?.status).toBe('failed');
@@ -320,15 +325,11 @@ describe('AI director with explicit fixtures, no live calls', () => {
 
   it('stops before LLM when only the Jev call fits the budget', async () => {
     const h = await harness({ config: { budgetUsd: 0.1 } });
-    await h.submit('invention', 'budget-between', 'A sling.');
+    await h.inventNew('budget-between', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
-    expect(
-      Object.values(h.service.world.recipes).filter(
-        (recipe) => recipe.provenance.source !== 'authored-world',
-      ),
-    ).toEqual([]);
+    expect(inventedRecipes(h.service.world)).toEqual([]);
   });
 
   it('consumes the reservation for unknown completion and sends no automatic retries', async () => {
@@ -343,23 +344,19 @@ describe('AI director with explicit fixtures, no live calls', () => {
         },
       }),
     });
-    await h.submit('invention', 'unknown-cost', 'A sling.');
+    await h.inventNew('unknown-cost', 'A sling.');
     await h.director.idle();
     expect((await h.store.usage(h.config.budgetUsd)).budget.spentUsd).toBeGreaterThanOrEqual(
       h.config.jevReserveUsd,
     );
     expect(h.calls.judges).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
-    expect(
-      Object.values(h.service.world.recipes).filter(
-        (recipe) => recipe.provenance.source !== 'authored-world',
-      ),
-    ).toEqual([]);
+    expect(inventedRecipes(h.service.world)).toEqual([]);
   });
 
   it('does not call either provider without credentials or while paused', async () => {
     const h = await harness({ config: { jevKey: '', llmKey: '' } });
-    expect((await h.submit('invention', 'no-keys', 'A sling.')).code).toBe('unconfigured');
+    expect((await h.inventNew('no-keys', 'A sling.')).code).toBe('unconfigured');
     h.director.considerThought();
     await h.service.control({ paused: true });
     expect((await h.submit('chat', 'pause', 'Hello.')).code).toBe('paused');
@@ -380,12 +377,12 @@ describe('AI director with explicit fixtures, no live calls', () => {
     await h.change((world) => {
       world.entities[PLAYER_ID]!.actor!.incapacitated = true;
     });
-    expect((await h.submit('invention', 'incapacitated-submit', 'A sling.')).code).toBe('actor');
+    expect((await h.inventNew('incapacitated-submit', 'A sling.')).code).toBe('actor');
     expect(h.calls.judges).toHaveLength(0);
     await h.change((world) => {
       world.entities[PLAYER_ID]!.actor!.incapacitated = false;
     });
-    await h.submit('invention', 'incapacitated-result', 'A sling.');
+    await h.inventNew('incapacitated-result', 'A sling.');
     await started.promise;
     await h.change((world) => {
       world.entities[PLAYER_ID]!.actor!.incapacitated = true;
@@ -393,14 +390,10 @@ describe('AI director with explicit fixtures, no live calls', () => {
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', slingFixture()));
     await h.director.idle();
     expect((await h.job('incapacitated-result'))?.status).toBe('stale');
-    expect(
-      Object.values(h.service.world.recipes).filter(
-        (recipe) => recipe.provenance.source !== 'authored-world',
-      ),
-    ).toEqual([]);
+    expect(inventedRecipes(h.service.world)).toEqual([]);
   });
 
-  it('retrieves an older relevant recipe from all 64 known entries while bounding the supplied candidates', async () => {
+  it('retrieves an older relevant recipe from 64 invented entries while bounding the supplied candidates', async () => {
     const h = await harness();
     let oldestId = '';
     for (let index = 0; index < 64; index++) {
@@ -414,7 +407,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
         authority: { origin: 'player', policyRevision: 1 },
       });
       expect(admitted.ok).toBe(true);
-      if (index === 0) oldestId = admitted.recipeId!;
+      if (index === 0) oldestId = inventedRecipes(h.service.world)[0]!.id;
     }
     const context = buildContext(
       h.service,

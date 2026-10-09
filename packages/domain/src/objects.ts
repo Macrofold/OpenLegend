@@ -21,6 +21,7 @@ import {
   type ObjectIndexNode,
 } from './object-index.js';
 import type { Entity, ItemInstance, WorldState } from './types.js';
+import { equipmentConflicts, equipmentProblem } from './equipment.js';
 
 export interface ItemLot {
   definitionPin: DefinitionPin;
@@ -74,6 +75,7 @@ type Children = ObjectIndexNode<number> | undefined;
 type ChildIndex = ObjectIndexNode<Children> | undefined;
 interface IndexedObjects {
   children: ChildIndex;
+  attachments: ChildIndex;
 }
 const indexes = new WeakMap<object, IndexedObjects>();
 const retiredIndexes = new WeakMap<WorldState['entities'], readonly string[]>();
@@ -102,12 +104,12 @@ function indexFor(world: WorldState): IndexedObjects {
   if (isDraft(world) && original(world)?.objectState) {
     const base = original(world)!;
     const inherited = indexFor(base);
-    index = { children: inherited.children };
+    index = { children: inherited.children, attachments: inherited.attachments };
   } else {
-    index = { children: undefined };
+    index = { children: undefined, attachments: undefined };
     for (const entity of Object.values(world.entities)) {
       const parent = !entity.retirement && parentOf(entity);
-      if (parent)
+      if (parent) {
         index.children = objectIndexSet(
           index.children,
           parent,
@@ -117,6 +119,13 @@ function indexFor(world: WorldState): IndexedObjects {
             1 + (entity.container?.height ?? 0),
           ),
         );
+        if (entity.placement?.mode === 'attached')
+          index.attachments = objectIndexSet(
+            index.attachments,
+            parent,
+            objectIndexSet(objectIndexGet(index.attachments, parent), entity.id, 1),
+          );
+      }
     }
   }
   indexes.set(token, index);
@@ -130,7 +139,11 @@ export function captureObjectIndex(
   const base = original(draft)!,
     priorRetired = retiredIndexes.get(base.entities);
   return (committed, changed) => {
-    if (index) indexes.set(committed.objectState, { children: index.children });
+    if (index)
+      indexes.set(committed.objectState, {
+        children: index.children,
+        attachments: index.attachments,
+      });
     if (priorRetired && base.entities !== committed.entities) {
       let ids: Set<string> | undefined;
       for (const id of changed)
@@ -170,6 +183,35 @@ function reindex(
         1 + (world.entities[id]?.container?.height ?? 0),
       ),
     );
+  updateAttachmentIndex(world, index, id, oldParent, newParent);
+}
+function updateAttachmentIndex(
+  world: WorldState,
+  index: IndexedObjects,
+  id: string,
+  oldParent: string | undefined,
+  newParent: string | undefined,
+) {
+  if (oldParent)
+    index.attachments = objectIndexSet(
+      index.attachments,
+      oldParent,
+      objectIndexSet(objectIndexGet(index.attachments, oldParent), id, undefined),
+    );
+  if (newParent && world.entities[id]?.placement?.mode === 'attached')
+    index.attachments = objectIndexSet(
+      index.attachments,
+      newParent,
+      objectIndexSet(objectIndexGet(index.attachments, newParent), id, 1),
+    );
+}
+/** Rebuildable subset of the placement index, never a second saved attachment authority.
+ * Contact and each inventory row must not walk every carried supply to find two held tools. */
+export function* attachedItemIds(world: WorldState, actorId: string): Generator<string> {
+  for (const [id] of objectIndexEntries(objectIndexGet(indexFor(world).attachments, actorId))) {
+    chargeWork({ candidates: 1 });
+    yield id;
+  }
 }
 export function* directChildIds(
   world: WorldState,
@@ -627,10 +669,8 @@ function changeItemQuantities(
       lot.quantity = quantity;
       lot.revision = bump(lot.revision);
     } else {
-      const parentId = parentOf(entity),
-        parent = getOwn(world.entities, parentId);
+      const parentId = parentOf(entity);
       lineage(world, 'consume', id, lot.quantity, cause);
-      if (parent?.actor?.equippedItemId === id) parent.actor.equippedItemId = null;
       entity.retirement = {
         custodianId: historicalCustodian(world, id),
         at: world.simTime,
@@ -658,32 +698,18 @@ export function setItemQuantity(
   applyItemQuantities(world, [{ id, quantity }], cause);
 }
 export function splitLot(world: WorldState, id: string, quantity: number, cause: string): string {
-  return splitHomogeneousLot(world, id, quantity, cause, 'live');
+  return splitHomogeneousLot(world, id, quantity, cause);
 }
-function splitAdmission(
-  world: WorldState,
-  id: string,
-  quantity: number,
-  mode: 'live' | 'migration',
-) {
+function splitAdmission(world: WorldState, id: string, quantity: number) {
   const entity = world.entities[id],
     lot = entity?.item,
-    parentId = parentOf(entity),
-    action = parentId && world.entities[parentId]?.actor?.action;
-  // The checked legacy equipment conversion alone rebinds a running weapon to
-  // its individualized unit. Ordinary splits cannot redirect process identity.
-  const migratingWeapon =
-    mode === 'migration' &&
-    action &&
-    action.weaponItemId === id &&
-    action.itemId !== id &&
-    action.ammoItemId !== id;
+    parentId = parentOf(entity);
   if (
     !lot ||
     !parentId ||
     entity!.container ||
     lotCarriesState(entity!) ||
-    (identityBound(world, id) && !migratingWeapon) ||
+    identityBound(world, id) ||
     contributionSourceBound(world, id) ||
     lot.individuality !== 'homogeneous' ||
     quantity <= 0 ||
@@ -699,9 +725,8 @@ function splitHomogeneousLot(
   id: string,
   quantity: number,
   cause: string,
-  mode: 'live' | 'migration',
 ): string {
-  const { entity, lot, parentId } = splitAdmission(world, id, quantity, mode);
+  const { entity, lot, parentId } = splitAdmission(world, id, quantity);
   const resultId = nextId(world, 'item');
   // Split preserves units; its one lineage row is published after the new identity exists.
   changeItemQuantities(world, [{ id, quantity: lot.quantity - quantity }], cause, 'split');
@@ -763,7 +788,7 @@ function itemMovePlan(
     throw new Error('A bag cannot contain itself or exceed the nesting limit.');
   if (quantity !== lot.quantity && (entity.container || lot.individuality === 'individual'))
     throw new Error('An individual object cannot be divided.');
-  if (quantity !== lot.quantity) splitAdmission(world, id, quantity, 'live');
+  if (quantity !== lot.quantity) splitAdmission(world, id, quantity);
   for (let i = 0; i < ancestors.length; i++) {
     const enclosing = ancestors[i]!,
       rule =
@@ -902,8 +927,6 @@ export function moveLotsTogether(
       movedId = movedIds[index]!;
     const moved = world.entities[movedId]!,
       moving = moved.item!;
-    if (world.entities[plan.sourceId]?.actor?.equippedItemId === movedId)
-      world.entities[plan.sourceId]!.actor!.equippedItemId = null;
     moving.revision = bump(moving.revision);
     moved.placement = {
       mode: 'contained',
@@ -941,8 +964,6 @@ export function moveLot(
   const movedId = quantity === lot.quantity ? id : splitLot(world, id, quantity, cause);
   const moved = world.entities[movedId]!,
     moving = moved.item!;
-  if (world.entities[sourceId]?.actor?.equippedItemId === movedId)
-    world.entities[sourceId]!.actor!.equippedItemId = null;
   moving.revision = bump(moving.revision);
   moved.placement = {
     mode: 'contained',
@@ -971,58 +992,43 @@ export function moveLot(
   }
   return movedId;
 }
-export function equipLot(
-  world: WorldState,
-  actorId: string,
-  id: string,
-  cause: string,
-  mode: 'live' | 'migration' = 'live',
-): string {
+export function equipLot(world: WorldState, actorId: string, id: string, cause: string): string {
   const actor = world.entities[actorId]?.actor,
     entity = world.entities[id],
     lot = entity?.item;
-  if (
-    !actor ||
-    !lot ||
-    custodian(world, id) !== actorId ||
-    (mode === 'live' && (actor.action || itemHasReservations(world, id)))
-  )
+  if (!actor || !lot || custodian(world, id) !== actorId || actor.action)
     throw new Error('Choose a free tool in this inventory.');
-  if (
-    mode === 'migration' &&
-    lot.quantity > 1 &&
-    (actor.action?.itemId === id ||
-      actor.action?.ammoItemId === id ||
-      availableItemQuantity(world, id) < 1)
-  )
-    throw new Error('Equipped stack has an unsupported active reference; conversion refused.');
+  const problem = equipmentProblem(world, actorId, id);
+  if (problem) throw new Error(problem);
   const definition = world.itemDefinitions[lot.definitionPin.id];
-  if (!definition?.launcher && !definition?.gatheringTool && !definition?.melee)
-    throw new Error('This item has no equipment capability.');
+  const conflicts = equipmentConflicts(world, actorId, id);
   if (parentOf(entity) !== actorId) moveLot(world, id, actorId, lot.quantity, cause, false);
-  const previous = actor.equippedItemId ? world.entities[actor.equippedItemId] : undefined;
-  if (previous?.placement?.mode === 'attached')
+  for (const conflict of conflicts) {
+    const previous = world.entities[conflict.id]!;
     previous.placement = {
       mode: 'contained',
       parentEntityId: actorId,
-      revision: bump(previous.placement.revision),
+      revision: bump(previous.placement!.revision),
     };
-  const equippedId = lot.quantity > 1 ? splitHomogeneousLot(world, id, 1, cause, mode) : id;
+    updateAttachmentIndex(world, indexFor(world), conflict.id, actorId, actorId);
+  }
+  const equippedId = lot.quantity > 1 ? splitLot(world, id, 1, cause) : id;
   const equipped = world.entities[equippedId]!;
   equipped.item!.individuality = 'individual';
   equipped.item!.revision = bump(equipped.item!.revision);
   equipped.placement = {
     mode: 'attached',
     parentEntityId: actorId,
-    portId: 'equipment',
+    portId: definition!.equipment!.ports[0]!,
     revision: bump(equipped.placement!.revision),
   };
-  actor.equippedItemId = equippedId;
+  updateAttachmentIndex(world, indexFor(world), equippedId, actorId, actorId);
+  world.objectState.revision = bump(world.objectState.revision);
   publishDeltas(world, new Map(), [actorId]);
   return equippedId;
 }
 export function validateObjects(world: WorldState): void {
-  const slots = new Set<string>();
+  const slots = new Map<string, Set<string>>();
   if (
     !world.objectState ||
     !Number.isSafeInteger(world.objectState.revision) ||
@@ -1096,15 +1102,23 @@ export function validateObjects(world: WorldState): void {
       if (!parent || !(parent.actor || parent.kind === 'item-pile' || parent.container))
         throw new Error('Invalid physical container.');
       if (placement.mode === 'attached') {
-        const key = `${placement.parentEntityId}:${placement.portId}`;
+        const definition = world.itemDefinitions[entity.item.definitionPin.id];
+        const profile = definition?.equipment;
         if (
-          placement.portId !== 'equipment' ||
-          slots.has(key) ||
-          parent.actor?.equippedItemId !== entity.id ||
+          !profile ||
+          placement.portId !== profile.ports[0] ||
+          profile.ports.some(
+            (port) => !parent.actor?.body?.equipmentPorts.some((p) => p.id === port),
+          ) ||
           entity.item.individuality !== 'individual'
         )
           throw new Error('Invalid equipment attachment.');
-        slots.add(key);
+        const occupied = slots.get(placement.parentEntityId) ?? new Set<string>();
+        slots.set(placement.parentEntityId, occupied);
+        for (const port of profile.ports) {
+          if (occupied.has(port)) throw new Error('Conflicting equipment attachments.');
+          occupied.add(port);
+        }
       }
     }
     const lot = entity.item;
@@ -1176,16 +1190,6 @@ export function validateObjects(world: WorldState): void {
         throw new Error('Container load summary is inconsistent.');
     }
   }
-  for (const entity of Object.values(world.entities))
-    if (entity.actor?.equippedItemId) {
-      const equipped = getOwn(world.entities, entity.actor.equippedItemId);
-      if (
-        equipped?.placement?.mode !== 'attached' ||
-        equipped.placement.parentEntityId !== entity.id ||
-        !equipped.item
-      )
-        throw new Error('Equipment refers to an unavailable attachment.');
-    }
   for (const [id, record] of Object.entries(world.objectLineage ?? {})) {
     if (
       !hasRecordFields(
@@ -1269,17 +1273,20 @@ export function mergeLots(
   publishDeltas(world, new Map(), [parent]);
   return targetId;
 }
-export function unequipLot(world: WorldState, actorId: string): void {
+export function unequipLot(world: WorldState, actorId: string, itemId: string): void {
   const actor = world.entities[actorId]?.actor;
-  if (!actor?.equippedItemId) return;
-  const item = world.entities[actor.equippedItemId];
-  if (!item?.item || itemHasReservations(world, item.id) || actor.action)
+  const item = world.entities[itemId];
+  if (!actor || item?.placement?.mode !== 'attached' || item.placement.parentEntityId !== actorId)
+    throw new Error('Choose current attached equipment.');
+  if (!item.item || itemHasReservations(world, item.id) || actor.action)
     throw new Error('Finish current work before releasing this equipment.');
+  const index = indexFor(world);
   item.placement = {
     mode: 'contained',
     parentEntityId: actorId,
     revision: bump(item.placement!.revision),
   };
-  actor.equippedItemId = null;
+  updateAttachmentIndex(world, index, itemId, actorId, actorId);
+  world.objectState.revision = bump(world.objectState.revision);
   publishDeltas(world, new Map(), [actorId]);
 }

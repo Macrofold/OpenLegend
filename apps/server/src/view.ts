@@ -1,6 +1,7 @@
 import { outingViews } from './outing-view.js';
 
 import { recipeDetailsView } from './recipe-view.js';
+import { equippedItem, guardWorkLabel, BASE_GUARD_TEXT } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
@@ -236,7 +237,10 @@ export async function projectView(
         ? { reason }
         : {}),
   });
-  const equipment = itemFor(world, actor.equippedItemId ?? '');
+  const equipment =
+    equippedItem(world, scope.actorId, 'ranged') ??
+    equippedItem(world, scope.actorId, 'melee') ??
+    equippedItem(world, scope.actorId, 'gather');
   const launcher = equipment && world.itemDefinitions[equipment.definitionId]?.launcher;
   const ammunition =
     launcher &&
@@ -253,7 +257,7 @@ export async function projectView(
       world.recipes,
       actor.inventoryInspection,
       world.knowledge[player.id],
-      actor.equippedItemId,
+      player.inventoryRevision,
       actor.action,
       world.itemHandling,
       player.spatial,
@@ -298,8 +302,8 @@ export async function projectView(
           active,
           paused,
           launcher,
-          actor.equippedItemId,
-          (actor.attackReadyAt ?? 0) > world.simTime,
+          player.inventoryRevision,
+          (actor.combatReadyAt ?? 0) > world.simTime,
           ammunition,
           observation.knownRecipes,
           worldPosition(player),
@@ -526,6 +530,7 @@ export async function projectView(
                       .join(', ')
                   : entity.actor.action
                     ? ({
+                        guard: BASE_GUARD_TEXT.activityLabel,
                         pickup: 'Picking up items',
                         move: 'Walking',
                         follow: 'Following',
@@ -962,6 +967,7 @@ export async function projectView(
                   'treat-scar',
                   'hunt',
                   'strike',
+                  'guard',
                   'replenish',
                   'tend-fire',
                 ].includes(actor.action.type)),
@@ -973,7 +979,7 @@ export async function projectView(
             advancing: !paused && actor.action.stage === 'working',
             label: actor.action.navigation
               ? 'Preparing route'
-              : (workLabels[actor.action.type] ?? 'Working'),
+              : (guardWorkLabel(world, player) ?? workLabels[actor.action.type] ?? 'Working'),
             progress:
               actor.action.stage === 'approaching' || actor.action.type === 'follow'
                 ? 0

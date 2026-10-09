@@ -1,6 +1,7 @@
 import { namePhrase, type Named } from '@open-legend/language';
 import { weaponStrikeWording } from './worlds/base/strikes.js';
 import { itemFor } from './objects.js';
+import { equippedItems } from './equipment.js';
 import type { Entity, WorldState } from './types.js';
 /** Trusted targeted-strike definitions; data selects only this finite native family.
  * docs/targeted-actions.md#targeted-strikes
@@ -94,15 +95,16 @@ export function availableStrikes(
   actorId: string,
   target?: Named | string,
 ): StrikeDefinition[] {
-  const weaponItemId = world.entities[actorId]?.actor?.equippedItemId;
-  const item = weaponItemId && itemFor(world, weaponItemId);
-  const melee = item && strikeDefinition(item.definitionId, world, item.id, target);
+  const melee = equippedItems(world, actorId, 'melee').flatMap((item) => {
+    const definition = strikeDefinition(item.definitionId, world, item.id, target);
+    return definition && supportsStrike(world.entities[actorId], definition) ? [definition] : [];
+  });
   const native = Object.values(world.nativeStrikes ?? {})
     .filter((definition) => supportsStrike(world.entities[actorId], definition))
     .map((definition) =>
       target ? { ...definition, label: `${definition.label} ${namePhrase(target)}` } : definition,
     );
-  return [...native, ...(melee && supportsStrike(world.entities[actorId], melee) ? [melee] : [])];
+  return [...native, ...melee];
 }
 /** The same anatomical/capability requirement governs discovery, admission and impact. */
 export function supportsStrike(actor: Entity | undefined, definition: StrikeDefinition): boolean {

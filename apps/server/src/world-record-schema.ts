@@ -244,7 +244,7 @@ RECORD_NODES.get('sim_items')!.uniqueIndexes = [['item_id']];
 RECORD_NODES.get('sim_placements')!.uniqueIndexes = [['entity_id']];
 RECORD_NODES.get('sim_placements')!.constraints = [
   'FOREIGN KEY(world_id,physical_parent_id) REFERENCES sim_entities(world_id,entity_id) ON DELETE RESTRICT',
-  "CHECK ((placement_mode='world' AND physical_parent_id IS NULL AND port_id IS NULL AND x IS NOT NULL AND y IS NOT NULL AND z IS NOT NULL) OR (placement_mode='contained' AND physical_parent_id IS NOT NULL AND port_id IS NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL) OR (placement_mode='attached' AND physical_parent_id IS NOT NULL AND port_id='equipment' AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL))",
+  "CHECK ((placement_mode='world' AND physical_parent_id IS NULL AND port_id IS NULL AND x IS NOT NULL AND y IS NOT NULL AND z IS NOT NULL) OR (placement_mode='contained' AND physical_parent_id IS NOT NULL AND port_id IS NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL) OR (placement_mode='attached' AND physical_parent_id IS NOT NULL AND port_id IS NOT NULL AND length(port_id)>0 AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL))",
 ];
 columns(
   'sim_object_lineage',

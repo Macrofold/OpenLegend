@@ -1,5 +1,6 @@
 import type { ItemDefinition } from '../../types.js';
 import type { MaterialInterface } from '../../invention-families.js';
+import { BASE_KNIFE_EQUIPMENT, BASE_SPEAR_EQUIPMENT } from './equipment.js';
 
 /** Native preparation and invented cord share these authored costs and output semantics.
  * docs/worlds/base/items.md#cordage-manufacture-and-reuse */
@@ -32,6 +33,7 @@ export const CONSTRUCTED_ITEM_STORY_FIELDS = { story_importance: { story_importa
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
   knife: {
     mechanismFields: { story_importance: { story_importance: 7 } },
+    equipment: BASE_KNIFE_EQUIPMENT,
     id: 'knife',
     version: 1,
     portable: true,
@@ -55,6 +57,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     portable: true,
     packingLoad: 2,
     name: 'Lookout spear',
+    equipment: BASE_SPEAR_EQUIPMENT,
     description:
       'A long wooden spear left at the lookout. It reaches farther than the knife but prepares and recovers more slowly. Equip it for an ordinary contact attack.',
     properties: ['rigid', 'shaft', 'point'],
