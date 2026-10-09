@@ -34,12 +34,12 @@ Creator revival is another distinct power. Current architecture permits an autho
 
 Four distinctions apply throughout:
 
-| Distinction | Product meaning |
-| --- | --- |
-| Person and embodiment | The same retained identity may be dormant, temporarily manifest or ordinarily living under a supported law. There is at most one active embodiment/controller of that person. |
-| World occurrence and knowledge | An event can occur without this person perceiving it. Retained identity is not surveillance or universal recall. |
-| Communication and disclosure of a mind | A chosen message is attributable testimony. It does not expose raw private context or prove what the sender thinks. |
-| Fictional authority and platform permission | A spell, relationship, summon or new body cannot override current private grants, account control, forgetting, spending or world access. |
+| Distinction                                 | Product meaning                                                                                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Person and embodiment                       | The same retained identity may be dormant, temporarily manifest or ordinarily living under a supported law. There is at most one active embodiment/controller of that person. |
+| World occurrence and knowledge              | An event can occur without this person perceiving it. Retained identity is not surveillance or universal recall.                                                              |
+| Communication and disclosure of a mind      | A chosen message is attributable testimony. It does not expose raw private context or prove what the sender thinks.                                                           |
+| Fictional authority and platform permission | A spell, relationship, summon or new body cannot override current private grants, account control, forgetting, spending or world access.                                      |
 
 The first ghost is an adult speaking NPC whose existing capability can support the conversation. A dead animal does not acquire human language, a verbal mind or a new species merely because the same summoning framework is installed. The first telepathic pair are already known people capable of deliberate message assent and composition. No absent human is silently connected, no characterless account is promoted, and no NPC privately bound to another human becomes an autonomous substitute.
 
@@ -63,7 +63,7 @@ At the actual anchor the player chooses a legitimately known deceased NPC and re
 
 An invitation identifies this caller, this anchor and this requested encounter. It grants the selected NPC no knowledge of the caller's whole history or private human notes. Eren may accept or decline on that limited basis with permitted personal context. Silence, unavailable cognition, invalid current eligibility and a withheld refusal are not all fictional rejection. The interface keeps application failure separate from a claimed character decision while disclosing no hidden reason or private dead/live state that the caller was not entitled to learn.
 
-The selected profile proposes one pending invitation per caller and one pending invitation or active manifestation per retained person. A second request cannot wake a second Eren, duplicate memories or spend a second body's actions. A pending request is not an active ghost and has no sensory feed. Declined or failed invitations do not retry automatically. Actual paid-attempt exposure remains governed by existing admission and uncertainty rules, not by an assertion that a short fictional ritual is free.
+The selected profile proposes one outstanding outgoing invitation place shared across a caller's supported contact, telepathic-link and spirit requests. Within the spirit family a caller may hold one pending invitation **or** one active manifestation, and a retained person may have one pending invitation or one active manifestation. A caller already sustaining a spirit cannot invite another until that visit ends. A second request cannot wake a second Eren, duplicate memories or spend a second body's actions. A pending request is not an active ghost and has no sensory feed. Declined or failed invitations do not retry automatically. Actual paid-attempt exposure remains governed by existing admission and uncertainty rules, not by an assertion that a short fictional ritual is free.
 
 New summon invitations consume the same proposed sender-wide **three new offers per sixty real seconds** used for supported contact/link invitations, rather than a separate allowance for each magical family. A duplicate request counts once. Dismissal suppresses another invitation cue during the same attended cairn encounter; crossing a boundary cannot reset the real sender allowance. Native recipient/scene admission and the existing model budget still apply before any paid consideration. A failed or uncertain provider attempt remains that attempt until reconciled; pressing the button again is not authority for an automatic unchanged paid retry. No independent summoning AI budget is added.
 
@@ -93,7 +93,7 @@ New experience belongs to this continuing person. A second visit may refer to th
 
 Other people may arrive and perceive the visible/audible exchange through normal geometry. They do not automatically join the conversation or acquire earlier speech. Eren and the caller can stop speaking or end the meeting when the audience changes. The first cairn is not a private chamber; the review says local speech can be heard. Neither summoning nor ordinary resurrection declassifies a prior private human–NPC message. Such content and its derivatives remain protected in speech, notes, reflection, god inspection and later ghost recall under DG24's actual source policy.
 
-The manifestation does not freeze the living caller's needs or the surrounding world. They can inspect, speak and listen while participating; walking away, choosing incompatible bodily activity or losing control can end their sustaining attendance. They should be able to enjoy the encounter without feeding the ghost or managing a second inventory. Ordinary available food/rest remains an honest personal choice, not a new ritual fee or an implicit promise of physiological immunity.
+The manifestation does not freeze the living caller's needs or the surrounding world. They can inspect, speak and listen while participating; ordinary eating from accessible possessions is permitted while they remain awake and in range. Walking away, sleeping, choosing an actually incompatible bodily activity or losing control ends sustaining attendance. They should be able to enjoy the encounter without feeding the ghost or managing a second inventory. Food is still real and finite; eating permission grants neither an automatic meal nor physiological immunity. There is no need to dismiss a friend just to take an otherwise compatible bite.
 
 ### 4.3 A native end that preserves the encounter
 
@@ -121,6 +121,14 @@ This is a difficult return because the resource requires a meaningful excursion 
 
 The route should have value and interest beyond a receipt: a wanted place to reach, a real obstacle understood through perception and a decision about risk. There is no guaranteed kill, special reward for hurting Eren, or automatically assigned expedition partner. A player who solves the route cleverly should keep that success. Do not secretly respawn guards or increase the cost because an invention made the journey easier. An accepted world law can explicitly constrain revival power; a material tag called “life” cannot manufacture another ember through an unsupported recipe.
 
+The concrete first layout is a ground-supported approach to Windward Ledge with an actual stone screen and one territorial stag. It consumes the [separately inspected newer-main threat family](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/first-threat-encounter.md), not a claim that this site is installed on the task branch. The direct short route crosses the stag's four-unit home trigger; the ember's collection stance lies outside that footprint. The longer route takes an outer leg beyond the eight-unit pursuit bound, then approaches the collection stance without entering the four-unit trigger. That final approach can be within eight units: it avoids starting this territorial encounter, but is not a guaranteed safe destination during an already-active pursuit. Both routes must really exist on supported ground; the word “ledge” supplies no climbing or jumping mechanic.
+
+Hoof tracks and damaged foliage give observable grounds to investigate. They do not report an unseen animal's current intent. The player can inspect the actual animal, follow the safer outer route, or risk the short crossing. The source family permits ordinary walking to outpace the stag, uses real sight and contact, and stops a preparing strike when actual sight is lost. The stone screen can therefore matter through its real geometry, while a supported ranged tool can change the encounter through actual range/ammunition/accuracy. It cannot guarantee a hit or silently add a distraction command. Injury, retreat, a missed shot and an already-displaced stag remain real outcomes rather than a reset challenge.
+
+The newer source targets eligible human-controlled bipeds and excludes ordinary residents. A willing NPC who legitimately knows the route and can acquire the ember may therefore help differently; the design must not secretly give the animal broader targets just to make retrieval equally difficult. Asking someone to help is a genuine alternative if they choose it, not a button that forces a resident courier. Direct shared-play luring and broader indirect harm remain their existing unresolved owner. The new site must consume the actually adopted human risk/recovery package before being offered, including that newer package's true human death and 300-game-second vulnerable departure, five real seconds only at normal speed. It cannot be backported by prose into the inspected collapse baseline; pause/downtime do not consume that game-time interval.
+
+The one real resource is placed at that cache stance, with no killing requirement, drop chance, personal copy or automatic refill. The player returns with it and chooses the wanted revival. This supplies a concrete observation/route/risk decision and finite resource choice. Whether it is a sufficiently difficult and satisfying return is a qualification question. If the actual episode reduces to a trivial known pickup, improve its genuine encounter or keep ordinary revival unoffered; do not pad it with empty walking, login deadlines or a material checklist. Ghost contact remains independently useful while that work is unresolved.
+
 ### 5.2 The ember is actual property, not a quest flag
 
 When the player reaches it, they take the real finite item if the current location, handling, reach and permission permit. Another actor can take it first under those same rules. There is no personal duplicate behind the scenery. Its known status is current only where actually observed; a departed person is not tracked remotely through the quest. The player may carry it home, store it, deliberately give it to another legitimate user or decide to use it for another eligible return. It is not a compulsory single-person token unless an alternate world expressly selects such a law.
@@ -145,7 +153,7 @@ Completion rechecks the current person, physical-life state, consent, exact reso
 
 ### 6.2 The bodily result is explicit
 
-The first Eren profile is an explicitly authored and qualified adult speaking person with **no harvest output**. This is not an assertion that every NPC or every humanoid body shares that property. The proposed revived body has full supported health and normal full food/energy needs, clears ordinary lethal injury and ended transient bodily processes, and retains the person's age context, supported permanent traits and existing scars. It adds no new punitive scar. A special condition outside the selected body's supported return policy must be resolved before that profile is offered; missing condition data is not permission to remove it by default.
+The first Eren profile is an explicitly authored and qualified adult speaking person with **no harvest output**. This is not an assertion that every NPC or every humanoid body shares that property. The proposed revived body has full supported health and normal full food/energy needs, clears ordinary lethal injury and ended transient bodily processes, and retains the person's authored bodily age at death, supported permanent traits and existing scars. It adds no new punitive scar. Actual advancing world-calendar time since death may be shown separately under permitted chronology; dormant retention is neither lived bodily aging nor a newborn reset. No missing birthday or placeholder timestamp is converted into a reliable age. A special condition outside the selected body's supported return policy must be resolved before that profile is offered; missing condition data is not permission to remove it by default.
 
 Full needs are deliberate. The difficult route and finite ember already price the return; beginning the reunion in immediate hunger or exhaustion would stack maintenance onto it. This restoration is a finite authored resource transformation, counted in the economics. It is not a free daily healing station, a way to refill another person's stomach by briefly dismissing a ghost, or evidence that ordinary medicine works this way. The living person resumes their actual normal needs and independent choices after return.
 
@@ -163,6 +171,8 @@ Eren can look around, speak, ask for their old belongings, seek food later, cont
 
 The old body's cleanup deadline does not kill the new life, and the revived person does not inherit a ghost countdown. Death later remains possible under actual world rules. It returns this person's actual later history to the retained lifecycle; another ordinary return requires another legitimately available resource and current consent. The first finite source does not replenish. Killing Eren again neither produces extra harvest nor improves a summoning bonus. If a world selects renewable revival later, its resource/time/physiology economy must be separately evaluated rather than assuming repeated returns are harmless.
 
+Lethal-action presentation must consume the installed law too. The separately inspected newer threat package's current final-blow wording says ordinary animal/NPC revival is unavailable; that sentence cannot stay universally true after this family is installed. The narrow consumer should explain only the target's actual permitted known consequences and supported possibility of return, without promising consent/success or revealing hidden body eligibility, an ember's existence or its location. Keep the same exact one-attempt lethal review, current control and PvP/harm boundaries. This wording correction does not make killing reversible on demand or change who may attack whom.
+
 ## 7. Telepathy begins with a specific willing pair
 
 ### 7.1 A mental message, not a view into a mind
@@ -179,7 +189,7 @@ The first trial uses a human and one independently choosing NPC across an actual
 
 The proposed reach is **thirty world units measured between the current eligible embodiments**, ignoring ordinary walls under this expressly magical law. The initial offer is local with clear recognition and addressing; it cannot target a guessed account, a distant alias, an old source ID or an unrecognized new body. Thirty units is a reviewable local-scouting choice, not a physical claim about thought or a measured optimum. It is smaller than world-wide slate reach and is not inherited by other senses.
 
-There is one current selected pair per participant and one outgoing invitation per caller. New invitations use the shared existing contact-offer envelope, including one invitation for the pair, same-encounter cue suppression and three new offers per sender in sixty real seconds. A pair invitation expires when the eligible local exchange ends, either person withdraws or their actual eligibility changes. No queued remote assent recreates it after separation.
+There is one current selected pair per participant. New invitations use the shared existing contact-offer envelope: one outgoing pending place across contact/link/spirit requests, one invitation for the pair, same-encounter cue suppression and three new offers per sender in sixty real seconds. These do not add a second allowance and do not claim to bound every other kind of inbound world work; DG26's slate-call request envelope retains its separate owner. A pair invitation expires when the eligible local exchange ends, either person withdraws or their actual eligibility changes. No queued remote assent recreates it after separation.
 
 Leaving is easy and local. **Leave this link** immediately stops the person's future reception and retires their own selected-pair place. It does not send a private status notice, change the other person's known count/card, erase received evidence or tell them why contact stopped. The other person can retain a clearly labeled **last-agreed link**, leave it explicitly or replace their own selection during a fresh mutually consented local exchange. There is no claim that its other end is currently listening. Replacing a link ends the replacing person's old sending/reception scope; it does not forward old history to a new partner.
 
@@ -229,21 +239,21 @@ The human can close the link, keep an editable unsent draft, read prior permitte
 
 ## 9. One coherent lifecycle through interruption and restore
 
-| Situation | Required product outcome |
-| --- | --- |
-| Two callers invite Eren at once | At most one pending accepted opportunity and one manifestation of that retained person. Losing requests do not disclose another caller or private location. No duplicate paid retries or extra mind. |
-| Eren refuses contact | No apparition or material charge is invented. Suppress repeated encounter cues; preserve the actual refusal under permitted knowledge. A global/public rejection story is not generated. |
-| An invitation races with creator/ordinary revival | Current lifecycle wins at admission. No second living/ghost embodiment, duplicated equipment or stale post-death reply. Creator authority remains separate. |
-| Caller leaves, sleeps, pauses or loses control | The manifestation ends natively; incomplete return work stops and its unspent material claim releases. No invisible observer, remote caller control or auto-summon on return. |
-| A listener arrives late or behind a wall | Ordinary current sight/hearing and recognition determine what they acquire. No prior conversation, private mind or hidden source identity is supplied. |
-| The corpse has already disappeared | Retained identity can still support the selected invitation and qualified rite. Old equipment is neither required as an arbitrary keepsake nor restored from a snapshot. |
-| Ember is lost or somebody else uses it | Actual stock is unavailable. No replacement, double use or obligation for the chosen NPC to return. Contact can remain worthwhile independently. |
-| A return is interrupted one step before completion | No new life and no successful-use debit. Other real events remain real. A retry uses current consent/resource/place, not an old authorization. |
-| A revived person dies later | Their new actual life/history and current belongings determine aftermath. No repeated first-death reward, renewed ember, refreshed harvest or automatic resurrection. |
-| A thought link is left privately | End that person's active scope and future reception without changing the peer's known card/count or erasing delivered history. The peer can leave the stale selection explicitly. |
-| Message receipt is uncertain | Recover the original submission once. Do not infer delivery from a retry, generate a copy or awaken a dormant recipient. |
-| Recipient leaves range, sleeps, dies or blocks | No new receipt in that mind and no delayed replay. Sender gets only the same permitted Submitted result, not the hidden cause. |
-| An NPC dies after receiving human-private text | Keep the source restriction through dormant retention, ghost recall, ordinary revival, any notes and authorized inspection. Death is no declassification step. |
+| Situation                                          | Required product outcome                                                                                                                                                                             |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two callers invite Eren at once                    | At most one pending accepted opportunity and one manifestation of that retained person. Losing requests do not disclose another caller or private location. No duplicate paid retries or extra mind. |
+| Eren refuses contact                               | No apparition or material charge is invented. Suppress repeated encounter cues; preserve the actual refusal under permitted knowledge. A global/public rejection story is not generated.             |
+| An invitation races with creator/ordinary revival  | Current lifecycle wins at admission. No second living/ghost embodiment, duplicated equipment or stale post-death reply. Creator authority remains separate.                                          |
+| Caller leaves, sleeps, pauses or loses control     | The manifestation ends natively; incomplete return work stops and its unspent material claim releases. No invisible observer, remote caller control or auto-summon on return.                        |
+| A listener arrives late or behind a wall           | Ordinary current sight/hearing and recognition determine what they acquire. No prior conversation, private mind or hidden source identity is supplied.                                               |
+| The corpse has already disappeared                 | Retained identity can still support the selected invitation and qualified rite. Old equipment is neither required as an arbitrary keepsake nor restored from a snapshot.                             |
+| Ember is lost or somebody else uses it             | Actual stock is unavailable. No replacement, double use or obligation for the chosen NPC to return. Contact can remain worthwhile independently.                                                     |
+| A return is interrupted one step before completion | No new life and no successful-use debit. Other real events remain real. A retry uses current consent/resource/place, not an old authorization.                                                       |
+| A revived person dies later                        | Their new actual life/history and current belongings determine aftermath. No repeated first-death reward, renewed ember, refreshed harvest or automatic resurrection.                                |
+| A thought link is left privately                   | End that person's active scope and future reception without changing the peer's known card/count or erasing delivered history. The peer can leave the stale selection explicitly.                    |
+| Message receipt is uncertain                       | Recover the original submission once. Do not infer delivery from a retry, generate a copy or awaken a dormant recipient.                                                                             |
+| Recipient leaves range, sleeps, dies or blocks     | No new receipt in that mind and no delayed replay. Sender gets only the same permitted Submitted result, not the hidden cause.                                                                       |
+| An NPC dies after receiving human-private text     | Keep the source restriction through dormant retention, ghost recall, ordinary revival, any notes and authorized inspection. Death is no declassification step.                                       |
 
 Current-format saves preserve the coupled retained person, actual life/manifestation state, resources and in-progress native work under their respective owners. A restart reconciles current participation/control before permitting further observation or completion. If caller control was lost, the visit is over; it is not recreated merely because a saved appearance existed. If an already committed revival is recovered, the new life and one ember debit remain one result. Do not show the old ghost while also reconstructing the living person.
 
@@ -272,3 +282,148 @@ A living independent NPC is not automatically made a non-sentient drone when joi
 For every temporary stronger effect, expiry detaches only that effect's ongoing contribution. It does not restore an old whole-person snapshot, refund spent materials, unsay speech, erase an experience, undo a voluntary change made during the interval or resume a stale plan. Overlapping effects need defined combination and interruption before use; source death/removal, target return and save/load cannot accidentally copy a compulsion onto another physical life. [EM-R08](#em-r08--resurrection-and-duplicated-minds-expose-transition-failures) provides historical evidence of exactly these fragile boundaries.
 
 Select an extension only if it produces a wanted episode that simpler communication or ordinary character influence cannot supply, has a clear participant-control policy and can afford its complete lifecycle. A coherent alternate world could deliberately make corpse echoes, bounded involuntary thought detection or a colony protagonist its premise. It must label those differences honestly; it cannot present an echo as Eren, a group transcript as consent, or copied private context as shared consciousness.
+
+## 11. Economics of the complete encounter
+
+An incorporeal person still costs perception, dialogue, decisions, permitted memory, presentation and storage while manifest. Count that person as an actual active cognitive participant in the offered scene workload, not as free decorative art. Dormancy removes ordinary active ticking and scheduled inference; it does not make a lifetime history or cold preparation free. One spirit per caller does not bound all callers, anchors, dead identities or old conversations in a mature world.
+
+Separate a complete attempt into invitation/admission, permitted cold recall, willingness, native preparation, active responses, any actual return work, authoritative transition, interruption/reconciliation, observer evidence and retained private derivatives. The payer is the current world/operator under actual service and AI funding rules. A fictional ember pays a fictional revival cost, not an external model bill. No player's subscription, creator allocation or supporter promise is silently charged or redirected because their character was summoned.
+
+For sensitivity, suppose a wanted ghost visit needs one paid invitation consideration and six reply decisions, while two rejected/uncertain attempts also incurred cost: nine workflows at an illustrative average `c`. At `c = $0.002`, `$0.01` or `$0.05`, inference is `$0.018`, `$0.09` or `$0.45` before cold-history preparation, any separate maintenance, normal living actors, hosting and support. These are dimensional assumptions, not provider prices or measured calls. A five-minute encounter with dozens of listeners can also create far more permitted evidence than a private pair. Measure the actual audience and complete workflow; do not price only one successful sentence.
+
+The telepathic native submission and current grant/range checks need no model call. An NPC's later choice may cost inference, but there is no automatic reply, paid ping, transcript summary or status-check loop. The shared send cap prevents a slate/call/link combination from multiplying one sender's allowance. It does not bound hundreds of senders, rejected traffic, lifetime history or a popular NPC's total workload. Three offers per sender per minute is a burst policy, not proof that three hundred offers to one retained person are affordable.
+
+For a scale illustration, ten thousand retained people averaging twenty KiB of retained state each would already occupy about 195 MiB before indexes, backups, relationships or message history. This is an assumed storage example, not the current person's real footprint and not a new retention target. A full private message can also carry up to eight thousand body bytes plus its evidence/derivatives. Small visible pages and one active pair do not bound all of that. Existing memory, persistence, native-work and whole-service admission own measured growth and justified capacity choices.
+
+On the world side, the first revival spends one nonrenewing ember and restores one body's supported physiology once. Full food and energy are real economic value from that authored magical source. They are not obtained by repeatedly calling/dismissing a ghost, nor by restoring a pre-use item beside a post-use person. Eren has no harvest output in this first profile, so death/return cannot produce a material yield cycle. A later renewable resource or harvestable body must account for all replenished physiology, gathering/crafting work and extracted matter before claiming sustainable repeated revival.
+
+The living visitor still consumes ordinary food and time. At the base rate of 10.8 fullness per game hour, a five-normal-real-minute conversation spans five game hours and uses 54 fullness for a continuously active ordinary person before eating or other modifiers. The sixty-second preparation and six-hundred-second rite together span eleven game minutes, about 1.98 fullness at that same rate; actual travel, danger and conversation dominate. These are arithmetic illustrations, not new costs or guarantees of a particular duration. Allowing an ordinary bite in range is better than requiring a second summoning just to maintain the human body's current law.
+
+Qualification begins with the complete selected one-spirit episode and one separate active pair. Before wider advertised service, measure multiple concurrent invitations, a popular anchor, many cold histories, long retained private threads, combined text traffic, return races and ordinary foreground play. Cheap current rejection must preserve rightful recovery of already committed work. Overload can stop new invitations or submissions with honest own-service feedback; it cannot make two people share a mind accidentally, disclose a hidden refusal or delete retained people to satisfy an unstated cache limit.
+
+## 12. Acceptance is a playable episode plus truthful boundaries
+
+The two first families and the harder revival extension have independent completion gates. The spirit conversation must work before its expedition is required. The telepathic pair needs a real advantage across an actual obstruction before widening its range or connecting more people. The ordinary return needs its actual route, resource and body transition qualified before being advertised as achievable. A source file, fixture appearance or plausible dialogue is not sufficient evidence of any of these.
+
+| Episode                                            | Required player-visible and retained result                                                                                                                                                         |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A wanted first visit                               | A legitimately recognized Eren chooses to appear, responds from actual retained perspective and learns a new permitted fact. The player may leave satisfied without pursuing revival.               |
+| An unwelcome invitation                            | Refusal, silence and service failure remain distinct internally and safely presented. Same-encounter pressure is suppressed; no endless paid reroll or fabricated hurt feelings.                    |
+| A stranger overhears                               | Real geometry and that witness's recognition produce only allowed words/detail. No global name, previous conversation, private mind or narrator leak.                                               |
+| Eren is asked about an unseen death cause          | The answer remains uncertainty, inference, testimony or refusal as supported; no authoritative killer oracle or after-death surveillance.                                                           |
+| An ordinary pause or tab departure                 | Native ending works without another model; pending work cannot publish, and return does not summon again. Already committed history remains real.                                                   |
+| One ember is sought                                | Actual signs, direct risk and outer route are playable; the finite object can be acquired without killing. An independently willing NPC alternative honors its actual different threat eligibility. |
+| The corpse is gone                                 | Contact and the qualified return still work from retained identity without reconstructing abandoned goods or inventing a freshness deadline.                                                        |
+| Eren changes their mind at the final rite          | No new body and no successful-use ember debit. The player's prior trip remains real; contact, another eligible use or stopping remain honest choices.                                               |
+| A successful return races with a duplicate request | One living physical life, one resource debit, ended ghost capability and coherent old-remains disposition. Old attacks/plans cannot apply to the new body.                                          |
+| A reopened world contains a completed return       | The same identity/history and current physical life remain, without a second ember, duplicated equipment or refreshed corpse yield.                                                                 |
+| A willing pair scouts across a wall                | Deliberate chosen text reaches the actual eligible peer within thirty units; no mental stream, sound effect, forced response or automatic shared control.                                           |
+| A peer privately leaves or becomes unavailable     | Sender history/card stays last-agreed, and Submitted supplies no hidden cause. Missing messages are never delivered on later reconnect. Own Leave and fresh local pairing remain easy.              |
+| A private message informs an NPC's later choice    | Its protected source cannot leak through notes, god inspection, ghost dialogue, revived speech or a new controller. Independently observable actions remain observable.                             |
+| Actual AI funding ends                             | The player can end effects, read permitted prior history and continue funded native play. No invented answer or silent spending exemption appears.                                                  |
+
+Include a changed target identity/control, depleted ember, blocked placement, range loss at message admission, disconnected acknowledgement, current-format reload, forbidden old context after erasure and family disable/re-enable. Demonstrate witnessed versus unwitnessed events and two callers targeting the same retained person. Do not require an entire mature shared-mind society to qualify these local first episodes; conversely, do not use one quiet scene as proof of arbitrary population or long-history capacity.
+
+Observe player effort and voluntary choices alongside integrity. Did the ghost encounter feel like meeting Eren, or a procedural information vending machine? Did the player choose a subject beyond the revival checklist? Did the return route invite observation or creativity, or merely delay a wanted reunion? Did mental messages clarify a real coordination problem, or add a forgotten mode and stale-link confusion? If ordinary speech/contact or an authored remembrance gives the better experience, retain the simpler option rather than declaring every supernatural family necessary.
+
+## 13. Game-first review and sequence
+
+First deliver a coherent willing apparition at an actual place with meaningful remembered context, understandable capabilities and a clean native ending. Independently deliver one consented explicit-message pair with current private evidence. Then qualify the actual return expedition and once-only living transition. Shared minds, compulsion, general memory alteration, summoned workers and afterlife geography are optional later world premises, not prerequisites to those experiences.
+
+The review removed a fixed ghost countdown because accelerated time would rush the conversation and make the player watch a timer. It chose full needs on revival because the journey and finite resource already provide consequence. It kept corpse cleanup without a corpse-freshness requirement, allowed ordinary eating during a visit, and made the first revived body non-harvestable so a broad yield redesign does not block the desired encounter. It selected chosen messages instead of passive reading or a live sensory feed. These are substantive reductions in work the player must manage.
+
+Those cuts do not make death meaningless. The person is absent from ordinary life until a real return, actual goods and interrupted plans remain changed, witnesses remember what happened, and the sole authored ember cannot fund unlimited returns. The ghost is free to disagree and the revived person is free to leave. The relationship supplies stakes; repeated maintenance payments, forced gratitude and profitable companion harm would weaken it. [EM-R05](#em-r05--consequence-without-clone-maintenance) and [EM-R11](#em-r11--a-mechanic-can-undermine-the-relationship) are useful external warnings, not measured validation of this choice.
+
+Stop or narrow an expansion if every summoning becomes a paid retry for a desired answer, if private-source protection cannot survive ordinary recall, if the “difficult” return has no interesting choice, or if stale links make coordination less reliable than talking. A more complex ontology is not its own benefit. Preserve what is enjoyable about the two encounters and improve the actual point of friction; do not repair an optional power by requiring a whole new government, currency, collective controller or revival industry.
+
+## 14. Primary research and its limits
+
+All records were accessed on 2026-10-09 UTC. They are official rules, developer announcements, support or creator retrospectives. They establish what those sources state, not measured Open Legend enjoyment, cost, clinical benefit or a real theory of consciousness. Historical descriptions and corrected defects retain their dates; public reader comments were excluded. The observations and our design inferences are intentionally separate.
+
+### EM-R01 — A corpse answer is not the returned person
+
+**Source:** Wizards of the Coast, [Speak with Dead](https://www.dndbeyond.com/spells/2619068-speak-with-dead), currently published non-Legacy rule page; undated public rule body read. The spell supplies a limited corpse exchange without restoring the departed soul, does not let that speaker learn later information, and does not guarantee truthful answers to an enemy.
+
+**Inference:** A limited echo and the same continuing person are different offerings. Eren's encounter therefore preserves a real continuing identity, new experience and agency. The rules are a fictional comparator, not evidence that a generated voice establishes identity or that a particular metaphysical account is true.
+
+### EM-R02 — Communication is narrower than sharing a mind
+
+**Source:** Wizards of the Coast, [Rary's Telepathic Bond](https://www.dndbeyond.com/spells/2618925-rarys-telepathic-bond), current non-Legacy rule page; undated body read. A finite willing group receives temporary communication with an explicit planar boundary and language accommodation. The rule does not grant all participants' memories or action control.
+
+**Inference:** Keep a useful mental channel separate from a merged controller. Open Legend selects different reach, message, language and lifetime terms rather than importing the tabletop spell wholesale. Willing communication alone does not establish continued consent to future messages or raw disclosure.
+
+### EM-R03 — Detecting, reading and probing are separate powers
+
+**Source:** Wizards of the Coast, [Detect Thoughts](https://www.dndbeyond.com/spells/2619099-detect-thoughts), current non-Legacy rule page; undated official body read, comments excluded. The rule distinguishes detecting a thinking presence from reading current focus and deeper probing, with different resistance, disclosure and termination behavior plus material/range limits.
+
+**Inference:** Name each permitted disclosure explicitly. One chosen message grants no identity search, location feed or memory read. The involuntary fictional access described by this comparator is not adopted here and cannot authorize inspection of private human data.
+
+### EM-R04 — Willingness and body eligibility matter before costly preparation
+
+**Source:** Wizards of the Coast, [Raise Dead, Legacy](https://www.dndbeyond.com/spells/2224-raise-dead), expressly labeled Legacy/Basic Rules 2014; full rule body read. The soul must be willing and free, with material, bodily and elapsed-time conditions. Some prior conditions persist, while missing essential parts can prevent the return and temporary penalties follow success.
+
+**Inference:** Explain the supported result and potential refusal before an expedition. Open Legend deliberately declines the corpse deadline and repeated recovery penalty while retaining fresh consent and concrete eligibility. This record is not represented as the latest edition's revival rule.
+
+### EM-R05 — Consequence without clone maintenance
+
+**Source:** CCP Terminus, [A new Era of Clones](https://www.eveonline.com/ko/news/view/a-new-era-of-clones), 2014-12-02 historical announcement; English body served at the official locale URL. CCP announced removing clone-grade upkeep and associated skill loss, arguing that a forgotten upgrade could erase weeks of progress and discourage wanted risk while meaningful ship loss remained.
+
+**Inference:** Death can have consequences without an attendance chore or upkeep trap. This is a developer's rationale and expected improvement, not a measured post-change result. EVE's cloning fiction does not define Eren's personhood or body law.
+
+### EM-R06 — Removing a death cost has an economic counterpart
+
+**Source:** ArenaNet, [Say Goodbye to Armor Repair Costs and Hello to Free Trait Resets](https://www.guildwars2.com/en/news/say-goodbye-to-armor-repair-costs-and-hello-to-free-trait-resets/), 2014-03-27, with date corroborated by the [official feature-pack index](https://www.guildwars2.com/en-gb/the-game/releases/feature-packs/); bodies read. The announcement treats return/repair time as sufficient burden and removes monetary repair cost, while reducing selected gold inputs as sinks disappear.
+
+**Inference:** Avoid stacking penalties without distinct purpose, but count the real economic value of full physiology and renewable return. This historical plan is not a current complete death-system description or measured evidence of its success.
+
+### EM-R07 — Mental power changes the affected person's choices
+
+**Source:** Ludeon Studios / Tia Young, [Anomaly preview #3: Cultists, hate chanters and rituals](https://ludeon.com/blog/2024/04/anomaly-preview-3-cultists-hate-chanters-and-rituals/), 2024-04-04 pre-release preview; relevant body read. The preview describes limited death refusal and rituals affecting motivation, memory and allegiance, including coercive uses in a horror setting.
+
+**Inference:** These are consequential families requiring exact target, refusal/resistance and aftermath choices. Their existence is not authority to compel Open Legend humans, promise mental treatment or adopt an entire horror economy for one wanted extraordinary encounter. Described balance was not independently tested here.
+
+### EM-R08 — Resurrection and duplicated minds expose transition failures
+
+**Source:** Ludeon Studios, [New ambient horror setting and tribal Anomaly support](https://ludeon.com/blog/2024/05/new-ambient-horror-setting-and-tribal-anomaly-support/), 2024-05-03 released update; relevant body and changelog read. Reported corrections include hypnosis copied to duplicates, rituals persisting after caster death/disappearance, duplicated implants and needs not updating after resurrection. The update also offered lighter integration choices.
+
+**Inference:** Body return, active effects, consent, equipment and needs must be qualified together. A supernatural option need not import the entire surrounding progression. These are historical corrected defects, not claims of current failures or proof of Open Legend correctness.
+
+### EM-R09 — The dead still need the history that actually occurred
+
+**Source:** Larian Studios, [Patch #6 Now Live!](https://baldursgate3.game/news/patch-6-now-live_108), 2024-02-16, version 4.1.1.4763283; relevant official sections read. Fixes concern incorrect death circumstances in dialogue, knowledge from corpse speech failing to support later conversation, living-style chatter on dead souls, corpse-inventory duplication and summoned return across regions.
+
+**Inference:** A convincing appearance does not prove a complete afterlife encounter. Actual scoped history, new usable testimony, body eligibility and conserved goods need the same lifecycle. This record describes reported corrections rather than current defects or measured narrative quality.
+
+### EM-R10 — Ghost continuity can become household upkeep
+
+**Source:** Electronic Arts, [The Sims 4 Occult Guides: Ghosts](https://help.ea.com/en/articles/the-sims/the-sims-4/sims-4-ghost-guide/), current public support body read; only a relative update age was displayed, so no exact update date is assigned. It distinguishes playable/free-roaming ghosts, irreversible release and fading prevented by strengthening a connection, with analogous needs and changes to marriage/career continuity.
+
+**Inference:** State retained and changed relationships explicitly. A maintenance action that keeps a beloved person available can become attendance pressure; this proposal instead keeps remembrance optional and dormant continuity inactive. The source does not establish which policy players prefer.
+
+### EM-R11 — A mechanic can undermine the relationship
+
+**Source:** Klei Entertainment, [Wendy refresh and March 25 hotfix](https://store.steampowered.com/news/posts/?appids=322330&enddate=1585343932), official developer feed covering 2020-03-19 and 2020-03-25; bodies read after the direct forum returned 403. Six days after refreshing Wendy/Abigail, Klei removed a low-Wendy-health damage incentive it said undermined their teamwork, replacing it with complementary attacks.
+
+**Inference:** A companion-return mechanic should not make harming or repeatedly killing the companion the best way to cooperate. Klei's player-commanded spirit model is a different agency contract; this proposal retains Eren's independent choices. No retention effect was measured here.
+
+### EM-R12 — Identity ambiguity should be an intentional premise
+
+**Source:** Thomas Grip / Frictional Games, [SOMA — 6 Months Later](https://frictionalgames.com/2016-03-soma-6-months-later/), original post 2016-03-24; the page also shows 2023-10-10. Full post read. The creator reports extensive discussion of the game's “coin-flip” interpretation and differing reactions to its bleak subject.
+
+**Inference:** Person/copy ambiguity can serve an authored story, but an ordinary action must not accidentally misstate who continues and who controls the body. This is a creator retrospective, not a representative audience study, formal transfer specification or empirical finding about consciousness; the later page date is not a new study.
+
+### EM-R13 — A collective mind is a different control model
+
+**Source:** Paradox Development Studio, [Government, Civics and Hive Minds](https://store.steampowered.com/news/posts/?appids=281990&enddate=1490340614&feed=steam_community_announcements), 2017-02-23 Banks/Utopia preview in the official developer feed; relevant body read after direct forum retrieval failed. It presents a ruling consciousness, non-sentient workers, autonomous leaders and consequential disconnection, replacing ordinary factions/happiness.
+
+**Inference:** A colony protagonist requires explicit bodies, control, membership and separation rules. It is a contrast to independent people exchanging messages, not permission to turn an existing NPC into a drone or concatenate private human records. Current Stellaris rules are not inferred from this historical preview.
+
+## Maintained records
+
+- Preparation: [DG33 — Extraordinary minds and life after death](../maintainers/needs-design.md#dg33--extraordinary-minds-and-life-after-death), consuming the separately selected NPC portion of ND11 and voluntary ND21 family.
+- Lifecycle delivery: [BW15.1–BW15.6](../maintainers/base-world.md#dg33--voluntary-spirits-and-ordinary-revival), with Human Continue, creator revival and NPC ordinary return retaining distinct authority.
+- Telepathy delivery: [EWF10T.1–EWF10T.4](../maintainers/extensible-world-foundation.md#dg33--deliberate-telepathic-messages), coordinated with existing INV, AG, CR, NC and evidence owners rather than a second mind or message system.
+- Authored choices and scope: [optional world profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [MIND-L01–MIND-L08](../limits/extraordinary-minds-and-afterlife.md).
+- Source contracts: [lifecycle](../worlds/base/lifecycle-and-protection.md), [agency](../agent-agency.md), [memory](../memory-architecture.md), [recognition](../worlds/base/knowledge.md), [mental-effect boundary](../../archive/07-technical-architecture/world-module-runtime.md#fictional-mental-effects-and-operational-ownership) and [EX05/EX06](../extensible-world-examples.md#ex05--a-compel-spell-that-affects-an-actors-goals).
+- Private communication and recovery: [DG24](world-text-messages-feature-spec.md), [TX limits](../limits/narration.md#tx-l02--contact-admission-and-invitation-load), [DG25](corrections-and-shared-restoration-feature-spec.md), [DG26](voice-and-calls-feature-spec.md), [DG27](customer-and-supporter-offers-feature-spec.md) and [DG29](participants-and-world-travel-feature-spec.md).
+- Separately inspected newer-main dependencies: [human death/Continue](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/player-death.md) and [first threat](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/first-threat-encounter.md); these exact-source references do not claim integration into the inspected task branch.
