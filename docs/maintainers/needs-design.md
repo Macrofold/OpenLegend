@@ -329,6 +329,8 @@ DG33 now has a [comprehensive product proposal](../projects/extraordinary-minds-
 
 PS07's forecast canonical campaigns, timing/revision promises, local participation and contribution recognition, with the relevant PS08 mature-scale and recovery evidence.
 
+**Design in progress, October 9:** the [shared-campaign feature proposal](../projects/shared-campaigns-feature-spec.md) develops the [Ash Road profile](../worlds/base/shared-campaigns.md), two distinct local outings and one finite nonlethal adversary in the same world. [PS07.1–PS07.7](product-scalability.md#dg34--linked-local-campaign-opportunities) and existing PS08 retain delivery and broader evidence; [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign) is the single proposed limits inventory. Research and independent review remain part of this design assignment; documentation does not install a campaign, adopt event service or qualify a siege.
+
 **Start and parallel boundary:** Use DG29's cross-world/travel contracts where the selected campaign spans worlds, plus the actual participation/capacity rules. Do not require governments, generations or special mental powers merely because a campaign has many people. Local opportunities can be designed against current supported worlds first. **Existing owners:** PS07/PS08, campaign/access/time, data and existing scale owners.
 
 ### Band 8 — Insert other expansion only at its trigger
