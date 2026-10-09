@@ -27,6 +27,8 @@ Distinguish protected runtime integrity, reusable mechanisms, replaceable policy
 
 Trace relevant ownership, units, permitted reads/writes, triggers, work bounds, interaction effects and lifecycle through save/restore. Include cognition/observation and player discoverability, not only storage. For invention/world-authoring work, specify supported inspection, creation and modification through existing admission, with understandable consequences and explicit unsupported capabilities.
 
+For physical mechanics, apply the [physical-interaction design checks](../../../docs/spatial-world.md#physical-interaction-design-checks) before calling the design ready. For repeated native processes, collection queries or derived caches, read [Performance](../openlegend-performance/SKILL.md) during design rather than waiting for a measured slowdown. Source inspection and paper calculations can establish a design's contracts; they do not establish runtime geometry, player usability or scaling acceptance.
+
 Challenge claimed composability with a genuinely different scenario. Localize necessary v1 specificity with its owner, limit, seam and extraction trigger instead of building an unused framework. Logical modularity does not require new packages, services or an ECS replacement.
 
 ## Approval to implementation

@@ -11,6 +11,12 @@ export interface Bounds3 {
   min: WorldPoint;
   max: WorldPoint;
 }
+/** Ordered upper rectangle, extruded by its normal thickness into a finite prism.
+ * Corners wind toward the upper normal; bounds are only its broad phase. */
+export interface FinitePanel {
+  corners: [WorldPoint, WorldPoint, WorldPoint, WorldPoint];
+  thickness: number;
+}
 export type Terrain = 'grass' | 'sand' | 'water' | 'rock';
 
 /** A finite rectangular support patch. Its top is a plane, not a camera-facing image.
@@ -35,12 +41,15 @@ export interface WalkableSurface {
   material: 'ground' | 'timber' | 'stone';
 }
 export interface SpatialBlocker {
+  /** A finite panel is collision geometry and can never become a supporting floor. */
+  nonWalkable?: boolean;
   id: string;
   bounds: Bounds3;
+  panel?: FinitePanel;
   movement: boolean;
   sight: boolean;
   acousticTransmission: number;
-  material: 'stone' | 'timber';
+  material: 'stone' | 'timber' | 'panel';
 }
 export interface SpatialLayout {
   version: 1;

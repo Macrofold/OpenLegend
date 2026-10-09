@@ -735,6 +735,22 @@ export function endActivity(
 const invocationFields: Partial<
   Record<Command['type'], { required: string[]; optional?: string[] }>
 > = {
+  assemble: {
+    required: [
+      'operation',
+      'familyId',
+      'arrangementId',
+      'requestId',
+      'editId',
+      'expectedRevision',
+      'destination',
+      'heading',
+      'bay',
+      'slot',
+      'itemId',
+    ],
+    optional: ['rootId', 'binding1', 'binding2', 'binding3', 'binding4', 'destinationId'],
+  },
   pickup: { required: ['targetId'], optional: ['itemId', 'quantity'] },
   drop: { required: ['itemId', 'quantity'] },
   move: { required: ['destination'] },
@@ -747,13 +763,14 @@ const invocationFields: Partial<
   craft: { required: ['recipeId'] },
   replenish: { required: ['targetId', 'attributeId'] },
   equip: { required: ['itemId'] },
+  guard: { required: ['itemId'], optional: ['targetId', 'facing', 'autoEquip'] },
   eat: { required: ['itemId'] },
   'inspect-inventory': {
     required: [],
     optional: ['containerId', 'after', 'expectedRevision', 'expectedScope'],
   },
-  strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId'] },
-  hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
+  strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId', 'autoEquip'] },
+  hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId', 'autoEquip'] },
   'treat-scar': { required: ['targetId', 'scarId'] },
   cook: { required: ['itemId', 'heatId'] },
   'tend-fire': {
@@ -778,7 +795,10 @@ const invocationFields: Partial<
       'minimumHeld',
     ],
   },
-  'status-effect': { required: ['targetId', 'definitionId', 'operation'] },
+  'status-effect': {
+    required: ['targetId', 'definitionId', 'operation'],
+    optional: ['facingHeading', 'restingPlaceId', 'restingBay'],
+  },
   say: { required: ['text'], optional: ['targetId', 'intendedRecipientId', 'volume'] },
 };
 function exactFields(value: object, fields: string[]): void {

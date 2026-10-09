@@ -128,7 +128,7 @@ it('restores a saved elevated route and native flight through PostgreSQL and man
     );
     expect(game.service.world.entities[actorId]).toEqual({
       ...snapshot,
-      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'exiting' }) },
+      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
     });
     expect(game.service.world.paused).toBe(true);
     expect(game.service.generation).not.toBe(epoch);

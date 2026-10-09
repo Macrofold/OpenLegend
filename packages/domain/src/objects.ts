@@ -14,6 +14,7 @@ import {
   availableItemQuantity,
 } from './resource-claims.js';
 import { groundedSpatial, worldPosition } from './spatial-state.js';
+import type { AssemblyAttachment, AssemblyClaim } from './assembly-types.js';
 import {
   objectIndexGet,
   objectIndexSet,
@@ -21,8 +22,13 @@ import {
   type ObjectIndexNode,
 } from './object-index.js';
 import type { Entity, ItemInstance, WorldState } from './types.js';
+import { isAssemblyPlacement } from './spatial-state.js';
+import { equipmentConflicts, equipmentProblem } from './equipment.js';
 
 export interface ItemLot {
+  assemblyClaim?: import('./assembly-types.js').AssemblyClaim;
+  /** Physical input provenance. Authorization remains in the server's current grant. */
+  materialOriginIds?: string[];
   definitionPin: DefinitionPin;
   unitPin: DefinitionPin;
   quantity: number;
@@ -74,6 +80,7 @@ type Children = ObjectIndexNode<number> | undefined;
 type ChildIndex = ObjectIndexNode<Children> | undefined;
 interface IndexedObjects {
   children: ChildIndex;
+  attachments: ChildIndex;
 }
 const indexes = new WeakMap<object, IndexedObjects>();
 const retiredIndexes = new WeakMap<WorldState['entities'], readonly string[]>();
@@ -102,12 +109,12 @@ function indexFor(world: WorldState): IndexedObjects {
   if (isDraft(world) && original(world)?.objectState) {
     const base = original(world)!;
     const inherited = indexFor(base);
-    index = { children: inherited.children };
+    index = { children: inherited.children, attachments: inherited.attachments };
   } else {
-    index = { children: undefined };
+    index = { children: undefined, attachments: undefined };
     for (const entity of Object.values(world.entities)) {
       const parent = !entity.retirement && parentOf(entity);
-      if (parent)
+      if (parent) {
         index.children = objectIndexSet(
           index.children,
           parent,
@@ -117,6 +124,13 @@ function indexFor(world: WorldState): IndexedObjects {
             1 + (entity.container?.height ?? 0),
           ),
         );
+        if (entity.placement?.mode === 'attached')
+          index.attachments = objectIndexSet(
+            index.attachments,
+            parent,
+            objectIndexSet(objectIndexGet(index.attachments, parent), entity.id, 1),
+          );
+      }
     }
   }
   indexes.set(token, index);
@@ -130,7 +144,11 @@ export function captureObjectIndex(
   const base = original(draft)!,
     priorRetired = retiredIndexes.get(base.entities);
   return (committed, changed) => {
-    if (index) indexes.set(committed.objectState, { children: index.children });
+    if (index)
+      indexes.set(committed.objectState, {
+        children: index.children,
+        attachments: index.attachments,
+      });
     if (priorRetired && base.entities !== committed.entities) {
       let ids: Set<string> | undefined;
       for (const id of changed)
@@ -170,6 +188,35 @@ function reindex(
         1 + (world.entities[id]?.container?.height ?? 0),
       ),
     );
+  updateAttachmentIndex(world, index, id, oldParent, newParent);
+}
+function updateAttachmentIndex(
+  world: WorldState,
+  index: IndexedObjects,
+  id: string,
+  oldParent: string | undefined,
+  newParent: string | undefined,
+) {
+  if (oldParent)
+    index.attachments = objectIndexSet(
+      index.attachments,
+      oldParent,
+      objectIndexSet(objectIndexGet(index.attachments, oldParent), id, undefined),
+    );
+  if (newParent && world.entities[id]?.placement?.mode === 'attached')
+    index.attachments = objectIndexSet(
+      index.attachments,
+      newParent,
+      objectIndexSet(objectIndexGet(index.attachments, newParent), id, 1),
+    );
+}
+/** Rebuildable subset of the placement index, never a second saved attachment authority.
+ * Contact and each inventory row must not walk every carried supply to find two held tools. */
+export function* attachedItemIds(world: WorldState, actorId: string): Generator<string> {
+  for (const [id] of objectIndexEntries(objectIndexGet(indexFor(world).attachments, actorId))) {
+    chargeWork({ candidates: 1 });
+    yield id;
+  }
 }
 export function* directChildIds(
   world: WorldState,
@@ -400,8 +447,13 @@ export function mergeCompatible(world: WorldState, aId: string, bId: string): bo
     second.individuality === 'homogeneous' &&
     !a.container &&
     !b.container &&
-    !lotCarriesState(a) &&
-    !lotCarriesState(b) &&
+    !first.assemblyClaim &&
+    !second.assemblyClaim &&
+    canonicalJson(first.materialOriginIds ?? null) ===
+      canonicalJson(second.materialOriginIds ?? null) &&
+    ((!lotCarriesState(a) && !lotCarriesState(b)) ||
+      (homogeneousMaterialState(world, a) !== undefined &&
+        homogeneousMaterialState(world, a) === homogeneousMaterialState(world, b))) &&
     !contributionSourceBound(world, aId) &&
     !contributionSourceBound(world, bId) &&
     a.placement?.mode === 'contained' &&
@@ -423,6 +475,25 @@ function lotCarriesState(entity: Entity): boolean {
     Object.keys(entity.mechanismFields ?? {}).length ||
     Object.keys(entity.statusEffects ?? {}).length
   );
+}
+/** Only the installed material law explicitly admits homogeneous copying/equivalence.
+ * Other per-item attributes retain their existing split/merge refusal. */
+function homogeneousMaterialState(world: WorldState, entity: Entity): string | undefined {
+  const material =
+    entity.item && world.itemDefinitions[entity.item.definitionPin.id]?.assemblyMaterial;
+  const family = material && world.assemblyFamilies?.[material.familyId];
+  if (
+    !family ||
+    !['fiber', 'binding'].includes(material?.role ?? '') ||
+    entity.item?.assemblyClaim ||
+    entity.container ||
+    Object.keys(entity.mechanismFields ?? {}).length ||
+    Object.keys(entity.statusEffects ?? {}).length
+  )
+    return;
+  const allowed = [family.moistureAttribute, family.conditionAttribute];
+  if (Object.keys(entity.attributes ?? {}).some((id) => !allowed.includes(id))) return;
+  return canonicalJson(allowed.map((id) => entity.attributes?.[id]?.value ?? null));
 }
 /** Native process references bind possessions of their acting custodian. Other processes
  * must hold quantities through P1; neither route permits silent identity rebinding. */
@@ -472,8 +543,11 @@ export function createItemLot(
     getOwn(world.entities, id)
   )
     throw new Error('Invalid object source, identity, quantity or destination.');
-  if (definition.container && quantity !== 1)
-    throw new Error('Each bag must have its own identity.');
+  const individual =
+    !!definition.container ||
+    !!(definition.assemblyMaterial && ['post', 'cover'].includes(definition.assemblyMaterial.role));
+  if (individual && quantity !== 1)
+    throw new Error('Each individual object must have its own identity. Create one at a time.');
   const ancestors = objectAncestors(world, parentId);
   if (
     ancestors.length > MAX_CONTAINMENT_DEPTH ||
@@ -488,10 +562,11 @@ export function createItemLot(
   const pin = definitionPin(definition);
   const lot: ItemLot = {
     definitionPin: pin,
+    ...(definition.assemblyMaterial ? { materialOriginIds: [id] } : {}),
     unitPin: { ...ITEM_COUNT_PIN },
     quantity,
     revision: 0,
-    individuality: definition.container ? 'individual' : 'homogeneous',
+    individuality: individual ? 'individual' : 'homogeneous',
   };
   const deltas = ancestorDeltas(world, undefined, parent, ownLoad(world, lot));
   // Build before inserting, then update only the direct membership paths.
@@ -505,6 +580,24 @@ export function createItemLot(
     placement: { mode: 'contained', parentEntityId: parentId, revision: 0 },
     spatial: groundedSpatial('object'),
     item: lot,
+    ...(definition.assemblyMaterial &&
+    world.assemblyFamilies?.[definition.assemblyMaterial.familyId]
+      ? {
+          attributes: Object.fromEntries(
+            world.moduleManifest.definitions
+              .filter((d) => {
+                const family = world.assemblyFamilies![definition.assemblyMaterial!.familyId]!;
+                return (
+                  d.id === family.conditionAttribute ||
+                  ((definition.assemblyMaterial!.role === 'cover' ||
+                    definition.assemblyMaterial!.role === 'fiber') &&
+                    d.id === family.moistureAttribute)
+                );
+              })
+              .map((d) => [d.id, { value: d.schema.initial, revision: 0 }]),
+          ),
+        }
+      : {}),
     ...(definition.container
       ? {
           container: {
@@ -536,6 +629,10 @@ function quantityPlan(world: WorldState, changes: readonly QuantityChange[]) {
     const entity = world.entities[id],
       lot = entity?.item;
     if (!entity || !lot) throw new Error('Object is unavailable.');
+    if (lot.assemblyClaim && quantity !== lot.quantity)
+      throw new Error(
+        'Reclaim installed or lowered material before consuming or changing its quantity.',
+      );
     if (lot.individuality === 'individual' && quantity > 1)
       throw new Error('An individual object has one unit.');
     if (quantity === lot.quantity) continue;
@@ -544,6 +641,7 @@ function quantityPlan(world: WorldState, changes: readonly QuantityChange[]) {
       throw new Error('Empty this container before retiring it.');
     if (
       !quantity &&
+      homogeneousMaterialState(world, entity) === undefined &&
       [entity.attributes, entity.mechanismFields, entity.statusEffects].some(
         (component) => component && Object.keys(component).length,
       )
@@ -627,10 +725,8 @@ function changeItemQuantities(
       lot.quantity = quantity;
       lot.revision = bump(lot.revision);
     } else {
-      const parentId = parentOf(entity),
-        parent = getOwn(world.entities, parentId);
+      const parentId = parentOf(entity);
       lineage(world, 'consume', id, lot.quantity, cause);
-      if (parent?.actor?.equippedItemId === id) parent.actor.equippedItemId = null;
       entity.retirement = {
         custodianId: historicalCustodian(world, id),
         at: world.simTime,
@@ -658,32 +754,19 @@ export function setItemQuantity(
   applyItemQuantities(world, [{ id, quantity }], cause);
 }
 export function splitLot(world: WorldState, id: string, quantity: number, cause: string): string {
-  return splitHomogeneousLot(world, id, quantity, cause, 'live');
+  return splitHomogeneousLot(world, id, quantity, cause);
 }
-function splitAdmission(
-  world: WorldState,
-  id: string,
-  quantity: number,
-  mode: 'live' | 'migration',
-) {
+function splitAdmission(world: WorldState, id: string, quantity: number) {
   const entity = world.entities[id],
     lot = entity?.item,
-    parentId = parentOf(entity),
-    action = parentId && world.entities[parentId]?.actor?.action;
-  // The checked legacy equipment conversion alone rebinds a running weapon to
-  // its individualized unit. Ordinary splits cannot redirect process identity.
-  const migratingWeapon =
-    mode === 'migration' &&
-    action &&
-    action.weaponItemId === id &&
-    action.itemId !== id &&
-    action.ammoItemId !== id;
+    parentId = parentOf(entity);
   if (
     !lot ||
     !parentId ||
     entity!.container ||
-    lotCarriesState(entity!) ||
-    (identityBound(world, id) && !migratingWeapon) ||
+    !!lot.assemblyClaim ||
+    (lotCarriesState(entity!) && homogeneousMaterialState(world, entity!) === undefined) ||
+    identityBound(world, id) ||
     contributionSourceBound(world, id) ||
     lot.individuality !== 'homogeneous' ||
     quantity <= 0 ||
@@ -699,13 +782,18 @@ function splitHomogeneousLot(
   id: string,
   quantity: number,
   cause: string,
-  mode: 'live' | 'migration',
 ): string {
-  const { entity, lot, parentId } = splitAdmission(world, id, quantity, mode);
+  const { entity, lot, parentId } = splitAdmission(world, id, quantity);
   const resultId = nextId(world, 'item');
   // Split preserves units; its one lineage row is published after the new identity exists.
   changeItemQuantities(world, [{ id, quantity: lot.quantity - quantity }], cause, 'split');
   createItemLot(world, parentId, lot.definitionPin.id, quantity, resultId);
+  if (lot.materialOriginIds)
+    world.entities[resultId]!.item!.materialOriginIds = [...lot.materialOriginIds];
+  if (entity.attributes)
+    world.entities[resultId]!.attributes = Object.fromEntries(
+      Object.entries(entity.attributes).map(([key, state]) => [key, { ...state }]),
+    );
   if (entity!.declaredOwner) world.entities[resultId]!.declaredOwner = { ...entity!.declaredOwner };
   lineage(world, 'split', id, quantity, cause, resultId);
   return resultId;
@@ -736,11 +824,26 @@ function itemMovePlan(
   quantity: number,
   precedingDeltas?: ReadonlyMap<string, number>,
   deferCapacity = false,
+  assemblyRootId?: string,
 ) {
   const entity = world.entities[id],
     lot = entity?.item,
     sourceId = parentOf(entity),
     destination = world.entities[destinationId];
+  if (lot?.assemblyClaim && lot.assemblyClaim.rootId !== assemblyRootId)
+    throw new Error(
+      'This material belongs to installed or lowered structure work. Use authorized reclaim first.',
+    );
+  const material = lot && world.itemDefinitions[lot.definitionPin.id]?.assemblyMaterial;
+  if (
+    material &&
+    ['cover', 'fiber'].includes(material.role) &&
+    destination?.container &&
+    world.assemblyFamilies?.[material.familyId]
+  )
+    throw new Error(
+      'This material has no qualified exposure rule inside a bag. Keep it directly carried or on exposed ground.',
+    );
   if (
     !entity ||
     !lot ||
@@ -763,7 +866,7 @@ function itemMovePlan(
     throw new Error('A bag cannot contain itself or exceed the nesting limit.');
   if (quantity !== lot.quantity && (entity.container || lot.individuality === 'individual'))
     throw new Error('An individual object cannot be divided.');
-  if (quantity !== lot.quantity) splitAdmission(world, id, quantity, 'live');
+  if (quantity !== lot.quantity) splitAdmission(world, id, quantity);
   for (let i = 0; i < ancestors.length; i++) {
     const enclosing = ancestors[i]!,
       rule =
@@ -902,8 +1005,6 @@ export function moveLotsTogether(
       movedId = movedIds[index]!;
     const moved = world.entities[movedId]!,
       moving = moved.item!;
-    if (world.entities[plan.sourceId]?.actor?.equippedItemId === movedId)
-      world.entities[plan.sourceId]!.actor!.equippedItemId = null;
     moving.revision = bump(moving.revision);
     moved.placement = {
       mode: 'contained',
@@ -941,8 +1042,6 @@ export function moveLot(
   const movedId = quantity === lot.quantity ? id : splitLot(world, id, quantity, cause);
   const moved = world.entities[movedId]!,
     moving = moved.item!;
-  if (world.entities[sourceId]?.actor?.equippedItemId === movedId)
-    world.entities[sourceId]!.actor!.equippedItemId = null;
   moving.revision = bump(moving.revision);
   moved.placement = {
     mode: 'contained',
@@ -971,53 +1070,39 @@ export function moveLot(
   }
   return movedId;
 }
-export function equipLot(
-  world: WorldState,
-  actorId: string,
-  id: string,
-  cause: string,
-  mode: 'live' | 'migration' = 'live',
-): string {
+export function equipLot(world: WorldState, actorId: string, id: string, cause: string): string {
   const actor = world.entities[actorId]?.actor,
     entity = world.entities[id],
     lot = entity?.item;
-  if (
-    !actor ||
-    !lot ||
-    custodian(world, id) !== actorId ||
-    (mode === 'live' && (actor.action || itemHasReservations(world, id)))
-  )
+  if (lot?.assemblyClaim) throw new Error('Reclaim this installed material before equipping it.');
+  if (!actor || !lot || custodian(world, id) !== actorId || actor.action)
     throw new Error('Choose a free tool in this inventory.');
-  if (
-    mode === 'migration' &&
-    lot.quantity > 1 &&
-    (actor.action?.itemId === id ||
-      actor.action?.ammoItemId === id ||
-      availableItemQuantity(world, id) < 1)
-  )
-    throw new Error('Equipped stack has an unsupported active reference; conversion refused.');
+  const problem = equipmentProblem(world, actorId, id);
+  if (problem) throw new Error(problem);
   const definition = world.itemDefinitions[lot.definitionPin.id];
-  if (!definition?.launcher && !definition?.gatheringTool && !definition?.melee)
-    throw new Error('This item has no equipment capability.');
+  const conflicts = equipmentConflicts(world, actorId, id);
   if (parentOf(entity) !== actorId) moveLot(world, id, actorId, lot.quantity, cause, false);
-  const previous = actor.equippedItemId ? world.entities[actor.equippedItemId] : undefined;
-  if (previous?.placement?.mode === 'attached')
+  for (const conflict of conflicts) {
+    const previous = world.entities[conflict.id]!;
     previous.placement = {
       mode: 'contained',
       parentEntityId: actorId,
-      revision: bump(previous.placement.revision),
+      revision: bump(previous.placement!.revision),
     };
-  const equippedId = lot.quantity > 1 ? splitHomogeneousLot(world, id, 1, cause, mode) : id;
+    updateAttachmentIndex(world, indexFor(world), conflict.id, actorId, actorId);
+  }
+  const equippedId = lot.quantity > 1 ? splitLot(world, id, 1, cause) : id;
   const equipped = world.entities[equippedId]!;
   equipped.item!.individuality = 'individual';
   equipped.item!.revision = bump(equipped.item!.revision);
   equipped.placement = {
     mode: 'attached',
     parentEntityId: actorId,
-    portId: 'equipment',
+    portId: definition!.equipment!.ports[0]!,
     revision: bump(equipped.placement!.revision),
   };
-  actor.equippedItemId = equippedId;
+  updateAttachmentIndex(world, indexFor(world), equippedId, actorId, actorId);
+  world.objectState.revision = bump(world.objectState.revision);
   publishDeltas(world, new Map(), [actorId]);
   return equippedId;
 }
@@ -1070,6 +1155,16 @@ export function validateObjects(world: WorldState): void {
       continue;
     }
     const placement = entity.placement;
+    if (entity.assembly?.retired) {
+      if (
+        placement ||
+        entity.item ||
+        Object.keys(entity.assembly.parts).length ||
+        Object.keys(entity.assembly.joints).length
+      )
+        throw new Error('Invalid retired assembly root.');
+      continue;
+    }
     if (
       !placement ||
       !Number.isSafeInteger(placement.revision) ||
@@ -1078,39 +1173,75 @@ export function validateObjects(world: WorldState): void {
     )
       throw new Error('Invalid physical placement.');
     const ancestors = objectAncestors(world, entity.id);
-    if (
-      !hasRecordFields(
-        placement,
-        placement.mode === 'world'
-          ? ['mode', 'position', 'supportSurfaceId', 'revision']
-          : placement.mode === 'attached'
-            ? ['mode', 'parentEntityId', 'portId', 'revision']
-            : ['mode', 'parentEntityId', 'revision'],
-      )
-    )
-      throw new Error('Conflicting physical placement fields.');
+    const placementFieldsValid: boolean = hasRecordFields(
+      placement,
+      placement.mode === 'world'
+        ? ['mode', 'position', 'supportSurfaceId', 'revision']
+        : placement.mode === 'attached'
+          ? [
+              'mode',
+              'parentEntityId',
+              'portId',
+              'revision',
+              ...(placement.portId === 'assembly' ? ['local', 'slot'] : []),
+            ]
+          : ['mode', 'parentEntityId', 'revision'],
+    );
+    if (!placementFieldsValid) throw new Error('Conflicting physical placement fields.');
     if (placement.mode !== 'world') {
       if (!entity.item || !isSafeRecordId(placement.parentEntityId))
         throw new Error('Only admitted item entities may be contained.');
       const parent = ancestors[1];
-      if (!parent || !(parent.actor || parent.kind === 'item-pile' || parent.container))
+      if (
+        !parent ||
+        !(parent.actor || parent.kind === 'item-pile' || parent.container || parent.assembly)
+      )
         throw new Error('Invalid physical container.');
       if (placement.mode === 'attached') {
-        const key = `${placement.parentEntityId}:${placement.portId}`;
-        if (
-          placement.portId !== 'equipment' ||
-          slots.has(key) ||
-          parent.actor?.equippedItemId !== entity.id ||
-          entity.item.individuality !== 'individual'
-        )
-          throw new Error('Invalid equipment attachment.');
-        slots.add(key);
+        if (placement.portId === 'assembly') {
+          if (!isAssemblyPlacement(placement))
+            throw new Error('Missing installed part coordinates.');
+          const part = parent.assembly?.parts[entity.id];
+          const key = `${parent.id}:${placement.slot}`;
+          if (
+            !part ||
+            part.slot !== placement.slot ||
+            slots.has(key) ||
+            !entity.item.assemblyClaim ||
+            entity.item.assemblyClaim.rootId !== parent.id ||
+            entity.item.quantity !== 1 ||
+            ![placement.local.x, placement.local.y, placement.local.z].every(Number.isFinite)
+          )
+            throw new Error('Invalid installed material attachment.');
+          slots.add(key);
+        } else {
+          const definition = world.itemDefinitions[entity.item.definitionPin.id];
+          const profile = definition?.equipment;
+          if (
+            !profile ||
+            placement.portId !== profile.ports[0] ||
+            profile.ports.some(
+              (port) => !parent.actor?.body?.equipmentPorts.some((p) => p.id === port),
+            ) ||
+            entity.item.individuality !== 'individual'
+          )
+            throw new Error('Invalid equipment attachment.');
+          for (const port of profile.ports) {
+            const key = `${placement.parentEntityId}:${port}`;
+            if (slots.has(key)) throw new Error('Conflicting equipment attachments.');
+            slots.add(key);
+          }
+        }
       }
     }
     const lot = entity.item;
     if (!lot) continue;
     if (
-      !hasRecordFields(lot, ['definitionPin', 'unitPin', 'quantity', 'individuality', 'revision'])
+      !hasRecordFields(
+        lot,
+        ['definitionPin', 'unitPin', 'quantity', 'individuality', 'revision'],
+        ['assemblyClaim', 'materialOriginIds'],
+      )
     )
       throw new Error('Unsupported lot state.');
     const definition = world.itemDefinitions[lot.definitionPin.id];
@@ -1176,16 +1307,6 @@ export function validateObjects(world: WorldState): void {
         throw new Error('Container load summary is inconsistent.');
     }
   }
-  for (const entity of Object.values(world.entities))
-    if (entity.actor?.equippedItemId) {
-      const equipped = getOwn(world.entities, entity.actor.equippedItemId);
-      if (
-        equipped?.placement?.mode !== 'attached' ||
-        equipped.placement.parentEntityId !== entity.id ||
-        !equipped.item
-      )
-        throw new Error('Equipment refers to an unavailable attachment.');
-    }
   for (const [id, record] of Object.entries(world.objectLineage ?? {})) {
     if (
       !hasRecordFields(
@@ -1208,6 +1329,74 @@ export function validateObjects(world: WorldState): void {
     )
       throw new Error('Invalid object lineage.');
   }
+}
+
+/** Trusted assembly owner calls these within its single compound candidate. Ordinary
+ * movement cannot clear the protection or create an installed attachment. */
+export function attachAssemblyPart(
+  world: WorldState,
+  id: string,
+  rootId: string,
+  attachment: AssemblyAttachment,
+  claim: AssemblyClaim,
+): string {
+  const source = world.entities[id],
+    lot = source?.item,
+    root = world.entities[rootId];
+  if (!lot || lot.assemblyClaim || !root?.assembly || itemHasReservations(world, id))
+    throw new Error('The selected material cannot be installed.');
+  const movedId = lot.quantity === 1 ? id : splitLot(world, id, 1, 'assembly-install');
+  const moved = world.entities[movedId]!,
+    parentId = parentOf(moved)!;
+  const deltas = ancestorDeltas(world, world.entities[parentId], root, ownLoad(world, moved.item!));
+  moved.item!.individuality = 'individual';
+  moved.item!.assemblyClaim = claim;
+  moved.item!.revision = bump(moved.item!.revision);
+  moved.placement = {
+    mode: 'attached',
+    parentEntityId: rootId,
+    revision: bump(moved.placement!.revision),
+    ...attachment,
+  };
+  reindex(world, movedId, parentId, rootId);
+  publishDeltas(world, deltas, [parentId, rootId]);
+  return movedId;
+}
+/** Protected transfers share packing admission while ordinary moves keep refusing claims. */
+export function assemblyMovesReason(
+  world: WorldState,
+  ids: readonly string[],
+  rootId: string,
+  destinationId: string,
+): string | undefined {
+  try {
+    const deltas = new Map<string, number>();
+    for (const id of ids) {
+      if (world.entities[id]?.item?.assemblyClaim?.rootId !== rootId)
+        throw new Error('The selected actual part is no longer available.');
+      const plan = itemMovePlan(world, id, destinationId, 1, deltas, false, rootId);
+      for (const [key, delta] of plan.deltas) deltas.set(key, (deltas.get(key) ?? 0) + delta);
+    }
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return error instanceof Error ? error.message : 'Material transfer is unavailable.';
+  }
+}
+
+export function detachAssemblyPart(
+  world: WorldState,
+  id: string,
+  rootId: string,
+  destinationId: string,
+  retainClaim = false,
+): void {
+  const material = world.entities[id],
+    claim = material?.item?.assemblyClaim;
+  if (!claim || claim.rootId !== rootId)
+    throw new Error('The selected material is no longer part of this structure.');
+  delete material!.item!.assemblyClaim;
+  moveLot(world, id, destinationId, 1, 'assembly-reclaim', false);
+  if (retainClaim) material!.item!.assemblyClaim = claim;
 }
 
 export function declareObjectOwner(
@@ -1269,17 +1458,20 @@ export function mergeLots(
   publishDeltas(world, new Map(), [parent]);
   return targetId;
 }
-export function unequipLot(world: WorldState, actorId: string): void {
+export function unequipLot(world: WorldState, actorId: string, itemId: string): void {
   const actor = world.entities[actorId]?.actor;
-  if (!actor?.equippedItemId) return;
-  const item = world.entities[actor.equippedItemId];
-  if (!item?.item || itemHasReservations(world, item.id) || actor.action)
+  const item = world.entities[itemId];
+  if (!actor || item?.placement?.mode !== 'attached' || item.placement.parentEntityId !== actorId)
+    throw new Error('Choose current attached equipment.');
+  if (!item.item || itemHasReservations(world, item.id) || actor.action)
     throw new Error('Finish current work before releasing this equipment.');
+  const index = indexFor(world);
   item.placement = {
     mode: 'contained',
     parentEntityId: actorId,
     revision: bump(item.placement!.revision),
   };
-  actor.equippedItemId = null;
+  updateAttachmentIndex(world, index, itemId, actorId, actorId);
+  world.objectState.revision = bump(world.objectState.revision);
   publishDeltas(world, new Map(), [actorId]);
 }

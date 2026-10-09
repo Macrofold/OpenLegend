@@ -1,4 +1,4 @@
-import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
+import type { EntityView, GameView, SurfacePoint, ConstructionShape } from '@open-legend/protocol';
 import type { CameraCommand, CameraState } from './world-camera';
 export type ShadowQuality = 'detailed' | 'economy';
 export interface ScreenPoint {
@@ -36,6 +36,7 @@ export interface PerceptionOptions {
   hearing: boolean;
 }
 export interface WorldRenderer {
+  setConstructionPreview(shapes: readonly ConstructionShape[] | null, valid?: boolean): void;
   setTargeting(active: boolean): void;
   setSuspended(suspended: boolean): void;
   sampleFrameRate(): number | null;

@@ -1,8 +1,12 @@
 # Spatial world implementation tracker
 
+**October 7 shelter follow-on:** [SH02/SH05](editable-shelters.md) qualify one saved root heading, exact connected-part contact, bounded accessible exterior work points and full supported footprints. A shared finite normal-thickness prism serves collision, navigation, rendering/picking and axial vertical-rain projection; its bounds alone confer no contact or coverage. Existing SW14–SW16/SW19 broader navigation/device/scale gates stay open.
+
 **The checked subtasks below have native implementation evidence; the broader target and unverified gates remain open.** This tracker owns new 3D geometry, movement/navigation, tactical camera, and renderer-boundary delivery. The [behavior specification](../spatial-world.md) and [runtime contract](../../archive/07-technical-architecture/spatial-world-runtime.md) own requirements. Documentation alone is not implementation, fixture evidence, or live acceptance.
 
 Keep existing ACT, CR/CH, EPR, AG, NC, INV, SL, production-data, and performance task IDs and valid states. Checked implementation work is separate from the test/acceptance tasks that remain open. Reference their specific contracts rather than making all of those roadmaps prerequisites. A native actor walking up a ramp does not depend on a full planning harness or new invention service. New spatial capabilities enter the existing action/admission and evidence paths.
+
+**Delivered flat shelter consumer:** [PX05’s paired design](../projects/editable-shelters-tech-design.md#4-support-coverage-and-usable-space) maps [SH02/SH03/SH05/SH06](editable-shelters.md) to SW03/04/07/08/10/11/15 and existing qualification owners. It adds derived full-extent assembly geometry, finite non-walkable cover planes, actual support/clearance/use queries, exposed attachments and scoped physical/read overlays. Current living-person sleep collision is upright; the implemented shelter rest choice also checks the displayed reclining extent and rechecks arrival. Whole-map Recast preparation remains the bounded worker fallback; part revisions fence old routes, and roofs remain non-walkable. [AV04 evidence](../verification/editable-shelters.md) qualifies native/UI flat construction, not tile-local rebuilding, broad camera/device acceptance or settlement capacity. Existing checked work and broader SW gates remain unchanged.
 
 ## Implemented provider and remaining release gates
 

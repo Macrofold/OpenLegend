@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { isSafeRecordId, type WorldState } from '@open-legend/domain';
+import { isSafeRecordId, type WorldState, type ConstructionPermission } from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
 
 // Dependency order for operational recovery; these records never enter gameplay checkpoints.
@@ -10,6 +10,8 @@ export const AUTHORITY_TABLES = [
   'auth_accounts',
   'auth_sessions',
   'auth_grants',
+  'auth_construction_grants',
+  'auth_construction_receipts',
   'auth_controls',
   'auth_exits',
   'auth_control_receipts',
@@ -28,6 +30,29 @@ export const capabilitySchema = z.enum([
   'save',
   'manage-access',
 ]);
+export const constructionPermissionSchema = z
+  .object({
+    id: z.string().refine(isSafeRecordId),
+    worldId: z.string().refine(isSafeRecordId),
+    actorId: z.string().refine(isSafeRecordId),
+    revision: z.number().int().positive(),
+    revoked: z.boolean(),
+    site: z
+      .object({
+        surfaceId: z.string().refine(isSafeRecordId),
+        minX: z.number().finite(),
+        maxX: z.number().finite(),
+        minZ: z.number().finite(),
+        maxZ: z.number().finite(),
+      })
+      .strict()
+      .refine((s) => s.minX < s.maxX && s.minZ < s.maxZ),
+    operations: z
+      .array(z.enum(['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered']))
+      .max(5),
+    materialIds: z.array(z.string().refine(isSafeRecordId)).max(2048),
+  })
+  .strict();
 export type Capability = z.infer<typeof capabilitySchema>;
 /** Characterless grants share the one-grant-per-account row without a character. The marker
  * never leaves this repository; changing the existing NOT NULL column would convert saves.
@@ -161,6 +186,7 @@ const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
  * docs/projects/multiplayer-authority-tech-design.md#2-identity-and-records
  */
 export class AuthorityRepository {
+  private construction = new Map<string, readonly ConstructionPermission[]>();
   private sessions = new Map<string, LoginSession>();
   private grants = new Map<string, WorldGrant>();
   private controls = new Map<string, ControlLease>();
@@ -172,6 +198,8 @@ export class AuthorityRepository {
       CREATE TABLE IF NOT EXISTS auth_sessions (id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, account_id TEXT NOT NULL REFERENCES auth_accounts(id), revision BIGINT NOT NULL, expires_at BIGINT NOT NULL);
       CREATE INDEX IF NOT EXISTS auth_sessions_expiry ON auth_sessions(expires_at);
       CREATE TABLE IF NOT EXISTS auth_grants (world_id TEXT NOT NULL, account_id TEXT NOT NULL REFERENCES auth_accounts(id), actor_id TEXT NOT NULL, revision BIGINT NOT NULL, capabilities TEXT NOT NULL, PRIMARY KEY(world_id,account_id), UNIQUE(world_id,actor_id));
+      CREATE TABLE IF NOT EXISTS auth_construction_grants (world_id TEXT NOT NULL, id TEXT NOT NULL, revision BIGINT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,id));
+      CREATE TABLE IF NOT EXISTS auth_construction_receipts (world_id TEXT NOT NULL, issuer_id TEXT NOT NULL, request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,issuer_id,request_id));
       CREATE TABLE IF NOT EXISTS auth_controls (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, generation BIGINT NOT NULL, account_id TEXT NOT NULL, session_id TEXT NOT NULL, connection_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id));
       CREATE TABLE IF NOT EXISTS auth_exits (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,actor_id));
       CREATE TABLE IF NOT EXISTS auth_control_receipts (world_id TEXT NOT NULL, account_id TEXT NOT NULL, request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,account_id,request_id));
@@ -179,6 +207,91 @@ export class AuthorityRepository {
       CREATE TABLE IF NOT EXISTS auth_binding_receipts (world_id TEXT NOT NULL, issuer_id TEXT NOT NULL, request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,issuer_id,request_id));
       CREATE TABLE IF NOT EXISTS auth_access_audit (id TEXT PRIMARY KEY, world_id TEXT NOT NULL, account_id TEXT NOT NULL, issuer_id TEXT NOT NULL, recorded_at BIGINT NOT NULL, payload TEXT NOT NULL);
     `);
+  }
+  constructionPermissions(worldId: string): readonly ConstructionPermission[] {
+    return this.construction.get(worldId) ?? [];
+  }
+  async refreshConstruction(worldId: string): Promise<void> {
+    const rows = await this.db
+      .prepare('SELECT payload FROM auth_construction_grants WHERE world_id=? ORDER BY id')
+      .all(worldId);
+    const grants = rows.map((row) =>
+      constructionPermissionSchema.parse(JSON.parse(String(row['payload']))),
+    );
+    this.construction.set(worldId, grants);
+  }
+  async seedConstruction(permission: ConstructionPermission): Promise<void> {
+    const grant = constructionPermissionSchema.parse(permission);
+    await this.db
+      .prepare(
+        'INSERT INTO auth_construction_grants(world_id,id,revision,payload) VALUES(?,?,?,?) ON CONFLICT(world_id,id) DO NOTHING',
+      )
+      .run(grant.worldId, grant.id, grant.revision, JSON.stringify(grant));
+  }
+  /** Operational authority is checked in the same SQL transaction as material publication. */
+  async assertConstruction(
+    worldId: string,
+    fences: readonly { id: string; revision: number }[],
+  ): Promise<void> {
+    for (const fence of fences) {
+      const row = await this.db
+        .prepare('SELECT revision,payload FROM auth_construction_grants WHERE world_id=? AND id=?')
+        .get(worldId, fence.id);
+      if (
+        !row ||
+        Number(row['revision']) !== fence.revision ||
+        constructionPermissionSchema.parse(JSON.parse(String(row['payload']))).revoked
+      )
+        throw new AuthorityError('forbidden');
+    }
+  }
+  async changeConstruction(
+    scope: RequestScope,
+    permission: ConstructionPermission,
+    expectedRevision: number,
+    requestId: string,
+    now: () => number,
+  ): Promise<ConstructionPermission> {
+    const grant = constructionPermissionSchema.parse(permission);
+    return this.db.transaction(async () => {
+      await this.assertFence({ scope, capability: 'manage-access', controlling: false, now });
+      if (
+        grant.worldId !== scope.worldId ||
+        grant.revision !== expectedRevision + 1 ||
+        !isSafeRecordId(requestId)
+      )
+        throw new AuthorityError('forbidden');
+      const fingerprint = JSON.stringify({ grant, expectedRevision });
+      const prior = await this.db
+        .prepare(
+          'SELECT fingerprint,payload FROM auth_construction_receipts WHERE world_id=? AND issuer_id=? AND request_id=?',
+        )
+        .get(scope.worldId, scope.accountId, requestId);
+      if (prior) {
+        if (prior['fingerprint'] !== fingerprint) throw new AuthorityError('conflict');
+        return constructionPermissionSchema.parse(JSON.parse(String(prior['payload'])));
+      }
+      const old = await this.db
+        .prepare('SELECT revision FROM auth_construction_grants WHERE world_id=? AND id=?')
+        .get(scope.worldId, grant.id);
+      if ((old ? Number(old['revision']) : 0) !== expectedRevision)
+        throw new AuthorityError('conflict');
+      await this.db
+        .prepare(
+          'INSERT INTO auth_construction_grants(world_id,id,revision,payload) VALUES(?,?,?,?) ON CONFLICT(world_id,id) DO UPDATE SET revision=excluded.revision,payload=excluded.payload',
+        )
+        .run(grant.worldId, grant.id, grant.revision, JSON.stringify(grant));
+      await this.db
+        .prepare(
+          'INSERT INTO auth_construction_receipts(world_id,issuer_id,request_id,fingerprint,payload) VALUES(?,?,?,?,?)',
+        )
+        .run(scope.worldId, scope.accountId, requestId, fingerprint, JSON.stringify(grant));
+      this.changed(() => {
+        const grants = this.construction.get(scope.worldId) ?? [];
+        this.construction.set(scope.worldId, [...grants.filter((p) => p.id !== grant.id), grant]);
+      });
+      return grant;
+    });
   }
   subscribe(listener: () => void) {
     this.listeners.add(listener);

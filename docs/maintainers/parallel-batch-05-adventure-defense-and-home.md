@@ -1,6 +1,6 @@
 # Batch 05 — Adventure, defense and a home
 
-**Proposed October 5, 2026; no runtime implementation or verification is closed by this plan.** Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
+**Allocated October 5; AV02 and AV04 delivered and qualified October 6, 2026.** The other three assignments remain unfinished. [AV02 evidence](../verification/shield-defense.md) distinguishes actual native, PostgreSQL and browser checks from unqualified free model choice and broader capacity. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
 
 ## AV01 — Rewarding expeditions
 
@@ -17,12 +17,12 @@
 
 [Batch 06](parallel-batch-06-rivals-and-contested-ground.md) consumes this equipment/guard owner. CF02 owns the later supported-projectile extension; CF03 interruption and CF01/CF04 loadouts consume the existing contract. These open consumers do not expand AV02 into a duplicate defense implementation or establish its completion.
 
-- [ ] Replace single-equipped-item authority with admitted body-port attachment through the existing object owner; update all current callers, cleanup and current-format validation together.
-- [ ] Deliver known shield manufacture, finite family authoring, readable knife/shield versus two-handed equipment, auto-equip conflict explanation and one chosen guard.
-- [ ] Integrate one current contact-defense/damage owner; complete real front/late/rear/miss/cancel/expiry/concurrent-impact and lifecycle/transfer/restore acceptance.
-- [ ] Reconcile AC/PO/EWF/INV/BW/UIUX affected requirements and the [shield profile](../worlds/base/shield-defense.md), preserving supplied death/PvP decisions.
+- [x] Replace single-equipped-item authority with admitted body-port attachment through the existing object owner; update all current callers, cleanup and current-format validation together.
+- [x] Deliver known shield manufacture, finite family authoring, readable knife/shield versus two-handed equipment, auto-equip conflict explanation and one chosen guard.
+- [x] Integrate one current contact-defense/damage owner; complete real front/late/rear/miss/cancel/expiry/concurrent-impact and lifecycle/transfer/restore acceptance.
+- [x] Reconcile AC/PO/EWF/INV/BW/UIUX affected requirements and the [shield profile](../worlds/base/shield-defense.md), preserving supplied death/PvP decisions.
 
-**Readiness:** starts after the owner supplies integrated incoming threat/lifecycle work (`codex/pg05-first-threat` inspected at `75e8c82e`). Do not duplicate PG05/PX01. **Consumers:** AV04's cloak uses this equipment owner; AV03/AV05 do not create alternate equipment stores. [AV02 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
+**Delivered on `codex/av02-shield-defense`:** supplied local `main` at `51d43e3f4a91e7ceed1404add65123b331d97358` already contained the incoming encounter and lifecycle owners. The [shield profile](../worlds/base/shield-defense.md) and [verification report](../verification/shield-defense.md) own current behavior and evidence. This does not claim the branch is merged. **Consumers:** AV04's cloak uses this equipment owner; AV03/AV05 do not create alternate equipment stores. [AV02 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
 
 ## AV03 — Useful competence and voluntary coaching
 
@@ -35,12 +35,12 @@
 
 ## AV04 — A usable editable shelter
 
-- [ ] Supply PX05's complete technical design before implementing its selected structural family; preserve existing product/world decisions.
-- [ ] Implement real phased construction, part identity, builder/material permission, geometry/coverage, rest/visitor use and selected rain/moisture.
-- [ ] Implement extension, cloak use through AV02, safe support failure, material-preserving alteration/reclaim and complete current-format continuity.
-- [ ] Complete the selected canopy/two-bay acceptance and reconcile PX05/DG13/ND07/shelter-only ND08, INV-6.4 and affected SW/PO/SC/BW work. Do not close general construction or rain/heat systems.
+- [x] Supply PX05's complete technical design before implementing its selected structural family; preserve existing product/world decisions.
+- [x] Implement real phased construction, part identity, builder/material permission, geometry/coverage, rest/visitor use and selected rain/moisture.
+- [x] Implement extension, cloak use through AV02, safe support failure, material-preserving alteration/reclaim and complete current-format continuity.
+- [x] Complete the selected canopy/two-bay acceptance and reconcile PX05/DG13/ND07/shelter-only ND08, INV-6.4 and affected SW/PO/SC/BW work. Do not close general construction or rain/heat systems.
 
-**Readiness:** PX05 technical design is a required earlier-wave deliverable. Construction can proceed after that delivery; final wearing/attachment integration also needs AV02. [AV04 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av04--real-construction-and-useful-shelter).
+**Delivered on `codex/av04-editable-shelter`:** PX05 design commits `716ae528c`/`78490fa93` and completed AV02 `e025fe0f55ce8010d58be6646decccc5a1a639aa` are incorporated. [Actual evidence](../verification/editable-shelters.md) covers native, disposable PostgreSQL, ordinary UI and bounded work; [SH01–SH06](editable-shelters.md) retains wider qualification and home scope; the separately authorized October 7 follow-on qualifies corrected contacts and the finite-stock single-bay slope. This is branch delivery, not a claim that the branch is merged. [AV04 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av04--real-construction-and-useful-shelter).
 
 ## AV05 — River fishing and world-defined cooking
 

@@ -1,3 +1,4 @@
+import { lowerUnsupportedCovers } from './assemblies.js';
 import { reconcileConditions } from './conditions.js';
 import { installedStateQuery } from './queries.js';
 import { ResourceReservationError } from './resource-claims.js';
@@ -204,6 +205,14 @@ export function writeState(
       reconcileBody(world, entity, events, cause);
     }
   }
+  const material =
+    entity.item && world.itemDefinitions[entity.item.definitionPin.id]?.assemblyMaterial;
+  if (
+    material &&
+    world.assemblyFamilies?.[material.familyId]?.conditionAttribute === definition.id &&
+    entity.item?.assemblyClaim
+  )
+    lowerUnsupportedCovers(world, entity.id, events);
   if (conditionTiming === 'now') reconcileConditions(world, entity, events);
   recordSemanticChange(world, {
     kind: 'state',

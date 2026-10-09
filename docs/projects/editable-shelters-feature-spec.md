@@ -1,12 +1,14 @@
 # Editable shelters, rain and home use — product and behavior specification
 
-| Status      | Current progress                                                                                                                                 | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | DG13's concrete build, use, edit and reclaim journey is designed; product review is complete; technical design and runtime delivery remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Flat one/two-bay and the single-bay lean-to are delivered and reviewed; wider homes and scale qualification remain open. | 2026-10-07   |
 
-**Status: proposed detailed behavior, October 3, 2026, expanded for DG13 on October 5.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. It does not claim current modular buildings, weather, moisture, drying or household behavior is implemented. Technical design remains deferred; the existing object, spatial, state, work and world-policy owners retain authority.
+**Flat canopy/two-bay delivered October 6; corrected contacts and the single-bay lean-to delivered October 7, 2026. Wider behavior remains proposed.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. Its [technical counterpart](editable-shelters-tech-design.md) and [SH01–SH06 delivery breakdown](../maintainers/editable-shelters.md) now define the selected one-builder open-shelter journey. AV04 implements finite parts, phased building, ordinary use, alteration/reclaim and local rain/moisture/drying for that profile. Existing object, spatial, state, work, authority and world-policy owners retain their responsibilities. Enclosed buildings and household behavior remain unimplemented.
 
-[PX05 in batch 04](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px05--editable-shelter-technical-design) assigns the missing technical counterpart and delivery breakdown. Its design completion will not establish construction runtime acceptance.
+[PX05 in batch 04](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px05--editable-shelter-technical-design) is complete as a design assignment only. Its completion establishes no construction runtime acceptance and does not complete this wider shelter/home project.
+
+The completed [AV04 plan](completed/editable-shelters-implementation-plan.md) delivers only the selected flat one/two-bay profile. It proves useful chosen rest, covered belongings, an ordinary invitation and reversible changes without a new penalty. It does not establish spontaneous NPC preference or uncoached player enjoyment; those remain distinct broader product evidence.
 
 ## 1. The experience and its purpose
 
@@ -27,6 +29,8 @@ The accepted [materials and construction direction](../../archive/03-design-prop
 ### 2.1 Recommended first family
 
 Begin with a single ground-level modular bay that can become a lean-to: light timber supports, admitted ground anchors/bindings and one flexible roof section. Neighboring bays can extend it. The selected plan states its dimensions and usable area using the actual supported body and material sizes. Do not promise that any cloak covers any number of people.
+
+The first selected delivery remains the flat DG13 canopy. [The technical design's cloak lean-to and two-bay traces](editable-shelters-tech-design.md#7-worked-arrangements-and-contrasting-traces) qualify later arrangements using the same four-corner material/support rules, without adding slope-specific runoff or heat benefits. Sloping cover must fit its actual along-plane cloth length, lower-edge clearance and work reach; it does not grow taller posts from the starting kit.
 
 Use a simple layout grid for bays, roof areas and edge panels, with a few supported orientations and connections. The grid is a construction aid and a bounded geometric approximation, not a universal lattice for the whole world. A player selects a place, orientation and intended size through a visible preview or ordinary-language request; they need not place every twig.
 
@@ -86,6 +90,8 @@ Construction is an ordinary admitted activity with actual approach, tools, mater
 
 Reserve only the material and work scope the admitted activity actually needs. The plan explains which resources remain loose, which are held for work, which become installed reusable parts and which are consumed. A drawing does not reserve the whole forest indefinitely. Existing resource-hold and action lifetime limits remain controlling.
 
+The selected flat/sloping release qualifies neighboring and replacement cover combinations before work starts. Overlapping perpendicular slopes refuse with a separate-or-align alternative because their relative-height rain cut is unsupported; separated perpendicular shelters remain usable. This repairs an admitted combination that previously failed in later exposure. Broader exact polygon integration remains an extension under [SH-L12](../limits/editable-shelters.md#sh-l12--growth-and-required-query-admission), rather than approximate cover or partial material effects.
+
 Useful partial work remains real. Installed posts can stand before a roof is added; an unfinished bay has no completed-cover benefit. A completed roof section can protect its actual footprint even while a neighboring bay is unfinished. Canceling the whole project does not erase completed posts, grant finished cover or refund consumed bindings as new stock.
 
 ### 4.3 Interruption and cooperation
@@ -140,6 +146,8 @@ Initial applicability is deliberately narrow: the admitted covering materials, e
 
 If an initial scenario relies on keeping tinder dry, it must use an admitted storage arrangement: a covered exposed stock location or a container whose water transmission is actually supported. A wicker-container graphic alone is not a dry-storage promise. Larger inventories require bounded exposure of relevant contents through the existing container owner before that scope is enabled.
 
+The selected first process profile refuses moving its active eligible material into an unsupported nested exposure form; it offers directly carrying it or a supported exposed ground spot instead. This prevents silently stopping wetting/drying at a bag boundary. It changes no unrelated existing bag contents, initializes no historical wetness and gives no waterproof-storage claim. [The authored exposed forms](../worlds/base/editable-shelters.md#initial-exposed-forms-and-condition-labels) and [SH-L13](../limits/editable-shelters.md#sh-l13--exposed-material-forms-and-homogeneous-condition) retain the scope and expansion trigger.
+
 ### 6.2 Coarse ambient drying
 
 The separate drying family removes moisture according to the admitted material, current exposure and selected ambient conditions. It can be deliberately simple: no full humidity field, airflow simulation or per-thread water movement is necessary. It must still preserve elapsed time, current moisture and the distinction between stopping rain and drying material.
@@ -190,7 +198,9 @@ When actual damage removes support, the change takes effect from that occurrence
 
 ### 7.5 Damage and repair have real causes
 
-The first family supports explicit local part damage and visible failed connections through admitted actions/conditions. Rain changes moisture; it does not automatically rot the frame. More elaborate deterioration, hostile structure attacks or fire damage require their own actual families and participation policy. Current actor combat does not automatically imply complete building combat.
+A later qualified damage consumer supports explicit local part damage and visible failed connections through admitted actions/conditions. Rain changes moisture; it does not automatically rot the frame. More elaborate deterioration, hostile structure attacks or fire damage require their own actual families and participation policy. Current actor combat does not automatically imply complete building combat.
+
+Within that wider direction, PX05's first open profile admits intact material plus explicit support/connection failure and harmless lowering. It selects no granular cloth tears, patch recipe or repair action yet. Those later consumers must specify their real material/condition effects before the corresponding repair story is offered; ordinary rain never creates a repair obligation.
 
 A repair uses actual materials and work appropriate to the part. A patch can reduce a specific leak while retaining its material and the history of earlier damage. Repair cannot exceed the part's admitted intact state, create spare material, erase moisture by resetting the object or repair every connected building. Renaming, picking up, reconnecting and changing detail level are not repairs.
 
@@ -262,7 +272,7 @@ Repeatedly toggling a door, moving a covering or issuing equivalent plans must n
 
 Advance passive effects using actual supported simulation time and the weather/arrangement history required by those effects. A real host pause or outage does not invent an elapsed storm. Arriving after a long quiet interval should materialize the same current material state, not replay every rain observation into memory or reset every item to dry.
 
-Save and restore preserve installed parts, connections, loose salvage, current moisture, damage, committed work and remaining resources. If a newly introduced moisture rule lacks historical evidence, use an explicit authorized initialization approximation; do not fabricate exact past rainfall. Changes to a shared material law follow its version/migration owner and apply coherently to affected existing and unattended objects.
+Save and restore preserve installed parts, connections, loose salvage, current moisture, damage, committed work and remaining resources. If a newly introduced moisture rule lacks historical evidence, use an explicit authorized initialization approximation; do not fabricate exact past rainfall. Changes to a shared material law retain exact pins and follow an explicit supported live-definition conversion through its owning installation service, coherently across affected existing and unattended objects. This is not older-save migration or compatibility: [the development policy](../../AGENTS.md#development-save-policy) still requires current-format validation and explicit incompatible-save rejection without deletion/reset.
 
 ## 10. Concrete journeys and failure cases
 
@@ -461,7 +471,7 @@ Moving an entire occupied assembly is not supplied by the first family. The play
 
 ### 14.7 A home name is not a permission system
 
-The first construction scene supplies a new proposed permission for one builder at its site/assembly. Existing creator and container controls do not already implement that construction grant. The material picker requires both carrying and permission for the selected use: the designated kit or qualifying material the builder legitimately produces from eligible inputs. Another person's contribution requires a transfer that permits this use or an explicitly supported material grant. Until that additional grant is implemented, the first profile declines the input. Ordinary accepted handover currently changes custody; it does not prove this additional grant or necessarily change declared title.
+The delivered construction scene supplies an operational construction-use grant for one builder at its site/assembly. Creator or container access alone does not supply this grant. The material picker requires both carrying and permission for the selected use: the designated kit or qualifying material the builder legitimately produces from eligible inputs. Another person's contribution requires a transfer that permits this use or an explicitly supported material grant. Without an actual supported input-use grant, the first profile declines the input. Ordinary accepted handover currently changes custody; it does not prove this additional grant or necessarily change declared title.
 
 Picking another person's identified cloak up from an unrestricted pile cannot bypass the rule. Installed parts retain their alteration/reclaim restrictions through ordinary pickup and inventory routes as well as the construction menu. The product does not assume that either current carrying or declared ownership alone establishes these permissions.
 
@@ -564,15 +574,27 @@ The earlier SH-R01–SH-R16 evidence remains above. The sources below were check
 
 **Home meaning must follow play.** A resident can visit without becoming a labor source. A name does not grant title, privacy or entry. Optional remembered-place navigation follows the ordinary return scene, and walls/doors follow the open canopy. Quiet solo use and declining to build remain legitimate play.
 
-**The technical assignment is still necessary.** These proposals resolve product inputs for PX05; they do not supply a support algorithm, new equipment implementation, permission enforcement or measured capacity. Its technical counterpart and the existing construction/runtime tasks remain open. No prototype, provider call, UI playtest or construction benchmark has run for this documentation task.
+**PX05 now supplies the technical assignment.** [The counterpart](editable-shelters-tech-design.md) defines support/coverage/use calculations, persistent parts, permission enforcement, work and current-format lifecycle, with flat-canopy, cloak lean-to and two-bay paper traces. [SH01–SH06](../maintainers/editable-shelters.md) sequence actual implementation and evidence under existing owners. No prototype, provider call, UI playtest or construction benchmark ran for this design; PX05 established no runtime acceptance; AV04 delivers the flat one/two-bay subset and the separately authorized single-bay slope, with wider home work still open.
+
+## 17. PX05 design disposition and remaining scope
+
+The selected one-builder flat canopy, adjoining bay and single-bay sloping cloak are implemented and qualified under the specified contracts; [the AV04 evidence](../verification/editable-shelters.md) distinguishes native, PostgreSQL, browser and bounded-work results. The first flat bay uses actual garment/part continuity and direct build/use/alter/reclaim. The delivered sloping cloak uses actual short/tall stock, qualified reach and in-plane material size; the two-bay trace exposes real shared-post and seam constraints. Coverage-preserving replacement can fail when the seam would exceed the two-layer/two-socket profile, with temporary exposure explained before work.
+
+Current rest still has an upright collision shape despite its horizontal artwork. The first shelter-use query therefore checks both actual physical clearance and a conservative displayed reclining envelope; it does not add a comfort reward or silently change global sleeping physics. Exact selected material/shape/work/exposure rules stay in [the world owner](../worlds/base/editable-shelters.md#qualified-geometry-for-px05), with their qualification and growth limits in [SH-L01–SH-L13](../limits/editable-shelters.md).
+
+The October 6 design review makes tying physically explicit: the builder approaches a clear post face and reaches the binding below the cloth. Only the connected cloth's qualified contact at that post tip is permitted; neither an obstructed stance nor an unrelated collision disappears. The shelter's orientation uses the object's existing saved direction, so previews, installed parts and restoration cannot acquire separate directions. Mike authorized reconciling these contracts and qualifying the single-bay sloping cloak on October 7. These corrections and the single-bay slope are implemented and qualified. The completed flat release and its dated evidence remain preserved; the [follow-on plan](completed/editable-shelters-lean-to-plan.md) records the separate scope.
+
+Later walls/doors, multiple builders, remembered home/household psychology, granular repairs, heavy structures and thermal/fire consumers retain their existing ambition. [The technical stage-blocker table](editable-shelters-tech-design.md#101-consequential-unresolved-owner-decisions) identifies which consequential owner answers precede their dependent work. Completing DG13's narrow paired design removes that missing preparation from PX05/ND07 and shelter-only ND08; it does not close construction, general weather/heat/spread or these broader home choices.
 
 ## Maintained records
 
 - Package and sequence: [five product specifications](five-product-feature-specs.md).
 - October 5 batch and review: [DG11–DG15](completed/product-design-groups-11-15.md).
 - Initial authored materials, arrangements and tuning: [base-world light canopies](../worlds/base/editable-shelters.md).
+- Technical counterpart and exact source mapping: [editable-shelter technical design](editable-shelters-tech-design.md).
+- Detailed implementation sequence and unsatisfied acceptance: [SH01–SH06](../maintainers/editable-shelters.md), beneath the existing INV/SW/PO/BW/SC owners.
 - Design/delivery: [ND07 and ND08](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes), [INV-6.4](../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), with [spatial](../maintainers/spatial-world.md), [persistent objects](../maintainers/persistent-objects.md) and [state contributions](../maintainers/state-contributions.md) retaining their consumers.
-- Proposed scope and tuning: [editable-shelter limits](../limits/editable-shelters.md). Existing [object](../limits/objects.md), [spatial](../limits/spatial.md), [state-effect](../limits/state-effects.md) and [invention](../limits/inventions.md) inventories retain shared limits.
+- Scope and tuning: [editable-shelter limits](../limits/editable-shelters.md). Existing [object](../limits/objects.md), [spatial](../limits/spatial.md), [state-effect](../limits/state-effects.md) and [invention](../limits/inventions.md) inventories retain shared limits.
 - Current campfire behavior: [bundled survival](../worlds/base/survival.md#tending-the-campfire); the proposed dry-tinder consumer must explicitly revise and qualify that family before changing its behavior.
 - Related contracts: [construction direction](../../archive/03-design-proposals/evolving-materials-and-construction.md), [hearing](../hearing-and-speech.md), [lifecycle/property](../worlds/base/lifecycle-and-protection.md), [continuing lives](continuing-lives-feature-spec.md) and [attention/scenes](attention-and-scenes-feature-spec.md).
-- Technical design, implementation and measured capacity remain open. Product documentation does not close INV-6.4, implement arbitrary weather or authorize new property damage rules.
+- PX05's narrow paired design and AV04's selected runtime journey are complete. [Recorded evidence](../verification/editable-shelters.md) qualifies those arrangements, not human enjoyment or settlement capacity. The documents stay In progress because the wider shelter/home project and broader qualification remain open.

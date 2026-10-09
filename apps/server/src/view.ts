@@ -1,4 +1,8 @@
 import { outingViews } from './outing-view.js';
+import { bodyProfile } from '@open-legend/domain';
+import { materialExposureView } from '@open-legend/domain';
+import { assemblyView } from './construction.js';
+import { equippedItem, guardWorkLabel, BASE_GUARD_TEXT } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
@@ -183,7 +187,14 @@ export async function projectView(
   };
   const pileContents = memo(
     'pileContents',
-    [observation.visibleEntities, world.objectState, world.itemDefinitions],
+    [
+      observation.visibleEntities,
+      world.objectState,
+      world.itemDefinitions,
+      world.entities,
+      world.assemblyGeometryRevision,
+      world.simTime,
+    ],
     () => {
       const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
       for (const pile of observation.visibleEntities.filter(
@@ -198,6 +209,7 @@ export async function projectView(
             name: definition.name,
             quantity: item.quantity,
             portable: definition.portable === true,
+            materialCondition: materialExposureView(world, item.id),
           });
           byOwner.set(item.ownerId, contents);
         }
@@ -236,7 +248,10 @@ export async function projectView(
         ? { reason }
         : {}),
   });
-  const equipment = itemFor(world, actor.equippedItemId ?? '');
+  const equipment =
+    equippedItem(world, scope.actorId, 'ranged') ??
+    equippedItem(world, scope.actorId, 'melee') ??
+    equippedItem(world, scope.actorId, 'gather');
   const launcher = equipment && world.itemDefinitions[equipment.definitionId]?.launcher;
   const ammunition =
     launcher &&
@@ -251,7 +266,7 @@ export async function projectView(
       world.resourceReservations,
       world.itemDefinitions,
       world.recipes,
-      actor.equippedItemId,
+      player.inventoryRevision,
       actor.action,
       world.itemHandling,
       player.spatial,
@@ -273,6 +288,9 @@ export async function projectView(
         `entity:${entity.id}`,
         [
           entity,
+          entity.assembly ? world.entities : undefined,
+          entity.assembly ? world.simTime : undefined,
+          entity.assembly ? service.constructionAllowed(scope.actorId) : undefined,
           world.observerIdentities?.[scope.actorId]?.[entity.id],
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
           entity.kind === 'item-pile' || entity.remains ? pileContents.get(entity.id) : undefined,
@@ -296,8 +314,8 @@ export async function projectView(
           active,
           paused,
           launcher,
-          actor.equippedItemId,
-          (actor.attackReadyAt ?? 0) > world.simTime,
+          player.inventoryRevision,
+          (actor.combatReadyAt ?? 0) > world.simTime,
           ammunition,
           observation.knownRecipes,
           worldPosition(player),
@@ -475,6 +493,15 @@ export async function projectView(
                       : 'station';
           return {
             id: entity.id,
+            ...(entity.assembly
+              ? {
+                  assembly: assemblyView(
+                    world,
+                    entity.id,
+                    service.constructionAllowed(scope.actorId),
+                  ),
+                }
+              : {}),
             ...display,
             ...(entity.kind === 'item-pile' || entity.remains
               ? { contents: pileContents.get(entity.id) ?? [] }
@@ -488,6 +515,14 @@ export async function projectView(
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
+            ...(entity.actor
+              ? {
+                  bodySize: {
+                    width: bodyProfile(entity).radius * 2,
+                    height: bodyProfile(entity).height,
+                  },
+                }
+              : {}),
             ...(entity.actor?.body ? { bodyPlan: entity.actor.body.plan } : {}),
             ...(world.exitExposures?.[entity.id] !== undefined &&
             world.participationPolicy?.exitExposureSeconds
@@ -524,6 +559,11 @@ export async function projectView(
                       .join(', ')
                   : entity.actor.action
                     ? ({
+                        assemble: entity.actor.action.assemblyPhase
+                          ? world.assemblyFamilies?.[entity.actor.action.assemblyPhase.familyId]
+                              ?.labels[entity.actor.action.assemblyPhase.operation]
+                          : undefined,
+                        guard: BASE_GUARD_TEXT.activityLabel,
                         pickup: 'Picking up items',
                         move: 'Walking',
                         follow: 'Following',
@@ -955,11 +995,13 @@ export async function projectView(
                   'gather',
                   'prepare',
                   'craft',
+                  'assemble',
                   'cook',
                   'harvest',
                   'treat-scar',
                   'hunt',
                   'strike',
+                  'guard',
                   'replenish',
                   'tend-fire',
                 ].includes(actor.action.type)),
@@ -971,7 +1013,11 @@ export async function projectView(
             advancing: !paused && actor.action.stage === 'working',
             label: actor.action.navigation
               ? 'Preparing route'
-              : (workLabels[actor.action.type] ?? 'Working'),
+              : actor.action.assemblyPhase
+                ? (world.assemblyFamilies?.[actor.action.assemblyPhase.familyId]?.labels[
+                    actor.action.assemblyPhase.operation
+                  ] ?? 'Working')
+                : (guardWorkLabel(world, player) ?? workLabels[actor.action.type] ?? 'Working'),
             progress:
               actor.action.stage === 'approaching' || actor.action.type === 'follow'
                 ? 0
@@ -1072,7 +1118,12 @@ export async function projectView(
           );
           return {
             id: recipe.id,
-            npcCreated: knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated,
+            origin:
+              recipe.provenance.source === 'world-authored'
+                ? 'authored'
+                : knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated
+                  ? 'npc'
+                  : 'player',
             name: recipe.name,
             description: recipe.description,
             output: recipe.output,
@@ -1088,7 +1139,10 @@ export async function projectView(
               role: input.role,
             })),
             workSeconds: recipe.workSeconds,
-            provenance: `${recipe.provenance.source} · ${recipe.provenance.model ?? 'test fixture'}`,
+            provenance:
+              recipe.provenance.source === 'world-authored'
+                ? 'Known world method'
+                : `${recipe.provenance.source} · ${recipe.provenance.model ?? 'supplied method'}`,
             actions: [
               action(
                 `craft-${recipe.id}`,

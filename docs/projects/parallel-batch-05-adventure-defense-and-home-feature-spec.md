@@ -1,8 +1,8 @@
 # Batch 05 — Adventure, defense and a home
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Five implementation assignments are specified; incoming encounter work and the earlier shelter design remain explicit prerequisites. | 2026-10-05   |
+| Status      | Current progress                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV02 shield defense and AV04 flat shelters are delivered; the other three assignments retain their unfinished scope. | 2026-10-06   |
 
 ## Purpose and selection
 
@@ -19,6 +19,8 @@ Inspected local `main` and freshly fetched `origin/main` at `34233ae24365eb8911f
 - `codex/pg02-attended-resident` at `94633971` remains separate. A worktree's presence is evidence of separate work, not proof someone is currently executing it. Batch 04 already assigns barter, known places, voluntary outings and shelter technical design. None is allocated again here.
 - Current source has working prey hunting, finite harvest, meat cooking, ordinary eating, sleep, bags and item manufacture. Equipment still has one equipped-item reference; there is no shield guard consumer. The river is landscape, not a fish source. Cooking still has one raw-meat/output pair. Richer scenery alone supplies neither rewarding exploration nor another food activity.
 - `ce68e678` expanded DG11–DG15 product designs. Shelter and practical competence directly support this batch's game; cross-world libraries, optional story cutaways and a well-being study are considered below, not automatically promoted.
+
+**October 6 AV02 delivery:** the supplied local `main` revision `51d43e3f4a91e7ceed1404add65123b331d97358` already includes the incoming threat/lifecycle work. Compatible equipment, known shield manufacture and finite chosen guard are delivered on `codex/av02-shield-defense`; [native, PostgreSQL and browser evidence](../verification/shield-defense.md) records the scope. The October 5 audit above remains historical. AV01/AV03/AV04/AV05 are not completed by this delivery.
 
 ### Priority comparison
 

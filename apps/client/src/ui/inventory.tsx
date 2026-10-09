@@ -868,6 +868,17 @@ function InventoryWorkspace({
                       ? 'Unknown'
                       : `${item.packingLoad} units${item.container ? ' including contents' : ' per item'}`}
                   </p>
+                  {item.materialCondition && (
+                    <p>
+                      {item.materialCondition.label} ·{' '}
+                      {item.materialCondition.coveredFraction >= 1 - 1e-6
+                        ? 'covered'
+                        : item.materialCondition.coveredFraction > 0
+                          ? 'partly covered'
+                          : 'exposed'}{' '}
+                      · {item.materialCondition.process}
+                    </p>
+                  )}
                   {!!item.characteristics?.length && (
                     <dl className="ol-inventory-facts">
                       {item.characteristics.map((fact) => (

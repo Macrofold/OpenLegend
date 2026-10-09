@@ -1,5 +1,7 @@
+import { BASE_CANOPY, CANOPY_ITEMS } from './canopies.js';
 import type { ItemDefinition } from '../../types.js';
 import type { MaterialInterface } from '../../invention-families.js';
+import { BASE_KNIFE_EQUIPMENT } from './equipment.js';
 
 /** Native preparation and invented cord share these authored costs and output semantics.
  * docs/worlds/base/items.md#cordage-manufacture-and-reuse */
@@ -23,8 +25,10 @@ export const BASE_BINDING_MATERIAL: MaterialInterface = {
 export const CONSTRUCTED_ITEM_STORY_FIELDS = { story_importance: { story_importance: 8 } };
 
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
+  ...CANOPY_ITEMS,
   knife: {
     mechanismFields: { story_importance: { story_importance: 7 } },
+    equipment: BASE_KNIFE_EQUIPMENT,
     id: 'knife',
     version: 1,
     portable: true,
@@ -82,6 +86,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['fiber'],
   },
   prepared_fiber: {
+    assemblyMaterial: { familyId: BASE_CANOPY.id, role: 'fiber' },
     id: 'prepared_fiber',
     version: 1,
     portable: true,
@@ -92,6 +97,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['fiber', 'flexible', 'pouch'],
   },
   cord: {
+    assemblyMaterial: { familyId: BASE_CANOPY.id, role: 'binding' },
     id: 'cord',
     version: 1,
     portable: true,

@@ -83,7 +83,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     `knife-${NPC_ID}:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'knife')!.id}`,
     `talk-${NPC_ID}`,
     `invite-travel:${NPC_ID}`,
-    'teach',
+    `teach-${NPC_ID}-wooden-shield-method`,
   ]);
   // Offers are listed for the selected person and remain unavailable out of arm's reach.
   const offers = person.filter((action) => action.id.startsWith('offer:'));
@@ -149,7 +149,8 @@ it('includes learned recipes beyond an AI retrieval limit while excluding anothe
     catalogue.actions.filter(
       (action) => action.intent.kind === 'command' && action.intent.command.type === 'craft',
     ),
-  ).toHaveLength(30);
+  ).toHaveLength(31);
+  expect(catalogue.actions.some((action) => action.label === 'Craft Wooden shield')).toBe(true);
   expect(JSON.stringify(catalogue)).not.toContain('Private fixture sling');
   expect(catalogue.actions.some((action) => action.label === 'Craft Fixture sling 29')).toBe(true);
   const craft = catalogue.actions.find((action) => action.label === 'Craft Fixture sling 29')!;

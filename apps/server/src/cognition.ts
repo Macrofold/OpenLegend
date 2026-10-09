@@ -91,8 +91,15 @@ export const thoughtOnlySchema = z
   .strict();
 
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
-  const base = { actorId, id, ...(input.purpose ? { purpose: input.purpose } : {}) };
+  const base = {
+    actorId,
+    id,
+    ...(input.purpose ? { purpose: input.purpose } : {}),
+    ...(input.autoEquip ? { autoEquip: true } : {}),
+  };
   switch (input.type) {
+    case 'construction':
+    case 'construction-rest':
     case 'activity-request':
       throw new Error(
         'Requested activity parameters require the scoped world binder, not a prebuilt action candidate.',
@@ -189,6 +196,13 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       return { ...base, type: 'prepare', preparation: input.preparation! };
     case 'craft':
       return { ...base, type: 'craft', recipeId: input.recipeId! };
+    case 'guard':
+      return {
+        ...base,
+        type: 'guard',
+        itemId: input.itemId!,
+        ...(input.targetId ? { targetId: input.targetId } : { facing: input.facing! }),
+      };
     case 'eat':
     case 'equip':
       return { ...base, type: input.type, itemId: input.itemId! };

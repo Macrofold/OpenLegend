@@ -1,12 +1,14 @@
 # Five product and behavior specifications
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG12–DG14 product expansions and reviews are complete; technical design and runtime delivery remain open. | 2026-10-05   |
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG12–DG14 product reviews and PX05’s shelter design are complete; AV04 delivers the selected flat shelter, with wider work open. | 2026-10-06   |
 
-**Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Technical design and runtime implementation remain open.**
+**Status: all five researched product proposals and the game-first critique complete, October 3, 2026. Wider technical design and runtime implementation remain open; PX05’s narrow shelter pair is now complete.**
 
 The [groups 11–15 assignment](completed/product-design-groups-11-15.md) preserves this package and extends its existing creation, shelter and competence specifications in place. DG12 now adds the complete invention-library round trip and useful opening continuation. DG13 adds concrete canopy materials/layouts, direct build/use/edit/reclaim behavior, construction permissions and a positive first home-use scene. DG14 selects a short sling-handling improvement, independent inert-target practice and a willing coached episode, preserving the existing roof/dice example as optional. This follow-up does not rewrite the original source baseline below or claim technical/runtime completion.
+
+[PX05’s technical counterpart](editable-shelters-tech-design.md) separately completes the selected one-builder open-shelter contracts and paper arrangements. AV04 delivers the flat canopy/two-bay journey with [native, PostgreSQL and browser evidence](../verification/editable-shelters.md). [SH01–SH06](../maintainers/editable-shelters.md) retains the unselected slope and broader qualification under INV/SW/PO/BW/SC; broader home, structural and thermal choices remain explicit stage blockers.
 
 ## Purpose and scope
 
@@ -27,13 +29,13 @@ Mike explicitly requested product and behavior design before technical design. C
 
 ## Specifications and progress
 
-| Order | Product specification                                                | Existing work owner                                       | Status                                                                                          |
-| ----- | -------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies           | Product proposal and focused review complete; technical design and runtime work remain open     |
-| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                             | Product proposal and focused review complete; technical design and runtime work remain open     |
-| 3     | [Creating a world from a premise](world-creation-feature-spec.md)    | ND01/ND12, INV-4.10/INV-8, EWF11/EWF12                    | DG12 expands creation and invention reuse; product review complete, technical/runtime work open |
-| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4, PX05                        | DG13 product expansion and review complete; technical design and runtime work remain open       |
-| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03/ND04 practical slice, PC and shared EWF/action/state | Product proposal and focused review complete; technical design and runtime work remain open     |
+| Order | Product specification                                                | Existing work owner                                       | Status                                                                                             |
+| ----- | -------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1     | [Continuing NPC lives](continuing-lives-feature-spec.md)             | PS02–PS03, with explicit PS04–PS06 dependencies           | Product proposal and focused review complete; technical design and runtime work remain open        |
+| 2     | [Attention, crowds and scenes](attention-and-scenes-feature-spec.md) | PS04 / PS-D02                                             | Product proposal and focused review complete; technical design and runtime work remain open        |
+| 3     | [Creating a world from a premise](world-creation-feature-spec.md)    | ND01/ND12, INV-4.10/INV-8, EWF11/EWF12                    | DG12 expands creation and invention reuse; product review complete, technical/runtime work open    |
+| 4     | [Editable shelters and rain](editable-shelters-feature-spec.md)      | ND07 / focused ND08, INV-6.4, PX05                        | DG13/PX05 complete; AV04 flat shelter delivered; slope, broader home and qualification remain open |
+| 5     | [World-authored stats and checks](authored-stats-feature-spec.md)    | ND03/ND04 practical slice, PC and shared EWF/action/state | Product proposal and focused review complete; technical design and runtime work remain open        |
 
 ## Completion criteria
 

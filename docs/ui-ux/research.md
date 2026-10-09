@@ -340,6 +340,14 @@ Access note: original discussion text was available in indexed retrieval; direct
 
 Players describe difficulty judging item purpose and recurring management; replies describe deposit, sell and salvage workflows that help them. Reveal useful bulk actions and consequences instead of assuming economy knowledge. This thread establishes neither prevalence nor a monetization motive. Destination: [Inventory](inventory.md).
 
+## Local implementation evidence
+
+### OL01
+
+**OpenLegend shelter delivery review, October 6, 2026.** [Recorded browser and native evidence](../verification/editable-shelters.md#delivery-review).
+
+The original shelter controls allowed overlapping reads. The repair used one cancellable read owner for polling and post-write refresh; controlled three/five-second delays recorded at most one read in flight. Deliberate failed reads disabled Review, retained the draft and recovered. Sleep temporarily removed a selected canopy from view; an explicit unavailable state retained that identity until waking. This supports [the asynchronous-work guidance](react.md#effects-asynchronous-work-and-mutations), not a universal polling cadence, representative accessibility result or measured frame-rate improvement.
+
 ## Synthesis and evidence limits
 
 The shared lesson is to make the object, scope, next action and consequential state legible, preserve working context and remove repetitive management with no gameplay purpose. Composite controls, focus and transaction integrity need explicit behavior contracts, not visual intuition alone. The handbook's quantitative ranges in [UXL01–05](../limits/ui-ux.md) remain Open Legend proposals; attributed WCAG thresholds retain their qualifications. No cited company endorses our particular values.
@@ -348,4 +356,4 @@ Primer was read in the specified excerpts; Adobe's two named implementation file
 
 Most pages were read as parsed text; Apple, Material and Steam access limits are recorded individually. Coverage is not hands-on comparative play, live ChatGPT/Claude product testing, every component body, every patch or a representative player sample. Official guide images are references, not licensed game assets. Recheck living sources when a version-sensitive claim or dependency API changes; ordinary UI edits need not reread every source.
 
-No game/browser, assistive-technology, native agent-dispatch or user study was run for this research. Tooling evidence and open checks belong in [verification](verification.md) and [UIUX06](../maintainers/ui-ux.md#uiux06). Research refines requirements; it does not certify present conformance or authorize every described enhancement.
+The original external-source research ran no game/browser, assistive-technology, native agent-dispatch or user study; OL01 separately records controlled local browser evidence. Tooling evidence and open checks belong in [verification](verification.md) and [UIUX06](../maintainers/ui-ux.md#uiux06). Research refines requirements; it does not certify present conformance or authorize every described enhancement.

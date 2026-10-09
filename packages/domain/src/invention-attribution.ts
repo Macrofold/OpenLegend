@@ -77,6 +77,7 @@ export function validateInventionAttribution(world: WorldState): void {
       throw new Error('Invalid saved invention attribution.');
   }
   for (const recipe of Object.values(world.recipes)) {
+    if (recipe.provenance.source === 'world-authored') continue;
     const base = recipe.provenance.derivedFrom;
     if (
       base &&
@@ -105,7 +106,7 @@ export function knownRecipeAttribution(
   const knowledge = world.knowledge[actorId]?.find((entry) => entry.recipeId === recipeId);
   if (!knowledge) return;
   const recipe = getOwn(world.recipes, recipeId);
-  if (!recipe) return;
+  if (!recipe || recipe.provenance.source === 'world-authored') return;
   const own =
     knowledge.source === 'invented'
       ? getOwn(world.declarationReceipts, knowledge.evidenceId)

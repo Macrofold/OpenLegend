@@ -1,3 +1,4 @@
+import { Construction } from './ui/construction';
 import { namePhrase } from '@open-legend/language';
 import { FamilyEditor } from './ui/family-editor';
 import { WorldVisualSettings } from './ui/world-visual-settings';
@@ -1028,7 +1029,19 @@ function App({
           </>
         );
       case 'crafting':
-        return <Crafting {...props} invent={() => invent()} />;
+        return (
+          <>
+            <Construction
+              key={`${view.access?.scope}:${view.saveTimeline}:${view.player.id}`}
+              view={view}
+              connected={connected}
+              visible={open.includes('crafting') && (!narrow || open.at(-1) === 'crafting')}
+              command={command}
+              preview={(shapes, valid) => scene.current?.setConstructionPreview(shapes, valid)}
+            />
+            <Crafting {...props} invent={() => invent()} />
+          </>
+        );
       case 'character':
         return (
           <Character

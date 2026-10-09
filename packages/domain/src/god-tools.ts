@@ -190,6 +190,7 @@ export function reviveActor(
   if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
     throw new Error('Physical life exhausted.');
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
+  delete actor.combatReadyAt;
   actor.alive = true;
   actor.incapacitated = false;
   setBodyHealth(actor, actor.body!.maxHealth);

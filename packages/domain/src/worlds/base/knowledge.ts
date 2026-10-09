@@ -5,6 +5,19 @@ import { characterCount, advanceKnowledgeRevision, type KnowledgePolicy } from '
 import { isSafeRecordId } from '../../records.js';
 import { seesEntity } from '../../perception.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
+import { KNOWN_SHIELD_METHOD } from './shield-family.js';
+
+export function startingRecipeKnowledge(world: WorldState, actorId: string): void {
+  if (!world.entities[actorId]?.actor?.body?.equipmentPorts.length) return;
+  const knowledge = (world.knowledge[actorId] ??= []);
+  if (!knowledge.some((k) => k.recipeId === KNOWN_SHIELD_METHOD.recipeId))
+    knowledge.push({
+      recipeId: KNOWN_SHIELD_METHOD.recipeId,
+      source: 'authored',
+      learnedAt: world.simTime,
+      evidenceId: 'base:known-shield',
+    });
+}
 
 export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 

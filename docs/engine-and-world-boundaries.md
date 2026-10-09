@@ -104,6 +104,12 @@ These principles guide engine design, subsystem design, and implementation revie
 
 Apply P07 separately to fictional knowledge and application security. A world may deliberately support telepathy or compulsion through admitted game effects; neither can reach credentials, actual billing, or ungranted human-private data.
 
+### Complete-operation authorization
+
+Resolve permissions against the complete current operation: its actor/site, consumed inputs, dependent materials and released outputs. Custody, visibility or permission to visit does not imply editing or material-use rights. Consider all applicable grants rather than treating the first partially matching grant as decisive; combine grants only when the authority owner's contract explicitly supports composition. Authored policy describes permitted fictional operations; it cannot waive platform grants enforced by the authority owner.
+
+Keep the qualifying grant identities/revisions and affected resources before mutation changes the relationships used to establish that permission. Revalidate mutable authority at each real commit after elapsed or asynchronous work, then build the truthful completion record from that admission; do not rediscover its authorization from the already-mutated world. In the [shelter review](verification/editable-shelters.md#delivery-review), detaching cloth removed links to its cords, so checking the resulting world could name a cloth-only grant that had not authorized releasing those cords. Invalid current authority refuses new material effects; earlier committed phases follow their defined interruption rules. Restoration cannot revive revoked rights.
+
 ### Preserve precise history and solve the general cause
 
 For event, action-result, awareness, memory, recall, consolidation, journal, telemetry and other historical tracking work, preserve the exact available facts at the recording boundary: identities and attribution, occurrence time/order, quantities and units, before/after values, attempted versus committed effects, failure/cancellation, and source/observation uncertainty. Record actual values after clamping or partial execution. Do not replace “15 to 33” with “improved,” silently round a canonical value, truncate an account, or let a compact summary become the only surviving representation. Precision means retaining what was actually known, not inventing exactness or exposing truth an observer could not perceive.
@@ -271,3 +277,7 @@ This document owns the conceptual engine/world boundary and the extension decisi
 | [World agent and workshop](../archive/03-design-proposals/world-agent-and-workshop.md) / [UI brief](ui-design-brief.md) | Natural-language authoring workflow, review decisions, and progressive technical inspection                                |
 
 Development compatibility follows the [root policy](../AGENTS.md#development-save-policy). Live definition activation and current-format continuity remain the separate contracts described above.
+
+## Selected shelter consumer
+
+The flat flexible-bay engine computes finite attachments, clearances, part transitions and layered coverage. The base world authors its material roles, physical material classification, dimensions, sockets, work times, condition/moisture laws, kit, builder site and player wording once in `packages/domain/src/worlds/base/canopies.ts` and `canopy-scene.ts`. Server and client consume those definitions; no engine layer supplies a second cloth size, Sleep reward, roof strength or weather penalty. Existing objects/equipment, spatial navigation, state contributions, operational authority and rest own their effects. [Current profile](worlds/base/editable-shelters.md), [implementation contract](projects/editable-shelters-tech-design.md) and [evidence](verification/editable-shelters.md) limit this delivery to the selected flat canopy/two-bay loop.

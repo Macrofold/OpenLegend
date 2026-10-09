@@ -1,5 +1,7 @@
 # Extensible world foundation — implementation tracker
 
+**Delivered AV02 consumer, October 6:** EWF04/EWF06/EWF07 now have a finite contact-defense/equipment example using pinned world profiles, declared body ports, permitted inspection, shared human/NPC admission and same-version return. A changed admitted shield alters actual damage; a body without compatible ports refuses before effects. [Evidence](../verification/shield-defense.md) does not close arbitrary anatomy, general family registration, live model quality or broader EWF release gates.
+
 [INV-15–INV-19](inventions-and-world-evolution.md#unified-world-agent-delivery) now own the agent-facing graph/MCP/kind-adapter integration and capability journeys. EWF remains responsible for the actual shared host/state/port interfaces; tool descriptions or graph edges do not complete them. Use [Composition](../invention-composition.md) and [target scenarios](../invention-scenarios.md) when qualifying unlike consumers.
 
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).

@@ -1,3 +1,4 @@
+import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js';
 import {
   STARTER_EXTENT,
   starterTiles,
@@ -6,6 +7,8 @@ import {
 } from './landscape.js';
 import { emptyActionExperience } from '../../action-experience.js';
 import { ADA_IDENTITY } from './characters.js';
+import { installKnownShieldMethod } from './shield-family.js';
+import { startingRecipeKnowledge } from './knowledge.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { BASE_PARTICIPATION_POLICY } from './participation.js';
 import { NATIVE_STRIKES } from './strikes.js';
@@ -72,7 +75,6 @@ export function createActor(
     incapacitated: false,
     bornAt: -24 * 365 * 86400,
     action: null,
-    equippedItemId: null,
     agency: seedAgency(
       initialGoals !== undefined
         ? initialGoals
@@ -123,7 +125,7 @@ export function createWorld(
     },
     inventionPolicy: initialInventionPolicy(),
     moduleManifest: createModuleManifest(
-      DEFAULT_ATTRIBUTES,
+      [...DEFAULT_ATTRIBUTES, ...CANOPY_ATTRIBUTES],
       DEFAULT_SENSES,
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
@@ -151,6 +153,8 @@ export function createWorld(
     nativeStrikes: structuredClone({ ...NATIVE_STRIKES, [STAG_CONTACT.id]: STAG_CONTACT }),
     entities: {},
     objectState: { revision: 0 },
+    assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(BASE_CANOPY) },
+    assemblyGeometryRevision: 0,
     itemDefinitions: structuredClone(NATIVE_ITEMS),
     recipes: {},
     memories: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
@@ -370,7 +374,14 @@ export function createWorld(
     },
   ];
   for (const entity of entities) world.entities[entity.id] = entity;
+  for (const material of [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
+    for (let n = 0; n < material.quantity; n++) {
+      const id = addItem(world, PLAYER_ID, material.definitionId, 1);
+      if (material.quantity > 1) world.entities[id]!.name += ` ${n + 1}`;
+    }
+  installKnownShieldMethod(world);
   for (const id of [PLAYER_ID, NPC_ID, MERCENARY_ID]) {
+    startingRecipeKnowledge(world, id);
     addItem(world, id, 'stone_tool', 1);
     addItem(world, id, 'knife', 1);
     addItem(world, id, 'prepared_fiber', id === PLAYER_ID ? 4 : 2);

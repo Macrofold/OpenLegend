@@ -856,7 +856,6 @@ export async function prepareDecision(
     offered,
     actionCandidates: availableActions,
     actionInspection,
-    knownPlans: {} as Record<string, string[]>,
     expectedPlanRevision: actor.agency.plan?.revision ?? 0,
     replaceChosenPlan:
       actor.agency.plan?.status === 'blocked' || actor.agency.plan?.status === 'active',
@@ -920,10 +919,7 @@ export async function selectDecisionActions(
   const candidates = fitActionCandidates(prepared.context, prepared.actionCandidates);
   const allOffers = candidates.map((candidate, index) => ({
     id: `a${index}`,
-    description:
-      purpose === 'choose-action' && candidate.prerequisite
-        ? `${candidate.description.replace('Requires first equipping the carried weapon in a separate action. ', '')} (auto-equip)`
-        : candidate.description,
+    description: candidate.description,
   }));
   const candidateDescriptions = Object.fromEntries(
     allOffers.map((candidate) => [candidate.id, candidate.description]),
@@ -968,19 +964,6 @@ export async function selectDecisionActions(
       }),
     ),
   };
-  const knownPlans: Record<string, string[]> = {};
-  if (purpose === 'choose-action')
-    for (const candidate of selected) {
-      if (!candidate.prerequisite) continue;
-      const id = `a${candidates.indexOf(candidate)}`,
-        preparation = `${id}_prepare`;
-      actions[preparation] = domainCommand(
-        candidate.prerequisite,
-        prepared.binding.actorId,
-        prepared.binding.decisionId,
-      );
-      knownPlans[id] = [preparation, id];
-    }
   const offered = selected.map((candidate) => allOffers[candidates.indexOf(candidate)]!);
   const entityReferences = actionEntityReferences(prepared, selected);
   const binding = { ...prepared.binding, actions, entityIds: Object.values(entityReferences) };
@@ -992,7 +975,6 @@ export async function selectDecisionActions(
     );
   return {
     ...prepared,
-    knownPlans,
     binding,
     entityReferences,
     offered,

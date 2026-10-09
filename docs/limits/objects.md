@@ -32,11 +32,11 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB05
 
-**Reported · Restrictiveness: Very safe.**
+**Changed October 6, 2026 · Restrictiveness: Medium.**
 
-Attachment supports only the existing `equipment` slot; no general attachment points or assemblies. One physical parent remains a placement invariant.
+**Removed single-slot restriction; current admitted body-port equipment and selected shelter attachments.** One item may occupy multiple places declared by its pinned equipment profile, and compatible items may remain held together. Missing body ports or overlapping occupied ports refuse before effects. There is no engine-fixed number of hands or saved equipment mirror. AV04 adds exact local attachments for the [selected flat canopy family](editable-shelters.md); broader assemblies remain unsupported. One physical parent remains a placement invariant.
 
-**Reason / tradeoff:** Preserve unique physical placement; the single equipment slot is the discretionary supported-feature boundary.
+**Reason / tradeoff:** AV02 replaces the former single `equipment` slot so a knife and shield can coexist and one two-handed launcher can conflict with both. A rebuilt attachment subset bounds warm lookups by held items, rather than all carried supplies; it is not saved authority. Extension needs a real authored body/equipped consumer and its permissions. [World profile](../worlds/base/shield-defense.md#compatible-equipment), [native/browser/SQL and isolated lookup evidence](../verification/shield-defense.md).
 
 ## OB06
 

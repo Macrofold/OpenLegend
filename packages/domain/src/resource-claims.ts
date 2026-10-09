@@ -286,8 +286,12 @@ export function captureReservationIndex(world: WorldState): (result: WorldState)
   const records = world.resourceReservations;
   const index = records && reservationIndexes.get(records);
   return (result) => {
-    if (index && result.resourceReservations)
+    if (index && result.resourceReservations) {
       reservationIndexes.set(result.resourceReservations, index);
+      // A compound candidate transfers a complete index; the receiving draft must
+      // copy it before further changes rather than inherit an older dirty marker.
+      if (isDraft(result)) changedReservationIndexes.delete(result.resourceReservations);
+    }
   };
 }
 /** Derived occupancy includes terminal receipts until their canonical owner supports
@@ -380,18 +384,32 @@ export function itemHasReservations(world: WorldState, itemId: string): boolean 
     ) ?? 0) > 0
   );
 }
-export function availableItemQuantity(world: WorldState, itemId: string): number {
+/** Completing work may use its own held stock, but never another invocation's.
+ * The reservation owner indexes live holds; retained receipts must not be scanned
+ * once per selected material. See docs/performance.md#design-recurring-work-before-implementation. */
+export function availableItemQuantity(
+  world: WorldState,
+  itemId: string,
+  invocationId?: string,
+): number {
   const item = itemFor(world, itemId);
   if (!item) return 0;
   if (!world.resourceReservations) return item.quantity;
   const definition = getOwn(world.itemDefinitions, item.definitionId);
-  return definition
-    ? (availableResource(world, {
-        kind: 'item',
-        itemId,
-        definition: itemDefinitionPin(definition),
-      }) ?? 0)
-    : 0;
+  if (!definition) return 0;
+  const pin = itemDefinitionPin(definition);
+  let available = availableResource(world, { kind: 'item', itemId, definition: pin }) ?? 0;
+  if (invocationId)
+    for (const id of reservationIndex(world).invocations.get(invocationId) ?? []) {
+      const hold = world.resourceReservations[id]!;
+      if (
+        hold.resource.kind === 'item' &&
+        hold.resource.itemId === itemId &&
+        sameDefinitionPin(hold.resource.definition, pin)
+      )
+        available += hold.amount;
+    }
+  return available;
 }
 
 /** Planning reads one start state; a coupled group cannot spend its own speculative
@@ -734,14 +752,19 @@ export function reserveResource(
       world.workState?.invocations[request.invocationId]?.actorId !== request.actorId)
   )
     return { status: 'unavailable' };
-  const plan = planGroup(world, {
-    invocationId: request.invocationId,
-    fulfillment: 'all-or-nothing',
-    operations: [
-      { source: request.resource, sourceRevision: expectedRevision, amount: request.amount },
-    ],
-  });
-  if (plan.status !== 'planned') return plan;
+  // Holding stock promises availability; it does not consume or retire an object.
+  // Actual debits still pass planGroup and their owning quantity/state checks.
+  const stock = readResource(world, request.resource);
+  if (!stock) return { status: 'unavailable' };
+  if (stock.revision !== expectedRevision) return { status: 'stale' };
+  if (
+    !Number.isFinite(request.amount) ||
+    request.amount <= 0 ||
+    (stock.precision === 'whole' && !Number.isSafeInteger(request.amount))
+  )
+    return { status: 'invalid' };
+  if ((availableResource(world, request.resource) ?? 0) < request.amount)
+    return { status: 'unavailable' };
   const hold: ResourceReservation = {
     ...request,
     requestDigest,

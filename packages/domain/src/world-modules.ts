@@ -1,3 +1,4 @@
+import { validateAssemblies } from './assembly-validation.js';
 import { validNarrationTemplate } from '@open-legend/language';
 import {
   narrationTemplate,
@@ -15,7 +16,7 @@ import { recordSemanticChange } from './dependencies.js';
 import { validateNativeWork } from './native-work.js';
 import { validateWorkState } from './work-budget.js';
 import { validateParticipation } from './participation.js';
-import { isDraft, original, freeze } from 'immer';
+import { current, isDraft, original, freeze } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
 import { validateKnowledge } from './knowledge.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
@@ -54,7 +55,9 @@ import { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
-import { hasRecordFields } from './records.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
+import { validateEquipment } from './equipment.js';
+import { validateContactDefense } from './contact-defense.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { validateOutings } from './outings.js';
@@ -183,15 +186,20 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
   },
 } as const);
 const definitionPins = new WeakMap<object, DefinitionPin>();
-export function definitionPin(definition: { id: string; version: number }): DefinitionPin {
-  const cached = definitionPins.get(definition);
+export function definitionPin<T extends { id: string; version: number }>(
+  definition: T,
+): DefinitionPin {
+  // Unchanged draft definitions resolve to their frozen original, so native state
+  // reads share its exact pin. Changed drafts produce a fresh, uncached snapshot.
+  const snapshot = isDraft(definition) ? current(definition) : definition;
+  const cached = definitionPins.get(snapshot);
   if (cached) return cached;
   const pin = {
-    id: definition.id,
-    version: definition.version,
-    digest: contentLabel(canonicalJson(definition)),
+    id: snapshot.id,
+    version: snapshot.version,
+    digest: contentLabel(canonicalJson(snapshot)),
   };
-  if (!isDraft(definition) && Object.isFrozen(definition)) definitionPins.set(definition, pin);
+  if (Object.isFrozen(snapshot)) definitionPins.set(snapshot, pin);
   return pin;
 }
 export function createModuleManifest(
@@ -779,6 +787,7 @@ export function validateWorldModules(world: WorldState): void {
   if (!world.moduleManifest) throw new Error('World module manifest is missing.');
   validateStatusEffects(world);
   validateNativeWork(world);
+  validateAssemblies(world);
   validateSpatialWorld(world);
   validatePerceptionState(world);
   validatePlaces(world);
@@ -786,6 +795,8 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
   validateGatheringTools(world);
+  validateEquipment(world);
+  validateContactDefense(world);
   for (const definition of Object.values(world.itemDefinitions)) {
     if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))
@@ -793,6 +804,21 @@ export function validateWorldModules(world: WorldState): void {
   }
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
+    if (recipe.provenance.source === 'world-authored') {
+      if (
+        !isSafeRecordId(recipe.provenance.definition.id) ||
+        !sameDefinitionPin(
+          recipe.provenance.definition,
+          definitionPin({
+            id: recipe.provenance.definition.id,
+            version: recipe.provenance.definition.version,
+            candidate: recipe.sourceCandidate,
+          }),
+        )
+      )
+        throw new Error('Invalid authored method source.');
+      continue;
+    }
     const authority = recipe.provenance?.authority;
     if (
       !authority ||
@@ -936,8 +962,8 @@ export function validateWorldModules(world: WorldState): void {
     )
       throw new Error('Invalid saved inventory inspection.');
     if (
-      e.actor?.attackReadyAt !== undefined &&
-      (!finite(e.actor.attackReadyAt) || e.actor.attackReadyAt < 0)
+      e.actor?.combatReadyAt !== undefined &&
+      (!finite(e.actor.combatReadyAt) || e.actor.combatReadyAt < 0)
     )
       throw new Error('Invalid attack recovery deadline.');
     for (const contact of Object.values(e.actor?.contacts ?? {})) {
@@ -1052,7 +1078,7 @@ export function validateWorldModules(world: WorldState): void {
         (e.actor.action.strikePhase === 'windup' && e.actor.action.strikeOutcome !== undefined) ||
         (e.actor.action.strikePhase === 'recovery' &&
           (!['hit', 'miss'].includes(e.actor.action.strikeOutcome ?? '') ||
-            e.actor.attackReadyAt === undefined)))
+            e.actor.combatReadyAt === undefined)))
     )
       throw new Error('Invalid saved melee phase.');
     if (

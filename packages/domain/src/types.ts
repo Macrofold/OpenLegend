@@ -29,9 +29,12 @@ export interface Ammunition {
 }
 export interface ItemDefinition extends Named {
   mechanismFields?: Record<string, Record<string, number>>;
+  assemblyMaterial?: import('./assembly-types.js').AssemblyMaterial;
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
+  equipment?: import('./equipment.js').EquipmentProfile;
+  contactDefense?: import('./contact-defense.js').ContactDefenseProfile;
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
   portable?: boolean;
   gatheringTool?: { resourceId: string; quantity: number };
@@ -104,10 +107,15 @@ export interface RecipeDefinition {
   digest: string;
   outputDefinitionId: string;
   admittedAt: number;
-  provenance: DeclarationProvenance;
+  provenance: DeclarationProvenance | AuthoredRecipeProvenance;
+}
+export interface AuthoredRecipeProvenance {
+  source: 'world-authored';
+  definition: import('./world-modules.js').DefinitionPin;
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
+  | 'guard'
   | 'pickup'
   | 'strike'
   | 'follow'
@@ -121,8 +129,13 @@ export type ActionType =
   | 'status-effect'
   | 'treat-scar'
   | 'replenish'
-  | 'tend-fire';
+  | 'tend-fire'
+  | 'assemble';
 export interface Action {
+  assemblyPhase?: import('./assembly-types.js').AssemblyPhase;
+  assemblyCorner?: number;
+  constructionGrant?: { id: string; revision: number };
+  materialOriginIds?: string[];
   requiresLethalReview?: boolean;
   /** A physical life, rather than the continuing identity, is an attack's target. */
   targetLife?: number;
@@ -132,6 +145,7 @@ export interface Action {
   recipePin?: import('./world-modules.js').DefinitionPin;
   strikePhase?: 'windup' | 'recovery';
   strikeOutcome?: 'hit' | 'miss';
+  guard?: import('./contact-defense.js').GuardState;
   follow?: {
     distance: number;
     nextRepathAt: number;
@@ -193,8 +207,8 @@ export interface ActorComponent {
   pendingDeath?: import('./reincarnation.js').PendingDeath;
   scars?: Record<string, number>;
   conditions?: Record<string, import('./conditions.js').ConditionEpisode>;
-  /** Attack recovery survives cancelling an already committed swing. */
-  attackReadyAt?: number;
+  /** Committed strike/defense recovery belongs to this body and survives action cancellation. */
+  combatReadyAt?: number;
   inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
   /** Explicitly disclosed offer terms, not a live view of another person's inventory. */
   knownTradeLots?: Record<string, Record<string, import('./handover.js').KnownTradeLot>>;
@@ -227,7 +241,6 @@ export interface ActorComponent {
   /** Legacy animals have no recorded birth time; bornAt is only a placeholder then. */
   birthTimeKnown?: boolean;
   action: Action | null;
-  equippedItemId: string | null;
   planGeneration: number;
 }
 export interface AnimalComponent {
@@ -267,7 +280,17 @@ export interface Entity extends Named {
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
   mechanismFields?: Record<string, Record<string, number>>;
   id: string;
-  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile' | 'item';
+  kind:
+    | 'player'
+    | 'npc'
+    | 'animal'
+    | 'resource'
+    | 'campfire'
+    | 'remains'
+    | 'item-pile'
+    | 'item'
+    | 'assembly';
+  assembly?: import('./assembly-types.js').AssemblyComponent;
   inventoryRevision?: number;
   placement?: import('./spatial-state.js').Placement;
   item?: import('./objects.js').ItemLot;
@@ -307,7 +330,7 @@ export interface MemoryRecord {
 export interface KnowledgeRecord {
   recipeId: string;
   learnedAt: number;
-  source: 'invented' | 'taught' | 'practiced';
+  source: 'authored' | 'invented' | 'taught' | 'practiced';
   evidenceId: string;
 }
 /** Closed, trusted occurrence scope; only native/server code assigns it.
@@ -356,6 +379,9 @@ export interface WorldState {
   places: Record<string, import('./places.js').PlaceDefinition>;
   /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
   visiblePlaces?: Record<string, Record<string, number>>;
+  assemblyFamilies?: Record<string, import('./assembly-types.js').AssemblyFamily>;
+  assemblyGeometryRevision?: number;
+  finiteRain?: import('./assembly-types.js').FiniteRain;
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: {
@@ -445,6 +471,7 @@ interface Envelope {
 export type Command = Envelope &
   (
     | import('./outings.js').OutingCommand
+    | ({ type: 'assemble' } & import('./assembly-types.js').AssemblyPhase)
     | {
         type: 'activity';
         methodId: string;
@@ -512,8 +539,10 @@ export type Command = Envelope &
     | { type: 'craft'; recipeId: string }
     | { type: 'replenish'; targetId: string; attributeId: string }
     | { type: 'equip' | 'eat'; itemId: string }
+    | { type: 'guard'; itemId: string; targetId?: string; facing?: number; autoEquip?: boolean }
     | {
         type: 'strike';
+        autoEquip?: boolean;
         definitionId: string;
         targetId: string;
         weaponItemId?: string;
@@ -521,6 +550,7 @@ export type Command = Envelope &
       }
     | {
         type: 'hunt';
+        autoEquip?: boolean;
         targetId: string;
         weaponItemId?: string;
         ammoItemId?: string;
@@ -566,6 +596,9 @@ export type Command = Envelope &
         targetId: string;
         definitionId: string;
         operation: 'activate' | 'deactivate';
+        facingHeading?: number;
+        restingPlaceId?: string;
+        restingBay?: number;
       }
     | {
         type: 'inspect-inventory';

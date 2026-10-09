@@ -1,3 +1,5 @@
+import type { ConstructionPermission } from './assembly-types.js';
+import { isEquipped } from './equipment.js';
 import { executeCommand, nativeOperationAvailable } from './kernel.js';
 import type { Command, WorldState } from './types.js';
 import type { ActorPlan, PlanStep } from './agency.js';
@@ -362,7 +364,7 @@ function predicate(
     case 'alive':
       return entity.actor?.alive;
     case 'equipped':
-      return actor.actor?.equippedItemId === id;
+      return isEquipped(world, actor.id, id);
     case 'lit':
       return entity.heat?.lit;
   }
@@ -522,11 +524,7 @@ export function activityFrontier(
           block('A required actual output or compatible binding is unavailable.');
           return;
         }
-        if (
-          command.type === 'equip' &&
-          world.entities[actorId]!.actor!.equippedItemId === command.itemId
-        )
-          continue;
+        if (command.type === 'equip' && isEquipped(world, actorId, command.itemId)) continue;
         const step: PlanStep = {
           id,
           command,
@@ -561,6 +559,7 @@ export function startLearnedActivity(
   methodId: string,
   bindings: Record<string, ActivityBinding>,
   resume = false,
+  constructionPermissions: readonly ConstructionPermission[] = [],
 ) {
   const actor = world.entities[actorId]?.actor;
   const method = acquiredActivities(world, actorId).find((method) => method.id === methodId);
@@ -614,7 +613,7 @@ export function startLearnedActivity(
   actor.planGeneration++;
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = nativeOperationAvailable(world, first.command);
+    const preview = nativeOperationAvailable(world, first.command, constructionPermissions);
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'The learned activity was selected; no result is promised.');
@@ -662,6 +661,7 @@ export function startRequestedActivity(
   actorId: string,
   id: string,
   command: Extract<Command, { type: 'compose' }>,
+  constructionPermissions: readonly ConstructionPermission[] = [],
 ) {
   const actor = world.entities[actorId]?.actor;
   if (!actor) return outcome(false, 'actor-unavailable', 'The actor is unavailable.');
@@ -716,7 +716,19 @@ export function startRequestedActivity(
           !(value === inspectedContainerId && canAccessContainer(world, actorId, value)) &&
           !seesEntity(world, world.entities[actorId]!, entity) &&
           // A stack lying in a pile is reachable through the pile the actor perceives.
-          !(pile?.kind === 'item-pile' && seesEntity(world, world.entities[actorId]!, pile)))
+          !(pile?.kind === 'item-pile' && seesEntity(world, world.entities[actorId]!, pile)) &&
+          // Installed parts are identified through their actually perceived assembly.
+          // This grants a reference only; native material/edit admission still owns rights.
+          !(
+            entity.placement?.mode === 'attached' &&
+            entity.placement.portId === 'assembly' &&
+            world.entities[entity.placement.parentEntityId]?.assembly?.parts[value] &&
+            seesEntity(
+              world,
+              world.entities[actorId]!,
+              world.entities[entity.placement.parentEntityId]!,
+            )
+          ))
       );
     })
   )
@@ -821,7 +833,7 @@ export function startRequestedActivity(
     );
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = nativeOperationAvailable(world, first.command);
+    const preview = nativeOperationAvailable(world, first.command, constructionPermissions);
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'The requested activity was admitted; no result is promised.');

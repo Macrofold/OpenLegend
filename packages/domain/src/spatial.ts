@@ -6,8 +6,11 @@ import { worldRootEntities } from './entity-index.js';
 import { isDraft } from 'immer';
 import {
   BODY_PROFILES,
+  MOVEMENT,
   canStand,
+  bodyIntersects,
   clearSegment,
+  clearPhysicalSegment,
   distance3D,
   findSurfaceRoute,
   resolveSupport,
@@ -18,8 +21,9 @@ import {
   type BodyProfile,
   type SurfacePoint,
   type RoutePlan,
+  type CollisionSolid,
 } from '@open-legend/spatial';
-import { bodyProfile, spatialMap, supportedPosition } from './spatial-state.js';
+import { bodyProfile, bodySpace, spatialMap, supportedPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 /** Owned, unsaved point bins. Changes replace copied inputs; queries preserve the
@@ -136,6 +140,95 @@ export function canReachEntity(
   const from = interactionAnchor(actor, origin),
     to = interactionAnchor(target);
   return distance3D(from, to) <= reach && clearSegment(spatialMap(world), from, to);
+}
+/** A real work point and its admitted stance, not a proxy entity or a new location. */
+export interface PhysicalWorkPoint {
+  point: Position;
+  stance: SurfacePoint;
+  /** A part created only after the work must also leave the builder standing clear. */
+  obstruction?: CollisionSolid;
+}
+export function physicalWorkPointAvailable(
+  world: WorldState,
+  actor: Entity,
+  candidate: PhysicalWorkPoint,
+  reach: number,
+  origin: Position = candidate.stance,
+): boolean {
+  const map = spatialMap(world),
+    profile = bodyProfile(actor),
+    from = interactionAnchor(actor, origin);
+  if (
+    !canStand(map, candidate.stance, profile) ||
+    (origin !== candidate.stance &&
+      !canStand(map, { ...origin, surfaceId: candidate.stance.surfaceId }, profile)) ||
+    (candidate.obstruction && bodyIntersects(candidate.obstruction, origin, origin, profile)) ||
+    distance3D(from, candidate.point) > reach ||
+    !clearPhysicalSegment(map, from, candidate.point)
+  )
+    return false;
+  const space = bodySpace(
+    world,
+    {
+      ...actor,
+      placement: {
+        ...actor.placement!,
+        mode: 'world',
+        position: origin,
+        supportSurfaceId: candidate.stance.surfaceId,
+      },
+    },
+    false,
+    0,
+    MOVEMENT.skin,
+  );
+  for (const other of worldRootEntities(world, true)) {
+    if (other.id === actor.id || other.assembly) continue;
+    const occupied = bodySpace(world, other);
+    if (
+      space.min.x < occupied.max.x &&
+      space.max.x > occupied.min.x &&
+      space.min.y < occupied.max.y &&
+      space.max.y > occupied.min.y &&
+      space.min.z < occupied.max.z &&
+      space.max.z > occupied.min.z
+    )
+      return false;
+  }
+  return true;
+}
+/** Bounded continuous-coordinate candidates through the same native route owner.
+ * Missing preparation stays pending, rather than becoming proof of no accessible face. */
+export function findPhysicalWorkApproach(
+  world: WorldState,
+  actor: Entity,
+  candidates: readonly PhysicalWorkPoint[],
+  reach: number,
+): { candidate: PhysicalWorkPoint; route: RoutePlan } | null {
+  const start = supportedPosition(actor);
+  if (!start || candidates.length > 12) return null;
+  const ordered = candidates
+    .map((candidate, order) => ({ candidate, order }))
+    .sort(
+      (a, b) =>
+        distance3D(start, a.candidate.stance) - distance3D(start, b.candidate.stance) ||
+        a.order - b.order,
+    );
+  let pending: { candidate: PhysicalWorkPoint; route: RoutePlan } | undefined;
+  for (const { candidate } of ordered) {
+    if (!physicalWorkPointAvailable(world, actor, candidate, reach)) continue;
+    const route = findPath(
+      world,
+      start,
+      candidate.stance,
+      start.surfaceId,
+      candidate.stance.surfaceId,
+      bodyProfile(actor),
+    );
+    if (route?.status === 'reached') return { candidate, route };
+    if (route?.status === 'pending') pending ??= { candidate, route };
+  }
+  return pending ?? null;
 }
 /** Strict endpoint projection: Y selects a real height, explicit surface IDs disambiguate seams. */
 export function findPath(

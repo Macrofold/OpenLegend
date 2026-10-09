@@ -1,3 +1,4 @@
+import type { ConstructionPermission } from '@open-legend/domain';
 import {
   usdToMicroUsd,
   microUsdToUsd,
@@ -370,6 +371,8 @@ export interface WorldStore {
       restore?: RestoreSave;
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
+      constructionSeeds?: readonly ConstructionPermission[];
+      constructionFences?: readonly { id: string; revision: number }[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: {
@@ -897,6 +900,8 @@ export class SqlGameRepository implements GameRepository {
       restore?: RestoreSave;
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
+      constructionSeeds?: readonly ConstructionPermission[];
+      constructionFences?: readonly { id: string; revision: number }[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: {
@@ -966,6 +971,13 @@ export class SqlGameRepository implements GameRepository {
         );
     const transaction = timed('persistence.transaction', () =>
       this.db.transaction(async () => {
+        for (const permission of historyProjection?.constructionSeeds ?? [])
+          await this.authority.seedConstruction(permission);
+        if (historyProjection?.constructionFences?.length)
+          await this.authority.assertConstruction(
+            state.world.id,
+            historyProjection.constructionFences,
+          );
         for (const binding of historyProjection?.authorityBindings ?? [])
           await this.authority.provision(state.world.id, binding);
         for (const [actorId, accountId] of historyProjection?.authorityOwners ?? [])

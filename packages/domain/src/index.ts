@@ -84,6 +84,8 @@ export {
   hasLineOfEffect,
   canReachEntity,
   findApproachPath,
+  findPhysicalWorkApproach,
+  physicalWorkPointAvailable,
   isWalkable,
   nearbyEntities,
   sameSurfacePoint,
@@ -205,7 +207,15 @@ export {
   setItemQuantity,
   validateObjects,
 } from './objects.js';
-export { upgradeObjects } from './object-migration.js';
+export * from './equipment.js';
+export * from './contact-defense.js';
+export {
+  guardDescription,
+  guardWorkLabel,
+  guardChoiceLabel,
+  BASE_GUARD_TEXT,
+  equipmentChangeDescription,
+} from './worlds/base/shield-defense.js';
 
 export * from './dependencies.js';
 export { worldRootEntities } from './entity-index.js';
@@ -251,3 +261,15 @@ export { basePlaytestMilestones } from './worlds/base/playtest.js';
 
 export * from './outings.js';
 export { BASE_OUTING } from './worlds/base/outing-policy.js';
+export * from './assembly-types.js';
+export * from './assemblies.js';
+export * from './assembly-geometry.js';
+export { BASE_CANOPY_SCENE } from './worlds/base/canopies.js';
+
+export * from './material-exposure.js';
+
+export * from './assembly-validation.js';
+
+export * from './assembly-use.js';
+export { beginCanopyShower } from './worlds/base/canopy-scene.js';
+export { BASE_CONSTRUCTION_DESCRIPTIONS } from './worlds/base/canopies.js';

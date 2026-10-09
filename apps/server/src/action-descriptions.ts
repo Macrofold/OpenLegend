@@ -1,4 +1,11 @@
 import { BASE_OUTING } from '@open-legend/domain';
+import { BASE_CONSTRUCTION_DESCRIPTIONS } from '@open-legend/domain';
+import {
+  equippedItem,
+  guardDescription,
+  equipmentChangeDescription,
+  BASE_GUARD_TEXT,
+} from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   nativeCatalogueView,
@@ -25,6 +32,7 @@ import type { CommandInput } from '@open-legend/protocol';
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
   ...BASE_DEATH_COMMAND_DESCRIPTIONS,
   outing: BASE_OUTING.description,
+  ...BASE_CONSTRUCTION_DESCRIPTIONS,
   'activity-request':
     'Choose every required parameter and review a supported activity before starting it.',
   'inspect-activities':
@@ -55,6 +63,7 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   prepare: 'Turn gathered plant material into usable fibers or cord for crafting.',
   craft:
     'Make an item using a technique you know. Materials are consumed when work begins and are not refunded if you stop.',
+  guard: BASE_GUARD_TEXT.description,
   equip:
     'Select one individual tool from your inventory. A ranged tool needs compatible ammunition before you can fire.',
   strike:
@@ -112,10 +121,14 @@ function describeCommand(
   const common = ACTION_DESCRIPTIONS[command.type];
   if (command.type === 'outing') return BASE_OUTING.description;
   switch (command.type) {
+    case 'guard':
+      return itemDefinition?.contactDefense
+        ? `${equipmentChangeDescription(world, observation.actor.id, item!.id)}${itemDefinition.name}: ${guardDescription(itemDefinition.contactDefense)}`
+        : common;
     case 'strike': {
       if (itemDefinition?.melee) {
         const m = itemDefinition.melee;
-        return `${common} ${itemDefinition.name}: ${m.damage} damage, ${m.accuracy * 100}% accuracy, ${m.range} units reach, ${m.windupSeconds} game seconds wind-up and ${m.recoverySeconds} seconds recovery. Requires this exact equipped weapon; misses cause no damage.`;
+        return `${equipmentChangeDescription(world, observation.actor.id, item!.id)}${common} ${itemDefinition.name}: ${m.damage} damage, ${m.accuracy * 100}% accuracy, ${m.range} units reach, ${m.windupSeconds} game seconds wind-up and ${m.recoverySeconds} seconds recovery. Requires this exact equipped weapon; misses cause no damage.`;
       }
       const strike = strikeDefinition(command.definitionId, world);
       return strike
@@ -141,11 +154,11 @@ function describeCommand(
           : common;
     case 'hunt': {
       const equipped = read.items.get(
-        command.itemId ?? observation.actor.actor?.equippedItemId ?? '',
+        command.itemId ?? equippedItem(world, observation.actor.id, 'ranged')?.id ?? '',
       );
       const weapon = equipped && definition(equipped.definitionId);
       const subject = target?.animal ? namePhrase(target, 'definite') : 'a living animal';
-      return `Attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
+      return `${equipped ? equipmentChangeDescription(world, observation.actor.id, equipped.id) : ''}Attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
     }
     case 'harvest':
       if (!target?.remains) return common;

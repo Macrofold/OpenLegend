@@ -153,6 +153,8 @@ describe('untrusted dictionary identifiers', () => {
 
   it('rejects an incapacitated inventor at the pure admission boundary', () => {
     const world = createWorld();
+    const originalRecipes = structuredClone(world.recipes);
+    const originalKnowledge = structuredClone(world.knowledge[PLAYER_ID]);
     world.entities[PLAYER_ID]!.actor!.incapacitated = true;
     const result = admitDeclaration(world, draft(), {
       actorId: PLAYER_ID,
@@ -162,7 +164,7 @@ describe('untrusted dictionary identifiers', () => {
     });
     expect(result.outcome.code).toBe('invalid-provenance');
     expect(result.world).toBe(world);
-    expect(world.recipes).toEqual({});
-    expect(world.knowledge[PLAYER_ID]).toEqual([]);
+    expect(world.recipes).toEqual(originalRecipes);
+    expect(world.knowledge[PLAYER_ID]).toEqual(originalKnowledge);
   });
 });

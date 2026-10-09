@@ -1,4 +1,10 @@
 import { outingActions } from './outing-view.js';
+import {
+  isEquipped,
+  guardDescription,
+  guardChoiceLabel,
+  equipmentChangeDescription,
+} from '@open-legend/domain';
 import { namePhrase, type Named } from '@open-legend/language';
 import { learnedActivityCandidates } from './activity-context.js';
 import { consumptionDescription } from './body-services.js';
@@ -298,7 +304,6 @@ export interface CandidateAction {
   id: string;
   description: string;
   command: CommandInput | null;
-  prerequisite?: CommandInput;
 }
 export function npcCandidates(
   service: WorldService,
@@ -679,8 +684,9 @@ export function npcCandidates(
     const definition = definitions.get(item.definitionId);
     if (
       definition &&
-      item.id !== actor.equippedItemId &&
-      (definition.melee ||
+      !isEquipped(service.world, actorId, item.id) &&
+      (definition.contactDefense ||
+        definition.melee ||
         definition.gatheringTool ||
         (definition.launcher && compatibleAmmo(definition.launcher.ammunitionKind)))
     )
@@ -697,7 +703,7 @@ export function npcCandidates(
     return definition &&
       launcher &&
       ammunition &&
-      (item.id === actor.equippedItemId || item.quantity === 1)
+      (isEquipped(service.world, actorId, item.id) || item.quantity === 1)
       ? [{ item, definition, launcher, ammunition }]
       : [];
   });
@@ -709,7 +715,7 @@ export function npcCandidates(
     ...inventory
       .filter(
         (item) =>
-          item.id !== actor.equippedItemId &&
+          !isEquipped(service.world, actorId, item.id) &&
           item.quantity === 1 &&
           definitions.get(item.definitionId)?.melee,
       )
@@ -718,6 +724,30 @@ export function npcCandidates(
         return strike ? [strike] : [];
       }),
   ];
+  // Only an actually visible prepared contact attack makes defense relevant here. A guard
+  // offer neither selects it nor binds an unperceived attacker or future pursuit.
+  const shields = inventory.filter((item) => definitions.get(item.definitionId)?.contactDefense);
+  for (const target of observed.visibleEntities.filter(
+    (e) =>
+      e.actor?.alive &&
+      e.actor.action?.type === 'strike' &&
+      e.actor.action.strikePhase === 'windup',
+  ))
+    for (const shield of shields) {
+      const profile = definitions.get(shield.definitionId)!.contactDefense!;
+      const command: CommandInput = {
+        type: 'guard',
+        itemId: shield.id,
+        targetId: target.id,
+        autoEquip: true,
+      };
+      if (service.previewCommand(command, actorId).ok)
+        actions.push({
+          id: `guard:${shield.id}:${target.id}`,
+          description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name, target.name)}. ${guardDescription(profile)}`,
+          command,
+        });
+    }
   const fires: { id: string; travelSeconds: number; fuelSeconds: number }[] = [];
   for (const entity of observed.visibleEntities) {
     // Target discovery uses only this actor's perception. Terrain is the same public
@@ -739,16 +769,14 @@ export function npcCandidates(
         if (!reachable.get(launcher.range)) continue;
         actions.push({
           id: `hunt:${item.id}:${entity.id}`,
-          description: `${item.id !== actor.equippedItemId ? 'Auto-equip the chosen weapon first. ' : ''}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: SIMULATION_RULES.shotSeconds })}`,
+          description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: SIMULATION_RULES.shotSeconds })}`,
           command: {
             type: 'hunt',
+            autoEquip: true,
             targetId: entity.id,
             itemId: item.id,
             ammunitionId: ammunition.id,
           },
-          ...(item.id !== actor.equippedItemId
-            ? { prerequisite: { type: 'equip' as const, itemId: item.id } }
-            : {}),
         });
       }
     }
@@ -768,17 +796,15 @@ export function npcCandidates(
         );
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Auto-equip the chosen weapon first. ' : ''}${description ?? `${strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)?.label ?? definition.label}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
+          description: `${definition.weaponItemId ? equipmentChangeDescription(service.world, actorId, definition.weaponItemId) : ''}${description ?? `${strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)?.label ?? definition.label}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
           command: {
             type: 'strike',
+            autoEquip: true,
             ...(description ? { purpose: 'Hunt once' } : {}),
             definitionId: definition.id,
             itemId: definition.weaponItemId,
             targetId: entity.id,
           },
-          ...(definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId
-            ? { prerequisite: { type: 'equip' as const, itemId: definition.weaponItemId } }
-            : {}),
         });
       }
     }
