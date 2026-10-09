@@ -8,6 +8,10 @@ This is the sole implementation tracker for the living-actor migration. Canonica
 
 ## Tasks
 
+### Generations and adult family continuity proposal
+
+[DG31 generations and family life](../projects/generations-and-family-life-feature-spec.md) selects an independently useful adult-family encounter and truthful age continuity without new automatic frailty, heredity or household control. [GEN01–GEN04](generations-and-family-life.md) owns the consumer and the unfinished audience-dependent design. ACT04’s bodily foundation and completed family facts remain intact; actual later bodily changes require a selected playable purpose and their owning care/lifecycle rules.
+
 ### Recovery and useful care proposal
 
 [DG21 recovery and care](../projects/recovery-and-care-feature-spec.md) uses ACT04's existing bodily effects for one proposed human camp-recovery activity, followed by separately selected resident choice, field dressing/help and a distinct illness only when useful. [CARE01–CARE05](recovery-and-care.md) owns this consumer; it does not reopen the completed body foundation or require a body-part graph. The audit uses newer main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425), where zero health causes death and scar treatment exists. This branch's older runtime ancestry is not the proposal's mortality baseline. [Care limits](../limits/recovery-and-care.md) records the new world choices and growth paths.

@@ -70,6 +70,8 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 
 ## Social playable slices
 
+[DG31’s proposed adult family scenario](../worlds/base/generations-and-family-life.md) consumes the completed biological ancestry foundation through [GEN01–GEN04](generations-and-family-life.md). It adds no inferred age from current placeholder timestamps, new family authority, reproductive mechanic or automatic retirement. The full reproductive/dependent-care design remains gated by D16; BW16 completion below is unchanged.
+
 **Status: BW16 family-tree authoring is delivered (2026-10-03); BW17's read-only first slice was delivered on 2026-09-28. Remaining promise controls and feeling processes need their own authorization.** Current [social rules](../worlds/base/social.md) and [gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability) distinguish existing support from these new surfaces. Family authoring is complete; continue BW17 when its remaining policy is selected; consider [ACT09](actor-model.md#act09--internal-feeling-process-authoring) only when an authored scenario needs it. No requirement to expose every native primitive as a UI.
 
 ### BW16 — Family authoring and inspection

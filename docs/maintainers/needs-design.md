@@ -325,6 +325,8 @@ PS07's forecast canonical campaigns, timing/revision promises, local participati
 
 **Start and parallel boundary:** Use DG29's cross-world/travel contracts where the selected campaign spans worlds, plus the actual participation/capacity rules. Do not require governments, generations or special mental powers merely because a campaign has many people. Local opportunities can be designed against current supported worlds first. **Existing owners:** PS07/PS08, campaign/access/time, data and existing scale owners.
 
+**October 9 partial product design:** [Generations and family life](../projects/generations-and-family-life-feature-spec.md) supplies the independently useful adult-family scenario, age/time and cost analysis, and primary-source research. D16’s reserved audience answer and the affected reproductive/dependent-care design remain unfinished under [GEN04](generations-and-family-life.md#gen04--resolve-the-reserved-audience-choice-and-finish-generations). This is partial DG31 coverage, not completion or implementation.
+
 ### Band 8 — Insert other expansion only at its trigger
 
 #### DG35 — A selected platform or offline capability
@@ -497,6 +499,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Needed before an implementation project:** select the first ecological or generational loop; define regrowth/scarcity, life stages, population change, caregiving and their housing/food/compute demands. Resolve audience and family-content boundaries before related features. Specify observable causes of collapse, useful intervention and population admission without promising automatic abundance or survival. Keep these authored-world choices separate from the generic simulation scheduler.
 
 **October 6 resource-renewal proposal:** [DG19 changing supplies](../projects/changing-supplies-feature-spec.md) selects a finite patch-renewal loop and compares ongoing food flow with real consumption. It does not design or authorize the remaining generational, reproductive or population features; those remain DG31 and their existing decisions.
+
+**October 9 independent family scope:** [DG31’s adult-family proposal](../projects/generations-and-family-life-feature-spec.md) adds a researched playable consumer and truthful age/cost boundaries. It preserves the PG requirement and the still-unanswered D16 audience choice; reproduction, new dependent care and growing-population design remain unfinished.
 
 ### ND07 — Editable buildings that become usable homes
 

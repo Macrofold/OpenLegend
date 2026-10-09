@@ -74,3 +74,7 @@ Current surfaces are summarized in [gameplay availability](../../../archive/05-p
 - Implementation: [BW16/BW17](../../maintainers/base-world.md#social-playable-slices), [BW20/BW21](../../maintainers/base-world.md#camp-fire-care-and-sharing), [ACT07/ACT08 and ACT09](../../maintainers/actor-model.md).
 - Limits and constraints: [base-world defaults](../../limits/base-world.md), [feelings](../../limits/feelings.md), [memory](../../limits/memory.md).
 - Related contract/design: [appraisal/social continuity](../../projects/appraisal-social-continuity-feature-spec.md), [technical design](../../projects/appraisal-social-continuity-tech-design.md), [knowledge](knowledge.md).
+
+## Proposed adult family play
+
+[Generations and family life](generations-and-family-life.md) proposes an optional adult-family encounter with deliberately authored ages and individually permitted shared background. It consumes the objective tree without granting control, private knowledge, household custody, inheritance or automatic affection. Existing starting birth timestamps are not reliable lifecycle ages. The audience-dependent reproductive/dependent-care design remains unfinished under D16 and [GEN04](../../maintainers/generations-and-family-life.md#gen04--resolve-the-reserved-audience-choice-and-finish-generations); no current family fact or completed BW16 behavior is changed.

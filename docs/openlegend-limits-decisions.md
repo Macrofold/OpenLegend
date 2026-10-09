@@ -16,6 +16,8 @@ Proposed [published packs and creator revenue](projects/published-packs-and-crea
 
 Proposed [creator funding and contributor governance](projects/creator-fund-and-contributor-governance-feature-spec.md): [FUND-L01–FUND-L10](limits/creator-fund-and-contributor-governance.md) records the finite invited round, full funding/labor reserve, bounded application, staged award, review/payment, advisory authority, conflicts, funded-work criteria, private evidence and closure. [FUND01–FUND06](maintainers/creator-fund-and-contributor-governance.md) consumes D37/C08; actual budget, program/contracting adoption and observed results remain open. No customer or creator liability becomes grant money.
 
+Proposed [generations and family life](projects/generations-and-family-life-feature-spec.md): [GEN-L01–GEN-L06](limits/generations-and-family-life.md) records the independent adult scenario, truthful age meaning, ordinary occasional help, unchanged continued-world scope and growing ancestry/history. [GEN01–GEN04](maintainers/generations-and-family-life.md) retains actual delivery and the unfinished D16-dependent design; biological family facts and shared time/protection constraints remain unchanged.
+
 ## Feature inventories
 
 | Feature                                                                                               | Inventory                         | Implementation tasks                                     |
