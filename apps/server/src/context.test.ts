@@ -2,7 +2,14 @@ import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
-import { advanceWorld, inventoryFor, quantityOf, type DeclarationDraft } from '@open-legend/domain';
+import {
+  advanceWorld,
+  executeCommand,
+  inventoryFor,
+  quantityOf,
+  type DeclarationDraft,
+} from '@open-legend/domain';
+import { domainCommand } from './cognition.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import {
   buildContext,
@@ -39,10 +46,11 @@ function select(
   return candidate!;
 }
 async function perform(service: WorldService, candidate: CandidateAction): Promise<void> {
-  const result = await service.command(
-    `test:${service.world.sequence}:${candidate.id}`,
-    candidate.command!,
-    NPC_ID,
+  const result = await service.transition((world) =>
+    executeCommand(
+      world,
+      domainCommand(candidate.command!, NPC_ID, `test:${world.sequence}:${candidate.id}`),
+    ),
   );
   expect(result.ok, result.message).toBe(true);
 }
@@ -110,7 +118,10 @@ describe('actor-scoped native decision candidates', () => {
     expect(quantityOf(service.world, NPC_ID, 'cooked_meat')).toBe(0);
     expect(
       service.world.events.some(
-        (event) => event.type === 'ate' && event.actorId === NPC_ID && /meat/i.test(event.text),
+        (event) =>
+          event.type === 'ate' &&
+          event.actorId === NPC_ID &&
+          event.data?.definitionId === 'cooked_meat',
       ),
     ).toBe(true);
     expect(new Set(npcCandidates(service).map((action) => action.id)).size).toBe(

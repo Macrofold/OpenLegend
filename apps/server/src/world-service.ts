@@ -1,4 +1,4 @@
-import { basePlaytestMilestones } from '@open-legend/domain';
+import { basePlaytestMilestones, BASE_GUARD_TEXT } from '@open-legend/domain';
 import { activityChoiceView } from './activity-context.js';
 import {
   ACTIVITY_LIMITS,
@@ -170,6 +170,7 @@ export const commandInputSchema = z
       'prepare',
       'craft',
       'equip',
+      'guard',
       'strike',
       'hunt',
       'harvest',
@@ -220,6 +221,8 @@ export const commandInputSchema = z
     expectedScope: z.string().max(16000).optional(),
     conversationId: id.optional(),
     text: z.string().trim().min(1).max(1500).optional(),
+    facing: z.number().finite().optional(),
+    autoEquip: z.boolean().optional(),
     generation: z.number().int().nonnegative().optional(),
     operation: z.enum(['join', 'leave']).optional(),
     effectOperation: z.enum(['activate', 'deactivate']).optional(),
@@ -282,7 +285,7 @@ function actorMilestones(
   actorId: string,
 ): Record<string, boolean> {
   const flags = { ...saved.actorMilestones?.[actorId] };
-  for (const milestone of basePlaytestMilestones(saved.world, actorId, events, 'recording'))
+  for (const milestone of basePlaytestMilestones(saved.world, actorId, events))
     if (milestone.done) flags[milestone.id] = true;
   return flags;
 }
@@ -793,7 +796,7 @@ export class WorldService {
       ]),
     );
     // Restart has no verified live transports. Existing deadlines are retained, never extended.
-    await this.reconcileParticipation();
+    await this.reconcileParticipation(true);
   }
 
   get controlledEntityId(): string {
@@ -2222,7 +2225,7 @@ export class WorldService {
         this.connections.clear();
         this.presence.clear();
         this.presenceOrders.clear();
-        await this.authorityContext.run(undefined, () => this.reconcileParticipation());
+        await this.authorityContext.run(undefined, () => this.reconcileParticipation(true));
         this.debtSeconds = 0;
         this.memoryBacklog = null;
         this.notify();
@@ -2435,7 +2438,9 @@ export class WorldService {
       return { ok: true, code: 'enrolled', message: 'Character bound to the invited account.' };
     });
   }
-  private async reconcileParticipation(): Promise<void> {
+  private readonly awaitingRestoredPresence = new Set<string>();
+  private async reconcileParticipation(pausedRestore = false): Promise<void> {
+    if (pausedRestore) this.awaitingRestoredPresence.clear();
     this.present; // Prune expired or replaced heartbeat authority first.
     const participating = new Set<string>();
     const scopes = [
@@ -2451,6 +2456,7 @@ export class WorldService {
       if (!entity?.actor) continue;
       let actor = this.world.entities[entity.id]!.actor!;
       if (participating.has(entity.id)) {
+        this.awaitingRestoredPresence.delete(entity.id);
         if (actor.participation?.phase === 'exiting' || actor.participation?.phase === 'inactive') {
           const result = changeParticipation(this.world, entity.id, actor.participation.revision, {
             type: 'return',
@@ -2471,7 +2477,23 @@ export class WorldService {
         }
         continue;
       }
-      if (actor.participation?.phase === 'inactive') continue;
+      if (actor.participation?.phase === 'inactive') {
+        this.awaitingRestoredPresence.delete(entity.id);
+        continue;
+      }
+      // Resetting transports during a paused current-format return is not yet a physical
+      // departure. Keep committed work until presence is re-established or ordinary absence
+      // reconciliation runs; a previously committed exit still wins, without renewed deadlines.
+      // docs/save-and-load.md#continuation-and-identity
+      if (
+        pausedRestore &&
+        actor.action &&
+        !this.exits.has(entity.id) &&
+        actor.participation?.phase !== 'exiting'
+      )
+        this.awaitingRestoredPresence.add(entity.id);
+      if (this.world.paused && this.awaitingRestoredPresence.has(entity.id)) continue;
+      this.awaitingRestoredPresence.delete(entity.id);
       let attempt = this.exits.get(entity.id);
       if (!attempt)
         attempt = {
@@ -3906,6 +3928,7 @@ export class WorldService {
       id: commandId,
       actorId,
       ...(input.purpose ? { purpose: input.purpose } : {}),
+      ...(input.autoEquip ? { autoEquip: true } : {}),
     };
     let command: Command;
     switch (input.type) {
@@ -4127,6 +4150,20 @@ export class WorldService {
       case 'eat':
         if (!input.itemId) return { ok: false, code: 'item', message: 'Choose an item.' };
         command = { ...envelope, type: input.type, itemId: input.itemId };
+        break;
+      case 'guard':
+        if (!input.itemId || (input.targetId === undefined) === (input.facing === undefined))
+          return {
+            ok: false,
+            code: 'binding',
+            message: BASE_GUARD_TEXT.binding,
+          };
+        command = {
+          ...envelope,
+          type: 'guard',
+          itemId: input.itemId,
+          ...(input.targetId ? { targetId: input.targetId } : { facing: input.facing! }),
+        };
         break;
       case 'cook': {
         if (!input.itemId) return { ok: false, code: 'item', message: 'Choose raw food to cook.' };

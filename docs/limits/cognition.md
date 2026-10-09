@@ -574,6 +574,8 @@ Original recommendation: **Keep**.
 
 **Evidence:** Distinguish ordinary dense-neighbor growth from deliberately creating 10,000 objects. [Implementation](../../apps/server/src/recall.ts) (`candidateSet; select`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
+**Measured follow-through, October 7:** the [AV02 complete resident caller](../verification/shield-defense.md#second-implementation-review--october-7-2026) prepared 1,584 choices with 1,509 carried lots, largely optional per-lot Drop suggestions; sampled warm calls ranged 37–248 ms on the shared host. Native attack/equipment admission and earlier incompatible-tool filtering are delivered, while general observation and pre-selection action preparation remain C17/PF work. This is diagnostic evidence, not hosted capacity or a new content cap.
+
 **Implemented mitigation:** Candidate formatting rejects more than 8,192 combined visible/inventory/recipe/note items or more than 4 MiB of note text before constructing their strings. Observation and resident-world preparation still precede this guard. [Preparation owner](../memory-architecture.md#retrieval-preparation-admission).
 
 ## CG02

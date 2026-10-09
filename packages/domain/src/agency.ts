@@ -1215,6 +1215,12 @@ export function deferAttempt(
 /** Finite native command families only; saved JSON never installs an executor. */
 export function isPhysicalCommand(command: Command): boolean {
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
+  if (
+    'autoEquip' in command &&
+    command.autoEquip !== undefined &&
+    typeof command.autoEquip !== 'boolean'
+  )
+    return false;
   switch (command.type) {
     case 'pickup':
       return (
@@ -1274,6 +1280,13 @@ export function isPhysicalCommand(command: Command): boolean {
     case 'equip':
     case 'eat':
       return isSafeRecordId(command.itemId);
+    case 'guard':
+      return (
+        isSafeRecordId(command.itemId) &&
+        (command.targetId !== undefined
+          ? isSafeRecordId(command.targetId) && command.facing === undefined
+          : typeof command.facing === 'number' && Number.isFinite(command.facing))
+      );
     case 'inspect-inventory':
       return (
         (command.containerId === undefined || isSafeRecordId(command.containerId)) &&

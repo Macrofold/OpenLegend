@@ -1463,31 +1463,9 @@ export class AiDirector {
     selected: string,
   ): ActorResponse {
     if (prepared.binding.actions[selected] === null) return { operations: [] };
-    const steps = prepared.knownPlans[selected];
     // Choosing a new alternative interrupts the chosen plan. The separately
     // offered continue option leaves its remaining work untouched.
     const mode = prepared.replaceChosenPlan ? 'replace' : 'enqueue';
-    if (steps)
-      return {
-        operations: [
-          {
-            note: null,
-            name: null,
-            localId: 'sequence',
-            requiresAccepted: [],
-            talk: null,
-            think: null,
-            goal: null,
-            act: null,
-            plan: {
-              mode,
-              expectedRevision: prepared.expectedPlanRevision,
-              goalId: null,
-              steps: steps.map((actionId) => ({ actionId, itemFromStep: null, useItemAs: null })),
-            },
-          },
-        ],
-      };
     return actionResponse({
       kind: 'known',
       mode,

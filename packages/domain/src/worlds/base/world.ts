@@ -6,6 +6,8 @@ import {
 } from './landscape.js';
 import { emptyActionExperience } from '../../action-experience.js';
 import { ADA_IDENTITY } from './characters.js';
+import { installKnownShieldMethod } from './shield-family.js';
+import { startingRecipeKnowledge } from './knowledge.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { BASE_PARTICIPATION_POLICY } from './participation.js';
 import { NATIVE_STRIKES } from './strikes.js';
@@ -72,7 +74,6 @@ export function createActor(
     incapacitated: false,
     bornAt: -24 * 365 * 86400,
     action: null,
-    equippedItemId: null,
     agency: seedAgency(
       initialGoals !== undefined
         ? initialGoals
@@ -370,7 +371,9 @@ export function createWorld(
     },
   ];
   for (const entity of entities) world.entities[entity.id] = entity;
+  installKnownShieldMethod(world);
   for (const id of [PLAYER_ID, NPC_ID, MERCENARY_ID]) {
+    startingRecipeKnowledge(world, id);
     addItem(world, id, 'stone_tool', 1);
     addItem(world, id, 'knife', 1);
     addItem(world, id, 'prepared_fiber', id === PLAYER_ID ? 4 : 2);

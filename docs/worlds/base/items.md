@@ -34,6 +34,12 @@ Pickup approaches through the existing supported movement path, then transfers t
 
 Inventory item details expose **Drop** and a whole-number quantity selector for portable items. Drop places that quantity at the actor's current supported location, only where the pile body can fit. Active work must stop first because it may hold material/equipment references. Equipping individualizes one unit; dropping the unequipped remainder leaves that unit equipped. Moving the selected unit detaches it. Player and NPC concrete action options use the same native commands. Ordinary pause, body and capability restrictions still apply.
 
+## Compatible held equipment
+
+One attached placement is the saved truth for each held item. Its admitted definition names the places on the body it occupies and its supported uses; the body supplies available places. The [shield profile](shield-defense.md#compatible-equipment) owns this world’s hand combinations. Knife/gathering tool and shield can coexist, while current sling/bow launchers occupy both hands. Equipping checks custody, body compatibility and all selected/conflicting reservations before atomically individualizing one unit, stowing only conflicts and attaching it. Stowed items remain the same carried items.
+
+Drop or accepted handover removes the exact attachment through the existing custody owner; an offer alone moves nothing. Removing one item does not release unrelated equipment. Equipment queries use a rebuilt subset of the object placement index, with no actor field mirroring equipment and no saved acceleration map. Current-format validation rejects missing ports, overlapping occupied ports, stale pins or invalid individualized attachments. Body and port identities remain separate even when their names contain colons. Inventory equipment descriptions require every occupied port and show current Equip refusals, including busy work and an incompatible body. Clothing and other bodies require their own authored ports and permissions; no armor or socket system is supplied here.
+
 ## God creation
 
 **God mode · Add item** in player inventory opens a searchable installed-item catalogue and quantity field. The existing character inventory editor remains available for other actors. **Add something ▸ Items** on the ground uses the same catalogue and creates a pile at the chosen support position. God mode may instantiate any installed item definition, including a nonportable one; it does not grant ordinary pickup permission, invent a new definition or call a model.

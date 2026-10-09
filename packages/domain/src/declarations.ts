@@ -23,6 +23,52 @@ import { recipeFamily } from './world-modules.js';
 
 export const validateDeclaration = validateRecipeCandidate;
 
+/** Trusted recipe installation shared by world-authored methods and admitted inventions.
+ * It creates definitions only, never stock or knowledge; compilers validate supported meaning. */
+export function installRecipeDefinition(
+  world: WorldState,
+  draft: DeclarationDraft,
+  provenance: import('./types.js').RecipeDefinition['provenance'],
+  recipeId: string,
+  outputDefinitionId: string,
+): void {
+  if (world.recipes[recipeId] || world.itemDefinitions[outputDefinitionId])
+    throw new Error('Recipe installation identity is already occupied.');
+  const digest = canonicalJson(draft);
+  const compiled = compileRecipeCandidate(world, draft);
+  const outputName = canonicalName(draft.output.name, compiled.outputDefinition.nameForm);
+  const family = recipeFamily(world, draft.family.id);
+  if (!family) throw new Error('The selected recipe family is not installed.');
+  world.itemDefinitions[outputDefinitionId] = {
+    ...cloneValue(compiled.outputDefinition),
+    id: outputDefinitionId,
+    version: 1,
+    name: outputName,
+    description: draft.output.description,
+    recipeId,
+  };
+  world.recipes[recipeId] = {
+    name: draft.name,
+    description: draft.description,
+    inputs: cloneValue(draft.inputs),
+    output: {
+      ...cloneValue(draft.output),
+      name: outputName,
+    },
+    workSeconds: compiled.workSeconds,
+    sourceCandidate: cloneValue(draft),
+    familyPin: definitionPin(family.definition),
+    dependencyReferences: recipeDependencyReferences(world, draft, compiled),
+    facts: cloneValue(compiled.facts),
+    id: recipeId,
+    version: 1,
+    digest,
+    outputDefinitionId,
+    admittedAt: world.simTime,
+    provenance: cloneValue(provenance),
+  };
+}
+
 export function admitDeclaration(
   original: WorldState,
   draft: DeclarationDraft,
@@ -98,39 +144,7 @@ export function admitDeclaration(
     // docs/invention-composition.md#3-composition-contract
     let outputDefinitionId = `item-${contentLabel(`output:${digest}`)}`;
     while (world.itemDefinitions[outputDefinitionId]) outputDefinitionId += '-v';
-    const compiled = compileRecipeCandidate(original, draft);
-    const outputName = canonicalName(draft.output.name, compiled.outputDefinition.nameForm);
-    const family = recipeFamily(original, draft.family.id);
-    if (!family)
-      return reject('invalid-declaration', 'The selected recipe family is not installed.');
-    world.itemDefinitions[outputDefinitionId] = {
-      ...cloneValue(compiled.outputDefinition),
-      id: outputDefinitionId,
-      version: 1,
-      name: outputName,
-      description: draft.output.description,
-      recipeId,
-    };
-    world.recipes[recipeId] = {
-      name: draft.name,
-      description: draft.description,
-      inputs: cloneValue(draft.inputs),
-      output: {
-        ...cloneValue(draft.output),
-        name: outputName,
-      },
-      workSeconds: compiled.workSeconds,
-      sourceCandidate: cloneValue(draft),
-      familyPin: definitionPin(family.definition),
-      dependencyReferences: recipeDependencyReferences(original, draft, compiled),
-      facts: cloneValue(compiled.facts),
-      id: recipeId,
-      version: 1,
-      digest,
-      outputDefinitionId,
-      admittedAt: world.simTime,
-      provenance: cloneValue(provenance),
-    };
+    installRecipeDefinition(world, draft, provenance, recipeId, outputDefinitionId);
   }
   world.declarationReceipts[provenance.requestId] = { digest, recipeId, attribution };
   const knowledge =

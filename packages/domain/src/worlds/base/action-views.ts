@@ -10,6 +10,7 @@ import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
+import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
 
 type ViewPossessions = {
   items: readonly ItemInstance[];
@@ -78,6 +79,7 @@ function activityView(
     'tend-fire': 'Tend a fire',
     eat: 'Eat',
     equip: 'Equip',
+    guard: 'Guard with shield',
     move: 'Move',
     gather: 'Gather',
     prepare: 'Prepare',
@@ -162,6 +164,20 @@ function activityView(
     }
     if (definition.description)
       view.facts.push({ name: 'description', value: definition.description, critical: false });
+  }
+  if (command.type === 'guard' && definition?.contactDefense) {
+    view.facts.push({
+      name: 'guard',
+      value: guardDescription(definition.contactDefense),
+      critical: true,
+    });
+    view.facts.push({
+      name: 'facing',
+      value: command.targetId
+        ? 'Face this visible target once; the shield does not track it'
+        : 'Hold the chosen body direction; camera rotation does not turn it',
+      critical: true,
+    });
   }
   if (command.type === 'strike') {
     const profile =
@@ -368,12 +384,16 @@ function nativeCatalogueCommitments(
       'Material selection',
       'Draws from carried supplies across lots; this action does not bind to one selected lot',
     ]);
-  if (command.type === 'strike' && command.weaponItemId)
-    facts.push(['Equipment', 'Requires this exact weapon to be equipped; approach is automatic']);
-  if (command.type === 'hunt' && command.weaponItemId)
+  const heldItemId =
+    command.type === 'guard'
+      ? command.itemId
+      : command.type === 'hunt' || command.type === 'strike'
+        ? command.weaponItemId
+        : undefined;
+  if (heldItemId)
     facts.push([
       'Equipment',
-      'Uses this exact carried ranged tool; approach is automatic and equipped equipment is unchanged',
+      `${'autoEquip' in command && command.autoEquip ? equipmentChangeDescription(world, command.actorId, heldItemId) : ''}Requires this exact item to be held${command.type === 'guard' ? '; guarding stays in place' : '; approach is automatic'}`,
     ]);
   if (command.type === 'hunt') {
     facts.push(['Time', `${BASE_ACTION_DEFAULTS.shotSeconds} seconds of game time, plus approach`]);

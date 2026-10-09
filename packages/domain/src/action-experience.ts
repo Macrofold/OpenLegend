@@ -747,13 +747,14 @@ const invocationFields: Partial<
   craft: { required: ['recipeId'] },
   replenish: { required: ['targetId', 'attributeId'] },
   equip: { required: ['itemId'] },
+  guard: { required: ['itemId'], optional: ['targetId', 'facing', 'autoEquip'] },
   eat: { required: ['itemId'] },
   'inspect-inventory': {
     required: [],
     optional: ['containerId', 'after', 'expectedRevision', 'expectedScope'],
   },
-  strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId'] },
-  hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
+  strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId', 'autoEquip'] },
+  hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId', 'autoEquip'] },
   'treat-scar': { required: ['targetId', 'scarId'] },
   cook: { required: ['itemId', 'heatId'] },
   'tend-fire': {

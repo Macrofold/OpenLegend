@@ -112,8 +112,6 @@ export function atomicObjects<T>(world: WorldState, operation: (candidate: World
     else if (current?.actor && entity.actor) {
       if (current.inventoryRevision !== entity.inventoryRevision)
         current.inventoryRevision = entity.inventoryRevision;
-      if (current.actor.equippedItemId !== entity.actor.equippedItemId)
-        current.actor.equippedItemId = entity.actor.equippedItemId;
     } else if (current !== entity) world.entities[id] = entity;
     if (wasRoot !== isRoot) rootMembershipChanged(world, id);
   }

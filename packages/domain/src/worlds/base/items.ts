@@ -1,5 +1,6 @@
 import type { ItemDefinition } from '../../types.js';
 import type { MaterialInterface } from '../../invention-families.js';
+import { BASE_KNIFE_EQUIPMENT } from './equipment.js';
 
 /** Native preparation and invented cord share these authored costs and output semantics.
  * docs/worlds/base/items.md#cordage-manufacture-and-reuse */
@@ -25,6 +26,7 @@ export const CONSTRUCTED_ITEM_STORY_FIELDS = { story_importance: { story_importa
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
   knife: {
     mechanismFields: { story_importance: { story_importance: 7 } },
+    equipment: BASE_KNIFE_EQUIPMENT,
     id: 'knife',
     version: 1,
     portable: true,

@@ -39,7 +39,7 @@ export interface FlightRoute {
 export type Placement =
   | { mode: 'world'; position: WorldPoint; supportSurfaceId: string | null; revision: number }
   | { mode: 'contained'; parentEntityId: string; revision: number }
-  | { mode: 'attached'; parentEntityId: string; portId: 'equipment'; revision: number };
+  | { mode: 'attached'; parentEntityId: string; portId: string; revision: number };
 export function worldPlacement(
   point: WorldPoint,
   supportSurfaceId: string | null = 'terrain',

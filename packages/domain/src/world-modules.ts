@@ -54,7 +54,9 @@ import { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
-import { hasRecordFields } from './records.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
+import { validateEquipment } from './equipment.js';
+import { validateContactDefense } from './contact-defense.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { validateOutings } from './outings.js';
@@ -183,7 +185,9 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
   },
 } as const);
 const definitionPins = new WeakMap<object, DefinitionPin>();
-export function definitionPin(definition: { id: string; version: number }): DefinitionPin {
+export function definitionPin<T extends { id: string; version: number }>(
+  definition: T,
+): DefinitionPin {
   const cached = definitionPins.get(definition);
   if (cached) return cached;
   const pin = {
@@ -786,6 +790,8 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
   validateGatheringTools(world);
+  validateEquipment(world);
+  validateContactDefense(world);
   for (const definition of Object.values(world.itemDefinitions)) {
     if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))
@@ -793,6 +799,21 @@ export function validateWorldModules(world: WorldState): void {
   }
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
+    if (recipe.provenance.source === 'world-authored') {
+      if (
+        !isSafeRecordId(recipe.provenance.definition.id) ||
+        !sameDefinitionPin(
+          recipe.provenance.definition,
+          definitionPin({
+            id: recipe.provenance.definition.id,
+            version: recipe.provenance.definition.version,
+            candidate: recipe.sourceCandidate,
+          }),
+        )
+      )
+        throw new Error('Invalid authored method source.');
+      continue;
+    }
     const authority = recipe.provenance?.authority;
     if (
       !authority ||
@@ -936,8 +957,8 @@ export function validateWorldModules(world: WorldState): void {
     )
       throw new Error('Invalid saved inventory inspection.');
     if (
-      e.actor?.attackReadyAt !== undefined &&
-      (!finite(e.actor.attackReadyAt) || e.actor.attackReadyAt < 0)
+      e.actor?.combatReadyAt !== undefined &&
+      (!finite(e.actor.combatReadyAt) || e.actor.combatReadyAt < 0)
     )
       throw new Error('Invalid attack recovery deadline.');
     for (const contact of Object.values(e.actor?.contacts ?? {})) {
@@ -1052,7 +1073,7 @@ export function validateWorldModules(world: WorldState): void {
         (e.actor.action.strikePhase === 'windup' && e.actor.action.strikeOutcome !== undefined) ||
         (e.actor.action.strikePhase === 'recovery' &&
           (!['hit', 'miss'].includes(e.actor.action.strikeOutcome ?? '') ||
-            e.actor.attackReadyAt === undefined)))
+            e.actor.combatReadyAt === undefined)))
     )
       throw new Error('Invalid saved melee phase.');
     if (

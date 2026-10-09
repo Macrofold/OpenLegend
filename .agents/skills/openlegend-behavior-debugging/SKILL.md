@@ -11,7 +11,7 @@ Treat the desired behavior as a hypothesis about what follows from a character's
 
 ## Establish the target and baseline
 
-Define observable success, starting conditions, allowed alternatives, provider tier and relevant recovery. A sensible alternative or justified reluctance can challenge the expected behavior. Preserve the user's task mode and constraints. Use the existing [AI boundary](../openlegend-ai/SKILL.md) and [verification/spending policy](../../rules/verification.md); this skill grants no execution or spending authorization.
+Define observable success, starting conditions, allowed alternatives, provider tier when applicable and relevant recovery. A sensible alternative or justified reluctance can challenge the expected behavior. Preserve the user's task mode and constraints. Follow the [verification/spending policy](../../rules/verification.md); for cognition, model input, Jev choices or provider work, also read the [AI boundary](../openlegend-ai/SKILL.md). Purely native mechanics/disclosure checks do not by themselves require AI guidance. This skill grants no execution or spending authorization.
 
 Capture a baseline in a disposable scenario: seed/time, environment, body/internal state, possessions, perception, memories, personality/background, goals and plan. Inspect exact submitted context, questions and options. Retain answers, scores, admission results, committed effects and subsequent awareness.
 

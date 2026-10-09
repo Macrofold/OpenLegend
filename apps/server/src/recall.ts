@@ -1,3 +1,4 @@
+import { isEquipped } from '@open-legend/domain';
 import { personalPronoun } from '@open-legend/language';
 import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
 import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
@@ -299,7 +300,7 @@ export function candidateSet(
   }
   for (const item of observed.inventory) {
     const definition = definitions.get(item.definitionId)!;
-    const text = possessionText(item, definition, item.id === observed.actor.actor!.equippedItemId);
+    const text = possessionText(item, definition, isEquipped(world, actorId, item.id));
     candidates.push({
       id: `item:${item.id}`,
       kind: 'possession',
@@ -369,8 +370,7 @@ export function candidateSet(
       .sort(
         (a, b) =>
           Number(boundItems.has(b.id)) - Number(boundItems.has(a.id)) ||
-          Number(b.id === observed.actor.actor!.equippedItemId) -
-            Number(a.id === observed.actor.actor!.equippedItemId) ||
+          Number(isEquipped(world, actorId, b.id)) - Number(isEquipped(world, actorId, a.id)) ||
           a.id.localeCompare(b.id),
       )
       .slice(0, HARD_CONTEXT_LIMITS.possessions)

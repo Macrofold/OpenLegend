@@ -1,3 +1,4 @@
+import { isEquipped, equipmentConflicts } from '@open-legend/domain';
 import {
   NATIVE_PREPARATIONS,
   quantityOf,
@@ -33,6 +34,7 @@ import {
   type ItemInstance,
 } from '@open-legend/domain';
 import type {
+  CommandInput,
   ActionOption,
   InventoryItemView,
   ContainerPage,
@@ -703,11 +705,13 @@ export function inventoryItemView(
     const reason = dropItemReason(world, player, item.id, item.quantity);
     actions.push(action(`drop-${item.id}`, 'Drop', command, !reason, reason ?? undefined));
   }
-  if (
-    (definition.launcher || definition.melee || definition.gatheringTool) &&
-    accessiblePossession(world, player.id, item.id)
-  )
-    actions.push(action(`equip-${item.id}`, 'Equip', { type: 'equip', itemId: item.id }));
+  if (definition.equipment && accessiblePossession(world, player.id, item.id)) {
+    const command: CommandInput = { type: 'equip', itemId: item.id };
+    const availability = service.previewCommand(command, scope.actorId);
+    actions.push(
+      action(`equip-${item.id}`, 'Equip', command, availability.ok, availability.message),
+    );
+  }
   if (
     accessiblePossession(world, player.id, item.id) &&
     definition.nutrition &&
@@ -756,7 +760,7 @@ export function inventoryItemView(
         workReason ?? undefined,
       ),
     );
-  if (actor.equippedItemId === item.id)
+  if (isEquipped(world, scope.actorId, item.id))
     actions.push(
       action(
         `unequip-${item.id}`,
@@ -776,13 +780,19 @@ export function inventoryItemView(
     id,
     ...fact,
   }));
-  const equipped =
-    actor.equippedItemId &&
-    actor.equippedItemId !== item.id &&
-    (definition.launcher || definition.melee || definition.gatheringTool) &&
-    accessiblePossession(world, scope.actorId, actor.equippedItemId)
-      ? itemFor(world, actor.equippedItemId)
-      : undefined;
+  if (definition.equipment) {
+    const ports = definition.equipment.ports.map(
+      (id) => actor.body?.equipmentPorts.find((port) => port.id === id)?.label,
+    );
+    characteristics.push({
+      id: 'held-placement',
+      label: 'Worn or held at',
+      value: ports.every((label) => label !== undefined)
+        ? ports.join(' + ')
+        : 'This body cannot hold this equipment',
+    });
+  }
+  const equipped = equipmentConflicts(world, scope.actorId, item.id)[0];
   const equippedDefinition = equipped && world.itemDefinitions[equipped.definitionId];
   const counterpart = equippedDefinition
     ? itemCharacteristics(world, equippedDefinition).map(({ key: id, ...fact }) => ({
@@ -838,16 +848,15 @@ export function inventoryItemView(
     ...(!item.container || canAccessContainer(world, scope.actorId, item.id)
       ? { packingLoad: itemPackingLoad(world, item.id, 1) }
       : {}),
-    category:
-      definition.launcher || definition.melee || definition.gatheringTool
-        ? 'equipment'
-        : definition.ammunition
-          ? 'ammunition'
-          : definition.properties.includes('food')
-            ? 'food'
-            : 'material',
-    description: describePossession(item, definition, actor.equippedItemId === item.id),
-    equipped: actor.equippedItemId === item.id,
+    category: definition.equipment
+      ? 'equipment'
+      : definition.ammunition
+        ? 'ammunition'
+        : definition.properties.includes('food')
+          ? 'food'
+          : 'material',
+    description: describePossession(item, definition, isEquipped(world, scope.actorId, item.id)),
+    equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
     actions,
   };

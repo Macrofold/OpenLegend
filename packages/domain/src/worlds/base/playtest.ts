@@ -1,4 +1,4 @@
-import { itemFor } from '../../objects.js';
+import { equippedItem } from '../../equipment.js';
 import type { WorldEvent, WorldState } from '../../types.js';
 
 /** Bundled playtest goals, not universal world progression. External-world composition
@@ -7,14 +7,12 @@ export function basePlaytestMilestones(
   world: WorldState,
   actorId: string,
   events: readonly WorldEvent[],
-  purpose: 'projection' | 'recording' = 'projection',
 ) {
   const known = (world.knowledge[actorId] ?? []).flatMap(({ recipeId }) => {
     const recipe = world.recipes[recipeId];
     return recipe ? [world.itemDefinitions[recipe.outputDefinitionId]] : [];
   });
-  const actor = world.entities[actorId]?.actor;
-  const equipped = actor?.equippedItemId && itemFor(world, actor.equippedItemId);
+  const equipped = equippedItem(world, actorId, 'ranged');
   const launcher = equipped && world.itemDefinitions[equipped.definitionId]?.launcher;
   return [
     {
@@ -30,12 +28,10 @@ export function basePlaytestMilestones(
       label: 'Invent a sling',
       done: known.some((item) => item?.launcher?.mechanism === 'swing'),
     },
-    // Preserve the earlier saved flag's broader equipped-item completion while the live card
-    // asks for a launcher. Narrowing historical playtest progress is unrelated to extraction.
     {
       id: 'craft',
       label: 'Craft and equip a launcher',
-      done: purpose === 'recording' ? !!actor?.equippedItemId : !!launcher,
+      done: !!launcher,
     },
     {
       id: 'hunt',

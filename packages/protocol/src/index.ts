@@ -33,6 +33,7 @@ export interface CommandInput {
     | 'prepare'
     | 'craft'
     | 'equip'
+    | 'guard'
     | 'strike'
     | 'hunt'
     | 'harvest'
@@ -63,6 +64,8 @@ export interface CommandInput {
   expectedScope?: string;
   conversationId?: string;
   text?: string;
+  facing?: number;
+  autoEquip?: boolean;
   generation?: number;
   operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
@@ -386,7 +389,7 @@ export interface ItemTradeView {
 }
 
 export interface RecipeView {
-  npcCreated: boolean;
+  origin: 'authored' | 'player' | 'npc';
   id: string;
   name: string;
   description: string;

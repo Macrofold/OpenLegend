@@ -1,10 +1,10 @@
 # Held shields and chosen defense
 
-**Proposed base-world rules, October 5, 2026; not implemented.** [AV02](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment) owns this first defensive consumer. Native authority and exact attachment are generic; these body slots, timings and combat laws belong to this world.
+**Implemented October 6, 2026.** [Native, PostgreSQL and browser evidence](../../verification/shield-defense.md) records the qualified scope. [AV02](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment) owns this first defensive consumer. Native authority and exact attachment are generic; these body slots, timings and combat laws belong to this world.
 
 ## Compatible equipment
 
-Applicable people have a main-hand and an off-hand equipment port. A knife or existing one-handed gathering tool uses the main hand. A shield uses the off hand. The selected spear and current sling/bow launcher profiles require both hands; equipping one removes conflicting held equipment into carried custody atomically, without moving it to the ground or changing ownership. These are explicit definition capabilities, not deductions from names. A nonperson body without these authored ports does not acquire human equipment by default.
+Applicable people have a main-hand and an off-hand equipment port. A knife or existing one-handed gathering tool uses the main hand. A shield uses the off hand. Current sling/bow launcher profiles require both hands; equipping one removes conflicting held equipment into carried custody atomically, without moving it to the ground or changing ownership. AV01’s proposed spear must declare its selected two-handed profile when installed. These are explicit definition capabilities, not deductions from names. A nonperson body without these authored ports does not acquire human equipment by default.
 
 The engine represents one physical attachment per item and derives occupied ports from its admitted profile. The base-world definitions provide the port labels, compatible tool uses and occupied-port requirements. Future clothing consumes that same attachment mechanism with its own port and permissions; it does not mean shields introduce every future armor slot.
 
@@ -41,3 +41,9 @@ No passive auto-guard, endless held stance, stamina meter, shield wear, parry st
 - Delivery: [AV02](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment).
 - Mechanism and UI: [technical definition](../../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av02--equipment-and-one-contact-defense-owner).
 - Limits: [AV-L02](../../limits/parallel-batch-05-adventure-defense-and-home.md#av-l02--equipment-and-finite-contact-guard); existing [combat](combat.md) and [lifecycle](lifecycle-and-protection.md) retain their authority.
+
+## Ordinary choices and current-format return
+
+Inventory and ordinary actions expose the exact shield, equipment changes and timing explanation. The player’s visible work label says Preparing guard, Guard ready or Recovering from guard. Visible threat preparation remains readable through ordinary observation. NPCs with an accessible shield can receive the same admitted guard choice when they see a contact strike being prepared, alongside ordinary alternatives. Offering it does not select it or establish that a model will choose well.
+
+Current-format saves retain exact attachments, shield/profile/life references, facing and original deadlines. Paused startup/load preserves committed physical work while control reconnects; genuine absence still interrupts it under the existing departure law. A returned expired guard receives no protection. Committed recovery and damage cannot renew or repeat because a request or save is reopened. Death stows attachments before the existing item-type retention decision and clears the retired body’s guard/recovery; it changes neither retention probabilities nor new-life rules.

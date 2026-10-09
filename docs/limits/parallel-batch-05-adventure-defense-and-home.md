@@ -1,6 +1,6 @@
 # Batch 05 proposed constraints
 
-This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **All are unimplemented proposals as of October 5, 2026.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
+This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **AV02 was implemented October 6, 2026; other entries remain proposals.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
 
 ## AV-L01 — Finite authored expeditions
 
@@ -10,9 +10,7 @@ World creation installs this content once; restored saves are not reseeded. Loca
 
 ## AV-L02 — Equipment and finite contact guard
 
-[Shield defense](../worlds/base/shield-defense.md) owns the selected human hand ports, compatibility, known recipe, profile bounds and guard phases. Only contact injury in the declared current facing sector qualifies. The first lawful intercepted hit consumes the ready guard; expiry/replacement ends it. Its chosen facing stays fixed until a new guard; camera rotation supplies no body tracking. No passive universal reduction, armor, durability, stamina, projectile interception or new PvP rule. This makes an understandable tactical choice without promising a complete combat system.
-
-Equipment attachment remains extensible by authored body ports and compatible definitions; no engine-fixed maximum number of hands or humanoid assumption. Resolve from the selected actor's attached items/index, not every world's possession. Body/profile admission prevents port conflicts; unsupported ports or attack types refuse/receive no benefit rather than approximating protection. A useful additional equipped consumer or defensive encounter triggers extension through this owner. AV02 owns implementation, including current callers and lifecycle; [objects](objects.md), [actions](action-experience.md) and [base-world lifecycle](base-world.md) retain inherited integrity limits.
+**Adopted October 6, 2026.** The former single equipment-slot restriction and admitted occupied-port boundary now belong to [OB05](objects.md#ob05); the finite contact-only choice and unsupported defensive systems belong to [SD01](base-world.md#sd01--finite-chosen-shield-defense). [The shield profile](../worlds/base/shield-defense.md) remains the sole authored tuning/wording owner, and [AV02](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment) links actual native, PostgreSQL and browser evidence. This disposition replaces the proposed inventory here rather than maintaining a second editable copy.
 
 ## AV-L03 — Finite river casts and preparation
 
