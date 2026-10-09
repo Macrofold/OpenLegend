@@ -44,7 +44,7 @@ The first scope is one same-world service, one depot and the exact bow, with one
 
 Neri selects the actual individual bow, identifies the intended lending depot and reviews its current condition, installed capability and authority. A name such as “library bow” cannot transform a stack, repair damage or make an unsupported launcher useful. If an asset is not individual, has ambiguous title, is pledged elsewhere, is held by someone who has not agreed to release it, or is needed by active work, it cannot become available merely because Neri signs a record.
 
-The mandate states: this exact item may be lent to an eligible member after that person accepts return of the same item; no purchase price, consumable supply, fee, interest, substitution or sublending is included. Sol may present and accept those terms, complete the approved checkout, inspect the returned object and take the service out of new-lending availability. Sol cannot sell it, lend it to themselves through their own acceptance, add compensation, erase a claim, give another officer power or take arbitrary goods out of the depot. Neri can separately approve Sol borrowing on the same visible terms. That approval is an owner decision, not an exploit of the keeper role.
+The mandate states: this exact item may be lent to an eligible member or known adult guest after that person accepts return of the same item; no purchase price, consumable supply, fee, interest, substitution or sublending is included. Sol may present and accept those terms, complete the approved checkout, inspect the returned object and take the service out of new-lending availability. Sol cannot sell it, lend it to themselves through their own acceptance, add compensation, erase a claim, give another officer power or take arbitrary goods out of the depot. Neri can separately approve Sol borrowing on the same visible terms. That approval is an owner decision, not an exploit of the keeper role.
 
 Existing sufficient grants are reused. A person should not repeatedly approve the same unchanged mandate for every ordinary transaction. A material widening names the change and needs the owner's fresh assent before it affects future lending. The borrower sees their own terms, not the entire institution's private correspondence. The appointment itself does not expose every member's possessions or past disputes.
 
@@ -61,6 +61,8 @@ The association steward controls only DG22's record functions unless they also h
 ### 3.3 Preparing a depot that can actually accept the return
 
 The depot is an ordinary real container at a supported reachable place, with additional narrowly authored library permissions. At setup it must fit the actual bow, expose permitted information and permit the selected current owner/keeper operations through every relevant action route. Borrowers do not receive general access to its contents. It is not a magic remote locker or a theft-proof territorial domain inferred from its name.
+
+The bow's title does not authorize use of somebody else's container. The actual current creator/permission authority must admit this narrow service at the selected depot, including every restricting ancestor. Any ordinary depot-principal power added for this purpose is separately specified new PO behavior. Sol's keeper role and Neri's item title cannot bypass it. That authority must also accept the continuing return commitment: subsequent revocation can stop new checkout, but cannot silently remove the accepted narrow return route. If the broader world's permissions cannot honor that bounded promise, this depot is ineligible.
 
 Checkout leaves real compatible room reserved for the return of that exact bow. The reservation follows the outstanding loan, not Sol's active work, and is unavailable for new unrelated deposits. It accounts for actual packing and any changed supported item state; it cannot treat unknown size as zero or promise acceptance of arbitrary modifications. This is an explicit new PO consumer. If retaining usable return room is not supported, the service must refuse checkout rather than advertise an offline return that may later overflow.
 
@@ -89,6 +91,8 @@ Successful checkout moves the real bow once, records the accepted return obligat
 The borrower can carry, equip and use this compatible bow through existing supported actions. They need their own authorized ammunition and actual bodily capability; the library does not grant a manufacturing technique or force an NPC companion to help. One finite hunt outcome supplies ordinary evidence. No automatic repeat, kill guarantee, meat yield bonus, relationship reward or generated quest completion is added.
 
 The loan's scope forbids deliberately selling, gifting, sublending, consuming as material or materially modifying the entrusted bow without a new agreement. That restriction must be enforced wherever those acts can occur, including native commands, natural-language execution, nested-container movement and newly admitted mechanics. An unqualified action family cannot silently route around it. This is an explicitly selected entrusted-item rule, not a universal theft law inferred from every declared owner in the world.
+
+These disposition restrictions are attached to the entrusted item for all ordinary actors while the grant applies. Giving somebody a bag containing it, dropping it for an accomplice or moving it through nested containers cannot make it freely saleable or consumable. Only the named borrower's use is pre-authorized; another custodian does not acquire that permission from pickup. An attempted forbidden use supplies the minimal permitted explanation that this entrusted item lacks authorization for that act, without naming private participants or revealing the loan history. A finder may preserve it and seek an ordinary consensual handover to the entitled person. A later broader finder-return grant needs its own legitimate knowledge and permission; the first borrower-only depot route does not reveal a secret return address to everyone holding the item. Actual qualified destruction and accidental loss remain possible under their selected mechanics; this rule is not blanket item invulnerability.
 
 Ordinary custody changes that do not dispose of the bow remain possible where supported: unequipping, putting it in an authorized carried container and retrieving it. Dropping it is a deliberate loss-of-custody risk, with a truthful consequence before the action when the borrower can know it. The feature does not glue the bow permanently to their body. Later recovery must involve the actual object and legitimate access. A finder does not inherit the borrower's debt, and seeing a bow does not expose the original private loan; permitted distinguishing information can support returning a found object without revealing unrelated records.
 
@@ -132,6 +136,16 @@ The record may be closed while physical wind-down continues. It cannot declare e
 
 The first service has no collective treasury, inheritable office, dues or profit shares. Larger pooled ownership would require a separate explicit principal/beneficiary rule, joining and exiting stakes, votes, contributor assent and dissolution distribution. Inventing those mechanisms for one bow would add more work than play. [IC-R05](#ic-r05--simpler-sharing-can-be-the-better-system) provides a useful precedent for deliberately reducing institutional machinery.
 
+### 5.4 Delegation spends the same finite commitment capacity
+
+The first accepted mandate occupies one of the existing sixteen unresolved-commitment places for each distinct accepting person: one for Neri, including her accepted fallback role in that same mandate, and one for Sol. Neri additionally commits one of those same places to the mandate's maximum one concurrently outstanding loan before checkout authority becomes usable. This standing capacity is unavailable for unrelated promises even while the bow is on the shelf. It is disclosed at mandate acceptance, not a new hidden debt and not a goods reservation.
+
+The actual borrower uses one existing place only when checkout succeeds. Sol acting within the mandate creates the principal's authorized relationship, not an additional personal repayment guarantee. A second keeper, second bow or separate mandate cannot reuse Neri's one standing loan place. Wider delegation must count its whole permitted simultaneous exposure before authority is granted. This avoids unlimited owner obligations and avoids revealing unseen checkout activity merely through an otherwise changing personal capacity count.
+
+Stopping future checkout releases unused standing loan capacity. A live loan retains its corresponding unresolved place while active; termination/waiver follows DG22's actor-specific rules, preserving claims and legitimate knowledge rather than erasing history. A person can end their own active undertaking without waiting forever for a missing counterparty, but this does not grant another checkout, release somebody else's collateral, relabel the bow as returned or settle another person's claim. The service's one-outstanding-loan eligibility remains tied to the actual unresolved custody obligation, not whether someone hid or ended their personal commitment card.
+
+Pending mandate/loan revisions use the existing three durable proposals per proposer and one amendment per agreement, rather than a new institution allowance. Immediate actual exchanges retain their own current offer lifetime and limits. Long-lived records, requests received from many people and historical claims are separate aggregate workloads; the sixteen active places do not prove their cost is bounded.
+
 ## 6. Knowledge, interface and independent characters
 
 Use existing person, item, agreement and inventory surfaces. The object detail can identify a permitted entrusted-item state and the actor's available return action. The agreement view explains known terms and actual next actions. The service view shows only authorized stock and roles; it is not a live omniscient membership or borrower tracker. A short visible status distinguishes proposed, checked out, return blocked, physically returned and separately disputed loss. Do not compress those into a red “bad member” label.
@@ -153,7 +167,7 @@ Native return, permission rechecks and committed receipts must work with no paid
 | Keeper disconnects, declines work or resigns | New lending waits for a willing authorized keeper. The already-granted physical return route remains usable. |
 | Owner or keeper dies | Actual supported mortality controls the person and possessions. Named scoped fallback authority can continue where valid; no relative automatically inherits title or claims. If no entitled actor remains, stop new lending and retain actual custody and unresolved title pending a supported disposition. |
 | Borrower becomes inactive | Current human absence protection governs the same body and carried bow. No automatic return, forced login, interest or seizure. The exposed asset remains unavailable for other lending. |
-| Borrower dies or the bow is dropped | Follow actual corpse, ghost, revival and item-custody rules. Death is not a returned-object event. A recoverable actual bow can be returned through qualified access; nobody may search private possessions merely because they hold a claim. |
+| Borrower dies where actual mortality is enabled, or the bow is dropped | Follow the actually installed mortality, recovery and item-custody rules. Death is not a returned-object event. A recoverable actual bow can be returned through qualified access; nobody may search private possessions merely because they hold a claim. |
 | Bow is damaged or destroyed by a supported mechanic | Preserve actual remains/outcome evidence. Physical recovery does not invent a pristine replacement. First unsecured lending has no automatic damages charge; voluntary replacement, title transfer, loss acknowledgment or waiver need their own honest agreement. |
 | Library removes the borrower | Stop future eligibility as authorized; preserve their current return route, own evidence and any collateral disposition. Do not relabel a valid checkout as theft. |
 | Depot is full of unrelated goods | Refuse the competing deposit against its real reserved return room. If corruption or an unsupported change already broke that promise, show return blocked and recover explicitly; never overflow or delete goods. |
@@ -161,8 +175,176 @@ Native return, permission rechecks and committed receipts must work with no paid
 | Principal wants a different bow as replacement | A similar-looking object is not this loan's return. Review a new exact settlement, including title, custody and the old claim's release. |
 | No one wants to operate the service | Close new lending, preserve return/custody and expose only authorized wind-down actions. Do not appoint an unwilling keeper or create a new NPC. |
 
-“Death” above consumes the actually adopted mortality law. The inspected branch's present collapse/ghost behavior and DG21's separately identified newer-main death/Continue work must not be silently conflated. Revival or Continue retains the proper identity and actual current holdings; it does not reset a loan, regenerate a destroyed bow or bind the debt to a newly created relative. There is no inherited player obligation from an NPC ancestry label.
+“Death” above consumes the actually adopted mortality law. The inspected branch's present collapse behavior and DG21's separately identified newer-main death/Continue work must not be silently conflated. This document does not claim delivered NPC ghosts, summoning or ordinary revival; those remain separate DG33 scope. Where Continue or a future recovery action is actually supported, it retains the proper identity and actual current holdings; it does not reset a loan, regenerate a destroyed bow or bind the debt to a newly created relative. There is no inherited player obligation from an NPC ancestry label.
 
 Restoring a supported current-format save restores a coherent world state with the same accepted terms, actual item placement, scopes, return room and once-only outcomes. A pre-checkout local snapshot cannot be combined with the later bow as though both copies were legitimate. A returned object cannot remain simultaneously equipped by the borrower. Incompatible development saves are rejected under AGENTS rather than repaired by guessing missing ownership or obligations.
 
-[DG25 recovery](recoverable-worlds-feature-spec.md) and [DG29 travel](participants-and-world-travel-feature-spec.md) control escaped consequences. This first same-world service grants no cross-world movement of entrusted items. A later compatible route needs the current principal's actual permission, complete object/loan/return consequences and reconciled restore policy; account pack rights alone do not suffice. External human records or observed events cannot be erased from people's experience by rolling back the fictional dispute. Real charges, grants and creator allocations remain under their real accounting owners and are never repaid through a restored library chest.
+[DG25 recovery](corrections-and-shared-restoration-feature-spec.md) and [DG29 travel](participants-and-world-travel-feature-spec.md) control escaped consequences. This first same-world service grants no cross-world movement of entrusted items. A later compatible route needs the current principal's actual permission, complete object/loan/return consequences and reconciled restore policy; account pack rights alone do not suffice. External human records or observed events cannot be erased from people's experience by rolling back the fictional dispute. Real charges, grants and creator allocations remain under their real accounting owners and are never repaid through a restored library chest.
+
+## 8. A separately useful secured loan, if trust lending needs it
+
+### 8.1 Select real security with an understandable exit
+
+Do not block the first bow episode on escrow. Investigate it only when an owner genuinely wants to share an asset but cannot accept the full loss risk, and an interested borrower can spare meaningful security without losing the ability to take the outing. A deposit that consumes their food, ammunition or only useful tool may defeat the whole purpose. A supposed market price is not a guaranteed replacement; [IC-R12](#ic-r12--suggested-value-is-not-recovery) supports that caution.
+
+The proposed first secured extension uses one exact homogeneous nonperishable lot owned and authorized by the borrower, held at one actual qualified depot. No basket, currency, yield, interest, price oracle or reusable credit line is selected. The amount is negotiated and displayed in real item units. It must be currently present, uncommitted and supported; a promise to gather it later is not collateral. Neri explicitly authorizes this new loan family and its exact alternative settlement. Sol's unsecured mandate does not silently widen to seize or assess deposits.
+
+The selected terms give the borrower two objective exits: return the actual bow and reclaim the held lot, or deliberately elect the agreed alternative settlement, transferring that lot to Neri and ending Neri's return claim. The latter transfers Neri's recorded title in that exact bow to the borrower whether it is carried, lost, elsewhere or later recovered. It supplies no teleport, new physical access or authority to extinguish somebody else's legitimate independent rights. If the bow was destroyed, the title disposition is historical and creates no replacement. This is a pre-agreed buyout option, not proof of fault or a guaranteed full replacement value. The owner must actually be willing to accept it before lending. If that is unacceptable, use the trust loan or require a later specifically designed adjudicated security family; do not hide unilateral forfeiture behind “deposit.”
+
+This deliberate exit makes the extension usable even if the keeper later disappears. It also exposes the economic tradeoff: a very low settlement lot lets borrowers legitimately choose to keep a valuable bow. That is a poor term for some owners, not cheating that a secret rule should fix. An exact higher lot may exclude the intended borrower. The playtest should discover whether the owner and borrower can choose mutually useful terms; if they cannot, the secured family has not earned implementation.
+
+### 8.2 Held means unavailable to spend
+
+Checkout moves the bow and the security under the same once-only agreed result or neither. The held lot stays real, with its identity/quantity, provenance and current placement. Neither Neri nor Sol may consume, withdraw, pledge, lend, merge away or count it as available library stock before an authorized settlement. The borrower retains the stated claim to recover it; depositing is not donation. A signboard balance is insufficient.
+
+Actual held-room capacity is additional to the bow's reserved return room. Contents and restricting ancestors must fit the full state after either exit. The depot authority accepts return, release and wind-down obligations before checkout; an asset mandate alone cannot promise somebody else's storage. The selected family excludes perishable, self-transforming or mechanically unsupported collateral until its full loss/condition behavior is designed. The hold is a new physical permission consumer, not DG22's spendable advance or BW21's temporary work-material reservation.
+
+Returning the actual bow releases the held goods to the borrower once. The ordinary combined operation uses their currently consented receiving destination and actual capacity. If they cannot presently carry the released lot, it remains at the depot under their narrow retrieval entitlement; it does not revert to Neri or become public. No private held goods are dumped on the ground to make room. The physical bow return must remain possible even when a separate dispute about security exists.
+
+Electing alternative settlement shows all consequences together: these goods become Neri's, this named return claim ends, and Neri's recorded title in the exact bow transfers to the borrower even if its location is unknown. The first extension uses the real depot's narrow settlement action after ordinary approach and reach; it supplies no new global remote finance service. It requires the borrower's fresh deliberate action; going offline, passing a date, dying or being expelled is not that election. After settlement the same old loan cannot demand the bow again. If a finder later delivers the original to Neri, custody changes but its settled title remains the borrower's; Neri cannot keep both goods and bow under the old claim. Returning or selling the bow to Neri after a buyout requires a new voluntary exchange, not a second automatic refund.
+
+### 8.3 Disagreement, loss and blocked recovery
+
+A keeper may report apparent loss or damage but cannot award themselves the security. A claim and its disclosed evidence are distinct from an objective result. Parties can voluntarily choose a replacement, partial release or waiver; each entitled claimant must assent to the exact affected remainder, and every actual transfer must still be available and authorized. The original principal must expressly delegate any settlement discretion. Merely being able to issue loans supplies none.
+
+If the borrower offers a different bow, Neri can accept a reviewed replacement and release the security, or decline without pretending the original returned. If the original later reappears, the replacement settlement's recorded title and claim disposition controls; nobody gets both compensation and an unreleased claim by omission. A partial settlement states exactly what remains rather than restarting the full debt. Unsupported complex settlements can remain ordinary proposals until a qualified native family exists.
+
+If the institution destroyed or lost the held lot, it cannot conjure a refund or debit another member. The borrower sees the known failure and can still physically return the bow while retaining a separate restitution claim, or negotiate an alternative. They are never told “deposit refunded” until actual release/payment occurs. A qualified secured service must disclose its real storage risks and loss responsibility beforehand. Admitting an incompatible new destructive mechanic can require suspending new secured loans; it cannot rewrite existing terms or erase a claimant.
+
+Closing the library releases no security automatically to the founder. Existing objective return and elected-settlement paths persist; returned collateral awaiting pickup retains its entitled recipient and restricted access. The absence or death of either party is not forfeiture. Where actual physical destruction or unsupported succession makes settlement impossible, preserve the truthful unresolved state and available evidence. First-profile hosting/retention follows DG27's finite service promises; do not promise eternal physical operation or a free human arbitration service.
+
+### 8.4 What remains an option, and why
+
+Timed interest and revolving credit are not selected. A fictional loan denominated in a currency needs D11's issuance, distribution, sinks and loss policy, plus exact principal, accrual clock, caps, partial repayment, default, creditor change and recovery. At 60:1, one game day is only twenty-four normal real minutes; casually copying a daily interest rule could become attendance pressure. Stopping the world, continuing it with other people, dying and restoring all need explicit treatment. Numerical rates would be arbitrary before a wanted borrowing activity and an actual currency exist.
+
+Likewise, elected treasuries, joint title, insurance pools, wages, courts and coercive collection remain optional independent designs. A court would need jurisdiction, admissible evidence, representation, review and actual enforcement; an NPC's confident story is not a verdict. A fictional ruler may be an interesting adversary, but cannot acquire platform moderation or private human records. Institutional play can later center on negotiating a real shared workshop or expedition budget. The present service supplies limited office, cooperation and exit without pretending to simulate a nation.
+
+## 9. Complete costs and the choice to keep the service small
+
+One bow can be checked out to at most one person at a time. A deposit is neither another bow nor available working capital. The depot's usable capacity is its actual capacity minus stored goods, held security and outstanding return-room commitments. A second request does not improve supply, and declining it is more truthful than selling two simultaneous uses. No player count, account subscription or title multiplies stock.
+
+For the first episode the exposed world resource is one real bow plus its return room. Normal food, ammunition, travel and action time remain paid by their actual actors. Lending does not create ammunition, preserve meals or supply energy. Resident keepers need ordinary food and independent decisions; adding an employee just for a decorative desk is a recurring cost. The first attended service does not depend on DG17 unattended operation, DG19 renewable food, a crowd engine, an imported pack or a paid platform membership.
+
+Suppose, purely for sensitivity, that a completed outing adds five keeper decisions and one fallback interaction at an average provider cost `c`, plus two unsuccessful decision attempts. Added inference would be `8c`: at illustrative `c = $0.002`, `$0.01` and `$0.05`, that is `$0.016`, `$0.08` or `$0.40` per episode before baseline character life, hosting, storage, presentation and support. These are assumed costs, not current prices or measured request counts. Native return/retry should add no model call. Measure the actual whole path, including failures and long conversations, instead of pricing only the successful checkout sentence.
+
+Human effort can dominate. If an institution needs four minutes of officer administration to enable a two-minute use that an ordinary gift would enable in seconds, the library is losing. If two brief visits enable several satisfying outings while the owner is away, it may earn the complexity. Record approach, reading, negotiation, waiting, actual use, return and dispute time separately, without treating social conversation that players enjoy as automatically wasted. Ask what they chose to do again, not whether they completed every form.
+
+Historical claims and role changes accumulate even with one active loan. Sixteen unresolved places do not bound accounts, institutions, past transactions, public displays, private evidence or received requests. First qualification uses the actual selected scene and lifecycle. Before offering many libraries or long-running worlds, measure aggregate authorized reads, admission changes, many simultaneous returns, stale officers, concentrated requests and long-history reopening. Use bounded pages and explicit unavailable service when required; do not truncate hidden claims, delete entrusted items or silently relax their authority to keep a frame rate.
+
+There is no passive model timer per library, borrower, deposit or supposed reputation point. Meaningful events and chosen actions can enter existing decision context; unobserved changes do not cause global gossip. Simple current permissions, exact custody and known settlement rules should be cheap native decisions. Where an actual world/operator limit is reached, refuse new institutions or checkouts while preserving completed loans and authorized returns. Measure reserve headroom for returning already admitted property before advertising growth; accepting more borrowers and then rejecting every return is not successful capacity.
+
+## 10. Qualification through useful episodes and awkward outcomes
+
+The first delivery is complete when a player can enjoy the bow trial and give the next person a real chance to do the same, without operator repair. Product acceptance requires these complete journeys, alongside the applicable PO, INV, agency, time and persistence qualification. Deterministic checks can prove conservation; they cannot establish that an NPC's choice is believable or that borrowing was enjoyable.
+
+| Journey | Required evidence and implication |
+| --- | --- |
+| A guest tries the bow | One short exact review, actual checkout, independently chosen compatible use and successful return. No compulsory membership, free ammo, guaranteed kill or extra tutorial bureaucracy. Compare the same outing using a gift/barter/personal tool. |
+| Owner is away, keeper is willing | Sol can exercise only the accepted mandate; Neri's standing exposure is already within the same commitment allowance. Neither role grants access to unrelated possessions or remote knowledge. |
+| Keeper wants to go out too | Sol may decline or resign. A self-loan needs independent owner assent. Neri's accepted fallback is usable but never coerces Neri to work. Return still works without either person present. |
+| Two people want the only bow | Exactly one current checkout succeeds. The other sees an honest current or last-known outcome and can choose an alternative; no hidden duplication, forced queue or prestige priority. |
+| A borrower leaves the group | They can stop future association participation immediately, keep their own evidence and perform the same physical return. Removal cannot turn the depot public or seize collateral. |
+| Someone fills or moves the depot | Actual reserved room blocks incompatible storage. Planned changed return burden requires assent or preservation of the old route. Unexpected loss yields blocked return and explicit recovery, not borrower fault. |
+| Same name, wrong object | A visually identical replacement does not discharge an exact-item obligation. A new accepted settlement can; later discovery of the original follows that settlement's disposition. |
+| Disconnect at each transfer boundary | Recover one actual result across checkout, return and each selected security exit. No duplicate goods, repeated refund, ghost debt or invented failure narrative. |
+| Owner, keeper or borrower dies | Actual current mortality and item placement remain authoritative. No auto-inheritance, forced new character, revived copy, absence succession or private corpse access from a claim. |
+| Service closes with work unfinished | New business stops; assets, return routes, held goods and own claims remain understandable. No founder jackpot, public chest, deleted stock or everlasting NPC employment. |
+| Later secured loan is exercised | Actual security cannot be spent while held. Return refunds it once; deliberate agreed buyout closes the same claim once. A missing lot remains a failure/restitution claim, not a balance conjured by prose. |
+| A world is paused or restored | No real-time hidden interest, catch-up service or duplicate settlement. Current-format complete state and external-dependency restrictions remain coherent. |
+
+Try refusal, early return, an outing with no useful shot and an owner choosing to withdraw the asset. The game must still be playable. A service that works only when every NPC accepts or every hunt succeeds has not passed. Test ordinary human and resident choices separately from replay integrity, and retain zero-paid-inference return as a practical recovery path.
+
+## 11. Sequence and game-first critique
+
+First demonstrate a useful owned bow in an ordinary attended encounter. Then compare direct gift/barter and a trusted exact-item loan between two people. The full selected library adds only the authority and depot behavior needed to let a willing keeper serve for an absent owner and let a borrower return independently. This complete service can be delivered before secured lending, member elections, treasury accounting or any wider government. Its technical work still has to make every relevant current item route honor the new permission; a partial happy-path menu is not sufficient.
+
+The review made five deliberate cuts. Guest borrowing avoids mandatory association paperwork. An individual principal avoids inventing corporate title. No default deadline avoids making accelerated time a login obligation. The owner is the already-consenting fallback rather than a newly simulated permanent employee. Optional security follows demonstrated need instead of making every borrower surrender scarce supplies. These cuts preserve a real institution: someone has accepted bounded responsibility for resources they do not personally own, and that responsibility survives ordinary personnel change.
+
+There are remaining costs worth challenging. Reserving real return room can make a small depot less useful; that is the honest cost of guaranteeing its offline return route. One bow may not justify even a short institutional interaction. An indefinite trust loan can remove the only stock for a long time. A secured buyout can be too expensive for the borrower or too cheap for the owner. Those are reasons to revise the activity or retain simpler exchange, not reasons to add automatic seizure, fake scarcity, infinite stock or moralized reputation.
+
+Do not expand if players mostly want a gift, if the keeper becomes another survival burden, if ordinary use is shorter than unavoidable administration, or if an exact return routinely needs operator intervention. Conversely, repeated voluntary borrowing, understandable refusal, a believable keeper who can leave, and a returned tool enabling another wanted outing are worthwhile evidence. No arbitrary retention percentage or monetization target is adopted here. Broader institutions should be selected from actual desired play: an expedition with a shared useful facility, an association that teaches a real craft, or a contest over an actual finite budget. Governance should make those possibilities playable, rather than replace them with governance homework.
+
+## 12. Primary research and design inferences
+
+All sources were accessed on 2026-10-09 UTC. These are primary developer statements or publisher support records, not independent measurements of enjoyment, fraud, profitability or current client behavior. Historical announcements and reported corrections retain their dates. The observations below are separated from the Open Legend choices they inform; no foreign game's title, currency or governance rule is adopted automatically.
+
+### IC-R01 — Collateral, lateness and unavailable destinations
+
+**Source:** CCP Games, [Courier Contracts](https://support.eveonline.com/hc/en-us/articles/203218982-Courier-Contracts), support updated 2021-08-23; public body read. The guide describes committed collateral, release on delivery, payment to the issuer on failure, and late delivery remaining possible until the issuer declares failure. Unavailable destinations receive distinct treatment.
+
+**Inference:** A clock cannot establish responsibility for a blocked return. The library must retain an actual return route and distinguish incomplete delivery from blame. This is currently published guidance, not a live test or evidence that its forfeiture policy would be enjoyable here.
+
+### IC-R02 — What does a loan actually enable?
+
+**Source:** CCP Atlas, [Talking about contracts…](https://www.eveonline.com/de/news/view/talking-about-contracts...), 2006-07-27 development proposal; relevant body read. Proposed private loans included corporate equipment. The author distinguished trust from full-value collateral and questioned the latter's usefulness. Corporate contracting required authority, while freeform completion could depend on issuer judgment.
+
+**Inference:** First make access possible through an affordable finite trust choice. Security should earn its extra steps. Unilateral issuer judgment is not objective settlement. This historical preview does not establish that the proposed loan family survived into EVE's current game.
+
+### IC-R03 — A contribution and a withdrawal are different powers
+
+**Source:** CCP Games, [Corporation Projects](https://support.eveonline.com/hc/en-us/articles/9583433729308-Corporation-Projects), support updated 2024-11-12; public body read. Projects track contributions, with both automatic and manually recorded activity, deadlines and individual limits. Delivery storage allows ordinary deposits while restricting withdrawals; some rewards can be claimed before the whole project finishes.
+
+**Inference:** An institution is useful through actual contributions and access, with explicit evidence and authority. Membership need not confer a treasury key. The guide supplies no Open Legend reward funding guarantee or measured benefit; the first library consequently promises only its real finite stock.
+
+### IC-R04 — Closure can destroy exactly what people contributed
+
+**Source:** CCP Games, [Corporation / Alliance Closure](https://support.eveonline.com/hc/en-us/articles/203209062-Corporation-Alliance-Closure), updated 2024-07-15; public body read. It describes closure without an eligible successor and conditions for alliance closure. Corporation assets are lost on closure under that published policy.
+
+**Inference:** Choose a different explicit tradeoff here: closing coordination preserves actual assets, title and residual claims until their supported disposition. Personal exit should be easy without making property disappear. This contrast does not establish how frequently EVE players experience the loss or whether its broader economic context justifies it.
+
+### IC-R05 — Simpler sharing can be the better system
+
+**Source:** CCP Greyscale, [Corp Hangars on ships and You](https://www.eveonline.com/de/news/view/corp-hangars-and-you), 2012-11-30 historical redesign announcement; official locale body read after the default URL failed. The developer described inconsistent role checks, unclear ownership and disproportionate maintenance complexity, proposing simpler ship-specific sharing while acknowledging reduced support for some uses.
+
+**Inference:** Select narrow lending and return authority before corporate divisions or elaborate ranks. This is a documented design tradeoff, not measured proof that simplification improved retention or eliminated abuse.
+
+### IC-R06 — People need to know who can change the arrangement
+
+**Source:** Strange Loop Games / John Krajewski, [Eco 9.0 constitution preview](https://store.steampowered.com/news/posts/?appids=382310&enddate=1583043738&feed=steam_community_announcements), 2020-02-21 in the official developer feed; relevant body read. The preview separates proposal, election and execution authority and uses ratification and amendments, with defaults to reduce setup.
+
+**Inference:** The library's short terms should specify who may change future service and who must accept changes to an existing loan. Elections are unnecessary for this purpose. Eco's governance-centered premise is a contrasting design, not evidence that Open Legend needs a constitution before someone borrows a tool.
+
+### IC-R07 — A held payment needs a real useful completion rule
+
+**Source:** Strange Loop Games / John Krajewski, [Eco Alpha 5.5 release announcement](https://www.moddb.com/games/eco-global-survival-game/news/were-excited-to-announce-eco-alpha-55-is-now-available), 2017-03-23 developer post; relevant body read. Delivery checks depot materials; construction checks a specified functioning table at its location. Payment and deposit are held, with temporary construction rights.
+
+**Inference:** Physical custody and exact completion matter more than the label “escrow.” Scoped access must persist long enough to finish its purpose. This historical currency-based system does not require us to adopt its deadlines, currency or automatic failure settlement.
+
+### IC-R08 — Economic errors cluster around repeated work and closure
+
+**Source:** Strange Loop Games, [Eco 10.1.4 and 10.2 release notes](https://store.steampowered.com/news/posts/?appids=382310&enddate=1712743532&feed=steam_community_announcements), 2024-02-12 and 2024-04-08; official feed bodies read. Reported fixes include settlement dissolution duplicating a linked bank-account owner's account balance, repeat completion using the same construction, unrelated mayors seeing orphaned treasury accounts and unauthorized constitution edits.
+
+**Inference:** Repeat return, settlement, officer replacement and closure deserve complete product acceptance, including private evidence. These are historical reported defects and corrections, not claims about current unfixed behavior or proof that Open Legend has solved the analogous cases.
+
+### IC-R09 — Newcomer powers can be dangerous
+
+**Source:** Square Enix, [Notice Regarding Free Company Rank Permissions](https://na.finalfantasyxiv.com/lodestone/news/detail/0aef429df390927c8e04d9e6bfb1046155e63703), undated in the retrieved public body. The notice reports theft/takeover feedback involving new-member rank powers and highlights promotion, demotion and chest access; it discusses considering changes.
+
+**Inference:** A newcomer should obtain the offered benefit without signing, promotion or broad withdrawal authority. This supports the optional guest route and explicit delegation boundary. The source is not labeled a 2026 incident, and its proposed changes are not assumed delivered.
+
+### IC-R10 — Placing something in a chest does not explain its title
+
+**Source:** Blizzard support representative Vrakthris, [Spotlight On — Guild Management and Security](https://us.forums.blizzard.com/en/wow/t/spotlight-on-guild-management-and-security/18813), 2018-11-15 official support guidance; public body read. Deposits are treated as relinquishing individual ownership, permissions separate several bank uses, and stack withdrawal limits differ from quantities or value.
+
+**Inference:** Open Legend must say loan, donation or safekeeping before transfer. Its first library chooses retained individual title, and limits refer to meaningful exact goods. This historical policy is not a current UI verification or a universal ownership law for shared containers.
+
+### IC-R11 — Internal disagreement is not free platform arbitration
+
+**Source:** ArenaNet, [Policy: Guild Ownership and Name Changes](https://help.guildwars2.com/hc/en-us/articles/360013021194-Policy-Guild-Ownership-and-Name-Changes), undated public policy body read. New members begin without powers; ordinary internal politics and authorized withdrawals generally remain leadership matters. It describes departure and inactive-leadership succession processes.
+
+**Inference:** Preserve meaningful evidence and personal exit while being honest that ordinary fictional disputes do not summon unlimited human support. Open Legend does not copy automatic inactivity succession or make membership a waiver of separate conduct protections. No publication date is inferred from copyright text.
+
+### IC-R12 — Suggested value is not recovery
+
+**Source:** Jagex, [Scams](https://support.runescape.com/hc/en-gb/articles/207721299-Scams), undated official support body read. The guidance warns about multi-step trust trades and exchanging goods for future promised benefit, and distinguishes guide prices from realizable trade prices.
+
+**Inference:** Show what actually moved, what remains owed and the real alternative exit. An appraisal cannot guarantee useful security or pay a loss. This is publisher guidance, not a measured fraud rate or a reason to eliminate every voluntary risky relationship from fiction.
+
+## Maintained records
+
+- Product preparation: [DG32 — Larger institutions and economic obligations](../maintainers/needs-design.md#dg32--larger-institutions-and-economic-obligations), consuming ND09/ND10 without adopting D11 currency or a starting government.
+- Delivery: [INV-20.5g–l](../maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions); [persistent objects](../maintainers/persistent-objects.md) retains the shared custody/authority consumer.
+- Authored choice and numerical scope: [Clearing Tool Library](../worlds/base/shared-equipment-and-institutions.md) and [INST-L01–INST-L08](../limits/shared-equipment-and-institutions.md).
+- Inherited cooperation and exact exchange: [DG22](durable-agreements-feature-spec.md), [DA limits](../limits/durable-agreements.md), [repertoire foundation](../repertoire-foundation.md), [PX02](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) and [base items](../worlds/base/items.md).
+- Independent people and actual activities: [agency](../agent-agency.md), [base survival](../worlds/base/survival.md), [time](../simulation-time.md), [economy repertoire](../repertoires/economy-logistics.md#ownership-rental-shared-access-and-commons) and [institutions repertoire](../repertoires/institutions-politics.md#guilds-standards-and-professions).
+- Recovery, service and rights: [DG25](corrections-and-shared-restoration-feature-spec.md), [DG29](participants-and-world-travel-feature-spec.md), [DG27](customer-and-supporter-offers-feature-spec.md), [DG28](published-packs-and-creator-revenue-feature-spec.md) and [invention governance](../../archive/03-design-proposals/invention-governance-and-ownership.md).
