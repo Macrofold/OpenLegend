@@ -84,13 +84,13 @@ The first Warden has one stored operation charge. It does not replenish from tim
 
 The operation's purpose is to close one currently open, connected campaign gate. The Warden receives only the declared fixture signals: whether its two relays remain connected and their associated gates' operational positions. This narrowly authored link is not a general sense of people, supplies, private plans or hidden activity. It follows an actual supported route from its workshop, carrying no conjured army. If both eligible gates are open, the first profile uses the shorter currently supported route; an exact tie uses the fixed authored western preference. The published conditional forecast explains this rule once that information is legitimately available.
 
-The initial qualification proposes a movement speed of 0.011 world units per game second, one tenth of the ordinary 0.11 reference, and an operation budget of 3,600 game seconds including movement and fixture work. These are provisional content choices: at normal speed the machine has at most one real minute of active work. The actual route must fit that budget with useful visible approach, and the numbers must change if the result is a tedious procession or an unreadable rush. A faster world clock shortens the real interval; qualification at normal speed does not establish a fair 8× encounter.
+The initial qualification proposes a movement speed of 0.011 world units per game second and an operation budget of 3,600 game seconds including movement and fixture work. These are provisional content choices: at normal speed the machine has at most one real minute of active work. The actual route must fit that budget with useful visible approach, and the numbers must change if the result is a tedious procession or an unreadable rush. A faster world clock shortens the real interval; qualification at normal speed does not establish a fair 8× encounter.
 
 The machine cannot cross unsupported terrain, pass through bodies, shove people, open private containers or reroute through a protected home. If a route is blocked it uses the already supported bounded navigation behaviour for this family. It does not acquire a general infinite path search. The active budget continues only with actual world progression. Exhausting that budget, losing all relevant power or failing its finite operation ends the attempt at the actual supported position. A service stall is not in-fiction time spent walking.
 
 At the destination, closing the gate takes the proposed 120 game seconds. The sweep must be clear at completion. A person or object blocking it prevents closure; no crushing damage is invented. People can deliberately obstruct a harmless machine, and this counts as a legitimate intervention if it actually prevents the attempt. That is a consequence of the selected nonlethal world law, not an exploit to repair secretly with damage. If this makes the outing uninteresting, improve the local work or omit the procession before considering a separately approved dangerous profile.
 
-The operation ends after one successful closure or the active budget expires. The Warden becomes permanently spent. It does not inspect the other gate and begin an unadvertised second attempt. Its body remains as a physical object under supported obstruction/removal rules. It cannot freeze in a doorway that the declared recovery route can never clear: the authored layout must give a walkable bypass and an actual supported way to shut down and move or dismantle the spent fixture. If those conditions are absent, the profile is not ready to launch.
+The operation ends after one successful closure or the active budget expires. The Warden becomes permanently spent. It does not inspect the other gate and begin an unadvertised second attempt. Its body remains as a physical object under supported obstruction/removal rules. It cannot freeze in a doorway that the declared recovery route can never clear: the authored layout must give a genuinely usable walkable bypass around every supported stopped position. The remnant can remain as an honest landmark; moving or dismantling it is optional and requires its own supported useful action, not a mandatory new hauling system. If the bypass cannot be honored, the profile is not ready to launch.
 
 A gate closed by the Warden can subsequently be reopened through the same real winding interaction. There is no invented seven-day repair tax. The setback is a temporarily blocked useful route and the story of how people responded. It is not described as a massacre, a destroyed town or lives saved. Bigger stakes require bigger actual laws and appropriate consent.
 
@@ -110,7 +110,7 @@ The first permanent shutdown is the canonical ending of that adversary. Its dorm
 | --- | --- | --- |
 | Both sources removed before an operation | Preparation prevented the attempted closure; no operation charge was spent and no battle happened. | Open remaining gates, disable the inert core, carry supplies, discuss the actual prevention. |
 | One source removed and core disabled | One community created a direct solution for the other; there was one shutdown. | Finish the second local mechanism if its parts or accessible road are wanted. |
-| Operation stopped in transit | Its actual movement and spent charge remain; the target gate has its real position. | Clear a supported obstruction, finish shutdown and use the route. |
+| Operation stopped in transit | Its actual movement and spent charge remain; the target gate has its real position. | Use the real bypass, finish shutdown and use the route; clear an obstruction only where that action is supported. |
 | Warden closes a gate | Its limited operation succeeded; that local setback is real. | Reopen the gate, remove any remaining source and improve the route's ordinary use. |
 | No valid destination or no ready service | No fictitious attack occurred and no victory is fabricated. | Continue immediate local work; read the changed service offer if interested. |
 | Campaign service ends unresolved | The operator's future event promise has ended; actual fixtures, goods and accepted history remain. | Pursue ordinary supported local shutdown/recovery while the world remains funded and accessible. |
@@ -163,4 +163,212 @@ There is still only one physical operation charge and one operation. If the firs
 Interested users can choose in-game notifications for material changes. Default participation does not subscribe them to repeated alarms, email or external messages. The same result is not announced as a modal, chat line and toast. A quiet notice links to the current permitted bulletin and its retained history. Missing a transient notice does not lose the information. No reminder is itself an NPC thought or a recurring paid generation call.
 
 Local UI expiry and real service commitments remain real across world pause, save/load and rewind. Restoring an earlier gate configuration cannot resurrect last Saturday's attendance promise. The [restoration rules in §10](#10-interruption-restoration-and-ending-the-service) explain how actual world history and present service commitments are reconciled.
+
+## 6. Participation without a campaign job
+
+### 6.1 Arrive, help, leave and return
+
+A person can encounter either site through ordinary play. Inspecting it does not join a group, accept a deadline or authorize a purchase. The useful decision is local: open the gate now, investigate the source that can close it later, approach the workshop after another community exposes its control, or continue one's own outing. An optional public bulletin explains the connection and current service offer without requiring an elaborate campaign panel.
+
+For the first full qualification, use two consenting human participants and the two particular resident NPCs across the two communities, with the same finite machine and fixtures. This is a workload input, not a minimum group or a hosted capacity claim. One player can do the whole physical sequence alone at different times. Other participants must add genuine options or companionship, not satisfy a party-count lock.
+
+The second player should be able to arrive after the first has left and understand three things from permitted evidence: what changed, how it affects the current local opportunity, and what they can do now. They need not read a transcript of every prior interaction. “The western connection is severed; the Warden's control is exposed” is a useful public fact. “Nessa secretly persuaded Mike while he was hungry” is not.
+
+Leaving never withdraws completed physical work. It also does not create an automatic standing commitment to defend the road, report in, eat on behalf of a resident or attend a finale. An unfinished native action stops under its actual cancellation policy. A separately accepted loan, trade or promise retains its own meaning; campaign closure cannot waive someone else's claim. Human departure uses current multiplayer control and absence, not the future dangerous-logout programme.
+
+A returning player receives a concise permitted account: their last known contribution, current route/operation condition and any actual outstanding personal arrangement. They can expand into the retained history if wanted. Do not automatically replay old warnings or read an entire campaign chronicle aloud. A person who returns after resolution can use the road, meet the changed community and ask what happened without being told that their play window has expired.
+
+### 6.2 Residents are people, not reusable quest terminals
+
+Nessa wants useful passage for carrying supplies; Orrin cares about preserving the winding tool and enjoying the lookout. Those motives create different suggestions and possible disagreements. Neither must offer the same speech to every visitor or learn unseen campaign results automatically. A visitor can have a worthwhile conversation even after the physical work is complete.
+
+Requests use the ordinary independent-agency contract. A resident can decline to travel, lend a tool or abandon another task. Where the resident already chose a supported activity, native continuation can proceed without another model call at every step. The campaign does not write a shared goal into everyone nearby, force gratitude or substitute an authored group scene for individual private consent.
+
+Food and energy remain real. At the current fullness drain, five normal real minutes use 54 fullness percentage points. A two-hour staffed service window cannot be treated as a two-hour free social gathering for embodied residents. The operator need not keep the game continuously advancing throughout the window merely to satisfy a schedule; while it does run, the actual selected survival and presence policy applies. Useful short visits, ordinary meals and leaving are part of the experience. If resident survival or cognition cannot support the advertised activity, narrow it before offering it.
+
+A missing model key or exhausted budget may prevent a new conversation or choice. Existing valid native gate work should still be possible where funded service supports it. The UI reports unavailable character service in its proper controls without inserting provider prose into an NPC's fictional transcript. It must not say that Nessa deliberately refuses to discuss the campaign when no such decision occurred.
+
+### 6.3 Preparation, peak and aftermath each stand on their own
+
+Preparation can open a useful route, establish the connection, recover a finite object or make the other community's direct shutdown possible. The peak can be an optional actual procession and intervention. Aftermath can be carrying goods through the reopened route, clearing an actual obstruction, returning the crank, discussing conflicting accounts or developing a genuinely new use for the workshop.
+
+These are examples of real available work, not a guarantee that every late player receives a new personal task. Do not refill the store whenever someone arrives or pay unlimited wages for taking supplies to a full destination. If the road needs no repair and the useful work is done, let it be done. Ordinary life and relationships are legitimate aftermath. A new campaign should have a new cause and finite resources, rather than quietly restarting this one.
+
+Published comparators show why this distinction matters. Later restoration activities and retained history can coexist with a completed place, while a time-limited event can require a deliberately different later opportunity. Those observations inform this choice; they do not justify an infinite reward faucet or a second canonical victory. [SC-R02](#sc-r02--late-opportunities-need-a-deliberate-policy), [SC-R03](#sc-r03--a-completed-place-can-remain-useful).
+
+## 7. Capacity, readiness and fair access
+
+### 7.1 Announce only an actual service envelope
+
+Before advertising activation, the operator needs a qualified local workload for the actual bodies, gates, carried goods, messages, required cognition, saves and client delivery. The first two-human exercise is not that evidence for an arbitrary crowd. The offer names the supported participation envelope and what kind of access it promises. A public announcement is not an account invitation, character binding, world entry grant or guaranteed place beside the Warden.
+
+Use the existing multiplayer and [DG29 admission](participants-and-world-travel-feature-spec.md) owners. Do not create a second campaign login queue or count campaign interest as physical presence. Already embodied people retain their actual place and control. A reconnect during the world's existing grace preserves that person's existing occupied place; it is not a new visitor competing for it. The baseline default grace is fifteen real seconds under MP, not a new campaign setting, and the campaign must consume the configured value rather than hardcode another copy.
+
+For an advertised optional peak, reserve a named finite number of arrival places for residents who accepted that particular offer before admitting optional visitors against the remainder. Those commitments must fit the measured envelope alongside people already there, normal local work and valid reconnects. The actual number must be published from the qualified workload before invitation; this design does not invent a percentage that supposedly proves capacity. The first exercise needs only its two actual participants. No home owner receives an unlimited perpetual reservation.
+
+A resident reservation lasts until the advertised window opens plus fifteen real minutes, unless they explicitly release it sooner. This proposed check-in allowance is for an optional event place, not a deadline on ordinary world access or a grace extension for an already present body. Unclaimed places then enter ordinary admission order. A late resident keeps their home and history but cannot evict a visitor who lawfully took the released place. Do not require repeated check-in clicks to hold a reservation once actually admitted.
+
+When several ordinary arrivals are eligible, use the existing single-request, oldest-ready order and fresh departure offer rather than a campaign-specific priority currency. The DG29 thirty-second ready offer and one missed-offer grace apply only where that supported arrival service is actually used. Changed material terms return to untimed review. A person can keep playing at a useful source while waiting. No subscription, donated supplies, public fame or contribution total buys queue priority.
+
+If a reservation or required recovery cannot be honored, show that failure before promising a new arrival. Do not count queued-away people as served campaign participants. Do not launch a peak whose essential readiness depends on people still stuck in the queue and then blame them for absence. Conversely, an optional visitor cannot veto the whole world indefinitely by remaining unready; the offer names what can proceed without them and preserves their actual local work.
+
+### 7.2 Fresh readiness is local and limited
+
+The launch review is short: current eligible gate/route, actual nonlethal scope, current timing, supported place and one deliberate **Begin this operation** choice by the authorized operator after a present participant accepts the optional staging. It is not unanimous consent from every account ever associated with either community. The authored fixtures and campaign domain need prior lawful approval; a passing person's future body control is never part of that approval.
+
+Readiness does not command the participant's movement or prevent ordinary departure. If they leave before launch and nobody else has actually accepted, launch remains unavailable. If they leave after launch, the actual physical attempt continues or pauses under current world presence; their new thoughts and defensive actions are not invented. There is no campaign-specific unattended substitute player.
+
+A person who is already in another task or conversation is not pulled away because a reservation became ready. The offer can be ignored, declined or reviewed after ending the current task. Materially changed risk or participation conditions require fresh assent. The short ready-slot expiry never becomes a deadline for reading new terms.
+
+The first profile's threat is deliberately limited enough that nonparticipants can continue ordinary local play. It cannot close a private home, sever the only safe way out, force PvP or trap an absent resident. The authored bypass must remain usable. If the selected map makes a road closure a catastrophic resource blockade, that is a different campaign with different consent, provisioning and absence implications; do not call it the harmless first profile.
+
+### 7.3 Congestion and adversarial occupancy
+
+Forecasts concentrate demand. Useful local fronts reduce the need to crowd around one machine, but cannot turn one doorway into unlimited capacity. Show congestion before travel where possible, retain an exit route and decline additional optional work before accepted mechanics fail. A real public account or supported recording can communicate what happened; no broadcast or remote camera is presumed available merely because it would be convenient.
+
+A person can block the harmless Warden physically, but not claim an unlimited right to reserve capacity by repeatedly reconnecting, opening new invitation tabs or submitting unchanged action attempts. Existing presence, admission and work limits remain controlling. A host can apply actual access/moderation authority to disruptive service use without inventing in-world injury or publicly revealing private enforcement reasons. Removing a player does not erase their completed legitimate contribution or seize their goods automatically.
+
+The operator must measure repeated arrival, correlated reconnect, an occupied gate, too many simultaneous fixture attempts and a burst of public-bulletin reads. If headroom disappears, postpone an unlaunched operation or stop admitting additional optional work. For an active operation, preserve actual progress and use the world's truthful technical pause/recovery rather than secretly slow only the opponent, ignore collision or discard a decisive disconnection.
+
+## 8. Contribution, recognition and actual property
+
+### 8.1 What deserves to be retained
+
+A contribution is a particular completed effect or properly attributed report, not time online, proximity to a progress bar or a promise to help. The first design records a relay disconnection, first supported opening after an obstruction, actual shutdown, successful intervention that changes the operation, and a voluntarily disclosed useful report with its actual source. It does not manufacture causal proof that every person standing nearby helped.
+
+Canonical physical state, a person's own action result, public attribution and another character's knowledge are separate. A native result can establish that the west relay is disconnected. It may not establish that an unrecognized passerby was Mike, that a private letter inspired the work, or that Nessa now remembers it. A public history names only identity and details that may actually be disclosed.
+
+People can choose whether their public contribution uses their permitted character identity, a disclosed group attribution where authorized, or no personal name. It never publishes the account's legal name, payment amount, private thoughts or precise hidden movements. Declining recognition does not undo the effect or disqualify the work. A group leader cannot reveal a private member through a shared credit entry without the applicable permission.
+
+The first record is a short factual history with expandable permitted details, not a ranked scoreboard. “The west connection was severed, exposing the Warden's control” is sufficient where attribution is withheld. “Orrin reports that…” remains a report unless the product has actual confirming evidence. Corrections preserve the prior public statement where lawful and explain the change; they do not silently rewrite a dispute as unanimous agreement.
+
+Participation before or after the peak can be specific and meaningful. Nobody needs to be present for the final shutdown to retain their earlier contribution. Historical live-event fixes show that late arrivals and interrupted delivery can expose unfair all-or-nothing recognition; our choice is to preserve each actual effect without a rank threshold. [SC-R05](#sc-r05--late-contributions-and-recovery-need-independent-treatment).
+
+### 8.2 Goods, promises and no automatic reward economy
+
+The first campaign awards no money, XP currency, tradable participation token or subscription benefit. Actual useful passage, reclaimed permitted objects and social history are the offered value. There is no faction shop paying for infinite donations. A player cannot empty a public store into a campaign counter and have the contents disappear from the native economy.
+
+The released coupling stays an exact object. Taking it changes custody once under the disclosed grant; leaving it does not create a claim to a later duplicate. If it is sold, lost, stolen under a supported world law, borrowed or carried away, the campaign archive does not recover it. The free-use crank likewise remains a physical tool, not a global account unlock. Property and action authority continue to apply through containers, crafting and other native routes.
+
+Optional requested supplies must name their actual recipient, use, quantity and custody before transfer. If a later paid commission is offered, the agreed delivery or work earns its own promised settlement even when the overall campaign fails, subject to that agreement's actual terms. DG22 owns the agreement; DG27/28 own real purchases and creator payments. A “contribution” label cannot cancel refunds, spend a host's card or redirect fixed subscriber allocations.
+
+Previously acquired knowledge, invention rights and definition authorship retain their existing owners. Copying a published technique into a campaign does not strip inherited grants or reveal private origin history. An operator can refuse an incompatible power before admission; it cannot quietly rewrite a lawful paid pack or pretend a creator's unrestricted test world produced a scarcity-equivalent victory.
+
+## 9. A host can operate this without becoming its full-time director
+
+The host first selects the optional authored profile in an appropriate supported world, checks that its actual map has two useful communities/routes, and verifies the named fixtures, public-state policy, finite objects and nonlethal boundaries. Existing worlds are not silently reseeded. Installing content does not grant account access, manufacture people or retrofit hidden narrative history. Nessa and Orrin require deliberate lawful authoring if they are new residents.
+
+Before inviting anyone to a public activation offer, the host sees the complete operating commitment: local work can resolve the campaign early; one charge means one attempt; notice and replacement limits; actual participation capacity and resident reservations; current funding; what survives closure; and the absence of guaranteed battle attendance. An operator who wants a casual immediate outing can run the local preparation without advertising this service at all.
+
+The actual first campaign needs no recurring strategic model. Native fixture facts and one deterministic construct purpose suffice. A human host may write an initial public explanation and a short closing account from permitted facts. Optional generated narration is budgeted separately and cannot hold up a gate or decide whether it opened. The useful game must remain playable when those flourishes are unavailable.
+
+The host can amend service arrangements within the disclosed rules, close new invitations, or cancel an unlaunched operation when funding or readiness fails. They cannot silently erase accepted local work, take back released property, restore the charge or describe a service cancellation as a player defeat. An actual creator edit remains an administrative world change with its own history and consent; it is not disguised as a canonical antagonist tactic.
+
+Publicly advertising a window carries more administration than a private outing. The operator must respond to material schedule changes, reconcile uncertain results and provide the promised recovery path. That work belongs in the economic comparison. If people enjoy opening the route but do not value the staged operation enough to cover its burden, omit the public activation service. The finite local cooperative story can stand alone.
+
+## 10. Interruption, restoration and ending the service
+
+| Situation | Required result |
+| --- | --- |
+| Player cancels fixture work | Only completed native effects remain; no success credit or salvage for an unfinished step. |
+| Another actor changes the tool, gate or relay | Recheck current admission and supported work; stop or continue truthfully rather than commit against stale assumptions. |
+| Participant disconnects | Current MP action cancellation/control/grace applies; no duplicate person or campaign-selected absentee action. |
+| Operator loses connection before launch | No authorized launch is inferred; retained local play and the service offer remain under current authority. |
+| World pauses or loses admitted presence | Mechanics stop under current policy; real service window continues, and physical prediction is marked interrupted. |
+| Process crashes during a relay change or launch | Recover the actual durable result; unknown is not failure, and retry cannot yield another coupling or operation charge. |
+| Model/provider fails | No fictional refusal or invented success; preserve current native facts and truthful unavailable optional service. |
+| Existing permission is revoked | Stop newly unauthorized work; completed effects remain, and safe exit/current custody follow actual access owners. |
+| Someone leaves the world or is removed | Membership removal is not a rewind, property transfer or permission to reveal their private contribution. |
+| Service funding ends | Stop new optional offers before unsupported work is promised; preserve required accepted outcomes/recovery under the hosting contract. |
+| Operator retires the campaign | End future service promises explicitly; retain actual local history and goods under the world's retention/access policy. |
+
+The current save/load contract rejects incompatible development saves; this proposal adds no migration or legacy exception. Same-version recovery must keep the machine, charge, relays, gate positions, released objects, native actions and relevant histories coherent. A stopped machine cannot become an unspent machine because a summary is older than the actual action receipt.
+
+A deliberate same-world gameplay restore uses [DG25](corrections-and-shared-restoration-feature-spec.md). When every admitted campaign consequence remains inside one supported coherent restore boundary, the physical world and its fictional contribution history may return together through that existing process. It still preserves present-day access, privacy/erasure, real payment and service commitments. Restoring before the relay was severed may make it connected again in that restored fictional world; it does not authorize a second real reward or pretend that human observers forgot the abandoned history.
+
+The restore review must disclose the affected campaign. Old forecast cards become historical, and any future advertised operation needs reconciliation with the actual restored state and present real dates. A past service window stays past. No automatic catch-up launch occurs when the operator resumes. Any externally retained public account of the prior timeline must be presented as superseded or otherwise reconciled under its publication policy, not silently claimed as the current world's history.
+
+Once actual goods, accepted outcomes or learned information have entered another world's retained history, a unilateral pre-export restore is not supported without the already qualified complete reconciliation. Itemless campaign reports can cross that boundary too. DG29 and DG25 own this; a “noncompetitive” label does not make escaped knowledge disappear. The first one-world scope avoids that dependency only while it actually remains isolated.
+
+Closure distinguishes the end of a service programme from destruction of a world. The host makes no new activation promise after the final offer ends. Existing bodies, road access, objects and permitted history persist according to the selected world's actual hosting/retention terms. There is no promise of indefinite free simulation, permanent hosted browsing or a complete export of other people's private history. Eligible export and retrieval use their existing rights owners and compatible formats.
+
+If service failure leaves an accepted result uncertain, retain a reachable recovery explanation rather than mark the campaign complete to clean up the interface. If a promised commercial remedy applies, commerce owns its settlement in real accounting. A goodwill fictional object cannot replace a refund without the required actual agreement, and a world rewind cannot refund a provider bill.
+
+## 11. Economy and complete operating cost
+
+The native economy is deliberately small: one machine charge, two relay connections, two exact couplings, one crank and real gates. There is no renewable campaign loot and no newly created currency. Tool use retains the tool unless its actual family says otherwise. A campaign success cannot refresh food, repair a borrowed weapon, replenish the store or recreate an object removed before the final event.
+
+The machine's charge is an authored finite energy source, not a claim that native movement is economically free. The living people still require their actual supplies and cognition. Preparation can use already supported materials and tools; it must not inflate their cost merely to make a donation drive necessary. The coupling's value must follow a demonstrated use or honest sentimental meaning, not an imaginary vendor who buys every recovered part.
+
+For the proposed operation, 3,600 game seconds at 0.011 units per game second gives an absolute movement-only distance of 39.6 units. Reserving 120 game seconds for closure leaves at most 38.28 units, before any other active work or delay. The profile therefore needs an actual short route. A much larger map cannot keep these numbers and claim the Warden will arrive. Conversely, a tiny route must not pad its time with empty animation solely to produce a scheduled spectacle.
+
+Use a complete cost account:
+
+`campaign cost = additional active simulation + legitimate delivery/presentation + required character workflows + optional generation + retained data/retrieval + operator and recovery work`.
+
+Baseline world service is not free just because the campaign is a small addition. Count the actual marginal campaign costs and disclose any shared hosting allocation rather than assigning every unrelated world expense to the event or hiding it outside the denominator. Compare cost per useful local outing, per genuinely served participant-hour and per resolved campaign, not registered followers versus concurrent activity.
+
+An illustrative attempt with eight resident exchanges, two chosen reconsiderations and two optional summaries has twelve complete workflows. At assumed all-in averages of0.002,0.01 or0.05 currency units per workflow, the respective generation-related totals are0.024,0.12 or0.60. These are sensitivity assumptions, not provider prices, approved funds or quality evidence. Include selection, context preparation, failed calls, tools, memory work and uncertain charges in each measured workflow; a short visible line can cost more than one request.
+
+If fifty campaigns each retain two30KiB public accounts plus ten10KiB private contribution records, that illustrative content alone is about7.8MiB before indices, replicated storage, native world state, full source evidence and backups. Small totals do not justify collecting private histories indefinitely. Permission-safe cold retrieval, revisions, erasure and long-lived unresolved claims can dominate later work. Existing privacy and retention owners select those policies; this proposal adds no arbitrary automatic deletion.
+
+The operator's time can dominate the AI bill. Thirty minutes of preparation/reconciliation at an assumed30currency units per hour costs15 before hosting, while a two-hour staffed availability window at the same assumption costs60 even if the physical procession lasts one minute. A replacement can add another such window. Do not present a low inference total as proof that an advertised campaign service is economical. A private asynchronous route project without staffed launch may deliver more fun per unit of cost.
+
+Before a paid public trial, state the actual payer, approved spend ceiling, operator hours, promised access/recovery/retention and minimum remaining reserve for accepted obligations. None is authorized by this document. Exhaustion stops optional new offers and generation before it compromises owed work. No automatic top-up, grant-fund allocation or platform-subscriber pool is implied. Performance admission and money admission are separate: a funded workload can still be too dense to execute correctly.
+
+## 12. Expansion that preserves the campaign's meaning
+
+### 12.1 From two places to a city-by-city adversary
+
+The accepted larger ambition is retained: several communities can affect one canonical adversary through distinct local opportunities and a changing forecast. The next useful expansion should add one actual new interdependence, such as a finite transport supplying a later front, rather than ten more identical relays or a larger progress denominator.
+
+Suppose a later independently supported villain plans to move a finite force from Ashvale toward Greyharbor. One community can cut its actual supply route; another can negotiate a faction's support; a third can prepare a refuge using real permitted materials. Each act changes specific resources, knowledge, access or available choices. This is a separately designed living campaign with real food, work, travel and agency. The dormant Warden is no evidence that a living force can wait unfed for a twenty-four-hour service notice.
+
+Forecast each local operation from actual legitimate reports and route conditions. A public approximate sequence can help people choose when and where to contribute, but a defeated force cannot continue to the next city because the timetable says so. Redirection consumes actual travel and compatible access; an opted-out home is not a convenient new battlefield. Before announcing a new front, publish its actual risks, affected property and recovery law, with the appropriate notice and consent.
+
+An intelligent strategist may use a stronger qualified model for occasional consequential choices. It sees actual reports, not all players' private intentions. A new plan is a proposal until its actions can be admitted. Prefer bounded reconsideration after a material report, source loss or completed operation; no continuous global narration or a paid thought per citizen per day. A low-budget enemy must not secretly forget its accepted capabilities merely because players chose a busy hour.
+
+Several simultaneous fronts require distinct actual bodies or expressly supported manifestations. Each manifestation needs its own identity, finite powers, knowledge propagation, shared resource meaning and ending. Damaging one must have the declared global consequence, rather than provide an expendable copy falsely advertised as the unique enemy. The final outcome occurs once through its actual authority. Later players can meet surviving factions, pursue unfinished local effects or deliberately choose a noncanonical reenactment; there is no entitlement to a personal last hit in shared history.
+
+### 12.2 Several worlds, one accepted result
+
+A cross-world campaign first declares the finite participating worlds and local sources, the authority that accepts their outcomes, allowed imports/powers, clocks, public information, funding and withdrawal policy. Joining later does not silently increase the old objective denominator or dilute completed work. A new front needs a new explicit phase or bounded amendment. A world can participate in preparation or observation without accepting hostile entry, trade or combat.
+
+Travel uses [DG29](participants-and-world-travel-feature-spec.md): same person, actual body and belongings, current access, supported binding, useful source waiting, fresh departure and retained recovery. A campaign card is not a teleport grant. A person whose account already binds another destination character cannot be copied or silently rebound for the event. Incompatible imports are explained before preparation rather than confiscated on arrival.
+
+Prefer finite unique outcomes over mass fungible donation scores. “This exact source was disconnected” cannot be multiplied by running the source world's clock faster, whereas “donate as much as possible” invites differences in production rates and exceptional creator powers. Any shared material objective still needs an admitted common economy, actual custody and complete source accounting. Unlimited creator stock may support a clearly labeled noncompetitive demonstration without being counted as equivalent scarcity-based victory.
+
+One declared campaign authority resolves the accepted strategic outcome. Local worlds retain authority over their own physical work and people. A remote report cannot rewrite a local gate without the admitted causal link and current permission. Where a result awaits reconciliation, the contributor sees their actual local effect and an honest pending shared acceptance; nobody is asked to destroy the same source again. Duplicate reports recover the same accepted result.
+
+A disconnected world can continue only the independently safe local work its policy permits. It cannot assume the latest global target, award a unique final defeat or accept an incompatible commitment while isolated. Reconnection compares actual accepted outcomes; it does not choose the most convenient history or merge mutually exclusive victories. If the existing owners cannot reconcile a proposed operation safely, decline that operation before it creates an external promise. Ordinary unrelated local play need not stop merely because campaign coordination is unavailable.
+
+Withdrawal stops new campaign authority prospectively. Already accepted shared consequences and earned arrangements remain; no operator can demand that another world forget a delivered warning or restore an exported source. If the withdrawn location was the only route to a required objective, revise the campaign honestly, preserve completed contributions and either use a previously admitted alternative or end unresolved. Do not create replacement resources by narrative decree or grant one private world an indefinite involuntary hostage role.
+
+An authority transfer requires the existing actual operators' supported grant and a coherent handover of open commitments. It is not elected by contribution count, bought through donations or inferred from the old operator's absence. If no lawful successor is ready, no new cross-world strategic commitments are accepted; retained outcomes and recovery remain obligations. This is an operational boundary, not a reason to build a constitutional government for the first campaign.
+
+### 12.3 Fair schedules and long histories
+
+The first twenty-four-hour notice and optional different-time replacement are hypotheses. Before a recurring or international service, compare communities with different time zones, shift work, short sessions, disability-related reading needs, unreliable connections and long absences. Examine who gets a useful local action, who can reach the peak, who leaves waiting and who only sees completion. A high total attendance can conceal repeated exclusion of the same people.
+
+Rotate new opportunities and preserve before/after roles without automatically resetting unique history. Avoid global attendance streaks, paid queue priority and essential power available only during one final minute. Published games make materially different choices about reruns, late rewards and permanent tracks; none eliminates the need to choose a coherent canonical policy here. [SC-R09](#sc-r09--a-unique-opening-has-an-attendance-tradeoff), [SC-R10](#sc-r10--recognition-need-not-expire-with-a-season).
+
+Mature campaigns need bounded, perspective-correct return explanations and reachable permitted older records. The first useful account should answer what changed and what can be done now, with optional detail. It must not become a mandatory reading assignment or an invented personal memory. Retaining history is distinct from running every old front forever.
+
+## 13. Qualification, acceptance and game-first decisions
+
+Deliver and evaluate the local campaign in this order:
+
+1. **A useful road and two distinct outings.** With generation unavailable, one person can open a gate, discover a relay method, disconnect it, retain the correct tool/object and understand the other site's changed option. A second person later sees the actual consequence without a private-history leak. Refusal and departure remain ordinary choices.
+2. **Complete early prevention.** Both sources can be severed and the unique core disabled before any public window. The record calls this prevention, never a failed event. No charge, source, object or recognition repeats after reconnect, crash or a duplicate attempt.
+3. **One actual optional operation.** Qualify the real route, sweep, source loss, moving shutdown, blocked body, spent position and usable bypass. At0.011units/game-second, the route plus120game-seconds of closure fits the3,600game-second budget. Exercise other speeds before offering them as equally usable play.
+4. **An advertised service worth its effort.** Check real notice, fresh readiness, resident reservations, configured reconnect grace, revised estimates, missed windows, maximum one replacement and honest closure. Verify ordinary world play outside the window and no missed-operation catch-up.
+5. **Wider campaigns only for demonstrated demand.** Add a wanted new front, intelligent adversary or cross-world connection only with its actual rights, costs, clocks, harm law, recovery and PS08 evidence.
+
+The first evaluation should observe whether people voluntarily use the reopened route, can explain why one community's work mattered to the other, find both outings different enough to enjoy, and choose another visit without a reward prompt. Ask someone who missed the procession whether their earlier action still felt worthwhile. Ask someone who arrived later whether the changed place offered a useful decision without falsely claiming their participation in the original victory.
+
+The acceptance matrix includes: opposite simultaneous relay actions; opening a connected gate then letting the Warden close it; all gates already closed; one person preventing closure by physical obstruction; a tool carried away; a moved bag blocking the sweep; permission revoked midwork; a private contributor declining public identity; a misleading resident report; budget exhaustion; actual save failure; pause spanning the whole service window; an accepted arrival losing capacity; a late resident after a released reservation; a crashed launch with uncertain charge; same-world coherent rewind; and an exported report making pre-export local rewind unsupported.
+
+Measure completed meaningful work and end-to-end latency/cost, not merely requests accepted. Include native execution, perception, required NPC choices, network delivery, persistence, client responsiveness, queue recovery and operator effort. The accepted wider workload remains100humans,100agents,100animals and1,000objects, half of each in one scene; growth retains10,000concurrent humans and200humans plus agents in a scene with other populations declared. The small Ash Road exercise, many idle accounts or people kept outside a full scene satisfy none of those broader targets.
+
+Stop or simplify if the relay work feels like a repeated click tax; if the shorter road has no wanted destination; if the operation adds only scheduling anxiety; if people cannot distinguish a service time from arrival; if ordinary food/cognition cost overwhelms the outing; or if the host must constantly invent recovery exceptions. First remove the optional advertised launch, preserve the useful route and causal cooperation, and measure again. Do not respond by adding mandatory loot, longer timers or more relays to justify the campaign machinery.
 
