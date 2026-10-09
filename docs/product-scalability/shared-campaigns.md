@@ -110,6 +110,7 @@ Open tuning includes notice windows, forecast confidence vocabulary, revision co
 
 ## Maintained records
 
+- Detailed proposed consumer: [shared campaigns and local opportunities](../projects/shared-campaigns-feature-spec.md) selects the [Ash Road](../worlds/base/shared-campaigns.md): two worthwhile local sites in one world, finite power, one actual adversary and an optional advertised operation whose prevention is a real outcome. Proposed notice, revision, access, recognition and closure choices live in [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign); [PS07.1–PS07.7](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities) retains delivery. This first nonlethal route problem is smaller than the intelligent city-by-city siege described above; it does not qualify or replace that later ambition.
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
 - Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
 - Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).

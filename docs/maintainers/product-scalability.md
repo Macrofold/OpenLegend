@@ -142,6 +142,20 @@ DG17's proposed first operating envelope adds the following qualification; it do
 
 **Exit:** multiple communities affect one campaign through local opportunities without global omniscience, copied victories, or compulsory private-world invasion.
 
+### DG34 — Linked local campaign opportunities
+
+[The shared-campaign proposal](../projects/shared-campaigns-feature-spec.md) develops a first complete PS07 consumer: two actual local opportunities in one world, finite sources feeding one unique adversary, immediate useful preparation, an optional forecast operation and a lasting aftermath. The [Ash Road profile](../worlds/base/shared-campaigns.md) owns its proposed setting; [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign) records proposed scope and service choices. The first nonlethal route problem does not enable D07 harm, PS-D01 dangerous logout, PS-D03 separate clocks, public sign-up or cross-world transfer. This documents proposed behavior; it neither installs the family nor closes the parent tasks.
+
+- [ ] **PS07.1:** Deliver two distinct worthwhile local outings and the narrowly authored finite relay, gate and unique-construct behavior; prove a local physical result changes the same campaign elsewhere without a duplicated body, supply or final outcome.
+- [ ] **PS07.2:** Deliver understandable advertised opportunities, current facts versus permitted reports, explicit real notice versus mechanical timing, and revisions for prevention, obstruction, pause, outage and unavailable service; never force a missed operation on return.
+- [ ] **PS07.3:** Consume current invitation, participation, property and capacity owners for residents, reconnects and visitors, with deliberate current readiness and honest unavailable entry; campaign interest grants no access, human action or private information.
+- [ ] **PS07.4:** Preserve actual accepted contributions, exact material custody and any separately agreed compensation; distinguish a personal receipt, permitted public recognition and independently acquired NPC evidence through success, partial success, failure and late arrival.
+- [ ] **PS07.5:** Reconcile uncertain actions, restart, coherent same-world restoration, current authority and campaign closure without duplicate consumption, credit or outcome; refuse unsupported pre-export local rewind after cross-world consequences or knowledge escape.
+- [ ] **PS07.6:** Provide the player, resident, author and operator views of the complete finite campaign with bounded useful coordination and funded service; preserve ordinary needs, ordinary play, retained claims and current privacy when optional campaign work stops.
+- [ ] **PS07.7:** Qualify the first local work, real prevention, one physical advance or its truthful cancellation, shutdown and worthwhile aftermath with actual players and complete costs; compare the shared layer with the simpler local adventure before expanding it.
+
+The city-by-city intelligent adversary, damaging siege, supported manifestations and cross-world fronts remain independently selected extensions of the parent PS07 requirements. A small Ash Road success does not qualify them or require completing them first. Broader evidence remains under PS08 below.
+
 ## PS08 — Broader experience and scale qualification
 
 **Owners:** existing operational scalability program plus relevant feature owners. **Depends on:** compelling and affordable earlier stages.
@@ -153,9 +167,13 @@ DG17's proposed first operating envelope adds the following qualification; it do
 
 **Exit:** a measured supported growth path. Millions remain an aspiration until actual relevant evidence establishes the specific claimed workload.
 
+**DG34 campaign cases:** include communities with different real schedules, contributors absent from the climax, residents returning under visitor demand, prevented and missed operations, mature contribution/knowledge histories, many simultaneous small campaigns and concentrated arrival at one real front. Measure useful participation and ordinary play rather than counting denied or queued people as delivered concurrency. Cross-world cases must include exported knowledge as well as goods and physical outcomes. Preserve the existing accepted mixed-population and concentrated growth targets; the first two-site campaign supplies a product case, not substitute scale evidence.
+
 ## Pending policy decisions
 
 The [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns material unresolved product choices; the [limits register](../limits/product-scalability.md) owns unset operating values, restrictions and reasons. No fixed actor-attention count, player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
+
+DG34 supplies an explicit reviewable first-consumer proposal for PS-D05 in PS-L42–PS-L49, including advertised notice and revision choices. Those proposed values are not adopted service terms, measured fairness or a change to the current world clock. Broader campaign policy and actual release qualification remain open.
 
 ## Documentation completion evidence
 

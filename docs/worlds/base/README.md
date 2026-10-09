@@ -19,6 +19,9 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
+- [Generations and family life](generations-and-family-life.md) — DG31's optional adult-family visit and truthful age continuity; reproduction and dependent care still require the reserved D16 audience choice.
+- [Shared equipment and institutions](shared-equipment-and-institutions.md) — DG32's optional useful bow loan, willing keeper and real return, with separate optional security; no currency or compulsory membership.
+- [Extraordinary minds and life after death](extraordinary-minds-and-afterlife.md) — DG33's separately selected willing spirit, finite ordinary revival and deliberate telepathic messages; these are proposed families, with existing identity, knowledge and human protection intact.
 - [A resident revises an outlook](experience-shaped-characters.md) — DG23's proposed specific revisable understanding and later voluntary conduct; current reflection is reused, while dreams and older coarsening remain optional.
 - [A small wilderness commission](durable-agreements.md) — DG22’s proposed finite barter commission, exact later settlement and independently selected advance/association; no currency or new starting institution.
 - [Finite continuing communities](continuing-communities.md) — DG17's proposed current-clock supplies, horizon and actual food/rest pacing, following useful attended continuity; no overnight service is adopted.

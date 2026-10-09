@@ -17,6 +17,8 @@
 
 - Proposed wider participation detail: [participants and world travel](participants-and-world-travel-feature-spec.md) refines PS05–PS08 through the focused [PT consumer](../maintainers/participants-and-world-travel.md), preserving the parent coordination and single scalability limits inventory. Small useful visits remain independent of broad population, unattended, campaign and marketplace delivery.
 
+- Proposed campaign detail: [shared campaigns and local opportunities](shared-campaigns-feature-spec.md) develops PS07/PS-D05 with two distinct local outings, finite causal sources, one optional forecast operation, exact contribution recognition and a lasting aftermath. [PS07.1–PS07.7](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities) retains delivery and PS08 broader qualification; a same-world first campaign does not require federation, damaging sieges or a new calendar.
+
 ## 1. Purpose and audience
 
 Enable persistent, consequential lives across very large populations without making each world, character, or minute of unattended history a permanent full-cost simulation obligation. This specification is about the player's relationship with the world: belonging, attention, absence, risk, local capacity, and participation in shared events. It is not a replacement deployment, replication, backup, or networking plan.
