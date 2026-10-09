@@ -1,8 +1,8 @@
 # Shared campaigns with local opportunities
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | DG34 product proposal completed for review: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-09 |
+| Status      | Current progress                                                                                                                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | DG34 product proposal completed for review: a finite campaign connecting two communities in one world, with canonical consequences and optional local participation; adoption, technical design, implementation and qualification remain open. | 2026-10-09   |
 
 ## 1. The Ash Road: something worth doing before the battle
 
@@ -64,13 +64,13 @@ The east gate can likewise be opened physically before or after disconnecting it
 
 ### 3.3 What each source actually changes
 
-| Actual condition | Shared effect | Local physical result |
-| --- | --- | --- |
-| Both relays connected | The dormant Warden's shutdown access is warded; it has two possible powered routes, not two bodies. | Either gate can be opened by actual work, but remains eligible for a later Warden closure. |
-| Exactly one connected | Shutdown access becomes operable; only an actually open still-connected gate is a valid destination for the one proposed operation. | The severed gate can be opened by actual work and cannot be reclosed by this Warden; its route is not opened by narration. |
-| Neither connected before launch | Activation is prevented; the unique Warden remains inert and can be permanently disabled through ordinary shutdown work. | Both routes are secured against this machine; actual gate opening and carrying can still be worthwhile. |
-| Chosen destination's connection removed during the operation | The fixed-target attempt ends spent at its actual supported position, even if the other relay remains connected. | Completed movement and gate changes remain; unfinished closing does not complete itself, and no retargeting occurs. |
-| Warden permanently shut down | It cannot launch or operate either gate again. | Remaining fixtures do not vanish; disconnected parts are not replenished. |
+| Actual condition                                             | Shared effect                                                                                                                       | Local physical result                                                                                                      |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Both relays connected                                        | The dormant Warden's shutdown access is warded; it has two possible powered routes, not two bodies.                                 | Either gate can be opened by actual work, but remains eligible for a later Warden closure.                                 |
+| Exactly one connected                                        | Shutdown access becomes operable; only an actually open still-connected gate is a valid destination for the one proposed operation. | The severed gate can be opened by actual work and cannot be reclosed by this Warden; its route is not opened by narration. |
+| Neither connected before launch                              | Activation is prevented; the unique Warden remains inert and can be permanently disabled through ordinary shutdown work.            | Both routes are secured against this machine; actual gate opening and carrying can still be worthwhile.                    |
+| Chosen destination's connection removed during the operation | The fixed-target attempt ends spent at its actual supported position, even if the other relay remains connected.                    | Completed movement and gate changes remain; unfinished closing does not complete itself, and no retargeting occurs.        |
+| Warden permanently shut down                                 | It cannot launch or operate either gate again.                                                                                      | Remaining fixtures do not vanish; disconnected parts are not replenished.                                                  |
 
 A disconnected relay cannot be rearmed in the first profile. This is a finite one-way dismantling of an obsolete mechanism, openly stated before commitment. It is not a universal rule that players may never repair machines. A future repair or adversarial restoration would need real components, permission, timing, outcome revision and a useful reason; it is not introduced merely to preserve repeated battles.
 
@@ -106,14 +106,14 @@ The first permanent shutdown records the final core condition. If the one operat
 
 ### 4.3 Meaningful outcomes without mandatory victory
 
-| Outcome | What remains true | What someone can usefully do next |
-| --- | --- | --- |
-| Both sources removed before an operation | Preparation prevented the attempted closure; no operation charge was spent and no battle happened. | Open remaining gates, disable the inert core, carry supplies, discuss the actual prevention. |
-| One source removed and core disabled | One community created a direct solution for the other; there was one shutdown. | Finish the second local mechanism if its parts or accessible road are wanted. |
-| Operation stopped in transit | Its actual movement and spent charge remain; the target gate has its real position. | Use the real bypass, finish shutdown and use the route; clear an obstruction only where that action is supported. |
-| Warden closes a gate | Its limited operation succeeded; that local setback is real. | Reopen the gate, remove any remaining source and improve the route's ordinary use. |
-| No valid destination or no ready service | No fictitious attack occurred and no victory is fabricated. | Continue immediate local work; read the changed service offer if interested. |
-| Campaign service ends unresolved | The operator's future event promise has ended; actual fixtures, goods and accepted history remain. | Pursue ordinary supported local shutdown/recovery while the world remains funded and accessible. |
+| Outcome                                  | What remains true                                                                                  | What someone can usefully do next                                                                                 |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Both sources removed before an operation | Preparation prevented the attempted closure; no operation charge was spent and no battle happened. | Open remaining gates, disable the inert core, carry supplies, discuss the actual prevention.                      |
+| One source removed and core disabled     | One community created a direct solution for the other; there was one shutdown.                     | Finish the second local mechanism if its parts or accessible road are wanted.                                     |
+| Operation stopped in transit             | Its actual movement and spent charge remain; the target gate has its real position.                | Use the real bypass, finish shutdown and use the route; clear an obstruction only where that action is supported. |
+| Warden closes a gate                     | Its limited operation succeeded; that local setback is real.                                       | Reopen the gate, remove any remaining source and improve the route's ordinary use.                                |
+| No valid destination or no ready service | No fictitious attack occurred and no victory is fabricated.                                        | Continue immediate local work; read the changed service offer if interested.                                      |
+| Campaign service ends unresolved         | The operator's future event promise has ended; actual fixtures, goods and accepted history remain. | Pursue ordinary supported local shutdown/recovery while the world remains funded and accessible.                  |
 
 None of these outcomes creates an unlimited supplier, a quest wage or a permanent obligation on Nessa or Orrin. Successful local work stays successful even if the overall campaign service later fails. The shared layer must make that relation easier to understand, not require the player to wait for a global verdict before their opened gate becomes real.
 
@@ -150,7 +150,7 @@ One authorized world operator owns the service offer and its revisions through c
 
 Any material change updates the canonical permitted bulletin as part of resolving the actual change, before another campaign request relies on superseded terms. Optional generated prose may follow; a model is not required to change “two connections” to “one.” Revisions retain their earlier public statement and explain the change: a source was severed, a route became blocked, service is unavailable, the operation was prevented, or the current estimate is no longer supported. Sensitive causes use an appropriately general explanation.
 
-Prevention immediately withdraws the advertised threat. Do not continue advertising a battle to protect attendance metrics. A player who arranged to come can see that earlier work succeeded, learn what remains possible and decide whether to visit. The operator may host an optional gathering if it is actually supported and wanted, but it is a separate offer, not a manufactured replacement emergency.
+Prevention immediately withdraws the advertised threat. Do not continue advertising a battle to protect attendance metrics. A player who arranged to come can see that earlier work succeeded, learn what remains possible and decide whether to visit. Prevention withdraws the operation, not an independently accepted entry reservation or hosting commitment; those must still be honored or explicitly reconciled under their disclosed terms. The operator may host an optional gathering if it is actually supported and wanted, but it is a separate offer, not a manufactured replacement emergency.
 
 A change must never move the operation earlier than an already announced not-before commitment. An operator-caused new risk, destination or material participation burden requires a new review and at least 24 real hours' notice before the changed optional operation. A genuine physical event after launch can make an arrival earlier or later than its estimate; describe that as changed physical prediction, not a new permission to attack before the operation's original admission.
 
@@ -268,19 +268,19 @@ Publicly advertising a window carries more administration than a private outing.
 
 ## 10. Interruption, restoration and ending the service
 
-| Situation | Required result |
-| --- | --- |
-| Player cancels fixture work | Only completed native effects remain; no success credit or salvage for an unfinished step. |
-| Another actor changes the tool, gate or relay | Recheck current admission and supported work; stop or continue truthfully rather than commit against stale assumptions. |
-| Participant disconnects | Current MP action cancellation/control/grace applies; no duplicate person or campaign-selected absentee action. |
-| Operator loses connection before launch | No authorized launch is inferred; retained local play and the service offer remain under current authority. |
-| World pauses or loses admitted presence | Mechanics stop under current policy; real service window continues, and physical prediction is marked interrupted. |
-| Process crashes during a relay change or launch | Recover the actual durable result; unknown is not failure, and retry cannot yield another coupling or operation charge. |
-| Model/provider fails | No fictional refusal or invented success; preserve current native facts and truthful unavailable optional service. |
-| Existing permission is revoked | Stop newly unauthorized work; completed effects remain, and safe exit/current custody follow actual access owners. |
-| Someone leaves the world or is removed | Membership removal is not a rewind, property transfer or permission to reveal their private contribution. |
-| Service funding ends | Stop new optional offers before unsupported work is promised; preserve required accepted outcomes/recovery under the hosting contract. |
-| Operator retires the campaign | End future service promises explicitly; retain actual local history and goods under the world's retention/access policy. |
+| Situation                                       | Required result                                                                                                                        |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Player cancels fixture work                     | Only completed native effects remain; no success credit or salvage for an unfinished step.                                             |
+| Another actor changes the tool, gate or relay   | Recheck current admission and supported work; stop or continue truthfully rather than commit against stale assumptions.                |
+| Participant disconnects                         | Current MP action cancellation/control/grace applies; no duplicate person or campaign-selected absentee action.                        |
+| Operator loses connection before launch         | No authorized launch is inferred; retained local play and the service offer remain under current authority.                            |
+| World pauses or loses admitted presence         | Mechanics stop under current policy; real service window continues, and physical prediction is marked interrupted.                     |
+| Process crashes during a relay change or launch | Recover the actual durable result; unknown is not failure, and retry cannot yield another coupling or operation charge.                |
+| Model/provider fails                            | No fictional refusal or invented success; preserve current native facts and truthful unavailable optional service.                     |
+| Existing permission is revoked                  | Stop newly unauthorized work; completed effects remain, and safe exit/current custody follow actual access owners.                     |
+| Someone leaves the world or is removed          | Membership removal is not a rewind, property transfer or permission to reveal their private contribution.                              |
+| Service funding ends                            | Stop new optional offers before unsupported work is promised; preserve required accepted outcomes/recovery under the hosting contract. |
+| Operator retires the campaign                   | End future service promises explicitly; retain actual local history and goods under the world's retention/access policy.               |
 
 The current save/load contract rejects incompatible development saves; this proposal adds no migration or legacy exception. Same-version recovery must keep the machine, charge, relays, gate positions, released objects, native actions and relevant histories coherent. A stopped machine cannot become an unspent machine because a summary is older than the actual action receipt.
 
@@ -488,7 +488,7 @@ These twelve primary records were retrieved on **2026-10-09 UTC**. Observations 
 
 ### SC-R12 — Compatibility must be clear before preparation
 
-**Source:** Frontier Developments, *Update 13, Narrative and Access to 4.0*, 2022-08-03, [official developer feed](https://store.steampowered.com/news/posts/?appids=359320&enddate=1659711816&feed=steam_community_announcements).
+**Source:** Frontier Developments, _Update 13, Narrative and Access to 4.0_, 2022-08-03, [official developer feed](https://store.steampowered.com/news/posts/?appids=359320&enddate=1659711816&feed=steam_community_announcements).
 
 **Observed:** The announcement planned no-additional-cost 4.0 access for PC Horizons while leaving Odyssey optional and 3.8 available. Later narrative required 4.0, while on-foot portions could require Odyssey.
 
