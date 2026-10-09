@@ -1,6 +1,6 @@
 # Sling handling, practice and coaching in the base world
 
-**Proposed authored behavior, October 5, 2026; not implemented.** This is the first concrete DG14 consumer of the [world-authored competence specification](../../projects/authored-stats-feature-spec.md). It owns the selected skill, progression, target and coaching rules. The generic action, state, knowledge and permission owners remain authoritative. This is a small addition to an already usable sling, not a required skill tree for the first playable.
+**Implemented authored behavior, October 6, 2026; human appreciation remains unqualified.** This is the first concrete DG14 consumer of the [world-authored competence specification](../../projects/authored-stats-feature-spec.md). It owns the selected skill, progression, target and coaching rules. The generic action, state, knowledge and permission owners remain authoritative. This is a small addition to an already usable sling, not a required skill tree for the first playable.
 
 ## Why this activity
 
@@ -8,11 +8,11 @@ A player who has invented or obtained a usable sling can already hunt with it. P
 
 The current base-world clock advances one game minute per real second at ordinary speed. Current cord preparation takes 60 game seconds, and cooking takes 90; a small duration improvement there would save only a fraction of a real second. That is a useful integration example but a weak reason to add progression. [Current clock](time.md#clock-and-fallback-horizon), [cord method](items.md#cordage-manufacture-and-reuse), [action defaults](../../../packages/domain/src/worlds/base/actions.ts).
 
-Current ranged hunting already has one meaningful uncertainty. After its 18-game-second windup, a valid shot consumes one compatible projectile and makes one hit comparison. The admitted launcher supplies accuracy; an animal with the existing danger condition applies the existing 0.85 factor. Invalid range or unavailable target/equipment/ammunition blocks the release. These facts come from the [existing action owner](../../../packages/domain/src/kernel.ts) and [world-authored launcher family](../../../packages/domain/src/worlds/base/recipe-families.ts). They do not establish a general ballistic simulation or current inert-target support.
+Current ranged hunting already has one meaningful uncertainty. After its 18-game-second windup, a valid shot consumes one compatible projectile and makes one hit comparison. The admitted launcher supplies accuracy; an animal with the existing danger condition applies the existing 0.85 factor. Invalid range or unavailable target/equipment/ammunition blocks the release. These facts come from the [existing action owner](../../../packages/domain/src/kernel.ts) and [world-authored launcher family](../../../packages/domain/src/worlds/base/recipe-families.ts). The separate inert-target action now shares that one-shot release accounting. Neither action is a general ballistic simulation.
 
 ## One narrow competence
 
-The proposed **Sling handling** value has two authored states:
+The implemented **Sling handling** value has two authored states:
 
 | Value | Player-facing meaning                | Mechanical effect                                                                                       |
 | ----- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
@@ -29,23 +29,23 @@ If the current sling's authored accuracy is **a**, the practiced handling accura
 | 0.75                    | 75%                            | 81.25%             | 63.75% → 69.0625%                                    |
 | 0.90                    | 90%                            | 92.5%              | 76.5% → 78.625%                                      |
 
-These are arithmetic illustrations for the proposed law, not measured hunting outcomes. A higher-quality sling remains better at each competence state. Practice does not erase all uncertainty, and it does not reduce every possible miss by 25%: the animal's additional condition remains. Exact live percentages appear only when the character may know all relevant inputs.
+These are arithmetic illustrations for the implemented law, not measured hunting outcomes or human appreciation. A higher-quality sling remains better at each competence state. Practice does not erase all uncertainty, and it does not reduce every possible miss by 25%: the animal's additional condition remains. Exact live percentages appear only when the character may know all relevant inputs.
 
 Damage, ammunition type/quantity, range, body eligibility, reach/clearance, actual target state and subsequent animal behavior remain unchanged. No proficiency creates a projectile, lets a shot pass through an obstacle, turns a practice target into food, or permits attacks on a protected person.
 
 ## Starting and enduring state
 
-New applicable person characters explicitly start at 0 unless the creator deliberately authors a practiced starting character. An experienced NPC can start at 1, but a confident biography or model reply is not the mechanical grant. Authored starting competence is identified as such rather than supported by invented past lessons.
+New applicable person characters explicitly start at 0 unless the creator deliberately authors a practiced starting character. Ada explicitly starts at 1 in the prepared world, without replacing her personality or goals. Other applicable people start at 0. A confident biography or model reply is not the mechanical grant. Authored starting competence is identified as such rather than supported by invented past lessons.
 
-Installing this law in an existing world proposes an explicit 0 initial value for applicable characters without an existing value. That preserves their current shooting performance. The creator can review different starting values through existing authority. Count new qualifying experience prospectively after activation; do not infer a lifetime total from anecdotes or silently scan and reclassify every historical action.
+Creator-authorized installation/initialization explicitly supplies 0 for applicable characters without an existing value, preserving their current shooting performance. It does not silently repair missing state or convert incompatible development saves. The creator can review different authored starting values through existing authority; earned support remains separately derived and cannot be overwritten as another mutable skill value. Count new qualifying experience prospectively after activation; do not infer a lifetime total from anecdotes or silently scan and reclassify every historical action.
 
 Animals and other inapplicable bodies do not receive a default human skill. Missing, unsupported, unknown and private are not interchangeable with 0. A required invalid skill definition is an unavailable consumer to repair through its owner, not a reason to overwrite existing character information.
 
-Earned competence persists for that character in that world. Ordinary absence, a missed shot, failed adventure, body recovery, replacing a sling or changing control between human and AI does not cause skill loss. Reconnect and current-format reopening retain the same value and supporting progression. This proposal adds no decay, daily practice quota, paid boost or penalty on death; other actual consequences remain with their owners.
+Earned competence persists for that character in that world. Ordinary absence, a missed shot, failed adventure, body recovery, replacing a sling or changing control between human and AI does not cause skill loss. Reconnect and current-format reopening retain the same value and supporting progression. This profile adds no decay, daily practice quota, paid boost or penalty on death; other actual consequences remain with their owners.
 
 ## What earns the improvement
 
-The proposed independent route requires **six qualifying released sling shots**. A second route requires **three qualifying released shots and one completed coaching episode**. Hunting and inert-target practice can be mixed. Hits and misses both qualify. The shot observed in coaching counts among those three; it is not a hidden extra requirement.
+The independent route requires **six qualifying released sling shots**. A second route requires **three qualifying released shots and one completed coaching episode**. Hunting and inert-target practice can be mixed. Hits and misses both qualify. The shot observed in coaching counts among those three; it is not a hidden extra requirement.
 
 A qualifying release must be an actual admitted use by this character of the supported sling mechanism, with the real compatible projectile consumed and a committed shot outcome. Starting an action, talking about an action or seeing another person's shot is insufficient. Only the actor who performed the release gains its practice evidence.
 
@@ -66,17 +66,17 @@ This is a deliberately short authored learning approximation, not a scientific m
 
 ## A peaceful practice route
 
-Provide **one visible inert practice target in the prepared first scene**, with a clear supported place from which to use it. This is authored scene content, independent of shelter construction and general target manufacturing. The first target is reusable and yields no health damage, corpse, loot, harvest, repair reward or currency.
+The prepared first scene provides **one visible inert practice target**, with a clear supported place from which to use it. This is authored scene content, independent of shelter construction and general target manufacturing. The first target is reusable and yields no health damage, corpse, loot, harvest, repair reward or currency.
 
-**Practice one sling shot** is a new supported action. Current hunting accepts living animals; changing an animal's label to target would not implement this consumer. The practice action uses the actual eligible sling and one compatible projectile, ordinary approach, the current 18-game-second windup and release-time reach/clearance/material checks. Against the inert target, use the same handling accuracy and one hit result, without an animal danger factor.
+**Practice one sling shot** is the separate supported action. Hunting still accepts living animals; the inert target has neither animal state nor health. The practice action uses the actual eligible sling and one compatible projectile, ordinary approach, the current 18-game-second windup and release-time reach/clearance/material checks. Against the inert target, use the same handling accuracy and one hit result, without an animal danger factor.
 
-The family represents an abstract target hit or miss. It does not claim a simulated projectile trajectory, exact landing location, wind correction or fine motor diagnosis. A bystander cannot be damaged by a practice result. The admitted firing position and target must satisfy the family's real safe-clearance rule before release; if the space becomes blocked, stop before the shot and explain only facts the player may know.
+The family represents an abstract target hit or miss. It does not claim a simulated projectile trajectory, exact landing location, wind correction or fine motor diagnosis. A bystander cannot be damaged by a practice result. The admitted firing position and target must satisfy the family's real safe-clearance rule before release; if the space becomes blocked, stop before the shot and explain only facts the player may know. Clearance checks current geometry and the whole living body along the firing segment, including a body crossing an endpoint, using the authored 0.25-unit horizontal margin and actual body widths/heights. Conservative candidate selection includes a body whose feet are below an elevated shot. Coaching feedback requires the existing person capabilities and the authored 1.6-unit communication reach.
 
 The target admits **one active practice shooter at a time** in this first profile. A second request gets a clear current-use explanation and no queued future shot. It does not reserve the whole clearing or prevent ordinary unrelated actions.
 
 A projectile is consumed once when a valid shot releases, hit or miss, just as in current hunting. Do not refund it because the target is inert. Existing ammunition manufacture/gathering supplies further attempts; a future recovery mechanic would need its own real object outcome and conservation. There is no automatic firing loop or free ammunition grant attached to opening the practice interface.
 
-Once practice windup begins, the shot cannot be suspended for unrelated physical work. Explicit cancellation or a permitted replacing action before release ends preparation without a projectile debit or practice credit; elapsed time remains spent. After release, the actual debit, hit/miss and credit remain. Current-format saving/reopening a still-active shot preserves that same action and rechecks its conditions, rather than canceling, refunding or replaying it.
+Once practice windup begins, the shot cannot be suspended for unrelated physical work. Explicit cancellation or a permitted replacing action before release ends preparation without a projectile debit or practice credit; elapsed time remains spent. After release, the actual debit, hit/miss and credit remain. Current-format saving/reopening preserves a still-active shot under its existing participation contract and rechecks its conditions, without refund or replay. Continuously present NPC work resumes once. Human departure/load follows the existing cancellation rule for unfinished physical work; completed shots and competence survive. Saving grants no exception to that participation rule.
 
 The player can stop after any shot or choose another explicit shot. Training remains available after becoming practiced if someone simply enjoys comparing equipment, but the interface plainly says there is no further handling advancement in this profile. The ordinary hunting route remains fully available to a beginner who never uses the target.
 
@@ -89,7 +89,7 @@ The participants agree to this episode through ordinary interaction and each act
 The agreed episode consists of three observable parts:
 
 1. The coach is actually present and able to observe at least one of the learner's qualifying releases and its visible result.
-2. Both deliberately participate in a short contextual **Give/receive sling coaching** activity after that observation. The proposed guided-feedback duration is **30 game seconds**, with ordinary reach/communication and current work restrictions.
+2. Both deliberately participate in a short contextual **Give/receive sling coaching** activity after that observation. The guided-feedback duration is **30 game seconds**, with ordinary reach/communication and current work restrictions.
 3. Completion records the actual coaching episode once and tells the learner what independent practice remains.
 
 The guided activity supplies mechanically true instruction about this supported method and the permitted observed result. It does not grade a human's prose or require the model to invent a posture error, hidden release timing or wind direction. The action panel can explain the demonstrated rule and remaining requirement without quoting it as words an NPC never said. Any spoken advice remains actual chosen speech under the conversation owner.
@@ -112,15 +112,16 @@ Supported live rule revisions retain historical results and use the existing act
 
 ## Qualification and expansion
 
-Qualify a beginner hunting normally, independent target practice, a voluntary coached episode, missed and blocked shots, a reused result, a changed sling, an absent/declining teacher, an interrupted lesson, scoped hidden factors and current-format return. Compare complete play with ordinary sling use; a working counter and exact arithmetic do not prove a worthwhile feature.
+[October 6 qualification](../../verification/practical-competence.md) records native, PostgreSQL, browser and genuine NPC-choice evidence separately. It does not prove human appreciation. Required comparisons include a beginner hunting normally, independent target practice, a voluntary coached episode, missed and blocked shots, a reused result, a changed sling, an absent/declining teacher, an interrupted lesson, scoped hidden factors and current-format return. Compare complete play with ordinary sling use; a working counter and exact arithmetic do not prove a worthwhile feature.
 
-The proposed effect and short requirements should be revised or omitted if players feel obliged to exhaust the target before doing anything fun, cannot notice the benefit or see no value in the coaching encounter. Do not solve that failure by lowering the beginner's current accuracy, adding kill XP, stretching the training time or selling a shortcut.
+The implemented effect and short requirements should be revised or omitted if players feel obliged to exhaust the target before doing anything fun, cannot notice the benefit or see no value in the coaching encounter. Do not solve that failure by lowering the beginner's current accuracy, adding kill XP, stretching the training time or selling a shortcut.
 
 A second competence needs a different actual benefit and its own evidence. Bow handling, practical crafting, broad mastery, personality change, general teaching of learned methods and a new uncertainty curve do not follow automatically from this first profile.
 
 ## Maintained records
 
 - Product behavior, research and critique: [authored stats, DG14 expansion](../../projects/authored-stats-feature-spec.md).
-- Proposed bounds and rationale: [authored-stat limits](../../limits/authored-stats.md).
+- Implemented selected bounds and broader proposal rationale: [authored-stat limits](../../limits/authored-stats.md).
 - Focused new consumer work: [practical competence](../../maintainers/practical-competence.md); shared EWF, action, state and knowledge tasks retain their own acceptance.
+- Scoped technical counterpart: [sling competence](../../projects/authored-stats-tech-design.md).
 - Current action evidence and method learning: [action experience](../../action-experience.md).

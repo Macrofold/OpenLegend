@@ -41,6 +41,12 @@ The kernel remains the only physical executor. Recording is in the same transiti
 
 Output consumption connects actual lots across independently chosen actions. Split/merge handling preserves contributors; mixed indistinguishable units do not acquire invented per-source precision. Family-supplied state links retain contributing injuries. Missing or externally changed support makes the candidate incomplete rather than establishing that a last hit defeated a healthy animal. Purpose links connect the actor's chosen ordered work; temporal adjacency or sharing a tool alone does not prove causality.
 
+## Scoped practice and coaching support
+
+Eligible real sling releases record the exact tool/mechanism, projectile and quantity, applied handling, effective chance, hit/miss and actual damage in private action-occurrence detail. The competence owner then references that committed occurrence/event for future improvement. Starting, observing, retelling or redisplaying an action is not another release. Hunting retains its existing separate learning eligibility; the new inert-target and coaching occurrences do not automatically create a learned activity or disclose a recipe.
+
+Completed coaching references the learner's observed release and each participant's actual feedback occurrence. Explicit evidence correction/forgetting reconciles compact support through the existing experience owner, including current privacy overlays on restored saves. Ordinary cold history/compaction retains support; historical shot debits and material effects are never rerolled or refunded. The owner's inspection hydrates readable release records through bounded indexed lookup and keeps unavailable detail explicit. [World rules](worlds/base/practical-competence.md), [technical ownership](projects/authored-stats-tech-design.md), [qualification](verification/practical-competence.md).
+
 ## Learning and shared definitions
 
 `activity-learning.ts` considers a bounded repertoire: direct material pairs with native support, endpoint dependency slices, selected-purpose spans, and compatible known spans. It preserves the raw trace and larger/overlapping candidates. A recognized four-action span does not prevent learning an eight-action span, and overlapping matches do not execute the same source step twice. Misses accompany the evidence without becoming mandatory failed steps. The exact ten-action example remains in the [technical design](projects/action-experience-tech-design.md#exact-ten-action-example).

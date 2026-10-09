@@ -224,6 +224,10 @@ Embeddings and caches are derived indexes, not canonical memory. Actor scope is 
 
 Reflection may use bounded `get_memories`, `inspect_memory` and `list_commitments` tools over this service, exposed through MCP or an equivalent adapter. Limit total calls, records, bytes, time and spending across the job; pagination cannot bypass those limits. No arbitrary SQL, world-history search or access to another actor's private mind is granted. Immediate level-2–4 calls use assembled context without requiring a tool round. Tools and database-backed recall do not require a separate database per NPC.
 
+### Private retrieval fencing
+
+Private evidence inspection follows the same disclosure boundary even without AI, including progress panels. Bind reads to the authenticated observer, world/control generation and current evidence/privacy revision before selecting permitted IDs. After each asynchronous or cached-promise result, recheck those bindings immediately before disclosure. Stable world identity alone does not fence a correction or forgetting committed while the read was pending. Invalidation stops later reuse; it does not by itself stop an already-running read returning old private text. Exercise that race through the actual read/commit/projection callers; reject stale results and keep missing evidence explicit. [Concurrent sling inspection](verification/practical-competence.md#continuity-and-private-inspection) demonstrates this requirement through cold SQL retrieval.
+
 Goal changes reevaluate already perceived objects as well as new exposures. World-interest subscriptions and personal recall can share an intent, but have distinct permission scopes: remembering a tree does not establish that it is still present or currently visible.
 
 ## 5. Events, awareness and memory storage

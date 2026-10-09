@@ -12,6 +12,8 @@ For prioritized parallel assignments or standalone task prompts, use [create-par
 
 Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Follow the [root planning requirement](../../../AGENTS.md#plan-before-implementation), scaling detail to the task.
 
+For a new gameplay mechanic, compare the complete benefit and burden with the already-capable ordinary route, including the actual world clock, materials, approach, controls and conversation. Correct counters or probability arithmetic establish mechanical behavior, not whether people notice or value it; record that human-evidence gap separately. This check applies while implementing an agreed feature too, without reopening prioritization or silently retuning accepted rules.
+
 Apply [the developer-question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work) to design as well as code: complete the independent parts, then obtain the developer's answers before developing the dependent specification. An open-decisions section records remaining questions; it does not replace asking them or authorize designing around assumed answers.
 
 ## Discoveries, rewards and earned progress

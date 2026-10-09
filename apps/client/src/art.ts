@@ -495,3 +495,22 @@ export function itemPileArt(
   }
   return image;
 }
+
+/** A nonliving target uses the ordinary cached billboard/material lifecycle. */
+export function practiceTargetArt(): HTMLCanvasElement {
+  const [image, ctx] = canvas(72, 84);
+  poly(ctx, '#66543a', [12, 81, 21, 81, 34, 52, 37, 52, 51, 81, 61, 81, 43, 44, 28, 44]);
+  for (const [radius, color] of [
+    [27, '#beaa77'],
+    [21, '#74684e'],
+    [15, '#dfcda2'],
+    [8, '#895840'],
+    [3, '#382d26'],
+  ] as const) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(36, 30, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  return image;
+}

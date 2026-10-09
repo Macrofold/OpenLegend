@@ -411,19 +411,24 @@ const entityIndexes = new WeakMap<
   WorldState['entities'],
   ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>>
 >();
-function entityIndex(world: WorldState) {
+const livingEntityIndexes = new WeakMap<
+  WorldState['entities'],
+  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>>
+>();
+function entityIndex(world: WorldState, livingOnly = false) {
+  const indexes = livingOnly ? livingEntityIndexes : entityIndexes;
   let index =
     !isDraft(world.entities) && Object.isFrozen(world.entities)
-      ? entityIndexes.get(world.entities)
+      ? indexes.get(world.entities)
       : undefined;
   if (!index) {
     index = spatialCandidates(
-      worldRootEntities(world)
-        .filter(activelyParticipates)
+      worldRootEntities(world, true)
+        .filter((entity) => activelyParticipates(entity) && (!livingOnly || entity.actor?.alive))
         .map((entity) => ({ entity, position: worldPosition(entity) })),
     );
     if (!isDraft(world.entities) && Object.isFrozen(world.entities))
-      entityIndexes.set(world.entities, index);
+      indexes.set(world.entities, index);
   }
   return index;
 }
@@ -461,6 +466,14 @@ export function spatialCandidateMembershipKey(
 }
 export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
   return entityIndex(world)(position, radius).map(({ entity }) => entity);
+}
+/** Safety checks need living bodies, not every inert object in conservative grid cells. */
+export function nearbyLivingEntities(
+  world: WorldState,
+  position: Position,
+  radius: number,
+): Entity[] {
+  return entityIndex(world, true)(position, radius).map(({ entity }) => entity);
 }
 export function nearbyEntityPage(
   world: WorldState,

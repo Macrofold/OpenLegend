@@ -8,6 +8,7 @@ import {
   observerDescription,
 } from '@open-legend/domain';
 import { outingActions } from './outing-view.js';
+import { competenceOptions } from './competence-actions.js';
 import { namePhrase } from '@open-legend/language';
 import {
   accessiblePossession,
@@ -533,6 +534,15 @@ export function actionCatalogue(
   }
   // Each offer/reply binds its exact perceived person; the recipient alone can accept.
   for (const target of actionTargets) {
+    for (const option of competenceOptions(world, scope.actorId, target, itemUses))
+      add(
+        option.id,
+        option.label,
+        target.practiceTarget ? 'Practice' : 'Social',
+        option.command,
+        [option.description],
+        target.id,
+      );
     for (const option of target.actor
       ? handoverOptions(
           world,

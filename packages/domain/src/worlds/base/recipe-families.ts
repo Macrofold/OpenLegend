@@ -180,7 +180,7 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
     {
       ...weaponConsumer,
       limitation: swing
-        ? 'Native animal hunting only; not a general projectile or combat engine.'
+        ? 'Native animal hunting and installed inert practice targets; not a general projectile or combat engine.'
         : 'Uses compatible native arrows; no generated trajectory solver.',
     },
     {
@@ -191,7 +191,9 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
     },
   );
   data.guidance.push(
-    'One compatible projectile is consumed per resolved shot, hit or miss. Accuracy is modified by fleeing; animals only, with no homing or new hit effects.',
+    swing
+      ? 'One compatible projectile is consumed per resolved shot, hit or miss. Supported inert targets allow one chosen practice shot without damage or loot. Animal conditions still apply to hunting; no homing or new hit effects.'
+      : 'One compatible projectile is consumed per resolved shot, hit or miss. Accuracy is modified by fleeing; animals only, with no homing or new hit effects.',
   );
   data.editor.derivedFacts.push({ path: 'facts.ammunition', label: 'Ammunition', readOnly: true });
   return {

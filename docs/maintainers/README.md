@@ -2,7 +2,7 @@
 
 ## Product design groups 11–15
 
-[The completed five-group design review](../projects/completed/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal; [practical-competence tasks](practical-competence.md) track the selected sling practice/coaching consumer. [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) tracks the optional story consumer. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.
+[The completed five-group design review](../projects/completed/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal; [practical-competence tasks](practical-competence.md) track the delivered sling practice/coaching consumer and remaining human appreciation, with its [scoped design](../projects/authored-stats-tech-design.md) and [qualification](../verification/practical-competence.md). [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) tracks the optional story consumer. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.
 
 ## Future work needing design
 

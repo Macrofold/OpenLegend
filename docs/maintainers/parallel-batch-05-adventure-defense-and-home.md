@@ -1,6 +1,6 @@
 # Batch 05 — Adventure, defense and a home
 
-**In progress, October 8, 2026.** AV01 delivers two discoverable sites, finite rewards and exact record learning/manufacture/use through current equipment; AV02 compatible equipment and shield defense are now merged; combined qualification and the other assignments retain their scoped acceptance. [Shield evidence](../verification/shield-defense.md) records the prior native, PostgreSQL and browser checks. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
+**In progress, October 8, 2026.** AV01 delivers two discoverable sites, finite rewards and exact record learning/manufacture/use through current equipment; AV02 compatible equipment/shield defense and AV03 finite sling practice/voluntary coaching are now merged; human appreciation, combined qualification and the other assignments retain their scoped acceptance. [Shield evidence](../verification/shield-defense.md) records the prior native, PostgreSQL and browser checks. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
 
 ## AV01 — Rewarding expeditions
 
@@ -37,12 +37,13 @@
 
 ## AV03 — Useful competence and voluntary coaching
 
-- [ ] Complete PC02's scoped technical counterpart and implement PC03's actual-use progression, inert target and private progress.
-- [ ] Deliver PC04's two genuine consents, observed shot, chosen feedback and refusal/interruption, distinct from recipe teaching and method learning.
-- [ ] Complete PC05 continuity/correction/cost and PC06 game-value qualification under the existing exact world profile; no beginner nerf or mandatory target grind.
-- [ ] Reconcile [PC](practical-competence.md), DG14/ND03/ND04's scoped portion, EWF/SC/AE/AG/CE consumers and actual evidence.
+- [x] Complete PC02's scoped technical counterpart and implement PC03's actual-use progression, inert target and private progress.
+- [x] Deliver PC04's two genuine consents, observed shot, chosen feedback and refusal/interruption, distinct from recipe teaching and method learning.
+- [x] Complete PC05 continuity/correction/cost and PC06 native comparisons under the exact world profile; no beginner nerf or mandatory target grind.
+- [ ] Complete PC06 human game-value qualification: observe whether players notice and appreciate the benefit without treating practice as an opening chore.
+- [x] Reconcile [PC](practical-competence.md), DG14/ND03/ND04's scoped portion, EWF/SC/AE/AG/CE consumers and actual evidence.
 
-**Readiness:** current main plus this plan; existing sling release, typed state and action evidence are available. Coaching owns its finite episode and does not depend on PX04's trip controller. [AV03 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience). The numerical effect is selected product scope, not proven enjoyment.
+**Delivery:** [scoped design](../projects/authored-stats-tech-design.md) and [native, SQL, browser and real-choice evidence](../verification/practical-competence.md) cover the selected consumer. Human appreciation remains open in PC06. Coaching owns its finite episode and does not depend on PX04's trip controller. [AV03 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av03--practical-skill-from-committed-experience). The numerical effect is selected product scope, not proven enjoyment.
 
 ## AV04 — A usable editable shelter
 

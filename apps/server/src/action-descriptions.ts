@@ -11,6 +11,9 @@ import {
   strikeDefinition,
   describeItemOffer,
   BASE_HANDOVER,
+  BASE_PRACTICE_COMMAND_DESCRIPTIONS,
+  handlingAccuracy,
+  toolPracticeDefinition,
 } from '@open-legend/domain';
 import { domainCommand } from './cognition.js';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
@@ -31,6 +34,7 @@ import type { CommandInput } from '@open-legend/protocol';
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
   ...BASE_DEATH_COMMAND_DESCRIPTIONS,
   outing: BASE_OUTING.description,
+  ...BASE_PRACTICE_COMMAND_DESCRIPTIONS,
   'activity-request':
     'Choose every required parameter and review a supported activity before starting it.',
   'inspect-activities':
@@ -152,13 +156,26 @@ function describeCommand(
         : itemDefinition
           ? `${itemDefinition.description}\n\n${common}`
           : common;
+    case 'practice-shot':
     case 'hunt': {
       const equipped = read.items.get(
         command.itemId ?? equippedItem(world, observation.actor.id, 'ranged')?.id ?? '',
       );
       const weapon = equipped && definition(equipped.definitionId);
+      if (command.type === 'practice-shot') {
+        const practice = weapon && toolPracticeDefinition(world, weapon);
+        const known =
+          weapon?.launcher && practice?.id === target?.practiceTarget?.attributeId
+            ? handlingAccuracy(world, observation.actor, weapon)
+            : undefined;
+        return `${common} ${weapon ? `Selected tool: ${weapon.name}. ` : ''}${known?.competence !== undefined ? `Known inert-target chance: ${known.accuracy * 100}%. ` : ''}${practice ? `${practice.practice!.windupSeconds} game seconds of preparation after approach. ` : ''}The firing lane must remain safely clear; stopping before release spends no projectile and earns no practice.`;
+      }
+      const handling = weapon?.launcher && handlingAccuracy(world, observation.actor, weapon);
+      const note = handling?.definition
+        ? ` ${handling.definition.name}: ${handling.competence === 1 ? 'practiced' : handling.competence === 0 ? 'beginner' : 'unavailable'}. ${handling.definition.practice!.scope} Animal conditions still affect the final chance.`
+        : '';
       const subject = target?.animal ? namePhrase(target, 'definite') : 'a living animal';
-      return `${equipped ? equipmentChangeDescription(world, observation.actor.id, equipped.id) : ''}Attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
+      return `${equipped ? equipmentChangeDescription(world, observation.actor.id, equipped.id) : ''}Attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.${note}`;
     }
     case 'harvest':
       if (!target?.remains) return common;

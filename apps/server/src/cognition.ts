@@ -236,12 +236,23 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         definitionId: input.definitionId!,
         operation: input.effectOperation!,
       };
+    case 'practice-shot':
     case 'hunt':
       return {
         ...base,
-        type: 'hunt',
+        type: input.type,
         targetId: input.targetId!,
         ...(input.itemId ? { weaponItemId: input.itemId } : {}),
+        ...(input.ammunitionId ? { ammoItemId: input.ammunitionId } : {}),
+      };
+    case 'coaching':
+      return {
+        ...base,
+        type: 'coaching',
+        targetId: input.targetId!,
+        attributeId: input.attributeId!,
+        operation: input.coachingOperation!,
+        ...(input.episodeId ? { episodeId: input.episodeId } : {}),
       };
     case 'cook':
       return { ...base, type: 'cook', itemId: input.itemId!, heatId: input.targetId! };

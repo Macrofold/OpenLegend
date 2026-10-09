@@ -7,6 +7,7 @@ import {
   guardChoiceLabel,
   equipmentChangeDescription,
 } from '@open-legend/domain';
+import { competenceOptions, competenceContext } from './competence-actions.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { learnedActivityCandidates } from './activity-context.js';
 import { consumptionDescription } from './body-services.js';
@@ -624,6 +625,18 @@ export function npcCandidates(
   }
   // Starting another timed task would discard actual work/materials. The actor can
   // explicitly cancel work; listing alternatives must not silently interrupt it.
+  const practiceContext = competenceContext(service.world, observed.actor);
+  for (const target of observed.visibleEntities)
+    for (const option of competenceOptions(service.world, actorId, target, inventory))
+      if (
+        !(actor.action && option.command.type === 'practice-shot') &&
+        service.previewCommand(option.command, actorId).ok
+      )
+        actions.push({
+          id: option.id,
+          description: `${option.description} ${practiceContext}`,
+          command: option.command,
+        });
   if (actor.action) return actions;
 
   if (visionRadius(service.world, observed.actor) === 0) {

@@ -1,3 +1,9 @@
+import {
+  hasEarnedPractice,
+  initializePractice,
+  setStartingPractice,
+} from './practical-competence.js';
+import { supportsManualWork } from './living.js';
 import { subjectNarration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { reconcileConditions } from './conditions.js';
@@ -452,6 +458,21 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   if (statsChanged) {
     for (const [id, value] of Object.entries(draft.person.meters)) {
       const definition = attributeDefinition(world, id)!;
+      // Editing another meter must not convert earned evidence into authored support.
+      if (readAttribute(entity.actor!, definition) === value) continue;
+      const progress = entity.actor!.practice?.[id];
+      if (
+        definition.practice &&
+        progress &&
+        value === 0 &&
+        hasEarnedPractice(progress, definition.practice)
+      ) {
+        return reject(
+          original,
+          'earned-competence',
+          'Correct the supporting experience to remove earned competence; editing a meter only changes authored starting competence.',
+        );
+      }
       if (definition.implementation === 'native-health-v1' && definition.schema.kind === 'number')
         setBodyHealth(
           entity.actor!,
@@ -801,10 +822,16 @@ export function editActorAttributes(
     const definition = attributeDefinition(original, change.attributeId);
     if (
       !definition ||
-      HOST_IMPLEMENTATIONS[definition.implementation].storage !== 'attributes' ||
+      !['attributes', 'practice'].includes(
+        HOST_IMPLEMENTATIONS[definition.implementation].storage,
+      ) ||
+      (definition.implementation === 'finite-practice-v1' &&
+        !supportsManualWork(original.entities[request.actorId])) ||
       (change.expectedRevision === null
-        ? actor.attributes?.[change.attributeId] !== undefined
-        : actor.attributes?.[change.attributeId]?.revision !== change.expectedRevision)
+        ? actor.attributes?.[change.attributeId] !== undefined ||
+          actor.practice?.[change.attributeId] !== undefined
+        : (actor.practice?.[change.attributeId]?.revision ??
+            actor.attributes?.[change.attributeId]?.revision) !== change.expectedRevision)
     )
       return reject(original, 'conflict', 'Attribute changed or is not applicable.');
     try {
@@ -816,6 +843,13 @@ export function editActorAttributes(
   const world = draftWorld(original);
   const events: WorldEvent[] = [];
   for (const change of request.changes) {
+    const definition = attributeDefinition(world, change.attributeId)!;
+    if (definition.implementation === 'finite-practice-v1') {
+      if (change.expectedRevision === null)
+        initializePractice(world.entities[request.actorId]!.actor!, definition, change.value);
+      else setStartingPractice(world, world.entities[request.actorId]!, definition, change.value);
+      continue;
+    }
     if (change.expectedRevision === null)
       initializeAttributes(world.entities[request.actorId]!.actor!, [
         attributeDefinition(world, change.attributeId)!,

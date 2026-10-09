@@ -1,3 +1,4 @@
+import { practiceDefinition } from '../../practical-competence.js';
 import type { Command, Entity, ItemInstance, WorldState } from '../../types.js';
 import type { ActivityView } from '../../action-experience.js';
 import { itemFor } from '../../objects.js';
@@ -32,6 +33,7 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
     (offer) =>
       (offer.command.type === 'strike' && offer.command.itemId === equipment.id) ||
       (offer.command.type === 'hunt' && !!definition?.launcher) ||
+      (offer.command.type === 'practice-shot' && offer.command.itemId === equipment.id) ||
       (offer.command.type === 'gather' &&
         !!definition?.gatheringTool &&
         definition.gatheringTool.resourceId === target.resource?.definitionId),
@@ -98,6 +100,13 @@ function activityView(
     teach: 'Teach',
     'learn-record': 'Learn a recorded method',
   };
+  if (command.type === 'practice-shot')
+    names['practice-shot'] = practiceDefinition(
+      world,
+      target?.practiceTarget?.attributeId ?? '',
+    )?.practice?.practiceLabel;
+  if (command.type === 'coaching')
+    names.coaching = practiceDefinition(world, command.attributeId)?.practice?.coachingLabel;
   const view: ActivityView = { name: command.purpose ?? names[command.type] ?? 'Act', facts: [] };
   if (command.type === 'treat-scar') {
     const treatment = reincarnationPolicy(world)?.treatment;

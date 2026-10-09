@@ -1,6 +1,8 @@
+import { SLING_HANDLING } from './practical-competence.js';
 import type { AttributeDefinition } from '../../world-modules.js';
 
 export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
+  SLING_HANDLING,
   {
     id: 'wilderness:health',
     version: 2,

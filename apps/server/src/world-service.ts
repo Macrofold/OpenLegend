@@ -173,6 +173,8 @@ export const commandInputSchema = z
       'guard',
       'strike',
       'hunt',
+      'practice-shot',
+      'coaching',
       'harvest',
       'cook',
       'tend-fire',
@@ -228,6 +230,8 @@ export const commandInputSchema = z
     operation: z.enum(['join', 'leave']).optional(),
     effectOperation: z.enum(['activate', 'deactivate']).optional(),
     fireOperation: z.enum(['light', 'fuel', 'extinguish']).optional(),
+    coachingOperation: z.enum(['request', 'accept', 'decline', 'withdraw', 'feedback']).optional(),
+    episodeId: id.optional(),
     handoverOperation: z.enum(['offer', 'counter', 'accept', 'decline', 'withdraw']).optional(),
     outingOperation: z.enum(['invite', 'accept', 'decline', 'leave']).optional(),
     outingId: id.optional(),
@@ -4269,11 +4273,12 @@ export class WorldService {
           ...(input.itemId ? { weaponItemId: input.itemId } : {}),
         };
         break;
+      case 'practice-shot':
       case 'hunt':
-        if (!input.targetId) return { ok: false, code: 'target', message: 'Choose an animal.' };
+        if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
         command = {
           ...envelope,
-          type: 'hunt',
+          type: input.type,
           humanInitiated: true,
           targetId: input.targetId,
           ...(input.itemId ? { weaponItemId: input.itemId } : {}),
@@ -4309,6 +4314,18 @@ export class WorldService {
           expectedRevision: input.expectedRevision,
           placementRevision: input.placementRevision,
           recordPin: input.recordPin,
+        };
+        break;
+      case 'coaching':
+        if (!input.targetId || !input.attributeId || !input.coachingOperation)
+          return { ok: false, code: 'coaching', message: 'Choose a person and a coaching action.' };
+        command = {
+          ...envelope,
+          type: 'coaching',
+          targetId: input.targetId,
+          attributeId: input.attributeId,
+          operation: input.coachingOperation,
+          ...(input.episodeId ? { episodeId: input.episodeId } : {}),
         };
         break;
       case 'teach':

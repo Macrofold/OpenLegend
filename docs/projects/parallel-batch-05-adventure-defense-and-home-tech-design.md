@@ -1,8 +1,8 @@
 # Batch 05 — Technical definitions for adventure, defense and a home
 
-| Status      | Current progress                                                                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | AV01 expeditions and AV02 compatible equipment/shield defense are merged; other assignments retain their unfinished scope and acceptance. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV01 expeditions, AV02 equipment/shield defense and AV03 sling practice/coaching are merged; human appreciation and other assignments retain their unfinished scope. | 2026-10-08   |
 
 ## Scope and baseline
 
@@ -155,7 +155,7 @@ Prove a changed admitted shield profile changes the same calculation and view. Q
 
 ### Owned change and source map
 
-Implement [PC02–PC06](../maintainers/practical-competence.md), supplying `docs/projects/authored-stats-tech-design.md` as the missing canonical counterpart for this selected consumer. Preserve the broader optional examples rather than marking them delivered. The exact product and tuning owners are [section 16](authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing) and [practical competence](../worlds/base/practical-competence.md).
+Implement [PC02–PC06](../maintainers/practical-competence.md), using the now-delivered [scoped technical counterpart](authored-stats-tech-design.md) for this selected consumer. Its [qualification](../verification/practical-competence.md) distinguishes delivered runtime evidence from open human appreciation. Preserve the broader optional examples rather than marking them delivered. The exact product and tuning owners are [section 16](authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing) and [practical competence](../worlds/base/practical-competence.md).
 
 - `packages/domain/src/world-modules.ts`: applicable typed attribute definitions/read/write, missing/private distinctions and authored installation.
 - `kernel.ts`, `strikes.ts`, `worlds/base/recipe-families.ts`: current swing mechanism, release checks and single accuracy roll.

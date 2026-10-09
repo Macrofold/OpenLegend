@@ -79,6 +79,18 @@ export interface ActivityView {
   result?: string;
 }
 export interface ActivityOccurrence {
+  release?: {
+    eventId: string;
+    tool: import('./world-modules.js').DefinitionPin;
+    family?: import('./world-modules.js').DefinitionPin;
+    competence?: number;
+    accuracy: number;
+    ammunitionItemId: string;
+    ammunitionDefinitionId: string;
+    quantity: 1;
+    hit: boolean;
+    damage: number;
+  };
   id: string;
   actorId: string;
   commandId: string;
@@ -461,6 +473,7 @@ export function beginActivity(
     };
   }
   const record: ActivityOccurrence = {
+    ...(['practice-shot', 'coaching'].includes(command.type) ? { noLearningControl: true } : {}),
     id: command.id,
     commandId: command.id,
     actionId,
@@ -762,6 +775,8 @@ const invocationFields: Partial<
   },
   strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId', 'autoEquip'] },
   hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId', 'autoEquip'] },
+  'practice-shot': { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
+  coaching: { required: ['targetId', 'attributeId', 'operation'], optional: ['episodeId'] },
   'treat-scar': { required: ['targetId', 'scarId'] },
   cook: { required: ['itemId', 'heatId'] },
   'tend-fire': {
@@ -1276,6 +1291,29 @@ export function validateActionExperience(world: WorldState): void {
       )
         throw new Error('Invalid action experience.');
       ids.add(entry.id);
+      const release = entry.release;
+      if (
+        release &&
+        (!['hunt', 'practice-shot'].includes(entry.command.type) ||
+          !isSafeRecordId(release.eventId) ||
+          !isDefinitionPin(release.tool) ||
+          (release.family !== undefined && !isDefinitionPin(release.family)) ||
+          (release.competence !== undefined &&
+            release.competence !== 0 &&
+            release.competence !== 1) ||
+          !Number.isFinite(release.accuracy) ||
+          release.accuracy < 0 ||
+          release.accuracy > 1 ||
+          !isSafeRecordId(release.ammunitionItemId) ||
+          !isSafeRecordId(release.ammunitionDefinitionId) ||
+          release.quantity !== 1 ||
+          typeof release.hit !== 'boolean' ||
+          !Number.isFinite(release.damage) ||
+          release.damage < 0 ||
+          (!release.hit && release.damage !== 0) ||
+          (entry.command.type === 'practice-shot' && release.damage !== 0))
+      )
+        throw new Error('Invalid committed shot evidence.');
       validateStockResolution(entry);
       for (const link of entry.connections) {
         const source = all.get(link.from);

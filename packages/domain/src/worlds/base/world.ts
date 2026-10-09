@@ -34,6 +34,8 @@ import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
 import { DEFAULT_COGNITION_POLICY } from './cognition.js';
 import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
+import { SLING_TARGET, SLING_HANDLING } from './practical-competence.js';
+import { setStartingPractice } from '../../practical-competence.js';
 import { activityHostPins } from '../../activity-hosts.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
@@ -88,7 +90,9 @@ export function createActor(
   };
   const meters = world.moduleManifest.definitions.filter(
     (definition) =>
-      definition.id === 'wilderness:fullness' || definition.id === 'wilderness:energy',
+      definition.id === 'wilderness:fullness' ||
+      definition.id === 'wilderness:energy' ||
+      definition.implementation === 'finite-practice-v1',
   );
   const food = meters.find((definition) => definition.id === 'wilderness:fullness');
   // Starting food is authored as a fraction of this world's installed range.
@@ -171,6 +175,15 @@ export function createWorld(
     world.map.spatial!,
   );
   const entities: Entity[] = [
+    {
+      id: SLING_TARGET.id,
+      name: SLING_TARGET.name,
+      description: SLING_TARGET.description,
+      kind: 'practice-target',
+      spatial: { bodyProfileId: 'object', heading: 0 },
+      placement: worldPlacement(SLING_TARGET.position, 'terrain'),
+      practiceTarget: { attributeId: SLING_TARGET.attributeId },
+    },
     {
       spatial: { bodyProfileId: 'person', heading: 0 },
       id: PLAYER_ID,
@@ -373,6 +386,8 @@ export function createWorld(
   ];
   for (const entity of entities) world.entities[entity.id] = entity;
   const shieldRecipe = installKnownShieldMethod(world);
+  // Explicit authored starting support; Ada's biography does not grant mechanics.
+  setStartingPractice(world, world.entities[NPC_ID]!, SLING_HANDLING, 1);
   for (const id of [PLAYER_ID, NPC_ID, MERCENARY_ID]) {
     startingRecipeKnowledge(world, id, shieldRecipe.id);
     addItem(world, id, 'stone_tool', 1);

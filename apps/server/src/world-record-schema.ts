@@ -56,6 +56,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
       exitExposures: map('sim_exit_exposures'),
+      coachingEpisodes: map('sim_coaching_episodes'),
       statusEffectPolicy: one('config_status_effects'),
       authorship: one('world_authorship', {
         creatorAccountIds: list('world_creators'),
@@ -92,6 +93,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             attempts: list('sim_intentions', 'id'),
           }),
           attributes: map('sim_actor_attributes'),
+          practice: map('sim_actor_practice'),
           conditions: map('sim_actor_conditions'),
           traits: list('sim_actor_traits', 'id'),
         }),

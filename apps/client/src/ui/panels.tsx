@@ -231,6 +231,37 @@ export function Character({
         ))}
         <Actions actions={view.player.actions} command={command} connected={connected} />
       </Section>
+      {!!view.player.practice?.length && (
+        <Section title="Practice">
+          {view.player.practice.map((progress) => (
+            <div key={progress.id}>
+              <Tag>
+                {progress.name}: {progress.value === 1 ? 'Practiced' : 'Beginner'}
+              </Tag>
+              <p>
+                {progress.releases}/{progress.independentRequired} real releases · Completed
+                coaching: {progress.coached ? 'yes' : 'no'}
+              </p>
+              {progress.starting && (
+                <p className="ol-caption">Practiced starting competence was explicitly authored.</p>
+              )}
+              <p className="ol-caption">
+                {progress.scope} {progress.effect}
+              </p>
+              <details>
+                <summary>Supporting releases ({progress.evidence.length})</summary>
+                <ul>
+                  {progress.evidence.map((evidence, index) => (
+                    <li key={evidence.occurrenceId}>
+                      Release {index + 1}: {evidence.description}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </div>
+          ))}
+        </Section>
+      )}
       <Section title="Traits">
         <Traits traits={view.player.traits} />
         <p className="ol-caption">Starting dispositions, with no mechanical bonuses.</p>

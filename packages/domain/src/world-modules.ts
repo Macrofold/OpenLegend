@@ -1,3 +1,11 @@
+import {
+  competenceValue,
+  initializePractice,
+  setStartingPractice,
+  validatePractice,
+  validatePracticeProfile,
+} from './practical-competence.js';
+import { validateCoaching } from './coaching.js';
 import { validNarrationTemplate } from '@open-legend/language';
 import {
   narrationTemplate,
@@ -86,11 +94,17 @@ export type AttributeCriticalPredicate =
     }
   | { concernActive: true };
 export interface AttributeDefinition {
+  practice?: import('./practical-competence.js').PracticeProfile;
   meaning?: string;
   condition?: ConditionPolicy;
   id: string;
   version: number;
-  implementation: 'native-health-v1' | 'number-v1' | 'reservoir-v1' | 'category-v1';
+  implementation:
+    | 'native-health-v1'
+    | 'number-v1'
+    | 'reservoir-v1'
+    | 'category-v1'
+    | 'finite-practice-v1';
   name: string;
   disclosure: 'public' | 'owner';
   presentation: { icon: string; color: string };
@@ -159,6 +173,12 @@ export interface AttributeView {
 // Reviewed service bindings, not dynamically imported functions. Definitions cannot
 // grant new effects: archive/07-technical-architecture/world-module-runtime.md#2-two-catalogs-with-different-authority.
 export const HOST_IMPLEMENTATIONS = Object.freeze({
+  'finite-practice-v1': {
+    interface: 'attribute-number-v1',
+    owner: 'practice',
+    execution: 'native',
+    storage: 'practice',
+  },
   'native-health-v1': {
     interface: 'attribute-number-v1',
     owner: 'body',
@@ -376,6 +396,7 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       'condition',
       'critical',
       'editorCritical',
+      'practice',
     ]);
     if (
       !namespace.test(d.id) ||
@@ -396,7 +417,21 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       throw new Error('Invalid attribute presentation symbols.');
     ids.add(d.id);
     const host = HOST_IMPLEMENTATIONS[d.implementation];
-    const owner = host.storage === 'attributes' ? d.id : host.storage;
+    const owner =
+      host.storage === 'attributes' || host.storage === 'practice' ? d.id : host.storage;
+    if (d.implementation === 'finite-practice-v1') {
+      validatePracticeProfile(d);
+      const familyOwner = `practice:${d.practice!.family.id}`;
+      if (owners.has(familyOwner))
+        throw new Error('Duplicate accuracy contribution for one mechanism.');
+      owners.add(familyOwner);
+      if (
+        !manifest.recipeFamilies.some(
+          (pin) => canonicalJson(pin) === canonicalJson(d.practice!.family),
+        )
+      )
+        throw new Error('Competence requires its exact installed mechanism.');
+    } else if (d.practice) throw new Error('Practice requires its supported state owner.');
     if (owners.has(owner)) throw new Error('Duplicate attribute state owner.');
     owners.add(owner);
     object(
@@ -512,6 +547,7 @@ export function readAttribute(
 ): AttributeValue | undefined {
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
   if (storage === 'attributes') return actor.attributes?.[definition.id]?.value;
+  if (storage === 'practice') return competenceValue(actor, definition);
   // Body health remains raw authoritative points; definition units are only a projection.
   if (
     storage === 'health' &&
@@ -560,6 +596,7 @@ export function setAttribute(
 ): boolean {
   validateAttributeValue(d, value);
   const storage = HOST_IMPLEMENTATIONS[d.implementation].storage;
+  if (storage === 'practice') return setStartingPractice(world, entity, d, value);
   if (storage !== 'attributes')
     throw new Error('Native state must use its owning body/need operation.');
   const prior = (entity.actor?.attributes ?? entity.attributes)?.[d.id];
@@ -628,6 +665,10 @@ export function initializeAttributes(
   initialValues: Record<string, AttributeValue> = {},
 ): void {
   for (const d of definitions) {
+    if (d.implementation === 'finite-practice-v1') {
+      initializePractice(actor, d, initialValues[d.id] ?? d.schema.initial);
+      continue;
+    }
     if (HOST_IMPLEMENTATIONS[d.implementation].storage !== 'attributes')
       throw new Error('Cannot initialize a second native state owner.');
     if (actor.attributes?.[d.id]) throw new Error('Attribute already initialized.');
@@ -691,7 +732,11 @@ export function projectAttributes(
         ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
           ? { editorCriticalComparison: { ...d.editorCritical.compare } }
           : {}),
-        revision: entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0,
+        revision:
+          entity.actor!.practice?.[d.id]?.revision ??
+          entity.actor!.attributes?.[d.id]?.revision ??
+          entity.actor!.body?.revision ??
+          0,
         ...(d.schema.kind === 'number' ? { min: d.schema.min, max, unit: d.schema.unit } : {}),
         ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
         ...(audience === 'owner' && d.condition
@@ -819,6 +864,8 @@ export function validateWorldModules(world: WorldState): void {
   validateAgency(world);
   validateOutings(world);
   validateActionExperience(world);
+  validatePractice(world);
+  validateCoaching(world);
   validateModuleManifest(world.moduleManifest);
   validateBodyPolicy(
     world.moduleManifest.bodyPolicy,
