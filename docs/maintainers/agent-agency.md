@@ -2,6 +2,8 @@
 
 Proposed follow-on: [PX04](parallel-batch-04-expeditions-and-exchange.md#px04--voluntary-shared-outings) adds one voluntary shared outing through existing individual activity/agency owners after PG02. It covers only the named AG05/AG06/AG07/AG12 child acceptance; no broader agency or unattended-life task is closed.
 
+Proposed DG33 consumers: [voluntary spirits/ordinary return](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) and [deliberate telepathy](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) retain independent NPC choices and current physical-life action binding. A message is experience, not a goal edit or command; revival does not resume a stale plan or owe labor to its caller. A dormant person has no ordinary decision loop, with one admitted invitation decision separately qualified. No new actor harness, whole-goal restoration or inference allowance is selected.
+
 ## Spatial dependencies
 
 [SW05–SW08](spatial-world.md) supplies supported ground route execution, results and senses; add SW12 only for flight-specific scenarios. Existing AG delivery can use flat schema-9 fixtures independently of the full camera/flight roadmap. Do not reset the operational goal/plan implementation or CR02 Jev-only work.

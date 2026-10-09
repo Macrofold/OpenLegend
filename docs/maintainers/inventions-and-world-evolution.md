@@ -4,6 +4,8 @@
 
 Current-main integration is implemented with [focused September 27 PostgreSQL, authority, Worker, usage and review evidence](../verification/invention-main-integration.md). Existing task IDs and broader INV/WW release gates remain unchanged; merging this foundation does not deliver every future scenario.
 
+Proposed [DG33 optional families](../projects/extraordinary-minds-and-afterlife-feature-spec.md) use [BW15](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) for the known-person manifestation/ordinary-return consumer and [EWF10T](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) for selected consenting messages. INV retains reviewed capability admission, actual supported definitions, authority and removal. A magical description grants no raw mind access, executable world law, body duplication or creator power. Qualify these small independent consumers through their existing owners before claiming broader compulsion, colony or revival families.
+
 ## Spatial family dependencies
 
 [SW03–SW05 and SW13](spatial-world.md) supply eligible geometry and placement adapters. Existing recipe authoring does not wait for flight, a GLB pipeline or full 3D completion. Keep creator versus actor authority, private invention evidence and actual activation/crafting separate. The first spatial branch installs native demo geometry, not an arbitrary generated-creature or building authoring capability.

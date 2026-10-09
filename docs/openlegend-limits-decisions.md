@@ -20,6 +20,8 @@ Proposed [generations and family life](projects/generations-and-family-life-feat
 
 Proposed [shared equipment and institutions](projects/shared-equipment-and-institutions-feature-spec.md): [INST-L01–INST-L08](limits/shared-equipment-and-institutions.md) records the first useful loan, narrow authority, shared commitment capacity, real reserved return room, no attendance penalties, conditional collateral and aggregate operating gaps. [INV-20.5g–l](maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) owns delivery; this creates no currency, corporate title or new platform powers.
 
+Proposed [extraordinary minds and afterlife](projects/extraordinary-minds-and-afterlife-feature-spec.md): [MIND-L01–MIND-L08](limits/extraordinary-minds-and-afterlife.md) records independent known-person and chosen-message families, attended manifestation, finite ordinary revival, body/yield continuity, shared text/invitation admission, private derivatives and aggregate history/work gaps. [BW15](maintainers/base-world.md#dg33--voluntary-spirits-and-ordinary-revival) and [EWF10T](maintainers/extensible-world-foundation.md#dg33--deliberate-telepathic-messages) retain actual delivery. Current human protection and creator revival are not changed.
+
 ## Feature inventories
 
 | Feature                                                                                               | Inventory                         | Implementation tasks                                     |

@@ -323,6 +323,8 @@ ND11's NPC ghost/summoning/ordinary-revival slice and ND21's selected mental-eff
 
 **Start and parallel boundary:** Treat these as separate selectable authored families with that shared boundary, not one mandatory magic system. Existing agency, lifecycle and provenance supply the starting contract. A requested world premise may bring a particular family forward; human recovery does not wait for ghosts, and a shared mind does not require revival. **Existing owners:** BW15, ACT/AG/CR, EWF10/INV and evidence/privacy owners.
 
+DG33 now has a [comprehensive product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md), [world profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [limits](../limits/extraordinary-minds-and-afterlife.md): voluntary local conversation with a known deceased adult, a separately earned finite-resource return, and independent deliberate telepathy. [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) and [EWF10T.1–EWF10T.4](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) retain adoption/delivery. Broader mental/colony families stay conditional; human recovery and source-reserved lethal choices remain separate.
+
 #### DG34 — Shared campaigns with local opportunities
 
 PS07's forecast canonical campaigns, timing/revision promises, local participation and contribution recognition, with the relevant PS08 mature-scale and recovery evidence.
@@ -572,6 +574,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 ## Creation, controls and communication
 
+DG33's [selected NPC product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) now covers voluntary summoning, local manifestation, dormancy and finite-resource ordinary return through [BW15 children](base-world.md#dg33--voluntary-spirits-and-ordinary-revival). These proposed D15 mechanics require adoption and actual qualification. The unresolved human conflict/recovery choices above are not answered by an NPC ghost family.
+
 ### ND12 — Cross-world invention libraries and usable pack publishing
 
 **Needs scoped delivery design under existing work.** Sources: [a creator's library across worlds](../../archive/03-design-proposals/invention-governance-and-ownership.md#a-creators-library-across-worlds), [world packs](../../archive/03-design-proposals/invention-governance-and-ownership.md#every-world-has-an-invention-pack), [private-world package policy](../../archive/06-marketing/open-platform-and-private-worlds.md), D36/D43/D44.
@@ -697,6 +701,8 @@ These refinements should be completed in the existing PS project and decision ow
 **October 5 DG15 scope:** the [researched product specification](../projects/story-perspectives-feature-spec.md) now selects that permission for one external familiar activity in a single-human private world, with [SP01–SP08](../limits/narration.md#sp01--selected-external-perspective) and [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective). The source policy is a new proposed consumer, not inherited omniscience. Private internal stimuli, other-human information and broader cutaways still require separate selection; implementation and qualification remain open.
 
 ## Commercial service, creator ecosystem and launch learning
+
+DG33's [deliberate telepathy proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) selects one willing known living pair, explicit chosen text, current range/consent, quiet owner-local ending, shared admission and protected derivatives. [EWF10T](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates actual delivery through existing owners. It supplies no compulsion, passive mind reading, shared memory or colony control; those retain the conditional selection criteria above.
 
 ### ND22 — Commercial offers and the customer entitlement lifecycle
 

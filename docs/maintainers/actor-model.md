@@ -8,6 +8,10 @@ This is the sole implementation tracker for the living-actor migration. Canonica
 
 ## Tasks
 
+### Extraordinary mind and afterlife proposal
+
+[DG33](../projects/extraordinary-minds-and-afterlife-feature-spec.md) consumes ACT’s identity/body/controller boundaries through [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) and [EWF10T](extensible-world-foundation.md#dg33--deliberate-telepathic-messages). Preserve one retained person, one current physical life, actual goods, independent speaking/harvest capability and protected private-source derivatives through ghost, ordinary return and controller change. The first return uses a non-harvestable adult speaking profile; a later harvestable consumer must conserve entitlement, distinct from accepted creator revival. No existing ACT checkbox or human recovery policy is changed by this product proposal.
+
 ### Generations and adult family continuity proposal
 
 [DG31 generations and family life](../projects/generations-and-family-life-feature-spec.md) selects an independently useful adult-family encounter and truthful age continuity without new automatic frailty, heredity or household control. [GEN01–GEN04](generations-and-family-life.md) owns the consumer and the unfinished audience-dependent design. ACT04’s bodily foundation and completed family facts remain intact; actual later bodily changes require a selected playable purpose and their owning care/lifecycle rules.

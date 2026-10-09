@@ -4,6 +4,8 @@
 
 [The next five-group assignment](../projects/product-design-groups-31-35.md) continues the completed groups 26–30 branch. [Generations and family life](generations-and-family-life.md) owns DG31’s independent adult-family proposal under ACT/BW and PS. The original PG requirement is preserved; D16’s reserved audience decision and the affected reproductive/dependent-care design remain unfinished. Later groups, technical work, runtime and measured qualification are not completed by this navigation entry.
 
+DG33’s [product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) adds two independent optional families: [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) covers a willing known spirit and separately earned ordinary revival; [EWF10T.1–EWF10T.4](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates deliberate telepathic messages. Their [profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [MIND limits](../limits/extraordinary-minds-and-afterlife.md) retain proposed scope; runtime and qualification remain open.
+
 DG32 uses [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) for useful shared equipment, exact keeper authority, accepted claims and return without a present keeper. The [product proposal](../projects/shared-equipment-and-institutions-feature-spec.md) keeps association membership optional and first lending unsecured; actual property consumers and qualification remain open.
 
 ## Product design groups 26–30

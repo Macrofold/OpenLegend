@@ -1,5 +1,7 @@
 # Cognition redesign delivery tasks
 
+Proposed [DG33 extraordinary minds and afterlife](../projects/extraordinary-minds-and-afterlife-feature-spec.md) consumes CR through [BW15](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) and [EWF10T](extensible-world-foundation.md#dg33--deliberate-telepathic-messages). Retain actual acquaintance, source/time attribution, cold history and newly experienced dialogue without omniscient dead-person recall. Human-private telepathic derivatives keep NC22 disclosure restrictions through memories, notes, reasons, God inspection, ghost/return and controller change. Dormancy has no recurring ordinary cognition; a legitimate invitation may admit one consent decision. Existing complete preparation, route and failure budgets apply; no automatic retry or per-spirit allowance follows.
+
 ## Spatial acceptance cross-links
 
 Use [SW08/SW16](spatial-world.md) for geometric audience/reach and cross-level native execution. Keep CR02/CR12 level-1 selection and zero-generative-continuation gates here. CH01 is not a prerequisite for native ground navigation, and no path node or camera frame is a new paid decision.
