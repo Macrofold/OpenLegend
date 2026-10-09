@@ -43,6 +43,18 @@ import {
   reconcileActorCoaching,
 } from './coaching.js';
 import { hasOtherTargetUser } from './entity-index.js';
+import {
+  preparationDefinition,
+  preparationForBinding,
+  preparationPin,
+  cookingClaims,
+} from './food-preparation.js';
+import {
+  castDefinition,
+  castGeometryProblem,
+  castBindingProblem,
+  castSourcePin,
+} from './finite-casts.js';
 import { subjectNarration, person, presentVerb } from './narration.js';
 import { prepareRecipeLearning, readRecipeRecord } from './recipe-records.js';
 import { learnRecipe } from './knowledge.js';
@@ -53,6 +65,7 @@ import {
   endActivity,
   bindActivityAction,
   occurrenceFor,
+  activityCompletionProblem,
   type ActivityOutput,
 } from './action-experience.js';
 import { nativeActivityView } from './worlds/base/action-views.js';
@@ -269,7 +282,7 @@ import {
   activeContributionId,
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
-import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
+import { addItem, sourceItemId, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
 import {
   appendMemory,
   canonicalJson,
@@ -428,6 +441,8 @@ export function ammoFor(
   );
 }
 function actionReach(world: WorldState, action: Action): number {
+  if (action.type === 'fish')
+    return castDefinition(world, world.entities[action.targetId ?? ''])?.stanceTolerance ?? 0;
   if (action.type === 'pickup') return world.itemHandling.reach;
   if (action.type === 'treat-scar') return reincarnationPolicy(world)?.treatment?.reach ?? 0;
   if (action.type === 'strike') {
@@ -443,7 +458,7 @@ function actionReach(world: WorldState, action: Action): number {
   return rangedApproachRange(range);
 }
 function targetPosition(world: WorldState, action: Action): Position | undefined {
-  return action.type === 'move' || action.type === 'assemble'
+  return action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
     ? action.destination
     : worldPosition(world.entities[action.targetId ?? action.heatId ?? '']);
 }
@@ -458,12 +473,13 @@ function actionInReach(
 ): boolean {
   // A route in progress ends at its last point, not wherever a slice happens to stop inside
   // the tolerance, so arrival does not depend on how elapsed time was divided.
-  if (action.type === 'move' || action.type === 'assemble')
+  if (action.type === 'move' || action.type === 'assemble' || action.type === 'fish')
     return (
       !!action.destination &&
       !action.path.length &&
       worldSupport(actor) === action.destination.surfaceId &&
-      distance(origin, action.destination) <= MOVEMENT.arrivalTolerance
+      distance(origin, action.destination) <=
+        (action.type === 'fish' ? actionReach(world, action) : MOVEMENT.arrivalTolerance)
     );
   const target = actionTarget(world, action);
   return !!target && canReachEntity(world, actor, target, actionReach(world, action), origin);
@@ -478,13 +494,13 @@ function approachPath(world: WorldState, actor: Entity, action: Action): RoutePl
       worldPosition(actor),
       destination,
       worldSupport(actor)!,
-      action.type === 'move' || action.type === 'assemble'
+      action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
         ? action.destination!.surfaceId
         : (worldSupport(actionTarget(world, action)) ?? undefined),
     );
     return path ? { status: 'reached', path, length: 0, expanded: 0 } : null;
   }
-  return action.type === 'move' || action.type === 'assemble'
+  return action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
     ? findPath(
         world,
         worldPosition(actor),
@@ -645,8 +661,12 @@ function materialRequirements(
       totals.set(input.definitionId, (totals.get(input.definitionId) ?? 0) + input.quantity);
     return [...totals].map(([definitionId, quantity]) => ({ definitionId, quantity }));
   }
-  if (action.type === 'cook')
-    return [{ definitionId: BASE_FAMILY_FACTS.cooking.input, quantity: 1 }];
+  if (action.type === 'cook' && action.foodPreparation)
+    return (
+      preparationForBinding(world, action.foodPreparation)?.inputs.map(
+        ({ definitionId, quantity }) => ({ definitionId, quantity }),
+      ) ?? []
+    );
   return [];
 }
 function workMaterials(
@@ -654,30 +674,42 @@ function workMaterials(
   actor: Entity,
   action: Action,
 ): ResourceOperation[] | Outcome {
-  const requirements = materialRequirements(world, action);
+  if (action.type === 'fish') {
+    const target = world.entities[action.targetId ?? ''];
+    const problem =
+      castBindingProblem(world, actor, target, action.itemId!, action.fishing) ??
+      (target && castGeometryProblem(world, actor, target, action.stage === 'working'));
+    if (problem) return outcome(false, 'cast-unavailable', problem);
+    if (!target?.resource || target.resource.quantity <= 0)
+      return outcome(
+        false,
+        'depleted',
+        castDefinition(world, target)?.exhaustedText ?? 'No supply remains.',
+      );
+  }
+  if (action.type === 'cook') {
+    const definition =
+      action.foodPreparation && preparationForBinding(world, action.foodPreparation);
+    if (!definition)
+      return outcome(
+        false,
+        'stale-preparation',
+        'The selected preparation or ingredient/output definition changed.',
+      );
+    const claims = cookingClaims(world, actor.id, definition, action.foodPreparation!.inputs);
+    if (!claims)
+      return outcome(
+        false,
+        'missing-material',
+        'The exact selected ingredients are no longer available.',
+      );
+    if (!world.entities[action.heatId ?? '']?.heat?.lit)
+      return outcome(false, 'no-heat', 'The selected preparation requires a lit heat source.');
+    return claims;
+  }
   const claims: ResourceOperation[] = [];
-  for (const input of requirements) {
-    const chosen =
-      action.type === 'cook' && action.itemId ? itemFor(world, action.itemId) : undefined;
-    const selected =
-      action.type === 'cook'
-        ? chosen &&
-          chosen.definitionId === input.definitionId &&
-          accessiblePossession(world, actor.id, chosen.id) &&
-          availableItemQuantity(world, chosen.id) >= input.quantity
-          ? [
-              {
-                source: {
-                  kind: 'item' as const,
-                  itemId: chosen.id,
-                  definition: itemDefinitionPin(world.itemDefinitions[chosen.definitionId]!),
-                },
-                sourceRevision: chosen.revision ?? 0,
-                amount: input.quantity,
-              },
-            ]
-          : null
-        : itemClaims(world, actor.id, input.definitionId, input.quantity);
+  for (const input of materialRequirements(world, action)) {
+    const selected = itemClaims(world, actor.id, input.definitionId, input.quantity);
     if (!selected)
       return outcome(
         false,
@@ -686,8 +718,6 @@ function workMaterials(
       );
     claims.push(...selected);
   }
-  if (action.type === 'cook' && !world.entities[action.heatId ?? '']?.heat?.lit)
-    return outcome(false, 'no-heat', 'Cooking requires a lit campfire.');
   if (action.type === 'tend-fire') {
     const problem = fireCareProblem(
       world,
@@ -701,6 +731,38 @@ function workMaterials(
     if (problem) return outcome(false, problem.code, problem.message);
   }
   return claims;
+}
+function cookingRecordProblem(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  claims: readonly ResourceOperation[] = [],
+): Outcome | null {
+  const entry = occurrenceFor(world, actor.id, action.id);
+  const definition = action.foodPreparation && preparationForBinding(world, action.foodPreparation);
+  if (!entry || !definition) return null;
+  // This reserves receipt size, not an item or future outcome. The source owner
+  // uses the same current stacking choice; a new native ID cannot exceed this length.
+  // Recheck on completion because another action can change the actor's output lots.
+  const outputs = definition.outputs.map(({ definitionId, quantity }) => ({
+    port: definitionId,
+    definitionId,
+    quantity,
+    itemId:
+      sourceItemId(world, actor.id, definitionId, quantity) ?? `item-${Number.MAX_SAFE_INTEGER}`,
+  }));
+  return activityCompletionProblem(
+    world,
+    entry,
+    {
+      ...outcome(true, 'completed', `${definition.name} completed.`),
+      outputs,
+      ...(outputs.length === 1 ? { itemId: outputs[0]!.itemId } : {}),
+    },
+    claims.flatMap((claim) =>
+      claim.source.kind === 'item' ? [{ itemId: claim.source.itemId, quantity: claim.amount }] : [],
+    ),
+  );
 }
 function startWork(
   world: WorldState,
@@ -754,6 +816,10 @@ function startWork(
           ),
         ]
       : undefined;
+  if (action.type === 'cook') {
+    const problem = cookingRecordProblem(world, actor, action, claims);
+    if (problem) return problem;
+  }
   if (
     claims.length &&
     applyResourceGroup(
@@ -867,6 +933,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   if (
     ([
       'gather',
+      'fish',
       'prepare',
       'craft',
       'assemble',
@@ -904,6 +971,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
       ? command.heatId
       : ([
             'gather',
+            'fish',
             'harvest',
             'hunt',
             'practice-shot',
@@ -1235,6 +1303,8 @@ function prepareNativeOperation(
     }
     case 'gather': {
       const target = getOwn(world.entities, command.targetId);
+      if (target?.resource?.cast)
+        return reject('requires-cast', 'This source requires its supported one-cast action.');
       if (!target?.resource || target.resource.quantity < 1)
         return reject('depleted', 'There is nothing left to gather here.');
       if (!visible(world, actor, target))
@@ -1399,22 +1469,46 @@ function prepareNativeOperation(
       break;
     }
     case 'cook': {
-      const item = itemFor(world, command.itemId);
+      const definition = preparationDefinition(world, command);
       const heat = getOwn(world.entities, command.heatId);
-      if (
-        !item ||
-        !accessiblePossession(world, actor.id, item.id) ||
-        item.definitionId !== BASE_FAMILY_FACTS.cooking.input
-      )
-        return reject(
-          'not-cookable',
-          `Choose ${world.itemDefinitions[BASE_FAMILY_FACTS.cooking.input]?.name ?? 'something cookable'} in this actor’s inventory.`,
-        );
+      if (!definition)
+        return reject('stale-preparation', 'Choose a current installed food preparation.');
       if (!heat?.heat?.lit || !visible(world, actor, heat))
         return reject('no-heat', 'A visible lit heat source is needed.');
-      action = temporary('cook', SIMULATION_RULES.cookSeconds);
-      action.itemId = item.id;
+      action = temporary('cook', definition.workSeconds);
       action.heatId = heat.id;
+      action.foodPreparation = {
+        definition: preparationPin(world, definition)!,
+        inputs: { ...command.inputs },
+        items: [
+          ...new Set(
+            [...definition.inputs, ...definition.outputs].map((input) => input.definitionId),
+          ),
+        ].map((id) => itemDefinitionPin(world.itemDefinitions[id]!)),
+      };
+      break;
+    }
+    case 'fish': {
+      const target = getOwn(world.entities, command.targetId);
+      const definition = castDefinition(world, target);
+      const problem =
+        castBindingProblem(world, actor, target, command.itemId) ??
+        (target && castGeometryProblem(world, actor, target, false));
+      if (problem || !definition || !target?.resource?.cast)
+        return reject('cast-unavailable', problem ?? 'Choose a compatible authored source.');
+      if (target.resource.quantity <= 0) return reject('depleted', definition.exhaustedText);
+      action = temporary('fish', definition.workSeconds);
+      action.targetId = target.id;
+      action.itemId = command.itemId;
+      action.destination = { ...target.resource.cast.stance };
+      action.fishing = {
+        definition: definitionPin(definition),
+        source: castSourcePin(target),
+        tool: itemDefinitionPin(
+          world.itemDefinitions[itemFor(world, command.itemId)!.definitionId]!,
+        ),
+        output: itemDefinitionPin(world.itemDefinitions[target.resource.definitionId]!),
+      };
       break;
     }
     case 'eat': {
@@ -1686,6 +1780,9 @@ function executeCommandNative(
   // before allocating IDs, recording experience or interrupting work in a throwaway draft.
   // Nested callers retain disposable execution: interruption events must still spend
   // their caller's work allowance. Other families retain later checks or remain unqualified.
+  // Cooking's startWork still admits the atomic ingredient group, including quantity,
+  // reservation and work limits. Keep that disposable transaction until its remaining
+  // refusal checks have a shared read-only preflight; AC11/PF05 track that optimization.
   // docs/action-capabilities.md#action-availability-and-temporary-execution
   if (
     options.preview &&
@@ -1704,6 +1801,7 @@ function executeCommandNative(
       'replenish',
       'follow',
       'guard',
+      'fish',
     ].includes(action.type)
   )
     return {
@@ -1756,13 +1854,23 @@ function executeCommandNative(
           world,
           command,
           command.id,
-          nativeActivityView(original, command),
+          startingActivityView(original, command, action),
           component.agency.plan?.steps.some((step) => step.id === command.id)
             ? component.agency.plan.id
             : undefined,
         )
       : undefined;
-  if (action) action.id = nextId(world, 'action');
+  if (experience && 'ok' in experience) return { world: original, events: [], outcome: experience };
+  if (action) {
+    action.id = nextId(world, 'action');
+    if (experience) bindActivityAction(world, experience, action.id);
+    // Immediate cooking is checked with its exact material links by startWork
+    // below. Approaching work must also fit before any travel is committed.
+    if (action.type === 'cook' && action.stage === 'approaching') {
+      const problem = cookingRecordProblem(world, actor, action);
+      if (problem) return { world: original, events: [], outcome: problem };
+    }
+  }
   if (action?.type === 'follow') updateFollowPath(world, actor, action);
   if (
     experience &&
@@ -2510,7 +2618,6 @@ function executeCommandNative(
         return reject('unsupported', 'This command is not supported.');
     }
   if (action) {
-    if (experience) bindActivityAction(world, experience, action.id);
     const toolId =
       command.type === 'guard'
         ? command.itemId
@@ -2578,15 +2685,6 @@ function executeCommandNative(
     }
     if (action.guard) actor.spatial.heading = action.guard.facing;
     if (action.type === 'coaching') registerFeedback(world, actor, action);
-    if (experience && action.stage === 'approaching')
-      experience.view.children = [
-        {
-          name: 'Move into reach',
-          facts: experience.view.facts.filter(
-            (fact) => fact.name === 'distance' || fact.name === 'approach',
-          ),
-        },
-      ];
     component.planGeneration++;
     emit(
       world,
@@ -2622,6 +2720,17 @@ function executeCommandNative(
   return finish(world, events, result);
 }
 
+function startingActivityView(world: WorldState, command: Command, action?: Action) {
+  const view = nativeActivityView(world, command);
+  if (action?.stage === 'approaching')
+    view.children = [
+      {
+        name: 'Move into reach',
+        facts: view.facts.filter((fact) => fact.name === 'distance' || fact.name === 'approach'),
+      },
+    ];
+  return view;
+}
 function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reason: string): void {
   // Selected stock guards contain private supply/minimum facts. Witnesses can
   // observe the stop, while only the actor receives its detailed reason.
@@ -3079,20 +3188,95 @@ function completeAction(
       break;
     }
     case 'cook': {
-      if (!world.entities[action.heatId ?? '']?.heat?.lit) {
-        failAction(world, actor, events, 'the fire went out before cooking finished.');
+      const definition =
+        action.foodPreparation && preparationForBinding(world, action.foodPreparation);
+      if (!definition || !world.entities[action.heatId ?? '']?.heat?.lit) {
+        failAction(
+          world,
+          actor,
+          events,
+          definition
+            ? 'the fire went out before cooking finished.'
+            : 'the selected preparation changed before cooking finished.',
+        );
         return;
       }
-      outputItemId = produce(BASE_FAMILY_FACTS.cooking.output, 1);
+      const recordProblem = cookingRecordProblem(world, actor, action);
+      if (recordProblem) {
+        failAction(world, actor, events, recordProblem.message);
+        return;
+      }
+      for (const output of definition.outputs) produce(output.definitionId, output.quantity);
+      if (outputs.length === 1) outputItemId = outputs[0]!.itemId;
+      completion = `${definition.name} completed.`;
       emit(
         world,
         events,
         'cooked',
-        subjectNarration(actor, `cooked meat over the campfire.`),
+        subjectNarration(actor, definition.completedText),
         actor,
         action.heatId,
+        {
+          actionId: action.id,
+          preparationId: definition.id,
+          quantity: outputs.reduce((sum, output) => sum + output.quantity, 0),
+        },
       );
       break;
+    }
+    case 'fish': {
+      const target = world.entities[action.targetId ?? ''];
+      const definition = castDefinition(world, target);
+      const problem =
+        castBindingProblem(world, actor, target, action.itemId!, action.fishing) ??
+        (target && castGeometryProblem(world, actor, target, true));
+      if (problem || !definition || !target?.resource || target.resource.quantity <= 0) {
+        failAction(
+          world,
+          actor,
+          events,
+          problem ?? definition?.exhaustedText ?? 'the source is no longer available.',
+        );
+        return;
+      }
+      const source = {
+        kind: 'gathering',
+        entityId: target.id,
+        definition: action.fishing!.output,
+      } as const;
+      if ((availableResource(world, source) ?? 0) < 1) {
+        failAction(world, actor, events, definition.exhaustedText);
+        return;
+      }
+      const caught = nextRandom(world) < definition.chance;
+      if (caught) {
+        const result = applyResourceGroup(
+          world,
+          {
+            invocationId: action.id,
+            fulfillment: 'all-or-nothing',
+            operations: [{ source, sourceRevision: target.resource.revision ?? 0, amount: 1 }],
+          },
+          events,
+        );
+        if (result.status !== 'applied')
+          throw new Error('A lawful finite cast lost its synchronous stock commit.');
+        outputItemId = produce(target.resource.definitionId, 1);
+      }
+      completion = caught ? definition.caughtText : definition.emptyText;
+      emit(world, events, 'cast-completed', subjectNarration(actor, completion), actor, target.id, {
+        actionId: action.id,
+        caught,
+        quantity: caught ? 1 : 0,
+        definitionId: target.resource.definitionId,
+      });
+      finishPlanAction(world, actor.id, action.id, {
+        ...outcome(true, caught ? 'caught' : 'empty', completion),
+        ...(outputItemId ? { itemId: outputItemId } : {}),
+        outputs,
+      });
+      component.action = null;
+      return;
     }
     case 'tend-fire': {
       const done = completeFireCare(
@@ -3357,9 +3541,10 @@ function advanceAction(
       const last = action.path.at(-1);
       const endpointUseful =
         last &&
-        (action.type === 'move' || action.type === 'assemble'
+        (action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
           ? last.surfaceId === action.destination!.surfaceId &&
-            distance(last, action.destination!) <= MOVEMENT.arrivalTolerance
+            distance(last, action.destination!) <=
+              (action.type === 'fish' ? actionReach(world, action) : MOVEMENT.arrivalTolerance)
           : canReachEntity(
               world,
               actor,
@@ -3413,7 +3598,9 @@ function advanceAction(
     seconds = 0;
   }
   if (
-    ['gather', 'harvest', 'cook', 'pickup', 'tend-fire', 'treat-scar'].includes(action.type) &&
+    ['gather', 'harvest', 'cook', 'fish', 'pickup', 'tend-fire', 'treat-scar'].includes(
+      action.type,
+    ) &&
     !actionInReach(world, actor, action)
   ) {
     failAction(
@@ -3448,6 +3635,15 @@ function advanceAction(
       );
       return;
     }
+  }
+  if (
+    action.type === 'cook' &&
+    (!action.foodPreparation ||
+      !preparationForBinding(world, action.foodPreparation) ||
+      !world.entities[action.heatId ?? '']?.heat?.lit)
+  ) {
+    failAction(world, actor, events, 'the selected preparation changed or its heat went out.');
+    return;
   }
   if (action.type === 'replenish') {
     const definition = attributeDefinition(world, action.attributeId ?? '');

@@ -123,16 +123,16 @@ The foundation supports **calling any registered compatible family**, not only t
 
 The normal OpenLegend world should expose ordinary actions in these families when their mechanics are implemented. They require no invention merely to use them. Some already have narrow native implementations; others need new engineering. Refer to Architecture for that distinction rather than inferring implementation from this target list.
 
-| Family cluster                  | Ordinary invocations to expose                                                                           | What remains family/world-specific                                                |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Existing survival and work      | Gather, prepare, craft a known method, equip, hunt, harvest, cook, eat, replenish, rest, recover, cancel | Current material/body/recipe rules; native batch quantities and output types      |
-| Communication and expression    | Say, ask, reply, join/leave, gesture; whisper/shout only when supported                                  | Channel reach, intelligibility, anatomy, expressive versus mechanical effects     |
-| Possessions and containment     | Pick up, put down, transfer, offer/accept, insert/remove, split/combine, carry                           | Capacity, load, access, custody, ownership, participation and stack semantics     |
-| Manipulation and devices        | Open/close, turn, press, attach/detach, hold, move with supported force                                  | State domains, geometry, resource channels and downstream mechanics               |
-| Care and social interaction     | Help request, permitted treatment, rescue, teach a known technique, practice                             | Consent/emergency rules, anatomy, learning, skill and independent social response |
-| Environmental use               | Ignite with a source, extinguish by a method, pour, fill, heat, cool, plant, harvest                     | Combustion, fluids, growth, material compatibility and passive consequences       |
-| Worksites and transport         | Build a known design, repair, disassemble, board, operate, unload                                        | Structural/vehicle mechanics, shared work, production recipes and lifecycle       |
-| World-defined special abilities | Cast a known spell, use a configured machine, invoke an admitted body transformation                     | Applicable constitution, resources, target contracts and privileged effect owners |
+| Family cluster                  | Ordinary invocations to expose                                                                                 | What remains family/world-specific                                                |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Existing survival and work      | Gather, prepare, craft a known method, equip, hunt, harvest, cook, fish, eat, replenish, rest, recover, cancel | Current material/body/recipe rules; native batch quantities and output types      |
+| Communication and expression    | Say, ask, reply, join/leave, gesture; whisper/shout only when supported                                        | Channel reach, intelligibility, anatomy, expressive versus mechanical effects     |
+| Possessions and containment     | Pick up, put down, transfer, offer/accept, insert/remove, split/combine, carry                                 | Capacity, load, access, custody, ownership, participation and stack semantics     |
+| Manipulation and devices        | Open/close, turn, press, attach/detach, hold, move with supported force                                        | State domains, geometry, resource channels and downstream mechanics               |
+| Care and social interaction     | Help request, permitted treatment, rescue, teach a known technique, practice                                   | Consent/emergency rules, anatomy, learning, skill and independent social response |
+| Environmental use               | Ignite with a source, extinguish by a method, pour, fill, heat, cool, plant, harvest                           | Combustion, fluids, growth, material compatibility and passive consequences       |
+| Worksites and transport         | Build a known design, repair, disassemble, board, operate, unload                                              | Structural/vehicle mechanics, shared work, production recipes and lifecycle       |
+| World-defined special abilities | Cast a known spell, use a configured machine, invoke an admitted body transformation                           | Applicable constitution, resources, target contracts and privileged effect owners |
 
 Do not implement every row as a new switch branch. Expose the actual family invocation and target/quantity schema; let synonyms and compositions share it. “Pick up,” “give,” “offer,” and “eat” may all involve an item but have different semantics and cannot collapse into an unqualified transfer.
 
@@ -288,7 +288,9 @@ Only genuine semantic ambiguity/composition needs a bounded interpreter. It rece
 
 A later tool-using planning harness can use the same scoped discovery/preview ports. It is not necessary for the first point-move slice and owns no authoritative continuation outside the saved plan.
 
-### Action availability and temporary execution
+Finite food preparation and casting use those same native boundaries. Cooking binds an installed definition, exact ingredient lots and chosen heat; casting binds a perceived finite source and held compatible tool. Preview samples no future cast result and spends no stock. Completion retains actual empty/catch/product receipts and rechecks current meaning, access, heat and geometry. [The preparation/cast owner](food-preparation.md) defines the finite contract and [AV05 evidence](verification/river-meal.md) records qualified cases.
+
+## Action availability and temporary execution
 
 **Required when designing, implementing or reviewing action behavior, prerequisites, availability or execution.** An availability check answers whether a particular character can start the exact selected action now. Menus, NPC choices and plan selection need that answer, not the action's effects or a prediction of eventual success.
 

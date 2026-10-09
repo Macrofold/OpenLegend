@@ -889,13 +889,14 @@ export function inventoryItemView(
     ...(!item.container || canAccessContainer(world, scope.actorId, item.id)
       ? { packingLoad: itemPackingLoad(world, item.id, 1) }
       : {}),
-    category: definition.equipment
-      ? 'equipment'
-      : definition.ammunition
-        ? 'ammunition'
-        : definition.properties.includes('food')
-          ? 'food'
-          : 'material',
+    category:
+      definition.equipment || definition.fishingTool
+        ? 'equipment'
+        : definition.ammunition
+          ? 'ammunition'
+          : definition.properties.includes('food')
+            ? 'food'
+            : 'material',
     description: describePossession(item, definition, isEquipped(world, scope.actorId, item.id)),
     equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],

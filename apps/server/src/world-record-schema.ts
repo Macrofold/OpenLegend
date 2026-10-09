@@ -57,6 +57,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       finiteRain: one('sim_finite_rain'),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
+      foodPreparations: map('config_food_preparations'),
+      castDefinitions: map('config_cast_definitions'),
       exitExposures: map('sim_exit_exposures'),
       coachingEpisodes: map('sim_coaching_episodes'),
       statusEffectPolicy: one('config_status_effects'),

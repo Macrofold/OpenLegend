@@ -306,11 +306,11 @@ The save worker starts with the server and is not automatically restarted after 
 
 ## BW04
 
-**Reported · Restrictiveness: Medium.**
+**Historical; superseded by current-format rejection · Restrictiveness: Medium.**
 
-Legacy feeling migration only supports the known fear/discomfort format and decay rate. Equipment migration only rebinds understood weapon references; unsupported references block migration. Unknown legacy item definitions do not automatically gain packing compatibility. [Feeling migration](../../packages/domain/src/appraisal-migration.ts), [object migration](../../packages/domain/src/object-migration.ts)
+Earlier feeling conversion supported only the known fear/discomfort format and decay rate. Earlier equipment conversion rebound understood weapon references, rejected unsupported references and did not grant unknown item definitions packing compatibility. These were restrictions on the former conversion paths, not current save support. Current equipment ownership is in [objects](../../packages/domain/src/objects.ts); the [development save policy](../../AGENTS.md#development-save-policy) forbids retaining an older-format reader.
 
-**Reason / tradeoff:** Only understood legacy semantics can be converted without guessing or losing references.
+**Former reason / tradeoff:** Only understood legacy semantics could be converted without guessing or losing references. Current incompatible saves are rejected without conversion or deletion.
 
 ## SV17
 
@@ -348,7 +348,7 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 **Changed · Restrictiveness: Safe.**
 
-**Only the current physical format is supported.** Database format 10, `records-jsonl-2` and save format `development-2026-10-08-equipment-practice-and-shelter` require the combined perspective/access table, maintained event totals and [saved sampling progress](../simulation-time.md#native-interval-contract). The integrated model also requires exact recipe-family pins, sparse body meters and the explicit memory-search projection. Format 10 additionally requires exact body-port equipment attachments, finite guard work, authored-method provenance, source-bearing invention receipts, current recipe-record acquisitions/transactions, owned practice support, active coaching records and shelter/material-exposure records. It replaces the separate preceding layouts without retaining an older reader. The remainder must be finite, positive above the current time tolerance and no greater than the world-owned fallback horizon; any exact deadline must agree with the saved clock and remainder. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
+**Only the current physical format is supported.** Database format 11, `records-jsonl-2` and save format `development-2026-10-08-equipment-practice-shelter-and-river-meals` require the combined perspective/access table, maintained event totals and [saved sampling progress](../simulation-time.md#native-interval-contract). The integrated model also requires exact recipe-family pins, sparse body meters and the explicit memory-search projection. Format 11 additionally requires exact body-port equipment attachments, finite guard work, authored-method provenance, source-bearing invention receipts, current recipe-record acquisitions/transactions, owned practice support, active coaching records and shelter/material-exposure records, installed preparation definitions and finite cast definitions. It replaces the separate preceding layouts without retaining an older reader. The remainder must be finite, positive above the current time tolerance and no greater than the world-owned fallback horizon; any exact deadline must agree with the saved clock and remainder. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
 
 **Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That reader was removed with the history layout change; it is not a promised support window. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
 

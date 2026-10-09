@@ -4,29 +4,32 @@ Optional human-outcome research: [well-being evidence inventory](limits/wellbein
 
 Proposed follow-on allocation constraints: [batch 04 — Expeditions and exchange](limits/parallel-batch-04-expeditions-and-exchange.md) and [batch 05 — Adventure, defense and a home](limits/parallel-batch-05-adventure-defense-and-home.md). Unadopted bounds remain proposals; the adopted AV-L01 expedition entry now lives with [bundled-world limits](limits/base-world.md#av-l01--finite-authored-expeditions).
 
+AV05’s adopted [food preparation and finite cast bounds](limits/food-preparation.md) are current.
+
 Defined conflict allocation: [batch 06 — Rivals and contested ground](limits/parallel-batch-06-rivals-and-contested-ground.md) records proposed projectile/evasion/help/encounter bounds and the accepted NPC participation target; runtime delivery remains open.
 
 Start with [the tracking system](limits/README.md). Feature inventories retain limits, reasons and removal decisions; [Remove / Change / Expand](maintainers/limits-audit.md) contains only pending recommendations. [Feature documentation requirements](feature-documentation.md) explain how future changes keep both synchronized.
 
 ## Feature inventories
 
-| Feature                                                                                               | Inventory                         | Implementation tasks                                     |
-| ----------------------------------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------- |
-| [Cognition and action selection](agent-agency.md)                                                     | [Limits](limits/cognition.md)     | [Tracker](maintainers/cognition-redesign.md)             |
-| [Memory, knowledge and consolidation](memory-architecture.md)                                         | [Limits](limits/memory.md)        | [Tracker](maintainers/cognition-redesign.md)             |
-| [AI execution and spending](ai-providers.md)                                                          | [Limits](limits/ai-execution.md)  | [Tracker](maintainers/macrofold-worker-api.md)           |
-| [Invention and generated content](../archive/07-technical-architecture/declarations-and-evolution.md) | [Limits](limits/inventions.md)    | [Tracker](maintainers/inventions-and-world-evolution.md) |
-| [Objects, inventory and equipment](projects/persistent-objects-feature-spec.md)                       | [Limits](limits/objects.md)       | [Tracker](maintainers/persistent-objects.md)             |
-| [Shared state, resources and effects](status-effects.md)                                              | [Limits](limits/state-effects.md) | [Tracker](maintainers/state-contributions.md)            |
-| [Native work and invalidation](projects/dependency-invalidation-feature-spec.md)                      | [Limits](limits/native-work.md)   | [Tracker](maintainers/dependency-invalidation.md)        |
-| [Feelings and social continuity](projects/appraisal-social-continuity-feature-spec.md)                | [Limits](limits/feelings.md)      | [Tracker](maintainers/agent-agency.md)                   |
-| [Accounts, participation and transport](projects/multiplayer-authority-feature-spec.md)               | [Limits](limits/multiplayer.md)   | [Tracker](maintainers/multiplayer.md)                    |
-| [Space, movement and perception](spatial-world.md)                                                    | [Limits](limits/spatial.md)       | [Tracker](maintainers/spatial-world.md)                  |
-| [Narration and conversations](narration-and-conversations.md)                                         | [Limits](limits/narration.md)     | [Tracker](maintainers/narration-and-conversations.md)    |
-| [Persistence, checkpoints and recovery](save-and-load.md)                                             | [Limits](limits/persistence.md)   | [Tracker](maintainers/save-and-load.md)                  |
-| [Diagnostics and inspection](performance.md)                                                          | [Limits](limits/observability.md) | [Tracker](maintainers/performance-profiling.md)          |
-| [Authoring and presentation](ui-design-brief.md)                                                      | [Limits](limits/interface.md)     | [Tracker](maintainers/TODO.md)                           |
-| [Bundled-world defaults](worlds/base/README.md)                                                       | [Limits](limits/base-world.md)    | [Tracker](maintainers/base-world.md)                     |
+| Feature                                                                                               | Inventory                            | Implementation tasks                                                                                                 |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| [Cognition and action selection](agent-agency.md)                                                     | [Limits](limits/cognition.md)        | [Tracker](maintainers/cognition-redesign.md)                                                                         |
+| [Memory, knowledge and consolidation](memory-architecture.md)                                         | [Limits](limits/memory.md)           | [Tracker](maintainers/cognition-redesign.md)                                                                         |
+| [AI execution and spending](ai-providers.md)                                                          | [Limits](limits/ai-execution.md)     | [Tracker](maintainers/macrofold-worker-api.md)                                                                       |
+| [Invention and generated content](../archive/07-technical-architecture/declarations-and-evolution.md) | [Limits](limits/inventions.md)       | [Tracker](maintainers/inventions-and-world-evolution.md)                                                             |
+| [Objects, inventory and equipment](projects/persistent-objects-feature-spec.md)                       | [Limits](limits/objects.md)          | [Tracker](maintainers/persistent-objects.md)                                                                         |
+| [Shared state, resources and effects](status-effects.md)                                              | [Limits](limits/state-effects.md)    | [Tracker](maintainers/state-contributions.md)                                                                        |
+| [Native work and invalidation](projects/dependency-invalidation-feature-spec.md)                      | [Limits](limits/native-work.md)      | [Tracker](maintainers/dependency-invalidation.md)                                                                    |
+| [Food preparation and finite casts](food-preparation.md)                                              | [Limits](limits/food-preparation.md) | [Tracker](maintainers/parallel-batch-05-adventure-defense-and-home.md#av05--river-fishing-and-world-defined-cooking) |
+| [Feelings and social continuity](projects/appraisal-social-continuity-feature-spec.md)                | [Limits](limits/feelings.md)         | [Tracker](maintainers/agent-agency.md)                                                                               |
+| [Accounts, participation and transport](projects/multiplayer-authority-feature-spec.md)               | [Limits](limits/multiplayer.md)      | [Tracker](maintainers/multiplayer.md)                                                                                |
+| [Space, movement and perception](spatial-world.md)                                                    | [Limits](limits/spatial.md)          | [Tracker](maintainers/spatial-world.md)                                                                              |
+| [Narration and conversations](narration-and-conversations.md)                                         | [Limits](limits/narration.md)        | [Tracker](maintainers/narration-and-conversations.md)                                                                |
+| [Persistence, checkpoints and recovery](save-and-load.md)                                             | [Limits](limits/persistence.md)      | [Tracker](maintainers/save-and-load.md)                                                                              |
+| [Diagnostics and inspection](performance.md)                                                          | [Limits](limits/observability.md)    | [Tracker](maintainers/performance-profiling.md)                                                                      |
+| [Authoring and presentation](ui-design-brief.md)                                                      | [Limits](limits/interface.md)        | [Tracker](maintainers/TODO.md)                                                                                       |
+| [Bundled-world defaults](worlds/base/README.md)                                                       | [Limits](limits/base-world.md)       | [Tracker](maintainers/base-world.md)                                                                                 |
 
 Proposed [progressive 3D pixel art](projects/3d-pixel-art-feature-spec.md): [A3D01–A3D14](limits/3d-pixel-art.md) inventory the new asset-pipeline envelopes and unqualified device targets; [V3D01–V3D12](maintainers/3d-pixel-art.md) own delivery. Existing lighting, spending, physical-world and persistence limits above remain controlling. These are proposals, not changes to current runtime limits.
 

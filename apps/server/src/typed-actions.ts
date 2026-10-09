@@ -1,3 +1,4 @@
+import { activityCommandFields, isCookingInputField, cookingChoices } from '@open-legend/domain';
 import { canonicalName } from '@open-legend/language';
 import {
   accessiblePossession,
@@ -216,11 +217,12 @@ class Builder {
   }
   invoke(command: Command, name: string, produces?: string): ActivityNode {
     const args: Record<string, ActivityArgument> = {};
-    for (const [field, value] of Object.entries(command)) {
+    for (const [field, value] of Object.entries(activityCommandFields(command))) {
       if (['id', 'actorId', 'type', 'purpose'].includes(field) || value === undefined) continue;
-      args[field] = PERSONAL_FIELDS.has(field)
-        ? { role: this.role(value as ActivityBinding) }
-        : { literal: value as string | number | boolean };
+      args[field] =
+        PERSONAL_FIELDS.has(field) || isCookingInputField(field)
+          ? { role: this.role(value as ActivityBinding) }
+          : { literal: value as string | number | boolean };
     }
     const key = this.key();
     if (produces) this.produced.push({ key, definitionId: produces });
@@ -1064,17 +1066,28 @@ function cook(scope: Scope, itemName: string, fireName: string | undefined): Out
       : refuse('blocked', 'Nothing to cook over is in view.', ['@visible']);
   const item = carried(scope, itemName);
   if (!item || !('id' in item)) return item;
+  const choices = cookingChoices(
+    scope.world,
+    [...possessionItems(scope.world, scope.actorId)],
+    fire.id,
+    item.id,
+  );
+  if (choices.length > 1)
+    return refuse(
+      'needs_clarification',
+      `Choose which preparation to use for ${definitionName(scope.world, item)}.`,
+      [item.id],
+    );
+  const choice = choices[0];
+  if (!choice)
+    return refuse(
+      'blocked',
+      `No installed preparation has its exact ingredients available for ${definitionName(scope.world, item)}.`,
+      [item.id],
+    );
   return {
-    commands: [
-      {
-        id: scope.localId,
-        actorId: scope.actorId,
-        type: 'cook',
-        itemId: item.id,
-        heatId: fire.id,
-      },
-    ],
-    description: `Cook ${definitionName(scope.world, item)} over ${named(scope, fire.id)}.`,
+    commands: [{ ...choice, id: scope.localId, actorId: scope.actorId }],
+    description: `${scope.world.foodPreparations[choice.preparationId]!.name} over ${named(scope, fire.id)}.`,
   };
 }
 

@@ -16,6 +16,9 @@ import { STAG_CONTACT, installFirstThreat } from './first-threat.js';
 import { addItem, nextRandom, nextId } from '../../data.js';
 import { BASE_ITEM_HANDLING } from './item-handling.js';
 import { NATIVE_ITEMS } from './items.js';
+import { BASE_FOOD_PREPARATIONS } from './food-preparations.js';
+import { BASE_CAST_DEFINITIONS, installRiverReaches, RIVER_LINE_METHOD } from './river-fishing.js';
+import { installRecipe } from '../../declarations.js';
 import { DEFAULT_STATUS_EFFECT_POLICY } from './status-effects.js';
 import {
   starterSpatialLayout,
@@ -161,6 +164,8 @@ export function createWorld(
     assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(BASE_CANOPY) },
     assemblyGeometryRevision: 0,
     itemDefinitions: structuredClone(NATIVE_ITEMS),
+    foodPreparations: structuredClone(BASE_FOOD_PREPARATIONS),
+    castDefinitions: structuredClone(BASE_CAST_DEFINITIONS),
     recipes: {},
     memories: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
     knowledge: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
@@ -416,6 +421,18 @@ export function createWorld(
     entityIds: ['campfire'],
     importance: 8,
   });
+  installRiverReaches(world);
+  const riverMethod = installRecipe(world, RIVER_LINE_METHOD, {
+    source: 'authored-world',
+    profile: { id: world.profile.id, version: world.profile.version },
+  }).recipe;
+  for (const actorId of [PLAYER_ID, NPC_ID, MERCENARY_ID])
+    (world.knowledge[actorId] ??= []).push({
+      recipeId: riverMethod.id,
+      learnedAt: world.simTime,
+      source: 'authored',
+      evidenceId: riverMethod.id,
+    });
   populateOuterWilderness(world);
   installFirstThreat(world);
   installExpeditions(world);

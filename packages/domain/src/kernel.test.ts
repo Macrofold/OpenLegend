@@ -1,3 +1,4 @@
+import { cookingChoices } from './food-preparation.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
@@ -327,7 +328,15 @@ describe('bounded invented mechanisms', () => {
         itemId: itemId(world, 'raw_meat'),
       }).outcome.code,
     ).toBe('not-edible');
-    world = command(world, { type: 'cook', itemId: itemId(world, 'raw_meat'), heatId: 'campfire' });
+    world = command(
+      world,
+      cookingChoices(
+        world,
+        inventoryFor(world, PLAYER_ID),
+        'campfire',
+        itemId(world, 'raw_meat'),
+      )[0]!,
+    );
     world = advanceWorld(world, 200).world;
     expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(1);
     expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(1);

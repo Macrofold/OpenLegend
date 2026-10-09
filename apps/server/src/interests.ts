@@ -1,4 +1,9 @@
-import { itemFor, inventoryFor, accessiblePossession } from '@open-legend/domain';
+import {
+  itemFor,
+  inventoryFor,
+  accessiblePossession,
+  preparationDefinition,
+} from '@open-legend/domain';
 import { currentGoal, isFuel, NATIVE_PREPARATIONS } from '@open-legend/domain';
 import {
   activeStimuli,
@@ -224,7 +229,17 @@ function planDefinitions(world: WorldState, actorId: string): string[] {
             return world.knowledge[actorId]?.some((entry) => entry.recipeId === command.recipeId)
               ? (world.recipes[command.recipeId]?.inputs.map((input) => input.definitionId) ?? [])
               : [];
-          if (command.type === 'cook') return ['raw_meat'];
+          if (command.type === 'cook') {
+            const { preparationId, preparationVersion, preparationDigest } = command;
+            if (!preparationId || !preparationVersion || !preparationDigest) return [];
+            return (
+              preparationDefinition(world, {
+                preparationId,
+                preparationVersion,
+                preparationDigest,
+              })?.inputs.map((input) => input.definitionId) ?? []
+            );
+          }
           if (command.type === 'tend-fire' && command.operation === 'fuel')
             return Object.values(world.itemDefinitions)
               .filter(isFuel)

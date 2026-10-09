@@ -12,6 +12,7 @@ import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
 import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
 import { BASE_GATHER_EQUIPMENT, BASE_LAUNCHER_EQUIPMENT } from './equipment.js';
 import { BASE_SHIELD_FAMILY } from './shield-family.js';
+import { RIVER_LINE_FAMILY } from './river-fishing.js';
 
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
@@ -381,4 +382,5 @@ export const BASE_RECIPE_FAMILIES: readonly RecipeFamilyDescriptor[] = [
   BASE_CAMP_CONTAINER_FAMILY,
   BASE_CORDAGE_FAMILY,
   BASE_SHIELD_FAMILY,
+  RIVER_LINE_FAMILY,
 ];

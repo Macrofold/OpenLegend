@@ -9,6 +9,7 @@ Historical migration/recovery observations in the linked reports describe the pi
 Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
 
 - [Finite sling practice and voluntary coaching](verification/practical-competence.md): complete native comparisons, private progress, SQL continuity/correction, browser interaction and separate real NPC choices with bounded accounting; human appreciation remains open.
+- [River meal](verification/river-meal.md): real craft/cast/cook/eat and offered/carried/packed food, finite stock and interruption/competition, a contrasting preparation, PostgreSQL continuation and separate live NPC choice with exact cost.
 - [Action records and learned activities](verification/action-experience.md): native learning/execution, private PostgreSQL history, browser inspection, automatic meal behavior and exact provider costs.
 - [Precise action requests and composed activities](verification/composed-activities.md): no-provider typed commands, exact request details, follow stances/last-seen/stopping time, bounded requested activities, interrupt-then-resume, item quantities and work states.
 

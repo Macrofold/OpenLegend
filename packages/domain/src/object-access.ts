@@ -62,6 +62,7 @@ export function inventoryWorkReason(world: WorldState, actorId: string, id: stri
       action?.ammoItemId,
       action?.targetId,
       action?.heatId,
+      ...Object.values(action?.foodPreparation?.inputs ?? {}),
     ])
       if (reference) referenced.add(reference);
   }

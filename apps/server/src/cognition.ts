@@ -257,7 +257,17 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         ...(input.episodeId ? { episodeId: input.episodeId } : {}),
       };
     case 'cook':
-      return { ...base, type: 'cook', itemId: input.itemId!, heatId: input.targetId! };
+      return {
+        ...base,
+        type: 'cook',
+        preparationId: input.preparationId!,
+        preparationVersion: input.preparationVersion!,
+        preparationDigest: input.preparationDigest!,
+        inputs: input.inputs!,
+        heatId: input.targetId!,
+      };
+    case 'fish':
+      return { ...base, type: 'fish', targetId: input.targetId!, itemId: input.itemId! };
     case 'outing':
       return input.outingOperation === 'invite'
         ? {

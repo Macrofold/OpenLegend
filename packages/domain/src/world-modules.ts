@@ -47,6 +47,8 @@ import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
+import { validateFoodPreparations } from './food-preparation.js';
+import { validateFiniteCasts } from './finite-casts.js';
 import { validateActionExperience } from './action-experience.js';
 import { validateActivityHostPins } from './activity-hosts.js';
 import { activityHostForCommand } from './activity-hosts.js';
@@ -842,6 +844,8 @@ export function validateWorldModules(world: WorldState): void {
   validateGatheringTools(world);
   validateEquipment(world);
   validateContactDefense(world);
+  validateFoodPreparations(world);
+  validateFiniteCasts(world);
   for (const definition of Object.values(world.itemDefinitions)) {
     if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))

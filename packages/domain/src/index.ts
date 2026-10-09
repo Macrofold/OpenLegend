@@ -1,5 +1,7 @@
 export * from './types.js';
 export * from './recipe-records.js';
+export * from './food-preparation.js';
+export * from './finite-casts.js';
 export { BASE_DEATH_COMMAND_DESCRIPTIONS } from './worlds/base/death.js';
 export * from './reincarnation.js';
 export * from './combat-consent.js';
@@ -21,6 +23,7 @@ export * from './action-experience.js';
 export * from './activity-learning.js';
 export * from './activity-execution.js';
 export {
+  BASE_FOOD_ACTION_WORDING,
   nativeActivityView,
   equippedTargetAction,
   nativeCatalogueView,

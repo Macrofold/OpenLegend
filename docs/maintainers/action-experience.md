@@ -4,6 +4,10 @@
 
 **Proposed DG14 consumer, October 5:** [Practical competence](practical-competence.md) uses actual released-shot and coaching participation evidence for a finite world-authored handling improvement. This is new product scope with open technical/runtime tasks. It neither turns current tentative method acquisition into numerical skill nor claims current Teach or AE learning implements consensual coaching. The selected [world rule](../worlds/base/practical-competence.md) retains bounded independent support after coached improvement and current privacy/correction owners. Existing AE checkboxes and limits remain unchanged.
 
+**AV05 food-method consumer, October 6:** AE02/AE04/AE09 now preserve finite empty/catch outcomes and all exact cooking ingredient roles/products through the existing records, save bindings and invocation owner. A contrasting preparation normalized, rebound its exact ingredients and executed; pending casts continued through PostgreSQL with the same saved draw/stock/output. [Current contract](../food-preparation.md) and [evidence](../verification/river-meal.md) qualify this consumer. They do not claim new live method learning, autonomous fishing meals or wider AE throughput.
+
+**AV05 second review, October 7:** native capture and prospective cooking completion now enforce the existing record/display allowances before costs. Structured ingredient/product facts, one mixed-history notice and shared completion formatting preserve actual quantities and readable history. A 48-role pending meal resumed through PostgreSQL exactly; 16 products remained real receipts, and oversized work refused unchanged ([evidence](../verification/river-meal.md#second-requested-review--october-7-2026)). Wider AE acceptance is unchanged.
+
 ## Maintained records
 
 - [Project and staged scope](../projects/action-experience.md).

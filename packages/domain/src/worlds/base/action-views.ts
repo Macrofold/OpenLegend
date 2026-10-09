@@ -1,6 +1,8 @@
 import { practiceDefinition } from '../../practical-competence.js';
+import { preparationDefinition } from '../../food-preparation.js';
+import { castDefinition } from '../../finite-casts.js';
 import type { Command, Entity, ItemInstance, WorldState } from '../../types.js';
-import type { ActivityView } from '../../action-experience.js';
+import { ACTIVITY_LIMITS, type ActivityView } from '../../action-experience.js';
 import { itemFor } from '../../objects.js';
 import { accessiblePossession, possessionItems } from '../../object-access.js';
 import { worldPosition } from '../../spatial-state.js';
@@ -12,6 +14,20 @@ import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
 import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
+
+export const BASE_FOOD_ACTION_WORDING = {
+  cookingDescription:
+    'Use the selected preparation and exact ingredients at a lit heat source. Spent ingredients are not returned on interruption.',
+  cookingLabel: 'Prepare food',
+  cookingRequiredText:
+    'Choose an installed preparation, its ingredients and a perceived heat source.',
+  cookingHeatRequiredText: 'A perceived lit heat source is needed.',
+  fishingDescription: 'Choose one cast at a compatible finite source using the selected tool.',
+  fishingLabel: 'Fish once',
+  fishingHereLabel: 'Fish here',
+  fishingRequiredText: 'Choose a perceived compatible reach and an accessible fishing tool.',
+  fishingBindingText: 'Choose a river reach and an exact fishing tool.',
+};
 
 type ViewPossessions = {
   items: readonly ItemInstance[];
@@ -78,6 +94,7 @@ function activityView(
     hunt: 'Hunt once',
     harvest: 'Harvest',
     cook: 'Cook',
+    fish: BASE_FOOD_ACTION_WORDING.fishingLabel,
     'tend-fire': 'Tend a fire',
     eat: 'Eat',
     equip: 'Equip',
@@ -265,11 +282,75 @@ function activityView(
     });
   }
   if (command.type === 'cook') {
-    view.facts.push({
-      name: 'cost',
-      value: `Uses one raw meat at the start; ${BASE_ACTION_DEFAULTS.cookSeconds} game seconds; requires a lit fire throughout; spent meat is not returned on interruption`,
-      critical: true,
-    });
+    const preparation = preparationDefinition(world, command);
+    if (preparation) {
+      view.name = command.purpose ?? preparation.name;
+      view.facts.push({
+        name: 'cost',
+        value: `Uses the selected ingredients at work start; ${preparation.workSeconds} game seconds; requires a lit fire throughout; spent ingredients are not returned on interruption`,
+        critical: true,
+      });
+      const products = preparation.outputs.map((output) => ({
+        quantity: output.quantity,
+        material: world.itemDefinitions[output.definitionId]?.name ?? 'item',
+      }));
+      view.facts.push({
+        name: 'output',
+        value: products,
+        sentence: `On completion: ${products.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
+        critical: true,
+      });
+      const ingredients = preparation.inputs.map((input) => {
+        const id = command.inputs[input.role];
+        const ingredient =
+          id && accessiblePossession(world, command.actorId, id) ? itemFor(world, id) : undefined;
+        return {
+          role: input.role,
+          material: world.itemDefinitions[input.definitionId]?.name ?? 'ingredient',
+          'required quantity': input.quantity,
+          'selected carried quantity':
+            ingredient?.quantity ?? 'The selected ingredient is no longer accessible',
+        };
+      });
+      // Preserve each role without turning authored role text into a display label
+      // or exceeding the record owner's per-detail/fact limits.
+      for (let at = 0; at < ingredients.length; at += ACTIVITY_LIMITS.detailEntries) {
+        const portions = ingredients.slice(at, at + ACTIVITY_LIMITS.detailEntries);
+        view.facts.push({
+          name: at ? `more ingredients ${at / ACTIVITY_LIMITS.detailEntries + 1}` : 'ingredients',
+          value: portions,
+          sentence: `Ingredients: ${portions
+            .map((portion) => {
+              const carried = portion['selected carried quantity'];
+              return `${portion.role}: ${portion['required quantity']} ${portion.material} (${typeof carried === 'number' ? `${carried} in the selected carried stack` : carried})`;
+            })
+            .join('; ')}`,
+          critical: true,
+        });
+      }
+    } else
+      view.facts.push({
+        name: 'preparation',
+        value: 'The selected preparation changed or is unavailable',
+        critical: true,
+      });
+  }
+  if (command.type === 'fish') {
+    const cast = perceived ? castDefinition(world, target) : undefined;
+    if (cast) {
+      view.facts.push({ name: 'cast', value: cast.description, critical: true });
+      view.facts.push({
+        name: 'supply',
+        value: target!.resource!.quantity > 0 ? cast.supplyUnknownText : cast.exhaustedText,
+        critical: true,
+      });
+      view.facts.push({
+        name: 'approach',
+        value:
+          'Use the selected dry bank stance with a clear line into the declared water; time is spent even on an empty attempt',
+        critical: true,
+      });
+    }
   }
   if (command.type === 'harvest')
     view.facts.push({

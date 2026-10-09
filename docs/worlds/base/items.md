@@ -18,6 +18,12 @@ Learning or installing a technique creates no supplies and teaches only its inve
 
 [NP03 evidence](../../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) covers actual gathered/prepared stock, two names and container sizes, conservation/cancellation, private ingredients, forged/stale/malformed inputs, native alternate fiber, browser Apply/Craft/storage and PostgreSQL active-work reopening. It establishes native and supplied-proposal behavior; live model invention or autonomous chain selection is unqualified. [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families) owns the finite interface scope and expansion trigger; [NP03](../../maintainers/parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material) tracks delivery.
 
+## Ordinary authored methods and river food
+
+The [river profile](river-fishing.md) supplies a starting known River line method and one compatible trusted tool family. This ordinary world-authored knowledge is labelled **World method**, without an invented-by attribution. Installing/knowing it creates no tool, materials or fish; real crafting uses the same family compiler, definition pins and ingredient consumption as other manufacture. Live invention remains separately admitted and attributed.
+
+Raw and cooked river fish are real portable lots. The raw catch has no edible nutrition; its cooked output uses ordinary eating, packing, carrying, drop/pickup and recipient-consent offering. [Installed preparation](../../food-preparation.md) owns the generic transformation; the profile owns exact content and tuning.
+
 ## Ground piles
 
 The [rewarding expedition profile](rewarding-expeditions.md) adds a finite portable lookout case and workshop satchel through the same ordinary ground-pile/container owner. Only permitted deliberate inspection shows actual nested stock; moving the case or record moves that same physical item, with no restock or hidden copy. The profile owns spear/method tuning and AV02's still-pending two-hand integration.

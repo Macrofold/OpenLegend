@@ -1,6 +1,6 @@
-# Batch 05 proposed constraints
+# Batch 05 constraints and delivery dispositions
 
-This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **As of October 8, 2026, AV-L01 and AV-L02 are adopted; AV04 selected shelters are also implemented; AV-L03 remains an unimplemented proposal.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
+This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **As of October 8, 2026, AV-L01 and AV-L02 are adopted; AV04 selected shelters are also implemented; AV-L03 is also adopted for river meals.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
 
 ## AV-L01 — Finite authored expeditions
 
@@ -12,11 +12,7 @@ This inventory owns newly proposed restrictions for [batch 05](../projects/paral
 
 ## AV-L03 — Finite river casts and preparation
 
-[River fishing](../worlds/base/river-fishing.md) owns two initial local stocks, cast time/chance, one reusable tool profile and one food chain. One selected cast attempts one catch, with no automatic retry; one successful outcome removes one unit and produces one item. The initial finite stocks do not replenish. This is restrictive authored extraction, not a breeding/ecology or indefinite-food claim. Reproduction, boats, bait, rod repair and spoilage need a selected later consumer.
-
-Only explicitly supported water footprints/stances permit the action. Randomness is drawn once at lawful resolution; invalid preparation and an already exhausted source do not draw. Active attempts use the existing simulation deadline/work bounds, with no periodic all-source scan. Relevant offers use selected/perceived resources, not all sources × all carried items. No new retained action-history or memory cap is selected to hide growth.
-
-Preparation supports finite installed input/output/work/heat definitions only, through current material/work owners. It cannot execute arbitrary generated effects. Preview hides unknown inputs/stock rather than exposing them to simplify choice. A new worthwhile food transformation is the expansion trigger for additional supported terms; more species alone does not require another engine handler. AV05 owns delivery; inherited [invention](inventions.md), [objects](objects.md), [simulation-time](../simulation-time.md) and [action](action-experience.md) bounds remain in their owners.
+**Adopted and moved:** [AV-L03 in the food preparation inventory](food-preparation.md#av-l03--finite-river-casts-and-preparation) now owns the current finite stock/attempt, observation, recipe/heat and interruption restrictions, rationale and expansion triggers. [FP-L01](food-preparation.md#fp-l01--choice-preparation-and-retained-growth) records prepared-choice growth and inherited controls. The [river profile](../worlds/base/river-fishing.md) remains the sole authored content owner; [AV05 evidence](../verification/river-meal.md) records native/player/live-choice scope. This disposition preserves the original ID without a second editable contract.
 
 ## Existing competence and shelter limits
 

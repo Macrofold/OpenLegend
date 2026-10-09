@@ -9,6 +9,7 @@ import {
 } from '@open-legend/domain';
 import { outingActions } from './outing-view.js';
 import { competenceOptions } from './competence-actions.js';
+import { cookingOptions, fishingOptions, fishingTools } from './food-actions.js';
 import { namePhrase } from '@open-legend/language';
 import {
   accessiblePossession,
@@ -17,6 +18,8 @@ import {
   worldPosition,
   strikeDefinition,
   nativeHuntCatalogueLabel,
+  cookingPreparations,
+  BASE_FOOD_ACTION_WORDING,
 } from '@open-legend/domain';
 import { itemFor, custodian } from '@open-legend/domain';
 import { inventoryItemView } from './inventory-view.js';
@@ -117,6 +120,7 @@ export function actionCatalogue(
   }
   const world = service.world;
   const itemUses = selectedItem ? [selectedItem] : observation.inventory;
+  const castTools = fishingTools(world, itemUses);
   const targets = observation.visibleEntities.filter((entity) => entity.id !== scope.actorId);
   const selected =
     context.targetId === scope.actorId
@@ -139,7 +143,11 @@ export function actionCatalogue(
     // Ground exposes destination movement only. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
     if (context.itemId) {
-      if (command.itemId !== context.itemId) return;
+      if (
+        command.itemId !== context.itemId &&
+        !(command.type === 'cook' && Object.values(command.inputs ?? {}).includes(context.itemId))
+      )
+        return;
     } else if (!context.catalogue && !selected && command.type !== 'move') return;
     if (
       !context.catalogue &&
@@ -374,7 +382,7 @@ export function actionCatalogue(
           target.id,
         );
     }
-    if (target.resource)
+    if (target.resource && !target.resource.cast)
       add(
         `gather-${target.id}`,
         `Gather ${target.name}`,
@@ -480,27 +488,6 @@ export function actionCatalogue(
         { type: 'eat', itemId: item.id },
         [],
       );
-    if (item.definitionId === 'raw_meat') {
-      for (const fire of fires)
-        add(
-          `cook-${item.id}-${fire.id}`,
-          `Cook meat at ${fire.name}`,
-          'Create',
-          { type: 'cook', itemId: item.id, targetId: fire.id },
-          ['food', 'meal', 'fire'],
-          fire.id,
-        );
-      if (!fires.length)
-        missing(
-          'cook',
-          'Cook meat',
-          'Create',
-          'A visible lit campfire is needed.',
-          `cook-${item.id}`,
-          undefined,
-          item.id,
-        );
-    }
   }
   if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
     for (const target of actionTargets) {
@@ -532,6 +519,45 @@ export function actionCatalogue(
         availability: service.previewCommand(choice.command, scope.actorId),
       });
   }
+  const preparations =
+    fires.length || selectedItem
+      ? cookingPreparations(world, observation.inventory, context.itemId)
+      : [];
+  const offeredPreparations = new Set<string>();
+  if (selectedItem && !fires.length)
+    for (const preparation of preparations)
+      missing(
+        'cook',
+        preparation.definition.name,
+        'Create',
+        BASE_FOOD_ACTION_WORDING.cookingHeatRequiredText,
+        `cook-${preparation.definition.id}`,
+        undefined,
+        selectedItem.id,
+      );
+  for (const fire of fires)
+    for (const option of cookingOptions(preparations, fire.id)) {
+      add(
+        option.id,
+        `${option.label} at ${fire.name}`,
+        'Create',
+        option.command,
+        ['food', 'meal', option.definition.description],
+        fire.id,
+      );
+      if (actionIds.has(option.id)) offeredPreparations.add(option.definition.id);
+    }
+  for (const source of (selected ? [selected] : targets).filter((entity) => entity.resource?.cast))
+    for (const option of fishingOptions(world, castTools, source))
+      add(
+        option.id,
+        option.label,
+        'Gather',
+        option.command,
+        [source.name, option.description],
+        source.id,
+      );
+
   // Each offer/reply binds its exact perceived person; the recipient alone can accept.
   for (const target of actionTargets) {
     for (const option of competenceOptions(world, scope.actorId, target, itemUses))
@@ -590,13 +616,24 @@ export function actionCatalogue(
       [recipe.description, recipe.sourceCandidate.family.id, 'make'],
     );
 
-  if (selected?.heat && !observation.inventory.some((item) => item.definitionId === 'raw_meat'))
+  if (selected?.heat)
+    for (const preparation of Object.values(world.foodPreparations))
+      if (!offeredPreparations.has(preparation.id))
+        missing(
+          'cook',
+          `${preparation.name} at ${selected.name}`,
+          'Create',
+          `Carry the exact ingredients: ${preparation.inputs.map((input) => `${input.quantity} ${world.itemDefinitions[input.definitionId]?.name ?? 'ingredient'}`).join(', ')}.`,
+          `cook-${preparation.id}`,
+          selected.id,
+        );
+  if (selected?.resource?.cast && !actions.some((action) => action.id.startsWith('fish-')))
     missing(
-      'cook',
-      `Cook meat at ${selected.name}`,
-      'Create',
-      'Carry raw meat to cook.',
-      'cook',
+      'fish',
+      BASE_FOOD_ACTION_WORDING.fishingHereLabel,
+      'Gather',
+      world.castDefinitions[selected.resource.cast.definitionId]!.toolRequiredText,
+      `fish-${selected.id}`,
       selected.id,
     );
   if (selected?.kind === 'npc' && selected.actor?.alive && !observation.knownRecipes.length)
@@ -625,7 +662,18 @@ export function actionCatalogue(
   family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
   const consumption = bodyPolicy(world)?.consumption;
   if (consumption) family('eat', consumption.label, 'Body', consumption.unavailableText);
-  family('cook', 'Cook meat', 'Create', 'Carry raw meat and find a lit campfire.');
+  family(
+    'cook',
+    BASE_FOOD_ACTION_WORDING.cookingLabel,
+    'Create',
+    BASE_FOOD_ACTION_WORDING.cookingRequiredText,
+  );
+  family(
+    'fish',
+    BASE_FOOD_ACTION_WORDING.fishingLabel,
+    'Gather',
+    BASE_FOOD_ACTION_WORDING.fishingRequiredText,
+  );
   family(
     'tend-fire',
     'Tend a campfire',
