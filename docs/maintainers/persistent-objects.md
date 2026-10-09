@@ -10,6 +10,8 @@ Implementation was approved in chat on September 26, 2026; the [foundation plan]
 
 **DG20 consumer proposal, October 6:** [HM02–HM04](heat-and-materials.md) extends the same owner for actual heated/fired material, finite vessel output, damage and surviving salvage. The [product proposal](../projects/heat-and-materials-feature-spec.md) does not implement stateful consumption or thermal handling. Work, containment, installed parts and fuel retain one actual material history; a useful new vessel cannot be created alongside an unconsumed duplicate blank.
 
+**DG32 consumer proposal, October 9:** [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) adds a proposed exact-object loan, scoped owner/depot delegation, actual reserved return capacity and enduring narrow return permission. [The product specification](../projects/shared-equipment-and-institutions-feature-spec.md) explicitly distinguishes individually titled goods, custody, mandates and claims. Existing creator-only broad access editing does not already provide these ordinary powers. The new consumer must cover every relevant inventory/action route and preserve real loss, private evidence and current-format custody; no completed PO foundation item is reopened or claimed to implement lending.
+
 ## Execution notes — September 26, 2026
 
 The approved finite object implementation and native/database/browser qualification are complete.

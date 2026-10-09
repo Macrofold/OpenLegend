@@ -4,6 +4,8 @@
 
 [The next five-group assignment](../projects/product-design-groups-31-35.md) continues the completed groups 26–30 branch. [Generations and family life](generations-and-family-life.md) owns DG31’s independent adult-family proposal under ACT/BW and PS. The original PG requirement is preserved; D16’s reserved audience decision and the affected reproductive/dependent-care design remain unfinished. Later groups, technical work, runtime and measured qualification are not completed by this navigation entry.
 
+DG32 uses [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) for useful shared equipment, exact keeper authority, accepted claims and return without a present keeper. The [product proposal](../projects/shared-equipment-and-institutions-feature-spec.md) keeps association membership optional and first lending unsecured; actual property consumers and qualification remain open.
+
 ## Product design groups 26–30
 
 [The sequential five-group assignment](../projects/completed/product-design-groups-26-30.md) starts from the requested groups 21–25 branch. DG26 uses [HE07](hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) and [NC23](narration-and-conversations.md#nc23--consented-private-slate-calls) for optional speech media and private calls. DG27 uses [commercial offers](commercial-offers.md) under PD10/INV-13. These are researched product proposals; individual adoption, technical work, runtime delivery and measured experience remain open. The completed assignment records all five product proposals, their final critique, actual documentation verification and the exact inspected baseline.

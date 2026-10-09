@@ -315,6 +315,8 @@ ND10's broader authored institutions and any selected ND09 credit, escrow, inter
 
 **Start and parallel boundary:** Build on relevant DG06/DG22 agreement/group rules. This can proceed alongside generations without depending on biology or a compulsory currency. Fictional power never grants platform moderation, billing or private-data authority. **Existing owners:** INV-20, PO/social/world-policy owners and D11/D18.
 
+**October 9 product design in progress:** [DG32's shared-equipment service](../projects/shared-equipment-and-institutions-feature-spec.md) selects a real bow loan, voluntary participation, owner-issued keeper authority, exact return without a present keeper, departure/loss/closure and optional held collateral. [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) and [INST limits](../limits/shared-equipment-and-institutions.md) retain adoption, actual PO consumers, implementation and whole-service evidence. Corporate title, currency and a starting government remain separate choices.
+
 #### DG33 — Extraordinary minds and life after death
 
 ND11's NPC ghost/summoning/ordinary-revival slice and ND21's selected mental-effect, telepathy or shared-mind families. Their common design boundary is character identity, who controls a mind/body, retained experience and authorized disclosure.
@@ -536,6 +538,8 @@ These refinements should be completed in the existing PS project and decision ow
 
 **October 6 product design:** [DG22’s commission, change and default rules](../projects/durable-agreements-feature-spec.md) now select the narrow family above PX02 barter, with optional unsecured advance and no currency in the first delivery. [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) retains technical/runtime work; D64 management is a proposed disposition pending adoption. A later currency still needs its own actual exchange need and full circulation choices under D11/R09.
 
+**October 9 selected extension:** [DG32](../projects/shared-equipment-and-institutions-feature-spec.md) adds exact-object lending and a separately enabled one-lot secured loan with real custody, loss, claimant authority and once-only release. The first loan is unsecured and has no automatic deadline, fee or interest. These proposed obligations use existing agreement owners; they neither adopt D11 currency nor turn suggested values into guaranteed collateral recovery.
+
 ### ND10 — Persistent groups, shared ownership and in-world institutions
 
 **Conditional scoped design.** Source: [institutions without a mandatory government system](../../archive/03-design-proposals/world-and-player-experience.md#institutions-without-a-mandatory-government-system), with D18's unsettled starting social organization.
@@ -545,6 +549,8 @@ These refinements should be completed in the existing PS project and decision ow
 **Needed before an implementation project:** select one useful group or recurring cooperative arrangement. Specify membership, shared property/goals, delegation, obligations, notices, disputes and dissolution only as that use case requires. Decide whether a formal organization record is needed and which facts each observer knows. Preserve the separation between fictional institutions and platform access/billing authority; do not prescribe a starting government or implement every repertoire institution.
 
 **October 6 scoped product design:** [DG22’s optional small association](../projects/durable-agreements-feature-spec.md#9-optional-small-association) now specifies voluntary membership, narrow record stewardship, accepted custodial responsibility, known history and dissolution without implied property/access or platform powers. It is independent of the first commission. Ordinary shared-property rights require their real PO consumer; formal corporate title and wider institutions remain DG32. No organization is added to the current starting world.
+
+**October 9 selected institution:** [The Clearing Tool Library](../worlds/base/shared-equipment-and-institutions.md) gives DG22's coordination record a useful asset service through explicit individual owner/depot mandates and consenting keepers. One-off guest borrowing does not require membership. Real reserved return room, accepted succession and wind-down are proposed new consumers under [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions); current creator access, title and platform roles are not silently widened.
 
 ### ND11 — Human conflict/recovery and NPC ghost continuity
 

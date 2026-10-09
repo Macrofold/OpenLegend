@@ -100,3 +100,7 @@ The inventory panel refreshes when the player moves or its own inventory/context
 - Implementation: [Feature tasks](../../maintainers/base-world.md).
 - Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).
 - Manufactured material composition: [NP03](../../maintainers/parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material), [INV-3/INV-6](../../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes) and [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families).
+
+## Proposed equipment loans and narrow returns
+
+[The Clearing Tool Library](shared-equipment-and-institutions.md) proposes an exact individual-tool loan through the same object owner. It needs explicit asset/depot authority, real reserved compatible return room and a continuing exact return permission; current owner metadata, broad creator access lists and temporary work holds do not already supply those powers. A group name neither transfers title nor permits taking, consuming or pledging another person's stock. [INV-20.5g–l](../../maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) retains this new consumer's implementation and full action-route qualification; current item behavior remains as documented above.

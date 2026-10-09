@@ -18,6 +18,8 @@ Proposed [creator funding and contributor governance](projects/creator-fund-and-
 
 Proposed [generations and family life](projects/generations-and-family-life-feature-spec.md): [GEN-L01–GEN-L06](limits/generations-and-family-life.md) records the independent adult scenario, truthful age meaning, ordinary occasional help, unchanged continued-world scope and growing ancestry/history. [GEN01–GEN04](maintainers/generations-and-family-life.md) retains actual delivery and the unfinished D16-dependent design; biological family facts and shared time/protection constraints remain unchanged.
 
+Proposed [shared equipment and institutions](projects/shared-equipment-and-institutions-feature-spec.md): [INST-L01–INST-L08](limits/shared-equipment-and-institutions.md) records the first useful loan, narrow authority, shared commitment capacity, real reserved return room, no attendance penalties, conditional collateral and aggregate operating gaps. [INV-20.5g–l](maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) owns delivery; this creates no currency, corporate title or new platform powers.
+
 ## Feature inventories
 
 | Feature                                                                                               | Inventory                         | Implementation tasks                                     |

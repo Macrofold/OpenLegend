@@ -78,3 +78,7 @@ Current surfaces are summarized in [gameplay availability](../../../archive/05-p
 ## Proposed adult family play
 
 [Generations and family life](generations-and-family-life.md) proposes an optional adult-family encounter with deliberately authored ages and individually permitted shared background. It consumes the objective tree without granting control, private knowledge, household custody, inheritance or automatic affection. Existing starting birth timestamps are not reliable lifecycle ages. The audience-dependent reproductive/dependent-care design remains unfinished under D16 and [GEN04](../../maintainers/generations-and-family-life.md#gen04--resolve-the-reserved-audience-choice-and-finish-generations); no current family fact or completed BW16 behavior is changed.
+
+## Proposed scoped institutions
+
+[Shared equipment and scoped institutions](shared-equipment-and-institutions.md) extends DG22's optional association with one useful loan, exact owner/depot mandates and willing keeper succession. Membership, individual title, physical custody, delegated authority and return claims remain different facts. A known guest can borrow without joining; departure ends future participation while actual prior claims and agreed returns remain meaningful. Neither fictional office nor family relationship supplies inventory, knowledge, platform or billing powers. [INV-20.5g–l](../../maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) owns the new proposed consumer; current promises, handover and social facts are unchanged.

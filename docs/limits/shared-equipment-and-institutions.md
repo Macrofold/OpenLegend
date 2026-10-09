@@ -1,0 +1,53 @@
+# Shared equipment and institutions — limits and constraints
+
+This inventory accompanies the [DG32 feature](../projects/shared-equipment-and-institutions-feature-spec.md), [Clearing Tool Library profile](../worlds/base/shared-equipment-and-institutions.md) and [INV-20.5g–l delivery](../maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions). Entries are **proposed product scope, October 9, 2026**, not runtime behavior or measured economic tuning. Current identity, exact custody, actual authority, private knowledge, independent agency and single settlement are required integrity contracts, not discretionary limits.
+
+## INST-L01 — A useful first service
+
+**Proposed · Restrictiveness: Very safe.** Qualify one same-world library with one real individual usable bow, one depot, its owner Neri, willing keeper Sol and one human borrower. Neri separately accepts fallback keeping. A known adult guest can borrow without permanent membership. No compulsory currency, membership dues, fee, free ammunition, guaranteed hunting result or carrying-strength bonus is included. These quantities describe an authored evidence scene, not a universal member, asset or population maximum.
+
+**Reason / tradeoff:** An outing with a different tool can make shared resources immediately useful. The service must beat simpler gift, barter, joint outing or personal acquisition in the selected situation. Existing cheap bag manufacture cannot be artificially slowed to justify administration. Broader resources and people need a wanted purpose and actual admission; adding NPC employees is not cost-free. Revisit the profile after observing whether the tool enables enjoyable play and is actually returned and reused.
+
+## INST-L02 — Exact delegated authority
+
+**Proposed · Restrictiveness: Safe.** The first service has individually titled assets, an owner-issued exact lending mandate and a named willing keeper plus the owner's explicitly accepted fallback. No automatic promotion, self-appointment, sale, sublending, claim waiver, collective title or general inventory access follows from membership or stewardship. The selected depot requires its own actual permission authority. Existing creator-only broad access editing does not become an ordinary titleholder power by implication.
+
+**Reason / tradeoff:** Narrow standing authority lets cooperation outlast the founder's immediate presence without importing a corporate hierarchy. It costs some flexibility: new assets, broader powers and a substitute settlement need the actual responsible person's assent. Additional keeper roles or genuinely collective title must justify their succession, privacy and custody consequences before adoption. Owner revocation closes future lending while preserving previously accepted terms and return rights.
+
+## INST-L03 — Existing commitment capacity and one loan at this service
+
+**Proposed reuse of shared bounds · Restrictiveness: Safe.** A borrower has at most one outstanding equipment loan at this first service. The accepted mandate consumes one shared commitment place for each distinct accepting person: Neri once despite holding owner and fallback roles, and Sol once. Neri additionally reserves one of the same sixteen places for this mandate’s maximum one concurrently outstanding loan before delegated lending becomes available. Another request cannot consume that reserved place. The borrower consumes one existing place only when checkout actually succeeds; Sol does not acquire a personal repayment obligation by signing within the mandate. This is a proposed consumer of the existing agreement/commitment envelope, not delivered escrow or an additional sixteen-place allowance. [DA-L04](durable-agreements.md#da-l04--pending-proposals-accepted-undertakings-and-amendments) retains three pending durable proposals per proposer, one pending amendment per agreement and the existing sixteen unresolved commitments per participant. The feature owns the precise mandate/party accounting and must qualify it before lending.
+
+**Reason / tradeoff:** Finite active work protects attention and prevents a keeper from admitting obligations that bypass the owner's capacity. Reaching capacity refuses new admission honestly; it does not silently discard old claims or announce an unseen counterparty change. The one-loan service rule prevents borrowing its whole first stock and is independently revisitable when a real multi-tool activity is selected. It does not bound all incoming requests, associations, lifetime claims or historical storage; see INST-L08.
+
+## INST-L04 — Actual reserved room and narrow continuing return
+
+**Proposed · Restrictiveness: Safe.** Every admitted loan retains actual compatible room for its exact return and a continuing return-only permission at the agreed real depot. No unrelated deposit may consume that room. Membership exit, keeper replacement and new-service closure do not remove it. Existing finite packing, depth, ancestor access and actual physical execution remain controlling; this is a new PO lending consumer, not extra virtual storage or an indefinite repurposing of live-work holds.
+
+**Reason / tradeoff:** Returning should work without waiting for an employee or discovering that the library filled its own return space. Retaining real room reduces other usable storage capacity. A move or access change must preserve the agreed route or obtain required assent; real destruction still creates a genuine blocked outcome rather than teleportation. A service that cannot qualify this promise cannot advertise keeper-independent return or admit the selected checkout.
+
+## INST-L05 — No attendance deadline or accumulating penalties
+
+**Proposed · Restrictiveness: Safe.** The first loan has no default due time, automatic interest, late fee, forfeiture, public credit score or compelled collection. Its claimant accepts finite exposure to the real tool. Any later voluntarily accepted due time must identify actual game-clock meaning and continue to distinguish lateness, blocked return, loss, dispute and rightful release. A deadline alone does not establish fault.
+
+**Reason / tradeoff:** Absence should not turn an optional adventure into recurring debt maintenance. An unsecured library cannot guarantee prompt recovery or unlimited stock. Owners can stop new lending, accept a supported settlement or consciously retain the unresolved claim. Recurring finance would need an independently useful service, complete default/exit policy and sustainable real resources; a fictional account cannot debit platform money or bind another human's future attendance.
+
+## INST-L06 — Conditional finite collateral
+
+**Proposed later option · Restrictiveness: Very safe.** A separately selected secured loan holds one exact nonperishable collateral lot in actual custody. It is excluded from the first unsecured outing. Qualify the real transfer, reservation, access, loss exposure, exact return release, accepted replacement/loss settlement and once-only closure before enabling it. No arbitrary appraisal, automatic timed forfeiture, collateral reuse, fractional banking or interest is selected.
+
+**Reason / tradeoff:** A known pledge may make one otherwise refused loan possible, but full replacement value can exclude the intended borrower and add needless handling. The held lot remains unavailable for consumption or another pledge; a label cannot guarantee its survival. The claimant cannot recover both collateral and a duplicate unpaid full claim. Wider baskets, perishable deposits or pooled guarantees need their own worthwhile purpose and actual supported lifecycle, not a hidden exception here.
+
+## INST-L07 — Same-world attended qualification
+
+**Proposed · Restrictiveness: Very safe.** First prove checkout, a wanted activity, exact unattended-by-keeper return, another eligible checkout, ordinary refusal and willing succession within one attended world. Keeper-independent return does not mean unlimited unattended world operation. Existing human absence, finite hosting, actual NPC work and recovery rules retain their owners. No cross-world loan, new continued-world duration or global institutional service is admitted by this profile.
+
+**Reason / tradeoff:** The institution can be useful before federation, generations or a monetary economy. Later travel must account for the actual carried asset, consent, current claims and compatible return route; protected restore cannot replay a past loan to duplicate external goods. Larger or continuously operating services need measured whole-world food, attention, capacity and cost. Mature-scale qualification must not block the smaller complete local scene.
+
+## INST-L08 — Aggregate institutions, claims and operating work
+
+**No new aggregate count/retention bound selected · Restrictiveness: Too liberal for unqualified large services.** This proposal sets no independent lifetime cap on institutions, contributed assets, mandate revisions, members, unsettled loss claims or retained receipts. Existing [memory](memory.md), [native work](native-work.md), [persistent objects](objects.md), [persistence](persistence.md) and [product scalability](product-scalability.md) remain controlling. A small list page, finite active commitments or one displayed borrower does not bound pre-selection queries, historical hydration, pending requests, simultaneous access or support disputes.
+
+**Reachable growth / consequence:** Repeated loans, departures, renamed or closed services, retries and delayed returns can grow retained history while physical stock stays small. Separate institutions can multiply authority checks and queues. A founder's absence cannot trigger endless paid bookkeeping, and every ordinary return must not require generated judgment. Count setup, explanation, negotiation, actual loan/use/return, exception handling, storage and operator recovery together.
+
+**Reason / tradeoff and revisit:** Preserve actual claims and permitted evidence without inventing infinite low-cost service or deleting inconvenient obligations. Before broader admission, qualify the offered entire workload and choose justified shared work/admission policies with the relevant owners. Bound current discovery and processing without silently dropping entitled facts or inventing omniscient summaries. Actual larger-service capacity remains unfinished delivery; the first useful episode is independently testable.
