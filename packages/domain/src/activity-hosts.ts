@@ -1,3 +1,4 @@
+import { BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { BASE_FIRE_ACTIVITY_HOST } from './worlds/base/fire-activity.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './worlds/base/camp-activity.js';
@@ -137,6 +138,7 @@ const trustedHosts = [
   BASE_FIRE_ACTIVITY_HOST,
   BASE_CAMP_ACTIVITY_HOST,
   BASE_OUTING_HOST,
+  BASE_CANOPY_ACTIVITY_HOST,
 ];
 export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
   return world.moduleManifest.activityHosts.flatMap(

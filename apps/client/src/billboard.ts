@@ -18,6 +18,7 @@ export function configureBillboard(material: pc.StandardMaterial): void {
     #else
       uniform vec3 ol_spriteFoot;
     #endif
+    uniform float ol_groundPose;
     uniform vec3 ol_cameraRight;
     uniform vec3 ol_cameraUp;
   `,
@@ -25,6 +26,7 @@ export function configureBillboard(material: pc.StandardMaterial): void {
   material.shaderChunks.glsl.set(
     'litUserMainEndVS',
     `
+    if(ol_groundPose < 0.5) {
     vec3 offset = vPositionW - ol_spriteFoot;
     vec3 upright = ol_spriteFoot + ol_cameraRight * dot(offset, ol_cameraRight);
     upright.y += dot(offset, ol_cameraUp);
@@ -45,8 +47,10 @@ export function configureBillboard(material: pc.StandardMaterial): void {
     #ifdef LINEAR_DEPTH
       vLinearDepth = -(matrix_view * vec4(upright, 1.0)).z;
     #endif
+    }
   `,
   );
+  material.setParameter('ol_groundPose', 0);
   material.update();
 }
 

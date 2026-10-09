@@ -36,6 +36,7 @@ export interface ContactImpact {
   preventedInjury: number;
   injury: number;
   guardActionId?: string;
+  shieldItemId?: string;
   attemptedGuardId?: string;
   guardFailure?: 'unavailable' | 'preparing' | 'expired' | 'coverage';
 }
@@ -135,6 +136,7 @@ export function contactImpact(
     preventedInjury: rawInjury * profile.reduction,
     injury: rawInjury * (1 - profile.reduction),
     guardActionId: action!.id,
+    shieldItemId: action!.itemId,
   };
 }
 /** Start recovery before injury interrupts work. The existing body-scoped combat deadline

@@ -1,3 +1,4 @@
+import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js';
 import {
   STARTER_EXTENT,
   starterTiles,
@@ -129,7 +130,7 @@ export function createWorld(
     },
     inventionPolicy: initialInventionPolicy(),
     moduleManifest: createModuleManifest(
-      DEFAULT_ATTRIBUTES,
+      [...DEFAULT_ATTRIBUTES, ...CANOPY_ATTRIBUTES],
       DEFAULT_SENSES,
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
@@ -157,6 +158,8 @@ export function createWorld(
     nativeStrikes: structuredClone({ ...NATIVE_STRIKES, [STAG_CONTACT.id]: STAG_CONTACT }),
     entities: {},
     objectState: { revision: 0 },
+    assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(BASE_CANOPY) },
+    assemblyGeometryRevision: 0,
     itemDefinitions: structuredClone(NATIVE_ITEMS),
     recipes: {},
     memories: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
@@ -385,6 +388,11 @@ export function createWorld(
     },
   ];
   for (const entity of entities) world.entities[entity.id] = entity;
+  for (const material of [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
+    for (let n = 0; n < material.quantity; n++) {
+      const id = addItem(world, PLAYER_ID, material.definitionId, 1);
+      if (material.quantity > 1) world.entities[id]!.name += ` ${n + 1}`;
+    }
   const shieldRecipe = installKnownShieldMethod(world);
   // Explicit authored starting support; Ada's biography does not grant mechanics.
   setStartingPractice(world, world.entities[NPC_ID]!, SLING_HANDLING, 1);

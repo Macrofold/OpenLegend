@@ -98,6 +98,8 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     ...(input.autoEquip ? { autoEquip: true } : {}),
   };
   switch (input.type) {
+    case 'construction':
+    case 'construction-rest':
     case 'activity-request':
       throw new Error(
         'Requested activity parameters require the scoped world binder, not a prebuilt action candidate.',

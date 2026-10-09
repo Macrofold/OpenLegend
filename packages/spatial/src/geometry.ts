@@ -11,8 +11,9 @@ import {
   type WorldPoint,
   type SpatialBlocker,
 } from './types.js';
+import { panelGeometry } from './finite-panel.js';
 import { BoundsIndex } from './bounds-index.js';
-import { bodyIntersects } from './body-query.js';
+import { bodyIntersects, type CollisionSolid } from './body-query.js';
 import { segmentBoundsQuery } from './segment-bounds.js';
 const EPS = SPATIAL_LIMITS.epsilon;
 const EMPTY_IDS: ReadonlySet<string> = new Set();
@@ -49,6 +50,31 @@ export function surfaceContains(
     point.z >= surface.minZ + margin - EPS &&
     point.z <= surface.maxZ - margin + EPS
   );
+}
+/** Complete rectangular support, including holes in raster ground between its corners.
+ * Native surface/cell ownership remains here; consumers do not restate terrain laws. */
+export function surfaceSupportsRectangle(
+  map: SpatialMap,
+  surface: WalkableSurface,
+  footprint: Pick<WalkableSurface, 'minX' | 'maxX' | 'minZ' | 'maxZ'>,
+): boolean {
+  if (
+    !surfaceContains(surface, { x: footprint.minX, z: footprint.minZ }) ||
+    !surfaceContains(surface, { x: footprint.maxX, z: footprint.maxZ })
+  )
+    return false;
+  if (surface.material !== 'ground') return true;
+  if (
+    footprint.minX < 0 ||
+    footprint.minZ < 0 ||
+    footprint.maxX > map.width - 1 ||
+    footprint.maxZ > map.height - 1
+  )
+    return false;
+  for (let z = Math.floor(footprint.minZ + 0.5); z < Math.ceil(footprint.maxZ + 0.5); z++)
+    for (let x = Math.floor(footprint.minX + 0.5); x < Math.ceil(footprint.maxX + 0.5); x++)
+      if (!terrainWalkable(map, { x, y: 0, z })) return false;
+  return true;
 }
 export function surfaceById(map: SpatialMap, id: string): WalkableSurface | undefined {
   return preparedShapes(map).supportById.get(id);
@@ -194,6 +220,7 @@ function clipSegment(
   return enter <= 1 && exit >= 0 ? [Math.max(0, enter), Math.min(1, exit)] : null;
 }
 interface PreparedShape {
+  panel?: SpatialBlocker['panel'];
   surface?: WalkableSurface;
   id: string;
   kind: 'surface' | 'blocker';
@@ -313,17 +340,8 @@ function preparedShapes(map: SpatialMap) {
       (b): PreparedShape => ({
         id: b.id,
         kind: 'blocker',
-        planes: boxPlanes(b.bounds),
-        vertices: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => ({
-          x: i & 1 ? b.bounds.max.x : b.bounds.min.x,
-          y: i & 2 ? b.bounds.max.y : b.bounds.min.y,
-          z: i & 4 ? b.bounds.max.z : b.bounds.min.z,
-        })),
-        edges: [
-          { x: 1, y: 0, z: 0 },
-          { x: 0, y: 1, z: 0 },
-          { x: 0, y: 0, z: 1 },
-        ],
+        panel: b.panel,
+        ...solidGeometry(b),
         bounds: b.bounds,
         movement: b.movement,
         sight: b.sight,
@@ -426,6 +444,88 @@ export function rayHits(
 }
 export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
   !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, () => true);
+/** Physical work cannot reach through a transparent movement blocker. End-face
+ * contact uses the same shrunken planes as ordinary rays, without ignoring a part. */
+export const clearPhysicalSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
+  !visitHits(map, from, to, 'movement', EMPTY_IDS, undefined, () => true);
+
+function boxHull(bounds: Bounds3) {
+  return {
+    vertices: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => ({
+      x: i & 1 ? bounds.max.x : bounds.min.x,
+      y: i & 2 ? bounds.max.y : bounds.min.y,
+      z: i & 4 ? bounds.max.z : bounds.min.z,
+    })),
+    edges: [
+      { x: 1, y: 0, z: 0 },
+      { x: 0, y: 1, z: 0 },
+      { x: 0, y: 0, z: 1 },
+    ],
+  };
+}
+function solidGeometry(solid: CollisionSolid) {
+  return solid.panel
+    ? panelGeometry(solid.panel)
+    : solid.surface
+      ? { planes: surfacePlanes(solid.surface), ...surfaceHull(solid.surface) }
+      : { planes: boxPlanes(solid.bounds), ...boxHull(solid.bounds) };
+}
+function solidsOverlap(
+  a: ReturnType<typeof solidGeometry>,
+  b: ReturnType<typeof solidGeometry>,
+): boolean {
+  const axes = [...a.planes, ...b.planes].map(([x, y, z]) => ({ x, y, z }));
+  for (const left of a.edges) for (const right of b.edges) axes.push(cross(left, right));
+  for (const axis of axes) {
+    const length = Math.hypot(axis.x, axis.y, axis.z);
+    if (length < 1e-12) continue;
+    let aMin = Infinity,
+      aMax = -Infinity,
+      bMin = Infinity,
+      bMax = -Infinity;
+    for (const p of a.vertices) {
+      const value = axis.x * p.x + axis.y * p.y + axis.z * p.z;
+      aMin = Math.min(aMin, value);
+      aMax = Math.max(aMax, value);
+    }
+    for (const p of b.vertices) {
+      const value = axis.x * p.x + axis.y * p.y + axis.z * p.z;
+      bMin = Math.min(bMin, value);
+      bMax = Math.max(bMax, value);
+    }
+    if (Math.min(aMax, bMax) - Math.max(aMin, bMin) <= EPS * length) return false;
+  }
+  return true;
+}
+/** Positive-volume exact overlap. Contact qualification remains with the caller's
+ * admitted family; bounds only prune candidates and never supply that permission. */
+export function solidOverlap(a: CollisionSolid, b: CollisionSolid): boolean {
+  return solidsOverlap(solidGeometry(a), solidGeometry(b));
+}
+export function physicalIntersections(map: SpatialMap, solid: CollisionSolid) {
+  const query = solidGeometry(solid),
+    hits: Array<{
+      id: string;
+      kind: 'surface' | 'blocker';
+      bounds: Bounds3;
+      panel?: SpatialBlocker['panel'];
+    }> = [];
+  preparedShapes(map).shapeIndex.visit(
+    (b) =>
+      b.min.x < solid.bounds.max.x &&
+      b.max.x > solid.bounds.min.x &&
+      b.min.y < solid.bounds.max.y &&
+      b.max.y > solid.bounds.min.y &&
+      b.min.z < solid.bounds.max.z &&
+      b.max.z > solid.bounds.min.z,
+    (shape) => {
+      if (shape.movement && solidsOverlap(query, shape))
+        hits.push({ id: shape.id, kind: shape.kind, bounds: shape.bounds, panel: shape.panel });
+      return false;
+    },
+  );
+  return hits;
+}
 /** A shrunken sight polytope returned by sightObstacles; opaque outside this module. */
 export interface SightObstacle {
   readonly planes: readonly Plane[];

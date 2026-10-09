@@ -122,7 +122,9 @@ export function installExpeditions(world: WorldState): void {
   addItem(world, lookoutCase, 'workshop-directions', 1);
   addItem(world, workshopSatchel, 'field-sling-record', 1);
   addItem(world, workshopSatchel, 'cord', 2);
-  addItem(world, workshopSatchel, 'prepared_fiber', 1);
+  // Exposed shelter-process fiber uses ordinary ground custody; nested moisture is unsupported.
+  // docs/worlds/base/editable-shelters.md#initial-exposed-forms-and-condition-labels
+  addItem(world, 'riverside-workshop', 'prepared_fiber', 1);
   addItem(world, workshopSatchel, 'stone', 4);
   world.places!['abandoned-lookout'] = {
     id: 'abandoned-lookout',

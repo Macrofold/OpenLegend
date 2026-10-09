@@ -1,0 +1,45 @@
+.ol-construction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.ol-construction p {
+  margin: 0;
+}
+.ol-construction-coordinates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.ol-construction-coordinates label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.ol-construction input[type='number'] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--surface-raised);
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: var(--control-radius);
+  padding: var(--space-2);
+}
+.ol-construction input:focus-visible {
+  outline: 2px solid Highlight;
+  outline-offset: 2px;
+}
+.ol-construction .ol-actions {
+  flex-wrap: wrap;
+}
+.ol-construction .ol-btn {
+  height: auto;
+  min-height: var(--control-md);
+  max-width: 100%;
+  padding-block: var(--space-2);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

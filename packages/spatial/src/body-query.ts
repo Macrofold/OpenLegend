@@ -1,8 +1,9 @@
-import type { BodyProfile, Bounds3, WalkableSurface, WorldPoint } from './types.js';
+import type { BodyProfile, Bounds3, FinitePanel, WalkableSurface, WorldPoint } from './types.js';
 
 export interface CollisionSolid {
   bounds: Bounds3;
   surface?: WalkableSurface;
+  panel?: FinitePanel;
 }
 export type BodySweep = (
   solid: CollisionSolid,

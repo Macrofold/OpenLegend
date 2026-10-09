@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — technical task definitions
 
-| Status      | Current progress                                                                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01 encounter integration, PX02 barter, PX03 discoveries and PX04 paired outings are delivered and reviewed; PX05 and broader qualification remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                              | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01–PX04 are delivered and reviewed and PX05 shelter design is complete; broader qualification remains open. | 2026-10-07   |
 
 [Feature and acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Prompts](parallel-batch-04-expeditions-and-exchange-prompts.md)
 
@@ -186,6 +186,8 @@ Read [persistent objects](../maintainers/persistent-objects.md), [state contribu
 **Definition of done:** the product/technical pair and sequenced tasks support an engineer implementing the ordinary build/use/edit/reclaim journey and relevant failures without choosing an unstated structural or authority policy. Record any consequential owner decisions explicitly; unresolved decisions mean the affected implementation stage is not ready. Do not check runtime tasks or claim shelter playability from paper traces.
 
 **Reconcile:** DG13/ND07 and the shelter-only ND08 subset, INV-6.4, relevant SW/PO/BW; [editable-shelter limits](../limits/editable-shelters.md). Design completion does not close construction, thermal simulation or home psychology.
+
+**PX05 completed-design mapping, October 5:** the [shelter technical counterpart](editable-shelters-tech-design.md) answers question 1 in §2/§7, 2 in §3, 3 in §5, 4 in §4, 5 in §1/§6 and the world profile, 6 in §5.4/§6.2, 7 in §6.3/§8.2, and 8 in §8.1/§9/§10. [SH01–SH06](../maintainers/editable-shelters.md) is the canonical sequenced breakdown. AV04 now delivers the selected flat one-builder journey with [actual evidence](../verification/editable-shelters.md); [unselected expansions are explicit stage blockers](editable-shelters-tech-design.md#101-consequential-unresolved-owner-decisions). These documents and paper traces complete PX05 only.
 
 ## Maintained records
 

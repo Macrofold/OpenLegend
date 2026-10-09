@@ -11,6 +11,7 @@ export type EquipmentUse = 'melee' | 'ranged' | 'gather' | 'guard';
 export interface EquipmentProfile {
   /** The first occupied port is the physical attachment's primary port. */
   ports: string[];
+  /** A worn garment can occupy a port without granting a tool/defense consumer. */
   uses: EquipmentUse[];
 }
 export interface EquipmentPort {
@@ -23,10 +24,9 @@ export function validEquipmentProfile(profile: EquipmentProfile): boolean {
     hasRecordFields(profile, ['ports', 'uses']) &&
     Array.isArray(profile.ports) &&
     profile.ports.length > 0 &&
-    profile.ports.every(isSafeRecordId) &&
+    profile.ports.every((port) => isSafeRecordId(port) && port !== 'assembly') &&
     new Set(profile.ports).size === profile.ports.length &&
     Array.isArray(profile.uses) &&
-    profile.uses.length > 0 &&
     profile.uses.every((use) => ['melee', 'ranged', 'gather', 'guard'].includes(use)) &&
     new Set(profile.uses).size === profile.uses.length
   );

@@ -1,4 +1,10 @@
-import { spatialBlockers, surfaceHeight, type SpatialMap } from '@open-legend/spatial';
+import {
+  panelGeometry,
+  PANEL_TRIANGLES,
+  spatialBlockers,
+  surfaceHeight,
+  type SpatialMap,
+} from '@open-legend/spatial';
 
 /** Mechanical geometry only: billboards never create navigation or collision. Terrain cells
  * retain water holes. Units/winding match the shared right-handed Y-up spatial contract.
@@ -18,12 +24,15 @@ export function navigationTriangles(map: SpatialMap) {
     z1: number,
     top: (x: number, z: number) => number,
     bottom?: (x: number, z: number) => number,
+    nonWalkable = false,
   ) => {
     const a = [x0, top(x0, z0), z0],
       b = [x0, top(x0, z1), z1],
       c = [x1, top(x1, z1), z1],
       d = [x1, top(x1, z0), z0];
-    quad(a, b, c, d);
+    // Recast marks downward facing tops as non-walkable while retaining solid clearance.
+    if (nonWalkable) quad(d, c, b, a);
+    else quad(a, b, c, d);
     if (!bottom) return;
     const e = [x0, bottom(x0, z0), z0],
       f = [x0, bottom(x0, z1), z1],
@@ -56,11 +65,22 @@ export function navigationTriangles(map: SpatialMap) {
         (x, z) => s.solidBase ?? surfaceHeight(s, x, z) - s.thickness,
       );
   }
-  for (const {
-    movement,
-    bounds: { min, max },
-  } of spatialBlockers(map))
-    if (movement)
+  for (const blocker of spatialBlockers(map)) {
+    if (!blocker.movement) continue;
+    if (blocker.panel) {
+      const n = positions.length / 3;
+      positions.push(...panelGeometry(blocker.panel).vertices.flatMap((p) => [p.x, p.y, p.z]));
+      for (let i = 0; i < PANEL_TRIANGLES.length; i += 3) {
+        const [a, b, c] = PANEL_TRIANGLES.slice(i, i + 3);
+        // Flexible roofs obstruct clearance but never become a navigation floor.
+        indices.push(
+          n + a!,
+          n + (blocker.nonWalkable && i < 6 ? c! : b!),
+          n + (blocker.nonWalkable && i < 6 ? b! : c!),
+        );
+      }
+    } else {
+      const { min, max } = blocker.bounds;
       slab(
         min.x,
         max.x,
@@ -68,6 +88,9 @@ export function navigationTriangles(map: SpatialMap) {
         max.z,
         () => max.y,
         () => min.y,
+        blocker.nonWalkable,
       );
+    }
+  }
   return { positions: new Float32Array(positions), indices: new Uint32Array(indices) };
 }

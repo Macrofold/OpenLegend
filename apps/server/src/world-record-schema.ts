@@ -53,6 +53,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       // Keep even small authored records out of the frequently written world header.
       knowledgePolicy: one('config_knowledge'),
       itemHandling: one('config_item_handling'),
+      assemblyFamilies: map('config_assembly_families'),
+      finiteRain: one('sim_finite_rain'),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
       exitExposures: map('sim_exit_exposures'),
@@ -79,6 +81,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       }),
       entities: map('sim_entities', {
         placement: one('sim_placements'),
+        assembly: one('sim_assemblies'),
         item: one('sim_items'),
         container: one('sim_containers'),
         declaredOwner: one('sim_declared_owners'),
@@ -222,6 +225,19 @@ columns(
     },
     physical_parent_id: textColumn('parentEntityId'),
     port_id: textColumn('portId'),
+    attachment_slot: textColumn('slot'),
+    local_x: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['local'] as JsonRecord | undefined)?.['x'] ?? null,
+    },
+    local_y: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['local'] as JsonRecord | undefined)?.['y'] ?? null,
+    },
+    local_z: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['local'] as JsonRecord | undefined)?.['z'] ?? null,
+    },
     support_id: textColumn('supportSurfaceId'),
     x: {
       sql: 'DOUBLE PRECISION',
@@ -246,7 +262,8 @@ RECORD_NODES.get('sim_items')!.uniqueIndexes = [['item_id']];
 RECORD_NODES.get('sim_placements')!.uniqueIndexes = [['entity_id']];
 RECORD_NODES.get('sim_placements')!.constraints = [
   'FOREIGN KEY(world_id,physical_parent_id) REFERENCES sim_entities(world_id,entity_id) ON DELETE RESTRICT',
-  "CHECK ((placement_mode='world' AND physical_parent_id IS NULL AND port_id IS NULL AND x IS NOT NULL AND y IS NOT NULL AND z IS NOT NULL) OR (placement_mode='contained' AND physical_parent_id IS NOT NULL AND port_id IS NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL) OR (placement_mode='attached' AND physical_parent_id IS NOT NULL AND port_id IS NOT NULL AND length(port_id)>0 AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL))",
+  // Assembly-local positions do not create a second independent world position.
+  "CHECK ((placement_mode='world' AND physical_parent_id IS NULL AND port_id IS NULL AND x IS NOT NULL AND y IS NOT NULL AND z IS NOT NULL AND attachment_slot IS NULL AND local_x IS NULL AND local_y IS NULL AND local_z IS NULL) OR (placement_mode='contained' AND physical_parent_id IS NOT NULL AND port_id IS NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL AND attachment_slot IS NULL AND local_x IS NULL AND local_y IS NULL AND local_z IS NULL) OR (placement_mode='attached' AND physical_parent_id IS NOT NULL AND port_id IS NOT NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL AND ((port_id='assembly' AND attachment_slot IS NOT NULL AND length(attachment_slot)>0 AND local_x IS NOT NULL AND local_y IS NOT NULL AND local_z IS NOT NULL) OR (port_id<>'assembly' AND length(port_id)>0 AND attachment_slot IS NULL AND local_x IS NULL AND local_y IS NULL AND local_z IS NULL))))",
 ];
 columns(
   'sim_object_lineage',

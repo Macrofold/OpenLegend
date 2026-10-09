@@ -1,3 +1,4 @@
+import { constructionPlanSchema } from './construction.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuitySubjects, continuityView } from './continuity-view.js';
@@ -8,6 +9,7 @@ import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
   capabilitySchema,
+  constructionPermissionSchema,
   isCharacterless,
   scopeKey,
   type Capability,
@@ -842,6 +844,8 @@ async function initializeGameServer(
           request.headers['x-ol-scope'] !== scopeKey(scope)
         )
           throw new AuthorityError('stale-scope');
+        if (request.method === 'GET' && url.pathname === '/api/construction')
+          return send(response, 200, service.constructionView(scope));
         if (request.method === 'GET' && url.pathname === '/api/state')
           return send(response, 200, await currentView(scope));
         if (request.method === 'GET' && url.pathname === '/api/operations') {
@@ -1203,6 +1207,26 @@ async function initializeGameServer(
           responseScope = undefined;
           return send(response, 200, { ok: true, message: 'Access updated.' });
         }
+        if (url.pathname === '/api/access/construction') {
+          const value = z
+            .object({
+              id: requestIdSchema,
+              expectedRevision: sequence,
+              permission: constructionPermissionSchema,
+            })
+            .strict()
+            .parse(body);
+          return send(
+            response,
+            200,
+            await service.changeConstructionPermission(
+              value.permission,
+              value.expectedRevision,
+              value.id,
+              scope,
+            ),
+          );
+        }
         if (url.pathname === '/api/access/binding') {
           const value = z
             .object({
@@ -1268,6 +1292,8 @@ async function initializeGameServer(
               : 'play';
         responseCapability = required;
         const controlling = [
+          '/api/god/canopy-shower',
+          '/api/construction/preview',
           '/api/command',
           '/api/knowledge',
           '/api/control',
@@ -1572,6 +1598,21 @@ async function initializeGameServer(
                 ok: true,
                 profile: await service.setPreferences(preferences.parse(body), scope),
               });
+            case '/api/god/canopy-shower':
+              return send(
+                response,
+                200,
+                await service.canopyShower(
+                  z.object({ id: z.string().uuid() }).strict().parse(body).id,
+                  scope,
+                ),
+              );
+            case '/api/construction/preview':
+              return send(
+                response,
+                200,
+                service.previewConstruction(constructionPlanSchema.parse(body), scope),
+              );
             case '/api/command': {
               const value = command.parse(body);
               return send(

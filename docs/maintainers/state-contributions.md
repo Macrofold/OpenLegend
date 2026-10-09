@@ -1,8 +1,12 @@
 # State contributions — EWF02–03 / INV-6.3 subtracker
 
+**October 7 shelter follow-on:** [SH05](editable-shelters.md#sh05--shared-two-bay-layout-and-qualified-cloak-lean-to) adds exact axial slope/height exposure to the same moisture value and separate drying owner. Wearing, installation, replacement, reclaim and current restoration preserve the value; there is no sleep/health/fire consumer or model-per-material work. Broader SC08 qualification stays open.
+
 **Status:** implemented and qualified for the approved finite foundation scope; hosted capacity and broader parent work remain separate. This is the detailed decomposition of shared contribution/claim work under [EWF02–03](extensible-world-foundation.md#ewf02--typed-state-providers-and-one-authoritative-value) and [INV-6.3](inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes), not another state or invention authority. Parent completion still requires its own remaining scope. [Feature specification](../projects/shared-state-contributions-feature-spec.md) and [technical design](../projects/shared-state-contributions-tech-design.md) own the approved project.
 
 Implementation was authorized September 26, 2026 in the [five-project execution plan](../projects/foundations-1-5.md#approved-implementation-plan). The slice checkboxes below remain qualification gates, not a count of files written. Each slice joins SL00 when it introduces durable state.
+
+**Delivered selected shelter consumer:** [PX05’s technical counterpart](../projects/editable-shelters-tech-design.md#6-rain-moisture-actor-knowledge-and-save-lifecycle) uses this foundation for one material-moisture attribute, finite rain intervals and a separately registered drying process. [SH03/SH04/SH06](editable-shelters.md) owns delivered flat-profile interval/placement integration, state-preserving eligible fiber operations and current-format restoration, plus remaining wider qualification. [AV04 evidence](../verification/editable-shelters.md) records finite rain/drying, actual material continuity and bounded work. This adds no fire penalty or model-per-material work and does not reopen completed SC foundation acceptance.
 
 ## Execution notes — September 26, 2026
 

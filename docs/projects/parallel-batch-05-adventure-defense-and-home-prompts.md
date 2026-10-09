@@ -1,8 +1,8 @@
 # Batch 05 — Five implementation prompts
 
-| Status      | Current progress                                                                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | AV01 expeditions, AV02 equipment/shield defense and AV03 sling practice/coaching are merged; human appreciation and other assignments retain their unfinished scope. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV01 expeditions, AV02 equipment/shield defense and AV03 sling practice/coaching and AV04 editable shelters are merged; human appreciation and other assignments retain their unfinished scope. | 2026-10-08   |
 
 Use a branch containing this batch's committed documentation. [Allocation and sequencing](parallel-batch-05-adventure-defense-and-home-feature-spec.md#allocation-and-sequencing) explains readiness: AV03 and AV05 can start from the inspected main; AV01 can start independent content work but needs PX03/threat integration to finish; AV02 needs the incoming threat/lifecycle delivery; AV04 needs PX05 and later AV02's equipment integration. These prompts do not execute the assignments from the planning chat.
 

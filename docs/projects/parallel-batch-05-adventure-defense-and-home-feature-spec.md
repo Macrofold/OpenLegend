@@ -1,8 +1,8 @@
 # Batch 05 — Adventure, defense and a home
 
-| Status      | Current progress                                                                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | AV01 expeditions, AV02 equipment/shield defense and AV03 sling practice/coaching are merged; human appreciation and other assignments retain their unfinished scope. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV01 expeditions, AV02 equipment/shield defense and AV03 sling practice/coaching and AV04 editable shelters are merged; human appreciation and other assignments retain their unfinished scope. | 2026-10-08   |
 
 ## Purpose and selection
 

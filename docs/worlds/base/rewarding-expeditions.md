@@ -1,6 +1,6 @@
 # Useful discoveries beyond the clearing
 
-**Implemented base-world content, October 6, 2026.** Native journey and production-browser evidence are recorded [here](../../verification/rewarding-expeditions.md). The current single-equipped-tool system supplies weapon use; AV02 still owns the final two-hand integration. [AV01](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions) owns delivery. This is an ordinary authored adventure, not generated invention or a universal quest system.
+**Implemented base-world content, October 6, 2026.** Native journey and production-browser evidence are recorded [here](../../verification/rewarding-expeditions.md). Compatible body-port equipment supplies weapon use, including the spear’s two-hand requirement. [AV01](../../maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions) owns delivery. This is an ordinary authored adventure, not generated invention or a universal quest system.
 
 ## Two places and a reason to go
 
@@ -16,7 +16,7 @@ The spear is an authored contact weapon: 10 injury, 0.8 base accuracy, 2.2-metre
 
 The workshop record teaches one **field sling** recipe through exact current recipe knowledge. It uses the existing swing-launcher family and lawful material roles: two cord units for binding and one prepared-fiber unit for its flexible pouch. Admitted output: one sling with 14 injury, 6-metre range and 0.75 authored accuracy; manufacture takes 180 game seconds. New-world creation compiles these values and role bindings through the installed family. The saved method has authored-world provenance, teaches nobody on installation and creates no item; actors learn only through an admitted disclosure. Native checks exercised the actual compiled output, material debit and use.
 
-The site supplies two cord, one prepared fiber and four stones as ordinary finite lots. They are not a supply guarantee after another visitor takes them. Existing gathering/preparation remains the alternative. The method is a reliable known choice, not a unique best recipe; the player can invent another supported method and benefit from its actual differences.
+The site supplies two cord, one prepared fiber and four stones as ordinary finite lots. The prepared fiber sits beside the supply satchel in the workshop ground bundle; the other supplies and recipe record remain inside the satchel. This exposed placement respects the shelter material law, whose nested-container moisture behavior is not yet supported. They are not a supply guarantee after another visitor takes them. Existing gathering/preparation remains the alternative. The method is a reliable known choice, not a unique best recipe; the player can invent another supported method and benefit from its actual differences.
 
 Reading the physical record is a new supported knowledge action. A successful in-reach inspection identifies its exact pinned method, explains what it makes and what is required, then offers **Learn this method**. Native admission grants only that method to that actor. It manufactures nothing, consumes no recipe record and does not reveal source-author private history. Repeated learning returns an already-known outcome. Merely seeing the outside of a bag holding the record or hearing another visitor's result supplies no grant.
 

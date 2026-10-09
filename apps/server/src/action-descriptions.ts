@@ -1,5 +1,6 @@
 import {
   BASE_OUTING,
+  BASE_CONSTRUCTION_DESCRIPTIONS,
   equippedItem,
   guardDescription,
   equipmentChangeDescription,
@@ -35,6 +36,7 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   ...BASE_DEATH_COMMAND_DESCRIPTIONS,
   outing: BASE_OUTING.description,
   ...BASE_PRACTICE_COMMAND_DESCRIPTIONS,
+  ...BASE_CONSTRUCTION_DESCRIPTIONS,
   'activity-request':
     'Choose every required parameter and review a supported activity before starting it.',
   'inspect-activities':

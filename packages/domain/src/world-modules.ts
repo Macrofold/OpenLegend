@@ -6,6 +6,7 @@ import {
   validatePracticeProfile,
 } from './practical-competence.js';
 import { validateCoaching } from './coaching.js';
+import { validateAssemblies } from './assembly-validation.js';
 import { validNarrationTemplate } from '@open-legend/language';
 import {
   narrationTemplate,
@@ -23,7 +24,7 @@ import { recordSemanticChange } from './dependencies.js';
 import { validateNativeWork } from './native-work.js';
 import { validateWorkState } from './work-budget.js';
 import { validateParticipation } from './participation.js';
-import { isDraft, original, freeze } from 'immer';
+import { current, isDraft, original, freeze } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
 import { validateKnowledge } from './knowledge.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
@@ -208,14 +209,17 @@ const definitionPins = new WeakMap<object, DefinitionPin>();
 export function definitionPin<T extends { id: string; version: number }>(
   definition: T,
 ): DefinitionPin {
-  const cached = definitionPins.get(definition);
+  // Unchanged draft definitions resolve to their frozen original, so native state
+  // reads share its exact pin. Changed drafts produce a fresh, uncached snapshot.
+  const snapshot = isDraft(definition) ? current(definition) : definition;
+  const cached = definitionPins.get(snapshot);
   if (cached) return cached;
   const pin = {
-    id: definition.id,
-    version: definition.version,
-    digest: contentLabel(canonicalJson(definition)),
+    id: snapshot.id,
+    version: snapshot.version,
+    digest: contentLabel(canonicalJson(snapshot)),
   };
-  if (!isDraft(definition) && Object.isFrozen(definition)) definitionPins.set(definition, pin);
+  if (Object.isFrozen(snapshot)) definitionPins.set(snapshot, pin);
   return pin;
 }
 export function createModuleManifest(
@@ -828,6 +832,7 @@ export function validateWorldModules(world: WorldState): void {
   if (!world.moduleManifest) throw new Error('World module manifest is missing.');
   validateStatusEffects(world);
   validateNativeWork(world);
+  validateAssemblies(world);
   validateSpatialWorld(world);
   validatePerceptionState(world);
   validatePlaces(world);

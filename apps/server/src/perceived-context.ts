@@ -22,6 +22,7 @@ const propertyDescriptions: Record<ItemDefinition['properties'][number], string>
 };
 
 const activities: Record<Action['type'], string | undefined> = {
+  assemble: undefined,
   pickup: 'picking up items',
   follow: 'following',
   move: 'moving',
@@ -63,7 +64,14 @@ export function perceivedEntityText(
   else if (entity.actor?.action) {
     const action = entity.actor.action;
     // No action record is not evidence of stillness: native movement uses other state.
-    const activity = action.stage === 'approaching' ? 'moving' : activities[action.type];
+    const activity =
+      action.stage === 'approaching'
+        ? 'moving'
+        : action.assemblyPhase
+          ? world.assemblyFamilies?.[action.assemblyPhase.familyId]?.labels[
+              action.assemblyPhase.operation
+            ].toLowerCase()
+          : activities[action.type];
     if (activity) facts.push(`It is ${activity}.`);
   }
   if (entity.resource) {

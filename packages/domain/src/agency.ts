@@ -38,6 +38,7 @@ import { seesEntity } from './perception.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { supportedPosition } from './spatial-state.js';
 import { isFireCareCommand } from './worlds/base/fire.js';
+import { validAssemblyPhase } from './assemblies.js';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
@@ -1222,6 +1223,8 @@ export function isPhysicalCommand(command: Command): boolean {
   )
     return false;
   switch (command.type) {
+    case 'assemble':
+      return validAssemblyPhase(command);
     case 'pickup':
       return (
         isSafeRecordId(command.targetId) &&

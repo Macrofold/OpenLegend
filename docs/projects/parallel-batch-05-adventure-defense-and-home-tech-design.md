@@ -1,8 +1,8 @@
 # Batch 05 — Technical definitions for adventure, defense and a home
 
-| Status      | Current progress                                                                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | AV01 expeditions, AV02 equipment/shield defense and AV03 sling practice/coaching are merged; human appreciation and other assignments retain their unfinished scope. | 2026-10-08   |
+| Status      | Current progress                                                                                                                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | AV01 expeditions, AV02 equipment/shield defense and AV03 sling practice/coaching and AV04 editable shelters are merged; human appreciation and other assignments retain their unfinished scope. | 2026-10-08   |
 
 ## Scope and baseline
 
@@ -194,7 +194,7 @@ No general teaching framework or a second skill is needed to complete this consu
 
 ### Prerequisite and source map
 
-**Runtime implementation begins after PX05 supplies `docs/projects/editable-shelters-tech-design.md` and resolves its required technical contracts.** That path is an expected deliverable, not an existing verified file in the inspected main. Product scope is already in [DG13's expansion](editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) and the [world profile](../worlds/base/editable-shelters.md). PX05's canonical design owns the detailed structural schemas; this allocation does not create a competing schema while that assignment remains open.
+**Prerequisites supplied and AV04 flat release delivered October 6; the separately authorized corrected-contact/single-bay slope follow-on is qualified October 7.** PX05's `docs/projects/editable-shelters-tech-design.md` resolves the selected contracts and was consumed before coding; completed AV02 supplies the cloak's attachment owner. [The AV04 report](../verification/editable-shelters.md) records actual selected evidence and remaining broader limits. Product scope is already in [DG13's expansion](editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) and the [world profile](../worlds/base/editable-shelters.md). PX05's canonical design owns the detailed structural schemas; this allocation creates no competing schema.
 
 Its implementation must extend current `packages/domain/src/objects.ts`, material/invention owners, `action-capabilities.ts`, `state-contributions.ts`, spatial surfaces/clearance/navigation and current-format persistence. Client scene/picking and placement UI consume the same geometry and permitted plans. Server preview/inspection and native execution must share the actual construction prerequisites. Use AV02's attachment owner for wearing the same cloak, rather than a shelter-only equipped flag.
 

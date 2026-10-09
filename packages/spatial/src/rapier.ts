@@ -1,6 +1,7 @@
 import R from '@dimforge/rapier3d-compat';
 import { installBodySweep, type CollisionSolid } from './body-query.js';
 import { MOVEMENT, type BodyProfile, type WorldPoint } from './types.js';
+import { panelGeometry } from './finite-panel.js';
 
 const rotation = { x: 0, y: 0, z: 0, w: 1 };
 const zero = { x: 0, y: 0, z: 0 };
@@ -28,7 +29,20 @@ function solidShape(solid: CollisionSolid) {
   const { min, max } = solid.bounds;
   const position = { x: (min.x + max.x) / 2, y: (min.y + max.y) / 2, z: (min.z + max.z) / 2 };
   const s = solid.surface;
-  if (s && (s.slopeX || s.slopeZ)) {
+  if (solid.panel) {
+    entry = {
+      shape: new R.ConvexPolyhedron(
+        new Float32Array(
+          panelGeometry(solid.panel).vertices.flatMap((p) => [
+            p.x - position.x,
+            p.y - position.y,
+            p.z - position.z,
+          ]),
+        ),
+      ),
+      position,
+    };
+  } else if (s && (s.slopeX || s.slopeZ)) {
     const vertices: number[] = [];
     for (const x of [s.minX, s.maxX])
       for (const z of [s.minZ, s.maxZ]) {

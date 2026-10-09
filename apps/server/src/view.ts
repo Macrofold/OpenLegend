@@ -10,6 +10,9 @@ import {
   type PracticeView,
   type ActivityOccurrence,
 } from '@open-legend/domain';
+import { bodyProfile } from '@open-legend/domain';
+import { materialExposureView } from '@open-legend/domain';
+import { assemblyView } from './construction.js';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
@@ -195,7 +198,14 @@ export async function projectView(
   };
   const pileContents = memo(
     'pileContents',
-    [observation.visibleEntities, world.objectState, world.itemDefinitions],
+    [
+      observation.visibleEntities,
+      world.objectState,
+      world.itemDefinitions,
+      world.entities,
+      world.assemblyGeometryRevision,
+      world.simTime,
+    ],
     () => {
       const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
       for (const pile of observation.visibleEntities.filter(
@@ -210,6 +220,7 @@ export async function projectView(
             name: definition.name,
             quantity: item.quantity,
             portable: definition.portable === true,
+            materialCondition: materialExposureView(world, item.id),
           });
           byOwner.set(item.ownerId, contents);
         }
@@ -327,6 +338,9 @@ export async function projectView(
         `entity:${entity.id}`,
         [
           entity,
+          entity.assembly ? world.entities : undefined,
+          entity.assembly ? world.simTime : undefined,
+          entity.assembly ? service.constructionAllowed(scope.actorId) : undefined,
           world.observerIdentities?.[scope.actorId]?.[entity.id],
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
           entity.kind === 'item-pile' || entity.remains ? pileContents.get(entity.id) : undefined,
@@ -541,6 +555,15 @@ export async function projectView(
                       : 'station';
           return {
             id: entity.id,
+            ...(entity.assembly
+              ? {
+                  assembly: assemblyView(
+                    world,
+                    entity.id,
+                    service.constructionAllowed(scope.actorId),
+                  ),
+                }
+              : {}),
             ...display,
             ...(entity.kind === 'item-pile' || entity.remains
               ? { contents: pileContents.get(entity.id) ?? [] }
@@ -554,6 +577,14 @@ export async function projectView(
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
+            ...(entity.actor
+              ? {
+                  bodySize: {
+                    width: bodyProfile(entity).radius * 2,
+                    height: bodyProfile(entity).height,
+                  },
+                }
+              : {}),
             ...(entity.actor?.body ? { bodyPlan: entity.actor.body.plan } : {}),
             ...(world.exitExposures?.[entity.id] !== undefined &&
             world.participationPolicy?.exitExposureSeconds
@@ -590,6 +621,10 @@ export async function projectView(
                       .join(', ')
                   : entity.actor.action
                     ? ({
+                        assemble: entity.actor.action.assemblyPhase
+                          ? world.assemblyFamilies?.[entity.actor.action.assemblyPhase.familyId]
+                              ?.labels[entity.actor.action.assemblyPhase.operation]
+                          : undefined,
                         guard: BASE_GUARD_TEXT.activityLabel,
                         pickup: 'Picking up items',
                         move: 'Walking',
@@ -1031,6 +1066,7 @@ export async function projectView(
                   'gather',
                   'prepare',
                   'craft',
+                  'assemble',
                   'cook',
                   'harvest',
                   'treat-scar',
@@ -1051,7 +1087,11 @@ export async function projectView(
               !paused && actor.action.stage === 'working' && !waitingForFeedback(world, player),
             label: actor.action.navigation
               ? 'Preparing route'
-              : (guardWorkLabel(world, player) ?? workLabels[actor.action.type] ?? 'Working'),
+              : actor.action.assemblyPhase
+                ? (world.assemblyFamilies?.[actor.action.assemblyPhase.familyId]?.labels[
+                    actor.action.assemblyPhase.operation
+                  ] ?? 'Working')
+                : (guardWorkLabel(world, player) ?? workLabels[actor.action.type] ?? 'Working'),
             progress:
               actor.action.stage === 'approaching' || actor.action.type === 'follow'
                 ? 0

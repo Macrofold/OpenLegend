@@ -85,6 +85,8 @@ export {
   hasLineOfEffect,
   canReachEntity,
   findApproachPath,
+  findPhysicalWorkApproach,
+  physicalWorkPointAvailable,
   isWalkable,
   nearbyEntities,
   sameSurfacePoint,
@@ -267,3 +269,15 @@ export {
   SLING_TARGET,
   BASE_PRACTICE_COMMAND_DESCRIPTIONS,
 } from './worlds/base/practical-competence.js';
+export * from './assembly-types.js';
+export * from './assemblies.js';
+export * from './assembly-geometry.js';
+export { BASE_CANOPY_SCENE } from './worlds/base/canopies.js';
+
+export * from './material-exposure.js';
+
+export * from './assembly-validation.js';
+
+export * from './assembly-use.js';
+export { beginCanopyShower } from './worlds/base/canopy-scene.js';
+export { BASE_CONSTRUCTION_DESCRIPTIONS } from './worlds/base/canopies.js';

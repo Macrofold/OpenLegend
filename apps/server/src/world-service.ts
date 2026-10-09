@@ -1,3 +1,40 @@
+import { assemblyView } from './construction.js';
+import { reconcileConstructionAuthority } from '@open-legend/domain';
+import {
+  inventoryFor,
+  nearbyEntities,
+  worldPosition,
+  visionRadius,
+  seesEntity,
+  worldRootEntities,
+  compileAssemblyRest,
+  beginCanopyShower,
+} from '@open-legend/domain';
+import { constructionPlanSchema } from './construction.js';
+import {
+  assemblyPermission,
+  assemblyRoot,
+  assemblySite,
+  assemblyShapes,
+  coverGeometry,
+  assemblyArrangement,
+  postHeightForSlot,
+  postBounds,
+  materialPostHeight,
+  assemblySupportSlots,
+  accessiblePossession,
+  materialAuthorized,
+  materialUsable,
+  availableItemQuantity,
+  materialExposureView,
+} from '@open-legend/domain';
+import type { ConstructionView, ConstructionShape } from '@open-legend/protocol';
+import {
+  BASE_CANOPY_SCENE,
+  compileAssemblyActivity,
+  type ConstructionPermission,
+  type AssemblyPlan,
+} from '@open-legend/domain';
 import { basePlaytestMilestones, BASE_GUARD_TEXT } from '@open-legend/domain';
 import { activityChoiceView } from './activity-context.js';
 import {
@@ -55,7 +92,7 @@ import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/do
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
 import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
-import { completeNavigation, navigationBlocked } from '@open-legend/domain';
+import { completeNavigation, navigationBlocked, spatialMap } from '@open-legend/domain';
 import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
 import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
 import type { SpeechVolume } from '@open-legend/domain';
@@ -152,6 +189,8 @@ const id = z
 export const commandInputSchema = z
   .object({
     type: z.enum([
+      'construction',
+      'construction-rest',
       'activity',
       'activity-request',
       'conversation',
@@ -192,6 +231,8 @@ export const commandInputSchema = z
       'teach',
       'learn-record',
     ]),
+    constructionPlan: constructionPlanSchema.optional(),
+    bay: z.number().int().nonnegative().optional(),
     purpose: z.string().trim().min(1).max(120).optional(),
     activityFamilyId: id.optional(),
     activityArguments: z
@@ -727,6 +768,7 @@ export class WorldService {
     this.persistedRevision = existing?.revision ?? 0;
     this.persistedEvents = this.saved.world.events;
     this.viewRevision = this.persistedRevision;
+    if (existing) await store.authority.refreshConstruction(this.saved.world.id);
     this.saved = {
       ...this.saved,
       world: updateWorld(this.saved.world, (world) => {
@@ -753,6 +795,7 @@ export class WorldService {
             reconcileConditions(world, entity, []);
         }
         world.paused = true;
+        reconcileConstructionAuthority(world, store.authority!.constructionPermissions(world.id));
       }),
     };
     this.saved = updateMilestones(this.saved, this.saved.world.events);
@@ -766,7 +809,29 @@ export class WorldService {
         this.saved,
         undefined,
         undefined,
-        { after: startupHistory, authorityBindings: bindings, authorityOwners: actorOwners },
+        {
+          after: startupHistory,
+          authorityBindings: bindings,
+          authorityOwners: actorOwners,
+          ...(!existing
+            ? {
+                constructionSeeds: [
+                  {
+                    id: 'intro-canopy-builder',
+                    worldId: this.saved.world.id,
+                    actorId: BASE_CANOPY_SCENE.builderId,
+                    revision: 1,
+                    revoked: false,
+                    site: BASE_CANOPY_SCENE.site,
+                    operations: ['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered'],
+                    materialIds: inventoryFor(this.saved.world, BASE_CANOPY_SCENE.builderId).map(
+                      (item) => item.id,
+                    ),
+                  } satisfies ConstructionPermission,
+                ],
+              }
+            : {}),
+        },
       );
       startupAllocation.commit();
     } catch (error) {
@@ -774,6 +839,7 @@ export class WorldService {
       throw error;
     }
     if (store.releaseHistory) this.saved = store.releaseHistory(this.saved);
+    if (!existing) await store.authority.refreshConstruction(this.saved.world.id);
     freezeWorld(this.saved.world);
     this.rememberPersistedMemorySources();
     this.persistedEvents = this.saved.world.events;
@@ -1062,7 +1128,13 @@ export class WorldService {
   notify(telemetry = true): void {
     if (telemetry) this.telemetryRevision++;
     this.viewRevision++;
-    for (const listener of this.listeners) listener();
+    // Publication can close an obsolete transport during a load. Its asynchronous
+    // cleanup must queue behind this writer, never inherit permission to nest inside it.
+    this.mutationContext.exit(() =>
+      this.authorityContext.run(undefined, () => {
+        for (const listener of this.listeners) listener();
+      }),
+    );
   }
 
   /** Milestones and hot-event placement shared by every world write. */
@@ -1130,6 +1202,16 @@ export class WorldService {
       operationalChange?: () => Promise<void>;
     },
   ): Promise<boolean> {
+    if (restore)
+      saved = {
+        ...saved,
+        world: updateWorld(saved.world, (world) =>
+          reconcileConstructionAuthority(
+            world,
+            this.store.authority!.constructionPermissions(world.id),
+          ),
+        ),
+      };
     // Synchronous save. One writer in snapshot order: an in-flight background save commits
     // first, and a failed one stops every later write
     // (docs/projects/ordered-async-saves.md#ordering-rules).
@@ -1150,6 +1232,9 @@ export class WorldService {
         this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {
           before: historyBefore,
           after: historyWorld,
+          ...(!restore
+            ? { constructionFences: this.constructionFences(historyWorld, appendEventCount) }
+            : {}),
           receipt,
           restore,
           ...authorityChanges,
@@ -2790,7 +2875,10 @@ export class WorldService {
         if (navigationBlocked(world)) break;
         const stepStarted = performance.now();
         const startTime = world.simTime;
-        const slices = advanceWorldSlices(world, offered - advancedSeconds, { maxIntervals: 1 });
+        const slices = advanceWorldSlices(world, offered - advancedSeconds, {
+          maxIntervals: 1,
+          constructionPermissions: this.store.authority!.constructionPermissions(world.id),
+        });
         const nextSlice = (boundary?: boolean) => {
           const started = performance.now();
           try {
@@ -2844,7 +2932,15 @@ export class WorldService {
         !this.backgroundSave &&
         unsavedMs >= 1000 &&
         (!this.pendingOperations || unsavedMs >= BACKGROUND_SAVE_DEFERRAL_MS);
-      if (due ? await this.saveProgress(saved) : this.acceptProgress(saved))
+      const constructionChanged =
+        world.assemblyGeometryRevision !== this.world.assemblyGeometryRevision;
+      if (
+        constructionChanged
+          ? await this.commit(saved, undefined, 'append')
+          : due
+            ? await this.saveProgress(saved)
+            : this.acceptProgress(saved)
+      )
         this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
@@ -2875,6 +2971,296 @@ export class WorldService {
         return { ok: false, code: 'storage', message: this.storageError! };
       return result.outcome;
     });
+  }
+  constructionAllowed(actorId: string): boolean {
+    return this.store
+      .authority!.constructionPermissions(this.world.id)
+      .some((p) => p.actorId === actorId && !p.revoked);
+  }
+  /** Operational grants never travel with a gameplay save. The writer lane cancels
+   * an old phase before any later material publication can use its permission. */
+  async changeConstructionPermission(
+    permission: ConstructionPermission,
+    expectedRevision: number,
+    id: string,
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    return this.authorized(scope, 'manage-access', false, async () => {
+      if (
+        permission.worldId !== this.world.id ||
+        !this.world.entities[permission.actorId]?.actor ||
+        !this.world.map.spatial.surfaces.some((s) => s.id === permission.site.surfaceId) ||
+        permission.materialIds.some(
+          (materialId) =>
+            !this.world.entities[materialId]?.item && !this.world.entities[materialId]?.retirement,
+        )
+      )
+        return {
+          ok: false,
+          code: 'invalid-permission',
+          message: 'Choose a current character, supported site and actual material identities.',
+        };
+      await this.flush();
+      await this.store.authority!.changeConstruction(
+        scope,
+        permission,
+        expectedRevision,
+        id,
+        this.now,
+      );
+      // Operational revocation must release unfinished work even while gameplay is
+      // paused. The ordinary action transition deliberately refuses paused worlds.
+      const world = updateWorld(this.world, (draft) =>
+        reconcileConstructionAuthority(
+          draft,
+          this.store.authority!.constructionPermissions(draft.id),
+        ),
+      );
+      if (
+        world !== this.world &&
+        !(await this.commit({ ...this.saved, world }, undefined, 'append'))
+      )
+        return { ok: false, code: 'storage', message: this.storageError! };
+      return {
+        ok: true,
+        code: 'construction-permission',
+        message: 'Construction permission updated.',
+      };
+    });
+  }
+  async canopyShower(id: string, scope = this.localScope): Promise<ApiResult> {
+    this.assertScope(scope, 'create');
+    return this.transition((world) => beginCanopyShower(world, id));
+  }
+  constructionView(scope = this.localScope): ConstructionView {
+    this.assertScope(scope);
+    const world = this.world,
+      family = Object.values(world.assemblyFamilies!)[0]!,
+      permissions = this.store
+        .authority!.constructionPermissions(world.id)
+        .filter((p) => p.actorId === scope.actorId && !p.revoked);
+    const visible = new Set(
+      nearbyEntities(
+        world,
+        worldPosition(world.entities[scope.actorId]!),
+        visionRadius(world, world.entities[scope.actorId]!),
+      )
+        .filter((e) => seesEntity(world, world.entities[scope.actorId]!, e))
+        .map((e) => e.id),
+    );
+    const materials = inventoryFor(world, scope.actorId).flatMap((item) => {
+      const descriptor = world.itemDefinitions[item.definitionId]?.assemblyMaterial;
+      if (!descriptor) return [];
+      const role = descriptor.role,
+        materialFamily = world.assemblyFamilies![descriptor.familyId]!;
+      const reason = world.entities[item.id]?.item?.assemblyClaim
+        ? 'This piece belongs to the structure; reclaim it through its building controls.'
+        : !permissions.some((p) => materialAuthorized(world, item.id, p))
+          ? 'Carrying this material does not grant permission to build with it.'
+          : !materialUsable(world, item.id, materialFamily, role)
+            ? 'This material does not meet the condition required for the selected attachment.'
+            : availableItemQuantity(world, item.id) < 1
+              ? 'This material is held for unfinished work.'
+              : undefined;
+      const eligible = !reason;
+      const condition = materialExposureView(world, item.id);
+      return [
+        {
+          id: item.id,
+          name: world.entities[item.id]!.name,
+          quantity: item.quantity,
+          role,
+          eligible,
+          ...(descriptor.postHeight ? { postHeight: descriptor.postHeight } : {}),
+          ...(reason ? { reason } : {}),
+          ...(condition ? { condition: condition.label } : {}),
+        },
+      ];
+    });
+    const lowered = Object.values(world.entities).flatMap((item) => {
+      const rootId = item.item?.assemblyClaim?.rootId;
+      return rootId &&
+        visible.has(rootId) &&
+        !world.entities[rootId]?.assembly?.parts[item.id] &&
+        permissions.length
+        ? [{ id: item.id, rootId, name: item.name }]
+        : [];
+    });
+    return {
+      ok: true,
+      revision: this.version,
+      authorized: permissions.length > 0,
+      canCueShower: this.currentScope(scope, 'create'),
+      family: {
+        id: family.id,
+        name: family.name,
+        description: family.description,
+        help: family.presentation.help,
+        useHelp: family.presentation.useHelp,
+        replacementHelp: family.presentation.replacementHelp,
+        planLabels: family.presentation.planLabels,
+        bay: family.bay,
+        defaultArrangementId: family.defaultArrangementId,
+        arrangements: family.arrangements,
+        cover: family.cover,
+        maximumBays: family.limits.bays,
+        invitationText: family.presentation.invitationText,
+        postSeconds: family.seconds.post,
+        coverSeconds: family.seconds.cover,
+        showerSeconds: BASE_CANOPY_SCENE.rainSeconds,
+      },
+      suggested: BASE_CANOPY_SCENE.suggested,
+      materials,
+      lowered,
+      ...(world.finiteRain
+        ? { weather: { startsAt: world.finiteRain.startsAt, endsAt: world.finiteRain.endsAt } }
+        : {}),
+    };
+  }
+  previewConstruction(
+    plan: AssemblyPlan,
+    scope = this.localScope,
+  ): ApiResult & { shapes: ConstructionShape[] } {
+    this.assertScope(scope);
+    const checked = compileAssemblyActivity(
+      this.world,
+      scope.actorId,
+      'construction-preview',
+      plan,
+      this.store.authority!.constructionPermissions(this.world.id),
+    );
+    const root = plan.rootId ? this.world.entities[plan.rootId] : undefined;
+    // A refused guessed root must not disclose its position or installed geometry.
+    if (
+      plan.rootId &&
+      (!root?.assembly || !seesEntity(this.world, this.world.entities[scope.actorId]!, root))
+    )
+      return {
+        ...('ok' in checked
+          ? checked
+          : {
+              ok: false,
+              code: 'not-visible',
+              message: 'Move close enough to perceive the actual structure.',
+            }),
+        shapes: [],
+      };
+    const site = root ? assemblySite(root)! : plan.site,
+      heading = root ? root.spatial.heading : (plan.orientation * Math.PI) / 2,
+      family = this.world.assemblyFamilies?.[plan.familyId];
+    const shapes: ConstructionShape[] = [];
+    if (
+      family &&
+      site &&
+      assemblyArrangement(family, root?.assembly?.arrangementId ?? plan.arrangementId)
+    ) {
+      const bays =
+        plan.operation === 'extend' ||
+        Object.values(root?.assembly?.parts ?? {}).some((p) => p.bay === 1)
+          ? 2
+          : 1;
+      const arrangementId = root?.assembly?.arrangementId ?? plan.arrangementId;
+      const previewCover = (id: string, bay: number) => {
+        const geometry = coverGeometry(family, site, heading, bay, arrangementId);
+        shapes.push({ id, role: 'cover', ...geometry.bounds, panel: geometry.panel });
+      };
+      if (['build', 'extend', 'resume'].includes(plan.operation)) {
+        for (let bay = 0; bay < bays; bay++) previewCover(`preview-cover-${bay}`, bay);
+        const parts = Object.values(root?.assembly?.parts ?? {}).filter((p) => p.role === 'post');
+        const targetBay =
+          plan.operation === 'extend' ||
+          (plan.operation === 'resume' && parts.some((p) => p.bay === 1))
+            ? 1
+            : 0;
+        const missing = assemblySupportSlots(targetBay).filter(
+          (slot) => !parts.some((p) => p.slot === slot),
+        );
+        for (let column = 0; column <= bays; column++)
+          for (let row = 0; row < 2; row++) {
+            const slot = `${column}:${row}`,
+              installed = parts.find((p) => p.slot === slot);
+            const selected =
+              plan.postIds.length === missing.length
+                ? plan.postIds[missing.indexOf(slot)]
+                : undefined;
+            // A refused guessed material must not disclose someone else's inventory.
+            const height =
+              (installed
+                ? materialPostHeight(this.world, installed.itemId)
+                : selected && accessiblePossession(this.world, scope.actorId, selected)
+                  ? materialPostHeight(this.world, selected)
+                  : undefined) ?? postHeightForSlot(family, arrangementId, slot);
+            shapes.push({
+              id: `preview-post-${slot}`,
+              role: 'post',
+              ...postBounds(family, site, heading, slot, height),
+            });
+          }
+      } else if (root?.assembly) {
+        const actual = assemblyView(this.world, root.id)?.shapes ?? [];
+        if (plan.operation === 'replace') {
+          const bay = root.assembly.parts[plan.outgoingId ?? '']?.bay;
+          if (bay !== undefined) previewCover('preview-incoming-cover', bay);
+        } else {
+          const outgoing = new Set([
+            plan.outgoingId,
+            ...Object.values(root.assembly.joints)
+              .filter((j) => j.coverId === plan.outgoingId)
+              .map((j) => j.bindingId),
+          ]);
+          shapes.push(
+            ...actual.filter(
+              (shape) =>
+                plan.operation === 'dismantle' ||
+                (plan.operation === 'lower' &&
+                  !plan.outgoingId &&
+                  (shape.role === 'cover' || shape.role === 'binding')) ||
+                outgoing.has(shape.id),
+            ),
+          );
+        }
+      }
+    }
+    return {
+      ...('ok' in checked
+        ? checked
+        : {
+            ok: true,
+            code: 'available',
+            message:
+              'The complete selected work is available now. Each real phase is checked again as it finishes.',
+          }),
+      shapes,
+    };
+  }
+  private constructionFences(
+    world: WorldState,
+    appendCount: number | undefined,
+  ): { id: string; revision: number }[] {
+    const fences = new Map<string, number>();
+    for (const entity of worldRootEntities(world, true)) {
+      const action = entity.actor?.action;
+      if (action?.assemblyPhase && action.constructionGrant)
+        fences.set(action.constructionGrant.id, action.constructionGrant.revision);
+    }
+    // The snapshot owner already proved the append suffix. Only an edited/forked
+    // history needs an identity diff against retained history.
+    const known =
+      appendCount === undefined
+        ? new Set(this.persistedEvents.map((event) => event.id))
+        : undefined;
+    const start = appendCount === undefined ? 0 : world.events.length - appendCount;
+    for (let i = start; i < world.events.length; i++) {
+      const event = world.events[i]!;
+      if (
+        !known?.has(event.id) &&
+        event.type === 'construction-phase' &&
+        typeof event.data?.['grantId'] === 'string' &&
+        typeof event.data['grantRevision'] === 'number'
+      )
+        fences.set(event.data['grantId'], event.data['grantRevision']);
+    }
+    return [...fences].map(([id, revision]) => ({ id, revision }));
   }
   async transition(
     operation: (world: WorldState) => Transition,
@@ -2953,7 +3339,8 @@ export class WorldService {
     timeline: string,
   ): Promise<void> {
     await this.mutate(async () => {
-      if (this.storageError || this.world.map !== map || this.timelineId !== timeline) return;
+      if (this.storageError || spatialMap(this.world) !== map || this.timelineId !== timeline)
+        return;
       const transition = completeNavigation(this.world, actorId, actionId, request, result);
       if (transition.world === this.world) return;
       // The action/request is already durable. A computed route is simulation progress,
@@ -3972,6 +4359,24 @@ export class WorldService {
           code: 'outing-choices',
           message: 'Choose the exact invitation and reply.',
         };
+      case 'construction-rest':
+        if (!input.targetId)
+          return { ok: false, code: 'rest-place', message: 'Choose a covered bay.' };
+        return compileAssemblyRest(this.world, actorId, commandId, input.targetId, input.bay ?? 0);
+      case 'construction':
+        if (!input.constructionPlan)
+          return {
+            ok: false,
+            code: 'construction-choices',
+            message: 'Choose the site and actual materials.',
+          };
+        return compileAssemblyActivity(
+          this.world,
+          actorId,
+          commandId,
+          input.constructionPlan,
+          this.store.authority!.constructionPermissions(this.world.id),
+        );
       case 'activity-request':
         if (!input.activityFamilyId || !input.activityArguments)
           return {
@@ -4376,7 +4781,10 @@ export class WorldService {
     if (preview) {
       if (this.paused && input.type !== 'inspect-inventory')
         return { ok: false, code: 'paused', message: 'Resume the world to act.' };
-      const { outcome } = executeCommand(this.world, command, { preview: true });
+      const { outcome } = executeCommand(this.world, command, {
+        preview: true,
+        constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
+      });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
     const { lethalReviewId, ...unreviewedInput } = input;
@@ -4399,7 +4807,10 @@ export class WorldService {
         };
       command = { ...review.command, id: commandId, lethalPermission: review.permission };
     } else if (scope && (command.type === 'strike' || command.type === 'hunt')) {
-      const preview = executeCommand(this.world, command, { preview: true }).outcome;
+      const preview = executeCommand(this.world, command, {
+        preview: true,
+        constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
+      }).outcome;
       if (preview.code === 'lethal-review-required') {
         const offer = lethalAttackOffer(this.world, command),
           policy = bodyPolicy(this.world)?.lethalAttackReview;
@@ -4454,7 +4865,10 @@ export class WorldService {
       }
     }
     return this.transition(
-      (world) => executeCommand(world, command),
+      (world) =>
+        executeCommand(world, command, {
+          constructionPermissions: this.store.authority!.constructionPermissions(world.id),
+        }),
       gameplay,
       undefined,
       undefined,

@@ -223,6 +223,10 @@ export function admitAttributeDeclaration(
       e.actor?.attributes?.[id] ||
       e.actor?.practice?.[id] ||
       e.practiceTarget?.attributeId === id ||
+      e.attributes?.[id] ||
+      Object.values(original.assemblyFamilies ?? {}).some(
+        (family) => family.conditionAttribute === id || family.moistureAttribute === id,
+      ) ||
       e.replenisher?.attributeId === id ||
       e.actor?.action?.attributeId === id ||
       e.actor?.agency.plan?.steps.some(

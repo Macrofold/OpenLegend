@@ -1,5 +1,6 @@
 import { isEquipped, equipmentConflicts } from '@open-legend/domain';
 import {
+  materialExposureView,
   NATIVE_PREPARATIONS,
   quantityOf,
   activityRequestHost,
@@ -871,6 +872,7 @@ export function inventoryItemView(
     indefiniteArticle: definition.indefiniteArticle,
     quantity: item.quantity,
     ...(recipeRecord ? { recipeRecord } : {}),
+    materialCondition: materialExposureView(world, item.id),
     characteristics,
     ...(equipped && equippedDefinition && comparable
       ? {

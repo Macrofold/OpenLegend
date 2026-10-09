@@ -1,3 +1,5 @@
+import type { ConstructionPlan, AssemblyView } from './construction.js';
+export * from './construction.js';
 import type { Named } from '@open-legend/language';
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
 import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
@@ -15,6 +17,8 @@ export type { SurfacePoint, SpatialLayout };
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
   type:
+    | 'construction'
+    | 'construction-rest'
     | 'activity'
     | 'activity-request'
     | 'conversation'
@@ -54,6 +58,8 @@ export interface CommandInput {
     | 'treat-scar'
     | 'learn-record'
     | 'teach';
+  constructionPlan?: ConstructionPlan;
+  bay?: number;
   purpose?: string;
   activityFamilyId?: string;
   activityArguments?: Record<string, string | number | boolean>;
@@ -276,6 +282,8 @@ export interface StatusEffectView {
 }
 export interface EntityView extends Named {
   trade?: ItemTradeView;
+  bodySize?: { width: number; height: number };
+  assembly?: AssemblyView;
   /** Exact action offered for the controlled character's currently equipped item. */
   equippedAction?: ActionOption;
   contents?: Array<{
@@ -284,6 +292,7 @@ export interface EntityView extends Named {
     name: string;
     quantity: number;
     portable: boolean;
+    materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   }>;
   actionAnimation?: ActionAnimation | null;
   statusEffects?: StatusEffectView[];
@@ -316,6 +325,7 @@ export interface EntityView extends Named {
 }
 
 export interface InventoryItemView extends Named {
+  materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   revision: number;
   placementRevision: number;
   individual?: boolean;

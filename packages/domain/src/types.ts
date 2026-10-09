@@ -29,6 +29,7 @@ export interface Ammunition {
 }
 export interface ItemDefinition extends Named {
   mechanismFields?: Record<string, Record<string, number>>;
+  assemblyMaterial?: import('./assembly-types.js').AssemblyMaterial;
   /** Authored labels project existing components; they never duplicate component values. */
   characteristics?: import('./item-characteristics.js').ItemCharacteristicDescriptor[];
   melee?: import('./strikes.js').MeleeProfile;
@@ -135,10 +136,15 @@ export type ActionType =
   | 'status-effect'
   | 'treat-scar'
   | 'replenish'
-  | 'tend-fire';
+  | 'tend-fire'
+  | 'assemble';
 export interface Action {
   competencePin?: import('./world-modules.js').DefinitionPin;
   coachingEpisodeId?: string;
+  assemblyPhase?: import('./assembly-types.js').AssemblyPhase;
+  assemblyCorner?: number;
+  constructionGrant?: { id: string; revision: number };
+  materialOriginIds?: string[];
   requiresLethalReview?: boolean;
   /** A physical life, rather than the continuing identity, is an attack's target. */
   targetLife?: number;
@@ -295,7 +301,9 @@ export interface Entity extends Named {
     | 'remains'
     | 'item-pile'
     | 'item'
-    | 'practice-target';
+    | 'practice-target'
+    | 'assembly';
+  assembly?: import('./assembly-types.js').AssemblyComponent;
   inventoryRevision?: number;
   placement?: import('./spatial-state.js').Placement;
   item?: import('./objects.js').ItemLot;
@@ -385,6 +393,9 @@ export interface WorldState {
   /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
   visiblePlaces?: Record<string, Record<string, number>>;
   coachingEpisodes?: Record<string, import('./coaching.js').CoachingEpisode>;
+  assemblyFamilies?: Record<string, import('./assembly-types.js').AssemblyFamily>;
+  assemblyGeometryRevision?: number;
+  finiteRain?: import('./assembly-types.js').FiniteRain;
   actionExperience: import('./action-experience.js').ActionExperienceState;
   workState?: import('./work-budget.js').WorkState;
   participationPolicy?: {
@@ -483,6 +494,7 @@ export type Command = Envelope &
         operation: 'request' | 'accept' | 'decline' | 'withdraw' | 'feedback';
         episodeId?: string;
       }
+    | ({ type: 'assemble' } & import('./assembly-types.js').AssemblyPhase)
     | {
         type: 'activity';
         methodId: string;
@@ -614,6 +626,9 @@ export type Command = Envelope &
         targetId: string;
         definitionId: string;
         operation: 'activate' | 'deactivate';
+        facingHeading?: number;
+        restingPlaceId?: string;
+        restingBay?: number;
       }
     | {
         type: 'inspect-inventory';

@@ -1,6 +1,6 @@
 # Batch 05 proposed constraints
 
-This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **As of October 8, 2026, AV-L01 and AV-L02 are adopted; AV-L03 remains an unimplemented proposal.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
+This inventory owns newly proposed restrictions for [batch 05](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md). **As of October 8, 2026, AV-L01 and AV-L02 are adopted; AV04 selected shelters are also implemented; AV-L03 remains an unimplemented proposal.** On adoption, place each mechanism's inventory entry with its persistent subsystem owner and leave a disposition/link here; do not maintain two editable copies. Exact authored values and examples stay in the linked world owners.
 
 ## AV-L01 — Finite authored expeditions
 
@@ -20,7 +20,7 @@ Preparation supports finite installed input/output/work/heat definitions only, t
 
 ## Existing competence and shelter limits
 
-AV03 inherits [ST-L08–ST-L13](authored-stats.md) and the [competence world profile](../worlds/base/practical-competence.md). The six-release supporting record is not a six-memory retention limit. AV04 inherits [SH-L01–SH-L10](editable-shelters.md), its world profile and PX05's required technical closure. Two bays/parts/layers and one builder/edit are a declared first-family boundary, not settlement capacity evidence.
+AV03 inherits [ST-L08–ST-L13](authored-stats.md) and the [competence world profile](../worlds/base/practical-competence.md). The six-release supporting record is not a six-memory retention limit. AV04's selected flat profile is delivered under [SH-L01–SH-L14](editable-shelters.md), its world profile and PX05's completed technical design. Two bays/parts/layers and one builder/edit are a declared first-family boundary, not settlement capacity evidence. The SH owner retains the slope and broader qualification.
 
 No new AI budget, rate limit, pricing policy, general validation framework or verification quota is created by this allocation. Current policy owns spending and checks. Native arithmetic/geometry do not require inference; genuine NPC choices keep their actual metering. Broader growth and value claims require evidence on their actual workloads.
 

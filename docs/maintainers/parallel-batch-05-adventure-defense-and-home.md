@@ -1,6 +1,6 @@
 # Batch 05 — Adventure, defense and a home
 
-**In progress, October 8, 2026.** AV01 delivers two discoverable sites, finite rewards and exact record learning/manufacture/use through current equipment; AV02 compatible equipment/shield defense and AV03 finite sling practice/voluntary coaching are now merged; human appreciation, combined qualification and the other assignments retain their scoped acceptance. [Shield evidence](../verification/shield-defense.md) records the prior native, PostgreSQL and browser checks. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
+**In progress, October 8, 2026.** AV01 delivers two discoverable sites, finite rewards and exact record learning/manufacture/use through current equipment; AV02 compatible equipment/shield defense and AV03 finite sling practice/voluntary coaching and AV04 editable shelters are now merged; human appreciation, combined qualification and the other assignments retain their scoped acceptance. [Shield evidence](../verification/shield-defense.md) records the prior native, PostgreSQL and browser checks. Five assignments continue after batches 03/04. [Feature scope and priority comparison](../projects/parallel-batch-05-adventure-defense-and-home-feature-spec.md), [technical definitions](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](../projects/parallel-batch-05-adventure-defense-and-home-prompts.md), [constraints](../limits/parallel-batch-05-adventure-defense-and-home.md), [numbered register](../projects/parallel-batches.md).
 
 ## AV01 — Rewarding expeditions
 
@@ -47,12 +47,12 @@
 
 ## AV04 — A usable editable shelter
 
-- [ ] Supply PX05's complete technical design before implementing its selected structural family; preserve existing product/world decisions.
-- [ ] Implement real phased construction, part identity, builder/material permission, geometry/coverage, rest/visitor use and selected rain/moisture.
-- [ ] Implement extension, cloak use through AV02, safe support failure, material-preserving alteration/reclaim and complete current-format continuity.
-- [ ] Complete the selected canopy/two-bay acceptance and reconcile PX05/DG13/ND07/shelter-only ND08, INV-6.4 and affected SW/PO/SC/BW work. Do not close general construction or rain/heat systems.
+- [x] Supply PX05's complete technical design before implementing its selected structural family; preserve existing product/world decisions.
+- [x] Implement real phased construction, part identity, builder/material permission, geometry/coverage, rest/visitor use and selected rain/moisture.
+- [x] Implement extension, cloak use through AV02, safe support failure, material-preserving alteration/reclaim and complete current-format continuity.
+- [x] Complete the selected canopy/two-bay acceptance and reconcile PX05/DG13/ND07/shelter-only ND08, INV-6.4 and affected SW/PO/SC/BW work. Do not close general construction or rain/heat systems.
 
-**Readiness:** PX05 technical design is a required earlier-wave deliverable. Construction can proceed after that delivery; final wearing/attachment integration also needs AV02. [AV04 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av04--real-construction-and-useful-shelter).
+**Delivered on `codex/av04-editable-shelter`:** PX05 design commits `716ae528c`/`78490fa93` and completed AV02 `e025fe0f55ce8010d58be6646decccc5a1a639aa` are incorporated. [Actual evidence](../verification/editable-shelters.md) covers native, disposable PostgreSQL, ordinary UI and bounded work; [SH01–SH06](editable-shelters.md) retains wider qualification and home scope; the separately authorized October 7 follow-on qualifies corrected contacts and the finite-stock single-bay slope. This is branch delivery, not a claim that the branch is merged. [AV04 technical definition](../projects/parallel-batch-05-adventure-defense-and-home-tech-design.md#av04--real-construction-and-useful-shelter).
 
 ## AV05 — River fishing and world-defined cooking
 

@@ -1,4 +1,5 @@
 import { recordSemanticChange } from './dependencies.js';
+import { assemblySpatialMap } from './assembly-geometry.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   BODY_PROFILES,
@@ -10,6 +11,7 @@ import {
   surfaceById,
   SPATIAL_LIMITS,
   validateSpatialMap,
+  type Bounds3,
   type BodyProfileId,
   type SpatialLayout,
   type SurfacePoint,
@@ -25,6 +27,8 @@ export interface FlightProgress {
 }
 export interface EntitySpatial {
   bodyProfileId: BodyProfileId;
+  /** A qualified non-solid exposed form, independent of rendered artwork. */
+  softFootprint?: { width: number; length: number; height: number };
   heading: number;
   /** A native flight routine is saved work; it never grants a capability from sprite artwork. */
   flight?: FlightProgress;
@@ -39,7 +43,24 @@ export interface FlightRoute {
 export type Placement =
   | { mode: 'world'; position: WorldPoint; supportSurfaceId: string | null; revision: number }
   | { mode: 'contained'; parentEntityId: string; revision: number }
-  | { mode: 'attached'; parentEntityId: string; portId: string; revision: number };
+  | { mode: 'attached'; parentEntityId: string; portId: string; revision: number }
+  | ({
+      mode: 'attached';
+      parentEntityId: string;
+      revision: number;
+    } & import('./assembly-types.js').AssemblyAttachment);
+/** Registered assembly attachments have local part coordinates; equipment ports do not. */
+export function isAssemblyPlacement(
+  placement: Placement | undefined,
+): placement is Extract<Placement, import('./assembly-types.js').AssemblyAttachment> {
+  return (
+    !!placement &&
+    placement.mode === 'attached' &&
+    placement.portId === 'assembly' &&
+    'slot' in placement &&
+    'local' in placement
+  );
+}
 export function worldPlacement(
   point: WorldPoint,
   supportSurfaceId: string | null = 'terrain',
@@ -73,7 +94,18 @@ export function worldSupport(entity: Entity | undefined): string | null {
   return placement?.mode === 'world' ? placement.supportSurfaceId : null;
 }
 export function bodyProfile(entity: Entity) {
-  const profile = BODY_PROFILES[entity.spatial.bodyProfileId];
+  const base = BODY_PROFILES[entity.spatial.bodyProfileId];
+  const form = entity.spatial.softFootprint;
+  const profile = form
+    ? {
+        ...base,
+        radius: Math.max(form.width, form.length) / 2,
+        height: form.height,
+        eyeHeight: form.height,
+        earHeight: form.height,
+        interactionHeight: form.height,
+      }
+    : base;
   return entity.actor && !entity.actor.alive
     ? {
         ...profile,
@@ -124,7 +156,7 @@ export function setSpatialPosition(
 /** Unchanged Immer map branches reuse derived geometry/navigation caches. A modified candidate
  * receives its own snapshot; querying an original map would ignore uncommitted geometry edits. */
 export const spatialMap = (world: WorldState) =>
-  isDraft(world.map) ? current(world.map) : world.map;
+  assemblySpatialMap(world, isDraft(world.map) ? current(world.map) : world.map);
 
 export { starterSpatialLayout, starterFlightRoutes } from './worlds/base/spatial.js';
 
@@ -189,11 +221,19 @@ export function validateSpatialWorld(world: WorldState): void {
   for (const entity of Object.values(world.entities)) {
     if (
       entity.retirement ||
+      entity.assembly?.retired ||
       entity.placement?.mode === 'contained' ||
       entity.placement?.mode === 'attached'
     )
       continue;
     const s = entity.spatial;
+    if (
+      s?.softFootprint &&
+      (entity.actor ||
+        entity.kind !== 'item-pile' ||
+        !Object.values(s.softFootprint).every((v) => Number.isFinite(v) && v > 0 && v <= 1))
+    )
+      throw new Error('Invalid non-solid material form.');
     if (
       !finitePoint(worldPosition(entity)) ||
       !s ||
@@ -278,4 +318,34 @@ export function validateSpatialWorld(world: WorldState): void {
         throw new Error('Invalid saved spatial destination.');
     }
   }
+}
+
+/** Full occupied posture for construction/rest clearance; locomotion keeps its existing body owner. */
+export function bodySpace(
+  world: WorldState,
+  entity: Entity,
+  horizontal = world.statusEffectPolicy.definitions.some(
+    (d) =>
+      d.presentation?.pose === 'horizontal' &&
+      Object.entries(entity.statusEffects ?? {}).some(
+        ([id, state]) => state.active && (state.contribution?.definitionId ?? id) === d.id,
+      ),
+  ),
+  heading = entity.spatial.heading,
+  margin = 0,
+): Bounds3 {
+  const point = worldPosition(entity),
+    profile = bodyProfile(entity);
+  const width = profile.radius * 2 + margin * 2,
+    length = (horizontal ? profile.height : profile.radius * 2) + margin * 2;
+  const x = (Math.abs(Math.cos(heading)) * width + Math.abs(Math.sin(heading)) * length) / 2;
+  const z = (Math.abs(Math.sin(heading)) * width + Math.abs(Math.cos(heading)) * length) / 2;
+  return {
+    min: { x: point.x - x, y: point.y, z: point.z - z },
+    max: {
+      x: point.x + x,
+      y: point.y + (horizontal ? profile.radius * 2 : profile.height),
+      z: point.z + z,
+    },
+  };
 }

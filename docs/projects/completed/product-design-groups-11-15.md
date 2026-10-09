@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                                          | Last updated |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five researched product designs, review fixes and documentation checks are complete; feature delivery remains with the linked owners. | 2026-10-05   |
+| Completed | All five researched product designs, review fixes and documentation checks are complete; feature delivery remains with the linked owners. | 2026-10-06   |
 
 ## Scope and working baseline
 
@@ -23,6 +23,8 @@ The [gameplay priorities](../../repertoires/gameplay-priorities.md), [engine/wor
 | DG15 — An optional story perspective                | [After you left specification](../story-perspectives-feature-spec.md)      | Private historical perspective researched and reviewed; NC20 technical/runtime work remains open                   |
 
 The three existing feature specifications remain their behavior owners. This overview does not create competing versions or replace their unresolved implementation work. Each design records primary-source research, what the evidence actually supports, what remains an inference, concrete player journeys, graceful failure, finite work and retention choices, and criteria for deciding whether the feature deserves expansion.
+
+**Subsequent disposition, October 6:** [the shelter technical counterpart](../editable-shelters-tech-design.md) completes PX05's narrow open-shelter design, and AV04 delivers its flat canopy/two-bay construction, use, finite rain/drying and reclaim. [SH01–SH06](../../maintainers/editable-shelters.md) retains the slope and wider qualification. The table above records this product assignment’s completion boundary; it is not a current claim that PX05 remains missing. Broader construction/weather and home psychology remain open.
 
 ## Delivery and review
 

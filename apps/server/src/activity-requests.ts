@@ -60,10 +60,14 @@ export function projectActivityStatus(
     execution.pending.at(-1)?.node.kind === 'wait'
       ? execution.pending.at(-1)!.node.name
       : undefined;
+  let reason = execution.reason ?? waiting;
+  if (!reason && plan!.status === 'blocked')
+    for (const step of plan!.steps)
+      if (step.status === 'blocked' && step.outcome) reason = step.outcome.message;
   return {
     name: execution.request?.name ?? 'My selected method',
     status: waiting ? 'waiting' : plan!.status,
-    ...(execution.reason || waiting ? { reason: execution.reason ?? waiting } : {}),
+    ...(reason ? { reason } : {}),
     ...(execution.control
       ? {
           spent: execution.spent ?? 0,
