@@ -14,7 +14,7 @@ Reuse [ACT04](actor-model.md), [BW16](base-world.md#bw16--family-authoring-and-i
 
 ## GEN02 — Truthful adult age and selected bodily consequences
 
-- [ ] Preserve deliberately authored starting ages separately in meaning from events actually lived. Advance any enabled age record only with supported elapsed life, with readable calendar-versus-bodily meaning and correct save, pause, absence, age-at-death and physical-life boundaries. Qualify one-world chronology first; later compatible travel must preserve origins and count each actual interval once without age reset or invented held life.
+- [ ] Preserve deliberately authored starting ages separately in meaning from events actually lived. Advance any enabled chronological-age record only with actual advancing world calendar time, with readable calendar-versus-bodily meaning and correct save, pause, absence, age-at-death and physical-life boundaries. Qualify one-world chronology first; later compatible travel must preserve origins and count each actual interval once without age reset or invented held life.
 - [ ] Keep this proposal's lack of automatic birthday decline, forced retirement, fertility rules and control succession explicit. If one later adult bodily consequence is selected, first identify a worthwhile activity it changes and specify its actual cause, visibility, progression, interruption and useful response through the existing body/care owners.
 - [ ] Resolve any required new chronological/biological clock assignment through PS-D03 before using it. Do not infer mature behavior, learning, food, money or remembered years from a calendar label or a restored timestamp.
 
@@ -27,7 +27,7 @@ Reuse [ACT04](actor-model.md), [BW16](base-world.md#bw16--family-authoring-and-i
 - [ ] Qualify the full three-person scene with independent resident decisions and ordinary human controls, accessible reading and editable drafts. Record actual script, browser, uncoached-play and provider evidence separately. Pending work/service failure cannot masquerade as a person's refusal or successful care.
 - [ ] Account for the full resident workflows, movement, resources, observation, private history, retained dead identities, save/load and operator effort. Bound or qualify growing discovery, pending work and retained collections through their existing owners; a two-NPC example does not bound mature worlds or ancestry traversal. Preserve complete permitted evidence and accepted capacity ambitions.
 
-**Exit:** the chosen attended experience works and its full cost is understood. Continued population, dependent care or long-lived-world support is claimed only for the actually qualified scope.
+**Exit:** the chosen attended experience works and its full cost is understood. First-scene qualification need not complete a mature-world scale program. Concurrent family scenes, large ancestry and cold long-history work must be qualified before offering those larger scopes. Continued population, dependent care or long-lived-world support is claimed only for the actually qualified scope.
 
 ## GEN04 — Resolve the reserved audience choice and finish generations
 
