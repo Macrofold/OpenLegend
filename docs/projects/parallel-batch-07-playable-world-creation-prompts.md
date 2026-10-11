@@ -1,8 +1,8 @@
 # Batch 07 — Playable world creation implementation prompt
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | One standalone assignment covers OC01–OC05; no implementation has started. | 2026-10-11 |
+| Status      | Current progress                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------- | ------------ |
+| Not started | One standalone assignment covers OC01–OC05; no implementation has started. | 2026-10-11   |
 
 This is one assignment with internal stages. It can finish without Batch 06 or another assignment being implemented. Planning these instructions does not itself authorize running them.
 

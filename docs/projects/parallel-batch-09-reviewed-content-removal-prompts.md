@@ -1,7 +1,7 @@
 # Batch 09 — Implementation prompt for reviewed condition removal
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | Not started | One standalone assignment covers complete reviewed removal of authored character conditions and their native dependents. | 2026-10-11   |
 
 RD01–RD05 are internal stages for one agent, not five workers. This document prepares implementation; the planning task does not launch it. The worker's base must contain this project pair, prompt and tracker. Source readiness was checked on `Macrofold/OpenLegend` local `main` and `origin/main` at `2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5`; no new branch was created by planning.

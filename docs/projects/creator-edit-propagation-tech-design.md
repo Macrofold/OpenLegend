@@ -1,7 +1,7 @@
 # Creator edit propagation — technical design
 
-| Status      | Current progress                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
+| Status      | Current progress                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
 | Not started | Batch 09 designs reviewed status-effect removal; runtime delivery and later consumers remain open. | 2026-10-11   |
 
 ## Boundaries

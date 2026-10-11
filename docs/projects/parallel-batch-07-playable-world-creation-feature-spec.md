@@ -1,8 +1,8 @@
 # Batch 07 — Create a world and play its opening
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | The complete creation assignment is defined; implementation and first-play acceptance have not started. | 2026-10-11 |
+| Status      | Current progress                                                                                        | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The complete creation assignment is defined; implementation and first-play acceptance have not started. | 2026-10-11   |
 
 ## Purpose and selected scope
 
@@ -40,18 +40,18 @@ Use supported definitions and ordinary actions from the starting base. New host 
 
 The creator prepares the new opening from an existing authorized authoring surface. This does not silently grant characterless visitors new tools. The operator must have prepared the target's independent database, data directory, host address and account policy. Implementing the empty-target intake and handoff is this assignment's work; installing a cloud provisioning platform is not.
 
-| Situation | What the person sees and what remains true |
-| --- | --- |
-| A useful supported opening is ready | Play is offered; no required decorative generation, simulated history or extra interview. |
-| The premise depends on unavailable mechanics | The essential idea remains in the retained proposal, with a concrete unsupported requirement; no silent substitution or misleading Start. |
-| The creator deliberately chooses scarcity or solitude | The actual choice survives review and entry, with its practical consequence explained. |
-| A required route, ingredient, definition or grant is missing | Readiness identifies the blocking opportunity and repair; a pretty preview is not a pass. |
-| The target is occupied, unavailable or no longer authorized | The candidate remains retained; no overwrite, reset, deletion or automatic retry. |
-| The person changes the proposal during review | The old review cannot start the changed world; unchanged work remains available. |
-| Start commits but the browser or source process loses its reply | The same start identity resolves to the same world and entry route, without a second creation. |
-| The target commits but its runtime fails to start | Show the committed world and unavailable host separately; runtime recovery opens the same world. |
-| Optional presentation fails | Use faithful existing native presentation where available; required missing representation remains a blocker. |
-| The resident declines or chooses another activity | Preserve independent behavior; first play remains possible without compulsory help. |
+| Situation                                                       | What the person sees and what remains true                                                                                                |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| A useful supported opening is ready                             | Play is offered; no required decorative generation, simulated history or extra interview.                                                 |
+| The premise depends on unavailable mechanics                    | The essential idea remains in the retained proposal, with a concrete unsupported requirement; no silent substitution or misleading Start. |
+| The creator deliberately chooses scarcity or solitude           | The actual choice survives review and entry, with its practical consequence explained.                                                    |
+| A required route, ingredient, definition or grant is missing    | Readiness identifies the blocking opportunity and repair; a pretty preview is not a pass.                                                 |
+| The target is occupied, unavailable or no longer authorized     | The candidate remains retained; no overwrite, reset, deletion or automatic retry.                                                         |
+| The person changes the proposal during review                   | The old review cannot start the changed world; unchanged work remains available.                                                          |
+| Start commits but the browser or source process loses its reply | The same start identity resolves to the same world and entry route, without a second creation.                                            |
+| The target commits but its runtime fails to start               | Show the committed world and unavailable host separately; runtime recovery opens the same world.                                          |
+| Optional presentation fails                                     | Use faithful existing native presentation where available; required missing representation remains a blocker.                             |
+| The resident declines or chooses another activity               | Preserve independent behavior; first play remains possible without compulsory help.                                                       |
 
 ## Stages, effort and acceptance
 

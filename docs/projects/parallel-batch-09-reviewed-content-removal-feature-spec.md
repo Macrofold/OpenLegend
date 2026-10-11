@@ -1,7 +1,7 @@
 # Batch 09 — Review and remove authored character conditions
 
-| Status      | Current progress                                                                                                                    | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Not started | One complete assignment is defined for reviewing and removing authored character conditions through the existing status-effect owner. | 2026-10-11   |
 
 ## Purpose and selected scope

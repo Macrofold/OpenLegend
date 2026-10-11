@@ -1,7 +1,7 @@
 # Creating a playable world from a premise — product and behavior specification
 
-| Status      | Current progress                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Batch 07 specifies first-opening delivery; implementation and the broader DG12 invention-library journey remain open. | 2026-10-11   |
 
 **Status: proposed detailed behavior, October 3, 2026.** This develops the accepted ND01 creator experience. It specifies a product journey and its consequences, not a universal world generator or a new implementation. The [Batch 07 technical design](parallel-batch-07-playable-world-creation-tech-design.md) now specifies the supported first-opening delivery; technical work for broader creation and the library round trip remains open. Existing invention, constitution, funding, world-host and participation owners remain authoritative.

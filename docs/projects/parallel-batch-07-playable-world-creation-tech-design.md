@@ -1,8 +1,8 @@
 # Batch 07 — Technical design for playable world creation
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | One independently completable creation assignment has concrete assembly, authority and recovery contracts; runtime work remains open. | 2026-10-11 |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | One independently completable creation assignment has concrete assembly, authority and recovery contracts; runtime work remains open. | 2026-10-11   |
 
 ## Baseline and independent completion
 
@@ -14,15 +14,15 @@ The [feature allocation](parallel-batch-07-playable-world-creation-feature-spec.
 
 ## Existing owners and the actual gaps
 
-| Responsibility | Existing source and change boundary |
-| --- | --- |
-| Fresh bundled definitions and starting circumstances | `packages/domain/src/worlds/base/world.ts`, `landscape.ts`, `characters.ts` and other base-world modules. Extract reusable fresh construction; do not create a populated world and delete unwanted people afterward. |
-| Exact compiled methods and authored initial knowledge | `packages/domain/src/declarations.ts` supplies `installRecipe`, which installs without teaching or making items; `worlds/base/knowledge.ts` and `knowledge.ts` own explicit starting knowledge. |
-| Actor identity, goals, placement, items and geometry | Existing domain owners, including `identity.ts`, `agency.ts`, `spatial-state.ts`, `items.ts`/quantity owners and current world validators. No copied authoring-side implementation of their semantics. |
+| Responsibility                                                      | Existing source and change boundary                                                                                                                                                                                               |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fresh bundled definitions and starting circumstances                | `packages/domain/src/worlds/base/world.ts`, `landscape.ts`, `characters.ts` and other base-world modules. Extract reusable fresh construction; do not create a populated world and delete unwanted people afterward.              |
+| Exact compiled methods and authored initial knowledge               | `packages/domain/src/declarations.ts` supplies `installRecipe`, which installs without teaching or making items; `worlds/base/knowledge.ts` and `knowledge.ts` own explicit starting knowledge.                                   |
+| Actor identity, goals, placement, items and geometry                | Existing domain owners, including `identity.ts`, `agency.ts`, `spatial-state.ts`, `items.ts`/quantity owners and current world validators. No copied authoring-side implementation of their semantics.                            |
 | Retained human requirements, questions, drafts, review and receipts | `apps/server/src/world-authoring.ts`, `world-authoring-kinds.ts`, `world-authoring-context.ts`, `world-authoring-contracts.ts`, `world-agent-store.ts` and `world-agent-runner.ts`. Add one supported initial-world kind/profile. |
-| Durable world publication and account grants | `apps/server/src/store.ts`, `world-records.ts`, `authority.ts`, `world-service.ts`. Extend the repository's transaction boundary for initial activation and its exact operational receipt. |
-| Host startup and serving | `apps/server/src/http.ts`, `config.ts`, `postgres.ts` and `world-service.ts`. Add the explicit awaiting-creation startup mode and adopt a committed initial world once. |
-| Creator presentation and entry | Existing World Agent workspace, design-system controls, protocol DTOs and current authentication/control entry. Add scoped creation/preview/target views; no browser-authored authority. |
+| Durable world publication and account grants                        | `apps/server/src/store.ts`, `world-records.ts`, `authority.ts`, `world-service.ts`. Extend the repository's transaction boundary for initial activation and its exact operational receipt.                                        |
+| Host startup and serving                                            | `apps/server/src/http.ts`, `config.ts`, `postgres.ts` and `world-service.ts`. Add the explicit awaiting-creation startup mode and adopt a committed initial world once.                                                           |
+| Creator presentation and entry                                      | Existing World Agent workspace, design-system controls, protocol DTOs and current authentication/control entry. Add scoped creation/preview/target views; no browser-authored authority.                                          |
 
 Today `WorldService.initialize` automatically chooses `createWorld`, `createTouchDemo` or `createReservoirDemo` when storage is empty. It then prepares startup state, establishes authority and commits before the HTTP runtime is served. This cannot serve as the prepared empty target: it would fill that target before the creator confirms. The supported authoring-kind enum likewise has no initial-world assembly. Both missing paths are included in OC01/OC04.
 
@@ -118,22 +118,22 @@ Measure cold construction, reused readiness, layout invalidation, full Start com
 
 ## Complete acceptance
 
-| Case | Evidence needed |
-| --- | --- |
-| Prepared opening without paid creation | Select, inspect, start and enter through real surfaces; no generative dispatch occurred merely by viewing or choosing it. |
-| Ordinary-language inhabited opening | Real authorized World Agent preserves the premise, produces a native-valid exact candidate, reaches review and starts it; report actual quality/cost separately from fixtures. |
-| First useful invention and play | In the new world, genuinely generate an admitted supported tool, obtain/debit actual inputs, make/use it, experience the result and reuse it after reopening. A prewritten recipe is not the live-generation proof. |
-| Solitary contrasting opening | Same builder/review/start path omits the resident and preserves its different layout/activity without deletion machinery or compulsory NPC help. |
-| Meaning preservation | An essential unsupported mechanic stays unresolved; a requested harsh start is not repaired against intent; changing layout preserves chosen identity and other unaffected work. |
-| Spatial/resource readiness | Actual body clearance, support, approach and required supplies permit the advertised activity; a blocked route or missing input is visible before Start. Incomplete route work never reads as ready. |
-| Private preview | Candidate inspection does not reveal source-world private thoughts/events, teach final actors or mutate either source or destination. |
-| Authority | Ordinary player, unlisted creator, changed target generation, revoked source grant and invalid account-role mapping cannot activate; no candidate text or destination name grants permission. |
-| Occupied and competing targets | A populated/partly inconsistent target refuses; two concurrent Starts produce exactly one complete world and an explicit refusal or exact replay for the other. |
-| Commit interruption | Failure before transaction leaves no activation; loss after commit resolves the same receipt. Source failure and target runtime failure preserve different truthful statuses. |
-| Revision and cancellation | Stale approval refuses changed contents, reconnect preserves the original request, pre-commit cancellation leaves the destination empty and uncertain cancellation resolves truthfully. |
-| Persistence | Current PostgreSQL reopen and gameplay save/load retain initial definitions, actor bindings, knowledge, supplies, RNG and actual later progress; operational activation cannot rewind. |
-| Browser and accessibility | Keyboard and pointer creation, questions, editing, review, preview alternative, Start and entry work with narrow/short layouts; focus, draft text and reading position survive pending/errors/reopen. |
-| Work bounds | Real complete callers qualify cold/reused preparation, invalidation and admitted/rejected sizes; no automatic paid retry, whole-source-world clone or per-tick creation work. |
+| Case                                   | Evidence needed                                                                                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prepared opening without paid creation | Select, inspect, start and enter through real surfaces; no generative dispatch occurred merely by viewing or choosing it.                                                                                           |
+| Ordinary-language inhabited opening    | Real authorized World Agent preserves the premise, produces a native-valid exact candidate, reaches review and starts it; report actual quality/cost separately from fixtures.                                      |
+| First useful invention and play        | In the new world, genuinely generate an admitted supported tool, obtain/debit actual inputs, make/use it, experience the result and reuse it after reopening. A prewritten recipe is not the live-generation proof. |
+| Solitary contrasting opening           | Same builder/review/start path omits the resident and preserves its different layout/activity without deletion machinery or compulsory NPC help.                                                                    |
+| Meaning preservation                   | An essential unsupported mechanic stays unresolved; a requested harsh start is not repaired against intent; changing layout preserves chosen identity and other unaffected work.                                    |
+| Spatial/resource readiness             | Actual body clearance, support, approach and required supplies permit the advertised activity; a blocked route or missing input is visible before Start. Incomplete route work never reads as ready.                |
+| Private preview                        | Candidate inspection does not reveal source-world private thoughts/events, teach final actors or mutate either source or destination.                                                                               |
+| Authority                              | Ordinary player, unlisted creator, changed target generation, revoked source grant and invalid account-role mapping cannot activate; no candidate text or destination name grants permission.                       |
+| Occupied and competing targets         | A populated/partly inconsistent target refuses; two concurrent Starts produce exactly one complete world and an explicit refusal or exact replay for the other.                                                     |
+| Commit interruption                    | Failure before transaction leaves no activation; loss after commit resolves the same receipt. Source failure and target runtime failure preserve different truthful statuses.                                       |
+| Revision and cancellation              | Stale approval refuses changed contents, reconnect preserves the original request, pre-commit cancellation leaves the destination empty and uncertain cancellation resolves truthfully.                             |
+| Persistence                            | Current PostgreSQL reopen and gameplay save/load retain initial definitions, actor bindings, knowledge, supplies, RNG and actual later progress; operational activation cannot rewind.                              |
+| Browser and accessibility              | Keyboard and pointer creation, questions, editing, review, preview alternative, Start and entry work with narrow/short layouts; focus, draft text and reading position survive pending/errors/reopen.               |
+| Work bounds                            | Real complete callers qualify cold/reused preparation, invalidation and admitted/rejected sizes; no automatic paid retry, whole-source-world clone or per-tick creation work.                                       |
 
 Verification and whether to author tests follow current `AGENTS.md` and its policy. Native fixtures establish deterministic contracts; actual browser interaction establishes the changed interface, and a separately capped real provider journey establishes only the observed language-generation behavior. Reuse valid existing action/invention evidence where unchanged, but perform the new connected creation-to-entry-to-use journey. No uncoached player enjoyment or broad scale claim follows automatically.
 
@@ -143,15 +143,15 @@ Implement OC01 → OC02 → OC03 → OC04 → OC05 within one assignment; host-l
 
 The consequential choices are: creation begins in an existing authorized session; the bundled family supplies the first supported profile; a complete fresh state is built rather than deleting/cloning a live world; only configured empty targets can receive it; the destination owns the exact receipt; normal entry grants control separately; and optional illustration/rehearsal does not delay a ready opening. These choices exchange general provisioning and arbitrary-law breadth for an actual independently deliverable creator experience while preserving the later profile/host adapter seams.
 
-| Maintained owner | Required scoped reconciliation |
-| --- | --- |
-| `docs/projects/world-creation-feature-spec.md` | Link this concrete first-release technical owner and record only delivered creation/readiness/entry scope; keep DG12 §15 library work open. |
-| `docs/maintainers/inventions-and-world-evolution.md` INV-4.10/4.11/4.12 | Record the new supported initial-world authoring consumer and its exact scope; do not close general creator investigation, arbitrary module authoring, conjuring or INV-8 portability. |
-| `docs/maintainers/extensible-world-foundation.md` EWF12 | Record the creation-profile metadata/admission consumer; retain general bodies, rules, composition and portability gaps. |
-| `docs/maintainers/needs-design.md` DG12/ND01 | Link the implementation assignment and supplied technical design, preserving ND12 and broader creation scope. |
-| `docs/limits/world-creation.md` WC-L01–WC-L05/WC-L13 | Preserve proposed versus measured envelopes; document selected profile/empty-target restrictions and actual qualification without duplicating shared authoring limits. |
-| `docs/save-and-load.md`, `docs/identity-and-references.md`, authority/production-data owners | Record initial activation, current-format operational receipts, source/destination scopes and no-replacement startup behavior only where implemented. |
-| `docs/worlds/base/`, architecture and verification owners | Maintain the one authored opening profile, implemented behavior and observed complete-path evidence; keep fixture/live/browser/experience limits distinct. |
+| Maintained owner                                                                             | Required scoped reconciliation                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/projects/world-creation-feature-spec.md`                                               | Link this concrete first-release technical owner and record only delivered creation/readiness/entry scope; keep DG12 §15 library work open.                                            |
+| `docs/maintainers/inventions-and-world-evolution.md` INV-4.10/4.11/4.12                      | Record the new supported initial-world authoring consumer and its exact scope; do not close general creator investigation, arbitrary module authoring, conjuring or INV-8 portability. |
+| `docs/maintainers/extensible-world-foundation.md` EWF12                                      | Record the creation-profile metadata/admission consumer; retain general bodies, rules, composition and portability gaps.                                                               |
+| `docs/maintainers/needs-design.md` DG12/ND01                                                 | Link the implementation assignment and supplied technical design, preserving ND12 and broader creation scope.                                                                          |
+| `docs/limits/world-creation.md` WC-L01–WC-L05/WC-L13                                         | Preserve proposed versus measured envelopes; document selected profile/empty-target restrictions and actual qualification without duplicating shared authoring limits.                 |
+| `docs/save-and-load.md`, `docs/identity-and-references.md`, authority/production-data owners | Record initial activation, current-format operational receipts, source/destination scopes and no-replacement startup behavior only where implemented.                                  |
+| `docs/worlds/base/`, architecture and verification owners                                    | Maintain the one authored opening profile, implemented behavior and observed complete-path evidence; keep fixture/live/browser/experience limits distinct.                             |
 
 ## Maintained records
 

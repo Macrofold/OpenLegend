@@ -1,7 +1,7 @@
 # Batch 09 — Technical design for reviewed condition removal
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                             | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Not started | Current status-effect removal, dependency readers and reviewed-write owners are mapped into one independently complete task. | 2026-10-11   |
 
 ## Baseline and readiness
@@ -18,16 +18,16 @@ This is therefore a concrete extension of an existing lawful operation. By contr
 
 ## Source and responsibility map
 
-| Responsibility | Existing owner and precise use |
-| --- | --- |
-| Definition conditions and native removal | `packages/domain/src/status-effects.ts`, `status-effect-validation.ts`: supported condition traversal, complete candidate validity, old-definition deactivation, state removal and instance/action agreement. |
-| Dependent body rules and retained contributions | `body-policy.ts`, `state-contributions.ts`, `contribution-residency.ts`, `status-capabilities.ts`: keep exact pins and existing refusal; do not detach another owner's data. |
-| Active activities and work | `agency.ts`, `native-work.ts`, `work-budget.ts`, called by the status owner: end only the condition's occupied activity and release its actual reservation. |
-| Current relationship discovery | `apps/server/src/world-graph.ts`, `relationship-index.ts`, `world-tools.ts`: exact definition IDs, versions, source paths, existing search/inspection and bounded presentation. General graph traversal remains exploratory. |
-| Saved candidate, review and Apply | `world-authoring-kinds.ts`, `world-authoring-analysis.ts`, `world-authoring.ts`, `world-agent-store.ts`: one status-policy candidate, immutable revisions, precise preparation, human decision and retained plan. |
-| Native writer and storage | `world-service.ts` (`reviewedTransition`, scoped history preparation), `world-records.ts`, existing command receipts: atomic world/result publication, current authority and cold contribution rows. |
-| Entry and wire contracts | `http.ts`, `world-authoring-contracts.ts`, `world-authoring-schemas.ts`, `packages/protocol/src/index.ts`: shared native preview/selection/read results; no client-supplied approval or affected set. |
-| Creator controls | `apps/client/src/ui/world-inspection.tsx`, `world-agent-work.tsx`, `world-agent-work-details.tsx`, `world-agent-review.tsx`: discover, inspect, revise optional selection, approve, Apply and recover in the existing workspace. |
+| Responsibility                                  | Existing owner and precise use                                                                                                                                                                                                   |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Definition conditions and native removal        | `packages/domain/src/status-effects.ts`, `status-effect-validation.ts`: supported condition traversal, complete candidate validity, old-definition deactivation, state removal and instance/action agreement.                    |
+| Dependent body rules and retained contributions | `body-policy.ts`, `state-contributions.ts`, `contribution-residency.ts`, `status-capabilities.ts`: keep exact pins and existing refusal; do not detach another owner's data.                                                     |
+| Active activities and work                      | `agency.ts`, `native-work.ts`, `work-budget.ts`, called by the status owner: end only the condition's occupied activity and release its actual reservation.                                                                      |
+| Current relationship discovery                  | `apps/server/src/world-graph.ts`, `relationship-index.ts`, `world-tools.ts`: exact definition IDs, versions, source paths, existing search/inspection and bounded presentation. General graph traversal remains exploratory.     |
+| Saved candidate, review and Apply               | `world-authoring-kinds.ts`, `world-authoring-analysis.ts`, `world-authoring.ts`, `world-agent-store.ts`: one status-policy candidate, immutable revisions, precise preparation, human decision and retained plan.                |
+| Native writer and storage                       | `world-service.ts` (`reviewedTransition`, scoped history preparation), `world-records.ts`, existing command receipts: atomic world/result publication, current authority and cold contribution rows.                             |
+| Entry and wire contracts                        | `http.ts`, `world-authoring-contracts.ts`, `world-authoring-schemas.ts`, `packages/protocol/src/index.ts`: shared native preview/selection/read results; no client-supplied approval or affected set.                            |
+| Creator controls                                | `apps/client/src/ui/world-inspection.tsx`, `world-agent-work.tsx`, `world-agent-work-details.tsx`, `world-agent-review.tsx`: discover, inspect, revise optional selection, approve, Apply and recover in the existing workspace. |
 
 The feature introduces no new fictional effects, command family, dependency database or mutation queue. If a small shared visitor is needed, place it with the domain's typed status-condition owner and consume it from native validation and the existing graph/authoring readers. It must enumerate semantic references and source paths, not walk arbitrary JSON strings. A hypothetical future family supplies its own complete dependency/deletion adapter before becoming removable; it does not gain support by appearing in the generic graph.
 
@@ -109,15 +109,15 @@ The concrete consumer, optional-association meaning, native ending semantics, ex
 
 ## Documentation and parent reconciliation
 
-| Owner | Reconcile only this delivered scope |
-| --- | --- |
-| `docs/maintainers/creator-edits.md` CE01 and creator-edit-propagation project pair | Record this first supported condition-removal adapter and actual acceptance; retain general-family deletion and CE02 gaps. |
-| `docs/status-effects.md`, `docs/invention-workshop-tools.md`, `docs/world-agent-runtime.md` | Describe exact removal preview, raw-policy routing, current creator controls, old-definition ending semantics and receipt recovery after delivery. |
+| Owner                                                                                                     | Reconcile only this delivered scope                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/maintainers/creator-edits.md` CE01 and creator-edit-propagation project pair                        | Record this first supported condition-removal adapter and actual acceptance; retain general-family deletion and CE02 gaps.                                  |
+| `docs/status-effects.md`, `docs/invention-workshop-tools.md`, `docs/world-agent-runtime.md`               | Describe exact removal preview, raw-policy routing, current creator controls, old-definition ending semantics and receipt recovery after delivery.          |
 | `docs/invention-graph.md`, `docs/maintainers/inventions-and-world-evolution.md` INV-15, INV-11 and INV-21 | Identify finite complete status-removal coverage while general graph impact/activation coverage remains open; update exact reviewed-write integration only. |
-| Same tracker INV-5 and `docs/maintainers/extensible-world-foundation.md` EWF07 | Record the scoped native condition retirement/retained-pin behavior; do not close general law migration or risk-accepted incompatible changes. |
-| `docs/save-and-load.md`, `docs/maintainers/save-and-load.md` SL00 | Reconcile any changed current-format review/receipt/state participation and actual restart/load proof without legacy support. |
-| `docs/limits/creator-edits.md` CE01, reused invention/graph limits | Record supported roots/optional associations/blockers, measured work/retention envelopes and refusal; retain unresolved broader scale honestly. |
-| `docs/maintainers/ui-ux.md` UIUX05 and `docs/architecture.md` | Record the selected real creator journey and new current behavior, not whole-interface or general accessibility acceptance. |
+| Same tracker INV-5 and `docs/maintainers/extensible-world-foundation.md` EWF07                            | Record the scoped native condition retirement/retained-pin behavior; do not close general law migration or risk-accepted incompatible changes.              |
+| `docs/save-and-load.md`, `docs/maintainers/save-and-load.md` SL00                                         | Reconcile any changed current-format review/receipt/state participation and actual restart/load proof without legacy support.                               |
+| `docs/limits/creator-edits.md` CE01, reused invention/graph limits                                        | Record supported roots/optional associations/blockers, measured work/retention envelopes and refusal; retain unresolved broader scale honestly.             |
+| `docs/maintainers/ui-ux.md` UIUX05 and `docs/architecture.md`                                             | Record the selected real creator journey and new current behavior, not whole-interface or general accessibility acceptance.                                 |
 
 Keep the Batch 09 feature/design/prompt and [RD tracker](../maintainers/parallel-batch-09-reviewed-content-removal.md) consistent. Record actual runtime evidence under the existing verification-report policy and link it from these owners. Planning closes none of their runtime gates.
 
