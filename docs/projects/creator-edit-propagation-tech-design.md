@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                             | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Direction and safety contracts are recorded; concrete owner adapters and runtime tooling remain future work. | 2026-10-03   |
+| Not started | Batch 09 designs reviewed status-effect removal; runtime delivery and later consumers remain open. | 2026-10-11   |
 
 ## Boundaries
 
@@ -24,9 +24,11 @@ Manual editing/deletion calls the existing memory editor/forgetting owner, inclu
 
 ## Stages and verification
 
-CE01 (earlier): select a concrete explicit-dependency deletion consumer, map complete owners, then implement preview/selection/approval/atomic apply with invalid/stale/retry checks and actual UI qualification. CE02 (later): actor scope and semantic lookup, multiselection/manual edits, then separately bounded AI diff proposals. Establish numerical work/retention/page limits and scale evidence during each implementation; no invented capacity claims now.
+CE01 (earlier): Batch 09 selects installed status-effect definitions; map complete owners, then implement preview/selection/approval/atomic apply with invalid/stale/retry checks and actual UI qualification. CE02 (later): actor scope and semantic lookup, multiselection/manual edits, then separately bounded AI diff proposals. Establish numerical work/retention/page limits and scale evidence during each implementation; no invented capacity claims now.
 
-No runtime implementation is authorized by this future plan alone. Mike's current request authorizes documenting/tracking these capabilities while implementing the family tree.
+The original October 3 request authorized documenting these capabilities during the family-tree work. The October 11 allocation supplies Batch 09's implementation design and prompt; creating these documents does not itself authorize executing that prompt.
+
+The first concrete delivery is [Batch 09](parallel-batch-09-reviewed-content-removal-feature-spec.md), with its [owner-specific technical design](parallel-batch-09-reviewed-content-removal-tech-design.md). This supplies the selected consumer without turning the general policy into a promise to remove every record kind.
 
 ## Maintained records
 

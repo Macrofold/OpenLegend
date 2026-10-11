@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 11, 2026 — Three complete assignments alongside unfinished combat work
+
+[Batches 07–09](projects/parallel-batches.md#launching-batches-0709-together) allocate playable world creation, an investigation with real witnesses and a recoverable possession, and reviewed creator-content removal. Each is one ambitious assignment containing its own implementation, user experience, persistence and qualification work. Their designs use the integrated local-main capabilities and assume Batch 06 is unavailable; shared files do not require intermediate handoffs or agent communication.
+
+The allocation selects two complete experiences and work to close an already accepted creator-control gap, avoiding repeated delivery of existing survival activities or category quotas. Unresolved psychological, enclosure and production-art decisions remain with their existing owners. Project scopes, limits, parent tracker mappings and exact future branch names are documented; no runtime implementation, paid execution or new standing workflow is introduced by this planning change.
+
 ## October 8, 2026 — Consolidate Batch 06 into one complete assignment
 
 At the owner's request, [Batch 06](projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md) now has [one implementation prompt](projects/parallel-batch-06-rivals-and-contested-ground-prompts.md) covering CF01–CF05. The previous five assignments required partial deliveries and repeated handoffs; combining them lets one agent own the full permissions → projectiles → evasion → opponents → help → encounter sequence. Existing feature scope, modular code responsibilities and acceptance criteria remain intact; the tradeoff is one larger assignment rather than five independently finishable tasks that the old split did not actually provide.

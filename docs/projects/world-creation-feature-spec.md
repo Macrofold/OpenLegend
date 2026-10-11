@@ -2,11 +2,13 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG12 deepens the existing creation proposal with a researched invention-library round trip; technical design and runtime delivery remain open. | 2026-10-05   |
+| In progress | Batch 07 specifies first-opening delivery; implementation and the broader DG12 invention-library journey remain open. | 2026-10-11   |
 
-**Status: proposed detailed behavior, October 3, 2026.** This develops the accepted ND01 creator experience. It specifies a product journey and its consequences, not a universal world generator or a new implementation. Technical design remains deferred. Existing invention, constitution, funding, world-host and participation owners remain authoritative.
+**Status: proposed detailed behavior, October 3, 2026.** This develops the accepted ND01 creator experience. It specifies a product journey and its consequences, not a universal world generator or a new implementation. The [Batch 07 technical design](parallel-batch-07-playable-world-creation-tech-design.md) now specifies the supported first-opening delivery; technical work for broader creation and the library round trip remains open. Existing invention, constitution, funding, world-host and participation owners remain authoritative.
 
 The 5 October DG12 expansion in section 15 connects that opening to a retained invention, destination compatibility and free reuse under actual grants. It preserves the original proposal and its game-first critique; the writing sequence and current baseline are recorded in the [five-group overview](completed/product-design-groups-11-15.md).
+
+The [Batch 07 assignment](parallel-batch-07-playable-world-creation-feature-spec.md) turns the first-opening part of this proposal into one independently completable implementation scope. Its [tracker](../maintainers/parallel-batch-07-playable-world-creation.md) owns that delivery; completing it does not complete section 15's invention library or all broader journeys in this specification.
 
 ## 1. The promise
 

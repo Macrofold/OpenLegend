@@ -258,6 +258,8 @@ The delivered local reuse exercise covers definition-only attribute transfer and
 
 ## EWF12 — Runtime-to-world-agent authoring and explanation bridge
 
+**Scoped delivery allocation:** [Batch 07](parallel-batch-07-playable-world-creation.md) owns one supported initial-world assembly and empty-host activation consumer, including its authoring, review and actual entry. Existing compiler/runtime support remains authoritative. This allocation neither completes EWF12 nor makes library import or new combat a dependency.
+
 **Dependencies:** a real first supported module/family and the relevant INV-1/2/4 authoring operations. It can begin with native descriptors before full template composition. **Contract:** runtime §13 authoring boundary; world-agent/workshop and UI owners define the user workflow.
 
 **Proposed product consumer:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) develops ND01's complete creation journey and WC-J acceptance cases. It reuses this bridge and INV-4.10; its researched product detail does not complete these interfaces, approve new host capabilities or add a second installer.

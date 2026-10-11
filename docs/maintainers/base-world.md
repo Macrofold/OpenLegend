@@ -1,5 +1,7 @@
 # Open Legend base-world delivery
 
+**Proposed noncombat investigation:** [Batch 08](parallel-batch-08-the-missing-belonging.md) owns a missing possession, two residents with partial knowledge, physical clues and actual custody/return. Its new authored content and observer-permitted evidence integration are unimplemented; it requires no Batch 06 behavior and does not close broader BW09 recognition, character-life or relationship acceptance.
+
 **October 7 shelter follow-on:** [the authored shelter owner](../worlds/base/editable-shelters.md) now supplies the qualified single-bay slope and exactly two separately granted tall posts alongside the unchanged flat kit. [SH05](editable-shelters.md#sh05--shared-two-bay-layout-and-qualified-cloak-lean-to) and its evidence record delivery. Wider home, material production, weather/heat/fire and cooperative construction remain separate.
 
 Proposed conflict expansion: [batch 06](parallel-batch-06-rivals-and-contested-ground.md) specifies CF02/CF03 ranged/evasive mechanics under [proposed world tuning](../worlds/base/ranged-counterplay.md). Armed opponents, voluntary combat help and Broken Watchpost are also specified after Mike accepted [NPC-to-NPC lethality including Ada](../worlds/base/lifecycle-and-protection.md#npc-combat-participation). CF01 implements that target-policy extension; current BW14 player-danger/death and BW23 effects remain controlling, and no runtime completion is implied.

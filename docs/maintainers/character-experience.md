@@ -6,6 +6,8 @@ The first useful scope is one resident whose body experience, desire for contact
 
 ## CE01 — A coherent authored person in a supported world
 
+[Batch 08](parallel-batch-08-the-missing-belonging.md) proposes two ordinary witnesses with distinct authored circumstances and partial knowledge in a complete investigation. Actual voluntary conversation and later recollection belong to that assignment's acceptance. Its authored incident is not evidence of spontaneous motivation, general psychological satisfaction or a complete ordinary life; D69 and wider CE acceptance remain open.
+
 [CF01/CF04](parallel-batch-06-rivals-and-contested-ground.md) propose hostile residents and voluntary combat help as further consumers of ordinary minds. Explicit authored initial purposes do not prove spontaneous motivation, and a biography must not prescribe the decision algorithm. Their planned evidence does not close this broader character-quality scope.
 
 The owner’s [authorship clarification](../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality) distinguishes evolving history/disposition from prescribed behavior and transient circumstances. Ada now has a simple observation preference; the supply-dependent clause, current camp assertion and generic reasoning/narration instructions are removed. The old stopping episode remains evidence for the old content and cannot qualify this revision. Whole-life acceptance remains open.

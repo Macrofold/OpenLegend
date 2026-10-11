@@ -139,7 +139,7 @@ The original four recipe families—sling, bow, arrow and gathering tool—now h
 
 **Depends on:** INV-1/2 identities and permissions. Can proceed alongside INV-3.
 
-**Proposed ND01 consumer:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) develops the complete initial assembly journey on INV-4.10 and EWF12, with scoped readiness, retained intent, preview, funding and current-host handoff. [WC limits](../limits/world-creation.md) record proposed scope. Technical design and unchecked delivery remain open.
+**Proposed ND01 consumer:** [Creating a playable world from a premise](../projects/world-creation-feature-spec.md) develops the complete initial assembly journey on INV-4.10 and EWF12, with scoped readiness, retained intent, preview, funding and current-host handoff. [WC limits](../limits/world-creation.md) record proposed scope. The [Batch 07 technical design](../projects/parallel-batch-07-playable-world-creation-tech-design.md) now specifies that first-opening scope; unchecked runtime delivery remains open.
 
 - [ ] **4.1 Separate creator and embodied audiences.** Introduce server-granted creator query capabilities over the authorized world. Cover entities, definitions, installations, character context and events through bounded typed reads. Never send the whole world snapshot, credentials or other actors' private memories to ordinary player/NPC jobs. Creator-only findings stay out of character knowledge unless learned through a valid in-world event.
 - [ ] **4.2 Make history durable and navigable.** Persist the declared event coverage and technical invention artifacts beyond UI scrollback. Support exact lookup and paginated time/entity/version filters with evidence IDs, revisions and honest gaps. Add database indexes when needed; broad semantic search is not required for basic inspection.
@@ -340,6 +340,8 @@ PW03/PW10 add a concrete 6.1–6.3 consumer through the existing object/resource
 The following work implements the accepted [runtime](../world-agent-runtime.md), [shared tools](../invention-workshop-tools.md), [MCP](../world-agent-mcp.md), [graph](../invention-graph.md), [composition](../invention-composition.md) and [scenario](../invention-scenarios.md) contracts. It extends INV-1–INV-14 rather than marking their unfinished scope complete. INV-11 still owns mandatory validation; INV-5 still owns live activation; EWF/AG/EPR/PF retain their subsystem responsibilities. Automated regression cases are recorded only in the maintainer TODO.
 
 ### INV-15 — Navigable relationship graph and visual inspection
+
+**October 11 allocation:** [Batch 09](parallel-batch-09-reviewed-content-removal.md) specifies implementation of reviewed removal for supported creator-authored status-effect definitions through actual owner dependencies. It reuses exact graph sources where valid and adds complete removal coverage for that consumer; exploratory navigation still cannot certify deletion, and broader INV-15/INV-11 impact coverage remains open.
 
 **Depends on:** existing definition/pin identities and INV-11.1–11.3 where enforced behavior summaries are needed. **Owner:** [Relationship graph](../invention-graph.md).
 

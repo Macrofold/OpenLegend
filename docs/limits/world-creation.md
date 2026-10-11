@@ -4,6 +4,8 @@
 
 DG12’s 5 October expansion adds the bounded library/reuse consumer below. INV-8/EWF11 retain portability, rights and data ownership; none of these proposed envelopes is measured runtime capacity.
 
+[Batch 07](../projects/parallel-batch-07-playable-world-creation-tech-design.md) now defines the first-opening implementation assignment under WC-L01–WC-L05 and WC-L13. It does not deliver or require the library consumer in WC-L06–WC-L12. All new scope remains proposed and unmeasured.
+
 ## WC-L01 — Reference starting population and place
 
 **Proposed · Restrictiveness: Safe.** The first familiar reference follows the [accepted personal MVP](../../archive/05-project/first-playable-mvp.md): one wilderness locality, one live NPC and one initial human-controlled character, with the real creative gameplay loop. A ready curated opening is valid; custom creation is optional. This revises the earlier six-resident first reference to avoid making a larger population or authoring workflow a prerequisite for first play. Six remains an unqualified later small-community hypothesis for social variety, not a release floor, capacity result or engine-wide cap. That larger offer still requires whole-community resource, agency, interesting interaction and operating qualification; success with one resident does not qualify six. Unsupported larger requests receive an explicit supported alternative or retained draft before activation; no silent reduction to decorative residents. Supported atypical, solitary, empty and deliberately harsh premises remain possible. Revisit after the feature's first-session, absence, population-change and complete-cost cases.
@@ -51,6 +53,10 @@ DG12’s 5 October expansion adds the bounded library/reuse consumer below. INV-
 ## WC-L12 — Rights and private-origin presentation
 
 **Proposed · Restrictiveness: Safe.** Show only permitted origin metadata, credits, inventory and dependency explanations to each audience. Original, imported, adapted and learned views remain distinct. Zero price supplies no new modification, commercial-use or redistribution grant. A partial distributable pack is labeled partial; a complete authorized inventory may contain restricted references that are not exposed publicly. Previously granted rights follow the actual version terms; exceptional privacy/security/rights removal remains separately authorized. No product-wide free-use license, self-hosted ownership adjudication or compulsory contribution policy is chosen by DG12.
+
+## WC-L13 — Prepared empty creation targets
+
+**Proposed — October 11, 2026 · Restrictiveness: Very safe.** The first creator journey uses an existing authorized creator session and operator-configured local targets with independent current PostgreSQL storage, data directories and current account/operating policy. An awaiting-creation target starts no bundled world or autonomous activity before exact reviewed activation. Only the current supported creation profile is admitted; no automatic host provisioning, occupied-world replacement, library import, remote federation, arbitrary executable law or generated media is supplied. Client/model selection carries a permitted target identity, never a connection string, path, executable command or new entitlement. An unavailable, occupied, changed or unsupported target preserves the draft and refuses activation. This limits deployment breadth while proving the complete creation-to-play path; [OC01–OC05](../maintainers/parallel-batch-07-playable-world-creation.md) must qualify the largest admitted profile and rejected excess through real callers. The one-resident reference does not establish a population capacity, and target count, retained candidates and total storage remain independently growing work under the existing authoring/hosting owners. Expansion requires a complete supported profile or hosting use case, not merely a larger numeric allowance.
 
 ## Maintained records
 

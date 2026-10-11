@@ -8,6 +8,8 @@ AV05’s adopted [food preparation and finite cast bounds](limits/food-preparati
 
 Defined conflict allocation: [batch 06 — Rivals and contested ground](limits/parallel-batch-06-rivals-and-contested-ground.md) records proposed projectile/evasion/help/encounter bounds and the accepted NPC participation target; runtime delivery remains open.
 
+Batches 07–09 retain [world-creation limits](limits/world-creation.md), add the proposed [missing-belonging scope](limits/parallel-batch-08-the-missing-belonging.md), and extend [creator-removal limits](limits/creator-edits.md). Their planning limits are not runtime capacity measurements.
+
 Start with [the tracking system](limits/README.md). Feature inventories retain limits, reasons and removal decisions; [Remove / Change / Expand](maintainers/limits-audit.md) contains only pending recommendations. [Feature documentation requirements](feature-documentation.md) explain how future changes keep both synchronized.
 
 ## Feature inventories
