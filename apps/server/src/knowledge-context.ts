@@ -32,9 +32,11 @@ export function selectedKnowledgeReferences(
 
 export function generalKnowledgeContext(world: WorldState, actorId: string) {
   const doc = knowledgeDocument(world, actorId, null);
+  const seeded = !!doc && doc.revision === 1 && doc.evidenceIds.length === 0 && !!doc.text;
   return {
     subjectId: null,
     revision: doc?.revision ?? 0,
+    ...(seeded ? { provenance: 'Authored starting understanding' } : {}),
     characters: characterCount(doc?.text ?? ''),
     maxCharacters: world.knowledgePolicy?.maxCharacters.general,
     text: projectEntityMarkers(doc?.text ?? '', world, actorId),

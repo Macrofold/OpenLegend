@@ -897,7 +897,13 @@ export function inventoryItemView(
           : definition.properties.includes('food')
             ? 'food'
             : 'material',
-    description: describePossession(item, definition, isEquipped(world, scope.actorId, item.id)),
+    description: describePossession(
+      item,
+      definition,
+      isEquipped(world, scope.actorId, item.id),
+      'accessible possession',
+      Boolean(currentInventoryInspection(world, player.id)?.itemIds.includes(item.id)),
+    ),
     equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
     actions,

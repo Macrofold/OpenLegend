@@ -166,10 +166,16 @@ export function acquireExposure(
   exposure: import('./places.js').EncounterExposure,
   importance = 6,
 ): WorldEvent {
+  const locationSuffix =
+    exposure.kind === 'inventory-item' && exposure.observedLocation
+      ? exposure.observedLocation.kind === 'world'
+        ? ` at ${exposure.observedLocation.label}`
+        : ` (${exposure.observedLocation.label})`
+      : '';
   const text =
     exposure.kind === 'place'
       ? `I reached ${exposure.label}. ${exposure.description}`
-      : `I inspected ${exposure.label}. ${exposure.description}`;
+      : `I inspected ${exposure.label}${locationSuffix}. ${exposure.description}`;
   return recordEvent(
     world,
     events,

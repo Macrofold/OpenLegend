@@ -1,11 +1,31 @@
 import { projectEventEvidence, type ActorEvent, type WorldEvent } from '@open-legend/domain';
-import type { PerceivedEventsPage, PublicEvent } from '@open-legend/protocol';
+import type {
+  PerceivedEventsPage,
+  PublicEvent,
+  WorldEventSourceAcquisition,
+  WorldEventSourceDetail,
+  WorldEventSourceReference,
+} from '@open-legend/protocol';
 import { digest } from './content-digest.js';
 import type { SqlDatabase } from './store.js';
 import type { StorySource } from './history.js';
 import { SEARCH_SCAN_ROWS, matchesSearch, scanMatches, searchTerms } from './text-search.js';
 import { HistoryCursorError } from './history-cursor-error.js';
 export { HistoryCursorError } from './history-cursor-error.js';
+
+export function worldEventSourceReference(
+  sourceScope: string,
+  family: 'speech' | 'encounter',
+  sourceId: string,
+  revision = '1',
+): WorldEventSourceReference {
+  return {
+    family,
+    sourceId,
+    revision,
+    token: digest(['world-event-source-v1', sourceScope, family, sourceId]),
+  };
+}
 
 /** Presentation never receives raw source text, origins or hidden subject IDs. */
 export function publicEvent(event: ActorEvent): PublicEvent {
@@ -61,6 +81,8 @@ export async function readPerceivedEvents(
   actorId: string,
   scope: string,
   options: { type?: string; cursor?: string; limit?: number; q?: string },
+  sourceScope = scope,
+  corrections?: Record<string, string>,
 ): Promise<PerceivedEventsPage> {
   const type = options.type ?? 'all';
   const terms = searchTerms(options.q);
@@ -189,10 +211,195 @@ export async function readPerceivedEvents(
       events: page.reverse().map((row) => {
         const event = JSON.parse(String(row['payload'])) as WorldEvent;
         const perspective = JSON.parse(String(row['perspective'])) as StorySource;
-        return publicEvent(projectEventEvidence(event, perspective.evidence));
+        const projected = projectEventEvidence(event, perspective.evidence);
+        const corr = corrections?.[projected.id] ?? corrections?.[`memory-${projected.id}`];
+        const source =
+          projected.type === 'speech' || projected.type === 'encounter'
+            ? worldEventSourceReference(
+                sourceScope,
+                projected.type,
+                projected.id,
+                corr ? `${perspective.revision}:corrected:${corr}` : perspective.revision,
+              )
+            : undefined;
+        return {
+          ...publicEvent(projected),
+          ...(source ? { source } : {}),
+        };
       }),
       ...(next ? { nextCursor: Buffer.from(JSON.stringify(next)).toString('base64url') } : {}),
       ...(scanLimited ? { scanLimited } : {}),
     };
+  });
+}
+
+/** Exact indexed lookup of one or two retained actor perspectives for source detail/comparison.
+ * Never falls back to raw world events when an actor perspective is missing or revoked.
+ * docs/perceived-world-events.md#4-query-and-storage-behavior
+ */
+export async function readPerceivedEventSources(
+  db: SqlDatabase,
+  worldId: string,
+  actorId: string,
+  sourceScope: string,
+  references: readonly WorldEventSourceReference[],
+  state?: { corrections?: Record<string, string>; forgotten?: readonly string[] },
+): Promise<WorldEventSourceDetail[]> {
+  if (!Array.isArray(references) || references.length < 1 || references.length > 2)
+    throw new HistoryCursorError('Select one or two event sources.');
+  for (const ref of references) {
+    if (
+      !ref ||
+      (ref.family !== 'speech' && ref.family !== 'encounter') ||
+      typeof ref.sourceId !== 'string' ||
+      ref.sourceId.length === 0 ||
+      ref.sourceId.length > 160 ||
+      typeof ref.revision !== 'string' ||
+      ref.revision.length === 0 ||
+      ref.revision.length > 200 ||
+      typeof ref.token !== 'string' ||
+      ref.token !== worldEventSourceReference(sourceScope, ref.family, ref.sourceId, ref.revision).token
+    )
+      throw new HistoryCursorError('This source selection expired. Refresh the event log.');
+  }
+  const forgottenSet = new Set(state?.forgotten ?? []);
+  const corrections = state?.corrections ?? {};
+  const requestedIds = [...new Set(references.map((ref) => ref.sourceId))];
+  const correctionIds = requestedIds.flatMap((id) => {
+    const corr = corrections[id] ?? corrections[`memory-${id}`];
+    return corr ? [corr] : [];
+  });
+  const allIds = [...new Set([...requestedIds, ...correctionIds])];
+  const position = perspectiveField('order', 'p');
+  const field = (name: string) => `(e.payload::jsonb->>'${name}')`;
+  const join =
+    'history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id';
+  const where = `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern')) AND p.event_id IN (${allIds.map(() => '?').join(',')})`;
+  const snapshot = db.readTransaction?.bind(db) ?? db.transaction.bind(db);
+  return snapshot(async () => {
+    const rows = allIds.length
+      ? await db
+          .prepare(
+            `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE ${where}`,
+          )
+          .all(worldId, actorId, ...allIds)
+      : [];
+    const byId = new Map(rows.map((row) => [String(row['id']), row]));
+    return references.map((ref): WorldEventSourceDetail => {
+      if (forgottenSet.has(ref.sourceId) || forgottenSet.has(`memory-${ref.sourceId}`)) {
+        return {
+          status: 'unavailable',
+          sourceId: ref.sourceId,
+          reason: 'This source is no longer available in retained personal history.',
+        };
+      }
+      const row = byId.get(ref.sourceId);
+      if (!row) {
+        return {
+          status: 'unavailable',
+          sourceId: ref.sourceId,
+          reason: 'This source is no longer available in retained personal history.',
+        };
+      }
+      const event = JSON.parse(String(row['payload'])) as WorldEvent;
+      const perspective = JSON.parse(String(row['perspective'])) as StorySource;
+      const projected = projectEventEvidence(event, perspective.evidence);
+      if (
+        (projected.type !== 'speech' && projected.type !== 'encounter') ||
+        projected.type !== ref.family
+      )
+        throw new HistoryCursorError('This source selection expired. Refresh the event log.');
+      const exposure = perspective.evidence.exposure ?? event.exposure;
+      let acquisition: WorldEventSourceAcquisition;
+      let acquisitionLabel: string;
+      let sourceLabel: string;
+      if (projected.type === 'speech') {
+        const selfSpoken =
+          projected.speech?.perception === 'self' ||
+          projected.actorId === actorId ||
+          perspective.evidence.sourceId === actorId;
+        acquisition = selfSpoken ? 'spoken-by-self' : 'heard-speech';
+        acquisitionLabel = selfSpoken ? 'Spoken by you' : 'Heard directly';
+        sourceLabel =
+          projected.speech?.speaker?.nameAtTime || (selfSpoken ? 'You' : 'Unrecognized speaker');
+      } else if (exposure?.kind === 'inventory-item') {
+        if (exposure.inscription) {
+          acquisition = 'inspected-document';
+          acquisitionLabel = 'Written account inspected';
+        } else {
+          acquisition = 'inspected-item';
+          acquisitionLabel = 'Physical item inspected';
+        }
+        sourceLabel = exposure.label;
+      } else if (exposure?.kind === 'place') {
+        acquisition = 'observed-place';
+        acquisitionLabel = 'Place reached';
+        sourceLabel = exposure.label;
+      } else {
+        acquisition = 'observed-encounter';
+        acquisitionLabel = 'Direct observation';
+        sourceLabel = 'Observed encounter';
+      }
+      const observedLocation =
+        exposure?.kind === 'inventory-item' && exposure.observedLocation
+          ? exposure.observedLocation.kind === 'world'
+            ? {
+                kind: 'world' as const,
+                label: exposure.observedLocation.label,
+                point: {
+                  x: exposure.observedLocation.point.x,
+                  y: exposure.observedLocation.point.y,
+                  z: exposure.observedLocation.point.z,
+                  surfaceId: exposure.observedLocation.point.surfaceId,
+                },
+              }
+            : {
+                kind: 'possession' as const,
+                label: exposure.observedLocation.label,
+              }
+          : undefined;
+      const correctionEventId =
+        corrections[ref.sourceId] ?? corrections[`memory-${ref.sourceId}`];
+      const corrected = Boolean(correctionEventId);
+      let correctionNote: string | undefined;
+      if (correctionEventId) {
+        const corrRow =
+          !forgottenSet.has(correctionEventId) && !forgottenSet.has(`memory-${correctionEventId}`)
+            ? byId.get(correctionEventId)
+            : undefined;
+        if (corrRow) {
+          const corrEvent = JSON.parse(String(corrRow['payload'])) as WorldEvent;
+          const corrPerspective = JSON.parse(String(corrRow['perspective'])) as StorySource;
+          const corrProjected = projectEventEvidence(corrEvent, corrPerspective.evidence);
+          correctionNote = `Qualified by later observation: ${corrProjected.text}`;
+        } else {
+          correctionNote = 'Qualified by a later observation in retained history.';
+        }
+      }
+      return {
+        status: 'available',
+        reference: worldEventSourceReference(
+          sourceScope,
+          ref.family,
+          ref.sourceId,
+          correctionEventId
+            ? `${perspective.revision}:corrected:${correctionEventId}`
+            : perspective.revision,
+        ),
+        time: projected.at,
+        order: Number(row['position']),
+        acquisition,
+        acquisitionLabel,
+        sourceLabel,
+        text: projected.text,
+        ...(exposure?.kind === 'inventory-item' && exposure.inscription
+          ? { inscription: exposure.inscription }
+          : {}),
+        ...(projected.speech ? { speech: projected.speech } : {}),
+        ...(observedLocation ? { observedLocation } : {}),
+        corrected,
+        ...(correctionNote ? { correctionNote } : {}),
+      };
+    });
   });
 }
