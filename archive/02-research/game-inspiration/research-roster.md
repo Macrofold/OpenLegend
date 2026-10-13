@@ -1,6 +1,6 @@
 # Complete research roster
 
-Read [requirements](research-requirements.md) and [current progress](research-progress.md). This is the stable **148-subject inventory**; **only the progress ledger records completion**. The original 47 subjects are preserved, G48–G49 implement Mike's September 25, 2026 RuneScape request, G50–G57 preserve the first September 26 expansion, G58–G130 implement the broader September 26 mechanics-corpus expansion, and G131–G148 add the eighteen survival games approved September 27. The directory `dossiers/` owns full-category passes. Earlier chapters and selective mechanics remain in their existing owners and do not automatically satisfy R01–R14.
+Read [requirements](research-requirements.md) and [current progress](research-progress.md). This is the stable **149-subject inventory**; **only the progress ledger records completion**. The original 47 subjects are preserved, G48–G49 implement Mike's September 25, 2026 RuneScape request, G50–G57 preserve the first September 26 expansion, G58–G130 implement the broader September 26 mechanics-corpus expansion, and G131–G148 add the eighteen survival games approved September 27. G149 adds Songs of Syx at Mike's request on October 13, 2026. The directory `dossiers/` owns full-category passes. Earlier chapters and selective mechanics remain in their existing owners and do not automatically satisfy R01–R14.
 
 | ID | Subject | Dossier filename | Existing chapter / scope boundary |
 | --- | --- | --- | --- |
@@ -66,7 +66,7 @@ Read [requirements](research-requirements.md) and [current progress](research-pr
 | G59 | Pathfinder: Wrath of the Righteous | `pathfinder-wrath-of-the-righteous.md` | Independent full pass; mythic paths, crusade layer, companions, class/build breadth, turn-based/RTwP, expansions and branching narrative. |
 | G60 | Fire Emblem: The Blazing Blade (Fire Emblem, GBA) | `fire-emblem-the-blazing-blade.md` | North American title and Japanese subtitle distinguished; permadeath, supports, weapon triangle, map objectives and campaign structure. |
 | G61 | Fire Emblem: Path of Radiance | `fire-emblem-path-of-radiance.md` | Independent Tellius pass; base conversations, supports, bonus experience, skills, laguz and map design. |
-| G62 | Fire Emblem Awakening | `fire-emblem-awakening.md` | Pair Up, marriage/children, class changes, skills, supports, map/progression and difficulty boundaries. |
+| G62 | Fire Emblem Awakening | `fire-emblem-awakening.md` | Pair Up, relationships, children, class changes, skills, supports, map/progression and difficulty boundaries. |
 | G63 | Fire Emblem Fates | `fire-emblem-fates.md` | Birthright/Conquest/Revelation routes and availability boundaries; pair-up revisions, My Castle, children and map design. |
 | G64 | Fire Emblem: Three Houses | `fire-emblem-three-houses.md` | Academy calendar, tutoring, classes, battalions, supports, routes, monastery activities and expansion boundaries. |
 | G65 | Fire Emblem Heroes | `fire-emblem-heroes.md` | Mobile live-service pass; summon/economy, inheritance, merges, modes, power creep, events and monetization separated from mainline FE. |
@@ -153,8 +153,9 @@ Read [requirements](research-requirements.md) and [current progress](research-pr
 | G146 | V Rising | `v-rising.md` | Vampire survival, blood, sunlight, combat/powers, bosses, castle production, servants and PvE/PvP; distinguish versioned progression, server rules and expansion/crossover content. |
 | G147 | Once Human | `once-human.md` | Supernatural survival, contamination/sanity, weapons, Deviations, territory production and group activities; distinguish scenarios, seasonal/persistent rules, carryover, monetization and platform/version boundaries. |
 | G148 | Abiotic Factor | `abiotic-factor.md` | Research-facility survival: professions/skills, bodily needs, improvised tools, traps, power, bases, anomalies, exploration and cooperative roles; separate Early Access history, released chapters and expansion content. |
+| G149 | Songs of Syx | `songs-of-syx.md` | Added October 13, 2026 at Mike's request: full R01–R14 pass on settlement growth, species, households, law, religion, production/logistics, technology, trade, regions, armies, presentation, development, distribution, economics and reception. Distinguish V71 from older releases/demos, 1.0 targets and mod-only features. |
 
-These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G148. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each pass; research missing categories rather than duplicating complete existing sections.
+These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G149. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each pass; research missing categories rather than duplicating complete existing sections.
 
 
 ## September 26 mechanics-corpus expansion scope
@@ -190,3 +191,7 @@ The initial scope check used BioWare's [June 2024 series/Veilguard account](http
 G131–G148 are the eighteen games in the approved survival shortlist. Each requires its own full R01–R14 pass, explicit mechanics inventory, worked interactions, five substantive written reviews where available and applicable Steam/player evidence. The two ARK releases and the two Forest games have independent IDs and dossiers; a franchise comparison does not discharge either game. Existing survival subjects such as Minecraft, Terraria, Valheim, Project Zomboid, Palworld and Kenshi keep their original IDs. Other sequels and related editions are context within the stated boundaries, not silently added full subjects.
 
 The filenames above are planned outputs. Adding a roster row does not create a dossier or establish completion; the [progress ledger](research-progress.md#survival-expansion--g131g148) owns the pending state. Detailed current mechanics and release/service claims must be verified during each pass.
+
+## October 13 Songs of Syx addition
+
+G149 is a new independent full-game pass, not a replacement for the earlier colony or strategy references. [Its dossier](dossiers/songs-of-syx.md) must apply the same R01–R14 standard, five substantive independent written perspectives and accessible Steam helpful/player evidence. The [progress ledger](research-progress.md) owns completion and verification. Prior G01–G148 results and the separate global preservation/integration gates are not re-certified by this addition.
