@@ -45,6 +45,14 @@ import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
 import { BASE_PLACES } from './places.js';
 import { installExpeditions } from './expeditions.js';
+import {
+  installMissingBelonging,
+  MARA_ID,
+  MARA_STARTING_UNDERSTANDING,
+  MISSING_BELONGING_LOCATIONS,
+  TAVIN_ID,
+  TAVIN_STARTING_UNDERSTANDING,
+} from './missing-belonging.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
 import traitBank from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
@@ -52,6 +60,13 @@ import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../t
 
 export const PLAYER_ID = 'entity-0001';
 export const NPC_ID = 'entity-0002';
+export {
+  MARA_ID,
+  MARA_STARTING_UNDERSTANDING,
+  MISSING_BELONGING_LOCATIONS,
+  TAVIN_ID,
+  TAVIN_STARTING_UNDERSTANDING,
+};
 const MERCENARY_ID = 'peacock-mercenary';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
 export { NATIVE_ITEMS, NATIVE_PREPARATIONS } from './items.js';
@@ -436,6 +451,7 @@ export function createWorld(
   populateOuterWilderness(world);
   installFirstThreat(world);
   installExpeditions(world);
+  installMissingBelonging(world);
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);

@@ -856,6 +856,13 @@ export function validateWorldModules(world: WorldState): void {
         !isDefinitionPin(definition.recipeRecord.method))
     )
       throw new Error('Invalid recipe-record capability.');
+    if (
+      definition.inscription !== undefined &&
+      (typeof definition.inscription !== 'string' ||
+        !definition.inscription.trim() ||
+        definition.inscription.length > 600)
+    )
+      throw new Error('Invalid item inscription.');
   }
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {

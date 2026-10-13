@@ -96,7 +96,9 @@ export function starterTiles(seed: number, width: number, depth: number): Terrai
         tiles[z]![x] === 'grass' &&
         noise(seed + 29, x, z) < 0.009 &&
         !WOODLAND_ANIMALS.some(([, ax, az]) => Math.hypot(x - ax, z - az) < 1.5) &&
-        !WOODLAND_PATCHES.some(([, , px, pz]) => Math.hypot(x - px, z - pz) < 1.5)
+        !WOODLAND_PATCHES.some(([, , px, pz]) => Math.hypot(x - px, z - pz) < 1.5) &&
+        Math.hypot(x - 32, z - 28) >= 1.5 &&
+        Math.hypot(x - 38, z - 31) >= 1.5
       )
         tiles[z]![x] = 'rock';
   return tiles;

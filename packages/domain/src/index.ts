@@ -57,6 +57,13 @@ export {
   TRAIT_BANK,
 } from './data.js';
 export {
+  MARA_ID,
+  MARA_STARTING_UNDERSTANDING,
+  MISSING_BELONGING_LOCATIONS,
+  TAVIN_ID,
+  TAVIN_STARTING_UNDERSTANDING,
+} from './worlds/base/missing-belonging.js';
+export {
   GOD_SPAWN_OPTIONS,
   editPerson,
   editWorldEvents,

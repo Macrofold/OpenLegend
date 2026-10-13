@@ -25,3 +25,51 @@ export const ADA_IDENTITY = {
     },
   ] satisfies CharacterTrait[],
 };
+
+export const MARA_IDENTITY = {
+  initialGoals: ['Keep my mending tools in order and recover my red-stitched satchel.'],
+  description:
+    'A careful camp mender in a patched wool coat, looking over her work kit with quiet concern.',
+  personality:
+    'Careful, observant, and appreciative of honest help. Speaks plainly about what she has noticed and avoids guessing what she has not seen.',
+  backstory:
+    'I am Mara Reed. I learned to mend cordage, packs, and camp gear along the river crossings, keeping every tool and satchel neatly marked so shared supplies do not go astray.',
+  traits: [
+    {
+      id: 'mara-methodical',
+      name: 'Methodical mender',
+      description: 'I track repairs and materials by their physical markings and condition.',
+    },
+    {
+      id: 'mara-plain-dealing',
+      name: 'Plain-dealing',
+      description:
+        'I state what I know directly and thank people who return or look after shared gear.',
+    },
+  ] satisfies CharacterTrait[],
+};
+
+export const TAVIN_IDENTITY = {
+  initialGoals: ['Keep the clearing work spot and dry reed-side stores tidy.'],
+  description:
+    'A practical camp sorter in a reed-woven vest, keeping clearing tools and dry stores in order.',
+  personality:
+    'Practical, tidy, and matter-of-fact. Moves unattended gear out of the damp and leaves clear notes about where he stored it.',
+  backstory:
+    'I am Tavin Vale. I worked river landings and camp clearings where sudden damp ruined cordage left on the ground, developing a habit of sorting stray bundles under dry stone cover.',
+  traits: [
+    {
+      id: 'tavin-dry-store-keeper',
+      name: 'Dry-store keeper',
+      description:
+        'I set stray cordage and fiber bundles under dry stone cover before damp weather sets in.',
+    },
+    {
+      id: 'tavin-direct-recorder',
+      name: 'Direct recorder',
+      description:
+        'I leave plain notes at work spots and state where I moved unattended gear without guessing who owns it.',
+    },
+  ] satisfies CharacterTrait[],
+};
+
