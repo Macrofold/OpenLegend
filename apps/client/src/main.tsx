@@ -112,7 +112,7 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
   game: { title: 'Game', side: 'right' },
   nearby: { title: 'In view', side: 'right' },
   journal: { title: 'Journal', side: 'left' },
-  events: { title: 'World Events', side: 'left' },
+  events: { title: 'World Events', side: 'left', wide: true },
   ai: { title: 'AI & allowance', side: 'right' },
   intelligence: { title: 'Intelligence', side: 'right', wide: true },
   composer: { title: 'Conversation', side: 'left', wide: true },

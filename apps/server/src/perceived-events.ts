@@ -319,25 +319,25 @@ export async function readPerceivedEventSources(
           projected.actorId === actorId ||
           perspective.evidence.sourceId === actorId;
         acquisition = selfSpoken ? 'spoken-by-self' : 'heard-speech';
-        acquisitionLabel = selfSpoken ? 'Spoken by you' : 'Heard directly';
+        acquisitionLabel = selfSpoken ? 'Spoken by you' : 'Heard';
         sourceLabel =
           projected.speech?.speaker?.nameAtTime || (selfSpoken ? 'You' : 'Unrecognized speaker');
       } else if (exposure?.kind === 'inventory-item') {
         if (exposure.inscription) {
           acquisition = 'inspected-document';
-          acquisitionLabel = 'Written account inspected';
+          acquisitionLabel = 'Inspected a written account';
         } else {
           acquisition = 'inspected-item';
-          acquisitionLabel = 'Physical item inspected';
+          acquisitionLabel = 'Inspected';
         }
         sourceLabel = exposure.label;
       } else if (exposure?.kind === 'place') {
         acquisition = 'observed-place';
-        acquisitionLabel = 'Place reached';
+        acquisitionLabel = 'Observed';
         sourceLabel = exposure.label;
       } else {
         acquisition = 'observed-encounter';
-        acquisitionLabel = 'Direct observation';
+        acquisitionLabel = 'Observed';
         sourceLabel = 'Observed encounter';
       }
       const observedLocation =
