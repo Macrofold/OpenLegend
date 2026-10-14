@@ -1,0 +1,621 @@
+{
+  "purpose": "Finer source-guided fixed-cell mercenary; original and first block iteration retained",
+  "lineage": "Body anatomy and rig landmarks from original Meshy study; fitted cape from authored study rest geometry",
+  "authoring": "Offline solid-shape conversion, material-family repaint, explicit face correction, thick cape and small round bronze clasp",
+  "license": "First-party authoring script AGPL-3.0-only; inherited model/reference production rights remain unqualified study provenance",
+  "cellSizeMetres": 0.0125,
+  "coordinateSystem": "Y-up, front +Z",
+  "sourceScale": 1.1351351325844843,
+  "boundsYUp": {
+    "min": [
+      -0.5125000000000001,
+      0.0,
+      -0.55
+    ],
+    "max": [
+      0.5125000000000001,
+      2.1,
+      0.23750000000000002
+    ]
+  },
+  "widthMetres": 1.0250000000000001,
+  "heightMetres": 2.1,
+  "parts": [
+    {
+      "name": "torso",
+      "parent": "MercenarySculpted",
+      "pivotMetresYUp": [
+        -0.005970721133053303,
+        1.174438238143921,
+        -0.011488883756101131
+      ],
+      "localPivotMetresYUp": [
+        -0.005970721133053303,
+        1.174438238143921,
+        -0.011488883756101131
+      ],
+      "cells": 39699,
+      "quads": 6250,
+      "exposedCellFaces": 14376,
+      "triangles": 12500
+    },
+    {
+      "name": "head",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        -0.0011722558410838246,
+        1.8339828252792358,
+        0.04432295635342598
+      ],
+      "localPivotMetresYUp": [
+        0.0047984654083848,
+        0.6595445871353149,
+        0.055811841040849686
+      ],
+      "cells": 3118,
+      "quads": 770,
+      "exposedCellFaces": 1766,
+      "triangles": 1540
+    },
+    {
+      "name": "leftUpperArm",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        0.19770701229572296,
+        1.709094524383545,
+        0.023914655670523643
+      ],
+      "localPivotMetresYUp": [
+        0.2036777287721634,
+        0.534656286239624,
+        0.0354035384953022
+      ],
+      "cells": 5665,
+      "quads": 1454,
+      "exposedCellFaces": 3156,
+      "triangles": 2908
+    },
+    {
+      "name": "leftForearm",
+      "parent": "leftUpperArm",
+      "pivotMetresYUp": [
+        0.270564466714859,
+        1.404713749885559,
+        -0.04124092310667038
+      ],
+      "localPivotMetresYUp": [
+        0.07285745441913605,
+        -0.30438077449798584,
+        -0.06515558063983917
+      ],
+      "cells": 2324,
+      "quads": 1012,
+      "exposedCellFaces": 1954,
+      "triangles": 2024
+    },
+    {
+      "name": "rightUpperArm",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        -0.20417052507400513,
+        1.7111566066741943,
+        0.02354647032916546
+      ],
+      "localPivotMetresYUp": [
+        -0.1981998085975647,
+        0.5367183685302734,
+        0.035035353153944016
+      ],
+      "cells": 5069,
+      "quads": 1349,
+      "exposedCellFaces": 2852,
+      "triangles": 2698
+    },
+    {
+      "name": "rightForearm",
+      "parent": "rightUpperArm",
+      "pivotMetresYUp": [
+        -0.2685481011867523,
+        1.4116445779800415,
+        -0.04246681183576584
+      ],
+      "localPivotMetresYUp": [
+        -0.06437757611274719,
+        -0.29951202869415283,
+        -0.06601328402757645
+      ],
+      "cells": 2357,
+      "quads": 997,
+      "exposedCellFaces": 1964,
+      "triangles": 1994
+    },
+    {
+      "name": "leftThigh",
+      "parent": "MercenarySculpted",
+      "pivotMetresYUp": [
+        0.1325899362564087,
+        1.0567704439163208,
+        -0.008694073185324669
+      ],
+      "localPivotMetresYUp": [
+        0.1325899362564087,
+        1.0567704439163208,
+        -0.008694073185324669
+      ],
+      "cells": 16517,
+      "quads": 4041,
+      "exposedCellFaces": 10382,
+      "triangles": 8082
+    },
+    {
+      "name": "leftShin",
+      "parent": "leftThigh",
+      "pivotMetresYUp": [
+        0.18737544119358063,
+        0.5860949158668518,
+        0.002486503915861249
+      ],
+      "localPivotMetresYUp": [
+        0.054785504937171936,
+        -0.470675528049469,
+        0.011180576868355274
+      ],
+      "cells": 6403,
+      "quads": 1667,
+      "exposedCellFaces": 3732,
+      "triangles": 3334
+    },
+    {
+      "name": "rightThigh",
+      "parent": "MercenarySculpted",
+      "pivotMetresYUp": [
+        -0.13203081488609314,
+        1.0563666820526123,
+        -0.008465100079774857
+      ],
+      "localPivotMetresYUp": [
+        -0.13203081488609314,
+        1.0563666820526123,
+        -0.008465100079774857
+      ],
+      "cells": 15855,
+      "quads": 3779,
+      "exposedCellFaces": 9730,
+      "triangles": 7558
+    },
+    {
+      "name": "rightShin",
+      "parent": "rightThigh",
+      "pivotMetresYUp": [
+        -0.1822761595249176,
+        0.5840752720832825,
+        0.003632510779425502
+      ],
+      "localPivotMetresYUp": [
+        -0.05024534463882446,
+        -0.47229140996932983,
+        0.012097611092031002
+      ],
+      "cells": 6319,
+      "quads": 1568,
+      "exposedCellFaces": 3702,
+      "triangles": 3136
+    },
+    {
+      "name": "cape",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        8.752998837735504e-06,
+        1.7481117248535156,
+        -0.19297300279140472
+      ],
+      "localPivotMetresYUp": [
+        0.005979474168270826,
+        0.5736734867095947,
+        -0.18148411810398102
+      ],
+      "cells": 20889,
+      "quads": 11990,
+      "exposedCellFaces": 33148,
+      "triangles": 23980
+    }
+  ],
+  "cells": 124215,
+  "triangles": 69754,
+  "materials": 1,
+  "textures": 0,
+  "skins": 0,
+  "clips": 0,
+  "palette": {
+    "skin": "bd936d",
+    "skinLight": "d4ad81",
+    "skinShade": "a77c57",
+    "skinWarm": "c39a74",
+    "eye": "26342f",
+    "eyeLight": "918d78",
+    "brow": "45362c",
+    "mouth": "493027",
+    "lip": "94684c",
+    "hair": "37302d",
+    "hairLight": "534539",
+    "hairWarm": "625340",
+    "beard": "514236",
+    "beardLight": "65513d",
+    "mail": "647271",
+    "mailLight": "80908a",
+    "mailShade": "4e605f",
+    "mailDark": "445452",
+    "quilt": "967249",
+    "quiltLight": "ac8558",
+    "quiltShade": "7b5c3e",
+    "quiltSeam": "6a513b",
+    "wrap": "b3a07c",
+    "wrapLight": "c5b38c",
+    "wrapShade": "968669",
+    "trouser": "736348",
+    "trouserLight": "8a7755",
+    "leather": "6a5138",
+    "leatherLight": "866545",
+    "leatherShade": "4a3a2c",
+    "sole": "36332a",
+    "cape": "93482f",
+    "capeLight": "a55335",
+    "capeShade": "7c3d2c",
+    "capeDeep": "593329",
+    "gold": "bf9452",
+    "goldLight": "d4ab64",
+    "goldShade": "9b7540",
+    "bronze": "9f7d43",
+    "bronzeLight": "c19b5b"
+  },
+  "solidFilling": {
+    "sampledColumns": 6082,
+    "oddIntersectionColumns": 82,
+    "oddColumnCellsXY": [
+      [
+        -23,
+        76
+      ],
+      [
+        -22,
+        56
+      ],
+      [
+        -21,
+        8
+      ],
+      [
+        -19,
+        47
+      ],
+      [
+        -17,
+        80
+      ],
+      [
+        -16,
+        37
+      ],
+      [
+        -15,
+        75
+      ],
+      [
+        -13,
+        47
+      ],
+      [
+        -13,
+        58
+      ],
+      [
+        -13,
+        101
+      ],
+      [
+        -12,
+        58
+      ],
+      [
+        -12,
+        74
+      ],
+      [
+        -11,
+        75
+      ],
+      [
+        -11,
+        91
+      ],
+      [
+        -9,
+        72
+      ],
+      [
+        -9,
+        78
+      ],
+      [
+        -9,
+        89
+      ],
+      [
+        -8,
+        60
+      ],
+      [
+        -8,
+        83
+      ],
+      [
+        -8,
+        99
+      ],
+      [
+        -7,
+        61
+      ],
+      [
+        -7,
+        62
+      ],
+      [
+        -6,
+        150
+      ],
+      [
+        -5,
+        65
+      ],
+      [
+        -5,
+        66
+      ],
+      [
+        -5,
+        143
+      ],
+      [
+        -5,
+        144
+      ],
+      [
+        -5,
+        146
+      ],
+      [
+        -4,
+        68
+      ],
+      [
+        -4,
+        75
+      ],
+      [
+        -4,
+        76
+      ],
+      [
+        -4,
+        77
+      ],
+      [
+        -4,
+        78
+      ],
+      [
+        -2,
+        66
+      ],
+      [
+        -2,
+        67
+      ],
+      [
+        -1,
+        97
+      ],
+      [
+        0,
+        167
+      ],
+      [
+        1,
+        81
+      ],
+      [
+        1,
+        167
+      ],
+      [
+        2,
+        96
+      ],
+      [
+        3,
+        61
+      ],
+      [
+        3,
+        88
+      ],
+      [
+        3,
+        92
+      ],
+      [
+        3,
+        96
+      ],
+      [
+        3,
+        149
+      ],
+      [
+        4,
+        61
+      ],
+      [
+        4,
+        62
+      ],
+      [
+        4,
+        84
+      ],
+      [
+        4,
+        96
+      ],
+      [
+        5,
+        59
+      ],
+      [
+        5,
+        61
+      ],
+      [
+        5,
+        62
+      ],
+      [
+        5,
+        69
+      ],
+      [
+        6,
+        61
+      ],
+      [
+        7,
+        78
+      ],
+      [
+        7,
+        82
+      ],
+      [
+        8,
+        57
+      ],
+      [
+        8,
+        60
+      ],
+      [
+        8,
+        79
+      ],
+      [
+        9,
+        32
+      ],
+      [
+        9,
+        57
+      ],
+      [
+        9,
+        59
+      ],
+      [
+        10,
+        50
+      ],
+      [
+        10,
+        58
+      ],
+      [
+        11,
+        74
+      ],
+      [
+        12,
+        64
+      ],
+      [
+        14,
+        64
+      ],
+      [
+        14,
+        117
+      ],
+      [
+        16,
+        60
+      ],
+      [
+        16,
+        66
+      ],
+      [
+        16,
+        68
+      ],
+      [
+        16,
+        72
+      ],
+      [
+        16,
+        73
+      ],
+      [
+        17,
+        36
+      ],
+      [
+        17,
+        64
+      ],
+      [
+        17,
+        72
+      ],
+      [
+        18,
+        65
+      ],
+      [
+        18,
+        66
+      ],
+      [
+        18,
+        70
+      ],
+      [
+        19,
+        7
+      ],
+      [
+        19,
+        59
+      ],
+      [
+        26,
+        120
+      ]
+    ]
+  },
+  "costUSD": 0,
+  "sourceSha256": {
+    "scripts/sculpt-voxel-mercenary.py": "86e3518a51fc53bb870307084a38a8fdf476afb915a814b9395aea67478bf1e8",
+    "apps/client/src/characters/mercenary-assets/mercenary.glb": "cfd519287b4ebcc6233ffd269ea10cc455780f3f52c5c4e789f2db245f444ab6",
+    "apps/client/src/characters/mercenary-cloth.json": "1ff957a18af52de6d5eb1da4376c981111dcda02f3aed5efa453a576f18e8e6d"
+  },
+  "sha256": {
+    "mercenary-sculpted.glb": "76c79c177af1ee73c374704da6c13f7c76c351229172b0b16c676d94790eb3a7",
+    "mercenary-sculpted.blend": "02f482864fef7076a72bf8cb03826d93ecfcc16ef10feca682e60f6997b2ae12"
+  },
+  "remaining": [
+    "Creator likeness/style acceptance",
+    "Arbitrary poses and equipment",
+    "Production rights",
+    "Crowd/device qualification"
+  ]
+}
