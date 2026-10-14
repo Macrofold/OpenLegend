@@ -1,8 +1,8 @@
 # What makes games fun — and worth returning to
 
-**Canonical research synthesis · October 14, 2026**
+**Canonical research synthesis · Critically reviewed and expanded October 14, 2026**
 
-This is the game-inspiration library's core research document on **fun, meaningful experience, sustained engagement and pressure to keep playing**. It synthesizes all **148 roster subjects plus the additional Dragon Age series dossier**, and incorporates Mike's supplied Roblox video transcript. It replaces neither the individual dossiers nor the [earlier fun essay](what-actually-makes-these-worlds-fun.md), which remains a preserved precursor. Canonical here means the owner of this research synthesis—not an approved architecture, product specification or implementation backlog.
+This is the game-inspiration library's core research document on **fun, meaningful experience, sustained engagement and pressure to keep playing**. It synthesizes all **148 roster subjects plus the additional Dragon Age series dossier**, incorporates Mike's supplied Roblox video transcript, and now extends beyond that corpus through design theory, human studies, mobile play and additional 2025–2026 games. It replaces neither the individual dossiers nor the [earlier fun essay](what-actually-makes-these-worlds-fun.md), which remains a preserved precursor. Canonical here means the owner of this research synthesis—not an approved architecture, product specification or implementation backlog.
 
 **Central position:** design for participation people value, progress that preserves or expands that value, and return they can freely choose. Being hard to put down is not sufficient evidence of success. A game can be enjoyable without demanding another session; it can sustain attention after enjoyment has faded; and an enjoyable game can still be played in ways a person regrets.
 
@@ -13,6 +13,12 @@ The [research roster](../research-roster.md) owns subject identities. The topic-
 The corpus was taken from a branch beginning at GitHub main commit `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`. This review inspected relevant dossier mechanics, interpretations, worked situations and limitations. It did **not** replay 148 games, rerun their original research passes, independently verify every external source, or turn constructed examples into observed sessions. Existing facts retain their version, audience and source boundaries. The 22 selected video categories/entries are a supplemental account, not 22 newly completed dossiers.
 
 The [foundations paper](../references/fun-engagement-and-compulsion-research.md) separately records selected primary research on motivation, meaningful entertainment, playtime and the clinical boundary. It distinguishes published findings from our design interpretations. The principles below are comparative hypotheses and recommendations: recurring cases make them useful to investigate, not universal causal laws or statistically ranked effects.
+
+### Broader research and corrections to the first assessment
+
+The expansion has three source-owning papers: [critique, design theory and evaluation](../references/fun-research-expansion-theory.md), [mobile play and recent games](../references/fun-research-expansion-mobile-and-recent.md), and [AI-era games and human evidence](../references/fun-research-expansion-ai.md). Each identifies what was actually inspected, source type, relevant findings and limits. Additional examples do not enlarge the original roster or convert a product description into an independent enjoyment study.
+
+The earlier assessment was strongest at identifying failure modes, but too often used “meaningful” or “worthwhile” as an explanation. It also underdeveloped action feel, purposeful friction, device context and AI-specific interaction costs. The correction is to ask **what experience is intended, what playable interaction might cause it, and what observation would count against that explanation**. The core position survives; a universal equation of fun with choice, ease, persistent progress or maximum freedom does not follow. [Detailed critique](../references/fun-research-expansion-theory.md#1-assessment-of-the-earlier-assessment)
 
 ## 2. Fun, meaning, return and compulsion are different questions
 
@@ -29,7 +35,9 @@ These are not four scores that should be added into an invented health metric. T
 
 Our preferred design sequence is **an inviting situation → worthwhile participation → an understandable result → learning, change or discovery → a personally meaningful next possibility**. A satisfying stopping point belongs inside that sequence. A contrasting sequence is **a threatened loss or expiring opportunity → another required check → postponed departure**, which can raise attendance without establishing equivalent value. These are analytical descriptions, not claims that every game or player belongs wholly to one category. The same game can support both motives. [Roblox account](../references/roblox-addictiveness-video.md) · [evidence map](../references/fun-and-engagement-dossier-evidence.md)
 
-## 3. Sixteen central principles
+Do not make the first sequence require a permanent improvement after every action. Performing a familiar movement, enjoying a joke, looking at a place or spending time with someone can be sufficient. Nor does good underlying play eliminate unwanted persistence: the supplied narrator describes enjoying Bee Swarm while also struggling to stop. That contrast remains part of the evidence rather than being edited away to protect the thesis. [Transcript source and interpretation](../references/roblox-addictiveness-video.md#rv01)
+
+## 3. Eighteen central principles
 
 ### P01 — Decide what kind of value the game promises
 
@@ -39,13 +47,17 @@ Animal Crossing and The Sims make personal arrangement and ordinary life relevan
 
 **Counterweight:** “players differ” should not excuse poor execution. Identify the promised pleasure, then investigate whether controls, repetition and progression deliver it. A story-first player and an optimization enthusiast can reasonably need different settings or activities rather than one compromised average.
 
+**Make the explanation actionable:** use MDA's distinction between rules, their behavior in play and the desired experience as a hypothesis-building aid—not a validated recipe. “The companion can help” names a capability; “the player notices and values a particular contribution” names an experience to investigate. The same distinction protects sensation and atmosphere from being treated as decoration that must justify itself through a statistic. [Theory T01](../references/fun-research-expansion-theory.md#t01)
+
 ### P02 — Make the activity itself good, not merely its reward
 
 The interval between rewards is most of the experience. Responsive movement, readable impact, sound, atmosphere, conversation and the physical satisfaction of arranging something deserve evaluation in their own right. An action can be enjoyable without requiring a fresh strategic decision every second. Conversely, making a chore economically necessary does not make it enjoyable.
 
 Hades distinguishes weapons through handling; Battle Brothers makes shield outcomes visible and audible; Black Flag lets a collected song change later travel. The video praises Pet Simulator 99's presentation while finding the subsequent activity hollow, and finds comforting companionship in Treelands without a strong urge to continue. Those contrasts separate sensory quality, activity quality and persistence. [G01, G22](../references/fun-and-engagement-dossier-evidence.md) · [G98, G121](../references/fun-and-engagement-dossier-evidence-g81-g148.md) · [Roblox study](../references/roblox-addictiveness-video.md)
 
-**Review question:** with the next payout temporarily removed, what would still be satisfying, expressive, funny, beautiful or interesting? This is a diagnostic thought experiment, not a demand that every game remove progression.
+**Review question:** with the next payout temporarily removed, what would still be satisfying, expressive, funny, beautiful or interesting? This is a diagnostic thought experiment, not a demand that every game remove progression. Also evaluate the complete activity: preparing supplies may be satisfying precisely because it anticipates an expedition. Removing that context can invalidate the comparison rather than reveal that the preparation was worthless.
+
+**Inspect the action itself:** game-feel research distinguishes coherent physicality, amplified feedback and support for translating intention into action. For OpenLegend, examine targeting, approach, commitment, visible or audible result and recovery of control together. More particles, camera movement or dialogue cannot automatically compensate for an action that is hard to direct; too much feedback can conceal the important cue. This is our application of the survey, not a universal effects or latency prescription. [Theory T04](../references/fun-research-expansion-theory.md#t04)
 
 ### P03 — Supply direction without unnecessarily prescribing the method
 
@@ -55,6 +67,8 @@ The transcript's Bee Swarm example combines overlapping goals with different hiv
 
 **Counterweight:** maximum freedom is not the rule. Final Fantasy IV's authored role changes and Mass Effect's directed dramatic structure can support meaningful participation. Agency can concern conduct, timing and interpretation even when the destination is fixed. A thousand equivalent or unusable options are not a thousand good choices. [G81, G101–G104](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
 
+An open prompt also asks the player to formulate an intention and predict an uncertain reply. AI dialogue studies report both increased involvement and additional cognitive burden in different tasks. Preserve a useful expressive route without making ordinary actions depend on repeated rephrasing. Freedom that the participant endorses is different from an interface that merely accepts arbitrary text. [AI evidence A01–A02](../references/fun-research-expansion-ai.md#human-evidence)
+
 ### P04 — Make causality learnable; preserve mystery where discovery is the activity
 
 A player needs enough evidence to form and revise a plan. Distinguish not knowing the answer from not knowing what the controls did, which prerequisite was missing, why an apparently valid action failed, or whether progress was saved. These require different remedies.
@@ -63,6 +77,8 @@ Slay the Spire's intentions and Final Fantasy X's turn order support planning un
 
 **Counterweight:** exposing every hidden fact can remove investigation, suspense or deduction. Explain the action's contract and provide discoverable evidence; do not automatically reveal the solution. A camera failure, inconsistent affordance or unregistered input is not productive uncertainty.
 
+Competence does not require constant dominance. Experimental work on close competitive outcomes found suspense could make a game more enjoyable than a larger victory that increased perceived competence. That is not an optimal win-rate rule. Our design distinction is between uncertainty about execution, opposition or discovery and confusion about what the interface accepted. Preserve the former when it serves the activity; do not defend the latter as challenge. [Theory T03–T05](../references/fun-research-expansion-theory.md#t05)
+
 ### P05 — Make progress change possibilities, and keep its parts in proportion
 
 Progress may be new knowledge, a useful route, a relationship, a changed home, a reusable design, resilience or a new action—not only a larger statistic. Numerical growth earns its place when it changes what the player can meaningfully attempt or how a familiar activity feels.
@@ -70,6 +86,8 @@ Progress may be new knowledge, a useful route, a relationship, a changed home, a
 Cyberpunk's action-changing perks, Final Fantasy V's portable expertise, Octopath II's restoration projects and Rain World's learned routes illustrate different growth forms. Raft's receiver and engine change navigation rather than simply multiplying income. [G68](../references/fun-and-engagement-dossier-evidence.md) · [G82, G108, G123, G141](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
 
 The transcript's Mining Simulator and Pet Simulator 99 cases expose the opposite: catch-up power can erase interesting obstacles while leaving a capacity or waiting bottleneck. An upgrade must be evaluated relative to enemies, carrying capacity, acquisition cost, travel and goals—not in isolation. **Counterweight:** newcomers may genuinely need accelerated access. Preserve opportunities to understand and participate; do not force every historic grind merely to protect a notion of earned power. [Roblox comparison RV-D](../references/roblox-addictiveness-video.md) · [Terraria and Path of Radiance counterweights](../references/fun-and-engagement-dossier-evidence.md)
+
+**Test transfer, not only acquisition:** after learning a rule or making a tool, give the player another situation in which that understanding can matter. This proposed test distinguishes a successful one-off demonstration from an expanded repertoire. Stable behavior lets learning accumulate; opportunistically changing a rule to guarantee surprise can erase it. Pattern-learning theory is useful here without reducing all enjoyment to learning. [Theory T02](../references/fun-research-expansion-theory.md#t02)
 
 ### P06 — Seek useful combinations, not maximum system count
 
@@ -83,9 +101,11 @@ Noita and Caves of Qud emphasize cross-system consequences. Linked Materia makes
 
 Scarcity, weight, time, durability and vulnerability can make preparation matter. Their value depends on what the player chooses because they exist. A journey that trades equipment against mobility is different from moving the same items among inconvenient menus after the decision is already settled.
 
-DayZ and Starsector make taking more equipment potentially costly. Oxygen Not Included turns a local solution into connected heat, water and power questions. Kingdom Come: Deliverance II makes learning a procedure distinct from owning its ingredients. These are different uses of friction. The inventory criticism in Ultima VII and Green Hell shows that physical presentation can be immersive and cumbersome simultaneously. [G114, G120, G128–G129, G132, G144](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
+DayZ and Starsector make taking more equipment potentially costly. Oxygen Not Included turns a local solution into connected heat, water and power questions. Kingdom Come: Deliverance II makes learning a procedure distinct from owning its ingredients. These are different uses of friction. The inventory criticism in Ultima VII and Green Hell shows that physical presentation can be immersive and cumbersome simultaneously. [G114, G120, G128–G129, G132, M144](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
 
 **Review question:** after the player understands the solution, what remains valuable about performing it again? Sometimes the answer is a chosen calming routine, not another puzzle. Sometimes it is nothing. Compress the latter without automatically erasing the former.
+
+**Purposeful friction is different:** Baby Steps makes deliberately difficult movement the performance; Wanderstop uses ordinary routines within a story questioning relentless growth. These authored intentions do not justify an accidental input failure elsewhere. Remove barriers to the promised activity, not automatically every demanding or uncomfortable part of that activity. An accessibility aid can change one demand while preserving another. [Recent cases C03–C04](../references/fun-research-expansion-mobile-and-recent.md#c03) · [Input and difficulty M06](../references/fun-research-expansion-mobile-and-recent.md#m06)
 
 ### P08 — Give play a rhythm, not uninterrupted escalation
 
@@ -143,6 +163,8 @@ Balatro, Slay the Spire and Against the Storm make offers and context affect the
 
 **Counterweight:** random deprivation is not automatically interesting variation. Replaying social preparation, leveling reserves or revisiting a long known route can become a tax on the genuinely new part. New Game Plus, alternate starts, rematches and saved designs should preserve the right work without assuming everything must persist. [G64, G76](../references/fun-and-engagement-dossier-evidence.md) · [G108, G124, G147](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
 
+The newer cases sharpen the hypothesis: Blue Prince varies routes through room drafting; Mewgenics connects future teams to inherited consequences; Is This Seat Taken? combines immediately understandable preferences. These are developer-described structures, not proof of endless novelty. For OpenLegend, test a changed arrangement of learned possibilities before assuming more generated content is the missing ingredient. [Recent cases C01–C05](../references/fun-research-expansion-mobile-and-recent.md#recent-games)
+
 ### P15 — Make leaving, returning and finishing trustworthy
 
 An interruption is not automatically an in-fiction failure. A player should understand what persists, what expires, what can be recovered, and whether a return still supports the activity they valued. Completing a finite goal can be success rather than churn requiring repair.
@@ -158,6 +180,24 @@ Randomness, status, completion and scheduled occasions can provide real exciteme
 Balatro uses uncertain offers within decisions; Bee Swarm combines rerolls with planning; Fire Emblem Heroes separates a compact tactical game from its acquisition economy. The transcript's Grow a Garden account describes a cost of leaving that session length alone cannot distinguish from enthusiasm. Its Sol's RNG account is one person's weak response, not proof of every participant's motives. [G42, G65](../references/fun-and-engagement-dossier-evidence.md) · [Roblox study](../references/roblox-addictiveness-video.md)
 
 **Design position:** do not optimize unwanted persistence. Evaluate pressure from limited access, repeated uncertain acquisition, social obligation and threatened losses alongside the value offered. Platform discovery, creator compensation, sales and player satisfaction are related but different outcomes. Neither a popularity peak nor a published incentive establishes that the underlying experience is good. The source study also keeps Roblox's media policy separate from unverified claims about a particular takedown. [Roblox dossier](../dossiers/roblox.md) · [policy/source boundary](../references/roblox-addictiveness-video.md)
+
+Removing frustration and creating positive value are separate achievements. The Basic Needs in Games Scale distinguishes satisfaction from active frustration: not connecting strongly with a character differs from feeling pressured into maintaining the relationship. Likewise, a short enjoyable match does not certify its surrounding acquisition or payment system. Measure the desired experience and the burden separately rather than presuming one cancels the other. [Theory T06 and T09](../references/fun-research-expansion-theory.md#t06) · [Mobile cases M03–M04](../references/fun-research-expansion-mobile-and-recent.md#m03)
+
+### P17 — Fit participation to the person, device and available attention
+
+Input simplicity and shallow play are different. A small action vocabulary can support mastery; an unhurried puzzle can support discovery; an expressive collection can be worthwhile without constant combat. Mobile examples also separate the length of a playable activity from the schedule of its rewards. Poinpy, Monument Valley 3, Pokémon TCG Pocket and SNAP's contrasting modes supply different reference points, not one formula to copy. [Mobile cases](../references/fun-research-expansion-mobile-and-recent.md#m01)
+
+**Our design hypothesis:** make ordinary actions easy to enter, richer intentions possible when useful, and a return easy to understand. Check touch targeting, readable text, non-audio information, alternatives to hover and whether the player can recover their purpose after an interruption. Voice should not be assumed available or desirable everywhere. Accessibility concerns the barrier relative to the person's capabilities; easing one motor demand need not remove tactical judgment. [Mobile lessons and guidance](../references/fun-research-expansion-mobile-and-recent.md#mobile-lessons)
+
+**Counterweight:** these lessons do not authorize a mobile port, offline progression or mandatory short sessions. Shared-world rules and chosen challenges still matter. For OpenLegend, evaluate the actual supported interaction surface; a narrow-screen layout is not proof that the whole game is usable on a phone.
+
+### P18 — Make AI expand useful participation without dissolving the game
+
+AI's value depends on its role: helping an author create, understanding an unusual intention, making dialogue responsive, choosing a character's action or realizing an invention are different achievements. Human studies show both benefits and costs; contextualized generation can improve experience in a bounded prototype, while open-ended dialogue can add effort and uncertainty. These findings are task-specific, not a universal verdict for or against generative games. [Human evidence](../references/fun-research-expansion-ai.md#human-evidence)
+
+**Our design position:** keep a viable known route, make genuinely novel input useful within supported rules, and ensure the resulting capability remains learnable. A character can disagree for a coherent reason without the software unpredictably changing the facts. An authored clue-giver and an evasive suspect need not speak with the same freedom. A visually navigable generated world does not by itself establish durable possessions or consequences. [Role and world-model boundaries](../references/fun-research-expansion-ai.md#a06)
+
+Evaluate prompt composition, correction, reading and waiting as costs of participation. Compare with strong direct controls and authored alternatives, not only a cumbersome command language. Preserve the creator's ability to reject and revise; do not turn embodied play into unrestricted author control. A model's consistency rating, an impressive transcript or a first successful demonstration is not evidence of human fun or worthwhile return. [AI principles and OpenLegend comparisons](../references/fun-research-expansion-ai.md#4-learnings-to-carry-into-the-main-principles)
 
 ## 4. What changed when the Roblox account met the wider corpus
 
@@ -189,6 +229,21 @@ The corpus does not imply that OpenLegend should collect every mechanic. A usefu
 
 No example commits the project to these particular boats, companions, timers or rules. The reusable proposal is to test an intelligible connection between activity, consequence, enduring value and freely chosen continuation.
 
+### Connect the hypotheses to the actual product direction
+
+The broader review checked [Playable game first](https://github.com/Macrofold/OpenLegend/blob/1700f3b23a39acfdd14f3a6ab34c8ce330847bc3/docs/repertoires/gameplay-priorities.md) and the [README](https://github.com/Macrofold/OpenLegend/blob/1700f3b23a39acfdd14f3a6ab34c8ce330847bc3/README.md) at GitHub main `1700f3b23a39acfdd14f3a6ab34c8ce330847bc3`. Those sources distinguish existing native play and finite recipe invention from broader targets. They prioritize a playable adventure with a genuine useful invention and an independent, observation-grounded character consequence—not a generic survival game with its defining features postponed. This is a documentation comparison, not new runtime verification.
+
+| Desired experience | Focused proposed test | What would undermine the hypothesis |
+| --- | --- | --- |
+| Enjoyable action before elaborate simulation | Compare how the player targets, approaches, commits and understands a real obstacle or encounter. | Technically valid actions feel hard to direct, weakly communicated or unrelated to the player's intention. |
+| An invention that expands agency | Keep a viable known method; follow an optional supported invention through realization and a second use. | Only the name changes, success exists only in prose, or the next use requires learning a different rule. |
+| A person with an understandable independent purpose | Observe a request, possible refusal, a legitimately perceived event and a later consequential response. | The actor agrees indiscriminately, uses hidden information or changes position without an intelligible cause. |
+| Creativity without constant prompt work | Compare language with concise contextual actions for routine work and with alternatives for genuinely novel intentions. | Time shifts mainly into rephrasing, waiting and reading while the activity itself becomes less enjoyable. |
+| A world worth returning to | End a small complete activity, return later and check remembered purpose, continuity and a desired next possibility. | Re-entry is confusing, earlier consequences contradict themselves, or return is driven only by avoiding a penalty. |
+| Access without erasing the intended challenge | Test the supported controls in constrained input/attention conditions, keeping the central decision intact. | Assistance completes the desired problem automatically, or an unrelated input barrier prevents participation. |
+
+Use these comparisons to evaluate the existing direction, not to create six new subsystems. In particular, do not add supply-planning bureaucracy where current inventory suffices, force invention as a secret answer, guarantee persuasion or stage a character's decision just to produce an impressive demo. A peaceful creative or aesthetic activity can also be worthwhile without a combat bonus; it does not replace the adventure already promised. [Product-priority source](https://github.com/Macrofold/OpenLegend/blob/1700f3b23a39acfdd14f3a6ab34c8ce330847bc3/docs/repertoires/gameplay-priorities.md)
+
 ## 6. How to evaluate a prototype without mistaking attendance for quality
 
 This is a proposed research procedure, not a validated psychological instrument. Keep the initial questions short, obtain appropriate consent, avoid collecting unnecessary personal information, and do not turn player interviews into diagnosis.
@@ -199,11 +254,15 @@ Establish what the participant hopes to do and their familiarity with the genre.
 
 Capture specific incidents rather than only averages: an upgrade changed a route; a surprise invited an experiment; a companion did something useful; a menu obscured a known solution; a reward removed the challenge; a timer postponed a planned departure. Classify these against the linked dossier examples, while permitting the participant to contradict our interpretation.
 
+State a falsifiable working explanation before a comparison: **intended experience → intervention → expected observation → competing explanation → disconfirming observation**. Keep task and content reasonably comparable, use a strong alternative and counterbalance order when feasible. For example, longer conversation could mean richer role-play or difficulty obtaining a usable answer; ask which occurred. A small exploratory study can reveal problems without proving population-wide superiority. [Theory and measurement](../references/fun-research-expansion-theory.md#3-measure-the-mechanism-separately-from-the-outcome)
+
 ### At a natural stop and afterward
 
 Ask which moments were enjoyable, which felt worthwhile, which they would remove, and what they would choose next. Ask whether they continued longer than intended and what made stopping easy or difficult. A later reflection can distinguish satisfaction with the experience from excitement during its last reward reveal. None of these answers alone establishes a disorder.
 
 Report behavioral measures—session length, return, completion, repeated failures and purchases where relevant—alongside these accounts. Define the population and window. Do not combine them into a universal “fun score,” or infer that the person who finished and left disliked the game.
+
+For more formal comparisons, select appropriate established measures such as relevant Player Experience Inventory or Basic Needs in Games Scale constructs, retaining their instructions and scoring rather than assembling an unvalidated mixture. Keep usability, enjoyment, competence, relatedness, cognitive burden and trust separate where the question requires it. Observe a second use and a later return to examine learning and continuity. Neither a short novelty response nor a model judge qualifies long-term human enjoyment. [Measurement evidence T06–T08](../references/fun-research-expansion-theory.md#t06) · [AI evidence limits](../references/fun-research-expansion-ai.md#6-evaluation-and-remaining-uncertainty)
 
 ### Compare a change against the problem it claims to solve
 
@@ -215,12 +274,14 @@ Report behavioral measures—session length, return, completion, repeated failur
 | Hollow catch-up | Staged access with coherent power/capacity and a retained learning sequence. | Skipping obsolete repetition versus erasing the next interesting problem. |
 | Attendance pressure | A safe interruption or non-expiring claim window while retaining the activity. | A wanted shared occasion versus a penalty for absence. |
 | Late-game stagnation | A changed context or an explicit satisfying conclusion. | More content versus a genuinely different reason to participate. |
+| Prompt and reading burden | Strong contextual controls alongside expressive input; observe correction and time to a usable result. | More freedom versus more work explaining an ordinary intention. |
+| Input or sensory barriers | A suitable alternate input or cue for the same underlying problem. | The intended challenge versus the barrier to participating in it. |
 
 Choose comparisons appropriate to the experience; do not introduce a harmful pressure mechanic merely to test whether it raises retention. Compare novice and expert accounts, solo and group contexts, and different motivations where relevant. A builder's valued routine may be a combat-focused player's tax. No dossier supplies a universal optimum for upgrade timing, difficulty, session duration or loss severity.
 
 ## 7. Coverage, confidence and maintenance
 
-All 148 subject records contributed a positive possibility, a counterexample, a boundary or a useful absence. Coverage is not an assertion that every subject appears by name in the sixteen principles or supports every principle. The evidence map is the complete audit trail; the body selects representative comparisons rather than becoming another 148-entry catalogue.
+All 148 subject records contributed a positive possibility, a counterexample, a boundary or a useful absence. Coverage is not an assertion that every subject appears by name in the eighteen principles or supports every principle. The evidence map is the complete audit trail for that dossier review; the body selects representative comparisons rather than becoming another 148-entry catalogue. The three expansion papers separately own the additional research and cases.
 
 | Evidence group | How it informs the synthesis |
 | --- | --- |
@@ -233,11 +294,14 @@ All 148 subject records contributed a positive possibility, a counterexample, a 
 | G121–G140 | Company/dynasty continuity, physical worlds, knowledge, risk, survival configuration and authoring. |
 | G141–G148 | Labor reduction, preparation, persistence boundaries, coherent fantasy and the costs of routine. |
 | Dragon Age supplement | Smaller games and historical services that distinguish tactical value, commercial waiting, authored identity and preservation limits. |
+| Theory expansion | Explanatory mechanisms, action feel, suspense, satisfaction/frustration and measurement limitations. |
+| Mobile and recent-game expansion | Interaction context, accessibility, meaningful small activities, purposeful friction and learnable variation. |
+| AI-era expansion | Human experience comparisons, prompt burden, useful generation, creator control and the distinction between demonstrated capability and good play. |
 
-The strongest conclusion is not an effect-size ranking. It is a set of distinctions that recur across unlike cases: action versus reward; knowledge versus stats; ownership versus usable capability; preparation versus maintenance; authored purpose versus free method; consequence versus error; repeated context versus repeated content; social contribution versus social gate; desired return versus costly departure.
+The strongest conclusion is not an effect-size ranking. It is a set of distinctions that recur across unlike cases: action versus reward; knowledge versus stats; ownership versus usable capability; preparation versus maintenance; authored purpose versus free method; consequence versus error; repeated context versus repeated content; social contribution versus social gate; desired return versus costly departure; and expressive freedom versus the effort required to use it.
 
-**Remaining uncertainty:** the corpus was selected for game inspiration, not randomly sampled; editions and audiences differ; testimonials and developer intentions have different evidentiary strength; many titles share design lineages; long-term clinical and commercial outcomes were not measured here. Cross-case agreement generates better questions, not proof of causality. In particular, 148 dossiers are not 148 independent experiments.
+**Remaining uncertainty:** the corpus was selected for game inspiration, not randomly sampled; editions and audiences differ; testimonials and developer intentions have different evidentiary strength; many titles share design lineages; long-term clinical and commercial outcomes were not measured here. Cross-case agreement generates better questions, not proof of causality. In particular, 148 dossiers are not 148 independent experiments. The broader web run is also targeted rather than systematic: several studies were accessible only as abstracts or indexed sections, some are preprints, and many recent-game cases use developer descriptions. None supplies a universal effect size or measured improvement in OpenLegend.
 
-When new evidence changes a principle, update this canonical document and its case records together. Keep outside terminology and study findings in the [foundations reference](../references/fun-engagement-and-compulsion-research.md), detailed game facts in their dossiers, and supplied-source interpretation in the [Roblox transcript study](../references/roblox-addictiveness-video.md). Preserve disagreements and version boundaries rather than revising every case to fit a preferred thesis.
+When new evidence changes a principle, update this canonical document and its case records together. Keep basic terminology and the original five studies in the [foundations reference](../references/fun-engagement-and-compulsion-research.md); expanded source findings in the [theory](../references/fun-research-expansion-theory.md), [mobile/recent](../references/fun-research-expansion-mobile-and-recent.md) and [AI](../references/fun-research-expansion-ai.md) papers; detailed rostered-game facts in their dossiers; and supplied-source interpretation in the [Roblox transcript study](../references/roblox-addictiveness-video.md). Preserve disagreements and version boundaries rather than revising every case to fit a preferred thesis.
 
-**Bottom line:** make playing worth the player's attention, make progress preserve reasons to participate, and make both returning and stopping legitimate outcomes.
+**Bottom line:** make playing worth the player's attention, make progress preserve reasons to participate, and make both returning and stopping legitimate outcomes. Explain and test the interaction that might produce that value; neither more features nor more AI is an explanation by itself.
