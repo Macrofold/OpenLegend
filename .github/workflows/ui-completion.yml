@@ -1,0 +1,59 @@
+name: UI completion verification
+on:
+  push:
+    branches: [docs/game-ui-research-redesign]
+    paths: [.github/workflows/ui-completion.yml, .github/scripts/ui-completion.py]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ui-completion-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  recovery:
+    if: github.repository == 'Macrofold/OpenLegend'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          show-progress: false
+      - name: Locate existing recovery and browser owners
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          selections = {
+              'apps/server/src/ai-director.ts': [('submitAction(', 12, 180)],
+              'apps/server/src/store.ts': [('getJob(', 8, 45), ('getIntegration(', 5, 20)],
+              'apps/server/src/game-saves.ts': [('async list(', 5, 65), ('async read(', 5, 45), ('async create(', 8, 75)],
+              'apps/client/src/main.tsx': [('GameSavesPanel', 4, 12)],
+              'apps/client/src/ui/creation-request.tsx': [('import ', 0, 35)],
+              'docs/action-capabilities.md': [('Action availability and temporary execution', 0, 55)],
+          }
+          for path, patterns in selections.items():
+              lines = Path(path).read_text().splitlines()
+              selected = set()
+              for text, before, after in patterns:
+                  for index, line in enumerate(lines):
+                      if text in line: selected.update(range(max(0,index-before),min(len(lines),index+after)))
+              print('\nSOURCE=' + path)
+              previous = -2
+              for index in sorted(selected):
+                  if index > previous+1: print('...')
+                  print(str(index+1) + ': ' + lines[index]); previous = index
+          for path in ['package.json', 'playwright.config.ts', 'tests/fixtures/browser.ts', 'apps/client/src/inventory-command-record.ts']:
+              file = Path(path)
+              if file.exists(): print('\nFILE=' + path + '\n' + file.read_text())
+          for directory in ['tests/browser','tests/fixtures','apps/server/src','packages/protocol/src']:
+              print('\nFILES=' + directory)
+              for path in sorted(Path(directory).glob('*')):
+                  if path.is_file() and (directory != 'apps/server/src' or any(term in path.name for term in ['job', 'action', 'save', 'request'])): print(str(path))
+          for path in sorted(Path('.').rglob('AGENTS.md')):
+              if any(part in ['.git','node_modules'] for part in path.parts): continue
+              if path.parent != Path('.') and str(path) not in ['apps/client/AGENTS.md','apps/server/AGENTS.md','packages/domain/AGENTS.md']:
+                  print('\nPATH_GUIDANCE=' + str(path) + '\n' + path.read_text())
+          PY
