@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                  | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-03   |
+| In progress | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-14   |
 
 **Status: accepted strategic direction, proposed detailed product requirements, October 2, 2026. Documentation only; runtime delivery and capacity remain unqualified.**
 
@@ -14,6 +14,10 @@
 - Constraints and unresolved tuning: [limits register](../limits/product-scalability.md).
 - Proposed product detail: [continuing NPC lives](continuing-lives-feature-spec.md) develops PS02–PS03 with researched behavior, economics, scenarios and acceptance. Its new recommendations remain proposals; technical design and runtime delivery are not completed by that document.
 - Proposed attention detail: [attention, crowds and scenes](attention-and-scenes-feature-spec.md) develops PS04/PS-D02 with stable focus, character-led scenes, exact-language exceptions and a separately staged timed-speech proposal. Existing hearing and time policy remain authoritative until approved changes are delivered.
+
+- Proposed wider participation detail: [participants and world travel](participants-and-world-travel-feature-spec.md) refines PS05–PS08 through the focused [PT consumer](../maintainers/participants-and-world-travel.md), preserving the parent coordination and single scalability limits inventory. Small useful visits remain independent of broad population, unattended, campaign and marketplace delivery.
+
+- Proposed campaign detail: [shared campaigns and local opportunities](shared-campaigns-feature-spec.md) develops PS07/PS-D05 with two distinct local outings, finite causal sources, one optional forecast operation, exact contribution recognition and a lasting aftermath. [PS07.1–PS07.7](../maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities) retains delivery and PS08 broader qualification; a same-world first campaign does not require federation, damaging sieges or a new calendar.
 
 ## 1. Purpose and audience
 

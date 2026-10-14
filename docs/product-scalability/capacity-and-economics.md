@@ -77,6 +77,8 @@ Use actual quality-qualified model routes and observed activity rates. Do not em
 
 ## 8. Bound the quiet-world liability
 
+The [DG17 continuing-lives proposal](../projects/continuing-lives-feature-spec.md) makes a first isolated operating contract concrete: a finite supported interval, actual resources, authorized funding, required-service readiness, coherent whole-world pause and explicit resumption. The [prepared base-world profile](../worlds/base/continuing-communities.md) supplies qualification values, not a recurring subscription or perpetual-life guarantee. [PS03/PS06](../maintainers/product-scalability.md#ps03--a-bounded-unattended-community) retain delivery; PS-D06 still owns adoption and any broader customer promise.
+
 Persistence should not imply free unlimited autonomous civilization forever. Worlds need a sustainable, explicit allowance for unattended activity. Retained state, ongoing essential commitments, optional new drama, and premium detailed simulation have different cost profiles.
 
 Supported policies may include inexpensive default background continuation, community-funded additional activity, opt-in higher fidelity, or independent/self-hosted worlds under separate operational terms. These are funding possibilities, not a selected commercial price plan. Paying for more detailed simulation must not quietly purchase invulnerability, guaranteed victories, or stronger authority in a shared campaign.
@@ -113,6 +115,8 @@ Numbers used to size experiments are workload inputs, not advertised capacities.
 Do not expand a configuration whose sustainable budget makes NPCs incoherent, whose quiet-world liability grows without bounds, whose capacity policy rewards griefing, or whose transitions change decisive outcomes opportunistically. Narrow the supported world/activity envelope before presenting an unqualified scale promise.
 
 A successful early result is a compelling small community with bounded background cost, truthful transitions, fair admission, and memorable relationships. Broader concurrency then becomes an incremental measured program rather than a product promise funded by hypothetical efficiency.
+
+The [DG29 admission and travel proposal](../projects/participants-and-world-travel-feature-spec.md) joins the ordinary visit to complete overload, recovery and mature-history qualification. Its one-request and ready-offer candidates are service proposals, not capacity results. The accepted shared-world population and concentration targets remain; many small worlds, a queue or a restricted social proof cannot replace them. Complete cost includes retained worlds, legitimate audience preparation, failed/uncertain work, recovery and operator time, alongside useful participant-hours. [PT01–PT06](../maintainers/participants-and-world-travel.md) owns the focused consumer while PS06/PS08 retain wider evidence.
 
 ## Maintained records
 

@@ -1,5 +1,39 @@
 # Maintainer work index
 
+## Product design groups 31–35
+
+[The completed product assignment for groups 31–35](../projects/completed/product-design-groups-31-35.md) follows groups 26–30. [Generations and family life](generations-and-family-life.md) owns DG31’s independent adult-family proposal under ACT/BW and PS. Mike selected adult players, non-explicit presentation with optional sex, and browser-only delivery for now. The family product design is prepared; technical work, runtime and measured qualification remain in their existing owners.
+
+DG33’s [product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md) adds two independent optional families: [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) covers a willing known spirit and separately earned ordinary revival; [EWF10T.1–EWF10T.4](extensible-world-foundation.md#dg33--deliberate-telepathic-messages) coordinates deliberate telepathic messages. Their [profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [MIND limits](../limits/extraordinary-minds-and-afterlife.md) retain proposed scope; runtime and qualification remain open.
+
+DG32 uses [INV-20.5g–l](inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) for useful shared equipment, exact keeper authority, accepted claims and return without a present keeper. The [product proposal](../projects/shared-equipment-and-institutions-feature-spec.md) keeps association membership optional and first lending unsecured; actual property consumers and qualification remain open.
+
+DG34 uses [PS07.1–PS07.7](product-scalability.md#dg34--linked-local-campaign-opportunities) and existing PS08 for the [shared-campaign proposal](../projects/shared-campaigns-feature-spec.md): two useful local outings, finite shared power, one optional physical operation, exact recognition and worthwhile aftermath. The [Ash Road profile](../worlds/base/shared-campaigns.md) and [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign) retain proposed scope and values; no new tracker, harm policy, clock or capacity claim is created.
+
+DG35's [platform and offline decision brief](../projects/platform-and-offline-decision-brief.md) prepares the researched options and common requirements. The actual audience or production problem is still missing under [ND34](needs-design.md#nd34--additional-distribution-platforms-and-offline-play), so its selected feature design remains unfinished. Existing SW10, UIUX/AC, MP and PD retain their responsibilities; no second client, console release, local model or offline world is selected.
+
+## Product design groups 26–30
+
+[The sequential five-group assignment](../projects/completed/product-design-groups-26-30.md) starts from the requested groups 21–25 branch. DG26 uses [HE07](hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) and [NC23](narration-and-conversations.md#nc23--consented-private-slate-calls) for optional speech media and private calls. DG27 uses [commercial offers](commercial-offers.md) under PD10/INV-13. These are researched product proposals; individual adoption, technical work, runtime delivery and measured experience remain open. The completed assignment records all five product proposals, their final critique, actual documentation verification and the exact inspected baseline.
+
+DG28 uses [published packs and creator revenue](published-packs-and-creator-revenue.md) under INV-8/EWF11/PD10. Its free portability proof, curated listing, paid acquisition and creator allocation/payout stages remain independently scoped; no marketplace or grants become prerequisites for useful free reuse.
+
+DG29 uses [participants and world travel](participants-and-world-travel.md) under PS05–PS08, with the existing product-scalability inventory. A worthwhile small visit and coherent return precede any broader advertised capacity or federation.
+
+DG30 uses [creator funding and contributor governance](creator-fund-and-contributor-governance.md), with actual operating-budget, rights and platform-authority adoption separate from the product proposal. A finite manual round can finish before grant or voting software.
+
+## Product design groups 21–25
+
+[The sequential five-group assignment](../projects/completed/product-design-groups-21-25.md) extends the first design branch. [Recovery and care](recovery-and-care.md) supplies DG21’s focused consumer; [INV-20.5a–f](inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) now covers DG22’s commissions and optional advances/associations. [EC01–EC06](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) now covers DG23's revisable outlook, older reinterpretation and independent optional extensions. These are product proposals, with adoption, technical work, implementation and gameplay qualification remaining distinct. The source audit also reads newer main without changing this branch's ancestry.
+
+[NC22](narration-and-conversations.md#nc22--authored-world-asynchronous-text) now covers DG24's optional private text journey, with existing MP/CR/data consumer obligations and no parallel authority or cognition checklist. The first complete two-human journey precedes NPC correspondence and optional calls.
+
+[HE06](hearing-and-speech.md#he06--attributed-correction) and [SL10.1–SL10.7](save-and-load.md#dg25--protected-shared-restoration) now cover DG25's independent new-event correction and protected shared restore. Existing creator-edit, privacy, participation, billing and operational-recovery owners retain their responsibilities. All five product proposals are written; runtime and evidence states remain with the focused trackers.
+
+## Product design groups 16–20
+
+[The completed five-group product-design assignment](../projects/completed/product-design-groups-16-20.md) covers a personal Journal edition, continuing lives, worthwhile conversations/scenes, changing supplies and heat/material consequences. The further gameplay review separates useful attended contributions from conditional persistent editing, unattended service, crowd meaning, food aging and broader fire. It recommends strengthening the current adventure and independent resident through existing owners; DG16–DG20 is not a five-feature release order. [NC21](narration-and-conversations.md#nc21--personal-journal-edition), [PS02–PS06](product-scalability.md#ps02--one-interruptible-life), [CS01–CS06](changing-supplies.md) and [HM01–HM06](heat-and-materials.md) retain independently scoped delivery and the fuller unperformed acceptance; technical/runtime gates remain open.
+
 ## Product design groups 11–15
 
 [The completed five-group design review](../projects/completed/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal; [practical-competence tasks](practical-competence.md) track the delivered sling practice/coaching consumer and remaining human appreciation, with its [scoped design](../projects/authored-stats-tech-design.md) and [qualification](../verification/practical-competence.md). [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) tracks the optional story consumer. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.

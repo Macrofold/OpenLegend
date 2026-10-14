@@ -110,8 +110,20 @@ Physical mass/volume, scattering, contested ownership/theft rules and additional
 
 The inventory panel refreshes when the player moves or its own inventory/context changes; use **Refresh** for newly nearby destinations or changes in a shared container. Every action rechecks current access and revisions. Constant background motion does not repeatedly clear an open inventory page.
 
+## Proposed food-condition consumer
+
+[DG19 changing supplies](../../projects/changing-supplies-feature-spec.md) proposes one condition-bearing food family using this same custody and quantity owner. Its [authored profile](changing-supplies.md) selects preservation and renewal; [CS02](../../maintainers/changing-supplies.md#cs02--food-condition-follows-the-real-material) requires coherent creation, active-work condition, splitting/merging, exact partial handling and last-unit consumption before decay is enabled. Current containers and food remain as described above. Neither a bag name, ownership change, pending offer nor a storage move grants freshness or access to somebody else's food history.
+
+## Proposed heat and vessel consumer
+
+[DG20 heat and materials](../../projects/heat-and-materials-feature-spec.md) proposes firing an actual clay blank into a useful finite vessel, with local material consequences in its selected profile. The same object owner must preserve the blank's progress, the finished vessel, actual contents and any surviving damaged material without duplicate output or pristine salvage. The [world profile](heat-and-materials.md) owns the new vessel and qualified fire materials; [HM02–HM04](../../maintainers/heat-and-materials.md) retain delivery. Existing woven containers remain available. A fired-bowl name does not supply liquids, serving, preservation, extra carrying strength or new access to another person's possessions.
+
 ## Maintained records
 
 - Implementation: [Feature tasks](../../maintainers/base-world.md).
 - Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).
 - Manufactured material composition: [NP03](../../maintainers/parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material), [INV-3/INV-6](../../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes) and [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families).
+
+## Proposed equipment loans and narrow returns
+
+[The Clearing Tool Library](shared-equipment-and-institutions.md) proposes an exact individual-tool loan through the same object owner. It needs explicit asset/depot authority, real reserved compatible return room and a continuing exact return permission; current owner metadata, broad creator access lists and temporary work holds do not already supply those powers. A group name neither transfers title nor permits taking, consuming or pledging another person's stock. [INV-20.5g–l](../../maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) retains this new consumer's implementation and full action-route qualification; current item behavior remains as documented above.

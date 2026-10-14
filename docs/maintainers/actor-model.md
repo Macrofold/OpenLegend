@@ -8,6 +8,18 @@ This is the sole implementation tracker for the living-actor migration. Canonica
 
 ## Tasks
 
+### Extraordinary mind and afterlife proposal
+
+[DG33](../projects/extraordinary-minds-and-afterlife-feature-spec.md) consumes ACT’s identity/body/controller boundaries through [BW15.1–BW15.6](base-world.md#dg33--voluntary-spirits-and-ordinary-revival) and [EWF10T](extensible-world-foundation.md#dg33--deliberate-telepathic-messages). Preserve one retained person, one current physical life, actual goods, independent speaking/harvest capability and protected private-source derivatives through ghost, ordinary return and controller change. The first return uses a non-harvestable adult speaking profile; a later harvestable consumer must conserve entitlement, distinct from accepted creator revival. No existing ACT checkbox or human recovery policy is changed by this product proposal.
+
+### Generations and adult family continuity proposal
+
+[DG31 generations and family life](../projects/generations-and-family-life-feature-spec.md) selects an independently useful adult-family encounter and truthful age continuity without new automatic frailty, heredity or household control. [GEN01–GEN04](generations-and-family-life.md) owns the independent consumer and completed audience-dependent product preparation; GEN05–GEN07 retain adoption, implementation and qualification. ACT04’s bodily foundation and completed family facts remain intact; actual later bodily changes require a selected playable purpose and their owning care/lifecycle rules.
+
+### Recovery and useful care proposal
+
+[DG21 recovery and care](../projects/recovery-and-care-feature-spec.md) uses ACT04's existing bodily effects for one proposed human camp-recovery activity, followed by separately selected resident choice, field dressing/help and a distinct illness only when useful. [CARE01–CARE05](recovery-and-care.md) owns this consumer; it does not reopen the completed body foundation or require a body-part graph. The audit uses newer main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425), where zero health causes death and scar treatment exists. This branch's older runtime ancestry is not the proposal's mortality baseline. [Care limits](../limits/recovery-and-care.md) records the new world choices and growth paths.
+
 ACT01–ACT05 are implemented; acceptance gates remain open with automated coverage deferred to [TODO](TODO.md#three-program-deferred-validation). God revival now follows the accepted [actor model](../architecture.md#actor-means-any-living-being), including harvested bodies. Current schema 10 preserves physical actor identity. The existing animal-field import is historical implementation; development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). Open ACT01–ACT06 checkboxes retain broader acceptance, not a claim that their native implementation is absent.
 
 - [ ] **ACT01 — Define the capability model and current-state recovery.** Specify shared lifecycle/body components plus independent species, body plan, controller, cognition, memory, inner-world and speech capabilities. Validate current state under the [development save policy](../../AGENTS.md#development-save-policy). Preserve stable entity IDs and animal state through recovery without granting every animal human cognition.
@@ -207,3 +219,7 @@ The complete source/definition retirement audit, actual two-human payload races,
 - [ ] After implementation, manually exercise authoring, actual condition start/end, the agreed stop/replacement behavior, capacity refusal, private views and restart. Add evidence to Verification; retain the linked automated regression TODOs.
 
 **Dependencies:** ACT07/ACT08, DI native work/dependencies, MP privacy and SL recovery; no prerequisite to complete broad live emotional-language quality. **Exit:** the approved NPC journey is authorable, observable and stoppable without raw native calls, with no duplicate feelings or silent policy changes. **Deferred coverage:** [social slice validation TODO](TODO.md#social-playable-slices--future-validation). Limits owner: [FL10–FL16](../limits/feelings.md#fl10). World owner: [social rules](../worlds/base/social.md#feelings).
+
+## DG23 — Experience-shaped outlooks
+
+[People who change through living](../projects/experience-shaped-characters-feature-spec.md) is the researched product proposal for a specific revisable outlook and later voluntary conduct. It consumes delivered ACT07/ACT08 rather than reopening their completed foundation. Protected beginnings, mutable self-understanding, directional subject knowledge, current feelings, actual events and practical proficiency retain distinct meanings. A learned outlook does not enroll a native feeling process or settle ACT09/D65. [EC01–EC06 under CR](cognition-redesign.md#dg23--revisable-outlook-and-older-recollection) own the focused longitudinal delivery and independent optional dream/human/coarsening extensions; CE05/CR12 retain live quality and cost. [EC limits](../limits/memory.md#ec-l01--existing-authored-capacity) and [the world profile](../worlds/base/experience-shaped-characters.md) add no numerical trait system, compulsory growth or new paid cadence. All ACT acceptance states above remain unchanged.

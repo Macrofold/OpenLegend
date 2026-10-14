@@ -161,6 +161,12 @@ A later identification is new evidence. It does not rewrite the original utteran
 
 Generic event and awareness editors must not rewrite committed speech text or content independently of the listener capsule. Reject such rewrites clearly; existing guarded deletion and awareness-importance edits remain permitted. A correction spoken in the world is a new event, not a retroactive hearing upgrade. A dedicated administrative re-authoring operation needs explicit semantics for already-perceived fragments and their dependents; that unresolved extension is recorded in [D66](../archive/05-project/open-decisions.md#d66--re-authoring-committed-speech).
 
+### Selected attributed correction proposal
+
+[DG25](projects/corrections-and-shared-restoration-feature-spec.md) proposes ordinary new-event correction as the first consumer of D66. The optional Correct what you said control prepares an unsent new utterance by the currently controlled speaker; normal current speaking/hearing applies. Its first history links are private to that speaker. Other listeners obtain actual new words, with no retrospective fragment, identity, relationship or hearing upgrade. An ordinary clarification does not automatically invoke the existing administrative memory-correction operation or repair appraisals, agreements and later choices.
+
+The accepted [creator-edit policy](projects/creator-edit-propagation-feature-spec.md#accepted-policy) forbids automatic semantic memory cascades after ordinary creator edits. Existing explicit dependencies, selected forgetting and guarded administrative memory operations retain their distinct authority. [HE06](maintainers/hearing-and-speech.md#he06--attributed-correction) owns the proposed optional consumer; [HC-L01–HC-L05](limits/hearing-and-speech.md#hc-l01--correction-through-actual-speech) records its constraints. Administrative inline retcon remains unselected; a deliberately different whole fictional history uses an actually supported retained-world restore under SL, independently of ordinary speech.
+
 ### Native behavior and sleep
 
 Retain current sleep/life/capability gates for conscious acquisition. An asleep listener does not receive full speech simply because a level crossed a threshold. Loud-sound waking is a future native policy. Acoustic exposure computation need not require human-style memory or cognition: a future native animal reaction can use exposure without allocating an LLM job or a transcript. Do not attach cognition to ordinary animals as part of this feature.
@@ -255,6 +261,8 @@ Immutable manifest/sense resolution, per-volume receiver bounds and bounded geom
 
 Grouping changes what is distinguishable prospectively, not what a listener already understood. Preserve existing exact speech and permitted fragments; later focus cannot recover unheard words. A coarse background scene may establish gist without an exhaustive ambient transcript, but exact-language mechanics must retain their actual words and source/audience evidence. This does not authorize replacing accepted human messages or foreground NPC utterances with generic chatter.
 
+[DG18's detailed product proposal](projects/attention-and-scenes-feature-spec.md) starts a worthwhile attended gathering using this current exact-speech contract, then specifies a separately admitted prospective gist/aggregate family. [The authored gathering](worlds/base/social-gatherings.md) is a qualification workload, not a new complete-audience cap. HE02/HE04 listener evidence, HR02 audience completeness and HR04 caption overflow/history behavior remain foundations; new focus or scene membership cannot suppress a currently entitled exact fragment. PS04 owns the proposed integration, and actual timed speech remains separate DG26 work.
+
 ## 12. Deliberate extension boundaries
 
 Deferred capabilities include timed/streamed physical speech, listening to only a later part of an ongoing sentence, room/portal propagation, reflections/diffraction, frequency bands and audiograms, voice recognition, language competence, head orientation, lip-reading, speaker amplification, sound-triggered waking/damage, and accurate sound-duration/masking processes. Their future additions should preserve the event/evidence/caption boundaries above.
@@ -276,3 +284,9 @@ These sources support acoustic and accessibility concepts, not the proposed game
 - Limits and constraints: [hearing, captions and perceived history](limits/hearing-and-speech.md).
 - Related contracts: [Timed UI](timed-ui.md) and [perceived history](perceived-world-events.md).
 - Current integration evidence: [combined verification](verification/hearing-main-integration.md).
+
+## Optional media product proposal
+
+[DG26's voice and call specification](projects/voice-and-calls-feature-spec.md) proposes optional synthesis of exactly the listener's already committed evidence and private reviewed microphone composition. It does not change this document's instantaneous speech, partial words, identity, full audible audience, caption clocks or current NP05 preview boundary. A quiet or unidentified rendering never contains hidden original words or a secretly identifying voice.
+
+[HE07](maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) owns the independently useful media/input stages; a later actual timed doorway exchange consumes PS04's existing time/overlap owner. [NC23](maintainers/narration-and-conversations.md#nc23--consented-private-slate-calls) owns the separately enabled private slate conversation. These are product proposals with adoption, technical/runtime and qualification still open, not delivered media. [VO constraints](limits/hearing-and-speech.md#vo-l01--optional-committed-speech-playback) retain the selected restrictions and unresolved aggregate media bounds.

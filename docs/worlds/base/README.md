@@ -10,13 +10,14 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [A river catch becomes a meal](river-fishing.md) — proposed finite fishing and world-defined cooking for AV05.
 - [Items, ground piles and possession](items.md)
 - [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the existing four invention families.
-- [Inventable camp containers](camp-containers.md) — proposed material/capacity rules for a nonweapon invention and ordinary camp storage; not yet implemented.
-- [Chosen camp supplies and fire watches](camp-routines.md) — proposed finite methods and one-session care, without automatic goals or learned conditional policies.
+- [Inventable camp containers](camp-containers.md) — implemented finite woven-container family and ordinary storage. A [published coached live journey](https://github.com/Macrofold/OpenLegend/blob/34233ae24365eb8911fe1995c9c232bd57f34616/docs/verification/camp-life.md#live-player-journey--october-4-2026) qualifies generated cord/pouch manufacture, packing/retrieval and reopening; voluntary NPC choices and unattended use remain separate.
+- [Chosen camp supplies and fire watches](camp-routines.md) — implemented finite methods and explicitly selected one-session care; uncoached/live integration remains open, with no automatic goals or learned conditional policies.
 - [Light canopies and useful shelter](editable-shelters.md) — proposed finite materials, two arrangements, reversible work and nonpunitive moisture for DG13; runtime remains open.
 - [Sling handling, practice and coaching](practical-competence.md) — proposed finite competence gain, real quiet practice and voluntary instruction for DG14; runtime remains open.
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
+- [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; distinguishes newer main's actual death/scars from this branch's older runtime context.
 - [Combat](combat.md)
 - [First optional threat encounter](first-threat-encounter.md)
 - [Player danger and leaving the world](player-danger.md)
@@ -25,6 +26,18 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Knowledge and observer identity](knowledge.md)
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
+- [Generations and family life](generations-and-family-life.md) — DG31's optional adult-family visit and truthful age continuity; reproduction and dependent care still require the reserved D16 audience choice.
+- [Shared equipment and institutions](shared-equipment-and-institutions.md) — DG32's optional useful bow loan, willing keeper and real return, with separate optional security; no currency or compulsory membership.
+- [Extraordinary minds and life after death](extraordinary-minds-and-afterlife.md) — DG33's separately selected willing spirit, finite ordinary revival and deliberate telepathic messages; these are proposed families, with existing identity, knowledge and human protection intact.
+- [The Ash Road campaign](shared-campaigns.md) — DG34's proposed two-site route problem, finite shared power, optional forecast operation and actual aftermath; no new harm, unattended service or mass-capacity claim.
+- [A resident revises an outlook](experience-shaped-characters.md) — DG23's proposed specific revisable understanding and later voluntary conduct; current reflection is reused, while dreams and older coarsening remain optional.
+- [A small wilderness commission](durable-agreements.md) — DG22’s proposed finite barter commission, exact later settlement and independently selected advance/association; no currency or new starting institution.
+- [Finite continuing communities](continuing-communities.md) — DG17's proposed current-clock supplies, horizon and actual food/rest pacing, following useful attended continuity; no overnight service is adopted.
+- [Heat and materials](heat-and-materials.md) — DG20's separately selectable human firing, material-fire, moisture and resident/food-fire activities, with finite sources and recovery; current cooking fires retain their existing behavior.
+- [Something worth showing](social-gatherings.md) — DG18's ordinary exact conversation, a worthwhile additional participant, and separately conditional gist, vocal activity and larger gatherings; current hearing remains authoritative.
+- [Supplies worth keeping](changing-supplies.md) — DG19's independently selectable preservation and finite renewal, with actual work and stock economics; current food and resource rules remain unchanged.
+
+- [Personal message slates](text-messages.md) — proposed optional later-world correspondence with local mutual contacts, private reading, real device possession and no primitive-start addition.
 
 ## Code boundary
 
