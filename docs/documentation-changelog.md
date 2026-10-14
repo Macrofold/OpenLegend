@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 14, 2026 — Permit fresh development state after incompatibility
+
+Mike explicitly changed the [development save policy](../AGENTS.md#development-save-policy): agents may reset or replace incompatible development saves/databases with the latest intended initial world without asking again. The former blanket prohibition on automatic replacement is superseded. No legacy readers or migrations are introduced; same-format integrity, credentials, access controls and real spending/accounting remain protected. The tradeoff is loss of old development-world progress when starting fresh. [Local setup](../README.md#run-locally) documents using a new database and save directory; runtime format validation still refuses older data rather than silently relabeling it.
+
 ## October 13, 2026 — Carry Batch 07 review lessons into required guidance
 
 The [Batch 07 review](verification/playable-world-creation.md#october-13-requested-complete-change-review) exposed completed preparation lost after cache replacement, a Check caller missing deferred work, incomplete operating-setting approval identity, a replaced UI recovery identity and native completeness metadata lost by nested commands. [Guidance reconciliation](maintainers/agent-guidance.md#batch-07-review-lessons-and-reading-routes--october-13-2026) records the narrow owner for each lesson. Performance and React bodies clarify the missing procedures; the existing authorization contract now explicitly covers effective operating inputs. Root routing includes approval-related settings, and domain routing includes state-copy/finalization metadata even without a storage change. Already-routed material-history, engine/world, validation and spending guidance remains authoritative rather than being copied into another checklist. These are instruction changes, not new gameplay laws or completion of Batch 07; observed dispatch and its limits remain CG05-owned.
