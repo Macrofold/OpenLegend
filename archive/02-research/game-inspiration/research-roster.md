@@ -66,7 +66,7 @@ Read [requirements](research-requirements.md) and [current progress](research-pr
 | G59 | Pathfinder: Wrath of the Righteous | `pathfinder-wrath-of-the-righteous.md` | Independent full pass; mythic paths, crusade layer, companions, class/build breadth, turn-based/RTwP, expansions and branching narrative. |
 | G60 | Fire Emblem: The Blazing Blade (Fire Emblem, GBA) | `fire-emblem-the-blazing-blade.md` | North American title and Japanese subtitle distinguished; permadeath, supports, weapon triangle, map objectives and campaign structure. |
 | G61 | Fire Emblem: Path of Radiance | `fire-emblem-path-of-radiance.md` | Independent Tellius pass; base conversations, supports, bonus experience, skills, laguz and map design. |
-| G62 | Fire Emblem Awakening | `fire-emblem-awakening.md` | Pair Up, relationships, children, class changes, skills, supports, map/progression and difficulty boundaries. |
+| G62 | Fire Emblem Awakening | `fire-emblem-awakening.md` | Pair Up, marriage/children, class changes, skills, supports, map/progression and difficulty boundaries. |
 | G63 | Fire Emblem Fates | `fire-emblem-fates.md` | Birthright/Conquest/Revelation routes and availability boundaries; pair-up revisions, My Castle, children and map design. |
 | G64 | Fire Emblem: Three Houses | `fire-emblem-three-houses.md` | Academy calendar, tutoring, classes, battalions, supports, routes, monastery activities and expansion boundaries. |
 | G65 | Fire Emblem Heroes | `fire-emblem-heroes.md` | Mobile live-service pass; summon/economy, inheritance, merges, modes, power creep, events and monetization separated from mainline FE. |
