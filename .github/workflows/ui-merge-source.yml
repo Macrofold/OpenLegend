@@ -9,6 +9,10 @@ jobs:
   source:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [app-0, app-1, app-2, app-3, docs, guidance]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -16,47 +20,39 @@ jobs:
           ref: 705efb2bd102ba151123659b129372aea62b6a79
           fetch-depth: 0
           persist-credentials: false
-      - name: Inspect pinned three-way conflicts
+      - name: Inspect selected conflicts and owning instructions
+        env:
+          PART: ${{ matrix.part }}
         shell: bash
         run: |
           set -euo pipefail
-          base=741e8cf7e0e3f4ab7b1eea47d32d33e5f483eda6
-          branch=705efb2bd102ba151123659b129372aea62b6a79
-          main=1700f3b23a39acfdd14f3a6ab34c8ce330847bc3
-          test "$(git merge-base "$branch" "$main")" = "$base"
           status=0
-          git merge-tree --write-tree "$branch" "$main" > "$RUNNER_TEMP/merge-tree.txt" || status=$?
+          git merge-tree --write-tree 705efb2bd102ba151123659b129372aea62b6a79 1700f3b23a39acfdd14f3a6ab34c8ce330847bc3 > "$RUNNER_TEMP/merge-tree.txt" || status=$?
           test "$status" -le 1
-          cat "$RUNNER_TEMP/merge-tree.txt"
-          tree=$(head -n 1 "$RUNNER_TEMP/merge-tree.txt")
-          echo '=== Conflict hunks ==='
-          python3 - "$tree" <<'PY'
-          import re, subprocess, sys
+          python3 - "$(head -n 1 "$RUNNER_TEMP/merge-tree.txt")" <<'PY'
+          import os, re, subprocess, sys
           tree = sys.argv[1]
-          paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', tree], text=True).splitlines()
-          for path in paths:
-              if not path.endswith(('.md', '.ts', '.tsx', '.css', '.yml', '.yaml', '.json')):
-                  continue
-              data = subprocess.check_output(['git', 'show', f'{tree}:{path}']).decode('utf-8')
-              if '<<<<<<< ' not in data:
-                  continue
-              print(f'\n=== {path} ===')
-              lines = data.splitlines()
-              active = False
-              for index, line in enumerate(lines):
-                  if line.startswith('<<<<<<< '):
-                      active = True
-                      for before in range(max(0, index - 8), index):
-                          print(f'{before + 1}: {lines[before]}')
-                  if active:
-                      print(f'{index + 1}: {line}')
-                  if line.startswith('>>>>>>> '):
-                      active = False
-                      for after in range(index + 1, min(len(lines), index + 9)):
-                          print(f'{after + 1}: {lines[after]}')
+          part = os.environ['PART']
+          def read(path):
+              return subprocess.check_output(['git', 'show', f'{tree}:{path}'], text=True)
+          if part == 'guidance':
+              paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', tree], text=True).splitlines()
+              for path in paths:
+                  if path.endswith('AGENTS.md') and path != 'AGENTS.md' and path.startswith(('apps/', 'docs/', '.github/')):
+                      print(f'=== {path} ===\n{read(path)}')
+              print('=== Root instruction overlap ===')
+              print(subprocess.check_output(['git', 'diff', '705efb2bd102ba151123659b129372aea62b6a79', tree, '--', 'AGENTS.md'], text=True))
+          else:
+              paths = ['apps/client/src/App.tsx'] if part.startswith('app-') else ['docs/action-discovery.md', 'docs/maintainers/autonomy-experience.md', 'docs/ui-ux/react-ui.md']
+              for path in paths:
+                  data = read(path)
+                  matches = list(re.finditer(r'^<{7,} .+?\n.*?^>{7,} .+?(?:\n|$)', data, re.M | re.S))
+                  print(f'=== {path}: {len(matches)} conflicts ===')
+                  for index, match in enumerate(matches):
+                      if part.startswith('app-') and index % 4 != int(part[-1]):
+                          continue
+                      before = data[:match.start()].splitlines()[-5:]
+                      after = data[match.end():].splitlines()[:5]
+                      print(f'=== conflict {index} at line {data[:match.start()].count(chr(10)) + 1} ===')
+                      print('\n'.join(before) + '\n' + match.group() + '\n'.join(after))
           PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: openlegend-ui-merge-conflicts
-          path: ${{ runner.temp }}/merge-tree.txt
-          retention-days: 1
