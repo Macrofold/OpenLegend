@@ -4,10 +4,12 @@
 
 ## Start here
 
-- **[Full 149-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
-- **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
-- **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
-- **[Songs of Syx — G149](dossiers/songs-of-syx.md):** settlement-to-empire growth, households, law, production, logistics, trade and military commitments; full October 13 research with V71, older-demo and mod boundaries. [Completion and limits](research-progress.md#songs-of-syx-g149).
+- **[Full 166-subject research roster](research-roster.md):** canonical title/edition list. The seventeen G150–G166 additions are **roster only; research has not started and must wait for Mike's authorization**.
+- **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable. The [October 13 amendment](research-economics-engagement-and-creation.md) explicitly covers revenue estimates and economic outcomes, why play is enjoyable or frustrating, replay/abandonment, fictional economies, deep lore and creator tooling.
+- **[October 13 expansion and amendment coverage](research-progress-expansion-2026-10-13.md):** current scope, new roster-only subjects, targeted additions and verification on `research/game-library-expansion`.
+- **[Earlier research progress](research-progress.md):** G01–G149 completion provenance and the separate whole-library gates; its dated branch instructions and counts do not override the current expansion boundary.
+- **[Roblox: economies, replay and creation](dossiers/roblox-economies-replay-and-creation.md):** tycoon/economic play, Mike's Apocalypse Rising rebuilding example, reasons to return or quit, and what Studio/Roblox supplies versus what creators script and publish. Supplements the existing [platform dossier](dossiers/roblox.md).
+- **[Songs of Syx — G149](dossiers/songs-of-syx.md):** settlement-to-empire growth, households, law, production, logistics, trade and military commitments; full October 13 research with V71, older-demo and mod boundaries. [Initial completion and limits](research-progress.md#songs-of-syx-g149). The [economy and lore supplement](dossiers/songs-of-syx-economy-and-lore.md) deepens mythology and its relationship to economic/social choices.
 - **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
 - **[G121–G130 dossiers](#full-dossiers--curated-references-g121g130):** mercenary, survival, social-simulation and systemic-world references.
 - **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [G131–G140 dossiers](#full-dossiers--survival-expansion-g131g140) and [G141–G148 dossiers](#full-dossiers--survival-references-g141g148) are now integrated with their scoped requirements/corrections audits. The [progress ledger](research-progress.md#survival-expansion--g131g148) owns completion and retained evidence limits.
@@ -24,7 +26,7 @@
 
 ## Expanded per-game dossiers
 
-The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 149-subject assignment or packet-wide preservation audit is finished.
+The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [earlier progress ledger](research-progress.md) and [expansion ledger](research-progress-expansion-2026-10-13.md) for their respective completion states and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 166-subject assignment or packet-wide preservation audit is finished.
 
 **September 27, 2026 scoped resolution:** all recorded G40–G60 manuscript-audit findings now have committed remedies. Seventeen subjects required corrections or additional research; four had no major gap identified. The [original matrix](references/games-40-60-coverage-audit.md) and [later-game findings](references/games-51-60-coverage-audit.md) remain historical baseline evidence, not competing current task trackers. Their pending labels are superseded by the ledger's per-game remedy records. Declared source/access/version limits remain, rather than being relabelled as successful reading or testing.
 
@@ -42,11 +44,11 @@ These independent per-game passes supplement the original chapters and mechanics
 
 **Final Fantasy, G81–G93:** [IV](dossiers/final-fantasy-iv.md) · [V](dossiers/final-fantasy-v.md) · [VI](dossiers/final-fantasy-vi.md) · [VII](dossiers/final-fantasy-vii.md) · [VIII](dossiers/final-fantasy-viii.md) · [IX](dossiers/final-fantasy-ix.md) · [X](dossiers/final-fantasy-x.md) · [XI](dossiers/final-fantasy-xi.md) · [XII](dossiers/final-fantasy-xii.md) · [XIII](dossiers/final-fantasy-xiii.md) · [XIV](dossiers/final-fantasy-xiv.md) · [XV](dossiers/final-fantasy-xv.md) · [XVI](dossiers/final-fantasy-xvi.md).
 
-**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [Warcraft II](dossiers/warcraft-ii.md) · [Warcraft III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md).
+**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [II](dossiers/warcraft-ii.md) · [III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md).
 
 **Assassin's Creed, G98–G100:** [IV: Black Flag](dossiers/assassins-creed-iv-black-flag.md) · [III](dossiers/assassins-creed-iii.md) · [Valhalla](dossiers/assassins-creed-valhalla.md).
 
-The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 149-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
+The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate whole-library integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
 
 ## Full dossiers — curated references G111–G120
 
@@ -121,6 +123,8 @@ These eight September 27 survival passes are independent full R01–R14 studies 
 [Read the full dossier](dossiers/songs-of-syx.md) for the October 13, 2026 addition. It examines the actual settlement, production, household, religious, legal, trade and military systems alongside presentation, development, distribution, commercial evidence and reception. Eight situations connect the systems: seven explicitly constructed examples and one attributed historical play account. Five independent written perspectives and contrasting Steam testimony retain their source and version limits.
 
 The useful comparison is how growth changes responsibilities without discarding the original place, and when interdependent systems become meaningful choices rather than maintenance. The [completion record](research-progress.md#songs-of-syx-g149) owns review and verification; this addition does not close the separate whole-library gates or authorize OpenLegend gameplay changes.
+
+The later [economy and lore supplement](dossiers/songs-of-syx-economy-and-lore.md) adds a source-qualified account of the divine wars, peoples, religious relationships and historical mysteries, connecting them to economic and social choices. It preserves the difference between lore, belief, old promotional material and verified mechanics.
 
 ## Game studies
 
