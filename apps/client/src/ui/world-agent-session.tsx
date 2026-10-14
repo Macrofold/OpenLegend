@@ -43,6 +43,7 @@ export function WorldAgentSession({
   purpose,
   nativeCreation,
   onCreated,
+  onStatusPolicyChanged,
 }: {
   worldId: string;
   accessScope: string;
@@ -53,6 +54,7 @@ export function WorldAgentSession({
   purpose?: 'invention' | 'creation';
   nativeCreation?: boolean;
   onCreated(): void;
+  onStatusPolicyChanged(): void;
 }) {
   const key = authoringKey('session', worldId, accessScope, sessionId);
   const recordKey = (record: string) =>
@@ -750,6 +752,7 @@ export function WorldAgentSession({
           }
           onClose={() => setReview(undefined)}
           onChanged={() => void refresh()}
+          onStatusPolicyChanged={onStatusPolicyChanged}
         />
       )}
     </>

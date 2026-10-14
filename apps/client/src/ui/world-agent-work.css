@@ -166,12 +166,18 @@
   overflow-wrap: anywhere;
 }
 .ol-agent-work-review {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  max-block-size: calc(100dvh - var(--space-6));
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+.ol-agent-review-overlay .ol-modal {
+  /* One dialog scroller keeps both consequences and actions reachable when
+   * short screens or enlarged text leave no room for a separate fixed footer. */
+  inline-size: min(620px, calc((100dvw - 24px) / var(--ui-scale, 1)));
+  max-block-size: calc((100dvh - 24px) / var(--ui-scale, 1));
 }
 .ol-agent-work-review-body {
-  overflow: auto;
+  overflow: visible;
   min-block-size: 0;
   padding: var(--space-4);
 }
@@ -188,9 +194,62 @@
 }
 .ol-agent-work-review-heading h2 {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 .ol-agent-work-review-footer {
   border-block-start: 1px solid var(--line);
+}
+.ol-agent-work-review-footer > p {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}
+.ol-status-removal,
+.ol-status-removal-entry,
+.ol-status-removal-selection {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  margin-block: var(--space-3);
+}
+.ol-status-removal :where(h3, h4, p) {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ol-status-removal-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding-inline-start: var(--space-4);
+}
+.ol-status-removal-list > li {
+  min-inline-size: 0;
+}
+.ol-status-removal-choice {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding-block: var(--space-2);
+  overflow-wrap: anywhere;
+}
+.ol-status-removal-mark {
+  flex: 0 0 1em;
+  inline-size: 1em;
+  block-size: 1em;
+  margin-block-start: 0.2em;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.ol-status-removal-choice[data-selected] .ol-status-removal-mark::after {
+  content: '✓';
+  display: block;
+  text-align: center;
+  line-height: 1;
+  color: var(--ink);
+}
+.ol-status-removal-choice[data-focus-visible] {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 @container (min-width: 700px) {
   .ol-agent-work-list {

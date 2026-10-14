@@ -812,7 +812,9 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                         }
                         onPress={() => void prepare()}
                       >
-                        Prepare exact review
+                        {selectedExact.kind === 'status-effect-policy'
+                          ? 'Review removal and policy changes'
+                          : 'Prepare exact review'}
                       </Button>
                       {canRetryPrepare && (
                         <Button

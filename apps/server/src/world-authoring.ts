@@ -26,11 +26,21 @@ import type {
   WorldCreationPlanView,
   WorldCreationOperationView,
   WorldCreationTargetView,
+  WorldStatusRemovalPage,
+  WorldStatusRemovalSection,
 } from '@open-legend/protocol';
 import {
   selectedCreationProfileForWorld,
   selectedCreationProfileForCandidate,
 } from '@open-legend/domain';
+import {
+  analyzeStatusRemoval,
+  assertRemovalDisclosure,
+  retainStatusRemoval,
+  REMOVAL_PAGE_SIZE,
+  statusRemovalKey,
+  type RetainedStatusRemoval,
+} from './world-authoring-removal.js';
 import { countMetric } from './performance.js';
 import { creationOperatingSettings } from './creation-host.js';
 import { reconcileWorldCreationReceipts } from './world-creation-recovery.js';
@@ -144,6 +154,7 @@ export interface ChangePlan {
   status: 'pending' | 'approved' | 'rejected' | 'applied';
   result?: ApiResult;
   creation?: WorldCreationPlanView;
+  removal?: WorldAgentPlanView['removal'];
 }
 interface OpeningOperation {
   request: CreationActivationRequest | null;
@@ -1268,7 +1279,14 @@ export class WorldAuthoringService {
       [...planReferences.values()].map((p) => this.draft(s, p.draftId, p.revision)),
     );
     const question = s.questionTurn ? await this.questionStatus(s, scope, exposure) : undefined;
+    const removalEvidence = await this.removalReadEvidence(id, { plans: shownPlans });
     const current = await this.ownedSession(id, scope);
+    if (removalEvidence.length)
+      await assertRemovalDisclosure(
+        this.service,
+        scope,
+        removalEvidence.flatMap((retained) => retained.instances),
+      );
     // Collections contain private intent/findings too; no await may follow these target checks.
     for (const d of [...drafts, ...planDrafts]) this.assertDraftTarget(d.kind, d.payload, scope);
     return {
@@ -2022,10 +2040,26 @@ export class WorldAuthoringService {
     try {
       const s = await this.ownedSession(id, scope);
       const response = await execute({ ...s, authority: scope });
+      const removalEvidence = await this.removalReadEvidence(id, response.data);
       // History is readable after closure/expiry, but never after current access is revoked.
       await this.ownedSession(id, scope);
+      if (
+        removalEvidence.length &&
+        record(response.data).section &&
+        s.timeline !== this.service.timelineId
+      )
+        throw new AuthoringRequestError(
+          'The gameplay timeline changed while reading removal details.',
+          'stale',
+        );
       const finalized = finalizeDisclosure(response.data);
       if (finalized !== undefined) response.data = finalized;
+      if (removalEvidence.length)
+        await assertRemovalDisclosure(
+          this.service,
+          scope,
+          removalEvidence.flatMap((retained) => retained.instances),
+        );
       this.assertWorkspaceDisclosure(response.data, scope);
       return response;
     } catch (error) {
@@ -2036,6 +2070,48 @@ export class WorldAuthoringService {
           : 'Saved work could not be confirmed. Retained receipts remain available.',
       );
     }
+  }
+  private async removalReadEvidence(sessionId: string, data: unknown) {
+    const keys = new Set<string>();
+    const pending: unknown[] = [data];
+    while (pending.length) {
+      const value = pending.pop();
+      if (Array.isArray(value)) {
+        pending.push(...value);
+        continue;
+      }
+      const row = record(value);
+      const summary = record(row.removal ?? record(row.preparation).removal ?? row.summary);
+      const draftId = row.draftId ?? row.id;
+      if (
+        typeof summary.binding === 'string' &&
+        typeof draftId === 'string' &&
+        typeof row.revision === 'number'
+      )
+        keys.add(statusRemovalKey(draftId, row.revision, summary.binding));
+      for (const field of [
+        'plan',
+        'draft',
+        'before',
+        'after',
+        'data',
+        'plans',
+        'drafts',
+        'revisions',
+      ])
+        if (row[field]) pending.push(row[field]);
+    }
+    const evidence: RetainedStatusRemoval[] = [];
+    for (const key of keys) {
+      const retained = await this.records.get<RetainedStatusRemoval>(sessionId, 'removal', key);
+      if (!retained)
+        throw new AuthoringRequestError(
+          'Complete removal disclosure evidence is unavailable.',
+          'unavailable',
+        );
+      evidence.push(retained);
+    }
+    return evidence;
   }
   private assertWorkspaceDisclosure(data: unknown, scope: RequestScope) {
     if (!data || typeof data !== 'object') return;
@@ -2095,18 +2171,35 @@ export class WorldAuthoringService {
     };
     return view;
   }
-  localDraftRead(
+  async localDraftRead(
     sessionId: string,
     args: { draftId: string; revision: number; afterPlan?: string },
     scope = this.service.localScope,
   ) {
-    return this.localWork(sessionId, scope, async (s) =>
-      workResult(
-        'ok',
-        undefined,
-        await this.exactDraft(s, args.draftId, args.revision, scope, args.afterPlan),
+    return this.withDraftValidationHistory(sessionId, args.draftId, args.revision, scope, () =>
+      this.localWork(sessionId, scope, async (s) =>
+        workResult(
+          'ok',
+          undefined,
+          await this.exactDraft(s, args.draftId, args.revision, scope, args.afterPlan),
+        ),
       ),
     );
+  }
+  private async withDraftValidationHistory<T>(
+    sessionId: string,
+    draftId: string,
+    revision: number,
+    scope: RequestScope,
+    operation: () => Promise<T>,
+  ) {
+    const session = await this.ownedSession(sessionId, scope);
+    const draft = await this.draft(session, draftId, revision);
+    // Inspection and comparison include native checks. Prepare complete condition
+    // history once for the whole read, including both sides of a comparison.
+    return draft.kind === 'status-effect-policy'
+      ? this.service.withStatusEffectHistory(operation)
+      : operation();
   }
   localDraftHistory(
     sessionId: string,
@@ -2143,72 +2236,74 @@ export class WorldAuthoringService {
     args: { draftId: string; fromRevision: number; toRevision: number },
     scope = this.service.localScope,
   ) {
-    return this.localWork<WorldAgentDraftComparisonView>(sessionId, scope, async (s) => {
-      const [before, after] = await Promise.all([
-        this.exactDraft(s, args.draftId, args.fromRevision, scope),
-        this.exactDraft(s, args.draftId, args.toRevision, scope),
-      ]);
-      const object = (value: unknown): Record<string, unknown> =>
-        value && typeof value === 'object' && !Array.isArray(value)
-          ? (value as Record<string, unknown>)
-          : {};
-      const a = object(before.payload),
-        b = object(after.payload);
-      const changed: WorldAgentDraftComparisonView['changed'] = [];
-      const compare = (
-        path: string[],
-        left: unknown,
-        right: unknown,
-        leftPresent: boolean,
-        rightPresent: boolean,
-      ) => {
-        if (leftPresent === rightPresent && fingerprint([left]) === fingerprint([right])) return;
-        if (
-          before.kind === 'recipe' &&
-          leftPresent &&
-          rightPresent &&
-          left &&
-          right &&
-          typeof left === 'object' &&
-          typeof right === 'object' &&
-          Array.isArray(left) === Array.isArray(right)
-        ) {
-          const leftFields = left as Record<string, unknown>,
-            rightFields = right as Record<string, unknown>;
-          const keys = [...new Set([...Object.keys(leftFields), ...Object.keys(rightFields)])];
-          if (keys.length) {
-            for (const key of keys)
-              compare(
-                [...path, key],
-                leftFields[key],
-                rightFields[key],
-                Object.hasOwn(leftFields, key),
-                Object.hasOwn(rightFields, key),
-              );
-            return;
+    return this.withDraftValidationHistory(sessionId, args.draftId, args.fromRevision, scope, () =>
+      this.localWork<WorldAgentDraftComparisonView>(sessionId, scope, async (s) => {
+        const [before, after] = await Promise.all([
+          this.exactDraft(s, args.draftId, args.fromRevision, scope),
+          this.exactDraft(s, args.draftId, args.toRevision, scope),
+        ]);
+        const object = (value: unknown): Record<string, unknown> =>
+          value && typeof value === 'object' && !Array.isArray(value)
+            ? (value as Record<string, unknown>)
+            : {};
+        const a = object(before.payload),
+          b = object(after.payload);
+        const changed: WorldAgentDraftComparisonView['changed'] = [];
+        const compare = (
+          path: string[],
+          left: unknown,
+          right: unknown,
+          leftPresent: boolean,
+          rightPresent: boolean,
+        ) => {
+          if (leftPresent === rightPresent && fingerprint([left]) === fingerprint([right])) return;
+          if (
+            before.kind === 'recipe' &&
+            leftPresent &&
+            rightPresent &&
+            left &&
+            right &&
+            typeof left === 'object' &&
+            typeof right === 'object' &&
+            Array.isArray(left) === Array.isArray(right)
+          ) {
+            const leftFields = left as Record<string, unknown>,
+              rightFields = right as Record<string, unknown>;
+            const keys = [...new Set([...Object.keys(leftFields), ...Object.keys(rightFields)])];
+            if (keys.length) {
+              for (const key of keys)
+                compare(
+                  [...path, key],
+                  leftFields[key],
+                  rightFields[key],
+                  Object.hasOwn(leftFields, key),
+                  Object.hasOwn(rightFields, key),
+                );
+              return;
+            }
           }
-        }
-        changed.push({
-          field: path.join('.'),
-          path,
-          beforePresent: leftPresent,
-          afterPresent: rightPresent,
-          ...(leftPresent ? { before: left } : {}),
-          ...(rightPresent ? { after: right } : {}),
-        });
-      };
-      for (const field of new Set([...Object.keys(a), ...Object.keys(b)]))
-        compare([field], a[field], b[field], Object.hasOwn(a, field), Object.hasOwn(b, field));
-      if (before.intent !== after.intent)
-        changed.push({
-          field: 'intent',
-          beforePresent: true,
-          afterPresent: true,
-          before: before.intent,
-          after: after.intent,
-        });
-      return workResult('ok', undefined, { before, after, changed, coverage: 'structural-only' });
-    });
+          changed.push({
+            field: path.join('.'),
+            path,
+            beforePresent: leftPresent,
+            afterPresent: rightPresent,
+            ...(leftPresent ? { before: left } : {}),
+            ...(rightPresent ? { after: right } : {}),
+          });
+        };
+        for (const field of new Set([...Object.keys(a), ...Object.keys(b)]))
+          compare([field], a[field], b[field], Object.hasOwn(a, field), Object.hasOwn(b, field));
+        if (before.intent !== after.intent)
+          changed.push({
+            field: 'intent',
+            beforePresent: true,
+            afterPresent: true,
+            before: before.intent,
+            after: after.intent,
+          });
+        return workResult('ok', undefined, { before, after, changed, coverage: 'structural-only' });
+      }),
+    );
   }
   localDraftPreview(
     sessionId: string,
@@ -2315,33 +2410,35 @@ export class WorldAuthoringService {
       },
     );
   }
-  localDraftCheck(
+  async localDraftCheck(
     sessionId: string,
     args: { draftId: string; revision: number },
     scope = this.service.localScope,
   ) {
     let target: AuthoringDraft | undefined;
     let opening: Awaited<ReturnType<typeof settleOpeningReadiness>> | undefined;
-    return this.localWork<WorldAgentValidation>(
-      sessionId,
-      scope,
-      async (s) => {
-        const d = await this.draft(s, args.draftId, args.revision);
-        target = d;
-        this.assertDraftTarget(d.kind, d.payload, scope);
-        if (d.kind === 'world-opening')
-          opening = await this.inspectOpeningReadiness(d.payload, scope);
-        return workResult('ok');
-      },
-      () => {
-        if (!target) return;
-        this.assertDraftTarget(target.kind, target.payload, scope);
-        // Check uses the same final synchronous world read as Preview. A storage
-        // wait must not return passed findings for a value that changed meanwhile.
-        return target.kind === 'world-opening'
-          ? openingValidation(this.service, target.payload, scope, opening)
-          : validateAuthoring(this.service, target, scope);
-      },
+    return this.withDraftValidationHistory(sessionId, args.draftId, args.revision, scope, () =>
+      this.localWork<WorldAgentValidation>(
+        sessionId,
+        scope,
+        async (s) => {
+          const d = await this.draft(s, args.draftId, args.revision);
+          target = d;
+          this.assertDraftTarget(d.kind, d.payload, scope);
+          if (d.kind === 'world-opening')
+            opening = await this.inspectOpeningReadiness(d.payload, scope);
+          return workResult('ok');
+        },
+        () => {
+          if (!target) return;
+          this.assertDraftTarget(target.kind, target.payload, scope);
+          // Check uses the same final synchronous world read as Preview. A storage
+          // wait must not return passed findings for a value that changed meanwhile.
+          return target.kind === 'world-opening'
+            ? openingValidation(this.service, target.payload, scope, opening)
+            : validateAuthoring(this.service, target, scope);
+        },
+      ),
     );
   }
   private async inspectOpeningReadiness(payload: unknown, scope: RequestScope) {
@@ -2378,7 +2475,211 @@ export class WorldAuthoringService {
       args,
       scope,
       async (s) => this.dispatch({ name: 'ol_change_prepare', arguments: args }, s, true),
+      draft.kind === 'status-effect-policy',
     );
+  }
+
+  async localRemoval(
+    sessionId: string,
+    args: {
+      operationId: string;
+      rootIds: string[];
+      optionalIds?: string[];
+      draftId?: string;
+      expectedRevision?: number;
+    },
+    scope = this.service.localScope,
+  ) {
+    if (!(await this.records.session(sessionId)))
+      await this.open(sessionId, this.service.world.id, 0, scope);
+    return this.localMutation<WorldAgentPlanView>(
+      sessionId,
+      'human-status-removal',
+      args,
+      scope,
+      async (s) => {
+        const old =
+          args.draftId && args.expectedRevision
+            ? await this.draft(s, args.draftId, args.expectedRevision, true)
+            : undefined;
+        if (!!args.draftId !== !!args.expectedRevision || (old && !old.removalSelection))
+          throw new AuthoringRequestError('Choose the exact saved removal revision.');
+        if (old && fingerprint(old.removalSelection?.rootIds) !== fingerprint(args.rootIds))
+          throw new AuthoringRequestError(
+            'Keep the selected removal roots when revising optional choices.',
+          );
+        if (
+          (old?.revision ?? 0) >= 256 ||
+          (!old && (await this.records.count(s.id, 'draft')) >= 64) ||
+          (await this.records.count(s.id, 'plan')) >= 512
+        )
+          throw new AuthoringRequestError(
+            'This session reached its retained work allowance.',
+            'capacity',
+          );
+        await this.assertOperationalWritable(s, true);
+        const world = this.service.world;
+        const analysis = analyzeStatusRemoval(world, {
+          rootIds: args.rootIds,
+          optionalIds: args.optionalIds,
+        });
+        const retained = retainStatusRemoval(this.service, analysis, true);
+        await assertRemovalDisclosure(this.service, scope, retained.instances);
+        const payload = analysis.candidatePolicy;
+        if (Buffer.byteLength(JSON.stringify(payload)) > 24000)
+          throw new AuthoringRequestError(
+            'The complete policy exceeds the authoring candidate allowance; no partial removal can apply.',
+            'capacity',
+          );
+        const d: AuthoringDraft = {
+          id: old?.id ?? randomUUID(),
+          revision: (old?.revision ?? 0) + 1,
+          kind: 'status-effect-policy',
+          intent: `Remove ${args.rootIds.map((id) => world.statusEffectPolicy.definitions.find((definition) => definition.id === id)?.label ?? id).join(', ')}`,
+          payload,
+          digest: '',
+          actorId: s.actorId,
+          policyRevision: world.inventionPolicy.revision,
+          base: draftBase(world, 'status-effect-policy', payload),
+          removalSelection: { rootIds: analysis.rootIds, optionalIds: analysis.optionalIds },
+        };
+        d.digest = fingerprint(d);
+        const prepared = prepareAuthoring(
+          this.service,
+          world,
+          d,
+          scope,
+          s.timeline,
+          [],
+          undefined,
+          { analysis, retained },
+        );
+        d.preparation = prepared.preparation;
+        // Retain refused plans as inspectable work, never as executable approval.
+        const plan: ChangePlan = {
+          id: randomUUID(),
+          draftId: d.id,
+          revision: d.revision,
+          digest: fingerprint({
+            draft: d.digest,
+            evidence: prepared.preparation.evidence,
+            impact: prepared.impact,
+            removal: retained.summary,
+            session: s.id,
+            timeline: s.timeline,
+          }),
+          impact: prepared.impact,
+          validation: prepared.validation,
+          preparation: prepared.preparation,
+          removal: retained.summary,
+          status: 'pending',
+        };
+        await this.records.put(
+          s.id,
+          'removal',
+          statusRemovalKey(d.id, d.revision, retained.summary.binding),
+          retained,
+        );
+        await this.records.put(s.id, 'revision', draftRevisionKey(d.id, d.revision), d);
+        await this.records.put(s.id, 'draft', d.id, d);
+        await this.records.put(s.id, 'plan', plan.id, plan);
+        s.selectedDraft = { id: d.id, revision: d.revision };
+        await this.records.saveSession(s);
+        return result(
+          'ok',
+          retained.summary.status === 'complete'
+            ? 'The complete removal is saved for exact review. Nothing has changed in the world.'
+            : 'Removal is blocked. Inspect the saved reasons; nothing has changed in the world.',
+          plan,
+        );
+      },
+      true,
+    );
+  }
+
+  localRemovalPage(
+    sessionId: string,
+    args: {
+      planId: string;
+      draftId: string;
+      revision: number;
+      section: WorldStatusRemovalSection;
+      cursor?: string;
+    },
+    scope = this.service.localScope,
+  ) {
+    return this.localWork<WorldStatusRemovalPage>(sessionId, scope, async (s) => {
+      if (s.timeline !== this.service.timelineId)
+        throw new AuthoringRequestError(
+          'This removal belongs to an earlier gameplay timeline.',
+          'stale',
+        );
+      const d = await this.draft(s, args.draftId, args.revision);
+      const plan = await this.records.get<ChangePlan>(s.id, 'plan', args.planId);
+      if (!plan?.removal || plan.draftId !== d.id || plan.revision !== d.revision)
+        throw new AuthoringRequestError('Choose the exact saved removal plan.', 'stale');
+      const retained = await this.records.get<RetainedStatusRemoval>(
+        s.id,
+        'removal',
+        statusRemovalKey(d.id, d.revision, plan.removal.binding),
+      );
+      if (!retained || plan.removal.binding !== retained.summary.binding)
+        throw new AuthoringRequestError('Complete removal detail is unavailable.', 'unavailable');
+      let offset = 0;
+      const prefix = fingerprint([
+        s.id,
+        s.timeline,
+        scope.accountId,
+        scope.grantRevision,
+        plan.id,
+        d.id,
+        d.revision,
+        retained.summary.binding,
+        args.section,
+      ]);
+      if (args.cursor) {
+        const parts = args.cursor.split(':');
+        if (parts.length !== 2 || parts[0] !== prefix || !/^\d+$/.test(parts[1] ?? ''))
+          throw new AuthoringRequestError(
+            'This removal page belongs to another review or permission.',
+            'stale',
+          );
+        offset = Number(parts[1]);
+        if (!Number.isSafeInteger(offset) || offset % REMOVAL_PAGE_SIZE !== 0)
+          throw new AuthoringRequestError('Invalid removal page.', 'stale');
+      }
+      const rows = retained[args.section];
+      if (offset > rows.length)
+        throw new AuthoringRequestError('Removal page is unavailable.', 'stale');
+      await this.ownedSession(s.id, scope);
+      if (s.timeline !== this.service.timelineId)
+        throw new AuthoringRequestError('The gameplay timeline changed.', 'stale');
+      // localWork performs the complete disclosure check after every repository wait.
+      const page: WorldStatusRemovalPage = {
+        summary: retained.summary,
+        draftId: d.id,
+        revision: d.revision,
+        section: args.section,
+        definitions: [],
+        optional: [],
+        instances: [],
+        blockers: [],
+        nextCursor:
+          offset + REMOVAL_PAGE_SIZE < rows.length
+            ? `${prefix}:${offset + REMOVAL_PAGE_SIZE}`
+            : null,
+      };
+      // Section assignment remains correlated with the retained typed source.
+      if (args.section === 'definitions')
+        page.definitions = retained.definitions.slice(offset, offset + REMOVAL_PAGE_SIZE);
+      if (args.section === 'optional')
+        page.optional = retained.optional.slice(offset, offset + REMOVAL_PAGE_SIZE);
+      if (args.section === 'instances')
+        page.instances = retained.instances.slice(offset, offset + REMOVAL_PAGE_SIZE);
+      if (args.section === 'blockers')
+        page.blockers = retained.blockers.slice(offset, offset + REMOVAL_PAGE_SIZE);
+      return workResult('ok', undefined, page);
+    });
   }
   private localMutation<T>(
     sessionId: string,
@@ -2386,6 +2687,7 @@ export class WorldAuthoringService {
     args: { operationId: string },
     scope: RequestScope,
     execute: (s: AgentSession) => Promise<AuthoringResult>,
+    statusHistory = false,
   ) {
     let target: AuthoringDraft | undefined;
     return this.localWork<T>(
@@ -2393,21 +2695,27 @@ export class WorldAuthoringService {
       scope,
       async (s) =>
         this.serial(sessionId, async () => {
-          const prior = await this.retainedOperation(s, name, args);
-          let response = prior;
+          let response = await this.retainedOperation(s, name, args);
           if (!response) {
-            const current = await this.requireSession(sessionId, scope);
-            this.assertHumanWritable(current);
-            response = await this.operation(s, name, args, async () => {
-              const fresh = await this.requireSession(sessionId, scope);
-              this.assertHumanWritable(fresh);
-              const result = await execute(fresh);
-              // All new operational writes share this transaction. Expiry during a
-              // later repository wait must roll back the edit, not leave a revision
-              // or selected-draft change without an admitted operation receipt.
-              await this.assertOperationalWritable(fresh, true);
-              return result;
-            });
+            const mutate = async () => {
+              const current = await this.requireSession(sessionId, scope);
+              this.assertHumanWritable(current);
+              return this.operation(s, name, args, async () => {
+                const fresh = await this.requireSession(sessionId, scope);
+                this.assertHumanWritable(fresh);
+                const result = await execute(fresh);
+                // All new operational writes share this transaction. Expiry during a
+                // later repository wait must roll back the edit, not leave a revision
+                // or selected-draft change without an admitted operation receipt.
+                await this.assertOperationalWritable(fresh, true);
+                return result;
+              });
+            };
+            // Retained results need current disclosure checks, never fresh gameplay
+            // preparation that could fail or scan history unrelated to their receipt.
+            response = statusHistory
+              ? await this.service.withStatusEffectHistory(mutate)
+              : await mutate();
           }
           const data = response.data;
           if (
@@ -2464,8 +2772,23 @@ export class WorldAuthoringService {
       p = await this.records.get<ChangePlan>(sessionId, 'plan', planId);
     if (!p) throw new AuthoringRequestError('Change plan unavailable.');
     const d = await this.draft(s, p.draftId, p.revision);
+    const removal = p.removal
+      ? await this.records.get<RetainedStatusRemoval>(
+          s.id,
+          'removal',
+          statusRemovalKey(d.id, d.revision, p.removal.binding),
+        )
+      : undefined;
     await this.ownedSession(sessionId, scope);
     this.assertDraftTarget(d.kind, d.payload, scope);
+    if (p.removal) {
+      if (!removal || removal.summary.binding !== p.removal.binding)
+        throw new AuthoringRequestError(
+          'The complete retained removal is unavailable.',
+          'unavailable',
+        );
+      await assertRemovalDisclosure(this.service, scope, removal.instances);
+    }
     return {
       plan: p,
       draft: d,
@@ -2496,47 +2819,59 @@ export class WorldAuthoringService {
         // Native navigation may await its worker; the source SQL writer stays free.
         opening = await settleOpeningReadiness(this.service, reviewed.draft.payload, scope);
       }
-      return this.records.db.transaction(async () => {
-        const { plan, draft } = await this.review(sessionId, planId, scope);
-        if (plan.digest !== digest)
-          throw new AuthoringRequestError('Review content changed. Refresh the exact plan.');
-        if (
-          plan.status === 'applied' ||
-          plan.status === (decision === 'approve' ? 'approved' : 'rejected')
-        )
-          return plan;
-        if (plan.status !== 'pending')
-          throw new AuthoringRequestError(
-            'This decision is final; prepare a new plan for another review.',
-          );
-        const current = await this.requireSession(sessionId, scope);
-        this.assertHumanWritable(current);
-        await this.draft(current, draft.id, draft.revision, true);
-        await this.assertOperationalWritable(current, true);
-        if (decision === 'approve') {
-          const validation =
-            draft.kind === 'world-opening'
-              ? openingValidation(this.service, draft.payload, scope, opening)
-              : validateAuthoring(this.service, draft, scope);
+      const recordDecision = () =>
+        this.records.db.transaction(async () => {
+          const { plan, draft } = await this.review(sessionId, planId, scope);
+          if (plan.digest !== digest)
+            throw new AuthoringRequestError('Review content changed. Refresh the exact plan.');
           if (
-            !validation.ok ||
-            authoringImpact(this.service.world, draft).token !== plan.impact.token ||
-            (plan.preparation &&
-              plan.preparation.evidence.dependencies !==
-                authoringEvidenceDependencies(this.service.world, draft, scope))
+            plan.status === 'applied' ||
+            plan.status === (decision === 'approve' ? 'approved' : 'rejected')
+          )
+            return plan;
+          if (
+            plan.status !== 'pending' &&
+            !(plan.removal && decision === 'reject' && plan.status === 'approved')
           )
             throw new AuthoringRequestError(
-              'The reviewed change is no longer ready. Validate and prepare a new review.',
+              'This decision is final; prepare a new plan for another review.',
             );
-        }
-        plan.status = decision === 'approve' ? 'approved' : 'rejected';
-        await this.records.put(sessionId, 'plan', plan.id, plan);
-        // Existing decisions above remain readable. A new decision must roll back if
-        // expiry or authority changes while its repository write is waiting.
-        await this.assertOperationalWritable(current, true);
-        this.assertDraftTarget(draft.kind, draft.payload, scope);
-        return plan;
-      });
+          const current = await this.requireSession(sessionId, scope);
+          this.assertHumanWritable(current);
+          await this.draft(current, draft.id, draft.revision, true);
+          await this.assertOperationalWritable(current, true);
+          if (decision === 'approve') {
+            if (plan.removal && plan.removal.status !== 'complete')
+              throw new AuthoringRequestError(
+                'Removal is blocked or incomplete. Resolve its reasons and prepare a complete new review.',
+              );
+            const currentImpact = authoringImpact(this.service.world, draft);
+            const validation =
+              draft.kind === 'world-opening'
+                ? openingValidation(this.service, draft.payload, scope, opening)
+                : validateAuthoring(this.service, draft, scope);
+            if (
+              !validation.ok ||
+              currentImpact.token !== plan.impact.token ||
+              (plan.preparation &&
+                plan.preparation.evidence.dependencies !==
+                  authoringEvidenceDependencies(this.service.world, draft, scope, currentImpact))
+            )
+              throw new AuthoringRequestError(
+                'The reviewed change is no longer ready. Validate and prepare a new review.',
+              );
+          }
+          plan.status = decision === 'approve' ? 'approved' : 'rejected';
+          await this.records.put(sessionId, 'plan', plan.id, plan);
+          // Existing decisions above remain readable. A new decision must roll back if
+          // expiry or authority changes while its repository write is waiting.
+          await this.assertOperationalWritable(current, true);
+          this.assertDraftTarget(draft.kind, draft.payload, scope);
+          return plan;
+        });
+      return reviewed.draft.kind === 'status-effect-policy'
+        ? this.service.withStatusEffectHistory(recordDecision)
+        : recordDecision();
     });
   }
   async readContext(handle: string): Promise<RequestScope | undefined> {
@@ -2590,6 +2925,13 @@ export class WorldAuthoringService {
               );
           // Recovery reads retained receipts, not current-world facts. Quotas and changed
           // definition pins must not hide an already committed outcome from its owner.
+          const removalEvidence = await this.removalReadEvidence(s.id, response.data);
+          if (removalEvidence.length)
+            await assertRemovalDisclosure(
+              this.service,
+              scope ?? s.authority,
+              removalEvidence.flatMap((retained) => retained.instances),
+            );
           if (!this.permitted(s, scope)) return result('forbidden', 'Inspection scope changed.');
           return response.status === 'ok' && s.activeTurn && s.packetRef
             ? result('ok', response.message, { result: response.data, packetRef: s.packetRef })
@@ -2607,6 +2949,14 @@ export class WorldAuthoringService {
             principal: s.principal,
             scope: s.authority,
           });
+        const removalEvidence = await this.removalReadEvidence(s.id, response.data);
+        const recheckRemovalDisclosure = removalEvidence.length
+          ? await assertRemovalDisclosure(
+              this.service,
+              scope ?? s.authority,
+              removalEvidence.flatMap((retained) => retained.instances),
+            )
+          : undefined;
         if (!this.permitted(s, scope)) return result('forbidden', 'Inspection scope changed.');
         if (
           contextMembership(readWorld, s.profile) !==
@@ -2652,6 +3002,8 @@ export class WorldAuthoringService {
         await this.records.put(s.id, 'packet', packet.id, packet);
         s.packetRef = packet.id;
         await this.records.saveSession(s);
+        // Reuse this call's exact custody preparation; access is checked again live.
+        recheckRemovalDisclosure?.();
         if (!this.permitted(s, scope)) return result('forbidden', 'Inspection scope changed.');
         return result('ok', response.message, {
           result: response.data,
@@ -2705,9 +3057,30 @@ export class WorldAuthoringService {
         const execute = () => this.dispatch(call, current);
         // Only operational edits use this transaction. Apply enters the world lane first,
         // never with a database lock held (avoids writer/database lock inversion).
-        if (!operationId) return execute();
-        return this.operation(current, name, { ...args, operationId }, execute);
+        const run = () =>
+          operationId
+            ? this.operation(current, name, { ...args, operationId }, execute)
+            : execute();
+        const selected =
+          'draftId' in args && typeof args.draftId === 'string'
+            ? await this.records.get<AuthoringDraft>(current.id, 'draft', args.draftId)
+            : undefined;
+        const proposal = 'proposal' in args ? record(args.proposal) : undefined;
+        const needsStatusHistory =
+          name !== 'ol_change_apply' &&
+          (name === 'ol_status_policy_submit' ||
+            proposal?.kind === 'status-effect-policy' ||
+            ('kind' in args && args.kind === 'status-effect-policy') ||
+            selected?.kind === 'status-effect-policy');
+        return needsStatusHistory ? this.service.withStatusEffectHistory(run) : run();
       });
+      const removalEvidence = await this.removalReadEvidence(s.id, response.data);
+      if (removalEvidence.length)
+        await assertRemovalDisclosure(
+          this.service,
+          scope ?? s.authority,
+          removalEvidence.flatMap((retained) => retained.instances),
+        );
       // A revocation while a repository read was pending must fence its outgoing contents too.
       return this.permitted(s, scope)
         ? response
@@ -2920,7 +3293,7 @@ export class WorldAuthoringService {
           digest: '',
         };
         d.digest = fingerprint(d);
-        const { preparation, validation, impact } = prepareAuthoring(
+        const { preparation, validation, impact, removal } = prepareAuthoring(
           this.service,
           snapshot,
           d,
@@ -2929,6 +3302,15 @@ export class WorldAuthoringService {
           requirements,
         );
         d.preparation = preparation;
+        if (removal) {
+          await assertRemovalDisclosure(this.service, s.authority, removal.instances);
+          await this.records.put(
+            s.id,
+            'removal',
+            statusRemovalKey(d.id, d.revision, removal.summary.binding),
+            removal,
+          );
+        }
         await this.records.put(s.id, 'revision', draftRevisionKey(d.id, d.revision), d);
         await this.records.put(s.id, 'draft', d.id, d);
         s.selectedDraft = { id: d.id, revision: d.revision };
@@ -2949,6 +3331,7 @@ export class WorldAuthoringService {
             impact,
             validation,
             preparation,
+            ...(removal ? { removal: removal.summary } : {}),
             status: 'pending',
           };
           await this.records.put(s.id, 'plan', plan.id, plan);
@@ -3004,14 +3387,24 @@ export class WorldAuthoringService {
         const requirements = await this.draftRequirements(s, d);
         await this.assertOperationalWritable(s, human);
         this.assertDraftTarget(d.kind, d.payload, s.authority);
-        d.preparation = prepareAuthoring(
+        const prepared = prepareAuthoring(
           this.service,
           this.service.world,
           d,
           s.authority,
           s.timeline,
           requirements,
-        ).preparation;
+        );
+        d.preparation = prepared.preparation;
+        if (prepared.removal) {
+          await assertRemovalDisclosure(this.service, s.authority, prepared.removal.instances);
+          await this.records.put(
+            s.id,
+            'removal',
+            statusRemovalKey(d.id, d.revision, prepared.removal.summary.binding),
+            prepared.removal,
+          );
+        }
         await this.records.put(s.id, 'revision', draftRevisionKey(d.id, 1), d);
         await this.records.put(s.id, 'draft', d.id, d);
         s.selectedDraft = { id: d.id, revision: d.revision };
@@ -3037,14 +3430,24 @@ export class WorldAuthoringService {
         this.assertDraftTarget(d.kind, d.payload, s.authority);
         delete d.preparation;
         d.digest = fingerprint({ ...d, digest: '' });
-        d.preparation = prepareAuthoring(
+        const prepared = prepareAuthoring(
           this.service,
           this.service.world,
           d,
           s.authority,
           s.timeline,
           requirements,
-        ).preparation;
+        );
+        d.preparation = prepared.preparation;
+        if (prepared.removal) {
+          await assertRemovalDisclosure(this.service, s.authority, prepared.removal.instances);
+          await this.records.put(
+            s.id,
+            'removal',
+            statusRemovalKey(d.id, d.revision, prepared.removal.summary.binding),
+            prepared.removal,
+          );
+        }
         await this.records.put(s.id, 'revision', draftRevisionKey(d.id, d.revision), d);
         await this.records.put(s.id, 'draft', d.id, d);
         s.selectedDraft = { id: d.id, revision: d.revision };
@@ -3092,7 +3495,7 @@ export class WorldAuthoringService {
         const requirements = await this.draftRequirements(s, d);
         await this.assertOperationalWritable(s, human);
         this.assertDraftTarget(d.kind, d.payload, s.authority);
-        const { validation, impact, preparation } = prepareAuthoring(
+        const { validation, impact, preparation, removal } = prepareAuthoring(
           this.service,
           this.service.world,
           d,
@@ -3100,8 +3503,17 @@ export class WorldAuthoringService {
           s.timeline,
           requirements,
         );
-        if (!validation.ok) return result('blocked', validation.message, validation);
-        if (preparation.next !== 'ready_for_review')
+        if (removal) {
+          await assertRemovalDisclosure(this.service, s.authority, removal.instances);
+          await this.records.put(
+            s.id,
+            'removal',
+            statusRemovalKey(d.id, d.revision, removal.summary.binding),
+            removal,
+          );
+        }
+        if (!validation.ok && !removal) return result('blocked', validation.message, validation);
+        if (preparation.next !== 'ready_for_review' && !removal)
           return result(
             preparation.next,
             'Required preparation is incomplete; no review was created.',
@@ -3121,6 +3533,7 @@ export class WorldAuthoringService {
           impact,
           validation,
           preparation,
+          ...(removal ? { removal: removal.summary } : {}),
           status: 'pending',
         };
         await this.records.put(s.id, 'plan', plan.id, plan);
@@ -3161,14 +3574,22 @@ export class WorldAuthoringService {
             if (human) this.assertHumanWritable(fresh);
             const latest = await this.records.get<ChangePlan>(s.id, 'plan', plan.id);
             await this.draft(fresh, draft.id, draft.revision, true);
+            const removalEvidence = await this.removalReadEvidence(s.id, plan);
             await this.assertOperationalWritable(fresh, human);
+            if (removalEvidence.length)
+              await assertRemovalDisclosure(
+                this.service,
+                s.authority,
+                removalEvidence.flatMap((retained) => retained.instances),
+              );
+            const currentImpact = authoringImpact(world, draft);
             if (
               fresh.contextHash !== s.contextHash ||
               latest?.status !== 'approved' ||
-              authoringImpact(world, draft).token !== plan.impact.token ||
+              currentImpact.token !== plan.impact.token ||
               (plan.preparation &&
                 plan.preparation.evidence.dependencies !==
-                  authoringEvidenceDependencies(world, draft, s.authority))
+                  authoringEvidenceDependencies(world, draft, s.authority, currentImpact))
             )
               return {
                 world,
@@ -3179,9 +3600,32 @@ export class WorldAuthoringService {
                   message: 'Authority or affected instances changed; prepare another review.',
                 },
               };
-            return authoringTransition(this.service, world, draft, id, s.authority);
+            if (
+              (draft.preparation?.removal && !plan.removal) ||
+              (plan.removal && plan.removal.status !== 'complete')
+            )
+              return {
+                world,
+                events: [],
+                outcome: {
+                  ok: false,
+                  code: 'review-required',
+                  message: 'A complete condition-removal review is required.',
+                },
+              };
+            const transitioned = authoringTransition(this.service, world, draft, id, s.authority);
+            return transitioned.outcome.ok && plan.removal
+              ? {
+                  ...transitioned,
+                  outcome: {
+                    ...transitioned.outcome,
+                    message: `Removed ${plan.removal.totals.definitions} condition definitions; affected ${plan.removal.totals.instances} condition records and ended ${plan.removal.totals.activities} occupied activities. Earlier quantities and history are preserved.`,
+                  },
+                }
+              : transitioned;
           },
           draft.kind === 'action',
+          draft.kind === 'status-effect-policy' ? 'status-effect-history' : undefined,
         );
         if (!applied.ok) return result('blocked', applied.message, applied);
         plan.status = 'applied';

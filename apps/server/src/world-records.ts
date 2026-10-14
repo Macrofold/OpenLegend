@@ -740,6 +740,117 @@ export class WorldRecords {
       ? this.db.readTransaction(() => this.readHistory(state, actorIds, sourceIds))
       : this.db.transaction(() => this.readHistory(state, actorIds, sourceIds));
   }
+
+  /** Definition edits need every retained condition pin, without unrelated mind history. */
+  async withStatusEffectHistory(state: SavedWorld): Promise<SavedWorld> {
+    return this.db.readTransaction
+      ? this.db.readTransaction(() => this.readStatusEffectHistory(state))
+      : this.db.transaction(() => this.readStatusEffectHistory(state));
+  }
+
+  /** Retained references may name cold consumed objects. Read only their canonical
+   * custody, through exact entity and retirement indexes; never hydrate all history.
+   * The unique-identity LIMIT keeps requested IDs ahead of retirement joins; a plain
+   * outer join allowed PostgreSQL to visit retirement for every world entity.
+   * docs/memory-architecture.md#private-retrieval-fencing */
+  async readRetainedObjectCustody(worldId: string, ids: string[]) {
+    const batchSize = 256;
+    const read = async () => {
+      const result = new Map<string, { custodianId?: string } | null>();
+      for (let offset = 0; offset < ids.length; offset += batchSize) {
+        const rows = await this.db
+          .prepare(
+            `SELECT requested.value AS entity_id,
+          entity.id AS record_id, retirement.parent_id AS retired_parent,
+          retirement.payload::jsonb ->> 'custodianId' AS custodian_id
+          FROM jsonb_array_elements_text(?::jsonb) requested
+          LEFT JOIN LATERAL (
+            SELECT id,world_id FROM sim_entities
+            WHERE world_id=? AND entity_id=requested.value LIMIT 1
+          ) entity ON true
+          LEFT JOIN sim_object_retirements retirement
+            ON retirement.world_id=entity.world_id AND retirement.parent_id=entity.id`,
+          )
+          .all(JSON.stringify(ids.slice(offset, offset + batchSize)), worldId);
+        for (const row of rows) {
+          if (row['record_id'] && !row['retired_parent'])
+            throw new Error('A live historical subject is missing from the current world.');
+          result.set(
+            String(row['entity_id']),
+            row['retired_parent']
+              ? { ...(row['custodian_id'] ? { custodianId: String(row['custodian_id']) } : {}) }
+              : null,
+          );
+        }
+      }
+      return result;
+    };
+    // One SELECT already has a consistent snapshot and uses the adapter's reader;
+    // multiple transport batches need one explicit snapshot, not repeated transactions.
+    if (ids.length <= batchSize) return read();
+    return this.db.readTransaction ? this.db.readTransaction(read) : this.db.transaction(read);
+  }
+
+  private async readStatusEffectHistory(
+    state: SavedWorld,
+    entityIds?: string[],
+  ): Promise<SavedWorld> {
+    if (!entityIds && !completeObjectHistory(state.world.entities)) {
+      // Lawful consumption refuses objects with conditions, but current-format restored
+      // terminal objects may retain an inactive condition. Never approve an omitted owner.
+      const absentOwner = await this.db
+        .prepare(
+          `SELECT 1 FROM sim_status_effects conditions
+           JOIN sim_entities entity ON entity.world_id=conditions.world_id AND entity.id=conditions.parent_id
+           JOIN sim_object_retirements retired ON retired.world_id=entity.world_id AND retired.parent_id=entity.id
+           WHERE conditions.world_id=? AND entity.entity_id <> ALL(?::text[]) LIMIT 1`,
+        )
+        .get(state.world.id, Object.keys(state.world.entities));
+      if (absentOwner)
+        throw new Error(
+          'Condition history is unavailable for a retained physical record; the complete edit cannot be established.',
+        );
+    }
+    const incomplete = (entityIds ?? Object.keys(state.world.entities)).filter((id) => {
+      const entity = state.world.entities[id];
+      return entity && !completeContributionHistory(entity.statusEffects);
+    });
+    if (!incomplete.length) return state;
+    const entities = { ...state.world.entities };
+    // Loading conditions does not materialize omitted physical identities.
+    if (!completeObjectHistory(state.world.entities)) markPartialObjectHistory(entities);
+    for (let offset = 0; offset < incomplete.length; offset += 800) {
+      const ids = incomplete.slice(offset, offset + 800);
+      const parents = ids.map((id) => recordId(['world', 'entities', id]));
+      const rows = await this.db
+        .prepare(
+          `SELECT parent_id,slot,position,payload FROM sim_status_effects
+           WHERE world_id=? AND parent_id IN (${parents.map(() => '?').join(',')})
+           ORDER BY parent_id,position,id`,
+        )
+        .all(state.world.id, ...parents);
+      const grouped = new Map<string, Record<string, unknown>[]>();
+      for (const row of rows) {
+        const parent = String(row['parent_id']);
+        let group = grouped.get(parent);
+        if (!group) grouped.set(parent, (group = []));
+        group.push(row);
+      }
+      for (const [index, id] of ids.entries()) {
+        const records = grouped.get(parents[index]!) ?? [];
+        const statusEffects = Object.fromEntries(
+          records.map((row) => [String(row['slot']), JSON.parse(String(row['payload']))]),
+        );
+        entities[id] = { ...entities[id]!, statusEffects };
+        historyMapPositions.set(statusEffects, {
+          positions: new Map(records.map((row) => [String(row['slot']), Number(row['position'])])),
+          next: records.length ? Number(records.at(-1)!['position']) + 1 : 0,
+        });
+      }
+    }
+    return { ...state, world: { ...state.world, entities } };
+  }
+
   private async readHistory(
     state: SavedWorld,
     actorIds?: string[],
@@ -754,29 +865,8 @@ export class WorldRecords {
       // Unscoped materialization is the save/restore boundary; actor maintenance does
       // not need unrelated physical history. Never infer completeness from a hot map.
       if (!actorIds) state = await this.withObjectHistory(state);
-      const entities = { ...state.world.entities };
-      // One person's evidence does not materialize omitted physical identities.
-      // Preserve trusted residency on this owned copy; raw/full reconstruction stays strict.
-      if (!completeObjectHistory(state.world.entities)) markPartialObjectHistory(entities);
-      for (const actorId of actorIds ?? Object.keys(entities)) {
-        const entity = entities[actorId];
-        if (!entity || completeContributionHistory(entity.statusEffects)) continue;
-        const rows = await this.db
-          .prepare(
-            'SELECT slot,position,payload FROM sim_status_effects WHERE world_id=? AND parent_id=? ORDER BY position,id',
-          )
-          .all(state.world.id, recordId(['world', 'entities', actorId]));
-        entities[actorId] = {
-          ...entity,
-          statusEffects: Object.fromEntries(
-            rows.map((row) => [String(row['slot']), JSON.parse(String(row['payload']))]),
-          ),
-        };
-        historyMapPositions.set(entities[actorId]!.statusEffects!, {
-          positions: new Map(rows.map((row) => [String(row['slot']), Number(row['position'])])),
-          next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
-        });
-      }
+      state = await this.readStatusEffectHistory(state, actorIds);
+      const entities = state.world.entities;
       const appraisals = { ...state.world.appraisals };
       for (const actorId of actorIds ?? Object.keys(appraisals)) {
         const rows = await this.db

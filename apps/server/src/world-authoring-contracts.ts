@@ -305,6 +305,22 @@ export const sessionOpeningCreateRequest = sessionRequest
   .strict();
 export const sessionCreationOperationRequest = sessionRequest.extend({ planId: id }).strict();
 export const sessionDraftCheckRequest = sessionDraftSelectionRequest;
+export const sessionRemovalRequest = sessionRequest
+  .extend({
+    ...mutation,
+    rootIds: z.array(z.string().min(1).max(200)).min(1).max(64),
+    optionalIds: z.array(z.string().min(1).max(200)).max(64).optional(),
+    draftId: id.optional(),
+    expectedRevision: revision.optional(),
+  })
+  .strict();
+export const sessionRemovalPageRequest = sessionDraftSelectionRequest
+  .extend({
+    planId: id,
+    section: z.enum(['definitions', 'optional', 'instances', 'blockers']),
+    cursor: z.string().min(1).max(2000).optional(),
+  })
+  .strict();
 export const authoringToolRequest = z
   .object({
     contextHandle: z.string().min(32).max(256),

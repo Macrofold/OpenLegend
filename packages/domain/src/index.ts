@@ -119,6 +119,8 @@ export * from './mind.js';
 
 export * from './experience.js';
 export * from './status-effects.js';
+export * from './status-condition-references.js';
+export * from './status-effect-removal.js';
 export { DEFAULT_STATUS_EFFECT_POLICY } from './worlds/base/status-effects.js';
 export * from './cognition-policy.js';
 export * from './commitments.js';

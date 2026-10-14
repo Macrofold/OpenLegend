@@ -406,6 +406,7 @@ export interface GameRepository extends WorldStore {
     actorIds?: string[],
     sourceIds?: string[],
   ): Promise<SavedWorld>;
+  hydrateStatusEffectHistory?(state: SavedWorld): Promise<SavedWorld>;
   history?: HistoryRepository;
   saves?: GameSaves;
   commands?: CommandReceipts;
@@ -791,6 +792,13 @@ export class SqlGameRepository implements GameRepository {
   ): Promise<SavedWorld> {
     if (state !== this.acceptedState) throw new Error('Flush before materializing history.');
     const full = await this.records.withHistory(state, actorIds, sourceIds);
+    this.acceptedState = full;
+    return full;
+  }
+  async hydrateStatusEffectHistory(state: SavedWorld): Promise<SavedWorld> {
+    if (state !== this.acceptedState)
+      throw new Error('Flush before materializing condition history.');
+    const full = await this.records.withStatusEffectHistory(state);
     this.acceptedState = full;
     return full;
   }

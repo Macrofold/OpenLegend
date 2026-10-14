@@ -151,6 +151,7 @@ export interface WorldAgentPreparation {
   /** Source/validator/authority pins make this evidence attributable, never an approval. */
   evidence: { version: string; dependencies: string; generation: string };
   next: 'ready_for_review' | 'needs_revision' | 'pending_analysis' | 'blocked';
+  removal?: WorldStatusRemovalSummary;
 }
 export interface WorldAgentPlanView {
   id: string;
@@ -163,6 +164,76 @@ export interface WorldAgentPlanView {
   status: 'pending' | 'approved' | 'rejected' | 'applied';
   result?: { ok: boolean; code: string; message: string };
   creation?: WorldCreationPlanView;
+  removal?: WorldStatusRemovalSummary;
+}
+
+/** Complete retained condition-removal plans are paged; counts cover the saved plan. */
+export interface WorldStatusRemovalSummary {
+  status: 'complete' | 'blocked' | 'incomplete';
+  rootIds: string[];
+  optionalIds: string[];
+  totals: {
+    definitions: number;
+    optional: number;
+    instances: number;
+    activities: number;
+    blockers: number;
+  };
+  binding: string;
+  selectionEditable: boolean;
+}
+export interface WorldStatusRemovalDefinition {
+  id: string;
+  label: string;
+  selectedRoot: boolean;
+  reason: {
+    kind: 'root' | 'dependent';
+    viaDefinitionId?: string;
+    viaDefinitionLabel?: string;
+    sourcePath?: string;
+    witness: string[];
+    witnessLabels: string[];
+  };
+}
+export interface WorldStatusRemovalOptional {
+  id: string;
+  label: string;
+  referencedBy: string[];
+  referencedByLabels: string[];
+  sourcePaths: string[];
+  selected: boolean;
+  required: boolean;
+}
+export interface WorldStatusRemovalInstance {
+  entityId: string;
+  entityLabel: string;
+  definitionId: string;
+  definitionLabel: string;
+  recordId: string;
+  episode: string;
+  active: boolean;
+  sourceId: string;
+  actionTargetId: string;
+  disposition: 'remove' | 'end';
+  action?: { id: string; type: string; label: string; workInvocationId?: string };
+}
+export interface WorldStatusRemovalBlocker {
+  kind: string;
+  message: string;
+  definitionId?: string;
+  sourcePath?: string;
+}
+export type WorldStatusRemovalSection = 'definitions' | 'optional' | 'instances' | 'blockers';
+export interface WorldStatusRemovalPage {
+  summary: WorldStatusRemovalSummary;
+  draftId: string;
+  revision: number;
+  section: WorldStatusRemovalSection;
+  definitions: WorldStatusRemovalDefinition[];
+  optional: WorldStatusRemovalOptional[];
+  instances: WorldStatusRemovalInstance[];
+  blockers: WorldStatusRemovalBlocker[];
+  nextCursor: string | null;
 }
 export interface WorldAgentSessionView {
   sessionId: string;

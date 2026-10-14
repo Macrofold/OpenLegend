@@ -3,7 +3,7 @@ import type {
   WorldAgentPlanView,
   WorldCreationOperationView,
 } from '@open-legend/protocol';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { Button, Tag } from '../design-system/components';
 import { post, privateDraftScope, worldCreationOperation } from '../api';
@@ -14,6 +14,7 @@ import { WorldCreationTargetDetails } from './world-creation-target-details';
 import { worldAgentKindLabel } from './world-agent-labels';
 import { holdActionFocus } from './action-focus';
 import { authoringKey } from './world-agent-identity';
+import { WorldStatusRemovalDetails } from './world-status-removal';
 import './world-agent-work.css';
 
 /** Approval and Apply remain bound to one exact plan, never displayed prose.
@@ -27,6 +28,7 @@ export function WorldAgentReview({
   mutationReason,
   onClose,
   onChanged,
+  onStatusPolicyChanged,
 }: {
   worldId: string;
   sessionId: string;
@@ -34,9 +36,23 @@ export function WorldAgentReview({
   canApply: boolean;
   mutationReason?: string;
   onClose(): void;
-  onChanged(): void;
+  onChanged(plan?: WorldAgentPlanView): void;
+  onStatusPolicyChanged?(): void;
 }) {
   const [review, setReview] = useState<WorldAgentReviewView>();
+  const [currentPlanId, setCurrentPlanId] = useState(planId);
+  const [removalUnsafe, setRemovalUnsafe] = useState(false);
+  const removalUnsafeRef = useRef(false);
+  const updateRemovalUnsafe = useCallback((unsafe: boolean) => {
+    removalUnsafeRef.current = unsafe;
+    setRemovalUnsafe(unsafe);
+  }, []);
+  const [removalCancelBlocked, setRemovalCancelBlocked] = useState(false);
+  const removalCancelBlockedRef = useRef(false);
+  const updateRemovalCancellationBlocked = useCallback((blocked: boolean) => {
+    removalCancelBlockedRef.current = blocked;
+    setRemovalCancelBlocked(blocked);
+  }, []);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
@@ -45,9 +61,13 @@ export function WorldAgentReview({
   const readingCreation = useRef(false);
   const working = useRef(false);
   const dialog = useRef<HTMLDivElement>(null);
+  const modal = useRef<HTMLDivElement>(null);
+  const readingPosition = useRef(0);
+  const restoringReading = useRef(true);
   const audience = privateDraftScope();
-  const scope = authoringKey('review', worldId, audience, sessionId, planId);
-  const applyKey = authoringKey('apply-operation', worldId, audience, sessionId, planId);
+  const scope = authoringKey('review', worldId, audience, sessionId, currentPlanId);
+  const applyKey = authoringKey('apply-operation', worldId, audience, sessionId, currentPlanId);
+  const readingKey = authoringKey('review-reading', worldId, audience, sessionId, currentPlanId);
   type ApplyMarker = { scope: string; digest: string };
   const markerValid = (value: unknown): value is ApplyMarker =>
     !!value &&
@@ -64,12 +84,24 @@ export function WorldAgentReview({
   const canStartCreation = !review?.plan.creation || creationOutcome?.status === 'prepared';
   const currentScope = useRef(scope);
   currentScope.current = scope;
-  const body = { worldId, sessionId, planId };
+  const body = { worldId, sessionId, planId: currentPlanId };
+  function notifyChanged(plan?: WorldAgentPlanView, kind = review?.draft.kind) {
+    onChanged(plan);
+    if (plan?.status === 'applied' && kind === 'status-effect-policy') onStatusPolicyChanged?.();
+  }
   useEffect(() => {
     const controller = new AbortController();
     const requestScope = scope;
     currentScope.current = requestScope;
     setReview(undefined);
+    readingPosition.current = readLocal(
+      readingKey,
+      0,
+      (value): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0,
+    );
+    restoringReading.current = true;
+    updateRemovalUnsafe(false);
+    updateRemovalCancellationBlocked(false);
     setCreationOutcome(undefined);
     setError('');
     setRetainedApply(readLocal<ApplyMarker | null>(applyKey, null, markerValid));
@@ -80,8 +112,10 @@ export function WorldAgentReview({
     )
       .then((result) => {
         if (controller.signal.aborted || currentScope.current !== requestScope) return;
-        if (result.ok) setReview(result.data);
-        else setError(result.message ?? 'This exact review is unavailable.');
+        if (result.ok) {
+          updateRemovalUnsafe(!!result.data.plan.removal);
+          setReview(result.data);
+        } else setError(result.message ?? 'This exact review is unavailable.');
       })
       .catch((failure) => {
         if (!controller.signal.aborted && currentScope.current === requestScope)
@@ -89,15 +123,27 @@ export function WorldAgentReview({
       });
     return () => {
       controller.abort();
+      writeLocal(readingKey, readingPosition.current);
       currentScope.current = '';
     };
   }, [scope]);
+  useEffect(() => {
+    if (!review || review.plan.removal || !restoringReading.current) return;
+    const frame = requestAnimationFrame(() => {
+      if (modal.current) modal.current.scrollTop = readingPosition.current;
+      restoringReading.current = false;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [scope, review, removalUnsafe]);
   function clearApplyMarker() {
     writeLocal(applyKey, null);
     setRetainedApply(null);
   }
   function retainCreationOutcome(outcome: WorldCreationOperationView) {
-    if (outcome.planId !== planId || outcome.operationId !== review?.plan.creation?.operationId)
+    if (
+      outcome.planId !== currentPlanId ||
+      outcome.operationId !== review?.plan.creation?.operationId
+    )
       throw new Error(
         'The returned Start outcome does not belong to this exact review. Check its original result again.',
       );
@@ -112,7 +158,13 @@ export function WorldAgentReview({
     readingCreation.current = true;
     setCreationReading(true);
     try {
-      const result = await worldCreationOperation('recover', worldId, sessionId, planId, signal);
+      const result = await worldCreationOperation(
+        'recover',
+        worldId,
+        sessionId,
+        currentPlanId,
+        signal,
+      );
       if (signal?.aborted || currentScope.current !== requestScope) return;
       if (result.data) retainCreationOutcome(result.data);
       if (!result.ok || !result.data)
@@ -147,6 +199,8 @@ export function WorldAgentReview({
     if (
       !review ||
       working.current ||
+      ((decision === 'approve' || (decision === 'apply' && !retry)) && removalUnsafeRef.current) ||
+      ((decision === 'reject' || decision === 'cancel') && removalCancelBlockedRef.current) ||
       (decision === 'apply' && readingCreation.current) ||
       (decision === 'apply' && !canStartCreation) ||
       (decision === 'cancel' &&
@@ -163,11 +217,12 @@ export function WorldAgentReview({
     setBusy(true);
     setError('');
     setNotice('');
+    let acknowledgedPlan: WorldAgentPlanView | undefined;
     try {
       if (decision === 'cancel') {
         // A lost cancellation reply must be reconciled before offering Start again.
         setCreationOutcome(undefined);
-        const cancelled = await worldCreationOperation('cancel', worldId, sessionId, planId);
+        const cancelled = await worldCreationOperation('cancel', worldId, sessionId, currentPlanId);
         if (currentScope.current !== requestScope) return;
         if (cancelled.data) retainCreationOutcome(cancelled.data);
         if (!cancelled.ok || !cancelled.data)
@@ -184,15 +239,35 @@ export function WorldAgentReview({
           // Once dispatch starts, an earlier prepared read can no longer prove
           // that cancellation is safe. A lost reply requires native recovery.
           setCreationOutcome(undefined);
-          const creation = await worldCreationOperation('start', worldId, sessionId, planId);
+          const creation = await worldCreationOperation('start', worldId, sessionId, currentPlanId);
           if (currentScope.current === requestScope && creation.data)
             retainCreationOutcome(creation.data);
           result = creation;
-        } else
-          result = await post<{ ok: boolean; message?: string }>(
-            '/api/world-agent/session/apply',
-            body,
-          );
+        } else {
+          const applied = await post<{
+            ok: boolean;
+            message?: string;
+            data: { data?: WorldAgentPlanView };
+          }>('/api/world-agent/session/apply', body);
+          if (currentScope.current !== requestScope) return;
+          if (applied.ok) {
+            const plan = applied.data?.data;
+            if (
+              !plan ||
+              plan.id !== review.plan.id ||
+              plan.digest !== review.plan.digest ||
+              plan.status !== 'applied'
+            )
+              throw new Error(
+                'The exact Apply result needs confirmation. Check its original result.',
+              );
+            setReview((previous) => previous && { ...previous, plan });
+            // A later detail-read failure cannot erase an acknowledged world change.
+            acknowledgedPlan = plan;
+            notifyChanged(plan);
+          }
+          result = applied;
+        }
         if (!result.ok)
           throw new Error(
             result.message ??
@@ -213,21 +288,34 @@ export function WorldAgentReview({
           { ...body, decision, digest: review.plan.digest },
         );
         if (!result.ok) throw new Error(result.message ?? 'Decision not accepted.');
-        if (currentScope.current === requestScope)
+        if (currentScope.current === requestScope) {
           setReview((previous) => previous && { ...previous, plan: result.data });
+          acknowledgedPlan = result.data;
+          notifyChanged(result.data);
+        }
       }
+      if (currentScope.current !== requestScope) return;
       const refreshed = await post<{ ok: boolean; message?: string; data: WorldAgentReviewView }>(
         '/api/world-agent/session/review',
         body,
       );
       if (currentScope.current !== requestScope) return;
-      if (refreshed.ok) setReview(refreshed.data);
-      else
+      if (refreshed.ok) {
+        setReview(refreshed.data);
+        if (
+          !acknowledgedPlan ||
+          acknowledgedPlan.id !== refreshed.data.plan.id ||
+          acknowledgedPlan.digest !== refreshed.data.plan.digest ||
+          acknowledgedPlan.status !== refreshed.data.plan.status
+        )
+          notifyChanged(refreshed.data.plan, refreshed.data.draft.kind);
+      } else {
         setError(
           refreshed.message ??
             'The action returned a result, but this exact review could not be refreshed.',
         );
-      onChanged();
+        if (!acknowledgedPlan) onChanged();
+      }
     } catch (failure) {
       if (currentScope.current === requestScope)
         setError(
@@ -256,8 +344,18 @@ export function WorldAgentReview({
         body,
       );
       if (currentScope.current !== requestScope) return;
-      if (result.ok) setReview(result.data);
-      else setError(result.message ?? 'This exact review remains unavailable.');
+      if (result.ok) {
+        const previousPlan = review?.plan;
+        if (
+          !previousPlan ||
+          previousPlan.id !== result.data.plan.id ||
+          previousPlan.revision !== result.data.plan.revision ||
+          previousPlan.removal?.binding !== result.data.plan.removal?.binding
+        )
+          updateRemovalUnsafe(!!result.data.plan.removal);
+        setReview(result.data);
+        notifyChanged(result.data.plan, result.data.draft.kind);
+      } else setError(result.message ?? 'This exact review remains unavailable.');
     } catch (failure) {
       if (currentScope.current === requestScope)
         setError(
@@ -273,23 +371,41 @@ export function WorldAgentReview({
   }
   return (
     <ModalOverlay
-      className="ol-root ol-modal-overlay"
+      className="ol-root ol-modal-overlay ol-agent-review-overlay"
       isOpen
       isDismissable={!busy}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <Modal className="ol-modal">
+      <Modal
+        ref={modal}
+        className="ol-modal"
+        onScroll={(event) => {
+          if (!restoringReading.current) {
+            readingPosition.current = event.currentTarget.scrollTop;
+          }
+        }}
+      >
         <Dialog
           ref={dialog}
           className="ol-person-dialog ol-agent-work-review"
           aria-label={
-            review?.plan.creation ? 'Review exact new world' : 'Review exact world change'
+            review?.plan.creation
+              ? 'Review exact new world'
+              : review?.plan.removal
+                ? 'Review condition removal'
+                : 'Review exact world change'
           }
         >
           <div className="ol-agent-work-review-heading">
-            <h2>{review?.plan.creation ? 'Review and start this world' : 'Review exact change'}</h2>
+            <h2>
+              {review?.plan.creation
+                ? 'Review and start this world'
+                : review?.plan.removal
+                  ? review.draft.intent
+                  : 'Review exact change'}
+            </h2>
           </div>
           <div className="ol-agent-work-review-body">
             {!review && !error && <p role="status">Loading exact review…</p>}
@@ -319,11 +435,59 @@ export function WorldAgentReview({
                     <WorldCreationTargetDetails target={review.plan.creation.target} />
                   </section>
                 )}
-                <WorldAgentPreparationDetails
-                  preparation={review.plan.preparation ?? review.draft.preparation}
-                  preparationRevision={review.plan.revision}
-                  validation={review.plan.validation}
-                />
+                {!review.plan.removal && (
+                  <WorldAgentPreparationDetails
+                    preparation={review.plan.preparation ?? review.draft.preparation}
+                    preparationRevision={review.plan.revision}
+                    validation={review.plan.validation}
+                  />
+                )}
+                {review.plan.removal && (
+                  <WorldStatusRemovalDetails
+                    key={authoringKey(
+                      'removal-details',
+                      worldId,
+                      audience,
+                      sessionId,
+                      review.plan.id,
+                      review.plan.revision,
+                      review.plan.removal.binding,
+                    )}
+                    worldId={worldId}
+                    sessionId={sessionId}
+                    plan={review.plan}
+                    removal={review.plan.removal}
+                    canChange={canApply && !mutationReason && !canRetryApply}
+                    busy={busy}
+                    onUnsafeChange={updateRemovalUnsafe}
+                    onCancellationBlocked={updateRemovalCancellationBlocked}
+                    onReadReady={() => {
+                      const requestScope = scope;
+                      requestAnimationFrame(() => {
+                        if (currentScope.current !== requestScope || !restoringReading.current)
+                          return;
+                        if (modal.current) modal.current.scrollTop = readingPosition.current;
+                        restoringReading.current = false;
+                      });
+                    }}
+                    onRevised={(plan) => {
+                      updateRemovalUnsafe(true);
+                      setReview(undefined);
+                      setCurrentPlanId(plan.id);
+                      onChanged(plan);
+                    }}
+                  />
+                )}
+                {review.plan.removal && (
+                  <details>
+                    <summary>Native checks and policy details</summary>
+                    <WorldAgentPreparationDetails
+                      preparation={review.plan.preparation ?? review.draft.preparation}
+                      preparationRevision={review.plan.revision}
+                      validation={review.plan.validation}
+                    />
+                  </details>
+                )}
                 <p>Affected records: {review.plan.impact.affected}.</p>
                 <p>
                   {review.plan.status === 'applied'
@@ -336,6 +500,11 @@ export function WorldAgentReview({
                   {review.draft.kind === 'recipe' &&
                     ' Installing a recipe does not create an item. Crafting is separate.'}
                 </p>
+                {review.plan.removal && review.plan.status === 'rejected' && (
+                  <p role="status">
+                    Removal cancelled. This saved review cannot apply a world change.
+                  </p>
+                )}
                 {review.plan.status !== 'applied' &&
                   review.plan.validation.activationRequiresResume && (
                     <p>
@@ -352,7 +521,11 @@ export function WorldAgentReview({
                   <summary>Base pins and review identity</summary>
                   <pre className="ol-agent-json">
                     {JSON.stringify(
-                      { base: review.draft.base, digest: review.plan.digest, planId },
+                      {
+                        base: review.draft.base,
+                        digest: review.plan.digest,
+                        planId: currentPlanId,
+                      },
                       null,
                       2,
                     )}
@@ -404,14 +577,20 @@ export function WorldAgentReview({
                 <Button
                   variant="primary"
                   busy={busy}
-                  disabled={busy || !canApply || !!mutationReason || !review.plan.validation.ok}
+                  disabled={
+                    busy ||
+                    !canApply ||
+                    !!mutationReason ||
+                    !review.plan.validation.ok ||
+                    removalUnsafe
+                  }
                   onPress={() => void act('approve')}
                 >
                   {review.plan.creation
                     ? 'Approve this exact opening and host'
                     : 'Approve this exact change'}
                 </Button>
-                {!review.plan.creation && (
+                {!review.plan.creation && !review.plan.removal && (
                   <Button
                     disabled={busy || !canApply || !!mutationReason}
                     variant="quiet"
@@ -431,6 +610,7 @@ export function WorldAgentReview({
                   !canApply ||
                   !!mutationReason ||
                   !!canRetryApply ||
+                  removalUnsafe ||
                   (!!review.plan.creation && creationReading)
                 }
                 onPress={() => void act('apply')}
@@ -441,14 +621,27 @@ export function WorldAgentReview({
             {canRetryApply && !review?.plan.creation && review?.plan.status !== 'applied' && (
               <>
                 <p role="status">
-                  An earlier Apply for this exact review needs confirmation. Retry it to recover the
-                  same result; the server still checks whether a new change is permitted.
+                  {review.plan.removal
+                    ? 'The original removal outcome needs confirmation. Check result retrieves or completes that same approved operation.'
+                    : 'An earlier Apply for this exact review needs confirmation. Retry it to recover the same result; the server still checks whether a new change is permitted.'}
                 </p>
                 <Button busy={busy} disabled={busy} onPress={() => void act('apply', true)}>
-                  Retry original Apply
+                  {review.plan.removal ? 'Check result' : 'Retry original Apply'}
                 </Button>
               </>
             )}
+            {review?.plan.removal &&
+              (review.plan.status === 'pending' || review.plan.status === 'approved') && (
+                <Button
+                  variant="quiet"
+                  disabled={
+                    busy || !canApply || !!mutationReason || !!canRetryApply || removalCancelBlocked
+                  }
+                  onPress={() => void act('reject')}
+                >
+                  Cancel removal
+                </Button>
+              )}
             {review?.plan.creation && (
               <>
                 {creationOutcome?.status === 'prepared' &&
@@ -492,7 +685,7 @@ export function WorldAgentReview({
               Refresh exact review
             </Button>
             <Button variant="quiet" disabled={busy} onPress={onClose}>
-              Close review
+              {review?.plan.removal ? 'Hide review' : 'Close review'}
             </Button>
           </div>
         </Dialog>

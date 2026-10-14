@@ -246,6 +246,10 @@ World mutation lanes admit at most 256 pending operations; each PostgreSQL read/
 
 Perception retains derived exposure inputs and prior outputs across immutable transitions. An unchanged observer/nearby-source set reuses exposure membership; changes to geometry, senses, positions, life/memory capabilities or output identity force reevaluation. Moving contacts still receive their next stationary transition. Recovery rebuilds the cache. Work metering counts actual UTF-8 event bytes; the group output allowance is 64 MB because the release-size first crowd exposure legitimately emits over 16 MB. No audience or required outcome is trimmed. The profiler refuses rejected or nonadvancing steps instead of counting them as simulation throughput.
 
+### Preparing complete results
+
+Where an existing size allowance applies, before copying growing explanation paths or constructing a complete retained result, check whether a provable size lower bound already exceeds that allowance. Count the representation that will actually be retained, including serialization escaping and encoding differences. Refuse early only when that proof cannot reject a result that fits; preserve admitted content and the final exact size check. Avoid repeatedly serializing the growing result just to measure it. This can bound otherwise quadratic explanation copying; it does not bound relationship extraction, validation or historical loading, which need their own complete-path measurements. [Batch 09 review evidence](verification/reviewed-content-removal.md#explanation-construction-and-exactness) demonstrates the oversized-path case under an unchanged detail allowance.
+
 ## Eight-times spatial and sensory budget
 
 This is the accepted optimization direction, not a declaration that every dense 8x workload has passed. PF12 sequences the broader PF/SW/EPR work; [PF13](maintainers/simulation-time.md) owns the finite elapsed-time delivery. [Earlier rebase evidence](verification/spatial-rebase-eightx.md) records the former per-second baseline; [current cadence evidence](verification/simulation-cadence.md) records actual elapsed progress and its limits.

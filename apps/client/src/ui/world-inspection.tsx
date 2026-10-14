@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import type { RelationshipNode, RelationshipPage, RelationshipRef } from '@open-legend/protocol';
+import type {
+  RelationshipNode,
+  RelationshipPage,
+  RelationshipRef,
+  WorldAgentPlanView,
+} from '@open-legend/protocol';
 import { Button, Tag } from '../design-system/components';
 import { post } from '../api';
+import { WorldStatusRemovalButton } from './world-status-removal';
+import { authoringKey } from './world-agent-identity';
 
 type Trace = {
   nodes: RelationshipNode[];
@@ -19,7 +26,21 @@ const key = (ref: RelationshipRef) => JSON.stringify([ref.kind, ref.id, ref.vers
 /** Owner-only relationship list uses the same service as MCP; it does not edit graph edges.
  * docs/invention-graph.md#graph-reader-implementation
  */
-export function WorldInspection({ actorId }: { actorId: string }) {
+export function WorldInspection({
+  actorId,
+  worldId,
+  sessionId,
+  connected,
+  conditionPolicyRevision,
+  onRemovalPrepared,
+}: {
+  actorId: string;
+  worldId: string;
+  sessionId?: string;
+  connected: boolean;
+  conditionPolicyRevision: number;
+  onRemovalPrepared(sessionId: string, plan: WorldAgentPlanView): void;
+}) {
   const [query, setQuery] = useState(''),
     [nodes, setNodes] = useState<RelationshipNode[]>([]);
   const [searchKind, setSearchKind] = useState<'definitions' | 'entities'>('definitions');
@@ -28,18 +49,28 @@ export function WorldInspection({ actorId }: { actorId: string }) {
     [submitted, setSubmitted] = useState('');
   const [inspection, setInspection] = useState<Inspection>(),
     [extra, setExtra] = useState<unknown>();
+  const [selection, setSelection] = useState<{ kind: string; id: string; label?: string }>();
+  const [resultsStale, setResultsStale] = useState(false);
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   const alive = useRef(true),
     pending = useRef(false);
+  const activeRead = useRef<AbortController | undefined>(undefined);
+  const currentRevision = useRef(conditionPolicyRevision);
+  currentRevision.current = conditionPolicyRevision;
+  const previousRevision = useRef(conditionPolicyRevision);
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
+      activeRead.current?.abort();
     };
   }, []);
   async function read<T>(name: string, args: unknown, accept: (value: T) => void) {
     if (pending.current) return;
+    const controller = new AbortController();
+    const revision = currentRevision.current;
+    activeRead.current = controller;
     pending.current = true;
     setBusy(true);
     setError('');
@@ -48,24 +79,78 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         ok: boolean;
         message?: string;
         result: { status: string; message?: string; data?: T };
-      }>('/api/world-agent/inspect', { name, arguments: args });
+      }>('/api/world-agent/inspect', { name, arguments: args }, controller.signal);
+      if (
+        !alive.current ||
+        controller.signal.aborted ||
+        activeRead.current !== controller ||
+        currentRevision.current !== revision
+      )
+        return;
       if (!result.ok || result.result.status !== 'ok')
         throw new Error(result.message ?? result.result.message ?? 'Read unavailable.');
-      if (alive.current) accept(result.result.data!);
+      accept(result.result.data!);
     } catch (e) {
-      if (alive.current) setError(e instanceof Error ? e.message : 'Read unavailable.');
+      if (
+        alive.current &&
+        !controller.signal.aborted &&
+        activeRead.current === controller &&
+        currentRevision.current === revision
+      )
+        setError(e instanceof Error ? e.message : 'Read unavailable.');
     } finally {
-      pending.current = false;
-      if (alive.current) setBusy(false);
+      if (activeRead.current === controller) {
+        activeRead.current = undefined;
+        pending.current = false;
+        if (alive.current) setBusy(false);
+      }
     }
   }
-  const inspect = (ref: { kind: string; id: string; version?: string }) =>
-    void read<Inspection>('ol_inspect', ref, (value) => {
-      setInspection(value);
-      setDirection(ref.kind === 'entity' || ref.kind === 'item' ? 'both' : 'out');
-      setExtra(undefined);
-      setTrace(undefined);
-    });
+  function inspect(ref: { kind: string; id: string; version?: string; label?: string }) {
+    if (pending.current) return;
+    const label =
+      ref.label ??
+      (selection?.kind === ref.kind && selection.id === ref.id ? selection.label : undefined);
+    setSelection({ kind: ref.kind, id: ref.id, label });
+    setInspection(undefined);
+    setExtra(undefined);
+    setTrace(undefined);
+    void read<Inspection>(
+      'ol_inspect',
+      {
+        kind: ref.kind,
+        id: ref.id,
+        ...(ref.version ? { version: ref.version } : {}),
+        sections: ['relationships'],
+      },
+      (value) => {
+        setInspection(value);
+        if (value.node)
+          setSelection({
+            kind: value.node.ref.kind,
+            id: value.node.ref.id,
+            label: value.node.label,
+          });
+        setDirection(ref.kind === 'entity' || ref.kind === 'item' ? 'both' : 'out');
+      },
+    );
+  }
+  useEffect(() => {
+    if (previousRevision.current === conditionPolicyRevision) return;
+    previousRevision.current = conditionPolicyRevision;
+    // A committed policy can remove a dependent, edit a survivor or reinstall an ID.
+    // Only the current reader can establish what this selected source now offers.
+    activeRead.current?.abort();
+    activeRead.current = undefined;
+    pending.current = false;
+    setBusy(false);
+    setInspection(undefined);
+    setExtra(undefined);
+    setTrace(undefined);
+    setError('');
+    setResultsStale(true);
+    if (selection) inspect(selection);
+  }, [conditionPolicyRevision]);
   const search = (next?: string) =>
     void read<{ nodes: RelationshipNode[]; nextCursor: string | null }>(
       searchKind === 'entities' ? 'ol_entities' : 'ol_find',
@@ -73,6 +158,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       (value) => {
         setNodes(value.nodes);
         setCursor(value.nextCursor);
+        setResultsStale(false);
         if (!next) setSubmitted(query);
       },
     );
@@ -116,6 +202,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
               setSearchKind(event.target.value === 'entities' ? 'entities' : 'definitions');
               setNodes([]);
               setCursor(null);
+              setResultsStale(false);
             }}
           >
             <option value="definitions">Definitions</option>
@@ -155,16 +242,19 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         </p>
       )}
       {busy && <p role="status">Reading current records…</p>}
+      {resultsStale && (
+        <p role="status">Condition definitions changed. Search again for current results.</p>
+      )}
       <ul aria-label="World search results">
         {nodes.map((node) => (
           <li key={key(node.ref)}>
             <Button
               variant="quiet"
               size="sm"
-              disabled={busy}
+              disabled={busy || resultsStale}
               onPress={() => {
                 setDirection('out');
-                inspect(node.ref);
+                inspect({ ...node.ref, label: node.label });
               }}
             >
               {node.label}
@@ -174,24 +264,59 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         ))}
       </ul>
       {cursor && (
-        <Button size="sm" disabled={busy} onPress={() => search(cursor)}>
+        <Button size="sm" disabled={busy || resultsStale} onPress={() => search(cursor)}>
           Next search page
         </Button>
       )}
+      {selection && (
+        <>
+          <h3 tabIndex={-1} data-removal-focus>
+            {inspection?.node?.label ?? selection.label ?? selection.id}
+          </h3>
+          {!inspection && (
+            <p className="ol-caption">
+              {selection.kind} · {selection.id}
+            </p>
+          )}
+          {!inspection && !busy && (
+            <p>
+              This selected source is unavailable. Refresh it or inspect another current result.
+            </p>
+          )}
+          <Button size="sm" disabled={busy} onPress={() => inspect(selection)}>
+            Refresh this source
+          </Button>
+        </>
+      )}
       {root && page && (
         <>
-          <h3>{inspection.node?.label ?? root.id}</h3>
           <p className="ol-caption">
             {root.kind} · {root.id} · version {root.version.slice(0, 12)}
           </p>
+          {root.kind === 'status-effect' &&
+            inspection.node?.layer === 'definition' &&
+            inspection.node.canInspect &&
+            !inspection.node.availability && (
+              <>
+                <WorldStatusRemovalButton
+                  key={authoringKey(
+                    'inspected-removal',
+                    worldId,
+                    sessionId ?? '',
+                    root.id,
+                    root.version,
+                  )}
+                  worldId={worldId}
+                  sessionId={sessionId}
+                  definitionId={root.id}
+                  label={inspection.node.label}
+                  disabled={busy || !connected}
+                  onPrepared={onRemovalPrepared}
+                />
+                {!connected && <p role="status">Reconnect before preparing a removal review.</p>}
+              </>
+            )}
           <div className="ol-agent-tools">
-            <Button
-              size="sm"
-              disabled={busy}
-              onPress={() => inspect({ kind: root.kind, id: root.id })}
-            >
-              Refresh this source
-            </Button>
             {(['out', 'in', 'both'] as const).map((value) => (
               <Button
                 size="sm"
@@ -260,7 +385,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
                       disabled={busy}
                       onPress={() => {
                         setDirection('out');
-                        inspect(target);
+                        inspect({ ...target, label: node.label });
                       }}
                     >
                       Inspect {node.label}
@@ -304,7 +429,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
                   size="sm"
                   variant="quiet"
                   disabled={busy || !node.canInspect || !!node.availability}
-                  onPress={() => inspect(node.ref)}
+                  onPress={() => inspect({ ...node.ref, label: node.label })}
                 >
                   {node.label}
                 </Button>{' '}

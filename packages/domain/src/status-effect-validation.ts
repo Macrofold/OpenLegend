@@ -7,6 +7,7 @@ import {
   capabilityContributionDefinition,
 } from './state-contributions.js';
 import { attributeDefinition, validateAttributeValue } from './world-modules.js';
+import { visitStatusCondition } from './status-condition-references.js';
 import type {
   StatusEffectPolicy,
   StatusEffectDefinition,
@@ -72,7 +73,8 @@ export function validateStatusCondition(
   if ('all' in value || 'any' in value) {
     const children = value.all ?? value.any;
     if (!Array.isArray(children) || !children.length) fail('empty condition group.');
-    for (const child of children) validateStatusCondition(world, child, ids, depth + 1, budget);
+    for (const child of children)
+      validateStatusCondition(world, child, undefined, depth + 1, budget);
   } else if ('compare' in value) {
     const c = value.compare;
     object(c, ['target', 'attribute', 'operator', 'value']);
@@ -119,13 +121,14 @@ export function validateStatusCondition(
     const c = value.statusActive;
     object(c, ['target', 'definitionId', 'value']);
     reference(c.target);
-    if (
-      (ids && !ids.has(c.definitionId)) ||
-      !isSafeRecordId(c.definitionId) ||
-      typeof c.value !== 'boolean'
-    )
+    if (!isSafeRecordId(c.definitionId) || typeof c.value !== 'boolean')
       fail('unknown status reference.');
   }
+  if (depth === 0 && ids)
+    visitStatusCondition(value as StatusCondition, '', (condition) => {
+      if ('statusActive' in condition && !ids.has(condition.statusActive.definitionId))
+        fail('unknown status reference.');
+    });
 }
 export function validateStatusEffectPolicy(
   world: WorldState,

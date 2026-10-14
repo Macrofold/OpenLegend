@@ -45,6 +45,8 @@ import {
   sessionDraftPrepareRequest,
   sessionOpeningCreateRequest,
   sessionCreationOperationRequest,
+  sessionRemovalRequest,
+  sessionRemovalPageRequest,
   authoringToolRequest,
 } from './world-authoring-contracts.js';
 import { WorldToolService, WORLD_READ_TOOLS, worldReadRequest } from './world-tools.js';
@@ -2260,11 +2262,7 @@ async function initializeGameServer(
               return send(
                 response,
                 200,
-                await service.withActorHistory(undefined, () =>
-                  service.transition((world) =>
-                    admitStatusEffectPolicy(world, value.policy, value.expectedRevision),
-                  ),
-                ),
+                await service.updateStatusEffects(value.policy, value.expectedRevision, scope),
               );
             }
             case '/api/god/cognition-policy': {
@@ -2875,6 +2873,26 @@ async function initializeGameServer(
                 ok: true,
                 data: await authoring.review(value.sessionId, value.planId, scope),
               });
+            }
+            case '/api/world-agent/session/removal': {
+              const value = sessionRemovalRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localRemoval(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/session/removal-page': {
+              const value = sessionRemovalPageRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localRemovalPage(value.sessionId, value, scope),
+              );
             }
             case '/api/world-agent/session/decision': {
               const value = sessionDecisionRequest.parse(body);

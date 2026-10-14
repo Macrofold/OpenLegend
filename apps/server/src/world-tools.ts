@@ -1,4 +1,4 @@
-import type { RequestScope } from './authority.js';
+import { mayDiscloseSubject, type RequestScope } from './authority.js';
 import { EntityDirectory } from './entity-directory.js';
 import { traceRelationships, TRACE_LIMITS } from './relationship-trace.js';
 import { authoringKind } from './world-authoring-contracts.js';
@@ -7,7 +7,6 @@ import { memoryRef, projectMemoryRecord } from './evidence-relationships.js';
 import { z } from 'zod';
 import {
   itemFor,
-  objectAncestors,
   installedRecipeFamilies,
   projectAttributes,
   validateDeclaration,
@@ -243,14 +242,10 @@ export class WorldToolService {
   }
 
   private canReadSubject(world: WorldState, id: string, grant: WorldReadGrant): boolean {
-    const entity = world.entities[id];
-    if (!entity || entity.retirement) return false;
-    return objectAncestors(world, id).every(
-      (entry) =>
-        !entry.actor ||
-        (grant.scope
-          ? this.service.mayInspectPrivate(entry.id, grant.scope)
-          : entry.actor.controller !== 'player'),
+    return mayDiscloseSubject(world, id, (actorId) =>
+      grant.scope
+        ? this.service.mayInspectPrivate(actorId, grant.scope)
+        : world.entities[actorId]?.actor?.controller !== 'player',
     );
   }
 
