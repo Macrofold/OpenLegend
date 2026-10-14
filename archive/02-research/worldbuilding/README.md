@@ -1,6 +1,6 @@
 # Worldbuilding research library
 
-**29 dossiers, six comparative essays, and a cross-world matrix.** Initial packet: 2026-09-26. Whole-world reassessment: 2026-09-27, on `codex/world-idea-repertoires`. Dossier 29 was incorporated after the original 28-world roster and is included in the revised comparison.
+**29 dossiers, six comparative essays, a cross-world matrix, and a supplementary D&D lore study.** Initial packet: 2026-09-26. Whole-world reassessment: 2026-09-27, on `codex/world-idea-repertoires`; targeted completion: 2026-10-14. Dossier 29 was incorporated after the original 28-world roster and is included in the revised comparison. The later lore study supplements that dossier; it is not a thirtieth world.
 
 This library studies fictional worlds as places where people live, work, desire, create, enjoy, believe, compete, govern, harm, protect, and change. It distinguishes the represented world from its presentation and reception. The point is not to make every setting equally pleasant, bleak, explained, or complete, but to understand what its particular arrangements make possible and why its encounters can matter.
 
@@ -12,7 +12,7 @@ A road, school, family name, ability, ritual, workplace, or pleasurable gatherin
 
 [What makes a fictional world feel alive?](comparative-synthesis.md) provides the overall argument. The [comparison matrix](comparative-matrix.md) includes every dossier's initial foothold, developed relationships, concrete cases, and an important limit.
 
-The [research method](research-method.md) owns scope and evidence standards. The [source audit](source-audit.md) summarizes the actual reading layers and access limitations. The [reassessment ledger](reassessment-progress.md) records the correction pass and verification; [research-progress.md](research-progress.md) preserves the earlier packet's historical record rather than standing in for the new review.
+The [research method](research-method.md) owns scope and evidence standards. The [source audit](source-audit.md) summarizes the actual reading layers and access limitations; its [prioritized follow-ups](source-audit.md#7-targeted-completion-and-evidence-priorities--2026-10-14) distinguish consequential source improvements from unnecessary franchise-wide rereading. The [reassessment ledger](reassessment-progress.md) records the correction pass and verification; [research-progress.md](research-progress.md) preserves the earlier packet's historical record rather than standing in for the new review.
 
 ## The six comparative essays
 
@@ -24,6 +24,14 @@ The [research method](research-method.md) owns scope and evidence standards. The
 | [Languages and communication](languages-and-communication.md) | How do conlangs, scripts, registers, names, translation, wit, music, and performance make relationships and histories perceptible? |
 | [Magic, technology, and ecology](magic-technology-and-ecology.md) | What becomes possible, desirable, ordinary, dependent, or dangerous when bodies and capacities differ? How much explanation does a particular encounter require? |
 | [Authorship, medium, and accessibility](authorship-medium-and-accessibility.md) | How do collaboration, revision, medium, entry, return, and critical disagreement shape the world an audience encounters? What cannot be concluded about popularity? |
+
+## Supplementary research and close readings
+
+[Local laws, inherited magic, and lived institutions](dungeons-and-dragons-planes-and-lived-magic.md) deepens dossier 29 through the Weave, mythals, Faerzress, portals, planar traits, the Feywild, Candlekeep, and Waterdeep. Its [access register](dungeons-and-dragons-planes-and-lived-magic.md#14-annotated-sources-and-exact-access-boundary) identifies eight substantially retrieved wiki articles and separate publisher/creator material; neither complete wiki nor every cited book was read.
+
+The related [complete-SRD systems synthesis](../game-inspiration/mechanics/dungeons-and-dragons-srd-systems.md#16-source-coverage-limitations-and-corrections-to-the-earlier-pass) records an earlier reading of the uploaded 364-page rules document. It belongs to game research and distinguishes original adaptation proposals from source rules. Its existence does not turn those proposals into accepted requirements or replace the setting evidence in this library. The [D&D packet](../game-inspiration/games/dungeons-and-dragons.md) owns navigation among the edition, adjudication, rules, and lore studies.
+
+The authorship essay's [three inspected visual cases](authorship-medium-and-accessibility.md#three-inspected-visual-cases) compare public travel, household hospitality, and a fantastical street. These add direct visual observation to the textual research without claiming a fresh film screening, soundtrack analysis, or game playthrough.
 
 ## Complete dossier roster
 
@@ -81,7 +89,7 @@ Numbers are stable navigation, not rankings. The original selection consisted of
 |---|---|---|
 | 27 | [The Elder Scrolls / Tamriel](worlds/27-the-elder-scrolls.md) | Contested history, place, recognition, homes, celebration, courtship, revelry, divine cruelty, and family separation. |
 | 28 | [Fallout](worlds/28-fallout.md) | Rebuilding, inherited promises, personhood, live entertainment, sexual agency versus exploitation, technical ambition, and different futures. |
-| 29 | [Dungeons & Dragons](worlds/29-dungeons-and-dragons.md) | Eberron's ordinary magic and institutions, selected other settings, a recurring gala, an ended screen marriage, and conditional gothic-horror outcomes. |
+| 29 | [Dungeons & Dragons](worlds/29-dungeons-and-dragons.md) | Eberron's ordinary magic and institutions, bounded Greyhawk encounters and Sigil street life, a recurring gala, an ended screen marriage, and conditional gothic-horror outcomes. |
 
 ## What a dossier contains
 
@@ -119,4 +127,4 @@ The comparative conclusions can inform possible transferable questions, but the 
 
 ## Repository and review records
 
-The original 28-world packet was located on `docs/worldbuilding-research-library` and imported to `codex/world-idea-repertoires` without replacing its unrelated work. Dossiers were revised and committed individually; D&D's later addition was then included. The six essays and matrix were reconsidered from the revised corpus, not updated only with a prefatory statement. See the [reassessment ledger](reassessment-progress.md) for commit provenance, final status, and verification actually performed.
+The original 28-world packet was located on `docs/worldbuilding-research-library` and imported to `codex/world-idea-repertoires` without replacing its unrelated work. Dossiers were revised and committed individually; D&D's later addition was then included. The six essays and matrix were reconsidered from the revised corpus, not updated only with a prefatory statement. The October finishing pass connected the later D&D studies, added bounded source and visual checks, and reconciled the stale status record. See the [reassessment ledger](reassessment-progress.md) for actual commit provenance, final status, and verification performed.
