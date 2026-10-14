@@ -2,53 +2,64 @@ name: UI completion verification
 on:
   push:
     branches: [docs/game-ui-research-redesign]
-    paths: [.github/workflows/ui-completion.yml, .github/scripts/ui-finish.py, .github/scripts/ui-recovery-browser.ts, .github/scripts/ui-native-worlds.ts, .github/scripts/ui-verify.py]
-  workflow_dispatch:
+    paths: [.github/workflows/ui-completion.yml]
 permissions:
-  contents: write
-concurrency:
-  group: ui-completion-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
+  actions: read
 jobs:
-  recovery:
+  inspect:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: openlegend
-          POSTGRES_PASSWORD: fixture
-          POSTGRES_DB: postgres
-        ports: [5432:5432]
-        options: >-
-          --health-cmd "pg_isready -U openlegend -d postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      AI_BUDGET_USD: '0'
-      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
           show-progress: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - name: Install pinned dependencies and the existing browser
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Verify native worlds and actual browser recovery
+      - name: Inspect saved browser traces and their exact current owners
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 .github/scripts/ui-verify.py
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ui-finish-results
-          path: ${{ runner.temp }}/ui-finish/
-          retention-days: 7
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11929499305/zip --output "$RUNNER_TEMP/ui-failed.zip"
+          python3 - <<'PY'
+          import hashlib, io, json, os, re, zipfile
+          from pathlib import Path
+          raw = Path(os.environ['RUNNER_TEMP'], 'ui-failed.zip').read_bytes()
+          assert hashlib.sha256(raw).hexdigest() == 'ad6d2beb215584bbb7f343e927f2514bd18d7edecfc25fb2742b16a677e44155'
+          with zipfile.ZipFile(io.BytesIO(raw)) as saved:
+              for name in saved.namelist():
+                  if name.endswith(('browser.log', 'error-context.md')):
+                      print('\nSAVED=' + name + '\n' + saved.read(name).decode())
+                  if not name.endswith('trace.zip'): continue
+                  print('\nTRACE=' + name)
+                  with zipfile.ZipFile(io.BytesIO(saved.read(name))) as trace:
+                      calls = {}
+                      for member in trace.namelist():
+                          if not member.endswith('.trace'): continue
+                          for line in trace.read(member).decode().splitlines():
+                              event = json.loads(line)
+                              if event.get('type') == 'before': calls[event.get('callId')] = event
+                              elif event.get('type') == 'after':
+                                  before = calls.get(event.get('callId'), {})
+                                  print(json.dumps({'start':before.get('startTime'), 'end':event.get('endTime'), 'api':before.get('apiName') or before.get('method'), 'parameters':before.get('params'), 'error':event.get('error')}, ensure_ascii=False)[:1800])
+          for path, terms in {
+              'apps/client/src/main.tsx': ['clearAccess(', 'WorldLoadingError', 'preservePendingCommands', 'acceptAccess('],
+              'apps/server/src/construction-scene.ts': ['constructionProfile'],
+              'packages/domain/src/construction-scene.ts': ['constructionProfile'],
+              'apps/server/src/context.ts': ['recallSelectionQuestions', ':context', 'selection'],
+              'docs/memory-architecture.md': ['#', 'selection'],
+              'apps/client/src/ui/camp-activity.tsx': ['className="ol-camp', 'following', 'hasPlanHistory'],
+          }.items():
+              file = Path(path)
+              if not file.exists(): continue
+              lines = file.read_text().splitlines(); indices = set()
+              for index, line in enumerate(lines):
+                  if any(term in line for term in terms):
+                      indices.update(range(max(0,index-5), min(len(lines),index+22)))
+              print('\nOWNER=' + path)
+              previous = -2
+              for index in sorted(indices):
+                  if index > previous + 1: print('...')
+                  print(str(index+1)+': '+lines[index]); previous = index
+          PY
