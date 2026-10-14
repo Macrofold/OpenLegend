@@ -4,7 +4,7 @@
 
 ## Scope and authorization
 
-Mike approved the full recommendation following the Don't Starve Together question plus Shattered Pixel Dungeon, then explicitly instructed: **do not start the new games' research yet; only add them to the roster**. G150–G166 are all **Not started — roster only, awaiting research authorization**. The roster owns their seventeen titles, output filenames and edition boundaries. No new per-game dossier for that range is created in this task. Don't Starve Together stays G140; Apocalypse Rising is a targeted example in G04's supplement, not a new full-game assignment.
+Mike approved the full recommendation following the Don't Starve Together question plus Shattered Pixel Dungeon, then explicitly instructed: **do not start the new games' research yet; only add them to the roster**. G150–G166 are all **Not started — roster only, awaiting research authorization**. The roster owns their seventeen titles, output filenames and edition boundaries. No new per-game dossier for that range was created in this task. Don't Starve Together stays G140; Apocalypse Rising is a targeted example in G04's supplement, not a new full-game assignment.
 
 This ledger owns only the new range's status and coverage of the October 13 amendment. The earlier ledger retains G01–G149 completion provenance and P01–P05 whole-library gates. Its dated counts and completion labels do not certify the new requirements or mean the roster still ends at G149. No earlier game is silently recertified.
 
@@ -16,14 +16,34 @@ The connector supports branch creation and protected ref updates but exposes no 
 
 ## Current task state
 
+**The roster, requirements and requested existing-study additions are complete and committed. The literal branch rename remains a connector limitation, not a completed operation.**
+
 | Work | State | Evidence or remaining scope |
 | --- | --- | --- |
-| Add G150–G166 | Complete as roster additions only | `885590f1378b37860154585d7d8c6956e830a8be`; preserve prior IDs and all seventeen separate new subjects. No research started on them. |
-| Strengthen research requirements | Written and committed; final diff/link review pending | Detailed amendment `f587a9b8146164ecbc9eaf092195812638ac35a9`; integration into R01–R14 owner `158f4f2a4aa52fa6a2d8f8131798da30ecb08859`. Covers revenue estimates/economic outcome, enjoyment/replay/abandonment, fictional economies, deep lore and creation tooling. |
-| G04 Roblox targeted supplement | In progress | Finish evidence-backed tycoon/economic-loop and replay analysis, Mike's original Apocalypse Rising example, and platform-versus-creator tooling/scripting workflow. Preserve the original chapter and platform dossier. |
-| G149 Songs of Syx targeted supplement | In progress | Clarify existing economy coverage, deepen lore with explicit source/canon/version limits, connect fiction to economic/social choices, and distinguish commercial observations from missing estimates. |
-| Navigation and scoped verification | Pending | Link finished supplements, check all changed/new files, inspect actual diffs and verify no G150–G166 dossier or runtime source was added. |
+| Add G150–G166 | Complete as roster additions only | `885590f1378b37860154585d7d8c6956e830a8be`; prior IDs retained and all seventeen separate new subjects present. No research started on them. |
+| Strengthen research requirements | Complete; scoped content/diff/link review performed | Detailed amendment `f587a9b8146164ecbc9eaf092195812638ac35a9`; integration into R01–R14 owner `158f4f2a4aa52fa6a2d8f8131798da30ecb08859`. Covers revenue estimates/economic outcome, enjoyment/replay/abandonment, fictional economies, deep lore and creation tooling. |
+| G04 Roblox targeted supplement | Complete as a scoped addition | [Economic play, replay and authoring](dossiers/roblox-economies-replay-and-creation.md), `ecfc56a32b5c8d5297c72a381dac6983d7d11e73`. Adds historical genre evidence, three bounded creator/player feedback accounts, Mike's original Apocalypse Rising example, a platform-versus-creator comparison, Luau/server/persistence/package/testing/AI-authoring distinctions and a constructed workflow. Original chapter and platform dossier unchanged. |
+| G149 Songs of Syx targeted supplement | Complete as a scoped addition | [Economy and lore](dossiers/songs-of-syx-economy-and-lore.md), `b632e43b7aae4ee920130664fe1b2dab473f908d`. Maps existing economy coverage, expands the source-qualified mythic history, gods, peoples and mysteries, and connects belief to economic/social choices. Original dossier unchanged; no new lifetime-revenue model claimed. |
+| Navigation and scoped verification | Complete for this documentation change | README integration `dbd28d69d9fb5ced491dcb53b4e8b541384c8bd5`; actual modified-file patches inspected, supplement bodies/source tables reviewed, and new local routes checked against their owners. Details below. |
 | True branch rename | Connector limitation | Broader branch created without deleting the old ref; no claim of a literal rename. |
+
+## Scoped verification and preservation
+
+GitHub comparison from the task base `553997d64164735b7f61d761a79bc99956729045` to `dbd28d69d9fb5ced491dcb53b4e8b541384c8bd5` is ahead-only, with seven commits and the task base itself as merge base. The complete changed-file set is exactly seven documentation paths: README, roster, original requirements, the detailed requirements amendment, this expansion ledger, and the two new targeted supplements. This closing commit updates only this ledger.
+
+No original game dossier, original chapter, historical progress ledger, runtime file, test, asset or G150–G166 dossier is in that change set. All seventeen planned new subjects have separate IDs and filenames; FTL/Into the Breach and Creatures 3/Docking Station are not collapsed into one subject. Don't Starve Together is not duplicated.
+
+The actual requirements, roster and README patches were inspected for preservation and scope. The new amendment and supplement texts were checked for substantive coverage, attribution, source identifiers, version boundaries and research-versus-implementation distinctions. The source tables provide the references for the adjacent identifiers; the Songs of Syx references additionally have Markdown definitions. New navigation connects the README, roster, expanded requirements, scoped ledger and supplements; the supplements retain links to their original owners. The Songs of Syx economy heading was checked against the actual dossier heading.
+
+Two incidental wording edits in the inspected navigation/roster patches preserve meaning: G138 says Early Access history, and the Warcraft section shortens the II/III link labels without changing destinations. Neither is a new game research finding. The requirements and README also lack a terminal newline after their updates; this is not a content loss or a runtime change.
+
+This was a scoped manual documentation/content/link review, not an automated whole-repository or external-link crawl, fresh verification of every inherited fact, game playtest, Studio test, source-code audit or benchmark. No paid execution, live account analytics, asset installation, audio playback or watched footage is claimed. No task-owned edited file is being left uncommitted; all changes were written through connector commits.
+
+## Evidence limits
+
+Roblox genre prominence is supported by a dated official 2021 retrospective, not an invented 2026 percentage. The three tycoon feedback accounts were available as substantive indexed text while direct forum pages were challenged; they are qualitative examples, not representative statistics. Mike's Apocalypse Rising observation remains attributed, and the official page shells did not establish the original game's exact current reset rules. Historical sequel bug fixes are explicitly separate from original-game mechanics and current defects.
+
+Songs of Syx lore draws on source-qualified community transcriptions and older developer-hosted wiki material. Several direct page requests failed. Contradictory names, counts, wording and incompletely documented chronology are not silently resolved, and historical balance tables or promotional promises are not imported as current V71 mechanics. Its prior operational economy coverage is retained; this addition does not pretend to have recovered an exhaustive current canon or private financial accounts.
 
 ## Amendment coverage across earlier subjects
 
@@ -33,4 +53,4 @@ The G04/G149 supplements are scoped additions, not new complete R01–R14 review
 
 ## Resume boundary
 
-Finish only the currently authorized G04/G149 supplements and document review. Do not begin G150–G166, a whole-library backfill, game execution or implementation. Preserve all earlier research and use the existing task branch; check its current head before further writes. Commit substantive changes through the connector. Final completion must distinguish delivered documentation from the literal-rename limitation and any genuine source-access gaps.
+No further research or documentation work remains in this agreed scope. The literal rename cannot be completed through the available connector actions; the broader working branch and preserved old ref are stated above. Do not begin G150–G166, a whole-library backfill, game execution or implementation without a new instruction. For later authorized work, preserve earlier research, use the intended branch and check its current head before writing.
