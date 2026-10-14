@@ -39,12 +39,10 @@ jobs:
           script = Path('.github/scripts/ui-reconcile.py').read_text()
           script = script.replace("marker = '            New invention\\n          </Button>'", "marker = '          New invention\\n        </Button>'")
           exec(compile(script, '.github/scripts/ui-reconcile.py', 'exec'))
-          # Fresh-world construction now asks the activity owner for its complete
-          # installed pin list. The UI's presentation metadata remains separate.
           world = ROOT / 'packages/domain/src/worlds/base/world.ts'
           data = world.read_text()
-          data, count = re.subn(r'\[\s*activityHostPin,.*?\]', 'activityHostPins()', data, count=1, flags=re.S)
-          assert count == 1
+          data, count = re.subn(r'\[STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST, BASE_OUTING_HOST\]\.map\(\s*activityHostPin,\s*\)', 'activityHostPins()', data, count=1)
+          assert count == 1, 'The pinned world activity registration changed.'
           world.write_text(data)
           presentation = ROOT / 'packages/domain/src/worlds/base/presentation.ts'
           data = presentation.read_text()
@@ -54,11 +52,17 @@ jobs:
               data = f"import {{ {name} }} from './{owners[0].stem}.js';\n" + data
           data = replace(data, "  cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',", "  guard: BASE_GUARD_TEXT.description,\n  cook: BASE_FOOD_ACTION_WORDING.cookingDescription,\n  fish: BASE_FOOD_ACTION_WORDING.fishingDescription,")
           presentation.write_text(data)
-          # These words now have their single authored owner above.
           descriptions = ROOT / 'apps/server/src/action-descriptions.ts'
-          data = descriptions.read_text().replace('  BASE_GUARD_TEXT,\n', '')
-          data = data.replace('BASE_DEATH_COMMAND_DESCRIPTIONS, BASE_FOOD_ACTION_WORDING', 'BASE_DEATH_COMMAND_DESCRIPTIONS')
+          data = descriptions.read_text()
+          if data.count('BASE_GUARD_TEXT') == 1:
+              data = data.replace('  BASE_GUARD_TEXT,\n', '')
+          if data.count('BASE_FOOD_ACTION_WORDING') == 1:
+              data = data.replace('BASE_DEATH_COMMAND_DESCRIPTIONS, BASE_FOOD_ACTION_WORDING', 'BASE_DEATH_COMMAND_DESCRIPTIONS')
           descriptions.write_text(data)
+          agent = ROOT / 'apps/client/src/ui/world-agent.tsx'
+          data = replace(agent.read_text(), 'create(true)', "create('invention')")
+          data = replace(data, "(inventionTarget === active ? 'New invention' : 'New conversation')", "(inventionTarget === active ? 'New invention' : creationTarget?.id === active ? 'New world' : 'New conversation')")
+          agent.write_text(data)
           Path(os.environ['RUNNER_TEMP'], 'ui-resolved-paths.txt').write_text('\n'.join([*DECISIONS, 'packages/domain/src/worlds/base/presentation.ts']) + '\n')
           PY
       - uses: pnpm/action-setup@v4
@@ -75,25 +79,25 @@ jobs:
       - name: Check reconciled current contracts
         working-directory: ${{ runner.temp }}/ui-reconciled
         run: pnpm run check > "$RUNNER_TEMP/ui-check.log" 2>&1 || { tail -160 "$RUNNER_TEMP/ui-check.log"; exit 1; }
-      - name: Report candidate checks
+      - name: Report candidate checks and bounded source
         if: always()
         shell: bash
         run: |
           test ! -f "$RUNNER_TEMP/ui-check.log" || tail -100 "$RUNNER_TEMP/ui-check.log"
           python3 - <<'PY'
-          import os, re
+          import os
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'], 'ui-reconciled')
-          if root.exists():
-              for relative in ['apps/client/src/ui/world-events.tsx', 'apps/client/src/ui/world-agent.tsx', 'packages/domain/src/worlds/base/world.ts']:
-                  path = root / relative
-                  if path.exists():
-                      lines = path.read_text().splitlines()
-                      print('===', relative)
-                      selected = set()
-                      for i, line in enumerate(lines):
-                          if any(term in line for term in ['activityHostPin', 'initialPurpose=', 'function create(', 'const activeTitle', 'New invention', 'function WorldEventScope', 'function ScopedWorldEvents', 'function ScopedComparisonOwner', 'visible={visible}']):
-                              selected.update(range(max(0, i-2), min(len(lines), i+12)))
-                      for i in sorted(selected):
+          for relative, ranges in {
+              'apps/client/src/ui/world-agent.tsx': [(300, 380)],
+              'apps/client/src/ui/world-agent-review.tsx': [(270, 360)],
+              'apps/client/src/ui/world-events.tsx': [(265, 345)],
+          }.items():
+              path = root / relative
+              if path.exists():
+                  print('===', relative)
+                  lines = path.read_text().splitlines()
+                  for start, end in ranges:
+                      for i in range(start-1, min(end, len(lines))):
                           print(f'{i+1}: {lines[i]}')
           PY
