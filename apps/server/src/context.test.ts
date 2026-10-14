@@ -93,9 +93,21 @@ describe('actor-scoped native decision candidates', () => {
         })
       ).ok,
     ).toBe(true);
-    await perform(service, select(service, 'craft'));
+    const recipe = Object.values(service.world.recipes).find((entry) => entry.name === draft.name)!;
+    expect(recipe).toBeDefined();
+    await perform(
+      service,
+      select(service, 'craft', (action) => action.command?.recipeId === recipe.id),
+    );
     await service.transition((world) => advanceWorld(world, 60));
-    await perform(service, select(service, 'equip'));
+    const sling = inventoryFor(service.world, NPC_ID).find(
+      (item) => item.definitionId === recipe.outputDefinitionId,
+    )!;
+    expect(sling).toBeDefined();
+    await perform(
+      service,
+      select(service, 'equip', (action) => action.command?.itemId === sling.id),
+    );
     await perform(
       service,
       select(service, 'hunt', (action) => action.command?.targetId === 'hare-1'),
@@ -129,6 +141,11 @@ describe('actor-scoped native decision candidates', () => {
     expect(new Set(npcCandidates(service).map((action) => action.id)).size).toBe(
       npcCandidates(service).length,
     );
-    expect(npcCandidates(service).some((action) => action.command?.type === 'craft')).toBe(false);
+    // Spending this method's inputs cannot prohibit unrelated starter recipes.
+    expect(
+      npcCandidates(service).some(
+        (action) => action.command?.type === 'craft' && action.command.recipeId === recipe.id,
+      ),
+    ).toBe(false);
   });
 });

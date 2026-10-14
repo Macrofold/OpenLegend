@@ -827,6 +827,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     <div
       ref={task}
       className="ol-camp-activities"
+      data-completed={visible && !preparing && !!activity && !working ? true : undefined}
       role="group"
       aria-label={preparing ? 'Task preparation' : workTitle}
       tabIndex={-1}

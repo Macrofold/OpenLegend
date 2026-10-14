@@ -1,3 +1,4 @@
+import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
@@ -529,6 +530,7 @@ async function harness(
   await enterLocalWorld(service);
   await service.setConnection('fixture-browser', true);
   await service.setPresence('fixture-browser', true);
+  await useNearCampSight(service);
   await service.control({ paused: false });
   const state = {
     script: options.script ?? {},

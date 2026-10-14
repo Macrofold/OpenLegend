@@ -168,3 +168,14 @@
 .ol-activity-picker-overlay[data-exiting] {
   animation: none;
 }
+
+/* A completed result is a short reading task, not an empty full-height
+ * preparation workspace. The bound preserves scrolling for long results. */
+.ol-panel:has(.ol-camp-activities:not([hidden])[data-completed='true']) {
+  height: fit-content;
+  max-height: 100%;
+  align-self: start;
+}
+.ol-camp-activities[data-completed='true'] {
+  flex: 0 1 auto;
+}

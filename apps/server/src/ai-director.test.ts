@@ -1,5 +1,5 @@
 import { testRepository } from '../../../tests/fixtures/database.js';
-import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { allItems } from '@open-legend/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -292,8 +292,24 @@ describe('AI director with explicit fixtures, no live calls', () => {
       if (fault === 'mechanics') draft.parameters.damage = 999;
       if (fault === 'quantity') draft.inputs[0]!.quantity = 0;
       if (fault === 'hidden-material')
-        draft.inputs.push({ definitionId: 'bone', quantity: 1, role: 'point' });
+        draft.inputs.push({ definitionId: 'fixture-hidden-bone', quantity: 1, role: 'point' });
       const h = await harness({ generate: (request) => value(request.requestId, 'openai', draft) });
+      if (fault === 'hidden-material') {
+        // Bone is now genuinely known from the starting fishing method.
+        // This installed definition has no possession or observed source.
+        await editWorld(h.service, (world) => {
+          world.itemDefinitions['fixture-hidden-bone'] = {
+            ...world.itemDefinitions.bone!,
+            id: 'fixture-hidden-bone',
+            name: 'Unobserved fixture bone',
+          };
+        });
+        expect(
+          h.service
+            .observe(PLAYER_ID)!
+            .itemDefinitions.some((item) => item.id === 'fixture-hidden-bone'),
+        ).toBe(false);
+      }
       const beforeItems = structuredClone(allItems(h.service.world));
       const beforeRecipes = structuredClone(h.service.world.recipes);
       const beforeKnowledge = structuredClone(h.service.world.knowledge[PLAYER_ID]);

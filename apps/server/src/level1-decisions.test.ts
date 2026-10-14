@@ -1,3 +1,4 @@
+import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -249,6 +250,7 @@ async function harness(
   await enterLocalWorld(service);
   await service.setConnection('fixture-browser', true);
   await service.setPresence('fixture-browser', true);
+  await useNearCampSight(service);
   await service.control({ paused: false });
   const calls = { judges: [] as JudgeRequest[], generations: [] as GenerateRequest[] };
   const client: AiClient = {

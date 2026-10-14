@@ -4,7 +4,7 @@ on:
     branches: [docs/game-ui-research-redesign]
     paths: [.github/workflows/ui-completion-source-read-20261014.yml]
 permissions:
-  contents: write
+  contents: read
 jobs:
   qualify:
     if: github.repository == 'Macrofold/OpenLegend'
@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
           show-progress: false
       - uses: pnpm/action-setup@v4
@@ -38,77 +38,37 @@ jobs:
           cache: pnpm
       - name: Install pinned dependencies
         run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
-      - name: Retain the reviewed changes and correct only fixture ordering
+      - name: Qualify the committed source without modifying it
         run: |
           python3 - <<'PY'
-          import subprocess, textwrap
-          from pathlib import Path
-          source=subprocess.check_output(['git','show','a70085268a03ff8f6d76a60b714a28b30e97f43a:.github/workflows/ui-completion-source-read-20261014.yml'],text=True)
-          block=source.split('      - name: Apply scoped fixture and completed-task corrections\n',1)[1].split('\n      - ',1)[0]
-          shell=textwrap.dedent(block.split('        run: |\n',1)[1])
-          subprocess.run(['bash','-e','-c',shell],check=True)
-          for path in ['apps/server/src/level1-decisions.test.ts','apps/server/src/cognition-payloads.test.ts','apps/server/src/cognition-verification.test.ts']:
-            p=Path(path); text=p.read_text()
-            assert text.count('  await useNearCampSight(service);\n')==1
-            text=text.replace('  await useNearCampSight(service);\n','',1)
-            anchor="  await service.setPresence('fixture-browser', true);"
-            assert text.count(anchor)==1
-            p.write_text(text.replace(anchor,anchor+'\n  await useNearCampSight(service);',1))
-          PY
-      - name: Check the corrected native fixtures and expose exact remaining differences
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 - <<'PY'
-          import json, os, subprocess, urllib.request
+          import json, os, subprocess
           from pathlib import Path
           report=Path(os.environ['RUNNER_TEMP'])/'ui-scoped';report.mkdir()
-          def git(*args):return subprocess.check_output(['git',*args])
-          paths=git('diff','--name-only').decode().splitlines()
-          subprocess.run(['pnpm','exec','prettier','--write',*paths,'.github/workflows/ui-completion-source-read-20261014.yml','docs/ui-ux/runtime/completion-20261014/README.md'],check=True)
           checks={}
           def run(label,args):
-            with (report/(label+'.log')).open('w') as out: checks[label]=subprocess.run(args,stdout=out,stderr=subprocess.STDOUT).returncode
+            with (report/(label+'.log')).open('w') as out:
+              checks[label]=subprocess.run(args,stdout=out,stderr=subprocess.STDOUT).returncode
             print(label+': '+str(checks[label]),flush=True)
-            print('\n'.join((report/(label+'.log')).read_text().splitlines()[-100:]),flush=True)
+            if checks[label]:
+              print('\n'.join((report/(label+'.log')).read_text().splitlines()[-70:]),flush=True)
           run('types',['pnpm','typecheck'])
-          originals={}
           if checks['types']==0:
-            probes={
-              'apps/server/src/action-catalogue.test.ts':[("  expect(person.map((action) => action.id).filter((id) => !id.startsWith('offer:'))).toEqual([", "  console.log('EXACT_PERSON_ACTIONS=' + JSON.stringify(person.map(a => ({id:a.id,label:a.label}))));\n  expect(person.map((action) => action.id).filter((id) => !id.startsWith('offer:'))).toEqual([")],
-              'apps/server/src/http.test.ts':[("    expect(initial.clock.pauseReason).toBe('away');", "    console.log('EXACT_STARTING_RECIPES=' + JSON.stringify(initial.recipes.map(r => [r.name,r.origin])));\n    expect(initial.clock.pauseReason).toBe('away');")],
-              'apps/server/src/context.test.ts':[("    expect(service.world.entities['hare-1']!.actor!.alive).toBe(false);", "    console.log('EXACT_HUNT_RESULT=' + JSON.stringify({actor:service.world.entities[NPC_ID],hare:service.world.entities['hare-1'],events:service.world.events.slice(-14)}));\n    expect(service.world.entities['hare-1']!.actor!.alive).toBe(false);")],
-            }
-            try:
-              for name,changes in probes.items():
-                p=Path(name); originals[name]=p.read_text(); text=originals[name]
-                for old,new in changes:
-                  assert text.count(old)==1,(name,old)
-                  text=text.replace(old,new,1)
-                p.write_text(text)
-              run('tests',['pnpm','exec','vitest','run','apps/server/src/level1-decisions.test.ts','apps/server/src/cognition-payloads.test.ts','apps/server/src/cognition-verification.test.ts','apps/server/src/context.test.ts','apps/server/src/ai-director.test.ts','apps/server/src/http.test.ts','apps/server/src/action-catalogue.test.ts','--reporter=verbose','--reporter=json','--outputFile.json='+str(report/'tests.json')])
-              for line in (report/'tests.log').read_text().splitlines():
-                if 'EXACT_' in line: print(line[:18000],flush=True)
-            finally:
-              for name,text in originals.items():Path(name).write_text(text)
+            run('tests',['pnpm','exec','vitest','run','apps/server/src/level1-decisions.test.ts','apps/server/src/cognition-payloads.test.ts','apps/server/src/cognition-verification.test.ts','apps/server/src/context.test.ts','apps/server/src/ai-director.test.ts','apps/server/src/http.test.ts','apps/server/src/action-catalogue.test.ts','--reporter=json','--outputFile='+str(report/'tests.json')])
           if (report/'tests.json').exists():
-            data=json.loads((report/'tests.json').read_text()); failures=[]
+            data=json.loads((report/'tests.json').read_text());failures=[]
             for suite in data['testResults']:
               for test in suite['assertionResults']:
-                if test['status']=='failed':failures.append({'file':str(Path(suite['name']).relative_to(Path.cwd())),'test':test['fullName'],'errors':test.get('failureMessages',[])})
+                if test['status']=='failed':
+                  failures.append({'file':str(Path(suite['name']).relative_to(Path.cwd())),'test':test['fullName'],'errors':test.get('failureMessages',[])})
             print('RESULT='+json.dumps({'passed':data['numPassedTests'],'failed':data['numFailedTests'],'total':data['numTotalTests'],'failures':failures},indent=2),flush=True)
-          patch=git('diff'); (report/'changes.patch').write_bytes(patch)
-          print('AFFECTED_DIFF_BEGIN\n'+patch.decode()+'AFFECTED_DIFF_END',flush=True)
-          metadata={'parent':os.environ['GITHUB_SHA'],'checks':checks}
-          if checks['types']==0:
-            git('diff','--check'); paths=git('diff','--name-only').decode().splitlines();tree=git('rev-parse','HEAD^{tree}').decode().strip()
-            for offset in range(0,len(paths),3):
-              request=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees',method='POST',data=json.dumps({'base_tree':tree,'tree':[{'path':p,'mode':'100644','type':'blob','content':Path(p).read_text()} for p in paths[offset:offset+3]]}).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
-              with urllib.request.urlopen(request,timeout=120) as response:tree=json.load(response)['sha']
-            git('add','--',*paths);assert git('write-tree').decode().strip()==tree
-            metadata.update(tree=tree,paths=paths)
-          (report/'metadata.json').write_text(json.dumps(metadata,indent=2));print('CANDIDATE='+json.dumps(metadata),flush=True)
-          print('Detached checkout '+os.getcwd()+'. No commits or branch references changed by this runner.',flush=True)
+          print('ROUTING_SOURCES',flush=True)
+          subprocess.run(['rg','-n','request_|offeredRoutes','apps/server/src/jev-questions.ts','apps/server/src/response-routing.ts','apps/server/src/ai-director.ts'],check=False)
+          print('NESTED_GUIDANCE',flush=True)
+          for root in ['apps','tests','docs','.github']:
+            for p in sorted(Path(root).rglob('AGENTS.md')):print(p,flush=True)
+          metadata={'commit':os.environ['GITHUB_SHA'],'checks':checks,'providerSpendUsd':0}
+          (report/'metadata.json').write_text(json.dumps(metadata,indent=2));print('COMMITTED_SOURCE='+json.dumps(metadata),flush=True)
+          print('Detached qualification checkout '+os.getcwd()+'. No source, Git objects or branch references changed.',flush=True)
           if any(checks.values()):raise SystemExit(1)
           PY
       - uses: actions/upload-artifact@v4

@@ -124,3 +124,26 @@ clockwork preset must release inherited worn items into the same character's car
 belongings through the existing object owner before replacing those bodies. Preserve
 real items, quantities and custody; do not change universal anatomy or weaken current
 validation. This is initial preset composition, not a stored-world migration.
+
+### Exact fixtures and completed-task presentation
+
+The recorded full run passes six ordinary browser journeys including Time
+under its unchanged sixty-second limit. Its remaining catalogue assertions
+assume older authored actions/recipes. Keep exact independent expectations,
+privacy assertions and refusal checks while including the current content.
+The crafted-tool loop must select its newly admitted sling and exact physical
+output, not whichever starter recipe or equipped item appears first.
+
+A native diagnostic confirms the additional cognition call is attention over
+four distant visible objects in the expanded starting world. The one-request
+orchestration fixtures will explicitly install fourteen-metre sight for their
+small near-camp scenario, with recalculated exact sense pins and unchanged
+hearing, native admission, request accounting, limits and assertions. This is
+fixture-only scope, not a production range or attention change; it does not
+establish that the complete current starting scene needs only one request.
+
+Completed Activity results will size their own panel to content, only while
+visible, not preparing and with no current work. Preparation/running work keep
+their existing workspace; long results still have the available-height bound.
+Validate the composed result, keyboard focus and phone/short layouts in the
+actual game before closing UIUX09.
