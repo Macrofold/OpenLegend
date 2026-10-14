@@ -31,115 +31,26 @@ jobs:
           persist-credentials: false
           show-progress: false
           fetch-depth: 0
-      - name: Resolve the reviewed overlap
+      - name: Restore exact reviewed preparation and checks
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11918233550/zip --output "$RUNNER_TEMP/review.zip"
           python3 - <<'PY'
-          import hashlib, json, os, re, subprocess, tarfile, textwrap, zipfile
+          import os, re, subprocess, textwrap
           from pathlib import Path
+          source = subprocess.check_output(['git', 'show', '7826a9681691e48253c4c3b6670b8c059129e741:.github/workflows/ui-merge-source.yml'], text=True)
+          def step(name):
+              block = source.split('      - name: ' + name + '\n', 1)[1].split('\n      - ', 1)[0]
+              return textwrap.dedent(block.split('        run: |\n', 1)[1])
           temp = Path(os.environ['RUNNER_TEMP'])
-          root = temp / 'ui-final'
-          report = temp / 'ui-final-report'
-          root.mkdir(); report.mkdir()
-          main = '1cf678802d62652d8dd466776d4b95a9d0d19166'
-          with (temp / 'review.zip').open('rb') as file:
-              assert hashlib.file_digest(file, 'sha256').hexdigest() == '42a2d3bc92a860e361e9178269cb75b9931e08e06ead61b4614b6669aaf52bbf'
-          with zipfile.ZipFile(temp / 'review.zip') as saved:
-              metadata = json.loads(saved.read('metadata.json'))
-              assert metadata['main_parent'] == main
-              with saved.open('merged.tar') as stream, tarfile.open(fileobj=stream, mode='r|') as archive:
-                  paths = []
-                  for member in archive:
-                      assert not member.name.startswith('/') and '..' not in Path(member.name).parts
-                      archive.extract(member, root, filter='data')
-                      if member.isfile() or member.issym(): paths.append(member.name)
-          forbidden = {'.github/workflows/ui-merge-source.yml', '.github/scripts/ui-reconcile.py', '.github/scripts/ui-reconcile-publish.py'}
-          assert not forbidden.intersection(paths)
-          (temp / 'ui-final-paths.json').write_text(json.dumps(paths))
-          (temp / 'ui-final-paths.nul').write_bytes(b'\0'.join(p.encode() for p in paths) + b'\0')
-          def git(*args, **kwargs):
-              return subprocess.check_output(['git', *args], **kwargs)
-          env = dict(os.environ, GIT_DIR=str(Path.cwd() / '.git'), GIT_WORK_TREE=str(root), GIT_INDEX_FILE=str(temp / 'ui-final.index'))
-          git('read-tree', '--empty', env=env)
-          git('add', '-f', '--pathspec-from-file=' + str(temp / 'ui-final-paths.nul'), '--pathspec-file-nul', env=env)
-          assert git('write-tree', env=env, text=True).strip() == metadata['merged_tree']
-          def once(text, old, new):
-              assert text.count(old) == 1, (old, text.count(old))
-              return text.replace(old, new, 1)
-          left = lambda a, b: a
-          right = lambda a, b: b
-          both = lambda a, b: a + b
-          rules = {
-              'apps/client/src/design-system/layout.css': [lambda a,b: a.split('  --dock-top:',1)[0] + b],
-              'apps/client/src/main.tsx': [lambda a,b: a + b.split('  const hasView',1)[0], left, both],
-              'apps/client/src/ui/hud-layout.ts': [lambda a,b: once(a, '.ol-survival,', '.ol-survival, .ol-clock-position,')],
-              'apps/client/src/ui/panels.tsx': [left],
-              'apps/server/src/action-catalogue.ts': [left],
-              'apps/server/src/action-descriptions.ts': [right],
-              'apps/server/src/inventory-view.ts': [both, left],
-              'apps/server/src/view.ts': [
-                  lambda a,b: once(b, '      label,\n      command,', '      label,\n      icon: nativeActionIcon(command.type),\n      command,'),
-                  lambda a,b: once(once(b, "replenish: 'Replenishing',", "replenish: attributeDefinition(world, entity.actor.action.attributeId ?? '')?.reservoir?.actionLabel ?? 'Working',"), "'Watching the clearing'", "'Watching the surroundings'"),
-              ],
-              'docs/documentation-changelog.md': [lambda a,b: b + '\n' + a],
-              'docs/ui-ux/inventory.md': [lambda a,b: a + '\n' + b],
-              'packages/domain/src/activity-hosts.ts': [right, right, right],
-              'packages/domain/src/narration.ts': [right],
-              'packages/domain/src/types.ts': [both],
-              'packages/domain/src/world-modules.ts': [both],
-              'packages/domain/src/worlds/base/world.ts': [lambda a,b: once(a, '        STOCK_ACTIVITY_HOST,', '        STOCK_ACTIVITY_HOST,\n        ...BASE_NATIVE_ACTIVITY_HOSTS,') + '      BASE_RANGED_POLICY,\n'],
-          }
-          marker = re.compile(r'^<<<<<<< [^\n]+\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]+\n?', re.M | re.S)
-          for path, choices in rules.items():
-              file = root / path
-              text = file.read_text()
-              matches = list(marker.finditer(text))
-              assert len(matches) == len(choices), (path, len(matches), len(choices))
-              for match, choice in reversed(list(zip(matches, choices))):
-                  text = text[:match.start()] + choice(match[1], match[2]) + text[match.end():]
-              file.write_text(text)
-          # Keep the redesigned Capabilities section, using the current authored
-          # practice wording rather than restoring the previous flat character panel.
-          path = root / 'apps/client/src/ui/panels.tsx'
-          text = path.read_text()
-          main_panels = git('show', main + ':apps/client/src/ui/panels.tsx', text=True)
-          practice = re.search(r'<Section title="Practice">.*?</Section>', main_panels, re.S).group()
-          text, count = re.subn(r'<Section title="Practice">.*?</Section>', lambda _: practice, text, count=1, flags=re.S)
-          assert count == 1
-          assert text.count('entity={playerEntity(view)}') == 1
-          path.write_text(text)
-          # New main moved trusted implementation registration to composition.
-          # Keep the real alternate-world host available without installing it in
-          # the base world; base installation also needs the newly explicit native hosts.
-          path = root / 'packages/domain/src/world-composition.ts'
-          text = path.read_text()
-          text = "import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';\n" + text
-          text = once(text, '    STOCK_ACTIVITY_HOST,', '    STOCK_ACTIVITY_HOST,\n    RESERVOIR_ACTIVITY_HOST,')
-          path.write_text(text)
-          path = root / 'packages/domain/src/worlds/base/world.ts'
-          path.write_text("import { BASE_NATIVE_ACTIVITY_HOSTS } from './native-activities.js';\n" + path.read_text())
-          path = root / 'packages/domain/src/activity-hosts.ts'
-          text = path.read_text()
-          for name in ['BASE_OUTING_HOST', 'BASE_CANOPY_ACTIVITY_HOST']:
-              if text.count(name) == 1:
-                  text = re.sub(r'^import \{ ' + name + r' \} from [^\n]+;\n', '', text, flags=re.M)
-          path.write_text(text)
-          # The newer shared template contract already distinguishes physical
-          # entities from named definitions. All callers move to that one contract.
-          path = root / 'packages/domain/src/narration.ts'
-          text = once(path.read_text(), '  entities: Record<string, Entity | undefined>,\n  names: Record<string, Named | undefined> = {},', '  bindings: Record<string, Entity | Named | undefined>,')
-          path.write_text(text)
-          for name in paths:
-              if not name.endswith(('.ts', '.tsx', '.css', '.md')): continue
-              assert not re.search(r'^<<<<<<< |^>>>>>>> ', (root / name).read_text(), re.M), name
-          metadata['ui_parent'] = os.environ['GITHUB_SHA']
-          metadata['resolved_files'] = list(rules)
-          (report / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
-          print('Resolved 21 conflict regions in 15 files; retained both current contracts.')
-          print('Candidate source directory: ' + str(root))
+          for name, filename in [
+              ('Resolve the reviewed overlap', 'prepare.sh'),
+              ('Format and verify the exact candidate', 'verify.sh'),
+              ('Export immutable candidate objects in bounded batches', 'export.sh'),
+          ]:
+              (temp / filename).write_text(step(name))
+          subprocess.run(['bash', '-e', '-o', 'pipefail', str(temp / 'prepare.sh')], check=True)
           PY
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -149,142 +60,96 @@ jobs:
       - name: Install pinned dependencies
         working-directory: ${{ runner.temp }}/ui-final
         run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-final-report/install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-final-report/install.log"; exit 1; }
-      - name: Reconcile exact template callers
+      - name: Reconcile exact template callers using the installed formatter parser
         working-directory: ${{ runner.temp }}/ui-final
         shell: bash
         run: |
           node --input-type=module <<'JS'
           import fs from 'node:fs';
           import path from 'node:path';
-          import ts from 'typescript';
+          import { parsers } from 'prettier/plugins/typescript';
           const paths = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'ui-final-paths.json'), 'utf8'));
           for (const file of paths) {
             if (!/\.(ts|tsx)$/.test(file)) continue;
             let text = fs.readFileSync(file, 'utf8');
             if (!text.includes('narrationTemplate(')) continue;
-            const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+            const source = await parsers.typescript.parse(text, { filepath: file });
             const edits = [];
             const visit = (node) => {
-              if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'narrationTemplate' && node.arguments.length === 3) {
+              if (!node || typeof node !== 'object') return;
+              if (node.type === 'CallExpression' && node.callee?.type === 'Identifier' && node.callee.name === 'narrationTemplate' && node.arguments.length === 3) {
                 const [template, entities, names] = node.arguments;
-                if (!ts.isObjectLiteralExpression(entities) || !ts.isObjectLiteralExpression(names)) throw new Error('Review nonliteral narration arguments: ' + file + ':' + node.pos);
+                if (entities.type !== 'ObjectExpression' || names.type !== 'ObjectExpression') throw new Error('Review nonliteral narration arguments: ' + file);
                 const properties = [...entities.properties, ...names.properties];
                 const keys = properties.map((p) => {
-                  if (!(ts.isPropertyAssignment(p) || ts.isShorthandPropertyAssignment(p)) || !(ts.isIdentifier(p.name) || ts.isStringLiteral(p.name))) throw new Error('Review computed narration binding: ' + file);
-                  return p.name.text;
+                  if (p.type !== 'Property' || p.computed || !['Identifier', 'Literal'].includes(p.key.type)) throw new Error('Review computed narration binding: ' + file);
+                  return p.key.name ?? p.key.value;
                 });
                 if (new Set(keys).size !== keys.length) throw new Error('Review overlapping narration bindings: ' + file);
-                edits.push([entities.getStart(source), names.end, '{ ' + properties.map((p) => p.getText(source)).join(', ') + ' }']);
+                const range = (n) => n.range ?? [n.start, n.end];
+                const from = range(entities)[0];
+                const to = range(names)[1];
+                if (!Number.isInteger(from) || !Number.isInteger(to)) throw new Error('Parser omitted source positions: ' + file);
+                const values = properties.map((p) => { const [a,b] = range(p); return text.slice(a,b); });
+                edits.push([from, to, '{ ' + values.join(', ') + ' }']);
               }
-              ts.forEachChild(node, visit);
+              for (const [key, value] of Object.entries(node)) {
+                if (['tokens','comments','loc','range','parent'].includes(key)) continue;
+                if (Array.isArray(value)) value.forEach(visit);
+                else if (value && typeof value === 'object') visit(value);
+              }
             };
             visit(source);
-            if (!edits.length) continue;
             for (const [start, end, replacement] of edits.sort((a,b) => b[0]-a[0])) text = text.slice(0,start) + replacement + text.slice(end);
-            fs.writeFileSync(file, text);
-            console.log('Updated exact narration callers: ' + file + ' (' + edits.length + ')');
+            if (edits.length) { fs.writeFileSync(file, text); console.log('Updated exact narration callers: ' + file + ' (' + edits.length + ')'); }
           }
           JS
-      - name: Format and verify the exact candidate
+      - name: Run selected checks on the exact candidate
         working-directory: ${{ runner.temp }}/ui-final
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json, os, subprocess
-          from pathlib import Path
-          temp = Path(os.environ['RUNNER_TEMP']); report = temp / 'ui-final-report'
-          env = dict(os.environ, GIT_DIR=os.environ['GITHUB_WORKSPACE'] + '/.git', GIT_WORK_TREE=str(Path.cwd()), GIT_INDEX_FILE=str(temp / 'ui-final.index'))
-          def git(*args): return subprocess.check_output(['git', *args], env=env)
-          git('add', '-f', '--pathspec-from-file=' + str(temp / 'ui-final-paths.nul'), '--pathspec-file-nul')
-          changed = git('diff', '--cached', '--name-only', '34d87d033fcecf8d651437dd7f33d9b3536949e9').decode().splitlines()
-          subprocess.run(['pnpm', 'exec', 'prettier', '--write', *changed], check=True)
-          results = {}
-          for label, command in [
-              ('guidance', ['pnpm', 'guidance:check']),
-              ('configuration', ['pnpm', 'config:check']),
-              ('format', ['pnpm', 'format:check']),
-              ('types', ['pnpm', 'typecheck']),
-              ('build', ['pnpm', 'build']),
-          ]:
-              if label == 'build' and results.get('types') != 0:
-                  results[label] = 'not run: type errors'; continue
-              with (report / (label + '.log')).open('w') as log:
-                  result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
-              results[label] = result.returncode
-              print(label + ': ' + str(result.returncode), flush=True)
-              print('\n'.join((report / (label + '.log')).read_text().splitlines()[-160 if result.returncode else -5:]), flush=True)
-          if results.get('types') == 0:
-              with (report / 'test.log').open('w') as log:
-                  result = subprocess.run(['pnpm', 'test', '--reporter=json', '--outputFile=' + str(report / 'tests.json')], stdout=log, stderr=subprocess.STDOUT)
-              results['tests'] = result.returncode
-              print('tests: ' + str(result.returncode), flush=True)
-              print('\n'.join((report / 'test.log').read_text().splitlines()[-50:]), flush=True)
-          else:
-              results['tests'] = 'not run: type errors'
-          git('add', '-f', '--pathspec-from-file=' + str(temp / 'ui-final-paths.nul'), '--pathspec-file-nul')
-          tree = git('write-tree').decode().strip()
-          git('diff', '--check', '705efb2bd102ba151123659b129372aea62b6a79', tree)
-          (report / 'resolution.patch').write_bytes(git('diff', '--binary', '34d87d033fcecf8d651437dd7f33d9b3536949e9', tree))
-          (report / 'resolved-paths.txt').write_text('\n'.join(changed) + '\n')
-          metadata = json.loads((report / 'metadata.json').read_text())
-          metadata.update(final_tree=tree, checks=results)
-          (report / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
-          print(json.dumps(metadata, indent=2), flush=True)
-          PY
-      - name: Export immutable candidate objects in bounded batches
+        run: bash -e -o pipefail "$RUNNER_TEMP/verify.sh"
+      - name: Export immutable objects in bounded batches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash -e -o pipefail "$RUNNER_TEMP/export.sh"
+      - name: Print the affected resolution and compare baseline failures
         if: ${{ !cancelled() && success() }}
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           python3 - <<'PY'
-          import hashlib, json, os, subprocess, urllib.request, urllib.error
+          import hashlib, json, os, re, urllib.request
           from pathlib import Path
-          temp = Path(os.environ['RUNNER_TEMP']); root = temp / 'ui-final'; report = temp / 'ui-final-report'
+          report = Path(os.environ['RUNNER_TEMP']) / 'ui-final-report'
+          print('RESOLUTION_DIFF_BEGIN', flush=True)
+          print((report / 'resolution.patch').read_text(), flush=True)
+          print('RESOLUTION_DIFF_END', flush=True)
           metadata = json.loads((report / 'metadata.json').read_text())
-          def git(*args): return subprocess.check_output(['git', *args])
-          def entries(ref):
-              result = {}
-              for record in git('ls-tree', '-rz', ref).split(b'\0'):
-                  if record:
-                      header, path = record.split(b'\t', 1)
-                      mode, kind, sha = header.decode().split(); assert kind == 'blob'
-                      result[path.decode()] = (mode, sha)
-              return result
-          def api(path, payload):
-              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/' + path, data=json.dumps(payload).encode(), method='POST', headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
-              try:
-                  with urllib.request.urlopen(request, timeout=120) as response: return json.load(response)
-              except urllib.error.HTTPError as error:
-                  print(error.read().decode(), flush=True); raise
-          base = entries(metadata['main_parent']); final = entries(metadata['final_tree'])
-          known = {sha for _, sha in [*base.values(), *entries('705efb2bd102ba151123659b129372aea62b6a79').values()]}
-          changes = []
-          for path, (mode, sha) in final.items():
-              if base.get(path) == (mode, sha): continue
-              entry = {'path': path, 'mode': mode, 'type': 'blob'}
-              if sha in known: entry['sha'] = sha
-              else: entry['content'] = git('cat-file', 'blob', sha).decode('utf-8')
-              changes.append(entry)
-          for path, (mode, _) in base.items():
-              if path not in final: changes.append({'path': path, 'mode': mode, 'type': 'blob', 'sha': None})
-          tree = git('rev-parse', metadata['main_parent'] + '^{tree}').decode().strip()
-          batches = []; batch = []; size = 0
-          for entry in changes:
-              length = len(json.dumps(entry).encode())
-              if batch and (len(batch) >= 20 or size + length > 200000): batches.append(batch); batch = []; size = 0
-              batch.append(entry); size += length
-          if batch: batches.append(batch)
-          for index, batch in enumerate(batches):
-              tree = api('git/trees', {'base_tree': tree, 'tree': batch})['sha']
-              print('Export batch ' + str(index+1) + '/' + str(len(batches)) + ': ' + tree, flush=True)
-          assert tree == metadata['final_tree'], (tree, metadata['final_tree'])
-          metadata['exported_tree'] = tree
-          (report / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
-          print('CANDIDATE_TREE=' + tree, flush=True)
-          print('No branch reference was changed by this job.', flush=True)
+          tests = report / 'tests.json'
+          if tests.exists():
+              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/actions/jobs/116002856340/logs', headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(request, timeout=120) as response: baseline = response.read()
+              (report / 'main-baseline.log').write_bytes(baseline)
+              clean = re.sub(r'\x1b\[[0-9;]*m', '', baseline.decode('utf-8-sig'))
+              baseline_names = set()
+              for line in clean.splitlines():
+                  match = re.search(r' FAIL  (.+?\.test\.tsx?) > (.+)$', line)
+                  if match: baseline_names.add((match[1].strip(), match[2].replace(' > ', ' ').strip()))
+              results = json.loads(tests.read_text())
+              failed = []
+              for suite in results['testResults']:
+                  name = suite['name'].split('/ui-final/', 1)[-1]
+                  for test in suite['assertionResults']:
+                      if test['status'] != 'failed': continue
+                      full = test['fullName'].strip()
+                      item = {'file': name, 'test': full, 'present_in_main': (name, full) in baseline_names, 'errors': test.get('failureMessages', [])}
+                      failed.append(item)
+              comparison = {'main_commit': metadata['main_parent'], 'main_job': 116002856340, 'main_log_sha256': hashlib.sha256(baseline).hexdigest(), 'main_failure_names': len(baseline_names), 'candidate_total': results['numTotalTests'], 'candidate_passed': results['numPassedTests'], 'candidate_failed': results['numFailedTests'], 'failures': failed}
+              (report / 'failure-comparison.json').write_text(json.dumps(comparison, indent=2) + '\n')
+              print('FAILURE_COMPARISON=' + json.dumps(comparison, indent=2), flush=True)
+          print('FINAL_METADATA=' + json.dumps(metadata, indent=2), flush=True)
           PY
-      - name: Preserve the candidate and verification results
+      - name: Preserve exact verification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -292,13 +157,13 @@ jobs:
           path: ${{ runner.temp }}/ui-final-report/
           retention-days: 3
           if-no-files-found: error
-      - name: Report verification failures honestly
+      - name: Keep failed checks visible
         if: ${{ !cancelled() && success() }}
         run: |
           python3 - <<'PY'
           import json, os
           from pathlib import Path
-          data = json.loads((Path(os.environ['RUNNER_TEMP']) / 'ui-final-report/metadata.json').read_text())
-          assert data.get('exported_tree') == data.get('final_tree'), data
-          assert all(result == 0 for result in data['checks'].values()), data['checks']
+          metadata = json.loads((Path(os.environ['RUNNER_TEMP']) / 'ui-final-report/metadata.json').read_text())
+          assert metadata['exported_tree'] == metadata['final_tree']
+          assert all(value == 0 for value in metadata['checks'].values()), metadata['checks']
           PY
