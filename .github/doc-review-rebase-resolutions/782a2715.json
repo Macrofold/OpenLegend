@@ -1,0 +1,14 @@
+{
+  "resolutions": {
+    "782a27150be41bb85ec280cff27144afc7eb2094:docs/maintainers/simulation-boundaries.md:60154d5a5ace99afaf7ea4d31a01991bbf621b34:3522df89dbe59b5165438b8744dc0501b29abe4b:b02f91352c52f05cf3f13d854e6adde6a4bb3455": {
+      "before_sha256": "4dde30a7618ce4151cb14adf57e131fd8fe71dc4bc42f04f9364b1ff545d8560",
+      "after_sha256": "c76ec6dce8e6610eeb9d02e00449bc22894dbc336b98ddcf7aadfea272722282",
+      "blocks": [{"sha256": "591835cbcb9cc84f977c2c8700ba730ae81194ec3d5102fe9286f6c5cb0d7dc8", "parts": [1]}],
+      "replacements": [
+        ["Reused from sound branch; EPR/PF09", "Integrated exposure reuse with current source-index invalidation; EPR/PF09"],
+        ["Sound branch owns new dB model and listener indexing", "Integrated hearing model and listener indexing; HE/EPR"],
+        ["Sound branch has transfer reuse; general dependency certificates remain candidate; EPR", "Integrated acoustic transfer reuse; general dependency certificates remain candidate; HE/EPR"]
+      ]
+    }
+  }
+}
