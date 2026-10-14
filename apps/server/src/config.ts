@@ -3,8 +3,13 @@ import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
 import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
 import { resolve } from 'node:path';
+import {
+  configuredCreationTargetSchema,
+  creationDestinationSchema,
+} from './creation-target-contracts.js';
 import type { ModelTokenPrices, TokenPrices } from '@open-legend/ai';
 import { captureModelPrices } from '@open-legend/ai';
+import { isSafeRecordId } from '@open-legend/domain';
 
 const modelIdentity = z.string().regex(/^[\w./:-]{1,128}$/);
 const tokenRate = z.number().finite().nonnegative();
@@ -152,6 +157,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
   const mode = z.enum(['local', 'oidc']).parse(env['OPEN_LEGEND_AUTH_MODE'] ?? 'local');
   const host = env['OPEN_LEGEND_HOST'] ?? '127.0.0.1';
+  const port = numberSetting(env, 'PORT', 3210, 1024, 65535);
   const loopback = (name: string) => ['localhost', '127.0.0.1', '[::1]', '::1'].includes(name);
   if (mode === 'local' && !loopback(host))
     throw new Error('Local authentication requires a loopback bind address.');
@@ -196,11 +202,64 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     .map((binding) => ({ ...binding, issuer: issuerUrl(binding.issuer) }));
   if (mode === 'oidc' && bindings.some((binding) => binding.issuer !== issuer))
     throw new Error('Account bindings must use the configured issuer.');
+  const creationStartup = z
+    .enum(['ordinary', 'awaiting-creation'])
+    .parse(env['OPEN_LEGEND_STARTUP_MODE'] ?? 'ordinary');
+  const creationInstallationId = env['OPEN_LEGEND_INSTALLATION_ID']?.trim();
+  const creationTargets = z
+    .array(configuredCreationTargetSchema)
+    .max(256)
+    .parse(JSON.parse(env['OPEN_LEGEND_CREATION_TARGETS_JSON'] ?? '[]'));
+  const creationDestination = env['OPEN_LEGEND_CREATION_DESTINATION_JSON']
+    ? creationDestinationSchema.parse(JSON.parse(env['OPEN_LEGEND_CREATION_DESTINATION_JSON']))
+    : undefined;
+  if (creationTargets.length && !creationInstallationId)
+    throw new Error('Configured creation targets require OPEN_LEGEND_INSTALLATION_ID.');
+  if (creationInstallationId)
+    z.string().min(1).max(100).refine(isSafeRecordId).parse(creationInstallationId);
+  if (new Set(creationTargets.map((target) => target.id)).size !== creationTargets.length)
+    throw new Error('Configured creation target identities must be unique.');
+  if (creationStartup === 'awaiting-creation' && !creationDestination)
+    throw new Error('Awaiting creation requires OPEN_LEGEND_CREATION_DESTINATION_JSON.');
+  if (creationDestination) {
+    const entry = new URL(creationDestination.entryUrl);
+    if (
+      mode === 'local'
+        ? entry.protocol !== 'http:' ||
+          !loopback(entry.hostname) ||
+          Number(entry.port || 80) !== port
+        : entry.origin !== origin
+    )
+      throw new Error(
+        'Creation entry address must match the destination authentication origin and port.',
+      );
+    for (const creator of creationDestination.creators) {
+      creator.account.issuer = issuerUrl(creator.account.issuer);
+      if (
+        mode === 'local'
+          ? creator.account.issuer !== 'https://local.openlegend.invalid/' ||
+            creator.account.subject !== 'local-player' ||
+            creator.account.accountId !== 'local-player'
+          : creator.account.issuer !== issuer
+      )
+        throw new Error(
+          'Creation account mappings must match the destination authentication policy.',
+        );
+      // The local authority owner uses this exact issuer spelling.
+      if (mode === 'local') creator.account.issuer = 'https://local.openlegend.invalid';
+    }
+  }
   const players = z
     .number()
     .int()
     .parse(numberSetting(env, 'OPEN_LEGEND_PLAYER_CAPACITY', 100, 1, 10000));
   return {
+    creation: {
+      startup: creationStartup,
+      installationId: creationInstallationId,
+      targets: creationTargets,
+      destination: creationDestination,
+    },
     capacity: {
       players,
       connections: players * 3,
@@ -237,20 +296,18 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     macrofoldSummaryModel: env['MACROFOLD_SUMMARY_MODEL'] ?? 'openai/gpt-5-nano',
     host,
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
-    port: numberSetting(env, 'PORT', 3210, 1024, 65535),
+    port,
     dataDirectory: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data'),
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
     budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
     jevOnly: env['AI_JEV_ONLY'] === 'true',
-    conversationInactivitySeconds: numberSetting(
-      env,
-      'CONVERSATION_INACTIVITY_SECONDS',
-      1800,
-      60,
-      86400,
-    ),
+    // Absence preserves the world's authored timeout; this records only an explicit override.
+    conversationInactivitySeconds:
+      env['CONVERSATION_INACTIVITY_SECONDS'] === undefined
+        ? undefined
+        : numberSetting(env, 'CONVERSATION_INACTIVITY_SECONDS', 60, 60, 86400),
     conversationDisconnectMs:
       numberSetting(env, 'CONVERSATION_DISCONNECT_SECONDS', 60, 5, 600) * 1000,
     narrationBatchMs: numberSetting(env, 'NARRATION_BATCH_MS', 750, 0, 10000),

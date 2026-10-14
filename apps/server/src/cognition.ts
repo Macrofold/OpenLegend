@@ -91,8 +91,16 @@ export const thoughtOnlySchema = z
   .strict();
 
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
-  const base = { actorId, id, ...(input.purpose ? { purpose: input.purpose } : {}) };
+  const base = {
+    actorId,
+    id,
+    ...(input.purpose ? { purpose: input.purpose } : {}),
+    ...(input.autoEquip ? { autoEquip: true } : {}),
+    ...(input.combatHelpId ? { combatHelpId: input.combatHelpId } : {}),
+  };
   switch (input.type) {
+    case 'construction':
+    case 'construction-rest':
     case 'activity-request':
       throw new Error(
         'Requested activity parameters require the scoped world binder, not a prebuilt action candidate.',
@@ -143,8 +151,9 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         placementRevision: input.placementRevision!,
         targetRevision: input.targetRevision!,
       };
+    case 'evade':
     case 'move':
-      return { ...base, type: 'move', destination: input.position! };
+      return { ...base, type: input.type, destination: input.position! };
     case 'confirm-attempt':
     case 'withdraw-attempt':
       return { ...base, type: input.type, attemptId: input.attemptId! };
@@ -189,6 +198,13 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       return { ...base, type: 'prepare', preparation: input.preparation! };
     case 'craft':
       return { ...base, type: 'craft', recipeId: input.recipeId! };
+    case 'guard':
+      return {
+        ...base,
+        type: 'guard',
+        itemId: input.itemId!,
+        ...(input.targetId ? { targetId: input.targetId } : { facing: input.facing! }),
+      };
     case 'eat':
     case 'equip':
       return { ...base, type: input.type, itemId: input.itemId! };
@@ -224,16 +240,49 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         definitionId: input.definitionId!,
         operation: input.effectOperation!,
       };
+    case 'release-shot':
+      return { ...base, type: 'release-shot', aimId: input.aimId! };
+    case 'practice-shot':
+    case 'aim':
+    case 'shoot-once':
     case 'hunt':
       return {
         ...base,
-        type: 'hunt',
+        type: input.type,
         targetId: input.targetId!,
         ...(input.itemId ? { weaponItemId: input.itemId } : {}),
+        ...(input.ammunitionId ? { ammoItemId: input.ammunitionId } : {}),
+      };
+    case 'coaching':
+      return {
+        ...base,
+        type: 'coaching',
+        targetId: input.targetId!,
+        attributeId: input.attributeId!,
+        operation: input.coachingOperation!,
+        ...(input.episodeId ? { episodeId: input.episodeId } : {}),
       };
     case 'cook':
-      return { ...base, type: 'cook', itemId: input.itemId!, heatId: input.targetId! };
+      return {
+        ...base,
+        type: 'cook',
+        preparationId: input.preparationId!,
+        preparationVersion: input.preparationVersion!,
+        preparationDigest: input.preparationDigest!,
+        inputs: input.inputs!,
+        heatId: input.targetId!,
+      };
+    case 'fish':
+      return { ...base, type: 'fish', targetId: input.targetId!, itemId: input.itemId! };
     case 'outing':
+      if (input.outingOperation === 'help')
+        return {
+          ...base,
+          type: 'outing',
+          operation: 'help',
+          recipientId: input.targetId!,
+          opponentId: input.opponentId!,
+        };
       return input.outingOperation === 'invite'
         ? {
             ...base,
@@ -287,6 +336,22 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         targetId: input.targetId!,
         ...(input.itemId ? { itemId: input.itemId } : {}),
       };
+    case 'learn-record':
+      if (
+        !input.itemId ||
+        input.expectedRevision === undefined ||
+        input.placementRevision === undefined ||
+        !input.recordPin
+      )
+        throw new Error('A current exact recipe record is required.');
+      return {
+        ...base,
+        type: 'learn-record',
+        itemId: input.itemId,
+        expectedRevision: input.expectedRevision,
+        placementRevision: input.placementRevision,
+        recordPin: input.recordPin,
+      };
     case 'teach':
       return { ...base, type: 'teach', targetId: input.targetId!, recipeId: input.recipeId! };
   }
@@ -334,6 +399,13 @@ export function cognitionContext(
       }),
     ),
   };
+  const entityIds = [
+    ...new Set([
+      actorId,
+      ...current.nearby.map((e) => e.id),
+      ...recall.entries.flatMap((m) => m.entityIds),
+    ]),
+  ];
   const binding: CognitionBinding = {
     bodyEligibility: bodyEligibilityRevision(service.world, service.world.entities[actorId]!),
     actorId,
@@ -343,13 +415,13 @@ export function cognitionContext(
     purpose,
     watermark: recall.observationWatermark,
     evidenceIds: recall.entries.map((m) => m.id),
-    entityIds: [
-      ...new Set([
-        actorId,
-        ...current.nearby.map((e) => e.id),
-        ...recall.entries.flatMap((m) => m.entityIds),
-      ]),
-    ],
+    entityIds,
+    entityEpisodes: Object.fromEntries(
+      entityIds.flatMap((id) => {
+        const episode = service.world.perceptionEpisodes?.[actorId]?.[id];
+        return episode ? [[id, episode]] : [];
+      }),
+    ),
     expectedPlan: actor.planGeneration,
     actions: Object.fromEntries(
       candidates.map((c) => [

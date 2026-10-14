@@ -1,5 +1,7 @@
 # Verification
 
+- [World and engine boundaries](verification/world-engine-boundaries.md) — all 13 selected-owner fixes, capability omission, contrasting native definitions, PostgreSQL continuation and truthful player presentation.
+
 This index links recorded checks and measurements by topic. Each report retains its own revision, workload, results and limitations; a passing result for one workload does not establish current release acceptance. The [maintainer index](maintainers/README.md) links the owners of remaining work.
 
 Add detailed evidence to the relevant report under `docs/verification/`, following the [documentation policy](../.agents/rules/documentation.md#verification-reports). Keep this page for navigation and the shared playtest protocol.
@@ -8,6 +10,9 @@ Historical migration/recovery observations in the linked reports describe the pi
 
 Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
 
+- [Rivals and contested ground](verification/rivals-and-contested-ground.md): current native flight/evasion/consent and finite-site checks, PostgreSQL continuation, ordinary browser discovery, failed live character qualification and complete cost accounting. Full encounter acceptance remains open.
+- [Finite sling practice and voluntary coaching](verification/practical-competence.md): complete native comparisons, private progress, SQL continuity/correction, browser interaction and separate real NPC choices with bounded accounting; human appreciation remains open.
+- [River meal](verification/river-meal.md): real craft/cast/cook/eat and offered/carried/packed food, finite stock and interruption/competition, a contrasting preparation, PostgreSQL continuation and separate live NPC choice with exact cost.
 - [Action records and learned activities](verification/action-experience.md): native learning/execution, private PostgreSQL history, browser inspection, automatic meal behavior and exact provider costs.
 - [Precise action requests and composed activities](verification/composed-activities.md): no-provider typed commands, exact request details, follow stances/last-seen/stopping time, bounded requested activities, interrupt-then-resume, item quantities and work states.
 
@@ -22,6 +27,9 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Development world startup](verification/world-startup.md): startup recovery, disposable worlds and editor observations.
 
 ## Characters, cognition and creation
+
+- [Playable world creation](verification/playable-world-creation.md): connected fresh-host activation, exact authority/receipt recovery, native manufacture/save/reopen, browser entry, bounded maximum openings and the remaining live model-service blocker.
+- [The missing belonging](verification/parallel-batch-08-the-missing-belonging.md): native clue/custody chain, PostgreSQL continuation and delayed-response fencing, two-source `World Events` comparison across viewports, and seven live NPC turns across three resolution paths with exact costs.
 
 - [Useful place and inspected-item discoveries](verification/useful-discoveries.md): private observed facts, introduction fallback, Known places, correction/forgetting, unavailable destinations and current-format reload.
 
@@ -40,12 +48,15 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 - [Player clarity UI](verification/player-clarity-ui.md): subject search, merge targets, large piles, history paging/search, caption gaps, promises and gesture notices; [PG03 action discovery and commitments](verification/player-clarity-ui.md#pg03--action-discovery-and-commitments--october-3-2026) records exact-tool execution, stable refresh and scoped stale/failure/layout evidence.
 - [Fuller starting wilderness](verification/wilderness-expansion.md): expanded seeded terrain/population, procedural scenery and animals, native movement/gathering, PostgreSQL restoration and bounded browser setup/render costs.
+- [Editable light shelters](verification/editable-shelters.md): corrected flat one/two-bay and single-bay sloping-cloak build/use/reclaim, exact contact and mid-phase/rain restoration, finite authorized stock and bounded native work; no paid calls or new penalty.
+- [Compatible equipment and chosen shield defense](verification/shield-defense.md): real manufacture/contact cases, exact SQL return, ordinary keyboard/browser flow, disclosure and isolated attachment lookup measurements; no paid model calls.
 - [First threat, player death and danger](verification/first-threat-encounter.md): real native avoidance/contact, exact type loss and corpse theft, scars, simulated fade, authenticated review/replay, SQL restart, browser flows and measured capacity limits; [PX01 integration](verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) adds changed-terrain pursuit/aftermath and the corrected real escape route.
 - [Injury, aftermath and direct interaction](verification/embodied-feedback.md): native death/decay/cleanup/revival, exact tool use, browser feedback/targeting/fire memory and bounded escape/guide costs.
 - [Whole-interface interaction redesign](verification/game-interaction-redesign.md): paired inventory and object opening, broader player/creator/operations presentation, native and controlled interface evidence, upstream integration and remaining composed-gameplay/input/player qualification.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
 - [Reciprocal barter](verification/reciprocal-barter.md): exact two-sided consent, changed goods/work/claims, private terms, actual shared drafts and controls, PostgreSQL rollback/replay, matched server measurements and controlled live accept/refuse costs.
 - [Camp fire care and sharing](verification/camp-life.md): native, PostgreSQL service and fixture-Jev evidence for lighting, fuelling and putting out fires, and for consent-aware offers. [October 2 containers and chosen activities](verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026) records current family/watch/inspection/aging and actual injected-director results, the corrected frozen-world stress diagnostic and historical mutable-fixture timeout, and separate browser/live/integration gaps.
+- [Rewarding expeditions](verification/rewarding-expeditions.md): physical clues, real ramp/bank travel, finite transferable rewards, exact private recipe learning, manufacture/use, second visitors, restart and browser interaction; practical value is assessed separately from correctness. The requested review adds projection/source-integrity corrections and matched record-page measurements, with complete-menu and wider capacity limits retained.
 - [Actor agency and invention workflows](verification/actor-agency-and-inventions.md): identity, native attempts, plans and supported invention loops.
 - [Invention foundation](verification/invention-foundation.md): crafting, gathering, proposal revision and provider evidence.
 - [NP03 manufactured-material reuse](verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026): supplied/native cord manufacture, container crafting and custody, privacy/refusal checks, PostgreSQL continuation and actual browser workshop/Craft/packing. Live model choice remains unqualified.
@@ -107,3 +118,5 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 ## Bounded live playtest protocol
 
 Use a backed-up or isolated save and an explicit nonzero cap. Verify a real conversation and later permitted recall, one resident decision, a generated sling that is crafted and used, finite harvest/cooking/eating, reuse without regeneration, and a separately compatible bow/arrow path. Exercise pause, restart, idempotent resubmission, stale work and uncertain accounting. No timeout may consume resources or silently repeat paid work. Record receipts and keep the relevant gate open when a model misroutes, leaks, refuses or produces an invalid definition.
+
+When an episode will be continued, reserve shutdown time to pause and complete an ordinary manual checkpoint after its last committed change. Retain its complete current-format package and metadata outside Git, and verify it through the ordinary saved-world read or load path before dropping the owned database. World dumps and choice exports are diagnostics, not continuation checkpoints: they omit associated persisted personal evidence. If capture cannot finish within the authorized bounds, record the unrecoverable segment and last usable checkpoint; do not claim its new state can resume or combine it with older personal evidence. [The post-meal continuation limit](verification/rivals-and-contested-ground.md#normal-continuation-and-the-npc-to-player-action-path--october-14-2026) demonstrates this distinction.

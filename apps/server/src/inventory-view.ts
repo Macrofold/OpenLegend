@@ -1,8 +1,16 @@
+import { isEquipped, equipmentConflicts } from '@open-legend/domain';
+import { nativeCommandKind } from './native-command-kind.js';
 import {
   nativeInventoryActions,
   nativeActionIcon,
+  nativeCommandSupported,
+  materialExposureView,
+  NATIVE_PREPARATIONS,
+  quantityOf,
   activityRequestHost,
   currentInventoryInspection,
+  readRecipeRecord,
+  definitionPin,
   visionRadius,
   canAccessContainer,
   accessiblePossession,
@@ -34,6 +42,7 @@ import {
   type ItemInstance,
 } from '@open-legend/domain';
 import type {
+  CommandInput,
   ActionOption,
   InventoryItemView,
   ContainerPage,
@@ -51,6 +60,7 @@ import { HistoryCursorError } from './perceived-events.js';
 import { countMetric } from './performance.js';
 import { createHash } from 'node:crypto';
 import { sealCursor, openCursor } from './scoped-cursor.js';
+import { recipeDetailsView } from './recipe-view.js';
 
 /** A historical successor is descriptive only; no redirect to an actionable object. */
 export async function objectHistoryPage(
@@ -825,17 +835,54 @@ function projectInventoryItem(
 
   const definition = world.itemDefinitions[item.definitionId]!;
   const actions: ActionOption[] = [];
+  let recipeRecord: InventoryItemView['recipeRecord'];
+  if (
+    definition.recipeRecord &&
+    currentInventoryInspection(world, player.id)?.itemIds.includes(item.id)
+  ) {
+    const read = readRecipeRecord(world, player.id, item.id);
+    if ('recipe' in read) {
+      const known = world.knowledge[player.id]?.some(
+        (knowledge) => knowledge.recipeId === read.recipe.id,
+      );
+      recipeRecord = {
+        method: recipeDetailsView(world, read.recipe, (id) => quantityOf(world, player.id, id)),
+        message: known
+          ? 'This exact method is already known. Reading again grants no items or additional knowledge.'
+          : 'This record discloses one exact method. Choose Learn this method to retain it; manufacture still requires real materials and work.',
+      };
+      const command = {
+        type: 'learn-record' as const,
+        itemId: item.id,
+        expectedRevision: item.revision!,
+        placementRevision: item.placementRevision!,
+        recordPin: definitionPin(definition),
+      };
+      const preview = service.previewCommand(command, player.id);
+      actions.push(
+        action(
+          `learn-record-${item.id}`,
+          'Learn this method',
+          command,
+          preview.ok,
+          preview.ok ? undefined : preview.message,
+        ),
+      );
+    } else recipeRecord = { message: read.message };
+  }
   const workReason = inventoryWorkReason(world, player.id, item.id);
   if (definition.portable === true && accessiblePossession(world, player.id, item.id)) {
     const command = { type: 'drop' as const, itemId: item.id, quantity: item.quantity };
     const reason = dropItemReason(world, player, item.id, item.quantity);
     actions.push(action(`drop-${item.id}`, 'Drop', command, !reason, reason ?? undefined));
   }
-  if (
-    (definition.launcher || definition.melee || definition.gatheringTool) &&
-    accessiblePossession(world, player.id, item.id)
-  )
-    actions.push(action(`equip-${item.id}`, 'Equip', { type: 'equip', itemId: item.id }));
+  if (definition.equipment && accessiblePossession(world, player.id, item.id)) {
+    const command: CommandInput = { type: 'equip', itemId: item.id };
+    const availability = service.previewCommand(command, scope.actorId);
+    actions.push(
+      action(`equip-${item.id}`, 'Equip', command, availability.ok, availability.message),
+    );
+  }
   if (
     accessiblePossession(world, player.id, item.id) &&
     definition.nutrition &&
@@ -880,7 +927,7 @@ function projectInventoryItem(
         workReason ?? undefined,
       ),
     );
-  if (actor.equippedItemId === item.id)
+  if (isEquipped(world, scope.actorId, item.id))
     actions.push(
       action(
         `unequip-${item.id}`,
@@ -900,13 +947,19 @@ function projectInventoryItem(
     id,
     ...fact,
   }));
-  const equipped =
-    actor.equippedItemId &&
-    actor.equippedItemId !== item.id &&
-    (definition.launcher || definition.melee || definition.gatheringTool) &&
-    accessiblePossession(world, scope.actorId, actor.equippedItemId)
-      ? itemFor(world, actor.equippedItemId)
-      : undefined;
+  if (definition.equipment) {
+    const ports = definition.equipment.ports.map(
+      (id) => actor.body?.equipmentPorts.find((port) => port.id === id)?.label,
+    );
+    characteristics.push({
+      id: 'held-placement',
+      label: 'Worn or held at',
+      value: ports.every((label) => label !== undefined)
+        ? ports.join(' + ')
+        : 'This body cannot hold this equipment',
+    });
+  }
+  const equipped = equipmentConflicts(world, scope.actorId, item.id)[0];
   const equippedDefinition = equipped && world.itemDefinitions[equipped.definitionId];
   const counterpart = equippedDefinition
     ? itemCharacteristics(world, equippedDefinition).map(({ key: id, ...fact }) => ({
@@ -948,6 +1001,8 @@ function projectInventoryItem(
     nameForm: definition.nameForm,
     indefiniteArticle: definition.indefiniteArticle,
     quantity: item.quantity,
+    ...(recipeRecord ? { recipeRecord } : {}),
+    materialCondition: materialExposureView(world, item.id),
     characteristics,
     ...(equipped && equippedDefinition && comparable
       ? {
@@ -965,16 +1020,24 @@ function projectInventoryItem(
       ? { packingLoad: itemPackingLoad(world, item.id, 1) }
       : {}),
     category:
-      definition.launcher || definition.melee || definition.gatheringTool
+      definition.equipment || definition.fishingTool
         ? 'equipment'
         : definition.ammunition
           ? 'ammunition'
           : definition.properties.includes('food')
             ? 'food'
             : 'material',
-    description: describePossession(item, definition, actor.equippedItemId === item.id),
-    equipped: actor.equippedItemId === item.id,
+    description: describePossession(
+      item,
+      definition,
+      isEquipped(world, scope.actorId, item.id),
+      'accessible possession',
+      Boolean(currentInventoryInspection(world, player.id)?.itemIds.includes(item.id)),
+    ),
+    equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
-    actions,
+    actions: actions.filter((option) =>
+      nativeCommandSupported(world, nativeCommandKind(option.command.type)),
+    ),
   };
 }

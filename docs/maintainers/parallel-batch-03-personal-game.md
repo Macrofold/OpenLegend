@@ -75,6 +75,10 @@ Delivered October 4: the owner-authorized [meter/follow follow-up](../projects/p
 
 Owners: [BW14](base-world.md#accepted-lifecycle-and-protection-delivery), MP04 in [multiplayer](multiplayer.md), [DG07/ND11](needs-design.md#dg07--human-participation-and-recoverable-conflict), D07/PS-D01 in [decisions](../../archive/05-project/open-decisions.md), and [base-world limits](../limits/base-world.md). The bounded runtime delivery is complete; broader D07/PS-D01, ND11, inactive-protection and cooperative-PvP questions remain open as recorded in those owners. [Technical entrypoint](../projects/parallel-batch-03-personal-game-tech-design.md#pg05--encounter-design-assignment-definition).
 
+**New scene qualification gap, October 6:** the existing God-tools fixture's `createWorld(31)` rejects the territorial stag with `Invalid spatial state for territorial-stag. A current 3D-format world is required.` A direct constructor comparison reproduced the identical failure on local `main` `378228e6f388e60efe5e1a446dcf138872e37ffc` and the competence branch. The scoped competence scenarios use seed 73 and do not change stag placement. [Observed check and limits](../verification/practical-competence.md#selected-checks-and-review) retains the failed check; broader CI remains a gate.
+
+- [ ] Diagnose current seed-31 authored stag placement/support and restore the existing God-tools fixture without weakening spatial validation.
+
 ## Integration boundary
 
 After the owner integrates delivery, the ordinary invention/use journey should remain discoverable with PG03 and mechanically identical with PG04. Repeat only evidence affected by the combination; PG02 consumes the same native effects, and PG05 adds no runtime dependency. This is the batch's combined completion condition, not a sixth worker or a new test-writing requirement. Preserve broader parent gaps and update the project status tables according to the documentation policy.

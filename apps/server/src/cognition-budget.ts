@@ -51,24 +51,39 @@ export function decisionAllowance(
   model?: string,
 ): number {
   if (provider === 'openai') return generationAllowance(config, model);
-  return config.macrofoldKey
-    ? config.jevReserveUsd
-    : Math.max(config.jevReserveUsd, (500_000 * config.jevPrices.inputUsdPerMillion) / 1e6);
+  // Macrofold reserves its prepared input as bytes plus padding before invoking Jev.
+  // The configured minimum cannot replace the supported request's price bound.
+  // docs/ai-providers.md#configuration-and-interface
+  return Math.max(
+    config.jevReserveUsd,
+    ((500_000 + (config.macrofoldKey ? 1024 : 0)) * config.jevPrices.inputUsdPerMillion) / 1e6,
+  );
+}
+/** Each request rounds separately at reservation; adding raw USD can lose headroom. */
+function sumAllowances(allowances: readonly number[]): number {
+  const total = sumSafeIntegers(allowances.map((amount) => usdToMicroUsd(amount) ?? NaN));
+  const usd = total === undefined ? undefined : microUsdToUsd(String(total));
+  if (usd === undefined) throw new Error('Decision allowance exceeds safe arithmetic.');
+  return usd;
 }
 /** Reserve one interactive response plus optional native interpretation, attention and embeddings. */
 export function interactiveAllowance(config: AppConfig): number {
+  const judgment = decisionAllowance(config, 'jev');
   // Strict typed-only operation cannot spend on generation or embeddings. Holding
   // those allowances would starve eligible idle learning despite available funds.
-  if (config.jevOnly) return 3 * decisionAllowance(config, 'jev');
-  if (config.macrofoldKey)
-    return 2 * config.macrofoldRunUsd + 3 * config.jevReserveUsd + config.embeddingReserveUsd;
+  if (config.jevOnly) return sumAllowances([judgment, judgment, judgment]);
   // The eventual route is not selected yet: hold the most expensive configured model.
-  const generation = generationAllowance(config, undefined, 120_000);
-  const judgment = Math.max(
-    config.jevReserveUsd,
-    (120000 * config.jevPrices.inputUsdPerMillion) / 1e6,
-  );
-  return 2 * generation + 3 * judgment + config.embeddingReserveUsd;
+  const generation = config.macrofoldKey
+    ? config.macrofoldRunUsd
+    : generationAllowance(config, undefined, 120_000);
+  return sumAllowances([
+    generation,
+    generation,
+    judgment,
+    judgment,
+    judgment,
+    config.embeddingReserveUsd,
+  ]);
 }
 
 /** Semantic levels with their own limits. Level 0 is native and spends nothing.
@@ -109,14 +124,10 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
   // Each SQL reservation rounds upward separately. Multiplying the raw USD first
   // would refuse the final advertised request for fractional-microdollar bounds.
   const requestAllowance = (requestsPerDecision: number, reserveUsd: number) => {
-    const reserve = usdToMicroUsd(reserveUsd);
-    const total =
-      reserve === undefined
-        ? undefined
-        : sumSafeIntegers(Array.from({ length: requestsPerDecision }, () => reserve));
-    const usd = total === undefined ? undefined : microUsdToUsd(String(total));
-    if (usd === undefined) throw new Error('Decision allowance exceeds safe arithmetic.');
-    return { requestsPerDecision, decisionUsd: usd };
+    return {
+      requestsPerDecision,
+      decisionUsd: sumAllowances(Array.from({ length: requestsPerDecision }, () => reserveUsd)),
+    };
   };
   const generative = (level: 2 | 3 | 4): LevelLimits => ({
     level,

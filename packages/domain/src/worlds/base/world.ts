@@ -1,3 +1,9 @@
+import { BASE_NATIVE_ACTIVITY_HOSTS } from './native-activities.js';
+import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js';
+import { BASE_SOCIAL_POLICY } from './social.js';
+import { baseConstructionProfile } from './canopy-scene.js';
+import { BASE_KNOWLEDGE_POLICY } from './knowledge.js';
+import { BASE_RANGED_POLICY } from './hunting.js';
 import {
   STARTER_EXTENT,
   starterTiles,
@@ -5,7 +11,10 @@ import {
   populateOuterWilderness,
 } from './landscape.js';
 import { emptyActionExperience } from '../../action-experience.js';
+import { installWatchpost } from './watchpost.js';
 import { ADA_IDENTITY } from './characters.js';
+import { installKnownShieldMethod } from './shield-family.js';
+import { startingRecipeKnowledge } from './knowledge.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { BASE_PARTICIPATION_POLICY } from './participation.js';
 import { NATIVE_STRIKES } from './strikes.js';
@@ -13,6 +22,9 @@ import { STAG_CONTACT, installFirstThreat } from './first-threat.js';
 import { addItem, nextRandom, nextId } from '../../data.js';
 import { BASE_ITEM_HANDLING } from './item-handling.js';
 import { NATIVE_ITEMS } from './items.js';
+import { BASE_FOOD_PREPARATIONS } from './food-preparations.js';
+import { BASE_CAST_DEFINITIONS, installRiverReaches, RIVER_LINE_METHOD } from './river-fishing.js';
+import { installRecipe } from '../../declarations.js';
 import { DEFAULT_STATUS_EFFECT_POLICY } from './status-effects.js';
 import {
   starterSpatialLayout,
@@ -32,24 +44,65 @@ import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
 import { DEFAULT_COGNITION_POLICY } from './cognition.js';
 import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
+import { SLING_TARGET, SLING_HANDLING } from './practical-competence.js';
+import { setStartingPractice } from '../../practical-competence.js';
 import { activityHostPin, STOCK_ACTIVITY_HOST } from '../../activity-hosts.js';
 import { BASE_FIRE_ACTIVITY_HOST } from './fire-activity.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './camp-activity.js';
 import { BASE_OUTING_HOST } from './outing.js';
+import { BASE_CANOPY_ACTIVITY_HOST } from './canopies.js';
 import { BASE_WORLD_PRESENTATION } from './presentation.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
 import { BASE_PLACES } from './places.js';
+import { installExpeditions } from './expeditions.js';
+import {
+  installMissingBelonging,
+  MARA_ID,
+  MARA_STARTING_BELIEFS,
+  MISSING_BELONGING_LOCATIONS,
+  TAVIN_ID,
+  TAVIN_STARTING_BELIEFS,
+} from './missing-belonging.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
 import traitBank from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
 import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../types.js';
+import type { ConstructionPermission } from '../../assembly-types.js';
+import { itemsForOwner } from '../../objects.js';
+import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 
 export const PLAYER_ID = 'entity-0001';
 export const NPC_ID = 'entity-0002';
+export {
+  MARA_ID,
+  MARA_STARTING_BELIEFS,
+  MISSING_BELONGING_LOCATIONS,
+  TAVIN_ID,
+  TAVIN_STARTING_BELIEFS,
+};
 const MERCENARY_ID = 'peacock-mercenary';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
 export { NATIVE_ITEMS, NATIVE_PREPARATIONS } from './items.js';
+
+/** Only the ordinary authored camp requests this starting material-use permission.
+ * The creation profile returns its own explicit seeds separately.
+ */
+export function baseWorldInitialConstructionSeeds(world: WorldState): ConstructionPermission[] {
+  if (!world.entities[BASE_CANOPY_SCENE.builderId]?.actor) return [];
+  return [
+    {
+      id: 'intro-canopy-builder',
+      worldId: world.id,
+      actorId: BASE_CANOPY_SCENE.builderId,
+      revision: 1,
+      revoked: false,
+      site: structuredClone(BASE_CANOPY_SCENE.site),
+      operations: ['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered'],
+      materialIds: itemsForOwner(world, BASE_CANOPY_SCENE.builderId).map((item) => item.id),
+    },
+  ];
+}
 export function createActor(
   world: WorldState,
   controller: 'player' | 'npc',
@@ -76,7 +129,6 @@ export function createActor(
     incapacitated: false,
     bornAt: -24 * 365 * 86400,
     action: null,
-    equippedItemId: null,
     agency: seedAgency(
       initialGoals !== undefined
         ? initialGoals
@@ -90,7 +142,9 @@ export function createActor(
   };
   const meters = world.moduleManifest.definitions.filter(
     (definition) =>
-      definition.id === 'wilderness:fullness' || definition.id === 'wilderness:energy',
+      definition.id === 'wilderness:fullness' ||
+      definition.id === 'wilderness:energy' ||
+      definition.implementation === 'finite-practice-v1',
   );
   const food = meters.find((definition) => definition.id === 'wilderness:fullness');
   // Starting food is authored as a fraction of this world's installed range.
@@ -105,13 +159,13 @@ export function createActor(
   return actor;
 }
 
-/** A primitive camp and generic material families; there is deliberately no seeded sling or bow recipe. */
-export function createWorld(
-  seed = 73,
-  accounts: WorldCreationAccounts = {
-    creatorAccountIds: ['local-player'],
-    playerAccountId: 'local-player',
-  },
+/** Shared authored definitions and empty fresh state; callers supply the selected population.
+ * docs/worlds/base/playable-openings.md#fresh-construction
+ */
+export function createFreshBaseWorld(
+  seed: number,
+  accounts: WorldCreationAccounts,
+  identity: { worldId: string; playerId: string },
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
@@ -124,24 +178,34 @@ export function createWorld(
     statusEffectPolicy: structuredClone(DEFAULT_STATUS_EFFECT_POLICY),
     authorship: {
       creatorAccountIds: [...accounts.creatorAccountIds],
-      playerAccountIds: { [PLAYER_ID]: accounts.playerAccountId },
+      playerAccountIds: { [identity.playerId]: accounts.playerAccountId },
     },
     inventionPolicy: initialInventionPolicy(),
     moduleManifest: createModuleManifest(
-      DEFAULT_ATTRIBUTES,
+      [...DEFAULT_ATTRIBUTES, ...CANOPY_ATTRIBUTES],
       DEFAULT_SENSES,
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
-      [STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST, BASE_OUTING_HOST].map(
-        activityHostPin,
-      ),
+      [
+        STOCK_ACTIVITY_HOST,
+        ...BASE_NATIVE_ACTIVITY_HOSTS,
+        BASE_FIRE_ACTIVITY_HOST,
+        BASE_CAMP_ACTIVITY_HOST,
+        BASE_OUTING_HOST,
+        BASE_CANOPY_ACTIVITY_HOST,
+      ].map(activityHostPin),
+      BASE_RANGED_POLICY,
     ),
     cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
     storyPolicy: defaultStoryPolicy(),
+    socialPolicy: structuredClone(BASE_SOCIAL_POLICY),
+    knowledgePolicy: structuredClone(BASE_KNOWLEDGE_POLICY),
+    actorKnowledge: {},
+    observerIdentities: {},
     visibleObjects: {},
     places: structuredClone(BASE_PLACES),
     visiblePlaces: {},
-    id: `wilderness-${normalizedSeed}`,
+    id: identity.worldId,
     seed: normalizedSeed,
     rngState: normalizedSeed || 0x6d2b79f5,
     sequence: 0,
@@ -158,10 +222,15 @@ export function createWorld(
     nativeStrikes: structuredClone({ ...NATIVE_STRIKES, [STAG_CONTACT.id]: STAG_CONTACT }),
     entities: {},
     objectState: { revision: 0 },
+    assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(BASE_CANOPY) },
+    constructionProfile: baseConstructionProfile(BASE_CANOPY_SCENE.suggested),
+    assemblyGeometryRevision: 0,
     itemDefinitions: structuredClone(NATIVE_ITEMS),
+    foodPreparations: structuredClone(BASE_FOOD_PREPARATIONS),
+    castDefinitions: structuredClone(BASE_CAST_DEFINITIONS),
     recipes: {},
-    memories: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
-    knowledge: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
+    memories: {},
+    knowledge: {},
     events: [],
     commandReceipts: {},
     declarationReceipts: {},
@@ -175,7 +244,34 @@ export function createWorld(
     world.map.tiles,
     world.map.spatial!,
   );
+  return world;
+}
+
+/** A primitive camp and generic material families; there is deliberately no seeded sling or bow recipe. */
+export function createWorld(
+  seed = 73,
+  accounts: WorldCreationAccounts = {
+    creatorAccountIds: ['local-player'],
+    playerAccountId: 'local-player',
+  },
+): WorldState {
+  const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
+  const world = createFreshBaseWorld(normalizedSeed, accounts, {
+    worldId: `wilderness-${normalizedSeed}`,
+    playerId: PLAYER_ID,
+  });
+  world.memories = { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] };
+  world.knowledge = { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] };
   const entities: Entity[] = [
+    {
+      id: SLING_TARGET.id,
+      name: SLING_TARGET.name,
+      description: SLING_TARGET.description,
+      kind: 'practice-target',
+      spatial: { bodyProfileId: 'object', heading: 0 },
+      placement: worldPlacement(SLING_TARGET.position, 'terrain'),
+      practiceTarget: { attributeId: SLING_TARGET.attributeId },
+    },
     {
       spatial: { bodyProfileId: 'person', heading: 0 },
       id: PLAYER_ID,
@@ -225,7 +321,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 5, z: 11 }, 'terrain'),
-      resource: { definitionId: 'raw_fiber', quantity: 48, workSeconds: 36 },
+      resource: {
+        definitionId: 'raw_fiber',
+        quantity: 48,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.raw_fiber,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -234,7 +334,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 19, z: 12 }, 'terrain'),
-      resource: { definitionId: 'raw_fiber', quantity: 30, workSeconds: 36 },
+      resource: {
+        definitionId: 'raw_fiber',
+        quantity: 30,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.raw_fiber,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -243,7 +347,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 8, z: 8 }, 'terrain'),
-      resource: { definitionId: 'wood', quantity: 36, workSeconds: 42 },
+      resource: {
+        definitionId: 'wood',
+        quantity: 36,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.wood,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -252,7 +360,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 5, z: 15 }, 'terrain'),
-      resource: { definitionId: 'stone', quantity: 60, workSeconds: 24 },
+      resource: {
+        definitionId: 'stone',
+        quantity: 60,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.stone,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -260,7 +372,11 @@ export function createWorld(
       name: 'Berry bush',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 8, z: 13 }, 'terrain'),
-      resource: { definitionId: 'berries', quantity: 0, workSeconds: 30 },
+      resource: {
+        definitionId: 'berries',
+        quantity: 0,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.berries,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -268,7 +384,11 @@ export function createWorld(
       name: 'Berry thicket',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 19, z: 15 }, 'terrain'),
-      resource: { definitionId: 'berries', quantity: 0, workSeconds: 30 },
+      resource: {
+        definitionId: 'berries',
+        quantity: 0,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.berries,
+      },
     },
     {
       spatial: { bodyProfileId: 'hare', heading: 0 },
@@ -346,7 +466,11 @@ export function createWorld(
       placement: worldPlacement({ x: 20, y: 3, z: 5.5 }, 'lookout-deck'),
       spatial: { bodyProfileId: 'object', heading: 0 },
       appearance: 'crate-mesh',
-      resource: { definitionId: 'wood', quantity: 24, workSeconds: 42 },
+      resource: {
+        definitionId: 'wood',
+        quantity: 24,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.wood,
+      },
     },
     {
       id: 'bird-1',
@@ -391,7 +515,16 @@ export function createWorld(
               : undefined;
     world.entities[entity.id] = entity;
   }
+  for (const material of [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
+    for (let n = 0; n < material.quantity; n++) {
+      const id = addItem(world, PLAYER_ID, material.definitionId, 1);
+      if (material.quantity > 1) world.entities[id]!.name += ` ${n + 1}`;
+    }
+  const shieldRecipe = installKnownShieldMethod(world);
+  // Explicit authored starting support; Ada's biography does not grant mechanics.
+  setStartingPractice(world, world.entities[NPC_ID]!, SLING_HANDLING, 1);
   for (const id of [PLAYER_ID, NPC_ID, MERCENARY_ID]) {
+    startingRecipeKnowledge(world, id, shieldRecipe.id);
     addItem(world, id, 'stone_tool', 1);
     addItem(world, id, 'knife', 1);
     addItem(world, id, 'prepared_fiber', id === PLAYER_ID ? 4 : 2);
@@ -399,19 +532,33 @@ export function createWorld(
     addItem(world, id, 'wood', 2);
     addItem(world, id, 'stone', 6);
   }
-  world.memories[NPC_ID]!.push({
-    id: nextId(world, 'memory'),
-    actorId: NPC_ID,
-    kind: 'belief',
-    source: 'observed',
-    summary:
-      'I arrived here with basic gathering, cord-making, cooking and survival knowledge. I have no village, only a small camp and a few possessions.',
-    at: 0,
-    entityIds: ['campfire'],
-    importance: 8,
-  });
+  // Authored background is required starting understanding, never a witnessed event.
+  world.actorKnowledge![NPC_ID] = {
+    general: {
+      origin: 'authored-starting',
+      subjectId: null,
+      revision: 1,
+      evidenceIds: [],
+      text: 'I arrived here with basic gathering, cord-making, cooking and survival knowledge. I have no village, only a small camp and a few possessions.',
+    },
+  };
+  installRiverReaches(world);
+  const riverMethod = installRecipe(world, RIVER_LINE_METHOD, {
+    source: 'authored-world',
+    profile: { id: world.profile.id, version: world.profile.version },
+  }).recipe;
+  for (const actorId of [PLAYER_ID, NPC_ID, MERCENARY_ID])
+    (world.knowledge[actorId] ??= []).push({
+      recipeId: riverMethod.id,
+      learnedAt: world.simTime,
+      source: 'authored',
+      evidenceId: riverMethod.id,
+    });
   populateOuterWilderness(world);
   installFirstThreat(world);
+  installExpeditions(world);
+  installMissingBelonging(world);
+  installWatchpost(world, createActor);
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);

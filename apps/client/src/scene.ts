@@ -1,3 +1,4 @@
+import type { ConstructionShape } from '@open-legend/protocol';
 import { itemPileArt } from './art';
 import {
   configureBillboard,
@@ -24,12 +25,14 @@ import { StatusIndicators } from './status-indicators';
 import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
 import {
   intersectBox,
+  panelRayFraction,
   pickSurfaces,
   rayHits,
   spatialBlockers,
   surfaceById,
   surfaceContains,
   surfaceHeight,
+  surfacesInBounds,
   type SceneryInstance,
   type WorldPoint,
 } from '@open-legend/spatial';
@@ -55,6 +58,7 @@ import {
   groundMesh,
   surroundingGroundMesh,
   surfaceMesh,
+  finitePanelMesh,
   surfaceSeamsMesh,
 } from './spatial-art';
 import { playerEntity } from './entity-view';
@@ -73,9 +77,12 @@ import {
   rottingArt,
   random,
   resourceArt,
+  practiceTargetArt,
   sceneryArt,
   predatorArt,
 } from './art';
+
+const restingCardBounds = new pc.BoundingBox(new pc.Vec3(0, 0, 0), new pc.Vec3(0.5, 0.05, 0.5));
 
 interface RenderedEntity {
   attackPose?: boolean;
@@ -112,6 +119,8 @@ export class WildernessScene implements WorldRenderer {
   private textures: pc.Texture[] = [];
   private materials: pc.StandardMaterial[] = [];
   private cameraSettings = initialCamera();
+  private constructionPreview?: pc.Entity;
+  private constructionPreviewMaterial?: pc.StandardMaterial;
   private geometryNodes = new Map<string, pc.Entity>();
   private geometryMeshes: pc.Mesh[] = [];
   private cutaways = new Set<string>();
@@ -122,7 +131,10 @@ export class WildernessScene implements WorldRenderer {
       y: number;
       z: number;
       height: number;
+      width: number;
+      horizontalLength?: number;
       horizontalHeight?: number;
+      horizontalHeading?: number;
       padding: ReturnType<typeof spritePadding>;
       depth: number;
     }
@@ -424,7 +436,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.bodyState ?? ''}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.bodyState ?? ''}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -436,17 +448,26 @@ export class WildernessScene implements WorldRenderer {
         this.actors.set(entity.id, entry);
       }
       const card = this.cards.get(entry.sprite);
+      const groundPoseChanged =
+        card &&
+        (card.horizontalHeading !== entity.heading ||
+          card.horizontalLength !== (entity.bodySize?.height ?? entry.height));
+      if (card) {
+        card.horizontalHeading = entity.heading;
+        card.horizontalLength = entity.bodySize?.height ?? entry.height;
+      }
       if (
         card &&
-        card.horizontalHeight !==
+        (card.horizontalHeight !==
           (entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
-            ? entry.width
-            : undefined)
+            ? (entity.bodySize?.width ?? entry.width)
+            : undefined) ||
+          (card.horizontalHeight !== undefined && groundPoseChanged))
       ) {
         // Use projected presentation, never action names or elapsed client time.
         // docs/architecture.md#react-presentation-and-character-traits
         card.horizontalHeight = entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
-          ? entry.width
+          ? (entity.bodySize?.width ?? entry.width)
           : undefined;
         this.orientCard(entry.sprite);
         for (const mesh of entry.sprite.render?.meshInstances ?? [])
@@ -454,7 +475,7 @@ export class WildernessScene implements WorldRenderer {
             'ol_spriteSize',
             card.horizontalHeight === undefined
               ? [entry.width, entry.height]
-              : [entry.height, entry.width],
+              : [entity.bodySize?.width ?? entry.width, entity.bodySize?.height ?? entry.height],
           );
       }
       entry.view = entity;
@@ -558,8 +579,35 @@ export class WildernessScene implements WorldRenderer {
           if (surface.levelId !== level.id && minimum > level.focusY + 0.05)
             this.cutaways.add(surface.id);
         }
-        for (const blocker of spatialBlockers(map))
-          if (blocker.bounds.min.y > level.focusY + 0.05) this.cutaways.add(blocker.id);
+        for (const blocker of spatialBlockers(map)) {
+          const { min, max } = blocker.bounds;
+          if (min.y <= level.focusY + 0.05) continue;
+          // A named floor can include raised/sloping ground. Keep its actual cover visible;
+          // a nominal focus height alone would hide walls which still stop movement and shots.
+          // docs/spatial-world.md#levels-and-cutaways
+          const onSelectedFloor = surfacesInBounds(map, {
+            min: { ...min, y: min.y - 0.05 },
+            max: { ...max, y: max.y + 0.05 },
+          }).some((surface) => {
+            if (surface.levelId !== level.id) return false;
+            const lowX = Math.max(min.x, surface.minX),
+              highX = Math.min(max.x, surface.maxX),
+              lowZ = Math.max(min.z, surface.minZ),
+              highZ = Math.min(max.z, surface.maxZ);
+            const lowest = surfaceHeight(
+                surface,
+                surface.slopeX >= 0 ? lowX : highX,
+                surface.slopeZ >= 0 ? lowZ : highZ,
+              ),
+              highest = surfaceHeight(
+                surface,
+                surface.slopeX >= 0 ? highX : lowX,
+                surface.slopeZ >= 0 ? highZ : lowZ,
+              );
+            return lowest <= max.y + 0.05 && highest >= min.y - 0.05;
+          });
+          if (!onSelectedFloor) this.cutaways.add(blocker.id);
+        }
       }
       for (const [id, node] of this.geometryNodes)
         this.presentation.setCutaway(node, this.cutaways.has(id));
@@ -797,7 +845,15 @@ export class WildernessScene implements WorldRenderer {
       }
       padding = spritePadding(image ? [image] : []);
     }
-    this.cards.set(sprite, { x, y, z, height, padding: padding ?? spritePadding([]), depth: 0 });
+    this.cards.set(sprite, {
+      x,
+      y,
+      z,
+      height,
+      width,
+      padding: padding ?? spritePadding([]),
+      depth: 0,
+    });
     // Relief depth is normalized to artwork width; facing flips never reverse it.
     sprite.setLocalScale(width, width, height);
     sprite.render!.castShadows = castShadows;
@@ -839,19 +895,32 @@ export class WildernessScene implements WorldRenderer {
   private orientCard(sprite: pc.Entity, bob = 0): void {
     const binding = this.cards.get(sprite);
     if (!binding) return;
+    for (const mesh of sprite.render?.meshInstances ?? [])
+      mesh.setParameter('ol_groundPose', binding.horizontalHeight === undefined ? 0 : 1);
+    if (binding.horizontalHeight !== undefined) {
+      sprite.setLocalScale(
+        binding.horizontalHeight * (sprite.getLocalScale().x < 0 ? -1 : 1),
+        binding.horizontalHeight,
+        binding.horizontalLength ?? binding.height,
+      );
+      sprite.setEulerAngles(0, ((binding.horizontalHeading ?? 0) * 180) / Math.PI, 0);
+      sprite.setLocalPosition(binding.x, binding.y + 0.03, binding.z);
+      // A resting image occupies the same ground rectangle used by native fit checks.
+      for (const mesh of sprite.render?.meshInstances ?? []) {
+        mesh.setCustomAabb(restingCardBounds);
+      }
+      return;
+    }
+    sprite.setLocalScale(
+      binding.width * (sprite.getLocalScale().x < 0 ? -1 : 1),
+      binding.width,
+      binding.height,
+    );
     // Full camera-facing cards retain their silhouette at every pitch. Body depth is
     // supplied by the shared billboard shader, including alpha-tested shadow casting.
     sprite.setRotation(this.camera.getRotation());
     sprite.rotateLocal(90, 0, 0);
-    if (binding.horizontalHeight !== undefined) sprite.rotateLocal(0, 90, 0);
-    const height = binding.horizontalHeight ?? binding.height;
-    const padding =
-      binding.horizontalHeight === undefined
-        ? binding.padding.bottom
-        : sprite.getLocalScale().x < 0
-          ? binding.padding.right
-          : binding.padding.left;
-    const center = height * (0.5 - padding) + bob;
+    const center = binding.height * (0.5 - binding.padding.bottom) + bob;
     const up = this.camera.up;
     sprite.setLocalPosition(
       binding.x + up.x * center,
@@ -903,6 +972,65 @@ export class WildernessScene implements WorldRenderer {
     material.destroy();
     this.materials = this.materials.filter((entry) => entry !== material);
   }
+  setConstructionPreview(shapes: readonly ConstructionShape[] | null, valid = false): void {
+    this.constructionPreview?.destroy();
+    this.constructionPreview = undefined;
+    if (this.constructionPreviewMaterial) {
+      this.releaseMaterial(this.constructionPreviewMaterial);
+      this.constructionPreviewMaterial = undefined;
+    }
+    if (!shapes) return;
+    const root = new pc.Entity('Construction preview', this.app);
+    this.app.root.addChild(root);
+    const material = this.material(valid ? '#498967' : '#b76d54');
+    material.opacity = 0.3;
+    material.blendType = pc.BLEND_NORMAL;
+    material.depthWrite = false;
+    material.update();
+    this.constructionPreview = root;
+    this.constructionPreviewMaterial = material;
+    for (const shape of shapes) {
+      const node = this.constructionPart(shape, root, material, { x: 0, y: 0, z: 0 });
+      node.render!.castShadows = false;
+    }
+  }
+  private constructionPart(
+    shape: ConstructionShape,
+    parent: pc.Entity,
+    material: pc.StandardMaterial,
+    origin: { x: number; y: number; z: number },
+  ): pc.Entity {
+    if (shape.panel) {
+      const node = new pc.Entity(shape.id, this.app);
+      // RenderComponent destroys its unique mesh instance and mesh with the node
+      // (installed PlayCanvas 2.22.2); no retained shared mesh or per-frame rebuild.
+      node.addComponent('render', {
+        meshInstances: [
+          new pc.MeshInstance(
+            finitePanelMesh(this.app.graphicsDevice, shape.panel, origin),
+            material,
+            node,
+          ),
+        ],
+      });
+      parent.addChild(node);
+      return node;
+    }
+    const a = shape.min,
+      b = shape.max;
+    return this.primitive(
+      shape.id,
+      'box',
+      material,
+      parent,
+      (a.x + b.x) / 2 - origin.x,
+      (a.y + b.y) / 2 - origin.y,
+      (a.z + b.z) / 2 - origin.z,
+      b.x - a.x,
+      b.y - a.y,
+      b.z - a.z,
+    );
+  }
   private releaseEntity(entry: RenderedEntity): void {
     if (this.hoveredId === entry.view.id) this.clearHover();
     entry.model?.destroy();
@@ -919,6 +1047,66 @@ export class WildernessScene implements WorldRenderer {
     const root = new pc.Entity(view.name, this.app);
     this.app.root.addChild(root);
     root.setPosition(view.position.x, view.position.y, view.position.z);
+    if (view.assembly) {
+      const key = `assembly:${view.assembly.familyId}`;
+      let asset = this.appearanceAssets.get(key);
+      if (!asset) {
+        const cloth = this.material(view.assembly.presentation.coverColor);
+        cloth.opacity = 0.64;
+        cloth.blendType = pc.BLEND_NORMAL;
+        cloth.update();
+        asset = {
+          materials: [this.material(view.assembly.presentation.postColor), cloth],
+          images: [],
+          padding: spritePadding([]),
+          refs: 0,
+        };
+        this.appearanceAssets.set(key, asset);
+      }
+      asset.refs++;
+      const nodes = view.assembly.shapes.map((shape) =>
+        this.constructionPart(
+          shape,
+          root,
+          asset!.materials[shape.role === 'cover' ? 1 : 0]!,
+          view.position,
+        ),
+      );
+      const sprite =
+        nodes[0] ??
+        this.primitive(
+          'Assembly place',
+          'box',
+          asset.materials[0]!,
+          root,
+          0,
+          0.01,
+          0,
+          0.02,
+          0.02,
+          0.02,
+        );
+      return {
+        root,
+        sprite,
+        meshCasters: (root.findComponents('render') as pc.RenderComponent[]).flatMap(
+          (r) => r.meshInstances,
+        ),
+        reveal: this.presentation.addReveal(sprite, asset.materials[0]!, false, false),
+        renderedSupport: view.supportSurfaceId,
+        view,
+        materials: asset.materials,
+        images: [],
+        assetKey: key,
+        card: false,
+        lastFrame: -1,
+        facing: 1,
+        scaleFacing: 1,
+        width: view.radius * 2,
+        height: 0.05,
+        observed: true,
+      };
+    }
     const dead = !!view.bodyState;
     const person = view.kind === 'actor' || (view.kind === 'remains' && view.bodyPlan === 'biped');
     const equipped =
@@ -942,9 +1130,11 @@ export class WildernessScene implements WorldRenderer {
             ? `person:${view.id !== game.player.id}:${equipped}:${view.bodyState ?? ''}`
             : view.kind === 'animal' || view.kind === 'remains'
               ? `animal:${view.subtype}:${view.appearance}:${view.bodyState ?? ''}`
-              : view.kind === 'station'
-                ? 'fire'
-                : `resource:${JSON.stringify([view.subtype + view.name, resourceSeed])}`;
+              : view.kind === 'practice-target'
+                ? 'practice-target'
+                : view.kind === 'station'
+                  ? 'fire'
+                  : `resource:${JSON.stringify([view.subtype + view.name, resourceSeed])}`;
     let width =
       view.kind === 'item-pile'
         ? 1
@@ -1010,9 +1200,11 @@ export class WildernessScene implements WorldRenderer {
                         ? predatorArt(bear, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead)
                         : animalArt(deer, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead),
                   )
-                : view.kind === 'station'
-                  ? [0, 1, 2].map(fireArt)
-                  : [resourceArt(view.subtype + view.name, resourceSeed)];
+                : view.kind === 'practice-target'
+                  ? [practiceTargetArt()]
+                  : view.kind === 'station'
+                    ? [0, 1, 2].map(fireArt)
+                    : [resourceArt(view.subtype + view.name, resourceSeed)];
       const materials = crate
         ? [this.material('#a17a4d'), this.material('#564631')]
         : images.map((source) => {
@@ -1757,6 +1949,8 @@ export class WildernessScene implements WorldRenderer {
       .parent!.getPosition()
       .clone()
       .add(new pc.Vec3(binding.x, binding.y, binding.z));
+    if (binding.horizontalHeight !== undefined)
+      return { point: new pc.Vec3().lerp(ray.from, ray.to, t), fraction: t };
     const point = billboardBodyPoint(
       new pc.Vec3().lerp(ray.from, ray.to, t),
       foot,
@@ -1811,7 +2005,14 @@ export class WildernessScene implements WorldRenderer {
       if (!entry.root.enabled) continue;
       let fraction: number | null = null,
         bodyPoint: pc.Vec3 | undefined;
-      if (entry.model?.visible) {
+      if (entry.view.assembly) {
+        for (const shape of entry.view.assembly.shapes) {
+          const hit = shape.panel
+            ? (panelRayFraction(shape.panel, ray.from, ray.to) ?? null)
+            : intersectBox(ray.from, ray.to, { min: shape.min, max: shape.max });
+          if (hit !== null && (fraction === null || hit < fraction)) fraction = hit;
+        }
+      } else if (entry.model?.visible) {
         fraction = entry.model.hit(ray.from, ray.to);
       } else if (!entry.card) {
         const p = entry.root.getPosition();
@@ -2109,6 +2310,7 @@ export class WildernessScene implements WorldRenderer {
     this.speech.destroy();
     for (const buffer of this.landscapeBuffers) buffer.destroy();
     this.landscapeBuffers = [];
+    this.setConstructionPreview(null);
     this.app.destroy();
   }
 }

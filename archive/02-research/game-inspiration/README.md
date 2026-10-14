@@ -4,9 +4,12 @@
 
 ## Start here
 
-- **[Full 148-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
-- **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
-- **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
+- **[Full 166-subject research roster](research-roster.md):** canonical title/edition list. The seventeen G150–G166 additions are **roster only; research has not started and must wait for Mike's authorization**.
+- **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable. The [October 13 amendment](research-economics-engagement-and-creation.md) explicitly covers revenue estimates and economic outcomes, why play is enjoyable or frustrating, replay/abandonment, fictional economies, deep lore and creator tooling.
+- **[October 13 expansion and amendment coverage](research-progress-expansion-2026-10-13.md):** current scope, new roster-only subjects, targeted additions and verification on `research/game-library-expansion`.
+- **[Earlier research progress](research-progress.md):** G01–G149 completion provenance and the separate whole-library gates; its dated branch instructions and counts do not override the current expansion boundary.
+- **[Roblox: economies, replay and creation](dossiers/roblox-economies-replay-and-creation.md):** tycoon/economic play, Mike's Apocalypse Rising rebuilding example, reasons to return or quit, and what Studio/Roblox supplies versus what creators script and publish. Supplements the existing [platform dossier](dossiers/roblox.md).
+- **[Songs of Syx — G149](dossiers/songs-of-syx.md):** settlement-to-empire growth, households, law, production, logistics, trade and military commitments; full October 13 research with V71, older-demo and mod boundaries. [Initial completion and limits](research-progress.md#songs-of-syx-g149). The [economy and lore supplement](dossiers/songs-of-syx-economy-and-lore.md) deepens mythology and its relationship to economic/social choices.
 - **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
 - **[G121–G130 dossiers](#full-dossiers--curated-references-g121g130):** mercenary, survival, social-simulation and systemic-world references.
 - **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [G131–G140 dossiers](#full-dossiers--survival-expansion-g131g140) and [G141–G148 dossiers](#full-dossiers--survival-references-g141g148) are now integrated with their scoped requirements/corrections audits. The [progress ledger](research-progress.md#survival-expansion--g131g148) owns completion and retained evidence limits.
@@ -14,7 +17,14 @@
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
 - **[Find an interaction](mechanics/interaction-lookup.md):** cross-game navigation by the question you are exploring, from effect delivery and useful delegation to personal history, shared rewards, and creator trust.
-- **[What makes these worlds fun](essays/what-actually-makes-these-worlds-fun.md):** agency, constraints, relationships, legibility, failure, atmosphere, and authored/generated content.
+- **[What makes games fun—and worth returning to](essays/fun-and-sustainable-engagement.md):** canonical research synthesis across the original 148 roster subjects and the Dragon Age series supplement, critically expanded beyond the dossiers; eighteen principles, counterexamples, OpenLegend hypotheses and proposed evaluation questions.
+- **[Beyond the dossiers: critique, theory and evaluation](references/fun-research-expansion-theory.md):** self-critique of the first assessment, MDA, pattern learning, GameFlow, game feel, suspense and player-experience measures, with source-access and evidence limits.
+- **[Beyond the dossiers: mobile and recent games](references/fun-research-expansion-mobile-and-recent.md):** mobile interaction and accessibility, additional 2025–2026 cases, purposeful friction and learnable variation; developer descriptions are distinguished from measured enjoyment.
+- **[Beyond the dossiers: games in the AI era](references/fun-research-expansion-ai.md):** mixed human-study findings, dialogue and creation costs, useful generated outcomes, current research demonstrations and focused OpenLegend comparisons.
+- **[Fun, engagement and compulsion: foundations](references/fun-engagement-and-compulsion-research.md):** working definitions and bounded findings from primary motivation, meaningful-entertainment and playtime research; separates ordinary enthusiasm from clinical disorder.
+- **[Complete fun/engagement evidence map](references/fun-and-engagement-dossier-evidence.md):** topic-focused readings for [G01–G80 and the Dragon Age supplement](references/fun-and-engagement-dossier-evidence.md) and [G81–G148](references/fun-and-engagement-dossier-evidence-g81-g148.md). This completed synthesis review does not certify the separate original research/preservation audits.
+- **[Roblox video transcript study](references/roblox-addictiveness-video.md):** Mike's supplied source, all selected cases, the narrator's changing argument, progression failures and separately labeled verification limits; integrated into the [Roblox dossier](dossiers/roblox.md).
+- **[Earlier essay: what makes these worlds fun](essays/what-actually-makes-these-worlds-fun.md):** preserved precursor on agency, constraints, relationships, legibility, failure, atmosphere, and authored/generated content; use the canonical synthesis above for the expanded topic owner.
 - **[Virality and discovery](essays/virality-and-discovery.md):** distinct player, creator, reuse, and distribution loops.
 - **[Production and platform pitfalls](essays/production-and-platform-pitfalls.md):** cancellations, unsustainable services, shallow freedom, expectation debt, and technical overreach.
 - **[Camera and audience](essays/camera-audience-popularity-and-the-non-fps-argument.md):** evidence for non-FPS demand, without unsupported age or camera-causality claims.
@@ -23,7 +33,7 @@
 
 ## Expanded per-game dossiers
 
-The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 148-subject assignment or packet-wide preservation audit is finished.
+The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [earlier progress ledger](research-progress.md) and [expansion ledger](research-progress-expansion-2026-10-13.md) for their respective completion states and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 166-subject assignment or packet-wide preservation audit is finished.
 
 **September 27, 2026 scoped resolution:** all recorded G40–G60 manuscript-audit findings now have committed remedies. Seventeen subjects required corrections or additional research; four had no major gap identified. The [original matrix](references/games-40-60-coverage-audit.md) and [later-game findings](references/games-51-60-coverage-audit.md) remain historical baseline evidence, not competing current task trackers. Their pending labels are superseded by the ledger's per-game remedy records. Declared source/access/version limits remain, rather than being relabelled as successful reading or testing.
 
@@ -41,62 +51,62 @@ These independent per-game passes supplement the original chapters and mechanics
 
 **Final Fantasy, G81–G93:** [IV](dossiers/final-fantasy-iv.md) · [V](dossiers/final-fantasy-v.md) · [VI](dossiers/final-fantasy-vi.md) · [VII](dossiers/final-fantasy-vii.md) · [VIII](dossiers/final-fantasy-viii.md) · [IX](dossiers/final-fantasy-ix.md) · [X](dossiers/final-fantasy-x.md) · [XI](dossiers/final-fantasy-xi.md) · [XII](dossiers/final-fantasy-xii.md) · [XIII](dossiers/final-fantasy-xiii.md) · [XIV](dossiers/final-fantasy-xiv.md) · [XV](dossiers/final-fantasy-xv.md) · [XVI](dossiers/final-fantasy-xvi.md).
 
-**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [Warcraft II](dossiers/warcraft-ii.md) · [Warcraft III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md).
+**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [II](dossiers/warcraft-ii.md) · [III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md).
 
 **Assassin's Creed, G98–G100:** [IV: Black Flag](dossiers/assassins-creed-iv-black-flag.md) · [III](dossiers/assassins-creed-iii.md) · [Valhalla](dossiers/assassins-creed-valhalla.md).
 
-The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 148-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
+The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate whole-library integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
 
 ## Full dossiers — curated references G111–G120
 
 These per-subject studies supplement the original chapters below. Each contains a mechanics inventory, concrete situations, reception and production research, a requirement map, and annotated evidence limits. The [progress ledger](research-progress.md) owns completion state and commit references; this navigation does not certify the other rostered subjects or the packet-wide preservation audit.
 
-| Roster ID | Dossier |
-| --- | --- |
-| G111 | [The Legend of Zelda: Tears of the Kingdom](dossiers/the-legend-of-zelda-tears-of-the-kingdom.md) |
-| G112 | [Fallout: New Vegas](dossiers/fallout-new-vegas.md) |
-| G113 | [The Elder Scrolls III: Morrowind](dossiers/the-elder-scrolls-iii-morrowind.md) |
-| G114 | [Kingdom Come: Deliverance II](dossiers/kingdom-come-deliverance-ii.md) |
-| G115 | [Mount & Blade II: Bannerlord](dossiers/mount-and-blade-ii-bannerlord.md) |
-| G116 | [Middle-earth: Shadow of War](dossiers/middle-earth-shadow-of-war.md) |
-| G117 | [Deus Ex (2000)](dossiers/deus-ex-2000.md) |
-| G118 | [Prey (2017)](dossiers/prey-2017.md) |
-| G119 | [Dishonored 2](dossiers/dishonored-2.md) |
-| G120 | [Starsector](dossiers/starsector.md) |
+| Roster ID | Dossier                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| G111      | [The Legend of Zelda: Tears of the Kingdom](dossiers/the-legend-of-zelda-tears-of-the-kingdom.md) |
+| G112      | [Fallout: New Vegas](dossiers/fallout-new-vegas.md)                                               |
+| G113      | [The Elder Scrolls III: Morrowind](dossiers/the-elder-scrolls-iii-morrowind.md)                   |
+| G114      | [Kingdom Come: Deliverance II](dossiers/kingdom-come-deliverance-ii.md)                           |
+| G115      | [Mount & Blade II: Bannerlord](dossiers/mount-and-blade-ii-bannerlord.md)                         |
+| G116      | [Middle-earth: Shadow of War](dossiers/middle-earth-shadow-of-war.md)                             |
+| G117      | [Deus Ex (2000)](dossiers/deus-ex-2000.md)                                                        |
+| G118      | [Prey (2017)](dossiers/prey-2017.md)                                                              |
+| G119      | [Dishonored 2](dossiers/dishonored-2.md)                                                          |
+| G120      | [Starsector](dossiers/starsector.md)                                                              |
 
 ## Full dossiers — curated references G121–G130
 
 These ten imported dossiers have completed initial research and the full requirements-and-corrections audit. Per-game closure commits, the final mechanics matrix and retained evidence limits are tracked in the [progress ledger](research-progress.md#g121g130-branch-research-state).
 
-| Roster ID | Dossier |
-| --- | --- |
-| G121 | [Battle Brothers](dossiers/battle-brothers.md) |
-| G122 | [Cataclysm: Dark Days Ahead](dossiers/cataclysm-dark-days-ahead.md) |
-| G123 | [Rain World](dossiers/rain-world.md) |
-| G124 | [Persona 5 Royal](dossiers/persona-5-royal.md) |
-| G125 | [XCOM 2](dossiers/xcom-2.md) |
-| G126 | [Crusader Kings III](dossiers/crusader-kings-iii.md) |
-| G127 | [Dragon's Dogma 2](dossiers/dragons-dogma-2.md) |
-| G128 | [Ultima VII: The Black Gate](dossiers/ultima-vii-the-black-gate.md) |
-| G129 | [Oxygen Not Included](dossiers/oxygen-not-included.md) |
-| G130 | [S.T.A.L.K.E.R. 2: Heart of Chornobyl](dossiers/stalker-2-heart-of-chornobyl.md) |
+| Roster ID | Dossier                                                                          |
+| --------- | -------------------------------------------------------------------------------- |
+| G121      | [Battle Brothers](dossiers/battle-brothers.md)                                   |
+| G122      | [Cataclysm: Dark Days Ahead](dossiers/cataclysm-dark-days-ahead.md)              |
+| G123      | [Rain World](dossiers/rain-world.md)                                             |
+| G124      | [Persona 5 Royal](dossiers/persona-5-royal.md)                                   |
+| G125      | [XCOM 2](dossiers/xcom-2.md)                                                     |
+| G126      | [Crusader Kings III](dossiers/crusader-kings-iii.md)                             |
+| G127      | [Dragon's Dogma 2](dossiers/dragons-dogma-2.md)                                  |
+| G128      | [Ultima VII: The Black Gate](dossiers/ultima-vii-the-black-gate.md)              |
+| G129      | [Oxygen Not Included](dossiers/oxygen-not-included.md)                           |
+| G130      | [S.T.A.L.K.E.R. 2: Heart of Chornobyl](dossiers/stalker-2-heart-of-chornobyl.md) |
 
 ## Full dossiers — survival expansion G131–G140
 
 These ten full passes cover the requested first half of the September 27 survival expansion, and the September 27 follow-up requirements/corrections audit is complete for all ten. Each dossier owns its current/version boundary, mechanics inventory, worked interactions, reception evidence, follow-up corrections and source limitations. The [progress ledger](research-progress.md#survival-expansion--g131g148) remains the completion owner; The separately researched G141–G148 range is linked below; this section records only G131–G140 evidence.
 
-| Roster ID | Dossier | Useful starting question |
-| --- | --- | --- |
-| G131 | [Rust](dossiers/rust.md) | How do temporary ownership, wipes, social uncertainty and player-authored infrastructure turn ordinary resources into conflict? |
-| G132 | [DayZ](dossiers/dayz.md) | How can bodily state, item compatibility, geography and strangers create progression without levels? |
-| G133 | [ARK: Survival Evolved](dossiers/ark-survival-evolved.md) | How do tame utility, breeding lineages, tribes, bosses and configurable time costs make creatures into infrastructure? |
-| G134 | [ARK: Survival Ascended](dossiers/ark-survival-ascended.md) | Which redesigned building, Trait, follower, mod-platform and ship systems make the reimagined release mechanically distinct from Evolved? |
-| G135 | [7 Days to Die](dossiers/7-days-to-die.md) | How do destructible structure, zombie pathfinding and a recurring horde deadline turn base design into an iterative test? |
-| G136 | [Conan Exiles](dossiers/conan-exiles.md) | How do RPG builds, followers, sorcery, Purges and connected authored maps sit on top of a survival sandbox? |
-| G137 | [The Forest](dossiers/the-forest.md) | How does ambiguous cannibal behavior make a compact building-and-cave survival game feel socially threatening? |
-| G138 | [Sons of the Forest](dossiers/sons-of-the-forest.md) | What changes when free-form physical construction, delegated labor and rapid traversal expand the original formula? |
-| G139 | [Subnautica](dossiers/subnautica.md) | How can oxygen, depth, vehicles and knowledge make world access itself the progression system? |
-| G140 | [Don't Starve Together](dossiers/dont-starve-together.md) | How do seasons, sanity, asymmetric characters, shared death and persistent worlds turn the calendar into cooperative progression? |
+| Roster ID | Dossier                                                     | Useful starting question                                                                                                                  |
+| --------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| G131      | [Rust](dossiers/rust.md)                                    | How do temporary ownership, wipes, social uncertainty and player-authored infrastructure turn ordinary resources into conflict?           |
+| G132      | [DayZ](dossiers/dayz.md)                                    | How can bodily state, item compatibility, geography and strangers create progression without levels?                                      |
+| G133      | [ARK: Survival Evolved](dossiers/ark-survival-evolved.md)   | How do tame utility, breeding lineages, tribes, bosses and configurable time costs make creatures into infrastructure?                    |
+| G134      | [ARK: Survival Ascended](dossiers/ark-survival-ascended.md) | Which redesigned building, Trait, follower, mod-platform and ship systems make the reimagined release mechanically distinct from Evolved? |
+| G135      | [7 Days to Die](dossiers/7-days-to-die.md)                  | How do destructible structure, zombie pathfinding and a recurring horde deadline turn base design into an iterative test?                 |
+| G136      | [Conan Exiles](dossiers/conan-exiles.md)                    | How do RPG builds, followers, sorcery, Purges and connected authored maps sit on top of a survival sandbox?                               |
+| G137      | [The Forest](dossiers/the-forest.md)                        | How does ambiguous cannibal behavior make a compact building-and-cave survival game feel socially threatening?                            |
+| G138      | [Sons of the Forest](dossiers/sons-of-the-forest.md)        | What changes when free-form physical construction, delegated labor and rapid traversal expand the original formula?                       |
+| G139      | [Subnautica](dossiers/subnautica.md)                        | How can oxygen, depth, vehicles and knowledge make world access itself the progression system?                                            |
+| G140      | [Don't Starve Together](dossiers/dont-starve-together.md)   | How do seasons, sanity, asymmetric characters, shared death and persistent worlds turn the calendar into cooperative progression?         |
 
 <a id="full-dossiers--survival-references-g141g148"></a>
 
@@ -104,16 +114,24 @@ These ten full passes cover the requested first half of the September 27 surviva
 
 These eight September 27 survival passes are independent full R01–R14 studies with explicit version boundaries, comprehensive mechanics inventories, eight worked interactions each, five substantive written reviews, current player evidence where applicable, production/commercial context and declared evidence limits. Mike's requested [second-pass requirements-and-corrections audit](coverage-audit-g141-g148.md) subsequently reread every dossier against the explicit mechanics inventory, corrected stale/current-version claims and filled real gaps game by game. G131–G140 has its own completion record above; the separate P01–P05 whole-library gates remain pending.
 
-| Roster ID | Dossier | Useful starting question |
-| --- | --- | --- |
-| G141 | [Raft](dossiers/raft.md) | How does one moving home become shelter, vehicle, production graph, social space and visible progression? |
-| G142 | [Grounded](dossiers/grounded.md) | How can authored scale, ecology, observation and player-built routes make one backyard stay surprising? |
-| G143 | [The Long Dark](dossiers/the-long-dark.md) | How do time, weather, injury, scarcity and geographic knowledge make ordinary expeditions consequential? |
-| G144 | [Green Hell](dossiers/green-hell.md) | How does diagnosis turn bodily survival from generic meters into specific causes, symptoms and treatments? |
-| G145 | [Enshrouded](dossiers/enshrouded.md) | How can a handcrafted RPG world remain deeply editable while preserving authored geography and shared progression? |
-| G146 | [V Rising](dossiers/v-rising.md) | What changes when bosses embody the tech tree and vampire identity rewrites blood, sunlight, servants and castles? |
-| G147 | [Once Human](dossiers/once-human.md) | How can scenario-specific world laws coexist with portable identity, selective inheritance and persistent communities? |
-| G148 | [Abiotic Factor](dossiers/abiotic-factor.md) | How can scientists repurpose authored infrastructure, grow through use and turn renewable portal expeditions into survival progression? |
+| Roster ID | Dossier                                      | Useful starting question                                                                                                                |
+| --------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| G141      | [Raft](dossiers/raft.md)                     | How does one moving home become shelter, vehicle, production graph, social space and visible progression?                               |
+| G142      | [Grounded](dossiers/grounded.md)             | How can authored scale, ecology, observation and player-built routes make one backyard stay surprising?                                 |
+| G143      | [The Long Dark](dossiers/the-long-dark.md)   | How do time, weather, injury, scarcity and geographic knowledge make ordinary expeditions consequential?                                |
+| G144      | [Green Hell](dossiers/green-hell.md)         | How does diagnosis turn bodily survival from generic meters into specific causes, symptoms and treatments?                              |
+| G145      | [Enshrouded](dossiers/enshrouded.md)         | How can a handcrafted RPG world remain deeply editable while preserving authored geography and shared progression?                      |
+| G146      | [V Rising](dossiers/v-rising.md)             | What changes when bosses embody the tech tree and vampire identity rewrites blood, sunlight, servants and castles?                      |
+| G147      | [Once Human](dossiers/once-human.md)         | How can scenario-specific world laws coexist with portable identity, selective inheritance and persistent communities?                  |
+| G148      | [Abiotic Factor](dossiers/abiotic-factor.md) | How can scientists repurpose authored infrastructure, grow through use and turn renewable portal expeditions into survival progression? |
+
+## Songs of Syx — G149
+
+[Read the full dossier](dossiers/songs-of-syx.md) for the October 13, 2026 addition. It examines the actual settlement, production, household, religious, legal, trade and military systems alongside presentation, development, distribution, commercial evidence and reception. Eight situations connect the systems: seven explicitly constructed examples and one attributed historical play account. Five independent written perspectives and contrasting Steam testimony retain their source and version limits.
+
+The useful comparison is how growth changes responsibilities without discarding the original place, and when interdependent systems become meaningful choices rather than maintenance. The [completion record](research-progress.md#songs-of-syx-g149) owns review and verification; this addition does not close the separate whole-library gates or authorize OpenLegend gameplay changes.
+
+The later [economy and lore supplement](dossiers/songs-of-syx-economy-and-lore.md) adds a source-qualified account of the divine wars, peoples, religious relationships and historical mysteries, connecting them to economic and social choices. It preserves the difference between lore, belief, old promotional material and verified mechanics.
 
 ## Game studies
 
@@ -143,18 +161,18 @@ The [G61–G80 reading index](dossiers/README.md) links the full-category studie
 
 These additive dossiers retain the earlier chapters and mechanics studies. Each owns its detailed mechanics, constructed situations, reception, production, commercial definitions and evidence limits. The [progress ledger](research-progress.md) owns completion commits and remaining library-wide gates; this index does not certify the seven-file packet audit. The current continuation stops at G110.
 
-| ID | Dossier | Useful starting question |
-| --- | --- | --- |
-| G101 | [Mass Effect](dossiers/mass-effect.md) | How do character builds, squad roles, investigation and imported choices support a continuing protagonist? |
-| G102 | [Mass Effect 2](dossiers/mass-effect-2.md) | How do recruitment, loyalty, preparation and role assignment converge on a consequential finale? |
-| G103 | [Mass Effect 3](dossiers/mass-effect-3.md) | How do prior choices, war assets, combat and different ending editions interact? |
-| G104 | [Mass Effect: Andromeda](dossiers/mass-effect-andromeda.md) | How do flexible profiles, mobility, research and settlement viability create exploration goals? |
-| G105 | [Mass Effect Galaxy](dossiers/mass-effect-galaxy.md) | What survives when an RPG setting becomes a compact mobile action-and-dialogue game? |
-| G106 | [Mass Effect Infiltrator](dossiers/mass-effect-infiltrator.md) | How do touch combat, scoring, upgrades and a retired cross-game service differ from a full RPG? |
-| G107 | [Octopath Traveler](dossiers/octopath-traveler.md) | How do field identities, jobs, weaknesses and resource timing coexist with an anthology structure? |
-| G108 | [Octopath Traveler II](dossiers/octopath-traveler-ii.md) | How do day/night actions, personal talents and crossed stories change the first game's structure? |
-| G109 | [Knights of the Old Republic](dossiers/star-wars-knights-of-the-old-republic.md) | How do party skills, authored investigations and allegiance make local decisions consequential? |
-| G110 | [Knights of the Old Republic II](dossiers/star-wars-knights-of-the-old-republic-ii.md) | How do influence, training, crafting and split-party objectives connect people to capability? |
+| ID   | Dossier                                                                                | Useful starting question                                                                                   |
+| ---- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| G101 | [Mass Effect](dossiers/mass-effect.md)                                                 | How do character builds, squad roles, investigation and imported choices support a continuing protagonist? |
+| G102 | [Mass Effect 2](dossiers/mass-effect-2.md)                                             | How do recruitment, loyalty, preparation and role assignment converge on a consequential finale?           |
+| G103 | [Mass Effect 3](dossiers/mass-effect-3.md)                                             | How do prior choices, war assets, combat and different ending editions interact?                           |
+| G104 | [Mass Effect: Andromeda](dossiers/mass-effect-andromeda.md)                            | How do flexible profiles, mobility, research and settlement viability create exploration goals?            |
+| G105 | [Mass Effect Galaxy](dossiers/mass-effect-galaxy.md)                                   | What survives when an RPG setting becomes a compact mobile action-and-dialogue game?                       |
+| G106 | [Mass Effect Infiltrator](dossiers/mass-effect-infiltrator.md)                         | How do touch combat, scoring, upgrades and a retired cross-game service differ from a full RPG?            |
+| G107 | [Octopath Traveler](dossiers/octopath-traveler.md)                                     | How do field identities, jobs, weaknesses and resource timing coexist with an anthology structure?         |
+| G108 | [Octopath Traveler II](dossiers/octopath-traveler-ii.md)                               | How do day/night actions, personal talents and crossed stories change the first game's structure?          |
+| G109 | [Knights of the Old Republic](dossiers/star-wars-knights-of-the-old-republic.md)       | How do party skills, authored investigations and allegiance make local decisions consequential?            |
+| G110 | [Knights of the Old Republic II](dossiers/star-wars-knights-of-the-old-republic-ii.md) | How do influence, training, crafting and split-party objectives connect people to capability?              |
 
 ## Deeper reading by system
 
@@ -179,3 +197,7 @@ Historical figures keep their measurement dates. Imported research claims are no
 Specific item and character names identify reference examples, not proposed OpenLegend names. Borrow design patterns rather than copying protected assets, dialogue, distinctive fictional settings, or branding. Reference media is linked, not redistributed.
 
 The existing engineering, product, and world-design owners remain authoritative for OpenLegend. This library grants no implementation, spending, permissions, or runtime changes.
+
+## Supplementary Dungeons & Dragons studies
+
+The [tabletop research hub](games/dungeons-and-dragons.md) distinguishes the [2024 revision](dossiers/dungeons-and-dragons-2024.md), [v.3.5](dossiers/dungeons-and-dragons-3-5.md), [GM adjudication](mechanics/dungeons-and-dragons-adjudication.md), and [complete-SRD systems study](mechanics/dungeons-and-dragons-srd-systems.md). The related [world dossier](../worldbuilding/worlds/29-dungeons-and-dragons.md) and [planes and lived-magic supplement](../worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) retain setting, edition and source-access distinctions. These additions do not renumber the existing game roster or claim exhaustive source review.

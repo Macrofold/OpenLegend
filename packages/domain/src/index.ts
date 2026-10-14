@@ -1,7 +1,21 @@
+export * from './world-creation.js';
+export * from './world-composition.js';
+export * from './social-policy.js';
+export * from './ranged-policy.js';
+export * from './native-command-contracts.js';
 export * from './types.js';
+export * from './worlds/base/initial-opening.js';
+export * from './worlds/base/opening-readiness.js';
+export { BASE_SOCIAL_POLICY } from './worlds/base/social.js';
+export { baseWorldInitialConstructionSeeds } from './worlds/base/world.js';
+export * from './recipe-records.js';
+export * from './food-preparation.js';
+export * from './finite-casts.js';
 export { BASE_DEATH_COMMAND_DESCRIPTIONS } from './worlds/base/death.js';
 export * from './reincarnation.js';
 export * from './combat-consent.js';
+export * from './ranged.js';
+export * from './worlds/base/ranged-counterplay.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';
 export {
   activeStimuli,
@@ -20,14 +34,14 @@ export * from './action-experience.js';
 export * from './activity-learning.js';
 export * from './activity-execution.js';
 export {
-  nativeActivityView,
+  BASE_FOOD_ACTION_WORDING,
   equippedTargetAction,
   nativeCatalogueView,
+  nativeActivityViews,
   nativeHuntCatalogueLabel,
 } from './worlds/base/action-views.js';
 export {
   BASE_ACTION_DESCRIPTIONS,
-  BASE_COOKING_PRESENTATION,
   nativeActionIcon,
   nativeGatherShortcut,
   nativePreparationOptions,
@@ -61,6 +75,13 @@ export {
   TRAIT_BANK,
 } from './data.js';
 export {
+  MARA_ID,
+  MARA_STARTING_BELIEFS,
+  MISSING_BELONGING_LOCATIONS,
+  TAVIN_ID,
+  TAVIN_STARTING_BELIEFS,
+} from './worlds/base/missing-belonging.js';
+export {
   GOD_SPAWN_OPTIONS,
   editPerson,
   editWorldEvents,
@@ -92,6 +113,8 @@ export {
   hasLineOfEffect,
   canReachEntity,
   findApproachPath,
+  findPhysicalWorkApproach,
+  physicalWorkPointAvailable,
   isWalkable,
   nearbyEntities,
   sameSurfacePoint,
@@ -165,7 +188,7 @@ export { isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
-export { BASE_HUNTING, huntingDescription, observedAnimalHealth } from './worlds/base/hunting.js';
+export { BASE_HUNTING, huntingDescription, observedBodyHealth } from './worlds/base/hunting.js';
 export * from './handover.js';
 export { BASE_HANDOVER } from './worlds/base/handover.js';
 export {
@@ -210,10 +233,20 @@ export {
   equipLot,
   retireItem,
   retiredObjectIds,
+  markPartialObjectHistory,
+  completeObjectHistory,
   setItemQuantity,
   validateObjects,
 } from './objects.js';
-export { upgradeObjects } from './object-migration.js';
+export * from './equipment.js';
+export * from './contact-defense.js';
+export {
+  guardDescription,
+  guardWorkLabel,
+  guardChoiceLabel,
+  BASE_GUARD_TEXT,
+  equipmentChangeDescription,
+} from './worlds/base/shield-defense.js';
 
 export * from './dependencies.js';
 export { worldRootEntities } from './entity-index.js';
@@ -258,4 +291,29 @@ export { DEFAULT_COGNITION_POLICY } from './worlds/base/cognition.js';
 export { basePlaytestMilestones } from './worlds/base/playtest.js';
 
 export * from './outings.js';
-export { BASE_OUTING } from './worlds/base/outing-policy.js';
+export { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
+export * from './practical-competence.js';
+export * from './coaching.js';
+export {
+  SLING_HANDLING,
+  SLING_TARGET,
+  BASE_PRACTICE_COMMAND_DESCRIPTIONS,
+} from './worlds/base/practical-competence.js';
+export * from './assembly-types.js';
+export * from './assemblies.js';
+export * from './assembly-geometry.js';
+export { BASE_CANOPY_SCENE } from './worlds/base/canopies.js';
+
+export * from './material-exposure.js';
+
+export * from './assembly-validation.js';
+
+export * from './assembly-use.js';
+export * from './construction-scene.js';
+export { BASE_CONSTRUCTION_DESCRIPTIONS } from './worlds/base/canopies.js';
+
+export * from './evasion.js';
+
+export * from './worlds/base/combat-views.js';
+
+export * from './worlds/base/watchpost.js';

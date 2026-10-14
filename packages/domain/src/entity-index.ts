@@ -2,12 +2,16 @@ import { countDomainWork } from './diagnostic-counters.js';
 import { recordSemanticChange } from './dependencies.js';
 import { isDraft, original } from 'immer';
 import { readOnlyDraftView } from './draft.js';
-import type { Entity, WorldState } from './types.js';
+import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-index.js';
+import { chargeWork } from './work-budget.js';
+import type { ActionType, Entity, WorldState } from './types.js';
 
 // Root membership is rebuildable. Values are read from the current phase, so moving
 // actors and occurrence-time audiences never reuse a stale entity or position copy.
 const roots = new WeakMap<WorldState['entities'], readonly string[]>();
 const draftMembership = new WeakMap<WorldState, Set<string>>();
+type TargetUsers = ObjectIndexNode<ObjectIndexNode<true>> | undefined;
+const targetUsers = new WeakMap<WorldState['entities'], { tree: TargetUsers }>();
 const physicalRoot = (entity: Entity | undefined) =>
   !!entity &&
   !entity.retirement &&
@@ -24,6 +28,41 @@ function snapshotRoots(entities: WorldState['entities']): readonly string[] {
   }
   return ids;
 }
+function targetKey(entity: Entity | undefined): string | undefined {
+  const action = entity?.actor?.action;
+  return physicalRoot(entity) && action?.targetId ? `${action.type}:${action.targetId}` : undefined;
+}
+function updateTargetUsers(tree: TargetUsers, key: string, id: string, add: boolean): TargetUsers {
+  const users = objectIndexSet(objectIndexGet(tree, key), id, add ? true : undefined);
+  return objectIndexSet(tree, key, users);
+}
+/** Immutable snapshots use a rebuildable target/action index. Mutable builders and
+ * in-progress drafts read current roots; a preview never creates an authoritative claim. */
+export function hasOtherTargetUser(
+  world: WorldState,
+  actorId: string,
+  type: ActionType,
+  targetId: string,
+): boolean {
+  if (isDraft(world) || !Object.isFrozen(world.entities))
+    return worldRootEntities(world, true).some((entity) => {
+      chargeWork({ tests: 1 });
+      return entity.id !== actorId && targetKey(entity) === `${type}:${targetId}`;
+    });
+  let index = targetUsers.get(world.entities);
+  if (!index) {
+    let tree: TargetUsers;
+    for (const id of snapshotRoots(world.entities)) {
+      chargeWork({ tests: 1 });
+      const key = targetKey(world.entities[id]);
+      if (key) tree = updateTargetUsers(tree, key, id, true);
+    }
+    index = { tree };
+    targetUsers.set(world.entities, index);
+  }
+  const users = objectIndexGet(index.tree, `${type}:${targetId}`);
+  return !!users && (users.key !== actorId || !!users.left || !!users.right);
+}
 /** Every admitted root creation/removal calls this in its existing semantic owner. */
 export function rootMembershipChanged(world: WorldState, id: string): void {
   const before = isDraft(world) ? original(world)!.entities[id] : undefined,
@@ -36,6 +75,7 @@ export function rootMembershipChanged(world: WorldState, id: string): void {
   });
   if (!isDraft(world)) {
     roots.delete(world.entities);
+    targetUsers.delete(world.entities);
     return;
   }
   let changed = draftMembership.get(world);
@@ -88,7 +128,19 @@ export function captureRootIndex(
   const base = original(draft)!;
   draftMembership.delete(draft);
   const prior = Object.isFrozen(base.entities) ? roots.get(base.entities) : undefined;
+  const priorTargets = Object.isFrozen(base.entities) ? targetUsers.get(base.entities) : undefined;
   return (world, changed) => {
+    if (priorTargets && world.entities !== base.entities) {
+      let tree = priorTargets.tree;
+      for (const id of changed) {
+        const before = targetKey(base.entities[id]),
+          after = targetKey(world.entities[id]);
+        if (before === after) continue;
+        if (before) tree = updateTargetUsers(tree, before, id, false);
+        if (after) tree = updateTargetUsers(tree, after, id, true);
+      }
+      targetUsers.set(world.entities, { tree });
+    }
     if (!prior || world.entities === base.entities) return;
     const removed = new Set<string>(),
       added: string[] = [];

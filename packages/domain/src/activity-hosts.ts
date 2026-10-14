@@ -1,12 +1,12 @@
+import { freeze, isDraft } from 'immer';
+import { trustedActivityHosts } from './world-composition.js';
+export { STOCK_ACTIVITY_HOST } from './stock-activity.js';
 import { canonicalJson, contentLabel } from './events.js';
-import { BASE_FIRE_ACTIVITY_HOST } from './worlds/base/fire-activity.js';
-import { BASE_CAMP_ACTIVITY_HOST } from './worlds/base/camp-activity.js';
-import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 import { outcome } from './events.js';
+import { isImmutableData } from './records.js';
 import type { Outcome } from './types.js';
 import type { Command, WorldState, Entity, ItemInstance } from './types.js';
 import type { DefinitionPin } from './world-modules.js';
-import { BASE_OUTING_HOST } from './worlds/base/outing.js';
 
 /** Installed trusted support for reusable commands and actor-scoped conditions.
  * Recipe-family installation grants neither of these capabilities.
@@ -40,7 +40,13 @@ export interface ActivityHostDescriptor {
       minimum: 'available-own-stock';
     };
     requests?: ActivityRequestDescriptor[];
+    /** Authored meaning of this host's closed native commands; never installs an executor. */
+    actions?: Partial<Record<Command['type'], ActivityActionMeaning>>;
   };
+  /** Dependencies of the selected supported implementation, separate from possessions. */
+  supportsCommand?: (world: WorldState, command: Command['type']) => boolean;
+  /** Meaningful output identity from the exact selected command; no hypothetical lot. */
+  outputDefinition?: (world: WorldState, command: Command) => string | undefined;
   evaluateCondition?: (
     world: WorldState,
     actorId: string,
@@ -69,6 +75,50 @@ export interface ActivityHostDescriptor {
     fieldId: string,
     candidateId: string,
   ) => ActivityRequestChoice | undefined;
+}
+export interface ActivityActionMeaning {
+  label: string;
+  description: string;
+  fallback?: { label: string; category: string; reason: string };
+  singleItemReceipt?: boolean;
+  itemOutputs?: boolean;
+  unpausableWhileWorking?: boolean;
+  toolFields?: readonly string[];
+  unitPerCommand?: boolean;
+}
+/** A trusted command's meaning can also interpret historical records after uninstallation.
+ * Execution/discovery must separately use nativeCommandSupported. */
+export function nativeActionMeaning(command: Command['type']): ActivityActionMeaning | undefined {
+  return implementations().meanings.get(command);
+}
+export function installedActionMeaning(world: WorldState, command: Command['type']) {
+  const selected = selectedImplementations(world);
+  const meaning = selected
+    ? selected.meanings.get(command)
+    : selectedDescriptors(world).find((host) => host.definition.actions?.[command])?.definition
+        .actions?.[command];
+  return meaning && command === 'hunt' && world.moduleManifest.rangedPolicy
+    ? {
+        ...meaning,
+        label: world.moduleManifest.rangedPolicy.actionLabel,
+        description: world.moduleManifest.rangedPolicy.description,
+      }
+    : meaning;
+}
+/** Reusable substrate operations remain available; fictional capabilities require installation.
+ * Installation grants no equipment, materials, privacy or platform permission. */
+export function nativeCommandSupported(world: WorldState, command: Command['type']): boolean {
+  if (implementations().commands.has(command)) {
+    const host = activityHostForCommand(world, command);
+    return !!host && (host.supportsCommand?.(world, command) ?? true);
+  }
+  return true;
+}
+export function itemOutputFamilies(world: WorldState, namedPorts = false): string[] {
+  const result = new Set<string>(['pickup']);
+  for (const [command, meaning] of installedActionMeanings(world))
+    if (namedPorts ? meaning.itemOutputs : meaning.singleItemReceipt) result.add(command);
+  return [...result];
 }
 /** Native prepared perception can be reused; this is never a client-supplied grant. */
 export interface ActivityRequestObservation {
@@ -117,6 +167,8 @@ export type ActivityRequestPresentation = {
     }
 );
 export interface ActivityRequestDescriptor {
+  /** Exact native operations this composition needs; no equipment/material grant. */
+  requires?: readonly Command['type'][];
   purposeLabel?: string;
   submitLabel?: string;
   id: string;
@@ -143,38 +195,24 @@ export interface ActivityRequestDescriptor {
     }
   >;
 }
-export const STOCK_ACTIVITY_HOST: ActivityHostDescriptor = {
-  definition: {
-    id: 'engine:stock-transfer',
-    version: 1,
-    interface: 'activity-host-v1',
-    implementationVersion: 1,
-    commands: ['transfer-stock'],
-    deadlineSafeCommands: ['transfer-stock'],
-    selection: {
-      examined: 200,
-      movedLots: 16,
-      quantity: 'exact-homogeneous',
-      minimum: 'available-own-stock',
-    },
-  },
-};
-const trustedHosts = [
-  STOCK_ACTIVITY_HOST,
-  BASE_FIRE_ACTIVITY_HOST,
-  BASE_CAMP_ACTIVITY_HOST,
-  RESERVOIR_ACTIVITY_HOST,
-  BASE_OUTING_HOST,
-];
 export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
-  return world.moduleManifest.activityHosts.flatMap(
-    (pin) => installedActivityHost(world, pin)?.definition.requests ?? [],
-  );
+  return selectedDescriptors(world)
+    .flatMap((host) => host.definition.requests ?? [])
+    .filter(
+      (request) =>
+        request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
+    );
 }
 export function activityRequestHost(world: WorldState, requestId: string) {
-  for (const pin of world.moduleManifest.activityHosts) {
-    const host = installedActivityHost(world, pin);
-    if (host?.definition.requests?.some((request) => request.id === requestId)) return host;
+  for (const host of selectedDescriptors(world)) {
+    if (
+      host.definition.requests?.some(
+        (request) =>
+          request.id === requestId &&
+          request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
+      )
+    )
+      return host;
   }
 }
 export function activityRequestChoices(
@@ -182,12 +220,20 @@ export function activityRequestChoices(
   actorId: string,
   observed?: ActivityRequestObservation,
 ) {
-  const results = world.moduleManifest.activityHosts.flatMap((pin) => {
-    const host = installedActivityHost(world, pin);
-    return host?.requestChoices ? [host.requestChoices(world, actorId, observed)] : [];
+  const supported = new Set(activityRequestDescriptors(world).map((request) => request.id));
+  const results = selectedDescriptors(world).flatMap((host) => {
+    return host.requestChoices && host.definition.requests?.some((entry) => supported.has(entry.id))
+      ? [host.requestChoices(world, actorId, observed)]
+      : [];
   });
   return {
-    choices: results.flatMap((result) => result.choices),
+    choices: results.flatMap((result) =>
+      result.choices.flatMap((choice) => {
+        if (!choice.requestIds) return [choice];
+        const requestIds = choice.requestIds.filter((id) => supported.has(id));
+        return requestIds.length ? [{ ...choice, requestIds }] : [];
+      }),
+    ),
     warnings: results.flatMap((result) => result.warnings),
   };
 }
@@ -199,10 +245,13 @@ export function bindActivityRequest(
   request: ActivityRequest,
   permittedEntityIds?: readonly string[],
 ): Command | Outcome {
-  for (const pin of world.moduleManifest.activityHosts) {
-    const host = installedActivityHost(world, pin);
+  for (const host of selectedDescriptors(world)) {
     if (
-      host?.definition.requests?.some((descriptor) => descriptor.id === request.family) &&
+      host.definition.requests?.some(
+        (descriptor) =>
+          descriptor.id === request.family &&
+          descriptor.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
+      ) &&
       host.compileRequest
     )
       return host.compileRequest(world, actorId, id, request, permittedEntityIds);
@@ -218,9 +267,14 @@ export function reviewActivityRequest(
   actorId: string,
   request: ActivityRequest,
 ): string[] {
-  for (const pin of world.moduleManifest.activityHosts) {
-    const host = installedActivityHost(world, pin);
-    if (host?.definition.requests?.some((entry) => entry.id === request.family)) {
+  for (const host of selectedDescriptors(world)) {
+    if (
+      host.definition.requests?.some(
+        (entry) =>
+          entry.id === request.family &&
+          entry.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
+      )
+    ) {
       const bound = host.compileRequest?.(world, actorId, 'review', request);
       if (!bound || 'ok' in bound) return [];
       return host.reviewRequest?.(world, actorId, request) ?? [];
@@ -230,8 +284,16 @@ export function reviewActivityRequest(
 }
 /** A budget consumer must publish actual `spent` receipts and a conservative debit.
  * Deadline-safe stock movement is deliberately separate from this contract. */
-export function activitySpendCeiling(world: WorldState, command: Command): number | undefined {
-  const rule = activityHostForCommand(world, command.type)?.definition.spending;
+export function activitySpendCeiling(
+  world: WorldState,
+  command: Command,
+  requireInstalled = true,
+): number | undefined {
+  const rule = (
+    requireInstalled
+      ? activityHostForCommand(world, command.type)
+      : trustedActivityHostForCommand(command.type)
+  )?.definition.spending;
   if (
     !rule ||
     rule.command !== command.type ||
@@ -242,24 +304,111 @@ export function activitySpendCeiling(world: WorldState, command: Command): numbe
     return;
   return rule.maximumPerAttempt;
 }
+const hostPins = new WeakMap<ActivityHostDescriptor['definition'], DefinitionPin>();
 export function activityHostPin(host: ActivityHostDescriptor): DefinitionPin {
-  return {
-    id: host.definition.id,
-    version: host.definition.version,
-    digest: contentLabel(canonicalJson(host.definition)),
+  // Exact trusted metadata is immutable; compute it once before repeated menu/plan reads.
+  // Mutable world installation pins are still checked on every resolution.
+  freeze(host.definition, true);
+  let pin = hostPins.get(host.definition);
+  if (!pin) {
+    pin = Object.freeze({
+      id: host.definition.id,
+      version: host.definition.version,
+      digest: contentLabel(canonicalJson(host.definition)),
+    });
+    hostPins.set(host.definition, pin);
+  }
+  return pin;
+}
+function exactActivityHostPin(pin: DefinitionPin, expected: DefinitionPin): boolean {
+  return (
+    !!pin &&
+    Object.keys(pin).length === 3 &&
+    pin.id === expected.id &&
+    pin.version === expected.version &&
+    pin.digest === expected.digest
+  );
+}
+interface ActivityImplementations {
+  hosts: ActivityHostDescriptor[];
+  byId: Map<string, ActivityHostDescriptor>;
+  commands: Map<Command['type'], ActivityHostDescriptor>;
+  meanings: Map<Command['type'], ActivityActionMeaning>;
+}
+function describeImplementations(
+  hosts: readonly ActivityHostDescriptor[],
+): ActivityImplementations {
+  const result: ActivityImplementations = {
+    hosts: [...hosts],
+    byId: new Map(),
+    commands: new Map(),
+    meanings: new Map(),
   };
+  for (const host of hosts) {
+    // Linked code supplies these descriptors; seal the consumed authored metadata
+    // before retaining its derived lookups. Effects and current support are not cached.
+    activityHostPin(host);
+    result.byId.set(host.definition.id, host);
+    for (const command of host.definition.commands)
+      if (!result.commands.has(command)) result.commands.set(command, host);
+    for (const [command, meaning] of Object.entries(host.definition.actions ?? {}))
+      if (meaning && !result.meanings.has(command as Command['type']))
+        result.meanings.set(command as Command['type'], meaning);
+  }
+  return result;
+}
+let linkedImplementations: ActivityImplementations | undefined;
+function implementations(): ActivityImplementations {
+  return (linkedImplementations ??= describeImplementations(trustedActivityHosts()));
+}
+/** Exact trusted metadata can interpret finished records without installing execution. */
+export function trustedActivityHost(pin: DefinitionPin): ActivityHostDescriptor | undefined {
+  const host = implementations().byId.get(pin?.id);
+  return host && exactActivityHostPin(pin, activityHostPin(host)) ? host : undefined;
+}
+export function trustedActivityHostForCommand(command: Command['type']) {
+  return implementations().commands.get(command);
+}
+const selectedHosts = new WeakMap<readonly DefinitionPin[], ActivityImplementations>();
+function selectedImplementations(world: WorldState): ActivityImplementations | undefined {
+  const pins = world.moduleManifest.activityHosts;
+  const cached = selectedHosts.get(pins);
+  if (cached) return cached;
+  if (isDraft(pins) || !isImmutableData(pins)) return;
+  const result = describeImplementations(
+    pins.flatMap((pin) => {
+      const host = trustedActivityHost(pin);
+      return host ? [host] : [];
+    }),
+  );
+  // Frozen containers with mutable pins or accessors can still change consumed values.
+  // Builders and drafts resolve live; weak retention follows the installation owner.
+  selectedHosts.set(pins, result);
+  return result;
+}
+function selectedDescriptors(world: WorldState): readonly ActivityHostDescriptor[] {
+  return (
+    selectedImplementations(world)?.hosts ??
+    world.moduleManifest.activityHosts.flatMap((pin) => {
+      const host = trustedActivityHost(pin);
+      return host ? [host] : [];
+    })
+  );
+}
+export function activityHostPins(): DefinitionPin[] {
+  return trustedActivityHosts().map(activityHostPin);
 }
 export function validateActivityHostPins(pins: readonly DefinitionPin[]): void {
-  if (!Array.isArray(pins) || pins.length > trustedHosts.length)
+  if (!Array.isArray(pins) || pins.length > trustedActivityHosts().length)
     throw new Error('Invalid installed activity support.');
   const seen = new Set<string>();
   for (const pin of pins) {
-    const host = trustedHosts.find((host) => host.definition.id === pin?.id);
+    const host = trustedActivityHost(pin);
     if (
       !host ||
       seen.has(pin.id) ||
       Object.keys(pin).sort().join(',') !== 'digest,id,version' ||
-      canonicalJson(pin) !== canonicalJson(activityHostPin(host))
+      !exactActivityHostPin(pin, activityHostPin(host))
     )
       throw new Error('Missing or incompatible trusted activity host.');
     seen.add(pin.id);
@@ -269,26 +418,41 @@ export function installedActivityHost(
   world: WorldState,
   pin: DefinitionPin,
 ): ActivityHostDescriptor | undefined {
-  const host = trustedHosts.find((host) => host.definition.id === pin.id);
+  const selected = selectedImplementations(world);
+  if (selected) {
+    const host = selected.byId.get(pin?.id);
+    return host && exactActivityHostPin(pin, activityHostPin(host)) ? host : undefined;
+  }
+  const host = trustedActivityHost(pin);
   return host &&
-    canonicalJson(activityHostPin(host)) === canonicalJson(pin) &&
-    world.moduleManifest.activityHosts.some(
-      (installed) => canonicalJson(installed) === canonicalJson(pin),
-    )
+    world.moduleManifest.activityHosts.some((installed) => exactActivityHostPin(installed, pin))
     ? host
     : undefined;
 }
 export function activityCommandSupported(world: WorldState, command: Command['type']): boolean {
-  return world.moduleManifest.activityHosts.some((pin) =>
-    installedActivityHost(world, pin)?.definition.commands.includes(command),
-  );
+  return !!activityHostForCommand(world, command);
 }
 export function activityHostForCommand(
   world: WorldState,
   command: Command['type'],
 ): ActivityHostDescriptor | undefined {
+  const selected = selectedImplementations(world);
+  if (selected) return selected.commands.get(command);
   for (const pin of world.moduleManifest.activityHosts) {
-    const host = installedActivityHost(world, pin);
+    const host = trustedActivityHost(pin);
     if (host?.definition.commands.includes(command)) return host;
   }
+}
+
+export function installedActionMeanings(
+  world: WorldState,
+): [Command['type'], ActivityActionMeaning][] {
+  const selected =
+    selectedImplementations(world) ?? describeImplementations(selectedDescriptors(world));
+  return [...selected.meanings.keys()].flatMap((command) => {
+    const meaning = installedActionMeaning(world, command);
+    return meaning && nativeCommandSupported(world, command)
+      ? [[command, meaning] as [Command['type'], ActivityActionMeaning]]
+      : [];
+  });
 }

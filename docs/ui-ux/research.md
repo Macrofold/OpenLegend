@@ -324,6 +324,16 @@ Historical rationale connects meaningful silhouettes, effect readability and vis
 
 Official posts discuss shared modern UI infrastructure, player-facing regressions, native settings replacing temporary scripts, and restoring deliberate rather than always-on equipment comparison. Staff statements are distinct from player replies. Inspect other callers after shared-component changes, make settings discoverable and avoid unsolicited comparisons obscuring the task. A modifier-key shortcut cannot be the sole accessible comparison method.
 
+## Project observations
+
+### O01
+
+**OpenLegend expedition implementation/review, October 6, 2026.** [Native and production-browser evidence](../verification/rewarding-expeditions.md#production-browser-interaction) · [requested review](../verification/rewarding-expeditions.md#requested-review--october-6-2026).
+
+Selecting the record initially retained its pre-inspection detail, and the compact inventory separately retained obsolete facts/known-method wording after inspection or learning. Corrected client refresh preserves selection and rejects late reads; the server includes inspection and learned knowledge in its display dependencies. Transfer this lesson to mutation-driven detail and derived projections: list identity or quantity alone cannot describe all permitted facts. This is observed project evidence, not a new external standard, general device qualification or proof of player enjoyment. Destination: [React mutation guidance](react.md#effects-asynchronous-work-and-mutations).
+
+The [October 7 second review](../verification/rewarding-expeditions.md#second-requested-review--october-7-2026) reproduced a further missing client dependency: an independent native inspection cleared the server's recipe facts, but the open selected record retained its old method and Learn button. Including the supplied recipe detail in the existing refresh key fixes immediate removal while preserving the selected item and quantity draft. Fresh inspection restores it; keyboard learning and repeat feedback update without ticking. This reinforces the same existing guidance rather than adding another policy or claiming broader accessibility qualification.
+
 ## Original player feedback
 
 ### P01
@@ -426,6 +436,14 @@ The [current-interface audit](current-interface-audit.md) is pinned to `b50ec6ce
 
 Mike explicitly requested object-opened grids and ordinary play without execution forms. That direction supersedes the routine chooser/review recommendation in the affected handbook chapters and UI brief. The [feature specification](../projects/game-interaction-redesign-feature-spec.md) specifies J01–J48 across the entire interface; the [technical design](../projects/game-interaction-redesign-tech-design.md) retains native ownership and scoped reads; [nine original wireframes](wireframes/README.md) illustrate the layouts. [UIUX07–UIUX18](../maintainers/ui-ux.md#uiux07) separates the corrected whole-interface research/design scope, the earlier branch implementation and open broader implementation/gameplay acceptance. The [verification report](../verification/game-interaction-redesign.md) records actual runtime checks and their limits. No copied screenshot becomes a production asset, and no reference game's rule silently becomes an Open Legend world law.
 
+## Local implementation evidence
+
+### OL01
+
+**OpenLegend shelter delivery review, October 6, 2026.** [Recorded browser and native evidence](../verification/editable-shelters.md#delivery-review).
+
+The original shelter controls allowed overlapping reads. The repair used one cancellable read owner for polling and post-write refresh; controlled three/five-second delays recorded at most one read in flight. Deliberate failed reads disabled Review, retained the draft and recovered. Sleep temporarily removed a selected canopy from view; an explicit unavailable state retained that identity until waking. This supports [the asynchronous-work guidance](react.md#effects-asynchronous-work-and-mutations), not a universal polling cadence, representative accessibility result or measured frame-rate improvement.
+
 ## Synthesis and evidence limits
 
 The shared lesson is to make the object, scope, next action and consequential state legible, preserve working context and remove repetitive management with no gameplay purpose. Composite controls, focus and transaction integrity need explicit behavior contracts, not visual intuition alone. The handbook's quantitative ranges in [UXL01–05](../limits/ui-ux.md) remain Open Legend proposals; attributed WCAG thresholds retain their qualifications. No cited company endorses our particular values.
@@ -434,4 +452,4 @@ Primer was read in the specified excerpts; Adobe's two named implementation file
 
 In the original September 30–October 1 handbook research, most pages were read as parsed text; Apple, Material and Steam access limits are recorded individually. The later game atlas additionally downloads and visually inspects its actual image files. Coverage is not hands-on comparative play, live ChatGPT/Claude product testing, every component body, every patch or a representative player sample. Official guide images are references, not licensed game assets. Recheck living sources when a version-sensitive claim or dependency API changes; ordinary UI edits need not reread every source.
 
-No game/browser, assistive-technology, native agent-dispatch or user study was run for this research. Tooling evidence and open checks belong in [verification](verification.md) and [UIUX06](../maintainers/ui-ux.md#uiux06). Research refines requirements; it does not certify present conformance or authorize every described enhancement.
+The original external-source research ran no game/browser, assistive-technology, native agent-dispatch or user study; OL01 separately records controlled local browser evidence. Tooling evidence and open checks belong in [verification](verification.md) and [UIUX06](../maintainers/ui-ux.md#uiux06). Research refines requirements; it does not certify present conformance or authorize every described enhancement.

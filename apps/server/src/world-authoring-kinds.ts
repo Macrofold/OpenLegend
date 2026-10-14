@@ -33,6 +33,7 @@ import { normalizeInventionProposal } from './invention-service.js';
 import { scopedInventionErrors } from './invention-context.js';
 import { fingerprint } from './relationship-index.js';
 import { commandInputSchema } from './world-service.js';
+import { OPENING_CHECKER_VERSION, openingValidation } from './world-opening-authoring.js';
 import type { WorldService } from './world-service.js';
 import type { WorldAgentPreparation } from '@open-legend/protocol';
 
@@ -250,6 +251,12 @@ export function authoringTransition(
   if (!permission.ok) return { world, events: [], outcome: permission };
   try {
     switch (d.kind) {
+      case 'world-opening':
+        return reject(
+          world,
+          'creation-target-required',
+          'Starting a fresh opening uses its exact reviewed prepared-host operation; it cannot be applied to this world.',
+        );
       case 'recipe': {
         // World-level investigation does not teach the controlled inventor unavailable materials.
         const errors = scopedInventionErrors(service, d.actorId, d.payload, world);
@@ -315,6 +322,7 @@ export function validateAuthoring(
   scope: RequestScope,
   world = service.world,
 ) {
+  if (d.kind === 'world-opening') return openingValidation(service, d.payload, scope);
   const action = d.kind === 'action' ? commandInputSchema.safeParse(d.payload) : undefined;
   // Preview and Apply share base/control fences. A structurally valid action on an
   // obsolete base must not be presented as ready for human approval.
@@ -384,6 +392,8 @@ export function validateAuthoring(
 }
 /** Approval covers affected effect episodes, not merely an earlier object count. Clock drift is irrelevant. */
 export function authoringImpact(world: WorldState, d: AuthoringDraft) {
+  if (d.kind === 'world-opening')
+    return { token: fingerprint([d.digest, OPENING_CHECKER_VERSION]), affected: 0 };
   if (d.kind === 'attribute-bindings') return attributeBindingImpact(world, d.payload);
   if (d.kind === 'attribute-values') return attributeValueImpact(world, d.payload);
   if (d.kind !== 'status-effect-policy') return { token: 'none', affected: 0 };

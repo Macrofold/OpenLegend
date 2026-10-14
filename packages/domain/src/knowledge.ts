@@ -2,8 +2,13 @@ import type { Outcome, WorldState } from './types.js';
 import { recordSemanticChange } from './dependencies.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { outcome } from './events.js';
+import type { KnowledgeRecord } from './types.js';
 
 export interface KnowledgeDocument {
+  /** Source of the current complete text, never inferred from revision or evidence absence.
+   * Observed facts and testimony keep their distinct sources on the referenced evidence.
+   * docs/knowledge.md#documents-and-authority */
+  origin: 'authored-starting' | 'actor-edit';
   subjectId: string | null;
   text: string;
   revision: number;
@@ -18,6 +23,20 @@ export interface KnowledgePolicy {
   maxCharacters: { general: number; subject: number };
 }
 export type ActorKnowledge = Record<string, KnowledgeDocument>;
+/** Callers own admission; this is the single mutation for exact learned recipe knowledge. */
+export function learnRecipe(
+  world: WorldState,
+  actorId: string,
+  recipeId: string,
+  source: KnowledgeRecord['source'],
+  evidenceId: string,
+): 'acquired' | 'already-known' {
+  const records = (world.knowledge[actorId] ??= []);
+  if (records.some((record) => record.recipeId === recipeId)) return 'already-known';
+  records.push({ recipeId, source, evidenceId, learnedAt: world.simTime });
+  advanceKnowledgeRevision(world, actorId);
+  return 'acquired';
+}
 export function advanceKnowledgeRevision(world: WorldState, actorId: string): void {
   if (!Number.isSafeInteger((world.knowledgeRevisions?.[actorId] ?? 0) + 1))
     throw new Error('Knowledge revision exhausted.');
@@ -102,6 +121,7 @@ export function editKnowledge(
   const documents = ((world.actorKnowledge ??= {})[actorId] ??= {});
   // Keep empty documents as revisioned tombstones: an old create cannot undo a later deletion.
   documents[knowledgeKey(edit.subjectId)] = {
+    origin: 'actor-edit',
     subjectId: edit.subjectId,
     text: edit.text,
     revision: (current?.revision ?? 0) + 1,
@@ -127,6 +147,7 @@ export function validateKnowledge(world: WorldState): void {
     if (!world.entities[actorId]?.actor) throw new Error('Knowledge owner is unavailable.');
     for (const [id, document] of Object.entries(documents)) {
       if (
+        !['authored-starting', 'actor-edit'].includes(document.origin) ||
         id !== knowledgeKey(document.subjectId) ||
         (document.subjectId !== null && !isSafeRecordId(document.subjectId)) ||
         !Number.isSafeInteger(document.revision) ||

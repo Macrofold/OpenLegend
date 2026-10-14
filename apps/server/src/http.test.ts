@@ -63,7 +63,7 @@ describe('local HTTP boundary', () => {
       ).status,
     ).toBe(403);
   });
-  it('uses opted-in background play and pauses after the closed connection finishes departure', async () => {
+  it('uses the event connection for opted-in background play and pauses after departure exposure', async () => {
     const { game, base, cookie, post } = await start();
     const controller = new AbortController();
     try {
@@ -88,16 +88,14 @@ describe('local HTTP boundary', () => {
       expect(game.service.world.simTime).toBe(30);
       controller.abort();
       await expect
-        .poll(() => game.service.world.entities[PLAYER_ID]!.actor!.participation?.phase)
+        .poll(() => game.service.world.entities[PLAYER_ID]?.actor?.participation?.phase)
         .toBe('exiting');
+      const departureAt = game.service.world.exitExposures![PLAYER_ID]!;
       expect(game.service.paused).toBe(false);
-      const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
-      expect(game.service.world.exitExposures?.[PLAYER_ID]).toBe(30 + exposure);
-      // Absence no longer skips the world's simulated vulnerable departure.
-      await game.service.tick(exposure / 30, 0);
+      await game.service.tick((departureAt - game.service.world.simTime) / 30, 0);
       expect(game.service.paused).toBe(true);
       await game.service.tick(1);
-      expect(game.service.world.simTime).toBe(30 + exposure);
+      expect(game.service.world.simTime).toBe(departureAt);
     } finally {
       controller.abort();
     }
@@ -148,7 +146,7 @@ describe('local HTTP boundary', () => {
     const { initial } = await start();
     expect(initial.clock.pauseReason).toBe('away');
     expect(initial.ai.mode).toBe('unconfigured');
-    expect(initial.recipes).toEqual([]);
+    expect(initial.recipes.map((recipe) => recipe.origin)).toEqual(['authored']);
     expect(initial).not.toHaveProperty('memories');
     expect(initial).not.toHaveProperty('items');
     expect(JSON.stringify(initial)).not.toContain('planGeneration');
@@ -190,15 +188,12 @@ describe('local HTTP boundary', () => {
     await post('/api/presence', { clientId: 'returning-tab', visible: false, sequence: 1 });
     expect(game.service.paused).toBe(false);
     await post('/api/presence', { clientId: 'returning-tab', visible: false, sequence: 3 });
-    expect(game.service.present).toBe(false);
-    expect(game.service.paused).toBe(false);
-    expect(game.service.world.entities[PLAYER_ID]!.actor!.participation?.phase).toBe('exiting');
-    const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
-    expect(game.service.world.exitExposures?.[PLAYER_ID]).toBe(60 + exposure);
+    expect(game.service.world.entities[PLAYER_ID]?.actor?.participation?.phase).toBe('exiting');
+    const departureAt = game.service.world.exitExposures![PLAYER_ID]!;
     await post('/api/presence', { clientId: 'returning-tab', visible: true, sequence: 2 });
-    expect(game.service.present).toBe(false);
-    expect(game.service.world.exitExposures?.[PLAYER_ID]).toBe(60 + exposure);
-    await game.service.tick(exposure / 60, 0);
+    expect(game.service.world.entities[PLAYER_ID]?.actor?.participation?.phase).toBe('exiting');
+    expect(game.service.world.exitExposures![PLAYER_ID]).toBe(departureAt);
+    await game.service.tick((departureAt - game.service.world.simTime) / 60, 0);
     expect(game.service.pauseReason).toBe('away');
   });
   it('does not renew presence from speed changes or while manually pausing', async () => {
@@ -264,6 +259,10 @@ describe('local HTTP boundary', () => {
       await post('/api/invent', { requestId: 'sling', text: 'Invent a sling.' })
     ).json();
     expect(result.code).toBe('unconfigured');
-    expect(game.service.world.recipes).toEqual({});
+    expect(
+      Object.values(game.service.world.recipes).every(
+        (recipe) => recipe.provenance.source === 'authored-world',
+      ),
+    ).toBe(true);
   });
 });

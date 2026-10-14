@@ -55,7 +55,7 @@ export function recoveryFile(payload: unknown, checksum: unknown): string | unde
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return file.data;
 }
-export const SAVE_FORMAT = 'development-2026-10-04-player-lives';
+export const SAVE_FORMAT = 'development-2026-10-14-world-rules-and-contested-ground';
 const MAX_BYTES = 64 * 1024 * 1024;
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
@@ -320,9 +320,9 @@ export class GameSaves {
       await this.worker?.close();
     }
   }
-  async initialize() {
+  async initialize(cleanInterruptedStages = true) {
     await this.worker?.ready;
-    await this.files.cleanInterruptedStages();
+    if (cleanInterruptedStages) await this.files.cleanInterruptedStages();
     await this.db.exec(`CREATE TABLE IF NOT EXISTS game_saves (
       id TEXT PRIMARY KEY, world_id TEXT NOT NULL, label TEXT NOT NULL,
       created_at TEXT NOT NULL, sim_time REAL NOT NULL, format TEXT NOT NULL,

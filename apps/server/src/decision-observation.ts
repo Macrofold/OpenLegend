@@ -1,3 +1,4 @@
+import { equippedItems } from '@open-legend/domain';
 import {
   inspectPossessions,
   currentInventoryInspection,
@@ -26,7 +27,7 @@ export function decisionObservation(world: WorldState, actorId: string) {
       cursor && !cursor.containerId ? cursor.itemIds : inspectPossessions(world, actorId).itemIds,
     );
     // Never drop tools already bound to admitted work when switching to a page.
-    if (actor.equippedItemId) ids.add(actor.equippedItemId);
+    for (const item of equippedItems(world, actorId)) ids.add(item.id);
     for (const action of [
       actor.action,
       ...(actor.agency.plan?.steps ?? [])

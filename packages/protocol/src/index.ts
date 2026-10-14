@@ -1,3 +1,5 @@
+import type { ConstructionPlan, AssemblyView } from './construction.js';
+export * from './construction.js';
 import type { Named } from '@open-legend/language';
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
 import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
@@ -16,6 +18,8 @@ export type { SurfacePoint, SpatialLayout };
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
   type:
+    | 'construction'
+    | 'construction-rest'
     | 'activity'
     | 'activity-request'
     | 'conversation'
@@ -27,6 +31,7 @@ export interface CommandInput {
     | 'merge-item'
     | 'unequip'
     | 'move'
+    | 'evade'
     | 'follow'
     | 'confirm-attempt'
     | 'withdraw-attempt'
@@ -34,10 +39,17 @@ export interface CommandInput {
     | 'prepare'
     | 'craft'
     | 'equip'
+    | 'guard'
     | 'strike'
     | 'hunt'
+    | 'aim'
+    | 'shoot-once'
+    | 'release-shot'
+    | 'practice-shot'
+    | 'coaching'
     | 'harvest'
     | 'cook'
+    | 'fish'
     | 'tend-fire'
     | 'handover'
     | 'outing'
@@ -50,7 +62,10 @@ export interface CommandInput {
     | 'recover'
     | 'respawn'
     | 'treat-scar'
+    | 'learn-record'
     | 'teach';
+  constructionPlan?: ConstructionPlan;
+  bay?: number;
   purpose?: string;
   activityFamilyId?: string;
   activityArguments?: Record<string, string | number | boolean>;
@@ -64,12 +79,20 @@ export interface CommandInput {
   expectedScope?: string;
   conversationId?: string;
   text?: string;
+  facing?: number;
+  aimId?: string;
+  autoEquip?: boolean;
   generation?: number;
   operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
   fireOperation?: 'light' | 'fuel' | 'extinguish';
+  coachingOperation?: 'request' | 'accept' | 'decline' | 'withdraw' | 'feedback';
+  episodeId?: string;
   handoverOperation?: 'offer' | 'counter' | 'accept' | 'decline' | 'withdraw';
-  outingOperation?: 'invite' | 'accept' | 'decline' | 'leave';
+  outingOperation?: 'help' | 'invite' | 'accept' | 'decline' | 'leave';
+  opponentId?: string;
+  /** Offered server-derived purpose; public dispatch rebinds current consent. */
+  combatHelpId?: string;
   outingId?: string;
   outingMode?: 'enqueue' | 'replace' | 'interrupt';
   destinationId?: string;
@@ -86,6 +109,7 @@ export interface CommandInput {
   definitionId?: string;
   itemId?: string;
   recipeId?: string;
+  recordPin?: { id: string; version: number; digest: string };
   attributeId?: string;
   ammunitionId?: string;
   position?: SurfacePoint;
@@ -104,6 +128,10 @@ export interface CommandInput {
   expectedContentsRevision?: number;
   targetRevision?: number;
   preparation?: 'fiber' | 'cord';
+  preparationId?: string;
+  preparationVersion?: number;
+  preparationDigest?: string;
+  inputs?: Record<string, string>;
 }
 
 /** Transport mirror of the installed world's trusted semantic presentation. */
@@ -141,9 +169,10 @@ export interface OutingView {
   revision: number;
   destination: string;
   companion: string;
-  distance: number;
+  distance: number | null;
+  kind: 'travel' | 'combat-help';
   purpose?: string;
-  status: 'pending' | 'traveling' | 'arrived';
+  status: 'pending' | 'traveling' | 'arrived' | 'helping';
   company: string;
   description: string;
   choices: Array<{ id: string; label: string; description: string; command: CommandInput }>;
@@ -240,6 +269,9 @@ export interface ActionOption {
   command: CommandInput;
   enabled: boolean;
   reason?: string;
+  /** Essential permitted facts beside the choice; optional statistics stay in detail. */
+  facts?: Array<[string, string]>;
+  detail?: string;
 }
 
 /** A discoverable option is either a native intention, a composer, or a missing prerequisite. */
@@ -312,6 +344,8 @@ export interface EntityView extends Named {
   /** Native root placement is public; contents revision requires current contents access. */
   storage?: { containerId: string; placementRevision: number; revision?: number };
   trade?: ItemTradeView;
+  bodySize?: { width: number; height: number };
+  assembly?: AssemblyView;
   /** Exact action offered for the controlled character's currently equipped item. */
   equippedAction?: ActionOption;
   contents?: Array<{
@@ -320,12 +354,13 @@ export interface EntityView extends Named {
     name: string;
     quantity: number;
     portable: boolean;
+    materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   }>;
   actionAnimation?: ActionAnimation | null;
   statusEffects?: StatusEffectView[];
   attributes?: AttributeView[];
   id: string;
-  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station' | 'item-pile';
+  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station' | 'item-pile' | 'practice-target';
   subtype: string;
   position: Position;
   supportSurfaceId: string | null;
@@ -353,6 +388,7 @@ export interface EntityView extends Named {
 
 export interface InventoryItemView extends Named {
   icon?: string;
+  materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   revision: number;
   placementRevision: number;
   individual?: boolean;
@@ -365,6 +401,7 @@ export interface InventoryItemView extends Named {
   availableQuantity?: number;
   /** The admitted requirement for one unit, including contents for an indivisible bag. */
   packingLoad?: number;
+  recipeRecord?: { method?: RecipeDetailsView; message: string };
   characteristics?: InventoryCharacteristic[];
   comparison?: Named & { id: string; characteristics: InventoryCharacteristic[] };
   category: 'material' | 'food' | 'equipment' | 'ammunition';
@@ -431,9 +468,7 @@ export interface ItemTradeView {
   }[];
 }
 
-export interface RecipeView {
-  npcCreated: boolean;
-  id: string;
+export interface RecipeDetailsView {
   name: string;
   description: string;
   family: string;
@@ -442,6 +477,10 @@ export interface RecipeView {
   limitations: string[];
   ingredients: Array<{ name: string; quantity: number; available: number; role: string }>;
   workSeconds: number;
+}
+export interface RecipeView extends RecipeDetailsView {
+  id: string;
+  origin: 'authored' | 'player' | 'npc';
   provenance: string;
   actions: ActionOption[];
 }
@@ -539,9 +578,60 @@ export interface KnownPlaceInspection {
   moveDescription: string;
 }
 
+export interface WorldEventSourceReference {
+  /** Opaque application-issued token binding world/timeline, actor, record family and sourceId. */
+  token: string;
+  sourceId: string;
+  revision: string;
+  family: 'speech' | 'encounter';
+}
+export type WorldEventSourceAcquisition =
+  | 'heard-speech'
+  | 'spoken-by-self'
+  | 'inspected-document'
+  | 'inspected-item'
+  | 'observed-place'
+  | 'observed-encounter';
+export interface WorldEventSourceObservedLocation {
+  kind: 'world' | 'possession';
+  label: string;
+  point?: SurfacePoint;
+}
+export type WorldEventSourceDetail =
+  | {
+      status: 'available';
+      reference: WorldEventSourceReference;
+      time: number;
+      order: number;
+      acquisition: WorldEventSourceAcquisition;
+      acquisitionLabel: string;
+      sourceLabel: string;
+      text: string;
+      inscription?: string;
+      speech?: PerceivedSpeech;
+      observedLocation?: WorldEventSourceObservedLocation;
+      corrected: boolean;
+      correctionNote?: string;
+    }
+  | {
+      status: 'unavailable';
+      sourceId: string;
+      reason: string;
+    };
+export interface WorldEventSourcesRequest {
+  references: WorldEventSourceReference[];
+}
+export interface WorldEventSourcesView {
+  ok: true;
+  worldId: string;
+  generation: string;
+  sources: WorldEventSourceDetail[];
+}
+
 export interface PublicEvent {
   speech?: PerceivedSpeech;
   modality?: 'heard' | 'observed' | 'felt' | 'internal';
+  source?: WorldEventSourceReference;
   id: string;
   time: number;
   type: string;
@@ -556,8 +646,8 @@ export interface ChatMessage {
   kind?: 'speech' | 'action';
   mechanical?: boolean;
   replyStatus?: AiJobView['status'];
-  /** User-facing detail revealed from the message-local failure label. */
-  replyFailure?: string;
+  /** Permitted explanation of a failed, cancelled or stale reply. */
+  replyReason?: string;
   id: string;
   speakerId?: string;
   speech?: PerceivedSpeech;
@@ -667,6 +757,7 @@ export interface GameView {
     offsetHours: number;
   };
   player: Named & {
+    evasion?: { label: string; readyIn: number };
     life?: number;
     death?: {
       message: string;
@@ -689,6 +780,7 @@ export interface GameView {
     heading: number;
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
+    practice: PracticeProgressView[];
     actionAnimation?: ActionAnimation | null;
     /** Configured applicable suggestions in authoritative presentation order. */
     suggestedActionIds: string[];
@@ -703,6 +795,8 @@ export interface GameView {
       durationSeconds: number;
       elapsedSeconds: number;
       advancing: boolean;
+      controls?: ActionOption[];
+      detail?: string;
     } | null;
     traits?: Array<{ id: string; name: string; description: string }>;
     memories?: MemoryEntryView[];
@@ -917,6 +1011,7 @@ export interface GodMindView {
   generation?: string;
   notepads?: {
     subjectId: string | null;
+    origin: 'authored-starting' | 'actor-edit';
     label: string;
     text: string;
     revision: number;
@@ -1276,6 +1371,16 @@ export type AccessCapability =
   | 'save'
   | 'manage-access';
 
+/** Public descriptions shared by account management and exact destination review. */
+export const ACCESS_CAPABILITY_TEXT: Record<AccessCapability, string> = {
+  play: 'Play a character',
+  spectate: 'Watch the world overview',
+  create: 'Creator tools and maintenance',
+  inspect: 'Inspect characters and diagnostics',
+  save: 'Save and load the world',
+  'manage-access': 'Invite people and manage access',
+};
+
 /** Real-world instants are UTC epoch milliseconds; `timeZone` is the creator's IANA display zone. */
 export interface MaintenanceWindowView {
   id: string;
@@ -1390,4 +1495,23 @@ export interface FamilyView {
   }>;
   next: string | null;
   preview?: string;
+}
+
+export interface PracticeProgressView {
+  rankLabel: string;
+  progressText: string;
+  authoredStartingText: string;
+  evidenceHeading: string;
+  evidenceItemTemplate: string;
+  id: string;
+  name: string;
+  value: 0 | 1;
+  starting: boolean;
+  releases: number;
+  independentRequired: number;
+  coachedRequired: number;
+  coached: boolean;
+  scope: string;
+  effect: string;
+  evidence: { occurrenceId: string; eventId: string; description: string }[];
 }

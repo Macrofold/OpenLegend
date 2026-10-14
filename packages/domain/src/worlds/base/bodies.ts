@@ -5,6 +5,7 @@ import { seedAgency } from '../../agency.js';
 import type { ActorComponent } from '../../types.js';
 import type { Entity, ItemDefinition } from '../../types.js';
 import type { LivingBody } from '../../living.js';
+import { BASE_EQUIPMENT_PORTS } from './equipment.js';
 
 // Authored starting anatomy and animal capabilities; lifecycle integrity remains generic.
 // docs/worlds/base/survival.md
@@ -26,6 +27,7 @@ export function describeBodyRemains(
 }
 export function livingBody(species: (typeof BASE_SPECIES)[number]): LivingBody {
   return {
+    equipmentPorts: species === 'human' ? BASE_EQUIPMENT_PORTS.map((port) => ({ ...port })) : [],
     plan:
       species === 'human' || species === 'construct'
         ? 'biped'
@@ -79,7 +81,6 @@ export function nativeActor(
     incapacitated: false,
     bornAt,
     action: null,
-    equippedItemId: null,
     agency: seedAgency(),
     planGeneration: 0,
   };

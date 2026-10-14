@@ -1,4 +1,5 @@
-import { subjectNarration } from './narration.js';
+import { subjectNarration, narrationTemplate } from './narration.js';
+import { BASE_PICKUP_NARRATION } from './worlds/base/item-handling.js';
 import { namePhrase } from '@open-legend/language';
 import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
@@ -22,7 +23,7 @@ import {
   type SurfacePoint,
   type BodyProfileId,
 } from '@open-legend/spatial';
-import { addItem, nextId } from './data.js';
+import { addItem, nextEntityId } from './data.js';
 import { availableResource, itemDefinitionPin, itemHasReservations } from './resource-claims.js';
 import { draftWorld, finishWorld, changedEntityIds } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
@@ -66,7 +67,7 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
       ) < 0.01,
   );
   if (existing) return existing;
-  const id = nextId(world, 'pile');
+  const id = nextEntityId(world, 'pile');
   const pile: Entity = {
     id,
     name: 'Items on the ground',
@@ -112,8 +113,6 @@ export function atomicObjects<T>(world: WorldState, operation: (candidate: World
     else if (current?.actor && entity.actor) {
       if (current.inventoryRevision !== entity.inventoryRevision)
         current.inventoryRevision = entity.inventoryRevision;
-      if (current.actor.equippedItemId !== entity.actor.equippedItemId)
-        current.actor.equippedItemId = entity.actor.equippedItemId;
     } else if (current !== entity) world.entities[id] = entity;
     if (wasRoot !== isRoot) rootMembershipChanged(world, id);
   }
@@ -167,9 +166,12 @@ export function pickUpItems(
     world,
     events,
     'items-picked-up',
-    subjectNarration(actor, `picked up ${description}.`),
+    // Render the observed source before an empty pile disappears; later history must
+    // not guess its identity from a now-missing object. No current reference is revived.
+    narrationTemplate(BASE_PICKUP_NARRATION, { actor, items: { name: description }, source: pile }),
     actor,
     pile.id,
+    { targetMustBeVisible: true },
   );
   if (pile.kind === 'item-pile' && !itemsForOwner(world, pileId).length) {
     delete world.entities[pileId];

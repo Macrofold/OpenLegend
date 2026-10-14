@@ -28,3 +28,27 @@ export function hasRecordFields(
     Object.keys(value).every((key) => required.includes(key) || optional.includes(key))
   );
 }
+
+const immutableData = new WeakSet<object>();
+/** Memoization needs immutable nested data, not merely a frozen outer record. */
+export function isImmutableData(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return typeof value !== 'function';
+  if (immutableData.has(value)) return true;
+  if (!Object.isFrozen(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  if (Array.isArray(value)) {
+    const keys = Object.keys(value);
+    if (
+      prototype !== Array.prototype ||
+      keys.length !== value.length ||
+      keys.some((key, index) => key !== String(index))
+    )
+      return false;
+  } else if (prototype !== Object.prototype && prototype !== null) return false;
+  for (const key of Reflect.ownKeys(value)) {
+    const field = Object.getOwnPropertyDescriptor(value, key);
+    if (!field || !('value' in field) || !isImmutableData(field.value)) return false;
+  }
+  immutableData.add(value);
+  return true;
+}

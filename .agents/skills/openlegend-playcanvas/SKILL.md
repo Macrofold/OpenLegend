@@ -9,6 +9,8 @@ description: >-
 
 Start with [WorldRenderer](../../../apps/client/src/world-renderer.ts), the relevant [scene implementation](../../../apps/client/src/scene.ts), pure camera controller and [spatial contract](../../../docs/spatial-world.md). Consult the installed PlayCanvas version's official API; this is a code-based engine integration, not an instruction to adopt Editor-specific workflows or a new rendering framework.
 
+Before changing floor focus, level visibility or cutaways, read [Levels and cutaways](../../../docs/spatial-world.md#levels-and-cutaways); for picking or submitted destinations, read [Picking and controls](../../../docs/spatial-world.md#picking-and-controls). Use actual support surfaces and geometry, including raised, sloping and stacked surfaces, rather than treating a level's nominal camera height as its physical floor. These presentation contracts apply even when physical execution is unchanged.
+
 React/gameplay exchange public DTOs, intentions and plain camera state. Keep PlayCanvas objects in the renderer. Picking identifies a target; the server validates the actual action. Preserve XYZ/support identity and coordinate conversions. Cutaways, appearance, interpolation and camera changes affect presentation, not physical authority or actor knowledge.
 
 Make creation, replacement and destruction explicit for scene nodes, textures, materials, meshes, listeners, observers and pending loads. Reuse existing caches/reference ownership and reject late results for destroyed or superseded scenes. A cache hit must not preserve obsolete assets or private data.

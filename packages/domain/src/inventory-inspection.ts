@@ -1,10 +1,12 @@
 import { accessiblePossession, canAccessContainer, possessionItems } from './object-access.js';
 import { acquireExposure } from './events.js';
 import { cloneValue } from './draft.js';
+import { isEquipped } from './equipment.js';
 import { itemFor, objectAncestors } from './objects.js';
 import { contentsQuery } from './queries.js';
-import { worldPosition } from './spatial-state.js';
+import { worldPosition, worldSupport } from './spatial-state.js';
 import { observerName } from './worlds/base/knowledge.js';
+import type { ObservedItemLocation } from './places.js';
 import type { ItemDefinition, ItemInstance, WorldState, WorldEvent } from './types.js';
 
 export interface InventoryInspection {
@@ -19,19 +21,21 @@ export interface InventoryInspection {
 }
 
 const descriptions = new WeakMap<ItemDefinition, string>();
+const inspectionEncoder = new TextEncoder();
 /** Definition facts are immutable across a committed snapshot; live lot facts are never cached. */
 export function describePossession(
   item: ItemInstance,
   definition: ItemDefinition,
   equipped: boolean,
   location = 'accessible possession',
+  includeInscription = false,
 ): string {
   let facts = descriptions.get(definition);
   if (!facts) {
     const melee = definition.melee;
     facts = [
       definition.description,
-      `Properties: ${definition.properties.join(', ')}.`,
+      definition.properties.length ? `Properties: ${definition.properties.join(', ')}.` : '',
       definition.nutrition ? `Edible now; restores ${definition.nutrition} nourishment.` : '',
       melee ? 'Can be equipped for close-range attacks.' : '',
     ]
@@ -44,7 +48,77 @@ export function describePossession(
     )
       descriptions.set(definition, facts);
   }
-  return `${item.quantity} × ${definition.name}${equipped ? ', equipped' : `, ${location}`}. ${facts}`;
+  const inscriptionText =
+    includeInscription && definition.inscription
+      ? ` Written text: “${definition.inscription}”`
+      : '';
+  return `${item.quantity} × ${definition.name}${equipped ? ', equipped' : `, ${location}`}. ${facts}${inscriptionText}`;
+}
+
+function observedOwnerLocation(
+  world: WorldState,
+  actorId: string,
+  ownerId: string,
+): ObservedItemLocation | undefined {
+  if (!canAccessContainer(world, actorId, ownerId)) return undefined;
+  const chain = objectAncestors(world, ownerId);
+  const root = chain.at(-1)!;
+  if (root.id === actorId) {
+    return {
+      kind: 'possession',
+      label:
+        ownerId === actorId
+          ? 'in my carried possessions'
+          : `in my carried ${observerName(world, actorId, ownerId).name}`,
+    };
+  }
+  if (root.actor && !root.remains) {
+    return {
+      kind: 'possession',
+      label: `in ${observerName(world, actorId, ownerId).name}`,
+    };
+  }
+  const support = worldSupport(root);
+  if (!support) return undefined;
+  const siteName = observerName(world, actorId, root.id).name;
+  const label =
+    ownerId === root.id ? siteName : `${observerName(world, actorId, ownerId).name} at ${siteName}`;
+  return {
+    kind: 'world',
+    point: { ...worldPosition(root), surfaceId: support },
+    label,
+    containerId: root.id,
+  };
+}
+
+function ownerLocationLookup(world: WorldState, actorId: string) {
+  const byOwner = new Map<string, ObservedItemLocation | undefined>();
+  return (ownerId: string): ObservedItemLocation | undefined => {
+    if (byOwner.has(ownerId)) return byOwner.get(ownerId);
+    const observed = observedOwnerLocation(world, actorId, ownerId);
+    byOwner.set(ownerId, observed);
+    return observed;
+  };
+}
+
+/** Snapshot the permitted site or carried custody where an item is inspected. Never resolves
+ * unseen ancestors or infers another actor's live world position. */
+export function observedItemLocation(
+  world: WorldState,
+  actorId: string,
+  itemId: string,
+): ObservedItemLocation | undefined {
+  const item = itemFor(world, itemId);
+  return item ? observedOwnerLocation(world, actorId, item.ownerId) : undefined;
+}
+
+function formatObservedLocationLabel(
+  observed: ObservedItemLocation | undefined,
+  containerId?: string,
+): string {
+  if (!observed)
+    return containerId ? 'in the selected accessible container' : 'accessible possession';
+  return observed.kind === 'world' ? `at ${observed.label}` : observed.label;
 }
 
 /** Rechecking access precedes reading any contents or private packing facts. Movement
@@ -139,6 +213,7 @@ export function inspectPossessions(
   const selected = world.entities[containerId ?? actorId]!;
   const scope = inventoryInspectionScope(world, actorId, containerId);
   const revision = selected.inventoryRevision ?? 0;
+  const locationForOwner = ownerLocationLookup(world, actorId);
   if (selectedItemId) {
     const item = itemFor(world, selectedItemId);
     if (
@@ -154,10 +229,11 @@ export function inspectPossessions(
     const description = describePossession(
       item,
       world.itemDefinitions[item.definitionId]!,
-      entity.actor.equippedItemId === item.id,
-      containerId ? 'in the selected accessible container' : 'accessible possession',
+      isEquipped(world, actorId, item.id),
+      formatObservedLocationLabel(locationForOwner(item.ownerId), containerId),
+      true,
     );
-    if (new TextEncoder().encode(description).length > 8000)
+    if (inspectionEncoder.encode(description).length > 8000)
       throw new Error('This possession description exceeds the inspection allowance.');
     return {
       revision,
@@ -205,10 +281,11 @@ export function inspectPossessions(
     const text = describePossession(
       item,
       world.itemDefinitions[item.definitionId]!,
-      entity.actor.equippedItemId === item.id,
-      containerId ? 'in the selected accessible container' : 'accessible possession',
+      isEquipped(world, actorId, item.id),
+      formatObservedLocationLabel(locationForOwner(item.ownerId), containerId),
+      true,
     );
-    const size = new TextEncoder().encode(text).length;
+    const size = inspectionEncoder.encode(text).length;
     if (page.length === 16 || bytes + size > 8000) {
       more = true;
       break;
@@ -240,9 +317,14 @@ export function recordInspectedItems(
   inspection: Pick<InventoryInspection, 'itemIds'> & { page: string[] },
 ): void {
   const observer = world.entities[actorId]!;
+  const locationForOwner = ownerLocationLookup(world, actorId);
   for (const [index, id] of inspection.itemIds.entries()) {
     const item = itemFor(world, id)!;
     const definition = world.itemDefinitions[item.definitionId]!;
+    const observedLocation = locationForOwner(item.ownerId);
+
+    if (definition.placeReport)
+      acquireExposure(world, events, observer, id, cloneValue(definition.placeReport));
     acquireExposure(world, events, observer, id, {
       kind: 'inventory-item',
       id,
@@ -253,6 +335,8 @@ export function recordInspectedItems(
         item.individuality === 'individual'
           ? `inventory-item:${id}`
           : `inventory-definition:${definition.id}`,
+      ...(definition.inscription ? { inscription: definition.inscription } : {}),
+      ...(observedLocation ? { observedLocation } : {}),
       ...(definition.mechanismFields
         ? { mechanismFields: cloneValue(definition.mechanismFields) }
         : {}),

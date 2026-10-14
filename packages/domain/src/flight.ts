@@ -197,6 +197,16 @@ export interface MotionTrack {
   pose: WorldPoint[];
   until?: number;
 }
+/** Sample the same piecewise path used by motion-boundary consumers. */
+export function motionTrackPosition(track: MotionTrack, t: number): WorldPoint {
+  let i = 1;
+  while (i < track.at.length - 1 && track.at[i]! < t) i++;
+  const a = track.at[i - 1]!,
+    b = track.at[i]!;
+  return b > a
+    ? interpolate(track.pose[i - 1]!, track.pose[i]!, Math.min(1, Math.max(0, (t - a) / (b - a))))
+    : track.pose[i]!;
+}
 /** The private path advanceFlight will follow over `seconds`, for sensory crossing checks.
  * A landing hop or a blocked sweep can leave the body at that hop's start, so both outcomes
  * are returned. Undefined means the flyer does not move during the slice. */

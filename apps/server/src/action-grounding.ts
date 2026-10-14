@@ -162,7 +162,7 @@ export async function groundActionAttempts(
     const matches = scoped.filter(
       (binding) =>
         normalize(binding.description).replace(/[.!?]+$/u, '') === description &&
-        !unmetSlots(binding.commands, slots).length,
+        !unmetSlots(world, binding.commands, slots).length,
     );
     if (matches.length === 1) {
       seen.set(normalized, op.localId);
@@ -285,7 +285,9 @@ export async function groundActionAttempts(
         });
       }
       // Jev may only choose a complete handle that already keeps every requested detail.
-      const honoring = scoped.filter((binding) => !unmetSlots(binding.commands, slots).length);
+      const honoring = scoped.filter(
+        (binding) => !unmetSlots(world, binding.commands, slots).length,
+      );
       const activityRequests = {
         requests: activityRequestDescriptors(world),
         ...activityRequestChoices(world, actorId),
@@ -597,7 +599,7 @@ export async function groundActionAttempts(
       let reason = result.reason;
       let omitted = result.omitted;
       // Native slot checks outrank the interpreter's claim that nothing was dropped.
-      const unmet = unmetSlots(boundCommands, slots);
+      const unmet = unmetSlots(world, boundCommands, slots);
       if (unmet.length && verdict === 'exact') {
         verdict = 'confirm';
         reason = 'The native action does not keep every requested detail; accept it only as shown.';

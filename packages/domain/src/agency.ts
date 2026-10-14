@@ -1,7 +1,18 @@
+import {
+  isCookingInputRole,
+  preparationDefinition,
+  validCookCommand,
+  validCookReference,
+  validCookingInputs,
+} from './food-preparation.js';
 import { activitySpendCeiling } from './activity-hosts.js';
 import { person, type Narration } from './narration.js';
 import { itemFor } from './objects.js';
-import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
+import {
+  activityHostForCommand,
+  nativeActionMeaning,
+  nativeCommandSupported,
+} from './activity-hosts.js';
 import {
   activityFrontier,
   reconcileActivityControl,
@@ -38,27 +49,19 @@ import { seesEntity } from './perception.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { supportedPosition } from './spatial-state.js';
 import { isFireCareCommand } from './worlds/base/fire.js';
+import { validAssemblyPhase } from './assemblies.js';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import type { ActorComponent, Command, Outcome, WorldState } from './types.js';
+import { validateCombatHelpReference } from './outings.js';
 
-/** Families whose completed step records a single item a plain later step may use: the world
- * declares its own; picking up is the engine's. Validation and prompt text read this list. */
-export const ITEM_OUTPUT_FAMILIES: readonly string[] = [
-  ...BASE_FAMILY_FACTS.singleItemReceipt,
-  'pickup',
-];
-/** Families whose outputs a later step may use through a named output port. */
-const PORT_OUTPUT_FAMILIES: readonly string[] = [...BASE_FAMILY_FACTS.itemOutputs, 'pickup'];
 /** The item kind a producing step yields when that is known before it runs, from the step's
- * own target or the world's family facts (cooking's output). */
+ * own target or the world's installed preparation definition. */
 export function producedItemDefinition(world: WorldState, command: Command): string | undefined {
-  if (command.type === 'gather') return world.entities[command.targetId]?.resource?.definitionId;
-  if (command.type === 'cook') return BASE_FAMILY_FACTS.cooking.output;
   if (command.type === 'pickup' && command.itemId)
     return itemFor(world, command.itemId)?.definitionId;
-  return undefined;
+  return activityHostForCommand(world, command.type)?.outputDefinition?.(world, command);
 }
 export const AGENCY_LIMITS = {
   goals: 8,
@@ -107,6 +110,11 @@ export type ItemOutputCommand = {
   outputPort?: string;
   quantity?: number;
   heatId?: string;
+  preparationId?: string;
+  preparationVersion?: number;
+  preparationDigest?: string;
+  inputRole?: string;
+  inputs?: Record<string, string>;
 };
 export type PlannedCommand = Command | ItemOutputCommand;
 export interface PlanStep {
@@ -419,6 +427,12 @@ export function arrangePlan(
     );
   if (!commands.length || commands.length > AGENCY_LIMITS.steps)
     return outcome(false, 'plan-limit', 'A frontier needs one to eight steps.');
+  if (commands.some((command) => !nativeCommandSupported(world, command.type)))
+    return outcome(
+      false,
+      'unsupported-capability',
+      'This world does not install a requested action.',
+    );
   if (commands.some((command) => !isPlannedCommand(command)))
     return outcome(false, 'invalid-plan', 'Only native physical work can be queued.');
   if (mode === 'enqueue' && current?.activity?.control && !current.activity.terminal)
@@ -525,8 +539,7 @@ export function pauseRefusal(action: ActorComponent['action']): string | null {
   if (action.type === 'status-effect') return 'This state cannot be paused.';
   if (
     action.strikePhase ||
-    ((BASE_FAMILY_FACTS.unpausableWhileWorking as readonly string[]).includes(action.type) &&
-      action.stage === 'working')
+    (nativeActionMeaning(action.type)?.unpausableWhileWorking && action.stage === 'working')
   )
     return 'An attack already under way cannot be paused; let it finish or replace it.';
   if (action.stage === 'working' && action.consumed.length)
@@ -1066,8 +1079,22 @@ export function validateAgency(world: WorldState): void {
           plan.steps.filter((step) => step.status === 'running').length > 1)
       )
         throw new Error('Invalid saved step identities or concurrent work.');
+      if (
+        plan &&
+        ['active', 'blocked'].includes(plan.status) &&
+        plan.steps.some(
+          (step) =>
+            ['queued', 'running', 'blocked'].includes(step.status) &&
+            !nativeCommandSupported(world, step.command.type),
+        )
+      )
+        throw new Error('Saved pending work requires its installed action support.');
       if (plan && !validOutputReferences(plan.steps.map((step) => step.command)))
         throw new Error('Invalid saved plan output references.');
+      if (plan?.status === 'active' || plan?.status === 'blocked')
+        for (const step of plan.steps)
+          if (step.status === 'queued' || step.status === 'running' || step.status === 'blocked')
+            validateCombatHelpReference(world, entity.id, step.command);
     }
     for (const step of [
       ...(agency.plan?.steps ?? []),
@@ -1214,8 +1241,23 @@ export function deferAttempt(
 
 /** Finite native command families only; saved JSON never installs an executor. */
 export function isPhysicalCommand(command: Command): boolean {
-  if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
+  if (
+    !command ||
+    !isSafeRecordId(command.id) ||
+    !isSafeRecordId(command.actorId) ||
+    (command.humanInitiated !== undefined && command.humanInitiated !== true) ||
+    (command.combatHelpId !== undefined && !isSafeRecordId(command.combatHelpId))
+  )
+    return false;
+  if (
+    'autoEquip' in command &&
+    command.autoEquip !== undefined &&
+    typeof command.autoEquip !== 'boolean'
+  )
+    return false;
   switch (command.type) {
+    case 'assemble':
+      return validAssemblyPhase(command);
     case 'pickup':
       return (
         isSafeRecordId(command.targetId) &&
@@ -1247,6 +1289,7 @@ export function isPhysicalCommand(command: Command): boolean {
         command.minimumHeld >= 0
       );
     case 'move':
+    case 'evade':
       return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
     case 'follow':
       return (
@@ -1274,6 +1317,13 @@ export function isPhysicalCommand(command: Command): boolean {
     case 'equip':
     case 'eat':
       return isSafeRecordId(command.itemId);
+    case 'guard':
+      return (
+        isSafeRecordId(command.itemId) &&
+        (command.targetId !== undefined
+          ? isSafeRecordId(command.targetId) && command.facing === undefined
+          : typeof command.facing === 'number' && Number.isFinite(command.facing))
+      );
     case 'inspect-inventory':
       return (
         (command.containerId === undefined || isSafeRecordId(command.containerId)) &&
@@ -1289,14 +1339,26 @@ export function isPhysicalCommand(command: Command): boolean {
         isSafeRecordId(command.definitionId) &&
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId))
       );
+    case 'practice-shot':
+    case 'aim':
+    case 'shoot-once':
     case 'hunt':
       return (
         isSafeRecordId(command.targetId) &&
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId)) &&
         (command.ammoItemId === undefined || isSafeRecordId(command.ammoItemId))
       );
+    case 'coaching':
+      return (
+        isSafeRecordId(command.targetId) &&
+        isSafeRecordId(command.attributeId) &&
+        ['request', 'accept', 'decline', 'withdraw', 'feedback'].includes(command.operation) &&
+        (command.operation === 'request' || isSafeRecordId(command.episodeId))
+      );
+    case 'fish':
+      return isSafeRecordId(command.targetId) && isSafeRecordId(command.itemId);
     case 'cook':
-      return isSafeRecordId(command.itemId) && isSafeRecordId(command.heatId);
+      return validCookCommand(command);
     case 'tend-fire':
       return isFireCareCommand(command);
     case 'status-effect':
@@ -1336,7 +1398,12 @@ function isPlannedCommand(command: PlannedCommand): boolean {
     (command.quantity === undefined ||
       (Number.isSafeInteger(command.quantity) && command.quantity > 0)) &&
     ['equip', 'eat', 'cook'].includes(command.type) &&
-    (command.type === 'cook' ? isSafeRecordId(command.heatId) : command.heatId === undefined)
+    (command.type === 'cook'
+      ? isSafeRecordId(command.heatId) &&
+        validCookReference(command) &&
+        isCookingInputRole(command.inputRole) &&
+        (command.inputs === undefined || validCookingInputs(command.inputs))
+      : command.heatId === undefined)
   );
 }
 function validOutputReferences(commands: PlannedCommand[]): boolean {
@@ -1349,7 +1416,12 @@ function validOutputReferences(commands: PlannedCommand[]): boolean {
         !producer ||
         producer.actorId !== command.actorId ||
         // A plain reference needs a single receipt; a named port may read any output.
-        !(command.outputPort ? PORT_OUTPUT_FAMILIES : ITEM_OUTPUT_FAMILIES).includes(producer.type)
+        !(
+          producer.type === 'pickup' ||
+          (command.outputPort
+            ? nativeActionMeaning(producer.type)?.itemOutputs
+            : nativeActionMeaning(producer.type)?.singleItemReceipt)
+        )
       )
         return false;
     }
@@ -1374,9 +1446,28 @@ export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | u
         : producer.outcome.itemId
       : undefined;
   if (!itemId) return;
-  const { itemFromStep: _, outputPort: _port, quantity: _quantity, heatId, ...base } = command;
+  const {
+    itemFromStep: _,
+    outputPort: _port,
+    quantity: _quantity,
+    heatId,
+    inputRole,
+    inputs,
+    preparationId,
+    preparationVersion,
+    preparationDigest,
+    ...base
+  } = command;
   return base.type === 'cook'
-    ? { ...base, type: 'cook', itemId, heatId: heatId! }
+    ? {
+        ...base,
+        type: 'cook',
+        preparationId: preparationId!,
+        preparationVersion: preparationVersion!,
+        preparationDigest: preparationDigest!,
+        inputs: { ...inputs, [inputRole!]: itemId },
+        heatId: heatId!,
+      }
     : { ...base, type: base.type, itemId };
 }
 

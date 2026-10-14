@@ -27,6 +27,7 @@ const CHARACTERLESS_ROUTES = new Set([
   'GET /api/performance',
   'POST /api/access',
   'POST /api/access/binding',
+  'POST /api/access/construction',
   'POST /api/saves/list',
   'POST /api/saves/create',
   'POST /api/saves/delete',
@@ -65,9 +66,11 @@ const CATEGORY: Record<Entity['kind'], WorldOverview['bodies'][number]['category
   animal: 'animal',
   resource: 'resource',
   campfire: 'fire',
+  'practice-target': 'object',
   remains: 'object',
   'item-pile': 'object',
   item: 'object',
+  assembly: 'object',
 };
 const tenth = (value: number) => Math.round(value * 10) / 10;
 

@@ -3,7 +3,7 @@ import { captureExposureCache } from './encounter-cache.js';
 import { captureAppraisalIndex } from './appraisal-index.js';
 import { captureWorkAllocations } from './work-budget.js';
 import { captureAppraisalResidency } from './appraisal-residency.js';
-import { captureObjectIndex } from './objects.js';
+import { captureObjectIndex, completeObjectHistory, markPartialObjectHistory } from './objects.js';
 import {
   captureSemanticChanges,
   captureSensoryChanges,
@@ -14,8 +14,8 @@ import { captureRootIndex } from './entity-index.js';
 import { captureReservationIndex } from './resource-claims.js';
 import { captureContributionSources } from './status-capabilities.js';
 import { captureContributionResidency } from './contribution-residency.js';
-import { Immer, current, isDraft, original, enablePatches, freeze } from 'immer';
-import type { WorldEvent, WorldState } from './types.js';
+import { Immer, current, isDraft, original, enablePatches, freeze, type Patch } from 'immer';
+import type { Entity, WorldEvent, WorldState } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
 
 // One isolated instance: drafts never cross the domain boundary. Unchanged branches
@@ -367,11 +367,19 @@ function freezeData(value: unknown): void {
 }
 export function draftWorld(world: WorldState): WorldState {
   sealAppends(world);
-  const result = drafts.createDraft(isDraft(world) ? current(world) : world);
+  const base = isDraft(world) ? current(world) : world;
+  // A compound command may copy an already modified entity dictionary. Carry its
+  // trusted residency metadata through that snapshot, never through serialized JSON.
+  // docs/save-and-load.md#continuation-and-identity
+  if (!completeObjectHistory(world.entities)) markPartialObjectHistory(base.entities);
+  const result = drafts.createDraft(base);
   inheritSensoryChanges(result, world);
   return result;
 }
-export function finishWorld(world: WorldState): WorldState {
+export function finishWorld(
+  world: WorldState,
+  capturePatches?: (patches: readonly Patch[]) => void,
+): WorldState {
   sealAppends(world);
   if (!isDraft(world)) return world;
   for (const value of admittedRecords.get(world) ?? []) freezeData(value);
@@ -414,6 +422,7 @@ export function finishWorld(world: WorldState): WorldState {
   // Read before finishing: finishing revokes the drafts that identify published entity copies.
   const copies = publishedEntityCopies(world);
   const result = drafts.finishDraft(world, (patches) => {
+    capturePatches?.(patches);
     for (const { op, path, value: patchValue } of patches) {
       if (path[0] === 'entities') {
         if (typeof path[1] === 'string') entityIds.add(path[1]);
@@ -461,7 +470,14 @@ export function finishWorld(world: WorldState): WorldState {
   // Entity maps are frozen only by the deep boundary freeze; a frozen predecessor lets that
   // freeze skip every entity it still shares.
   if (copies && base.entities !== result.entities && Object.isFrozen(base.entities))
-    frozenPredecessor.set(result, { entities: result.entities, changed: entityIds, copies });
+    frozenPredecessor.set(result, {
+      entities: result.entities,
+      changed: entityIds,
+      // A compound custody transition can replace an already modified entity. Its
+      // discarded draft copy is never finalized and contains revoked child proxies.
+      // Freeze only copies actually published; cancelled writes still retain theirs.
+      copies: copies.filter((copy) => result.entities[(copy as Entity).id] === copy),
+    });
   if (base.entities !== result.entities && Object.isFrozen(base.entities))
     entitySuccessors.set(base.entities, { next: new WeakRef(result.entities), changed: entityIds });
   publishChanges(result, result !== base);

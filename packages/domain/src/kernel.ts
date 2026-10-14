@@ -1,4 +1,75 @@
+import { BASE_EVASION_TEXT, BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
+import { prepareEvasion } from './evasion.js';
+import { recordSemanticChange } from './dependencies.js';
+import {
+  bindAim,
+  holdAim,
+  aimProblem,
+  releaseShot,
+  captureProjectileBodies,
+  advanceProjectiles,
+  projectileBoundary,
+} from './ranged.js';
+import { evaluateAssemblyRest } from './assembly-use.js';
+import {
+  captureMaterialExposure,
+  integrateMaterialExposure,
+  weatherBoundary,
+} from './material-exposure.js';
+import {
+  evaluateAssemblyPhase,
+  assemblyStances,
+  assemblyFamily,
+  reserveAssemblyPhase,
+  commitAssemblyPhase,
+  assemblyWorkBoundary,
+  assemblyPermission,
+} from './assemblies.js';
+import type { ConstructionPermission } from './assembly-types.js';
+import { equipmentEquipOutcome, BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
+import { atomicObjects } from './item-handling.js';
+import { equippedItem, equipmentConflicts, equipmentProblem, isEquipped } from './equipment.js';
+import {
+  commitContactImpact,
+  currentGuardProfile,
+  recoverGuard,
+  combatRecoveryDeadline,
+} from './contact-defense.js';
+import {
+  competenceValue,
+  toolPracticeDefinition,
+  practiceDefinition,
+  handlingAccuracy,
+  creditRelease,
+  practiceLaneProblem,
+} from './practical-competence.js';
+import {
+  applyCoaching,
+  coachingProblem,
+  endsCoachingConsent,
+  coachingFor,
+  registerFeedback,
+  observeCoachedRelease,
+  completeFeedback,
+  feedbackWaiting,
+  reconcileActorCoaching,
+} from './coaching.js';
+import { hasOtherTargetUser } from './entity-index.js';
+import {
+  preparationDefinition,
+  preparationForBinding,
+  preparationPin,
+  cookingClaims,
+} from './food-preparation.js';
+import {
+  castDefinition,
+  castGeometryProblem,
+  castBindingProblem,
+  castSourcePin,
+} from './finite-casts.js';
 import { subjectNarration, person, presentVerb } from './narration.js';
+import { prepareRecipeLearning, readRecipeRecord } from './recipe-records.js';
+import { learnRecipe } from './knowledge.js';
 import { namePhrase } from '@open-legend/language';
 import {
   ACTIVITY_LIMITS,
@@ -6,15 +77,22 @@ import {
   endActivity,
   bindActivityAction,
   occurrenceFor,
+  activityCompletionProblem,
   type ActivityOutput,
 } from './action-experience.js';
-import { nativeActivityView } from './worlds/base/action-views.js';
+import { nativeActivityView } from './world-composition.js';
 import {
   validateInstalledRecipe,
   recipeVisibleDependencies,
   recipeMechanicalPin,
 } from './invention-families.js';
-import { rangedApproachRange } from './worlds/base/actions.js';
+import {
+  rangedPolicy,
+  rangedTargetAllowed,
+  rangedAccuracy,
+  rangedApproachRange,
+  shotPreparationSeconds,
+} from './ranged-policy.js';
 import {
   executeHandover,
   prepareItemOffer,
@@ -39,7 +117,7 @@ import {
   admitActivityAttempt,
 } from './activity-execution.js';
 import { transferStock, prepareStockTransfer } from './stock-transfer.js';
-import { activityCommandSupported } from './activity-hosts.js';
+import { activityCommandSupported, nativeCommandSupported } from './activity-hosts.js';
 import { isSpeechVolume } from './acoustics.js';
 import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import {
@@ -96,7 +174,12 @@ import {
   admitTerritorialDetour,
   noteTerritorialInjury,
 } from './territorial-threat.js';
-import { attackReviewProblem, lethalPermission, type LethalPermission } from './combat-consent.js';
+import {
+  attackPermissionProblem,
+  attackReviewProblem,
+  lethalPermission,
+  type LethalPermission,
+} from './combat-consent.js';
 import {
   respawnPlayer,
   reincarnationPolicy,
@@ -222,7 +305,7 @@ import {
   activeContributionId,
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
-import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
+import { addItem, sourceItemId, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
 import {
   appendMemory,
   canonicalJson,
@@ -245,11 +328,13 @@ import {
 } from './perception.js';
 import {
   distance,
+  interactionAnchor,
   findPath,
   hasLineOfEffect,
   canReachEntity,
   findApproachPath,
   sameSurfacePoint,
+  occupiedBodySweepClear,
   isWalkable,
 } from './spatial.js';
 import type {
@@ -266,7 +351,13 @@ import type {
   WorldEvent,
   WorldState,
 } from './types.js';
-import { prepareOuting, executeOuting, reconcileOutings } from './outings.js';
+import {
+  prepareOuting,
+  executeOuting,
+  reconcileOutings,
+  endsOutingConsent,
+  combatHelpProblem,
+} from './outings.js';
 
 export const SIMULATION_RULES = {
   version: 3,
@@ -277,10 +368,27 @@ export const SIMULATION_RULES = {
 export function inventoryFor(world: WorldState, actorId: string): ItemInstance[] {
   return [...possessionItems(world, actorId)];
 }
+const quantitySnapshots = new WeakMap<WorldState, Map<string, Map<string, number>>>();
+/** Count only this actor's accessible possessions, once per immutable snapshot.
+ * Mutable work must see each debit, transfer and access change immediately.
+ * docs/performance.md#shared-entity-queries-and-cognition-work */
 export function quantityOf(world: WorldState, actorId: string, definitionId: string): number {
-  return inventoryFor(world, actorId)
-    .filter((item) => item.definitionId === definitionId)
-    .reduce((sum, item) => sum + item.quantity, 0);
+  if (!Object.isFrozen(world)) {
+    let total = 0;
+    for (const item of possessionItems(world, actorId))
+      if (item.definitionId === definitionId) total += item.quantity;
+    return total;
+  }
+  let actors = quantitySnapshots.get(world);
+  if (!actors) quantitySnapshots.set(world, (actors = new Map()));
+  let totals = actors.get(actorId);
+  if (!totals) {
+    totals = new Map();
+    for (const item of possessionItems(world, actorId))
+      totals.set(item.definitionId, (totals.get(item.definitionId) ?? 0) + item.quantity);
+    actors.set(actorId, totals);
+  }
+  return totals.get(definitionId) ?? 0;
 }
 function itemClaims(
   world: WorldState,
@@ -364,22 +472,24 @@ export function ammoFor(
   );
 }
 function actionReach(world: WorldState, action: Action): number {
+  if (action.type === 'fish')
+    return castDefinition(world, world.entities[action.targetId ?? ''])?.stanceTolerance ?? 0;
   if (action.type === 'pickup') return world.itemHandling.reach;
   if (action.type === 'treat-scar') return reincarnationPolicy(world)?.treatment?.reach ?? 0;
   if (action.type === 'strike') {
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
     return definition?.approachRange ?? definition?.range ?? 0;
   }
-  if (action.type !== 'hunt') return SIMULATION_RULES.interactionRadius;
+  if (!['hunt', 'practice-shot', 'aim', 'shoot-once'].includes(action.type))
+    return SIMULATION_RULES.interactionRadius;
   const range =
     world.itemDefinitions[itemFor(world, action.weaponItemId ?? '')?.definitionId ?? '']?.launcher
       ?.range ?? 0;
-  // Approach far enough that even the shortest admitted launcher can finish its
-  // wind-up while a fleeing animal moves. Completion still rechecks actual range.
-  return rangedApproachRange(range);
+  // The selected profile owns its approach allowance. Completion rechecks actual range.
+  return rangedApproachRange(world, range);
 }
 function targetPosition(world: WorldState, action: Action): Position | undefined {
-  return action.type === 'move'
+  return action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
     ? action.destination
     : worldPosition(world.entities[action.targetId ?? action.heatId ?? '']);
 }
@@ -394,14 +504,20 @@ function actionInReach(
 ): boolean {
   // A route in progress ends at its last point, not wherever a slice happens to stop inside
   // the tolerance, so arrival does not depend on how elapsed time was divided.
-  if (action.type === 'move')
+  if (action.type === 'move' || action.type === 'assemble' || action.type === 'fish')
     return (
       !!action.destination &&
       !action.path.length &&
       worldSupport(actor) === action.destination.surfaceId &&
-      distance(origin, action.destination) <= MOVEMENT.arrivalTolerance
+      distance(origin, action.destination) <=
+        (action.type === 'fish' ? actionReach(world, action) : MOVEMENT.arrivalTolerance)
     );
   const target = actionTarget(world, action);
+  if (target && ['aim', 'shoot-once', 'hunt'].includes(action.type))
+    return (
+      distance(interactionAnchor(actor, origin), interactionAnchor(target)) <=
+      actionReach(world, action)
+    );
   return !!target && canReachEntity(world, actor, target, actionReach(world, action), origin);
 }
 function approachPath(world: WorldState, actor: Entity, action: Action): RoutePlan | null {
@@ -414,13 +530,13 @@ function approachPath(world: WorldState, actor: Entity, action: Action): RoutePl
       worldPosition(actor),
       destination,
       worldSupport(actor)!,
-      action.type === 'move'
+      action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
         ? action.destination!.surfaceId
         : (worldSupport(actionTarget(world, action)) ?? undefined),
     );
     return path ? { status: 'reached', path, length: 0, expanded: 0 } : null;
   }
-  return action.type === 'move'
+  return action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
     ? findPath(
         world,
         worldPosition(actor),
@@ -477,7 +593,7 @@ export function navigationBlocked(world: WorldState, actorIds?: readonly string[
       return false;
     const body = bodyProfile(entity);
     return (
-      request.request.geometryRevision === world.map.spatial.revision &&
+      request.request.geometryRevision === spatialMap(world).spatial.revision &&
       request.request.from.surfaceId === worldSupport(entity) &&
       distance(worldPosition(entity), request.request.from) < 1e-7 &&
       body.radius === request.request.body.radius &&
@@ -513,7 +629,7 @@ export function completeNavigation(
     action.id !== actionId ||
     !action.navigation ||
     canonicalJson(action.navigation.request) !== canonicalJson(request) ||
-    request.geometryRevision !== original.map.spatial.revision ||
+    request.geometryRevision !== spatialMap(original).spatial.revision ||
     worldSupport(source) !== request.from.surfaceId ||
     distance(worldPosition(source), request.from) > 1e-7
   )
@@ -581,8 +697,12 @@ function materialRequirements(
       totals.set(input.definitionId, (totals.get(input.definitionId) ?? 0) + input.quantity);
     return [...totals].map(([definitionId, quantity]) => ({ definitionId, quantity }));
   }
-  if (action.type === 'cook')
-    return [{ definitionId: BASE_FAMILY_FACTS.cooking.input, quantity: 1 }];
+  if (action.type === 'cook' && action.foodPreparation)
+    return (
+      preparationForBinding(world, action.foodPreparation)?.inputs.map(
+        ({ definitionId, quantity }) => ({ definitionId, quantity }),
+      ) ?? []
+    );
   return [];
 }
 function workMaterials(
@@ -590,30 +710,42 @@ function workMaterials(
   actor: Entity,
   action: Action,
 ): ResourceOperation[] | Outcome {
-  const requirements = materialRequirements(world, action);
+  if (action.type === 'fish') {
+    const target = world.entities[action.targetId ?? ''];
+    const problem =
+      castBindingProblem(world, actor, target, action.itemId!, action.fishing) ??
+      (target && castGeometryProblem(world, actor, target, action.stage === 'working'));
+    if (problem) return outcome(false, 'cast-unavailable', problem);
+    if (!target?.resource || target.resource.quantity <= 0)
+      return outcome(
+        false,
+        'depleted',
+        castDefinition(world, target)?.exhaustedText ?? 'No supply remains.',
+      );
+  }
+  if (action.type === 'cook') {
+    const definition =
+      action.foodPreparation && preparationForBinding(world, action.foodPreparation);
+    if (!definition)
+      return outcome(
+        false,
+        'stale-preparation',
+        'The selected preparation or ingredient/output definition changed.',
+      );
+    const claims = cookingClaims(world, actor.id, definition, action.foodPreparation!.inputs);
+    if (!claims)
+      return outcome(
+        false,
+        'missing-material',
+        'The exact selected ingredients are no longer available.',
+      );
+    if (!world.entities[action.heatId ?? '']?.heat?.lit)
+      return outcome(false, 'no-heat', 'The selected preparation requires a lit heat source.');
+    return claims;
+  }
   const claims: ResourceOperation[] = [];
-  for (const input of requirements) {
-    const chosen =
-      action.type === 'cook' && action.itemId ? itemFor(world, action.itemId) : undefined;
-    const selected =
-      action.type === 'cook'
-        ? chosen &&
-          chosen.definitionId === input.definitionId &&
-          accessiblePossession(world, actor.id, chosen.id) &&
-          availableItemQuantity(world, chosen.id) >= input.quantity
-          ? [
-              {
-                source: {
-                  kind: 'item' as const,
-                  itemId: chosen.id,
-                  definition: itemDefinitionPin(world.itemDefinitions[chosen.definitionId]!),
-                },
-                sourceRevision: chosen.revision ?? 0,
-                amount: input.quantity,
-              },
-            ]
-          : null
-        : itemClaims(world, actor.id, input.definitionId, input.quantity);
+  for (const input of materialRequirements(world, action)) {
+    const selected = itemClaims(world, actor.id, input.definitionId, input.quantity);
     if (!selected)
       return outcome(
         false,
@@ -622,8 +754,6 @@ function workMaterials(
       );
     claims.push(...selected);
   }
-  if (action.type === 'cook' && !world.entities[action.heatId ?? '']?.heat?.lit)
-    return outcome(false, 'no-heat', 'Cooking requires a lit campfire.');
   if (action.type === 'tend-fire') {
     const problem = fireCareProblem(
       world,
@@ -638,16 +768,94 @@ function workMaterials(
   }
   return claims;
 }
+function cookingRecordProblem(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  claims: readonly ResourceOperation[] = [],
+): Outcome | null {
+  const entry = occurrenceFor(world, actor.id, action.id);
+  const definition = action.foodPreparation && preparationForBinding(world, action.foodPreparation);
+  if (!entry || !definition) return null;
+  // This reserves receipt size, not an item or future outcome. The source owner
+  // uses the same current stacking choice; a new native ID cannot exceed this length.
+  // Recheck on completion because another action can change the actor's output lots.
+  const outputs = definition.outputs.map(({ definitionId, quantity }) => ({
+    port: definitionId,
+    definitionId,
+    quantity,
+    itemId:
+      sourceItemId(world, actor.id, definitionId, quantity) ?? `item-${Number.MAX_SAFE_INTEGER}`,
+  }));
+  return activityCompletionProblem(
+    world,
+    entry,
+    {
+      ...outcome(true, 'completed', `${definition.name} completed.`),
+      outputs,
+      ...(outputs.length === 1 ? { itemId: outputs[0]!.itemId } : {}),
+    },
+    claims.flatMap((claim) =>
+      claim.source.kind === 'item' ? [{ itemId: claim.source.itemId, quantity: claim.amount }] : [],
+    ),
+  );
+}
 function startWork(
   world: WorldState,
   actor: Entity,
   action: Action,
   events: WorldEvent[],
+  constructionPermissions: readonly ConstructionPermission[] = [],
 ): Outcome | null {
+  if (action.assemblyPhase) {
+    const grant = constructionPermissions.find((p) => p.id === action.constructionGrant?.id);
+    if (!grant || grant.revoked || grant.revision !== action.constructionGrant?.revision)
+      return outcome(
+        false,
+        'construction-permission',
+        'Construction permission changed. Completed parts remain; choose the remaining work again.',
+      );
+    const checked = evaluateAssemblyPhase(
+      world,
+      actor.id,
+      action.assemblyPhase,
+      constructionPermissions,
+      action.id,
+    );
+    if (!checked.ok) return checked;
+    reserveAssemblyPhase(world, actor.id, action.assemblyPhase, action.id);
+    action.stage = 'working';
+    action.path = [];
+    return null;
+  }
   const requirements = materialRequirements(world, action);
   const selected = workMaterials(world, actor, action);
   if ('ok' in selected) return selected;
   const claims = selected;
+  const outputDefinition =
+    action.type === 'prepare'
+      ? NATIVE_PREPARATIONS[action.preparation!]!.output
+      : action.type === 'craft'
+        ? world.recipes[action.recipeId!]!.outputDefinitionId
+        : undefined;
+  const origins =
+    outputDefinition && world.itemDefinitions[outputDefinition]?.assemblyMaterial
+      ? [
+          ...new Set(
+            claims.flatMap((claim) =>
+              claim.source.kind === 'item'
+                ? (world.entities[claim.source.itemId]?.item?.materialOriginIds ?? [
+                    claim.source.itemId,
+                  ])
+                : [],
+            ),
+          ),
+        ]
+      : undefined;
+  if (action.type === 'cook') {
+    const problem = cookingRecordProblem(world, actor, action, claims);
+    if (problem) return problem;
+  }
   if (
     claims.length &&
     applyResourceGroup(
@@ -660,11 +868,12 @@ function startWork(
   const experience = occurrenceFor(world, actor.id, action.id);
   if (experience?.view.children?.[0])
     experience.view.children[0].result = 'Reached the required working distance.';
-  if (experience && ['strike', 'hunt'].includes(action.type))
+  if (experience && ['strike', 'hunt', 'practice-shot'].includes(action.type))
     (experience.view.children ??= []).push({
-      name: action.type === 'hunt' ? 'Shoot once' : 'Attack once',
+      name: ['hunt', 'practice-shot'].includes(action.type) ? 'Shoot once' : 'Attack once',
       facts: [],
     });
+  if (origins?.length) action.materialOriginIds = origins;
   action.consumed = requirements;
   action.stage = 'working';
   action.path = [];
@@ -717,11 +926,19 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   const source = getOwn(world.entities, command.actorId);
   if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
   // Withdrawing consent needs no physical action, including while paused or unable to move.
-  if (
-    command.type === 'outing' &&
-    (command.operation === 'leave' || command.operation === 'decline')
-  )
-    return null;
+  if (endsOutingConsent(command) || endsCoachingConsent(command)) return null;
+  if (command.combatHelpId) {
+    const problem = combatHelpProblem(
+      world,
+      command.actorId,
+      command.combatHelpId,
+      ['strike', 'aim', 'shoot-once', 'hunt', 'follow'].includes(command.type) &&
+        'targetId' in command
+        ? command.targetId
+        : undefined,
+    );
+    if (problem) return problem;
+  }
   if (command.type === 'respawn') {
     if (world.paused) return reject('paused', 'Resume the world before continuing.');
     return source.actor.pendingDeath
@@ -730,15 +947,6 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   }
   if (!activelyParticipates(source))
     return reject('inactive', 'Return to the world before acting.');
-  if (
-    (source.actor.controller === 'player' || command.humanInitiated) &&
-    command.type === 'strike' &&
-    world.entities[command.targetId]?.actor?.controller === 'player'
-  )
-    return reject(
-      'cooperative',
-      'Harmful actions between human-controlled characters require an explicitly supported participation policy.',
-    );
   const releaseSelf =
     command.type === 'status-effect' &&
     command.operation === 'deactivate' &&
@@ -751,16 +959,33 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     return reject('capability-restricted', 'This actor cannot act in its current state.');
   if (command.type === 'say' && capabilityBlocked(world, source, 'speech'))
     return reject('capability-restricted', 'Speech is unavailable.');
-  if (command.type === 'move' && capabilityBlocked(world, source, 'locomotion'))
+  if (
+    (command.type === 'move' || command.type === 'evade') &&
+    capabilityBlocked(world, source, 'locomotion')
+  )
     return reject('capability-restricted', 'Movement is unavailable.');
   if (world.paused && command.type !== 'cancel' && command.type !== 'inspect-inventory')
     return reject('paused', 'The world is paused.');
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
   if (
-    (['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook', 'strike'].includes(
-      command.type,
-    ) ||
+    ([
+      'gather',
+      'fish',
+      'prepare',
+      'craft',
+      'assemble',
+      'equip',
+      'hunt',
+      'aim',
+      'shoot-once',
+      'practice-shot',
+      'coaching',
+      'harvest',
+      'cook',
+      'strike',
+      'guard',
+    ].includes(command.type) ||
       command.type === 'tend-fire' ||
       command.type === 'treat-scar') &&
     !supportsManualWork(source) &&
@@ -784,9 +1009,21 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : (['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
-            command.type,
-          ) ||
+      : ([
+            'gather',
+            'fish',
+            'harvest',
+            'hunt',
+            'aim',
+            'shoot-once',
+            'practice-shot',
+            'replenish',
+            'strike',
+            'pickup',
+            'follow',
+            'guard',
+          ].includes(command.type) ||
+            (command.type === 'coaching' && !['decline', 'withdraw'].includes(command.operation)) ||
             command.type === 'tend-fire' ||
             command.type === 'treat-scar') &&
           'targetId' in command
@@ -813,12 +1050,16 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
  * temporary route/action description; no effects, randomness, receipts or drafts run here.
  * Later typed plan outputs remain future requirements. docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
  */
-export function nativeOperationAvailable(world: WorldState, command: Command): Outcome {
+export function nativeOperationAvailable(
+  world: WorldState,
+  command: Command,
+  constructionPermissions: readonly ConstructionPermission[] = [],
+): Outcome {
   const nested = inWorkGroup();
   try {
     return withWorkMeter(WORK_LIMITS.group, () => {
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
-      const prepared = prepareNativeOperation(world, command);
+      const prepared = prepareNativeOperation(world, command, { constructionPermissions });
       return 'ok' in prepared
         ? prepared
         : outcome(
@@ -839,7 +1080,23 @@ export function lethalAttackOffer(
   world: WorldState,
   command: Command,
 ): { command: Command; permission: LethalPermission } | null {
-  if (command.type !== 'strike' && command.type !== 'hunt') return null;
+  if (command.type === 'release-shot') {
+    const actor = world.entities[command.actorId],
+      held = actor?.actor?.action;
+    if (
+      !actor ||
+      held?.id !== command.aimId ||
+      held.type !== 'aim' ||
+      !held.ranged?.ready ||
+      aimProblem(world, actor, held, true, true)
+    )
+      return null;
+    const target = world.entities[held.targetId!]!;
+    const permission = lethalPermission(world, actor, target, held);
+    return permission ? { command, permission } : null;
+  }
+  if (command.type !== 'strike' && command.type !== 'hunt' && command.type !== 'shoot-once')
+    return null;
   const prepared = prepareNativeOperation(world, command, { skipLethalReview: true });
   if ('ok' in prepared) return null;
   const actor = world.entities[command.actorId]!,
@@ -855,11 +1112,17 @@ export function lethalAttackOffer(
 function prepareNativeOperation(
   world: WorldState,
   command: Command,
-  options: { executing?: boolean; skipLethalReview?: true } = {},
+  options: {
+    executing?: boolean;
+    skipLethalReview?: true;
+    constructionPermissions?: readonly ConstructionPermission[];
+  } = {},
 ): Action | Outcome {
   const reject = (code: string, message: string) => outcome(false, code, message);
-  if (!isActivityCommand(command))
+  if (!isActivityCommand(command) && command.type !== 'learn-record')
     return reject('invalid-plan', 'Only supported native physical work can be queued.');
+  if (!nativeCommandSupported(world, command.type))
+    return reject('unsupported-capability', 'This world does not install that action.');
   const problem = nativeActorProblem(world, command);
   if (problem) return problem;
   const actor = world.entities[command.actorId]!;
@@ -876,6 +1139,43 @@ function prepareNativeOperation(
     consumed: [],
   });
   switch (command.type) {
+    case 'coaching': {
+      const problem = coachingProblem(world, actor, command);
+      if (problem) return problem;
+      if (command.operation === 'feedback') {
+        const definition = practiceDefinition(world, command.attributeId)!;
+        action = temporary('coaching', definition.practice!.feedbackSeconds);
+        action.targetId = command.targetId;
+        action.coachingEpisodeId = command.episodeId;
+        action.competencePin = definitionPin(definition);
+      }
+      break;
+    }
+    case 'assemble': {
+      const { id, actorId, purpose, type, ...phase } = command;
+      const checked = evaluateAssemblyPhase(
+        world,
+        actorId,
+        phase,
+        options.constructionPermissions ?? [],
+      );
+      if (!checked.ok) return checked;
+      action = temporary(
+        'assemble',
+        assemblyFamily(world, phase.familyId)!.seconds[phase.operation],
+      );
+      action.assemblyPhase = phase;
+      action.assemblyCorner = 0;
+      const grant = assemblyPermission(
+        world,
+        actorId,
+        phase,
+        options.constructionPermissions ?? [],
+      )!;
+      action.constructionGrant = { id: grant.id, revision: grant.revision };
+      action.destination = assemblyStances(world, phase, actorId)[0]!;
+      break;
+    }
     case 'say': {
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
       if (!isSpeechVolume(command.volume ?? 'normal'))
@@ -954,6 +1254,12 @@ function prepareNativeOperation(
       if (error) return reject('follow-unavailable', error);
       break;
     }
+    case 'evade': {
+      const prepared = prepareEvasion(world, actor, command.id, command.destination);
+      if ('ok' in prepared) return prepared;
+      action = prepared;
+      break;
+    }
     case 'move': {
       if (
         visionRadius(world, actor) === 0 &&
@@ -979,19 +1285,23 @@ function prepareNativeOperation(
       if (!definition) return reject('unknown-action', 'Choose a registered strike.');
       if (!supportsStrike(actor, definition))
         return reject('unsupported-body', 'This body cannot perform that natural strike.');
-      if ((component.attackReadyAt ?? 0) > world.simTime)
-        return reject(
-          'attack-recovery',
-          'Finish recovering from the last swing before attacking again.',
-        );
+      if (combatRecoveryDeadline(world, actor) > world.simTime)
+        return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
       if (
         command.weaponItemId &&
-        (component.equippedItemId !== command.weaponItemId ||
+        ((!equippedItem(world, actor.id, 'melee', command.weaponItemId) && !command.autoEquip) ||
           !accessiblePossession(world, actor.id, command.weaponItemId))
       )
         return reject('weapon-unavailable', 'Equip that exact accessible weapon first.');
-      if (!target?.actor?.alive || target.id === actor.id)
-        return reject('invalid-target', 'Choose another living actor.');
+      if (command.weaponItemId && command.autoEquip) {
+        const problem = equipmentProblem(world, actor.id, command.weaponItemId, 'melee');
+        if (problem) return reject('weapon-unavailable', problem);
+      }
+      const permission = attackPermissionProblem(world, actor, target, {
+        requiresLethalReview: command.humanInitiated,
+      });
+      if (permission) return permission;
+      if (!target?.actor) return reject('invalid-target', 'Choose another living actor.');
       if (!definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range))
         return reject('out-of-range', 'Move within strike range first.');
       action = temporary('strike', definition.workSeconds);
@@ -1010,6 +1320,48 @@ function prepareNativeOperation(
         action.strikePhase = 'windup';
       break;
     }
+    case 'guard': {
+      if (combatRecoveryDeadline(world, actor) > world.simTime)
+        return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
+      if (component.action?.type === 'guard') return reject('guard-active', BASE_GUARD_TEXT.active);
+      const shield = command.autoEquip
+        ? itemFor(world, command.itemId)
+        : equippedItem(world, actor.id, 'guard', command.itemId);
+      const definition = shield && world.itemDefinitions[shield.definitionId];
+      const profile = definition?.contactDefense;
+      if (!profile || !accessiblePossession(world, actor.id, command.itemId))
+        return reject('shield-unavailable', BASE_GUARD_TEXT.unavailable);
+      if (command.autoEquip) {
+        const problem = equipmentProblem(world, actor.id, command.itemId, 'guard');
+        if (problem) return reject('shield-unavailable', problem);
+      }
+      const target = command.targetId ? world.entities[command.targetId] : undefined;
+      const position = target && worldPosition(target);
+      const origin = worldPosition(actor);
+      if (
+        target &&
+        (target.id === actor.id ||
+          !visible(world, actor, target) ||
+          Math.hypot(position!.x - origin.x, position!.z - origin.z) <= 1e-8)
+      )
+        return reject('guard-facing', BASE_GUARD_TEXT.distinctDirection);
+      const facing = position
+        ? Math.atan2(position.x - origin.x, position.z - origin.z)
+        : command.facing;
+      if (facing === undefined || !Number.isFinite(facing))
+        return reject('guard-facing', BASE_GUARD_TEXT.facing);
+      action = temporary('guard', profile.preparationSeconds);
+      action.itemId = command.itemId;
+      action.guard = {
+        phase: 'preparing',
+        profile: definitionPin(definition),
+        physicalLife: component.physicalLife ?? 0,
+        facing,
+        readyAt: world.simTime + profile.preparationSeconds,
+        expiresAt: world.simTime + profile.preparationSeconds + profile.readySeconds,
+      };
+      break;
+    }
     case 'treat-scar': {
       const problem = scarTreatmentProblem(world, actor, command.scarId, command.targetId);
       if (problem) return reject('treatment-unavailable', problem);
@@ -1020,6 +1372,8 @@ function prepareNativeOperation(
     }
     case 'gather': {
       const target = getOwn(world.entities, command.targetId);
+      if (target?.resource?.cast)
+        return reject('requires-cast', 'This source requires its supported one-cast action.');
       if (!target?.resource || target.resource.quantity < 1)
         return reject('depleted', 'There is nothing left to gather here.');
       if (!visible(world, actor, target))
@@ -1027,7 +1381,7 @@ function prepareNativeOperation(
       if (command.itemId) {
         const tool = itemFor(world, command.itemId);
         if (
-          component.equippedItemId !== command.itemId ||
+          !equippedItem(world, actor.id, 'gather', command.itemId) ||
           !accessiblePossession(world, actor.id, command.itemId) ||
           !tool ||
           world.itemDefinitions[tool.definitionId]?.gatheringTool?.resourceId !==
@@ -1076,46 +1430,102 @@ function prepareNativeOperation(
       if (
         !item ||
         !accessiblePossession(world, actor.id, item.id) ||
-        !(
-          world.itemDefinitions[item.definitionId]?.launcher ||
-          world.itemDefinitions[item.definitionId]?.melee ||
-          world.itemDefinitions[item.definitionId]?.gatheringTool
-        )
+        !world.itemDefinitions[item.definitionId]?.equipment
       )
         return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
-      if (itemHasReservations(world, item.id) || (options.executing && component.action))
+      if (itemHasReservations(world, item.id) || component.action)
         return reject('not-equippable', 'Choose a free tool in this inventory.');
+      const problem = equipmentProblem(world, actor.id, item.id);
+      if (problem) return reject('not-equippable', problem);
       break;
     }
+    case 'practice-shot':
+    case 'aim':
+    case 'shoot-once':
     case 'hunt': {
-      if ((component.attackReadyAt ?? 0) > world.simTime)
-        return reject(
-          'attack-recovery',
-          'Finish recovering from the last swing before attacking again.',
-        );
+      if (combatRecoveryDeadline(world, actor) > world.simTime)
+        return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
       const target = getOwn(world.entities, command.targetId);
-      if (!(target?.animal && target.actor?.alive))
-        return reject('not-huntable', 'Choose a living animal.');
+      const practice = command.type === 'practice-shot';
+      if (
+        !target ||
+        target.id === actor.id ||
+        (practice ? !target.practiceTarget : !rangedTargetAllowed(world, target))
+      )
+        return reject(
+          'invalid-target',
+          practice
+            ? 'Choose a supported inert practice target.'
+            : rangedPolicy(world)!.invalidTargetText,
+        );
       if (!visible(world, actor, target))
-        return reject('not-visible', 'The animal is out of sight.');
-      const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
+        return reject('not-visible', 'The target is out of sight.');
+      const weaponItemId =
+        command.weaponItemId ?? equippedItem(world, actor.id, 'ranged')?.id ?? '';
+      const autoEquip = 'autoEquip' in command && command.autoEquip;
       const item = itemFor(world, weaponItemId);
       const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
-      if (!item || !accessiblePossession(world, actor.id, item.id) || !launcher)
+      if (
+        !item ||
+        !accessiblePossession(world, actor.id, item.id) ||
+        !launcher ||
+        (!equippedItem(world, actor.id, 'ranged', item.id) && !autoEquip)
+      )
         return reject('no-weapon', 'Equip a suitable ranged tool first.');
+      if (autoEquip) {
+        const problem = equipmentProblem(world, actor.id, item.id, 'ranged');
+        if (problem) return reject('weapon-unavailable', problem);
+      }
       const ammo = ammoFor(world, actor.id, launcher.ammunitionKind, command.ammoItemId);
       if (!ammo)
         return reject('no-ammunition', `Need compatible ${launcher.ammunitionKind} ammunition.`);
-      action = temporary('hunt', SIMULATION_RULES.shotSeconds);
+      const competence = toolPracticeDefinition(world, world.itemDefinitions[item.definitionId]!);
+      if (competence && competenceValue(component, competence) === undefined)
+        return reject(
+          'competence-unavailable',
+          'This character’s handling is unavailable. The world creator must restore it before this shot.',
+        );
+      if (practice) {
+        if (!competence || target!.practiceTarget!.attributeId !== competence.id)
+          return reject(
+            'unsupported-tool',
+            'This practice target requires its supported tool mechanism.',
+          );
+        if (hasOtherTargetUser(world, actor.id, 'practice-shot', target.id))
+          return reject(
+            'target-in-use',
+            'Another person is using this practice target. Choose a shot after they finish.',
+          );
+        if (canReachEntity(world, actor, target!, rangedApproachRange(world, launcher.range))) {
+          const safety = practiceLaneProblem(
+            world,
+            actor,
+            target!,
+            launcher.range,
+            competence.practice!,
+          );
+          if (safety) return safety;
+        }
+      }
+      action = temporary(command.type, shotPreparationSeconds(world, competence?.practice));
+      if (competence) action.competencePin = definitionPin(competence);
       action.targetId = target.id;
       action.weaponItemId = item.id;
       action.ammoItemId = ammo.id;
-      action.targetLife = target.actor.physicalLife ?? 0;
-      action.lethalPermission = command.lethalPermission;
-      action.requiresLethalReview = command.humanInitiated;
+      if (!practice) {
+        action.rangedPolicyPin = world.moduleManifest.rangedPolicyPin!;
+        action.targetLife = target!.actor!.physicalLife ?? 0;
+        action.lethalPermission = command.lethalPermission;
+        action.requiresLethalReview = command.humanInitiated;
+        const permission = attackPermissionProblem(world, actor, target, action);
+        if (permission) return permission;
+      }
+      action.ranged = bindAim(world, actor, action, command.type === 'aim');
       const review = options.skipLethalReview
         ? null
-        : attackReviewProblem(world, actor, target, action);
+        : practice || command.type === 'aim'
+          ? null
+          : attackReviewProblem(world, actor, target!, action);
       if (review) return review;
       break;
     }
@@ -1137,22 +1547,46 @@ function prepareNativeOperation(
       break;
     }
     case 'cook': {
-      const item = itemFor(world, command.itemId);
+      const definition = preparationDefinition(world, command);
       const heat = getOwn(world.entities, command.heatId);
-      if (
-        !item ||
-        !accessiblePossession(world, actor.id, item.id) ||
-        item.definitionId !== BASE_FAMILY_FACTS.cooking.input
-      )
-        return reject(
-          'not-cookable',
-          `Choose ${world.itemDefinitions[BASE_FAMILY_FACTS.cooking.input]?.name ?? 'something cookable'} in this actor’s inventory.`,
-        );
+      if (!definition)
+        return reject('stale-preparation', 'Choose a current installed food preparation.');
       if (!heat?.heat?.lit || !visible(world, actor, heat))
         return reject('no-heat', 'A visible lit heat source is needed.');
-      action = temporary('cook', SIMULATION_RULES.cookSeconds);
-      action.itemId = item.id;
+      action = temporary('cook', definition.workSeconds);
       action.heatId = heat.id;
+      action.foodPreparation = {
+        definition: preparationPin(world, definition)!,
+        inputs: { ...command.inputs },
+        items: [
+          ...new Set(
+            [...definition.inputs, ...definition.outputs].map((input) => input.definitionId),
+          ),
+        ].map((id) => itemDefinitionPin(world.itemDefinitions[id]!)),
+      };
+      break;
+    }
+    case 'fish': {
+      const target = getOwn(world.entities, command.targetId);
+      const definition = castDefinition(world, target);
+      const problem =
+        castBindingProblem(world, actor, target, command.itemId) ??
+        (target && castGeometryProblem(world, actor, target, false));
+      if (problem || !definition || !target?.resource?.cast)
+        return reject('cast-unavailable', problem ?? 'Choose a compatible authored source.');
+      if (target.resource.quantity <= 0) return reject('depleted', definition.exhaustedText);
+      action = temporary('fish', definition.workSeconds);
+      action.targetId = target.id;
+      action.itemId = command.itemId;
+      action.destination = { ...target.resource.cast.stance };
+      action.fishing = {
+        definition: definitionPin(definition),
+        source: castSourcePin(target),
+        tool: itemDefinitionPin(
+          world.itemDefinitions[itemFor(world, command.itemId)!.definitionId]!,
+        ),
+        output: itemDefinitionPin(world.itemDefinitions[target.resource.definitionId]!),
+      };
       break;
     }
     case 'eat': {
@@ -1223,6 +1657,11 @@ function prepareNativeOperation(
       if (fuel?.id ?? command.itemId) action.itemId = fuel?.id ?? command.itemId;
       break;
     }
+    case 'learn-record': {
+      const read = prepareRecipeLearning(world, command);
+      if (!('recipe' in read)) return read;
+      break;
+    }
     case 'inspect-inventory': {
       try {
         inspectPossessions(
@@ -1254,6 +1693,34 @@ function prepareNativeOperation(
       )
         return reject('invalid-effect', 'Choose an available status effect and target.');
       if (
+        command.facingHeading !== undefined &&
+        (!Number.isFinite(command.facingHeading) ||
+          definition.presentation?.pose !== 'horizontal' ||
+          command.operation !== 'activate')
+      )
+        return reject('invalid-pose', 'Choose a valid facing for an ordinary resting posture.');
+      if (command.restingPlaceId !== undefined || command.restingBay !== undefined) {
+        if (
+          !command.restingPlaceId ||
+          command.restingBay === undefined ||
+          command.operation !== 'activate' ||
+          definition.presentation?.pose !== 'horizontal' ||
+          target.id !== actor.id
+        )
+          return reject('invalid-pose', 'Choose an available resting place for this person.');
+        const fit = evaluateAssemblyRest(
+          world,
+          target.id,
+          command.restingPlaceId,
+          command.restingBay,
+          true,
+        );
+        if ('ok' in fit) return reject(fit.code, fit.message);
+        if (command.facingHeading !== fit.facingHeading)
+          return reject('invalid-pose', 'The resting posture must fit the selected bay.');
+      }
+
+      if (
         target.id !== actor.id &&
         (!definition.actions.allowOther ||
           (command.operation === 'activate' && !definition.actions.activateOther) ||
@@ -1283,7 +1750,11 @@ function prepareNativeOperation(
       return reject('unsupported', 'This command is not supported.');
   }
   if (action) {
-    if (action.type !== 'follow' && !['prepare', 'craft'].includes(action.type)) {
+    if (command.combatHelpId) action.combatHelpId = command.combatHelpId;
+    if (
+      action.type !== 'follow' &&
+      !['prepare', 'craft', 'guard', 'coaching', 'evade'].includes(action.type)
+    ) {
       const error = approach(world, actor, action);
       if (error) return error;
     }
@@ -1310,7 +1781,11 @@ function prepareNativeOperation(
 export function executeCommand(
   original: WorldState,
   command: Command,
-  options: { preview?: boolean; nativeController?: true } = {},
+  options: {
+    preview?: boolean;
+    nativeController?: true;
+    constructionPermissions?: readonly ConstructionPermission[];
+  } = {},
 ): Transition {
   const nested = inWorkGroup();
   try {
@@ -1328,7 +1803,11 @@ export function executeCommand(
 function executeCommandNative(
   original: WorldState,
   command: Command,
-  options: { preview?: boolean; nativeController?: true },
+  options: {
+    preview?: boolean;
+    nativeController?: true;
+    constructionPermissions?: readonly ConstructionPermission[];
+  },
   standalone: boolean,
 ): Transition {
   const reject = (code: string, message: string): Transition => ({
@@ -1363,9 +1842,14 @@ function executeCommandNative(
     return receipt.digest === digest
       ? { world: original, events: [], outcome: { ...receipt.outcome, code: 'duplicate' } }
       : reject('idempotency-conflict', 'This command ID was already used with another body.');
-  const prepared = isActivityCommand(command)
-    ? prepareNativeOperation(original, command, { executing: true })
-    : nativeActorProblem(original, command);
+  if (!nativeCommandSupported(original, command.type))
+    return reject('unsupported-capability', 'This world does not install that action.');
+  const prepared =
+    isActivityCommand(command) || command.type === 'learn-record'
+      ? prepareNativeOperation(original, command, {
+          constructionPermissions: options.constructionPermissions,
+        })
+      : nativeActorProblem(original, command);
   if (prepared && 'ok' in prepared && !prepared.ok)
     return { world: original, events: [], outcome: prepared };
   const action = prepared && !('ok' in prepared) ? prepared : undefined;
@@ -1377,20 +1861,40 @@ function executeCommandNative(
   // before allocating IDs, recording experience or interrupting work in a throwaway draft.
   // Nested callers retain disposable execution: interruption events must still spend
   // their caller's work allowance. Other families retain later checks or remain unqualified.
+  // Cooking's startWork still admits the atomic ingredient group, including quantity,
+  // reservation and work limits. Keep that disposable transaction until its remaining
+  // refusal checks have a shared read-only preflight; AC11/PF05 track that optimization.
   // docs/action-capabilities.md#action-availability-and-temporary-execution
   if (
     options.preview &&
     standalone &&
     action &&
-    ['move', 'strike', 'gather', 'hunt', 'harvest', 'pickup', 'replenish', 'follow'].includes(
-      action.type,
-    )
+    [
+      'assemble',
+      'move',
+      'evade',
+      'strike',
+      'gather',
+      'hunt',
+      'aim',
+      'shoot-once',
+      'practice-shot',
+      'coaching',
+      'harvest',
+      'pickup',
+      'replenish',
+      'follow',
+      'guard',
+      'fish',
+    ].includes(action.type)
   )
     return {
       world: original,
       events: [],
       outcome: result,
     };
+  if (options.preview && standalone && command.type === 'learn-record')
+    return { world: original, events: [], outcome: result };
   const source = getOwn(original.entities, command.actorId)!;
   if (options.nativeController && (source.actor?.controller !== 'native' || !source.threat))
     return reject(
@@ -1421,6 +1925,8 @@ function executeCommandNative(
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
+  if (component.action?.guard && world.simTime >= component.action.guard.expiresAt)
+    recoverGuard(world, actor, component.action.guard.expiresAt);
   // A drop preview still checks the structural transfer, but never installs its action
   // record. Capacity admission above remains identical; other families retain bookkeeping.
   // docs/projects/parallel-batch-03-personal-game-tech-design.md#algorithm-boundary
@@ -1432,25 +1938,36 @@ function executeCommandNative(
           world,
           command,
           command.id,
-          nativeActivityView(original, command),
+          startingActivityView(original, command, action),
           component.agency.plan?.steps.some((step) => step.id === command.id)
             ? component.agency.plan.id
             : undefined,
         )
       : undefined;
-  if (action) action.id = nextId(world, 'action');
+  if (experience && 'ok' in experience) return { world: original, events: [], outcome: experience };
+  if (action) {
+    action.id = nextId(world, 'action');
+    if (action.ranged) action.ranged.reservationId = `${action.id}:projectile`;
+    if (experience) bindActivityAction(world, experience, action.id);
+    // Immediate cooking is checked with its exact material links by startWork
+    // below. Approaching work must also fit before any travel is committed.
+    if (action.type === 'cook' && action.stage === 'approaching') {
+      const problem = cookingRecordProblem(world, actor, action);
+      if (problem) return { world: original, events: [], outcome: problem };
+    }
+  }
   if (action?.type === 'follow') updateFollowPath(world, actor, action);
   if (
     experience &&
     (command.type === 'strike' || command.type === 'hunt') &&
-    component.equippedItemId
+    command.weaponItemId
   ) {
     const prior = [...(world.actionExperience.occurrences[actor.id] ?? [])]
       .reverse()
       .find(
         (entry) =>
           entry.command.type === 'equip' &&
-          entry.command.itemId === component.equippedItemId &&
+          entry.command.itemId === command.weaponItemId &&
           entry.status === 'completed',
       );
     if (prior) experience.connections.push({ from: prior.id, relation: 'support' });
@@ -1468,6 +1985,34 @@ function executeCommandNative(
     );
   if (!action)
     switch (command.type) {
+      case 'release-shot': {
+        const held = component.action;
+        if (held?.type !== 'aim' || held.id !== command.aimId || !held.ranged?.ready)
+          return reject('aim-changed', BASE_RANGED_TEXT.aimChanged);
+        const selected = {
+          ...held,
+          lethalPermission: command.lethalPermission,
+          requiresLethalReview: command.humanInitiated ?? held.requiresLethalReview,
+        };
+        const problem = aimProblem(world, actor, selected, true);
+        if (problem) return { world: original, events: [], outcome: problem };
+        if (options.preview)
+          return {
+            world: original,
+            events: [],
+            outcome: outcome(true, 'available', BASE_RANGED_TEXT.releaseAvailable),
+          };
+        held.lethalPermission = command.lethalPermission;
+        held.requiresLethalReview = selected.requiresLethalReview;
+        held.ranged.manual = false;
+        completeAction(world, actor, held, events, options.constructionPermissions);
+        result = outcome(true, 'released', BASE_RANGED_TEXT.releaseCompleted);
+        break;
+      }
+      case 'coaching':
+        result = applyCoaching(world, actor, command, events);
+        if (!result.ok) return { world: original, events: [], outcome: result };
+        break;
       case 'activity':
         if (command.interrupt && !command.resume) {
           const refused = suspendCurrentWork(world, actor.id);
@@ -1480,11 +2025,20 @@ function executeCommandNative(
           command.methodId,
           command.bindings,
           command.resume,
+          options.constructionPermissions,
+          command.humanInitiated,
+          command.combatHelpId,
         );
         if (!result.ok) return { world: original, events: [], outcome: result };
         break;
       case 'compose':
-        result = startRequestedActivity(world, actor.id, command.id, command);
+        result = startRequestedActivity(
+          world,
+          actor.id,
+          command.id,
+          command,
+          options.constructionPermissions,
+        );
         if (!result.ok) return { world: original, events: [], outcome: result };
         break;
       case 'transfer-item':
@@ -1578,13 +2132,13 @@ function executeCommandNative(
         const equipped = itemFor(world, command.itemId);
         if (
           !equipped ||
-          component.equippedItemId !== equipped.id ||
+          !isEquipped(world, actor.id, equipped.id) ||
           equipped.revision !== command.expectedRevision ||
           equipped.placementRevision !== command.placementRevision
         )
           return reject('stale', 'The selected equipment changed. Refresh before releasing it.');
         try {
-          unequipLot(world, actor.id);
+          unequipLot(world, actor.id, command.itemId);
         } catch (error) {
           if (error instanceof WorkBudgetError) throw error;
           return reject(
@@ -1685,6 +2239,31 @@ function executeCommandNative(
           );
           component.inventoryInspection = cursor;
           recordInspectedItems(world, events, actor.id, { ...cursor, page });
+          if (
+            command.itemId &&
+            world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.recipeRecord
+          ) {
+            const read = readRecipeRecord(world, actor.id, command.itemId);
+            if ('recipe' in read) {
+              emit(
+                world,
+                events,
+                'recipe-record-inspected',
+                `I read ${read.definition.name}: ${read.recipe.name}. ${read.recipe.description} Makes one ${read.recipe.output.name}. Requires ${read.recipe.inputs.map((input) => `${input.quantity} ${world.itemDefinitions[input.definitionId]!.name} (${input.role})`).join(', ')} and ${read.recipe.workSeconds} game seconds of manufacture. ${read.recipe.facts.map((fact) => `${fact.label}: ${fact.value}${fact.unit ? ` ${fact.unit}` : ''}`).join('; ')}. Reading grants no knowledge or item; I can explicitly learn this exact method.`,
+                actor,
+                undefined,
+                {
+                  itemId: read.item.id,
+                  recipeId: read.recipe.id,
+                  methodVersion: read.definition.recipeRecord!.method.version,
+                  methodDigest: read.definition.recipeRecord!.method.digest,
+                  recordRevision: read.item.revision!,
+                  placementRevision: read.item.placementRevision!,
+                },
+                'private',
+              );
+            }
+          }
           const container = inspectedContainer(world, actor.id);
           const packing =
             container?.load !== undefined && container.capacity !== undefined
@@ -1720,8 +2299,11 @@ function executeCommandNative(
         const item = itemFor(world, command.itemId);
         if (!item) return reject('not-equippable', 'Choose a tool in this actor’s inventory.');
         let equippedId: string;
+        const stowed = equipmentConflicts(world, actor.id, item.id);
         try {
-          equippedId = equipLot(world, actor.id, item.id, command.id);
+          equippedId = atomicObjects(world, (candidate) =>
+            equipLot(candidate, actor.id, item.id, command.id),
+          );
         } catch (error) {
           if (error instanceof WorkBudgetError) throw error;
           return reject(
@@ -1729,22 +2311,18 @@ function executeCommandNative(
             error instanceof Error ? error.message : 'Equipment unavailable.',
           );
         }
+        const description = equipmentEquipOutcome(
+          world,
+          equippedId,
+          stowed.map((i) => i.id),
+        );
         result = {
           ok: true,
           code: 'equipped',
-          message: `Equipped ${namePhrase(world.itemDefinitions[item.definitionId]!, 'definite')}.`,
+          message: description.message,
           itemId: equippedId,
         };
-        emit(
-          world,
-          events,
-          'equipped',
-          subjectNarration(
-            actor,
-            `equipped ${namePhrase(world.itemDefinitions[item.definitionId]!, 'definite')}.`,
-          ),
-          actor,
-        );
+        emit(world, events, 'equipped', subjectNarration(actor, description.narration), actor);
         break;
       }
       case 'outing': {
@@ -1824,6 +2402,34 @@ function executeCommandNative(
         )
           return reject('invalid-effect', 'Choose an available status effect and target.');
         if (
+          command.facingHeading !== undefined &&
+          (!Number.isFinite(command.facingHeading) ||
+            definition.presentation?.pose !== 'horizontal' ||
+            command.operation !== 'activate')
+        )
+          return reject('invalid-pose', 'Choose a valid facing for an ordinary resting posture.');
+        if (command.restingPlaceId !== undefined || command.restingBay !== undefined) {
+          if (
+            !command.restingPlaceId ||
+            command.restingBay === undefined ||
+            command.operation !== 'activate' ||
+            definition.presentation?.pose !== 'horizontal' ||
+            target.id !== actor.id
+          )
+            return reject('invalid-pose', 'Choose an available resting place for this person.');
+          const fit = evaluateAssemblyRest(
+            world,
+            target.id,
+            command.restingPlaceId,
+            command.restingBay,
+            true,
+          );
+          if ('ok' in fit) return reject(fit.code, fit.message);
+          if (command.facingHeading !== fit.facingHeading)
+            return reject('invalid-pose', 'The resting posture must fit the selected bay.');
+        }
+
+        if (
           target.id !== actor.id &&
           (!definition.actions.allowOther ||
             (command.operation === 'activate' && !definition.actions.activateOther) ||
@@ -1847,6 +2453,15 @@ function executeCommandNative(
             )
           )
             return reject('not-applicable', 'The status effect activation conditions are not met.');
+          if (command.facingHeading !== undefined) {
+            target.spatial.heading = command.facingHeading;
+            recordSemanticChange(world, {
+              kind: 'spatial',
+              entityId: target.id,
+              before: worldPosition(target),
+              after: worldPosition(target),
+            });
+          }
         } else {
           if (
             !(definition.contribution
@@ -2049,6 +2664,42 @@ function executeCommandNative(
         if (!result.ok) return reject(result.code, result.message);
         break;
       }
+      case 'learn-record': {
+        const read = prepareRecipeLearning(world, command);
+        if (!('recipe' in read)) return reject(read.code, read.message);
+        const learned = learnRecipe(world, actor.id, read.recipe.id, 'record', command.id);
+        emit(
+          world,
+          events,
+          'method-learned',
+          learned === 'acquired'
+            ? `I learned the exact method for ${read.recipe.name} from ${read.definition.name}. No item was made.`
+            : `I checked ${read.definition.name}; I already know the exact method for ${read.recipe.name}.`,
+          actor,
+          undefined,
+          {
+            recipeId: read.recipe.id,
+            itemId: read.item.id,
+            methodVersion: read.definition.recipeRecord!.method.version,
+            methodDigest: read.definition.recipeRecord!.method.digest,
+            recordRevision: read.item.revision!,
+            placementRevision: read.item.placementRevision!,
+            learned,
+          },
+          'private',
+        );
+        result = {
+          ...outcome(
+            true,
+            learned,
+            learned === 'acquired'
+              ? `${read.recipe.name} learned. Gather its ingredients and choose Craft to make it.`
+              : `${read.recipe.name} is already known. No knowledge or items were duplicated.`,
+          ),
+          recipeId: read.recipe.id,
+        };
+        break;
+      }
       case 'teach': {
         if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
         const target = getOwn(world.entities, command.targetId);
@@ -2062,14 +2713,7 @@ function executeCommandNative(
           return reject('not-heard', 'Teaching needs a nearby listener.');
         if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
           return reject('not-learned', 'You cannot teach a technique you do not know.');
-        const knowledge = world.knowledge[target.id] ?? (world.knowledge[target.id] = []);
-        if (!knowledge.some((record) => record.recipeId === recipe.id))
-          knowledge.push({
-            recipeId: recipe.id,
-            learnedAt: world.simTime,
-            source: 'taught',
-            evidenceId: command.id,
-          });
+        learnRecipe(world, target.id, recipe.id, 'taught', command.id);
         emit(
           world,
           events,
@@ -2090,9 +2734,51 @@ function executeCommandNative(
         return reject('unsupported', 'This command is not supported.');
     }
   if (action) {
-    if (experience) bindActivityAction(world, experience, action.id);
-    if (action.stage === 'working' && action.type !== 'follow') {
-      const error = startWork(world, actor, action, events);
+    const toolId =
+      command.type === 'guard'
+        ? command.itemId
+        : command.type === 'strike' ||
+            command.type === 'hunt' ||
+            command.type === 'aim' ||
+            command.type === 'shoot-once'
+          ? command.weaponItemId
+          : undefined;
+    if (
+      toolId &&
+      'autoEquip' in command &&
+      command.autoEquip &&
+      !isEquipped(world, actor.id, toolId)
+    ) {
+      const conflicts = equipmentConflicts(world, actor.id, toolId);
+      const equippedId = atomicObjects(world, (candidate) => {
+        // The chosen physical action replaces current work in this same transaction. Pure
+        // admission already checked real reservations on the selected/conflicting items.
+        candidate.entities[actor.id]!.actor!.action = null;
+        return equipLot(candidate, actor.id, toolId, command.id);
+      });
+      if (command.type === 'guard') action.itemId = equippedId;
+      else action.weaponItemId = equippedId;
+      const description = equipmentEquipOutcome(
+        world,
+        equippedId,
+        conflicts.map((i) => i.id),
+      );
+      result.message = description.message;
+      emit(
+        world,
+        events,
+        'equipped',
+        subjectNarration(actor, description.narration),
+        actor,
+        undefined,
+        {
+          actionId: action.id,
+          itemId: equippedId,
+        },
+      );
+    }
+    if (action.stage === 'working' && action.type !== 'follow' && !action.assemblyPhase) {
+      const error = startWork(world, actor, action, events, options.constructionPermissions);
       if (error) return { world: original, events: [], outcome: error };
     }
     interruptStatusEffects(world, actor, events, 'new-action');
@@ -2104,14 +2790,27 @@ function executeCommandNative(
     // Scheduled-work previews stop after identical admission, before action-start events/receipts.
     // docs/architecture.md#bundled-world-and-item-custody
     if (options.preview) return { world: original, events: [], outcome: result };
-    if (component.action && component.action.id !== action.id)
+    if (component.action && component.action.id !== action.id) {
+      releaseInvocationResources(world, component.action.id);
       endActivity(
         world,
         actor.id,
         component.action.id,
         outcome(false, 'cancelled', 'Replaced by newly chosen work; committed effects remain.'),
       );
+    }
     component.action = action;
+    if (action.evasion) component.evasionReadyAt = action.evasion.repeatAt;
+    if (action.ranged) {
+      const problem = holdAim(world, actor, action);
+      if (problem) return { world: original, events: [], outcome: problem };
+    }
+    if (action.assemblyPhase && action.stage === 'working') {
+      const error = startWork(world, actor, action, events, options.constructionPermissions);
+      if (error) return { world: original, events: [], outcome: error };
+    }
+    if (action.guard) actor.spatial.heading = action.guard.facing;
+    if (action.type === 'coaching') registerFeedback(world, actor, action);
     result = { ...result, actionId: action.id };
     if (experience && action.stage === 'approaching')
       experience.view.children = [
@@ -2127,7 +2826,7 @@ function executeCommandNative(
       world,
       events,
       'action-started',
-      action.type === 'move' && action.destination
+      (action.type === 'move' || action.type === 'assemble') && action.destination
         ? subjectNarration(
             actor,
             `started moving to ${action.destination.x}, ${action.destination.z}.`,
@@ -2139,7 +2838,7 @@ function executeCommandNative(
             )
           : subjectNarration(
               actor,
-              `started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+              `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
             ),
       actor,
       action.targetId,
@@ -2157,6 +2856,17 @@ function executeCommandNative(
   return finish(world, events, result);
 }
 
+function startingActivityView(world: WorldState, command: Command, action?: Action) {
+  const view = nativeActivityView(world, command);
+  if (action?.stage === 'approaching' && !action.evasion)
+    view.children = [
+      {
+        name: 'Move into reach',
+        facts: view.facts.filter((fact) => fact.name === 'distance' || fact.name === 'approach'),
+      },
+    ];
+  return view;
+}
 function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reason: string): void {
   // Selected stock guards contain private supply/minimum facts. Witnesses can
   // observe the stop, while only the actor receives its detailed reason.
@@ -2190,6 +2900,7 @@ function completeAction(
   actor: Entity,
   action: Action,
   events: WorldEvent[],
+  constructionPermissions: readonly ConstructionPermission[] = [],
 ): void {
   const component = actor.actor!;
   let outputItemId: string | undefined;
@@ -2197,10 +2908,28 @@ function completeAction(
   const outputs: ActivityOutput[] = [];
   const produce = (definitionId: string, quantity: number): string => {
     const itemId = addItem(world, actor.id, definitionId, quantity);
+    if (world.itemDefinitions[definitionId]?.assemblyMaterial && action.materialOriginIds?.length)
+      world.entities[itemId]!.item!.materialOriginIds = [...action.materialOriginIds];
     outputs.push({ port: definitionId, itemId, definitionId, quantity });
     return itemId;
   };
   switch (action.type) {
+    case 'assemble': {
+      const result = commitAssemblyPhase(
+        world,
+        actor.id,
+        action.assemblyPhase!,
+        action.id,
+        constructionPermissions,
+        events,
+      );
+      if (!result.ok) {
+        failAction(world, actor, events, result.message);
+        return;
+      }
+      completion = result.message;
+      break;
+    }
     case 'treat-scar': {
       const result = completeScarTreatment(world, actor, action.scarId!, action.targetId!, events);
       if (!result.ok) {
@@ -2374,6 +3103,7 @@ function completeAction(
         !definition ||
         definition.version !== action.definitionVersion ||
         !target?.actor?.alive ||
+        !!attackPermissionProblem(world, actor, target, action) ||
         target.id === actor.id ||
         !canReachEntity(world, actor, target, definition.range)
       ) {
@@ -2385,26 +3115,20 @@ function completeAction(
         );
         return;
       }
-      const before = target.actor.health;
       const review = attackReviewProblem(world, actor, target, action);
       if (review) {
         failAction(world, actor, events, review.message);
         return;
       }
-      commitBodyEffects(
+      const contact = commitContactImpact(
         world,
+        actor,
         target,
-        [
-          {
-            targetId: target.id,
-            kind: 'injury',
-            amount: definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
-          },
-        ],
+        definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
         action.id,
         events,
       );
-      const damage = before - target.actor.health;
+      const damage = contact.damage;
       if (target.animal && target.actor.alive) {
         if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
         else rememberAttack(world, target, actor);
@@ -2416,95 +3140,38 @@ function completeAction(
         subjectNarration(actor, [
           `${definition.pastTense} `,
           person(target, actor.id === target.id ? 'reflexive' : 'object'),
-          ` for ${damage} damage.`,
-        ]),
-        actor,
-        target.id,
-        { definitionId: definition.id, damage, actionId: action.id, targetReference: true },
-      );
-      break;
-    }
-    case 'hunt': {
-      const target = world.entities[action.targetId ?? ''];
-      const weapon = itemFor(world, action.weaponItemId ?? '');
-      const launcher = weapon && world.itemDefinitions[weapon.definitionId]?.launcher;
-      if (
-        !(target?.animal && target.actor?.alive) ||
-        !weapon ||
-        !accessiblePossession(world, actor.id, weapon.id) ||
-        !launcher
-      ) {
-        failAction(world, actor, events, 'the animal or ranged tool is no longer available.');
-        return;
-      }
-      const ammunition = ammoFor(world, actor.id, launcher.ammunitionKind, action.ammoItemId);
-      if (!ammunition) {
-        failAction(world, actor, events, 'compatible ammunition is no longer available.');
-        return;
-      }
-      if (!canReachEntity(world, actor, target, launcher.range)) {
-        failAction(world, actor, events, 'the animal moved out of range.');
-        return;
-      }
-      const bonus = world.itemDefinitions[ammunition.definitionId]!.ammunition!.damageBonus;
-      const review = attackReviewProblem(world, actor, target, action);
-      if (review) {
-        failAction(world, actor, events, review.message);
-        return;
-      }
-      if (!takeItem(world, actor.id, ammunition.id, action.id)) {
-        failAction(world, actor, events, 'compatible ammunition is no longer available.');
-        return;
-      }
-      const accuracy =
-        launcher.accuracy *
-        ((
-          target.threat
-            ? target.threat.mode === 'return' && !!target.actor.action
-            : target.animal.danger > 0
-        )
-          ? 0.85
-          : 1);
-      const hit = nextRandom(world) < accuracy;
-      action.strikeOutcome = hit ? 'hit' : 'miss';
-      const damage = hit
-        ? (launcher.damage + bonus) * scarFactor(world, actor, 'outgoingInjuryFactor')
-        : 0;
-      const actualDamage = Math.min(
-        target.actor!.health,
-        damage *
-          target.actor!.body!.susceptibility.injury *
-          scarFactor(world, target, 'incomingInjuryFactor'),
-      );
-      if (!target.threat) rememberAttack(world, target, actor);
-      emit(
-        world,
-        events,
-        'shot',
-        subjectNarration(actor, [
-          hit ? 'hit ' : 'missed ',
-          person(target, actor.id === target.id ? 'reflexive' : 'object'),
-          `${hit ? ` for ${actualDamage} damage` : ''}. One projectile was used.`,
+          '. The contact blow connected.',
         ]),
         actor,
         target.id,
         {
-          hit,
-          damage: actualDamage,
-          ammunitionKind: launcher.ammunitionKind,
+          definitionId: definition.id,
+          damage,
+          contactInjury: true,
+          ...bodyPolicy(world)?.combat?.impactAttention,
+          preventedInjury: contact.preventedInjury,
+          rawInjury: contact.rawInjury,
+          healthBefore: contact.healthBefore,
+          healthAfter: contact.healthAfter,
           actionId: action.id,
           targetReference: true,
         },
       );
-      if (actualDamage > 0)
-        commitBodyEffects(
-          world,
-          target,
-          [{ targetId: target.id, kind: 'injury', amount: damage }],
-          action.id,
-          events,
-        );
-      if (target.threat) noteTerritorialInjury(world, target, actor, actualDamage, events);
+      break;
+    }
+    case 'coaching':
+      completeFeedback(world, actor, action, events);
+      return;
+    case 'practice-shot':
+    case 'aim':
+    case 'shoot-once':
+    case 'hunt': {
+      const released = releaseShot(world, actor, action, events);
+      if (!released.ok) {
+        failAction(world, actor, events, released.message);
+        return;
+      }
+      completion = released.message;
       break;
     }
     case 'harvest': {
@@ -2538,20 +3205,95 @@ function completeAction(
       break;
     }
     case 'cook': {
-      if (!world.entities[action.heatId ?? '']?.heat?.lit) {
-        failAction(world, actor, events, 'the fire went out before cooking finished.');
+      const definition =
+        action.foodPreparation && preparationForBinding(world, action.foodPreparation);
+      if (!definition || !world.entities[action.heatId ?? '']?.heat?.lit) {
+        failAction(
+          world,
+          actor,
+          events,
+          definition
+            ? 'the fire went out before cooking finished.'
+            : 'the selected preparation changed before cooking finished.',
+        );
         return;
       }
-      outputItemId = produce(BASE_FAMILY_FACTS.cooking.output, 1);
+      const recordProblem = cookingRecordProblem(world, actor, action);
+      if (recordProblem) {
+        failAction(world, actor, events, recordProblem.message);
+        return;
+      }
+      for (const output of definition.outputs) produce(output.definitionId, output.quantity);
+      if (outputs.length === 1) outputItemId = outputs[0]!.itemId;
+      completion = `${definition.name} completed.`;
       emit(
         world,
         events,
         'cooked',
-        subjectNarration(actor, `cooked meat over the campfire.`),
+        subjectNarration(actor, definition.completedText),
         actor,
         action.heatId,
+        {
+          actionId: action.id,
+          preparationId: definition.id,
+          quantity: outputs.reduce((sum, output) => sum + output.quantity, 0),
+        },
       );
       break;
+    }
+    case 'fish': {
+      const target = world.entities[action.targetId ?? ''];
+      const definition = castDefinition(world, target);
+      const problem =
+        castBindingProblem(world, actor, target, action.itemId!, action.fishing) ??
+        (target && castGeometryProblem(world, actor, target, true));
+      if (problem || !definition || !target?.resource || target.resource.quantity <= 0) {
+        failAction(
+          world,
+          actor,
+          events,
+          problem ?? definition?.exhaustedText ?? 'the source is no longer available.',
+        );
+        return;
+      }
+      const source = {
+        kind: 'gathering',
+        entityId: target.id,
+        definition: action.fishing!.output,
+      } as const;
+      if ((availableResource(world, source) ?? 0) < 1) {
+        failAction(world, actor, events, definition.exhaustedText);
+        return;
+      }
+      const caught = nextRandom(world) < definition.chance;
+      if (caught) {
+        const result = applyResourceGroup(
+          world,
+          {
+            invocationId: action.id,
+            fulfillment: 'all-or-nothing',
+            operations: [{ source, sourceRevision: target.resource.revision ?? 0, amount: 1 }],
+          },
+          events,
+        );
+        if (result.status !== 'applied')
+          throw new Error('A lawful finite cast lost its synchronous stock commit.');
+        outputItemId = produce(target.resource.definitionId, 1);
+      }
+      completion = caught ? definition.caughtText : definition.emptyText;
+      emit(world, events, 'cast-completed', subjectNarration(actor, completion), actor, target.id, {
+        actionId: action.id,
+        caught,
+        quantity: caught ? 1 : 0,
+        definitionId: target.resource.definitionId,
+      });
+      finishPlanAction(world, actor.id, action.id, {
+        ...outcome(true, caught ? 'caught' : 'empty', completion),
+        ...(outputItemId ? { itemId: outputItemId } : {}),
+        outputs,
+      });
+      component.action = null;
+      return;
     }
     case 'tend-fire': {
       const done = completeFireCare(
@@ -2578,7 +3320,7 @@ function completeAction(
       true,
       action.strikeOutcome ?? 'completed',
       action.strikeOutcome
-        ? `The ${action.type === 'hunt' ? 'shot' : 'strike'} ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; this one attempt has ended.`
+        ? `The ${['hunt', 'practice-shot'].includes(action.type) ? 'shot' : 'strike'} ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; this one attempt has ended.`
         : (completion ?? `${action.type} completed.`),
     ),
     ...(outputItemId ? { itemId: outputItemId } : {}),
@@ -2592,6 +3334,7 @@ function moveAlongPath(
   actor: Entity,
   path: SurfacePoint[],
   distanceBudget: number,
+  occupiedBodies = false,
 ): boolean {
   let remaining = distanceBudget;
   const map = spatialMap(world),
@@ -2620,7 +3363,26 @@ function moveAlongPath(
             ...interpolate(start, point, remaining / delta),
             surfaceId: start.surfaceId,
           };
-    if (!withinTerritory(next) || !canWalkSegment(map, start, next, profile)) return false;
+    const clear = (to: SurfacePoint) =>
+      withinTerritory(to) &&
+      canWalkSegment(map, start, to, profile) &&
+      (!occupiedBodies || occupiedBodySweepClear(world, actor, start, to));
+    if (!clear(next)) {
+      if (occupiedBodies) {
+        let low = 0,
+          high = 1;
+        for (let i = 0; i < 16; i++) {
+          const fraction = (low + high) / 2;
+          if (clear({ ...interpolate(start, next, fraction), surfaceId: start.surfaceId }))
+            low = fraction;
+          else high = fraction;
+        }
+        if (low > 0)
+          setSpatialPosition(world, actor, interpolate(start, next, low), start.surfaceId);
+      }
+      return false;
+    }
+
     if (delta <= remaining) {
       setSpatialPosition(world, actor, point, point.surfaceId);
       path.shift();
@@ -2637,15 +3399,105 @@ function advanceAction(
   actor: Entity,
   seconds: number,
   events: WorldEvent[],
+  constructionPermissions: readonly ConstructionPermission[] = [],
 ): void {
   const action = actor.actor!.action;
   if (!action) return;
+  if (!nativeCommandSupported(world, action.type)) {
+    failAction(world, actor, events, 'this world no longer supports the action.');
+    return;
+  }
+  if (action.combatHelpId) {
+    const problem = combatHelpProblem(
+      world,
+      actor.id,
+      action.combatHelpId,
+      ['strike', 'aim', 'shoot-once', 'hunt', 'follow'].includes(action.type)
+        ? action.targetId
+        : undefined,
+    );
+    if (problem) {
+      failAction(world, actor, events, problem.message);
+      return;
+    }
+  }
+  if (action.ranged) {
+    const problem = aimProblem(world, actor, action);
+    if (problem) {
+      failAction(world, actor, events, problem.message);
+      return;
+    }
+    if (action.ranged.ready && action.ranged.manual) return;
+  }
+  if (action.evasion) {
+    const e = action.evasion;
+    if (
+      e.sourceLife !== (actor.actor!.physicalLife ?? 0) ||
+      capabilityBlocked(world, actor, 'locomotion') ||
+      capabilityBlocked(world, actor, 'actions')
+    ) {
+      failAction(world, actor, events, BASE_EVASION_TEXT.interrupted);
+      return;
+    }
+    if (!moveAlongPath(world, actor, action.path, e.speed * seconds, true)) {
+      failAction(world, actor, events, BASE_EVASION_TEXT.obstructed);
+      return;
+    }
+    action.remainingSeconds = Math.max(0, e.endsAt - world.simTime);
+    if (action.remainingSeconds <= TIME_EPSILON) {
+      emit(
+        world,
+        events,
+        'evasion-ended',
+        subjectNarration(actor, BASE_EVASION_TEXT.finished),
+        actor,
+        undefined,
+        { actionId: action.id, semanticTrigger: true },
+      );
+      finishPlanAction(
+        world,
+        actor.id,
+        action.id,
+        outcome(true, 'completed', BASE_EVASION_TEXT.completed),
+      );
+      actor.actor!.action = null;
+    }
+    return;
+  }
+  if (action.type === 'guard') {
+    const profile = currentGuardProfile(world, actor);
+    if (!profile || capabilityBlocked(world, actor, 'actions')) {
+      failAction(world, actor, events, BASE_GUARD_TEXT.interrupted);
+      return;
+    }
+    const guard = action.guard!;
+    if (guard.phase !== 'recovery' && world.simTime >= guard.expiresAt)
+      recoverGuard(world, actor, guard.expiresAt);
+    else if (guard.phase === 'preparing' && world.simTime >= guard.readyAt) guard.phase = 'ready';
+    const deadline =
+      guard.phase === 'preparing'
+        ? guard.readyAt
+        : guard.phase === 'ready'
+          ? guard.expiresAt
+          : guard.recoveryUntil!;
+    action.remainingSeconds = Math.max(0, deadline - world.simTime);
+    action.totalSeconds =
+      guard.phase === 'preparing'
+        ? profile.preparationSeconds
+        : guard.phase === 'ready'
+          ? profile.readySeconds
+          : profile.recoverySeconds;
+    if (guard.phase === 'recovery' && action.remainingSeconds === 0)
+      completeAction(world, actor, action, events);
+    return;
+  }
   if (action.strikePhase === 'recovery') {
     action.remainingSeconds = Math.max(
       0,
-      (actor.actor!.attackReadyAt ?? world.simTime) - world.simTime,
+      (actor.actor!.combatReadyAt ?? world.simTime) - world.simTime,
     );
-    if (action.remainingSeconds === 0) completeAction(world, actor, action, events);
+    if (action.remainingSeconds === 0)
+      completeAction(world, actor, action, events, constructionPermissions);
     return;
   }
   if (
@@ -2655,13 +3507,17 @@ function advanceAction(
     failAction(world, actor, events, 'the targeted physical life has ended.');
     return;
   }
-  if (
-    action.type === 'strike' &&
-    (actor.actor!.controller === 'player' || action.requiresLethalReview) &&
-    world.entities[action.targetId ?? '']?.actor?.controller === 'player'
-  ) {
-    failAction(world, actor, events, 'human conflict is not enabled.');
-    return;
+  if (action.type === 'strike') {
+    const permission = attackPermissionProblem(
+      world,
+      actor,
+      world.entities[action.targetId ?? ''],
+      action,
+    );
+    if (permission) {
+      failAction(world, actor, events, permission.message);
+      return;
+    }
   }
   // Follow judges its target only through perception and its loss policy; an unseen
   // target's participation must not leak through a different stop reason.
@@ -2697,7 +3553,7 @@ function advanceAction(
   if (
     action.type === 'strike' &&
     ((action.weaponItemId &&
-      (actor.actor!.equippedItemId !== action.weaponItemId ||
+      (!equippedItem(world, actor.id, 'melee', action.weaponItemId) ||
         !accessiblePossession(world, actor.id, action.weaponItemId))) ||
       capabilityBlocked(world, actor, 'actions') ||
       !world.entities[action.targetId!]?.actor?.alive ||
@@ -2714,7 +3570,7 @@ function advanceAction(
   if (action.type === 'gather' && action.itemId) {
     const tool = itemFor(world, action.itemId);
     if (
-      actor.actor!.equippedItemId !== action.itemId ||
+      !equippedItem(world, actor.id, 'gather', action.itemId) ||
       !accessiblePossession(world, actor.id, action.itemId) ||
       !tool ||
       world.itemDefinitions[tool.definitionId]?.gatheringTool?.resourceId !==
@@ -2726,7 +3582,7 @@ function advanceAction(
   }
   if (action.type === 'follow') {
     if (action.follow?.until !== undefined && world.simTime >= action.follow.until) {
-      completeAction(world, actor, action, events);
+      completeAction(world, actor, action, events, constructionPermissions);
       return;
     }
     if (
@@ -2760,7 +3616,7 @@ function advanceAction(
       const requested = action.navigation.request;
       const profile = bodyProfile(actor);
       if (
-        requested.geometryRevision === world.map.spatial.revision &&
+        requested.geometryRevision === spatialMap(world).spatial.revision &&
         requested.body.radius === profile.radius &&
         requested.body.height === profile.height &&
         requested.body.maxSlope === profile.maxSlope &&
@@ -2787,9 +3643,10 @@ function advanceAction(
       const last = action.path.at(-1);
       const endpointUseful =
         last &&
-        (action.type === 'move'
+        (action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
           ? last.surfaceId === action.destination!.surfaceId &&
-            distance(last, action.destination!) <= MOVEMENT.arrivalTolerance
+            distance(last, action.destination!) <=
+              (action.type === 'fish' ? actionReach(world, action) : MOVEMENT.arrivalTolerance)
           : canReachEntity(
               world,
               actor,
@@ -2823,10 +3680,10 @@ function advanceAction(
       return;
     }
     if (action.type === 'move') {
-      completeAction(world, actor, action, events);
+      completeAction(world, actor, action, events, constructionPermissions);
       return;
     }
-    const error = startWork(world, actor, action, events);
+    const error = startWork(world, actor, action, events, constructionPermissions);
     if (error) {
       // This supported observation skip ends the admitted fuel attempt without
       // spending. Other failures still stop the selected activity.
@@ -2843,7 +3700,9 @@ function advanceAction(
     seconds = 0;
   }
   if (
-    ['gather', 'harvest', 'cook', 'pickup', 'tend-fire', 'treat-scar'].includes(action.type) &&
+    ['gather', 'harvest', 'cook', 'fish', 'pickup', 'tend-fire', 'treat-scar'].includes(
+      action.type,
+    ) &&
     !actionInReach(world, actor, action)
   ) {
     failAction(
@@ -2854,6 +3713,38 @@ function advanceAction(
         ? 'the pile is no longer available.'
         : 'the target moved out of reach.',
     );
+    return;
+  }
+  if (action.assemblyPhase) {
+    const grant = constructionPermissions.find((p) => p.id === action.constructionGrant?.id);
+    if (!grant || grant.revoked || grant.revision !== action.constructionGrant?.revision) {
+      failAction(world, actor, events, 'construction permission changed. Completed parts remain.');
+      return;
+    }
+    const checked = evaluateAssemblyPhase(
+      world,
+      actor.id,
+      action.assemblyPhase,
+      constructionPermissions,
+      action.id,
+    );
+    if (!checked.ok || !actionInReach(world, actor, action)) {
+      failAction(
+        world,
+        actor,
+        events,
+        checked.ok ? 'the working corner is no longer within reach.' : checked.message,
+      );
+      return;
+    }
+  }
+  if (
+    action.type === 'cook' &&
+    (!action.foodPreparation ||
+      !preparationForBinding(world, action.foodPreparation) ||
+      !world.entities[action.heatId ?? '']?.heat?.lit)
+  ) {
+    failAction(world, actor, events, 'the selected preparation changed or its heat went out.');
     return;
   }
   if (action.type === 'replenish') {
@@ -2888,7 +3779,7 @@ function advanceAction(
     const recipient = readResource(world, destination)!;
     if (value >= definition.schema.max) {
       action.remainingSeconds = 0;
-      completeAction(world, actor, action, events);
+      completeAction(world, actor, action, events, constructionPermissions);
       return;
     }
     // The pre-step action pass advances no time. Resource transfers require a
@@ -2921,11 +3812,29 @@ function advanceAction(
     if (value + amount === definition.schema.max || target.replenisher.remaining === 0)
       action.remainingSeconds = 0;
   }
+  if (action.type === 'coaching') {
+    reconcileActorCoaching(world, actor.id, events);
+    if (actor.actor!.action !== action || feedbackWaiting(world, actor, action)) return;
+  }
   if (action.type === 'status-effect') return; // Effect conditions own completion; docs/status-effects.md#transitions.
   action.remainingSeconds = Math.max(0, action.remainingSeconds - seconds);
   // The simulation already treats sub-epsilon time as settled. Do not leave work at
   // 100% awaiting a later tick solely because sliced subtraction retained residue.
   if (action.remainingSeconds <= TIME_EPSILON) action.remainingSeconds = 0;
+  if (action.ranged?.manual && action.remainingSeconds === 0) {
+    action.ranged.ready = true;
+    emit(
+      world,
+      events,
+      'aim-ready',
+      subjectNarration(actor, BASE_RANGED_TEXT.prepared),
+      actor,
+      undefined,
+      { actionId: action.id },
+      'private',
+    );
+    return;
+  }
   if (
     action.remainingSeconds === 0 &&
     action.type === 'strike' &&
@@ -2933,6 +3842,11 @@ function advanceAction(
   ) {
     const definition = strikeDefinition(action.definitionId, world, action.weaponItemId)!;
     const target = world.entities[action.targetId!]!;
+    const permission = attackPermissionProblem(world, actor, target, action);
+    if (permission) {
+      failAction(world, actor, events, permission.message);
+      return;
+    }
     const review = attackReviewProblem(world, actor, target, action);
     if (review) {
       failAction(world, actor, events, review.message);
@@ -2941,22 +3855,17 @@ function advanceAction(
     const inRange = target.actor!.alive && canReachEntity(world, actor, target, definition.range);
     const accuracy = definition.accuracy ?? 1;
     const hit = inRange && (accuracy === 1 || nextRandom(world) < accuracy);
-    const before = target.actor!.health;
-    if (hit)
-      commitBodyEffects(
-        world,
-        target,
-        [
-          {
-            targetId: target.id,
-            kind: 'injury',
-            amount: definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
-          },
-        ],
-        action.id,
-        events,
-      );
-    const damage = before - target.actor!.health;
+    const contact = hit
+      ? commitContactImpact(
+          world,
+          actor,
+          target,
+          definition.damage * scarFactor(world, actor, 'outgoingInjuryFactor'),
+          action.id,
+          events,
+        )
+      : undefined;
+    const damage = contact?.damage ?? 0;
     if (target.animal && target.actor!.alive) {
       if (target.threat) noteTerritorialInjury(world, target, actor, damage, events);
       else rememberAttack(world, target, actor);
@@ -2965,7 +3874,7 @@ function advanceAction(
     action.strikePhase = 'recovery';
     action.totalSeconds = definition.recoverySeconds!;
     action.remainingSeconds = definition.recoverySeconds!;
-    actor.actor!.attackReadyAt = world.simTime + definition.recoverySeconds!;
+    actor.actor!.combatReadyAt = world.simTime + definition.recoverySeconds!;
     // The shared event owner records the world outcome and the actor's own awareness.
     // A completed miss is evidence for another choice, never an automatic retry.
     emit(
@@ -2975,7 +3884,7 @@ function advanceAction(
       subjectNarration(actor, [
         `${hit ? definition.pastTense : 'missed'} `,
         person(target, actor.id === target.id ? 'reflexive' : 'object'),
-        `.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
+        `.${hit ? ' The contact blow connected.' : inRange ? '' : ' The target moved out of reach.'}`,
       ]),
       actor,
       target.id,
@@ -2985,6 +3894,16 @@ function advanceAction(
         actionId: action.id,
         hit,
         damage,
+        ...(hit ? bodyPolicy(world)?.combat?.impactAttention : {}),
+        ...(contact
+          ? {
+              contactInjury: true,
+              preventedInjury: contact.preventedInjury,
+              rawInjury: contact.rawInjury,
+              healthBefore: contact.healthBefore,
+              healthAfter: contact.healthAfter,
+            }
+          : {}),
         reason: hit ? 'hit' : inRange ? 'accuracy' : 'out-of-range',
         targetReference: true,
         semanticTrigger: true,
@@ -2992,7 +3911,33 @@ function advanceAction(
     );
     return;
   }
-  if (action.remainingSeconds === 0) completeAction(world, actor, action, events);
+  if (
+    action.assemblyPhase &&
+    action.remainingSeconds > 0 &&
+    assemblyWorkBoundary(action) <= TIME_EPSILON
+  ) {
+    action.assemblyCorner = (action.assemblyCorner ?? 0) + 1;
+    action.destination = assemblyStances(world, action.assemblyPhase, actor.id)[
+      action.assemblyCorner
+    ];
+    if (!action.destination) {
+      failAction(
+        world,
+        actor,
+        events,
+        'The next exterior binding face is unavailable. Completed parts remain.',
+      );
+      return;
+    }
+    action.path = [];
+    delete action.navigation;
+    action.replans = 0;
+    const error = approach(world, actor, action);
+    if (error) failAction(world, actor, events, error.message);
+    return;
+  }
+  if (action.remainingSeconds === 0)
+    completeAction(world, actor, action, events, constructionPermissions);
 }
 /** An installed reservoir can opt into its existing native replenishment controller. */
 
@@ -3042,6 +3987,7 @@ function nativeParticipants(world: WorldState): {
   actors: string[];
   ambient: string[];
   statuses: string[];
+  projectileBodies: string[];
 } {
   const roots = worldRootEntities(world);
   const active = roots
@@ -3051,6 +3997,9 @@ function nativeParticipants(world: WorldState): {
     actors: active.filter((e) => e.actor).map((e) => e.id),
     ambient: active.map((e) => e.id),
     statuses: roots.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
+    projectileBodies: roots
+      .filter((e) => activelyParticipates(e) && (e.actor || e.practiceTarget))
+      .map((e) => e.id),
   };
 }
 
@@ -3076,6 +4025,7 @@ function* integrateEndpoint(
   mechanics: NativeMechanics,
   rateSeconds: number,
   events: WorldEvent[],
+  constructionPermissions: readonly ConstructionPermission[],
   work?: {
     seconds: number;
     working: ReadonlyMap<string, string>;
@@ -3099,7 +4049,7 @@ function* integrateEndpoint(
     if (work && work.working.get(id) === component.action?.id) {
       const following = component.action?.type === 'follow';
       const stage = component.action?.stage;
-      advanceAction(world, actor, following ? 0 : work.seconds, events);
+      advanceAction(world, actor, following ? 0 : work.seconds, events, constructionPermissions);
       if (following && component.action?.stage !== stage) mechanics.remainingSeconds = 0;
     }
   };
@@ -3157,7 +4107,10 @@ const nativeContinuations = new WeakMap<
 export function advanceWorld(
   original: WorldState,
   elapsedSimSeconds: number,
-  options: { maxIntervals?: number } = {},
+  options: {
+    maxIntervals?: number;
+    constructionPermissions?: readonly ConstructionPermission[];
+  } = {},
 ): Transition {
   const steps = advanceWorldSlices(original, elapsedSimSeconds, options);
   let result = steps.next();
@@ -3169,7 +4122,10 @@ export function advanceWorld(
 export function* advanceWorldSlices(
   original: WorldState,
   elapsedSimSeconds: number,
-  options: { maxIntervals?: number } = {},
+  options: {
+    maxIntervals?: number;
+    constructionPermissions?: readonly ConstructionPermission[];
+  } = {},
 ): Generator<void | 'boundary', Transition, boolean | undefined> {
   const nested = inWorkGroup();
   try {
@@ -3187,7 +4143,10 @@ export function* advanceWorldSlices(
 function* advanceWorldNative(
   original: WorldState,
   elapsedSimSeconds: number,
-  options: { maxIntervals?: number } = {},
+  options: {
+    maxIntervals?: number;
+    constructionPermissions?: readonly ConstructionPermission[];
+  } = {},
 ): Generator<void | 'boundary', Transition, boolean | undefined> {
   const maxIntervals = options.maxIntervals ?? 4096;
   if (
@@ -3257,7 +4216,14 @@ function* advanceWorldNative(
     if (!pendingSeconds) return;
     const seconds = pendingSeconds;
     pendingSeconds = 0;
-    yield* integrateEndpoint(world, participants, pendingMechanics!, seconds, events);
+    yield* integrateEndpoint(
+      world,
+      participants,
+      pendingMechanics!,
+      seconds,
+      events,
+      options.constructionPermissions ?? [],
+    );
   };
   // A flyer's own takeoff or landing changes only its grounded/activeWork predicates. Unless
   // another entity's status or plan depends on it, re-predict it alone before the next slice.
@@ -3325,7 +4291,10 @@ function* advanceWorldNative(
         yield* materialize();
         const intent = territorialIntention(world, actor, events);
         if (intent) {
-          const transition = executeCommand(world, intent, { nativeController: true });
+          const transition = executeCommand(world, intent, {
+            nativeController: true,
+            constructionPermissions: options.constructionPermissions,
+          });
           participants = nativeParticipants(transition.world);
           world = draftWorld(transition.world);
           events.push(...transition.events);
@@ -3343,7 +4312,9 @@ function* advanceWorldNative(
         const command = resolvePlanCommand(component.agency.plan!, step);
         const transition = command
           ? actionTargetsCurrent(world, actorId, [command], step.targetEpisodes)
-            ? executeCommand(world, command)
+            ? executeCommand(world, command, {
+                constructionPermissions: options.constructionPermissions,
+              })
             : {
                 world,
                 events: [],
@@ -3389,7 +4360,7 @@ function* advanceWorldNative(
         component.action?.type === 'pickup' ||
         component.action?.type === 'follow'
       )
-        advanceAction(world, actor, 0, events);
+        advanceAction(world, actor, 0, events, options.constructionPermissions);
       if (
         priorFollowStage &&
         (component.action?.stage !== priorFollowStage || component.action.path !== priorFollowPath)
@@ -3553,6 +4524,19 @@ function* advanceWorldNative(
       participants.ambient,
       crossings,
     );
+    for (const id of participants.actors) {
+      const action = world.entities[id]?.actor?.action;
+      if (action?.stage === 'working' && action.assemblyPhase)
+        seconds = Math.min(seconds, Math.max(TIME_EPSILON, assemblyWorkBoundary(action)));
+    }
+    seconds = weatherBoundary(world, seconds);
+    const projectileIds = Object.keys(world.projectiles ?? {});
+    const projectileBodies = projectileIds.length
+      ? captureProjectileBodies(world, participants.projectileBodies)
+      : undefined;
+    if (projectileBodies)
+      seconds = projectileBoundary(world, projectileBodies, projectileIds, seconds);
+    const materialExposure = captureMaterialExposure(world);
     // Fixed contributions become ineffective at the endpoint. Their release grants only
     // future movement, never movement over the interval they restricted.
     // docs/simulation-time.md#native-interval-contract
@@ -3595,7 +4579,7 @@ function* advanceWorldNative(
         actor.actor.action?.stage === 'approaching' &&
         !movementRestricted.has(id)
       )
-        advanceAction(world, actor, seconds, events);
+        advanceAction(world, actor, seconds, events, options.constructionPermissions);
     }
     const movementEffects = events.length !== beforeMovementEffects;
     // Non-emitting, bounded 0.4 m wander impulses retain their local timer remainder.
@@ -3643,6 +4627,7 @@ function* advanceWorldNative(
       }
       trackOccupancy(entity);
     }
+    yield* integrateMaterialExposure(world, materialExposure, seconds, events);
     const flightSources = flushFlight();
     const movedWithOccurrences = flightSources.length > 0;
     const beforeEffects = events.length;
@@ -3656,7 +4641,8 @@ function* advanceWorldNative(
         action?.id === actionId &&
         action.type !== 'follow' &&
         action.type !== 'status-effect' &&
-        action.remainingSeconds <= seconds + TIME_EPSILON
+        (action.assemblyPhase ? assemblyWorkBoundary(action) : action.remainingSeconds) <=
+          seconds + TIME_EPSILON
       );
     });
     const deferred =
@@ -3665,6 +4651,7 @@ function* advanceWorldNative(
       !workEnds &&
       !movementEffects &&
       !movedWithOccurrences &&
+      !projectileIds.length &&
       !fleeEnded &&
       mechanicalRevision(world) === intervalState;
     // Time deferred from earlier slices is applied for everyone before this endpoint's work, so
@@ -3674,11 +4661,21 @@ function* advanceWorldNative(
     pendingMechanics = mechanics;
     for (const id of participants.actors)
       reconcileActivityControl(world, id, world.entities[id]?.actor?.agency.plan, seconds);
-    yield* integrateEndpoint(world, participants, mechanics, deferred ? 0 : seconds, events, {
-      seconds,
-      working,
-      burning,
-    });
+    yield* integrateEndpoint(
+      world,
+      participants,
+      mechanics,
+      deferred ? 0 : seconds,
+      events,
+      options.constructionPermissions ?? [],
+      {
+        seconds,
+        working,
+        burning,
+      },
+    );
+    if (projectileBodies)
+      advanceProjectiles(world, projectileBodies, projectileIds, seconds, events);
     if (
       events
         .slice(beforeEffects)
@@ -3701,7 +4698,7 @@ function* advanceWorldNative(
         actor.actor.action?.stage === 'approaching' &&
         !capabilityBlocked(world, actor, 'locomotion')
       ) {
-        advanceAction(world, actor, 0, events);
+        advanceAction(world, actor, 0, events, options.constructionPermissions);
         // advanceAction mutates the action; read its stage afresh.
         const stage: string | undefined = world.entities[id]?.actor?.action?.stage;
         startedWork ||= stage === 'working';
@@ -3721,7 +4718,7 @@ function* advanceWorldNative(
       intervals++;
       slicesSinceBoundary = 0;
     }
-    if (sharedBoundary || fleeEnded || startedWork) discardMechanics();
+    if (sharedBoundary || fleeEnded || startedWork || workEnds) discardMechanics();
     else localize(flightSources);
     yield* updateEncounters(world, before, events, participants.actors);
     reconcileOutings(world, events, { companyObserved: true });
@@ -4089,6 +5086,7 @@ export function observeActor(
                       id: entity.actor.action.id,
                       type: entity.actor.action.type,
                       stage: entity.actor.action.stage,
+                      strikePhase: entity.actor.action.strikePhase,
                       remainingSeconds: entity.actor.action.remainingSeconds,
                       totalSeconds: entity.actor.action.totalSeconds,
                       path: [],
@@ -4120,13 +5118,12 @@ export function observeActor(
         delete copy.actor.conditions;
         delete copy.actor.inventoryInspection;
         delete copy.actor.knownTradeLots;
-        delete copy.actor.attackReadyAt;
+        delete copy.actor.combatReadyAt;
         copy.actor.agency = seedAgency();
         delete copy.actor.initialGoals;
         delete copy.actor.personality;
         delete copy.actor.backstory;
         delete copy.actor.participation;
-        copy.actor.equippedItemId = null;
         copy.actor.planGeneration = 0;
       }
       if (copy.resource) definitionIds.add(copy.resource.definitionId);
@@ -4152,8 +5149,11 @@ export function observeActor(
     itemDefinitions: [...definitionIds].flatMap((id) => {
       const definition = world.itemDefinitions[id];
       if (!definition) return [];
-      if (!definition.recipeId || knownRecipeIds.has(definition.recipeId)) return [definition];
-      const { recipeId, ...visible } = definition;
+      const disclosed = definition.recipeRecord
+        ? (({ recipeRecord: _record, ...facts }) => facts)(definition)
+        : definition;
+      if (!definition.recipeId || knownRecipeIds.has(definition.recipeId)) return [disclosed];
+      const { recipeId, ...visible } = disclosed;
       return [visible];
     }),
     knownRecipes,

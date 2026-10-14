@@ -1,3 +1,5 @@
+import { AimControls } from './ui/aim-controls';
+import { Construction } from './ui/construction';
 import { namePhrase } from '@open-legend/language';
 import { FamilyEditor } from './ui/family-editor';
 import { WorldEvents } from './ui/world-events';
@@ -37,6 +39,7 @@ import {
   SignInRequiredError,
   CharacterlessError,
   WorldLoadingError,
+  WorldCreationHostError,
   clearAccess,
   acceptAccess,
   eventsUrl,
@@ -472,6 +475,14 @@ function App({
             onCharacterless();
             return;
           }
+          if (e instanceof WorldCreationHostError) {
+            setView(null);
+            streamView = undefined;
+            stop?.();
+            stop = undefined;
+            setEntryStatus({ kind: 'creation-host', host: e.host });
+            return;
+          }
           if (e instanceof AccessError) {
             clearAccess();
             if (latest.current) {
@@ -576,6 +587,11 @@ function App({
     return () => window.removeEventListener('resize', resize);
   }, [scale, narrow]);
   const worldVisible = view !== null && (!tabPaused || tab.blocked);
+  const aimPanel =
+    view?.player.action?.controls &&
+    ((narrow && open.length > 0) || expandedWorkspaces.some((id) => open.includes(id)))
+      ? open.at(-1)
+      : undefined;
   useEffect(() => {
     if (!worldVisible || !survival.current || !hud.current || !canvas.current) return;
     return observeHudLayout(hud.current, canvas.current, survival.current, setCaptionOcclusions);
@@ -589,6 +605,8 @@ function App({
     expandedWorkspaces,
     choosingActionSubject,
     tabPaused,
+    !!view?.player.action?.controls,
+    aimPanel,
   ]);
   const workspaceWidth = Math.min(792, Math.max(336, width / scale - 184));
   function fit(panels: PanelId[]) {
@@ -657,7 +675,12 @@ function App({
     acknowledgement: 'notice' | 'inventory' | 'activity' = 'notice',
   ): Promise<ApiResult> {
     if (
-      (isPaused() && action.command.type !== 'inspect-inventory') ||
+      (isPaused() &&
+        !['inspect-inventory', 'cancel'].includes(action.command.type) &&
+        !(
+          action.command.type === 'outing' &&
+          ['leave', 'decline'].includes(action.command.outingOperation ?? '')
+        )) ||
       !latest.current?.access?.controlling
     ) {
       return { ok: false, code: 'paused', message: 'Resume here to play.' };
@@ -1415,7 +1438,19 @@ function App({
           />
         );
       case 'crafting':
-        return <Crafting {...props} invent={() => invent()} />;
+        return (
+          <>
+            <Construction
+              key={`${view.access?.scope}:${view.saveTimeline}:${view.player.id}`}
+              view={view}
+              connected={connected}
+              visible={open.includes('crafting') && (!narrow || open.at(-1) === 'crafting')}
+              command={command}
+              preview={(shapes, valid) => scene.current?.setConstructionPreview(shapes, valid)}
+            />
+            <Crafting {...props} invent={() => invent()} />
+          </>
+        );
       case 'character':
         return (
           <Character
@@ -1709,6 +1744,15 @@ function App({
                 <span className="ol-meta">{view.presentation.locationName}</span>
               </div>
               <Condition {...view.player} />
+              {view.player.evasion && (
+                <p className="ol-caption">
+                  {view.player.evasion.label}:{' '}
+                  {view.player.evasion.readyIn > 0
+                    ? `ready in ${Math.ceil(view.player.evasion.readyIn)} game seconds`
+                    : 'ready'}
+                </p>
+              )}
+
               <p className="ol-caption ol-player-state">
                 {view.player.participation === 'inactive'
                   ? 'Away from the world'
@@ -1811,6 +1855,16 @@ function App({
                   onPress={() => setTimeSettings(!timeSettings)}
                 />
               </div>
+              {view.player.action?.controls && !aimPanel && (
+                <div className="ol-card ol-aim-status">
+                  <AimControls
+                    action={view.player.action}
+                    connected={connected}
+                    controlling={!!view.access?.controlling}
+                    command={(choice) => void command(choice)}
+                  />
+                </div>
+              )}
               {timeSettings && (
                 <div className="ol-card ol-time-settings" role="region" aria-label="Time settings">
                   <p>
@@ -1941,6 +1995,16 @@ function App({
                                 },
                               }
                             : undefined
+                        }
+                        footer={
+                          id === aimPanel && view.player.action?.controls ? (
+                            <AimControls
+                              action={view.player.action}
+                              connected={connected}
+                              controlling={!!view.access?.controlling}
+                              command={(choice) => void command(choice)}
+                            />
+                          ) : undefined
                         }
                         onClose={() => hide(id)}
                         onBack={

@@ -1,3 +1,12 @@
+import {
+  competenceValue,
+  initializePractice,
+  setStartingPractice,
+  validatePractice,
+  validatePracticeProfile,
+} from './practical-competence.js';
+import { validateCoaching } from './coaching.js';
+import { validateAssemblies } from './assembly-validation.js';
 import { validNarrationTemplate } from '@open-legend/language';
 import {
   narrationTemplate,
@@ -15,7 +24,7 @@ import { recordSemanticChange } from './dependencies.js';
 import { validateNativeWork } from './native-work.js';
 import { validateWorkState } from './work-budget.js';
 import { validateParticipation } from './participation.js';
-import { isDraft, original, freeze } from 'immer';
+import { current, isDraft, original, freeze } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
 import { validateKnowledge } from './knowledge.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
@@ -38,9 +47,11 @@ import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
+import { validateFoodPreparations } from './food-preparation.js';
+import { validateFiniteCasts } from './finite-casts.js';
 import { validateActionExperience } from './action-experience.js';
 import { validateActivityHostPins } from './activity-hosts.js';
-import { activityHostForCommand } from './activity-hosts.js';
+import { nativeCommandSupported, activityHostForCommand } from './activity-hosts.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { isFuel } from './worlds/base/fire.js';
 import { validateAgency } from './agency.js';
@@ -50,14 +61,20 @@ import { bodyPolicy, validateBodyPolicy, type BodyPolicy } from './body-policy.j
 import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
-import { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
+import { trustedRecipeImplementations } from './world-composition.js';
+import { validateRangedPolicy, validateRangedActions, type RangedPolicy } from './ranged-policy.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
-import { hasRecordFields } from './records.js';
+import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
+import { validateEquipment } from './equipment.js';
+import { validateContactDefense } from './contact-defense.js';
+import { validateEvasion } from './evasion.js';
+import { validateRanged } from './ranged.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
-import { validateOutings } from './outings.js';
+import { validateOutings, validateCombatHelpReference } from './outings.js';
+import { validateSocialPolicy } from './social-policy.js';
 
 export type AttributeValue = number | string;
 /** Consequences of advanceReservoirs and kernel's native replenish action. These
@@ -84,11 +101,17 @@ export type AttributeCriticalPredicate =
     }
   | { concernActive: true };
 export interface AttributeDefinition {
+  practice?: import('./practical-competence.js').PracticeProfile;
   meaning?: string;
   condition?: ConditionPolicy;
   id: string;
   version: number;
-  implementation: 'native-health-v1' | 'number-v1' | 'reservoir-v1' | 'category-v1';
+  implementation:
+    | 'native-health-v1'
+    | 'number-v1'
+    | 'reservoir-v1'
+    | 'category-v1'
+    | 'finite-practice-v1';
   name: string;
   disclosure: 'public' | 'owner';
   presentation: { icon: string; color: string };
@@ -130,6 +153,8 @@ export interface WorldModuleManifest {
   sensePins: DefinitionPin[];
   acoustics: AcousticPolicy;
   acousticsPin: DefinitionPin;
+  rangedPolicy: RangedPolicy | null;
+  rangedPolicyPin: DefinitionPin | null;
   activityHosts: DefinitionPin[];
   recipeFamilies: DefinitionPin[];
 }
@@ -157,6 +182,12 @@ export interface AttributeView {
 // Reviewed service bindings, not dynamically imported functions. Definitions cannot
 // grant new effects: archive/07-technical-architecture/world-module-runtime.md#2-two-catalogs-with-different-authority.
 export const HOST_IMPLEMENTATIONS = Object.freeze({
+  'finite-practice-v1': {
+    interface: 'attribute-number-v1',
+    owner: 'practice',
+    execution: 'native',
+    storage: 'practice',
+  },
   'native-health-v1': {
     interface: 'attribute-number-v1',
     owner: 'body',
@@ -182,17 +213,39 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
     storage: 'attributes',
   },
 } as const);
-const definitionPins = new WeakMap<object, DefinitionPin>();
-export function definitionPin(definition: { id: string; version: number }): DefinitionPin {
-  const cached = definitionPins.get(definition);
+const definitionPins = new WeakMap<object, Readonly<DefinitionPin>>();
+export function definitionPin<T extends { id: string; version: number }>(
+  definition: T,
+): Readonly<DefinitionPin> {
+  // Unchanged draft definitions resolve to their frozen original, so native state
+  // reads share its exact pin. Changed drafts produce a fresh, uncached snapshot.
+  const snapshot = isDraft(definition) ? current(definition) : definition;
+  const cached = definitionPins.get(snapshot);
   if (cached) return cached;
-  const pin = {
-    id: definition.id,
-    version: definition.version,
-    digest: contentLabel(canonicalJson(definition)),
-  };
-  if (!isDraft(definition) && Object.isFrozen(definition)) definitionPins.set(definition, pin);
+  // Shared derived identity is read-only; callers replace or copy pins when authoring.
+  const pin = Object.freeze({
+    id: snapshot.id,
+    version: snapshot.version,
+    digest: contentLabel(canonicalJson(snapshot)),
+  });
+  if (isImmutableData(snapshot)) definitionPins.set(snapshot, pin);
   return pin;
+}
+
+/** Learned activities retain the exact current authored meaning without storing
+ * every definition twice in their bounded record and signature. Resolve actual
+ * data too: a mutable authoring draft cannot hide edits behind unchanged saved pins.
+ */
+export function activityManifest(world: WorldState): string {
+  const manifest = world.moduleManifest;
+  return canonicalJson({
+    ...manifest,
+    definitions: manifest.definitions.map(definitionPin),
+    senses: manifest.senses.map(definitionPin),
+    bodyPolicy: manifest.bodyPolicy && definitionPin(manifest.bodyPolicy),
+    acoustics: definitionPin(manifest.acoustics),
+    rangedPolicy: manifest.rangedPolicy && definitionPin(manifest.rangedPolicy),
+  });
 }
 export function createModuleManifest(
   definitions: AttributeDefinition[],
@@ -200,6 +253,7 @@ export function createModuleManifest(
   bodyPolicy: BodyPolicy | null,
   recipeFamilies: readonly DefinitionPin[],
   activityHosts: readonly DefinitionPin[] = [],
+  rangedPolicy: RangedPolicy | null = null,
 ): WorldModuleManifest {
   const manifest: WorldModuleManifest = {
     appraisals: structuredClone(BASE_APPRAISAL_POLICY),
@@ -216,6 +270,8 @@ export function createModuleManifest(
     acousticsPin: definitionPin(DEFAULT_ACOUSTICS),
     recipeFamilies: recipeFamilies.map((pin) => ({ ...pin })),
     activityHosts: activityHosts.map((pin) => ({ ...pin })),
+    rangedPolicy: rangedPolicy && structuredClone(rangedPolicy),
+    rangedPolicyPin: rangedPolicy && definitionPin(rangedPolicy),
   };
   validateModuleManifest(manifest);
   return manifest;
@@ -223,17 +279,22 @@ export function createModuleManifest(
 
 // Trusted definitions are immutable host content. Keep their pins once, while checking
 // every live manifest pin; caching mutable world manifests could admit changed meaning.
-const trustedRecipeFamilies = new Map(
-  BASE_RECIPE_FAMILIES.map((family) => {
-    freeze(family.definition, true);
-    return [
-      family.definition.id,
-      { family, pin: Object.freeze(definitionPin(family.definition)) },
-    ] as const;
-  }),
-);
+let trustedRecipeFamilies:
+  | Map<string, { family: RecipeFamilyDescriptor; pin: DefinitionPin }>
+  | undefined;
+function recipeImplementations() {
+  return (trustedRecipeFamilies ??= new Map(
+    trustedRecipeImplementations().map((family) => {
+      freeze(family.definition, true);
+      return [
+        family.definition.id,
+        { family, pin: Object.freeze(definitionPin(family.definition)) },
+      ] as const;
+    }),
+  ));
+}
 function exactRecipeFamily(pin: DefinitionPin): RecipeFamilyDescriptor | undefined {
-  const trusted = trustedRecipeFamilies.get(pin.id);
+  const trusted = recipeImplementations().get(pin.id);
   return trusted &&
     Object.keys(pin).length === 3 &&
     pin.id === trusted.pin.id &&
@@ -290,9 +351,19 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'acousticsPin',
     'activityHosts',
     'recipeFamilies',
+    'rangedPolicy',
+    'rangedPolicyPin',
   ]);
   validateAppraisalPolicy(manifest.appraisals);
   validateActivityHostPins(manifest.activityHosts);
+  validateRangedPolicy(manifest.rangedPolicy);
+  if (
+    manifest.rangedPolicy === null
+      ? manifest.rangedPolicyPin !== null
+      : !isDefinitionPin(manifest.rangedPolicyPin) ||
+        !sameDefinitionPin(manifest.rangedPolicyPin, definitionPin(manifest.rangedPolicy))
+  )
+    throw new Error('Missing exact ranged policy dependency.');
   if (
     manifest.interface !== 'world-modules-v1' ||
     !Number.isSafeInteger(manifest.revision) ||
@@ -372,6 +443,7 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       'condition',
       'critical',
       'editorCritical',
+      'practice',
     ]);
     if (
       !namespace.test(d.id) ||
@@ -392,7 +464,21 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       throw new Error('Invalid attribute presentation symbols.');
     ids.add(d.id);
     const host = HOST_IMPLEMENTATIONS[d.implementation];
-    const owner = host.storage === 'attributes' ? d.id : host.storage;
+    const owner =
+      host.storage === 'attributes' || host.storage === 'practice' ? d.id : host.storage;
+    if (d.implementation === 'finite-practice-v1') {
+      validatePracticeProfile(d);
+      const familyOwner = `practice:${d.practice!.family.id}`;
+      if (owners.has(familyOwner))
+        throw new Error('Duplicate accuracy contribution for one mechanism.');
+      owners.add(familyOwner);
+      if (
+        !manifest.recipeFamilies.some(
+          (pin) => canonicalJson(pin) === canonicalJson(d.practice!.family),
+        )
+      )
+        throw new Error('Competence requires its exact installed mechanism.');
+    } else if (d.practice) throw new Error('Practice requires its supported state owner.');
     if (owners.has(owner)) throw new Error('Duplicate attribute state owner.');
     owners.add(owner);
     object(
@@ -508,6 +594,7 @@ export function readAttribute(
 ): AttributeValue | undefined {
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;
   if (storage === 'attributes') return actor.attributes?.[definition.id]?.value;
+  if (storage === 'practice') return competenceValue(actor, definition);
   // Body health remains raw authoritative points; definition units are only a projection.
   if (
     storage === 'health' &&
@@ -556,6 +643,7 @@ export function setAttribute(
 ): boolean {
   validateAttributeValue(d, value);
   const storage = HOST_IMPLEMENTATIONS[d.implementation].storage;
+  if (storage === 'practice') return setStartingPractice(world, entity, d, value);
   if (storage !== 'attributes')
     throw new Error('Native state must use its owning body/need operation.');
   const prior = (entity.actor?.attributes ?? entity.attributes)?.[d.id];
@@ -624,6 +712,10 @@ export function initializeAttributes(
   initialValues: Record<string, AttributeValue> = {},
 ): void {
   for (const d of definitions) {
+    if (d.implementation === 'finite-practice-v1') {
+      initializePractice(actor, d, initialValues[d.id] ?? d.schema.initial);
+      continue;
+    }
     if (HOST_IMPLEMENTATIONS[d.implementation].storage !== 'attributes')
       throw new Error('Cannot initialize a second native state owner.');
     if (actor.attributes?.[d.id]) throw new Error('Attribute already initialized.');
@@ -687,7 +779,11 @@ export function projectAttributes(
         ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
           ? { editorCriticalComparison: { ...d.editorCritical.compare } }
           : {}),
-        revision: entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0,
+        revision:
+          entity.actor!.practice?.[d.id]?.revision ??
+          entity.actor!.attributes?.[d.id]?.revision ??
+          entity.actor!.body?.revision ??
+          0,
         ...(d.schema.kind === 'number' ? { min: d.schema.min, max, unit: d.schema.unit } : {}),
         ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
         ...(audience === 'owner' && d.condition
@@ -759,6 +855,7 @@ export function validateWorldModules(world: WorldState): void {
       Object.values(world.presentation).some((value) => typeof value !== 'string' || !value.trim()))
   )
     throw new Error('Invalid world presentation.');
+  validateSocialPolicy(world);
   for (const event of world.events)
     if (event.narration !== undefined) validateNarration(event.narration);
   const interval = world.nativeInterval;
@@ -785,6 +882,7 @@ export function validateWorldModules(world: WorldState): void {
   if (!world.moduleManifest) throw new Error('World module manifest is missing.');
   validateStatusEffects(world);
   validateNativeWork(world);
+  validateAssemblies(world);
   validateSpatialWorld(world);
   validatePerceptionState(world);
   validatePlaces(world);
@@ -792,6 +890,12 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
   validateGatheringTools(world);
+  validateEquipment(world);
+  validateContactDefense(world);
+  validateRanged(world);
+  validateEvasion(world);
+  validateFoodPreparations(world);
+  validateFiniteCasts(world);
   for (const definition of Object.values(world.itemDefinitions)) {
     if (
       (definition.icon !== undefined && typeof definition.icon !== 'string') ||
@@ -801,9 +905,23 @@ export function validateWorldModules(world: WorldState): void {
     if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))
       throw new Error('Invalid melee definition.');
+    if (
+      definition.recipeRecord &&
+      (definition.recipeRecord.disclosure !== 'method' ||
+        !isDefinitionPin(definition.recipeRecord.method))
+    )
+      throw new Error('Invalid recipe-record capability.');
+    if (
+      definition.inscription !== undefined &&
+      (typeof definition.inscription !== 'string' ||
+        !definition.inscription.trim() ||
+        definition.inscription.length > 600)
+    )
+      throw new Error('Invalid item inscription.');
   }
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
+    if (recipe.provenance.source === 'authored-world') continue;
     const authority = recipe.provenance?.authority;
     if (
       !authority ||
@@ -817,6 +935,8 @@ export function validateWorldModules(world: WorldState): void {
   validateAgency(world);
   validateOutings(world);
   validateActionExperience(world);
+  validatePractice(world);
+  validateCoaching(world);
   validateModuleManifest(world.moduleManifest);
   validateBodyPolicy(
     world.moduleManifest.bodyPolicy,
@@ -826,6 +946,7 @@ export function validateWorldModules(world: WorldState): void {
   );
   validateCognitionPolicy(world, world.cognitionPolicy);
   validateReincarnation(world);
+  validateRangedActions(world);
   validateNativeStrikes(world);
   validateTerritorialThreats(world);
   for (const e of Object.values(world.entities)) {
@@ -949,8 +1070,8 @@ export function validateWorldModules(world: WorldState): void {
     )
       throw new Error('Invalid saved inventory inspection.');
     if (
-      e.actor?.attackReadyAt !== undefined &&
-      (!finite(e.actor.attackReadyAt) || e.actor.attackReadyAt < 0)
+      e.actor?.combatReadyAt !== undefined &&
+      (!finite(e.actor.combatReadyAt) || e.actor.combatReadyAt < 0)
     )
       throw new Error('Invalid attack recovery deadline.');
     for (const contact of Object.values(e.actor?.contacts ?? {})) {
@@ -994,6 +1115,8 @@ export function validateWorldModules(world: WorldState): void {
         throw new Error('Invalid replenishment source.');
     }
     const fireAction = e.actor?.action;
+    if (fireAction && !nativeCommandSupported(world, fireAction.type))
+      throw new Error('Active work requires its installed action support.');
     if (fireAction?.fireGuard !== undefined) {
       const guard = fireAction.fireGuard;
       if (
@@ -1021,7 +1144,7 @@ export function validateWorldModules(world: WorldState): void {
     const activeAction = e.actor?.action;
     if (
       activeAction?.targetLife !== undefined &&
-      (!['strike', 'hunt'].includes(activeAction.type) ||
+      (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         !Number.isSafeInteger(activeAction.targetLife) ||
         activeAction.targetLife < 0)
     )
@@ -1029,7 +1152,7 @@ export function validateWorldModules(world: WorldState): void {
     if (activeAction?.lethalPermission) {
       const permission = activeAction.lethalPermission;
       if (
-        !['strike', 'hunt'].includes(activeAction.type) ||
+        !['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         permission.actorId !== e.id ||
         permission.sourceLife !== (e.actor!.physicalLife ?? 0) ||
         permission.targetId !== activeAction.targetId ||
@@ -1039,9 +1162,10 @@ export function validateWorldModules(world: WorldState): void {
       )
         throw new Error('Invalid saved lethal permission.');
     }
+    if (activeAction) validateCombatHelpReference(world, e.id, activeAction);
     if (
       activeAction?.requiresLethalReview !== undefined &&
-      (!['strike', 'hunt'].includes(activeAction.type) ||
+      (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         typeof activeAction.requiresLethalReview !== 'boolean')
     )
       throw new Error('Invalid saved attack origin.');
@@ -1065,7 +1189,7 @@ export function validateWorldModules(world: WorldState): void {
         (e.actor.action.strikePhase === 'windup' && e.actor.action.strikeOutcome !== undefined) ||
         (e.actor.action.strikePhase === 'recovery' &&
           (!['hit', 'miss'].includes(e.actor.action.strikeOutcome ?? '') ||
-            e.actor.attackReadyAt === undefined)))
+            e.actor.combatReadyAt === undefined)))
     )
       throw new Error('Invalid saved melee phase.');
     if (

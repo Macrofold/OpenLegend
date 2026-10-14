@@ -1,16 +1,39 @@
+import { observedBodyHealth } from './hunting.js';
+import { bodyPolicy } from '../../body-policy.js';
+import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import { practiceDefinition, toolPracticeDefinition } from '../../practical-competence.js';
+import { preparationDefinition } from '../../food-preparation.js';
+import { castDefinition } from '../../finite-casts.js';
 import type { Command, Entity, ItemInstance, WorldState } from '../../types.js';
-import type { ActivityView } from '../../action-experience.js';
+import { ACTIVITY_LIMITS, type ActivityView } from '../../action-experience.js';
 import { itemFor } from '../../objects.js';
 import { accessiblePossession, possessionItems } from '../../object-access.js';
 import { worldPosition } from '../../spatial-state.js';
 import { seesEntity } from '../../perception.js';
 import { observerDescription } from './knowledge.js';
 import { strikeDefinition, describeAttack } from '../../strikes.js';
-import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
+import { BASE_ACTION_DEFAULTS } from './actions.js';
+import { rangedPolicy, rangedApproachRange, shotPreparationSeconds } from '../../ranged-policy.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { attributeDefinition } from '../../world-modules.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
+import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
+import { evasionDescription } from './combat-views.js';
+
+export const BASE_FOOD_ACTION_WORDING = {
+  cookingDescription:
+    'Use the selected preparation and exact ingredients at a lit heat source. Spent ingredients are not returned on interruption.',
+  cookingLabel: 'Prepare food',
+  cookingRequiredText:
+    'Choose an installed preparation, its ingredients and a perceived heat source.',
+  cookingHeatRequiredText: 'A perceived lit heat source is needed.',
+  fishingDescription: 'Choose one cast at a compatible finite source using the selected tool.',
+  fishingLabel: 'Fish once',
+  fishingHereLabel: 'Fish here',
+  fishingRequiredText: 'Choose a perceived compatible reach and an accessible fishing tool.',
+  fishingBindingText: 'Choose a river reach and an exact fishing tool.',
+};
 
 type ViewPossessions = {
   items: readonly ItemInstance[];
@@ -31,7 +54,10 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
   const selected = offers.find(
     (offer) =>
       (offer.command.type === 'strike' && offer.command.itemId === equipment.id) ||
-      (offer.command.type === 'hunt' && !!definition?.launcher) ||
+      (['hunt', 'aim', 'shoot-once'].includes(offer.command.type) &&
+        offer.command.itemId === equipment.id &&
+        !!definition?.launcher) ||
+      (offer.command.type === 'practice-shot' && offer.command.itemId === equipment.id) ||
       (offer.command.type === 'gather' &&
         !!definition?.gatheringTool &&
         definition.gatheringTool.resourceId === target.resource?.definitionId),
@@ -74,12 +100,18 @@ function activityView(
   const names: Partial<Record<Command['type'], string>> = {
     strike: 'Attack once',
     hunt: 'Hunt once',
+    aim: BASE_RANGED_TEXT.aimName,
+    'shoot-once': BASE_RANGED_TEXT.shotName,
+    'release-shot': BASE_RANGED_TEXT.shootingName,
     harvest: 'Harvest',
     cook: 'Cook',
+    fish: BASE_FOOD_ACTION_WORDING.fishingLabel,
     'tend-fire': 'Tend a fire',
     eat: 'Eat',
     equip: 'Equip',
+    guard: 'Guard with shield',
     move: 'Move',
+    evade: bodyPolicy(world)?.evasion?.label,
     gather: 'Gather',
     prepare: 'Prepare',
     craft: 'Make',
@@ -95,7 +127,15 @@ function activityView(
     'treat-scar': 'Treat a scar',
     say: 'Speak',
     teach: 'Teach',
+    'learn-record': 'Learn a recorded method',
   };
+  if (command.type === 'practice-shot')
+    names['practice-shot'] = practiceDefinition(
+      world,
+      target?.practiceTarget?.attributeId ?? '',
+    )?.practice?.practiceLabel;
+  if (command.type === 'coaching')
+    names.coaching = practiceDefinition(world, command.attributeId)?.practice?.coachingLabel;
   const reservoir =
     command.type === 'replenish'
       ? attributeDefinition(world, command.attributeId)?.reservoir
@@ -139,10 +179,11 @@ function activityView(
       value: directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8]!,
       critical: true,
     });
-    if (target.animal && target.actor)
+    const health = observedBodyHealth(world, command.actorId, target.id);
+    if (health)
       view.facts.push({
         name: 'health',
-        value: `${target.actor.health}/${target.actor.body?.maxHealth ?? 'unknown'}`,
+        value: health,
         critical: true,
       });
   }
@@ -171,6 +212,29 @@ function activityView(
     if (definition.description)
       view.facts.push({ name: 'description', value: definition.description, critical: false });
   }
+  if (command.type === 'guard' && definition?.contactDefense) {
+    view.facts.push({
+      name: 'guard',
+      value: guardDescription(definition.contactDefense),
+      critical: true,
+    });
+    view.facts.push({
+      name: 'facing',
+      value: command.targetId
+        ? 'Face this visible target once; the shield does not track it'
+        : 'Hold the chosen body direction; camera rotation does not turn it',
+      critical: true,
+    });
+  }
+  if (command.type === 'evade' && actor) {
+    const description = evasionDescription(world, actor, command.destination);
+    if (description)
+      view.facts.push({
+        name: 'movement',
+        value: description,
+        critical: true,
+      });
+  }
   if (command.type === 'strike') {
     const profile =
       !command.weaponItemId || item
@@ -185,7 +249,12 @@ function activityView(
       });
     }
   }
-  if (command.type === 'hunt' && definition?.launcher) {
+  if (
+    ['hunt', 'aim', 'shoot-once'].includes(command.type) &&
+    'ammoItemId' in command &&
+    definition?.launcher &&
+    rangedPolicy(world)
+  ) {
     const compatible = (item: ItemInstance) =>
       world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
       definition.launcher!.ammunitionKind;
@@ -200,17 +269,18 @@ function activityView(
           );
     const ammo = ammunition && world.itemDefinitions[ammunition.definitionId];
     view.facts.push({
-      name: 'attack',
-      value: describeAttack({
-        ...definition.launcher,
-        damage: definition.launcher.damage + (ammo?.ammunition?.damageBonus ?? 0),
-        workSeconds: BASE_ACTION_DEFAULTS.shotSeconds,
-      }),
+      name: 'shot',
+      value: `${definition.launcher.damage + (ammo?.ammunition?.damageBonus ?? 0)} injury before protection; range ${definition.launcher.range} m; base aim steadiness ${Math.round(definition.launcher.accuracy * 100)}%; straight flight ${definition.launcher.flightSpeed} m per game second. Movement and solid cover determine contact.`,
+      critical: false,
+    });
+    view.facts.push({
+      name: 'preparation',
+      value: `${shotPreparationSeconds(world, toolPracticeDefinition(world, definition)?.practice)} game seconds after any approach; ${command.type === 'aim' ? 'then choose Shoot or Cancel aim' : 'then releases one projectile automatically'}`,
       critical: true,
     });
     view.facts.push({
       name: 'approach',
-      value: `Move to within ${rangedApproachRange(definition.launcher.range).toFixed(2)} m; the route length is not known`,
+      value: `Move to within ${rangedApproachRange(world, definition.launcher.range).toFixed(2)} m; the route length is not known`,
       critical: true,
     });
     view.facts.push({
@@ -247,11 +317,75 @@ function activityView(
     });
   }
   if (command.type === 'cook') {
-    view.facts.push({
-      name: 'cost',
-      value: `Uses one raw meat at the start; ${BASE_ACTION_DEFAULTS.cookSeconds} game seconds; requires a lit fire throughout; spent meat is not returned on interruption`,
-      critical: true,
-    });
+    const preparation = preparationDefinition(world, command);
+    if (preparation) {
+      view.name = command.purpose ?? preparation.name;
+      view.facts.push({
+        name: 'cost',
+        value: `Uses the selected ingredients at work start; ${preparation.workSeconds} game seconds; requires a lit fire throughout; spent ingredients are not returned on interruption`,
+        critical: true,
+      });
+      const products = preparation.outputs.map((output) => ({
+        quantity: output.quantity,
+        material: world.itemDefinitions[output.definitionId]?.name ?? 'item',
+      }));
+      view.facts.push({
+        name: 'output',
+        value: products,
+        sentence: `On completion: ${products.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
+        critical: true,
+      });
+      const ingredients = preparation.inputs.map((input) => {
+        const id = command.inputs[input.role];
+        const ingredient =
+          id && accessiblePossession(world, command.actorId, id) ? itemFor(world, id) : undefined;
+        return {
+          role: input.role,
+          material: world.itemDefinitions[input.definitionId]?.name ?? 'ingredient',
+          'required quantity': input.quantity,
+          'selected carried quantity':
+            ingredient?.quantity ?? 'The selected ingredient is no longer accessible',
+        };
+      });
+      // Preserve each role without turning authored role text into a display label
+      // or exceeding the record owner's per-detail/fact limits.
+      for (let at = 0; at < ingredients.length; at += ACTIVITY_LIMITS.detailEntries) {
+        const portions = ingredients.slice(at, at + ACTIVITY_LIMITS.detailEntries);
+        view.facts.push({
+          name: at ? `more ingredients ${at / ACTIVITY_LIMITS.detailEntries + 1}` : 'ingredients',
+          value: portions,
+          sentence: `Ingredients: ${portions
+            .map((portion) => {
+              const carried = portion['selected carried quantity'];
+              return `${portion.role}: ${portion['required quantity']} ${portion.material} (${typeof carried === 'number' ? `${carried} in the selected carried stack` : carried})`;
+            })
+            .join('; ')}`,
+          critical: true,
+        });
+      }
+    } else
+      view.facts.push({
+        name: 'preparation',
+        value: 'The selected preparation changed or is unavailable',
+        critical: true,
+      });
+  }
+  if (command.type === 'fish') {
+    const cast = perceived ? castDefinition(world, target) : undefined;
+    if (cast) {
+      view.facts.push({ name: 'cast', value: cast.description, critical: true });
+      view.facts.push({
+        name: 'supply',
+        value: target!.resource!.quantity > 0 ? cast.supplyUnknownText : cast.exhaustedText,
+        critical: true,
+      });
+      view.facts.push({
+        name: 'approach',
+        value:
+          'Use the selected dry bank stance with a clear line into the declared water; time is spent even on an empty attempt',
+        critical: true,
+      });
+    }
   }
   if (command.type === 'harvest')
     view.facts.push({
@@ -376,15 +510,27 @@ function nativeCatalogueCommitments(
       'Material selection',
       'Draws from carried supplies across lots; this action does not bind to one selected lot',
     ]);
-  if (command.type === 'strike' && command.weaponItemId)
-    facts.push(['Equipment', 'Requires this exact weapon to be equipped; approach is automatic']);
-  if (command.type === 'hunt' && command.weaponItemId)
+  const heldItemId =
+    command.type === 'guard'
+      ? command.itemId
+      : command.type === 'hunt' ||
+          command.type === 'aim' ||
+          command.type === 'shoot-once' ||
+          command.type === 'strike'
+        ? command.weaponItemId
+        : undefined;
+  if (heldItemId)
     facts.push([
       'Equipment',
-      'Uses this exact carried ranged tool; approach is automatic and equipped equipment is unchanged',
+      `${'autoEquip' in command && command.autoEquip ? equipmentChangeDescription(world, command.actorId, heldItemId) : ''}Requires this exact item to be held${command.type === 'guard' ? '; guarding stays in place' : '; approach is automatic'}`,
     ]);
-  if (command.type === 'hunt') {
-    facts.push(['Time', `${BASE_ACTION_DEFAULTS.shotSeconds} seconds of game time, plus approach`]);
+  if (command.type === 'hunt' || command.type === 'aim' || command.type === 'shoot-once') {
+    const tool = command.weaponItemId && itemFor(world, command.weaponItemId);
+    const definition = tool && world.itemDefinitions[tool.definitionId];
+    facts.push([
+      'Time',
+      `${shotPreparationSeconds(world, definition ? toolPracticeDefinition(world, definition)?.practice : undefined)} seconds of game time, plus approach`,
+    ]);
     if (command.ammoItemId) {
       const projectile = activityView(
         world,
@@ -400,7 +546,12 @@ function nativeCatalogueCommitments(
     } else if (command.weaponItemId)
       facts.push(['Ammunition', 'No compatible accessible, unreserved projectile is available.']);
   }
-  if (command.type === 'hunt' || command.type === 'strike')
+  if (
+    command.type === 'hunt' ||
+    command.type === 'aim' ||
+    command.type === 'shoot-once' ||
+    command.type === 'strike'
+  )
     facts.push([
       'Uncertainty',
       'An attempt, not a promised hit or kill; range and line of effect are checked at impact',
@@ -414,6 +565,33 @@ export function nativeCatalogueView(
   world: WorldState,
   items: readonly ItemInstance[],
 ): (command: Command) => ActivityView {
+  const possessions = prepareViewPossessions(world, items);
+  return (command) => {
+    const view = activityView(world, command, possessions);
+    for (const [name, value] of nativeCatalogueCommitments(world, command, possessions))
+      view.facts.push({ name, value, critical: true });
+    return view;
+  };
+}
+/** Share physical naming and exact ammunition reads without adding catalogue-only facts. */
+export function nativeActivityViews(
+  world: WorldState,
+  items: readonly ItemInstance[],
+): (command: Command) => ActivityView {
+  let possessions: ViewPossessions | undefined;
+  return (command) =>
+    activityView(
+      world,
+      command,
+      ('weaponItemId' in command && command.weaponItemId) || ('itemId' in command && command.itemId)
+        ? (possessions ??= prepareViewPossessions(world, items))
+        : undefined,
+    );
+}
+function prepareViewPossessions(
+  world: WorldState,
+  items: readonly ItemInstance[],
+): ViewPossessions {
   const counts = new Map<string, number>(),
     ordinals = new Map<string, number>();
   for (const item of items) {
@@ -427,15 +605,9 @@ export function nativeCatalogueView(
     ordinals.set(name, ordinal);
     names.set(item.id, toolName(name, ordinal, counts.get(name)!));
   }
-  const possessions: ViewPossessions = {
+  return {
     items,
     names,
     byId: new Map(items.map((item) => [item.id, item])),
-  };
-  return (command) => {
-    const view = activityView(world, command, possessions);
-    for (const [name, value] of nativeCatalogueCommitments(world, command, possessions))
-      view.facts.push({ name, value, critical: true });
-    return view;
   };
 }

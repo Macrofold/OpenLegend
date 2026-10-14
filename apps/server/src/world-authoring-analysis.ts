@@ -26,6 +26,11 @@ import type { WorldService } from './world-service.js';
 import { statusCapabilitySchema, statusConditionSchema } from './world-authoring-schemas.js';
 import { authoringBodyTarget } from './world-authoring-bindings.js';
 import { authoringAttributeValue } from './world-authoring-values.js';
+import {
+  OPENING_CHECKER_VERSION,
+  prepareOpeningAuthoring,
+  type PreparedOpening,
+} from './world-opening-authoring.js';
 
 export const CONTEXT_WORK = { records: 64, examined: 256, tools: 32, bytes: 64000 } as const;
 export const AUTHORING_ANALYSIS_VERSION = 'native-authoring-analysis-v2';
@@ -48,6 +53,13 @@ export function authoringEvidenceDependencies(
   scope: RequestScope,
   impact = authoringImpact(world, draft),
 ) {
+  if (draft.kind === 'world-opening')
+    return fingerprint([
+      draft.digest,
+      OPENING_CHECKER_VERSION,
+      scope.accountId,
+      scope.grantRevision,
+    ]);
   return fingerprint([
     AUTHORING_ANALYSIS_VERSION,
     draft.base,
@@ -449,7 +461,10 @@ export function prepareAuthoring(
   scope: RequestScope,
   generation: string,
   requirements: WorldAgentRequirement[],
+  opening?: PreparedOpening,
 ) {
+  if (draft.kind === 'world-opening')
+    return prepareOpeningAuthoring(service, draft, scope, generation, requirements, opening);
   const validation = validateAuthoring(service, draft, scope, world);
   const graph = candidateGraph(world, draft, generation, (id) =>
     service.mayInspectPrivate(id, scope),

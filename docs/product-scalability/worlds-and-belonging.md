@@ -93,6 +93,8 @@ A player returns after others have visited: their home and particular relationsh
 
 Failures include: forced transfer into an incompatible timeline, copied companions with contradictory memories, creator inspection of visiting humans' private state, unannounced destruction during inactivity, and a global campaign overriding private-domain consent. The [feature specification](../projects/product-scalability-feature-spec.md) turns these into delivery gates.
 
+The [DG29 visit proposal](../projects/participants-and-world-travel-feature-spec.md) supplies a concrete compatible-world consumer: deliberate readiness, the same existing traveler, exact lawful belongings when that stage is qualified, separate domain grants and retained recovery when ordinary entry is unavailable. It first proves a wanted same-world encounter and permits that delivery independently of cross-world transfer. Shared histories, companions, incompatible powers and clocks require their own supported expansion; a social-only trip still creates external restoration dependencies. This proposal does not itself implement protected houses, travel or independent-operator federation.
+
 ## Maintained records
 
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).

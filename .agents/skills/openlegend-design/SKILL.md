@@ -2,7 +2,8 @@
 name: openlegend-design
 description: >-
   Create paired feature specs and technical designs, execute a project plan after chat approval,
-  or design changed engine/world contracts; not routine fixes.
+  or design changed engine/world contracts and gameplay discoveries, rewards, knowledge or progression;
+  not routine fixes or prose corrections.
 ---
 
 # Design from playable behavior
@@ -11,7 +12,15 @@ For prioritized parallel assignments or standalone task prompts, use [create-par
 
 Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Follow the [root planning requirement](../../../AGENTS.md#plan-before-implementation), scaling detail to the task.
 
+For a new gameplay mechanic, compare the complete benefit and burden with the already-capable ordinary route, including the actual world clock, materials, approach, controls and conversation. Correct counters or probability arithmetic establish mechanical behavior, not whether people notice or value it; record that human-evidence gap separately. This check applies while implementing an agreed feature too, without reopening prioritization or silently retuning accepted rules.
+
 Apply [the developer-question rule](../../../AGENTS.md#resolve-developer-questions-before-dependent-work) to design as well as code: complete the independent parts, then obtain the developer's answers before developing the dependent specification. An open-decisions section records remaining questions; it does not replace asking them or authorize designing around assumed answers.
+
+## Discoveries, rewards and earned progress
+
+For gameplay discovery/reward/knowledge/progression work, read the relevant [knowledge contract](../../../docs/knowledge.md) and authored-world profile before planning changes. Distinguish finding a place, inspecting an object, learning a method, taking stock, manufacturing and using the result; one does not imply the others. Compose existing custody, knowledge, admission and manufacture owners, with the world's profile selecting rewards, grants and tuning. A physical record discloses its exact admitted method through [the record contract](../../../docs/knowledge.md#physical-production-method-records); it is not a hidden substitute for live invention. Keep origin and qualifying action evidence durable and consistent across receipts, repeated requests, persistence and player labels. Progress must credit what actually happened, not merely the presence of equivalent knowledge or an output item.
+
+Name the useful option or tradeoff the reward adds and a worthwhile stopping point where the feature allows partial participation. Exercise the reward through ordinary manufacture/use and verify actual remaining stock, repeat inspection and private second-visitor consequences under the selected world rules. Record mechanical correctness separately from engineer-assessed usefulness, uncoached enjoyment and balance; one successful scripted journey does not prove the latter. [Expedition evidence](../../../docs/verification/rewarding-expeditions.md#practical-value-of-the-second-trip) records that distinction rather than making finite rewards or a two-site route universal engine laws.
 
 ## Feature-spec or technical-design requests
 
@@ -27,7 +36,11 @@ Distinguish protected runtime integrity, reusable mechanisms, replaceable policy
 
 Trace relevant ownership, units, permitted reads/writes, triggers, work bounds, interaction effects and lifecycle through save/restore. Include cognition/observation and player discoverability, not only storage. For invention/world-authoring work, specify supported inspection, creation and modification through existing admission, with understandable consequences and explicit unsupported capabilities.
 
+For physical mechanics, apply the [physical-interaction design checks](../../../docs/spatial-world.md#physical-interaction-design-checks) before calling the design ready. For repeated native processes, collection queries or derived caches, read [Performance](../openlegend-performance/SKILL.md) during design rather than waiting for a measured slowdown. Source inspection and paper calculations can establish a design's contracts; they do not establish runtime geometry, player usability or scaling acceptance.
+
 Challenge claimed composability with a genuinely different scenario. Localize necessary v1 specificity with its owner, limit, seam and extraction trigger instead of building an unused framework. Logical modularity does not require new packages, services or an ECS replacement.
+
+When replacing a fixed world behavior with installed definitions, trace availability, parameter binding, NPC offers, player details, resource effects, reusable methods and saves to the same definition owner. Vary the contrasting example's real requirements, input/output cardinality or duration, not only its name; include shared-material requirements and stale or missing prerequisites when applicable. A generalized executor alone does not prove that downstream consumers stopped assuming the original recipe.
 
 ## Approval to implementation
 

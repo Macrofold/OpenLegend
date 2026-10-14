@@ -1,3 +1,4 @@
+import { panelGeometry } from './finite-panel.js';
 import { finitePoint, surfaceHeight } from './geometry.js';
 import { SPATIAL_LIMITS, type SpatialMap } from './types.js';
 const safeId = (v: unknown): v is string =>
@@ -152,12 +153,56 @@ export function validateSpatialMap(map: SpatialMap): void {
       b.bounds.min.z >= b.bounds.max.z ||
       typeof b.movement !== 'boolean' ||
       typeof b.sight !== 'boolean' ||
-      !['stone', 'timber'].includes(b.material) ||
+      (b.nonWalkable !== undefined && typeof b.nonWalkable !== 'boolean') ||
+      !['stone', 'timber', 'panel'].includes(b.material) ||
       !Number.isFinite(b.acousticTransmission) ||
       b.acousticTransmission < 0 ||
       b.acousticTransmission > 1
     )
       throw new Error('Invalid spatial blocker.');
+    if (b.panel) {
+      const panel = b.panel;
+      if (
+        !Array.isArray(panel.corners) ||
+        panel.corners.length !== 4 ||
+        !panel.corners.every(finitePoint) ||
+        !Number.isFinite(panel.thickness) ||
+        panel.thickness <= 0 ||
+        panel.thickness > SPATIAL_LIMITS.maxExtent
+      )
+        throw new Error('Invalid finite panel.');
+      const [a, cornerB, c, d] = panel.corners;
+      const u = { x: cornerB.x - a.x, y: cornerB.y - a.y, z: cornerB.z - a.z },
+        v = { x: d.x - a.x, y: d.y - a.y, z: d.z - a.z };
+      if (
+        Math.hypot(u.x, u.y, u.z) < SPATIAL_LIMITS.epsilon ||
+        Math.hypot(v.x, v.y, v.z) < SPATIAL_LIMITS.epsilon ||
+        Math.abs(u.x * v.x + u.y * v.y + u.z * v.z) > SPATIAL_LIMITS.epsilon ||
+        ['x', 'y', 'z'].some(
+          (axis) =>
+            Math.abs(
+              Reflect.get(c, axis) -
+                Reflect.get(cornerB, axis) -
+                Reflect.get(d, axis) +
+                Reflect.get(a, axis),
+            ) > SPATIAL_LIMITS.epsilon,
+        )
+      )
+        throw new Error('A finite panel needs one planar rectangle.');
+      const bounds = panelGeometry(panel).bounds;
+      if (
+        ['min', 'max'].some((edge) =>
+          ['x', 'y', 'z'].some(
+            (axis) =>
+              Math.abs(
+                Reflect.get(Reflect.get(bounds, edge), axis) -
+                  Reflect.get(Reflect.get(b.bounds, edge), axis),
+              ) > SPATIAL_LIMITS.epsilon,
+          ),
+        )
+      )
+        throw new Error('Finite panel bounds disagree with its exact shape.');
+    }
     ids.add(b.id);
   }
 }

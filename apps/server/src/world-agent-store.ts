@@ -8,9 +8,14 @@ import type {
   WorldAgentQuestion,
   WorldAgentQuestionAnswer,
   WorldAgentProgress,
+  WorldCreationOperationView,
 } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
 import type { AuthoringPacket, AuthoringProfile } from './world-authoring-context.js';
+import {
+  creationReceiptRequestSchema,
+  type CreationReceiptRequest,
+} from './creation-target-contracts.js';
 
 /** Operational authoring state is not rewound with gameplay. Domain definitions remain in WorldState.
  * docs/world-agent-runtime.md#durable-write-sessions
@@ -36,7 +41,9 @@ export interface AgentSession {
   recoveryTurn?: string;
   turnSequence?: number;
   profile?: AuthoringProfile;
-  initialPurpose?: 'conversation' | 'invention';
+  initialPurpose?: 'conversation' | 'invention' | 'creation';
+  /** Application-owned opening identities survive every revision and provider retry. */
+  openingIdentities?: import('@open-legend/domain').WorldOpeningIdentities;
   selectedDraft?: { id: string; revision: number };
   toolCalls?: number;
   packetRef?: string;
@@ -79,6 +86,21 @@ export interface AgentTurnRecord {
   };
   continuationOf?: { questionTurnId: string; answerId: string };
 }
+export interface WorldCreationReceiptCursor {
+  sessionId: string;
+  operationId: string;
+}
+export interface PendingWorldCreationReceipt extends WorldCreationReceiptCursor {
+  planId: string;
+  request: CreationReceiptRequest;
+}
+export interface BlockingWorldCreationOperation extends WorldCreationReceiptCursor {
+  planId: string;
+  status: Extract<
+    WorldCreationOperationView['status'],
+    'dispatching' | 'uncertain' | 'created' | 'host-unavailable' | 'ready'
+  >;
+}
 export class WorldAgentStore {
   constructor(readonly db: SqlDatabase) {}
   async initialize() {
@@ -102,6 +124,14 @@ export class WorldAgentStore {
       CREATE INDEX IF NOT EXISTS world_agent_plan_draft_order
         ON world_agent_records(session_id,(payload::jsonb #>> '{draftId}'),CAST((payload::jsonb #>> '{revision}') AS BIGINT),id)
         WHERE kind='plan';
+      CREATE INDEX IF NOT EXISTS world_agent_creation_pending
+        ON world_agent_records(session_id,id)
+        WHERE kind='creation-operation' AND (payload::jsonb #>> '{view,status}')
+          IN ('dispatching','uncertain','created','host-unavailable');
+      CREATE INDEX IF NOT EXISTS world_agent_creation_world_active
+        ON world_agent_records(session_id,(payload::jsonb #>> '{request,candidate,worldId}'),id)
+        WHERE kind='creation-operation' AND (payload::jsonb #>> '{view,status}')
+          IN ('dispatching','uncertain','created','host-unavailable','ready');
 `);
   }
   // Cast sortable JSON numbers explicitly: PostgreSQL projects JSON as text.
@@ -192,15 +222,110 @@ export class WorldAgentStore {
       .get(sessionId, kind);
     return Number(row?.['count'] ?? 0);
   }
+  /** Select pending identities before decoding receipt metadata. The candidate and
+   * old plan never leave SQL; these are admitted operational facts, not new grants.
+   */
+  async creationReceiptPage(worldId: string, after?: WorldCreationReceiptCursor) {
+    const cursor = after ?? { sessionId: '', operationId: '' };
+    // The adapter routes SELECT to its independent read connection. Keep that
+    // outer shape while materializing only the bounded admitted records below.
+    // docs/performance.md#storage-execution
+    const rows = await this.db
+      .prepare(
+        `SELECT * FROM (
+      WITH selected AS MATERIALIZED (
+        SELECT r.session_id,r.id FROM world_agent_records r
+        JOIN world_agent_sessions s ON s.id=r.session_id
+        WHERE s.world_id=? AND r.kind='creation-operation'
+          AND (r.payload::jsonb #>> '{view,status}') IN ('dispatching','uncertain','created','host-unavailable')
+          AND (r.session_id,r.id)>(?,?)
+        ORDER BY r.session_id,r.id LIMIT 21
+      ), bodies AS MATERIALIZED (
+        SELECT admitted.session_id,admitted.id,r.payload::jsonb AS body
+        FROM (SELECT * FROM selected ORDER BY session_id,id LIMIT 20) admitted
+        JOIN world_agent_records r ON r.session_id=admitted.session_id
+          AND r.kind='creation-operation' AND r.id=admitted.id
+      )
+      SELECT session_id,id,((body->'request')-'candidate'-'expiresAt')::text AS request,
+        body #>> '{view,operationId}' AS view_operation_id,
+        body #>> '{view,planId}' AS plan_id,
+        body #>> '{view,targetId}' AS view_target_id,
+        (SELECT count(*)>20 FROM selected) AS has_more
+      FROM bodies ORDER BY session_id,id
+      ) receipt_page ORDER BY session_id,id
+    `,
+      )
+      .all(worldId, cursor.sessionId, cursor.operationId);
+    const records: PendingWorldCreationReceipt[] = rows.map((row) => {
+      const sessionId = String(row['session_id']);
+      const operationId = String(row['id']);
+      const planId = creationReceiptRequestSchema.shape.approvalId.parse(row['plan_id']);
+      const request = creationReceiptRequestSchema.parse(JSON.parse(String(row['request'])));
+      if (
+        request.operationId !== operationId ||
+        row['view_operation_id'] !== operationId ||
+        request.approvalId !== planId ||
+        row['view_target_id'] !== request.targetId
+      )
+        throw new Error(
+          'Stored creation receipt metadata does not match its complete owning identity.',
+        );
+      return { sessionId, operationId, planId, request };
+    });
+    const last = records.at(-1);
+    return {
+      records,
+      next:
+        rows[0]?.['has_more'] === true && last
+          ? { sessionId: last.sessionId, operationId: last.operationId }
+          : null,
+    };
+  }
+  /** Any admitted or committed Start fences another target for this same retained
+   * prospective world. Display names, source expiry and current grants do not undo it.
+   */
+  async blockingCreationOperation(
+    sessionId: string,
+    prospectiveWorldId: string,
+  ): Promise<BlockingWorldCreationOperation | undefined> {
+    const row = await this.db
+      .prepare(
+        `
+      SELECT id,payload::jsonb #>> '{view,operationId}' AS view_operation_id,
+        payload::jsonb #>> '{view,planId}' AS plan_id,
+        payload::jsonb #>> '{request,approvalId}' AS approval_id,
+        payload::jsonb #>> '{view,status}' AS status
+      FROM world_agent_records WHERE session_id=? AND kind='creation-operation'
+        AND (payload::jsonb #>> '{request,candidate,worldId}')=?
+        AND (payload::jsonb #>> '{view,status}') IN ('dispatching','uncertain','created','host-unavailable','ready')
+      ORDER BY id LIMIT 1
+    `,
+      )
+      .get(sessionId, prospectiveWorldId);
+    if (!row) return undefined;
+    const operationId = String(row['id']);
+    const planId = creationReceiptRequestSchema.shape.approvalId.parse(row['plan_id']);
+    if (row['view_operation_id'] !== operationId || row['approval_id'] !== planId)
+      throw new Error('Stored creation operation does not match its original plan identity.');
+    const status = String(row['status']);
+    if (
+      status !== 'dispatching' &&
+      status !== 'uncertain' &&
+      status !== 'created' &&
+      status !== 'host-unavailable' &&
+      status !== 'ready'
+    )
+      throw new Error('Stored creation operation has an invalid active status.');
+    return { sessionId, operationId, planId, status };
+  }
   async workRevision(sessionId: string): Promise<string> {
     // Cover all admitted drafts/reviews, including work beyond the visible page.
     // The existing 64-draft/512-plan caps bound this aggregate; no bodies leave SQL.
     const row = await this.db
       .prepare(
-        `SELECT md5(COALESCE(string_agg(kind || ':' || id || ':' ||
-          COALESCE(payload::jsonb->>'digest','') || ':' ||
-          COALESCE(payload::jsonb->>'revision','') || ':' ||
-          COALESCE(payload::jsonb->>'status',''), '|' ORDER BY kind,id),'')) AS revision
+        `SELECT md5(COALESCE(jsonb_agg(jsonb_build_array(kind,id,
+          payload::jsonb->>'digest',payload::jsonb->>'revision',
+          payload::jsonb->>'status') ORDER BY kind,id)::text,'[]')) AS revision
          FROM world_agent_records WHERE session_id=? AND kind IN ('draft','plan')`,
       )
       .get(sessionId);

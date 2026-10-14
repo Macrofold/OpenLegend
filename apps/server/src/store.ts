@@ -1,3 +1,4 @@
+import type { ConstructionPermission } from '@open-legend/domain';
 import {
   usdToMicroUsd,
   microUsdToUsd,
@@ -29,6 +30,7 @@ import { readAttemptBudget, type AttemptBudgetSnapshot } from './attempt-budget.
 import { WorldAgentStore } from './world-agent-store.js';
 import { KnowledgeStore } from './knowledge-store.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
+import { CreationTargetRepository } from './creation-target.js';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
@@ -62,7 +64,7 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 import { digest } from './content-digest.js';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '6';
+export const DATABASE_SCHEMA = '13';
 
 export interface AttemptBudget {
   id: string;
@@ -370,6 +372,8 @@ export interface WorldStore {
       restore?: RestoreSave;
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
+      constructionSeeds?: readonly ConstructionPermission[];
+      constructionFences?: readonly { id: string; revision: number }[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: {
@@ -458,6 +462,7 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqlGameRepository implements GameRepository {
+  readonly creationTargets: CreationTargetRepository;
   readonly commands: CommandReceipts;
   readonly authority: AuthorityRepository;
   readonly invites: InviteRepository;
@@ -617,7 +622,11 @@ export class SqlGameRepository implements GameRepository {
 
   readonly history: HistoryRepository;
   readonly saves: GameSaves;
-  constructor(dataDirectory: string, database: SqlDatabase) {
+  constructor(
+    dataDirectory: string,
+    database: SqlDatabase,
+    private readonly initialization: { preserveSaveStages?: boolean } = {},
+  ) {
     this.db = database;
     this.integrationValues = new IntegrationValues(this.db);
     this.records = new WorldRecords(this.db);
@@ -628,6 +637,7 @@ export class SqlGameRepository implements GameRepository {
     this.authority = new AuthorityRepository(this.db);
     this.invites = new InviteRepository(this.db);
     this.maintenance = new MaintenanceRepository(this.db);
+    this.creationTargets = new CreationTargetRepository(this.db);
     this.ready = this.initialize();
   }
 
@@ -702,11 +712,13 @@ export class SqlGameRepository implements GameRepository {
       await this.memories.initialize();
       await new WorldAgentStore(this.db).initialize();
       await this.history.initialize();
-      await this.saves.initialize();
+      // An awaiting target must refuse retained files before ordinary startup cleanup.
+      await this.saves.initialize(!this.initialization.preserveSaveStages);
       await this.commands.initialize();
       await this.authority.initialize();
       await this.invites.initialize();
       await this.maintenance.initialize();
+      await this.creationTargets.initialize();
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', DATABASE_SCHEMA);
@@ -897,6 +909,8 @@ export class SqlGameRepository implements GameRepository {
       restore?: RestoreSave;
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
+      constructionSeeds?: readonly ConstructionPermission[];
+      constructionFences?: readonly { id: string; revision: number }[];
       authorityOwners?: ReadonlyMap<string, string>;
       bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
       controlChange?: {
@@ -966,6 +980,13 @@ export class SqlGameRepository implements GameRepository {
         );
     const transaction = timed('persistence.transaction', () =>
       this.db.transaction(async () => {
+        for (const permission of historyProjection?.constructionSeeds ?? [])
+          await this.authority.seedConstruction(permission);
+        if (historyProjection?.constructionFences?.length)
+          await this.authority.assertConstruction(
+            state.world.id,
+            historyProjection.constructionFences,
+          );
         for (const binding of historyProjection?.authorityBindings ?? [])
           await this.authority.provision(state.world.id, binding);
         for (const [actorId, accountId] of historyProjection?.authorityOwners ?? [])

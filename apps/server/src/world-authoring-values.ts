@@ -43,7 +43,12 @@ export function authoringAttributeValue(world: WorldState, entityId: string, att
     : undefined;
   return Object.hasOwn(actor?.attributes ?? {}, attributeId)
     ? actor?.attributes?.[attributeId]
-    : undefined;
+    : actor?.practice?.[attributeId]
+      ? {
+          value: actor.practice[attributeId]!.starting,
+          revision: actor.practice[attributeId]!.revision,
+        }
+      : undefined;
 }
 
 /** Exact current-value edits are creator interventions, never a native recharge or an NPC power.
@@ -77,11 +82,14 @@ export function editAuthoringAttributeValues(
     const definition = definitions.get(change.attributeId);
     if (
       !definition ||
-      HOST_IMPLEMENTATIONS[definition.implementation].storage !== 'attributes' ||
-      !Object.hasOwn(actor.attributes ?? {}, change.attributeId)
+      !['attributes', 'practice'].includes(
+        HOST_IMPLEMENTATIONS[definition.implementation].storage,
+      ) ||
+      (!Object.hasOwn(actor.attributes ?? {}, change.attributeId) &&
+        !Object.hasOwn(actor.practice ?? {}, change.attributeId))
     )
       return reject(
-        'Only already attached custom attributes can be edited. This does not attach attributes or change native physiology.',
+        'Only attached custom values or authored starting competence can be edited. Earned practice is retained; this does not attach attributes or change native physiology.',
       );
   }
   return editActorAttributes(world, {
@@ -122,10 +130,8 @@ export function attributeValueSummary(world: WorldState, payload: unknown): stri
   const definitions = new Map(world.moduleManifest.definitions.map((d) => [d.id, d]));
   const changes = parsed.data.changes.map((c) => {
     const definition = definitions.get(c.attributeId);
-    const current = Object.hasOwn(entity?.actor?.attributes ?? {}, c.attributeId)
-      ? entity?.actor?.attributes?.[c.attributeId]
-      : undefined;
-    return `${definition?.name ?? c.attributeId}: ${JSON.stringify(current?.value ?? null)} -> ${JSON.stringify(c.value)}${definition?.schema.kind === 'number' ? ` ${definition.schema.unit}` : ''}`;
+    const current = authoringAttributeValue(world, parsed.data.entityId, c.attributeId);
+    return `${definition?.name ?? c.attributeId}${definition?.practice ? ' (authored starting competence; earned evidence is retained)' : ''}: ${JSON.stringify(current?.value ?? null)} -> ${JSON.stringify(c.value)}${definition?.schema.kind === 'number' ? ` ${definition.schema.unit}` : ''}`;
   });
   return `Creator intervention on ${entity ? namePhrase(entity, 'definite') : 'the selected body'}: ${changes.join('; ')}. This may create or remove fictional reservoir quantity without a source or work. It is not ordinary recharge, learning, or a change to the definition. Existing native state and unrelated attributes are preserved; normal concern and reservoir rules still apply. Changed values require a fresh revision and review.`;
 }

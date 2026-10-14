@@ -10,6 +10,10 @@ import { CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
 
 import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
 import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
+import { BASE_GATHER_EQUIPMENT, BASE_LAUNCHER_EQUIPMENT } from './equipment.js';
+import { BASE_SHIELD_FAMILY } from './shield-family.js';
+import { RIVER_LINE_FAMILY } from './river-fishing.js';
+import { BASE_PROJECTILE_SPEED } from './ranged-counterplay.js';
 
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
@@ -48,9 +52,9 @@ const materialPolicy = {
   excludedDefinitionIds: ['raw_meat'],
 };
 const commonGuidance = [
-  'Choose actual registered materials, quantities and a fitting name; finished recipes are generated during play.',
+  'Choose actual registered materials, quantities and a fitting name for a new method. Installed authored methods require their own permitted learning; they are distinct from live invention.',
   'Inputs are consumed when crafting starts; one output is made on completion; interruption does not refund materials.',
-  'Installation teaches the technique and never creates an item. Ordinary work expenditure applies.',
+  'An admitted actor invention teaches its inventor and never creates an item. Ordinary work expenditure applies.',
   'No scripts, free sources, nutrition, fuel, sleep/status effects or autonomous machines are supported.',
 ];
 function definition(
@@ -173,13 +177,13 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
       { path: 'parameters.workSeconds', label: 'Crafting time', unit: 'game seconds' },
       { path: 'parameters.damage', label: 'Damage', unit: 'health points' },
       { path: 'parameters.range', label: 'Range', unit: 'metres' },
-      { path: 'parameters.accuracy', label: 'Base accuracy', unit: 'probability' },
+      { path: 'parameters.accuracy', label: 'Base aim steadiness', unit: 'probability' },
     ],
     {
       ...weaponConsumer,
       limitation: swing
-        ? 'Native animal hunting only; not a general projectile or combat engine.'
-        : 'Uses compatible native arrows; no generated trajectory solver.',
+        ? 'Straight point-projectile shots at permitted living targets and inert practice targets; no arcs, piercing or collateral injury.'
+        : 'Uses compatible arrows with straight point-projectile flight; no arcs, piercing or collateral injury.',
     },
     {
       mechanism,
@@ -189,7 +193,9 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
     },
   );
   data.guidance.push(
-    'One compatible projectile is consumed per resolved shot, hit or miss. Accuracy is modified by fleeing; animals only, with no homing or new hit effects.',
+    swing
+      ? 'One compatible projectile is consumed at release, before its flight result is known. Supported inert targets allow one chosen practice shot without damage or loot. Movement and solid cover decide contact; no extra fleeing multiplier, homing or new hit effects.'
+      : 'One compatible projectile is consumed at release, before its flight result is known. Base accuracy is aim steadiness; actual movement and cover decide contact. No extra fleeing multiplier, homing or new hit effects.',
   );
   data.editor.derivedFacts.push({ path: 'facts.ammunition', label: 'Ammunition', readOnly: true });
   return {
@@ -212,7 +218,9 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
             damage: numeric(candidate, 'damage'),
             range: numeric(candidate, 'range'),
             accuracy: numeric(candidate, 'accuracy'),
+            flightSpeed: BASE_PROJECTILE_SPEED[ammunitionKind],
           },
+          equipment: structuredClone(BASE_LAUNCHER_EQUIPMENT),
         },
         facts: [
           workFact(candidate),
@@ -226,7 +234,7 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
           { id: 'range', label: 'Range', value: numeric(candidate, 'range'), unit: 'metres' },
           {
             id: 'accuracy',
-            label: 'Base accuracy',
+            label: 'Base aim steadiness',
             value: numeric(candidate, 'accuracy'),
             unit: 'probability',
           },
@@ -342,6 +350,7 @@ const gathering: RecipeFamilyDescriptor = {
       outputDefinition: {
         ...baseOutput(world, candidate),
         gatheringTool: { resourceId, quantity: numeric(candidate, 'quantity') },
+        equipment: structuredClone(BASE_GATHER_EQUIPMENT),
       },
       facts: [
         workFact(candidate),
@@ -374,4 +383,6 @@ export const BASE_RECIPE_FAMILIES: readonly RecipeFamilyDescriptor[] = [
   gathering,
   BASE_CAMP_CONTAINER_FAMILY,
   BASE_CORDAGE_FAMILY,
+  BASE_SHIELD_FAMILY,
+  RIVER_LINE_FAMILY,
 ];

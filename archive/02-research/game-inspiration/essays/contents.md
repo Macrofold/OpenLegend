@@ -14,4 +14,17 @@
 11. [Prioritized study itinerary](prioritized-study-itinerary.md#11-prioritized-study-itinerary)
 12. [Sources](../references/master-bibliography.md#12-sources)
 
+### October 14, 2026 creator-content research
+
+- [Player-created content, modding tools and marketplaces](player-created-content-modding-and-marketplaces.md) — in-depth No Man's Sky and EVE Online comparisons, creator experience, authority, composition, sharing, discovery, incentives and marketplace tradeoffs.
+- [G167 Starfield dossier](../dossiers/starfield.md) — full-game research, five original reviews, Creation Kit/community tooling, and the Star Wars Genesis case.
+- [Conditional modding research requirement](../research-requirements.md#r15-modding-investigation-only-for-popular-modding-communities) — full tooling investigation only for games with an evidenced popular modding community.
+- [Scoped completion and evidence ledger](../research-progress-modding-2026-10-14.md) — this addition only; earlier research status remains with its existing owner.
+
 ---
+
+## Cross-game topic guides and incorporation tracking
+
+[Core learning map](../synthesis/README.md) · [Game-by-topic coverage](../synthesis/coverage.csv) · [Progress and evidence rules](../synthesis/progress.md).
+
+The new topic shells cover economies, crafting, loot, social systems and the wider player experience. They preserve the existing essays above and reserve the ongoing fun/creator-tooling work rather than creating competing copies. Shell creation does not mark any game assessed or incorporated.

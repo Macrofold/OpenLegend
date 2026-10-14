@@ -26,6 +26,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Product design proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) first improves one resident's follow-through, independent motives and useful interaction in the accepted personal creative loop. Full unattended life is later scope. Apply the [game-first sequence and playability gates](../projects/five-product-feature-specs.md#game-first-delivery-sequence); no delivered agency work is reset.
 
+**Independently complete first delivery:** one resident pursues a real purpose during ordinary running play, handles the selected interruption, and can be encountered again while the human pursues their own worthwhile activity. The applicable character episodes include bodily pressure, social/recreational interests and meaningful stopping. Qualify the combined experience at its actual offered clock with generation, reading and action delays before claiming continuing-life quality. Additional residents, unattended funding, a general coarse-execution system and new scene families are not prerequisites; a useful isolated conversation or presentation fix can still finish before that broader quality claim.
+
 **Owners:** agency, native action/resource owners, perception/reaction intake, simulation time. **Depends on:** current admitted work and scoped event foundations; reconcile their actual implemented state rather than duplicate them.
 
 - [ ] Retain a chosen activity and supported continuation/interruption conditions through the existing goal/plan owner.
@@ -39,20 +41,45 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Product design proposal:** [Continuing NPC lives](../projects/continuing-lives-feature-spec.md) retains quiet initiative, funding, long-return scenarios and later stages. Offer unattended service after a smaller active world is compelling and continued absence has a concrete player benefit. PS-D06 and PS05/PS06 retain funding and shared-operation authority.
 
+**DG17 product expansion, October 6, 2026:** The same feature owner now specifies a finite, isolated continuing community, real supply and self-care qualification, the current mechanical clock, coherent service pauses, return evidence and renewed admission. The optional [prepared camp](../worlds/base/continuing-communities.md) owns the first world's authored horizon and provisions. This is a proposed first profile, not an overnight-hosting promise, autonomous ecology, adopted price or replacement for current personal-world pause behavior.
+
 **Owners:** activity families, agency/cognition, work admission, world policy. **Depends on:** PS02.
 
+**Delivery boundary:** first finish the attended resident's useful continuity. The finite isolated offer is a separately selectable later completion point, qualified with its own actual supplies, independent personal/social activity, full authorized period, stop/resume and return cost. It may reuse current supported detailed execution and exact exchanges if those sustain the offered workload. The wider coarse-execution, renewal, long-absence and population program below remains open where not consumed by that finite offer; do not require it merely to demonstrate two people living while the host runs.
+
+- [x] Prepare the DG17 product/behavior proposal and its base-world profile; retain technical and runtime qualification as separate work.
+- [ ] Qualify the whole proposed finite interval with actual accessible supplies, repeated independently chosen meals and substantial rest, and meaningful personal/social activity; sufficient stock alone is not proof of viable life.
+- [ ] Demonstrate expiry during work, interrupted essential decision service, current-state readmission without replenishment, ordinary attended play without renewing unattended permission, and a useful perspective-correct return after actual no-participant operation.
 - [ ] Add explicit low-power optional initiative policy with viable needs, retained commitments, and no backlog of missed optional thoughts.
-- [ ] Supply inherited coarse execution for a small useful set of mechanics, including travel and representable partial work.
+- [ ] Supply inherited coarse execution for a small useful set of mechanics, including travel and representable partial work, when an offered activity or measured operating problem needs it; this is not a blanket prerequisite for the finite profile when current supported execution is adequate.
 - [ ] Declare unsupported combinations and their funded-detailed/restricted/approximate fallbacks before accepting creator reliance.
 - [ ] Measure no-player cost, long elapsed periods, necessary decisions, and the quality of continuing relationships.
 
-**Exit:** quiet progression remains coherent at a bounded cost and does not become an unbounded catch-up burst.
+**Finite-offer completion:** the selected period adds a worthwhile return beyond simply pausing the same camp, with actual independent choices, credible self-care, useful non-survival activity and measured complete cost. Its advertised maximum needs a complete-period run; a successful meal or coached return explanation does not suffice. **Full PS03 exit:** quiet progression remains coherent at a bounded cost and does not become an unbounded catch-up burst. Completing the finite offer does not check unrelated later scope.
 
 ## PS04 — Coherent scenes and limited attention
 
 **Owners:** memory, perception, hearing, conversations, model routing. **Depends on:** scoped history/commitment foundations. PS03 supplies an unattended consumer, but ordinary local conversation and small-group scenes do not depend on offering unattended service.
 
 **Product design proposal:** [Attention, crowds and scenes](../projects/attention-and-scenes-feature-spec.md) first improves ordinary one-resident conversation and useful interruptions. Larger task/promise scenes, aggregate crowds and timed speech must earn their additional burden through the [playability gates](../projects/five-product-feature-specs.md#playability-gates). Current instantaneous speech and caption clocks remain authoritative; full PS04 scope and runtime acceptance remain open.
+
+**DG18 product expansion, October 6, 2026:** The same owner now develops a gathering worth joining, participant-owned exchanges, meaningful arrival/exit, prospective gist and aggregate activity, individual exceptions and a scoped capacity qualification. The [base-world gathering profile](../worlds/base/social-gatherings.md) owns authored situations and workload values. Current EPR cue/intake work, HE speech/history and NC membership are foundations; none is a completed crowd-scene feature. Attended gatherings do not require DG17's unattended service or DG26's timed speech.
+
+**Separately completable deliveries:**
+
+| Delivery                             | Needed result                                                                                                                                                                                                     | Conditional scope kept separate                                                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Ordinary exact conversation          | Improve a real one-resident exchange where needed; preserve a clear addressee, useful reading and interruption behavior through current Talk                                                                      | Another resident, a shared group view, gist, vocal masking, unattended life or a new comparison implementation           |
+| Small exact gathering                | When an actual additional participant adds a worthwhile exchange, make their perceived contributions readable together and qualify current participation, joining/merging, secrecy, silence, custody and recovery | New scene-meaning rules, aggregate sound, timed phrases, additional authored crowd residents or every later PS04 journey |
+| Background meaning or vocal activity | Select the particular proposed family only for a concrete burden or desired encounter the smaller exact gathering exposes; qualify its full evidence, intervention and cost behavior                              | Automatically implementing both families, an omniscient director or a compulsory known-bad baseline                      |
+| Larger attended gathering            | Additional independent people create worthwhile possibilities; the offered interaction and ordinary interventions remain readable and affordable                                                                  | An automatic seven-body release target, public/festival capacity or inheritance of DG17's unattended envelope            |
+
+Existing valid evidence and a focused comparison against current play can guide selection. The proposed naive-switching and exhaustive-ambient baselines are optional diagnostics, not mandatory implementations. Current checklist states below retain the full PS04 program; a completed first delivery does not claim the later program complete.
+
+- [x] Prepare the DG18 product/behavior expansion and authored gathering profile; leave technical design, adoption and actual play/cost qualification open.
+- [ ] Demonstrate a voluntary gathering with actual objects or a shared matter, credible independent refusal and a useful next player choice; no automatic gift, recipe, reward or agreement follows from attendance.
+- [ ] Qualify arrival before an unresolved reply, a genuine overhearer, a departing or silent human, repeated group split/merge, source correction and restart without invented participation or retrospective exact words.
+- [ ] If the gist or aggregate family is selected for a demonstrated need, compare it with the same meaningful gathering using ordinary exact exchanges, including required physical evidence, pre-grouping work, private decisions, retained history and readable presentation; this comparison does not gate the earlier exact delivery.
 
 - [ ] Add aggregate sensory evidence, distinguishable sources, stable focus, and justified interruptions through the existing owners.
 - [ ] Define actual overlapping speech or an explicit alternate rule; never use caption lifetime as physical sound duration.
@@ -61,13 +88,15 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 - [ ] Preserve gist versus exact language, pivotal exact lines, and refusal to invent an exact historical transcript.
 - [ ] Evaluate higher character baseline model tiers and escalation without treating model price as correctness evidence.
 
-**Exit:** noisy crowds and coarse social encounters remain intelligible, affordable, and consistent without secret leakage or manufactured human consent.
+**First-delivery completion:** the selected exact conversation or small gathering is worth having and understandable through its real player path, with drafts, addressees, actual participation and permitted history preserved. It can finish before gist, vocal masking, timed speech or crowd work is selected. **Full PS04 exit:** noisy crowds and coarse social encounters remain intelligible, affordable, and consistent without secret leakage or manufactured human consent. Apply those later criteria only when the corresponding family is offered; retain its unfinished work without blocking an independently complete smaller contribution.
 
 ## PS05 — Transitions, protection, logout, and clocks
 
 **Delivered detailed encounter portion:** [PG05/PX01](../verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) demonstrates the installed five-second simulated departure, possible new animal harm during that interval, preserved aftermath and protected inactivity after it. The fixed deadline cannot be renewed by the attacker. Current-revision native/service/SQL checks supplement PG05 browser evidence. General coarse/background combat, standing defenses, detail transitions and the cross-boundary acceptance below remain open; no whole PS05 checkbox is closed by this site.
 
 **Owners:** spatial/time, participation/access, world policy, save/load. **Depends on:** PS02–PS04 capabilities used by each behavior.
+
+The DG17 proposal deliberately uses today's mechanical clock and current MP04 absence. MP04's delivered cancellation, claim release, retained possessions/history, absent body and safe return are foundations to reuse. The future dangerous-logout and independent-calendar tasks below remain distinct; they are not missing prerequisites to the isolated prepared profile or implicitly enabled by it.
 
 - [ ] Materialize valid current activities with bounded preparation, shared overlap handling, and demotion hysteresis.
 - [ ] Integrate teleport capacity/readiness with one coherent identity and truthful failure/cost outcomes.
@@ -78,9 +107,17 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Exit:** transitions do not create contradiction, death traps, logout immunity, duplicate identities, or invented private player actions.
 
+**DG29 product consumer:** [Participants and world travel](../projects/participants-and-world-travel-feature-spec.md) and [PT01–PT06](participants-and-world-travel.md) refine the selected readiness, placement, departure/return, clock and connected-outcome journey. They reuse current MP04 for the first supported visit; future dangerous-logout or independent-calendar behavior still needs its own adopted policy and complete delivery. Existing checked participation work is not reopened.
+
 ## PS06 — Capacity and sustainable economics
 
 **Owners:** encounter scaling, work admission, accounting, player UX. **Depends on:** supported behaviors from earlier stages.
+
+DG17's proposed first operating envelope adds the following qualification; it does not establish a commercial offer or measured cost:
+
+- [ ] Measure the complete admitted community period, including required decisions, ordinary mechanics, retained evidence, unresolved charges, interruption and return; distinguish real elapsed time from completed game time.
+- [ ] Demonstrate coherent world-wide stop/resume under the isolated profile, with no automatic top-up, provider-reset resume, fabricated resident decision, unattended time debt or selective continued harmful subsystem.
+- [ ] Keep funding authority, actual current supplies, supported effects and service readiness independently visible to admission; preserve current accounting and retention owners.
 
 - [ ] Measure interaction-cost envelopes for dispersed play, markets, concerts, unrestricted combat, and after-entry effect growth.
 - [ ] Provide visible capacity admission, safe waits, party/resident/reconnect fairness, and anti-occupancy/attention-spam abuse policies.
@@ -90,9 +127,13 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Exit:** publish only measured supported envelopes with a viable quality/cost balance, not a generic number of players per region.
 
+**DG29 admission and cost consumer:** PT04/PT06 retain full-workload qualification, visible source-side waiting, coherent arrival/return, after-entry effect growth, correlated reconnects and complete service cost. A small visit supplies a product case; it neither qualifies nor replaces the accepted first/growth shared-world workloads in [data delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product).
+
 ## PS07 — Federation and forecast canonical campaigns
 
 **Owners:** access/domain rules, world relationships, campaign coordination, existing data/transfer owners. **Depends on:** PS05–PS06 for relevant travel, participation, and capacity.
+
+[DG29](../projects/participants-and-world-travel-feature-spec.md) develops the travel/property/import part through PT01–PT03/PT05. A small real visit can finish independently of the campaign tasks below. The visitor enters the destination's actual history, and broad commercial, cross-operator and canonical-campaign connections remain separately qualified consumers.
 
 - [ ] Establish protected personal/guild spaces and compatible opt-in participation/import/clock rules.
 - [ ] Demonstrate visits to actual histories without copying companions or merging contradictory timelines.
@@ -102,6 +143,20 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 - [ ] Demonstrate distinct manifestations or actual travel, specific contribution recognition, and one canonical final outcome.
 
 **Exit:** multiple communities affect one campaign through local opportunities without global omniscience, copied victories, or compulsory private-world invasion.
+
+### DG34 — Linked local campaign opportunities
+
+[The shared-campaign proposal](../projects/shared-campaigns-feature-spec.md) develops a first complete PS07 consumer: two actual local opportunities in one world, finite sources feeding one unique adversary, immediate useful preparation, an optional forecast operation and a lasting aftermath. The [Ash Road profile](../worlds/base/shared-campaigns.md) owns its proposed setting; [PS-L42–PS-L49](../limits/product-scalability.md#ps-l42--first-finite-campaign) records proposed scope and service choices. The first nonlethal route problem does not enable D07 harm, PS-D01 dangerous logout, PS-D03 separate clocks, public sign-up or cross-world transfer. This documents proposed behavior; it neither installs the family nor closes the parent tasks.
+
+- [ ] **PS07.1:** Deliver two distinct worthwhile local outings and the narrowly authored finite relay, gate and unique-construct behavior; prove a local physical result changes the same campaign elsewhere without a duplicated body, supply or final outcome.
+- [ ] **PS07.2:** Deliver understandable advertised opportunities, current facts versus permitted reports, explicit real notice versus mechanical timing, and revisions for prevention, obstruction, pause, outage and unavailable service; never force a missed operation on return.
+- [ ] **PS07.3:** Consume current invitation, participation, property and capacity owners for residents, reconnects and visitors, with deliberate current readiness and honest unavailable entry; campaign interest grants no access, human action or private information.
+- [ ] **PS07.4:** Preserve actual accepted contributions, exact material custody and any separately agreed compensation; distinguish a personal receipt, permitted public recognition and independently acquired NPC evidence through success, partial success, failure and late arrival.
+- [ ] **PS07.5:** Reconcile uncertain actions, restart, coherent same-world restoration, current authority and campaign closure without duplicate consumption, credit or outcome; refuse unsupported pre-export local rewind after cross-world consequences or knowledge escape.
+- [ ] **PS07.6:** Provide the player, resident, author and operator views of the complete finite campaign with bounded useful coordination and funded service; preserve ordinary needs, ordinary play, retained claims and current privacy when optional campaign work stops.
+- [ ] **PS07.7:** Qualify the first local work, real prevention, one physical advance or its truthful cancellation, shutdown and worthwhile aftermath with actual players and complete costs; compare the shared layer with the simpler local adventure before expanding it.
+
+The city-by-city intelligent adversary, damaging siege, supported manifestations and cross-world fronts remain independently selected extensions of the parent PS07 requirements. A small Ash Road success does not qualify them or require completing them first. Broader evidence remains under PS08 below.
 
 ## PS08 — Broader experience and scale qualification
 
@@ -114,9 +169,13 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Exit:** a measured supported growth path. Millions remain an aspiration until actual relevant evidence establishes the specific claimed workload.
 
+**DG34 campaign cases:** include communities with different real schedules, contributors absent from the climax, residents returning under visitor demand, prevented and missed operations, mature contribution/knowledge histories, many simultaneous small campaigns and concentrated arrival at one real front. Measure useful participation and ordinary play rather than counting denied or queued people as delivered concurrency. Cross-world cases must include exported knowledge as well as goods and physical outcomes. Preserve the existing accepted mixed-population and concentrated growth targets; the first two-site campaign supplies a product case, not substitute scale evidence.
+
 ## Pending policy decisions
 
 The [central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices) owns material unresolved product choices; the [limits register](../limits/product-scalability.md) owns unset operating values, restrictions and reasons. No fixed actor-attention count, player cap, cell size, prewarm radius, logout grace, harm list, scene size, model SKU, price, forecast notice, or implementation date is selected here. Resolve consequential settings before enabling their behavior, not by silently inheriting illustrative numbers from conversation.
+
+DG34 supplies an explicit reviewable first-consumer proposal for PS-D05 in PS-L42–PS-L49, including advertised notice and revision choices. Those proposed values are not adopted service terms, measured fairness or a change to the current world clock. Broader campaign policy and actual release qualification remain open.
 
 ## Documentation completion evidence
 

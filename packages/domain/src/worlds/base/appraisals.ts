@@ -1,5 +1,5 @@
 import { appraisePerceivedEvent, appraisalPin, type AppraisalPolicy } from '../../appraisals.js';
-import type { WorldEvent, WorldState } from '../../types.js';
+import type { Entity, WorldEvent, WorldState } from '../../types.js';
 
 /** Fictional, opt-in vocabulary. Only compatibility damage reactions run by default;
  * kinship or descriptive personality prose never enrolls an actor in a feeling. */
@@ -69,13 +69,13 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
 export function appraiseEvent(world: WorldState, event: WorldEvent): void {
   if (!event.targetId || !world.entities[event.targetId]?.actor) return;
   const damage =
-    event.type === 'shot' || event.type === 'struck'
+    event.type === 'struck'
       ? event.data?.['damage']
       : event.type === 'body-effect'
         ? -Number(event.data?.['healthDelta'] ?? 0)
         : 0;
   if (typeof damage !== 'number' || !Number.isFinite(damage) || damage <= 0) return;
-  const label = event.type === 'shot' || event.type === 'struck' ? 'fear' : 'discomfort';
+  const label = event.type === 'struck' ? 'fear' : 'discomfort';
   const definition = world.moduleManifest.appraisals?.definitions.find(
     (entry) => entry.id === `wilderness:${label}`,
   );
@@ -91,4 +91,24 @@ export function appraiseEvent(world: WorldState, event: WorldEvent): void {
       value: Math.min(1, damage / (world.entities[event.targetId]!.actor!.body?.maxHealth ?? 100)),
     },
   );
+}
+
+/** A personally felt projectile contact can retain fear of an identified shooter.
+ * The flight owner supplies this only after actual sight and physical-life checks;
+ * the public contact event never carries an unseen shooter identity. */
+export function appraiseProjectileContact(
+  world: WorldState,
+  event: WorldEvent,
+  shooter: Entity,
+  injured: Entity,
+): void {
+  const damage = event.data?.['damage'];
+  const definition = world.moduleManifest.appraisals?.definitions.find(
+    (entry) => entry.id === 'wilderness:fear',
+  );
+  if (!definition || typeof damage !== 'number' || damage <= 0) return;
+  appraisePerceivedEvent(world, event, injured.id, shooter.id, appraisalPin(definition), {
+    kind: 'scaled',
+    value: Math.min(1, damage / injured.actor!.body!.maxHealth),
+  });
 }

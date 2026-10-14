@@ -32,9 +32,12 @@ export function selectedKnowledgeReferences(
 
 export function generalKnowledgeContext(world: WorldState, actorId: string) {
   const doc = knowledgeDocument(world, actorId, null);
+  const seeded = doc?.origin === 'authored-starting' && !!doc.text;
   return {
     subjectId: null,
     revision: doc?.revision ?? 0,
+    origin: doc?.origin ?? null,
+    ...(seeded ? { provenance: 'Authored starting understanding' } : {}),
     characters: characterCount(doc?.text ?? ''),
     maxCharacters: world.knowledgePolicy?.maxCharacters.general,
     text: projectEntityMarkers(doc?.text ?? '', world, actorId),
@@ -61,7 +64,7 @@ export function subjectKnowledgeCandidates(
       {
         id: `notepad:${id}`,
         kind: 'knowledge' as const,
-        text: `Notepad ${noteReference(actorId, doc.subjectId)} about ${label}${bound ? '' : '; no current identity binding'}; revision ${doc.revision}. ${characterCount(doc.text)}/${world.knowledgePolicy!.maxCharacters.subject} characters.\n${projectEntityMarkers(doc.text, world, actorId)}`,
+        text: `Notepad ${noteReference(actorId, doc.subjectId)} about ${label}${bound ? '' : '; no current identity binding'}; revision ${doc.revision}; ${doc.origin === 'authored-starting' ? 'authored starting understanding' : 'actor-edited understanding'}. ${characterCount(doc.text)}/${world.knowledgePolicy!.maxCharacters.subject} characters.\n${projectEntityMarkers(doc.text, world, actorId)}`,
         embeddingText: `Notes about ${name || 'a subject'}: ${doc.text}`,
         // A new preferred name changes semantic search text; exposure tokens do not.
         revision: JSON.stringify([doc.revision, name ?? '']),

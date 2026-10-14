@@ -4,7 +4,7 @@
 
 ## 1. What low-power progression promises
 
-The [continuing-lives feature specification](../projects/continuing-lives-feature-spec.md) supplies a detailed October 3 product proposal for the initial activity families, ordinary and failed journeys, quiet initiative, funded operation and behavioral qualification. This page retains the accepted cross-feature contract; new choices in that proposal are not current runtime behavior or automatically accepted policy.
+The [continuing-lives feature specification](../projects/continuing-lives-feature-spec.md) supplies the initial activity proposal and its October 6 DG17 expansion for actual unattended operation, ordinary and failed journeys, quiet initiative, funded operation and behavioral qualification. The optional [prepared camp](../worlds/base/continuing-communities.md) owns the first world's finite horizon and actual provisions. This page retains the accepted cross-feature contract; new choices in that proposal are not current runtime behavior or automatically accepted policy.
 
 An unattended community can continue lives, projects, journeys, commitments, and selected new developments without executing every footstep or continuously reconsidering every goal. Its coarse outcomes need not equal a hypothetical detailed simulation. They must be legal and coherent outcomes of the admitted world rules, consistent with already-established history and actual permissions.
 

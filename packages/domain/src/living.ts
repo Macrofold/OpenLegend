@@ -13,13 +13,18 @@ import { setBodyHealth } from './body-state.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { finishPlanAction } from './agency.js';
 import { releaseInvocationResources } from './resource-claims.js';
-import { separateDeadLife, scarFactor } from './reincarnation.js';
+import { separateDeadLife } from './reincarnation.js';
+import { scarFactor } from './scar-effects.js';
 import { strikeDefinition } from './strikes.js';
 import type { Entity, WorldEvent, WorldState, Transition } from './types.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
+import { projectAttributes } from './world-modules.js';
+import { BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
+import { baseCombatInjuryInterruption } from './worlds/base/body-policy.js';
 
 export interface LivingBody {
+  equipmentPorts: import('./equipment.js').EquipmentPort[];
   plan: 'biped' | 'quadruped' | 'avian';
   maxHealth: number;
   revision: number;
@@ -186,7 +191,7 @@ export function commitBodyEffects(
   effects: BodyEffect[],
   cause: string,
   events: WorldEvent[],
-): void {
+) {
   if (!activelyParticipates(entity)) return;
   const actor = entity.actor!;
   const body = actor.body!;
@@ -196,7 +201,10 @@ export function commitBodyEffects(
   ))
     totals[effect.kind] +=
       effect.amount * (effect.kind === 'health' ? 1 : body.susceptibility[effect.kind]);
-  totals.injury *= scarFactor(world, entity, 'incomingInjuryFactor');
+  const scarInjuryFactor = scarFactor(world, entity, 'incomingInjuryFactor');
+  const injuryFactor = body.susceptibility.injury * scarInjuryFactor;
+  // Body susceptibility is already applied above; share its final scale with contact feedback.
+  totals.injury *= scarInjuryFactor;
   const before = actor.health;
   const previous = { ...body.conditions };
   body.conditions.injury = Math.max(
@@ -221,9 +229,24 @@ export function commitBodyEffects(
     cause,
     before,
     actor.health,
-    !!observer && (observer.id === entity.id || seesEntity(world, observer, entity)),
+    !!observer &&
+      (observer.id === entity.id ||
+        (seesEntity(world, observer, entity) &&
+          projectAttributes(world, entity, 'public').some((attribute) => attribute.bodyHealth))),
   );
   if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
+  const combatInterruption = baseCombatInjuryInterruption(before, actor);
+  if (combatInterruption && actor.action) {
+    const interrupted = actor.action;
+    if (interrupted.ranged) releaseInvocationResources(world, interrupted.id);
+    finishPlanAction(
+      world,
+      entity.id,
+      interrupted.id,
+      outcome(false, 'interrupted', combatInterruption),
+    );
+    actor.action = null;
+  }
   if (actor.health < before && actor.action?.type === 'treat-scar') {
     finishPlanAction(
       world,
@@ -233,10 +256,21 @@ export function commitBodyEffects(
     );
     actor.action = null;
   }
+  if (actor.health < before && actor.action?.guard && actor.action.guard.phase !== 'recovery') {
+    const interrupted = actor.action;
+    releaseInvocationResources(world, interrupted.id);
+    finishPlanAction(
+      world,
+      entity.id,
+      interrupted.id,
+      outcome(false, 'interrupted', BASE_GUARD_TEXT.injuryInterrupted),
+    );
+    actor.action = null;
+  }
   if (actor.health < before && actor.action?.strikePhase === 'windup') {
     const interrupted = actor.action;
-    actor.attackReadyAt = Math.max(
-      actor.attackReadyAt ?? 0,
+    actor.combatReadyAt = Math.max(
+      actor.combatReadyAt ?? 0,
       world.simTime +
         (strikeDefinition(interrupted.definitionId, world, interrupted.weaponItemId)
           ?.recoverySeconds ?? 0),
@@ -265,4 +299,5 @@ export function commitBodyEffects(
       burningDelta: body.conditions.burning - previous.burning,
     },
   );
+  return { healthBefore: before, healthAfter: actor.health, injuryFactor };
 }

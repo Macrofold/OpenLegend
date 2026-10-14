@@ -10,6 +10,7 @@ import { canonicalJson, finish, outcome } from './events.js';
 import { canSpeak } from './living.js';
 import { hearsEntity } from './perception.js';
 import { loudestSpeechVolume } from './acoustics.js';
+import { selectedSocialPolicy } from './social-policy.js';
 
 export interface Conversation {
   id: string;
@@ -74,6 +75,8 @@ function transition(
     ...(sourceId ? { sourceId } : {}),
   };
   state.transitions[id] = record;
+  // Membership has its own freshness. Ending an exchange does not replace physical work.
+  // docs/narration-and-conversations.md#6-durable-conversation-lifecycle
   conversation.generation++;
   conversation.lastActivityAt = world.simTime;
   return record;
@@ -111,8 +114,6 @@ export function leaveConversation(world: WorldState, actorId: string, reason: st
   delete state.active[actorId];
   if (!conversation.intervals.some((i) => i.leftAt === undefined))
     conversation.endedAt = world.simTime;
-  const actor = world.entities[actorId]?.actor;
-  if (actor) actor.planGeneration++;
 }
 function merge(world: WorldState, source: Conversation, destination: Conversation) {
   if (source.id === destination.id) return;
@@ -138,8 +139,6 @@ function merge(world: WorldState, source: Conversation, destination: Conversatio
       transitionId: receipt.id,
     });
     state.active[actorId] = destination.id;
-    const actor = world.entities[actorId]?.actor;
-    if (actor) actor.planGeneration++;
   }
 }
 /** Called only after native speech admission, in the same transaction as speech/awareness. */
@@ -251,7 +250,7 @@ export function reconcileConversations(world: WorldState): void {
   const manifest = isDraft(world.moduleManifest)
     ? current(world.moduleManifest)
     : world.moduleManifest;
-  const timeout = world.socialPolicy?.conversationInactivitySeconds ?? 1800;
+  const timeout = selectedSocialPolicy(world).conversationInactivitySeconds;
   const old = Object.isFrozen(records) ? continuity.get(records) : undefined;
   if (
     old &&

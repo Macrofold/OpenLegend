@@ -18,7 +18,15 @@ Learning or installing a technique creates no supplies and teaches only its inve
 
 [NP03 evidence](../../verification/camp-life.md#np03--manufactured-material-reuse-october-3-2026) covers actual gathered/prepared stock, two names and container sizes, conservation/cancellation, private ingredients, forged/stale/malformed inputs, native alternate fiber, browser Apply/Craft/storage and PostgreSQL active-work reopening. It establishes native and supplied-proposal behavior; live model invention or autonomous chain selection is unqualified. [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families) owns the finite interface scope and expansion trigger; [NP03](../../maintainers/parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material) tracks delivery.
 
+## Ordinary authored methods and river food
+
+The [river profile](river-fishing.md) supplies a starting known River line method and one compatible trusted tool family. This ordinary world-authored knowledge is labelled **World method**, without an invented-by attribution. Installing/knowing it creates no tool, materials or fish; real crafting uses the same family compiler, definition pins and ingredient consumption as other manufacture. Live invention remains separately admitted and attributed.
+
+Raw and cooked river fish are real portable lots. The raw catch has no edible nutrition; its cooked output uses ordinary eating, packing, carrying, drop/pickup and recipient-consent offering. [Installed preparation](../../food-preparation.md) owns the generic transformation; the profile owns exact content and tuning.
+
 ## Ground piles
+
+The [rewarding expedition profile](rewarding-expeditions.md) adds a finite portable lookout case and workshop satchel through the same ordinary ground-pile/container owner. Only permitted deliberate inspection shows actual nested stock; moving the case or record moves that same physical item, with no restock or hidden copy. The profile owns spear/method tuning and AV02's still-pending two-hand integration.
 
 A pile is a spatial entity holding item entities. Each active lot has one tagged placement: a world root, contained custody or an equipment attachment. Actor inventories, piles and admitted bags hold direct children without a second inventory list. Custody does not mean account authorship or legal ownership. Pickup/drop transfers existing quantities without creation or consumption. A complete unmerged transfer retains its identity; splitting allocates a new lot with lineage. Merge requires exact definition/unit pins, homogeneous state, matching ownership/provenance and no incompatible holds or active identity references. Individual objects and bags do not merge.
 
@@ -33,6 +41,12 @@ Right-click a visible pile. With one portable stack, **Pick Up** directly select
 Pickup approaches through the existing supported movement path, then transfers the eligible selection. A single-stack request refers to its actual stack ID; Pick Up All means all eligible contents present at completion. Completion rechecks visibility, reach and availability. Another actor taking the contents first causes an explicit failure, never duplicated inventory. Canceling movement does not transfer items. Loss of handling or action capability cancels pending pickup; loss of locomotion cancels a required approach but does not prevent collection already within reach.
 
 Inventory item details expose **Drop** and a whole-number quantity selector for portable items. Drop places that quantity at the actor's current supported location, only where the pile body can fit. Active work must stop first because it may hold material/equipment references. Equipping individualizes one unit; dropping the unequipped remainder leaves that unit equipped. Moving the selected unit detaches it. Player and NPC concrete action options use the same native commands. Ordinary pause, body and capability restrictions still apply.
+
+## Compatible held equipment
+
+One attached placement is the saved truth for each held item. Its admitted definition names the places on the body it occupies and its supported uses; the body supplies available places. The [shield profile](shield-defense.md#compatible-equipment) owns this world’s hand combinations. Knife/gathering tool and shield can coexist, while current sling/bow launchers occupy both hands. Equipping checks custody, body compatibility and all selected/conflicting reservations before atomically individualizing one unit, stowing only conflicts and attaching it. Stowed items remain the same carried items.
+
+Drop or accepted handover removes the exact attachment through the existing custody owner; an offer alone moves nothing. Removing one item does not release unrelated equipment. Equipment queries use a rebuilt subset of the object placement index, with no actor field mirroring equipment and no saved acceleration map. Current-format validation rejects missing ports, overlapping occupied ports, stale pins or invalid individualized attachments. Body and port identities remain separate even when their names contain colons. Inventory equipment descriptions require every occupied port and show current Equip refusals, including busy work and an incompatible body. Clothing and other bodies require their own authored ports and permissions; no armor or socket system is supplied here.
 
 ## God creation
 
@@ -96,8 +110,20 @@ Physical mass/volume, scattering, contested ownership/theft rules and additional
 
 The inventory panel refreshes when the player moves or its own inventory/context changes; use **Refresh** for newly nearby destinations or changes in a shared container. Every action rechecks current access and revisions. Constant background motion does not repeatedly clear an open inventory page.
 
+## Proposed food-condition consumer
+
+[DG19 changing supplies](../../projects/changing-supplies-feature-spec.md) proposes one condition-bearing food family using this same custody and quantity owner. Its [authored profile](changing-supplies.md) selects preservation and renewal; [CS02](../../maintainers/changing-supplies.md#cs02--food-condition-follows-the-real-material) requires coherent creation, active-work condition, splitting/merging, exact partial handling and last-unit consumption before decay is enabled. Current containers and food remain as described above. Neither a bag name, ownership change, pending offer nor a storage move grants freshness or access to somebody else's food history.
+
+## Proposed heat and vessel consumer
+
+[DG20 heat and materials](../../projects/heat-and-materials-feature-spec.md) proposes firing an actual clay blank into a useful finite vessel, with local material consequences in its selected profile. The same object owner must preserve the blank's progress, the finished vessel, actual contents and any surviving damaged material without duplicate output or pristine salvage. The [world profile](heat-and-materials.md) owns the new vessel and qualified fire materials; [HM02–HM04](../../maintainers/heat-and-materials.md) retain delivery. Existing woven containers remain available. A fired-bowl name does not supply liquids, serving, preservation, extra carrying strength or new access to another person's possessions.
+
 ## Maintained records
 
 - Implementation: [Feature tasks](../../maintainers/base-world.md).
 - Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).
 - Manufactured material composition: [NP03](../../maintainers/parallel-batch-02-foundations-and-usability.md#np03--craft-with-an-invented-material), [INV-3/INV-6](../../maintainers/inventions-and-world-evolution.md#inv-6--composable-materials-assemblies-and-passive-world-processes) and [RF01](../../limits/inventions.md#rf01--world-owned-recipe-families).
+
+## Proposed equipment loans and narrow returns
+
+[The Clearing Tool Library](shared-equipment-and-institutions.md) proposes an exact individual-tool loan through the same object owner. It needs explicit asset/depot authority, real reserved compatible return room and a continuing exact return permission; current owner metadata, broad creator access lists and temporary work holds do not already supply those powers. A group name neither transfers title nor permits taking, consuming or pledging another person's stock. [INV-20.5g–l](../../maintainers/inventions-and-world-evolution.md#dg32--shared-equipment-and-scoped-institutions) retains this new consumer's implementation and full action-route qualification; current item behavior remains as documented above.

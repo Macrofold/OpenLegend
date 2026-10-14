@@ -1,4 +1,12 @@
-import { worldPosition, observedAnimalHealth, fireFuelDescription } from '@open-legend/domain';
+import {
+  worldPosition,
+  observedBodyHealth,
+  fireFuelDescription,
+  BASE_GUARD_TEXT,
+  BASE_RANGED_TEXT,
+  BASE_EVASION_TEXT,
+  observedCombatActivity,
+} from '@open-legend/domain';
 import { entityLabel } from './entity-references.js';
 import type { Action, Entity, ItemDefinition, ItemInstance, WorldState } from '@open-legend/domain';
 import type { AttentionCandidate } from './recall.js';
@@ -17,16 +25,24 @@ const propertyDescriptions: Record<ItemDefinition['properties'][number], string>
 };
 
 const activities: Record<Action['type'], string | undefined> = {
+  assemble: undefined,
   pickup: 'picking up items',
   follow: 'following',
   move: 'moving',
+  evade: BASE_EVASION_TEXT.activity,
   gather: 'gathering',
   prepare: 'preparing materials',
   craft: 'crafting',
+  'practice-shot': 'practicing a shot',
+  coaching: 'participating in guided feedback',
   hunt: 'hunting',
+  aim: BASE_RANGED_TEXT.aimingActivity,
+  'shoot-once': BASE_RANGED_TEXT.shootingActivity,
   harvest: 'harvesting',
   cook: 'cooking',
+  fish: 'fishing',
   strike: 'striking',
+  guard: BASE_GUARD_TEXT.activity,
   replenish: 'replenishing a supply',
   'tend-fire': 'tending a fire',
   'treat-scar': 'treating an injury',
@@ -47,7 +63,11 @@ export function perceivedEntityText(
   const facts = [
     `I can see ${entityLabel(world, entity, observerId, 'indefinite')}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
   ];
-  const health = observedAnimalHealth(world, observerId, entity.id);
+  const combat =
+    world.entities[observerId] &&
+    observedCombatActivity(world, world.entities[observerId]!, entity);
+  if (combat) facts.push(combat);
+  const health = observedBodyHealth(world, observerId, entity.id);
   if (health) facts.push(health);
   if (entity.actor && !entity.actor.alive) facts.push('It is dead.');
   // Same coarse outward state that ranks a fallen being earlier in attention (EPR06).
@@ -55,10 +75,24 @@ export function perceivedEntityText(
   else if (entity.actor?.action) {
     const action = entity.actor.action;
     // No action record is not evidence of stillness: native movement uses other state.
-    const activity = action.stage === 'approaching' ? 'moving' : activities[action.type];
+    const activity =
+      action.stage === 'approaching'
+        ? 'moving'
+        : action.assemblyPhase
+          ? world.assemblyFamilies?.[action.assemblyPhase.familyId]?.labels[
+              action.assemblyPhase.operation
+            ].toLowerCase()
+          : activities[action.type];
     if (activity) facts.push(`It is ${activity}.`);
   }
-  if (entity.resource) {
+  if (entity.resource?.cast) {
+    const definition = world.castDefinitions[entity.resource.cast.definitionId];
+    if (definition)
+      facts.push(
+        definition.description,
+        entity.resource.quantity > 0 ? definition.supplyUnknownText : definition.exhaustedText,
+      );
+  } else if (entity.resource) {
     const item = definitions.get(entity.resource.definitionId);
     facts.push(
       `${entity.resource.quantity} units of ${item?.name ?? 'unidentified material'} remain.`,

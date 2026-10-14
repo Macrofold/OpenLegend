@@ -1,3 +1,4 @@
+import { isCookingInputField, preparationDefinition } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   acquiredActivities,
@@ -280,52 +281,78 @@ export function activityChoiceView(
             name: world.itemDefinitions[input.definitionId]?.name ?? 'required material',
             future: false,
           });
-        const field = ['eat', 'cook', 'drop'].includes(node.command)
+        const field = ['eat', 'drop'].includes(node.command)
           ? 'itemId'
           : node.command === 'hunt'
             ? 'ammoItemId'
             : undefined;
-        const arg = field && node.args[field];
-        const quantity =
-          node.command === 'drop' && node.args.quantity && 'literal' in node.args.quantity
-            ? Number(node.args.quantity.literal)
-            : 1;
-        if (arg && 'output' in arg) {
-          const key = `${arg.output}:${arg.port}`,
-            product = products.get(key);
-          const actual = availableOutputs[arg.output]?.find((output) => output.port === arg.port);
-          const available = actual
-            ? accessiblePossession(world, actorId, actual.itemId)
-              ? availableItemQuantity(world, actual.itemId)
-              : 0
-            : product?.quantity;
-          totals.set(key, {
-            quantity,
-            available,
-            name:
-              world.itemDefinitions[product?.definitionId ?? arg.port]?.name ?? 'earlier product',
-            future: !actual,
-          });
-        } else if (arg && 'role' in arg) {
-          const id = bindings[arg.role],
-            item =
-              typeof id === 'string' && accessiblePossession(world, actorId, id)
-                ? itemFor(world, id)
-                : undefined;
-          const key = item ? `definition:${item.definitionId}` : arg.role;
-          const prior = totals.get(key)?.quantity ?? 0;
-          totals.set(key, {
-            quantity: quantity + prior,
-            available: item
-              ? [...possessionItems(world, actorId)]
-                  .filter((other) => other.definitionId === item.definitionId)
-                  .reduce((sum, other) => sum + availableItemQuantity(world, other.id), 0)
-              : 0,
-            name: item
-              ? (world.itemDefinitions[item.definitionId]?.name ?? 'carried item')
-              : 'required carried item',
-            future: false,
-          });
+        const selectedFields =
+          node.command === 'cook'
+            ? Object.keys(node.args).filter(isCookingInputField)
+            : field
+              ? [field]
+              : [];
+        const cooking =
+          node.command === 'cook'
+            ? preparationDefinition(world, {
+                preparationId: literal('preparationId'),
+                preparationVersion: Number(literal('preparationVersion')),
+                preparationDigest: literal('preparationDigest'),
+              })
+            : undefined;
+        if (node.command === 'cook' && !cooking) return totals;
+        for (const selectedField of selectedFields) {
+          const arg = node.args[selectedField];
+          const quantity =
+            node.command === 'cook'
+              ? (cooking?.inputs.find((input) => `input:${input.role}` === selectedField)
+                  ?.quantity ?? 1)
+              : node.command === 'drop' && node.args.quantity && 'literal' in node.args.quantity
+                ? Number(node.args.quantity.literal)
+                : 1;
+          if (arg && 'output' in arg) {
+            const key = `${arg.output}:${arg.port}`,
+              product = products.get(key);
+            const actual = availableOutputs[arg.output]?.find((output) => output.port === arg.port);
+            const available = actual
+              ? accessiblePossession(world, actorId, actual.itemId)
+                ? availableItemQuantity(world, actual.itemId)
+                : 0
+              : product?.quantity;
+            totals.set(key, {
+              quantity: quantity + (totals.get(key)?.quantity ?? 0),
+              available,
+              name:
+                world.itemDefinitions[product?.definitionId ?? arg.port]?.name ?? 'earlier product',
+              future: !actual,
+            });
+          } else if (arg && 'role' in arg) {
+            const id = bindings[arg.role],
+              item =
+                typeof id === 'string' && accessiblePossession(world, actorId, id)
+                  ? itemFor(world, id)
+                  : undefined;
+            const key = item
+              ? node.command === 'cook'
+                ? `item:${item.id}`
+                : `definition:${item.definitionId}`
+              : arg.role;
+            const prior = totals.get(key)?.quantity ?? 0;
+            totals.set(key, {
+              quantity: quantity + prior,
+              available: item
+                ? node.command === 'cook'
+                  ? availableItemQuantity(world, item.id)
+                  : [...possessionItems(world, actorId)]
+                      .filter((other) => other.definitionId === item.definitionId)
+                      .reduce((sum, other) => sum + availableItemQuantity(world, other.id), 0)
+                : 0,
+              name: item
+                ? (world.itemDefinitions[item.definitionId]?.name ?? 'carried item')
+                : 'required carried item',
+              future: false,
+            });
+          }
         }
       }
       return totals;

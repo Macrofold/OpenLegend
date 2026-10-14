@@ -1,5 +1,15 @@
+import {
+  activityCommandFields,
+  isCookingInputField,
+  cookingChoices,
+  commandBindingFields,
+  commandEntityFields,
+} from '@open-legend/domain';
 import { canonicalName } from '@open-legend/language';
 import {
+  nativeCommandSupported,
+  validateInstalledActivityConditions,
+  bodyPolicy,
   accessiblePossession,
   clockDeadline,
   gatheringYield,
@@ -75,7 +85,12 @@ export interface TypedActionRequest {
 export function typedActionForms(world: WorldState): string {
   const times = namedClockTimes(world).join('|');
   const until = times ? ` [until ${times}]` : '';
-  return `Typed actions that need no AI: go to X, Z; move N m forward/back/left/right; go to NAME; go to where I last saw NAME; follow NAME [behind|beside|on the left|on the right] [at N m]${until} [and go to where I last saw them]; pick up [N|all] ITEM; drop [N|all] ITEM; gather RESOURCE [until I have N${times ? `|until ${times}` : ''}]; gather N RESOURCE; cook ITEM [at NAME]; eat [N] FOOD; equip ITEM; wait N minutes${times ? `|until ${times}` : ''}; ${times ? `stay by NAME until ${times}; ` : ''}A then B; stop.`;
+  const gathering = nativeCommandSupported(world, 'gather')
+    ? `gather RESOURCE [until I have N${times ? `|until ${times}` : ''}]; gather N RESOURCE; `
+    : '';
+  const cooking = nativeCommandSupported(world, 'cook') ? 'cook ITEM [at NAME]; ' : '';
+  const eating = bodyPolicy(world)?.consumption ? 'eat [N] FOOD; ' : '';
+  return `Typed actions that need no AI: go to X, Z; move N m forward/back/left/right; go to NAME; go to where I last saw NAME; follow NAME [behind|beside|on the left|on the right] [at N m]${until} [and go to where I last saw them]; pick up [N|all] ITEM; drop [N|all] ITEM; ${gathering}${cooking}${eating}equip ITEM; wait N minutes${times ? `|until ${times}` : ''}; ${times ? `stay by NAME until ${times}; ` : ''}A then B; stop.`;
 }
 /** A regex group matching one of this world's clock names; never matches when it names none. */
 function untilGroup(world: WorldState): string {
@@ -185,16 +200,6 @@ type Plain = { commands: Command[]; description: string; omitted?: Omitted; conf
 type Composed = { root: ActivityNode; description: string; omitted?: Omitted; confirm?: boolean };
 type Outcome = Plain | Composed | { refuse: [ResolutionCategory, string, string[]] };
 
-const PERSONAL_FIELDS = new Set([
-  'targetId',
-  'intendedRecipientId',
-  'itemId',
-  'weaponItemId',
-  'ammoItemId',
-  'heatId',
-  'destination',
-  'text',
-]);
 /** Builds one requested activity: unique step keys, private role bindings and the actual
  * outputs earlier steps will commit, so later steps bind real results, never guessed IDs. */
 class Builder {
@@ -216,9 +221,10 @@ class Builder {
   }
   invoke(command: Command, name: string, produces?: string): ActivityNode {
     const args: Record<string, ActivityArgument> = {};
-    for (const [field, value] of Object.entries(command)) {
+    const privateFields = new Set(commandBindingFields(command));
+    for (const [field, value] of Object.entries(activityCommandFields(command))) {
       if (['id', 'actorId', 'type', 'purpose'].includes(field) || value === undefined) continue;
-      args[field] = PERSONAL_FIELDS.has(field)
+      args[field] = privateFields.has(field)
         ? { role: this.role(value as ActivityBinding) }
         : { literal: value as string | number | boolean };
     }
@@ -1064,17 +1070,28 @@ function cook(scope: Scope, itemName: string, fireName: string | undefined): Out
       : refuse('blocked', 'Nothing to cook over is in view.', ['@visible']);
   const item = carried(scope, itemName);
   if (!item || !('id' in item)) return item;
+  const choices = cookingChoices(
+    scope.world,
+    [...possessionItems(scope.world, scope.actorId)],
+    fire.id,
+    item.id,
+  );
+  if (choices.length > 1)
+    return refuse(
+      'needs_clarification',
+      `Choose which preparation to use for ${definitionName(scope.world, item)}.`,
+      [item.id],
+    );
+  const choice = choices[0];
+  if (!choice)
+    return refuse(
+      'blocked',
+      `No installed preparation has its exact ingredients available for ${definitionName(scope.world, item)}.`,
+      [item.id],
+    );
   return {
-    commands: [
-      {
-        id: scope.localId,
-        actorId: scope.actorId,
-        type: 'cook',
-        itemId: item.id,
-        heatId: fire.id,
-      },
-    ],
-    description: `Cook ${definitionName(scope.world, item)} over ${named(scope, fire.id)}.`,
+    commands: [{ ...choice, id: scope.localId, actorId: scope.actorId }],
+    description: `${scope.world.foodPreparations[choice.preparationId]!.name} over ${named(scope, fire.id)}.`,
   };
 }
 
@@ -1431,6 +1448,22 @@ export function typedAction(
         ]
       : result.commands;
   const [first] = commands;
+  if (first?.type === 'compose') {
+    try {
+      validateInstalledActivityConditions(world, first.root, first.bindings);
+    } catch {
+      return {
+        ...base,
+        commands: [],
+        resolution: refuseAction(
+          world,
+          actorId,
+          'unsupported_capability',
+          'This world does not support every action required by that activity.',
+        ),
+      };
+    }
+  }
   // Current admission gives the plain reason now; later steps still recheck at their start.
   // A composition previews its own first step when admitted.
   if (first && first.type !== 'cancel' && first.type !== 'compose') {
@@ -1446,18 +1479,20 @@ export function typedAction(
         resolution: refuseAction(
           world,
           actorId,
-          ['unsupported-body', 'unsupported'].includes(preview.outcome.code)
+          ['unsupported-body', 'unsupported', 'unsupported-capability'].includes(
+            preview.outcome.code,
+          )
             ? 'unsupported_capability'
             : 'blocked',
           preview.outcome.message,
-          ['targetId', 'itemId'].flatMap((key) => {
+          commandEntityFields(first).flatMap((key) => {
             const value = Object.getOwnPropertyDescriptor(first, key)?.value;
             return typeof value === 'string' ? [value] : [];
           }),
         ),
       };
   }
-  const unmet = unmetSlots(commands, request.slots);
+  const unmet = unmetSlots(world, commands, request.slots);
   const omitted = [
     ...(result.omitted ?? []),
     ...unmet.map((requirement) => ({
@@ -1537,7 +1572,16 @@ export async function commitTypedAction(
         refs,
         world.entities[actorId]?.actor?.planGeneration ?? 0,
         binding
-          ? [{ ...binding, targetEpisodes: captureActionTargets(world, actorId, binding.commands) }]
+          ? [
+              {
+                ...binding,
+                commands: binding.commands.map((command) => ({
+                  ...command,
+                  humanInitiated: true as const,
+                })),
+                targetEpisodes: captureActionTargets(world, actorId, binding.commands),
+              },
+            ]
           : [],
       );
     },

@@ -61,11 +61,17 @@ export function bindAuthoringAttributes(
   const changes: { attributeId: string; expectedRevision: null; value: number | string }[] = [];
   for (const attributeId of attributeIds) {
     const definition = definitions.get(attributeId);
-    if (!definition || HOST_IMPLEMENTATIONS[definition.implementation].storage !== 'attributes')
+    if (
+      !definition ||
+      !['attributes', 'practice'].includes(HOST_IMPLEMENTATIONS[definition.implementation].storage)
+    )
       return reject(
-        'Only installed passive number, reservoir or category attributes can be attached.',
+        'Only installed custom attributes or finite practice starting support can be attached.',
       );
-    if (Object.hasOwn(world.entities[entityId]!.actor!.attributes ?? {}, attributeId))
+    if (
+      Object.hasOwn(world.entities[entityId]!.actor!.attributes ?? {}, attributeId) ||
+      Object.hasOwn(world.entities[entityId]!.actor!.practice ?? {}, attributeId)
+    )
       return reject(
         'An attribute is already attached. This operation never resets existing values.',
       );

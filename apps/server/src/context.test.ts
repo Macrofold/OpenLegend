@@ -48,12 +48,12 @@ function select(
 async function perform(service: WorldService, candidate: CandidateAction): Promise<void> {
   // These are the NPC's own candidates, so use its native command binder rather
   // than the human command endpoint that requires a lethal-attack confirmation.
-  const command = domainCommand(
-    candidate.command!,
-    NPC_ID,
-    `test:${service.world.sequence}:${candidate.id}`,
+  const result = await service.transition((world) =>
+    executeCommand(
+      world,
+      domainCommand(candidate.command!, NPC_ID, `test:${world.sequence}:${candidate.id}`),
+    ),
   );
-  const result = await service.transition((world) => executeCommand(world, command));
   expect(result.ok, result.message).toBe(true);
 }
 afterEach(async () => {
@@ -120,7 +120,10 @@ describe('actor-scoped native decision candidates', () => {
     expect(quantityOf(service.world, NPC_ID, 'cooked_meat')).toBe(0);
     expect(
       service.world.events.some(
-        (event) => event.type === 'ate' && event.actorId === NPC_ID && /meat/i.test(event.text),
+        (event) =>
+          event.type === 'ate' &&
+          event.actorId === NPC_ID &&
+          event.data?.definitionId === 'cooked_meat',
       ),
     ).toBe(true);
     expect(new Set(npcCandidates(service).map((action) => action.id)).size).toBe(

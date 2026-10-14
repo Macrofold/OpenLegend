@@ -1,4 +1,5 @@
 import { Button } from '../design-system/components';
+import type { WorldCreationHostStatus } from '@open-legend/protocol';
 import { EntryNotice } from './entry-notice';
 import './entry-screen.css';
 
@@ -6,6 +7,7 @@ export type EntryStatus =
   | { kind: 'loading'; retryLabel?: 'Check access again' | 'Retry connection' }
   | { kind: 'signed-out' }
   | { kind: 'forbidden' }
+  | { kind: 'creation-host'; host: WorldCreationHostStatus }
   | { kind: 'failed'; message: string };
 
 /** First entry needs a clear next action; requiring sign-in is not a connection failure. */
@@ -51,6 +53,21 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
                 Your character or permitted World operations will open when the connection is ready.
               </p>
             </>
+          ) : status.kind === 'creation-host' ? (
+            <>
+              <h2>
+                {status.host.status === 'awaiting-creation'
+                  ? 'Waiting for a world'
+                  : 'World created; host unavailable'}
+              </h2>
+              <p>{status.host.message}</p>
+              {status.host.status === 'awaiting-creation' && (
+                <p>
+                  Prepare and review an opening from your authorized World Agent, then choose this
+                  host.
+                </p>
+              )}
+            </>
           ) : (
             <>
               <h2>We couldn’t connect to your world</h2>
@@ -70,7 +87,7 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
               </a>
             ) : (
               <Button variant="primary" busy={loading} onPress={onRetry}>
-                {retryLabel}
+                {status.kind === 'creation-host' ? 'Check host again' : retryLabel}
               </Button>
             )}
             {forbidden && (

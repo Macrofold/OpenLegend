@@ -13,6 +13,18 @@ export const BASE_FIRE_ACTIVITY_HOST: ActivityHostDescriptor = {
     interface: 'activity-host-v1',
     implementationVersion: 1,
     commands: ['tend-fire'],
+    actions: {
+      'tend-fire': {
+        label: 'Tend a fire',
+        description:
+          'Light a campfire that has fuel laid, add one piece of carried fuel, or put it out. Materials are used only when the work finishes; unburnt fuel stays in a fire that is put out.',
+        fallback: {
+          label: 'Tend a campfire',
+          category: 'Survival',
+          reason: 'Select a campfire to light, fuel or put out.',
+        },
+      },
+    },
     deadlineSafeCommands: ['tend-fire'],
     spending: {
       command: 'tend-fire',

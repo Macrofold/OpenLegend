@@ -5,6 +5,7 @@ import {
   installedRecipeFamilies,
   bodyPolicy,
   RESERVOIR_CONSUMER_GUIDE,
+  selectedCreationProfileForWorld,
   type WorldState,
 } from '@open-legend/domain';
 import { declarationSchema } from './ai-schemas.js';
@@ -23,6 +24,15 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
     coverage: 'Native supported family only; use ol_validate for authoritative findings.',
   };
   switch (kind) {
+    case 'world-opening':
+      return {
+        ...common,
+        ...selectedCreationProfileForWorld(world).metadata,
+        payloadEncoding:
+          'Use proposal.kind="world-opening" and proposal.candidate containing the complete prospective opening serialized as bounded JSON text.',
+        approval:
+          'Saving retains a proposed new opening. The authenticated human selects a permitted prepared target, reviews the exact opening and target, and starts through the native creation controls.',
+      };
     case 'recipe':
       return {
         ...common,
@@ -119,7 +129,9 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
         },
         notes: [
           'The example already has the required next revision. Keep that revision unchanged; edit only the requested policy fields.',
-          'Exact fields: version=1, revision=current+1, maxImmediateLevel=2|3|4, significantEventTypes (lowercase/hyphen event names, each 1..64 characters), reflection boolean, dream.',
+          'Exact fields: version=1, revision=current+1, maxImmediateLevel=2|3|4, significantEventTypes (lowercase/hyphen event names, each 1..64 characters), reflection boolean, dream, actionGuidance and recording.',
+          'actionGuidance is {reasons,consideration,selection,criteria:{true,false}} with nonempty text up to 2000 characters per field. This prose guides judgment only; it cannot disclose private data, grant permissions, install actions or raise spending.',
+          'recording is {actionResultImportance,exposureImportance}, each a finite number from 0 to 10. These are selected fictional importance judgments, never authority or paid-execution limits.',
           'dream is null (no dreaming) or {statusEffectId,afterSeconds>0}; a named effect must already exist. This is a world-wide policy revision; it never raises real spending limits.',
         ],
       };

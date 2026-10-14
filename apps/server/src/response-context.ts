@@ -1,4 +1,4 @@
-import { accessiblePossession, ITEM_OUTPUT_FAMILIES, worldPosition } from '@open-legend/domain';
+import { accessiblePossession, worldPosition } from '@open-legend/domain';
 import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
 import {
   awarenessBindsSubject,
@@ -101,8 +101,9 @@ export function readableDecisionContext(
   const namedTimes = Array.isArray(context['namedTimes'])
     ? (context['namedTimes'] as string[])
     : [];
-  const outputs =
-    ITEM_OUTPUT_FAMILIES.slice(0, -1).join(', ') + ' and ' + ITEM_OUTPUT_FAMILIES.at(-1);
+  const outputs = Array.isArray(context['outputFamilies'])
+    ? (context['outputFamilies'] as string[]).join(', ')
+    : 'none supplied';
   const expressionGuidance = capabilities?.expressions
     ? 'Supported gestures: nod, smile, frown, wave, shrug, shake_head, slap. Expressions have no mechanical effects; a slap requires contact range.'
     : 'This body has no supported gesture expressions. Do not use act.kind=expression or describe human gestures as performed.';

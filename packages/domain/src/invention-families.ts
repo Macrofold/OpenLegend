@@ -482,10 +482,19 @@ export function describeInvention(value: RecipeDefinition): string {
     .join('; ');
 }
 
+const recipeMechanicalPins = new WeakMap<RecipeDefinition, DefinitionPin>();
+
 /** Attribution, knowledge and time are not part of immutable mechanical identity. */
 export function recipeMechanicalPin(recipe: RecipeDefinition): DefinitionPin {
+  // Published definitions are deeply frozen; mutable builders/drafts must recompute.
+  // docs/performance.md#shared-entity-queries-and-cognition-work
+  const immutable = Object.isFrozen(recipe);
+  const cached = immutable ? recipeMechanicalPins.get(recipe) : undefined;
+  if (cached) return cached;
   const { provenance, admittedAt, ...meaning } = recipe;
-  return definitionPin(meaning);
+  const pin = definitionPin(meaning);
+  if (immutable) recipeMechanicalPins.set(recipe, Object.freeze(pin));
+  return pin;
 }
 
 /** Ordinary recipe readers expose direct ingredient facts, not the internal producer graph.
@@ -507,13 +516,19 @@ export function recipeVisibleDependencies(
   );
 }
 
-/** One integrity owner for consumption, discovery, publication and current-format restore. */
+const validatedSnapshots = new WeakMap<WorldState, WeakSet<RecipeDefinition>>();
+/** One integrity owner for consumption, discovery, publication and current-format restore.
+ * Published worlds are deeply frozen: readers of the same snapshot share exact validation.
+ * Drafts/builders always recheck; access, knowledge and execution remain separate checks.
+ * docs/performance.md#shared-entity-queries-and-cognition-work */
 export function validateInstalledRecipe(
   world: WorldState,
   recipe: RecipeDefinition,
   visiting = new Set<string>(),
 ): void {
   if (visiting.has(recipe.id)) throw new Error('Circular recipe material dependencies.');
+  const immutable = Object.isFrozen(world);
+  if (immutable && validatedSnapshots.get(world)?.has(recipe)) return;
   visiting.add(recipe.id);
   try {
     if (
@@ -563,6 +578,11 @@ export function validateInstalledRecipe(
       throw new Error('Saved recipe does not reproduce its exact compiled meaning.');
   } finally {
     visiting.delete(recipe.id);
+  }
+  if (immutable) {
+    let validated = validatedSnapshots.get(world);
+    if (!validated) validatedSnapshots.set(world, (validated = new WeakSet()));
+    validated.add(recipe);
   }
 }
 

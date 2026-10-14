@@ -276,7 +276,10 @@ export function captureWorkAllocations(world: WorldState): (result: WorldState) 
       : undefined);
   allocationDrafts.delete(world);
   return (result) => {
-    if (index && result.workState) allocationSnapshots.set(result.workState.invocations, index);
+    if (index && result.workState) {
+      if (isDraft(result)) allocationDrafts.set(result, { ...index });
+      else allocationSnapshots.set(result.workState.invocations, index);
+    }
   };
 }
 /** Internal semantic admission port. The caller owns the surrounding atomic draft and

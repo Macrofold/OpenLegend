@@ -1,3 +1,8 @@
+import { activityRoleKinds } from './native-command-contracts.js';
+import { validateInstalledActivityConditions } from './action-experience.js';
+import type { ConstructionPermission } from './assembly-types.js';
+import { isEquipped } from './equipment.js';
+import { isCookingInputField } from './food-preparation.js';
 import { executeCommand, nativeOperationAvailable } from './kernel.js';
 import type { Command, WorldState } from './types.js';
 import type { ActorPlan, PlanStep } from './agency.js';
@@ -27,6 +32,8 @@ import {
   installedActivityHost,
   activityHostForCommand,
   activitySpendCeiling,
+  trustedActivityHost,
+  trustedActivityHostForCommand,
 } from './activity-hosts.js';
 import { canAccessContainer } from './object-access.js';
 import { canReachEntity } from './spatial.js';
@@ -44,6 +51,9 @@ export interface ChosenActivityControl {
 }
 
 export interface ActivityExecution {
+  combatHelpId?: string;
+  /** Origin belongs to this invocation, never to the learned method. */
+  humanInitiated?: true;
   /** A personally learned method, or absent for a requested composition. */
   methodId?: string;
   /** A requested composition carries its own validated root and chosen name. */
@@ -222,6 +232,7 @@ export function validateChosenActivityControl(
   bindings: Record<string, ActivityBinding>,
   control: ChosenActivityControl,
   admission = false,
+  requireInstalled = true,
 ): void {
   const exact = (value: object, fields: string[]) => {
     if (
@@ -235,7 +246,9 @@ export function validateChosenActivityControl(
   exact(control, ['deadline', 'observation', 'accessRoles', 'reachRoles', 'budget']);
   exact(control.observation, ['definition', 'role']);
   exact(control.budget, ['command', 'maximumAttempts', 'maximumSpent']);
-  const host = installedActivityHost(world, control.observation.definition);
+  const host = requireInstalled
+    ? installedActivityHost(world, control.observation.definition)
+    : trustedActivityHost(control.observation.definition);
   if (
     !isDefinitionPin(control.observation.definition) ||
     !Number.isFinite(control.deadline) ||
@@ -266,7 +279,9 @@ export function validateChosenActivityControl(
     observed = false;
   const visit = (node: ActivityNode): void => {
     if (node.kind === 'invoke') {
-      const support = activityHostForCommand(world, node.command);
+      const support = requireInstalled
+        ? activityHostForCommand(world, node.command)
+        : trustedActivityHostForCommand(node.command);
       if (!support?.definition.deadlineSafeCommands.includes(node.command))
         throw new Error('This child cannot safely end at a whole-activity deadline.');
       if (node.command === control.budget.command) {
@@ -312,7 +327,13 @@ export function validateChosenActivityControl(
       observed = true;
   };
   visit(root);
-  if (!counted || !observed || !activityHostForCommand(world, control.budget.command))
+  if (
+    !counted ||
+    !observed ||
+    !(requireInstalled
+      ? activityHostForCommand(world, control.budget.command)
+      : trustedActivityHostForCommand(control.budget.command))
+  )
     throw new Error('Unsupported counted activity command or observation.');
 }
 function predicate(
@@ -362,30 +383,53 @@ function predicate(
     case 'alive':
       return entity.actor?.alive;
     case 'equipped':
-      return actor.actor?.equippedItemId === id;
+      return isEquipped(world, actor.id, id);
     case 'lit':
       return entity.heat?.lit;
   }
 }
 export function bindActivityCommand(
   node: Extract<ActivityNode, { kind: 'invoke' }>,
-  execution: Pick<ActivityExecution, 'bindings' | 'outputs'>,
+  execution: Pick<ActivityExecution, 'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId'>,
   actorId: string,
   id: string,
 ): Command | undefined {
-  const command = { id, actorId, type: node.command, purpose: node.name } as Command &
-    Record<string, unknown>;
+  const command = {
+    id,
+    actorId,
+    type: node.command,
+    purpose: node.name,
+    ...(execution.humanInitiated ? { humanInitiated: true } : {}),
+    ...(execution.combatHelpId ? { combatHelpId: execution.combatHelpId } : {}),
+  } as Command & Record<string, unknown>;
   for (const [field, value] of Object.entries(node.args)) {
-    if (['id', 'actorId', 'type', '__proto__', 'constructor', 'prototype'].includes(field)) return;
-    if ('role' in value) command[field] = execution.bindings[value.role];
-    else if ('literal' in value) command[field] = value.literal;
+    if (
+      [
+        'id',
+        'actorId',
+        'type',
+        'humanInitiated',
+        'combatHelpId',
+        '__proto__',
+        'constructor',
+        'prototype',
+      ].includes(field)
+    )
+      return;
+    let bound: unknown;
+    if ('role' in value) bound = execution.bindings[value.role];
+    else if ('literal' in value) bound = value.literal;
     else {
       const output = execution.outputs[value.output]?.find(
         (output) => output.port === value.port && output.quantity >= value.quantity,
       );
       if (!output) return;
-      command[field] = output.itemId;
+      bound = output.itemId;
     }
+    if (node.command === 'cook' && isCookingInputField(field)) {
+      const inputs = (command.inputs ??= {}) as Record<string, unknown>;
+      inputs[field.slice(6)] = bound;
+    } else command[field] = bound;
   }
   return isActivityCommand(command) ? command : undefined;
 }
@@ -522,11 +566,7 @@ export function activityFrontier(
           block('A required actual output or compatible binding is unavailable.');
           return;
         }
-        if (
-          command.type === 'equip' &&
-          world.entities[actorId]!.actor!.equippedItemId === command.itemId
-        )
-          continue;
+        if (command.type === 'equip' && isEquipped(world, actorId, command.itemId)) continue;
         const step: PlanStep = {
           id,
           command,
@@ -561,6 +601,9 @@ export function startLearnedActivity(
   methodId: string,
   bindings: Record<string, ActivityBinding>,
   resume = false,
+  constructionPermissions: readonly ConstructionPermission[] = [],
+  humanInitiated?: true,
+  combatHelpId?: string,
 ) {
   const actor = world.entities[actorId]?.actor;
   const method = acquiredActivities(world, actorId).find((method) => method.id === methodId);
@@ -577,6 +620,15 @@ export function startLearnedActivity(
     )
   )
     return outcome(false, 'invalid-bindings', 'The method needs compatible current objects.');
+  try {
+    validateInstalledActivityConditions(world, method.root, bindings);
+  } catch {
+    return outcome(
+      false,
+      'unsupported-capability',
+      'This world no longer supports every action in this method.',
+    );
+  }
   if (resume) {
     const plan = actor.agency.plan;
     if (!plan?.activity || plan.activity.methodId !== methodId || plan.status !== 'blocked')
@@ -602,6 +654,8 @@ export function startLearnedActivity(
     status: 'active',
     steps: [],
     activity: {
+      ...(combatHelpId ? { combatHelpId } : {}),
+      ...(humanInitiated ? { humanInitiated } : {}),
       methodId,
       bindings: cloneValue(bindings),
       pending: [{ node: cloneValue(method.root), iteration: 0 }],
@@ -614,7 +668,7 @@ export function startLearnedActivity(
   actor.planGeneration++;
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = nativeOperationAvailable(world, first.command);
+    const preview = nativeOperationAvailable(world, first.command, constructionPermissions);
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'Selected the learned task.');
@@ -637,21 +691,6 @@ function timeConditions(node: ActivityNode): number[] {
   return node.until.test === 'time' ? [node.until.at] : [];
 }
 /** Roles an activity structure binds through its invocation arguments. */
-function structureRoles(node: ActivityNode, roles = new Set<string>()): Set<string> {
-  if (node.kind === 'invoke') {
-    for (const arg of Object.values(node.args)) if ('role' in arg) roles.add(arg.role);
-  } else if (node.kind === 'sequence')
-    node.children.forEach((child) => structureRoles(child, roles));
-  else if (node.kind === 'branch') {
-    structureRoles(node.yes, roles);
-    if (node.no) structureRoles(node.no, roles);
-    if ('role' in node.when) roles.add(node.when.role);
-  } else if (node.kind === 'repeat') {
-    structureRoles(node.body, roles);
-    if ('role' in node.until) roles.add(node.until.role);
-  } else if ('role' in node.until) roles.add(node.until.role);
-  return roles;
-}
 
 /** Admit a requested composition through the same executor, plan owner and native admission
  * as learned methods. The structure is data: registered controls, predicates and command
@@ -662,11 +701,15 @@ export function startRequestedActivity(
   actorId: string,
   id: string,
   command: Extract<Command, { type: 'compose' }>,
+  constructionPermissions: readonly ConstructionPermission[] = [],
 ) {
   const actor = world.entities[actorId]?.actor;
   if (!actor) return outcome(false, 'actor-unavailable', 'The actor is unavailable.');
+  let roles: ReturnType<typeof activityRoleKinds>;
   try {
     validateActivityNode(command.root);
+    roles = activityRoleKinds(command.root);
+    validateInstalledActivityConditions(world, command.root, command.bindings);
     if (command.control)
       validateChosenActivityControl(world, command.root, command.bindings, command.control, true);
   } catch {
@@ -676,7 +719,6 @@ export function startRequestedActivity(
       'The requested activity is not a supported bounded structure.',
     );
   }
-  const roles = structureRoles(command.root);
   const inspectedContainerId = currentInventoryInspection(world, actorId)?.containerId;
   if (timeConditions(command.root).some((at) => at <= world.simTime))
     return outcome(false, 'stale-deadline', 'That stopping time has already passed; ask again.');
@@ -693,8 +735,13 @@ export function startRequestedActivity(
         // not change the answer. Actor subjects are rechecked through encounter pins.
         command.subjects.some((id) => typeof id !== 'string' || !isSafeRecordId(id)))) ||
     Object.keys(command.bindings).length !== roles.size ||
-    [...roles].some((role) => !Object.hasOwn(command.bindings, role)) ||
-    Object.values(command.bindings).some((value) => {
+    [...roles.keys()].some((role) => !Object.hasOwn(command.bindings, role)) ||
+    Object.entries(command.bindings).some(([role, value]) => {
+      const kind = roles.get(role);
+      if (kind === 'text') return typeof value !== 'string' || !value.trim() || value.length > 1500;
+      if (kind === 'place') {
+        if (typeof value === 'string') return true;
+      } else if (typeof value !== 'string') return true;
       if (typeof value !== 'string')
         return (
           !value ||
@@ -716,7 +763,19 @@ export function startRequestedActivity(
           !(value === inspectedContainerId && canAccessContainer(world, actorId, value)) &&
           !seesEntity(world, world.entities[actorId]!, entity) &&
           // A stack lying in a pile is reachable through the pile the actor perceives.
-          !(pile?.kind === 'item-pile' && seesEntity(world, world.entities[actorId]!, pile)))
+          !(pile?.kind === 'item-pile' && seesEntity(world, world.entities[actorId]!, pile)) &&
+          // Installed parts are identified through their actually perceived assembly.
+          // This grants a reference only; native material/edit admission still owns rights.
+          !(
+            entity.placement?.mode === 'attached' &&
+            entity.placement.portId === 'assembly' &&
+            world.entities[entity.placement.parentEntityId]?.assembly?.parts[value] &&
+            seesEntity(
+              world,
+              world.entities[actorId]!,
+              world.entities[entity.placement.parentEntityId]!,
+            )
+          ))
       );
     })
   )
@@ -726,6 +785,8 @@ export function startRequestedActivity(
       'The activity needs current things you can perceive or carry.',
     );
   const execution: ActivityExecution = {
+    ...(command.combatHelpId ? { combatHelpId: command.combatHelpId } : {}),
+    ...(command.humanInitiated ? { humanInitiated: true } : {}),
     request: { name: command.name.trim(), root: cloneValue(command.root) },
     bindings: cloneValue(command.bindings),
     pending: [{ node: cloneValue(command.root), iteration: 0 }],
@@ -812,7 +873,7 @@ export function startRequestedActivity(
   if (afterDirect) return outcome(true, 'queued', 'Added the task after your current work.');
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = nativeOperationAvailable(world, first.command);
+    const preview = nativeOperationAvailable(world, first.command, constructionPermissions);
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'Started the task.');

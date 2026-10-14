@@ -73,7 +73,7 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
   }
 });
 
-it('restores elevated position and native flight while departure stops unfinished routes', async () => {
+it('preserves elevated position and manual route snapshots while departure cancels walking', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-spatial-'));
   const config = readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_DATA_DIR: directory });
   let game = await createGameServer({
@@ -87,6 +87,11 @@ it('restores elevated position and native flight while departure stops unfinishe
     const actorId = game.service.controlledEntityId;
     await enterLocalWorld(game.service);
     await game.service.control({ paused: false, clientId: 'save-fixture' });
+    // Capture an idle world for the later interrupted-departure check.
+    // Moving work is separately checked below and must survive a paused load.
+    const idleId = randomUUID();
+    await game.service.createSave('Idle before the ramp', idleId);
+    const idleStored = await game.service.store.saves!.read(game.service.world.id, idleId);
     await game.service.command('saved-ramp', {
       type: 'move',
       position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
@@ -104,7 +109,7 @@ it('restores elevated position and native flight while departure stops unfinishe
     await game.service.createSave('On the ramp', id);
     const stored = await game.service.store.saves!.read(game.service.world.id, id);
     expect(stored.format).toBe(SAVE_FORMAT);
-    expect(stored.state.world.entities[actorId]).toEqual(snapshot);
+    expect(stored.state.world.entities[actorId]!.actor!.action).toEqual(snapshot!.actor!.action);
     await game.close();
     game = await createGameServer({
       config,
@@ -118,22 +123,18 @@ it('restores elevated position and native flight while departure stops unfinishe
       ...snapshot,
       actor: {
         ...snapshot!.actor,
-        action: null,
-        planGeneration: snapshot!.actor!.planGeneration + 1,
         participation: expect.objectContaining({ phase: 'active' }),
       },
     });
     // The slot retains the exact route, but returning does not restart a departed
     // player's unfinished walk: docs/worlds/base/player-danger.md.
     await game.service.control({ paused: false, clientId: 'save-fixture' });
-    expect(
-      (
-        await game.service.command('resume-saved-ramp', {
-          type: 'move',
-          position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
-        })
-      ).ok,
-    ).toBe(true);
+    // Paused startup preserves committed work; reconnecting may choose a replacement route.
+    // docs/save-and-load.md#continuation-and-identity
+    await game.service.command('resumed-ramp', {
+      type: 'move',
+      position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
+    });
     await expect
       .poll(() => game.service.world.entities[actorId]!.actor!.action?.navigation, {
         timeout: 10_000,
@@ -149,12 +150,7 @@ it('restores elevated position and native flight while departure stops unfinishe
     );
     expect(game.service.world.entities[actorId]).toEqual({
       ...snapshot,
-      actor: {
-        ...snapshot!.actor,
-        action: null,
-        planGeneration: snapshot!.actor!.planGeneration + 1,
-        participation: expect.objectContaining({ phase: 'exiting' }),
-      },
+      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
     });
     expect(game.service.world.paused).toBe(true);
     expect(game.service.generation).not.toBe(epoch);
@@ -164,13 +160,19 @@ it('restores elevated position and native flight while departure stops unfinishe
     expect(game.service.storageError).toBeNull();
     expect(game.service.pauseReason).toBe('manual');
 
-    // A completed install cannot hide a failure saving its following departure state.
+    // A paused transport reset alone preserves a restored active body. An exit
+    // already started before loading still reconciles and can fail its write.
+    // docs/save-and-load.md#continuation-and-identity
+    await game.service.control({ paused: false, clientId: 'save-fixture' });
+    await game.service.setPresence('save-fixture', false);
+    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('exiting');
     const timeline = game.service.timelineId;
     const protectedActor = structuredClone(game.service.world.entities[actorId]);
     const requestId = randomUUID();
     const store = game.service.store;
     const realCommit = store.commit.bind(store);
     let installedRevision: number | undefined;
+    let protectedSaveId: string | undefined;
     let refusedParticipation = 0;
     const commit = vi.spyOn(store, 'commit').mockImplementation(async (...args) => {
       if (
@@ -182,11 +184,14 @@ it('restores elevated position and native flight while departure stops unfinishe
         throw new Error('Fixture refused the participation write before commit.');
       }
       const revision = await realCommit(...args);
-      if (args[4]?.restore) installedRevision = revision;
+      if (args[4]?.restore) {
+        installedRevision = revision;
+        protectedSaveId = args[4].restore.recoveryId;
+      }
       return revision;
     });
     try {
-      await expect(game.service.restoreSave(id, requestId, stored)).rejects.toThrow(
+      await expect(game.service.restoreSave(idleId, requestId, idleStored)).rejects.toThrow(
         'The save could not be committed.',
       );
     } finally {
@@ -198,10 +203,13 @@ it('restores elevated position and native flight while departure stops unfinishe
     expect(game.service.pauseReason).toBe('storage');
     expect(game.service.world.paused).toBe(true);
     expect(game.service.timelineId).not.toBe(timeline);
-    expect(game.service.world.entities[actorId]!.actor!.action).toEqual(snapshot!.actor!.action);
+    expect(game.service.world.entities[actorId]!.actor!.action).toEqual(
+      idleStored.state.world.entities[actorId]!.actor!.action,
+    );
     expect(await store.records?.head()).toMatchObject({ revision: installedRevision });
-    expect(await store.getIntegration(`load-request:${requestId}`)).toEqual({ saveId: id });
-    const protection = await store.saves!.read(game.service.world.id, 'before-load');
+    expect(await store.getIntegration(`load-request:${requestId}`)).toEqual({ saveId: idleId });
+    expect(protectedSaveId).toBeDefined();
+    const protection = await store.saves!.read(game.service.world.id, protectedSaveId!);
     expect(protection.state.world.entities[actorId]).toEqual(protectedActor);
     const speed = game.service.speed;
     expect(await game.service.control({ speed: speed === 3 ? 1 : 3 })).toMatchObject({

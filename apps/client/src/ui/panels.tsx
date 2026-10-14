@@ -38,7 +38,18 @@ export function Actions({
           <Button size="sm" disabled={!a.enabled || !connected} onPress={() => command(a)}>
             {a.label}
           </Button>
+          {a.facts?.map(([name, value]) => (
+            <p className="ol-caption" key={name}>
+              {name}: {value}
+            </p>
+          ))}
           {!a.enabled && a.reason && <p className="ol-caption">{a.reason}</p>}
+          {a.detail && (
+            <details>
+              <summary>Stats and details</summary>
+              <p className="ol-caption">{a.detail}</p>
+            </details>
+          )}
         </div>
       ))}
     </div>
@@ -74,10 +85,13 @@ export function Crafting({
   invent(): void;
 }) {
   const [query, setQuery] = useState('');
+  const [creatorFilter, setCreatorFilter] = useState('all');
   const [selectedId, setSelectedId] = useState('');
   const search = query.trim().toLocaleLowerCase();
-  const recipes = view.recipes.filter((recipe) =>
-    `${recipe.output.name} ${recipe.name}`.toLocaleLowerCase().includes(search),
+  const recipes = view.recipes.filter(
+    (recipe) =>
+      `${recipe.output.name} ${recipe.name}`.toLocaleLowerCase().includes(search) &&
+      (creatorFilter === 'all' || recipe.origin === creatorFilter),
   );
   const selected = selectedId
     ? view.recipes.find((recipe) => recipe.id === selectedId)
@@ -85,6 +99,19 @@ export function Crafting({
   return (
     <>
       <Section title="Known recipes" count={recipes.length}>
+        <label>
+          Method source{' '}
+          <select
+            aria-label="Method source"
+            value={creatorFilter}
+            onChange={(event) => setCreatorFilter(event.target.value)}
+          >
+            <option value="all">All methods</option>
+            <option value="authored">Authored methods</option>
+            <option value="player">Players</option>
+            <option value="npc">NPCs</option>
+          </select>
+        </label>
         <label className="ol-task-search">
           Find an output
           <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -111,20 +138,24 @@ export function Crafting({
         </div>
         {!recipes.length && (
           <EmptyState
-            title={view.recipes.length ? 'No recipes match this filter.' : 'Nothing invented yet.'}
+            title={
+              view.recipes.length ? 'No recipes match this filter.' : 'No methods learned yet.'
+            }
           >
             {view.recipes.length
-              ? 'Change or clear the output search.'
-              : 'Describe a useful tool and discover a way to make it.'}
+              ? 'Change the method source or clear the output search.'
+              : 'Learn from an accessible recipe record, or describe a useful tool to invent a method with live AI.'}
           </EmptyState>
         )}
         {selected ? (
           <section className="ol-selected-recipe" aria-label={`Make ${selected.output.name}`}>
-            {!!search && !recipes.some((recipe) => recipe.id === selected.id) && (
-              <p className="ol-caption">
-                Your selected output is outside this filter. Clear the search to see it in the list.
-              </p>
-            )}
+            {(!!search || creatorFilter !== 'all') &&
+              !recipes.some((recipe) => recipe.id === selected.id) && (
+                <p className="ol-caption">
+                  Your selected output is outside this filter. Clear the search to see it in the
+                  list.
+                </p>
+              )}
             <h3>{selected.output.name}</h3>
             <RecipeDetails recipe={selected} />
             <Actions actions={selected.actions} command={command} connected={connected} />
@@ -263,7 +294,7 @@ export function Character({
   visible?: boolean;
 }) {
   const [section, setSection] = useState('condition');
-  const equipped = view.player.inventory.find((item) => item.equipped);
+  const equipped = view.player.inventory.filter((item) => item.equipped);
   useEffect(() => {
     if (actionEntry) setSection('capabilities');
   }, [actionEntry]);
@@ -327,6 +358,39 @@ export function Character({
           )}
         </TabPanel>
         <TabPanel id="capabilities" shouldForceMount className="ol-character-page">
+          {!!view.player.practice?.length && (
+            <Section title="Practice">
+              {view.player.practice.map((progress) => (
+                <div key={progress.id}>
+                  <Tag>
+                    {progress.name}: {progress.rankLabel}
+                  </Tag>
+                  <p>{progress.progressText}</p>
+                  {progress.starting && (
+                    <p className="ol-caption">{progress.authoredStartingText}</p>
+                  )}
+                  <p className="ol-caption">
+                    {progress.scope} {progress.effect}
+                  </p>
+                  <details>
+                    <summary>
+                      {progress.evidenceHeading} ({progress.evidence.length})
+                    </summary>
+                    <ul>
+                      {progress.evidence.map((evidence, index) => (
+                        <li key={evidence.occurrenceId}>
+                          {progress.evidenceItemTemplate
+                            .replaceAll('{number}', String(index + 1))
+                            .replaceAll('{description}', evidence.description)}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
+              ))}
+            </Section>
+          )}
+
           <OutingStatus view={view} connected={connected} command={command} />
           <ActionAttempts
             key={`${view.access?.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
@@ -358,23 +422,21 @@ export function Character({
           </ActionAttempts>
         </TabPanel>
         <TabPanel id="equipment" className="ol-character-page">
-          <Section title="Equipped item">
-            {equipped ? (
-              <div className="ol-character-equipment">
-                <Icon
-                  name={equipped.icon ?? 'ui.inventory'}
-                  fallbackLabel={equipped.name}
-                  size={32}
-                />
-                <div>
-                  <h3>{equipped.name}</h3>
-                  <p>{equipped.description}</p>
+          <Section title="Equipped items">
+            {equipped.length ? (
+              equipped.map((item) => (
+                <div className="ol-character-equipment" key={item.id}>
+                  <Icon name={item.icon ?? 'ui.inventory'} fallbackLabel={item.name} size={32} />
+                  <div>
+                    <h3>{item.name}</h3>
+                    <p>{item.description}</p>
+                  </div>
                 </div>
-              </div>
+              ))
             ) : (
               <p>No item is equipped.</p>
             )}
-            <p className="ol-caption">Compare or change your equipped item in Inventory.</p>
+            <p className="ol-caption">Compare or change your equipped items in Inventory.</p>
             {openInventory && (
               <Button icon="ui.inventory" onPress={openInventory}>
                 Open inventory

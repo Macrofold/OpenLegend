@@ -4,11 +4,13 @@ import {
   fireFuelDescription,
   type Entity,
   type ItemDefinition,
+  type CastDefinition,
 } from '@open-legend/domain';
 /** Called only for entities in the player's permitted observation. No private mind. */
 export function describeEntity(
   entity: Entity,
   definitions: Record<string, ItemDefinition>,
+  castDefinitions: Record<string, CastDefinition>,
 ): string {
   const remains = describeBodyRemains(entity, definitions);
   if (remains) return remains;
@@ -20,6 +22,10 @@ export function describeEntity(
         : entity.threat.relinquished
           ? entity.threat.policy.stopText
           : (entity.description ?? entity.name);
+  if (entity.resource?.cast) {
+    const definition = castDefinitions[entity.resource.cast.definitionId];
+    return `${entity.description ?? entity.name} ${definition?.description ?? ''}${entity.resource.quantity === 0 ? ` ${definition?.exhaustedText ?? ''}` : ''}`;
+  }
   if (entity.description) return entity.description;
   if (entity.resource)
     return `${namePhrase(entity, 'indefinite', { capitalize: true })}. ${definitions[entity.resource.definitionId]?.description ?? 'A source of gathering materials.'} ${entity.resource.quantity} units remain.`;
@@ -29,7 +35,7 @@ export function describeEntity(
     return `${namePhrase(entity, 'indefinite', { capitalize: true })} of the clearing. ${entity.actor!.alive ? (entity.animal.danger > 0 ? 'It is fleeing.' : 'It is foraging nearby.') : 'It is no longer alive.'}`;
   if (entity.heat)
     return entity.heat.lit
-      ? `A burning fire that provides heat for cooking raw meat, with ${fireFuelDescription(entity.heat)}.`
+      ? `A burning fire that provides heat for food preparation, with ${fireFuelDescription(entity.heat)}.`
       : `A cold campfire with ${fireFuelDescription(entity.heat)}. It cannot cook food until it is lit.`;
   return entity.name;
 }

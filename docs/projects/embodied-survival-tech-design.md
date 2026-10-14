@@ -1,5 +1,9 @@
 # Embodied survival: technical design
 
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-07   |
+
 **Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** [Feature specification](embodied-survival-feature-spec.md) owns the proposed experience. Required directions are distinguished there from recommended content and tuning.
 
 ## Baseline, scope and risk
@@ -40,7 +44,7 @@ Apply the [boundary decision procedure](../engine-and-world-boundaries.md#5-a-re
 
 The narrow new computation is band-transition evaluation and weapon-bound timed hit resolution. Prefer existing state/policy and action adapters; do not require a general expression language, arbitrary callbacks, dynamic package loader or new service. A trusted finite predicate can compare a typed number to authored boundaries; the text explaining it is not executable policy.
 
-Localize the current human/biped and single-equipped-item limitations in the existing handling/strike adapters. Another body using this family must declare supported manipulation and locomotion; “rigid” or “point” material properties alone cannot grant attack authority. Extend those adapters when a real non-biped or multi-hand mechanic needs them, under AC/EWF, rather than pretending this slice solves all anatomy.
+AV02 replaces the former single-equipped-item restriction with declared body ports and exact attached items through the existing object owner; [current equipment/defense contract](../worlds/base/shield-defense.md) and [evidence](../verification/shield-defense.md) describe the extension. The reviewed human/biped physical-work boundary remains: another body must declare supported manipulation, equipment places and locomotion; “rigid” or “point” material properties alone cannot grant attack authority. Further anatomy needs a real consumer under AC/EWF.
 
 ## Body descriptions and transition lifecycle
 
@@ -259,11 +263,11 @@ Earlier completed receipts total $0.074665878; the separate $0.25 uncertain hold
 
 ### Learned activities: discussion only
 
-This discussion now has a requested [project overview](action-experience.md), [feature specification](action-experience-feature-spec.md), [technical design](action-experience-tech-design.md) and [AE implementation tracker](../maintainers/action-experience.md). They own the formal action representation and learning project; the paragraphs below retain the motivating discussion. Mike subsequently authorized implementation, now documented in [current behavior](../action-experience.md) and [evidence](../verification/action-experience.md).
+This discussion now has a requested [project overview](completed/action-experience.md), [feature specification](completed/action-experience-feature-spec.md), [technical design](completed/action-experience-tech-design.md) and [AE implementation tracker](../maintainers/action-experience.md). They own the formal action representation and learning project; the paragraphs below retain the motivating discussion. Mike subsequently authorized implementation, now documented in [current behavior](../action-experience.md) and [evidence](../verification/action-experience.md).
 
 The owner proposed remembering a successful food activity as a reusable, interruptible composition. Existing saved short plans, native continuation, explicit continue/cancel and earlier-item result references are useful foundations, but they are not a learned general method library. Prefer parameterized roles (prey, compatible weapon, resulting remains/meat, reachable cooking place) and actual result bindings over saved entity IDs or a hardcoded hunger recipe. Use bounded repetition with explicit success/stop conditions, revalidate prerequisites at each step, and retain completed receipts while showing only remaining work at reconsideration. Partial methods such as hunt → harvest should be usable independently; cooking must remain conditional on actual heat/resources. Descriptions can derive tools, outputs, work duration and currently known approach distances from bound steps without promising unknown future routes. AC06 owns the missing predicates, multi-output bindings and bounded repetition; AG03 owns saved plan continuity. The linked action-experience package owns that design and its subsequent implementation; registered controls execute, while learning does not invent repeat predicates from a single trace.
 
-The earlier suggestion to group work at undefined “useful outcome” boundaries is superseded by [recorded endpoints and bounded connected candidates](action-experience-tech-design.md#incremental-candidate-construction), assessed during [eligible idle periods](action-experience-tech-design.md#idle-learning-and-relevant-retrieval). Time schedules processing; it does not decide membership. Recorded outputs, supported state contributions, evidence and selected purpose supply links; sharing a tool, timestamp or plan boundary alone is insufficient. The action-experience package owns normalization, tentative personal learning, shared reuse and remaining-work presentation. Explicitly taught/authored starting knowledge remains optional world content, not silently installed competence.
+The earlier suggestion to group work at undefined “useful outcome” boundaries is superseded by [recorded endpoints and bounded connected candidates](completed/action-experience-tech-design.md#incremental-candidate-construction), assessed during [eligible idle periods](completed/action-experience-tech-design.md#idle-learning-and-relevant-retrieval). Time schedules processing; it does not decide membership. Recorded outputs, supported state contributions, evidence and selected purpose supply links; sharing a tool, timestamp or plan boundary alone is insufficient. The action-experience package owns normalization, tentative personal learning, shared reuse and remaining-work presentation. Explicitly taught/authored starting knowledge remains optional world content, not silently installed competence.
 
 ### Explicit completion feedback correction
 

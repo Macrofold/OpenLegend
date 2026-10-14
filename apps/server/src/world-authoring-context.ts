@@ -3,6 +3,8 @@ import {
   recipeFamily,
   selectedRecipeCandidateSchema,
   observeActor,
+  selectedCreationProfileForWorld,
+  selectedCreationProfileForCandidate,
   type WorldState,
 } from '@open-legend/domain';
 import type { RelationshipRef, WorldAgentRequirement } from '@open-legend/protocol';
@@ -32,6 +34,10 @@ export interface AuthoringPacket {
 }
 
 export function profileTools(profile: AuthoringProfile): string[] {
+  if (profile === 'world-opening')
+    // The fresh profile and exact template are supplied; source-world inspection
+    // cannot supply authority or content for the prospective world.
+    return ['ol_world_opening_submit'];
   if (profile === 'recipe')
     // The complete recipe guide is already in every admitted packet.
     return ['ol_find', 'ol_inspect', 'ol_recipe_submit', 'ol_request_capability'];
@@ -62,11 +68,15 @@ export function authoringGuide(
     return {
       ...guide,
       payloadEncoding:
-        kind === 'status-effect-policy'
-          ? `Use proposal.kind="status-effect-policy" and proposal.candidate containing the complete policy serialized as JSON text in ${AUTHORING_SUBMIT_TOOLS[kind]}. Preserve every unchanged field from the supplied example; native validation checks the decoded policy.`
-          : `Typed proposal.kind and proposal.candidate in ${AUTHORING_SUBMIT_TOOLS[kind]}; schema is already in the tool.`,
+        kind === 'world-opening'
+          ? guide.payloadEncoding
+          : kind === 'status-effect-policy'
+            ? `Use proposal.kind="status-effect-policy" and proposal.candidate containing the complete policy serialized as JSON text in ${AUTHORING_SUBMIT_TOOLS[kind]}. Preserve every unchanged field from the supplied example; native validation checks the decoded policy.`
+            : `Typed proposal.kind and proposal.candidate in ${AUTHORING_SUBMIT_TOOLS[kind]}; schema is already in the tool.`,
       coverage:
-        'Native checks and a bounded candidate graph are retained by submission. No general interaction proof.',
+        kind === 'world-opening'
+          ? guide.coverage
+          : 'Native checks and a bounded candidate graph are retained by submission. No general interaction proof.',
     };
   }
   const family = familyId ? recipeFamily(world, familyId) : undefined;
@@ -105,7 +115,9 @@ function durableMembership(value: object | undefined) {
   return digest;
 }
 // These pins survive restart. Process-local dependency tokens cannot identify saved facts.
-export function contextMembership(world: WorldState) {
+export function contextMembership(world: WorldState, profile?: AuthoringProfile) {
+  if (profile === 'world-opening')
+    return fingerprint(selectedCreationProfileForWorld(world).metadata);
   return fingerprint(
     [
       world.itemDefinitions,
@@ -141,7 +153,28 @@ export function buildAuthoringPacket(
     throw new Error('Retained requirements exceed the bounded context slice.');
   const pins: RelationshipRef[] = [];
   const facts: Record<string, unknown> = {};
-  if (profile === 'recipe') {
+  if (profile === 'world-opening') {
+    if (selected && selected.kind !== 'world-opening')
+      throw new Error(
+        'The selected draft is not a prospective opening. Select its supported kind first.',
+      );
+    const identities = session.openingIdentities;
+    if (!identities)
+      throw new Error(
+        'The application has not allocated this session’s prospective opening identities.',
+      );
+    const selectedProfile = selectedCreationProfileForWorld(world);
+    const candidate = selected?.payload ?? selectedProfile.create(identities);
+    // Retained JSON is unknown at this context boundary. Reuse the profile owner
+    // before walking its fields; no source-world actor is consulted.
+    const validated = selectedCreationProfileForCandidate(candidate);
+    facts.guide = authoringGuide(world, profile);
+    if (!selected) facts.prospective_opening = candidate;
+    facts.editable_fields = validated.profile.editor(validated.candidate).fields;
+    facts.opening_identity = identities;
+    facts.authoring_scope =
+      'Only fresh authored setup in this prospective opening. Target selection, operating/account admission, exact human review and Start happen in the native creation surface after the draft is saved.';
+  } else if (profile === 'recipe') {
     const observed = observeActor(world, session.actorId, { includeMemories: false });
     if (!observed) throw new Error('The inventor is unavailable.');
     const materials = inventionMaterials(world, observed);
@@ -172,6 +205,7 @@ export function buildAuthoringPacket(
   } else {
     facts.capabilities = {
       recipe: authoringGuide(world, 'recipe'),
+      'world-opening': authoringGuide(world, 'world-opening'),
       'status-effect-policy':
         'World-owner change to the whole status policy, including sleep/rates/restrictions; not a bed or potion.',
       attribute: 'Create supported passive number, reservoir or category definitions.',
@@ -209,7 +243,7 @@ export function buildAuthoringPacket(
     authority: fingerprint(session.authority),
     profile,
     pins,
-    membership: contextMembership(world),
+    membership: contextMembership(world, profile),
     requirements,
     ...(selected
       ? { selected: { id: selected.id, revision: selected.revision, digest: selected.digest } }
@@ -225,7 +259,7 @@ export function packetCurrent(packet: AuthoringPacket, world: WorldState, sessio
     packet.contextHash === session.contextHash &&
     packet.generation === session.timeline &&
     packet.authority === fingerprint(session.authority) &&
-    packet.membership === contextMembership(world) &&
+    packet.membership === contextMembership(world, packet.profile) &&
     packet.pins.every(
       (pin) => readDefinition(world, pin.kind, pin.id)?.node.ref.version === pin.version,
     )
@@ -262,9 +296,11 @@ export function renderAuthoringPacket(
     next_action:
       packet.profile === 'discovery'
         ? 'If the request needs a proposal, select its supported kind with ol_request_capability and finish. Selection is not a saved review. Otherwise answer and finish.'
-        : packet.profile === 'recipe'
-          ? `Submit a requested recipe change with ol_recipe_submit.${packet.selected ? ' To refine current_work, set edit to {draftId: current_work.id, expectedRevision: current_work.revision}.' : ''}`
-          : `For a requested change, call ${AUTHORING_SUBMIT_TOOLS[packet.profile]} with packetRef and the complete typed proposal. To refine current_work, set edit to {draftId: current_work.id, expectedRevision: current_work.revision}. Finish when saved. Otherwise answer without saving.`,
+        : packet.profile === 'world-opening'
+          ? `Use ${packet.selected ? 'current_work.candidate' : 'prospective_opening'} as the complete retained starting point. Preserve every unchanged selected part and supplied identity/pin/seed/RNG value. Submit the complete JSON text with proposal.kind="world-opening" in ol_world_opening_submit.${packet.selected ? ' Set edit to {draftId: current_work.id, expectedRevision: current_work.revision}.' : ''} Record unsupported essential meaning in requirement annotations; never silently replace it or manufacture support. Finish after saving for the human’s target selection and exact review. No source-world Apply or Start is offered to the model.`
+          : packet.profile === 'recipe'
+            ? `Submit a requested recipe change with ol_recipe_submit.${packet.selected ? ' To refine current_work, set edit to {draftId: current_work.id, expectedRevision: current_work.revision}.' : ''}`
+            : `For a requested change, call ${AUTHORING_SUBMIT_TOOLS[packet.profile]} with packetRef and the complete typed proposal. To refine current_work, set edit to {draftId: current_work.id, expectedRevision: current_work.revision}. Finish when saved. Otherwise answer without saving.`,
   };
   if (!(sections.retained_requirements as unknown[]).length) delete sections.retained_requirements;
   // The only recipe submit tool already explains saving and stopping. A selected

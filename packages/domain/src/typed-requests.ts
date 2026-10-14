@@ -1,4 +1,4 @@
-import { BASE_TYPED_REQUESTS } from './worlds/base/typed-requests.js';
+import { selectedTypedRequestVocabulary } from './world-composition.js';
 import type { WorldState } from './types.js';
 
 /** A world's words for typed requests: what its things and creatures are called, requests it
@@ -29,6 +29,6 @@ export interface TypedRequestVocabulary {
 
 /** Composition point: the bundled world supplies the vocabulary today. An installed world
  * package would supply its own here once external packages exist (EWF); there is no loader. */
-export function typedRequestVocabulary(_world: WorldState): TypedRequestVocabulary {
-  return BASE_TYPED_REQUESTS;
+export function typedRequestVocabulary(world: WorldState): TypedRequestVocabulary {
+  return selectedTypedRequestVocabulary(world);
 }

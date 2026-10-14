@@ -59,6 +59,8 @@ it('projects active, failed and interrupted reply outcomes on the originating sp
     .poll(async () => (await projectView(service)).conversation.at(-1))
     .toMatchObject({
       replyStatus: 'stale',
+      replyReason: 'You moved out of hearing range before Ada could answer.',
+      retryable: false,
     });
 
   await store.putJob({ ...base, status: 'failed', message: 'Provider failed.' });
@@ -67,6 +69,6 @@ it('projects active, failed and interrupted reply outcomes on the originating sp
     .poll(async () => (await projectView(service)).conversation.at(-1))
     .toMatchObject({
       replyStatus: 'failed',
-      replyFailure: 'Provider failed.',
+      replyReason: 'Provider failed.',
     });
 });

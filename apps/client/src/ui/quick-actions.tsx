@@ -18,38 +18,33 @@ import './character-actions.css';
 /** Group only genuine, permitted native actions using the installed world's own
  * shortcut metadata. A subtype name cannot create a capability or its wording. */
 export function gatherQuickActions(view: GameView): ActionOption[] {
-  const groups = new Map<
+  const nearest = new Map<
     string,
-    { action: ActionOption; source: GameView['entities'][number] }[]
+    { action: ActionOption; source: GameView['entities'][number]; distance: number }
   >();
   for (const source of view.entities) {
+    let distance: number | undefined;
     for (const action of source.actions) {
       if (!action.shortcut) continue;
-      const entries = groups.get(action.shortcut.id) ?? [];
-      entries.push({ action, source });
-      groups.set(action.shortcut.id, entries);
+      distance ??= distance3D(source.position, view.player.position);
+      const previous = nearest.get(action.shortcut.id);
+      if (
+        !previous ||
+        Number(action.enabled) > Number(previous.action.enabled) ||
+        (action.enabled === previous.action.enabled &&
+          (distance < previous.distance ||
+            (distance === previous.distance && source.id.localeCompare(previous.source.id) < 0)))
+      ) {
+        nearest.set(action.shortcut.id, { action, source, distance });
+      }
     }
   }
-  return [...groups.values()].flatMap((entries) => {
-    entries.sort(
-      (a, b) =>
-        Number(b.action.enabled) - Number(a.action.enabled) ||
-        distance3D(a.source.position, view.player.position) -
-          distance3D(b.source.position, view.player.position) ||
-        a.source.id.localeCompare(b.source.id),
-    );
-    const selected = entries[0];
-    if (!selected?.action.shortcut) return [];
-    const { action, source } = selected;
-    return [
-      {
-        ...action,
-        id: selected.action.shortcut.id,
-        label: `${selected.action.shortcut.label} · ${source.name}`,
-        icon: selected.action.shortcut.icon ?? action.icon,
-      },
-    ];
-  });
+  return [...nearest.values()].map(({ action, source }) => ({
+    ...action,
+    id: action.shortcut!.id,
+    label: `${action.shortcut!.label} · ${source.name}`,
+    icon: action.shortcut!.icon ?? action.icon,
+  }));
 }
 
 export function QuickActions({

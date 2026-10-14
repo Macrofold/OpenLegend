@@ -254,7 +254,7 @@ export function territorialIntention(
     threat.mode === 'pursuit' &&
     seen &&
     target &&
-    (actor.attackReadyAt ?? 0) <= world.simTime &&
+    (actor.combatReadyAt ?? 0) <= world.simTime &&
     canReachEntity(world, entity, target, policy.attackRange)
   ) {
     stopAction(world, entity);

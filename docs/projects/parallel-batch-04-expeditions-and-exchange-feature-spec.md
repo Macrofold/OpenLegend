@@ -1,8 +1,8 @@
 # Parallel batch 04 — Expeditions and exchange — feature specification
 
-| Status      | Current progress                                                                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PX01 encounter integration, PX02 barter, PX03 discoveries and PX04 paired outings are delivered and reviewed; PX05 and broader qualification remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                              | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PX01–PX04 are delivered and reviewed and PX05 shelter design is complete; broader qualification remains open. | 2026-10-07   |
 
 [Technical definitions](parallel-batch-04-expeditions-and-exchange-tech-design.md) · [Five prompts](parallel-batch-04-expeditions-and-exchange-prompts.md) · [Tracker](../maintainers/parallel-batch-04-expeditions-and-exchange.md) · [Batch register](parallel-batches.md)
 
@@ -103,6 +103,8 @@ Produce the missing technical counterpart to [Editable shelters](editable-shelte
 The design must make one ground-level light shelter buildable, alterable and reclaimable with real parts. Choose a location and useful size, preview actual occupied/covered space, consume real supported work, bring a belonging or ordinary activity there, change a panel, and recover surviving materials. Preserve each meaningful item's identity/condition. Include two different arrangements that use the same assembly rules. Ordinary geometry, permissions and supplies remain authoritative; a name or generated picture does not create coverage or safe passage.
 
 Settle the specific representation, support/coverage calculation, navigation invalidation, material custody during work, interruption, unsupported shapes, permissions, disclosure, same-version save lifecycle and natural-language authoring route. Reuse the existing product scope for rain/moisture, with clear staging: useful place-making is the attraction; general heat/spread and mandatory maintenance remain separate. Identify owner decisions that still need approval instead of quietly implementing them. Completion is an implementation-ready pair and task breakdown with worked success/failure traces, not runtime evidence or closure of INV-6.4.
+
+**PX05 disposition, October 5:** the [existing shelter feature specification](editable-shelters-feature-spec.md) and its [technical counterpart](editable-shelters-tech-design.md) now complete the design assignment. [SH01–SH06](../maintainers/editable-shelters.md) sequences one useful flat bay, separate wetting/drying, then shared two-bay and qualified lean-to variations. AV04 now delivers the selected flat construction/use/reclaim and finite rain/drying; the slope, broader qualification and home psychology remain open.
 
 ## Maintained records
 

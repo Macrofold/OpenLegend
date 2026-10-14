@@ -1,3 +1,4 @@
+import { revokePracticeSupport } from './practical-competence.js';
 import { revokeActivityEvidence } from './activity-learning.js';
 import {
   invalidateAppraisals,
@@ -5,7 +6,6 @@ import {
   type AppraisalChange,
   type AppraisalBindings,
 } from './appraisals.js';
-import { migrateKnowledge } from './knowledge-migration.js';
 import {
   editKnowledge,
   knowledgeDocument,
@@ -612,7 +612,6 @@ export function migrateCognition(world: WorldState): void {
       evidenceIds: mind.documents.flatMap((d) => d.evidence.map((e) => e.id)),
     };
   }
-  migrateKnowledge(world);
 }
 /** One projection for recall and derived speech indexing; never consult the raw world event. */
 export function awarenessMemory(entry: Awareness): MemoryRecord {
@@ -920,7 +919,10 @@ export function invalidateExperience(
         (memory.activityId && affected.has(memory.activityId))
       )
         include(memory.id);
-      if (affected.has(memory.id)) include(memory.activityId);
+      if (affected.has(memory.id)) {
+        include(memory.activityId);
+        include(memory.eventId);
+      }
     }
     for (const occurrence of world.actionExperience.occurrences[actorId] ?? []) {
       if (affected.has(occurrence.id)) include(occurrence.resultMemoryId);
@@ -939,6 +941,7 @@ export function invalidateExperience(
       }
   }
   revokeActivityEvidence(world, actorId, [...affected]);
+  revokePracticeSupport(world, actorId, affected);
   if (forget) {
     state.forgotten[actorId] = [...new Set([...(state.forgotten[actorId] ?? []), ...affected])];
     state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(

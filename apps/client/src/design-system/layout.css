@@ -48,6 +48,7 @@ body,
 }
 .ol-hud {
   --status-height: 180px;
+  --clock-height: 56px;
   --status-scale: 1;
   --status-bottom: calc(var(--hud-inset) + 48px + var(--status-height) * var(--status-scale));
   position: absolute;
@@ -1519,7 +1520,10 @@ body,
   --sheet-top: calc(
     var(--space-3) + var(--control-sm) + var(--space-2) + var(--control-md) + 2 * var(--space-1)
   );
-  --dock-top: max(230px, calc(var(--status-bottom) + var(--space-3) + 56px + var(--space-3)));
+  --dock-top: max(
+    230px,
+    calc(var(--status-bottom) + var(--space-3) + var(--clock-height) + var(--space-3))
+  );
 }
 .ol-hud[data-narrow='true'] .ol-survival {
   transform: scale(0.72);
@@ -1712,7 +1716,10 @@ body,
 }
 .ol-hud[data-tight='true'] {
   --status-scale: 0.6;
-  --dock-top: max(280px, calc(var(--status-bottom) + var(--space-3) + 88px + var(--space-3)));
+  --dock-top: max(
+    280px,
+    calc(var(--status-bottom) + var(--space-3) + var(--clock-height) + var(--space-3))
+  );
   --mobile-tabs-top: calc(var(--dock-top) + var(--space-8) + var(--space-2));
 }
 .ol-hud[data-tight='true'] .ol-timebar {
@@ -2721,6 +2728,71 @@ body,
   margin: 4px 0 0;
   white-space: pre-wrap;
 }
+.ol-world-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ol-world-event-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid var(--ol-border-subtle, rgba(255, 255, 255, 0.14));
+  border-radius: 6px;
+  background: var(--ol-surface-raised, rgba(0, 0, 0, 0.22));
+  max-height: min(44vh, 280px);
+  overflow-y: auto;
+}
+.ol-world-event-comparison-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ol-world-event-comparison-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ol-world-event-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+@media (max-width: 720px), (max-height: 560px) {
+  .ol-world-event-comparison {
+    max-height: min(26vh, 180px);
+  }
+  .ol-world-event-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.ol-world-event-source-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--ol-border-subtle, rgba(255, 255, 255, 0.12));
+  border-radius: 4px;
+  min-width: 0;
+}
+.ol-world-event-source-meta p,
+.ol-world-event-source-body p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ol-world-event-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
 /* World Agent drafts use ordinary panels; no generated markup enters a review. */
 .ol-agent-reviews {
@@ -3096,4 +3168,29 @@ body,
 }
 .ol-family-confirm p {
   flex-basis: 100%;
+}
+
+.ol-combat-controls {
+  margin-top: var(--space-2, 8px);
+}
+.ol-combat-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ol-combat-controls p {
+  overflow-wrap: anywhere;
+}
+
+.ol-aim-status {
+  margin-top: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  max-height: min(240px, 40vh);
+  overflow: auto;
+}
+.ol-panel-foot .ol-combat-controls {
+  margin-top: 0;
+  max-height: 30vh;
+  overflow: auto;
 }

@@ -1,8 +1,10 @@
 # Player Death — technical design
 
-| Status    | Current progress                                                                                          | Last updated |
-| --------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Selected runtime and optional world-scar correction are delivered; broader qualification remains tracked. | 2026-10-05   |
+| Status    | Current progress                                                                                               | Last updated |
+| --------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Selected replacement-life rules and optional world scars are delivered; broader qualification remains tracked. | 2026-10-14   |
+
+**Alignment updated:** 2026-10-14T08:14:37Z.
 
 ## Scope, source and plan
 
@@ -13,6 +15,8 @@ The implementation base is freshly fetched `origin/main` d36ec3bd in branch `cod
 [death.ts](../../../packages/domain/src/worlds/base/death.ts) owns type fraction, rounding convention, rest family/radius, new-life physiology, scars/treatment and wording; the installed body policy selects true player death. `living.ts` is the sole body mutation owner. `reincarnation.ts` supplies supported separation/placement/treatment using existing indexed objects, saved randomness, spatial support, remains, participation and events. Server control/records own durable authenticated Continue and current-format reconstruction. Client/protocol present permitted facts and intentions.
 
 A different installed world may omit reincarnation or choose another supported fraction/rest family/scar policy. No second actor database, loot journal, generalized resurrection graph or speculative loader exists.
+
+The nullable policy now explicitly selects the trusted rest-replacement implementation, player-only qualification and finite placement inputs. Rest-kind selection is shared by Continue and scar-treatment offers/admission. The installed body-policy pin retains this exact selection in current saves; omission gives no replacement behavior. Supported circular sampling admits 1–64 points with configured exclusion distances, while the bundled world preserves its eight points and existing random choices. [Focused contrasting policy and PostgreSQL evidence](../../verification/world-engine-boundaries.md#ranged-rules-materials-replacement-life-and-practice) establishes the narrow boundary; it does not complete optional world-owned health or NPC revival.
 
 ## Optional world scars correction
 
@@ -31,7 +35,7 @@ Lot count drives traversal/moves, distinct types drive sorting/sampling, and qua
 
 ## Rest selection, life pins and treatment
 
-A pending Continue request scans exposed roots for installed rest kind, computes straight-line distance from death, checks usable in-range fires and selects uniformly from distinct fires. Nearest fallback checks candidates lazily in deterministic distance order. A finite eight-point neighborhood uses each fire's actual support height, collision, occupancy and nearby contact checks; no corpse-to-camp path or all-world threat scan occurs. Fewer constructed camps make this rare scan sufficient. An indexed rest-family query becomes justified when a real large constructed-rest workload shows cost, not as unused infrastructure now.
+A pending Continue request obtains the exposed-root list once and computes the largest current occupancy/threat exclusion distance once for that search. It selects installed resting places, computes straight-line distance from death, checks usable in-range places and selects uniformly among them. Nearest fallback checks candidates lazily in deterministic distance order. The selected finite circular neighborhood uses each place's actual support height, collision, occupancy and nearby contact checks; the bundled world retains eight samples around campfires. Nearby living candidates must cover the exact exclusion distances even when the authored search margin is smaller. No corpse-to-camp path is required. Cost grows with exposed roots, candidate resting places and nearby living bodies per sampled point, without a new recurring scan or retained cache. The [October 14 review](../../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) records the clearance correction and unchanged bundled candidate order/random choices. An indexed rest-family query becomes justified when a real large constructed-rest workload shows cost, not as unused infrastructure now.
 
 One accepted Continue increments physical life, restores health/configured meters, clears old injury/motion/work and emits authored arrival. Feedback keeps the exact second-person arrival message; a separate authored event template reuses the existing name/perspective renderer for history. Current control and pending/alive checks admit only one successor; duplicate request acknowledgement does not create another. Targeted attack/review life pins and current action/generation invalidation prevent delayed effects from reaching a new or creator-revived body. Pending player/old successor-corpse creator revival is explicitly refused.
 

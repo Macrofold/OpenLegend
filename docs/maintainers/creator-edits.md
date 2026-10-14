@@ -6,7 +6,9 @@ The accepted policy is no automatic semantic memory rewrites or deletion after c
 
 ## CE01 — Reviewed explicit dependency cascades
 
-- [ ] **Earlier priority; deferred implementation.** Implement complete deletion previews through actual semantic dependency owners. List every deletion and its reason, permit optional selections, lock required dependents, recompute closure and require approval of the exact set. Reject incomplete/stale coverage; apply atomically with authority and retry fencing. Coordinate existing INV-15 impact work instead of creating a rival dependency registry. Completion requires an actual creator journey plus transitive/optional/stale/cancel/retry and persistence evidence. Select the first concrete deletion consumer before implementation.
+[Batch 09](parallel-batch-09-reviewed-content-removal.md) selects installed status-effect definitions as the first concrete consumer and owns the complete creator journey. Its [technical design](../projects/parallel-batch-09-reviewed-content-removal-tech-design.md) covers transitive required removals, optional related definitions, unsupported-owner blockers and actual active-effect teardown. Generic recipe/material/stock deletion and CE02 remain outside that scope. Implementation is not started; the full general policy remains accepted.
+
+- [ ] **Earlier priority; first consumer allocated, implementation not started.** Implement complete deletion previews through actual semantic dependency owners. List every deletion and its reason, permit optional selections, lock required dependents, recompute closure and require approval of the exact set. Reject incomplete/stale coverage; apply atomically with authority and retry fencing. Coordinate existing INV-15 impact work instead of creating a rival dependency registry. Completion requires an actual creator journey plus transitive/optional/stale/cancel/retry and persistence evidence. Deliver and qualify the selected Batch 09 consumer before extending removal to other owners.
 
 ## CE02 — Optional memory propagation tools
 

@@ -77,6 +77,8 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     version: 1,
     reincarnation: null,
     lethalAttackReview: null,
+    combat: null,
+    evasion: null,
     zeroHealth: {
       player: 'incapacitate',
       npc: 'die',

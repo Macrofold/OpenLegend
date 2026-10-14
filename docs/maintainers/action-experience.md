@@ -1,14 +1,22 @@
 # Action records and learned activities
 
+Batch 06 adds committed release and separate observed terminal flight outcomes through AE02/AE03's existing records. Practice is credited once at release; private health and unknown impacts remain undisclosed. [Recorded native/database evidence](../verification/rivals-and-contested-ground.md) is separate from independent NPC choice and combined encounter qualification, which remain open.
+
 **Status: AE01–AE10 delivered and qualified for the accepted initial scope, September 28, 2026.** This child tracker coordinates existing AG/AC/CR/EPR/storage owners. It does not close their broader acceptance or create a separate interpreter, catalogue of capabilities or memory store.
 
 **Proposed DG14 consumer, October 5:** [Practical competence](practical-competence.md) uses actual released-shot and coaching participation evidence for a finite world-authored handling improvement. This is new product scope with open technical/runtime tasks. It neither turns current tentative method acquisition into numerical skill nor claims current Teach or AE learning implements consensual coaching. The selected [world rule](../worlds/base/practical-competence.md) retains bounded independent support after coached improvement and current privacy/correction owners. Existing AE checkboxes and limits remain unchanged.
 
+**AV05 food-method consumer, October 6:** AE02/AE04/AE09 now preserve finite empty/catch outcomes and all exact cooking ingredient roles/products through the existing records, save bindings and invocation owner. A contrasting preparation normalized, rebound its exact ingredients and executed; pending casts continued through PostgreSQL with the same saved draw/stock/output. [Current contract](../food-preparation.md) and [evidence](../verification/river-meal.md) qualify this consumer. They do not claim new live method learning, autonomous fishing meals or wider AE throughput.
+
+**AV05 second review, October 7:** native capture and prospective cooking completion now enforce the existing record/display allowances before costs. Structured ingredient/product facts, one mixed-history notice and shared completion formatting preserve actual quantities and readable history. A 48-role pending meal resumed through PostgreSQL exactly; 16 products remained real receipts, and oversized work refused unchanged ([evidence](../verification/river-meal.md#second-requested-review--october-7-2026)). Wider AE acceptance is unchanged.
+
+**Installed-support and restoration review, October 14 (AE04/AE06/AE08/AE09):** completed/cancelled activities and terminal watches preserve validated results after support removal; resumable work still requires exact current dependencies. Learned methods use one compact description of the whole module manifest, including actual definition fingerprints and remaining settings, within the unchanged AEL07 allowance. Produced weapons and ammunition refer to fresh committed outputs during reuse. Inventory/entity/quick-action menus share current installed support, and fully immutable pin data permits derived implementation lookup reuse while current availability stays live. Native and PostgreSQL cases exercised restoration/refusal, changed definitions and Craft → Equip → Hunt reuse; a separate bow/arrow sequence checked both produced identities. [The review report](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) records actual caller work counts and timings. The global manifest dependency remains; this correction does not close broader [AC11](action-capabilities.md#ac11--usability-and-measured-efficiency) catalogue efficiency or [PF05](performance.md#pf05--public-view-and-browser-responsiveness) public-view/population qualification.
+
 ## Maintained records
 
-- [Project and staged scope](../projects/action-experience.md).
-- [Feature specification and AXE01–AXE13](../projects/action-experience-feature-spec.md#acceptance-scenarios).
-- [Technical design](../projects/action-experience-tech-design.md).
+- [Project and staged scope](../projects/completed/action-experience.md).
+- [Feature specification and AXE01–AXE13](../projects/completed/action-experience-feature-spec.md#acceptance-scenarios).
+- [Technical design](../projects/completed/action-experience-tech-design.md).
 - [AEL01–AEL08 limits](../limits/action-experience.md).
 
 [Current behavior](../action-experience.md) owns the runtime contract; [verification](../verification/action-experience.md#acceptance-evidence) maps AXE01–AXE13 to actual native, PostgreSQL, browser and live-provider evidence. The checked items below refer to the supported initial families and bounded structures, not new robotics, arbitrary multi-target attacks, universal cooperation or every broader AC/AG/CR target. All initial envelopes are recorded in AEL01–AEL08.
@@ -109,7 +117,7 @@ The current automatic learning route remains NPC-only for PW10. Execution suppli
 
 - [x] Retrieve only acquired/relevantly known methods with current evidence/prerequisite fit before materializing descriptions; preserve explicit inspection and omission coverage.
 - [x] Offer grounded reusable/partial methods without assigning a goal or assuming all prerequisites are available; leave unknown future bindings explicit.
-- [x] Extend AE03 individual-action preparation with the [cognitive information contract](../projects/action-experience-tech-design.md#cognitive-information-for-action-choice) through existing scoped context/capability owners. Share permitted body/goal/target facts across offers, preserve meaningful alternatives, and compose supported resource/time/requirement summaries only along supplied structures. Bound preparation before hydration and reuse queries/routes across tools.
+- [x] Extend AE03 individual-action preparation with the [cognitive information contract](../projects/completed/action-experience-tech-design.md#cognitive-information-for-action-choice) through existing scoped context/capability owners. Share permitted body/goal/target facts across offers, preserve meaningful alternatives, and compose supported resource/time/requirement summaries only along supplied structures. Bound preparation before hydration and reuse queries/routes across tools.
 - [x] Expose authorized player/actor inspection and personal evidence status; no global known-method dump in every cognition request.
 
 PW10's AE08 consumer binds a ground cache only from current permitted inspection, then rechecks access, exact material support and personal minimum. Missing/incomplete inspection is not proof of empty stock. PostgreSQL page-two-only decision preparation and access-loss removal passed; the actual injected director refused access lost during parameter selection. Browser/live retention/reuse qualification remains open ([evidence](../verification/camp-life.md#engineer-3--containers-and-chosen-activities-october-2-2026)).

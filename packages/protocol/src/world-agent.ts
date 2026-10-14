@@ -9,6 +9,7 @@ export interface WorldAgentReply {
 }
 export type WorldAuthoringKind =
   | 'recipe'
+  | 'world-opening'
   | 'attribute'
   | 'attribute-bindings'
   | 'attribute-values'
@@ -161,9 +162,11 @@ export interface WorldAgentPlanView {
   preparation?: WorldAgentPreparation;
   status: 'pending' | 'approved' | 'rejected' | 'applied';
   result?: { ok: boolean; code: string; message: string };
+  creation?: WorldCreationPlanView;
 }
 export interface WorldAgentSessionView {
   sessionId: string;
+  purpose?: 'conversation' | 'invention' | 'creation';
   workRevision?: string;
   available: boolean;
   closed: boolean;
@@ -192,6 +195,7 @@ export interface WorldAgentReviewView {
     policyRevision: number;
     base: unknown;
   };
+  openingPreview?: WorldCreationPreview;
 }
 
 export interface WorldAgentAvailability {
@@ -238,25 +242,25 @@ export interface WorldAgentDraftRevisionView extends WorldAgentDraftView {
   title: string;
   summary: string;
 }
-export interface WorldAgentRecipeFact {
+export interface WorldAgentDraftFact {
   id: string;
   label: string;
   value: number | string;
   unit?: string;
 }
-export interface WorldAgentRecipeEditorView {
+export interface WorldAgentDraftEditorView {
   family: { id: string; version: number };
   fields: Array<{
     path: string[];
     label: string;
-    kind: 'text' | 'number' | 'choice';
+    kind: 'text' | 'number' | 'choice' | 'boolean';
     unit?: string;
     minimum?: number;
     maximum?: number;
     step?: number;
     choices?: Array<{ value: string; label: string }>;
   }>;
-  facts: WorldAgentRecipeFact[];
+  facts: WorldAgentDraftFact[];
 }
 export interface WorldAgentExactDraftView extends WorldAgentDraftRevisionView {
   payload: unknown;
@@ -264,7 +268,8 @@ export interface WorldAgentExactDraftView extends WorldAgentDraftRevisionView {
   validation: WorldAgentValidation;
   plans: WorldAgentPlanView[];
   nextPlan: string | null;
-  recipeEditor?: WorldAgentRecipeEditorView;
+  editor?: WorldAgentDraftEditorView;
+  openingPreview?: WorldCreationPreview;
 }
 export interface WorldAgentDraftHistoryView {
   draftId: string;
@@ -290,5 +295,89 @@ export interface WorldAgentDraftPreviewView {
   candidateDigest: string;
   validation: WorldAgentValidation;
   preparation: WorldAgentPreparation;
-  facts?: WorldAgentRecipeFact[];
+  facts?: WorldAgentDraftFact[];
+  openingPreview?: WorldCreationPreview;
+}
+
+/** A permitted target projection contains no intake address, credential or database configuration. */
+export interface WorldCreationTargetView {
+  id: string;
+  generation: number | null;
+  profileDigest: string | null;
+  label: string;
+  entryUrl: string;
+  operatingProfile: string;
+  controlAccountId: string | null;
+  controlCapabilities?: string[];
+  operatingSettings?: Array<{ label: string; value: string | number | boolean }>;
+  status: 'unchecked' | 'available' | 'occupied' | 'unavailable' | 'forbidden';
+  reason?: string;
+}
+
+/** Inspection of authored initial circumstances; these entries are never live command targets. */
+export interface WorldCreationPreview {
+  worldId: string;
+  title: string;
+  activity: string;
+  payoff: string;
+  notices: string[];
+  entries: Array<{
+    id: string;
+    label: string;
+    kind: string;
+    position: { x: number; y: number; z: number };
+    description: string;
+    quantity?: number;
+  }>;
+  findings: Array<{
+    id: string;
+    status: 'passed' | 'failed' | 'pending';
+    message: string;
+  }>;
+}
+
+/** Human approval binds one opening, configured destination and durable Start identity. */
+export interface WorldCreationPlanView {
+  target: WorldCreationTargetView & {
+    generation: number;
+    profileDigest: string;
+    controlAccountId: string;
+    status: 'available';
+  };
+  operationId: string;
+  candidateDigest: string;
+  worldDigest: string;
+  worldId: string;
+  expiresAt: number;
+}
+
+export interface WorldCreationOperationView {
+  operationId: string;
+  planId: string;
+  targetId: string;
+  status:
+    | 'prepared'
+    | 'dispatching'
+    | 'uncertain'
+    | 'created'
+    | 'host-unavailable'
+    | 'ready'
+    | 'refused'
+    | 'cancelled';
+  message: string;
+  worldId?: string;
+  entryUrl?: string;
+  committedAt?: number;
+}
+
+export interface WorldCreationOpeningChoice {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface WorldCreationHostStatus {
+  status: 'awaiting-creation' | 'host-unavailable';
+  message: string;
+  worldId?: string;
 }

@@ -1,12 +1,14 @@
 # Batch 05 — Adventure, defense and a home
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | Five implementation assignments are specified; incoming encounter work and the earlier shelter design remain explicit prerequisites. | 2026-10-05   |
+| Status      | Current progress                                                                                         | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | All five assignments are merged; human appreciation and broader qualification retain their tracked gaps. | 2026-10-08   |
+
+Current AV05 delivery: [installed preparation/cast contract](../food-preparation.md), [river profile](../worlds/base/river-fishing.md) and [native/player/live-choice evidence](../verification/river-meal.md). Existing qualification gaps remain tracked separately.
 
 ## Purpose and selection
 
-After the previous batches, the player should have reasons to leave camp, a choice besides attacking or running, something useful to learn, a place to make their own, and another enjoyable way to obtain food. This batch delivers those experiences through five assignments. It is a proposed implementation allocation, not runtime delivery or authorization to execute these prompts in the planning chat.
+After the previous batches, the player should have reasons to leave camp, a choice besides attacking or running, something useful to learn, a place to make their own, and another enjoyable way to obtain food. This batch delivers those experiences through five assignments. All five assignments are now merged; their tracked qualification limits remain. The original planning chat did not authorize executing these prompts.
 
 The [technical definitions](parallel-batch-05-adventure-defense-and-home-tech-design.md), [five prompts](parallel-batch-05-adventure-defense-and-home-prompts.md) and [AV01–AV05 tracker](../maintainers/parallel-batch-05-adventure-defense-and-home.md) are the handoff. Start from a revision containing this documentation and the supplied prerequisites, not a stale historical hash.
 
@@ -19,6 +21,8 @@ Inspected local `main` and freshly fetched `origin/main` at `34233ae24365eb8911f
 - `codex/pg02-attended-resident` at `94633971` remains separate. A worktree's presence is evidence of separate work, not proof someone is currently executing it. Batch 04 already assigns barter, known places, voluntary outings and shelter technical design. None is allocated again here.
 - Current source has working prey hunting, finite harvest, meat cooking, ordinary eating, sleep, bags and item manufacture. Equipment still has one equipped-item reference; there is no shield guard consumer. The river is landscape, not a fish source. Cooking still has one raw-meat/output pair. Richer scenery alone supplies neither rewarding exploration nor another food activity.
 - `ce68e678` expanded DG11–DG15 product designs. Shelter and practical competence directly support this batch's game; cross-world libraries, optional story cutaways and a well-being study are considered below, not automatically promoted.
+
+**October 6 AV02 delivery:** the supplied local `main` revision `51d43e3f4a91e7ceed1404add65123b331d97358` already includes the incoming threat/lifecycle work. Compatible equipment, known shield manufacture and finite chosen guard are delivered on `codex/av02-shield-defense`; [native, PostgreSQL and browser evidence](../verification/shield-defense.md) records the scope. The October 5 audit above remains historical. AV01/AV03/AV04/AV05 are not completed by this delivery.
 
 ### Priority comparison
 

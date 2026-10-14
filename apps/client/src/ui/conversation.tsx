@@ -25,6 +25,7 @@ export function ConversationMessage({
   label,
   text,
   failureReason,
+  statusMessage,
   onRetry,
   pending,
   children,
@@ -33,6 +34,7 @@ export function ConversationMessage({
   label: string;
   text: string;
   failureReason?: string;
+  statusMessage?: string;
   onRetry?: () => void;
   pending?: boolean;
   children?: ReactNode;
@@ -42,6 +44,11 @@ export function ConversationMessage({
       <div className={`ol-message ol-message-${role}`}>
         <strong className="ol-message-author">{label}</strong>
         <div className="ol-prose">{text}</div>
+        {statusMessage && (
+          <p className="ol-meta" role="status">
+            {statusMessage}
+          </p>
+        )}
         {failureReason && (
           <span className="ol-message-failure-actions">
             <FailureStatus reason={failureReason} />

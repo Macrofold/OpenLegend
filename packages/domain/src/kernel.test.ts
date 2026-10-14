@@ -1,3 +1,4 @@
+import { cookingChoices } from './food-preparation.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
@@ -24,7 +25,7 @@ import {
 } from './index.js';
 import type { Command, DeclarationDraft, WorldState } from './types.js';
 
-/** Test-only specimens. Production seeds contain no finished recipe composition. */
+/** Test-only specimens. Authored methods remain undisclosed; these specimens exercise independent invention. */
 const sling = (): DeclarationDraft => ({
   family: { id: 'base:swing', version: 1 },
   name: 'Woven river sling',
@@ -114,8 +115,8 @@ function addRecipe(
   expect(result.outcome.ok, result.outcome.message).toBe(true);
   return { world: result.world, recipeId: result.outcome.recipeId! };
 }
-function makeSling(seed = 73): WorldState {
-  const admitted = addRecipe(createWorld(seed));
+function makeSling(seed = 73, draft = sling()): WorldState {
+  const admitted = addRecipe(createWorld(seed), draft);
   let world = command(admitted.world, { type: 'craft', recipeId: admitted.recipeId });
   world = advanceWorld(world, 60).world;
   return command(world, {
@@ -128,8 +129,10 @@ describe('authoritative pure world', () => {
   it('starts in wilderness with knowledge and possessions but no invented recipe', () => {
     const world = createWorld();
     expect(world).toEqual(createWorld());
-    expect(world.recipes).toEqual({});
-    expect(world.knowledge[NPC_ID]).toEqual([]);
+    expect(
+      Object.values(world.recipes).every((recipe) => recipe.provenance.source === 'authored-world'),
+    ).toBe(true);
+    expect(world.knowledge[NPC_ID]!.every((record) => record.source === 'authored')).toBe(true);
     expect(quantityOf(world, PLAYER_ID, 'cord')).toBeGreaterThan(0);
     expect(JSON.parse(JSON.stringify(world))).toEqual(world);
   });
@@ -204,9 +207,17 @@ describe('bounded invented mechanisms', () => {
   it('admits a new composition idempotently and teaches only its inventor', () => {
     const original = createWorld();
     const admitted = addRecipe(original);
-    expect(original.recipes).toEqual({});
-    expect(admitted.world.knowledge[PLAYER_ID]).toHaveLength(1);
-    expect(admitted.world.knowledge[NPC_ID]).toHaveLength(0);
+    expect(
+      Object.values(original.recipes).every(
+        (recipe) => recipe.provenance.source === 'authored-world',
+      ),
+    ).toBe(true);
+    expect(
+      admitted.world.knowledge[PLAYER_ID]!.filter((record) => record.source === 'invented'),
+    ).toHaveLength(1);
+    expect(
+      admitted.world.knowledge[NPC_ID]!.filter((record) => record.source === 'invented'),
+    ).toHaveLength(0);
     const repeated = admitDeclaration(admitted.world, sling(), {
       actorId: PLAYER_ID,
       requestId: 'request-sling',
@@ -237,7 +248,9 @@ describe('bounded invented mechanisms', () => {
       targetId: NPC_ID,
       recipeId: admitted.recipeId,
     });
-    expect(taught.knowledge[NPC_ID]?.[0]?.source).toBe('taught');
+    expect(
+      taught.knowledge[NPC_ID]?.find((record) => record.recipeId === admitted.recipeId)?.source,
+    ).toBe('taught');
   });
   it('rejects invented sources, overpowered effects, missing roles and unknown fields atomically', () => {
     const world = createWorld();
@@ -290,8 +303,25 @@ describe('bounded invented mechanisms', () => {
   });
   it('completes a generated sling → hunt → finite harvest → cook → eat loop', () => {
     let world = makeSling();
+    // Controlled stationary prey qualifies the successful custody/meal chain; moving misses
+    // use the separate flight specimen below. This is not a natural hunting success rate.
+    world.entities['hare-1']!.actor!.incapacitated = true;
+    setSpatialPosition(
+      world,
+      world.entities['hare-1']!,
+      {
+        ...worldPosition(world.entities[PLAYER_ID]!),
+        x: worldPosition(world.entities[PLAYER_ID]!).x + 2,
+      },
+      worldSupport(world.entities[PLAYER_ID]!),
+    );
+    world.rngState = 73;
     const ammoBefore = quantityOf(world, PLAYER_ID, 'stone');
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
+    world = advanceWorld(world, 18).world;
+    world.entities['hare-1']!.actor!.incapacitated = false;
+    world.entities['hare-1']!.animal!.escapeHeading = null;
+    world.entities['hare-1']!.animal!.reviewAt = world.simTime + 40;
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(ammoBefore - 1);
     expect(world.entities['hare-1']!.actor!.alive).toBe(false);
@@ -315,7 +345,15 @@ describe('bounded invented mechanisms', () => {
         itemId: itemId(world, 'raw_meat'),
       }).outcome.code,
     ).toBe('not-edible');
-    world = command(world, { type: 'cook', itemId: itemId(world, 'raw_meat'), heatId: 'campfire' });
+    world = command(
+      world,
+      cookingChoices(
+        world,
+        inventoryFor(world, PLAYER_ID),
+        'campfire',
+        itemId(world, 'raw_meat'),
+      )[0]!,
+    );
     world = advanceWorld(world, 200).world;
     expect(quantityOf(world, PLAYER_ID, 'raw_meat')).toBe(1);
     expect(quantityOf(world, PLAYER_ID, 'cooked_meat')).toBe(1);
@@ -352,29 +390,45 @@ describe('bounded invented mechanisms', () => {
     world = advanceWorld(world, 30).world;
     expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
     expect(
-      world.events.some((event) => event.type === 'shot' && event.data?.ammunitionKind === 'arrow'),
+      world.events.some(
+        (event) => event.type === 'shot-released' && event.data?.ammunitionKind === 'arrow',
+      ),
     ).toBe(true);
   });
   it('records misses, spends one projectile and makes the animal react', () => {
-    let world = makeSling();
+    const draft = sling();
+    draft.parameters.accuracy = 0.6;
+    let world = makeSling(73, draft);
     world.rngState = 12345;
-    const weapon =
-      world.itemDefinitions[
-        itemFor(world, world.entities[PLAYER_ID]!.actor!.equippedItemId!)!.definitionId
-      ]!;
-    weapon.launcher!.accuracy = 0.6;
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
-    world = advanceWorld(world, 20).world;
-    expect(world.events.some((event) => event.type === 'shot' && event.data?.hit === false)).toBe(
-      true,
-    );
+    world = advanceWorld(world, 40).world;
+    expect(
+      world.events.some(
+        (event) => event.type === 'projectile-ended' && event.data?.result !== 'hit',
+      ),
+    ).toBe(true);
     expect(world.entities['hare-1']!.animal!.danger).toBeGreaterThan(0);
     expect(world.entities['hare-1']!.actor!.health).toBe(18);
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(5);
   });
   it('resolves competing harvesters once and never duplicates finite remains', () => {
     let world = makeSling();
+    world.entities['hare-1']!.actor!.incapacitated = true;
+    setSpatialPosition(
+      world,
+      world.entities['hare-1']!,
+      {
+        ...worldPosition(world.entities[PLAYER_ID]!),
+        x: worldPosition(world.entities[PLAYER_ID]!).x + 2,
+      },
+      worldSupport(world.entities[PLAYER_ID]!),
+    );
+    world.rngState = 73;
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
+    world = advanceWorld(world, 18).world;
+    world.entities['hare-1']!.actor!.incapacitated = false;
+    world.entities['hare-1']!.animal!.escapeHeading = null;
+    world.entities['hare-1']!.animal!.reviewAt = world.simTime + 40;
     world = advanceWorld(world, 24).world;
     const position = worldPosition(world.entities['hare-1']!);
     setSpatialPosition(
@@ -403,7 +457,7 @@ describe('bounded invented mechanisms', () => {
     world.entities['hare-1']!.actor!.alive = false;
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(6);
-    expect(world.events.some((event) => event.type === 'shot')).toBe(false);
+    expect(world.events.some((event) => event.type === 'shot-released')).toBe(false);
     expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
   });
   it('requires shaft-capable material for an arrow, not merely any rigid object', () => {
@@ -455,7 +509,7 @@ describe('bounded invented mechanisms', () => {
         world = advanceWorld(world, 1).world;
       expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
     }
-    expect(world.events.filter((event) => event.type === 'shot')).toHaveLength(2);
+    expect(world.events.filter((event) => event.type === 'shot-released')).toHaveLength(2);
     expect(
       world.events.some(
         (event) => event.type === 'action-stopped' && event.text.includes('out of range'),

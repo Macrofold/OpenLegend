@@ -209,7 +209,12 @@ export function Composer({
             text={message.text}
             failureReason={
               message.replyStatus === 'failed' && !retrying[message.replyRequestId ?? '']
-                ? message.replyFailure
+                ? message.replyReason
+                : undefined
+            }
+            statusMessage={
+              ['cancelled', 'stale'].includes(message.replyStatus ?? '') && message.replyReason
+                ? `Reply stopped: ${message.replyReason}`
                 : undefined
             }
             onRetry={

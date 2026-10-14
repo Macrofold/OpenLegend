@@ -4,6 +4,7 @@ import {
   type TypedQuestionMap,
 } from '@open-legend/ai';
 import { batchedAttentionQuestions } from './jev-questions.js';
+import type { WorldState } from '@open-legend/domain';
 
 /** Fit actual descriptions and question text, rather than silently imposing a question count.
  * docs/memory-architecture.md#4-jev-attention-before-context-inclusion
@@ -12,6 +13,7 @@ export function attentionRequest(
   state: Record<string, unknown>,
   entries: [string, string][],
   purpose: 'context' | 'actions' | 'choose-action' = 'context',
+  guidance?: WorldState['cognitionPolicy']['actionGuidance'],
 ) {
   const candidates: Record<string, string> = {};
   const questions: TypedQuestionMap = {};
@@ -21,7 +23,7 @@ export function attentionRequest(
   let count = 0;
   for (const [id, text] of entries) {
     const label = purpose === 'context' ? id : `Option ${count + 1}`;
-    const original = batchedAttentionQuestions([id], purpose)[id]!;
+    const original = batchedAttentionQuestions([id], purpose, guidance)[id]!;
     const question = {
       ...original,
       instructions: original.instructions.replaceAll(`candidates.${id}`, label),

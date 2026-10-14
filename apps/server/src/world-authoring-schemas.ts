@@ -186,6 +186,20 @@ export const statusPolicySchema = z
   .strict();
 export const cognitionPolicySchema = z
   .object({
+    actionGuidance: z
+      .object({
+        reasons: text(2000),
+        consideration: text(2000),
+        selection: text(2000),
+        criteria: z.object({ true: text(2000), false: text(2000) }).strict(),
+      })
+      .strict(),
+    recording: z
+      .object({
+        actionResultImportance: finite.min(0).max(10),
+        exposureImportance: finite.min(0).max(10),
+      })
+      .strict(),
     version: z.literal(1),
     revision: z.number().int().positive(),
     maxImmediateLevel: z.union([z.literal(2), z.literal(3), z.literal(4)]),
@@ -230,7 +244,7 @@ const attributeDefinition = z
     version: z.number().int().positive(),
     name: text(64),
     meaning: z.string().max(1600).optional(),
-    implementation: z.enum(['number-v1', 'reservoir-v1', 'category-v1']),
+    implementation: z.enum(['number-v1', 'reservoir-v1', 'category-v1', 'finite-practice-v1']),
     disclosure: z.enum(['public', 'owner']),
     presentation: z.object({ icon: text(64), color: text(64) }).strict(),
     schema: z.union([
@@ -277,6 +291,26 @@ const attributeDefinition = z
     critical: criticalPresentation.optional(),
     editorCritical: criticalPresentation.optional(),
     condition: conditionPolicy.optional(),
+    practice: z
+      .object({
+        family: z
+          .object({ id: text(120), version: z.number().int().positive(), digest: text(128) })
+          .strict(),
+        independentReleases: z.number().int().positive(),
+        coachedReleases: z.number().int().positive(),
+        missReduction: finite.min(0).lt(1),
+        windupSeconds: finite.positive(),
+        feedbackSeconds: finite.positive(),
+        communicationRange: finite.positive(),
+        laneMargin: finite.positive(),
+        practiceLabel: text(1000),
+        coachingLabel: text(1000),
+        scope: text(1000),
+        guidance: text(1000),
+        improvedText: text(1000),
+      })
+      .strict()
+      .optional(),
     reservoir: z
       .object({
         drainPerSecond: finite.nonnegative().max(100),
@@ -292,7 +326,18 @@ export const attributeDeclarationSchema = z.union([
   z.object({ definition: attributeDefinition }).strict(),
   z.object({ removeId: text(120) }).strict(),
 ]);
+// The world-owned builder validates the complete opening after decoding. Transport
+// text keeps that contract out of the generic authoring schema catalogue.
+export const worldOpeningCandidateText = z
+  .string()
+  .min(2)
+  .max(24000)
+  .refine(
+    (value) => Buffer.byteLength(value, 'utf8') <= 24000,
+    'Opening exceeds the candidate byte limit.',
+  );
 export const typedAuthoringPayload = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('world-opening'), candidate: worldOpeningCandidateText }).strict(),
   z.object({ kind: z.literal('status-effect-policy'), candidate: statusPolicySchema }).strict(),
   z.object({ kind: z.literal('cognition-policy'), candidate: cognitionPolicySchema }).strict(),
   z.object({ kind: z.literal('attribute'), candidate: attributeDeclarationSchema }).strict(),
@@ -302,6 +347,7 @@ export const typedAuthoringPayload = z.discriminatedUnion('kind', [
 ]);
 
 export const authoringCandidateSchemas = {
+  'world-opening': worldOpeningCandidateText,
   'status-effect-policy': statusPolicySchema,
   'cognition-policy': cognitionPolicySchema,
   attribute: attributeDeclarationSchema,

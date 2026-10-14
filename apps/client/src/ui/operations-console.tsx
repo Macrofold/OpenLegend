@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccessCapability, OperationsView, WorldOverview } from '@open-legend/protocol';
+import { ACCESS_CAPABILITY_TEXT } from '@open-legend/protocol';
 import { AccessError, SignInRequiredError, getOperations, post } from '../api';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, Tag } from '../design-system/components';
@@ -13,14 +14,6 @@ import './operations.css';
 
 /** Characterless sessions poll instead of streaming: no presence, no control lease. */
 const REFRESH_MS = 5_000;
-const CAPABILITY_TEXT: Record<AccessCapability, string> = {
-  play: 'Play a character',
-  spectate: 'Watch the world overview',
-  create: 'Creator tools and maintenance',
-  inspect: 'Inspect characters and diagnostics',
-  save: 'Save and load the world',
-  'manage-access': 'Invite people and manage access',
-};
 const PAUSE_TEXT = {
   manual: 'Paused',
   away: 'Paused while players are away',
@@ -225,7 +218,7 @@ export function OperationsConsole() {
                     <ul className="ol-operations-tags" aria-label="Granted operations">
                       {view.capabilities.map((capability) => (
                         <li key={capability}>
-                          <Tag>{CAPABILITY_TEXT[capability]}</Tag>
+                          <Tag>{ACCESS_CAPABILITY_TEXT[capability]}</Tag>
                         </li>
                       ))}
                     </ul>
@@ -258,7 +251,7 @@ export function OperationsConsole() {
                 <AccessSection
                   view={view}
                   access={view.access}
-                  describe={(capability) => CAPABILITY_TEXT[capability]}
+                  describe={(capability) => ACCESS_CAPABILITY_TEXT[capability]}
                   onChanged={() => void refresh()}
                 />
               </TabPanel>

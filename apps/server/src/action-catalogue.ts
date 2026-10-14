@@ -1,17 +1,38 @@
+import { nativeCommandKind } from './native-command-kind.js';
 import {
+  nativeCommandSupported,
+  installedActionMeaning,
+  installedActionMeanings,
+  rangedTargetAllowed,
+  rangedPolicy,
+} from '@open-legend/domain';
+import {
+  isEquipped,
+  guardChoiceLabel,
+  BASE_GUARD_TEXT,
+  rangedChoiceLabel,
+  BASE_RANGED_TEXT,
+  BASE_EVASION_KEYWORDS,
+  evasionChoices,
   BASE_OUTING,
   outingInvitationProblem,
+  BASE_COMBAT_HELP,
   activityRequestHost,
   observerDescription,
 } from '@open-legend/domain';
 import { outingActions } from './outing-view.js';
+import { competenceOptions } from './competence-actions.js';
+import { cookingOptions, fishingOptions, fishingTools } from './food-actions.js';
 import { namePhrase } from '@open-legend/language';
 import {
   accessiblePossession,
+  inspectedRecipeRecords,
   worldSupport,
   worldPosition,
   strikeDefinition,
   nativeHuntCatalogueLabel,
+  cookingPreparations,
+  BASE_FOOD_ACTION_WORDING,
 } from '@open-legend/domain';
 import { itemFor, custodian } from '@open-legend/domain';
 import { inventoryItemView } from './inventory-view.js';
@@ -21,11 +42,7 @@ import { statusEffectActions } from './status-effect-actions.js';
 import { ammoFor, availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
-import {
-  nativePreparationOptions,
-  BASE_COOKING_PRESENTATION,
-  nativeActionIcon,
-} from '@open-legend/domain';
+import { nativePreparationOptions, nativeActionIcon } from '@open-legend/domain';
 import { bodyPolicy } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions } from './handover-actions.js';
@@ -117,6 +134,7 @@ export function actionCatalogue(
   }
   const world = service.world;
   const itemUses = selectedItem ? [selectedItem] : observation.inventory;
+  const castTools = fishingTools(world, itemUses);
   const targets = observation.visibleEntities.filter((entity) => entity.id !== scope.actorId);
   const selected =
     context.targetId === scope.actorId
@@ -135,12 +153,23 @@ export function actionCatalogue(
     targetId?: string,
     provided?: { availability: { ok: boolean; message: string }; description: string },
   ) => {
-    if (actionIds.has(id)) return;
-    // Ground exposes destination movement only. Personal work belongs to self;
+    if (actionIds.has(id) || !nativeCommandSupported(world, nativeCommandKind(command.type)))
+      return;
+    // Ground exposes chosen destination movement, including a short evasive step. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
     if (context.itemId) {
-      if (command.itemId !== context.itemId) return;
-    } else if (!context.catalogue && !selected && command.type !== 'move') return;
+      if (
+        command.itemId !== context.itemId &&
+        !(command.type === 'cook' && Object.values(command.inputs ?? {}).includes(context.itemId))
+      )
+        return;
+    } else if (
+      !context.catalogue &&
+      !selected &&
+      command.type !== 'move' &&
+      command.type !== 'evade'
+    )
+      return;
     if (
       !context.catalogue &&
       selected &&
@@ -166,6 +195,33 @@ export function actionCatalogue(
       intent: { kind: 'command', command },
     });
   };
+  for (const shield of itemUses.filter(
+    (item) => world.itemDefinitions[item.definitionId]?.contactDefense,
+  )) {
+    const definition = world.itemDefinitions[shield.definitionId]!;
+    if (context.catalogue || selected?.id === scope.actorId || context.itemId)
+      add(
+        `guard:${shield.id}:facing`,
+        guardChoiceLabel(definition.name),
+        'Defense',
+        {
+          type: 'guard',
+          itemId: shield.id,
+          facing: observation.actor.spatial.heading,
+          autoEquip: true,
+        },
+        BASE_GUARD_TEXT.keywords,
+      );
+    for (const target of actionTargets.filter((e) => e.actor?.alive))
+      add(
+        `guard:${shield.id}:${target.id}`,
+        guardChoiceLabel(definition.name, target.name),
+        'Defense',
+        { type: 'guard', itemId: shield.id, targetId: target.id, autoEquip: true },
+        BASE_GUARD_TEXT.keywords,
+        target.id,
+      );
+  }
   if (selected?.actor?.alive && selected.id !== scope.actorId)
     add(
       `follow:${selected.id}`,
@@ -176,7 +232,7 @@ export function actionCatalogue(
       selected.id,
     );
   const missing = (
-    family: keyof typeof ACTION_DESCRIPTIONS,
+    family: CommandInput['type'] | import('@open-legend/domain').Command['type'] | 'talk',
     label: string,
     category: string,
     reason: string,
@@ -184,6 +240,7 @@ export function actionCatalogue(
     targetId?: string,
     itemId?: string,
   ) => {
+    if (family !== 'talk' && !nativeCommandSupported(world, nativeCommandKind(family))) return;
     const personalFamily = [
       'cancel',
       'status-effect',
@@ -207,7 +264,12 @@ export function actionCatalogue(
       id,
       label,
       category,
-      description: ACTION_DESCRIPTIONS[family],
+      description:
+        family === 'talk'
+          ? ACTION_DESCRIPTIONS[family]!
+          : (installedActionMeaning(world, nativeCommandKind(family))?.description ??
+            ACTION_DESCRIPTIONS[family] ??
+            'Choose a supported action.'),
       keywords: [],
       ...(targetId ? { targetId } : {}),
       enabled: false,
@@ -220,6 +282,25 @@ export function actionCatalogue(
       ? { ...worldPosition(selected), surfaceId: worldSupport(selected)! }
       : undefined
     : context.position;
+  if (position && bodyPolicy(world)?.evasion)
+    add(
+      'evade:point',
+      `${bodyPolicy(world)!.evasion!.label} here`,
+      'Defense',
+      { type: 'evade', position },
+      BASE_EVASION_KEYWORDS,
+      selected?.id,
+    );
+  if (context.catalogue || selected?.id === scope.actorId)
+    for (const choice of evasionChoices(world, observation.actor))
+      add(
+        `evade:${choice.label}`,
+        choice.label,
+        'Defense',
+        { type: 'evade', position: choice.destination },
+        BASE_EVASION_KEYWORDS,
+        selected?.id,
+      );
   if (position)
     add(
       'move',
@@ -312,7 +393,7 @@ export function actionCatalogue(
       for (const definition of [
         ...availableStrikes(world, scope.actorId, target),
         ...tools.flatMap((item) => {
-          if (item.id === self.equippedItemId) return [];
+          if (isEquipped(world, scope.actorId, item.id)) return [];
           const strike = strikeDefinition(item.definitionId, world, item.id, target);
           return strike ? [strike] : [];
         }),
@@ -323,6 +404,7 @@ export function actionCatalogue(
           'Combat',
           {
             type: 'strike',
+            autoEquip: true,
             definitionId: definition.id,
             itemId: definition.weaponItemId,
             targetId: target.id,
@@ -346,7 +428,7 @@ export function actionCatalogue(
           target.id,
         );
     }
-    if (target.resource)
+    if (target.resource && !target.resource.cast)
       add(
         `gather-${target.id}`,
         `Gather ${target.name}`,
@@ -355,23 +437,43 @@ export function actionCatalogue(
         [world.itemDefinitions[target.resource.definitionId]!.name, 'collect'],
         target.id,
       );
-    if (target.animal && target.actor?.alive) {
+    if (rangedTargetAllowed(world, target) && target.id !== scope.actorId)
+      for (const item of launchers)
+        for (const type of ['aim', 'shoot-once'] as const)
+          add(
+            `${type}:${target.id}:${item.id}`,
+            rangedChoiceLabel(type, target.name, world.itemDefinitions[item.definitionId]!.name),
+            'Combat',
+            {
+              type,
+              autoEquip: true,
+              targetId: target.id,
+              itemId: item.id,
+              ammunitionId: projectiles.get(
+                world.itemDefinitions[item.definitionId]!.launcher!.ammunitionKind,
+              ),
+            },
+            BASE_RANGED_TEXT.keywords,
+            target.id,
+          );
+    if (rangedTargetAllowed(world, target) && target.animal) {
       if (!launchers.length)
         add(
           `hunt-${target.id}`,
-          `Hunt ${target.name}`,
+          `${rangedPolicy(world)!.actionLabel} ${target.name}`,
           'Hunt',
-          { type: 'hunt', targetId: target.id },
+          { type: 'hunt', autoEquip: true, targetId: target.id },
           ['shoot', 'attack', 'ranged'],
           target.id,
         );
       for (const item of launchers)
         add(
           `hunt-${target.id}:${item.id}`,
-          nativeHuntCatalogueLabel(target.name, world.itemDefinitions[item.definitionId]!.name),
+          `${rangedPolicy(world)!.actionLabel} ${target.name} with ${world.itemDefinitions[item.definitionId]!.name}`,
           'Hunt',
           {
             type: 'hunt',
+            autoEquip: true,
             targetId: target.id,
             itemId: item.id,
             ammunitionId: projectiles.get(
@@ -435,7 +537,7 @@ export function actionCatalogue(
             },
           );
     }
-    if (definition.launcher || definition.melee || definition.gatheringTool)
+    if (definition.equipment)
       add(
         `equip-${item.id}`,
         `Equip ${definition.name}`,
@@ -451,31 +553,30 @@ export function actionCatalogue(
         { type: 'eat', itemId: item.id },
         [],
       );
-    if (item.definitionId === BASE_COOKING_PRESENTATION.input) {
-      for (const fire of fires)
-        add(
-          `cook-${item.id}-${fire.id}`,
-          `${BASE_COOKING_PRESENTATION.targetLabel} ${fire.name}`,
-          'Create',
-          { type: 'cook', itemId: item.id, targetId: fire.id },
-          ['food', 'meal', 'fire'],
-          fire.id,
-        );
-      if (!fires.length)
-        missing(
-          'cook',
-          BASE_COOKING_PRESENTATION.familyLabel,
-          'Create',
-          BASE_COOKING_PRESENTATION.missingTarget,
-          `cook-${item.id}`,
-          undefined,
-          item.id,
-        );
-    }
   }
   if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
     for (const target of actionTargets) {
       if (!BASE_OUTING.participant(target) || target.id === scope.actorId) continue;
+      const helpRefused = outingInvitationProblem(world, scope.actorId, target.id, 'combat-help');
+      if (activityRequestHost(world, BASE_COMBAT_HELP.family))
+        actions.push({
+          id: `invite-help:${target.id}`,
+          label: BASE_COMBAT_HELP.label,
+          category: 'Social',
+          description: BASE_COMBAT_HELP.description,
+          keywords: [
+            ...BASE_COMBAT_HELP.keywords,
+            observerDescription(world, scope.actorId, target.id, 'definite'),
+          ],
+          targetId: target.id,
+          enabled: controlling && !helpRefused,
+          ...(helpRefused ? { reason: helpRefused.message } : {}),
+          intent: {
+            kind: 'activity',
+            family: BASE_COMBAT_HELP.family,
+            arguments: { recipientId: target.id },
+          },
+        });
       const refused = outingInvitationProblem(world, scope.actorId, target.id);
       actions.push({
         id: `invite-travel:${target.id}`,
@@ -503,8 +604,56 @@ export function actionCatalogue(
         availability: service.previewCommand(choice.command, scope.actorId),
       });
   }
+  const preparations =
+    fires.length || selectedItem
+      ? cookingPreparations(world, observation.inventory, context.itemId)
+      : [];
+  const offeredPreparations = new Set<string>();
+  if (selectedItem && !fires.length)
+    for (const preparation of preparations)
+      missing(
+        'cook',
+        preparation.definition.name,
+        'Create',
+        BASE_FOOD_ACTION_WORDING.cookingHeatRequiredText,
+        `cook-${preparation.definition.id}`,
+        undefined,
+        selectedItem.id,
+      );
+  for (const fire of fires)
+    for (const option of cookingOptions(preparations, fire.id)) {
+      add(
+        option.id,
+        `${option.label} at ${fire.name}`,
+        'Create',
+        option.command,
+        ['food', 'meal', option.definition.description],
+        fire.id,
+      );
+      if (actionIds.has(option.id)) offeredPreparations.add(option.definition.id);
+    }
+  for (const source of (selected ? [selected] : targets).filter((entity) => entity.resource?.cast))
+    for (const option of fishingOptions(world, castTools, source))
+      add(
+        option.id,
+        option.label,
+        'Gather',
+        option.command,
+        [source.name, option.description],
+        source.id,
+      );
+
   // Each offer/reply binds its exact perceived person; the recipient alone can accept.
   for (const target of actionTargets) {
+    for (const option of competenceOptions(world, scope.actorId, target, itemUses))
+      add(
+        option.id,
+        option.label,
+        target.practiceTarget ? 'Practice' : 'Social',
+        option.command,
+        [option.description],
+        target.id,
+      );
     for (const option of target.actor
       ? handoverOptions(
           world,
@@ -534,6 +683,15 @@ export function actionCatalogue(
       : [])
       add(option.id, option.label, 'Survival', option.command, ['fire'], target.id);
   }
+  for (const { recipe, command, item } of inspectedRecipeRecords(world, scope.actorId))
+    add(
+      `learn-record-${item.id}`,
+      `Learn ${recipe.name}`,
+      'Knowledge',
+      command,
+      ['read', 'learn', recipe.name],
+      item.ownerId,
+    );
   for (const recipe of observation.knownRecipes)
     add(
       `craft-${recipe.id}`,
@@ -543,16 +701,24 @@ export function actionCatalogue(
       [recipe.description, recipe.sourceCandidate.family.id, 'make'],
     );
 
-  if (
-    selected?.heat &&
-    !observation.inventory.some((item) => item.definitionId === BASE_COOKING_PRESENTATION.input)
-  )
+  if (selected?.heat)
+    for (const preparation of Object.values(world.foodPreparations))
+      if (!offeredPreparations.has(preparation.id))
+        missing(
+          'cook',
+          `${preparation.name} at ${selected.name}`,
+          'Create',
+          `Carry the exact ingredients: ${preparation.inputs.map((input) => `${input.quantity} ${world.itemDefinitions[input.definitionId]?.name ?? 'ingredient'}`).join(', ')}.`,
+          `cook-${preparation.id}`,
+          selected.id,
+        );
+  if (selected?.resource?.cast && !actions.some((action) => action.id.startsWith('fish-')))
     missing(
-      'cook',
-      `${BASE_COOKING_PRESENTATION.targetLabel} ${selected.name}`,
-      'Create',
-      BASE_COOKING_PRESENTATION.missingInput,
-      'cook',
+      'fish',
+      BASE_FOOD_ACTION_WORDING.fishingHereLabel,
+      'Gather',
+      world.castDefinitions[selected.resource.cast.definitionId]!.toolRequiredText,
+      `fish-${selected.id}`,
       selected.id,
     );
   if (selected?.kind === 'npc' && selected.actor?.alive && !observation.knownRecipes.length)
@@ -567,7 +733,7 @@ export function actionCatalogue(
 
   // Missing prerequisites must not erase an entire supported action family.
   const family = (
-    prefix: keyof typeof ACTION_DESCRIPTIONS,
+    prefix: CommandInput['type'] | import('@open-legend/domain').Command['type'] | 'talk',
     label: string,
     category: string,
     reason: string,
@@ -575,26 +741,20 @@ export function actionCatalogue(
     if (!actions.some((action) => action.id.startsWith(`${prefix}-`)))
       missing(prefix, label, category, reason);
   };
-  family('gather', 'Gather resources', 'Gather', 'Move within sight of a resource.');
-  family('hunt', 'Hunt an animal', 'Hunt', 'Move within sight of a living animal.');
-  family('harvest', 'Harvest remains', 'Gather', 'Find animal remains to harvest.');
   family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
   const consumption = bodyPolicy(world)?.consumption;
   if (consumption) family('eat', consumption.label, 'Body', consumption.unavailableText);
-  family(
-    'cook',
-    BASE_COOKING_PRESENTATION.familyLabel,
-    'Create',
-    BASE_COOKING_PRESENTATION.unavailable,
-  );
-  family(
-    'tend-fire',
-    'Tend a campfire',
-    'Survival',
-    'Select a campfire to light, fuel or put out.',
-  );
-  family('craft', 'Craft a known recipe', 'Create', 'Invent or learn a recipe first.');
-  family('teach', 'Teach a technique', 'Social', 'Learn a recipe and find a nearby listener.');
+  for (const [command, meaning] of installedActionMeanings(world)) {
+    const fallback = meaning.fallback;
+    if (!fallback) continue;
+    const policy = command === 'hunt' ? rangedPolicy(world) : null;
+    family(
+      command === 'compose' ? 'activity-request' : command,
+      policy ? `${policy.actionLabel} ${policy.targetLabel}` : fallback.label,
+      fallback.category,
+      policy?.invalidTargetText ?? fallback.reason,
+    );
+  }
   family('talk', 'Talk to someone', 'Social', 'Move within sight of a living person.');
   return { revision: service.version, actions };
 }

@@ -1,4 +1,5 @@
 import { inventoryCommandStorageKey } from '../inventory-command-record';
+import { RecipeDetails } from './recipe-details';
 import { namePhrase } from '@open-legend/language';
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent } from 'react';
 import { Dialog, Popover } from 'react-aria-components';
@@ -220,6 +221,8 @@ function InventoryWorkspace({
       item.container?.revision,
       item.characteristics,
       item.comparison,
+      item.recipeRecord,
+      item.materialCondition,
     ]),
     view.entities.filter((entity) => entity.storage).map((entity) => [entity.id, entity.storage]),
     view.recipes.map((recipe) => recipe.id),
@@ -515,8 +518,10 @@ function InventoryWorkspace({
         },
       })
         .then((result) => {
-          if (alive.current && inspectedSelection.current === identity && !result.ok)
-            operations.setMessage(result.message);
+          if (alive.current && inspectedSelection.current === identity) {
+            if (result.ok) collection(side).refresh();
+            else operations.setMessage(result.message);
+          }
         })
         .catch((error: unknown) => {
           if (alive.current && inspectedSelection.current === identity)
@@ -1174,6 +1179,17 @@ function InventoryWorkspace({
                     <details open={!selection.actions}>
                       <summary>Known details</summary>
                       <p>{item.description}</p>
+                      {item.materialCondition && (
+                        <p>
+                          {item.materialCondition.label} ·{' '}
+                          {item.materialCondition.coveredFraction >= 1 - 1e-6
+                            ? 'covered'
+                            : item.materialCondition.coveredFraction > 0
+                              ? 'partly covered'
+                              : 'exposed'}{' '}
+                          · {item.materialCondition.process}
+                        </p>
+                      )}
                       <div className="ol-tags">
                         {item.tags.map((tag) => (
                           <Tag key={tag}>{tag}</Tag>
@@ -1186,6 +1202,15 @@ function InventoryWorkspace({
                         {item.container ? ' including its contents' : ' per unit'}
                       </p>
                       {item.declaredOwner && <p>Declared owner: {item.declaredOwner.name}</p>}
+                      {item.recipeRecord && (
+                        <section aria-label="Recorded production method">
+                          <h4>{item.recipeRecord.method?.name ?? 'Recorded method unavailable'}</h4>
+                          <p>{item.recipeRecord.message}</p>
+                          {item.recipeRecord.method && (
+                            <RecipeDetails recipe={item.recipeRecord.method} />
+                          )}
+                        </section>
+                      )}
                       <dl className="ol-inventory-facts">
                         {item.characteristics?.map((fact) => (
                           <div key={fact.id}>

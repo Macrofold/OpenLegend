@@ -1,3 +1,4 @@
+import { equippedItems } from '@open-legend/domain';
 import {
   itemFor,
   worldSupport,
@@ -31,7 +32,7 @@ export const inspectableEntity = (world: WorldState, e: Entity) => ({
     : [],
   senseIds: e.actor ? (e.actor.senses ?? world.moduleManifest.defaultSenses) : [],
   actionId: e.actor?.action?.id,
-  equippedItemId: e.actor?.equippedItemId,
+  equipment: equippedItems(world, e.id).map((item) => item.id),
 });
 
 /** Live arrangements are projected from their owners, not inferred from labels or pictures.
@@ -138,8 +139,7 @@ export function projectLiveSubject(
       }))
         if (itemId && itemFor(world, itemId)) link(ref, item(itemId), 'uses', role);
     }
-    if (e.actor?.equippedItemId && itemFor(world, e.actor.equippedItemId))
-      link(root, item(e.actor.equippedItemId), 'uses', 'equipped');
+    for (const held of equippedItems(world, e.id)) link(root, item(held.id), 'uses', 'equipped');
   }
   const index = new RelationshipIndex(
     JSON.stringify([world.id, generation]),

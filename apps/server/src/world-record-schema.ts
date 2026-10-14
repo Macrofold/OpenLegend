@@ -53,9 +53,15 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       // Keep even small authored records out of the frequently written world header.
       knowledgePolicy: one('config_knowledge'),
       itemHandling: one('config_item_handling'),
+      assemblyFamilies: map('config_assembly_families'),
+      constructionProfile: one('config_construction_profile'),
+      finiteRain: one('sim_finite_rain'),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
+      foodPreparations: map('config_food_preparations'),
+      castDefinitions: map('config_cast_definitions'),
       exitExposures: map('sim_exit_exposures'),
+      coachingEpisodes: map('sim_coaching_episodes'),
       statusEffectPolicy: one('config_status_effects'),
       authorship: one('world_authorship', {
         creatorAccountIds: list('world_creators'),
@@ -78,6 +84,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       }),
       entities: map('sim_entities', {
         placement: one('sim_placements'),
+        assembly: one('sim_assemblies'),
         item: one('sim_items'),
         container: one('sim_containers'),
         declaredOwner: one('sim_declared_owners'),
@@ -92,6 +99,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             attempts: list('sim_intentions', 'id'),
           }),
           attributes: map('sim_actor_attributes'),
+          practice: map('sim_actor_practice'),
           conditions: map('sim_actor_conditions'),
           traits: list('sim_actor_traits', 'id'),
         }),
@@ -118,6 +126,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       objectState: one('sim_object_state'),
       objectLineage: map('sim_object_lineage'),
       resourceReservations: map('sim_resource_reservations'),
+      projectiles: map('sim_projectiles'),
       workState: one('sim_work_state', { invocations: map('sim_work_invocations') }),
       outings: map('activity_outings'),
       itemDefinitions: map('definition_items'),
@@ -220,6 +229,19 @@ columns(
     },
     physical_parent_id: textColumn('parentEntityId'),
     port_id: textColumn('portId'),
+    attachment_slot: textColumn('slot'),
+    local_x: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['local'] as JsonRecord | undefined)?.['x'] ?? null,
+    },
+    local_y: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['local'] as JsonRecord | undefined)?.['y'] ?? null,
+    },
+    local_z: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['local'] as JsonRecord | undefined)?.['z'] ?? null,
+    },
     support_id: textColumn('supportSurfaceId'),
     x: {
       sql: 'DOUBLE PRECISION',
@@ -244,7 +266,8 @@ RECORD_NODES.get('sim_items')!.uniqueIndexes = [['item_id']];
 RECORD_NODES.get('sim_placements')!.uniqueIndexes = [['entity_id']];
 RECORD_NODES.get('sim_placements')!.constraints = [
   'FOREIGN KEY(world_id,physical_parent_id) REFERENCES sim_entities(world_id,entity_id) ON DELETE RESTRICT',
-  "CHECK ((placement_mode='world' AND physical_parent_id IS NULL AND port_id IS NULL AND x IS NOT NULL AND y IS NOT NULL AND z IS NOT NULL) OR (placement_mode='contained' AND physical_parent_id IS NOT NULL AND port_id IS NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL) OR (placement_mode='attached' AND physical_parent_id IS NOT NULL AND port_id='equipment' AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL))",
+  // Assembly-local positions do not create a second independent world position.
+  "CHECK ((placement_mode='world' AND physical_parent_id IS NULL AND port_id IS NULL AND x IS NOT NULL AND y IS NOT NULL AND z IS NOT NULL AND attachment_slot IS NULL AND local_x IS NULL AND local_y IS NULL AND local_z IS NULL) OR (placement_mode='contained' AND physical_parent_id IS NOT NULL AND port_id IS NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL AND attachment_slot IS NULL AND local_x IS NULL AND local_y IS NULL AND local_z IS NULL) OR (placement_mode='attached' AND physical_parent_id IS NOT NULL AND port_id IS NOT NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL AND ((port_id='assembly' AND attachment_slot IS NOT NULL AND length(attachment_slot)>0 AND local_x IS NOT NULL AND local_y IS NOT NULL AND local_z IS NOT NULL) OR (port_id<>'assembly' AND length(port_id)>0 AND attachment_slot IS NULL AND local_x IS NULL AND local_y IS NULL AND local_z IS NULL))))",
 ];
 columns(
   'sim_object_lineage',

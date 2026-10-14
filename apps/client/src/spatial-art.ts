@@ -1,5 +1,11 @@
 import * as pc from 'playcanvas';
-import { surfaceHeight, type WalkableSurface } from '@open-legend/spatial';
+import {
+  panelGeometry,
+  PANEL_TRIANGLES,
+  type FinitePanel,
+  surfaceHeight,
+  type WalkableSurface,
+} from '@open-legend/spatial';
 
 /** One ground receiver with continuous world UVs, using the authoritative supported heights. */
 export function groundMesh(
@@ -38,6 +44,25 @@ export function groundMesh(
   return mesh;
 }
 
+/** The same finite prism used by collision and rain; no box-shaped rendering shortcut. */
+export function finitePanelMesh(
+  device: pc.GraphicsDevice,
+  panel: FinitePanel,
+  origin: { x: number; y: number; z: number },
+): pc.Mesh {
+  const vertices = panelGeometry(panel).vertices;
+  const positions = PANEL_TRIANGLES.flatMap((i) => {
+    const p = vertices[i]!;
+    return [p.x - origin.x, p.y - origin.y, p.z - origin.z];
+  });
+  const indices = Array.from({ length: positions.length / 3 }, (_, i) => i);
+  const mesh = new pc.Mesh(device);
+  mesh.setPositions(positions);
+  mesh.setNormals(pc.calculateNormals(positions, indices));
+  mesh.setIndices(indices);
+  mesh.update();
+  return mesh;
+}
 /** Decorative soil continues the admitted border planes, without adding supported destinations. */
 export function surroundingGroundMesh(
   device: pc.GraphicsDevice,

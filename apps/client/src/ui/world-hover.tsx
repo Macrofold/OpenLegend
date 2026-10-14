@@ -39,6 +39,7 @@ export function WorldHover({
       {shown.map((item) => (
         <div key={item.id}>
           {item.name} × {item.quantity}
+          {item.materialCondition ? ` · ${item.materialCondition.label}` : null}
         </div>
       ))}
       {omitted > 0 && (

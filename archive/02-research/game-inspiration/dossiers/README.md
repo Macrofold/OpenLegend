@@ -1,35 +1,46 @@
-# Full-game dossier reading index — G61–G80
+# Full-game dossier reading index — G61–G80 and D&D expansion
 
 [Library](../README.md) · [Complete roster](../research-roster.md) · [Progress and resume ledger](../research-progress.md) · [Research requirements](../research-requirements.md)
 
-**Navigation and inspiration only.** This page connects the G61–G80 range to its full-game dossiers. The [130-subject roster](../research-roster.md) remains the canonical title/edition inventory; **only the progress ledger records completion**. Other ranges and their existing chapters remain accessible through those owners. A link here is not a new implementation requirement, a whole-library audit, or a claim that different editions share identical rules.
+**Navigation and inspiration only.** This page connects the G61–G80 range to its full-game dossiers and provides entry points to the additive D&D research packet. The [numbered roster](../research-roster.md) remains the canonical inventory for its existing title/edition slots; **the progress ledger records their completion**. Other ranges and their existing chapters remain accessible through those owners. A link here is not a new implementation requirement, a whole-library audit, or a claim that different editions share identical rules.
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Dungeons & Dragons expansion — 2026-09-27
+
+These are two distinct tabletop subjects, not replacements for Baldur's Gate, Pathfinder, or any existing numbered game. Their [research hub](../games/dungeons-and-dragons.md) records this expansion's scope and evidence status without renumbering or certifying the unrelated roster.
+
+| Dossier                                                                  | Useful starting question                                                                                                                            |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Dungeons & Dragons: 2024 revision / 5.5e](dungeons-and-dragons-2024.md) | How do current checks, social willingness, classes, weapons, tools, crafting, utility magic, and action costs support open intentions?              |
+| [Dungeons & Dragons v.3.5](dungeons-and-dragons-3-5.md)                  | What can explicit competence, retry procedures, skills, materials, preparation, and production teach about both useful detail and complexity costs? |
+
+Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-dragons-adjudication.md) · [D&D worldbuilding dossier](../../worldbuilding/worlds/29-dungeons-and-dragons.md). These distinguish primary rules, table practices, creator interpretations, constructed examples, and project-facing proposals. The hub explicitly records unresolved source-access and review-depth gates; it is not a claim of exhaustive franchise research.
+
 ## Read in roster order
 
-| ID | Dossier | Useful starting question |
-| --- | --- | --- |
-| G61 | [Fire Emblem: Path of Radiance](fire-emblem-path-of-radiance.md) | How do base conversations, supports, bonus experience, skills and laguz interact with tactical commitments? |
-| G62 | [Fire Emblem Awakening](fire-emblem-awakening.md) | How do Pair Up, relationships, children and class changes connect attachment to party construction? |
-| G63 | [Fire Emblem Fates](fire-emblem-fates.md) | How do route structure, revised pair systems, My Castle and map objectives change the same tactical vocabulary? |
-| G64 | [Fire Emblem: Three Houses](fire-emblem-three-houses.md) | How do a calendar, tutoring, battalions and branching routes make preparation part of the campaign? |
-| G65 | [Fire Emblem Heroes](fire-emblem-heroes.md) | How do inheritance, merges, summoning and live-service modes differ from a self-contained tactical campaign? |
-| G66 | [Disco Elysium](disco-elysium.md) | How can internal voices, checks, thoughts and time turn conversation into consequential play? |
-| G67 | [Grand Theft Auto V](grand-theft-auto-v.md) | Which activities and economies belong to the three-protagonist story, and which belong to GTA Online? |
-| G68 | [Cyberpunk 2077](cyberpunk-2077.md) | How do builds, cyberware, quests and relationships differ between launch and the post-2.0/Phantom Liberty game? |
-| G69 | [Red Dead Redemption](red-dead-redemption.md) | How do honor, Dead Eye, travel and encounters support an authored frontier journey? |
-| G70 | [Red Dead Redemption 2](red-dead-redemption-2.md) | How do camp, bodily needs, horse bonds, hunting and social reactions create continuity between missions? |
-| G71 | [The Elder Scrolls V: Skyrim](the-elder-scrolls-v-skyrim.md) | How do skills, crafting, factions, followers and crime support a self-directed character? |
-| G72 | [The Witcher 3: Wild Hunt](the-witcher-3-wild-hunt.md) | How do investigation, contracts, preparation, relationships and choices reinforce a defined protagonist? |
-| G73 | [The Legend of Zelda: Breath of the Wild](the-legend-of-zelda-breath-of-the-wild.md) | How do weather, surfaces, movement, durability, cooking and runes combine into alternative solutions? |
-| G74 | [Fallout 4](fallout-4.md) | How do crafting, settlements, companions, factions and Survival change the value of ordinary objects? |
-| G75 | [Elden Ring](elden-ring.md) | How do build variety, exploration, status, stance, summons and recovery shape difficult encounters? |
-| G76 | [Black Myth: Wukong](black-myth-wukong.md) | How do stances, spells, Spirits, transformations and healing configurations create distinct combat choices? |
-| G77 | [Clair Obscur: Expedition 33](clair-obscur-expedition-33.md) | How do character-specific resources, Pictos/Lumina and timed defense reinforce—or compete with—turn-based planning? |
-| G78 | [Final Fantasy I](final-fantasy.md) | How do initial class commitments, spell budgets, equipment and world-access chains produce expedition decisions? |
-| G79 | [Final Fantasy II](final-fantasy-ii.md) | How do use-based growth, equipment compatibility, learned keywords and temporary companions change character freedom? |
-| G80 | [Final Fantasy III](final-fantasy-iii.md) | How do job switching, proficiency, situational commands and complementary vehicles turn preparation into progression? |
+| ID  | Dossier                                                                              | Useful starting question                                                                                              |
+| --- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| G61 | [Fire Emblem: Path of Radiance](fire-emblem-path-of-radiance.md)                     | How do base conversations, supports, bonus experience, skills and laguz interact with tactical commitments?           |
+| G62 | [Fire Emblem Awakening](fire-emblem-awakening.md)                                    | How do Pair Up, relationships, children and class changes connect attachment to party construction?                   |
+| G63 | [Fire Emblem Fates](fire-emblem-fates.md)                                            | How do route structure, revised pair systems, My Castle and map objectives change the same tactical vocabulary?       |
+| G64 | [Fire Emblem: Three Houses](fire-emblem-three-houses.md)                             | How do a calendar, tutoring, battalions and branching routes make preparation part of the campaign?                   |
+| G65 | [Fire Emblem Heroes](fire-emblem-heroes.md)                                          | How do inheritance, merges, summoning and live-service modes differ from a self-contained tactical campaign?          |
+| G66 | [Disco Elysium](disco-elysium.md)                                                    | How can internal voices, checks, thoughts and time turn conversation into consequential play?                         |
+| G67 | [Grand Theft Auto V](grand-theft-auto-v.md)                                          | Which activities and economies belong to the three-protagonist story, and which belong to GTA Online?                 |
+| G68 | [Cyberpunk 2077](cyberpunk-2077.md)                                                  | How do builds, cyberware, quests and relationships differ between launch and the post-2.0/Phantom Liberty game?       |
+| G69 | [Red Dead Redemption](red-dead-redemption.md)                                        | How do honor, Dead Eye, travel and encounters support an authored frontier journey?                                   |
+| G70 | [Red Dead Redemption 2](red-dead-redemption-2.md)                                    | How do camp, bodily needs, horse bonds, hunting and social reactions create continuity between missions?              |
+| G71 | [The Elder Scrolls V: Skyrim](the-elder-scrolls-v-skyrim.md)                         | How do skills, crafting, factions, followers and crime support a self-directed character?                             |
+| G72 | [The Witcher 3: Wild Hunt](the-witcher-3-wild-hunt.md)                               | How do investigation, contracts, preparation, relationships and choices reinforce a defined protagonist?              |
+| G73 | [The Legend of Zelda: Breath of the Wild](the-legend-of-zelda-breath-of-the-wild.md) | How do weather, surfaces, movement, durability, cooking and runes combine into alternative solutions?                 |
+| G74 | [Fallout 4](fallout-4.md)                                                            | How do crafting, settlements, companions, factions and Survival change the value of ordinary objects?                 |
+| G75 | [Elden Ring](elden-ring.md)                                                          | How do build variety, exploration, status, stance, summons and recovery shape difficult encounters?                   |
+| G76 | [Black Myth: Wukong](black-myth-wukong.md)                                           | How do stances, spells, Spirits, transformations and healing configurations create distinct combat choices?           |
+| G77 | [Clair Obscur: Expedition 33](clair-obscur-expedition-33.md)                         | How do character-specific resources, Pictos/Lumina and timed defense reinforce—or compete with—turn-based planning?   |
+| G78 | [Final Fantasy I](final-fantasy.md)                                                  | How do initial class commitments, spell budgets, equipment and world-access chains produce expedition decisions?      |
+| G79 | [Final Fantasy II](final-fantasy-ii.md)                                              | How do use-based growth, equipment compatibility, learned keywords and temporary companions change character freedom? |
+| G80 | [Final Fantasy III](final-fantasy-iii.md)                                            | How do job switching, proficiency, situational commands and complementary vehicles turn preparation into progression? |
 
 ## Short comparison routes
 
@@ -41,4 +52,4 @@ Each dossier owns its mechanics, worked interactions, source annotations, editio
 
 **Does a convenience preserve the interesting decision?** Read the reviews and version histories beside the mechanics: saving, encounter controls, growth boosts, equipment information and timed-input support alter different costs. A launch complaint is not proof that every later version behaves the same way.
 
-For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md).
+For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md). The separate [D&D packet status](../games/dungeons-and-dragons.md#evidence-and-completion-status) covers the additive tabletop expansion.

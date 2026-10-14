@@ -1,8 +1,42 @@
+import {
+  replacementRest,
+  rangedTargetAllowed,
+  rangedPolicy,
+  practiceDefinition,
+  nativeCommandSupported,
+} from '@open-legend/domain';
+import { nativeCommandKind } from './native-command-kind.js';
 import { outingViews } from './outing-view.js';
+
+import { recipeDetailsView } from './recipe-view.js';
+import {
+  equippedItem,
+  guardWorkLabel,
+  BASE_GUARD_TEXT,
+  BASE_RANGED_TEXT,
+  rangedChoiceLabel,
+  nativeActivityViews,
+  observedCombatActivity,
+  combatRecoveryDeadline,
+} from '@open-legend/domain';
+import { competenceOptions, waitingForFeedback } from './competence-actions.js';
+import {
+  ownPractice,
+  coachingFor,
+  occurrenceFor,
+  renderActivity,
+  type PracticeView,
+  type ActivityOccurrence,
+} from '@open-legend/domain';
+import { bodyProfile } from '@open-legend/domain';
+import { materialExposureView } from '@open-legend/domain';
+import { assemblyView } from './construction.js';
+import { cookingOptions, fishingOptions, fishingTools } from './food-actions.js';
 import { namePhrase } from '@open-legend/language';
 import {
   recipeFamily,
   basePlaytestMilestones,
+  cookingPreparations,
   BASE_FAMILY_POLICY,
   equippedTargetAction,
 } from '@open-legend/domain';
@@ -52,6 +86,7 @@ import { projectAttributes, attributeDefinition, readAttribute } from '@open-leg
 import { canSpeak } from '@open-legend/domain';
 import type {
   ActionOption,
+  CommandInput,
   EntityView,
   GamePatch,
   GameView,
@@ -63,6 +98,7 @@ import {
   visionRadius,
   nearbyEntities,
   inventoryFor,
+  quantityOf,
   canRecoverAtCamp,
   GOD_SPAWN_OPTIONS,
   TRAIT_BANK,
@@ -188,9 +224,22 @@ export async function projectView(
         .filter((recipe) => !!recipe),
     ),
   };
+  const castTools = memo('castTools', [observation.inventory, world.itemDefinitions], () =>
+    fishingTools(world, observation.inventory),
+  );
+  // Lazily share exact ingredients across rebuilt fire panels within this snapshot.
+  // No longer-lived cache: reservation changes can alter which lot is usable.
+  let preparations: ReturnType<typeof cookingPreparations> | undefined;
   const pileContents = memo(
     'pileContents',
-    [observation.visibleEntities, world.objectState, world.itemDefinitions],
+    [
+      observation.visibleEntities,
+      world.objectState,
+      world.itemDefinitions,
+      world.entities,
+      world.assemblyGeometryRevision,
+      world.simTime,
+    ],
     () => {
       const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
       for (const pile of observation.visibleEntities.filter(
@@ -205,6 +254,7 @@ export async function projectView(
             name: definition.name,
             quantity: item.quantity,
             portable: definition.portable === true,
+            materialCondition: materialExposureView(world, item.id),
           });
           byOwner.set(item.ownerId, contents);
         }
@@ -214,37 +264,100 @@ export async function projectView(
   );
   const player = world.entities[scope.actorId]!;
   const actor = player.actor!;
-  const quantity = (definitionId: string) =>
-    observation.inventory
-      .filter((item) => item.definitionId === definitionId)
-      .reduce((sum, item) => sum + item.quantity, 0);
+  const generation = service.generation;
+  const historyEpoch = service.historyEpoch;
+  const practice = await memo<Promise<PracticeView[]>>(
+    'practice',
+    [actor.practice, world.moduleManifest, generation, historyEpoch],
+    async () => {
+      const progress = ownPractice(world, player);
+      const missing = progress.flatMap((p) =>
+        p.evidence
+          .filter((e) => !occurrenceFor(world, player.id, e.occurrenceId))
+          .map((e) => e.occurrenceId),
+      );
+      const recorded = new Map<string, ActivityOccurrence>();
+      if (service.store.records)
+        for (let offset = 0; offset < missing.length; offset += 128) {
+          const rows = await service.store.records.activityPage(
+            world.id,
+            player.id,
+            -1,
+            missing.slice(offset, offset + 128),
+            128,
+          );
+          for (const row of rows) if (!row.entry.revoked) recorded.set(row.entry.id, row.entry);
+        }
+      return progress.map((p) => ({
+        ...p,
+        evidence: p.evidence.map((e) => ({
+          ...e,
+          description: recorded.has(e.occurrenceId)
+            ? renderActivity(recorded.get(e.occurrenceId)!.view, 'What happened')
+            : e.description,
+        })),
+      }));
+    },
+  );
+  // A correction can revoke retained evidence while SQL inspection is pending.
+  // Recheck even a cached promise before publishing pre-correction private text.
+  if (generation !== service.generation || historyEpoch !== service.historyEpoch)
+    throw new Error('The world changed during practice inspection.');
+  service.assertScope(scope);
+  const quantity = (definitionId: string) => quantityOf(world, player.id, definitionId);
   const active =
     actor.participation?.phase !== 'inactive' &&
     !paused &&
     actor.alive &&
     !actor.incapacitated &&
     service.currentScope(scope, 'play', true);
+  const coaching = coachingFor(world, scope.actorId);
   const action = (
     id: string,
     label: string,
     command: ActionOption['command'],
     possible = true,
     reason?: string,
-  ): ActionOption => ({
-    id,
-    label,
-    icon: nativeActionIcon(command.type),
-    command,
-    enabled: active && possible,
-    ...(!active
-      ? {
-          reason: paused ? 'Resume the world to act.' : 'You cannot act in your current condition.',
-        }
-      : !possible && reason
-        ? { reason }
-        : {}),
-  });
-  const equipment = itemFor(world, actor.equippedItemId ?? '');
+  ): ActionOption => {
+    // Consent-ending rows carry the server's complete current preview. They require
+    // control, while declining physical work requires no live body or running clock.
+    const consentEnding =
+      command.type === 'coaching' &&
+      (command.coachingOperation === 'withdraw' || command.coachingOperation === 'decline');
+    const canChoose = active || (consentEnding && service.currentScope(scope, 'play', true));
+    return {
+      id,
+      label,
+      icon: nativeActionIcon(command.type),
+      command,
+      enabled: canChoose && possible,
+      ...(!canChoose
+        ? {
+            reason: paused
+              ? 'Resume the world to act.'
+              : 'You cannot act in your current condition.',
+          }
+        : !possible && reason
+          ? { reason }
+          : {}),
+    };
+  };
+  let activityView: ReturnType<typeof nativeActivityViews> | undefined;
+  const attackDetails = (command: import('@open-legend/domain').Command) => {
+    const view = (activityView ??= nativeActivityViews(world, observation.inventory))(command);
+    const facts = view.facts
+      .filter((fact) => fact.critical)
+      .map((fact) => [fact.name, String(fact.value)] as [string, string]);
+    const detail = view.facts
+      .filter((fact) => !fact.critical)
+      .map((fact) => `${fact.name}: ${String(fact.value)}`)
+      .join('; ');
+    return { facts, detail };
+  };
+  const equipment =
+    equippedItem(world, scope.actorId, 'ranged') ??
+    equippedItem(world, scope.actorId, 'melee') ??
+    equippedItem(world, scope.actorId, 'gather');
   const launcher = equipment && world.itemDefinitions[equipment.definitionId]?.launcher;
   const ammunition =
     launcher &&
@@ -262,7 +375,9 @@ export async function projectView(
       world.resourceReservations,
       world.itemDefinitions,
       world.recipes,
-      actor.equippedItemId,
+      actor.inventoryInspection,
+      world.knowledge[player.id],
+      player.inventoryRevision,
       actor.action,
       world.itemHandling,
       player.spatial,
@@ -284,11 +399,21 @@ export async function projectView(
         `entity:${entity.id}`,
         [
           entity,
+          entity.assembly ? world.entities : undefined,
+          entity.assembly ? world.simTime : undefined,
+          // Recovery can count down while the body itself stays unchanged. Rebuild only
+          // when the whole-second description changes, rather than on every clock tick.
+          entity.actor
+            ? Math.max(0, Math.ceil(combatRecoveryDeadline(world, entity) - world.simTime))
+            : undefined,
+          entity.assembly ? service.constructionAllowed(scope.actorId) : undefined,
           world.observerIdentities?.[scope.actorId]?.[entity.id],
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
           entity.kind === 'item-pile' || entity.remains ? pileContents.get(entity.id) : undefined,
           // Fire care availability depends on the player's carried tinder, drill and fuel.
-          entity.heat ? player.inventoryRevision : undefined,
+          entity.heat || entity.resource?.cast ? player.inventoryRevision : undefined,
+          entity.heat ? world.foodPreparations : undefined,
+          entity.resource?.cast ? world.castDefinitions : undefined,
           // Offer replies appear and disappear with pending offers between the two people.
           ...(entity.actor
             ? (() => {
@@ -300,15 +425,18 @@ export async function projectView(
           entity.actor ? player.inventoryRevision : undefined,
           // Starting/stopping work can bind a promised tool without changing its lot.
           entity.actor ? actor.action : undefined,
+          // Agreement and observation can change without either person's action changing.
+          entity.actor ? coaching : undefined,
           // Manual action choices depend on physical form, not unrelated body conditions.
           entity.actor ? actor.body?.plan : undefined,
           entity.actor ? service.timelineId : undefined,
           world.itemDefinitions,
           active,
           paused,
+          pauseReason,
           launcher,
-          actor.equippedItemId,
-          (actor.attackReadyAt ?? 0) > world.simTime,
+          player.inventoryRevision,
+          (actor.combatReadyAt ?? 0) > world.simTime,
           ammunition,
           observation.knownRecipes,
           worldPosition(player),
@@ -328,6 +456,7 @@ export async function projectView(
           world.statusEffectPolicy,
         ],
         () => {
+          const attributes = entity.actor ? projectAttributes(world, entity, 'public') : [];
           const display = observerName(world, scope.actorId, entity.id);
           const displayName = display.name;
           const sentenceName = namePhrase(display, 'definite');
@@ -356,15 +485,55 @@ export async function projectView(
                 targetId: entity.id,
               };
               const preview = service.previewCommand(command, scope.actorId);
-              actions.push(
-                action(
+              actions.push({
+                ...action(
                   `${definition.id}-${entity.id}`,
                   definition.label,
                   command,
                   preview.ok,
                   preview.message,
                 ),
-              );
+                ...attackDetails({
+                  id: `preview:${definition.id}`,
+                  actorId: scope.actorId,
+                  type: 'strike',
+                  definitionId: definition.id,
+                  targetId: entity.id,
+                  weaponItemId: definition.weaponItemId,
+                }),
+              });
+            }
+
+          if (entity.actor?.alive && equipment && launcher)
+            for (const type of ['aim', 'shoot-once'] as const) {
+              const command = {
+                type,
+                targetId: entity.id,
+                itemId: equipment.id,
+                ammunitionId: ammunition?.id,
+              };
+              const preview = service.previewCommand(command, scope.actorId);
+              actions.push({
+                ...action(
+                  `${type}:${entity.id}:${equipment.id}`,
+                  rangedChoiceLabel(
+                    type,
+                    displayName,
+                    world.itemDefinitions[equipment.definitionId]!.name,
+                  ),
+                  command,
+                  preview.ok,
+                  preview.message,
+                ),
+                ...attackDetails({
+                  id: `preview:${type}`,
+                  actorId: scope.actorId,
+                  type,
+                  targetId: entity.id,
+                  weaponItemId: equipment.id,
+                  ammoItemId: ammunition?.id,
+                }),
+              });
             }
 
           const speechCapable = canSpeak(entity);
@@ -406,7 +575,7 @@ export async function projectView(
               );
             }
           }
-          if (entity.resource)
+          if (entity.resource && !entity.resource.cast)
             actions.push({
               ...action(
                 `gather-${entity.id}`,
@@ -417,23 +586,47 @@ export async function projectView(
               ),
               shortcut: nativeGatherShortcut(world, entity.resource.definitionId),
             });
-          if (entity.animal && entity.actor?.alive)
+          for (const option of fishingOptions(world, castTools, entity)) {
+            const preview = service.previewCommand(option.command, scope.actorId);
+            actions.push(
+              action(
+                option.id,
+                option.label,
+                option.command,
+                preview.ok,
+                preview.ok ? undefined : preview.message,
+              ),
+            );
+          }
+          if (rangedTargetAllowed(world, entity)) {
+            const command: CommandInput = {
+              type: 'hunt',
+              targetId: entity.id,
+              itemId: equipment?.id,
+              ammunitionId: ammunition?.id,
+            };
+            const preview = service.previewCommand(command, scope.actorId);
             actions.push(
               action(
                 `hunt-${entity.id}`,
-                'Hunt',
-                {
-                  type: 'hunt',
-                  targetId: entity.id,
-                  itemId: equipment?.id,
-                  ammunitionId: ammunition?.id,
-                },
-                !!launcher && !!ammunition,
-                !launcher
-                  ? 'Invent, craft and equip a launcher first.'
-                  : `Carry compatible ${launcher.ammunitionKind} ammunition.`,
+                rangedPolicy(world)!.actionLabel,
+                command,
+                preview.ok,
+                preview.message,
               ),
             );
+          }
+          for (const option of competenceOptions(
+            world,
+            scope.actorId,
+            entity,
+            observation.inventory,
+          )) {
+            const preview = service.previewCommand(option.command, scope.actorId);
+            actions.push(
+              action(option.id, option.label, option.command, preview.ok, preview.message),
+            );
+          }
           if (entity.actor)
             for (const option of handoverOptions(
               world,
@@ -445,6 +638,22 @@ export async function projectView(
               const preview = service.previewCommand(option.command, scope.actorId);
               actions.push(
                 action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
+              );
+            }
+          if (entity.heat)
+            for (const option of cookingOptions(
+              (preparations ??= cookingPreparations(world, observation.inventory)),
+              entity.id,
+            )) {
+              const preview = service.previewCommand(option.command, scope.actorId);
+              actions.push(
+                action(
+                  option.id,
+                  option.label,
+                  option.command,
+                  preview.ok,
+                  preview.ok ? undefined : preview.message,
+                ),
               );
             }
           if (entity.heat)
@@ -464,7 +673,8 @@ export async function projectView(
                 'These remains have already been harvested.',
               ),
             );
-          if (canSpeak(entity) && entity.actor?.controller === 'npc')
+          // Speech-capable body metadata survives death; only a living listener can learn.
+          if (canSpeak(entity) && entity.actor?.alive && entity.actor.controller === 'npc')
             for (const recipe of observation.knownRecipes)
               actions.push(
                 action(`teach-${recipe.id}`, `Teach ${recipe.name}`, {
@@ -473,8 +683,9 @@ export async function projectView(
                   recipeId: recipe.id,
                 }),
               );
-          const kind: EntityView['kind'] =
-            entity.kind === 'item-pile'
+          const kind: EntityView['kind'] = entity.practiceTarget
+            ? 'practice-target'
+            : entity.kind === 'item-pile'
               ? 'item-pile'
               : entity.remains
                 ? 'remains'
@@ -485,8 +696,20 @@ export async function projectView(
                     : entity.resource || entity.kind === 'resource'
                       ? 'resource'
                       : 'station';
+          const installedActions = actions.filter((option) =>
+            nativeCommandSupported(world, nativeCommandKind(option.command.type)),
+          );
           return {
             id: entity.id,
+            ...(entity.assembly
+              ? {
+                  assembly: assemblyView(
+                    world,
+                    entity.id,
+                    service.constructionAllowed(scope.actorId),
+                  ),
+                }
+              : {}),
             ...display,
             icon: entity.resource
               ? world.itemDefinitions[entity.resource.definitionId]?.icon
@@ -495,7 +718,11 @@ export async function projectView(
             ...(entity.kind === 'item-pile' || entity.remains
               ? { contents: pileContents.get(entity.id) ?? [] }
               : {}),
-            description: describeEntity({ ...entity, ...display }, world.itemDefinitions),
+            description: describeEntity(
+              { ...entity, ...display },
+              world.itemDefinitions,
+              world.castDefinitions,
+            ),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
             subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
@@ -504,6 +731,14 @@ export async function projectView(
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
+            ...(entity.actor
+              ? {
+                  bodySize: {
+                    width: bodyProfile(entity).radius * 2,
+                    height: bodyProfile(entity).height,
+                  },
+                }
+              : {}),
             ...(entity.actor?.body ? { bodyPlan: entity.actor.body.plan } : {}),
             ...(world.exitExposures?.[entity.id] !== undefined &&
             world.participationPolicy?.exitExposureSeconds
@@ -534,36 +769,54 @@ export async function projectView(
                 ? ((entity.remains?.phase === 'rotting'
                     ? bodyPolicy(world)?.remains?.rottingLabel
                     : bodyPolicy(world)?.remains?.freshLabel) ?? '')
-                : projectStatusEffects(world, entity).length
-                  ? projectStatusEffects(world, entity)
-                      .map((d) => d.label)
-                      .join(', ')
-                  : entity.actor.action
-                    ? ({
-                        pickup: 'Picking up items',
-                        move: 'Walking',
-                        follow: 'Following',
-                        replenish:
-                          attributeDefinition(world, entity.actor.action.attributeId ?? '')
-                            ?.reservoir?.actionLabel ?? 'Working',
-                        gather: 'Gathering',
-                        'status-effect': 'Active state',
-                        hunt: 'Hunting',
-                        strike: 'Striking',
-                        harvest: 'Harvesting',
-                        cook: 'Cooking',
-                        'tend-fire': 'Tending a fire',
-                        'treat-scar': 'Treating an injury',
-                        prepare: 'Preparing',
-                        craft: 'Crafting',
-                      }[entity.actor.action.type] ?? 'Working')
-                    : entity.threat
-                      ? ''
-                      : entity.animal
-                        ? entity.animal.danger > 0
-                          ? 'Fleeing'
-                          : 'Foraging'
-                        : 'Watching the surroundings'
+                : (observedCombatActivity(world, player, entity) ??
+                  (projectStatusEffects(world, entity).length
+                    ? projectStatusEffects(world, entity)
+                        .map((d) => d.label)
+                        .join(', ')
+                    : entity.actor.action
+                      ? ({
+                          assemble: entity.actor.action.assemblyPhase
+                            ? world.assemblyFamilies?.[entity.actor.action.assemblyPhase.familyId]
+                                ?.labels[entity.actor.action.assemblyPhase.operation]
+                            : undefined,
+                          guard: BASE_GUARD_TEXT.activityLabel,
+                          pickup: 'Picking up items',
+                          move: 'Walking',
+                          evade: bodyPolicy(world)?.evasion?.label,
+                          follow: 'Following',
+                          replenish:
+                            attributeDefinition(world, entity.actor.action.attributeId ?? '')
+                              ?.reservoir?.actionLabel ?? 'Working',
+                          gather: 'Gathering',
+                          'status-effect': 'Active state',
+                          hunt: rangedPolicy(world)?.activityLabel,
+                          aim: BASE_RANGED_TEXT.aimingLabel,
+                          'shoot-once': BASE_RANGED_TEXT.shootingLabel,
+                          'practice-shot': practiceDefinition(
+                            world,
+                            entity.actor.action.competencePin?.id ?? '',
+                          )?.practice?.presentation.practiceActivityLabel,
+                          coaching: practiceDefinition(
+                            world,
+                            entity.actor.action.competencePin?.id ?? '',
+                          )?.practice?.presentation.coachingActivityLabel,
+                          strike: 'Striking',
+                          harvest: 'Harvesting',
+                          cook: 'Cooking',
+                          fish: 'Fishing',
+                          'tend-fire': 'Tending a fire',
+                          'treat-scar': 'Treating an injury',
+                          prepare: 'Preparing',
+                          craft: 'Crafting',
+                        }[entity.actor.action.type] ?? 'Working')
+                      : entity.threat
+                        ? ''
+                        : entity.animal
+                          ? entity.animal.danger > 0
+                            ? 'Fleeing'
+                            : 'Foraging'
+                          : 'Watching the surroundings'))
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
@@ -583,13 +836,23 @@ export async function projectView(
                       : entity.kind === 'item-pile'
                         ? `${pileContents.get(entity.id)?.length ?? 0} item stack${pileContents.get(entity.id)?.length === 1 ? '' : 's'}`
                         : entity.resource
-                          ? 'Gatherable'
+                          ? entity.resource.cast
+                            ? entity.resource.quantity > 0
+                              ? world.castDefinitions[entity.resource.cast.definitionId]!
+                                  .availableText
+                              : world.castDefinitions[entity.resource.cast.definitionId]!
+                                  .exhaustedText
+                            : 'Gatherable'
                           : '',
-            ...(entity.resource ? { quantity: entity.resource.quantity } : {}),
+            ...(entity.resource && !entity.resource.cast
+              ? { quantity: entity.resource.quantity }
+              : {}),
             ...(entity.actor
               ? {
-                  attributes: projectAttributes(world, entity, 'public'),
-                  health: entity.actor.health,
+                  attributes,
+                  ...(attributes.some((attribute) => attribute.bodyHealth)
+                    ? { health: entity.actor.health }
+                    : {}),
                   bodyRevision: entity.actor.body?.revision,
                   ...(!entity.actor.alive
                     ? {
@@ -610,14 +873,14 @@ export async function projectView(
                           ),
                           entity,
                           JSON.stringify([privateDraftScopeKey(scope), service.timelineId]),
-                          actions,
+                          installedActions,
                         ),
                       }
                     : {}),
                 }
               : {}),
-            actions,
-            equippedAction: equippedTargetAction(world, entity, equipment, actions),
+            actions: installedActions,
+            equippedAction: equippedTargetAction(world, entity, equipment, installedActions),
           };
         },
       ),
@@ -759,7 +1022,7 @@ export async function projectView(
   if (reincarnation && scarTreatment && actor.alive) {
     const rest = observation.visibleEntities.find(
       (entity) =>
-        entity.kind === reincarnation.restKind &&
+        replacementRest(world, entity) &&
         Math.hypot(
           worldPosition(entity).x - worldPosition(player).x,
           worldPosition(entity).y - worldPosition(player).y,
@@ -781,6 +1044,18 @@ export async function projectView(
       }
   }
   const work = actor.action;
+  const aimDetails =
+    work?.type === 'aim'
+      ? attackDetails({
+          id: work.id,
+          actorId: scope.actorId,
+          type: 'aim',
+          targetId: work.targetId!,
+          weaponItemId: work.weaponItemId,
+          ammoItemId: work.ammoItemId,
+        })
+      : undefined;
+
   const consumption = applicableConsumption(world, player);
   const suggestedConsumption =
     consumption &&
@@ -818,8 +1093,16 @@ export async function projectView(
     gather: `Gathering${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     harvest: `Harvesting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     strike: `Striking${targetName ? ` ${targetName}` : ''}`,
+    'practice-shot': 'Preparing one practice shot',
+    coaching: waitingForFeedback(world, player)
+      ? 'Waiting for the other person to choose feedback'
+      : 'Guided feedback',
+    evade: bodyPolicy(world)?.evasion?.label ?? 'Moving',
     hunt: `Hunting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
-    cook: 'Cooking meat',
+    aim: `${work?.ranged ? `${world.itemDefinitions[work.ranged.tool.id]?.name ?? 'Selected tool'} · ` : ''}${work?.ranged?.ready ? BASE_RANGED_TEXT.readyLabel : BASE_RANGED_TEXT.aimingLabel}${targetName ? ` · ${targetName}` : ''}`,
+    'shoot-once': `${BASE_RANGED_TEXT.shootingLabel}${targetName ? ` · ${targetName}` : ''}`,
+    cook: 'Cooking',
+    fish: 'Fishing',
     'tend-fire':
       work?.fireOperation === 'light'
         ? 'Lighting the fire'
@@ -931,7 +1214,10 @@ export async function projectView(
       position: worldPosition(player),
       supportSurfaceId: worldSupport(player),
       heading: player.spatial.heading,
-      attributes: projectAttributes(world, player, 'owner'),
+      attributes: projectAttributes(world, player, 'owner').filter(
+        (attribute) => !attributeDefinition(world, attribute.id)?.practice,
+      ),
+      practice,
       actionAnimation: actionAnimation(world, player),
       suggestedActionIds,
       alive: actor.alive,
@@ -968,34 +1254,84 @@ export async function projectView(
           }
         : {}),
       statusEffects: projectStatusEffects(world, player, 'owner'),
+      ...(bodyPolicy(world)?.evasion
+        ? {
+            evasion: {
+              label: bodyPolicy(world)!.evasion!.label,
+              readyIn: Math.max(0, (actor.evasionReadyAt ?? 0) - world.simTime),
+            },
+          }
+        : {}),
       action: actor.action
         ? {
             id: actor.action.id,
             // Floating progress is opt-in; routine movement never gets a status.
             showStatus:
+              actor.action.type === 'aim' ||
               !!actor.action.navigation ||
               (actor.action.stage === 'working' &&
                 [
                   'gather',
                   'prepare',
                   'craft',
+                  'assemble',
                   'cook',
                   'harvest',
                   'treat-scar',
                   'hunt',
+                  'aim',
+                  'shoot-once',
+                  'practice-shot',
+                  'coaching',
                   'strike',
+                  'guard',
                   'replenish',
                   'tend-fire',
                 ].includes(actor.action.type)),
+            ...(actor.action.type === 'aim'
+              ? {
+                  detail:
+                    aimDetails &&
+                    [
+                      BASE_RANGED_TEXT.aimDescription,
+                      ...(work?.ranged?.ready ? [BASE_RANGED_TEXT.ready] : []),
+                      ...aimDetails.facts.map(([name, value]) => `${name}: ${value}`),
+                      aimDetails.detail,
+                    ].join('; '),
+                  controls: [
+                    {
+                      id: `release:${actor.action.id}`,
+                      label: BASE_RANGED_TEXT.shootingName,
+                      command: { type: 'release-shot' as const, aimId: actor.action.id },
+                      enabled: !!actor.action.ranged?.ready && !paused,
+                      ...(!actor.action.ranged?.ready ? { reason: BASE_RANGED_TEXT.notReady } : {}),
+                    },
+                    {
+                      id: `cancel:${actor.action.id}`,
+                      label: BASE_RANGED_TEXT.cancelName,
+                      command: { type: 'cancel' as const },
+                      enabled: true,
+                    },
+                  ],
+                }
+              : {}),
             durationSeconds: actor.action.totalSeconds,
             elapsedSeconds:
               actor.action.stage === 'working'
                 ? actor.action.totalSeconds - actor.action.remainingSeconds
                 : 0,
-            advancing: !paused && actor.action.stage === 'working',
+            advancing:
+              !paused &&
+              actor.action.stage === 'working' &&
+              !actor.action.ranged?.ready &&
+              !waitingForFeedback(world, player),
             label: actor.action.navigation
               ? 'Preparing route'
-              : (workLabels[actor.action.type] ?? 'Working'),
+              : actor.action.assemblyPhase
+                ? (world.assemblyFamilies?.[actor.action.assemblyPhase.familyId]?.labels[
+                    actor.action.assemblyPhase.operation
+                  ] ?? 'Working')
+                : (guardWorkLabel(world, player) ?? workLabels[actor.action.type] ?? 'Working'),
             progress:
               actor.action.stage === 'approaching' || actor.action.type === 'follow'
                 ? 0
@@ -1096,23 +1432,17 @@ export async function projectView(
           );
           return {
             id: recipe.id,
-            npcCreated: knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated,
-            name: recipe.name,
-            description: recipe.description,
-            output: recipe.output,
-            facts: recipe.facts,
-            limitations: [
-              recipeFamily(world, recipe.sourceCandidate.family.id)!.definition.limitation,
-            ],
-            family: recipeFamily(world, recipe.sourceCandidate.family.id)!.definition.name,
-            ingredients: recipe.inputs.map((input) => ({
-              name: world.itemDefinitions[input.definitionId]!.name,
-              quantity: input.quantity,
-              available: quantity(input.definitionId),
-              role: input.role,
-            })),
-            workSeconds: recipe.workSeconds,
-            provenance: `${recipe.provenance.source} · ${recipe.provenance.model ?? 'test fixture'}`,
+            ...recipeDetailsView(world, recipe, quantity),
+            origin:
+              recipe.provenance.source === 'authored-world'
+                ? 'authored'
+                : knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated
+                  ? 'npc'
+                  : 'player',
+            provenance:
+              recipe.provenance.source === 'authored-world'
+                ? 'Known authored method; learned through an admitted disclosure.'
+                : `${recipe.provenance.source} · ${recipe.provenance.model ?? 'supplied proposal'}`,
             actions: [
               action(
                 `craft-${recipe.id}`,
@@ -1155,7 +1485,9 @@ export async function projectView(
               replyStatus,
               replyRequestId: reply?.id,
               retryable: reply?.status === 'failed',
-              ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
+              ...(['failed', 'cancelled', 'stale'].includes(replyStatus)
+                ? { replyReason: replyMessage }
+                : {}),
             }
           : {}),
         speakerId: event.actorId,

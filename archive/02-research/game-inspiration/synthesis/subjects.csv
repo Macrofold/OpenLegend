@@ -1,0 +1,169 @@
+game_key,roster_id,title,source_availability
+hades-ii,G01,Hades II,M
+among-us,G02,Among Us,M
+animal-crossing-new-horizons,G03,Animal Crossing: New Horizons,M
+roblox,G04,Roblox,M
+grow-a-garden,G05,Grow a Garden,M
+steal-a-brainrot,G06,Steal a Brainrot,M
+fortnite,G07,Fortnite,M
+league-of-legends,G08,League of Legends,M
+dota-2,G09,Dota 2,M
+path-of-exile,G10,Path of Exile,M
+path-of-exile-2,G11,Path of Exile 2,M
+diablo-iv,G12,Diablo IV,M
+dreams,G13,Dreams,M
+project-spark,G14,Project Spark,M
+worlds-adrift,G15,Worlds Adrift,M
+spore,G16,Spore,M
+no-mans-sky,G17,No Man's Sky,M
+everquest-next,G18,EverQuest Next,M
+ultima-online,G19,Ultima Online,M
+minecraft,G20,Minecraft,M
+rimworld,G21,RimWorld,M
+hades,G22,Hades I,M
+dwarf-fortress,G23,Dwarf Fortress,M
+the-sims,G24,The Sims,M
+wildermyth,G25,Wildermyth,M
+baldurs-gate-3,G26,Baldur's Gate 3,M
+factorio,G27,Factorio,M
+satisfactory,G28,Satisfactory,M
+terraria,G29,Terraria,M
+stardew-valley,G30,Stardew Valley,M
+valheim,G31,Valheim,M
+noita,G32,Noita,M
+caves-of-qud,G33,Caves of Qud,M
+outer-wilds,G34,Outer Wilds,M
+garrys-mod,G35,Garry's Mod,M
+kenshi,G36,Kenshi,M
+project-zomboid,G37,Project Zomboid,M
+lethal-company,G38,Lethal Company,M
+scribblenauts,G39,Scribblenauts,M
+ai-dungeon,G40,AI Dungeon,M
+palworld,G41,Palworld,M
+balatro,G42,Balatro,M
+slay-the-spire,G43,Slay the Spire,M
+vampire-survivors,G44,Vampire Survivors,M
+against-the-storm,G45,Against the Storm,M
+core-keeper,G46,Core Keeper,M
+peak,G47,PEAK,M
+runescape,G48,RuneScape,M
+old-school-runescape,G49,Old School RuneScape,M
+runescape-dragonwilds,G50,RuneScape: Dragonwilds,M
+dragon-age-origins,G51,Dragon Age: Origins,M
+dragon-age-ii,G52,Dragon Age II,M
+dragon-age-inquisition,G53,Dragon Age: Inquisition,M
+dragon-age-the-veilguard,G54,Dragon Age: The Veilguard,M
+pillars-of-eternity-ii-deadfire,G55,Pillars of Eternity II: Deadfire,M
+divinity-original-sin,G56,Divinity: Original Sin,M
+divinity-original-sin-ii,G57,Divinity: Original Sin II,M
+pathfinder-kingmaker,G58,Pathfinder: Kingmaker,M
+pathfinder-wrath-of-the-righteous,G59,Pathfinder: Wrath of the Righteous,M
+fire-emblem-the-blazing-blade,G60,Fire Emblem: The Blazing Blade,M
+fire-emblem-path-of-radiance,G61,Fire Emblem: Path of Radiance,M
+fire-emblem-awakening,G62,Fire Emblem Awakening,M
+fire-emblem-fates,G63,Fire Emblem Fates,M
+fire-emblem-three-houses,G64,Fire Emblem: Three Houses,M
+fire-emblem-heroes,G65,Fire Emblem Heroes,M
+disco-elysium,G66,Disco Elysium,M
+grand-theft-auto-v,G67,Grand Theft Auto V,M
+cyberpunk-2077,G68,Cyberpunk 2077,M
+red-dead-redemption,G69,Red Dead Redemption,M
+red-dead-redemption-2,G70,Red Dead Redemption 2,M
+the-elder-scrolls-v-skyrim,G71,The Elder Scrolls V: Skyrim,M
+the-witcher-3-wild-hunt,G72,The Witcher 3: Wild Hunt,M
+the-legend-of-zelda-breath-of-the-wild,G73,The Legend of Zelda: Breath of the Wild,M
+fallout-4,G74,Fallout 4,M
+elden-ring,G75,Elden Ring,M
+black-myth-wukong,G76,Black Myth: Wukong,M
+clair-obscur-expedition-33,G77,Clair Obscur: Expedition 33,M
+final-fantasy,G78,Final Fantasy I,M
+final-fantasy-ii,G79,Final Fantasy II,M
+final-fantasy-iii,G80,Final Fantasy III,M
+final-fantasy-iv,G81,Final Fantasy IV,M
+final-fantasy-v,G82,Final Fantasy V,M
+final-fantasy-vi,G83,Final Fantasy VI,M
+final-fantasy-vii,G84,Final Fantasy VII,M
+final-fantasy-viii,G85,Final Fantasy VIII,M
+final-fantasy-ix,G86,Final Fantasy IX,M
+final-fantasy-x,G87,Final Fantasy X,M
+final-fantasy-xi,G88,Final Fantasy XI,M
+final-fantasy-xii,G89,Final Fantasy XII,M
+final-fantasy-xiii,G90,Final Fantasy XIII,M
+final-fantasy-xiv,G91,Final Fantasy XIV,M
+final-fantasy-xv,G92,Final Fantasy XV,M
+final-fantasy-xvi,G93,Final Fantasy XVI,M
+warcraft-orcs-and-humans,G94,Warcraft: Orcs & Humans,M
+warcraft-ii,G95,Warcraft II,M
+warcraft-iii,G96,Warcraft III,M
+world-of-warcraft,G97,World of Warcraft,M
+assassins-creed-iv-black-flag,G98,Assassin's Creed IV: Black Flag,M
+assassins-creed-iii,G99,Assassin's Creed III,M
+assassins-creed-valhalla,G100,Assassin's Creed Valhalla,M
+mass-effect,G101,Mass Effect,M
+mass-effect-2,G102,Mass Effect 2,M
+mass-effect-3,G103,Mass Effect 3,M
+mass-effect-andromeda,G104,Mass Effect: Andromeda,M
+mass-effect-galaxy,G105,Mass Effect Galaxy,M
+mass-effect-infiltrator,G106,Mass Effect Infiltrator,M
+octopath-traveler,G107,Octopath Traveler,M
+octopath-traveler-ii,G108,Octopath Traveler II,M
+star-wars-knights-of-the-old-republic,G109,Star Wars: Knights of the Old Republic,M
+star-wars-knights-of-the-old-republic-ii,G110,Star Wars: Knights of the Old Republic II,M
+the-legend-of-zelda-tears-of-the-kingdom,G111,The Legend of Zelda: Tears of the Kingdom,M
+fallout-new-vegas,G112,Fallout: New Vegas,M
+the-elder-scrolls-iii-morrowind,G113,The Elder Scrolls III: Morrowind,M
+kingdom-come-deliverance-ii,G114,Kingdom Come: Deliverance II,M
+mount-and-blade-ii-bannerlord,G115,Mount & Blade II: Bannerlord,M
+middle-earth-shadow-of-war,G116,Middle-earth: Shadow of War,M
+deus-ex-2000,G117,Deus Ex,M
+prey-2017,G118,Prey,M
+dishonored-2,G119,Dishonored 2,M
+starsector,G120,Starsector,M
+battle-brothers,G121,Battle Brothers,M
+cataclysm-dark-days-ahead,G122,Cataclysm: Dark Days Ahead,M
+rain-world,G123,Rain World,M
+persona-5-royal,G124,Persona 5 Royal,M
+xcom-2,G125,XCOM 2,M
+crusader-kings-iii,G126,Crusader Kings III,M
+dragons-dogma-2,G127,Dragon's Dogma 2,M
+ultima-vii-the-black-gate,G128,Ultima VII: The Black Gate,M
+oxygen-not-included,G129,Oxygen Not Included,M
+stalker-2-heart-of-chornobyl,G130,S.T.A.L.K.E.R. 2: Heart of Chornobyl,M
+rust,G131,Rust,M
+dayz,G132,DayZ,M
+ark-survival-evolved,G133,ARK: Survival Evolved,M
+ark-survival-ascended,G134,ARK: Survival Ascended,M
+7-days-to-die,G135,7 Days to Die,M
+conan-exiles,G136,Conan Exiles,M
+the-forest,G137,The Forest,M
+sons-of-the-forest,G138,Sons of the Forest,M
+subnautica,G139,Subnautica,M
+dont-starve-together,G140,Don't Starve Together,M
+raft,G141,Raft,M
+grounded,G142,Grounded,M
+the-long-dark,G143,The Long Dark,M
+green-hell,G144,Green Hell,M
+enshrouded,G145,Enshrouded,M
+v-rising,G146,V Rising,M
+once-human,G147,Once Human,M
+abiotic-factor,G148,Abiotic Factor,M
+songs-of-syx,G149,Songs of Syx,M
+streets-of-rogue,G150,Streets of Rogue,P
+nethack,G151,NetHack,P
+spelunky-2,G152,Spelunky 2,P
+the-binding-of-isaac-rebirth,G153,The Binding of Isaac: Rebirth,P
+cogmind,G154,Cogmind,P
+dungeon-crawl-stone-soup,G155,Dungeon Crawl Stone Soup,P
+ftl-faster-than-light,G156,FTL: Faster Than Light,P
+into-the-breach,G157,Into the Breach,P
+dead-cells,G158,Dead Cells,P
+shadows-of-doubt,G159,Shadows of Doubt,P
+vintage-story,G160,Vintage Story,P
+eco,G161,Eco,P
+manor-lords,G162,Manor Lords,P
+majesty-gold-hd,G163,Majesty: Gold HD,P
+creatures-3,G164,Creatures 3,P
+creatures-docking-station,G165,Creatures Docking Station,P
+shattered-pixel-dungeon,G166,Shattered Pixel Dungeon,P
+starfield,G167,Starfield,M
+eve-online,unnumbered,EVE Online,T

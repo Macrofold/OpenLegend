@@ -14,6 +14,7 @@ import { WorldInspection } from './world-inspection';
 import { WorldAgentSession } from './world-agent-session';
 import { UsageRemaining } from './usage-remaining';
 import './creator-workspaces.css';
+import { authoringKey } from './world-agent-identity';
 
 type Props = {
   worldId: string;
@@ -33,7 +34,12 @@ export function WorldAgent(props: Props) {
   // A restore changes authority and model context. Retained old sessions stay explicitly historical.
   return (
     <WorldAgentPanel
-      key={`${props.worldId}:${props.saveTimeline}:${props.accessScope}`}
+      key={authoringKey(
+        'panel-component',
+        props.worldId,
+        props.accessScope,
+        props.saveTimeline ?? null,
+      )}
       {...props}
     />
   );
@@ -55,7 +61,12 @@ function WorldAgentPanel(props: Props) {
   const navigationRef = useRef<HTMLDetailsElement>(null);
   const navigationId = useId();
   const [navigationOpen, setNavigationOpen] = useState(false);
-  const selectionKey = `open-legend:authoring-selection:${worldId}:${saveTimeline}:${accessScope}`;
+  const selectionKey = authoringKey(
+    'conversation-selection',
+    worldId,
+    accessScope,
+    saveTimeline ?? null,
+  );
   const [active, setActive] = useState(() =>
     readLocal(
       selectionKey,
@@ -75,6 +86,7 @@ function WorldAgentPanel(props: Props) {
   const seedSeen = useRef<string | undefined>(undefined);
   const [seedTarget, setSeedTarget] = useState<string>();
   const [inventionTarget, setInventionTarget] = useState<string>();
+  const [creationTarget, setCreationTarget] = useState<{ id: string; native: boolean }>();
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -129,16 +141,21 @@ function WorldAgentPanel(props: Props) {
       setWorkspace(godMode ? 'authoring' : 'workshop');
     }
   }, [inventionSeed, godMode]);
-  function create(invention = false) {
+  function create(purpose?: 'invention' | 'creation', native = false) {
     const id = crypto.randomUUID();
     setActive(id);
-    setInventionTarget(invention ? id : undefined);
+    setInventionTarget(purpose === 'invention' ? id : undefined);
+    setCreationTarget(purpose === 'creation' ? { id, native } : undefined);
     setSeedTarget(undefined);
     setWorkspace('authoring');
   }
   const activeTitle =
     sessions.find((session) => session.sessionId === active)?.title ??
-    (inventionTarget === active ? 'New invention' : 'New conversation');
+    (inventionTarget === active
+      ? 'New invention'
+      : creationTarget?.id === active
+        ? 'New world'
+        : 'New conversation');
   const compactNavigation = !!godMode && workspace === 'authoring' && !!active;
   const closeNavigation = () => {
     if (navigationRef.current?.hasAttribute('data-compact')) navigationRef.current.open = false;
@@ -205,8 +222,14 @@ function WorldAgentPanel(props: Props) {
         <Button size="sm" variant="quiet" onPress={() => create()}>
           New conversation
         </Button>
-        <Button size="sm" variant="quiet" onPress={() => create(true)}>
+        <Button size="sm" variant="quiet" onPress={() => create('invention')}>
           New invention
+        </Button>
+        <Button size="sm" variant="quiet" onPress={() => create('creation', true)}>
+          Create a world
+        </Button>
+        <Button size="sm" variant="quiet" onPress={() => create('creation')}>
+          Describe a world
         </Button>
       </div>
       <details className="ol-creator-history">
@@ -310,14 +333,27 @@ function WorldAgentPanel(props: Props) {
         <div hidden={workspace !== 'authoring'} className="ol-creator-page ol-creator-authoring">
           {active ? (
             <WorldAgentSession
-              key={`${worldId}:${saveTimeline}:${active}`}
+              key={authoringKey(
+                'session-component',
+                worldId,
+                accessScope,
+                saveTimeline ?? null,
+                active,
+              )}
               worldId={worldId}
               accessScope={accessScope}
               sessionId={active}
               connected={connected}
               visible={visible && workspace === 'authoring'}
               seed={seedTarget === active ? inventionSeed : null}
-              purpose={inventionTarget === active ? 'invention' : undefined}
+              purpose={
+                creationTarget?.id === active
+                  ? 'creation'
+                  : inventionTarget === active
+                    ? 'invention'
+                    : undefined
+              }
+              nativeCreation={creationTarget?.id === active ? creationTarget.native : undefined}
               onCreated={() => void list()}
               controls={controls}
               navigationOpen={compactNavigation && navigationOpen}

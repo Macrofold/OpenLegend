@@ -6,12 +6,12 @@ Recorded September 19, 2026. **Accepted direction:** recognize financial support
 
 Candidate message: **Help bring this world into existence, and become part of its history.**
 
-| Offering | Example | Duration / proposed treatment |
-|---|---|---|
-| Recurring patron tier | Gold recognition, previews, community participation | Active benefits depend on current subscription; exact tiers/prices open |
-| Founding recognition | Display name in the official founding chronicle or an engraving | One-time recognition retained in the historical record under stated service terms |
-| Special dedication | Name a dragon, constellation, or monument | A naming entitlement redeemed once, with names reviewed before publication |
-| Contributor recognition | Badge or attribution for useful packs, code, art, or community work | Earned personal history, distinct from purchases |
+| Offering                | Example                                                             | Duration / proposed treatment                                                     |
+| ----------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Recurring patron tier   | Gold recognition, previews, community participation                 | Active benefits depend on current subscription; exact tiers/prices open           |
+| Founding recognition    | Display name in the official founding chronicle or an engraving     | One-time recognition retained in the historical record under stated service terms |
+| Special dedication      | Name a dragon, constellation, or monument                           | A naming entitlement redeemed once, with names reviewed before publication        |
+| Contributor recognition | Badge or attribution for useful packs, code, art, or community work | Earned personal history, distinct from purchases                                  |
 
 Budget recurring hosting/AI benefits explicitly. A one-time purchase must not accidentally promise unlimited lifetime compute. Recognition does not confer god powers in another person's world or override ordinary player protections.
 
@@ -50,3 +50,11 @@ Distinguish three flows: pack buyers pay for existing products; subscriber alloc
 A developed world accumulates relationships, institutions, inventions, and shared experiences. Its provenance and community may give it value beyond a snapshot that someone copies. This is a product hypothesis, not cryptocurrency proof of work, a financial valuation, or a guarantee that more simulation time creates more demand.
 
 Record branches, parent checkpoints, approved mechanics, and significant public events where useful. Preserve private memories and conversations separately. A signature or blockchain commitment can attest to a recorded version; it does not independently prove that every narrated event occurred or require other communities to recognize a world as canonical.
+
+## DG27 selected recognition proposal
+
+The [customer and supporter offers specification](../../docs/projects/customer-and-supporter-offers-feature-spec.md) selects one optional reviewed official-world founding-chronicle dedication as a first product proposal. It defines consent, once-only redemption, rejection, corrections/privacy and service-retirement remedies, independently of ordinary subscriptions. Physical dedications and transfers remain explicitly scoped later options; no game object, power, perpetual service or grant/vote is bundled implicitly. [CO04](../../docs/maintainers/commercial-offers.md) retains adoption and delivery. D37’s wider contributor voice and creator fund require the separate DG30 operating program and actual funded authority.
+
+## DG30 finite creator-fund proposal
+
+The October 8 [creator-fund and contributor-governance specification](../../docs/projects/creator-fund-and-contributor-governance-feature-spec.md) makes the separate C08/D37 operating program reviewable. It selects a finite manual pilot with at most two awards, a deliberately invited and bounded applicant cohort, complete signed scope/rights/acceptance/payment journeys, equal nonbinding contributor/supporter advice, independent review and funded closure. The [FUND01–FUND06 owner](../../docs/maintainers/creator-fund-and-contributor-governance.md) retains actual budget, contracting, program adoption and execution. Ordinary purchases, historical recognition, fixed subscriber allocations and earned creator proceeds do not automatically supply grant money or votes. The proposed grant-specific creator criteria neither adopt the whole wellbeing charter nor change platform, company or world authority.

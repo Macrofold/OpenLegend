@@ -642,7 +642,7 @@ Earlier-source mappings remain: Among Us → 203, 217; Grow a Garden → 204; Sp
 [w26]: ../../archive/02-research/worldbuilding/worlds/26-warhammer-40000.md
 [w27]: ../../archive/02-research/worldbuilding/worlds/27-the-elder-scrolls.md
 [w28]: ../../archive/02-research/worldbuilding/worlds/28-fallout.md
-[w29]: https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
+[w29]: ../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
 [planes]: https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md
 [conditions]: ../../archive/02-research/worldbuilding/magic-technology-and-ecology.md
 [languages]: ../../archive/02-research/worldbuilding/languages-and-communication.md

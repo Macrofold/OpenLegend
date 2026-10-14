@@ -3,6 +3,7 @@ import {
   EXPERIENCE_LIMITS,
   markPartialAppraisals,
   retiredObjectIds,
+  markPartialObjectHistory,
   markPartialContributions,
   terminalContributionOwners,
   updateWorld,
@@ -63,6 +64,7 @@ export function compactObjectHistory(world: WorldState): WorldState {
   if (!retired.length && !Object.keys(world.objectLineage ?? {}).length) return world;
   const entities = retired.length ? { ...world.entities } : world.entities;
   for (const id of retired) delete entities[id];
+  if (retired.length) markPartialObjectHistory(entities);
   return { ...world, entities, ...(world.objectLineage ? { objectLineage: {} } : {}) };
 }
 export function compactContributionHistory(world: WorldState): WorldState {

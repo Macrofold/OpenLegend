@@ -1,6 +1,11 @@
 import { Worker } from 'node:worker_threads';
 import type { NavigationRequest } from '@open-legend/spatial';
-import { navigationBlocked, worldRootEntities, type WorldState } from '@open-legend/domain';
+import {
+  navigationBlocked,
+  spatialMap,
+  worldRootEntities,
+  type WorldState,
+} from '@open-legend/domain';
 import type { WorldService } from '../world-service.js';
 import { recordDuration, gaugeMetric, countMetric } from '../performance.js';
 import { OverloadError } from '../work-lane.js';
@@ -49,8 +54,9 @@ export class NavigationCoordinator {
   private reconcile() {
     if (this.closed || this.service.storageError) return;
     const { world, timelineId } = this.service;
-    if (this.map !== world.map || this.timeline !== timelineId) {
-      this.map = world.map;
+    const map = spatialMap(world);
+    if (this.map !== map || this.timeline !== timelineId) {
+      this.map = map;
       this.timeline = timelineId;
       this.key = `${world.id}:${timelineId}:${++this.serial}`;
       // Do not make a loaded/replaced world wait for an obsolete heavy build. Termination
@@ -70,7 +76,7 @@ export class NavigationCoordinator {
       if (!a?.navigation || !navigationBlocked(world, [actor.id])) continue;
       if (
         this.active?.task?.actionId === a.id &&
-        this.active.task.map === world.map &&
+        this.active.task.map === map &&
         this.active.task.timeline === timelineId
       )
         continue;
@@ -80,7 +86,7 @@ export class NavigationCoordinator {
         actorId: actor.id,
         actionId: a.id,
         request: a.navigation.request,
-        map: world.map,
+        map,
         timeline: timelineId,
         queuedAt: prior?.queuedAt ?? performance.now(),
       });

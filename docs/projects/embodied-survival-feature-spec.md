@@ -1,5 +1,9 @@
 # Embodied survival and weapon use
 
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-07   |
+
 **Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** The owner requests cognitively chosen survival behavior, removal of automatic berry seeking/eating, a knife for Mike and Ada, and reusable melee mechanics. The owner accepted the starting scene, biography, initial tuning and delivery plan below; optimal tuning remains unqualified. The owner confirmed that existing NPC ghost/revival policy stays in place.
 
 [Technical design](embodied-survival-tech-design.md) explains ownership and implementation. Current behavior remains described by [survival](../worlds/base/survival.md), [combat](../worlds/base/combat.md), [agency](../agent-agency.md) and [targeted actions](../targeted-actions.md).

@@ -330,7 +330,8 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
         throw new GraphReadError('unavailable', 'A compiled recipe dependency is missing.');
       link(ref, target.node.ref, 'uses', 'family-dependency');
     }
-    const base = value.provenance.derivedFrom;
+    const base =
+      value.provenance.source === 'authored-world' ? undefined : value.provenance.derivedFrom;
     if (base) {
       const actual = world.recipes[base.recipeId];
       const installed =

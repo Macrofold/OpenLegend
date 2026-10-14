@@ -1,4 +1,12 @@
-import type { ApiResult, GamePatch, GameView, OperationsView } from '@open-legend/protocol';
+import type {
+  ApiResult,
+  GamePatch,
+  GameView,
+  OperationsView,
+  WorldCreationHostStatus,
+  WorldAgentWorkResult,
+  WorldCreationOperationView,
+} from '@open-legend/protocol';
 
 import { clearTradeDrafts } from './trade-drafts';
 import { announceLogout, tabClientId, tabIdentityReady } from './tab-session';
@@ -22,6 +30,12 @@ export function privateDraftScope(): string {
 }
 /** The signed-in account's grant has no character here; it uses World operations instead. */
 export class CharacterlessError extends AccessError {}
+/** An empty target and a committed world awaiting runtime adoption are recoverable host states. */
+export class WorldCreationHostError extends Error {
+  constructor(readonly host: WorldCreationHostStatus) {
+    super(host.message);
+  }
+}
 /** A restore is still replacing the world; entry must wait for a fresh view. */
 export class WorldLoadingError extends Error {}
 function clearSessionDrafts(preservePendingCommands = false): void {
@@ -84,7 +98,11 @@ export function acceptAccess(view: GameView): void {
     clearTradeDrafts();
   privateDraftNamespace = view.access?.privateDraftScope ?? '';
   privateDraftTimeline = view.saveTimeline ?? '';
-  const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
+  const owner = JSON.stringify([
+    view.worldId,
+    view.access?.accountId ?? 'local-player',
+    view.access?.actorId ?? view.player.id,
+  ]);
   const timelineKey = `open-legend:save-timeline:${view.worldId}`;
   // Each store owns its markers. Failure in one must never erase recovery in the other.
   try {
@@ -136,6 +154,17 @@ export function npcReplyPreviewUrl(worldId: string, requestId: string): string {
   return `/api/chat/preview?${new URLSearchParams({ worldId, requestId, client: tabClientId(), scope: viewScope })}`;
 }
 
+/** These controls use the plan's original identity. Recovery never dispatches Start. */
+export function worldCreationOperation(
+  operation: 'start' | 'recover' | 'cancel',
+  worldId: string,
+  sessionId: string,
+  planId: string,
+  signal?: AbortSignal,
+): Promise<WorldAgentWorkResult<WorldCreationOperationView>> {
+  return post(`/api/world-agent/creation/${operation}`, { worldId, sessionId, planId }, signal);
+}
+
 export function setWorldPaused(paused: boolean): Promise<ApiResult> {
   return post('/api/control', {
     paused,
@@ -164,6 +193,18 @@ export async function getState(signal?: AbortSignal): Promise<GameView> {
   if (response.status === 401) throw new SignInRequiredError('Sign in to enter your world.');
   if (response.status === 403)
     throw new AccessError('This account does not currently have access to this world.');
+  if (response.status === 503) {
+    const body = (await response.json().catch(() => ({}))) as {
+      code?: string;
+      data?: WorldCreationHostStatus;
+    };
+    if (
+      body.code === 'creation-host' &&
+      body.data &&
+      (body.data.status === 'awaiting-creation' || body.data.status === 'host-unavailable')
+    )
+      throw new WorldCreationHostError(body.data);
+  }
   if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
   const view = (await response.json()) as GameView;
   return view;
@@ -231,10 +272,11 @@ export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<
     signal,
     headers: { 'X-OL-Client': tabClientId(), 'X-OL-Scope': scope },
   });
-  if (!response.ok) throw new Error(`The requested history is unavailable (${response.status}).`);
+  if (!response.ok)
+    throw new Error(`The requested information is unavailable (${response.status}).`);
   const result = (await response.json()) as T;
   if (generation !== accessGeneration)
-    throw new Error('Your access or world changed. Reload this history.');
+    throw new Error('Your access or world changed. Reload this information.');
   return result;
 }
 export function applyGamePatch(current: GameView, patch: GamePatch): GameView {

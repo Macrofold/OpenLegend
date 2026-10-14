@@ -10,6 +10,7 @@ import type { WorldState } from './types.js';
 import type { Outing } from './outings.js';
 interface Entry {
   actors: string[];
+  kind: Outing['kind'];
   destinationId?: string;
   deadline?: number;
 }
@@ -32,8 +33,8 @@ function update(index: Index, id: string, trip?: Outing) {
   if (prior) {
     for (const actor of prior.actors) {
       index.members = objectIndexSet(index.members, `${actor}\0${id}`, undefined);
-      if (objectIndexGet(index.accepted, actor) === id)
-        index.accepted = objectIndexSet(index.accepted, actor, undefined);
+      if (objectIndexGet(index.accepted, `${prior.kind}\0${actor}`) === id)
+        index.accepted = objectIndexSet(index.accepted, `${prior.kind}\0${actor}`, undefined);
     }
     if (prior.destinationId)
       index.destinations = objectIndexSet(
@@ -47,14 +48,16 @@ function update(index: Index, id: string, trip?: Outing) {
   const entry = trip
     ? {
         actors: [trip.proposerId, trip.recipientId],
-        destinationId: trip.destination.entityId,
+        kind: trip.kind,
+        destinationId: trip.combat?.opponentId ?? trip.destination.entityId,
         ...(trip.status === 'pending' ? { deadline: trip.expiresAt } : {}),
       }
     : undefined;
   if (entry) {
     for (const actor of entry.actors) {
       index.members = objectIndexSet(index.members, `${actor}\0${id}`, id);
-      if (trip!.status === 'traveling') index.accepted = objectIndexSet(index.accepted, actor, id);
+      if (trip!.status !== 'pending')
+        index.accepted = objectIndexSet(index.accepted, `${trip!.kind}\0${actor}`, id);
     }
     if (entry.destinationId)
       index.destinations = objectIndexSet(index.destinations, `${entry.destinationId}\0${id}`, id);
@@ -96,8 +99,12 @@ export function* actorOutingIds(world: WorldState, actorId: string): Generator<s
     yield id;
   }
 }
-export function acceptedOutingId(world: WorldState, actorId: string): string | undefined {
-  return objectIndexGet(indexFor(world).accepted, actorId);
+export function acceptedOutingId(
+  world: WorldState,
+  actorId: string,
+  kind: Outing['kind'] = 'travel',
+): string | undefined {
+  return objectIndexGet(indexFor(world).accepted, `${kind}\0${actorId}`);
 }
 export function affectedOutingIds(world: WorldState, entityIds: Iterable<string>): Set<string> {
   const index = indexFor(world),

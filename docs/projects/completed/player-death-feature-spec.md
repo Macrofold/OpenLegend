@@ -1,8 +1,8 @@
 # Player Death — feature specification
 
-| Status    | Current progress                                                                                          | Last updated |
-| --------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Selected runtime and optional world-scar correction are delivered; broader qualification remains tracked. | 2026-10-05   |
+| Status    | Current progress                                                                                               | Last updated |
+| --------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Selected replacement-life rules and optional world scars are delivered; broader qualification remains tracked. | 2026-10-14   |
 
 ## Purpose and accepted behavior
 

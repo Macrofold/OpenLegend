@@ -62,6 +62,8 @@ pnpm run dev
 
 PostgreSQL with pgvector is required for local development and production. The configured role needs access to the game database and permission to initialize its schemas; install/enable the vector extension beforehand if that role cannot create extensions. Missing `OPEN_LEGEND_DATABASE_URL` fails startup clearly. No SQLite fallback or conversion is provided. Database-dependent checks require `OPENLEGEND_TEST_DATABASE_URL` pointing to a loopback PostgreSQL administrative database: fixtures create and drop their own uniquely named databases, never the named administrative database.
 
+If startup reports an unsupported database schema, the configured development database format differs from the running code. Follow the [development save policy](AGENTS.md#development-save-policy): agents may set up fresh current-format development state without another confirmation. A fresh database URL and separate `OPEN_LEGEND_DATA_DIR` start the latest standard world while leaving the previous database and saves intact. Do not change the stored schema marker to bypass validation. The server itself still refuses incompatible data; this policy does not add automatic reset to `pnpm dev`. Fresh standard starts use the newest integrated world initializer, combining its current characters, encounters and supplies; isolated test fixtures and unfinished branches are not the default seed.
+
 Open **http://127.0.0.1:3210**. For live AI, follow the [setup guide](docs/live-ai-setup.md): a configured Macrofold key selects that backend; direct Jev/OpenAI keys select the direct path otherwise. Current full NPC conversation requires Macrofold with explicit model/compute allowance. Set a chosen nonzero `AI_BUDGET_USD` and restart only when ready to permit paid work. The default is $50 per agent per UTC calendar month; set zero to disable paid dispatch. Keys never go to the browser. The allowance and usage accounting persist with this world's save, rather than resetting on page reload.
 
 If another app uses that port, run `PORT=3211 pnpm run dev` and open **http://127.0.0.1:3211** instead. Set `PORT=3211` in your existing `.env` to keep that choice across restarts.
@@ -91,7 +93,7 @@ pnpm start
 
 Local authentication binds only to loopback. Shared play uses the explicit OIDC configuration below; hosted operational/security and capacity qualification remain open.
 
-Current worlds use independent canonical SQL records with atomic revision fencing and coupled receipts/history. Supported legacy snapshots and journals are extracted in place. Explicit actions save immediately; routine simulation flushes once per real second and on clean shutdown. The browser bootstraps once and receives typed SSE updates. God-mode Person/World Events editors support atomic delta saves, discard, and independent draggable windows; see [current architecture and limits](docs/architecture.md#public-updates-and-owner-editors).
+Current worlds use independent canonical SQL records with atomic revision fencing and coupled receipts/history. Incompatible development data follows the [development save policy](AGENTS.md#development-save-policy). Explicit actions save immediately; routine simulation flushes once per real second and on clean shutdown. The browser bootstraps once and receives typed SSE updates. God-mode Person/World Events editors support atomic delta saves, discard, and independent draggable windows; see [current architecture and limits](docs/architecture.md#public-updates-and-owner-editors).
 
 Invent also supports bounded gathering tools: a compatible carried tool improves the yield from an existing finite resource. Complete recipe JSON can be supplied in the expandable proposal field for native validation without paid generation. See [the invention workflow](docs/architecture.md#shared-invention-workflow) for current limits.
 
@@ -133,7 +135,7 @@ Use a separate new data directory and disable paid work:
 OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 node --import tsx apps/server/src/main.ts
 ```
 
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Supported older worlds upgrade in place; malformed or unsupported historical shapes fail without resetting them. Use a separate directory when creating a different world. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
+Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Current-format worlds reopen without regeneration; incompatible data follows the [development save policy](AGENTS.md#development-save-policy). Use a separate PostgreSQL database and save directory when creating a different world. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
 
 For the coarse touch-only resident, use a separate data directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
 

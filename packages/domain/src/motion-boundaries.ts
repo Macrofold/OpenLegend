@@ -19,6 +19,7 @@ import {
   fallingDuration,
   flightPathSeconds,
   flightTracks,
+  motionTrackPosition as poseAt,
   LandingOccupancy,
   routeLapSeconds,
   TERMINAL_FALL_SPEED,
@@ -60,7 +61,7 @@ function motionReach(world: WorldState, entity: Entity, seconds: number): number
   if (!entity.actor?.alive || entity.actor.incapacitated) return 0;
   if (entity.actor.action)
     return entity.actor.action.stage === 'approaching'
-      ? BASE_ACTION_DEFAULTS.movementTilesPerSecond * seconds
+      ? nativeMovementSpeed(world, entity) * seconds
       : 0;
   if (entity.spatial.flight)
     return world.flightRoutes[entity.spatial.flight.routeId]!.speed * seconds;
@@ -202,15 +203,6 @@ export function nativeMotionInterval(
 /** Runs shorter than this are floating-point tangency noise, not separable exposure. */
 const MINIMUM_RUN_SECONDS = 1e-9;
 
-function poseAt(track: MotionTrack, t: number): WorldPoint {
-  let i = 1;
-  while (i < track.at.length - 1 && track.at[i]! < t) i++;
-  const a = track.at[i - 1]!,
-    b = track.at[i]!;
-  return b > a
-    ? interpolate(track.pose[i - 1]!, track.pose[i]!, Math.min(1, Math.max(0, (t - a) / (b - a))))
-    : track.pose[i]!;
-}
 const lift = (p: WorldPoint, y: number): WorldPoint => ({ x: p.x, y: p.y + y, z: p.z });
 
 /** Approach along an unchanged fixed route; routes toward living targets can replan inside the

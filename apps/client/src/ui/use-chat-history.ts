@@ -137,7 +137,7 @@ export function useChatHistory(
                         replyRequestId: jobId,
                         replyStatus: 'queued',
                         retryable: false,
-                        replyFailure: undefined,
+                        replyReason: undefined,
                       }
                     : message,
                 ),

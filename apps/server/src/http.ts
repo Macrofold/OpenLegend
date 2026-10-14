@@ -1,3 +1,4 @@
+import { constructionPlanSchema } from './construction.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuitySubjects, continuityView } from './continuity-view.js';
@@ -8,6 +9,7 @@ import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
   capabilitySchema,
+  constructionPermissionSchema,
   isCharacterless,
   scopeKey,
   type Capability,
@@ -41,6 +43,8 @@ import {
   sessionDraftPreviewRequest,
   sessionDraftCheckRequest,
   sessionDraftPrepareRequest,
+  sessionOpeningCreateRequest,
+  sessionCreationOperationRequest,
   authoringToolRequest,
 } from './world-authoring-contracts.js';
 import { WorldToolService, WORLD_READ_TOOLS, worldReadRequest } from './world-tools.js';
@@ -64,10 +68,12 @@ import {
 import { traceHistory, traceDetails } from './cognition-inspection.js';
 import { admitStatusEffectPolicy, admitCognitionPolicy } from '@open-legend/domain';
 import { inspectGodMind } from './god-mind.js';
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http';
+import { createAwaitingCreationHost, type CreationHostRuntime } from './creation-host.js';
+import type { CreationActivationReceipt } from './creation-target-contracts.js';
+import { prepareCreatedWorld } from './initial-world-preparation.js';
 import { randomBytes } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
-import { resolve, extname, sep } from 'node:path';
+import { createClientAssets, type ClientAssets } from './client-assets.js';
 import { z } from 'zod';
 import { intentSlotsSchema } from './navigation-contracts.js';
 import type { AiClient } from '@open-legend/ai';
@@ -350,9 +356,15 @@ interface GameServerOptions {
   aiClient?: AiClient;
   now?: () => number;
   tick?: boolean;
+  /** Trusted factory handoff only; never an HTTP input. */
+  createdActivation?: CreationActivationReceipt;
+  publicServer?: Server;
+  clientAssets?: ClientAssets;
 }
 
-export async function createGameServer(options: GameServerOptions = {}) {
+export async function createGameServer(
+  options: GameServerOptions = {},
+): Promise<CreationHostRuntime> {
   const rollback: (() => void | Promise<void>)[] = [];
   try {
     return await initializeGameServer(options, (close) => rollback.push(close));
@@ -374,13 +386,39 @@ export async function createGameServer(options: GameServerOptions = {}) {
 async function initializeGameServer(
   options: GameServerOptions,
   onFailure: (close: () => void | Promise<void>) => void,
-) {
+): Promise<CreationHostRuntime> {
   const config = options.config ?? readConfig();
   const store =
     options.store ??
-    new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl));
+    new SqlGameRepository(config.dataDirectory, new PostgresDatabase(config.databaseUrl), {
+      preserveSaveStages: config.creation.startup === 'awaiting-creation',
+    });
   if (!options.store) onFailure(() => store.close());
-  const service = new WorldService(store, config, options.now);
+  if (config.creation.startup === 'awaiting-creation' && !options.createdActivation) {
+    const assets = options.clientAssets ?? (await createClientAssets(options.production));
+    if (!options.clientAssets) onFailure(() => assets.close());
+    return createAwaitingCreationHost({
+      assets,
+      config,
+      store,
+      now: options.now,
+      closeStore: !options.store,
+      prepare: (initial, binding, candidate) =>
+        prepareCreatedWorld(initial, binding, config, candidate),
+      adopt: (receipt, publicServer) =>
+        createGameServer({
+          ...options,
+          config,
+          store,
+          createdActivation: receipt,
+          publicServer,
+          clientAssets: assets,
+        }),
+    });
+  }
+  const service = new WorldService(store, config, options.now, {
+    createdActivation: options.createdActivation,
+  });
   onFailure(() => service.releaseHostWork());
   const autosaves = new Autosaves(service);
   onFailure(() => autosaves.close());
@@ -398,6 +436,16 @@ async function initializeGameServer(
     () => !loadingSave,
   );
   await authoring.recover();
+  const creationRecoveryStop = new AbortController();
+  onFailure(() => creationRecoveryStop.abort());
+  // Native receipt reads run outside startup/world mutation work. This pass is
+  // bounded and cancellable; simulation ticks never poll creation installations.
+  const creationRecovery = authoring.reconcileCreationReceipts(creationRecoveryStop.signal);
+  creationRecovery.catch(() =>
+    console.warn(
+      'Creation receipt recovery could not complete; the original Starts remain retained and no activation was retried.',
+    ),
+  );
   const agentRuns = new WorldAgentRunner(
     authoring,
     (message, turn) => director.macrofold.message(message, turn.authority, turn),
@@ -614,17 +662,8 @@ async function initializeGameServer(
   };
   const unsubscribe = service.subscribe(publish);
   onFailure(unsubscribe);
-  const vite = options.production
-    ? null
-    : await (
-        await import('vite')
-      ).createServer({
-        configFile: resolve('apps/client/vite.config.ts'),
-        server: { middlewareMode: true },
-        appType: 'spa',
-      });
-  if (vite) onFailure(() => vite.close());
-  const assets = resolve('dist/client');
+  const clientAssets = options.clientAssets ?? (await createClientAssets(options.production));
+  if (!options.clientAssets) onFailure(() => clientAssets.close());
   const server = createServer(async (request, response) => {
     let responseScope: RequestScope | undefined;
     let responseCapability: Capability = 'play';
@@ -642,7 +681,7 @@ async function initializeGameServer(
     response.setHeader('X-Frame-Options', 'DENY');
     if (request.url === '/mcp' || request.url?.startsWith('/mcp?'))
       return mcp.handle(request, response);
-    const address = server.address();
+    const address = (options.publicServer ?? server).address();
     const port = address && typeof address !== 'string' ? address.port : config.port;
     const allowedHosts = new Set(
       config.authentication.mode === 'local'
@@ -847,6 +886,21 @@ async function initializeGameServer(
           request.headers['x-ol-scope'] !== scopeKey(scope)
         )
           throw new AuthorityError('stale-scope');
+        if (request.method === 'GET' && url.pathname === '/api/world-agent/creation/openings') {
+          z.object({}).strict().parse(Object.fromEntries(url.searchParams));
+          responseCapability = 'create';
+          return send(response, 200, authoring.openingChoices(scope));
+        }
+        if (request.method === 'GET' && url.pathname === '/api/world-agent/creation/targets') {
+          const value = z
+            .object({ sessionId: requestIdSchema })
+            .strict()
+            .parse(Object.fromEntries(url.searchParams));
+          responseCapability = 'create';
+          return send(response, 200, await authoring.creationTargets(value.sessionId, scope));
+        }
+        if (request.method === 'GET' && url.pathname === '/api/construction')
+          return send(response, 200, service.constructionView(scope));
         if (request.method === 'GET' && url.pathname === '/api/state')
           return send(response, 200, await currentView(scope));
         if (request.method === 'GET' && url.pathname === '/api/operations') {
@@ -875,12 +929,16 @@ async function initializeGameServer(
           if (!store.history)
             return send(response, 503, { message: 'History repository unavailable.' });
           const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
+          const sourceEpoch = `${service.timelineId}:${scopeKey(scope)}`;
+          const corrections = service.world.experience?.corrections?.[scope.actorId];
           const page = await store.history.perceivedEvents(
             service.world.id,
             scope.accountId,
             scope.actorId,
             epoch,
             options,
+            sourceEpoch,
+            corrections,
           );
           await assertHistoryRead(scope, epoch);
           return send(response, 200, page);
@@ -929,7 +987,6 @@ async function initializeGameServer(
           const messages = options.speechOnly
             ? page.items.map((item) => {
                 const job = speechJobs.get(item.id);
-                const failed = job?.status === 'failed';
                 return {
                   id: item.id,
                   kind: item.kind === 'speech' ? 'speech' : 'action',
@@ -947,7 +1004,9 @@ async function initializeGameServer(
                         replyStatus: job.status,
                         replyRequestId: job.id,
                         retryable: job.status === 'failed',
-                        ...(failed ? { replyFailure: job.message } : {}),
+                        ...(['failed', 'cancelled', 'stale'].includes(job.status)
+                          ? { replyReason: job.message }
+                          : {}),
                       }
                     : {}),
                 };
@@ -1208,6 +1267,26 @@ async function initializeGameServer(
           responseScope = undefined;
           return send(response, 200, { ok: true, message: 'Access updated.' });
         }
+        if (url.pathname === '/api/access/construction') {
+          const value = z
+            .object({
+              id: requestIdSchema,
+              expectedRevision: sequence,
+              permission: constructionPermissionSchema,
+            })
+            .strict()
+            .parse(body);
+          return send(
+            response,
+            200,
+            await service.changeConstructionPermission(
+              value.permission,
+              value.expectedRevision,
+              value.id,
+              scope,
+            ),
+          );
+        }
         if (url.pathname === '/api/access/binding') {
           const value = z
             .object({
@@ -1266,6 +1345,7 @@ async function initializeGameServer(
           ? 'inspect'
           : url.pathname.startsWith('/api/god/') ||
               url.pathname.startsWith('/api/world-agent/session/') ||
+              url.pathname.startsWith('/api/world-agent/creation/') ||
               url.pathname === '/api/world-agent/authoring'
             ? 'create'
             : url.pathname.startsWith('/api/saves/')
@@ -1273,6 +1353,8 @@ async function initializeGameServer(
               : 'play';
         responseCapability = required;
         const controlling = [
+          '/api/god/construction-shower',
+          '/api/construction/preview',
           '/api/command',
           '/api/knowledge',
           '/api/control',
@@ -1585,6 +1667,21 @@ async function initializeGameServer(
                 ok: true,
                 profile: await service.setPreferences(preferences.parse(body), scope),
               });
+            case '/api/god/construction-shower':
+              return send(
+                response,
+                200,
+                await service.constructionShower(
+                  z.object({ id: z.string().uuid() }).strict().parse(body).id,
+                  scope,
+                ),
+              );
+            case '/api/construction/preview':
+              return send(
+                response,
+                200,
+                service.previewConstruction(constructionPlanSchema.parse(body), scope),
+              );
             case '/api/command': {
               const value = command.parse(body);
               return send(
@@ -2065,6 +2162,52 @@ async function initializeGameServer(
               );
               return send(response, result.ok ? 200 : result.code === 'stale' ? 409 : 400, result);
             }
+            case '/api/world-events/sources': {
+              const value = z
+                .object({
+                  references: z
+                    .array(
+                      z
+                        .object({
+                          family: z.enum(['speech', 'encounter']),
+                          sourceId: requestIdSchema,
+                          revision: z.string().min(1).max(200),
+                          token: z.string().min(1).max(200),
+                        })
+                        .strict(),
+                    )
+                    .min(1)
+                    .max(2),
+                })
+                .strict()
+                .parse(body);
+              if (!store.history)
+                return send(response, 503, { message: 'History repository unavailable.' });
+              const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
+              const sourceEpoch = `${service.timelineId}:${scopeKey(scope)}`;
+              const corrections = service.world.experience?.corrections?.[scope.actorId];
+              const forgotten = service.world.experience?.forgotten[scope.actorId];
+              const sources = await store.history.perceivedEventSources(
+                service.world.id,
+                scope.accountId,
+                scope.actorId,
+                sourceEpoch,
+                value.references,
+                { corrections, forgotten },
+              );
+              await assertHistoryRead(scope, epoch);
+              if (
+                service.world.experience?.corrections?.[scope.actorId] !== corrections ||
+                service.world.experience?.forgotten[scope.actorId] !== forgotten
+              )
+                throw new HistoryCursorError('History changed while loading. Refresh this page.');
+              return send(response, 200, {
+                ok: true,
+                worldId: service.world.id,
+                generation: service.generation,
+                sources,
+              });
+            }
             case '/api/god/editor/world-events': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
@@ -2258,8 +2401,8 @@ async function initializeGameServer(
                         input?.actorScope ??
                         (job
                           ? job.kind === 'invention'
-                            ? scope.actorId
-                            : (job.request.npcId ?? service.defaultResidentEntityId)
+                            ? job.request.invention?.actorId
+                            : job.request.npcId
                           : undefined);
                       return {
                         ...call,
@@ -2531,6 +2674,29 @@ async function initializeGameServer(
                   ? { next: { createdAt: last.createdAt, id: last.id } }
                   : {}),
               });
+            }
+            case '/api/world-agent/creation/draft': {
+              const value = sessionOpeningCreateRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              return send(
+                response,
+                200,
+                await authoring.localOpeningCreate(value.sessionId, value, scope),
+              );
+            }
+            case '/api/world-agent/creation/start':
+            case '/api/world-agent/creation/recover':
+            case '/api/world-agent/creation/cancel': {
+              const value = sessionCreationOperationRequest.parse(body);
+              if (value.worldId !== service.world.id)
+                return send(response, 409, { ok: false, message: 'World mismatch.' });
+              const action = url.pathname.endsWith('/start')
+                ? authoring.startCreation.bind(authoring)
+                : url.pathname.endsWith('/cancel')
+                  ? authoring.cancelCreation.bind(authoring)
+                  : authoring.recoverCreation.bind(authoring);
+              return send(response, 200, await action(value.sessionId, value.planId, scope));
             }
             case '/api/world-agent/session/open': {
               const value = sessionOpenRequest.parse(body);
@@ -3018,43 +3184,7 @@ async function initializeGameServer(
         retainedBodyBytes -= requestBytes;
       }
     }
-    if (vite) {
-      vite.middlewares(request, response);
-      return;
-    }
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
-      response.writeHead(405);
-      response.end();
-      return;
-    }
-    try {
-      const path = resolve(
-        assets,
-        `.${decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)}`,
-      );
-      if (!path.startsWith(`${assets}${sep}`)) {
-        response.writeHead(403);
-        response.end();
-        return;
-      }
-      if (!(await stat(path)).isFile()) throw new Error('not-found');
-      const types: Record<string, string> = {
-        '.html': 'text/html; charset=utf-8',
-        '.js': 'text/javascript; charset=utf-8',
-        '.css': 'text/css; charset=utf-8',
-        '.png': 'image/png',
-        '.svg': 'image/svg+xml',
-        '.ico': 'image/x-icon',
-      };
-      response.writeHead(200, {
-        'Content-Type': types[extname(path)] ?? 'application/octet-stream',
-        'Cache-Control': extname(path) === '.html' ? 'no-cache' : 'public, max-age=3600',
-      });
-      response.end(request.method === 'HEAD' ? undefined : await readFile(path));
-    } catch {
-      response.writeHead(404);
-      response.end('Not found. Build the client with pnpm run build.');
-    }
+    await clientAssets.serve(request, response, url);
   });
   server.requestTimeout = 10_000;
   server.headersTimeout = 10_000;
@@ -3118,25 +3248,27 @@ async function initializeGameServer(
 
   return {
     server,
+    config,
+    isWorldRunning: true,
     service,
     get director() {
       return director;
     },
-    async close(): Promise<void> {
-      await this.shutdown();
-    },
+    close: () => shutdownOnceHandle().then(() => undefined),
     /** Every caller, including a concurrent one, receives the first shutdown's report. */
-    shutdown(deadlineMs = SHUTDOWN_DEADLINE_MS): Promise<ShutdownReport> {
-      shuttingDown ??= shutdownOnce(deadlineMs);
-      return shuttingDown;
-    },
+    shutdown: shutdownOnceHandle,
   };
+  function shutdownOnceHandle(deadlineMs = SHUTDOWN_DEADLINE_MS): Promise<ShutdownReport> {
+    shuttingDown ??= shutdownOnce(deadlineMs);
+    return shuttingDown;
+  }
   /** Finite shutdown (PF06): every stage has a share of one deadline, a failed or late
    * stage is reported instead of stopping the rest, and resource close is always attempted
    * (a close past the deadline is reported; main.ts exits one second after the report). The
    * report states whether the final save completed and the last revision confirmed durable. */
   async function shutdownOnce(deadlineMs: number): Promise<ShutdownReport> {
     disposed = true;
+    creationRecoveryStop.abort();
     maintenance.close();
     const until = performance.now() + deadlineMs;
     const problems: string[] = [];
@@ -3173,6 +3305,7 @@ async function initializeGameServer(
     // under the same finite shutdown deadline, retaining unfinished turns for recovery.
     await stage('MCP requests', () => mcp.close(), 0.2);
     await stage('World Agent turns', () => agentRuns.drain(), 0.2);
+    await stage('Creation receipt recovery', () => creationRecovery, 0.1);
     await stage('Native tick', () => activeTick, 0.2);
     await stage('Background admission', () => thinking, 0.2);
     await stage('Checkpoint drain', () => autosaves.close(), 0.3);
@@ -3223,7 +3356,7 @@ async function initializeGameServer(
         }),
       0.5,
     );
-    await stage('Development assets', () => vite?.close(), 0.5);
+    if (!options.clientAssets) await stage('Client assets', () => clientAssets.close(), 0.5);
     service.releaseHostWork();
     await stage('Storage', () => store.close(), 1);
     // A final save that finished after its stage deadline still counts as saved.

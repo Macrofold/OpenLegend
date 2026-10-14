@@ -13,12 +13,12 @@ export function OutingStatus({
 }) {
   if (!view.player.outings.length) return null;
   return (
-    <Section title="Outings">
+    <Section title="Agreements">
       {view.player.outings.map((trip) => (
         <div key={trip.id} className="ol-camp-activities">
           <p>
             <Tag>{trip.status}</Tag> <strong>{trip.destination}</strong> ·{' '}
-            {trip.distance.toFixed(1)} m away
+            {trip.distance === null ? 'Location unknown' : `${trip.distance.toFixed(1)} m away`}
           </p>
           <p>
             With {trip.companion}. {trip.company}.

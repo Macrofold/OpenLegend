@@ -1,5 +1,7 @@
 # UI/UX standards and qualification follow-through
 
+**AV02 bounded qualification, October 6:** ordinary Known world methods → Craft → Inventory/Equip → keyboard-selected Guard and manual save/return have readable phase and actual injury feedback at 1440×960 and 390×844. [Browser evidence and limits](../verification/shield-defense.md#ordinary-browser-journey) retains the scripted setup and software-rendering limitation. This does not close UIUX02–UIUX05’s full accessibility, uncoached-play or complete application matrix.
+
 [Handbook](../ui-ux/README.md) · [Essential rules](../../.agents/rules/ui-ux.md) · [Verification](../ui-ux/verification.md) · [Maintainer index](README.md)
 
 This tracker owns follow-through for the researched interaction-design handbook and the October 3–8 whole-interface redesign and requested review. Research, design and the subsequent UIUX08–UIUX18 implementation are authorized; delivered interface changes and remaining qualification are tracked separately below. It does not duplicate native inventory, spatial, hearing, narration, invention or save/load ownership. Original runtime evidence baseline: `0382be7`; the October 3 source audit uses `b50ec6c`, with research versions and source limits in the ledger.

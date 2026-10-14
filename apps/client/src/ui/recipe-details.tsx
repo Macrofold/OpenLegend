@@ -1,9 +1,9 @@
-import type { RecipeView } from '@open-legend/protocol';
+import type { RecipeDetailsView } from '@open-legend/protocol';
 import { Fragment } from 'react';
 import './recipe-details.css';
 
 /** Shared permitted recipe knowledge. Parents own native actions and creator provenance. */
-export function RecipeDetails({ recipe }: { recipe: RecipeView }) {
+export function RecipeDetails({ recipe }: { recipe: RecipeDetailsView }) {
   return (
     <div className="ol-recipe-details">
       <p>{recipe.description}</p>

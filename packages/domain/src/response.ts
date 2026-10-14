@@ -1,7 +1,8 @@
 import { subjectNarration, presentVerb, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
-import { BASE_FAMILY_FACTS, BASE_EXPRESSION_VERBS } from './worlds/base/actions.js';
+import { BASE_EXPRESSION_VERBS } from './worlds/base/actions.js';
+import { installedActionMeaning } from './activity-hosts.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   actionTargetsCurrent,
@@ -284,7 +285,11 @@ function activityConditions(node: ActivityNode): ActivityPredicate[] {
  * native enforcement yet, so a requested method is always reported as not kept.
  * docs/action-capabilities.md#preserve-the-consequential-slots
  */
-export function unmetSlots(commands: readonly Command[], slots?: IntentSlots | null): string[] {
+export function unmetSlots(
+  world: WorldState,
+  commands: readonly Command[],
+  slots?: IntentSlots | null,
+): string[] {
   if (!slots) return [];
   const field = (command: Command, key: string): unknown =>
     Object.getOwnPropertyDescriptor(command, key)?.value;
@@ -298,12 +303,13 @@ export function unmetSlots(commands: readonly Command[], slots?: IntentSlots | n
   if (slots.itemId && !uses(slots.itemId, ['itemId'])) unmet.push('the requested item');
   // Which fields name a tool, and which families handle one unit per command, are facts the
   // world declares about its families (worlds/base/actions.ts), not engine knowledge.
-  const facts = BASE_FAMILY_FACTS;
   if (
     slots.instrumentId &&
     !bound.has(slots.instrumentId) &&
     !commands.some((c) =>
-      (facts.toolFields[c.type] ?? []).some((key) => field(c, key) === slots.instrumentId),
+      (
+        installedActionMeaning(world, c.type)?.toolFields ?? (c.type === 'equip' ? ['itemId'] : [])
+      ).some((key) => field(c, key) === slots.instrumentId),
     )
   )
     unmet.push('the requested tool');
@@ -313,8 +319,9 @@ export function unmetSlots(commands: readonly Command[], slots?: IntentSlots | n
     slots.quantity !== null &&
     !(slots.quantityMode === 'exact'
       ? commands.some((command) => field(command, 'quantity') === slots.quantity) ||
-        commands.filter((c) => (facts.unitPerCommand as readonly string[]).includes(c.type))
-          .length === slots.quantity
+        commands.filter(
+          (c) => installedActionMeaning(world, c.type)?.unitPerCommand || c.type === 'eat',
+        ).length === slots.quantity
       : conditions.some((p) => p.test === 'holding' && p.quantity === slots.quantity))
   )
     unmet.push('the requested amount');
@@ -642,6 +649,7 @@ export function commitActorResponse(
         input.entities[actorId]!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
+      else if (bound.type === 'outing' && bound.operation === 'help') command('act', bound);
       else if (bound.type === 'compose' || bound.type === 'outing') {
         if (bound.mode !== act.mode)
           components[localId] = outcome(
@@ -861,7 +869,7 @@ export function commitActorResponse(
         }
         // A binding that drops a requested tool, recipient, item or amount can only be
         // offered as a disclosed revision, never admitted as an exact fulfillment.
-        const unmet = unmetSlots(selected, act.slots);
+        const unmet = unmetSlots(world, selected, act.slots);
         if (unmet.length && fulfillment.verdict === 'exact') {
           components[localId] = outcome(
             false,

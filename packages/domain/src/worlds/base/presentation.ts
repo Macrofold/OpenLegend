@@ -1,5 +1,6 @@
+import { BASE_FOOD_ACTION_WORDING } from './action-views.js';
+import { BASE_GUARD_TEXT } from './shield-defense.js';
 import type { ItemInstance, NativePreparation, WorldState } from '../../types.js';
-import { BASE_FAMILY_FACTS } from './actions.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 
 /** Vocabulary belongs to the installed native capability, not to an inventory widget.
@@ -8,16 +9,6 @@ export const BASE_WORLD_PRESENTATION: NonNullable<WorldState['presentation']> = 
   worldName: 'The first clearing',
   locationName: 'The first clearing',
   timeLabel: 'Time in the wilderness',
-};
-
-export const BASE_COOKING_PRESENTATION = {
-  input: BASE_FAMILY_FACTS.cooking.input,
-  label: 'Cook one',
-  targetLabel: 'Cook meat at',
-  familyLabel: 'Cook meat',
-  missingInput: 'Carry raw meat to cook.',
-  missingTarget: 'A visible lit campfire is needed.',
-  unavailable: 'Carry raw meat and find a lit campfire.',
 };
 
 export const BASE_ACTION_DESCRIPTIONS = {
@@ -31,7 +22,9 @@ export const BASE_ACTION_DESCRIPTIONS = {
   hunt: 'Approach a living animal and attempt one shot with your equipped ranged tool. Each attempt consumes ammunition and can miss. A killed animal leaves harvestable remains.',
   harvest:
     'Use a cutting point to collect the remaining materials from animal remains. Each set of remains can be harvested once.',
-  cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',
+  guard: BASE_GUARD_TEXT.description,
+  cook: BASE_FOOD_ACTION_WORDING.cookingDescription,
+  fish: BASE_FOOD_ACTION_WORDING.fishingDescription,
   'tend-fire':
     'Light a campfire that has fuel laid, add one piece of carried fuel, or put it out. Materials are used only when the work finishes; unburnt fuel stays in a fire that is put out.',
 };

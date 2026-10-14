@@ -1,7 +1,7 @@
 import { worldPlacement } from '../../spatial-state.js';
 import { groundedSpatial } from '../../spatial-state.js';
 import { nativeActor } from './bodies.js';
-import { nextId } from '../../data.js';
+import { nextEntityId } from '../../data.js';
 import { createActor, TRAIT_BANK } from './world.js';
 import type {
   Entity,
@@ -28,7 +28,7 @@ export function personTraits(
 }
 
 export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity | null {
-  const id = nextId(world, draft.type === 'person' ? 'person' : draft.type);
+  const id = nextEntityId(world, draft.type === 'person' ? 'person' : draft.type);
   const base = {
     id,
     placement: worldPlacement(

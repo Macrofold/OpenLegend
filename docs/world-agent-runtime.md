@@ -171,3 +171,66 @@ The current human request is rendered separately from retained design requiremen
 - Implementation: [World Agent delivery, WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design), with broader INV owners retained above.
 - Limits and constraints: [Invention/context bounds](limits/inventions.md#world-agent-context-proposal).
 - Related contract: [Invention coordination and preparation](invention-foundation.md).
+
+## Prepared creation host setup
+
+The [supported creation consumer](worlds/base/playable-openings.md) starts a reviewed opening on an independently prepared empty host. Configure both servers explicitly; the source never receives the destination database credentials. Use separate PostgreSQL databases, data directories and listener ports. Keep the destination in `awaiting-creation` mode across restart so its permanent receipt controls adoption; changing it to ordinary startup is not a recovery instruction. An occupied or inconsistent destination refuses activation and preserves its data.
+
+On the existing source host, retain its normal authenticated creator configuration and enable the owner surface when appropriate. Set `OPEN_LEGEND_INSTALLATION_ID=creator-host` and `OPEN_LEGEND_CREATION_TARGETS_JSON` to the following shape. This loopback example uses the existing local account; choose actual identities and HTTPS origins for a deployed installation.
+
+```json
+[
+  {
+    "id": "new-host",
+    "label": "Prepared local host",
+    "intakeUrl": "http://127.0.0.1:3212/",
+    "entryUrl": "http://127.0.0.1:3212/",
+    "intakeKey": "REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS",
+    "allowedCreatorAccountIds": ["local-player"],
+    "profile": {
+      "id": "local-operating-profile",
+      "revision": 1,
+      "description": "Local paused entry with the configured operating budget"
+    }
+  }
+]
+```
+
+On the destination, set its own `OPEN_LEGEND_DATABASE_URL`, `OPEN_LEGEND_DATA_DIR`, `PORT=3212`, `OPEN_LEGEND_AUTH_MODE=local`, `OPEN_LEGEND_HOST=127.0.0.1` and `OPEN_LEGEND_STARTUP_MODE=awaiting-creation`. Set `OPEN_LEGEND_CREATION_DESTINATION_JSON` to:
+
+```json
+{
+  "id": "new-host",
+  "label": "Prepared local host",
+  "entryUrl": "http://127.0.0.1:3212/",
+  "profile": {
+    "id": "local-operating-profile",
+    "revision": 1,
+    "description": "Local paused entry with the configured operating budget"
+  },
+  "sources": [
+    {
+      "installationId": "creator-host",
+      "intakeKey": "REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS"
+    }
+  ],
+  "creators": [
+    {
+      "sourceInstallationId": "creator-host",
+      "creatorAccountId": "local-player",
+      "account": {
+        "issuer": "https://local.openlegend.invalid",
+        "subject": "local-player",
+        "accountId": "local-player",
+        "capabilities": ["play", "create", "inspect", "save"]
+      }
+    }
+  ]
+}
+```
+
+Generate the service secret independently and keep the matching value only in the two server configurations; the placeholder is not a usable credential. Intake/entry addresses must be root HTTPS addresses or loopback HTTP addresses, without user information, query or fragment. Entry must match the destination authentication origin and port. OIDC account mappings must use that destination's configured issuer and the intended real subject. The initial release maps creator attribution and the initial human's eligible account to the same configured account; it supplies no live control lease. Select only capabilities the destination operator intends to grant.
+
+The destination's operating profile is an operator identity/revision, separate from the world-owned opening profile. Matching profile IDs/revisions and entry addresses are checked remotely; the review also shows the destination's actual safe operating settings, including its thinking/summary models and spending limits/reserves. The destination privately fingerprints its complete effective startup configuration, so any configuration change advances its retained generation and invalidates an older new-Start approval. This deliberately requires fresh review even for an incidental operator setting change rather than omitting a new behavior/funding field. Source permissions remain independently checked at dispatch. Credentials, endpoints and private service configuration are never projected to the browser or model; an existing committed receipt remains readable under current authenticated disclosure.
+
+Start each server with its normal launch command and its own configuration. The empty destination serves the ordinary client with a truthful waiting message and runs no simulation or AI director. In the source's World Agent, choose **Create a world** for native selection or **Describe a world** for a supported variation, inspect/edit the retained draft, select/check the permitted target and approve the exact review before **Start**. Generation has its own existing explicit funding admission; selecting or inspecting a native opening needs none. Successful activation offers the destination's normal sign-in/entry route. A failed host startup retains the created world; explicit status/entry or process restart can retry adoption without repeating creation. A lost Start acknowledgement must resolve the original receipt before any new operation. See [activation and recovery](save-and-load.md#initial-activation-on-a-prepared-empty-host) and [current qualification](verification/playable-world-creation.md); setup alone does not establish live model acceptance.

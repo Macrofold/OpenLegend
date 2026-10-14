@@ -103,6 +103,8 @@ Present where the character is, what happened during the bounded continuing enco
 
 Required cases include: safe logout; deliberate logout while losing a fight; losing the connection during the same fight; reconnect before resolution; return after death under different world aftermath policies; hidden danger without an information-leaking warning; repeated attackers attempting infinite retention; observer arrival after a protected background scene; and fast calendar with unchanged mechanical fire-starting duration. Qualification must evaluate fairness and abuse, not only persistence correctness.
 
+The [DG29 visit proposal](../projects/participants-and-world-travel-feature-spec.md) consumes current multiplayer absence/return and current mechanical time for its first compatible route. It separately defines readiness, scoped property use, safe custody after removal/expiry, coherent detail and refusal of unsupported external-history restoration. Current human absence is not detached-property protection, and this consumer adopts neither the broader dangerous-logout proposal nor a separate calendar. Those future options retain their actual native and product owners.
+
 ## Maintained records
 
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).

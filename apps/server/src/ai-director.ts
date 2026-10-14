@@ -275,8 +275,18 @@ export class AiDirector {
       // A reply may itself activate a restricting state: its already-committed receipt is not pending work.
       // docs/status-effects.md#capabilities-and-presentation
       if (run && run.job.kind !== 'invention' && !service.world.responseReceipts?.[run.job.id]) {
-        const entity =
-          service.world.entities[run.job.request.npcId ?? service.defaultResidentEntityId];
+        const actorId = this.selectedActorId(run.job);
+        const entity = actorId ? service.world.entities[actorId] : undefined;
+        if (
+          !entity?.actor?.alive ||
+          ((run.job.kind === 'chat' || run.job.kind === 'thought') &&
+            entity.actor.controller !== 'npc')
+        ) {
+          run.cancelReason =
+            'The selected character is unavailable; the pending reply was cancelled.';
+          run.controller.abort();
+          return;
+        }
         if (
           entity?.actor &&
           (capabilityBlocked(
@@ -287,7 +297,7 @@ export class AiDirector {
             entity.actor.incapacitated ||
             !entity.actor.alive)
         ) {
-          run.cancelReason = `${namePhrase(entity, 'definite', { capitalize: true })} became unavailable; the pending reply was cancelled.`;
+          run.cancelReason = 'The pending reply became unavailable and was cancelled.';
           run.controller.abort();
           return;
         }
@@ -516,6 +526,7 @@ export class AiDirector {
       await this.groundAttempts(run, actorId, response, unique, 'player-action')
     ).map((binding) => ({
       ...binding,
+      commands: binding.commands.map((command) => ({ ...command, humanInitiated: true as const })),
       targetEpisodes: { ...binding.targetEpisodes, ...request.targetEpisodes },
     }));
     await this.prepareResponseAdmission(run);
@@ -586,12 +597,6 @@ export class AiDirector {
     volume: SpeechVolume = 'normal',
     mode?: 'workshop',
   ): Promise<ApiResult> {
-    // Independent inference does not wait for remote reflection cancellation/cleanup.
-    this.maintenance.cancel();
-    if (this.running?.job.kind === 'thought') {
-      await this.cancel(this.running.job.id);
-      this.running = null;
-    }
     return await this.submit(
       kind,
       id,
@@ -713,7 +718,16 @@ export class AiDirector {
         npcId = original.request.npcId;
       }
       const targetId =
-        kind === 'chat' ? (npcId ?? this.service.defaultResidentEntityId) : undefined;
+        kind === 'chat' ? (npcId ?? this.service.availableDefaultResidentEntityId) : undefined;
+      if (
+        kind === 'chat' &&
+        (!targetId || this.service.world.entities[targetId]?.actor?.controller !== 'npc')
+      )
+        return {
+          ok: false,
+          code: 'resident-unavailable',
+          message: 'Select an available resident for this conversation.',
+        };
       const fingerprint = digest({
         kind,
         ...(kind === 'chat' ? { volume } : {}),
@@ -995,7 +1009,7 @@ export class AiDirector {
         ...(spokenEventId ? { playerSpeechEventId: spokenEventId } : {}),
         message:
           kind === 'chat'
-            ? `${this.service.world.entities[targetId!]?.name ?? 'The person'} is considering your words.`
+            ? `${namePhrase(observerName(this.service.world, inventorId, targetId!), 'definite', { capitalize: true })} is considering your words.`
             : 'Checking known techniques and supported mechanisms.',
         request: {
           text,
@@ -1100,7 +1114,15 @@ export class AiDirector {
     this.service.notify();
   }
 
-  private current(run: Running): void {
+  /** Each admitted request records its exact actor. The historical npcId field
+   * also carries an explicit human actor for player-action interpretation.
+   * docs/identity-and-references.md#control-and-projection
+   */
+  private selectedActorId(job: JobRecord): string | undefined {
+    return job.kind === 'invention' ? job.request.invention?.actorId : job.request.npcId;
+  }
+
+  private current(run: Running): string {
     if (
       this.stopped ||
       run.controller.signal.aborted ||
@@ -1118,8 +1140,9 @@ export class AiDirector {
     if (run.job.authority && !this.service.currentScope(run.job.authority, 'play', true))
       throw new StopJob('stale', 'Control or access changed; no new effects were applied.');
     if (run.job.kind === 'invention') {
-      const scope = run.job.request.invention!;
+      const scope = run.job.request.invention;
       if (
+        !scope ||
         scope.worldId !== this.service.world.id ||
         scope.timelineId !== this.service.timelineId ||
         (scope.authority.origin === 'player' &&
@@ -1135,12 +1158,14 @@ export class AiDirector {
       );
       if (!permission.ok) throw new StopJob('stale', permission.message);
     }
-    const actorId =
-      run.job.kind === 'invention'
-        ? run.job.request.invention!.actorId
-        : (run.job.request.npcId ?? this.service.defaultResidentEntityId);
-    const actor = this.service.world.entities[actorId];
-    if (run.generation !== this.service.generation || !actor?.actor?.alive)
+    const actorId = this.selectedActorId(run.job);
+    const actor = actorId ? this.service.world.entities[actorId] : undefined;
+    if (
+      !actorId ||
+      run.generation !== this.service.generation ||
+      !actor?.actor?.alive ||
+      ((run.job.kind === 'chat' || run.job.kind === 'thought') && actor.actor.controller !== 'npc')
+    )
       throw new StopJob('stale', 'The actor or world changed; the result was not applied.');
     if (
       run.job.kind === 'action' &&
@@ -1149,22 +1174,24 @@ export class AiDirector {
         run.job.request.action?.timelineId !== this.service.timelineId)
     )
       throw new StopJob('stale', 'The actor or action timeline changed.');
-    const resident =
-      this.service.world.entities[run.job.request.npcId ?? this.service.defaultResidentEntityId]
-        ?.actor;
     if (
       run.job.kind === 'thought' &&
-      resident &&
-      (resident.incapacitated ||
-        resident.capabilities?.cognition === false ||
+      (actor.actor.incapacitated ||
+        actor.actor.capabilities?.cognition === false ||
         nativeProtectionReason(this.service.world, actorId))
     )
       throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
     if (run.job.kind === 'invention' && this.service.world.entities[actorId]?.actor?.incapacitated)
       throw new StopJob('stale', 'The inventor became incapacitated; this result was not applied.');
+    return actorId;
   }
 
   private async begin(job: JobRecord, onCompleted?: () => Promise<void>): Promise<void> {
+    // Invalid/busy requests cannot discard another mind's funded decision.
+    // Reflection cleanup remains asynchronous once admission has actually succeeded.
+    // docs/ai-providers.md#admission-and-cancellation
+    if (job.authority && (job.kind === 'chat' || job.kind === 'invention'))
+      this.maintenance.cancel();
     job = {
       ...job,
       startedAt: this.now(),
@@ -1183,18 +1210,14 @@ export class AiDirector {
     this.running = run;
     await this.service.store.putJob(job);
     this.service.notify();
+    const actorId = this.selectedActorId(job);
     await this.log.save({
       id: job.id,
       kind: 'Semantic trigger',
       ownerAccountId: job.authority?.accountId,
       worldId: this.service.world.id,
-      actorId:
-        job.kind === 'invention'
-          ? job.request.invention!.actorId
-          : (job.request.npcId ?? this.service.defaultResidentEntityId),
-      actorName:
-        this.service.world.entities[job.request.npcId ?? this.service.defaultResidentEntityId]
-          ?.name,
+      actorId,
+      actorName: actorId ? this.service.world.entities[actorId]?.name : undefined,
       trigger: job.diagnosticTrigger ?? job.request.text,
       triggerType:
         job.diagnosticTriggerType ??
@@ -1364,7 +1387,7 @@ export class AiDirector {
   ): Promise<T> {
     if (this.service.paused && run.job.request.invention?.mode !== 'workshop')
       await this.awaitResume(run);
-    this.current(run);
+    const actorId = this.current(run);
     const id = `${run.job.id}:${suffix}`;
     const config = this.service.config;
     // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
@@ -1387,9 +1410,7 @@ export class AiDirector {
         provider,
         reserve,
         config.budgetUsd,
-        run.job.kind === 'invention'
-          ? run.job.request.invention!.actorId
-          : (run.job.request.npcId ?? this.service.defaultResidentEntityId),
+        actorId,
         undefined,
         inventionAttemptBudget(this.service, run.job.request.invention),
       ))
@@ -1415,7 +1436,9 @@ export class AiDirector {
         ? 'Jev is checking the bounded route.'
         : run.job.kind === 'invention'
           ? 'Generating a new material-and-mechanism definition.'
-          : 'Ada is thinking. Detailed responses may take about a minute.',
+          : run.job.kind === 'action'
+            ? 'Interpreting the requested action.'
+            : 'Preparing a detailed decision. This may take about a minute.',
     );
     const result = await dispatch(id);
     const accountingStartedAt = new Date().toISOString();
@@ -1464,31 +1487,9 @@ export class AiDirector {
     selected: string,
   ): ActorResponse {
     if (prepared.binding.actions[selected] === null) return { operations: [] };
-    const steps = prepared.knownPlans[selected];
     // Choosing a new alternative interrupts the chosen plan. The separately
     // offered continue option leaves its remaining work untouched.
     const mode = prepared.replaceChosenPlan ? 'replace' : 'enqueue';
-    if (steps)
-      return {
-        operations: [
-          {
-            note: null,
-            name: null,
-            localId: 'sequence',
-            requiresAccepted: [],
-            talk: null,
-            think: null,
-            goal: null,
-            act: null,
-            plan: {
-              mode,
-              expectedRevision: prepared.expectedPlanRevision,
-              goalId: null,
-              steps: steps.map((actionId) => ({ actionId, itemFromStep: null, useItemAs: null })),
-            },
-          },
-        ],
-      };
     return actionResponse({
       kind: 'known',
       mode,
@@ -1651,7 +1652,7 @@ export class AiDirector {
     attempt: number,
     interruptionEvidenceIds: string[],
   ): Promise<void> {
-    const actorId = run.job.request.npcId ?? this.service.defaultResidentEntityId;
+    const actorId = this.current(run);
     // An urgent refresh decides again; an earlier attempt's level-1 outcome no longer applies.
     run.level1 = undefined;
     // A known spending shortfall cannot produce a decision. Skip retrieval and its
@@ -1714,15 +1715,26 @@ export class AiDirector {
       run.job.kind === 'chat' ? 'Speech evidence unavailable.' : run.job.request.text,
       evidence,
     );
-    const addressedSpeech = evidenceIds.some((id) =>
-      evidence.some((entry) => entry.eventId === id && entry.triggerKind === 'addressed_speech'),
+    const decisionEvidenceIds = new Set([
+      ...evidenceIds,
+      ...(triggerEvidenceId ? [triggerEvidenceId] : []),
+    ]);
+    const decisionEvidence = evidence.filter((entry) => decisionEvidenceIds.has(entry.eventId));
+    const addressedSpeech = decisionEvidence.some(
+      (entry) => entry.triggerKind === 'addressed_speech',
     );
-    const speechTrigger = evidenceIds.some((id) =>
-      evidence.some(
-        (entry) =>
-          entry.eventId === id && entry.eventType === 'speech' && entry.modality !== 'observed',
-      ),
+    const speechEvidenceIds = new Set(
+      decisionEvidence
+        .filter((entry) => entry.eventType === 'speech')
+        .map((entry) => entry.eventId),
     );
+    // A conversational shortcut cannot suppress options for a coalesced physical cause.
+    // Personal result IDs need not be awareness rows; an omitted ID cannot prove pure speech.
+    // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
+    const speechTrigger =
+      decisionEvidence.some(
+        (entry) => entry.eventType === 'speech' && entry.modality !== 'observed',
+      ) && speechEvidenceIds.size === decisionEvidenceIds.size;
     let attentionCall = 0;
     const contextStartedAt = new Date().toISOString();
     let prepared = await prepareDecision(
@@ -2662,9 +2674,7 @@ export class AiDirector {
           .filter((memory) => {
             const event = this.service.worldEvent(memory.eventId ?? '');
             const speechJob = speechJobs.get(memory.eventId ?? memory.id);
-            const handledByChat =
-              !!speechJob &&
-              (speechJob.request.npcId ?? this.service.defaultResidentEntityId) === entity.id;
+            const handledByChat = !!speechJob && speechJob.request.npcId === entity.id;
             // Retain history but retract an obsolete bodily urgency before buying cognition.
             const attributeId = event?.type === 'body-condition' && event.data?.['attributeId'];
             // A notice from a replaced condition policy is superseded by its own 'initial'.

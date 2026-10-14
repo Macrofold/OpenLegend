@@ -503,7 +503,7 @@ Discovery used the corrected integrated snapshot after checking `docs/game-inspi
 [so]: ../../archive/02-research/worldbuilding/worlds/22-the-sopranos.md
 [au]: ../../archive/02-research/worldbuilding/worlds/23-austens-social-worlds.md
 [sa]: ../../archive/02-research/worldbuilding/worlds/25-spirited-away.md
-[dd]: https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
+[dd]: ../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
 [lm]: https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md
 [ft]: ../../archive/02-research/game-inspiration/dossiers/factorio.md
 [ha]: ../../archive/02-research/game-inspiration/dossiers/hades-ii.md

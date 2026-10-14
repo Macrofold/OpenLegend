@@ -5,6 +5,7 @@ import {
   type TypedQuestionMap,
 } from '@open-legend/ai';
 import { attentionRequest } from './attention-request.js';
+import { DEFAULT_COGNITION_POLICY } from '@open-legend/domain';
 import { JEV_ACTION_THRESHOLD, LEVEL1_POLICY } from './jev-questions.js';
 import {
   escalationLevel,
@@ -424,6 +425,7 @@ describe('offeredForRating', () => {
         ['a2', 'Walk to the well.'],
       ],
       'choose-action',
+      DEFAULT_COGNITION_POLICY.actionGuidance,
     );
     const offered = offeredForRating(request);
     expect(offered).toStrictEqual([
@@ -457,6 +459,7 @@ describe('offeredForRating', () => {
         ['a2', 'Walk to the well.'],
       ],
       'choose-action',
+      DEFAULT_COGNITION_POLICY.actionGuidance,
     );
     expect(Object.keys(request.questions)).toEqual(['a0', 'a2']);
     expect(request.state.candidates).toStrictEqual({

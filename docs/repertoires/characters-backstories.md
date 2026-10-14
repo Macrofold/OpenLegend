@@ -557,7 +557,7 @@ Integration handoff: update shared entry counts and source-atlas navigation when
 [AU]: ../../archive/02-research/worldbuilding/worlds/23-austens-social-worlds.md
 [ME]: ../../archive/02-research/worldbuilding/magic-technology-and-ecology.md
 [SO]: ../../archive/02-research/worldbuilding/worlds/22-the-sopranos.md
-[DD]: https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
+[DD]: ../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
 [DW]: ../../archive/02-research/worldbuilding/worlds/12-discworld.md
 [BG]: ../../archive/02-research/game-inspiration/dossiers/baldurs-gate-3.md
 [H1]: ../../archive/02-research/game-inspiration/dossiers/hades.md

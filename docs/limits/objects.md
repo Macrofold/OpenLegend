@@ -32,11 +32,11 @@ Implementation starting points: [objects.ts](../../packages/domain/src/objects.t
 
 ## OB05
 
-**Reported · Restrictiveness: Very safe.**
+**Changed October 6, 2026 · Restrictiveness: Medium.**
 
-Attachment supports only the existing `equipment` slot; no general attachment points or assemblies. One physical parent remains a placement invariant.
+**Removed single-slot restriction; current admitted body-port equipment and selected shelter attachments.** One item may occupy multiple places declared by its pinned equipment profile, and compatible items may remain held together. Missing body ports or overlapping occupied ports refuse before effects. There is no engine-fixed number of hands or saved equipment mirror. AV04 adds exact local attachments for the [selected flat canopy family](editable-shelters.md); broader assemblies remain unsupported. One physical parent remains a placement invariant.
 
-**Reason / tradeoff:** Preserve unique physical placement; the single equipment slot is the discretionary supported-feature boundary.
+**Reason / tradeoff:** AV02 replaces the former single `equipment` slot so a knife and shield can coexist and one two-handed launcher can conflict with both. A rebuilt attachment subset bounds warm lookups by held items, rather than all carried supplies; it is not saved authority. Extension needs a real authored body/equipped consumer and its permissions. [World profile](../worlds/base/shield-defense.md#compatible-equipment), [native/browser/SQL and isolated lookup evidence](../verification/shield-defense.md).
 
 ## OB06
 
@@ -56,11 +56,13 @@ Equipping separates one unit from a stack and **permanently makes it individual*
 
 ## OB08
 
-**Reported · Restrictiveness: Very safe.**
+**Current — selected material extension · Restrictiveness: Very safe.**
 
-Split/merge supports **stateless homogeneous stacks only**. Per-instance attributes, mechanism state, status state, reservations or references from active effects can prevent it.
+Split/merge supports stateless homogeneous stacks and the selected material family's explicitly admitted copying/comparison of per-item values. Splits preserve those values; merges require matching values. Other per-instance attributes, mechanism state, status state, reservations or references from active effects can still prevent it. The material family also owns bag refusal: base coverings and prepared fibers with weather state remain barred from bags, while a selected dry material may permit storage without acquiring contained weather behavior. [Current-format validation](../save-and-load.md#current-format-validation) requires initial values and validates any present optional material value.
 
-**Reason / tradeoff:** Preserve individual state and reservations; richer stack behavior needs explicit state/reference transfer rules.
+**Reason / tradeoff:** The former stateless-only description is superseded by the qualified material exception. Preserve individual state and reservations while allowing that consumer to declare equivalence and containment. Generic inventory does not infer these rules from shelter roles. Broader state/reference transfers still require their owning operation. [Full review](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) preserves the base refusal and checks permitted dry storage/reopening.
+
+[DG19 / CS02](../maintainers/changing-supplies.md#cs02--food-condition-follows-the-real-material) proposes one concrete richer consumer, including preservation input/output condition and last-unit retirement under OB14. That proposal does not remove these current restrictions until the shared operation and complete ordinary behavior are delivered. Its selected limits are in [CS-L07](changing-supplies.md#cs-l07--preserve-differences-without-multiplying-busywork).
 
 ## OB09
 
@@ -164,7 +166,7 @@ Inventory search matches definition names within the **current container only**.
 
 **Removed — implemented 2026-09-28 · Restrictiveness: — (removed).**
 
-The inventory merge control formerly offered targets from the **current page only**, filtered by definition alone. Selecting a lot now asks the server for merge targets across the **whole current container** through `/api/inventory` with `mergeSourceId`: the same [QU03](#qu03) windows (40 results, at most 200 children scanned, explicit “Search more lots” continuation) list only lots that pass the merge admission rules mirrored in `mergeTargetAvailable` (same direct container, equivalent free lots, same definition version and declared owner, no reservations, state or ongoing work). Move destinations are omitted from these responses.
+The inventory merge control formerly offered targets from the **current page only**, filtered by definition alone. Selecting a lot now asks the server for merge targets across the **whole current container** through `/api/inventory` with `mergeSourceId`: the same [QU03](#qu03) windows (40 results, at most 200 children scanned, explicit “Search more lots” continuation) list only lots that pass the merge admission rules mirrored in `mergeTargetAvailable` (same direct container, equivalent free lots, same definition version and declared owner, no reservations, unsupported state or ongoing work). The selected material exception follows [OB08](#ob08). Move destinations are omitted from these responses.
 
 **Remaining controls:** merging stays within one direct container; the merge command still rechecks handling, access and revisions; a changed container revision restarts the page. Implementation: [inventory-view.ts](../../apps/server/src/inventory-view.ts), [object-access.ts](../../packages/domain/src/object-access.ts).
 

@@ -1,8 +1,10 @@
 # Batch 05 — Technical definitions for adventure, defense and a home
 
-| Status      | Current progress                                                                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Implementation responsibilities and acceptance are defined; supplied encounter and shelter prerequisites still gate their dependent work. | 2026-10-05   |
+| Status      | Current progress                                                                                         | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | All five assignments are merged; human appreciation and broader qualification retain their tracked gaps. | 2026-10-08   |
+
+Current AV05 delivery: [installed preparation/cast contract](../food-preparation.md), [river profile](../worlds/base/river-fishing.md) and [native/player/live-choice evidence](../verification/river-meal.md). Existing qualification gaps remain tracked separately.
 
 ## Scope and baseline
 
@@ -93,7 +95,7 @@ The source map is not an invitation to rewrite PX03. AV01 closes only its conten
 ### Owned change and source map
 
 - `packages/domain/src/objects.ts`: current `equipLot`, `unequipLot`, transfer/retirement handling and attachment validation.
-- `item-handling.ts`: atomic object changes currently copy the single equipped reference; this must follow the new single owner.
+- `item-handling.ts`: atomic object changes publish exact item placements and rebuild derived attachment queries; there is no writable actor equipment mirror after AV02.
 - `types.ts`, `world-modules.ts`, `invention-families.ts`: current model, admitted equipment/defense profiles and body applicability.
 - `strikes.ts`, `kernel.ts`, `body-policy.ts`, plus incoming `territorial-threat.ts` and consent/lifecycle owners: contact attempt and committed injury. Incoming filenames must actually exist in the supplied branch before their integration is claimed.
 - `worlds/base/items.ts`, `recipe-families.ts`, `actions.ts`, body definitions and a proposed `shield-defense.ts`: authored hand use, guard and known shield.
@@ -117,6 +119,31 @@ Factor the contact impact calculation through one reusable resolver invoked by c
 
 Stable simulation ordering determines same-time attempts; the first lawful intercepted hit consumes the one interception. A later hit sees recovery/current state. No second event listener independently subtracts damage or marks a block after injury. Misses, wrong-sector attacks and unrelated hazards never receive protection by matching a generic word in their result.
 
+### AV02 implementation plan — October 6, 2026
+
+The supplied revision is `51d43e3f4a91e7ceed1404add65123b331d97358`, already containing refreshed `Macrofold/OpenLegend` `origin/main` at `0a3ab79b7a698a7f1941dc23722f89220d1ba425`. Work occurs on `codex/av02-shield-defense` in `/Users/mzw/.codex/worktrees/3b05/OpenLegend`; the main checkout is untouched. The actual territorial attack and player-death owners are present. Estimated scope is 900–1,400 changed logic lines, excluding verification; equipment identity, current-format persistence, recovery cancellation and observer privacy make this a substantial cross-layer change.
+
+1. Replace the actor's single equipment reference with queries over exact item placements. Add admitted equipment profiles and authored body ports, validate occupied-port conflicts, and atomically individualize/equip/stow only conflicting equipment. Cut over every supplied-base consumer, including cleanup, activities, inspection and save validation; remove compatibility-only equipment conversion rather than add an alias.
+2. Install the ordinary shield method and starting knowledge through existing recipe admission/knowledge owners. Add the finite shield family and authored descriptions, timing, coverage and reduction. Existing knife, gathering, sling and bow profiles consume the same attachment query.
+3. Add a chosen, exclusively physical guard with exact shield/profile/life, fixed permitted facing and simulation deadlines. Preserve committed recovery through Stop, movement, equipment changes and return. Route all contact attacks through one pure prevented/remaining-injury calculation and their existing commit; retain projectile, PvP and death rules.
+4. Expose exact equipment, conflict consequences, guard choices/phases and permitted actual results through current inventory, ordinary action offers, human admission and NPC preparation. Choices remain optional; no provider policy or scripted resident decision changes.
+5. Verify real craft/equip/guard/attack callers: front, late, rear, miss, expiry, cancellation, recovery bypass, repeated requests, simultaneous contacts, alternate admitted profile, missing body ports, stack split, reserved conflict, drop/offer/transfer, death and current-format continuation. Use focused existing native checks plus one representative integration scenario, selected PostgreSQL save checks and actual browser interaction. No paid calls are needed for mechanical qualification; controlled NPC offers do not establish free model choice.
+6. Inspect the complete affected diff and reconcile the canonical shield/combat/items/action/object/save owners, affected parent trackers, limits, evidence and project status. Commit scoped progress at least every 15 minutes after edits begin, then commit all remaining task work after verification and review.
+
+Completion requires the requested ordinary player journey, shared human/NPC admission, truthful perceivable feedback and exact current-format continuation to pass, with no task-owned uncommitted changes. Broader parent qualification remains independently tracked; an unavailable required database/browser check leaves AV02 incomplete rather than silently weakening its acceptance.
+
+**Delivered October 6:** all six implementation steps above are complete. The shared contact owner, exact attachments, ordinary manufacture/actions, permitted feedback and current-format return passed [focused qualification](../verification/shield-defense.md). A paused return previously canceled committed work before control could reconnect; the common presence reconciliation now preserves it while paused, without renewing deadlines or overriding a previously committed departure. Broader model choice, all-body anatomy and encounter balance remain outside this bounded evidence.
+
+**Requested follow-up review, October 6:** review the full delivered change against refreshed local `main` at `d6544ee7cbc57f997bc60b91138361ae7cc984a0`, preserving its later combat-consumer documentation. Estimated corrective scope is 0–200 logic lines; expand this plan before any materially larger or changed-contract work. Trace exact equipment through admission, reservation, movement, death and return; trace guard through facing/timing, interruption, one injury commit, private observation and NPC choices. Inspect repeated scans, derived-index invalidation and synchronous work using representative equipment/action workloads. Fix confirmed in-scope defects and simplify only where ownership or a demonstrated second use warrants it. Reuse valid native/browser evidence, run focused existing checks and one evolving ad-hoc scenario for newly exposed behavior, and record measured performance limits or concrete gaps in their existing owners. Completion requires full affected-diff review, reconciled implementation/remaining-work records, passing required checks and committed fixes.
+
+**Follow-up review completed October 6:** exact-item reads now share direct placement validation instead of rebuilding the held-item list, and strike discovery requires the same declared melee use as execution. The expanded native/SQL scenario, 37 focused existing checks, type check and production build passed; [review evidence](../verification/shield-defense.md#follow-up-review) records matched lookup measurements and qualification limits. Guard timing, coverage and permission rules were unchanged. The broader project remains in progress for its tracked human appreciation and qualification gaps; all five assignments are now merged.
+
+**Second requested review, October 7:** inspect the full delivered branch against local `main` at `741e8cf7e0e3f4ab7b1eea47d32d33e5f483eda6`, including its travel/barter consumers and the guidance updates. Estimated corrective scope is 0–200 logic lines; revise this plan before materially larger or changed-contract work. Trace exact equipment through action admission, conflict resolution, item transfer, interruption, death and current-format validation. Trace guard timing and one injury commit through human/NPC offers and permitted feedback. Review the full diff and fix demonstrated in-scope defects; reuse valid prior evidence and extend the existing temporary scenario only for uncovered behavior.
+
+Performance planning: cost grows with repeated requests, inventory/action candidates, carried lots and retained action history. Existing exact-item reads and the derived attachment subset provide shared equipment preparation; reuse remains limited to the same permissions and unchanged snapshot. Placement, body/definition changes, action replacement and restore invalidate relevant reuse. Measure meaningful corrections through actual menu/command callers, with both cold and warm state or relevant mutation, separately from helper timings. Completion requires verified fixes, reconciled current behavior/remaining-work records and a committed clean handoff; no provider experiment is needed to qualify mechanics.
+
+**Second review completed October 7:** resident attack/equipment offers and Inventory Equip now use current admission; recovery and incompatible/reserved tools are excluded before attack target expansion. All required equipment ports must exist before their labels imply compatibility. Namespaced body/port identities remain distinct during current-format validation. The expanded native/SQL/browser scenarios and 39 focused existing checks passed; [review evidence](../verification/shield-defense.md#second-implementation-review--october-7-2026) records complete caller counts, relevant mutations and the remaining general inventory-preparation cost under CG01/C17/PF. The shield rules and permission/death decisions are unchanged.
+
 ### Delivery order and acceptance
 
 1. Integrate supplied threat/lifecycle behavior; trace all equipment readers and item cleanup before replacing the single reference.
@@ -130,7 +157,7 @@ Prove a changed admitted shield profile changes the same calculation and view. Q
 
 ### Owned change and source map
 
-Implement [PC02–PC06](../maintainers/practical-competence.md), supplying `docs/projects/authored-stats-tech-design.md` as the missing canonical counterpart for this selected consumer. Preserve the broader optional examples rather than marking them delivered. The exact product and tuning owners are [section 16](authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing) and [practical competence](../worlds/base/practical-competence.md).
+Implement [PC02–PC06](../maintainers/practical-competence.md), using the now-delivered [scoped technical counterpart](authored-stats-tech-design.md) for this selected consumer. Its [qualification](../verification/practical-competence.md) distinguishes delivered runtime evidence from open human appreciation. Preserve the broader optional examples rather than marking them delivered. The exact product and tuning owners are [section 16](authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing) and [practical competence](../worlds/base/practical-competence.md).
 
 - `packages/domain/src/world-modules.ts`: applicable typed attribute definitions/read/write, missing/private distinctions and authored installation.
 - `kernel.ts`, `strikes.ts`, `worlds/base/recipe-families.ts`: current swing mechanism, release checks and single accuracy roll.
@@ -169,7 +196,7 @@ No general teaching framework or a second skill is needed to complete this consu
 
 ### Prerequisite and source map
 
-**Runtime implementation begins after PX05 supplies `docs/projects/editable-shelters-tech-design.md` and resolves its required technical contracts.** That path is an expected deliverable, not an existing verified file in the inspected main. Product scope is already in [DG13's expansion](editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) and the [world profile](../worlds/base/editable-shelters.md). PX05's canonical design owns the detailed structural schemas; this allocation does not create a competing schema while that assignment remains open.
+**Prerequisites supplied and AV04 flat release delivered October 6; the separately authorized corrected-contact/single-bay slope follow-on is qualified October 7.** PX05's `docs/projects/editable-shelters-tech-design.md` resolves the selected contracts and was consumed before coding; completed AV02 supplies the cloak's attachment owner. [The AV04 report](../verification/editable-shelters.md) records actual selected evidence and remaining broader limits. Product scope is already in [DG13's expansion](editable-shelters-feature-spec.md#14-dg13-expansion--make-a-place-use-it-and-change-it) and the [world profile](../worlds/base/editable-shelters.md). PX05's canonical design owns the detailed structural schemas; this allocation creates no competing schema.
 
 Its implementation must extend current `packages/domain/src/objects.ts`, material/invention owners, `action-capabilities.ts`, `state-contributions.ts`, spatial surfaces/clearance/navigation and current-format persistence. Client scene/picking and placement UI consume the same geometry and permitted plans. Server preview/inspection and native execution must share the actual construction prerequisites. Use AV02's attachment owner for wearing the same cloak, rather than a shelter-only equipped flag.
 

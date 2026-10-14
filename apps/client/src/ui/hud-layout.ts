@@ -11,7 +11,7 @@ export function observeHudLayout(
 ): () => void {
   const obstacles = [
     ...root.querySelectorAll<HTMLElement>(
-      '.ol-survival, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking',
+      '.ol-survival, .ol-clock-position, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking',
     ),
   ];
   const controls = root.querySelector<HTMLElement>('.ol-world-controls');
@@ -57,6 +57,12 @@ export function observeHudLayout(
       root.style.setProperty(
         '--status-height',
         `${entry.borderBoxSize[0]?.blockSize ?? condition.offsetHeight}px`,
+      );
+    const clock = entries.find((change) => change.target.matches('.ol-clock-position'));
+    if (clock)
+      root.style.setProperty(
+        '--clock-height',
+        `${clock.borderBoxSize[0]?.blockSize ?? (clock.target as HTMLElement).offsetHeight}px`,
       );
     measure();
   });

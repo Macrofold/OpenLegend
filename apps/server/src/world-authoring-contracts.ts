@@ -43,6 +43,7 @@ const payload = z
   .refine((v) => Buffer.byteLength(v, 'utf8') <= 24000, 'Candidate exceeds the UTF-8 byte limit.');
 export const authoringKind = z.enum([
   'recipe',
+  'world-opening',
   'attribute',
   'attribute-bindings',
   'attribute-values',
@@ -53,6 +54,7 @@ export const authoringKind = z.enum([
 export type AuthoringKind = z.infer<typeof authoringKind>;
 
 export const AUTHORING_SUBMIT_TOOLS = {
+  'world-opening': 'ol_world_opening_submit',
   'status-effect-policy': 'ol_status_policy_submit',
   'cognition-policy': 'ol_cognition_policy_submit',
   attribute: 'ol_attribute_submit',
@@ -115,6 +117,7 @@ function selectedSubmit<K extends keyof typeof authoringCandidateSchemas>(kind: 
 
 // One catalogue owns validation for local tools and MCP. No approval-grant or budget-increase tool.
 export const WORLD_AUTHORING_TOOLS = {
+  [AUTHORING_SUBMIT_TOOLS['world-opening']]: selectedSubmit('world-opening'),
   [AUTHORING_SUBMIT_TOOLS['status-effect-policy']]: selectedSubmit('status-effect-policy'),
   [AUTHORING_SUBMIT_TOOLS['cognition-policy']]: selectedSubmit('cognition-policy'),
   [AUTHORING_SUBMIT_TOOLS.attribute]: selectedSubmit('attribute'),
@@ -258,7 +261,7 @@ export function parseWorldAuthoringCall(name: string, raw: unknown): WorldAuthor
 export const sessionRequest = z.object({ sessionId: id, worldId: id }).strict();
 export const sessionOpenRequest = sessionRequest.extend({
   budgetUsd: z.number().finite().min(0).max(5).optional(),
-  purpose: z.enum(['conversation', 'invention']).optional(),
+  purpose: z.enum(['conversation', 'invention', 'creation']).optional(),
 });
 export const sessionDecisionRequest = sessionRequest.extend({
   planId: id,
@@ -294,7 +297,13 @@ export const sessionDraftPreviewRequest = sessionRequest
 export const sessionDraftSaveRequest = sessionDraftPreviewRequest
   .extend({ ...mutation, intent: z.string().min(1).max(4000).optional() })
   .strict();
-export const sessionDraftPrepareRequest = sessionDraftSelectionRequest.extend(mutation).strict();
+export const sessionDraftPrepareRequest = sessionDraftSelectionRequest
+  .extend({ ...mutation, targetId: z.string().min(1).max(120).optional() })
+  .strict();
+export const sessionOpeningCreateRequest = sessionRequest
+  .extend({ ...mutation, openingId: z.string().min(1).max(120) })
+  .strict();
+export const sessionCreationOperationRequest = sessionRequest.extend({ planId: id }).strict();
 export const sessionDraftCheckRequest = sessionDraftSelectionRequest;
 export const authoringToolRequest = z
   .object({

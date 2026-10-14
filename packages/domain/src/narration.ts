@@ -87,8 +87,7 @@ export function renderNarration(
  * even when they carry definition IDs, and are never parsed as another template. */
 export function narrationTemplate(
   template: string,
-  entities: Record<string, Entity | undefined>,
-  names: Record<string, Named | undefined> = {},
+  bindings: Record<string, Entity | Named | undefined>,
 ): Narration {
   const parts: NarrationPart[] = [];
   let end = 0;
@@ -96,8 +95,9 @@ export function narrationTemplate(
     const token = parseNarrationToken(match[1]!);
     if (!token) continue;
     parts.push(template.slice(end, match.index));
-    const entity = entities[token.binding];
-    const value = names[token.binding];
+    const value = bindings[token.binding];
+    // Definition IDs identify content; only physical entities carry observer identity.
+    const entity = value && 'kind' in value ? value : undefined;
     if (token.verb) {
       parts.push(
         entity
