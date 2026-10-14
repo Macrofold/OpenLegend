@@ -62,7 +62,7 @@ import {
   surfaceSeamsMesh,
 } from './spatial-art';
 import { playerEntity } from './entity-view';
-import { MercenaryModels, type MercenaryActor } from './characters/mercenary';
+import { VoxelMercenaryModels, type VoxelMercenaryActor } from './characters/voxel-mercenary';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { PerceptionOverlay } from './perception-overlay';
 import { FrameRateMeter } from './frame-rate';
@@ -86,7 +86,7 @@ const restingCardBounds = new pc.BoundingBox(new pc.Vec3(0, 0, 0), new pc.Vec3(0
 
 interface RenderedEntity {
   attackPose?: boolean;
-  model?: MercenaryActor;
+  model?: VoxelMercenaryActor;
   departedAt?: number;
   observed: boolean;
   card: boolean;
@@ -197,7 +197,7 @@ export class WildernessScene implements WorldRenderer {
   private readonly frameRateMeter = new FrameRateMeter();
   private readyRequested = false;
   private presentation!: WorldPresentation;
-  private mercenary?: MercenaryModels;
+  private mercenary?: VoxelMercenaryModels;
   private hoverPoint: { x: number; y: number } | null = null;
   private animations: Array<{ y: number; entity: pc.Entity; x: number; z: number; phase: number }> =
     [];
@@ -257,12 +257,7 @@ export class WildernessScene implements WorldRenderer {
       this.app.root.addChild(sun);
       this.presentation = new WorldPresentation(this.app, this.camera, sun);
       this.outline = new HoverOutline(this.app, this.camera);
-      this.mercenary = new MercenaryModels(
-        this.app,
-        this.presentation,
-        this.camera,
-        this.sun.light!.light,
-      );
+      this.mercenary = new VoxelMercenaryModels(this.app, this.presentation);
       this.shadowBatches = new SpriteShadowBatches(
         this.app.graphicsDevice,
         this.app.scene.layers.getLayerById(pc.LAYERID_WORLD)!,
