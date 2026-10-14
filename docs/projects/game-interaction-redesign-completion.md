@@ -1,0 +1,74 @@
+# Whole-interface implementation completion
+
+| Status | Current progress | Last updated |
+| --- | --- | --- |
+| In progress | Mike explicitly authorized completing the implementation; recovery, integration fixes and final game qualification are being completed on the existing UI branch. | 2026-10-14 |
+
+## Scope and authority
+
+On October 14, Mike explicitly requested completing the UI implementation and running the game to verify it. This follows clarification that the earlier assignment was comprehensive UI/UX research and design. Earlier wording that inferred implementation permission from “continue” does not substitute for this explicit authorization.
+
+This is the execution plan for the remaining agreed scope, not a replacement feature specification. The [feature specification](game-interaction-redesign-feature-spec.md), [technical design](game-interaction-redesign-tech-design.md), [UI/UX tracker](../maintainers/ui-ux.md) and [verification report](../verification/game-interaction-redesign.md) retain their requirements, decisions and evidence. Do not count implementation readiness and completion of the research/design deliverable as the same thing.
+
+Continue on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/game-ui-research-redesign`, starting at `18aa2920747ee0e8bb489f7c568ee60a6e6df193`. Its integrated GitHub `refs/heads/main` is `1cf678802d62652d8dd466776d4b95a9d0d19166`; the current main reference was checked and is unchanged. Preserve published history. This authorization does not request merging PR #27 into main or modifying unrelated branches.
+
+## Implementation plan
+
+### Original action recovery — UIUX12
+
+Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.
+
+Recovery reads the original server-owned request/job outcome; it must not call the submission path, pay for another interpretation or execute another action. Preserve the distinction between not found, still pending, a recorded refusal, an admitted request and completed physical work. A missing record alone does not prove that a delayed original request cannot arrive. Check current authority and the original world/timeline before disclosing or consuming its outcome. Changed private ownership clears private recovery. Failed browser persistence blocks an unretainable new submission rather than silently losing it. Clearing a resolved record must not erase a newer request or release the guard while cleanup is uncertain.
+
+Use the existing action admission, durable job store and private draft owner, with a narrowly scoped read projection where the current API does not expose the original result. No parallel action executor, automatic resend or new general job framework.
+
+### Checkpoint recovery — UIUX14
+
+Retain one exact unresolved checkpoint creation or load, including its original identifier and label or checkpoint identity, before dispatch. Add a synchronous operation guard so rapid input cannot start competing checkpoint mutations. Hide/reopen and same-owner reload restore the pending task and an explicit result-check action; draft changes cannot replace it.
+
+The result check uses the existing checkpoint and durable load-record owners without taking another checkpoint, reloading again or rotating protection. Loading can legitimately change the saved timeline: an original load outcome may be read under current save authority, but the old executable request must never be admitted into the new timeline. A changed account, character, world or revoked grant must not expose another owner's retained details. Preserve storage-health warnings even when an original load record proves installation succeeded. Keep the existing exact named confirmation and current-format validation.
+
+### Presentation and existing composed journeys — UIUX08–UIUX18
+
+Remove the excessive empty space around a retained completed task without clipping details or weakening focus/scroll behavior. Verify the change with actual content at desktop, narrow and short sizes.
+
+Finish the already tracked connected journeys: barter from Inventory and person entries, companion invitations and displayed-description search, Known places inside Journal, denied-container rendered state, and the outstanding creation/owner-conversation storage and recovery combinations. Keep exact lots/subjects/terms, explicit execution, current permission and privacy, and original-operation outcomes through interruption. Reuse unchanged native evidence instead of pretending every previous check was rerun. Inspect real rendered results as well as assertions.
+
+### Alternate-world repair — UIUX17 / UIUX18
+
+Repair the existing clockwork/touch starting-world composition. The present preset replaces attribute definitions after creating the full base world, leaving object properties whose definitions were removed. The same failure was reproduced on unchanged main. Preserve a deliberately selected coherent set of objects, authored definitions and activities; do not disable validation, make wilderness rules universal or substitute a renamed base-world meter for the actual recharge task.
+
+Verify ordinary base-world construction separately from clockwork and touch construction, permitted recharge discovery, finite supply use, partial work/Stop and current-format continuation. Follow each selected world's actual contracts and fix further concrete integration errors exposed by these paths.
+
+### Required failures and final review — UIUX18
+
+Inspect the actual assertions and producer/consumer paths behind the inherited Code failures. A matching test name is not proof of an identical cause. Update stale fixtures only when the accepted current behavior establishes they are stale; repair implementation defects at their semantic owner. Do not weaken assertions, normal-close/abrupt-loss coverage, the Time journey's sixty-second aggregate deadline or local capture allowances.
+
+Finish the existing required Code and Spatial/interface checks on the final source. Inspect the complete affected diff and resolve actionable review findings. Reconcile the feature/design status, task checkboxes, current evidence and PR description with the actual delivered result; keep historical evidence and failures scoped to their original revisions.
+
+## Size, risks and ownership
+
+Initial estimate: approximately 400–700 changed production-logic lines across the action and checkpoint clients, existing server outcome readers, scoped browser recovery and alternate-world composition, plus small layout changes. The estimate excludes tests and documentation and will be reassessed if the native owners reveal a wider required change. This is not a limit that permits dropping agreed scope.
+
+The consequential risks are duplicate paid interpretation, repeated world rewind, lost protection checkpoints, private-data disclosure after changed ownership, and stale asynchronous completion. The client owns drafts and a retained request description, never proof of success or permission. Existing server/native owners remain responsible for admission, durable outcomes, current grants, actual game effects and current-format state. No incompatible-save migration or new spending policy is introduced.
+
+## Performance and verification plan
+
+- **Growth:** retain at most one unresolved action and one unresolved checkpoint operation per currently permitted private task scope. Do not accumulate request logs, clone the world or scan all game history to recover a single request.
+- **Shared preparation:** reuse the existing authenticated request context, durable exact-ID job/load lookup, checkpoint metadata and private draft cleanup. World composition runs only when deliberately creating a world, not during rendering or simulation ticks.
+- **Invalidation:** bind action results to original identity/body and current private owner/world/timeline; bind load-result inspection to its original durable operation while separately checking current save authority. Ignore obsolete component/query completions. Failure to read or clear browser storage never means a request did not happen.
+- **Measurement:** run pinned formatting, configuration/guidance checks, TypeScript and the production build; exercise relevant existing native/HTTP checks and finite missing recovery scenarios with disposable PostgreSQL. Run the actual production App/server/browser journeys, record exact source and failed stages, and inspect captured UI. Required CI remains required. No broad new benchmark suite is needed for these exact-ID, explicit-gesture paths.
+
+The session's local execution tools are currently failing before commands run. Use the existing GitHub Actions execution path for disposable native/server/PostgreSQL/browser verification; do not describe it as Mike's local checkout. Any temporary runner-only observation/packaging files must be removed from the final feature tree. Keep generated logs, traces and screenshots in the execution artifacts rather than adding them to canonical source by default.
+
+All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture interpretation or supplied recipient decisions cannot establish live model quality. No paid call has been made in this completion pass; the shared authorized task cap remains governed by repository verification policy.
+
+## Completion criteria
+
+- [ ] Original action and checkpoint requests recover through reload and same-page changes without replacement admission or duplicate effects; meaningful storage, identity, privacy and stale-result cases pass.
+- [ ] Completed-task presentation and the already specified composed game journeys are implemented and verified through their actual owners and rendered interface.
+- [ ] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence.
+- [ ] In-scope defects and required final Code/Spatial failures are resolved without weakening acceptance; the affected diff and canonical documentation are reviewed and committed.
+- [ ] Remaining keyboard/non-drag, text/viewport, real operating-system input-method, assistive-device and uncoached-player requirements are accurately qualified. Automated browser or synthetic composition results cannot be reported as human/device evidence.
+
+There is no unresolved product decision blocking the implementation work described above. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
