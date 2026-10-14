@@ -2,7 +2,7 @@ name: UI completion verification
 on:
   push:
     branches: [docs/game-ui-research-redesign]
-    paths: [.github/workflows/ui-completion.yml, .github/scripts/ui-completion.py]
+    paths: [.github/workflows/ui-completion.yml, .github/scripts/ui-completion.py, .github/scripts/ui-completion-context.py]
   workflow_dispatch:
 permissions:
   contents: write
@@ -40,12 +40,12 @@ jobs:
           cache: pnpm
       - name: Install the pinned dependencies
         run: pnpm install --frozen-lockfile
-      - name: Apply the exact recovery changes
+      - name: Apply the connected recovery changes
         shell: bash
         run: |
           mkdir "$RUNNER_TEMP/ui-recovery"
-          python3 .github/scripts/ui-completion.py
-          pnpm exec prettier --write apps/client/src/retained-request.ts apps/client/src/ui/action-attempts.tsx apps/client/src/ui/game-saves.tsx apps/client/src/api.ts apps/client/src/main.tsx apps/server/src/action-request-recovery.ts apps/server/src/ai-director.ts apps/server/src/http.ts apps/server/src/game-saves.ts packages/protocol/src/request-recovery.ts packages/protocol/src/index.ts docs/projects/game-interaction-redesign-completion.md
+          python3 .github/scripts/ui-completion-context.py
+          pnpm exec prettier --write apps/client/src/retained-request.ts apps/client/src/ui/action-attempts.tsx apps/client/src/ui/game-saves.tsx apps/client/src/ui/operations-console.tsx apps/client/src/api.ts apps/client/src/main.tsx apps/server/src/action-request-recovery.ts apps/server/src/ai-director.ts apps/server/src/http.ts apps/server/src/game-saves.ts apps/server/src/authority.ts apps/server/src/view.ts apps/server/src/operations-routes.ts packages/protocol/src docs/projects/game-interaction-redesign-completion.md
           git diff --check
       - name: Static checks and the production build
         shell: bash
@@ -99,10 +99,8 @@ jobs:
               const recovered = await (await post('/api/action-attempt/receipt', { ...action, timeline: initial.saveTimeline })).json() as RequestRecoveryResult;
               expect(recovered).toMatchObject({ ok: true, status: 'resolved', result: { jobId: admitted.jobId } });
               expect(digest(game.service.world)).toBe(beforeActionCheck);
-              const changed = await post('/api/action-attempt/receipt', { ...action, mode: 'replace', timeline: initial.saveTimeline });
-              expect(await changed.json()).toMatchObject({ ok: false, code: 'idempotency-conflict' });
-              const unknown = await (await post('/api/action-attempt/receipt', { ...action, requestId: randomUUID(), timeline: initial.saveTimeline })).json();
-              expect(unknown).toMatchObject({ ok: true, status: 'unknown' });
+              expect(await (await post('/api/action-attempt/receipt', { ...action, mode: 'replace', timeline: initial.saveTimeline })).json()).toMatchObject({ ok: false, code: 'idempotency-conflict' });
+              expect(await (await post('/api/action-attempt/receipt', { ...action, requestId: randomUUID(), timeline: initial.saveTimeline })).json()).toMatchObject({ ok: true, status: 'unknown' });
               expect(digest(game.service.world)).toBe(beforeActionCheck);
               const checkpointId = randomUUID();
               expect((await (await post('/api/saves/create', { id: checkpointId, label: 'Original checkpoint' })).json()).ok).toBe(true);
@@ -112,6 +110,7 @@ jobs:
               const loadId = randomUUID();
               expect((await (await post('/api/saves/load', { id: checkpointId, requestId: loadId })).json()).ok).toBe(true);
               expect(game.service.timelineId).not.toBe(initial.saveTimeline);
+              expect((await view()).checkpoint?.recoveryScope).toBe(initial.checkpoint!.recoveryScope);
               const beforeLoadCheck = digest(game.service.world);
               const revision = await game.service.store.records!.head();
               const protection = await game.service.store.db.prepare("SELECT payload, checksum FROM game_saves WHERE id='before-load'").get();
@@ -120,12 +119,15 @@ jobs:
               expect(digest(game.service.world)).toBe(beforeLoadCheck);
               expect(await game.service.store.records!.head()).toEqual(revision);
               expect(await game.service.store.db.prepare("SELECT payload, checksum FROM game_saves WHERE id='before-load'").get()).toEqual(protection);
+              const operations = await (await fetch(base + '/api/operations', { headers: { Cookie: client.cookie } })).json();
+              expect(operations.checkpoint.recoveryScope).toBe(initial.checkpoint!.recoveryScope);
               expect(await (await post('/api/action-attempt/receipt', { ...action, timeline: initial.saveTimeline })).json()).toMatchObject({ ok: false, code: 'stale-world' });
-              console.log('PASS: original action after physical work, changed-body refusal, unknown lookup, create outcome, cross-timeline load outcome and unchanged protection; no provider calls.');
+              console.log('PASS: original action after physical work, changed-body refusal, unknown lookup, create outcome, cross-timeline load outcome, operator entry and unchanged protection; no provider calls.');
             } finally { await game.close(); }
           });
           TS
           set -o pipefail
+          pnpm typecheck 2>&1 | tee "$RUNNER_TEMP/ui-recovery/observation-types.log"
           pnpm exec vitest run tests/ui-completion-recovery.test.ts --reporter=verbose 2>&1 | tee "$RUNNER_TEMP/ui-recovery/native.log"
       - name: Remove the temporary observation
         if: always()
@@ -145,34 +147,25 @@ jobs:
           assert not git('ls-files', '--others', '--exclude-standard').decode().strip()
           git('diff', '--check')
           changes = [{'path': p, 'mode': '100644', 'type': 'blob', 'content': Path(p).read_text()} for p in paths]
-          request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees', method='POST', data=json.dumps({'base_tree': git('rev-parse','HEAD^{tree}').decode().strip(), 'tree': changes}).encode(), headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
-          with urllib.request.urlopen(request, timeout=120) as response: exported = json.load(response)['sha']
+          tree = git('rev-parse','HEAD^{tree}').decode().strip()
+          # Bound each request rather than relying on a large JSON payload.
+          for offset in range(0, len(changes), 3):
+              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees', method='POST', data=json.dumps({'base_tree': tree, 'tree': changes[offset:offset+3]}).encode(), headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
+              with urllib.request.urlopen(request, timeout=120) as response: tree = json.load(response)['sha']
           git('add', '--', *paths)
-          tree = git('write-tree').decode().strip()
-          assert exported == tree, (exported, tree)
+          expected = git('write-tree').decode().strip()
+          assert tree == expected, (tree, expected)
           metadata = {'parent': os.environ['GITHUB_SHA'], 'tree': tree, 'paths': paths, 'native_and_static_checks_passed': True}
           (report / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
           print('CHECKED_CANDIDATE=' + json.dumps(metadata, indent=2), flush=True)
           print('No commits or branch references were changed by this runner.', flush=True)
           PY
-      - name: Preserve the exact affected diff and source context
+      - name: Preserve the exact affected diff
         if: always()
         shell: bash
         run: |
           git diff HEAD -- apps packages docs > "$RUNNER_TEMP/ui-recovery/changes.patch"
-          python3 - <<'PY'
-          from pathlib import Path
-          for path in ['apps/server/src/authority.ts', 'apps/server/src/view.ts', 'apps/server/src/world-service.ts', 'apps/client/src/api.ts']:
-              lines = Path(path).read_text().splitlines()
-              for i, line in enumerate(lines):
-                  if 'privateDraftScope' in line or 'privateDraftNamespace' in line:
-                      print('OWNER=' + path + ':' + str(i+1))
-                      print('\n'.join(lines[max(0,i-6):i+14]))
-          for path in ['apps/client/src/ui/action-attempts.tsx', 'apps/client/src/api.ts']:
-              print('PATCH_ANCHORS=' + path)
-              for line in Path(path).read_text().splitlines():
-                  if 'className=' in line or 'disabled=' in line or 'clearSessionDrafts' in line or 'previousOwner' in line or 'previousTimeline' in line: print(line)
-          PY
+          git diff --stat HEAD -- apps packages docs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
