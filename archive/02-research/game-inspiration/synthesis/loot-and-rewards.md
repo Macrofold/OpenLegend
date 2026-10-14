@@ -1,6 +1,6 @@
 # Loot, rewards and discovery
 
-**Status: Not started — shell only. Topic: LOOT.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: LOOT.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns acquisition and reward delivery. Item use/storage belongs to GEAR and long-
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+A reward can fulfill a goal, open a capability, recognize a contribution or express identity. Risky extraction, immediately secured quest rewards and freely shared gifts make different promises. Randomness is one source of anticipation, not a substitute for usefulness or the only way to make a discovery memorable.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's acquisition and transfer evidence](../dossiers/rust.md#rust-looting) connects found goods to carrying space, equipment use and returning safely. [Its crafting account](../dossiers/rust.md#rust-crafting) also shows why an object can matter before its production method is known. The contrasting reviews warn that repeated loss can overwhelm the reward. This is initial scoped evidence, not a cross-game finding that all rewards should remain stealable.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="loot-l001"></a>
+
+### Distinguish finding, acquiring, securing and using
+
+Seeing an object is not obtaining custody; taking it is not necessarily banking it; possession is not always the ability to use it. Decide which boundary completes the promised reward and communicate it. An extraction phase can create a satisfying return arc, but imposing it after a reward presented as already secure breaks expectations. Technical delivery failure is not fictional risk.
+
+<a id="loot-l002"></a>
+
+### Make the next possibility more legible than rarity alone
+
+Explain why the object matters: a new method, a useful replacement, a gift, a trade opportunity or a piece of a chosen project. An exciting find may bypass a production bottleneck or renew an early decision. Without a meaningful use or recipient, rarity can become clutter or compulsory hoarding. Prefer a small understandable reward to an unreadable pile of nominal upgrades.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-loot) to locate relev
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** an explorer discovers a tool useful for reaching a previously inaccessible place. Carrying it home safely creates one possible adventure; using it immediately creates another. A companion might value it for a different purpose. The player needs to understand who receives it, what is being risked and when the acquisition is complete. A peaceful commission can deliver the same capability without an extraction threat. Link GEAR, CRAFT, GROWTH and TRUST; do not duplicate their ownership or use rules.
 
 ## Possible OpenLegend applications and limits
 
+Evaluate whether the first useful find changes a real available action and whether its delivery state is unambiguous. Do not import random loot tables, universal theft or escalating item tiers as defaults for every authored world.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Does a player recognize the reward's use and choose a wanted next action? Compare satisfaction after finding, returning and using it. Selected Rust testimony does not establish drop-rate preferences, population-wide recovery tolerance or optimal reward frequency.
 
 ## OpenLegend-specific research subtopics
 

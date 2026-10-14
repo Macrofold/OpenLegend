@@ -1,6 +1,6 @@
 # Trust, fairness and community safety
 
-**Status: Not started — shell only. Topic: TRUST.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: TRUST.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -16,17 +16,31 @@ How can meaningful freedom and risk coexist with reliable expectations and prote
 
 Owns player-facing trust and protection. Fictional law belongs to SOCIETY, creator code/tool permissions to CREATE, and purchase design to BUSINESS. This is research, not an approved OpenLegend specification.
 
-## Candidate reading routes — not assessed
+## Further candidate reading routes — not assessed
 
-[Rust](../dossiers/rust.md) · [Ultima Online](../dossiers/ultima-online.md) · [Roblox](../dossiers/roblox.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
+[Ultima Online](../dossiers/ultima-online.md) · [Roblox](../dossiers/roblox.md). Candidates are not an exhaustive relevance decision or evidence of incorporation. Rust's scoped assessment is below.
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+Participants should understand the stakes they enter, the powers they grant and the available response to abuse or technical loss. Risky fictional betrayal can coexist with clear real-participant boundaries. Protected communities, bounded competitive modes and persistent open conflict make different promises; none should be smuggled in as an unexplained default.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's trust/social analysis](../dossiers/rust.md#rust-trust), [server contract](../dossiers/rust.md#rust-servers) and [building distinctions](../dossiers/rust.md#rust-building) show why construction authorization is not damage immunity and why team membership is not every access grant. The preserved reviews document both valued uncertainty and harassment/frustration. Official anti-cheat activity is evidence of an operating burden, not a measured guarantee of fairness or unique-cheater prevalence.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="trust-l001"></a>
+
+### Make risk and permissions specific before investment
+
+State who may enter, use, move, build, alter access, damage or erase relevant property, and what continues during absence. A group label or ownership label should not imply every permission. Mode-specific protections must explain scope and exceptions. More toggles are not automatically better: coherent, understandable bundles may provide clearer consent than a large unexplained configuration surface.
+
+<a id="trust-l002"></a>
+
+### Separate fictional adversity from failures of the service
+
+A permitted ambush is different from harassment, cheating, undisclosed rule changes or technical loss. Preserve clear reporting, exit, correction and recovery paths without pretending every disappointing encounter is abuse. Counts of enforcement actions need denominators and definitions before becoming prevalence claims. Safety and moderation are ongoing responsibilities, not proof that fictional conflict must be harmless or that open conflict permits real-world misconduct.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-trust) to locate rele
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** a host lets a guest use shared supplies but not alter the household's access rules. The guest sees what is permitted before committing an action, and revocation has a clear scope. In a competitive world, the host separately understands when property may be attacked and what happens offline. A technical permission defect is investigated and corrected rather than narrated as an acceptable betrayal. Fictional rulers do not acquire authority over human accounts or private data.
 
 ## Possible OpenLegend applications and limits
 
+Use the existing permission and continuity owners to evaluate a concrete shared-space situation. Do not create a second policy system here or assume Rust's social conflict is the desired baseline. NPC knowledge, human private data and authoring authority remain distinct.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Can participants accurately predict the consequences of entry, sharing, absence and revocation? Compare stated protections with actual failure handling. This research did not audit Rust server moderation, plugin security or enforcement outcomes.
 
 ## OpenLegend-specific research subtopics
 
