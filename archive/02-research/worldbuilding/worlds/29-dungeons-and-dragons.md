@@ -1,8 +1,8 @@
 # 29. Dungeons & Dragons: worlds made inhabitable through consequential differences
 
-Research and focused reassessment: 2026-09-27. This is an independent worldbuilding study, not a proposed ruleset or implementation specification. [Library](../README.md) · [Research method](../research-method.md) · [D&D game-research hub](../../game-inspiration/games/dungeons-and-dragons.md).
+Research and focused reassessment: 2026-09-27. Targeted completion pass: 2026-10-14. This is an independent worldbuilding study, not a proposed ruleset or implementation specification. [Library](../README.md) · [Research method](../research-method.md) · [D&D game-research hub](../../game-inspiration/games/dungeons-and-dragons.md) · [Supplementary planes and lived-magic study](../dungeons-and-dragons-planes-and-lived-magic.md).
 
-**Spoilers and scope:** discusses setting premises, institutions, named characters, religious uncertainty, and the destruction of Cyre. The added cases discuss the 2016 *Death House* adventure and a relationship in the 2023 film *Honor Among Thieves*. A published adventure's possible outcomes, a film's events, and a particular table's campaign are different evidence. The deepest lived-world evidence remains Eberron creator commentary. The 2025 Forgotten Realms publications provide a dated comparison; Greyhawk and Planescape remain more selective lenses. The closing record specifies what was actually read, rather than claiming a complete franchise or sourcebook audit.
+**Spoilers and scope:** discusses setting premises, institutions, named characters, religious uncertainty, and the destruction of Cyre. The added cases discuss the 2016 *Death House* adventure and a relationship in the 2023 film *Honor Among Thieves*. A published adventure's possible outcomes, a film's events, and a particular table's campaign are different evidence. The deepest lived-world evidence remains Eberron creator commentary. The 2025 Forgotten Realms publications provide a dated comparison; Greyhawk and Planescape remain more selective lenses, now supplemented by identified official articles rather than contents alone. The closing records specify what was actually read, rather than claiming a complete franchise or sourcebook audit.
 
 ## 1. D&D is not one world, and an edition is not a chronology
 
@@ -14,10 +14,10 @@ The contemporary-world anchor is the **2025 Forgotten Realms pair, Heroes of Fae
 
 | Selected setting | Central comparison | Evidence boundary |
 |---|---|---|
-| Forgotten Realms / Faerûn | An accumulated heroic world approached through regions, institutions, gods, goods, and character identities. | 2025 official contents and criticism; an older public cosmological explanation; the 2023 film as a separately identified screen work, not a complete gazetteer or novel audit. |
+| Forgotten Realms / Faerûn | An accumulated heroic world approached through regions, institutions, gods, goods, and character identities. | 2025 official contents and criticism; an older public cosmological explanation; the 2023 film as a separately identified screen work, not a complete gazetteer or novel audit. The linked supplementary lore study owns its later selected readings. |
 | Eberron / principally Khorvaire | Extraordinary powers reorganizing occupations, infrastructure, nations, class, faith, and belonging. | Substantive creator essays, with quoted published material distinguished from personal campaign proposals. |
-| Greyhawk | A bounded campaign example and urban foothold within a larger world. | 2024 DMG public contents/product scope, not its entire paid gazetteer. |
-| Planescape / Sigil and the Outlands | Cosmic scale encountered through a city, travel, factions, and access. | 2023 collection contents and artist testimony, not all planar books or *Planescape: Torment*. |
+| Greyhawk | A bounded campaign example and urban foothold within a larger world. | 2024 DMG contents and a substantive official account of its short adventures; neither the complete adventures nor the paid gazetteer was read. |
+| Planescape / Sigil and the Outlands | Cosmic scale encountered through a city, travel, factions, and access. | 2023 collection contents, artist testimony, a substantive official Sigil introduction, and one directly inspected street illustration; not all planar books or *Planescape: Torment*. |
 | Ravenloft / selected Domains of Dread | A place whose governing premise concentrates horror, power, and vulnerability. | 2021 guide's public structure, *Curse of Strahd*'s premise, and selected text from the free 2016 *Death House* adventure. |
 
 Dragonlance, Dark Sun, Mystara, Spelljammer, Exandria, and other worlds remain useful comparisons, but are not smuggled into this dossier as fully researched additional subjects.
@@ -138,11 +138,19 @@ The 2024 DMG's public contents place Greyhawk within campaign construction and i
 
 **Interpretation:** a bounded setting can orient participants, supply pressures, and leave room for choices without first explaining every king or century. That is a different promise from an encyclopedia, even where an encyclopedia exists elsewhere. Contents alone cannot establish whether its residents receive equally detailed lives.
 
+A more concrete case is **“Winged God,”** described in Riley Silverman's official guide to the DMG's Greyhawk-linked short adventures. The robbed merchant Nondy Barducks hires an escort toward Diamond Lake. Pursuing the kobolds and continuing the journey are offered as different approaches; the dragon displacing the kobolds complicates the initial account of the threat. The guide describes the setup and convergence on a lair, not a particular party's victory or the merchant's eventual prosperity. [W9]
+
+**Interpretation:** trade creates a reason to travel; hiring distributes expertise; displacement changes the explanation of a robbery without making the loss unreal. The case is more useful than a list of map locations, but it cannot establish all of Greyhawk's commercial life. The same guide's **“Boreal Ball”** offers dancing, mingling, and reputation at a Feywild gathering. That outward journey broadens the available activity; it is not proof that every Greyhawk town shares a fairy court's customs. [W9]
+
 ### Planescape: a vast cosmos with local addresses
 
 The 2023 collection separates Sigil, its wards and factions, portals, the Lady of Pain, the Outlands, and gate-towns. Named urban areas include the Hive, Lower, Market, Clerks', and Lady's Wards. This is an organizational map, not a reproduction of complete cosmology or faction doctrine. [W6]
 
 **Interpretation:** cosmic scale can become navigable through a street, contact, route, and immediate reason to go somewhere. Difference can concern access and affiliation rather than only lectures. The risk is making every philosophy a costume or every plane one mood; public contents cannot prove the book avoids those reductions. The Lady of Pain's mystery need not be resolved into either neighborly helpfulness or a conventional combat antagonist.
+
+Mike Bernier's official 2023 Sigil introduction makes the everyday invitation more specific: planar travelers share commerce, drink, and civic space, while industrial work, markets, prestige, and poverty differentiate the city. Its practical account of portals gives departure a condition beyond merely walking toward a distant horizon. This is an introductory portrayal, not an independently verified constitution or exhaustive travel rulebook. The article's exact ward inventory and exceptional transport claims are not needed for this comparison and are not generalized across editions. [W10]
+
+The accompanying **Terraform Studios street illustration** was directly inspected. An enclosed, receding street contains hanging textiles, containers, varied bodies, and figures occupying different parts of the route. Unfamiliar anatomy shares the frame with recognizable goods and circulation. **Interpretation:** the picture invites looking at an inhabited place rather than treating every unusual being as an opponent. It does not establish the pictured inhabitants' occupations, consent, private motives, or a census of harmonious coexistence. The [authorship essay](../authorship-medium-and-accessibility.md) owns the closer visual comparison. [W11]
 
 ### Ravenloft: concentrated emotional conditions
 
@@ -196,11 +204,11 @@ The cult's apparitions demand a sacrifice. Compliance permits departure; refusal
 
 For **2025 Forgotten Realms orientation**, the two books' contents lead toward a chosen region and institution. For **ordinary magic**, Baker's houses, education, rural-life, food, law, and faith essays provide complementary perspectives. For **character formation**, compare Krozen/Jaela, Oargev, and the gala with the film's bounded relationship. For **medium and emphasis**, compare Planescape's organization and artist testimony with the written horror encounter and differing responses to the film.
 
-These routes do not mean that all linked paid books were read. Complete chapters, novels, videos, comments, and actual-play recordings are separate evidence surfaces. Greyhawk and Planescape remain predominantly orientation-level comparisons; adding a detailed Barovian encounter does not retrospectively deepen their evidentiary base.
+These routes do not mean that all linked paid books were read. Complete chapters, novels, videos, comments, and actual-play recordings are separate evidence surfaces. Greyhawk and Planescape remain limited comparisons, though the October completion pass adds official encounter and city descriptions plus an inspected illustration. The later [planes and lived-magic study](../dungeons-and-dragons-planes-and-lived-magic.md) owns selected Realms lore, while the [complete-SRD synthesis](../../game-inspiration/mechanics/dungeons-and-dragons-srd-systems.md#16-source-coverage-limitations-and-corrections-to-the-earlier-pass) owns its separate uploaded-rules reading. Neither makes a rules corpus a substitute for a complete setting history.
 
 ### Annotated sources
 
-Initial retrievals and focused reassessment: 2026-09-27. Existing labels are preserved. A creator essay quoting an older book is not independent inspection of that entire book. R2–R6 identify the focused additions.
+Initial retrievals and focused reassessment: 2026-09-27. Existing labels are preserved. A creator essay quoting an older book is not independent inspection of that entire book. R2–R6 identify the focused additions; W9–W11 identify the targeted 2026-10-14 additions.
 
 - **W1 — [Wizards' SRD page](https://www.dndbeyond.com/srd):** dated naming/version observation owned by the companion current-edition dossier; not setting canon or a player census.
 - **W2 — [Forgotten Realms: Heroes of Faerûn](https://www.dndbeyond.com/sources/dnd/frhof):** 2025 contents; character, society, religion, magic, faction, and atlas coverage, not paid chapter bodies.
@@ -210,6 +218,9 @@ Initial retrievals and focused reassessment: 2026-09-27. Existing labels are pre
 - **W6 — [Planescape: Adventures in the Multiverse](https://www.dndbeyond.com/sources/dnd/paitm):** 2023 contents, not complete planar lore.
 - **W7 — [Van Richten's Guide to Ravenloft](https://www.dndbeyond.com/sources/dnd/vrgtr):** 2021 contents and genre/domain structure.
 - **W8 — [Curse of Strahd product page](https://marketplace.dndbeyond.com/adventures/curse-of-strahd):** promotional premise only, not a full adventure reading.
+- **W9 — [Riley Silverman, Journey Through These 5 Short Adventures in the 2024 Dungeon Master's Guide](https://www.dndbeyond.com/posts/1848-journey-through-these-5-short-adventures-in-the), 4 November 2024:** main official guide read, especially “Winged God” and “Boreal Ball”; summaries, not full adventures or observed play.
+- **W10 — [Mike Bernier, What to Know Before You Visit Sigil, the City at the Center of the Multiverse](https://www.dndbeyond.com/posts/1576-what-to-know-before-you-visit-sigil-the-city-at), 21 September 2023:** substantive official introduction read. Its ward inventory and exceptional travel formulations are not used as an edition-independent rules authority.
+- **W11 — [Terraform Studios, Sigil street illustration](https://www.dndbeyond.com/attachments/10/868/the-wards-of-sigil.jpg):** image linked and credited by W10, directly visually inspected. Visual composition is primary evidence for the presentation, not a record of an actual campaign or proof of unidentified figures' motives. No image is incorporated as a licensed project asset.
 - **E1 — [Dragonmarked Houses](https://keith-baker.com/dragonmarks-51-the-dragonmarked-houses/), Keith Baker, 1 May 2012:** institutions and magical production; historical edition and personal interpretations retained as such.
 - **E2 — [Magical Education](https://keith-baker.com/magical-education/), 27 March 2020:** professional/adventuring magic and training.
 - **E3 — [Rural Eberron](https://keith-baker.com/rural-eberron/), 10 April 2017:** creator elaboration of everyday applications and regional difference, not demographic measurement.
@@ -240,13 +251,13 @@ Initial retrievals and focused reassessment: 2026-09-27. Existing labels are pre
 | Entry, humor, wonder, pleasure, ambition | Sections 2, 4–6, 10–13; no uniform moral meaning assigned to an activity. |
 | History, memory, change | Section 7 and the distinct outcomes in section 12. |
 | Material life, bodies, work, class | Sections 4–7; no invented population quantities or universal sexual customs. |
-| Institutions, power, diplomacy, wrongdoing | Sections 5–8 and 12; successful provision and deliberate victimization remain distinct. |
+| Institutions, power, diplomacy, wrongdoing | Sections 5–8, 11–12; successful provision and deliberate victimization remain distinct. |
 | Religion, cosmology, death | Sections 8, 11–12; local metaphysical assumptions preserved. |
 | Language and communication | Section 9; registers distinguished from complete conlangs. |
-| Extraordinary conditions | Sections 4–5, 8–9, 12; power distinguished from access and authority. |
+| Extraordinary conditions | Sections 4–5, 8–9, 11–12; power distinguished from access and authority. |
 | Particular people and relationships | Section 10; creator interpretations separated from published screen events. |
-| Developed integrations | Section 12: recurring institution, film encounter, conditional adventure. No invented scene counts as retrieved evidence. |
-| Criticism and gaps | Sections 11, 13–14; orientation-level settings remain explicitly limited. |
+| Developed integrations | Section 11's bounded adventure setup and section 12's recurring institution, film encounter, and conditional adventure. No invented scene counts as retrieved evidence. |
+| Criticism and gaps | Sections 11, 13–14; limited setting coverage and visual evidence remain explicitly bounded. |
 
 ## Focused reassessment record — 2026-09-27
 
@@ -254,4 +265,10 @@ Initial retrievals and focused reassessment: 2026-09-27. Existing labels are pre
 
 **Actually consulted for this correction:** E5's main essay; R2's specified primary adventure text in HTML; R3's scene article; R4's selected editorial review; R5's substantive review; and R6's selected critical discussion. Earlier W, E, P, and R1 sources retain the original addition's reading claims; they were not all re-researched. Brief indexed film clips were not treated as a complete screenplay or viewing. Newly cited HTML pages were readable, but that is not an exhaustive recheck of the bibliography.
 
-**Unresolved evidence:** complete paid setting chapters, complete novels, a fresh film viewing, original screenplay access, adventure maps, and comprehensive production/reception history. Direct PDF access and a read-only local repository download failed. The new adventure case narrows the previous scene gap; it does not close the separate D&D packet's unfulfilled full-book or setting-specific acceptance gates. Greyhawk and Planescape remain selective orientation, not fully re-researched societies. The [adjudication study](../../game-inspiration/mechanics/dungeons-and-dragons-adjudication.md) continues to own project-facing work and was not changed by this correction.
+**Unresolved evidence at that checkpoint:** complete paid setting chapters, complete novels, a fresh film viewing, original screenplay access, adventure maps, and comprehensive production/reception history. Direct PDF access and a read-only local repository download failed. The new adventure case narrowed the previous scene gap; it did not close the separate D&D packet's unfulfilled full-book or setting-specific acceptance gates. Greyhawk and Planescape were selective orientation, not fully re-researched societies. The [adjudication study](../../game-inspiration/mechanics/dungeons-and-dragons-adjudication.md) continued to own project-facing work and was not changed by that correction.
+
+## Targeted completion record — 2026-10-14
+
+**Reviewed and changed:** reread the complete maintained dossier and preserved its existing cases, annotations, named people, and fourteen-section structure. Expanded section 11 using W9–W11, updated the scope and requirement map, and linked the already-existing lore and SRD studies instead of repeating their research. Their original reading claims remain their own; this pass did not reread the uploaded 364-page SRD.
+
+**Actually inspected:** the main W9 and W10 articles and W11's image. The 2024 DMG campaign chapter redirected to commercial access, and the 2023 Sigil chapter could not be retrieved. These are partial improvements over contents-only evidence, not completed paid-book or full-setting audits. An image establishes composition, not movement, sound, social statistics, or the private lives of every figure. Remaining high-value source checks are prioritized in the [source audit](../source-audit.md), not silently marked as passed.
