@@ -42,20 +42,15 @@ jobs:
           data = replace(world.read_text(), "import { activityHostPins } from '../../activity-hosts.js';", "import { activityHostPin, STOCK_ACTIVITY_HOST } from '../../activity-hosts.js';\nimport { BASE_FIRE_ACTIVITY_HOST } from './fire-activity.js';\nimport { BASE_CAMP_ACTIVITY_HOST } from './camp-activity.js';\nimport { BASE_OUTING_HOST } from './outing.js';\nimport { BASE_CANOPY_ACTIVITY_HOST } from './canopies.js';")
           data = replace(data, 'activityHostPins()', '[STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST, BASE_OUTING_HOST, BASE_CANOPY_ACTIVITY_HOST].map(activityHostPin)')
           world.write_text(data)
-          # Main's exact recipe offers replace the retired one-input shortcut.
           name = 'BASE_COOKING_PRESENTATION'
           readers = []
           for directory in [ROOT / 'apps', ROOT / 'packages']:
               for path in directory.rglob('*.ts*'):
                   if path.is_file() and name in path.read_text() and path.name != 'presentation.ts':
                       readers.append(path)
-                      print('COOKING_PRESENTATION_READER=' + str(path.relative_to(ROOT)))
-                      lines = path.read_text().splitlines()
-                      for i, line in enumerate(lines):
-                          if name in line:
-                              print('\n'.join(lines[max(0, i-4):i+5]))
-          assert all(path == ROOT / 'packages/domain/src/index.ts' for path in readers), 'A remaining cooking consumer needs explicit reconciliation.'
+          assert set(readers) == {ROOT / 'apps/server/src/action-catalogue.ts', ROOT / 'packages/domain/src/index.ts'}
           for path in readers:
+              assert path.read_text().count(name) == 1
               data, count = re.subn(r'^\s*BASE_COOKING_PRESENTATION,\n', '', path.read_text(), flags=re.M)
               assert count == 1
               path.write_text(data)
@@ -108,6 +103,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/ui-reconcile-publish.py
-      - name: Release isolated check environment
+      - name: Restore checkout environment
         if: always()
-        run: printf 'GIT_DIR=\nGIT_WORK_TREE=\nGIT_INDEX_FILE=\n' >> "$GITHUB_ENV"
+        run: printf 'GIT_DIR=%s/.git\nGIT_WORK_TREE=%s\nGIT_INDEX_FILE=%s/.git/index\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
