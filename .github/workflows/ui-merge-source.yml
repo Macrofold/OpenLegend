@@ -1,0 +1,54 @@
+name: UI merge source export
+on:
+  push:
+    branches: [docs/game-ui-research-redesign]
+    paths: [.github/workflows/ui-merge-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.repository == 'Macrofold/OpenLegend'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 121a8b0f3d9a90985313c06f54878ae46a65c7b3
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Export pinned tracked source and three-way comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=741e8cf7e0e3f4ab7b1eea47d32d33e5f483eda6
+          branch=121a8b0f3d9a90985313c06f54878ae46a65c7b3
+          main=7a576214fbb9891b2e9f742db56bbeccaa3a58a1
+          out="$RUNNER_TEMP/openlegend-merge-source"
+          mkdir -p "$out"
+          test "$(git merge-base "$branch" "$main")" = "$base"
+          test "$(git rev-parse "$branch:pnpm-lock.yaml")" = "$(git rev-parse "$main:pnpm-lock.yaml")"
+          for name in base branch main; do
+            ref=${!name}
+            git archive "$ref" | gzip > "$out/$name.tar.gz"
+            git ls-tree -r "$ref" > "$out/$name.tree"
+          done
+          status=0
+          git merge-tree --write-tree "$branch" "$main" > "$out/merge-tree.txt" || status=$?
+          test "$status" -le 1
+          tree=$(head -n 1 "$out/merge-tree.txt")
+          git archive "$tree" | gzip > "$out/candidate.tar.gz"
+          git ls-tree -r "$tree" > "$out/candidate.tree"
+          { printf 'node_modules\0'; find apps packages -maxdepth 2 -type d -name node_modules -print0; } | tar --null -T - -czf "$out/dependencies.tar.gz"
+          (cd "$out" && sha256sum *.tar.gz *.tree merge-tree.txt > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openlegend-ui-merge-source
+          path: ${{ runner.temp }}/openlegend-merge-source/
+          compression-level: 0
+          retention-days: 1
