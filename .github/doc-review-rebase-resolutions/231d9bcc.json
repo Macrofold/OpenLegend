@@ -1,0 +1,22 @@
+{
+  "resolutions": {
+    "231d9bccf68f75302f4d5e9f2c6f88ed08fb01e7:docs/projects/embodied-survival-feature-spec.md:27d8e791d52e1561ba9f095718627a1881a4ddcb:1de1c536789b1e44dfde22727d0c65766d47db5b:e9f62f1e20b66cf16041d445518c2fc43d96b785": {
+      "before_sha256": "97587d740fdc69c703289f100dd1f804036ee965b84073312a0faab56040b48c",
+      "after_sha256": "bd362426be00c82d04a14572ae1bee2964136267671ba55d26e95b923728d605",
+      "blocks": [{"sha256": "4d6718598a3bb7b28cc43885424d31021b79017c3c77764f419025a0970c3eb1", "parts": [1]}],
+      "replacements": [
+        ["Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open.", "Chosen survival, real meals and compatible equipment are delivered; broader behavioral, interface and population qualification remains open."],
+        ["| 2026-10-07   |", "| 2026-10-14   |"]
+      ]
+    },
+    "231d9bccf68f75302f4d5e9f2c6f88ed08fb01e7:docs/projects/embodied-survival-tech-design.md:80914f54946fe267ae23ca3f56710e216f1f059b:abe5866db5a4f7876b71ca0237877e79b46dadb1:5058ede135d7b4adf08d8159bf578bf485e9e49b": {
+      "before_sha256": "8020595e7be556b36003a8597b26c157a8b9e9a7d6c0b4b00d3a3697304be79c",
+      "after_sha256": "c813ae0aa8b394634dfb0eecea6b8bc3a28c852bd0506930280fc9ec667c6a5d",
+      "blocks": [{"sha256": "be160aeaf041cec3edeaac2bc189c51729428b102458eeb581dafb5caffff0ad", "parts": [1]}],
+      "replacements": [
+        ["Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open.", "Chosen survival, real meals and compatible equipment are delivered; broader behavioral, interface and population qualification remains open."],
+        ["| 2026-10-07   |", "| 2026-10-14   |"]
+      ]
+    }
+  }
+}
