@@ -4,7 +4,7 @@ on:
     branches: [docs/game-ui-research-redesign]
     paths: [.github/workflows/ui-merge-source.yml, .github/scripts/ui-reconcile.py]
 permissions:
-  contents: read
+  contents: write
 jobs:
   reconcile:
     if: github.repository == 'Macrofold/OpenLegend'
@@ -63,6 +63,24 @@ jobs:
           data = replace(agent.read_text(), 'create(true)', "create('invention')")
           data = replace(data, "(inventionTarget === active ? 'New invention' : 'New conversation')", "(inventionTarget === active ? 'New invention' : creationTarget?.id === active ? 'New world' : 'New conversation')")
           agent.write_text(data)
+          inventory = ROOT / 'apps/client/src/ui/inventory.tsx'
+          native = source(MAIN, 'apps/client/src/ui/inventory.tsx')
+          truncated = re.search(r'(\s*\{item\.recipeRecord && \(.*?\n\s*\)\})', native, re.S).group(1)
+          complete = between(native, '                  {item.recipeRecord && (', '                  <div className="ol-traits">')
+          inventory.write_text(replace(inventory.read_text(), truncated, '\n' + complete))
+          review = ROOT / 'apps/client/src/ui/world-agent-review.tsx'
+          data = replace(review.read_text(), "{plan.kind === 'creation' ? 'Review and start this world' : 'Review exact change'}", "{review?.plan.creation ? 'Review and start this world' : 'Review exact change'}")
+          duplicates = list(re.finditer(r'<WorldAgentPreparationDetails\b.*?/>', data, re.S))
+          if len(duplicates) == 2:
+              assert re.sub(r'\s+', ' ', duplicates[0].group()) == re.sub(r'\s+', ' ', duplicates[1].group())
+              data = data[:duplicates[1].start()] + data[duplicates[1].end():]
+          review.write_text(data)
+          events = ROOT / 'apps/client/src/ui/world-events.tsx'
+          data = events.read_text()
+          data = replace(data, '  async function load(older = false) {', '  async function load(older = false) {\n    if (!visible) return;')
+          data = replace(data, '    setCursor(undefined);\n    void load();', '    setCursor(undefined);\n    loadedQuery.current = null;')
+          data = replace(data, '  }, [scope, type, query]);', '  }, [scope, type, query]);\n  useEffect(() => {\n    if (visible && loadedQuery.current !== query) void load();\n  }, [visible, scope, type, query]);')
+          events.write_text(data)
           Path(os.environ['RUNNER_TEMP'], 'ui-resolved-paths.txt').write_text('\n'.join([*DECISIONS, 'packages/domain/src/worlds/base/presentation.ts']) + '\n')
           PY
       - uses: pnpm/action-setup@v4
@@ -79,19 +97,23 @@ jobs:
       - name: Check reconciled current contracts
         working-directory: ${{ runner.temp }}/ui-reconciled
         run: pnpm run check > "$RUNNER_TEMP/ui-check.log" 2>&1 || { tail -160 "$RUNNER_TEMP/ui-check.log"; exit 1; }
+      - name: Publish checked tree without changing branch refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/ui-reconcile-publish.py
       - name: Report candidate checks and bounded source
         if: always()
         shell: bash
         run: |
-          test ! -f "$RUNNER_TEMP/ui-check.log" || tail -100 "$RUNNER_TEMP/ui-check.log"
+          test ! -f "$RUNNER_TEMP/ui-check.log" || tail -110 "$RUNNER_TEMP/ui-check.log"
           python3 - <<'PY'
           import os
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'], 'ui-reconciled')
           for relative, ranges in {
-              'apps/client/src/ui/world-agent.tsx': [(300, 380)],
-              'apps/client/src/ui/world-agent-review.tsx': [(270, 360)],
-              'apps/client/src/ui/world-events.tsx': [(265, 345)],
+              'apps/client/src/ui/inventory.tsx': [(1140, 1235)],
+              'apps/client/src/ui/world-agent-review.tsx': [(390, 470)],
+              'apps/client/src/ui/world-agent-session.tsx': [(500, 565)],
           }.items():
               path = root / relative
               if path.exists():
