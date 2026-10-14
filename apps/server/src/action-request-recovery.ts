@@ -45,21 +45,34 @@ export async function recoverPlayerAction(
   service.assertScope(authority, 'play');
   const scope = scopeKey(authority);
   if (request.timeline !== service.timelineId)
-    return { ok: false, code: 'stale-world', message: 'This action belongs to an earlier world timeline.' };
+    return {
+      ok: false,
+      code: 'stale-world',
+      message: 'This action belongs to an earlier world timeline.',
+    };
   const identity = playerActionIdentity(service.world.id, request.timeline, authority, request);
   const job = await service.store.getJob(identity.id);
   service.assertScope(authority, 'play');
   if (request.timeline !== service.timelineId)
-    return { ok: false, code: 'stale-world', message: 'The world changed while checking the action.' };
+    return {
+      ok: false,
+      code: 'stale-world',
+      message: 'The world changed while checking the action.',
+    };
   if (!job)
     return {
       ok: true,
       scope,
       status: 'unknown',
-      message: 'The original action has no confirmed record yet. Nothing was resubmitted. Check again after the connection settles.',
+      message:
+        'The original action has no confirmed record yet. Nothing was resubmitted. Check again after the connection settles.',
     };
   if (job.kind !== 'action' || job.fingerprint !== identity.fingerprint)
-    return { ok: false, code: 'idempotency-conflict', message: 'The saved action does not match that original request. Nothing was resubmitted.' };
+    return {
+      ok: false,
+      code: 'idempotency-conflict',
+      message: 'The saved action does not match that original request. Nothing was resubmitted.',
+    };
   return {
     ok: true,
     scope,

@@ -21,3 +21,11 @@ export type RequestRecoveryResult =
 export type CheckpointRequest =
   | { operation: 'create'; requestId: string; label: string; timeline: string }
   | { operation: 'load'; requestId: string; saveId: string; label: string; timeline: string };
+
+/** The recovery namespace survives a checkpoint's own timeline replacement, but not a
+ * different account, session, grant, character or audience. It grants no authority. */
+export interface CheckpointContext {
+  scope: string;
+  recoveryScope: string;
+  timeline: string;
+}

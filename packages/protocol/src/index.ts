@@ -1,3 +1,8 @@
+export type {
+  RequestRecoveryResult,
+  CheckpointRequest,
+  CheckpointContext,
+} from './request-recovery.js';
 import type { ConstructionPlan, AssemblyView } from './construction.js';
 export * from './construction.js';
 import type { Named } from '@open-legend/language';
@@ -685,6 +690,7 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  checkpoint?: import('./request-recovery.js').CheckpointContext;
   access?: {
     scope: string;
     /** Native private-draft namespace; not a request token or permission. */
@@ -1431,6 +1437,7 @@ export interface InviteView {
 }
 
 export interface OperationsView {
+  checkpoint?: import('./request-recovery.js').CheckpointContext;
   ok: true;
   worldId: string;
   accountId: string;

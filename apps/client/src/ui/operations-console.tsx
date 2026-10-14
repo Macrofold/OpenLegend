@@ -280,7 +280,14 @@ export function OperationsConsole() {
                 className="ol-operations-task-panel ol-card ol-operations-card"
                 shouldForceMount
               >
-                <GameSavesPanel visible={selectedTask === 'checkpoints'} timeDisplay="elapsed" />
+                {view.checkpoint && (
+                  <GameSavesPanel
+                    key={view.checkpoint.recoveryScope}
+                    context={view.checkpoint}
+                    visible={selectedTask === 'checkpoints'}
+                    timeDisplay="elapsed"
+                  />
+                )}
               </TabPanel>
             )}
           </Tabs>

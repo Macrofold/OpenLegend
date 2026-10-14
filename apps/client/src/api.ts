@@ -1,3 +1,4 @@
+import { pruneCheckpointRequests } from './retained-request';
 import type {
   ApiResult,
   GamePatch,
@@ -38,7 +39,10 @@ export class WorldCreationHostError extends Error {
 }
 /** A restore is still replacing the world; entry must wait for a fresh view. */
 export class WorldLoadingError extends Error {}
-function clearSessionDrafts(preservePendingCommands = false): void {
+function clearSessionDrafts(
+  preservePendingCommands = false,
+  preserveCheckpointResults = false,
+): void {
   try {
     for (const key of Object.keys(sessionStorage))
       if (
@@ -46,7 +50,11 @@ function clearSessionDrafts(preservePendingCommands = false): void {
         key.startsWith('open-legend:action-draft:') ||
         key.startsWith('open-legend:creation-request:') ||
         (!preservePendingCommands &&
-          (key.startsWith('open-legend:inventory-command:') ||
+          !preserveCheckpointResults &&
+          key.startsWith('open-legend:checkpoint-request:')) ||
+        (!preservePendingCommands &&
+          (key.startsWith('open-legend:action-request:') ||
+            key.startsWith('open-legend:inventory-command:') ||
             key.startsWith('open-legend:activity-command:')))
       )
         sessionStorage.removeItem(key);
@@ -97,6 +105,7 @@ export function acceptAccess(view: GameView): void {
   )
     clearTradeDrafts();
   privateDraftNamespace = view.access?.privateDraftScope ?? '';
+  pruneCheckpointRequests(view.checkpoint?.recoveryScope);
   privateDraftTimeline = view.saveTimeline ?? '';
   const owner = JSON.stringify([
     view.worldId,
@@ -110,7 +119,9 @@ export function acceptAccess(view: GameView): void {
     const previousTimeline = sessionStorage.getItem(timelineKey);
     if (previousOwner !== owner || (previousTimeline && previousTimeline !== view.saveTimeline)) {
       clearTradeDrafts();
-      clearSessionDrafts();
+      // A load can itself replace the timeline. Keep only the same owner's read-only
+      // checkpoint outcome description; never restore an executable old-world request.
+      clearSessionDrafts(false, true);
     }
     sessionStorage.setItem('open-legend:private-owner', owner);
     if (view.saveTimeline) sessionStorage.setItem(timelineKey, view.saveTimeline);
@@ -254,6 +265,7 @@ export async function getOperations(): Promise<OperationsView> {
   if (!response.ok || !result.ok)
     throw new Error(result.message ?? 'World operations could not be loaded. Try again.');
   const view = result as OperationsView;
+  pruneCheckpointRequests(view.checkpoint?.recoveryScope);
   // Mutations carry this audience; a changed scope or world generation invalidates in-flight work.
   if (view.generation !== worldGeneration || view.scope !== viewScope) {
     accessGeneration++;

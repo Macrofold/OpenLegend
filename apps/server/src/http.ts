@@ -1,3 +1,4 @@
+import { recoverPlayerAction } from './action-request-recovery.js';
 import { constructionPlanSchema } from './construction.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
@@ -1389,6 +1390,20 @@ async function initializeGameServer(
           });
         const dispatch = async () => {
           switch (url.pathname) {
+            case '/api/action-attempt/receipt': {
+              const value = z
+                .object({
+                  requestId: requestIdSchema,
+                  timeline: requestIdSchema,
+                  text: z.string().trim().min(1).max(500),
+                  targetId: requestIdSchema.optional(),
+                  mode: z.enum(['enqueue', 'replace', 'interrupt']),
+                  slots: intentSlotsSchema.optional(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, await recoverPlayerAction(service, scope, value));
+            }
             case '/api/action-attempt': {
               const value = z
                 .object({
@@ -1471,6 +1486,86 @@ async function initializeGameServer(
                   ? 'Checkpoint failure acknowledged.'
                   : 'That failure was already acknowledged or replaced by a newer one.',
                 autosaves: await autosaves.status(),
+              });
+            }
+            case '/api/saves/receipt': {
+              const value = z
+                .discriminatedUnion('operation', [
+                  z
+                    .object({
+                      operation: z.literal('create'),
+                      requestId: z.string().uuid(),
+                      label: z.string().trim().min(1).max(80),
+                      timeline: requestIdSchema,
+                    })
+                    .strict(),
+                  z
+                    .object({
+                      operation: z.literal('load'),
+                      requestId: z.string().uuid(),
+                      saveId: requestIdSchema,
+                      label: z.string().min(1).max(80),
+                      timeline: requestIdSchema,
+                    })
+                    .strict(),
+                ])
+                .parse(body);
+              service.assertScope(scope, 'save');
+              if (value.operation === 'create') {
+                if (!store.saves) throw new GameSaveError('Checkpoints are unavailable.');
+                const status = await store.saves.creationResult(
+                  service.world.id,
+                  value.requestId,
+                  value.label,
+                );
+                service.assertScope(scope, 'save');
+                const message =
+                  status === 'resolved'
+                    ? 'The original checkpoint was created.'
+                    : status === 'pending'
+                      ? 'The original checkpoint is still being created. Nothing was resubmitted.'
+                      : 'The original checkpoint has no confirmed published result. Nothing was resubmitted.';
+                return send(response, 200, {
+                  ok: true,
+                  scope: scopeKey(scope),
+                  status,
+                  message,
+                  ...(status === 'resolved'
+                    ? { result: { ok: true, code: 'saved', message } }
+                    : {}),
+                });
+              }
+              const prior = (await store.getIntegration(`load-request:${value.requestId}`)) as
+                | { saveId: string }
+                | undefined;
+              service.assertScope(scope, 'save');
+              if (prior && prior.saveId !== value.saveId)
+                return send(response, 409, {
+                  ok: false,
+                  code: 'idempotency-conflict',
+                  message: 'The saved checkpoint does not match the original load request.',
+                });
+              if (!prior)
+                return send(response, 200, {
+                  ok: true,
+                  scope: scopeKey(scope),
+                  status: 'unknown',
+                  message:
+                    'The original load has no confirmed installation record. Nothing was loaded again.',
+                });
+              const message = service.storageError
+                ? `The original load was installed, but saving still needs attention: ${service.storageError}`
+                : 'The original load was installed. No checkpoint was loaded again and its protection was not replaced.';
+              return send(response, 200, {
+                ok: true,
+                scope: scopeKey(scope),
+                status: 'resolved',
+                message,
+                result: {
+                  ok: !service.storageError,
+                  code: service.storageError ? 'storage' : 'loaded',
+                  message,
+                },
               });
             }
             case '/api/saves/create': {
@@ -3129,6 +3224,7 @@ async function initializeGameServer(
         // point, so they run fenced in the lane and are ordered after any revocation.
         return [
           '/api/saves/list',
+          '/api/saves/receipt',
           '/api/saves/load',
           '/api/saves/create',
           '/api/saves/delete',

@@ -31,7 +31,8 @@ export function retainRequest<T extends { requestId: string }>(
   if (sessionStorage.getItem(key) !== null)
     throw new Error('Check the original request before sending another one. Nothing was sent.');
   const text = JSON.stringify(request);
-  if (text.length > 8192) throw new Error('The recovery description is too large. Nothing was sent.');
+  if (text.length > 8192)
+    throw new Error('The recovery description is too large. Nothing was sent.');
   sessionStorage.setItem(key, text);
   if (sessionStorage.getItem(key) !== text)
     throw new Error('This browser could not retain the request. Nothing was sent.');
@@ -57,4 +58,19 @@ export function releaseRequest(key: string | undefined, requestId: string): void
 
 export function boundedText(value: unknown, maximum: number): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= maximum;
+}
+
+/** One retained checkpoint operation for the native account/session/grant/character scope. */
+export const checkpointRequestKey = (scope: string) => `open-legend:checkpoint-request:${scope}`;
+
+/** Scope adoption is independent of unrelated draft markers or storage areas. */
+export function pruneCheckpointRequests(scope: string | undefined): void {
+  try {
+    const keep = scope ? checkpointRequestKey(scope) : undefined;
+    for (const key of Object.keys(sessionStorage))
+      if (key.startsWith('open-legend:checkpoint-request:') && key !== keep)
+        sessionStorage.removeItem(key);
+  } catch {
+    // Inaccessible storage never grants permission to submit or disclose a retained request.
+  }
 }

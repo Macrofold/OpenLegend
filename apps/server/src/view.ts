@@ -55,6 +55,7 @@ import {
 import { worldPosition, worldSupport } from '@open-legend/domain';
 import {
   commandRecoveryScopeKey,
+  checkpointRecoveryScopeKey,
   privateDraftScopeKey,
   scopeKey,
   type RequestScope,
@@ -1115,6 +1116,13 @@ export async function projectView(
   const guide = perceptionGuide(world, player);
   return {
     schemaVersion: 2,
+    checkpoint: service.mayManageSaves(scope)
+      ? {
+          scope: scopeKey(scope),
+          recoveryScope: checkpointRecoveryScopeKey(scope),
+          timeline: service.timelineId,
+        }
+      : undefined,
     access: {
       scope: scopeKey(scope),
       privateDraftScope: privateDraftScopeKey(scope),

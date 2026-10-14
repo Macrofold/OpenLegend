@@ -1,3 +1,17 @@
+import {
+  checkpointRequestKey,
+  boundedText,
+  readRetainedRequest,
+  retainRequest,
+  releaseRequest,
+  type RetainedRequest,
+} from '../retained-request';
+import type {
+  ApiResult,
+  CheckpointContext,
+  CheckpointRequest,
+  RequestRecoveryResult,
+} from '@open-legend/protocol';
 import { EventTime } from './event-time';
 import { useEffect, useRef, useState } from 'react';
 import type {
@@ -9,6 +23,21 @@ import type {
 import { post } from '../api';
 import { Button, Section } from '../design-system/components';
 import './lifecycle.css';
+
+function validCheckpointRequest(value: unknown): value is CheckpointRequest {
+  if (!value || typeof value !== 'object') return false;
+  return (
+    'requestId' in value &&
+    boundedText(value.requestId, 200) &&
+    'label' in value &&
+    boundedText(value.label, 80) &&
+    'timeline' in value &&
+    boundedText(value.timeline, 200) &&
+    'operation' in value &&
+    (value.operation === 'create' ||
+      (value.operation === 'load' && 'saveId' in value && boundedText(value.saveId, 200)))
+  );
+}
 
 type SettingsDraft = { enabled: boolean; intervalMinutes: string; retain: string };
 const settingsDraft = (settings: AutosaveSettings): SettingsDraft => ({
@@ -30,12 +59,33 @@ const bytesLabel = (bytes: number) =>
       : `${Math.ceil(bytes / 1024)} KB`;
 
 export function GameSavesPanel({
+  context,
   visible = true,
   timeDisplay = 'world-clock',
 }: {
+  context: CheckpointContext;
   visible?: boolean;
   timeDisplay?: 'world-clock' | 'elapsed';
 }) {
+  const recoveryKey = checkpointRequestKey(context.recoveryScope);
+  const [retained, setRetained] = useState<RetainedRequest<CheckpointRequest>>(() =>
+    readRetainedRequest(recoveryKey, validCheckpointRequest),
+  );
+  const pending = useRef(retained);
+  const mutationActive = useRef(false);
+  const alive = useRef(true);
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  function remember(next: RetainedRequest<CheckpointRequest>) {
+    pending.current = next;
+    setRetained(next);
+  }
+  const pendingRequest = retained.status === 'pending' ? retained.request : undefined;
   const [saves, setSaves] = useState<GameSaveSummary[]>([]);
   const [autosaves, setAutosaves] = useState<AutosaveStatus>();
   const [next, setNext] = useState<GameSaveCatalog['next']>();
@@ -57,11 +107,8 @@ export function GameSavesPanel({
     save: GameSaveSummary;
     action: 'load' | 'delete';
   } | null>(null);
-  const loadRequest = useRef<{ id: string; requestId: string } | null>(null);
-  const createRequest = useRef<{ id: string; label: string } | null>(null);
-  const [createUncertain, setCreateUncertain] = useState(false);
   const [rowUncertain, setRowUncertain] = useState<{
-    action: 'load' | 'delete';
+    action: 'delete';
     save: GameSaveSummary;
   }>();
   const confirmation = useRef<HTMLDivElement>(null);
@@ -76,7 +123,7 @@ export function GameSavesPanel({
   draftRef.current = draft;
   const draftBaseRef = useRef(draftBase);
   draftBaseRef.current = draftBase;
-  const busy = listing || creating || rowBusy;
+  const busy = listing || creating || rowBusy || checking;
   function adopt(status: AutosaveStatus) {
     setAutosaves(status);
     // Keep an operator's unsaved edits unless the stored settings changed since the edit began;
@@ -135,73 +182,157 @@ export function GameSavesPanel({
         catalogControls.current?.querySelector('button')?.focus();
     });
   }
+  function settle(result: ApiResult, request: CheckpointRequest) {
+    if (
+      !alive.current ||
+      pending.current.status !== 'pending' ||
+      pending.current.request.requestId !== request.requestId
+    )
+      return;
+    releaseRequest(recoveryKey, request.requestId);
+    remember({ status: 'empty' });
+    setConfirm(null);
+    if (request.operation === 'create') setLabel('');
+    setMessage(result.message);
+  }
   async function create() {
-    if (creating || rowBusy || rowUncertain) return;
+    if (mutationActive.current || pending.current.status !== 'empty' || rowUncertain) return;
+    mutationActive.current = true;
     catalogRequest.current++;
     setCreating(true);
     setMessage('');
+    const request: CheckpointRequest = {
+      operation: 'create',
+      requestId: crypto.randomUUID(),
+      label: label.trim() || 'Manual save',
+      timeline: context.timeline,
+    };
     try {
-      createRequest.current ??= { id: crypto.randomUUID(), label: label.trim() || 'Manual save' };
-      const result = await post('/api/saves/create', createRequest.current);
-      if (!result.ok) {
-        // A later refusal (for example lost permission) does not establish what happened to an
-        // earlier unconfirmed request. Keep that exact request until its result is acknowledged.
-        if (!createUncertain) createRequest.current = null;
-        setMessage(result.message || 'The checkpoint was not created.');
-        await refresh();
-        return;
-      }
-      setCreateUncertain(false);
-      createRequest.current = null;
-      setLabel('');
-      setMessage(result.message ?? 'Checkpoint created.');
+      retainRequest(recoveryKey, request);
+      remember({ status: 'pending', request });
+      const result = await post('/api/saves/create', {
+        id: request.requestId,
+        label: request.label,
+      });
+      if (!alive.current) return;
+      if (result.ok || ['busy', 'invalid-input', 'loading', 'deferred'].includes(result.code))
+        settle(result, request);
+      else setMessage(result.message || 'The original checkpoint result is not confirmed.');
       await refresh();
     } catch (error) {
-      // Keep the request identity: retrying the same save cannot create a duplicate.
-      setCreateUncertain(true);
-      setMessage(
-        error instanceof Error ? error.message : 'The checkpoint result was not confirmed.',
-      );
-      await refresh();
+      if (alive.current) {
+        if (pending.current.status === 'empty')
+          remember(readRetainedRequest(recoveryKey, validCheckpointRequest));
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : 'The original checkpoint result is not confirmed.',
+        );
+        await refresh();
+      }
     } finally {
-      setCreating(false);
+      mutationActive.current = false;
+      if (alive.current) setCreating(false);
     }
   }
   async function run(action: 'load' | 'delete', save: GameSaveSummary) {
-    if (creating || rowBusy || createUncertain) return;
+    if (
+      mutationActive.current ||
+      pending.current.status !== 'empty' ||
+      (rowUncertain && (action !== 'delete' || rowUncertain.save.id !== save.id))
+    )
+      return;
+    mutationActive.current = true;
     catalogRequest.current++;
     setRowBusy(true);
     setMessage('');
+    const request: CheckpointRequest | undefined =
+      action === 'load'
+        ? {
+            operation: 'load',
+            requestId: crypto.randomUUID(),
+            saveId: save.id,
+            label: save.label,
+            timeline: context.timeline,
+          }
+        : undefined;
     try {
-      if (action === 'load' && loadRequest.current?.id !== save.id)
-        loadRequest.current = { id: save.id, requestId: crypto.randomUUID() };
+      if (request) {
+        retainRequest(recoveryKey, request);
+        remember({ status: 'pending', request });
+      }
       const result = await post(
         `/api/saves/${action}`,
-        action === 'load' ? loadRequest.current : { id: save.id },
+        request ? { id: save.id, requestId: request.requestId } : { id: save.id },
       );
+      if (!alive.current) return;
       if (!result.ok) {
-        setMessage(result.message || 'The checkpoint operation was not accepted.');
+        if (request && ['invalid-input', 'loading', 'deferred'].includes(result.code))
+          settle(result, request);
+        else setMessage(result.message || 'The original checkpoint operation is not confirmed.');
         await refresh();
         return;
       }
-      setRowUncertain(undefined);
-      if (action === 'load') {
+      if (request) {
+        settle(result, request);
         window.location.reload();
         return;
       }
+      setRowUncertain(undefined);
       setConfirm(null);
       setMessage(result.message ?? 'Done.');
       await refresh();
       restoreCatalogFocus();
     } catch (error) {
-      setRowUncertain({ action, save });
-      setMessage(
-        error instanceof Error ? error.message : 'The checkpoint operation was not confirmed.',
-      );
-      // A refused load records a checkpoint failure; show it without a manual refresh.
-      await refresh();
+      if (alive.current) {
+        if (!request) setRowUncertain({ action: 'delete', save });
+        else if (pending.current.status === 'empty')
+          remember(readRetainedRequest(recoveryKey, validCheckpointRequest));
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : 'The original checkpoint operation is not confirmed.',
+        );
+        await refresh();
+      }
     } finally {
-      setRowBusy(false);
+      mutationActive.current = false;
+      if (alive.current) setRowBusy(false);
+    }
+  }
+  async function checkOriginalCheckpoint() {
+    if (mutationActive.current || pending.current.status !== 'pending') return;
+    const request = pending.current.request;
+    mutationActive.current = true;
+    setChecking(true);
+    try {
+      const result = await post<RequestRecoveryResult>('/api/saves/receipt', request);
+      if (
+        !alive.current ||
+        pending.current.status !== 'pending' ||
+        pending.current.request.requestId !== request.requestId
+      )
+        return;
+      if (!result.ok) {
+        setMessage(result.message);
+        return;
+      }
+      if (result.scope !== context.scope)
+        throw new Error('Checkpoint access changed. Refresh before checking the original result.');
+      if (result.status === 'resolved') {
+        settle(result.result, request);
+        await refresh();
+      } else setMessage(result.message);
+    } catch (error) {
+      if (alive.current)
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : 'The original checkpoint result is still unknown.',
+        );
+    } finally {
+      mutationActive.current = false;
+      if (alive.current) setChecking(false);
     }
   }
   async function saveSettings() {
@@ -261,7 +392,7 @@ export function GameSavesPanel({
     Number.isInteger(Number(draft.retain)) &&
     Number(draft.retain) >= 1 &&
     Number(draft.retain) <= 20;
-  const unresolved = createUncertain || !!rowUncertain;
+  const unresolved = retained.status !== 'empty' || !!rowUncertain;
   return (
     <div className="ol-checkpoints">
       <Section title="Checkpoints">
@@ -297,31 +428,39 @@ export function GameSavesPanel({
         {unresolved && (
           <div className="ol-notice" role="alert">
             <strong>Checkpoint result not confirmed</strong>
-            {rowUncertain ? (
+            {pendingRequest ? (
               <>
                 <p>
-                  {rowUncertain.action === 'load' ? 'Loading' : 'Deleting'} “
-                  {rowUncertain.save.label}” did not return a confirmed result. The world or
-                  checkpoint may already have changed.
+                  {pendingRequest.operation === 'load' ? 'Loading' : 'Creating'} “
+                  {pendingRequest.label}” has an unresolved original request.
                 </p>
                 <Button
-                  busy={rowBusy}
-                  onPress={() => void run(rowUncertain.action, rowUncertain.save)}
+                  busy={checking}
+                  disabled={creating || rowBusy}
+                  onPress={() => void checkOriginalCheckpoint()}
                 >
-                  Retry the same {rowUncertain.action}
+                  Check original checkpoint result
                 </Button>
+                <p className="ol-caption">
+                  Checking does not create or load a checkpoint again. Your original protection
+                  checkpoint is not replaced.
+                </p>
               </>
-            ) : (
+            ) : retained.status === 'unreadable' ? (
+              <p>
+                This browser could not read its retained checkpoint request. Restore browser storage
+                access and reload before making another checkpoint change.
+              </p>
+            ) : rowUncertain ? (
               <>
-                <p>Creating “{createRequest.current?.label}” did not return a confirmed result.</p>
-                <Button busy={creating} onPress={() => void create()}>
-                  Retry the same checkpoint
+                <p>Deleting “{rowUncertain.save.label}” did not return a confirmed result.</p>
+                <Button busy={rowBusy} onPress={() => void run('delete', rowUncertain.save)}>
+                  Retry the same delete
                 </Button>
               </>
-            )}
+            ) : null}
             <p className="ol-caption">
-              Retry keeps the original request and checkpoint identity. It is not a new save or a
-              different load. Other checkpoint changes wait for this result.
+              Other checkpoint changes wait until the original result is known.
             </p>
           </div>
         )}
@@ -335,7 +474,6 @@ export function GameSavesPanel({
               disabled={creating || unresolved}
               onChange={(event) => {
                 setLabel(event.target.value);
-                createRequest.current = null;
               }}
               placeholder="Manual save"
             />
@@ -351,7 +489,7 @@ export function GameSavesPanel({
         </div>
         {creating && (
           <p role="status">
-            Creating “{createRequest.current?.label ?? (label.trim() || 'Manual save')}”… If another
+            Creating “{pendingRequest?.label ?? (label.trim() || 'Manual save')}”… If another
             checkpoint is running, this one starts after it.
           </p>
         )}

@@ -1,3 +1,11 @@
+import {
+  boundedText,
+  readRetainedRequest,
+  retainRequest,
+  releaseRequest,
+  type RetainedRequest,
+} from '../retained-request';
+import type { ApiResult, RequestRecoveryResult } from '@open-legend/protocol';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { EntityView, GameView, WorkState, WorkStepView } from '@open-legend/protocol';
 import { post } from '../api';
@@ -6,6 +14,27 @@ import { Button, IconButton, Section, Tag } from '../design-system/components';
 import './character-actions.css';
 
 type Mode = 'enqueue' | 'replace' | 'interrupt';
+type PendingAction = {
+  requestId: string;
+  text: string;
+  mode: Mode;
+  targetId?: string;
+  timeline: string;
+};
+function validPendingAction(value: unknown): value is PendingAction {
+  if (!value || typeof value !== 'object') return false;
+  return (
+    'requestId' in value &&
+    boundedText(value.requestId, 200) &&
+    'text' in value &&
+    boundedText(value.text, 500) &&
+    'mode' in value &&
+    ['enqueue', 'replace', 'interrupt'].includes(String(value.mode)) &&
+    'timeline' in value &&
+    boundedText(value.timeline, 200) &&
+    (!('targetId' in value) || value.targetId === undefined || boundedText(value.targetId, 200))
+  );
+}
 const STATE_LABELS: Record<WorkState, [string, string]> = {
   queued: ['Queued', 'neutral'],
   running: ['Running', 'accent'],
@@ -69,6 +98,18 @@ export function ActionAttempts({
   visible?: boolean;
   children?: ReactNode;
 }) {
+  const recoveryKey =
+    view.access?.privateDraftScope && view.saveTimeline
+      ? `open-legend:action-request:${JSON.stringify([view.access.privateDraftScope, view.worldId, view.player.id, view.saveTimeline])}`
+      : undefined;
+  const [retained, setRetained] = useState<RetainedRequest<PendingAction>>(() =>
+    readRetainedRequest(recoveryKey, validPendingAction),
+  );
+  const retainedRef = useRef(retained);
+  function remember(next: RetainedRequest<PendingAction>) {
+    retainedRef.current = next;
+    setRetained(next);
+  }
   const draftKey = view.access?.privateDraftScope
     ? `open-legend:action-draft:${view.access.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`
     : null;
@@ -89,7 +130,9 @@ export function ActionAttempts({
   const openerId = useId();
   const returnToOpener = useRef(false);
   const inFlight = useRef(false);
-  const submission = useRef<{ id: string; body: string } | null>(null);
+  const submission = useRef<PendingAction | null>(
+    retained.status === 'pending' ? retained.request : null,
+  );
   const decision = useRef<{
     id: string;
     key: string;
@@ -161,38 +204,94 @@ export function ActionAttempts({
       document.getElementById(openerId)?.focus();
     }
   }, [editing, entry, visible]);
+  function settle(result: ApiResult, submitted: PendingAction) {
+    if (!alive.current || submission.current?.requestId !== submitted.requestId) return;
+    releaseRequest(recoveryKey, submitted.requestId);
+    submission.current = null;
+    remember({ status: 'empty' });
+    if (result.jobId) setRequestId(result.jobId);
+    setMessage(result.message);
+  }
   const send = async () => {
-    if (inFlight.current || unavailable || targetMissing || !text.trim()) return;
-    const body = JSON.stringify({
+    if (
+      inFlight.current ||
+      retainedRef.current.status !== 'empty' ||
+      unavailable ||
+      targetMissing ||
+      !text.trim()
+    )
+      return;
+    inFlight.current = true;
+    setBusy(true);
+    const submitted: PendingAction = {
+      requestId: crypto.randomUUID(),
       text: text.trim(),
       targetId: targetId || undefined,
       mode: hasWork ? mode : 'enqueue',
-    });
-    if (!submission.current || submission.current.body !== body)
-      submission.current = { id: crypto.randomUUID(), body };
+      timeline: view.saveTimeline!,
+    };
+    try {
+      retainRequest(recoveryKey, submitted);
+      submission.current = submitted;
+      remember({ status: 'pending', request: submitted });
+      const { timeline: _timeline, ...body } = submitted;
+      const result = await post('/api/action-attempt', body);
+      if (!alive.current || submission.current?.requestId !== submitted.requestId) return;
+      setMessage(result.message);
+      // A failed transport, changed authority or ambiguous storage response is not a refusal
+      // of the original action. Only the original explicit admission/refusal settles it.
+      if (
+        result.ok ||
+        result.jobId ||
+        [
+          'invalid-action',
+          'invalid-input',
+          'paused',
+          'actor-unavailable',
+          'target',
+          'ai-unavailable',
+          'busy',
+        ].includes(result.code)
+      )
+        settle(result, submitted);
+    } catch (error) {
+      if (alive.current) {
+        if (!submission.current) remember(readRetainedRequest(recoveryKey, validPendingAction));
+        setMessage(
+          error instanceof Error ? error.message : 'The original action result is not confirmed.',
+        );
+      }
+    } finally {
+      inFlight.current = false;
+      if (alive.current) setBusy(false);
+    }
+  };
+  async function checkOriginalAction() {
     const submitted = submission.current;
+    if (inFlight.current || !submitted || !connected) return;
     inFlight.current = true;
     setBusy(true);
     try {
-      const result = await post('/api/action-attempt', {
-        requestId: submitted.id,
-        ...JSON.parse(body),
-      });
-      if (!alive.current) return;
-      setMessage(result.message ?? 'Action submitted.');
-      if (result.ok || result.jobId) setRequestId(result.jobId ?? null);
-      submission.current = null;
-    } catch (error) {
-      // Retain the identity on ambiguous delivery; an explicit retry must not buy the action twice.
-      if (alive.current)
-        setMessage(error instanceof Error ? error.message : 'Action request failed.');
-    } finally {
-      if (alive.current) {
-        inFlight.current = false;
-        setBusy(false);
+      const outcome = await post<RequestRecoveryResult>('/api/action-attempt/receipt', submitted);
+      if (!alive.current || submission.current?.requestId !== submitted.requestId) return;
+      if (!outcome.ok) {
+        setMessage(outcome.message);
+        return;
       }
+      if (outcome.scope !== view.access?.scope)
+        throw new Error('Character access changed. Refresh before checking the original action.');
+      if (outcome.status === 'resolved') settle(outcome.result, submitted);
+      else setMessage(outcome.message);
+    } catch (error) {
+      if (alive.current)
+        setMessage(
+          error instanceof Error ? error.message : 'The original result is still unknown.',
+        );
+    } finally {
+      inFlight.current = false;
+      if (alive.current) setBusy(false);
     }
-  };
+  }
   /** One idempotent native command per explicit choice (accept, decline or stop). */
   const command = async (key: string, input: Record<string, unknown>, done: string) => {
     if (inFlight.current || unavailable) return;
@@ -234,6 +333,41 @@ export function ActionAttempts({
   };
   return (
     <div className="ol-character-actions">
+      {retained.status !== 'empty' && (
+        <div className="ol-notice" role="status">
+          <strong>Original action result not confirmed</strong>
+          {retained.status === 'pending' ? (
+            <>
+              <p>{retained.request.text}</p>
+              <p className="ol-caption">
+                Original choice:{' '}
+                {retained.request.mode === 'replace'
+                  ? 'Replace current work'
+                  : retained.request.mode === 'interrupt'
+                    ? 'Pause current work, then resume'
+                    : 'After current work'}
+                .
+              </p>
+              <Button
+                variant="quiet"
+                disabled={!connected || busy}
+                onPress={() => void checkOriginalAction()}
+              >
+                Check original action
+              </Button>
+            </>
+          ) : (
+            <p>
+              This browser could not read the retained request. Restore browser storage access and
+              reload before sending another action.
+            </p>
+          )}
+          <p className="ol-caption">
+            Your draft can change, but another action will not be submitted until the original
+            result is known. Checking never sends the action again.
+          </p>
+        </div>
+      )}
       {hasWork && !editing && (
         <Section title="Current work">
           <p className="ol-character-work-name">
@@ -395,7 +529,7 @@ export function ActionAttempts({
         <div className="ol-actions ol-action-submit">
           <Button
             variant="primary"
-            disabled={!!unavailable || !text.trim() || targetMissing}
+            disabled={!!unavailable || !text.trim() || targetMissing || retained.status !== 'empty'}
             isPending={busy}
             onPress={() => void send()}
           >

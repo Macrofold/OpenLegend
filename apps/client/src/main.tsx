@@ -1663,7 +1663,13 @@ function App({
           </div>
         );
       case 'checkpoints':
-        return view.access?.canManageSaves ? <GameSavesPanel visible={visible} /> : null;
+        return view.access?.canManageSaves && view.checkpoint ? (
+          <GameSavesPanel
+            key={view.checkpoint.recoveryScope}
+            context={view.checkpoint}
+            visible={visible}
+          />
+        ) : null;
       case 'help':
         return (
           <Settings

@@ -191,6 +191,12 @@ export const commandRecoveryFields = (scope: RequestScope) => {
 };
 export const commandRecoveryScopeKey = (scope: RequestScope) =>
   hash(JSON.stringify(commandRecoveryFields(scope)));
+/** Only checkpoint outcome descriptions cross their own load's timeline change.
+ * Every live read still requires the complete current scope and save capability. */
+export const checkpointRecoveryScopeKey = (scope: RequestScope) => {
+  const { timelineId: _timelineId, ...privateScope } = commandRecoveryFields(scope);
+  return hash(JSON.stringify(privateScope));
+};
 const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
 
 /** Current authority is deliberately outside WorldRecords and every gameplay save.
