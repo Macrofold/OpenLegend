@@ -6,6 +6,7 @@ export * from './native-command-contracts.js';
 export * from './types.js';
 export * from './worlds/base/initial-opening.js';
 export * from './worlds/base/opening-readiness.js';
+export * from './worlds/base/starting-worlds.js';
 export { BASE_SOCIAL_POLICY } from './worlds/base/social.js';
 export { baseWorldInitialConstructionSeeds } from './worlds/base/world.js';
 export * from './recipe-records.js';
@@ -125,6 +126,8 @@ export * from './mind.js';
 
 export * from './experience.js';
 export * from './status-effects.js';
+export * from './status-condition-references.js';
+export * from './status-effect-removal.js';
 export { DEFAULT_STATUS_EFFECT_POLICY } from './worlds/base/status-effects.js';
 export * from './cognition-policy.js';
 export * from './commitments.js';

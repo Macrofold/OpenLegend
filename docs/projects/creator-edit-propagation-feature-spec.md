@@ -1,8 +1,8 @@
 # Creator edit propagation — feature specification
 
-| Status      | Current progress                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Batch 09 designs reviewed status-effect removal; runtime delivery and later consumers remain open. | 2026-10-11   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Batch 09 completes the first condition-removal consumer; general-family deletion and memory tools remain open. | 2026-10-14   |
 
 ## Accepted policy
 
@@ -14,7 +14,7 @@ Actual explicit dependencies are different. A record that cannot legally exist w
 
 Before applying a destructive cascade, show every record that will be deleted, its reason and dependency path. Required dependents are checked and cannot be unchecked; optional associated deletions are individually selectable. Show why a required choice is locked. Changing optional selections recomputes the required closure; approval covers exactly the final list. Cancel changes nothing. If the root cannot be deleted without an unacceptable dependent, cancel the root operation rather than allowing an invalid world.
 
-Use paging/grouping for large lists while preserving the complete approved set and truthful totals. Truncated or unknown dependency coverage cannot be presented as complete or applied. Changed dependencies or permissions invalidate the preview and require a fresh review. An ordinary edit needs no invented cascade when it has no destructive dependents. This is planned general tooling, not implemented by the family-tree change.
+Use paging/grouping for large lists while preserving the complete approved set and truthful totals. Truncated or unknown dependency coverage cannot be presented as complete or applied. Changed dependencies or permissions invalidate the preview and require a fresh review. An ordinary edit needs no invented cascade when it has no destructive dependents. Batch 09 now supplies the first installed-condition adapter; general deletion tooling remains a target and was not implemented by the family-tree change.
 
 ## Later follow-up: optional memory convenience tool
 
@@ -26,7 +26,7 @@ Keep memory identity, speaker attribution, dates and uncertainty visible. Do not
 
 Dependency work must demonstrate a complete transitive preview, optional selection, locked required dependencies, cancellation, stale preview rejection, atomic apply and retry safety. Memory convenience work must demonstrate scoped semantic search, false positives, multiselection, exact manual/AI diffs, refusal without budget/access, stale edits and preservation of unselected memories. Neither feature is runtime-complete from this design alone.
 
-The first concrete delivery is [Batch 09](parallel-batch-09-reviewed-content-removal-feature-spec.md), with its [owner-specific technical design](parallel-batch-09-reviewed-content-removal-tech-design.md). This supplies the selected consumer without turning the general policy into a promise to remove every record kind.
+The first concrete delivery is [Batch 09](completed/parallel-batch-09-reviewed-content-removal-feature-spec.md), with its [owner-specific technical design](completed/parallel-batch-09-reviewed-content-removal-tech-design.md). Its [current evidence](../verification/reviewed-content-removal.md) records the complete selected creator journey, native recovery, SQL history and measured-work limits. This supplies the selected consumer without turning the general policy into a promise to remove every record kind.
 
 ## Maintained records
 

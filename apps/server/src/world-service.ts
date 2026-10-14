@@ -98,6 +98,7 @@ import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/do
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
 import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
+import { admitStatusEffectPolicy } from '@open-legend/domain';
 import { completeNavigation, navigationBlocked, spatialMap } from '@open-legend/domain';
 import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
 import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
@@ -112,7 +113,6 @@ import {
   type AttributeEditRequest,
   type DefinitionPin,
 } from '@open-legend/domain';
-import { createReservoirDemo, createTouchDemo } from '@open-legend/domain';
 import { validateWorldModules } from '@open-legend/domain';
 import {
   CheckpointBusyError,
@@ -142,7 +142,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
-  createWorld,
+  createBaseStartingWorld,
   baseWorldInitialConstructionSeeds,
   updateWorld,
   appendedEventCount,
@@ -759,12 +759,7 @@ export class WorldService {
       playerAccountId: this.currentProfile.id,
     };
     this.saved = existing?.state ?? {
-      world:
-        config.worldPreset === 'touch-demo'
-          ? createTouchDemo(config.seed, creationAccounts)
-          : config.worldPreset === 'reservoir-demo'
-            ? createReservoirDemo(config.seed, creationAccounts)
-            : createWorld(config.seed, creationAccounts),
+      world: createBaseStartingWorld(config.worldPreset, config.seed, creationAccounts),
       speed: 1,
       manuallyPaused: false,
     };
@@ -1722,6 +1717,30 @@ export class WorldService {
       } finally {
         if (this.storageError)
           this.saved = { ...this.saved, world: compactHistory(this.saved.world) };
+        else if (this.store.releaseHistory) this.saved = this.store.releaseHistory(this.saved);
+        freezeWorld(this.saved.world);
+      }
+    });
+  }
+
+  /** Enter the world lane before operational SQL: reversing that order can deadlock Apply.
+   * Only condition records are needed for complete definition-edit impact.
+   * docs/projects/completed/parallel-batch-09-reviewed-content-removal-tech-design.md#rd01--complete-finite-dependency-and-live-impact-analysis
+   */
+  async withStatusEffectHistory<T>(operation: (world: WorldState) => Promise<T>): Promise<T> {
+    return this.mutate(async () => {
+      await this.flush();
+      if (this.store.hydrateStatusEffectHistory)
+        this.saved = await this.store.hydrateStatusEffectHistory(this.saved);
+      freezeWorld(this.saved.world);
+      try {
+        return await operation(this.world);
+      } finally {
+        if (this.storageError)
+          this.saved = this.store.releasedHistory?.(this.saved) ?? {
+            ...this.saved,
+            world: compactHistory(this.saved.world),
+          };
         else if (this.store.releaseHistory) this.saved = this.store.releaseHistory(this.saved);
         freezeWorld(this.saved.world);
       }
@@ -3433,10 +3452,11 @@ export class WorldService {
     scope: RequestScope,
     operation: (world: WorldState) => Promise<Transition>,
     controlling = false,
+    preparation?: 'status-effect-history',
   ): Promise<ApiResult> {
     return this.authorized(scope, controlling ? 'play' : 'create', controlling, async () => {
       await this.ready;
-      if (!this.config.godMode || this.timelineId !== timeline)
+      if (!this.config.godMode)
         return { ok: false, code: 'stale', message: 'World authority or timeline changed.' };
       this.assertScope(scope, 'create');
       this.assertScope(scope, 'inspect');
@@ -3448,6 +3468,8 @@ export class WorldService {
           message: 'Durable operation receipts are unavailable.',
         };
       const previous = await receipts.get(this.world.id, id);
+      this.assertScope(scope, 'create');
+      this.assertScope(scope, 'inspect');
       if (previous)
         return previous.fingerprint === fingerprint
           ? previous.result
@@ -3456,30 +3478,92 @@ export class WorldService {
               code: 'conflict',
               message: 'Operation identity already has different content.',
             };
-      const result = await operation(this.world);
-      if (!result.outcome.ok) return result.outcome;
-      const receipt: GameplayReceipt = {
-        id,
-        fingerprint,
-        recoveryFingerprint: null,
-        epoch: 0,
-        expiresAt: Number.MAX_SAFE_INTEGER,
-        result: result.outcome,
+      // A gameplay restore fences new effects, but cannot hide a historical
+      // committed result when its operational acknowledgement was lost.
+      // docs/save-and-load.md#continuation-and-identity
+      if (this.timelineId !== timeline)
+        return { ok: false, code: 'stale', message: 'World authority or timeline changed.' };
+      const apply = async () => {
+        this.assertScope(scope, 'create');
+        this.assertScope(scope, 'inspect');
+        const result = await operation(this.world);
+        if (!result.outcome.ok) return result.outcome;
+        const receipt: GameplayReceipt = {
+          id,
+          fingerprint,
+          recoveryFingerprint: null,
+          epoch: 0,
+          expiresAt: Number.MAX_SAFE_INTEGER,
+          result: result.outcome,
+        };
+        const world = updateWorld(result.world, (draft) => {
+          delete draft.commandReceipts[id];
+        });
+        if (
+          !(await this.commit(
+            { ...this.saved, world },
+            result.invalidatedMemoryIds,
+            'append',
+            undefined,
+            receipt,
+          ))
+        )
+          return { ok: false, code: 'storage', message: this.storageError! };
+        return result.outcome;
       };
-      const world = updateWorld(result.world, (draft) => {
-        delete draft.commandReceipts[id];
-      });
+      return preparation === 'status-effect-history'
+        ? this.withStatusEffectHistory(apply)
+        : apply();
+    });
+  }
+
+  async updateStatusEffects(
+    policy: unknown,
+    expectedRevision: number,
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    return this.authorized(scope, 'create', false, async () => {
+      this.assertScope(scope, 'inspect');
+      const supplied =
+        policy && typeof policy === 'object' && 'definitions' in policy
+          ? policy.definitions
+          : undefined;
+      const retained = Array.isArray(supplied)
+        ? new Set(
+            supplied.map((definition: unknown) =>
+              definition && typeof definition === 'object' && 'id' in definition
+                ? definition.id
+                : undefined,
+            ),
+          )
+        : undefined;
       if (
-        !(await this.commit(
-          { ...this.saved, world },
-          result.invalidatedMemoryIds,
-          'append',
-          undefined,
-          receipt,
-        ))
+        retained &&
+        this.world.statusEffectPolicy.definitions.some((definition) => !retained.has(definition.id))
       )
-        return { ok: false, code: 'storage', message: this.storageError! };
-      return result.outcome;
+        return {
+          ok: false,
+          code: 'review-required',
+          message:
+            'Review the complete condition removal in World Agent inspection or /api/world-agent/session/removal before applying it.',
+        };
+      if (this.paused)
+        return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
+      return this.withStatusEffectHistory(async (world) => {
+        this.assertScope(scope, 'create');
+        this.assertScope(scope, 'inspect');
+        const result = admitStatusEffectPolicy(world, policy, expectedRevision);
+        if (!result.outcome.ok) return result.outcome;
+        if (
+          !(await this.commit(
+            { ...this.saved, world: result.world },
+            result.invalidatedMemoryIds,
+            'append',
+          ))
+        )
+          return { ok: false, code: 'storage', message: this.storageError! };
+        return result.outcome;
+      });
     });
   }
 

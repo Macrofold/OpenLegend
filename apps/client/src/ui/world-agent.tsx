@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type {
   ActionOption,
   GameView,
@@ -15,6 +15,7 @@ import { WorldAgentSession } from './world-agent-session';
 import { UsageRemaining } from './usage-remaining';
 import './creator-workspaces.css';
 import { authoringKey } from './world-agent-identity';
+import { WorldAgentReview } from './world-agent-review';
 
 type Props = {
   worldId: string;
@@ -87,6 +88,12 @@ function WorldAgentPanel(props: Props) {
   const [seedTarget, setSeedTarget] = useState<string>();
   const [inventionTarget, setInventionTarget] = useState<string>();
   const [creationTarget, setCreationTarget] = useState<{ id: string; native: boolean }>();
+  const [inspectionReview, setInspectionReview] = useState<{ sessionId: string; planId: string }>();
+  const [conditionPolicyRevision, setConditionPolicyRevision] = useState(0);
+  const conditionPolicyChanged = useCallback(() => {
+    setConditionPolicyRevision((revision) => revision + 1);
+  }, []);
+  const inspectionTask = useRef<HTMLDivElement>(null);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -358,6 +365,7 @@ function WorldAgentPanel(props: Props) {
               controls={controls}
               navigationOpen={compactNavigation && navigationOpen}
               closeNavigation={closeNavigation}
+              onStatusPolicyChanged={conditionPolicyChanged}
             />
           ) : (
             <>
@@ -371,8 +379,50 @@ function WorldAgentPanel(props: Props) {
       )}
       {godMode && (
         <div hidden={workspace !== 'relationships'} className="ol-creator-page">
-          <WorldInspection actorId={actorId} />
+          <div ref={inspectionTask} tabIndex={-1}>
+            <WorldInspection
+              actorId={actorId}
+              worldId={worldId}
+              sessionId={active || undefined}
+              connected={connected}
+              conditionPolicyRevision={conditionPolicyRevision}
+              onRemovalPrepared={(sessionId, plan) => {
+                if (!active) setActive(sessionId);
+                setInspectionReview({ sessionId, planId: plan.id });
+                void list();
+              }}
+            />
+          </div>
         </div>
+      )}
+      {godMode && inspectionReview && (
+        <WorldAgentReview
+          key={authoringKey(
+            'inspection-review',
+            worldId,
+            accessScope,
+            saveTimeline ?? null,
+            inspectionReview.sessionId,
+            inspectionReview.planId,
+          )}
+          worldId={worldId}
+          sessionId={inspectionReview.sessionId}
+          planId={inspectionReview.planId}
+          canApply={connected}
+          mutationReason={!connected ? 'Reconnect before changing saved work.' : undefined}
+          onClose={() => {
+            setInspectionReview(undefined);
+            requestAnimationFrame(() => {
+              if (document.activeElement === document.body || !document.activeElement?.isConnected)
+                (
+                  inspectionTask.current?.querySelector<HTMLElement>('[data-removal-focus]') ??
+                  inspectionTask.current
+                )?.focus({ preventScroll: true });
+            });
+          }}
+          onChanged={() => void list()}
+          onStatusPolicyChanged={conditionPolicyChanged}
+        />
       )}
       <div hidden={workspace !== 'workshop'} className="ol-creator-page">
         <Inventions

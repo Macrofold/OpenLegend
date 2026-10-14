@@ -21,6 +21,12 @@ export const FIRST_THREAT_LOCATIONS = {
   screen: [29.5, 28],
 } as const;
 const firstThreatLocations = Object.values(FIRST_THREAT_LOCATIONS);
+/** The solo opening uses this centre, with at least a metre beyond its outer supplies
+ * kept clear so seeded rock cells cannot occupy their immediate work stances. */
+export const BASE_SOLO_CLEARING = { x: 13, z: 28, halfWidth: 4, halfDepth: 4 } as const;
+const inSoloClearing = (x: number, z: number): boolean =>
+  Math.abs(x - BASE_SOLO_CLEARING.x) <= BASE_SOLO_CLEARING.halfWidth &&
+  Math.abs(z - BASE_SOLO_CLEARING.z) <= BASE_SOLO_CLEARING.halfDepth;
 const WOODLAND_ANIMALS: Array<['hare' | 'deer' | 'wolf' | 'bear', number, number]> = [
   ['hare', 30, 19],
   ['hare', 27, 33],
@@ -104,6 +110,7 @@ export function starterTiles(seed: number, width: number, depth: number): Terrai
     for (let x = 12; x < width - 4; x++)
       if (
         tiles[z]![x] === 'grass' &&
+        !inSoloClearing(x, z) &&
         noise(seed + 29, x, z) < 0.009 &&
         !WOODLAND_ANIMALS.some(([, ax, az]) => Math.hypot(x - ax, z - az) < 1.5) &&
         !WOODLAND_PATCHES.some(([, , px, pz]) => Math.hypot(x - px, z - pz) < 1.5) &&
@@ -161,6 +168,7 @@ export function starterScenery(
       const perimeter = 6 + Math.sin(px * 0.25) * 2 + Math.cos(pz * 0.31) * 1.8;
       const outside = px < 0 || pz < 0 || px > width - 1 || pz > depth - 1;
       if (!outside && tiles[Math.round(pz)]?.[Math.round(px)] !== 'grass') continue;
+      if (inSoloClearing(px, pz)) continue;
       // The original camp and lookout keep their working space, flight corridor and sightlines.
       if (Math.hypot(px - 11, pz - 12) < 5.5 || (px > 17 && px < 26 && pz > 3 && pz < 14)) continue;
       if (edge > perimeter && (n > 0.075 || (px < 27 && pz < 23))) continue;
@@ -187,7 +195,11 @@ export function starterScenery(
   for (let i = 0; i < 50; i++) {
     const x = 8 + noise(seed + 23, i, 1) * (width - 12),
       z = 3 + noise(seed + 31, i, 2) * (depth - 7);
-    if (tiles[Math.round(z)]?.[Math.round(x)] !== 'grass' || Math.hypot(x - 11, z - 12) < 4)
+    if (
+      tiles[Math.round(z)]?.[Math.round(x)] !== 'grass' ||
+      Math.hypot(x - 11, z - 12) < 4 ||
+      inSoloClearing(x, z)
+    )
       continue;
     const h = 0.45 + noise(seed + 37, i, 3) * 0.6;
     add('woodland-shrub', x, z, h * 1.6, h, false, i % 3);

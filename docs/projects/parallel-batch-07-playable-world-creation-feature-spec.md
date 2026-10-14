@@ -1,10 +1,12 @@
 # Batch 07 — Create a world and play its opening
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-14   |
 
 ## Purpose and selected scope
+
+**October 14 supplied-start revision, authorized by Mike:** offer **Main world** and **Solo testing ground**. Main world contains the current integrated camp residents, survival/crafting, shelter, fishing, practice, expeditions, missing-belonging investigation and distant Broken Watchpost rivals through the same authored initializer as ordinary startup. Rivals are outside the ordinary opening view; exploring discovers their actual location and circumstances. Solo testing ground has one controlled person, basic supplies and making opportunities, with no residents or encounters. Custom supported openings remain available through authoring. These are starting circumstances, not scripted goals, guaranteed autonomous behavior or claims that every diagnostic world-law variation can coexist. See the [implementation plan](parallel-batch-07-playable-world-creation-tech-design.md#main-world-and-solo-testing-ground--october-14-implementation).
 
 Let an authorized creator describe a small world, preserve the parts they care about, inspect what someone can actually do there, and enter that exact opening on an operator-prepared empty host. Creation succeeds when the person plays a useful activity, not when a model finishes describing a place.
 

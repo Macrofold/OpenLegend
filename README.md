@@ -50,6 +50,8 @@ Hearing uses pinned acoustic/sense descriptors and persists event-time fragments
 
 ## Run locally
 
+The two supplied starts are **Main world** and **Solo testing ground** in **World Agent → Create a world**. Main world uses the same complete authored setup as default development startup: camp residents, survival/crafting, shelter, fishing, practice, expeditions, the missing-belonging investigation and distant Broken Watchpost rivals. For a directly playable solo development world, set `OPEN_LEGEND_WORLD_PRESET=solo` with a separate PostgreSQL database and `OPEN_LEGEND_DATA_DIR`; it creates one person with basic supplies and pouch-making knowledge. The preset applies only to an empty database. Existing compatible progress is reopened rather than regenerated. [Starting content and boundaries](docs/worlds/base/playable-openings.md).
+
 Use **Node.js 22.13+** and **pnpm 10.33.0**, pinned in `package.json`. Node 22 LTS is the tested baseline. If pnpm is not installed, use `corepack enable` with Node 22, or follow the [pnpm installation guide](https://pnpm.io/10.x/installation).
 
 ```sh

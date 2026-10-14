@@ -55,8 +55,11 @@ Read the installed `commit` skill and reuse its summarization, formatting and sc
 
 - A concise one-line subject; blank line; 1–10 bullets, each fewer than 20 words. Group aggressively, use as few as needed, largest impact first.
 - Summarize all actual net integration changes against the recorded destination, not just the last source commit or every intermediate message. Omit canceled approaches; describe an extension as an extension.
+- Include `Completed-tasks: <actual completed task/subtask IDs, grouped by batch or topic>` and, when applicable, `Work-context: <batch number/name; repository-relative design document and section; topic>`, before the provenance footer. Identify which context each group belongs to; include only relevant references, not every document touched. If no tracked item was completed, write `Completed-tasks: None` rather than inventing IDs.
 - After another blank line, add `Squashed-from: <source-branch-name> at <full-frozen-tip-commit-hash>`. Use the chosen source tip, never the base/destination/result hash. Preserve the branch name losslessly if ASCII escaping is required.
 - Printable ASCII plus actual LF newlines. Write/validate a temporary UTF-8 message file and commit with `git commit --file <message-file>`; verify the final message and provenance.
+
+Determine completion from the actual net integration, the owning trackers/designs and applicable verification evidence. Preserve exact identifiers, including completed subitems within an unfinished parent. Do not claim a parent task, batch or project completed merely because its implementation merged, or recount work already present on the destination. Identify partial work as partial in the summary; unresolved acceptance stays open. Resolve any disagreement between source completion claims and current evidence before writing the completion footer. These fields follow the existing ASCII/LF rules and are separate from the summary bullets.
 
 Verify exactly one new commit above the recorded destination, with that tip as its only parent, the reviewed tree unchanged, and no task edits left uncommitted. Required unresolved checks prevent completion.
 

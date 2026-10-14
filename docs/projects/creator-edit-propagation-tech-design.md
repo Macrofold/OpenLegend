@@ -1,8 +1,8 @@
 # Creator edit propagation — technical design
 
-| Status      | Current progress                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Batch 09 designs reviewed status-effect removal; runtime delivery and later consumers remain open. | 2026-10-11   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Batch 09 completes the first condition-removal consumer; general-family deletion and memory tools remain open. | 2026-10-14   |
 
 ## Boundaries
 
@@ -24,11 +24,11 @@ Manual editing/deletion calls the existing memory editor/forgetting owner, inclu
 
 ## Stages and verification
 
-CE01 (earlier): Batch 09 selects installed status-effect definitions; map complete owners, then implement preview/selection/approval/atomic apply with invalid/stale/retry checks and actual UI qualification. CE02 (later): actor scope and semantic lookup, multiselection/manual edits, then separately bounded AI diff proposals. Establish numerical work/retention/page limits and scale evidence during each implementation; no invented capacity claims now.
+CE01 (earlier): Batch 09 implements installed status-effect removal through complete typed predicate references, retained exact previews and the existing status transition/receipt owner. Its [native/PostgreSQL and browser evidence](../verification/reviewed-content-removal.md) qualifies status-only cold history, retained pins, object coverage, exact optional review/approval/Apply, stale/privacy/refusal/recovery and the selected keyboard/layout journey. [CE01 limits](../limits/creator-edits.md#ce01-b--complete-review-and-growing-work) records the implemented admission envelopes and measured storage workload. CE02 (later): actor scope and semantic lookup, multiselection/manual edits, then separately bounded AI diff proposals. General-family work and scale acceptance remain separate from this finite adapter.
 
 The original October 3 request authorized documenting these capabilities during the family-tree work. The October 11 allocation supplies Batch 09's implementation design and prompt; creating these documents does not itself authorize executing that prompt.
 
-The first concrete delivery is [Batch 09](parallel-batch-09-reviewed-content-removal-feature-spec.md), with its [owner-specific technical design](parallel-batch-09-reviewed-content-removal-tech-design.md). This supplies the selected consumer without turning the general policy into a promise to remove every record kind.
+The first concrete delivery is [Batch 09](completed/parallel-batch-09-reviewed-content-removal-feature-spec.md), with its [owner-specific technical design](completed/parallel-batch-09-reviewed-content-removal-tech-design.md). This supplies the selected consumer without turning the general policy into a promise to remove every record kind.
 
 ## Maintained records
 

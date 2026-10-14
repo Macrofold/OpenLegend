@@ -1,6 +1,11 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { isSafeRecordId, type WorldState, type ConstructionPermission } from '@open-legend/domain';
+import {
+  isSafeRecordId,
+  objectAncestors,
+  type WorldState,
+  type ConstructionPermission,
+} from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
 
 // Dependency order for operational recovery; these records never enter gameplay checkpoints.
@@ -122,6 +127,34 @@ export interface RequestScope {
   controlGeneration: number;
   connectionId: string;
   audience: 'embodied' | 'authorized-inspection';
+}
+/** Contained/attached objects inherit the enclosing human's disclosure boundary,
+ * independently of fictional title or public-looking object kind. Retained evidence
+ * may outlive its object, but absence never grants inspection of a current subject.
+ * Explicit null means canonical lookup proved historical absence; undefined grants
+ * no retained-reference permission. A custody record delegates its actor directly.
+ * docs/memory-architecture.md#private-retrieval-fencing */
+export function mayDiscloseSubject(
+  world: WorldState,
+  id: string,
+  mayReadActor: (actorId: string) => boolean,
+  retainedCustody?: { custodianId?: string | null } | null,
+): boolean {
+  const entity = world.entities[id];
+  if (!entity || entity.retirement) {
+    if (retainedCustody === undefined) return false;
+    // Retirement records have no live placement. Their recorded custodian keeps
+    // human-private history fenced without inventing a current physical parent.
+    const custody = entity?.retirement ?? retainedCustody;
+    // Current account ownership survives gameplay restoration, including an
+    // unbound historical actor absent from that save. Absence cannot erase it.
+    const actorReference = !!entity?.actor || Object.hasOwn(world.authorship.playerAccountIds, id);
+    return (
+      (!actorReference || mayReadActor(id)) &&
+      (!custody?.custodianId || mayReadActor(custody.custodianId))
+    );
+  }
+  return objectAncestors(world, id).every((entry) => !entry.actor || mayReadActor(entry.id));
 }
 export interface ExitAttempt {
   worldId: string;

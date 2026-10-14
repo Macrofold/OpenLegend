@@ -4,6 +4,7 @@ import {
   validateRecipeCandidate,
   type RecipeCandidate,
   type WorldState,
+  type StatusEffectRemovalAnalysis,
 } from '@open-legend/domain';
 import type {
   RelationshipEdge,
@@ -31,6 +32,11 @@ import {
   prepareOpeningAuthoring,
   type PreparedOpening,
 } from './world-opening-authoring.js';
+import {
+  retainStatusRemoval,
+  statusRemovalAnalysis,
+  type RetainedStatusRemoval,
+} from './world-authoring-removal.js';
 
 export const CONTEXT_WORK = { records: 64, examined: 256, tools: 32, bytes: 64000 } as const;
 export const AUTHORING_ANALYSIS_VERSION = 'native-authoring-analysis-v2';
@@ -462,16 +468,36 @@ export function prepareAuthoring(
   generation: string,
   requirements: WorldAgentRequirement[],
   opening?: PreparedOpening,
+  preparedRemoval?: { analysis: StatusEffectRemovalAnalysis; retained: RetainedStatusRemoval },
 ) {
   if (draft.kind === 'world-opening')
-    return prepareOpeningAuthoring(service, draft, scope, generation, requirements, opening);
+    return {
+      ...prepareOpeningAuthoring(service, draft, scope, generation, requirements, opening),
+      removal: undefined,
+    };
+  const removalAnalysis = preparedRemoval?.analysis ?? statusRemovalAnalysis(world, draft);
+  const removal =
+    preparedRemoval?.retained ??
+    (removalAnalysis && retainStatusRemoval(service, removalAnalysis, !!draft.removalSelection));
   const validation = validateAuthoring(service, draft, scope, world);
   const graph = candidateGraph(world, draft, generation, (id) =>
     service.mayInspectPrivate(id, scope),
   );
-  const impact = authoringImpact(world, draft);
-  const pending = graph.coverage.projection === 'incomplete';
-  const missing = graph.unresolved.length > 0;
+  if (removal) {
+    // Navigation is a bounded excerpt. The native removal owner independently
+    // validates all references and retains every required consequence for paging.
+    graph.unresolved = [];
+    graph.coverage.scope =
+      'Bounded relationship navigation; the complete native condition-removal consequences and blockers are retained in the removal review. Broader interactions are not evaluated.';
+  }
+  const impact = removalAnalysis
+    ? { token: fingerprint(removalAnalysis.binding), affected: removalAnalysis.instances.length }
+    : authoringImpact(world, draft);
+  // Exploratory graph limits do not certify this finite owner's complete removal.
+  const pending = removal
+    ? removal.summary.status === 'incomplete'
+    : graph.coverage.projection === 'incomplete';
+  const missing = removal ? removal.summary.status !== 'complete' : graph.unresolved.length > 0;
   const unsupported = requirements.some((r) => r.status === 'unsupported');
   const hasRepresentation =
     draft.kind !== 'recipe' ||
@@ -542,6 +568,7 @@ export function prepareAuthoring(
         : validation.ok && !missing
           ? 'ready_for_review'
           : 'needs_revision',
+    ...(removal ? { removal: removal.summary } : {}),
   };
-  return { preparation, validation, impact };
+  return { preparation, validation, impact, removal };
 }

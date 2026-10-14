@@ -1,7 +1,9 @@
 import {
   HOST_IMPLEMENTATIONS,
   bodyPolicy,
-  type StatusCondition,
+  visitStatusCondition,
+  statusDefinitionConditions,
+  bodyPolicyConditions,
   installedRecipeFamilies,
   recipeFamily,
   recipeItemHandlingPin,
@@ -230,48 +232,36 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
   if (dream) link(cognitionPolicy, dream.node.ref, 'requires', 'dream-state');
   for (const d of world.statusEffectPolicy.definitions) {
     const source = resolve('status-effect', d.id)!.node.ref;
-    const pending: StatusCondition[] = [
-      d.requires,
-      ...[d.activationCondition, d.automaticActivation, d.automaticDeactivation].filter(
-        (v): v is StatusCondition => !!v,
-      ),
-    ];
     for (const op of d.whileActive)
       if ('changeRate' in op) {
         const target = resolve('attribute', op.changeRate.attribute);
         if (target) link(source, target.node.ref, 'contributes_to', op.changeRate.target);
-        if (op.when) pending.push(op.when);
       }
-    // Traverse the native condition AST, not arbitrary properties or invented prose.
-    for (let i = 0; i < pending.length; i++) {
-      if (i > 10000)
-        throw new GraphReadError('capacity', 'Status relationship extraction is too large.');
-      const c = pending[i]!;
-      if ('all' in c) pending.push(...c.all);
-      else if ('any' in c) pending.push(...c.any);
-      else if ('compare' in c) {
-        const target = resolve('attribute', c.compare.attribute);
-        if (target) link(source, target.node.ref, 'uses', `condition:${c.compare.target}`);
-      } else if ('hasAttribute' in c) {
-        const target = resolve('attribute', c.hasAttribute.attribute);
-        if (target) link(source, target.node.ref, 'uses', `applicability:${c.hasAttribute.target}`);
-      } else if ('statusActive' in c) {
-        const target = resolve('status-effect', c.statusActive.definitionId);
-        if (target) link(source, target.node.ref, 'requires', `condition:${c.statusActive.target}`);
-      }
-    }
+    let visited = 0;
+    for (const { condition, sourcePath } of statusDefinitionConditions(d))
+      visitStatusCondition(condition, sourcePath, (c) => {
+        if (++visited > 10000)
+          throw new GraphReadError('capacity', 'Status relationship extraction is too large.');
+        if ('compare' in c || 'hasAttribute' in c) {
+          const predicate = 'compare' in c ? c.compare : c.hasAttribute;
+          const target = resolve('attribute', predicate.attribute);
+          if (target)
+            link(
+              source,
+              target.node.ref,
+              'uses',
+              `${'hasAttribute' in c ? 'applicability' : 'condition'}:${predicate.target}`,
+            );
+        } else if ('statusActive' in c) {
+          const target = resolve('status-effect', c.statusActive.definitionId);
+          if (target)
+            link(source, target.node.ref, 'requires', `condition:${c.statusActive.target}`);
+        }
+      });
   }
   const installedBodyPolicy = bodyPolicy(world);
   if (installedBodyPolicy) {
     const source = add('body-policy', 'current', 'Body policy', installedBodyPolicy);
-    const pending: StatusCondition[] = [
-      installedBodyPolicy.recovery?.when,
-      installedBodyPolicy.consumption?.suggestWhen,
-      installedBodyPolicy.backgroundThinking.maintenanceBlockedWhen,
-      installedBodyPolicy.backgroundThinking.commitBlockedWhen,
-      installedBodyPolicy.backgroundThinking.reflectionBlockedWhen,
-      ...installedBodyPolicy.backgroundThinking.reconsiderationInputs.map((input) => input.when),
-    ].filter((condition): condition is StatusCondition => !!condition);
     for (const id of [
       ...(installedBodyPolicy.recovery?.floors.map((floor) => floor.attributeId) ?? []),
       ...installedBodyPolicy.revival.fillToMaximum,
@@ -282,21 +272,20 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
       const target = resolve('attribute', id);
       if (target) link(source, target.node.ref, 'uses', 'body service');
     }
-    for (let i = 0; i < pending.length; i++) {
-      if (i > 10000)
-        throw new GraphReadError('capacity', 'Body policy relationships are too large.');
-      const condition = pending[i]!;
-      if ('all' in condition) pending.push(...condition.all);
-      else if ('any' in condition) pending.push(...condition.any);
-      else if ('compare' in condition || 'hasAttribute' in condition) {
-        const predicate = 'compare' in condition ? condition.compare : condition.hasAttribute;
-        const target = resolve('attribute', predicate.attribute);
-        if (target) link(source, target.node.ref, 'reads', predicate.target);
-      } else if ('statusActive' in condition) {
-        const target = resolve('status-effect', condition.statusActive.definitionId);
-        if (target) link(source, target.node.ref, 'requires', condition.statusActive.target);
-      }
-    }
+    let visited = 0;
+    for (const { condition, sourcePath } of bodyPolicyConditions(installedBodyPolicy))
+      visitStatusCondition(condition, sourcePath, (condition) => {
+        if (++visited > 10000)
+          throw new GraphReadError('capacity', 'Body policy relationships are too large.');
+        if ('compare' in condition || 'hasAttribute' in condition) {
+          const predicate = 'compare' in condition ? condition.compare : condition.hasAttribute;
+          const target = resolve('attribute', predicate.attribute);
+          if (target) link(source, target.node.ref, 'reads', predicate.target);
+        } else if ('statusActive' in condition) {
+          const target = resolve('status-effect', condition.statusActive.definitionId);
+          if (target) link(source, target.node.ref, 'requires', condition.statusActive.target);
+        }
+      });
   }
   for (const value of Object.values(world.recipes)) {
     const ref = resolve('recipe', value.id)!.node.ref;

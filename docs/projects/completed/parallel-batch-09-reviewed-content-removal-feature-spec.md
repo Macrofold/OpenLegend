@@ -1,20 +1,22 @@
-# Batch 09 — Review and remove authored character conditions
+# Batch 09 — Review and remove authored conditions
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | One complete assignment is defined for reviewing and removing authored character conditions through the existing status-effect owner. | 2026-10-11   |
+| Status    | Current progress                                                                                    | Last updated |
+| --------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | The creator journey is integrated with current main; review and selected verification are complete. | 2026-10-14   |
+
+**Implementation reconciliation updated:** 2026-10-14T16:21:12Z (2026-10-14 12:21:12 EDT).
 
 ## Purpose and selected scope
 
-A creator can experiment with a condition that changes a character, then remove it without guessing which other conditions or ongoing activities will disappear with it. Before anything changes, the application shows the exact definitions and current condition instances to be removed, why each is included, which activities will stop, and any reason removal cannot proceed. The creator can cancel, keep optional associated conditions, or approve that exact change and receive its durable result.
+A creator can experiment with a condition that changes a character or object, then remove it without guessing which other conditions or ongoing activities will disappear with it. Before anything changes, the application shows the exact definitions and current condition instances to be removed, why each is included, which activities will stop, and any reason removal cannot proceed. The creator can cancel, keep optional associated conditions, or approve that exact change and receive its durable result.
 
-This is the first concrete delivery of [CE01's accepted deletion policy](creator-edit-propagation-feature-spec.md#earlier-follow-up-approved-dependency-deletion). The supported consumer is the existing **status-effect definition**: the data that gives a character condition its requirements, ongoing effects, controls and presentation. The assignment is one complete creator journey, not a general-purpose delete button for every world record. **RD01–RD05 are internal stages for one agent.**
+This is the first concrete delivery of [CE01's accepted deletion policy](../creator-edit-propagation-feature-spec.md#earlier-follow-up-approved-dependency-deletion). The supported consumer is the existing **status-effect definition**: the data that gives a condition on a character or object its requirements, ongoing effects, controls and presentation. The assignment is one complete creator journey, not a general-purpose delete button for every world record. **RD01–RD05 are internal stages for one agent.**
 
 The value is coherent reversal of actual creator work. Adding more inventions is less useful when the creator cannot see the full consequence of removing an experiment. This is an accepted foundation gap, not a newly reproduced corruption defect. It complements new-world authoring but does not require that feature, the mystery project, or Batch 06 combat.
 
-## Current behavior and the change
+## Pre-implementation behavior and the delivered change
 
-Current main already accepts a complete revised status policy. Omitting a definition can remove it; the native owner ends ordinary active instances using the previous definition, releases their work and removes their saved condition entries. It rejects remaining definition references, body/dream-policy dependencies and retained independent contributions that still need an exact definition. Current authoring reviews have an affected-record count and a token that detects changed episodes, but do not provide the complete human-readable deletion list, dependency reasons or optional selections specified by CE01.
+At the planning baseline, main already accepted a complete revised status policy. Omitting a definition can remove it; the native owner ends ordinary active instances using the previous definition, releases their work and removes their saved condition entries. It rejects remaining definition references, body/dream-policy dependencies and retained independent contributions that still need an exact definition. The earlier authoring reviews had an affected-record count and a token that detected changed episodes, but did not provide the complete human-readable deletion list, dependency reasons or optional selections specified by CE01.
 
 The new interface turns that existing native ability into a reviewable operation. It does not invent an alternative condition executor or change what removal means. Native deactivation may emit its already-authored ending event; quantities already changed and events already committed remain. Removing a condition never restores an old character snapshot.
 
@@ -22,12 +24,12 @@ The bundled world demonstrates real references: Energy expenditure and Exhaustio
 
 ## Creator journey
 
-1. Inspect an installed condition from the existing creator relationship list or selected status-policy work. Choose **Review removal**. Merely opening this view is a read; it creates no paid work or world change.
+1. Inspect an installed condition from the existing creator relationship list or selected status-policy work. Choose **Review removal**. Opening this view prepares a saved operational review; it creates no paid work or gameplay change.
 2. Read a plain explanation of the selected condition and the complete proposed removal. Required dependent definitions are selected and locked, with a readable path explaining why they cannot remain. Current condition instances and their ending activities are listed separately from definitions.
 3. Review optional supporting conditions. These are other installed conditions explicitly referenced by the selected removal set, which can remain legally installed when that set is removed. They are kept by default. Selecting one means requesting its removal too; the application recomputes every required dependent and blocker before presenting a new exact review.
 4. Cancel without changing the world, or prepare and approve the existing exact review. Optional choices and uncommitted review state stay associated with the correct world, session and candidate. Closing a panel is distinct from cancelling the proposal.
-5. Apply through the existing reviewed change service. Show the actual removed definitions, cleared condition instances and ended activities from the receipt. A lost acknowledgement offers recovery of the same operation rather than a second deletion.
-6. Continue ordinary play and reopen the world. Removed controls and ongoing rates are gone, retained conditions still work, old events and memories remain, and the saved result agrees with the receipt.
+5. Apply through the existing reviewed change service. Show the actual removed definitions, cleared condition instances and ended activities from the receipt. A lost acknowledgement offers recovery of the same operation rather than a second deletion. A confirmed Apply remains visible if a separate subsequent detail read fails; both inspection and Work refresh the selected current source and discard obsolete replies.
+6. Continue ordinary play and reopen the world. Removed controls and ongoing rates are gone, retained conditions still work, old events and memories remain, and the saved result agrees with the receipt. An unavailable selected source keeps its last permitted label for orientation; a deliberate refresh reads any reinstalled same-ID definition from current authority.
 
 The list may page or group a complete retained plan. Its total is the actual approved set, not the number of currently rendered rows. Filtering and paging do not change selection or approval. Show unavailable analysis, an incomplete result, a stale plan and an empty affected-instance list as different states.
 
@@ -45,14 +47,14 @@ Contrast this with a currently supported non-character condition instance on an 
 
 - Required dependencies come from explicit native status predicates, including negated tests, nested conditions and conditional rate operations. Merely mentioning another condition in text creates no dependency. A valid cycle is removed as one required set; it is not rejected merely because the reference graph contains a cycle.
 - The status owner determines how active and inactive ordinary instance records end or disappear. Existing activity, work-allocation, capability and event owners retain their effects. Already completed work is not undone.
-- Body policy, dreaming policy, retained exact contribution pins and any unsupported dependency remain blockers. This assignment does not edit those policies, delete their history or propose a replacement law automatically.
+- Currently installed body-policy references, dreaming-policy references, retained exact contribution pins and any unsupported dependency remain blockers. No bundled condition name or ID is universally protected; another admitted policy can reference different conditions or disable dreaming. This assignment does not edit those policies, delete their history or propose a replacement law automatically.
 - Optional associations are restricted to explicit outgoing references to other status-effect definitions. Attributes read by a condition, things it affected, people who remember it, and similarly named records are not optional deletion candidates.
 - The existing authoring, raw-policy and HTTP/MCP entrypoints share the same removal analysis and exact approval requirement. Supplying a full policy with omissions cannot bypass the review. Ordinary non-removal edits retain their current semantics.
-- The existing creator authority, private-human boundary, current-format save rules and operational receipt ownership continue to apply. If required detail cannot be lawfully disclosed sufficiently for exact review, refuse removal without revealing hidden records or their counts.
+- The existing creator authority, private-human boundary, current-format save rules and operational receipt ownership continue to apply. If required detail cannot be lawfully disclosed sufficiently for exact review, refuse removal without revealing hidden records or their counts. The check includes affected objects and their bound sources/targets inside another human’s inventory or attachments; fictional custody or world rules cannot grant application access.
 
 ## Meaningful failure and recovery
 
-An unsupported root explains that reviewed removal currently covers installed character-condition definitions; it must not advertise recipe, material, stock, character or memory deletion. A required external policy or retained definition pin identifies a permitted blocker and leaves the world unchanged. Unknown dependency coverage and capacity exhaustion never become a partial Apply.
+An unsupported root explains that reviewed removal currently covers installed condition definitions; it must not advertise recipe, material, stock, character or memory deletion. A required external policy or retained definition pin identifies a permitted blocker and leaves the world unchanged. Unknown dependency coverage and capacity exhaustion never become a partial Apply.
 
 If a condition changes, another condition acquires a reference to it, an affected episode starts or ends, or the creator loses authority after preview, the old review cannot apply. Preserve the creator's selection as a draft where still permitted, explain what must be refreshed, and require approval of the newly computed set. Unrelated clock advancement alone does not force renewed approval.
 
@@ -79,8 +81,20 @@ Outside scope: arbitrary recipe/material/stock removal, actor deletion, generic 
 
 ## Maintained records
 
-- Implementation and acceptance: [RD01–RD05](../maintainers/parallel-batch-09-reviewed-content-removal.md).
+- Implementation and acceptance: [RD01–RD05](../../maintainers/parallel-batch-09-reviewed-content-removal.md).
 - Technical design and readiness: [Batch 09 technical design](parallel-batch-09-reviewed-content-removal-tech-design.md).
-- Limits and supported removal coverage: [Creator edits](../limits/creator-edits.md#ce01); reused [invention limits](../limits/inventions.md).
-- Accepted policy: [Creator edit propagation](creator-edit-propagation-feature-spec.md); current behavior: [Status effects](../status-effects.md) and [relationship inspection](../invention-graph.md).
-- Standalone assignment: [Implementation prompt](parallel-batch-09-reviewed-content-removal-prompts.md); allocation: [batch register](parallel-batches.md).
+- Limits and supported removal coverage: [Creator edits](../../limits/creator-edits.md#ce01); reused [invention limits](../../limits/inventions.md).
+- Accepted policy: [Creator edit propagation](../creator-edit-propagation-feature-spec.md); current behavior: [Status effects](../../status-effects.md) and [relationship inspection](../../invention-graph.md).
+- Standalone assignment: [Implementation prompt](parallel-batch-09-reviewed-content-removal-prompts.md); allocation: [batch register](../parallel-batches.md).
+
+## Implementation decisions reconciled
+
+Opening **Review removal** prepares and retains the exact operational review, rather than being a strictly read-only preview as originally worded. It still makes no gameplay change and dispatches no paid work. This deliberate change reuses the existing saved draft/revision/review owner so paging, choices, reopening and receipt recovery address one exact proposal. Opening it consumes the existing session’s finite draft/review allowance; ordinary inspection remains read-only. Human approval and Apply remain separate. Native preparation, review and application need no provider call; existing agent proposals or application of an already human-approved plan remain supported.
+
+The delivered interface distinguishes confirmed Apply from failure to read later detail, and current selected-source inspection from retained historical removal evidence. Exact saved-edit comparisons use complete condition history after restart. Earlier operation recovery remains historical and checks current permission without depending on fresh gameplay preparation. These refine the original recovery and current-control promises without weakening them.
+
+The supported selection, candidate and complete-detail allowances remain in [CE01-B](../../limits/creator-edits.md#ce01-b--complete-review-and-growing-work), with their reasons and qualification limits. Oversized explanations refuse before useless copying under the same allowance; no smaller condition-count or chain-depth limit is added. The world/engine review confirmed that actual installed references, including an alternate supported body policy and disabled dreaming, control removal eligibility. Shared human privacy now includes containment and canonical consumed-object custody; this corrects the original permission defect rather than changing accepted world rules. The review label covers characters and objects. No other gameplay, scope or acceptance decision diverged from the provided specification. [Recorded review evidence](../../verification/reviewed-content-removal.md#requested-complete-change-review--october-14-2026) supports these outcomes.
+
+## Completion evidence
+
+The selected assignment, full-code review and world/engine boundary follow-up passed their required scenarios and checks. The [boundary evidence](../../verification/reviewed-content-removal.md#worldengine-boundary-review--october-14-2026) records alternate installed-world rules, contained/cold object privacy, genuine historical absence and selective custody reads. [Native, PostgreSQL, browser and measured-work evidence](../../verification/reviewed-content-removal.md) records the actual journey, refusal/recovery checks, review fixes and explicit broader limits. General-family deletion, migration, memory tools, provider quality and whole-interface/large-population acceptance remain with their existing owners.

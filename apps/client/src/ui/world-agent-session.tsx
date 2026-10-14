@@ -47,6 +47,7 @@ export function WorldAgentSession({
   controls,
   navigationOpen = false,
   closeNavigation,
+  onStatusPolicyChanged,
 }: {
   worldId: string;
   accessScope: string;
@@ -60,6 +61,7 @@ export function WorldAgentSession({
   controls?: ReactNode;
   navigationOpen?: boolean;
   closeNavigation?(): void;
+  onStatusPolicyChanged(): void;
 }) {
   const key = authoringKey('session', worldId, accessScope, sessionId);
   const recordKey = (record: string) =>
@@ -863,6 +865,7 @@ export function WorldAgentSession({
           }
           onClose={() => setReview(undefined)}
           onChanged={() => void refresh()}
+          onStatusPolicyChanged={onStatusPolicyChanged}
         />
       )}
     </div>

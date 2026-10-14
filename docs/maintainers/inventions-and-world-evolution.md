@@ -172,6 +172,8 @@ The original four recipe families—sling, bow, arrow and gathering tool—now h
 
 ### INV-5 — Versioned workshop activation and existing-state migration
 
+**Batch 09 finite retirement consumer:** installed-condition deletion now uses exact complete review and the existing native policy admission/atomic receipt owner. It ends ordinary effects under old definitions, preserves unrelated/history state, and blocks body/dream dependencies or retained independent pins. [Cold-history/native evidence](../verification/reviewed-content-removal.md#condition-history-and-postgresql-qualification) qualifies retained pins and ordinary object coverage. [Combined creator, failure/recovery and gameplay-load evidence](../verification/reviewed-content-removal.md) qualifies this consumer; general live-law migration, other record retirement and risk-accepted incompatible changes remain open here.
+
 Coordinate module/save integration with [EWF07](extensible-world-foundation.md#ewf07--module-lifecycle-and-current-format-save-integration); this is the sole declaration/module activation mechanism. Analyze specialized templates, active effects, controllers/senses and retained-save pins. Removal detaches only its own ongoing contribution, never restores an old target snapshot; unsupported detach blocks retirement or requires explicit approved recovery.
 
 **Depends on:** INV-3 version/family contract and INV-4 workshop state. **Unlocks:** changing existing inventions safely.
@@ -284,6 +286,8 @@ PW03/PW10 add a concrete 6.1–6.3 consumer through the existing object/resource
 
 ### INV-11 — Dependency-driven verification and reusable evidence
 
+[Batch 09](parallel-batch-09-reviewed-content-removal.md) implements one complete finite status-removal analysis: typed predicate sources, reverse required closure, direct optional supports, exact ordinary instance/action effects and external blockers. Complete condition history is prepared through its storage owner; unknown coverage refuses approval. [Native/SQL/browser qualification](../verification/reviewed-content-removal.md) covers cold pins, object instances, complete creator review and its measured workload/recovery boundaries. This advances the named consumer of 11.1–11.3 without completing general dependency, interaction or invented-obligation coverage.
+
 **Design owner:** [Invention validation](../invention-validation.md). **Depends on:** current family contracts, INV-1.5 and the applicable INV-3/EWF bindings. Begin with deterministic checks over the existing families; new invented-law proof requires its actual supported consumer under INV-6 or equivalent EWF work.
 
 - [ ] **11.1 Build typed dependency projections.** Resolve exact definition references, invocation order, read/invalidation/query membership, resource conflicts, event subscriptions, rights, validation and presentation associations over existing identities. Use ordinary maps/tables and reverse indexes initially. Reject unsupported required capabilities and distinguish valid temporal feedback from unbounded expansion/zero-time cycles.
@@ -358,7 +362,7 @@ The following work implements the accepted [runtime](../world-agent-runtime.md),
 
 ### INV-15 — Navigable relationship graph and visual inspection
 
-**October 11 allocation:** [Batch 09](parallel-batch-09-reviewed-content-removal.md) specifies implementation of reviewed removal for supported creator-authored status-effect definitions through actual owner dependencies. It reuses exact graph sources where valid and adds complete removal coverage for that consumer; exploratory navigation still cannot certify deletion, and broader INV-15/INV-11 impact coverage remains open.
+**Batch 09 condition-removal consumer qualified:** [Batch 09](parallel-batch-09-reviewed-content-removal.md) implements reviewed removal for exact installed status-effect definitions through actual owner dependencies. It reuses typed graph sources and adds finite complete removal coverage for that consumer, with [native/SQL/browser evidence](../verification/reviewed-content-removal.md) for cold pins, ordinary objects and exact reviewed Apply. Exploratory navigation still cannot certify deletion, and broader INV-15/INV-11 impact coverage remains open.
 
 **Depends on:** existing definition/pin identities and INV-11.1–11.3 where enforced behavior summaries are needed. **Owner:** [Relationship graph](../invention-graph.md).
 
@@ -494,6 +498,8 @@ These scoped subtasks do not complete 20.5 as a general family or broaden the cu
 **Completion gate:** unlike physical, social and information consumers compose through the existing owners and appear in the same inspectable graph, with honest scope and native consequences. None is accepted solely by an added type, tool description or generated image. All actual model/harness, browser, persistence, privacy and performance qualification remains separately recorded.
 
 ### INV-21 — Reviewed MCP authoring and unified native execution
+
+Batch 09 extends the existing status-policy kind with direct creator removal, complete retained paged details, optional-choice revisions, native human approval and receipt-first Apply. Whole-policy omissions receive the same review; raw-policy omissions return `review-required`. Preparation preserves world-before-database ordering and pages/late reads recheck disclosure. [Current evidence](../verification/reviewed-content-removal.md) qualifies the complete selected creator/browser/recovery journey and independently measured native/storage growth. No second installation store, NPC removal capability or paid execution is added, and the wider gates below remain unchanged.
 
 **Owner:** shared application service/MCP/runtime; uses INV-15/16/17/18, existing native kind owners and permanent command receipts. **Not a replacement for their broader acceptance gates.**
 

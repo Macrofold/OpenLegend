@@ -14,17 +14,19 @@ import { emptyActionExperience } from '../../action-experience.js';
 import { installWatchpost } from './watchpost.js';
 import { ADA_IDENTITY } from './characters.js';
 import { installKnownShieldMethod } from './shield-family.js';
+import { BASE_WOVEN_CONTAINER_METHOD } from './container-method.js';
 import { startingRecipeKnowledge } from './knowledge.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { BASE_PARTICIPATION_POLICY } from './participation.js';
 import { NATIVE_STRIKES } from './strikes.js';
 import { STAG_CONTACT, installFirstThreat } from './first-threat.js';
-import { addItem, nextRandom, nextId } from '../../data.js';
+import { addItem, nextRandom, reserveEntityId } from '../../data.js';
 import { BASE_ITEM_HANDLING } from './item-handling.js';
 import { NATIVE_ITEMS } from './items.js';
 import { BASE_FOOD_PREPARATIONS } from './food-preparations.js';
 import { BASE_CAST_DEFINITIONS, installRiverReaches, RIVER_LINE_METHOD } from './river-fishing.js';
 import { installRecipe } from '../../declarations.js';
+import { learnRecipe } from '../../knowledge.js';
 import { DEFAULT_STATUS_EFFECT_POLICY } from './status-effects.js';
 import {
   starterSpatialLayout,
@@ -85,21 +87,22 @@ const MERCENARY_ID = 'peacock-mercenary';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
 export { NATIVE_ITEMS, NATIVE_PREPARATIONS } from './items.js';
 
-/** Only the ordinary authored camp requests this starting material-use permission.
- * The creation profile returns its own explicit seeds separately.
- */
-export function baseWorldInitialConstructionSeeds(world: WorldState): ConstructionPermission[] {
-  if (!world.entities[BASE_CANOPY_SCENE.builderId]?.actor) return [];
+/** The full authored camp supplies this permission for its exact starting builder. */
+export function baseWorldInitialConstructionSeeds(
+  world: WorldState,
+  builderId = PLAYER_ID,
+): ConstructionPermission[] {
+  if (!world.entities['camp-route-marker'] || !world.entities[builderId]?.actor) return [];
   return [
     {
       id: 'intro-canopy-builder',
       worldId: world.id,
-      actorId: BASE_CANOPY_SCENE.builderId,
+      actorId: builderId,
       revision: 1,
       revoked: false,
       site: structuredClone(BASE_CANOPY_SCENE.site),
       operations: ['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered'],
-      materialIds: itemsForOwner(world, BASE_CANOPY_SCENE.builderId).map((item) => item.id),
+      materialIds: itemsForOwner(world, builderId).map((item) => item.id),
     },
   ];
 }
@@ -247,21 +250,27 @@ export function createFreshBaseWorld(
   return world;
 }
 
-/** A primitive camp and generic material families; there is deliberately no seeded sling or bow recipe. */
+/** The full authored camp, surrounding encounters and finite starting possessions. */
 export function createWorld(
   seed = 73,
   accounts: WorldCreationAccounts = {
     creatorAccountIds: ['local-player'],
     playerAccountId: 'local-player',
   },
+  identity?: { worldId: string; playerId: string; residentId: string },
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
-  const world = createFreshBaseWorld(normalizedSeed, accounts, {
+  const { worldId, playerId, residentId } = identity ?? {
     worldId: `wilderness-${normalizedSeed}`,
     playerId: PLAYER_ID,
-  });
-  world.memories = { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] };
-  world.knowledge = { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] };
+    residentId: NPC_ID,
+  };
+  const world = createFreshBaseWorld(normalizedSeed, accounts, { worldId, playerId });
+  // Reserve application-assigned numbers before starting stock uses the shared sequence.
+  // docs/identity-and-references.md#contract
+  for (const id of [playerId, residentId]) reserveEntityId(world, id);
+  world.memories = { [playerId]: [], [residentId]: [], [MERCENARY_ID]: [] };
+  world.knowledge = { [playerId]: [], [residentId]: [], [MERCENARY_ID]: [] };
   const entities: Entity[] = [
     {
       id: SLING_TARGET.id,
@@ -274,7 +283,7 @@ export function createWorld(
     },
     {
       spatial: { bodyProfileId: 'person', heading: 0 },
-      id: PLAYER_ID,
+      id: playerId,
       name: 'Mike',
       nameForm: 'proper',
       kind: 'player',
@@ -283,7 +292,7 @@ export function createWorld(
     },
     {
       spatial: { bodyProfileId: 'person', heading: 0 },
-      id: NPC_ID,
+      id: residentId,
       name: 'Ada',
       nameForm: 'proper',
       kind: 'npc',
@@ -513,27 +522,35 @@ export function createWorld(
             : entity.actor?.species === 'human'
               ? 'person.wayfarer'
               : undefined;
+    // Prospective primary identities must not erase fixed authored starting content.
+    if (world.entities[entity.id])
+      throw new Error('A starting person identity collides with an authored scene object.');
     world.entities[entity.id] = entity;
   }
   for (const material of [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
     for (let n = 0; n < material.quantity; n++) {
-      const id = addItem(world, PLAYER_ID, material.definitionId, 1);
+      const id = addItem(world, playerId, material.definitionId, 1);
       if (material.quantity > 1) world.entities[id]!.name += ` ${n + 1}`;
     }
   const shieldRecipe = installKnownShieldMethod(world);
+  const containerRecipe = installRecipe(world, BASE_WOVEN_CONTAINER_METHOD, {
+    source: 'authored-world',
+    profile: { ...world.profile },
+  }).recipe;
   // Explicit authored starting support; Ada's biography does not grant mechanics.
-  setStartingPractice(world, world.entities[NPC_ID]!, SLING_HANDLING, 1);
-  for (const id of [PLAYER_ID, NPC_ID, MERCENARY_ID]) {
+  setStartingPractice(world, world.entities[residentId]!, SLING_HANDLING, 1);
+  for (const id of [playerId, residentId, MERCENARY_ID]) {
     startingRecipeKnowledge(world, id, shieldRecipe.id);
+    learnRecipe(world, id, containerRecipe.id, 'authored', 'base:known-woven-container');
     addItem(world, id, 'stone_tool', 1);
     addItem(world, id, 'knife', 1);
-    addItem(world, id, 'prepared_fiber', id === PLAYER_ID ? 4 : 2);
-    addItem(world, id, 'cord', id === PLAYER_ID ? 3 : 1);
+    addItem(world, id, 'prepared_fiber', id === playerId ? 4 : 2);
+    addItem(world, id, 'cord', id === playerId ? 3 : 1);
     addItem(world, id, 'wood', 2);
     addItem(world, id, 'stone', 6);
   }
   // Authored background is required starting understanding, never a witnessed event.
-  world.actorKnowledge![NPC_ID] = {
+  world.actorKnowledge![residentId] = {
     general: {
       origin: 'authored-starting',
       subjectId: null,
@@ -547,7 +564,7 @@ export function createWorld(
     source: 'authored-world',
     profile: { id: world.profile.id, version: world.profile.version },
   }).recipe;
-  for (const actorId of [PLAYER_ID, NPC_ID, MERCENARY_ID])
+  for (const actorId of [playerId, residentId, MERCENARY_ID])
     (world.knowledge[actorId] ??= []).push({
       recipeId: riverMethod.id,
       learnedAt: world.simTime,
@@ -557,7 +574,7 @@ export function createWorld(
   populateOuterWilderness(world);
   installFirstThreat(world);
   installExpeditions(world);
-  installMissingBelonging(world);
+  installMissingBelonging(world, playerId);
   installWatchpost(world, createActor);
   initializeIdentity(world);
   validateInventionAttribution(world);

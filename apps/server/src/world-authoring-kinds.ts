@@ -36,6 +36,7 @@ import { commandInputSchema } from './world-service.js';
 import { OPENING_CHECKER_VERSION, openingValidation } from './world-opening-authoring.js';
 import type { WorldService } from './world-service.js';
 import type { WorldAgentPreparation } from '@open-legend/protocol';
+import { statusRemovalAnalysis } from './world-authoring-removal.js';
 
 export interface AuthoringDraft {
   id: string;
@@ -47,6 +48,7 @@ export interface AuthoringDraft {
   preparation?: WorldAgentPreparation;
   actorId: string;
   policyRevision: number;
+  removalSelection?: { rootIds: string[]; optionalIds: string[] };
   base: {
     manifest?: string;
     actionRules?: string;
@@ -397,6 +399,8 @@ export function authoringImpact(world: WorldState, d: AuthoringDraft) {
   if (d.kind === 'attribute-bindings') return attributeBindingImpact(world, d.payload);
   if (d.kind === 'attribute-values') return attributeValueImpact(world, d.payload);
   if (d.kind !== 'status-effect-policy') return { token: 'none', affected: 0 };
+  const removal = statusRemovalAnalysis(world, d);
+  if (removal) return { token: fingerprint(removal.binding), affected: removal.instances.length };
   const proposed = object(d.payload).definitions;
   const definitions = new Map(
     (Array.isArray(proposed) ? proposed : []).map((value) => [object(value).id, value]),

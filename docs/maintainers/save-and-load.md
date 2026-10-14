@@ -37,6 +37,8 @@ Build the initial personal-world manual save/load flow through SL00–SL05 and S
 
 ## SL00 — Establish the subsystem integration boundary
 
+Batch 09 joins the existing save boundary without a new gameplay store: installed status definitions/ordinary instances remain gameplay records, exact review detail remains operational authoring data, and permanent Apply receipts share the native world transaction. [Current native/PostgreSQL evidence](../verification/reviewed-content-removal.md#condition-history-and-postgresql-qualification) establishes restart retention of terminal pins and ordinary object effects plus complete status-only preparation. [Integrated reviewed-removal evidence](../verification/reviewed-content-removal.md#integrated-native-authoring-apply-and-recovery) also records atomic world/receipt recovery, PostgreSQL restart and replacement-timeline fencing. No legacy reader, conversion, reset or snapshot undo is added; general SL qualification remains unchanged.
+
 Dependencies: none; use the existing authoritative transition and repository boundaries.
 
 - [x] Define a small coordination interface for capture, dependency enumeration, candidate validation/restoration and derived-state rebuilding. Keep payload interpretation with the owning subsystem; a single implementation is sufficient initially.
