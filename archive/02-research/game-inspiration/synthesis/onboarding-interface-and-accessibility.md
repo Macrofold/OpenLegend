@@ -1,6 +1,6 @@
 # Onboarding, interface and accessibility
 
-**Status: Not started — shell only. Topic: UX.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: UX.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns learning and usable interaction. Expressive audiovisual identity belongs to
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+The interface should help someone choose and perform a meaningful action, recognize the result and recover from a mistake. Direct manipulation, explicit menus and contextual commands have different strengths. A deliberately uncertain fictional world still needs reliable controls and truthful system feedback; uncertainty about another character is not the same as uncertainty about whether a click worked.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's UI analysis](../dossiers/rust.md#rust-ux) and [48-asset atlas](../dossiers/rust-visual-atlas.md) separate inspected screen layouts from inferred interaction quality. Contextual verbs, upkeep horizons, server filters and search are useful observations. The atlas also identifies mislabeled/reused imagery and missing current inventory/building sequences. This is one scoped case; no cross-game accessibility ranking or hands-on performance result is implied.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="ux-l001"></a>
+
+### Preserve desired challenge while removing manipulation burden
+
+Snapping, understandable destinations, contextual verbs and reliable repeated actions can make interaction easier without selecting a strategy for the player. Explain actionable blockers and costs rather than expose implementation fields indiscriminately. A shortcut that is undiscoverable, a color-only refusal or a label that overstates protection can undermine that convenience. Compare simpler controls as well as more elaborate assistance.
+
+<a id="ux-l002"></a>
+
+### Show the decision horizon and the actual transaction state
+
+Translate relevant stock, timing and consequences into something a person can act on. Distinguish a preview, an accepted action, its visible animation and its completed result. For joining/loading, separate discovery, admission, preparation, readiness and failure. For building, distinguish maintenance time from damage protection. A progress animation or an attractive screenshot is not evidence that the underlying operation succeeded.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-ux) to locate relevan
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** a player tries to extend a shelter. The interface previews the intended result, explains a specific missing condition, preserves the attempted placement while the player resolves it, and confirms the actual outcome. The player then discovers the changed upkeep or use consequence. Contrast this with a warning that merely turns red and forces repeated guessing. The fictional challenge can remain finding materials or choosing a layout; the interface should not add unexplained refusal as a second challenge.
 
 ## Possible OpenLegend applications and limits
 
+Use these research questions with existing UI owners rather than creating a Rust-themed design system. Evaluate real task transitions, including cancellation and full/error states. Do not infer accessibility from a library, a settings tab or a captured frame.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Capture complete ordinary and failure workflows with version, role and input method recorded. Test keyboard, reading/contrast needs and recovery where applicable. Rust's atlas supports visual observations, not a claim that those interaction or assistive-technology checks passed.
 
 ## OpenLegend-specific research subtopics
 

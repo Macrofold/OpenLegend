@@ -1,6 +1,6 @@
 # Monetization and commercial sustainability
 
-**Status: Not started — shell only. Topic: BUSINESS.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: BUSINESS.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns real commercial outcomes and purchase design. Fictional currency belongs to
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+A business model should support the experience actually promised and a sustainable level of development/support. Premium access, optional content, subscriptions, creator markets and noncommercial distribution have different dependencies. Commercial scale, developer livelihood, player value and community goals should be evaluated separately rather than collapsed into one success label.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's commercial evidence table](../dossiers/rust.md#rust-commercial) distinguishes historical dollar reporting, dated PC-copy milestones and annual participation. Its current lifetime revenue/profit is not defensibly estimated from the available accounting inputs. The dossier proposes coupled gameplay, creators, updates and optional purchases as demand mechanisms, but supplies no controlled channel attribution. This is a useful positive-scale case with financial uncertainty, not a general prediction for survival games.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="business-l001"></a>
+
+### Preserve the metric before explaining the outcome
+
+State product/platform scope, period, currency, reported versus modeled status, gross/net treatment and the missing cost inputs. Copies, unique players, sessions, hours, concurrency, consumer spending, receipts and profit are not substitutes. A historical disclosed number can be more credible than a precise current estimate built on unknown realized prices. Do not turn list price multiplied by every reported player into revenue or subtract only a store fee and call the result profit.
+
+<a id="business-l002"></a>
+
+### Separate a plausible demand mechanism from demonstrated attribution
+
+Explain how a concrete activity might generate value, return visits or shareable stories, then identify the missing causal evidence and counterexplanations. Creators, timing, distribution and network effects can matter alongside design. Continued content and community systems also create support, compatibility, moderation and infrastructure costs. High engagement can coexist with obligation or dissatisfaction; a profitable model is not automatically a good participation model.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-business) to locate r
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** a team considers funding a persistent shared world through premium access and optional expression. It separates expected sales receipts from hosting, inference, moderation, development and ongoing support; checks which inputs are measured; and models uncertainty rather than treating a popular comparable as a forecast. It also examines what a purchase actually grants and whether the participant can stop comfortably. A finite premium game or noncommercial project can have a different sustainable scope.
 
 ## Possible OpenLegend applications and limits
 
+Use the evidence discipline with OpenLegend's actual supported product and measured service costs. Do not import Rust's monetization, scale, staffing assumptions or content cadence as a requirement. No spending or paid-service experiment is authorized by this research.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Which receipts and costs are observable, and which assumptions dominate a model? What evidence separates enjoyable return from protective obligation? Rust's current lifetime accounting and incremental sales/retention attribution remain unavailable in this pass.
 
 ## OpenLegend-specific research subtopics
 

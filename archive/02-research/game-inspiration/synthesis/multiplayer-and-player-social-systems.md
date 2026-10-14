@@ -1,6 +1,6 @@
 # Multiplayer and player social systems
 
-**Status: Not started — shell only. Topic: MULTI.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: MULTI.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns player-to-player activities. NPC relationships belong to NPC, collective in
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+People should be able to begin a worthwhile shared activity, contribute in different ways and leave without hidden obligations. Persistent cooperation, short matched sessions and asynchronous help have different strengths. Complementary expertise can emerge without fixed classes; solo play need not be intentionally inadequate to make cooperation valuable.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's social account](../dossiers/rust.md#rust-social) connects shared construction and specialist roles, while party joining addresses only part of arrival. Its server/persistence analysis and contrasting reviews expose schedule burdens and group advantage. This supports attention to the whole participation cycle, not a conclusion that unrestricted persistent PvP is the best social structure. Other candidate games remain unassessed.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="multi-l001"></a>
+
+### Joining together is not yet playing together
+
+Distinguish invitation, admission to the same world, physical regrouping, useful equipment, appropriate access and readiness for a common goal. Remove accidental separation while preserving intended travel or discovery. An initial spawn convenience does not solve later recovery or progression gaps. Evaluate departure and return as part of the same activity, not only the exciting cooperative middle.
+
+<a id="multi-l002"></a>
+
+### Shared infrastructure creates roles and aggregates advantage
+
+A common home or project can make building, provision, scouting and defense mutually useful. It can also concentrate scarce access, shift unglamorous labor onto a few people and reward constant availability. Compare flexible contribution, smaller-group rules and asynchronous support without assuming one universal team-size limit. TRUST owns permissions and abuse; NPC motivations must not be inferred from human team membership.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-multi) to locate rele
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** two friends return to a settlement at different times. One prepares shared supplies; the other arrives later and needs to understand where they may go, what they may use and which activity is ready. A new participant can contribute without receiving unrestricted control of the entire settlement. After the activity, each can leave with clear expectations about ongoing work and risk. Contrast that persistent model with a self-contained outing whose obligations end when the group stops.
 
 ## Possible OpenLegend applications and limits
 
+Use the arrival-to-return sequence when evaluating a supported shared-world activity. Do not imply that OpenLegend currently implements these multiplayer conveniences or that autonomous residents are equivalent to human teammates. Preserve useful solo and peaceful participation.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Where do groups lose the most time before their first shared decision? Who carries recurring work, and can participants stop freely? Rust's sources do not establish representative group satisfaction, solo viability or an optimal team size.
 
 ## OpenLegend-specific research subtopics
 

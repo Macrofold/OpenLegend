@@ -1,6 +1,6 @@
 # Survival, needs and seasonal life
 
-**Status: Not started — shell only. Topic: SURVIVE.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: SURVIVE.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns living with needs. Ecosystems belong to SYSTEMS, making food/tools to CRAFT
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+Preparation can make a dangerous journey possible; tending a place can make ordinary life satisfying. Detailed bodily simulation, simplified provisioning and needs-free creative play serve different purposes. The presence of more meters does not establish more meaningful survival, and dependable comfort need not eliminate future goals.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's survival account](../dossiers/rust.md#rust-survival) connects provision, farming and livestock to longer-term activity, while its original critics disagree about the depth of basic bodily survival. A dated harvest-window change shows developer concern for real participation schedules, not measured wellbeing improvement. The lesson is about useful preparation and care, not copying exact timers or treating this single case as representative of the genre.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="survive-l001"></a>
+
+### Let solved needs become a form of competence
+
+Food, shelter and suitable equipment can reward earlier choices by enabling exploration, care, craft or leisure. Recurring needs are most useful when they change preparation or create different solutions, not when they interrupt an unrelated activity at a fixed rate. Compare deliberate simplification and stable abundance; a prosperous settlement does not automatically require a new unavoidable crisis.
+
+<a id="survive-l002"></a>
+
+### Evaluate care against ordinary absence
+
+Growth, spoilage and maintenance clocks can create valued routines, but they can also punish sleep, work and irregular schedules. Explain horizons, warning states and recovery options. A forgiving harvest window or another meaningful activity while waiting may preserve care better than constant alarms. Distinguish a voluntary specialist project from a universal obligation imposed on every inhabitant.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-survive) to locate re
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** someone prepares food and weather protection before a journey. Good preparation changes the possible route and leaves attention for discovery. At home, a tended garden may support shared meals or quiet enjoyment rather than only combat supply. On returning after an ordinary absence, the player should understand what changed and have a worthwhile response. Contrast a harsh expedition world with a comfortable domestic one; the same clock need not govern both.
 
 ## Possible OpenLegend applications and limits
 
+Evaluate a complete shelter/provision/journey activity in the selected world. Keep peaceful prosperity and NPC purposes visible. Rust's player farming systems do not establish autonomous animal care, ecological balance or resident wellbeing as delivered OpenLegend features.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Which needs change a choice, and which merely consume attention? Compare first-session scarcity with established comfort and time away. Current livestock-needs screens and representative care-schedule outcomes were not directly tested in the Rust audit.
 
 ## OpenLegend-specific research subtopics
 

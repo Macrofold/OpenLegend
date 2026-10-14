@@ -1,6 +1,6 @@
 # Logistics, automation and management
 
-**Status: Not started — shell only. Topic: LOGISTICS.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: LOGISTICS.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns coordinating flows and work at scale. Recipes belong to CRAFT, economic inc
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+Organizing a dependable process can itself be satisfying or can free attention for something else. Detailed routing, simple service abstractions and manual small-scale work have different costs. Automation should not require deliberate tedium first simply to make its eventual removal feel valuable.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's logistics account](../dossiers/rust.md#rust-logistics) connects physical inventories, filters, production and infrastructure. Its electric-furnace example changes a by-product, not only speed, and its public-infrastructure case distinguishes shared benefits from private machinery. The atlas inspected machine exteriors rather than complete diagnostics. This is one case and does not establish that every game needs vulnerable factories or explicit pipes.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="logistics-l001"></a>
+
+### An upgrade can change dependencies, not just throughput
+
+A new process may remove hauling or fuel work while changing inputs, by-products, power needs or concentration of value. Evaluate the whole chain and what decisions remain afterward. Resilience, reserve stock and alternative routes can be meaningful; where they add only administration, a simpler dependable service may be preferable. Do not impose failure merely to keep the player busy.
+
+<a id="logistics-l002"></a>
+
+### Diagnose the blocked stage and preserve useful work
+
+Distinguish missing input, unavailable power, unmet recipe/station conditions, route failure and full output. A single “not running” state can conceal the player's next action. Show enough local causality to repair the process without requiring implementation knowledge. Coordinated machines and a person's chosen commitment remain different systems; automation is not evidence that NPC labor should ignore motivation or consent.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-logistics) to locate 
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** a workshop reliably receives raw materials, but finished-goods storage fills. The organizer identifies the blocked destination, chooses whether to expand storage, slow input or redirect output, and understands which prior work remains intact. Replacing a fuel-based process with another method may remove a useful by-product needed elsewhere. Contrast that organizational puzzle with a small household where automatic service is sufficient and explicit routing adds no valued choice.
 
 ## Possible OpenLegend applications and limits
 
+Use causal stage distinctions to evaluate an existing supported production activity before adding a large automation system. Keep public-service benefits, private stock and individual residents' obligations separate. These findings do not approve a factory layer or a universal task-assignment mechanic.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Can a player locate the real blockage and restore the wanted output without repeated guessing? Does freed attention lead to better activity or simply more required scale? Rust's current filtering/error UI and representative network resilience were not executed in this pass.
 
 ## OpenLegend-specific research subtopics
 
