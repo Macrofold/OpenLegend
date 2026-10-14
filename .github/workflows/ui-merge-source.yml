@@ -5,77 +5,58 @@ on:
     paths: [.github/workflows/ui-merge-source.yml, .github/scripts/ui-reconcile.py]
 permissions:
   contents: read
-  actions: read
 jobs:
   reconcile:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: candidate
+            ref: 9bb7e74a4916396248368cd192df9f12bcde0ff3
+          - label: main
+            ref: 1cf678802d62652d8dd466776d4b95a9d0d19166
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: openlegend
+          POSTGRES_PASSWORD: fixture
+          POSTGRES_DB: postgres
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U openlegend -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       AI_BUDGET_USD: '0'
+      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 9bb7e74a4916396248368cd192df9f12bcde0ff3
+          ref: ${{ matrix.ref }}
           persist-credentials: false
           show-progress: false
-      - name: Inspect saved results without repeating completed tests
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          mkdir "$RUNNER_TEMP/ui-final-confirmation"
-          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11920123369/zip --output "$RUNNER_TEMP/verification.zip"
-          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/jobs/116002856340/logs --output "$RUNNER_TEMP/ui-final-confirmation/main-baseline.log"
-          python3 - <<'PY'
-          import hashlib, json, os, re, subprocess, zipfile
-          from pathlib import Path
-          temp = Path(os.environ['RUNNER_TEMP']); report = temp / 'ui-final-confirmation'
-          archive = temp / 'verification.zip'
-          assert hashlib.sha256(archive.read_bytes()).hexdigest() == 'ec6888461c09c0ec3df84f4a2ecb0f28e4390ad27a3f84bf71806f8709f421e0'
-          with zipfile.ZipFile(archive) as saved:
-              metadata = json.loads(saved.read('metadata.json'))
-              results = json.loads(saved.read('tests.json'))
-              for name in saved.namelist():
-                  assert '/' not in name and '\\' not in name
-                  (report / name).write_bytes(saved.read(name))
-          tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
-          assert tree == metadata['final_tree'] == metadata['exported_tree'] == '01741f2bc222456711d77c190c3efab4fe4c2099'
-          assert metadata['main_parent'] == '1cf678802d62652d8dd466776d4b95a9d0d19166'
-          for path in ['.github/workflows/ui-merge-source.yml', '.github/scripts/ui-reconcile.py', '.github/scripts/ui-reconcile-publish.py']:
-              assert not Path(path).exists(), path
-          baseline = (report / 'main-baseline.log').read_bytes()
-          clean = re.sub(r'\x1b\[[0-9;]*m', '', baseline.decode('utf-8-sig'))
-          names = set()
-          for line in clean.splitlines():
-              match = re.search(r' FAIL\s+(.+?\.test\.tsx?) > (.+)$', line)
-              if match: names.add((match[1].strip(), match[2].replace(' > ', ' ').strip()))
-          assert names, 'No baseline failure headings were parsed'
-          failures = []
-          for suite in results['testResults']:
-              file = suite['name'].split('/ui-final/', 1)[-1]
-              for test in suite['assertionResults']:
-                  if test['status'] != 'failed': continue
-                  full = test['fullName'].strip()
-                  failures.append({'file': file, 'test': full, 'present_in_main': (file, full) in names, 'errors': test.get('failureMessages', [])})
-          comparison = {'candidate_commit': '9bb7e74a4916396248368cd192df9f12bcde0ff3', 'candidate_tree': tree, 'main_commit': metadata['main_parent'], 'main_job': 116002856340, 'main_log_sha256': hashlib.sha256(baseline).hexdigest(), 'main_failure_names': sorted(names), 'candidate_total': results['numTotalTests'], 'candidate_passed': results['numPassedTests'], 'candidate_failed': results['numFailedTests'], 'failures': failures}
-          (report / 'failure-comparison.json').write_text(json.dumps(comparison, indent=2) + '\n')
-          print('FAILURE_COMPARISON=' + json.dumps(comparison, indent=2), flush=True)
-          print('REUSED_CHECKS=' + json.dumps(metadata['checks']), flush=True)
-          PY
-      - name: Check repository guidance in the actual candidate checkout
-        shell: bash
-        run: |
-          set -o pipefail
-          node scripts/check-agent-guidance.mjs 2>&1 | tee "$RUNNER_TEMP/ui-final-confirmation/guidance-final.log"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install pinned dependencies for the world-installation check
-        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-final-confirmation/install-final.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-final-confirmation/install-final.log"; exit 1; }
+      - name: Install exact pinned dependencies
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/ui-final-checks"
+          pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-final-checks/install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-final-checks/install.log"; exit 1; }
+      - name: Check candidate guidance after installing its declared dependencies
+        if: matrix.label == 'candidate'
+        shell: bash
+        run: |
+          set -o pipefail
+          test "$(git rev-parse 'HEAD^{tree}')" = 01741f2bc222456711d77c190c3efab4fe4c2099
+          pnpm guidance:check 2>&1 | tee "$RUNNER_TEMP/ui-final-checks/guidance.log"
       - name: Check the three existing world installations through native owners
+        if: matrix.label == 'candidate'
         shell: bash
         run: |
           set -o pipefail
@@ -96,23 +77,32 @@ jobs:
             assert.equal(activityRequestDescriptors(world).some(request => request.id === rechargeId), true, name);
           }
           console.log('PASS: base native activities stay installed; recharge remains available in both alternate worlds and absent from the base world. No provider calls.');
-          " 2>&1 | tee "$RUNNER_TEMP/ui-final-confirmation/world-installation.log"
-      - name: Preserve the exact evidence and unresolved baseline failures
+          " 2>&1 | tee "$RUNNER_TEMP/ui-final-checks/world-installation.log"
+      - name: Isolate the existing save and departure test without changing its deadline
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set +e
+          pnpm exec vitest run apps/server/src/spatial-http.test.ts -t 'preserves elevated position and manual route snapshots while departure cancels walking' --reporter=json --outputFile="$RUNNER_TEMP/ui-final-checks/spatial.json" > "$RUNNER_TEMP/ui-final-checks/spatial.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/ui-final-checks/spatial.log"
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          report = Path(os.environ['RUNNER_TEMP']) / 'ui-final-checks'
+          result = json.loads((report / 'spatial.json').read_text())
+          print('EXACT_COMMIT=' + subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip())
+          print('TOTAL=' + str(result['numTotalTests']) + ' PASSED=' + str(result['numPassedTests']) + ' FAILED=' + str(result['numFailedTests']))
+          for suite in result['testResults']:
+              for test in suite['assertionResults']:
+                  if test['status'] == 'failed': print(json.dumps(test, indent=2))
+          PY
+          exit "$status"
+      - name: Preserve source-specific final evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-final-confirmation
-          path: ${{ runner.temp }}/ui-final-confirmation/
+          name: ui-final-checks-${{ matrix.label }}
+          path: ${{ runner.temp }}/ui-final-checks/
           retention-days: 3
           if-no-files-found: error
-      - name: Retain the failing test gate
-        if: ${{ !cancelled() && success() }}
-        run: |
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          comparison = json.loads((Path(os.environ['RUNNER_TEMP']) / 'ui-final-confirmation/failure-comparison.json').read_text())
-          unexplained = [test for test in comparison['failures'] if not test['present_in_main']]
-          assert not unexplained, unexplained
-          assert comparison['candidate_failed'] == 0, 'Existing main failures remain open; this evidence comparison does not waive the required test gate.'
-          PY
