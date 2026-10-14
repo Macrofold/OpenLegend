@@ -42,6 +42,8 @@ try:
     shutil.copyfile('.github/scripts/ui-recovery-browser.ts', browser)
     if not run('prepare', ['python3', '.github/scripts/ui-finish.py']):
         raise RuntimeError('Preparation failed; candidate not ready for checks.')
+    if not run('refine', ['python3', '.github/scripts/ui-refine.py']):
+        raise RuntimeError('Refinement failed; candidate not ready for checks.')
     changed = git('diff', '--name-only').decode().splitlines()
     run('format', ['pnpm', 'exec', 'prettier', '--write', *changed, str(native), str(browser)])
     if run('types', ['pnpm', 'typecheck']):
@@ -70,9 +72,9 @@ finally:
         assert git('write-tree').decode().strip() == tree
         metadata.update(tree=tree, changed_paths=paths)
     evidence = []
-    for path in sorted(Path('test-results').rglob('*recovery*.png')):
+    for path in sorted(Path('test-results').rglob('*.png')):
         blob = api('blobs', {'encoding': 'base64', 'content': base64.b64encode(path.read_bytes()).decode()})['sha']
-        evidence.append({'path': path.name, 'mode': '100644', 'type': 'blob', 'sha': blob})
+        evidence.append({'path': str(path).replace('/', '--'), 'mode': '100644', 'type': 'blob', 'sha': blob})
     if evidence:
         metadata['image_tree'] = api('trees', {'tree': evidence})['sha']
         metadata['images'] = [entry['path'] for entry in evidence]
