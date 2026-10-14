@@ -358,39 +358,6 @@ export function Character({
           )}
         </TabPanel>
         <TabPanel id="capabilities" shouldForceMount className="ol-character-page">
-          {!!view.player.practice?.length && (
-            <Section title="Practice">
-              {view.player.practice.map((progress) => (
-                <div key={progress.id}>
-                  <Tag>
-                    {progress.name}: {progress.rankLabel}
-                  </Tag>
-                  <p>{progress.progressText}</p>
-                  {progress.starting && (
-                    <p className="ol-caption">{progress.authoredStartingText}</p>
-                  )}
-                  <p className="ol-caption">
-                    {progress.scope} {progress.effect}
-                  </p>
-                  <details>
-                    <summary>
-                      {progress.evidenceHeading} ({progress.evidence.length})
-                    </summary>
-                    <ul>
-                      {progress.evidence.map((evidence, index) => (
-                        <li key={evidence.occurrenceId}>
-                          {progress.evidenceItemTemplate
-                            .replaceAll('{number}', String(index + 1))
-                            .replaceAll('{description}', evidence.description)}
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                </div>
-              ))}
-            </Section>
-          )}
-
           <OutingStatus view={view} connected={connected} command={command} />
           <ActionAttempts
             key={`${view.access?.privateDraftScope}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
@@ -404,6 +371,38 @@ export function Character({
             openActivity={openActivity}
             visible={visible && section === 'capabilities'}
           >
+            {!!view.player.practice?.length && (
+              <Section title="Practice">
+                {view.player.practice.map((progress) => (
+                  <div key={progress.id}>
+                    <Tag>
+                      {progress.name}: {progress.rankLabel}
+                    </Tag>
+                    <p>{progress.progressText}</p>
+                    {progress.starting && (
+                      <p className="ol-caption">{progress.authoredStartingText}</p>
+                    )}
+                    <p className="ol-caption">
+                      {progress.scope} {progress.effect}
+                    </p>
+                    <details>
+                      <summary>
+                        {progress.evidenceHeading} ({progress.evidence.length})
+                      </summary>
+                      <ul>
+                        {progress.evidence.map((evidence, index) => (
+                          <li key={evidence.occurrenceId}>
+                            {progress.evidenceItemTemplate
+                              .replaceAll('{number}', String(index + 1))
+                              .replaceAll('{description}', evidence.description)}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  </div>
+                ))}
+              </Section>
+            )}
             <Section title="Actions available to you">
               <Actions
                 actions={view.player.actions.filter((action) => action.command.type !== 'cancel')}

@@ -427,7 +427,13 @@ export function GameSavesPanel({
         )}
         {unresolved && (
           <div className="ol-notice" role="alert">
-            <strong>Checkpoint result not confirmed</strong>
+            <strong>
+              {creating || rowBusy
+                ? 'Checkpoint operation in progress…'
+                : checking
+                  ? 'Checking original checkpoint…'
+                  : 'Checkpoint result not confirmed'}
+            </strong>
             {pendingRequest ? (
               <>
                 <p>
@@ -581,7 +587,7 @@ export function GameSavesPanel({
                 Delete
               </Button>
             </div>
-            {confirm?.save.id === save.id && !unresolved && (
+            {confirm?.save.id === save.id && (!unresolved || rowBusy) && (
               <div
                 className="ol-checkpoint-confirm"
                 role="group"

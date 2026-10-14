@@ -1,3 +1,6 @@
+import { CANOPY_ATTRIBUTES, BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
+import { SLING_HANDLING } from './worlds/base/practical-competence.js';
+import { directChildIds, unequipLot } from './objects.js';
 import { worldPlacement } from './spatial-state.js';
 import type { WorldCreationAccounts } from './invention-attribution.js';
 import { seedAgency } from './agency.js';
@@ -99,11 +102,13 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     },
   };
   world.moduleManifest = createModuleManifest(
-    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES],
+    // This preset reuses the camp's actual shelter materials and practice target.
+    // Their rules remain authored dependencies; human food/energy meters do not.
+    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES, ...CANOPY_ATTRIBUTES, SLING_HANDLING],
     BASE_SENSES,
     policy,
     world.moduleManifest.recipeFamilies,
-    [activityHostPin(RESERVOIR_ACTIVITY_HOST)],
+    [activityHostPin(RESERVOIR_ACTIVITY_HOST), activityHostPin(BASE_CANOPY_ACTIVITY_HOST)],
   );
   world.statusEffectPolicy = { revision: 1, clockOffsetHours: 0, namedTimes: {}, definitions: [] };
   world.cognitionPolicy = { ...world.cognitionPolicy, dream: null };
@@ -117,6 +122,10 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     if (actor.action?.type === 'status-effect') actor.action = null;
     initializeAttributes(actor, RESERVOIR_DEMO_ATTRIBUTES);
     if (actor.controller !== 'native') {
+      // Fresh constructs have no wearing ports. Keep inherited equipment as the
+      // same carried belongings through the ordinary placement/revision owner.
+      for (const id of directChildIds(world, entity.id))
+        if (world.entities[id]?.placement?.mode === 'attached') unequipLot(world, entity.id, id);
       actor.species = 'construct';
       actor.body = livingBody('construct');
       actor.agency = seedAgency(['Stay charged and explore the clearing.']);

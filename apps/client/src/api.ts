@@ -49,9 +49,7 @@ function clearSessionDrafts(
         key.startsWith('open-legend:composer-draft:') ||
         key.startsWith('open-legend:action-draft:') ||
         key.startsWith('open-legend:creation-request:') ||
-        (!preservePendingCommands &&
-          !preserveCheckpointResults &&
-          key.startsWith('open-legend:checkpoint-request:')) ||
+        (!preserveCheckpointResults && key.startsWith('open-legend:checkpoint-request:')) ||
         (!preservePendingCommands &&
           (key.startsWith('open-legend:action-request:') ||
             key.startsWith('open-legend:inventory-command:') ||
@@ -62,7 +60,10 @@ function clearSessionDrafts(
     /* Browser storage is optional. */
   }
 }
-export function clearAccess(options?: { preservePendingCommands?: boolean }): void {
+export function clearAccess(options?: {
+  preservePendingCommands?: boolean;
+  preserveCheckpointResultsFor?: string;
+}): void {
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
@@ -70,7 +71,8 @@ export function clearAccess(options?: { preservePendingCommands?: boolean }): vo
   privateDraftTimeline = '';
   clearTradeDrafts();
   // Each store can be unavailable independently; local storage must not prevent session cleanup.
-  clearSessionDrafts(options?.preservePendingCommands);
+  clearSessionDrafts(options?.preservePendingCommands, !!options?.preserveCheckpointResultsFor);
+  pruneCheckpointRequests(options?.preserveCheckpointResultsFor);
   try {
     if (!options?.preservePendingCommands) sessionStorage.removeItem('open-legend:private-owner');
   } catch {

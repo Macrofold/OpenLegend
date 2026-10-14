@@ -524,8 +524,19 @@ async function initializeGameServer(
   const invalidateStream = (stream: ServerResponse) => {
     // No private payload accompanies revocation. A blocked connection is disconnected;
     // data already handed to the transport cannot be recalled.
-    if (streams.get(stream)?.blocked) stream.destroy();
-    else stream.end('event: access-changed\ndata: {}\n\n');
+    const state = streams.get(stream);
+    if (state?.blocked) stream.destroy();
+    else {
+      // A load changes the timeline, not current account/grant ownership. Prove
+      // that distinction with the existing authority owner before permitting a
+      // client to retain only its read-only checkpoint outcome description.
+      // docs/save-and-load.md#continuation-and-identity
+      const timelineOnly =
+        state &&
+        state.scope.timelineId !== service.timelineId &&
+        service.currentScope({ ...state.scope, timelineId: service.timelineId }, 'save');
+      stream.end(`event: ${timelineOnly ? 'timeline-changed' : 'access-changed'}\ndata: {}\n\n`);
+    }
   };
   const currentView = (scope: RequestScope): Promise<GameView> => {
     const pending = projectionLane.run(async () => {

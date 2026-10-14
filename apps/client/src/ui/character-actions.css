@@ -28,16 +28,16 @@
   overflow: auto;
   align-content: start;
 }
-.ol-character-page:has(.ol-action-intention:not([hidden])),
-.ol-character-actions:has(.ol-action-intention:not([hidden])) {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-block-size: 0;
-  overflow: hidden;
+/* One vertical scroll owner keeps scheduling choices and the action footer
+ * reachable together, including after current work or recovery text changes. */
+.ol-character-page:has(.ol-action-intention:not([hidden])) {
+  display: block;
+  overflow: auto;
 }
 .ol-character-actions:has(.ol-action-intention:not([hidden])) {
-  overflow: auto;
+  display: grid;
+  flex: none;
+  overflow: visible;
 }
 /* Entering a draft is a focused task. Its own actor/subject and Cancel replace
  * browsing navigation; the mounted Character pages retain their reading state. */
@@ -121,7 +121,7 @@
 .ol-action-intention {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: none;
   min-block-size: 0;
   gap: var(--space-2);
   padding: var(--space-3);
@@ -135,10 +135,10 @@
 }
 .ol-action-fields {
   display: grid;
-  flex: 1;
-  min-block-size: 64px;
+  flex: none;
+  min-block-size: 0;
   gap: var(--space-3);
-  overflow: auto;
+  overflow: visible;
   align-content: start;
   padding: 4px;
   overscroll-behavior: contain;

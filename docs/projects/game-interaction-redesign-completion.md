@@ -72,3 +72,55 @@ All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture i
 - [ ] Remaining keyboard/non-drag, text/viewport, real operating-system input-method, assistive-device and uncoached-player requirements are accurately qualified. Automated browser or synthetic composition results cannot be reported as human/device evidence.
 
 There is no unresolved product decision blocking the implementation work described above. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
+
+## Integrated recovery continuation — October 14
+
+Development now includes GitHub `Macrofold/OpenLegend` `refs/heads/main` at
+`b72e9d9aab8072eb1b5ae9d25f620a4421509148`, through normal merge `28baace2983f60baff0179def860c089af6b6e6d`.
+Keep the revised creator removal controls and single-scroll review together with
+this branch's task navigation. The earlier verification remains source-specific.
+
+The running-game recovery checks exposed two additional presentation/lifetime
+problems: opening Checkpoints leaves focus in the Game menu, and the application
+reset erases the pending checkpoint when its own load changes the timeline.
+Selecting a task from Game will close that navigation menu and move focus into the
+selected task without trapping it. A load transition may retain only the exact
+read-only checkpoint description whose server-issued recovery scope still matches;
+old executable commands and unrelated private drafts remain cleared. Changed
+account, grant, character or session must not retain that description.
+
+The clockwork preset deliberately reuses real shelter materials and the existing
+practice target. Install their exact attribute definitions and the shelter activity
+as selected authored dependencies, without installing human hunger/energy or
+turning wilderness defaults into mandatory engine rules. Current validation stays
+strict. Verify all three existing presets, then actual recharge and recovery.
+
+The recovery probes use the visible Replace current work control and inspect the
+actual generated pre-load protection checkpoint through the existing save owner.
+A missing fixed `before-load` row cannot establish protection. Preserve the original
+request counts, exact content, native effects and all existing deadlines. These
+changes do not close wider native, accessibility or uncoached-play requirements.
+
+### Trace-supported completion corrections
+
+The ae12 native browser run passes checkpoint creation through reply loss, reload
+and phone adaptation. Its recorded load retains the same native checkpoint owner
+while replacing the timeline, but the old stream sends an undifferentiated access
+invalidation. Classify a timeline-only stream reset only after the existing authority
+owner accepts the exact old scope with the new timeline and current save permission.
+That public signal contains no private payload and permits retaining only the local
+read-only checkpoint description; genuine revocation still clears all private drafts.
+Fresh state and every receipt read continue to validate current authority.
+
+The action scheduling label is present but is clipped by competing nested scroll
+areas. Use the existing Character page as the single vertical scroll owner while
+editing; keep Practice in the retained browsing content, not above the focused form.
+The action footer scrolls with its form rather than covering fields. Keep ordinary
+pointer selection, keyboard navigation, exact request identity and the original
+60-second journey deadline.
+
+Construct bodies deliberately have no equipment attachment points. The fresh
+clockwork preset must release inherited worn items into the same character's carried
+belongings through the existing object owner before replacing those bodies. Preserve
+real items, quantities and custody; do not change universal anatomy or weaken current
+validation. This is initial preset composition, not a stored-world migration.

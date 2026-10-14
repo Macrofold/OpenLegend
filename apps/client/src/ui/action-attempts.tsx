@@ -19,6 +19,7 @@ type PendingAction = {
   text: string;
   mode: Mode;
   targetId?: string;
+  subjectLabel: string;
   timeline: string;
 };
 function validPendingAction(value: unknown): value is PendingAction {
@@ -29,7 +30,10 @@ function validPendingAction(value: unknown): value is PendingAction {
     'text' in value &&
     boundedText(value.text, 500) &&
     'mode' in value &&
-    ['enqueue', 'replace', 'interrupt'].includes(String(value.mode)) &&
+    typeof value.mode === 'string' &&
+    ['enqueue', 'replace', 'interrupt'].includes(value.mode) &&
+    'subjectLabel' in value &&
+    boundedText(value.subjectLabel, 500) &&
     'timeline' in value &&
     boundedText(value.timeline, 200) &&
     (!('targetId' in value) || value.targetId === undefined || boundedText(value.targetId, 200))
@@ -108,6 +112,7 @@ export function ActionAttempts({
   const retainedRef = useRef(retained);
   function remember(next: RetainedRequest<PendingAction>) {
     retainedRef.current = next;
+    submission.current = next.status === 'pending' ? next.request : null;
     setRetained(next);
   }
   const draftKey = view.access?.privateDraftScope
@@ -123,6 +128,7 @@ export function ActionAttempts({
   const [editing, setEditing] = useState(!!text);
   const [mode, setMode] = useState<Mode>('enqueue');
   const [busy, setBusy] = useState(false);
+  const [requestPhase, setRequestPhase] = useState<'sending' | 'checking' | null>(null);
   const [message, setMessage] = useState('');
   const [requestId, setRequestId] = useState<string | null>(null);
   const alive = useRef(true);
@@ -227,6 +233,7 @@ export function ActionAttempts({
       requestId: crypto.randomUUID(),
       text: text.trim(),
       targetId: targetId || undefined,
+      subjectLabel: currentSubject?.name ?? 'No fixed subject',
       mode: hasWork ? mode : 'enqueue',
       timeline: view.saveTimeline!,
     };
@@ -234,7 +241,8 @@ export function ActionAttempts({
       retainRequest(recoveryKey, submitted);
       submission.current = submitted;
       remember({ status: 'pending', request: submitted });
-      const { timeline: _timeline, ...body } = submitted;
+      setRequestPhase('sending');
+      const { timeline: _timeline, subjectLabel: _subjectLabel, ...body } = submitted;
       const result = await post('/api/action-attempt', body);
       if (!alive.current || submission.current?.requestId !== submitted.requestId) return;
       setMessage(result.message);
@@ -263,7 +271,10 @@ export function ActionAttempts({
       }
     } finally {
       inFlight.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) {
+        setRequestPhase(null);
+        setBusy(false);
+      }
     }
   };
   async function checkOriginalAction() {
@@ -272,7 +283,9 @@ export function ActionAttempts({
     inFlight.current = true;
     setBusy(true);
     try {
-      const outcome = await post<RequestRecoveryResult>('/api/action-attempt/receipt', submitted);
+      setRequestPhase('checking');
+      const { subjectLabel: _subjectLabel, ...request } = submitted;
+      const outcome = await post<RequestRecoveryResult>('/api/action-attempt/receipt', request);
       if (!alive.current || submission.current?.requestId !== submitted.requestId) return;
       if (!outcome.ok) {
         setMessage(outcome.message);
@@ -289,7 +302,10 @@ export function ActionAttempts({
         );
     } finally {
       inFlight.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) {
+        setRequestPhase(null);
+        setBusy(false);
+      }
     }
   }
   /** One idempotent native command per explicit choice (accept, decline or stop). */
@@ -335,10 +351,17 @@ export function ActionAttempts({
     <div className="ol-character-actions">
       {retained.status !== 'empty' && (
         <div className="ol-notice" role="status">
-          <strong>Original action result not confirmed</strong>
+          <strong>
+            {requestPhase === 'sending'
+              ? 'Sending original action…'
+              : requestPhase === 'checking'
+                ? 'Checking original action…'
+                : 'Original action result not confirmed'}
+          </strong>
           {retained.status === 'pending' ? (
             <>
               <p>{retained.request.text}</p>
+              <p className="ol-caption">Original subject: {retained.request.subjectLabel}</p>
               <p className="ol-caption">
                 Original choice:{' '}
                 {retained.request.mode === 'replace'

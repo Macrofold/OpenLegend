@@ -348,7 +348,16 @@ function App({
             previous.access.actorId === next.access?.actorId &&
             previous.player.id === next.player.id &&
             previous.saveTimeline === next.saveTimeline;
-          clearAccess({ preservePendingCommands: samePrivateOwner });
+          // A successful load replaces the timeline, but its original outcome
+          // remains readable under the same native checkpoint authority. This
+          // exception never preserves an executable old-timeline command.
+          clearAccess({
+            preservePendingCommands: samePrivateOwner,
+            preserveCheckpointResultsFor:
+              previous.checkpoint?.recoveryScope === next.checkpoint?.recoveryScope
+                ? next.checkpoint?.recoveryScope
+                : undefined,
+          });
           resetApplication();
           return;
         }
@@ -392,6 +401,15 @@ function App({
           setConnected(true);
         }
       };
+      source.addEventListener('timeline-changed', () => {
+        if (!active || source !== connection) return;
+        // The server proved that only the saved timeline changed. Old gameplay
+        // commands and other private drafts still disappear; checkpoint recovery
+        // is read-only and fresh state rechecks the exact retained owner.
+        pauseTab();
+        clearAccess({ preserveCheckpointResultsFor: current.checkpoint?.recoveryScope });
+        resetApplication();
+      });
       source.addEventListener('access-changed', () => {
         if (!active || source !== connection) return;
         pauseTab();
@@ -634,6 +652,24 @@ function App({
     // Opening speech history is the recovery path, so it settles the missed-caption notice.
     if (id === 'events') missedCaptions.clear();
     setOpen((v) => fit([...v.filter((p) => p !== id), id]));
+  }
+  function openGameTask(id: PanelId) {
+    const opener = document.activeElement;
+    show(id);
+    // Game is navigation, not an editing task. Its focused launcher must not
+    // displace the chosen task when the layout becomes a single narrow sheet.
+    setOpen((panels) => panels.filter((panel) => panel !== 'game'));
+    requestAnimationFrame(() => {
+      const target = document.getElementById(`${id}Panel`);
+      if (
+        target &&
+        !target.closest('[hidden]') &&
+        (document.activeElement === opener || document.activeElement === document.body)
+      )
+        target
+          .querySelector<HTMLButtonElement>('.ol-panel-tools button')
+          ?.focus({ preventScroll: true });
+    });
   }
   function hide(id: PanelId) {
     if (id === 'inventory') containerOpening.cancel();
@@ -1633,19 +1669,19 @@ function App({
                 {view.persistence.message}
               </p>
               {view.access?.canManageSaves && (
-                <Button onPress={() => show('checkpoints')}>Checkpoints</Button>
+                <Button onPress={() => openGameTask('checkpoints')}>Checkpoints</Button>
               )}
-              <Button onPress={() => show('help')}>Settings & help</Button>
-              <Button onPress={() => show('ai')}>Intelligence & allowance</Button>
+              <Button onPress={() => openGameTask('help')}>Settings & help</Button>
+              <Button onPress={() => openGameTask('ai')}>Intelligence & allowance</Button>
             </Section>
             <Section title="Creation and inspection">
-              <Button onPress={() => show('agent')}>Create</Button>
+              <Button onPress={() => openGameTask('agent')}>Create</Button>
               <p className="ol-caption">
                 Open your invention workshop
                 {view.godMode ? ' and the world-owner conversation' : ''}.
               </p>
               {view.godMode && (
-                <Button onPress={() => show('intelligence')}>
+                <Button onPress={() => openGameTask('intelligence')}>
                   God mode · Intelligence diagnostics
                 </Button>
               )}
