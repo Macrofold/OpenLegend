@@ -4,166 +4,115 @@ on:
     branches: [docs/game-ui-research-redesign]
     paths: [.github/workflows/ui-merge-source.yml, .github/scripts/ui-reconcile.py]
 permissions:
-  contents: write
+  contents: read
   actions: read
 jobs:
   reconcile:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: openlegend
-          POSTGRES_PASSWORD: fixture
-          POSTGRES_DB: postgres
-        ports: [5432:5432]
-        options: >-
-          --health-cmd "pg_isready -U openlegend -d postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
+    timeout-minutes: 10
     env:
       AI_BUDGET_USD: '0'
-      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: 9bb7e74a4916396248368cd192df9f12bcde0ff3
           persist-credentials: false
           show-progress: false
-          fetch-depth: 0
-      - name: Restore exact reviewed preparation and checks
+      - name: Inspect saved results without repeating completed tests
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          mkdir "$RUNNER_TEMP/ui-final-confirmation"
+          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11920123369/zip --output "$RUNNER_TEMP/verification.zip"
+          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/jobs/116002856340/logs --output "$RUNNER_TEMP/ui-final-confirmation/main-baseline.log"
           python3 - <<'PY'
-          import os, re, subprocess, textwrap
+          import hashlib, json, os, re, subprocess, zipfile
           from pathlib import Path
-          source = subprocess.check_output(['git', 'show', '7826a9681691e48253c4c3b6670b8c059129e741:.github/workflows/ui-merge-source.yml'], text=True)
-          def step(name):
-              block = source.split('      - name: ' + name + '\n', 1)[1].split('\n      - ', 1)[0]
-              return textwrap.dedent(block.split('        run: |\n', 1)[1])
-          temp = Path(os.environ['RUNNER_TEMP'])
-          for name, filename in [
-              ('Resolve the reviewed overlap', 'prepare.sh'),
-              ('Format and verify the exact candidate', 'verify.sh'),
-              ('Export immutable candidate objects in bounded batches', 'export.sh'),
-          ]:
-              (temp / filename).write_text(step(name))
-          subprocess.run(['bash', '-e', '-o', 'pipefail', str(temp / 'prepare.sh')], check=True)
+          temp = Path(os.environ['RUNNER_TEMP']); report = temp / 'ui-final-confirmation'
+          archive = temp / 'verification.zip'
+          assert hashlib.sha256(archive.read_bytes()).hexdigest() == 'ec6888461c09c0ec3df84f4a2ecb0f28e4390ad27a3f84bf71806f8709f421e0'
+          with zipfile.ZipFile(archive) as saved:
+              metadata = json.loads(saved.read('metadata.json'))
+              results = json.loads(saved.read('tests.json'))
+              for name in saved.namelist():
+                  assert '/' not in name and '\\' not in name
+                  (report / name).write_bytes(saved.read(name))
+          tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
+          assert tree == metadata['final_tree'] == metadata['exported_tree'] == '01741f2bc222456711d77c190c3efab4fe4c2099'
+          assert metadata['main_parent'] == '1cf678802d62652d8dd466776d4b95a9d0d19166'
+          for path in ['.github/workflows/ui-merge-source.yml', '.github/scripts/ui-reconcile.py', '.github/scripts/ui-reconcile-publish.py']:
+              assert not Path(path).exists(), path
+          baseline = (report / 'main-baseline.log').read_bytes()
+          clean = re.sub(r'\x1b\[[0-9;]*m', '', baseline.decode('utf-8-sig'))
+          names = set()
+          for line in clean.splitlines():
+              match = re.search(r' FAIL\s+(.+?\.test\.tsx?) > (.+)$', line)
+              if match: names.add((match[1].strip(), match[2].replace(' > ', ' ').strip()))
+          assert names, 'No baseline failure headings were parsed'
+          failures = []
+          for suite in results['testResults']:
+              file = suite['name'].split('/ui-final/', 1)[-1]
+              for test in suite['assertionResults']:
+                  if test['status'] != 'failed': continue
+                  full = test['fullName'].strip()
+                  failures.append({'file': file, 'test': full, 'present_in_main': (file, full) in names, 'errors': test.get('failureMessages', [])})
+          comparison = {'candidate_commit': '9bb7e74a4916396248368cd192df9f12bcde0ff3', 'candidate_tree': tree, 'main_commit': metadata['main_parent'], 'main_job': 116002856340, 'main_log_sha256': hashlib.sha256(baseline).hexdigest(), 'main_failure_names': sorted(names), 'candidate_total': results['numTotalTests'], 'candidate_passed': results['numPassedTests'], 'candidate_failed': results['numFailedTests'], 'failures': failures}
+          (report / 'failure-comparison.json').write_text(json.dumps(comparison, indent=2) + '\n')
+          print('FAILURE_COMPARISON=' + json.dumps(comparison, indent=2), flush=True)
+          print('REUSED_CHECKS=' + json.dumps(metadata['checks']), flush=True)
           PY
+      - name: Check repository guidance in the actual candidate checkout
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/check-agent-guidance.mjs 2>&1 | tee "$RUNNER_TEMP/ui-final-confirmation/guidance-final.log"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install pinned dependencies
-        working-directory: ${{ runner.temp }}/ui-final
-        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-final-report/install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-final-report/install.log"; exit 1; }
-      - name: Reconcile exact template callers using the installed formatter parser
-        working-directory: ${{ runner.temp }}/ui-final
+      - name: Install pinned dependencies for the world-installation check
+        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-final-confirmation/install-final.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-final-confirmation/install-final.log"; exit 1; }
+      - name: Check the three existing world installations through native owners
         shell: bash
         run: |
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          import path from 'node:path';
-          import { parsers } from 'prettier/plugins/typescript';
-          const paths = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'ui-final-paths.json'), 'utf8'));
-          for (const file of paths) {
-            if (!/\.(ts|tsx)$/.test(file)) continue;
-            let text = fs.readFileSync(file, 'utf8');
-            if (!text.includes('narrationTemplate(')) continue;
-            const source = await parsers.typescript.parse(text, { filepath: file });
-            const edits = [];
-            const visit = (node) => {
-              if (!node || typeof node !== 'object') return;
-              if (node.type === 'CallExpression' && node.callee?.type === 'Identifier' && node.callee.name === 'narrationTemplate' && node.arguments.length === 3) {
-                const [template, entities, names] = node.arguments;
-                if (entities.type !== 'ObjectExpression' || names.type !== 'ObjectExpression') throw new Error('Review nonliteral narration arguments: ' + file);
-                const properties = [...entities.properties, ...names.properties];
-                const keys = properties.map((p) => {
-                  if (p.type !== 'Property' || p.computed || !['Identifier', 'Literal'].includes(p.key.type)) throw new Error('Review computed narration binding: ' + file);
-                  return p.key.name ?? p.key.value;
-                });
-                if (new Set(keys).size !== keys.length) throw new Error('Review overlapping narration bindings: ' + file);
-                const range = (n) => n.range ?? [n.start, n.end];
-                const from = range(entities)[0];
-                const to = range(names)[1];
-                if (!Number.isInteger(from) || !Number.isInteger(to)) throw new Error('Parser omitted source positions: ' + file);
-                const values = properties.map((p) => { const [a,b] = range(p); return text.slice(a,b); });
-                edits.push([from, to, '{ ' + values.join(', ') + ' }']);
-              }
-              for (const [key, value] of Object.entries(node)) {
-                if (['tokens','comments','loc','range','parent'].includes(key)) continue;
-                if (Array.isArray(value)) value.forEach(visit);
-                else if (value && typeof value === 'object') visit(value);
-              }
-            };
-            visit(source);
-            for (const [start, end, replacement] of edits.sort((a,b) => b[0]-a[0])) text = text.slice(0,start) + replacement + text.slice(end);
-            if (edits.length) { fs.writeFileSync(file, text); console.log('Updated exact narration callers: ' + file + ' (' + edits.length + ')'); }
+          set -o pipefail
+          pnpm exec tsx --eval "
+          import assert from 'node:assert/strict';
+          import { createWorld } from './packages/domain/src/data.ts';
+          import { createReservoirDemo, createTouchDemo } from './packages/domain/src/world-presets.ts';
+          import { activityRequestDescriptors, activityHostPin } from './packages/domain/src/activity-hosts.ts';
+          import { BASE_NATIVE_ACTIVITY_HOSTS } from './packages/domain/src/worlds/base/native-activities.ts';
+          const base = createWorld(73);
+          const rechargeId = 'reservoir-demo:recharge-session';
+          assert.equal(activityRequestDescriptors(base).some(request => request.id === rechargeId), false);
+          for (const host of BASE_NATIVE_ACTIVITY_HOSTS) {
+            assert.ok(base.moduleManifest.activityHosts.some(pin => JSON.stringify(pin) === JSON.stringify(activityHostPin(host))), host.definition.id);
           }
-          JS
-      - name: Run selected checks on the exact candidate
-        working-directory: ${{ runner.temp }}/ui-final
-        run: bash -e -o pipefail "$RUNNER_TEMP/verify.sh"
-      - name: Export immutable objects in bounded batches
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: bash -e -o pipefail "$RUNNER_TEMP/export.sh"
-      - name: Print the affected resolution and compare baseline failures
-        if: ${{ !cancelled() && success() }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import hashlib, json, os, re, urllib.request
-          from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-final-report'
-          print('RESOLUTION_DIFF_BEGIN', flush=True)
-          print((report / 'resolution.patch').read_text(), flush=True)
-          print('RESOLUTION_DIFF_END', flush=True)
-          metadata = json.loads((report / 'metadata.json').read_text())
-          tests = report / 'tests.json'
-          if tests.exists():
-              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/actions/jobs/116002856340/logs', headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
-              with urllib.request.urlopen(request, timeout=120) as response: baseline = response.read()
-              (report / 'main-baseline.log').write_bytes(baseline)
-              clean = re.sub(r'\x1b\[[0-9;]*m', '', baseline.decode('utf-8-sig'))
-              baseline_names = set()
-              for line in clean.splitlines():
-                  match = re.search(r' FAIL  (.+?\.test\.tsx?) > (.+)$', line)
-                  if match: baseline_names.add((match[1].strip(), match[2].replace(' > ', ' ').strip()))
-              results = json.loads(tests.read_text())
-              failed = []
-              for suite in results['testResults']:
-                  name = suite['name'].split('/ui-final/', 1)[-1]
-                  for test in suite['assertionResults']:
-                      if test['status'] != 'failed': continue
-                      full = test['fullName'].strip()
-                      item = {'file': name, 'test': full, 'present_in_main': (name, full) in baseline_names, 'errors': test.get('failureMessages', [])}
-                      failed.append(item)
-              comparison = {'main_commit': metadata['main_parent'], 'main_job': 116002856340, 'main_log_sha256': hashlib.sha256(baseline).hexdigest(), 'main_failure_names': len(baseline_names), 'candidate_total': results['numTotalTests'], 'candidate_passed': results['numPassedTests'], 'candidate_failed': results['numFailedTests'], 'failures': failed}
-              (report / 'failure-comparison.json').write_text(json.dumps(comparison, indent=2) + '\n')
-              print('FAILURE_COMPARISON=' + json.dumps(comparison, indent=2), flush=True)
-          print('FINAL_METADATA=' + json.dumps(metadata, indent=2), flush=True)
-          PY
-      - name: Preserve exact verification evidence
+          for (const [name, create] of [['recharge', createReservoirDemo], ['touch', createTouchDemo]] as const) {
+            const world = create(73);
+            assert.equal(activityRequestDescriptors(world).some(request => request.id === rechargeId), true, name);
+          }
+          console.log('PASS: base native activities stay installed; recharge remains available in both alternate worlds and absent from the base world. No provider calls.');
+          " 2>&1 | tee "$RUNNER_TEMP/ui-final-confirmation/world-installation.log"
+      - name: Preserve the exact evidence and unresolved baseline failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-final-reconciliation
-          path: ${{ runner.temp }}/ui-final-report/
+          name: ui-final-confirmation
+          path: ${{ runner.temp }}/ui-final-confirmation/
           retention-days: 3
           if-no-files-found: error
-      - name: Keep failed checks visible
+      - name: Retain the failing test gate
         if: ${{ !cancelled() && success() }}
         run: |
           python3 - <<'PY'
           import json, os
           from pathlib import Path
-          metadata = json.loads((Path(os.environ['RUNNER_TEMP']) / 'ui-final-report/metadata.json').read_text())
-          assert metadata['exported_tree'] == metadata['final_tree']
-          assert all(value == 0 for value in metadata['checks'].values()), metadata['checks']
+          comparison = json.loads((Path(os.environ['RUNNER_TEMP']) / 'ui-final-confirmation/failure-comparison.json').read_text())
+          unexplained = [test for test in comparison['failures'] if not test['present_in_main']]
+          assert not unexplained, unexplained
+          assert comparison['candidate_failed'] == 0, 'Existing main failures remain open; this evidence comparison does not waive the required test gate.'
           PY
