@@ -1,6 +1,20 @@
 # Full research progress and resume ledger
 
-**Read first:** [complete assignment / R01–R14](research-requirements.md) and [148-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
+**Read first:** [complete assignment / R01–R14](research-requirements.md) and [149-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
+
+<a id="songs-of-syx-g149"></a>
+
+## Songs of Syx addition — October 13, 2026
+
+**G149 research complete.** Mike requested the same full-game research standard used for the earlier subjects. The [Songs of Syx dossier](dossiers/songs-of-syx.md) addresses R01–R14: identity and versions; construction, food, logistics, research, health, law, religion, trade and military operations; species and goods; progression and recovery; presentation, story, production, distribution, commercial evidence, reception and transferable patterns. It contains seven explicitly constructed cross-system situations and one attributed historical play account, five substantive independent written perspectives, contrasting Steam testimony and an annotated source register.
+
+**Repository and branch:** `Macrofold/OpenLegend`, `research/songs-of-syx`, created from GitHub `refs/heads/main` at `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`. All task writes are connector commits on that branch; no local checkout/worktree, main-branch write, merge, rebase or runtime change was made. The older branch and resume instructions below remain historical records of their respective assignments, not instructions to change the current task's branch or scope.
+
+**Committed output:** initial dossier `7cd61a9ba0a4e860fa0f7a4a8f10a116a738e781`; source-link rendering correction `63ab5f635a62727cbe9def0e1f9cd97c8a9867a1`. Roster addition `4fbd9c7e496d7252e73829a6b54690befb172697` was followed by `1bb38f4c177268879e99d2596e00335445b399e6`, restoring an unintended change to G62's original wording. Library navigation is committed at `ece9a87edcb03024a129f3da934a155f4b55a0ac`. The current roster adds G149 without replacing an earlier subject.
+
+**Review and evidence boundary:** the manuscript was checked against the research requirements, source and version distinctions, worked-example labeling, and research-versus-implementation boundary. Adjacent Markdown reference citations were separated so each points to its intended source. The library navigation diff was inspected. This is scoped documentation and source review, not an automated whole-repository/external-link crawl or gameplay qualification. V71 and paid itch build 0.71.72 are distinguished from older reviews, the older itch demo, future 1.0 targets and mod-author claims. The five written perspectives include professional and informal criticism rather than five professional scored reviews. Direct wiki access was blocked, so indexed passages are labeled; negative-only Steam helpful filtering failed, with an actual contrasting community-hub review used instead. Inaccessible article bodies, private commercial figures, untested mods, unwatched footage and unplayed audio are not represented as verified evidence.
+
+**Scope:** this addition does not re-certify G01–G148, modify their game dossiers, or close the independent P01–P05 whole-library gates. The dossier, roster and library routes are committed; this entry records the requested game's completion without declaring the entire archive complete. No further game research or OpenLegend implementation is authorized by this completion record.
 
 ## Integrated branch state — September 27, 2026
 
@@ -528,7 +542,7 @@ This closes only the requested G131–G140 follow-up audit. G141–G148 has its 
 | --- | --- |
 | P01 — Seven-file packet preservation | Compare all original passages, examples, reviews, source annotations, economic dates and viewing recommendations with repository owners. [Provenance](references/packet-provenance.md) identifies inputs but is not a completeness audit. |
 | P02 — Earlier conversation coverage | Recover accessible original scope; distinguish supplied material from unavailable conversation-only details. |
-| P03 — Full roster review | Verify all 148 passes and version/combined-chapter boundaries against R01–R14, including the explicit mechanics inventory, five-review minimum, Steam evidence where applicable, Dragon Age expansion/smaller-game coverage, and franchise boundaries. |
+| P03 — Full roster review | Verify all 149 passes and version/combined-chapter boundaries against R01–R14, including the explicit mechanics inventory, five-review minimum, Steam evidence where applicable, Dragon Age expansion/smaller-game coverage, and franchise boundaries. |
 | P04 — Navigation and links | Connect full dossiers through library/chapter routes; validate internal links and source anchors while preserving old routes. |
 | P05 — Evidence/diff review | Check actual changes, dates, source-access limits and unsupported claims. No unseen footage represented as watched. |
 
