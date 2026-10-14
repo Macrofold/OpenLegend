@@ -1,0 +1,73 @@
+name: Inspect documentation rebase
+on:
+  push:
+    branches: [ops/full-doc-rebase-2026-10-14]
+    paths: [.github/workflows/documentation-rebase.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Capture exact inputs and three-way conflicts
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess, zipfile
+          old = 'bf7366beb621e9c9c4cb03718c542c48ce2b6381'
+          new = '7a576214fbb9891b2e9f742db56bbeccaa3a58a1'
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          base = git('merge-base', old, new).decode().strip()
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'rebase-inputs.zip'
+          extension = {'.md','.mdc','.txt','.rst','.adoc','.ts','.tsx','.js','.mjs','.json','.yaml','.yml','.css','.html','.py','.sh','.toml','.sql'}
+          merged = subprocess.run(['git','merge-tree','--write-tree',new,old], capture_output=True)
+          assert merged.returncode in (0,1), merged.stderr.decode()
+          tree = merged.stdout.decode().splitlines()[0]
+          inventories = {}
+          with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:
+              for label, rev in [('base',base),('review',old),('main',new),('combined',tree)]:
+                  entries = git('ls-tree','-r','-z','--long',rev).split(b'\0')
+                  rows, requests = [], []
+                  for entry in entries:
+                      if not entry: continue
+                      metadata, name = entry.split(b'\t',1)
+                      mode, kind, sha, size = metadata.decode().split()
+                      name = name.decode()
+                      path = pathlib.PurePosixPath(name)
+                      row = dict(path=name, mode=mode, kind=kind, sha=sha, size=int(size) if size != '-' else None)
+                      rows.append(row)
+                      if kind == 'blob' and mode != '120000' and (path.suffix in extension or name in ('LICENSE','.prettierignore','.gitignore','.env.example')):
+                          if 'archive' not in path.parts or name in ('archive/05-project/implementation-status.md','archive/05-project/open-decisions.md'):
+                              requests.append((name,sha))
+                  p = subprocess.Popen(['git','cat-file','--batch'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+                  for name,sha in requests:
+                      p.stdin.write((sha+'\n').encode()); p.stdin.flush()
+                      header = p.stdout.readline().decode().split()
+                      data = p.stdout.read(int(header[2])); assert p.stdout.read(1) == b'\n'
+                      data.decode('utf-8')
+                      z.writestr(label+'/'+name,data)
+                  p.stdin.close(); assert p.wait() == 0
+                  inventories[label] = rows
+              metadata = dict(old=old, main=new, base=base, combined_tree=tree, clean=merged.returncode == 0, inventories=inventories)
+              z.writestr('metadata.json',json.dumps(metadata,indent=2))
+              z.writestr('merge-tree.txt',merged.stdout)
+              z.writestr('review.patch',git('diff','--binary',base,old))
+              z.writestr('upstream.patch',git('diff','--binary',base,new))
+              z.writestr('review-history.txt',git('log','--reverse','--format=%H%x09%P%x09%s','--name-status',f'{base}..{old}'))
+              z.writestr('upstream-history.txt',git('log','--format=%H%x09%s','--name-status',f'{base}..{new}'))
+          print(json.dumps({k:v for k,v in metadata.items() if k != 'inventories'},indent=2))
+          print(merged.stdout.decode())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentation-rebase-inputs
+          path: ${{ runner.temp }}/rebase-inputs.zip
+          retention-days: 7
+          if-no-files-found: error
