@@ -1,0 +1,30 @@
+name: Rebase documentation commits
+on:
+  push:
+    branches: [ops/full-doc-rebase-2026-10-14]
+    paths:
+      - .github/workflows/documentation-rebase-run.yml
+      - .github/rebase-helper.py
+      - .github/rebase-resolutions.json
+permissions:
+  contents: read
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Replay original individual commits in the isolated checkout
+        run: python3 .github/rebase-helper.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documentation-rebase-result
+          path: ${{ runner.temp }}/rebase-result.zip
+          retention-days: 7
+          if-no-files-found: error
