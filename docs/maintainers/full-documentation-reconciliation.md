@@ -1,18 +1,22 @@
 # Full documentation reconciliation TODO
 
-**In progress — checklist established October 14, 2026; the requested rebase and the original exhaustive review are not yet complete.**
+**In progress — the October 14 handoff inventory update is integrated; the requested rebase and the original exhaustive review are not yet complete.**
 
 This is the single remaining-work checklist for [Full Documentation Review](../projects/full-documentation-review.md), under CG17 in [agent guidance](agent-guidance.md). It owns reconciliation work, not a second copy of feature requirements. The feature trackers below retain implementation, dependencies, acceptance and verification ownership.
 
 ## Source boundary and inventory
 
-Repository: `Macrofold/OpenLegend`. Review branch: `docs/full-documentation-review-reconciled-2026-10-03`, starting at `bf7366beb621e9c9c4cb03718c542c48ce2b6381`. Requested target: GitHub `refs/heads/main` at `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`. Common base: `34233ae24365eb8911fe1995c9c232bd57f34616`. No local checkout was supplied. Main has 29 commits beyond that common base; the review branch has 562. These are pinned inputs, not a claim that the rebase has occurred.
+Repository: `Macrofold/OpenLegend`. Delivery branch: `docs/full-documentation-review-reconciled-2026-10-03`, read for this update at `931188e5d2616fc0d3435a1cb4f9d91c41ee99d0`. The selected refreshed target is GitHub `refs/heads/main` at `1cf678802d62652d8dd466776d4b95a9d0d19166`, not the stale base SHA reported by PR #28. Common base: `34233ae24365eb8911fe1995c9c232bd57f34616`. No local checkout or local-main ref was supplied. The owner has requested rebase; the earlier synchronization deferral is superseded. These are source pins, not a claim that the rebase has finished.
 
-The primary register contains **534 Markdown/text paths**: the preserved review inventory's 469 paths, unchanged as a path set through the verified comparison to `bf7366be`, plus 65 additional documentation paths in the complete 379-file upstream comparison. It is supplemented by **84 existing license/example/HTML/JSON source or evidence files** and **42 historical path moves**. Counts describe coverage targets, not completed semantic reviews or a count of defects. This newly created checklist is validated by the closing gate rather than counted in its own source inventory.
+**Preserved original inputs:** this checklist was published in `66a020ab03e24f944b4088e16e5b4677605e4b5a`, with navigation in `51fcfc0dbc62c3e49ddedfbab140757b2cef9917`. Its initial review input was `bf7366beb621e9c9c4cb03718c542c48ce2b6381`, and its main pin was `7a576214fbb9891b2e9f742db56bbeccaa3a58a1` (562 review commits and 29 main commits beyond the common base). Preserve `backup/full-doc-review-bf7366be-before-7a576214` and `backup/full-doc-review-51fcfc0d-before-1cf67880`; neither is the delivery branch.
 
-The upstream file list was obtained through the fully paginated temporary comparison PR #29, not the 300-file-limited commit comparison. The preserved inventory is from `7e0f417965579d90dfbe1e49a872a68663efe6d1`; its 149-commit comparison to `bf7366be` changes existing prose and removes temporary tooling, but adds/removes no Markdown/text paths. Earlier current-file contents and read records must still be refreshed where hashes or assumptions changed.
+The primary register now contains **538 Markdown/text paths**: the original 534, plus four documents from the handoff's comparison to main `1700f3b23a39acfdd14f3a6ab34c8ce330847bc3`; the three Batch 08 project paths are replaced by their completed-area paths, not counted twice. It is supplemented by **84 existing license/example/HTML/JSON source or evidence files** and **45 historical path moves**. The changed `.env.example` remains an explicit source dependency under FDR-02, outside that preserved supporting count. Counts describe coverage targets, not completed semantic reviews or a count of defects. This checklist is validated by the closing gate rather than counted in its own source inventory.
 
-**R** means present in the pinned review inventory. **U** means an additional upstream documentation path, to read on the pinned main until integration. **M** means an existing R path also changed upstream since the common base. M does not prove a textual conflict. Unmarked historical predecessor paths in the move register are not asserted to exist on either current tip.
+**Remaining freshness boundary:** `1cf67880` contains eight further main commits beyond `1700f3b2`. The 538-path register incorporates the previously unpublished handoff update, but is not yet certified as a complete inventory of that newer target. FDR-01 and FDR-07 remain open for the additional paths, renames and invalidated assumptions; do not report the handoff inventory as exhaustive current-main coverage.
+
+The original upstream file list was obtained through the fully paginated temporary comparison PR #29, not the 300-file-limited commit comparison. Its preserved review inventory is from `7e0f417965579d90dfbe1e49a872a68663efe6d1`; the 149-commit comparison to `bf7366be` changes existing prose and removes temporary tooling, but adds/removes no Markdown/text paths. The handoff adds four documents, three moves and fifty modified existing documents between `7a576214` and `1700f3b2`. Earlier contents and read records must still be refreshed where hashes or assumptions changed.
+
+**R** means present in the preserved review inventory. **U** means an additional upstream documentation path, to read on its pinned main until integration. **M** retains the original register's marker for an R path changed upstream since the common base. **F** marks one of the fifty existing documents changed in the handoff's later `7a576214` → `1700f3b2` comparison. Neither marker proves a textual conflict or a completed review. Historical predecessor paths in FDR-04 are not asserted to exist on either current tip.
 
 Every unchecked file needs a final disposition against the reconciled source; it does not mean the file was never read or that earlier corrections should be repeated. Reuse verifiable prior reading and evidence where the final contents and assumptions are unchanged. For each completed entry record `retained`, `corrected`, `consolidated/moved` or `obsolete`, the reviewed revision, the canonical replacement when applicable, and the relevant correction commit or evidence. Keep detailed read ranges and raw inventories outside Git. Missing historical coverage is unknown, not a pass.
 
@@ -25,9 +29,10 @@ Exclude the `archive/` directory from bulk review. Inspect an archived decision 
 - [ ] Review upstream overlaps against the old common base, original review change and latest accepted intent. Prefer newer main provisionally when uncertain, but reject changes inconsistent with engine/world ownership, player value, performance, one mutation owner, privacy or current-format integrity.
 - [ ] Compare the old and rebased patch series. Explain dropped equivalent/empty commits and every semantic resolution; preserve the backup and all still-valid corrections. Normal rebase handling of already-upstream or empty patches is not permission to drop substantive work.
 - [ ] Refresh the path register for post-pin additions, removals and renames. Reconcile predecessor paths through FDR-04 rather than leaving duplicate active specifications.
-- [ ] Finish or close temporary comparison PR #29 without merging. Keep temporary transfer/publishing code out of the review branch; ordinary CI remains unchanged.
+- [x] Close temporary comparison PR #29 without merging. Its closed, unmerged state was verified again on October 14; do not reopen it or repeat the closure operation.
+- [x] Integrate the handoff update through main `1700f3b2`: four added documents, three Batch 08 path replacements, fifty freshness markers and the configuration/consumer checks below. Further target refresh and semantic reconciliation remain separate open gates.
 
-The attempted temporary source/rebase workflow was blocked before creation. No rewritten history has been published. `ops/doc-review-rebase-bf7366be-2026-10-14` is an auxiliary branch at the original review head, not the final delivery branch. The block is not a GitHub repository push-permission denial. Do not label the branch rebased or work around a platform safety block through hidden executable hooks.
+The earlier temporary source/rebase workflow was blocked before creation; that is historical execution evidence, not a claim that the current GitHub connector lacks Git-object or ref operations. No completed rebase has been published. Keep temporary transfer/publishing code out of the delivery branch and leave ordinary CI unchanged. `ops/doc-review-rebase-bf7366be-2026-10-14` is an auxiliary branch at the original review head, not the final delivery branch. The block is not a GitHub repository push-permission denial. Do not label the branch rebased or work around a platform safety block through hidden executable hooks.
 
 ## FDR-02 — Concrete reconciliation decisions
 
@@ -41,7 +46,10 @@ The attempted temporary source/rebase workflow was blocked before creation. No r
 - [ ] **World-specific defects previously identified:** recheck promise English/gathering/help/tuning in BW17, gesture wording in NC03 and light eligibility in EWF04 against current implementation. Retain a concrete defect only while it exists; do not document an engine/world boundary violation as an accepted contract to match code.
 - [ ] **Performance claims:** reconcile persistence, cognition, perception, sound, native simulation and UI preparation descriptions against current producers and consumers. Distinguish bounded output from bounded preparation, cache capacity from exact-query semantics, cold/steady/long-session measurements and full-server results from isolated timings. Preserve failed large-vector restoration as a distinct workload unless actual matching evidence closes it.
 - [ ] **Runtime findings previously identified:** recheck action-description reference exposure under AE03/AE10, goal revision exhaustion under AG02, diagnostic-memory limits and promise-history scanning. Carry verified open work into existing owners; retire superseded findings with their repair evidence, not merely a newer date.
-- [ ] **Current-format policy:** retain the protected root policy rather than restoring pending-action upgrades, SQLite, old adapters, single-equipment mirrors, legacy save readers or historical reset instructions. A supported live-definition change and current paid-accounting integrity are not legacy support.
+- [ ] **Current-format policy and combined content:** reconcile affected specifications, guidance and RP02 with the [root development policy](../../AGENTS.md#development-save-policy). Mike explicitly approved main's more permissive replacement policy and coherent union of meaningful starting content on October 14; the root correction is published in `931188e5`. Older no-reset wording is superseded, not a reason to reject that decision. Preserve current-format integrity, accounting, privacy and selected integration scope; do not restore legacy readers or incompatible schema unions. No saved world was replaced by the policy documentation commit.
+- [ ] **World creation and opening readiness:** read the new Batch 07 implementation plan, playable-opening rules and creation verification alongside their feature/design/prompts and owning tracker. Trace creation host, target selection, initial preparation, authored opening, recovery and public-client callers. Preserve permission checks, exact approval, isolation, bounded preparation, current-format persistence and truthful failure reporting; a source read is not runtime qualification.
+- [ ] **Batch 08 completion and perspective:** reconcile the three moved project documents and new missing-belonging verification with the actual scenario, characters and remaining character/perception work. Preserve evidence limits and distinguish an occurrence, each character's perception, private interpretation and information disclosed to the player. The move alone does not close acceptance.
+- [ ] **Configuration and broader draft editing:** check `.env.example` against actual configuration and setup owners. Reconcile the upstream rename of `apps/client/src/ui/world-agent-recipe-editor.tsx` to `apps/client/src/ui/world-agent-draft-editor.tsx` and the actual broader edit support; preserve native permissions and exact-approval dependencies rather than treating a filename change as capability or deployment evidence.
 - [ ] **Review record and PR:** update `docs/projects/full-documentation-review.md` and PR #28 with the published October 8 corrections, removal of temporary tooling, this checklist, the actual rebase result and final checks. Preserve useful prior evidence while clearly separating historical checkpoints from current status.
 
 ## FDR-03 — Completion rule for every file
@@ -100,6 +108,9 @@ These are preservation checks, not instructions to redo completed moves. Inspect
 - [ ] `docs/projects/world-agent-context/examples/sling-context.yaml` → `docs/projects/completed/world-agent-context/examples/sling-context.yaml`
 - [ ] `docs/projects/world-agent-context/initial-foundation.md` → `docs/projects/completed/world-agent-context/initial-foundation.md`
 - [ ] `docs/projects/world-agent-context/mechanics.md` → `docs/projects/completed/world-agent-context/mechanics.md`
+- [ ] `docs/projects/parallel-batch-08-the-missing-belonging-feature-spec.md` → `docs/projects/completed/parallel-batch-08-the-missing-belonging-feature-spec.md`
+- [ ] `docs/projects/parallel-batch-08-the-missing-belonging-prompts.md` → `docs/projects/completed/parallel-batch-08-the-missing-belonging-prompts.md`
+- [ ] `docs/projects/parallel-batch-08-the-missing-belonging-tech-design.md` → `docs/projects/completed/parallel-batch-08-the-missing-belonging-tech-design.md`
 
 ## FDR-05 — Primary document register
 
@@ -111,11 +122,11 @@ Check onboarding, package boundaries, contribution/asset rights, local instructi
 
 - [ ] `.github/pull_request_template.md` — R
 - [ ] `.integration/recovery/README.md` — R
-- [ ] `AGENTS.md` — R, M
+- [ ] `AGENTS.md` — R, M, F
 - [ ] `CLAUDE.md` — R
 - [ ] `CONTRIBUTING.md` — R
 - [ ] `LICENSING.md` — R
-- [ ] `README.md` — R
+- [ ] `README.md` — R, F
 - [ ] `apps/client/AGENTS.md` — R
 - [ ] `apps/client/src/design-system/README.md` — R
 - [ ] `apps/client/src/design-system/fonts/atkinsonhyperlegiblenext-OFL.txt` — R
@@ -127,7 +138,7 @@ Check onboarding, package boundaries, contribution/asset rights, local instructi
 - [ ] `apps/server/AGENTS.md` — R, M
 - [ ] `licenses/Apache-2.0.txt` — R
 - [ ] `packages/ai/AGENTS.md` — R
-- [ ] `packages/domain/AGENTS.md` — R, M
+- [ ] `packages/domain/AGENTS.md` — R, M, F
 - [ ] `packages/domain/src/README.md` — R
 - [ ] `packages/protocol/AGENTS.md` — R
 - [ ] `packages/spatial/AGENTS.md` — R, M
@@ -151,7 +162,7 @@ Reconcile the reusable review skill, routing and root policies without duplicate
 - [ ] `.agents/skills/openlegend-behavior-debugging/references/experiments.md` — R
 - [ ] `.agents/skills/openlegend-design/SKILL.md` — R, M
 - [ ] `.agents/skills/openlegend-guidance/SKILL.md` — R, M
-- [ ] `.agents/skills/openlegend-performance/SKILL.md` — R, M
+- [ ] `.agents/skills/openlegend-performance/SKILL.md` — R, M, F
 - [ ] `.agents/skills/openlegend-playcanvas/SKILL.md` — R
 - [ ] `.agents/skills/openlegend-prioritize/SKILL.md` — R, M
 - [ ] `.agents/skills/openlegend-rebase/SKILL.md` — R
@@ -164,20 +175,20 @@ Check current contracts, implemented-versus-target statements, code consumers, c
 - [ ] `docs/action-capabilities.md` — R, M
 - [ ] `docs/action-experience.md` — R, M
 - [ ] `docs/agent-agency.md` — R, M
-- [ ] `docs/ai-providers.md` — R, M
-- [ ] `docs/architecture.md` — R, M
-- [ ] `docs/documentation-changelog.md` — R, M
+- [ ] `docs/ai-providers.md` — R, M, F
+- [ ] `docs/architecture.md` — R, M, F
+- [ ] `docs/documentation-changelog.md` — R, M, F
 - [ ] `docs/encounter-scaling.md` — R
-- [ ] `docs/engine-and-world-boundaries.md` — R, M
+- [ ] `docs/engine-and-world-boundaries.md` — R, M, F
 - [ ] `docs/entity-names.md` — R
 - [ ] `docs/events-perception-and-reactions.md` — R, M
 - [ ] `docs/extending.md` — R
 - [ ] `docs/extensibility-roadmap.md` — R
 - [ ] `docs/extensible-world-examples.md` — R
-- [ ] `docs/feature-documentation.md` — R
+- [ ] `docs/feature-documentation.md` — R, F
 - [ ] `docs/food-preparation.md` — U
 - [ ] `docs/hearing-and-speech.md` — R
-- [ ] `docs/identity-and-references.md` — R, M
+- [ ] `docs/identity-and-references.md` — R, M, F
 - [ ] `docs/invention-art-pipeline.md` — R
 - [ ] `docs/invention-budgets.md` — R
 - [ ] `docs/invention-composition.md` — R
@@ -186,27 +197,27 @@ Check current contracts, implemented-versus-target statements, code consumers, c
 - [ ] `docs/invention-handoff.md` — R
 - [ ] `docs/invention-scenarios.md` — R
 - [ ] `docs/invention-validation.md` — R
-- [ ] `docs/invention-workshop-tools.md` — R
-- [ ] `docs/knowledge.md` — R, M
+- [ ] `docs/invention-workshop-tools.md` — R, F
+- [ ] `docs/knowledge.md` — R, M, F
 - [ ] `docs/live-ai-setup.md` — R
 - [ ] `docs/macrofold-world-agent-handoff.md` — R
-- [ ] `docs/memory-architecture.md` — R, M
-- [ ] `docs/narration-and-conversations.md` — R, M
+- [ ] `docs/memory-architecture.md` — R, M, F
+- [ ] `docs/narration-and-conversations.md` — R, M, F
 - [ ] `docs/openlegend-limits-decisions.md` — R, M
-- [ ] `docs/perceived-world-events.md` — R
-- [ ] `docs/performance.md` — R, M
+- [ ] `docs/perceived-world-events.md` — R, F
+- [ ] `docs/performance.md` — R, M, F
 - [ ] `docs/repertoire-foundation.md` — R
-- [ ] `docs/save-and-load.md` — R, M
+- [ ] `docs/save-and-load.md` — R, M, F
 - [ ] `docs/simulation-time.md` — R
 - [ ] `docs/spatial-world.md` — R, M
 - [ ] `docs/status-effects.md` — R
 - [ ] `docs/targeted-actions.md` — R, M
 - [ ] `docs/timed-ui.md` — R
 - [ ] `docs/ui-design-brief.md` — R
-- [ ] `docs/verification.md` — R, M
+- [ ] `docs/verification.md` — R, M, F
 - [ ] `docs/world-agent-inspection-and-edits.md` — R
-- [ ] `docs/world-agent-mcp.md` — R
-- [ ] `docs/world-agent-runtime.md` — R
+- [ ] `docs/world-agent-mcp.md` — R, F
+- [ ] `docs/world-agent-runtime.md` — R, F
 - [ ] `docs/world-constitution.md` — R
 - [ ] `docs/world-presentation.md` — R
 
@@ -215,51 +226,51 @@ Check current contracts, implemented-versus-target statements, code consumers, c
 For each tracker inspect every open task and completed claim under FDR-03. Reconcile shared dependencies, task ownership and approval status; the README remains navigation rather than a second task body.
 
 - [ ] `docs/maintainers/3d-pixel-art.md` — R
-- [ ] `docs/maintainers/README.md` — R, M
+- [ ] `docs/maintainers/README.md` — R, M, F
 - [ ] `docs/maintainers/TODO.md` — R
 - [ ] `docs/maintainers/action-capabilities.md` — R, M
 - [ ] `docs/maintainers/action-experience.md` — R, M
 - [ ] `docs/maintainers/action-reconciliation.md` — R
 - [ ] `docs/maintainers/action-regressions.md` — R
 - [ ] `docs/maintainers/actor-model.md` — R
-- [ ] `docs/maintainers/agent-agency.md` — R, M
-- [ ] `docs/maintainers/agent-guidance.md` — R, M
+- [ ] `docs/maintainers/agent-agency.md` — R, M, F
+- [ ] `docs/maintainers/agent-guidance.md` — R, M, F
 - [ ] `docs/maintainers/art-direction.md` — R
 - [ ] `docs/maintainers/art/mercenary.md` — R
-- [ ] `docs/maintainers/base-world.md` — R, M
-- [ ] `docs/maintainers/character-experience.md` — R, M
-- [ ] `docs/maintainers/cognition-redesign.md` — R, M
+- [ ] `docs/maintainers/base-world.md` — R, M, F
+- [ ] `docs/maintainers/character-experience.md` — R, M, F
+- [ ] `docs/maintainers/cognition-redesign.md` — R, M, F
 - [ ] `docs/maintainers/creator-edits.md` — R, M
 - [ ] `docs/maintainers/dependency-invalidation.md` — R
 - [ ] `docs/maintainers/editable-shelters.md` — U
-- [ ] `docs/maintainers/events-perception-and-reactions.md` — R
-- [ ] `docs/maintainers/extensible-world-foundation.md` — R, M
-- [ ] `docs/maintainers/hearing-and-speech.md` — R
+- [ ] `docs/maintainers/events-perception-and-reactions.md` — R, F
+- [ ] `docs/maintainers/extensible-world-foundation.md` — R, M, F
+- [ ] `docs/maintainers/hearing-and-speech.md` — R, F
 - [ ] `docs/maintainers/hearing-handoff.md` — R
-- [ ] `docs/maintainers/inventions-and-world-evolution.md` — R, M
+- [ ] `docs/maintainers/inventions-and-world-evolution.md` — R, M, F
 - [ ] `docs/maintainers/limits-audit.md` — R
 - [ ] `docs/maintainers/macrofold-worker-api.md` — R
 - [ ] `docs/maintainers/multiplayer.md` — R, M
-- [ ] `docs/maintainers/narration-and-conversations.md` — R, M
-- [ ] `docs/maintainers/needs-design.md` — R, M
+- [ ] `docs/maintainers/narration-and-conversations.md` — R, M, F
+- [ ] `docs/maintainers/needs-design.md` — R, M, F
 - [ ] `docs/maintainers/parallel-batch-01-playable-week.md` — R
 - [ ] `docs/maintainers/parallel-batch-02-foundations-and-usability.md` — R
 - [ ] `docs/maintainers/parallel-batch-03-personal-game.md` — R, M
 - [ ] `docs/maintainers/parallel-batch-04-expeditions-and-exchange.md` — R, M
 - [ ] `docs/maintainers/parallel-batch-05-adventure-defense-and-home.md` — U
 - [ ] `docs/maintainers/parallel-batch-06-rivals-and-contested-ground.md` — U
-- [ ] `docs/maintainers/parallel-batch-07-playable-world-creation.md` — U
-- [ ] `docs/maintainers/parallel-batch-08-the-missing-belonging.md` — U
+- [ ] `docs/maintainers/parallel-batch-07-playable-world-creation.md` — U, F
+- [ ] `docs/maintainers/parallel-batch-08-the-missing-belonging.md` — U, F
 - [ ] `docs/maintainers/parallel-batch-09-reviewed-content-removal.md` — U
 - [ ] `docs/maintainers/performance-profiling.md` — R
 - [ ] `docs/maintainers/performance.md` — R, M
 - [ ] `docs/maintainers/persistent-objects.md` — R, M
 - [ ] `docs/maintainers/practical-competence.md` — R, M
 - [ ] `docs/maintainers/product-scalability.md` — R, M
-- [ ] `docs/maintainers/production-data.md` — R
+- [ ] `docs/maintainers/production-data.md` — R, F
 - [ ] `docs/maintainers/production-deployment.md` — R
 - [ ] `docs/maintainers/remaining-foundational-work.md` — R
-- [ ] `docs/maintainers/revisitable-policies.md` — R, M
+- [ ] `docs/maintainers/revisitable-policies.md` — R, M, F
 - [ ] `docs/maintainers/save-and-load.md` — R
 - [ ] `docs/maintainers/simulation-boundaries.md` — R
 - [ ] `docs/maintainers/simulation-time.md` — R
@@ -268,7 +279,7 @@ For each tracker inspect every open task and completed claim under FDR-03. Recon
 - [ ] `docs/maintainers/state-contributions.md` — R, M
 - [ ] `docs/maintainers/ui-ux.md` — R, M
 - [ ] `docs/maintainers/wellbeing-evidence.md` — R
-- [ ] `docs/maintainers/world-agent-writes.md` — R
+- [ ] `docs/maintainers/world-agent-writes.md` — R, F
 
 ### Limits and policy inventories — 33 files
 
@@ -285,9 +296,9 @@ Check every named policy against actual consumers and accepted intent. Preserve 
 - [ ] `docs/limits/editable-shelters.md` — R, M
 - [ ] `docs/limits/feelings.md` — R
 - [ ] `docs/limits/food-preparation.md` — U
-- [ ] `docs/limits/hearing-and-speech.md` — R
+- [ ] `docs/limits/hearing-and-speech.md` — R, F
 - [ ] `docs/limits/import-coverage.md` — R
-- [ ] `docs/limits/interface.md` — R
+- [ ] `docs/limits/interface.md` — R, F
 - [ ] `docs/limits/inventions.md` — R, M
 - [ ] `docs/limits/memory.md` — R, M
 - [ ] `docs/limits/multiplayer.md` — R
@@ -298,7 +309,7 @@ Check every named policy against actual consumers and accepted intent. Preserve 
 - [ ] `docs/limits/parallel-batch-04-expeditions-and-exchange.md` — R, M
 - [ ] `docs/limits/parallel-batch-05-adventure-defense-and-home.md` — U
 - [ ] `docs/limits/parallel-batch-06-rivals-and-contested-ground.md` — U
-- [ ] `docs/limits/parallel-batch-08-the-missing-belonging.md` — U
+- [ ] `docs/limits/parallel-batch-08-the-missing-belonging.md` — U, F
 - [ ] `docs/limits/persistence.md` — R, M
 - [ ] `docs/limits/product-scalability.md` — R
 - [ ] `docs/limits/production-deployment.md` — R
@@ -306,9 +317,9 @@ Check every named policy against actual consumers and accepted intent. Preserve 
 - [ ] `docs/limits/state-effects.md` — R
 - [ ] `docs/limits/ui-ux.md` — R
 - [ ] `docs/limits/wellbeing-evidence.md` — R
-- [ ] `docs/limits/world-creation.md` — R, M
+- [ ] `docs/limits/world-creation.md` — R, M, F
 
-### Active project records — 78 files
+### Active project records — 76 files
 
 Reconcile each project as a set: scope, approval, feature/design agreement, implementation assignments, acceptance and dated status tables. Move the set only when wholly complete.
 
@@ -360,16 +371,14 @@ Reconcile each project as a set: scope, approval, feature/design agreement, impl
 - [ ] `docs/projects/parallel-batch-06-rivals-and-contested-ground-feature-spec.md` — U
 - [ ] `docs/projects/parallel-batch-06-rivals-and-contested-ground-prompts.md` — U
 - [ ] `docs/projects/parallel-batch-06-rivals-and-contested-ground-tech-design.md` — U
-- [ ] `docs/projects/parallel-batch-07-playable-world-creation-feature-spec.md` — U
-- [ ] `docs/projects/parallel-batch-07-playable-world-creation-prompts.md` — U
-- [ ] `docs/projects/parallel-batch-07-playable-world-creation-tech-design.md` — U
-- [ ] `docs/projects/parallel-batch-08-the-missing-belonging-feature-spec.md` — U
-- [ ] `docs/projects/parallel-batch-08-the-missing-belonging-prompts.md` — U
-- [ ] `docs/projects/parallel-batch-08-the-missing-belonging-tech-design.md` — U
+- [ ] `docs/projects/parallel-batch-07-playable-world-creation-feature-spec.md` — U, F
+- [ ] `docs/projects/parallel-batch-07-playable-world-creation-implementation-plan.md` — U
+- [ ] `docs/projects/parallel-batch-07-playable-world-creation-prompts.md` — U, F
+- [ ] `docs/projects/parallel-batch-07-playable-world-creation-tech-design.md` — U, F
 - [ ] `docs/projects/parallel-batch-09-reviewed-content-removal-feature-spec.md` — U
 - [ ] `docs/projects/parallel-batch-09-reviewed-content-removal-prompts.md` — U
 - [ ] `docs/projects/parallel-batch-09-reviewed-content-removal-tech-design.md` — U
-- [ ] `docs/projects/parallel-batches.md` — R, M
+- [ ] `docs/projects/parallel-batches.md` — R, M, F
 - [ ] `docs/projects/perception-reaction-intake.md` — R
 - [ ] `docs/projects/player-clarity-ui.md` — R
 - [ ] `docs/projects/priority-followups-plan.md` — R
@@ -389,9 +398,9 @@ Reconcile each project as a set: scope, approval, feature/design agreement, impl
 - [ ] `docs/projects/three-times-scene-performance.md` — R
 - [ ] `docs/projects/wellbeing-evidence-feature-spec.md` — R
 - [ ] `docs/projects/world-configured-survival.md` — R
-- [ ] `docs/projects/world-creation-feature-spec.md` — R, M
+- [ ] `docs/projects/world-creation-feature-spec.md` — R, M, F
 
-### Completed project records — 69 files
+### Completed project records — 72 files
 
 Preserve completion evidence and unique rationale. Determine whether new work is a distinct extension or truly reopens this project; do not reopen a completed foundation for unrelated capacity work.
 
@@ -433,6 +442,9 @@ Preserve completion evidence and unique rationale. Determine whether new work is
 - [ ] `docs/projects/completed/parallel-batch-02-foundations-and-usability-feature-spec.md` — R
 - [ ] `docs/projects/completed/parallel-batch-02-foundations-and-usability-prompts.md` — R
 - [ ] `docs/projects/completed/parallel-batch-02-foundations-and-usability-tech-design.md` — R
+- [ ] `docs/projects/completed/parallel-batch-08-the-missing-belonging-feature-spec.md` — U
+- [ ] `docs/projects/completed/parallel-batch-08-the-missing-belonging-prompts.md` — U
+- [ ] `docs/projects/completed/parallel-batch-08-the-missing-belonging-tech-design.md` — U
 - [ ] `docs/projects/completed/perception-overlays.md` — R
 - [ ] `docs/projects/completed/perception-range-polish.md` — R
 - [ ] `docs/projects/completed/persistent-objects-feature-spec.md` — R
@@ -465,7 +477,7 @@ Preserve completion evidence and unique rationale. Determine whether new work is
 - [ ] `docs/projects/completed/world-agent-context/initial-foundation.md` — R
 - [ ] `docs/projects/completed/world-agent-context/mechanics.md` — R
 
-### Bundled-world contracts — 31 files
+### Bundled-world contracts — 32 files
 
 Check authored rules, vocabulary, tuning, supported scenarios and useful player outcomes against their native world owners. Keep generic infrastructure in its engine owner.
 
@@ -484,9 +496,10 @@ Check authored rules, vocabulary, tuning, supported scenarios and useful player 
 - [ ] `docs/worlds/base/knowledge.md` — R
 - [ ] `docs/worlds/base/landscape.md` — R
 - [ ] `docs/worlds/base/lifecycle-and-protection.md` — R, M
-- [ ] `docs/worlds/base/missing-belonging.md` — U
+- [ ] `docs/worlds/base/missing-belonging.md` — U, F
 - [ ] `docs/worlds/base/navigation.md` — R
 - [ ] `docs/worlds/base/places.md` — U
+- [ ] `docs/worlds/base/playable-openings.md` — U
 - [ ] `docs/worlds/base/player-danger.md` — U
 - [ ] `docs/worlds/base/player-death.md` — U
 - [ ] `docs/worlds/base/practical-competence.md` — R, M
@@ -495,7 +508,7 @@ Check authored rules, vocabulary, tuning, supported scenarios and useful player 
 - [ ] `docs/worlds/base/river-fishing.md` — U
 - [ ] `docs/worlds/base/shield-defense.md` — U
 - [ ] `docs/worlds/base/sleep.md` — R
-- [ ] `docs/worlds/base/social.md` — R, M
+- [ ] `docs/worlds/base/social.md` — R, M, F
 - [ ] `docs/worlds/base/story-perspectives.md` — R
 - [ ] `docs/worlds/base/survival.md` — R, M
 - [ ] `docs/worlds/base/time.md` — R
@@ -570,13 +583,13 @@ Reconcile shared control/input/accessibility conventions and actual evidence; av
 - [ ] `docs/ui-ux/controls.md` — R
 - [ ] `docs/ui-ux/foundations.md` — R
 - [ ] `docs/ui-ux/inventory.md` — R, M
-- [ ] `docs/ui-ux/react.md` — R, M
+- [ ] `docs/ui-ux/react.md` — R, M, F
 - [ ] `docs/ui-ux/research.md` — R, M
 - [ ] `docs/ui-ux/system-feedback.md` — R
 - [ ] `docs/ui-ux/verification.md` — R
 - [ ] `docs/ui-ux/world-interaction.md` — R, M
 
-### Verification reports — 90 files
+### Verification reports — 92 files
 
 Preserve the specific historical revision and workload. Link current acceptance to relevant evidence, distinguish fixture/native/browser/provider/stress checks, and retain failures rather than rewriting them into passes.
 
@@ -631,16 +644,18 @@ Preserve the specific historical revision and workload. Link current acceptance 
 - [ ] `docs/verification/mercenary-default.md` — R
 - [ ] `docs/verification/mixed-spatial-review.md` — R
 - [ ] `docs/verification/multiplayer-entry-maintenance.md` — R
-- [ ] `docs/verification/narration-and-chat-retry.md` — R
+- [ ] `docs/verification/narration-and-chat-retry.md` — R, F
 - [ ] `docs/verification/native-action-integration.md` — R
 - [ ] `docs/verification/npc-reply-preview.md` — R
 - [ ] `docs/verification/ordered-async-saves.md` — R
 - [ ] `docs/verification/parallel-batch-01-playable-week-engineer-2.md` — R
 - [ ] `docs/verification/parallel-batch-01-playable-week-engineer-4.md` — R
+- [ ] `docs/verification/parallel-batch-08-the-missing-belonging.md` — U
 - [ ] `docs/verification/perception-overlays.md` — R
 - [ ] `docs/verification/perception-reaction-intake.md` — R
 - [ ] `docs/verification/performance-investigation.md` — R
 - [ ] `docs/verification/physical-actions.md` — R
+- [ ] `docs/verification/playable-world-creation.md` — U
 - [ ] `docs/verification/player-clarity-ui.md` — R
 - [ ] `docs/verification/postgresql-cognition-preparation.md` — R
 - [ ] `docs/verification/practical-competence.md` — U
