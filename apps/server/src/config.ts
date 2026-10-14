@@ -9,7 +9,7 @@ import {
 } from './creation-target-contracts.js';
 import type { ModelTokenPrices, TokenPrices } from '@open-legend/ai';
 import { captureModelPrices } from '@open-legend/ai';
-import { isSafeRecordId } from '@open-legend/domain';
+import { BASE_STARTING_WORLD_PRESETS, isSafeRecordId } from '@open-legend/domain';
 
 const modelIdentity = z.string().regex(/^[\w./:-]{1,128}$/);
 const tokenRate = z.number().finite().nonnegative();
@@ -152,9 +152,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
           prices: { inputUsdPerMillion: 0.02, outputUsdPerMillion: 0 },
         },
       ]);
-  const worldPreset = env['OPEN_LEGEND_WORLD_PRESET'] ?? 'wilderness';
-  if (!['wilderness', 'reservoir-demo', 'touch-demo'].includes(worldPreset))
-    throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
+  const selectedWorldPreset = z
+    .enum(BASE_STARTING_WORLD_PRESETS)
+    .safeParse(env['OPEN_LEGEND_WORLD_PRESET'] ?? 'wilderness');
+  if (!selectedWorldPreset.success) throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
+  const worldPreset = selectedWorldPreset.data;
   const mode = z.enum(['local', 'oidc']).parse(env['OPEN_LEGEND_AUTH_MODE'] ?? 'local');
   const host = env['OPEN_LEGEND_HOST'] ?? '127.0.0.1';
   const port = numberSetting(env, 'PORT', 3210, 1024, 65535);

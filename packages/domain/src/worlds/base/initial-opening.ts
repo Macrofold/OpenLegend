@@ -23,7 +23,7 @@ import { ADA_IDENTITY } from './characters.js';
 import { KNOWN_SHIELD_METHOD } from './shield-family.js';
 import { BASE_WOVEN_CONTAINER_METHOD } from './container-method.js';
 import { RIVER_LINE_METHOD } from './river-fishing.js';
-import { STARTER_EXTENT, starterGroundAt } from './landscape.js';
+import { BASE_SOLO_CLEARING, STARTER_EXTENT, starterGroundAt } from './landscape.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { reserveEntityId } from '../../data.js';
 import { baseConstructionProfile } from './canopy-scene.js';
@@ -38,7 +38,7 @@ export const BASE_OPENING_PROFILE = {
   version: 2,
   name: 'Wilderness starting worlds',
   description:
-    'A supported wilderness locality with one controlled person and, when chosen, one independent resident. Gather finite supplies, make useful equipment and continue ordinary play.',
+    'The complete authored wilderness or a quiet solo testing ground, with supported custom small openings. Gather finite supplies, make useful equipment and continue ordinary play.',
   openings: [
     {
       id: 'main',
@@ -500,6 +500,7 @@ export function createBaseOpeningCandidate(
   };
   const position = (x: number, z: number): Position => ({ x, y: 0, z });
   const solitary = opening === 'solitary';
+  const { x: soloX, z: soloZ } = BASE_SOLO_CLEARING;
   const person = (personId: string, resident: boolean): BaseOpeningActor => ({
     id: personId,
     name: resident ? 'Ada' : 'Newcomer',
@@ -515,7 +516,7 @@ export function createBaseOpeningCandidate(
     traits: resident ? structuredClone(ADA_IDENTITY.traits) : [],
     initialGoals: [],
     fullness: resident ? 55 : 76,
-    position: resident ? position(13, 12) : solitary ? position(13, 28) : position(11, 13),
+    position: resident ? position(13, 12) : solitary ? position(soloX, soloZ) : position(11, 13),
     supportSurfaceId: 'terrain',
   });
   if (!solitary && !isSafeRecordId(identities.residentId))
@@ -525,10 +526,10 @@ export function createBaseOpeningCandidate(
   const quantities = { raw_fiber: 48, wood: 36, stone: 60, berries: 18 };
   const resourcePositions = solitary
     ? [
-        [10, 28],
-        [14, 26],
-        [10, 31],
-        [15, 30],
+        [soloX - 3, soloZ],
+        [soloX + 1, soloZ - 2],
+        [soloX - 3, soloZ + 3],
+        [soloX + 2, soloZ + 2],
       ]
     : [
         [5, 11],
@@ -550,7 +551,7 @@ export function createBaseOpeningCandidate(
     id: id('fire'),
     kind: 'fire',
     name: 'Banked campfire',
-    position: solitary ? position(13, 25) : position(11, 10),
+    position: solitary ? position(soloX, soloZ - 3) : position(11, 10),
     supportSurfaceId: 'terrain',
     fuelSeconds: 172800,
   });

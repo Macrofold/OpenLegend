@@ -86,7 +86,7 @@ export function baseWorldInitialConstructionSeeds(
   world: WorldState,
   builderId = PLAYER_ID,
 ): ConstructionPermission[] {
-  if (!world.entities[builderId]?.actor) return [];
+  if (!world.entities['camp-route-marker'] || !world.entities[builderId]?.actor) return [];
   return [
     {
       id: 'intro-canopy-builder',
@@ -495,7 +495,12 @@ export function createWorld(
       },
     },
   ];
-  for (const entity of entities) world.entities[entity.id] = entity;
+  for (const entity of entities) {
+    // Prospective primary identities must not erase fixed authored starting content.
+    if (world.entities[entity.id])
+      throw new Error('A starting person identity collides with an authored scene object.');
+    world.entities[entity.id] = entity;
+  }
   for (const material of [...BASE_CANOPY_SCENE.kit, ...BASE_CANOPY_SCENE.variantStock])
     for (let n = 0; n < material.quantity; n++) {
       const id = addItem(world, playerId, material.definitionId, 1);

@@ -110,7 +110,6 @@ import {
   type AttributeEditRequest,
   type DefinitionPin,
 } from '@open-legend/domain';
-import { createReservoirDemo, createTouchDemo } from '@open-legend/domain';
 import { validateWorldModules } from '@open-legend/domain';
 import {
   CheckpointBusyError,
@@ -140,7 +139,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
-  createWorld,
+  createBaseStartingWorld,
   baseWorldInitialConstructionSeeds,
   updateWorld,
   appendedEventCount,
@@ -748,12 +747,7 @@ export class WorldService {
       playerAccountId: this.currentProfile.id,
     };
     this.saved = existing?.state ?? {
-      world:
-        config.worldPreset === 'touch-demo'
-          ? createTouchDemo(config.seed, creationAccounts)
-          : config.worldPreset === 'reservoir-demo'
-            ? createReservoirDemo(config.seed, creationAccounts)
-            : createWorld(config.seed, creationAccounts),
+      world: createBaseStartingWorld(config.worldPreset, config.seed, creationAccounts),
       speed: 1,
       manuallyPaused: false,
     };
