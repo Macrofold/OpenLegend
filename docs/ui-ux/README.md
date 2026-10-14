@@ -4,6 +4,10 @@ A practical standard for deciding what the player sees, how controls behave and 
 
 **Research updated:** October 1, 2026. **Runtime evidence baseline:** `0382be76648879cf8a8397ad6c3534b4431916f5` on `Macrofold/OpenLegend/main`. The handbook integrates UI source/specification inspection, authoritative design and engineering guidance, pinned company code, game examples and player feedback. Exact source dates, revisions and access limits live in one [research ledger](research.md). No running-game or usability study is implied.
 
+## Selected follow-on workflow design
+
+The October 14 [inventory, crafting and building feature specification](../projects/inventory-crafting-building-workflows-feature-spec.md) and [technical design](../projects/inventory-crafting-building-workflows-tech-design.md) propose additions to the delivered PW04/activity/shelter foundations: a finite player crafting list, explicit equipment destinations and clearer placement/correction workflows. [ICB01–ICB07](../maintainers/inventory-crafting-building-workflows.md) owns the detailed implementation breakdown; [proposed limits](../limits/inventory-crafting-building-workflows.md) records the narrow scope. This is a new design, not delivered behavior, a replacement handbook or closure of existing UIUX/PW04/SH qualification. The missing current Rust screenshot sequence remains a separate research limitation.
+
 ## Start here, not everywhere
 
 Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.
