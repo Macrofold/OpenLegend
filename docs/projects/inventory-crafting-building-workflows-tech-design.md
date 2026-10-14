@@ -1,8 +1,8 @@
 # Inventory, crafting and building workflows — follow-on technical design
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | The design maps the proposed workflows onto existing owners; implementation, integration and runtime evidence remain open. | 2026-10-14 |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The design maps the proposed workflows onto existing owners; implementation, integration and runtime evidence remain open. | 2026-10-14   |
 
 **Design-only request, October 14, 2026.** Parent design identities: [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) for player controls and [ND07](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes) for shelter interaction. ICB module IDs below identify this follow-on's work, not replacement ND entries or a second global task register.
 
@@ -19,16 +19,16 @@ Inspected published main: `1cf678802d62652d8dd466776d4b95a9d0d19166`. Relevant i
 
 No runtime lines change in this design task. Future implementation is cross-layer work with material risks: editing a plan after some of it has executed, a compound custody/equipment change, stale spatial review, and private recipe/item disclosure. The design therefore supplies explicit commit boundaries and scenarios instead of treating this as a cosmetic screen change.
 
-| Responsibility | Existing owner / inspected entry point | Intended extension |
-| --- | --- | --- |
-| Inventory navigation, selected detail and quantity draft | `apps/client/src/ui/inventory.tsx`, `inventory-controls`, `inventory-destinations`; PW04 and inventory handbook | Preserve task context between existing panels; reuse exact quantities and lazy destination discovery |
-| Recipe detail | `apps/client/src/ui/recipe-details.tsx` consumes `RecipeDetailsView` | Separate planned output from receipts and held from usable stock; add finite-count/list affordances in the owning parent |
-| Current action choices and commands | Existing action catalogue/preview, `apps/server/src/world-service.ts`, `http.ts`, and native admission | Add only the scoped request/response variants below; no UI-owned permission or rule calculation |
-| Finite work and actual outputs | Existing `ActorPlan`, `packages/domain/src/activity-execution.ts`, `action-experience.ts`, `agency.ts` and kernel | Compile a chosen finite manufacture list; exact pending-suffix edit under the same plan owner |
-| Custody, conflicts and capacity | Existing object placement/quantity/reservation owners and installed equipment rules; PO04/PO10 | Evaluate and commit the destination-aware immediate exchange as one native operation |
-| Construction | Existing `ConstructionPlan`, `/api/construction`, `construction.tsx` and the SH evaluator/phase owner | Draft site picking, permitted alignment candidates and richer check/disposition presentation |
-| Scene preview | Existing plain `ConstructionShape` and renderer boundary | Show draft versus checked shapes without extra world knowledge, physics or React updates per frame |
-| Durability | Existing WorldService publication and PostgreSQL record catalogue | Persist accepted plan changes/receipts through their semantic owners; no independent queue table or save format |
+| Responsibility                                           | Existing owner / inspected entry point                                                                            | Intended extension                                                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Inventory navigation, selected detail and quantity draft | `apps/client/src/ui/inventory.tsx`, `inventory-controls`, `inventory-destinations`; PW04 and inventory handbook   | Preserve task context between existing panels; reuse exact quantities and lazy destination discovery                     |
+| Recipe detail                                            | `apps/client/src/ui/recipe-details.tsx` consumes `RecipeDetailsView`                                              | Separate planned output from receipts and held from usable stock; add finite-count/list affordances in the owning parent |
+| Current action choices and commands                      | Existing action catalogue/preview, `apps/server/src/world-service.ts`, `http.ts`, and native admission            | Add only the scoped request/response variants below; no UI-owned permission or rule calculation                          |
+| Finite work and actual outputs                           | Existing `ActorPlan`, `packages/domain/src/activity-execution.ts`, `action-experience.ts`, `agency.ts` and kernel | Compile a chosen finite manufacture list; exact pending-suffix edit under the same plan owner                            |
+| Custody, conflicts and capacity                          | Existing object placement/quantity/reservation owners and installed equipment rules; PO04/PO10                    | Evaluate and commit the destination-aware immediate exchange as one native operation                                     |
+| Construction                                             | Existing `ConstructionPlan`, `/api/construction`, `construction.tsx` and the SH evaluator/phase owner             | Draft site picking, permitted alignment candidates and richer check/disposition presentation                             |
+| Scene preview                                            | Existing plain `ConstructionShape` and renderer boundary                                                          | Show draft versus checked shapes without extra world knowledge, physics or React updates per frame                       |
+| Durability                                               | Existing WorldService publication and PostgreSQL record catalogue                                                 | Persist accepted plan changes/receipts through their semantic owners; no independent queue table or save format          |
 
 Source filenames identify current owners; proposed fields and operations below are **design contracts**, not assertions that matching exports already exist. Prefer a small feature-local child component when needed, not a second UI framework or one universal component with unrelated modes.
 
@@ -146,12 +146,12 @@ Local draft reversal changes no world state. Cancel/Stop after Start uses curren
 
 The new surfaces add no provider calls. Their main growing dimensions are known recipes, accessible lots and ancestor depth, finite plan nodes, nearby alignment candidates, edited parts and retained receipts. Keep shared preparation at existing quantity, equipment, plan and spatial owners. A selected row must not force a recipes × possessions × targets expansion.
 
-| Path | Preparation and invalidation | Future measurement through actual callers |
-| --- | --- | --- |
-| Recipe browsing | Page permitted metadata first; fetch material/work detail for selection; share quantity/hold reads within the same scope | Cold known-list preparation, page/search continuation, selection detail with large stock and held units |
-| Work-list display/edit | Read the existing bounded plan and actual receipts; update current progress with native time, not historical hydration per frame | Full admitted finite shape, stale concurrent edit, current-step advancement and restart reconstruction |
-| Exact exchange | Fetch exact selected sources/conflicts/destinations and affected ancestor chains; reuse existing indexes | Full and near-full nested bags, multiple conflicts, cold index reconstruction and rollback/publication cost |
-| Placement | Current permitted nearby candidates and selected assembly; one check at a time; dependency-complete reuse | Cold geometry/navigation preparation, repeated unchanged check, occupant/material changes and renderer/input responsiveness |
+| Path                   | Preparation and invalidation                                                                                                     | Future measurement through actual callers                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Recipe browsing        | Page permitted metadata first; fetch material/work detail for selection; share quantity/hold reads within the same scope         | Cold known-list preparation, page/search continuation, selection detail with large stock and held units                     |
+| Work-list display/edit | Read the existing bounded plan and actual receipts; update current progress with native time, not historical hydration per frame | Full admitted finite shape, stale concurrent edit, current-step advancement and restart reconstruction                      |
+| Exact exchange         | Fetch exact selected sources/conflicts/destinations and affected ancestor chains; reuse existing indexes                         | Full and near-full nested bags, multiple conflicts, cold index reconstruction and rollback/publication cost                 |
+| Placement              | Current permitted nearby candidates and selected assembly; one check at a time; dependency-complete reuse                        | Cold geometry/navigation preparation, repeated unchanged check, occupant/material changes and renderer/input responsiveness |
 
 [ICB-L02](../limits/inventory-crafting-building-workflows.md#icb-l02--bounded-reads-before-detail) records the proposed new-reader envelope and its limits. The inherited total object population, cold indexes, native whole-operation admission and global publication queue are not magically bounded by a small rendered page. No growth allowance is increased here. Incomplete preparation offers continuation or narrowing and is never reported as missing material, no recipe or no valid space.
 
@@ -159,15 +159,15 @@ Hide/close stops optional readers and check requests without stopping accepted n
 
 ## 8. Modules and delivery sequence
 
-| Module | Parent design / runtime owners | Dependency | Mechanism owned by this module |
-| --- | --- | --- | --- |
-| ICB01 | ND13; PW04, AC and UIUX | Current inventory/recipe/admission contracts | Scoped task handoff, selected recipe facts and planned-versus-actual presentation |
-| ICB02 | ND13; AC/AE/AG/SL and recipe owners | ICB01 | Finite manufacture-list compilation, owner-scoped normal UI and exact pending-suffix edits |
-| ICB03 | ND13; PO04/PO07/PO10 and PW04 | ICB01 | Exact acquisition/transfer handoff and current-state/receipt recovery |
-| ICB04 | ND13; PO/AC and installed equipment | ICB03 | Destination-aware immediate exchange, shared final-placement preflight and UI review |
-| ICB05 | ND07/ND13; SH02, SW and UIUX | ICB01 | Draft site mode, qualified alignment assistance and truthful checked-state presentation |
-| ICB06 | ND07; SH01/SH02/SH05 and PO | ICB05 | Complete replacement/reclaim disposition and draft-versus-committed correction |
-| ICB07 | ND07/ND13; relevant owners above | All selected preceding modules | Combined native/PostgreSQL/player-interface evidence and final owner reconciliation |
+| Module | Parent design / runtime owners      | Dependency                                   | Mechanism owned by this module                                                             |
+| ------ | ----------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| ICB01  | ND13; PW04, AC and UIUX             | Current inventory/recipe/admission contracts | Scoped task handoff, selected recipe facts and planned-versus-actual presentation          |
+| ICB02  | ND13; AC/AE/AG/SL and recipe owners | ICB01                                        | Finite manufacture-list compilation, owner-scoped normal UI and exact pending-suffix edits |
+| ICB03  | ND13; PO04/PO07/PO10 and PW04       | ICB01                                        | Exact acquisition/transfer handoff and current-state/receipt recovery                      |
+| ICB04  | ND13; PO/AC and installed equipment | ICB03                                        | Destination-aware immediate exchange, shared final-placement preflight and UI review       |
+| ICB05  | ND07/ND13; SH02, SW and UIUX        | ICB01                                        | Draft site mode, qualified alignment assistance and truthful checked-state presentation    |
+| ICB06  | ND07; SH01/SH02/SH05 and PO         | ICB05                                        | Complete replacement/reclaim disposition and draft-versus-committed correction             |
+| ICB07  | ND07/ND13; relevant owners above    | All selected preceding modules               | Combined native/PostgreSQL/player-interface evidence and final owner reconciliation        |
 
 ICB02, ICB03 and ICB05 can proceed independently after the shared projection/draft decisions in ICB01. Their authors must coordinate changes to shared protocol/UI primitives. Existing receipt, authority, equipment and shelter improvements are dependencies to reuse, not new copies of parent tasks. A partial release can deliver ICB01 or ICB03's improvements independently; the complete two-journey claim requires the full selected scope and ICB07.
 
