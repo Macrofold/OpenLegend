@@ -10,6 +10,8 @@ These entries own only this follow-on's discretionary scope and read/draft polic
 
 Use [AEL01](action-experience.md#ael01), [AEL07](action-experience.md#ael07) and [AEL08](action-experience.md#ael08) as the sole owners of structural/execution/history budgets. At the inspected baseline AEL01 has a 64-node representation and bounded repeat/expansion work; the eight-entry active window is not a total-list cap. Explain shape exhaustion before submission and preserve the draft rather than truncate it. Counts and dependency expansion must fit the existing native structure; this proposal adds no separate maximum number of possessions or recipe definitions.
 
+Check the draft's representational size before expanding counts into memory. Edits preserve completed iterations, current invocation identity, actual output bindings and cumulative native execution accounting. Spent work plus proposed remaining work must fit the same admitted budget; repeated edits cannot reset it. Oversized input remains an explained invalid draft, not a giant allocation or silently shortened list. Clock-only progress does not itself make an independent suffix edit stale; a changed execution frontier or relevant permission/definition does.
+
 Reason: reduce repeated chosen work without a second scheduler or changed survival obligations. Expand only for a concrete additional supported process with full continuation/cost/output semantics. Implementation: ICB02.
 
 ## ICB-L02 — Bounded reads before detail
