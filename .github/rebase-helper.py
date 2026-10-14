@@ -11,9 +11,10 @@ OLD = 'bf7366beb621e9c9c4cb03718c542c48ce2b6381'
 NEW = '7a576214fbb9891b2e9f742db56bbeccaa3a58a1'
 ROOT = pathlib.Path.cwd()
 OUT = pathlib.Path(os.environ['RUNNER_TEMP'])
-CONFIG = json.loads((ROOT / '.github/rebase-resolutions.json').read_text()) if (ROOT / '.github/rebase-resolutions.json').exists() else {}
+CONFIG = json.loads((ROOT / '.github/rebase-resolutions.json').read_text())
 LOG = []
 RESOLVED = []
+PATTERN = re.compile(r'^<<<<<<< [^\n]*\n(.*?)^\|\|\|\|\|\|\| [^\n]*\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]*\n', re.M | re.S)
 
 
 def git(*args, check=True):
@@ -38,7 +39,7 @@ def nonoverlapping_merge(base, left, right):
         return right
     tokenize = lambda s: re.findall(r'\w+|[^\w\s]|\s+', s)
     b, l, r = map(tokenize, (base, left, right))
-    if max(map(len, (b, l, r))) > 45000:
+    if max(map(len, (b, l, r))) > 10000:
         return None
     def changes(other):
         return [(i, j, other[k:n]) for op, i, j, k, n in difflib.SequenceMatcher(None, b, other, autojunk=False).get_opcodes() if op != 'equal']
@@ -76,34 +77,50 @@ for iteration in range(1000):
         raise RuntimeError('Rebase stopped without file conflicts: ' + LOG[-1])
     paths = sorted({line.split('\t', 1)[1] for line in raw.splitlines()})
     planned = []
+    source_commit = text('rev-parse', 'REBASE_HEAD').strip()
     for name in paths:
         stages = {}
         for stage in (1, 2, 3):
             p = git('show', f':{stage}:{name}', check=False)
             stages[str(stage)] = p.stdout.decode() if p.returncode == 0 else None
-        key = name + ':' + ':'.join(digest(stages[str(s)]) if stages[str(s)] is not None else 'absent' for s in (1, 2, 3))
-        supplied = CONFIG.get('resolutions', {}).get(key)
-        merged = None
-        method = None
-        if supplied is not None:
-            assert isinstance(supplied, dict) and supplied.get('reason'), name
-            merged = supplied['content']
-            method = supplied['reason']
-        elif pathlib.PurePosixPath(name).suffix == '.md' and all(v is not None for v in stages.values()):
-            merged = nonoverlapping_merge(stages['1'], stages['2'], stages['3'])
-            method = 'Disjoint token edits only; no competing edit selected.'
-        if merged is None:
-            current = (ROOT / name).read_text() if (ROOT / name).is_file() else None
-            remaining.append(dict(key=key, path=name, stages=stages, conflict=current, source_commit=text('rev-parse', 'REBASE_HEAD').strip()))
+        if pathlib.PurePosixPath(name).suffix != '.md' or any(v is None for v in stages.values()):
+            remaining.append(dict(path=name, stages=stages, source_commit=source_commit))
+            continue
+        git('checkout', '--conflict=diff3', '--', name)
+        current = (ROOT / name).read_text()
+        hunks = list(PATTERN.finditer(current))
+        if not hunks:
+            raise RuntimeError('Unrecognized conflict markers: ' + name)
+        edits, decisions, missing = [], [], []
+        for match in hunks:
+            left, ancestor, right = match.groups()
+            key = name + ':' + digest(left) + ':' + digest(right)
+            supplied = CONFIG.get('hunks', {}).get(key)
+            if supplied is not None:
+                assert supplied.get('reason'), key
+                choices = {'left': left, 'right': right, 'both': left + right}
+                merged = supplied['content'] if 'content' in supplied else choices[supplied['take']]
+                reason = supplied['reason']
+            else:
+                merged = nonoverlapping_merge(ancestor, left, right)
+                reason = 'Disjoint token edits only; no competing edit selected.'
+            if merged is None:
+                missing.append(dict(key=key, left=left, base=ancestor, right=right, context=current[max(0,match.start()-180):match.start()]))
+            else:
+                edits.append((match.start(), match.end(), merged))
+                decisions.append(dict(path=name, key=key, reason=reason, source_commit=source_commit))
+        if missing:
+            remaining.append(dict(path=name, stages=stages, conflict=current, hunks=missing, source_commit=source_commit))
         else:
-            planned.append((name, merged, key, method))
+            for start, end, merged in reversed(edits):
+                current = current[:start] + merged + current[end:]
+            planned.append((name, current, decisions))
     if remaining:
         break
-    for name, merged, key, method in planned:
-        (ROOT / name).parent.mkdir(parents=True, exist_ok=True)
+    for name, merged, decisions in planned:
         (ROOT / name).write_text(merged)
         git('add', '--', name)
-        RESOLVED.append(dict(path=name, key=key, reason=method, sha256=digest(merged)))
+        RESOLVED.extend(decisions)
     empty = git('diff', '--cached', '--quiet', check=False).returncode == 0
     result = git('rebase', '--skip' if empty else '--continue', check=False)
     LOG.append(result.stdout.decode() + result.stderr.decode())
@@ -123,13 +140,13 @@ with zipfile.ZipFile(OUT / 'rebase-result.zip', 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('range-diff.txt', text('range-diff', '--no-color', f'{base}..{OLD}', f'{NEW}..{head}'))
         z.writestr('rebased.patch', text('diff', '--binary', NEW, head))
         z.writestr('rebased-history.txt', text('log', '--reverse', '--format=%H%x09%P%x09%s', '--name-status', f'{NEW}..{head}'))
+        z.writestr('tree.txt', text('ls-tree', '-r', '--long', 'HEAD'))
         for entry in text('ls-files').splitlines():
             path = ROOT / entry
             if not path.is_file() or path.is_symlink():
                 continue
             if path.suffix in ('.md', '.mdc', '.txt', '.json', '.yaml', '.yml', '.ts', '.tsx', '.mjs', '.js', '.py', '.html', '.css') and 'archive' not in path.parts:
                 z.writestr('source/' + entry, path.read_bytes())
-        z.writestr('tree.json', json.dumps(json.loads(text('ls-tree', '-r', '--format={"path":"%(path)","sha":"%(objectname)","mode":"%(objectmode)"},', 'HEAD').join(['[', '{}]'])))) if False else None
     else:
         z.writestr('unmerged-index.txt', text('ls-files', '-u'))
         z.writestr('conflict.diff', text('diff', '--cc'))
