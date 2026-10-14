@@ -438,6 +438,8 @@ Static guidance, changed-file formatting, affected links/anchors and the full in
 
 The [canonical merge-branch skill](../../.agents/skills/merge-branch/SKILL.md) now owns requested newest-source squash integration, commit provenance and destination publication. Root routing selects it for the command or an explicit squash-merge-and-push request. Project/global entrypoints reference one body; repository task authority and the rebase conflict stop remain controlling. Creation is separate from execution, and the command does not publish unrelated pending work without authority.
 
+Commit summaries also identify actually completed task/subtask IDs and their applicable batch, design-document and topic context. Completion follows current trackers and evidence; partial implementation or integration alone cannot close an entire parent or batch. When no tracked item is completed, the message says `Completed-tasks: None`.
+
 Skill metadata, changed-file formatting, guidance reachability and the written branch-selection/commit/push procedure are checked for this change. Native menu discovery and automatic agent dispatch remain under CG05; static validation and Git mechanics do not establish installed-agent compliance. The command's global entrypoint depends on its referenced canonical checkout remaining available.
 
 ## World-boundary implementation lessons — October 14, 2026
