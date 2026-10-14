@@ -220,7 +220,7 @@ Keep these boundaries distinct:
 - social obligations;
 - proposed effects and actual outcomes.
 
-The [agency specification](agent-agency.md) already permits empty or repeated decision operations and persistent pursuit. Use it; do not preserve the current single `talk`/`act`/`think` response shape as a universal engine limit. Provider JSON constraints are adapter concerns, not the world's ontology.
+The [agency specification](agent-agency.md) and current native response contract support a bounded `operations` array, including an empty response and repeated supported operation kinds. Preserve that one admission/receipt owner; do not reintroduce a single `talk`/`act`/`think` slot or treat the current operation-count bound as a universal engine ontology. Provider JSON constraints remain adapter concerns; native capability, dependency and authority checks remain mandatory.
 
 A new need should supply a bounded meaningful concern to a compatible controller. A new sense should provide permitted evidence. A new action should expose discoverable, typed affordances. None should require its name to be added to every prompt or scheduler branch.
 
