@@ -20,13 +20,27 @@ Owns worldbuilding and meaning. Quests belong to STORY, institutions to SOCIETY,
 
 [Caves of Qud](../dossiers/caves-of-qud.md) · [Morrowind](../dossiers/the-elder-scrolls-iii-morrowind.md) · [Outer Wilds](../dossiers/outer-wilds.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-lore) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ How could deeds, disasters, inventions, migrations and ordinary lives become mem
 ### Culture and mystery that continue to change
 
 How can faith, language, art, rituals and institutions evolve while preserving a world's recognizable identity? Link KNOW, STORY, SOCIETY, NPC and LIVE; generated exposition is not by itself emergent lore or lived cultural change.
+
+### Additional boundaries from the broader source review
+
+Distinguish world truth, a witness's acquired evidence, institutional records, circulating belief and editorial revision. Consider custodians, censorship, lost knowledge, languages, rituals and places whose meaning changes on return. SPEECH owns communicative practice; LEISURE lived cultural activities; SOCIETY institutional power. A fixed literary arc does not establish an implemented generator of history.
 
 ## Design subtopics
 

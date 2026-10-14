@@ -20,13 +20,27 @@ Owns collective social rules. Individual bonds belong to NPC, material incentive
 
 [Crusader Kings III](../dossiers/crusader-kings-iii.md) · [Fallout: New Vegas](../dossiers/fallout-new-vegas.md) · [Mount & Blade II: Bannerlord](../dossiers/mount-and-blade-ii-bannerlord.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-society) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ How do groups form, select leaders, inherit responsibilities, change customs and
 ### Conflict, resistance and negotiated order
 
 Compare diplomacy, crime, espionage, propaganda, coercion, war, resistance and peace. Link ECON, NPC, KNOW and LORE; fictional wrongdoing and real-participant abuse are not the same policy problem.
+
+### Additional boundaries from the broader source review
+
+Distinguish force, wealth, expertise, legitimacy, office and personal trust. Institutions can have conflicting internal motives and incentives different from their stated purposes. Religion includes institutions and ordinary practice here, metaphysical possibilities in MAGIC and historical meaning in LORE. A victory, liberation, reconciliation and durable reform are different outcomes.
 
 ## Design subtopics
 

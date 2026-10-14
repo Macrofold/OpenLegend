@@ -20,13 +20,27 @@ Owns player-facing trust and protection. Fictional law belongs to SOCIETY, creat
 
 [Rust](../dossiers/rust.md) · [Ultima Online](../dossiers/ultima-online.md) · [Roblox](../dossiers/roblox.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-trust) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ How can a world include danger, crime, betrayal or war while participants unders
 ### Trust across observation, creation and recovery
 
 How do private character knowledge, shared spaces, creator edits, moderation and recovery from technical loss preserve confidence? Link KNOW, CREATE, LOSS and SOCIETY without creating competing permission policies here.
+
+### Additional boundaries from the broader source review
+
+Separate private human/account data, permitted character knowledge and deliberately authored fictional secrets. Consider clear admission, reporting, exit, correction, moderation and recovery without giving an in-world ruler platform authority. Scope audience and mature subjects explicitly without equating fictional violence with real-participant abuse.
 
 ## Design subtopics
 

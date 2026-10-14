@@ -147,7 +147,7 @@ enshrouded,G145,Enshrouded,M
 v-rising,G146,V Rising,M
 once-human,G147,Once Human,M
 abiotic-factor,G148,Abiotic Factor,M
-songs-of-syx,G149,Songs of Syx,E
+songs-of-syx,G149,Songs of Syx,M
 streets-of-rogue,G150,Streets of Rogue,P
 nethack,G151,NetHack,P
 spelunky-2,G152,Spelunky 2,P
@@ -165,5 +165,5 @@ majesty-gold-hd,G163,Majesty: Gold HD,P
 creatures-3,G164,Creatures 3,P
 creatures-docking-station,G165,Creatures Docking Station,P
 shattered-pixel-dungeon,G166,Shattered Pixel Dungeon,P
-starfield,unresolved-G149,Starfield,C
-eve-online,unnumbered,EVE Online,C
+starfield,G167,Starfield,M
+eve-online,unnumbered,EVE Online,T

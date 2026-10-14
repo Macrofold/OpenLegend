@@ -20,13 +20,27 @@ Owns learning and usable interaction. Expressive audiovisual identity belongs to
 
 [Dwarf Fortress](../dossiers/dwarf-fortress.md) · [Factorio](../dossiers/factorio.md) · [Baldur's Gate 3](../dossiers/baldurs-gate-3.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-ux) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ How do people discover peaceful, adversarial and creative activities when contro
 ### Intent, capability and actual outcome
 
 How can free-form requests and explicit controls communicate what is supported, what a character knows, what was attempted and what really happened? Link CREATE, KNOW and NPC; clear technical diagnostics alone do not establish a usable player experience.
+
+### Additional boundaries from the broader source review
+
+Separate the opportunity in ACTION, its controls here, audiovisual response in PRESENT and fictional knowledge in KNOW. Include disabled-player access, reading load, localization, recoverable mistakes, changing between character/observer/creator roles and the time until the first meaningful activity. Linguistic mystery must not excuse inaccessible interface text.
 
 ## Design subtopics
 

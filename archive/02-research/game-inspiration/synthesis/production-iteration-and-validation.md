@@ -16,7 +16,23 @@ How do teams preserve deep interaction, useful invention, coherent characters an
 
 ### Evidence that changes a decision
 
-Which feedback, observations and focused comparisons reveal whether an activity is understandable and worthwhile? Separate implementation correctness, simulation plausibility, enjoyment, creator productivity and commercial sustainability. Do not make all 30 learning guides prerequisites to a justified local design.
+Which feedback, observations and focused comparisons reveal whether an activity is understandable and worthwhile? Separate implementation correctness, simulation plausibility, enjoyment, creator productivity and commercial sustainability. Do not make all 35 learning guides prerequisites to a justified local design.
+
+## Desired experiences and contrasting approaches
+
+<!-- Define the useful delivered experience, intended audience and author/operator constraints. Compare a small complete activity with a broad system, and reuse with new capability, without assuming either is always preferable. -->
+
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-production), [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md), [current design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions) and [verification guidance](../../../../.agents/rules/verification.md). Existing unrun acceptance is not automatically missing design.
+
+## Complete situations and cross-topic consequences
+
+<!-- Trace an intended experience through evidence, selection, design, delivery and feedback. Identify the smallest complete proof and what remains unproven rather than treating a subsystem demonstration as the whole game. -->
+
+## Open questions and missing evidence
+
+<!-- Compare player benefit with development, maintenance, latency and service burden. Record a decision-changing evidence gap, not a generic demand for unlimited research, all-source rereads or new tests on every task. -->
 
 ## Design subtopics
 

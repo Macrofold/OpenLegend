@@ -20,13 +20,27 @@ Owns mature participation and content cadence. Underlying motivation belongs to 
 
 [Don't Starve Together](../dossiers/dont-starve-together.md) · [Stardew Valley](../dossiers/stardew-valley.md) · [Final Fantasy XIV](../dossiers/final-fantasy-xiv.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-live) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ How do independent lives, seasons, generations, ecological change and institutio
 ### Long projects, cultural change and endings
 
 What makes returning to people and places rewarding after a hiatus, and what lets a player leave satisfied? Link NPC, LORE, LOSS and BUSINESS; ongoing support and permanent attendance are not the same design goal.
+
+### Additional boundaries from the broader source review
+
+Distinguish canonical world events, forecasts, authored future possibilities and narrative retellings. Compare local participation in shared campaigns, time away, late arrivals, irreversible achievements and ongoing ordinary access. Background abstraction must not invent exact witnessing or duplicate a unique victory for every party.
 
 ## Design subtopics
 
