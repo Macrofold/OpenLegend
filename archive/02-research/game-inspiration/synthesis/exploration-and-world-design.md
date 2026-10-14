@@ -20,13 +20,27 @@ Owns the arrangement and discovery of places. Moving through them belongs to TRA
 
 [Outer Wilds](../dossiers/outer-wilds.md) · [Subnautica](../dossiers/subnautica.md) · [Breath of the Wild](../dossiers/the-legend-of-zelda-breath-of-the-wild.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-explore) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ What makes a peaceful outing, scientific observation, beautiful place or useful 
 ### Places changed by inhabitants and events
 
 How do new homes, ruins, memorials, disputed access and altered habitats change a return visit? Link BUILD, LORE and LIVE; distinguish actual changes and discoverable evidence from decorative backstory.
+
+### Additional boundaries from the broader source review
+
+Compare recognizable local detail with a wider implied world, meaningful revisits, changing routes and self-contained destinations. Authored geography and procedural generation have different evidence needs: a large map or a rich novel setting is not proof of enjoyable exploration. ACTION owns methods of interacting with a discovered place.
 
 ## Design subtopics
 

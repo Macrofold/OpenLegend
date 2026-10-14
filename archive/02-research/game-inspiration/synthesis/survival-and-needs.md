@@ -20,13 +20,27 @@ Owns living with needs. Ecosystems belong to SYSTEMS, making food/tools to CRAFT
 
 [Don't Starve Together](../dossiers/dont-starve-together.md) · [The Long Dark](../dossiers/the-long-dark.md) · [Valheim](../dossiers/valheim.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-survive) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ How do pleasure, comfort, shared meals, farming, gardening, rest and caring for 
 ### Different bodies and useful care
 
 Compare injury, illness, disability, healing, growth and aging where they add meaningful experience. Link NPC, SYSTEMS, CRAFT and LOSS; do not assume biological detail or constant hardship is necessary for a convincing life.
+
+### Additional boundaries from the broader source review
+
+Focus on recurring environmental and resource pressure; BODY owns anatomy, treatment and life cycles, LEISURE owns ordinary pleasure as an end, and SYSTEMS owns habitats. Keep remedies, dependable competence and the option of a comfortable life alongside hardship.
 
 ## Design subtopics
 

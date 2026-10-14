@@ -20,13 +20,27 @@ Owns the making process. Output properties belong to GEAR, mass production to LO
 
 [Minecraft](../dossiers/minecraft.md) · [Cataclysm: Dark Days Ahead](../dossiers/cataclysm-dark-days-ahead.md) · [Divinity: Original Sin II](../dossiers/divinity-original-sin-ii.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-craft) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ What makes an invented object or process enable a genuinely new activity? Compar
 ### Craftsmanship, teaching and shared making
 
 How can cooking, art, repair, toolmaking and cooperative projects matter without serving only combat? Examine teaching, commissions and NPC initiative, linking CREATE, GEAR, GROWTH and NPC rather than duplicating their rules.
+
+### Additional boundaries from the broader source review
+
+Trace acquisition or learning of a method, experimentation, manufacture and actual use separately. Practical invention belongs here; general improvised action links to ACTION, devices to TECH, and art or cooking pursued for pleasure to LEISURE. Creation should be useful without requiring a new universal manufacturing system.
 
 ## Design subtopics
 

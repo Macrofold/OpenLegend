@@ -20,13 +20,27 @@ Owns what items do and how they are carried. Acquisition belongs to LOOT, making
 
 [Caves of Qud](../dossiers/caves-of-qud.md) · [Project Zomboid](../dossiers/project-zomboid.md) · [Breath of the Wild](../dossiers/the-legend-of-zelda-breath-of-the-wild.md). Candidates are not an exhaustive relevance decision or evidence of incorporation.
 
+## Desired experiences and contrasting approaches
+
+<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+
 ## Cross-game evidence and counterexamples
 
 ## Consolidated lessons and tradeoffs
 
+## Current OpenLegend baseline and existing design owners
+
+Use the [source and goal map](source-and-goal-map.md#topic-gear) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+
+## Complete situations and cross-topic consequences
+
+<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+
 ## Possible OpenLegend applications and limits
 
 ## Open questions and missing evidence
+
+<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
 ## OpenLegend-specific research subtopics
 
@@ -37,6 +51,10 @@ Compare weapons with instruments, care supplies, everyday tools and unusual bodi
 ### Possessions with a continuing history
 
 How can gifts, inheritance, repairs, loss and visible provenance create attachment without inventing a biography for every item? Link CRAFT, NPC, LORE and LOSS; historical meaning and mechanical usefulness need not coincide.
+
+### Additional boundaries from the broader source review
+
+Connect equipment to BODY for genuinely different anatomy and to ACTION for situated uses. Compare carrying convenience, meaningful loadout choices, ownership and sentimental identity without turning every object into required bookkeeping.
 
 ## Design subtopics
 
