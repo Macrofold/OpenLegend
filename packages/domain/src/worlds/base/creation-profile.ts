@@ -13,8 +13,18 @@ import {
   type BaseOpeningIdentities,
 } from './initial-opening.js';
 import { checkBaseOpeningReadiness } from './opening-readiness.js';
+import {
+  createBaseMainWorldCandidate,
+  validateBaseMainWorldCandidate,
+  buildBaseMainWorld,
+  checkBaseMainWorldReadiness,
+} from './main-opening.js';
 
 function candidate(value: unknown) {
+  if (value && typeof value === 'object' && 'opening' in value && value.opening === 'main') {
+    validateBaseMainWorldCandidate(value);
+    return value;
+  }
   validateBaseOpeningCandidate(value);
   return value;
 }
@@ -31,7 +41,7 @@ function identities(value: WorldOpeningIdentities): BaseOpeningIdentities {
 export const BASE_CREATION_PROFILE: WorldCreationProfile = {
   id: BASE_OPENING_PROFILE.id,
   version: BASE_OPENING_PROFILE.version,
-  choices: BASE_OPENING_PROFILE.openings,
+  choices: BASE_OPENING_PROFILE.openings.filter((opening) => opening.id !== 'inhabited'),
   identityKeys: [
     'player',
     'resident',
@@ -44,9 +54,25 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
     resources: BASE_OPENING_RESOURCES,
     stockDefinitions: BASE_OPENING_STOCK_DEFINITIONS,
     learnedMethods: BASE_OPENING_METHODS,
+    mainTemplate: {
+      fields: [
+        'profile',
+        'worldId',
+        'opening',
+        'seed',
+        'rngState',
+        'title',
+        'premise',
+        'playerId',
+        'residentId',
+      ],
+      opening: 'main',
+      description:
+        'A compact reference to the complete ordinary authored wilderness. Preserve allocated player/resident identities and seed. Only title and premise are editable; scenario contents come from the current world-owned initializer.',
+    },
     identityKeys: BASE_OPENING_IDENTITY_KEYS,
     coverage:
-      'The supported initial profile only. Native preparation separately checks actual geometry, supplies, methods and activity readiness; it cannot guarantee an invented tool, a successful attempt or another person’s choice.',
+      'The complete authored main template and supported custom/solo openings. Native preparation checks actual geometry, supplies, methods and activity readiness; it cannot guarantee an invented tool, a successful attempt or another person’s choice.',
     notes: [
       'Use the session-owned prospective template or current_work. Preserve allocated identities, exact definition/profile pins, seed, RNG state and every unchanged selected part. Names never allocate or resolve identities.',
       'The application supplies fresh identities; none come from the source world. Source people, memories, inventories, active work, receipts, control leases, credentials and account grants are not opening content.',
@@ -57,14 +83,33 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
     ],
   },
   validate: candidate,
-  create(value, choiceId = 'inhabited') {
-    const choice = BASE_OPENING_PROFILE.openings.find((opening) => opening.id === choiceId);
+  create(value, choiceId) {
+    // Describe a world starts with editable selected circumstances. Supplied
+    // Main world explicitly selects the complete authored template instead.
+    if (choiceId === undefined) return createBaseOpeningCandidate(identities(value));
+    const choice = this.choices.find((opening) => opening.id === choiceId);
     if (!choice) throw new Error('The selected opening is unsupported by this profile.');
+    if (choice.id === 'main') return createBaseMainWorldCandidate(value);
+    if (choice.id !== 'solitary') throw new Error('The selected supplied opening is unsupported.');
     return createBaseOpeningCandidate(identities(value), choice.id);
   },
   assertSessionCandidate(value, allocated) {
     const selected = candidate(value);
     const assigned = identities(allocated);
+    if (selected.opening === 'main') {
+      const expected = createBaseMainWorldCandidate(allocated);
+      if (
+        selected.worldId !== expected.worldId ||
+        selected.playerId !== expected.playerId ||
+        selected.residentId !== expected.residentId ||
+        selected.seed !== expected.seed ||
+        selected.rngState !== expected.rngState
+      )
+        throw new Error(
+          'Preserve the application-assigned main-world identities and random results.',
+        );
+      return;
+    }
     const expected = createBaseOpeningCandidate(assigned);
     const allowed = new Set(Object.values(allocated.ids));
     if (
@@ -80,13 +125,43 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
       );
   },
   controlledActor(value) {
-    return candidate(value).player.id;
+    const selected = candidate(value);
+    return selected.opening === 'main' ? selected.playerId : selected.player.id;
   },
   build(value, accounts) {
-    return buildBaseInitialWorld(candidate(value), accounts);
+    const selected = candidate(value);
+    return selected.opening === 'main'
+      ? buildBaseMainWorld(selected, accounts)
+      : buildBaseInitialWorld(selected, accounts);
   },
   editor(value) {
     const selected = candidate(value);
+    if (selected.opening === 'main')
+      return {
+        family: { ...selected.profile },
+        fields: [
+          { path: ['title'], label: 'Opening name', kind: 'text' as const },
+          { path: ['premise'], label: 'What matters in this opening', kind: 'text' as const },
+        ],
+        facts: [
+          {
+            id: 'content',
+            label: 'Starting content',
+            value: 'Complete wilderness, camp residents and distant encounters',
+          },
+          {
+            id: 'setup',
+            label: 'Scenario setup',
+            value:
+              'Shared with ordinary startup; preserves its finite supplies and survival conditions',
+          },
+          {
+            id: 'world',
+            label: 'Publication',
+            value: 'Fresh paused world; no existing world is replaced',
+          },
+        ],
+      };
     return {
       family: { ...selected.profile },
       fields: baseOpeningEditorFields(selected),
@@ -102,7 +177,10 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
     };
   },
   readiness(value, world, routes) {
-    return checkBaseOpeningReadiness(candidate(value), world, routes);
+    const selected = candidate(value);
+    return selected.opening === 'main'
+      ? checkBaseMainWorldReadiness(selected, world, routes)
+      : checkBaseOpeningReadiness(selected, world, routes);
   },
   preview(value, world, readiness, failure) {
     const selected = candidate(value);
@@ -131,17 +209,19 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
               },
             ];
           })
-        : [
-            selected.player,
-            ...(selected.resident ? [selected.resident] : []),
-            ...selected.scene,
-          ].map((entry) => ({
-            id: entry.id,
-            label: entry.name,
-            kind: 'initialGoals' in entry ? 'person' : entry.kind,
-            position: entry.position,
-            description: 'description' in entry ? entry.description : '',
-          })),
+        : selected.opening === 'main'
+          ? []
+          : [
+              selected.player,
+              ...(selected.resident ? [selected.resident] : []),
+              ...selected.scene,
+            ].map((entry) => ({
+              id: entry.id,
+              label: entry.name,
+              kind: 'initialGoals' in entry ? 'person' : entry.kind,
+              position: entry.position,
+              description: 'description' in entry ? entry.description : '',
+            })),
       findings: readiness
         ? readiness.findings.map((finding) => ({
             id: finding.id,

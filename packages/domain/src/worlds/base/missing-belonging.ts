@@ -26,7 +26,7 @@ export const MARA_STARTING_BELIEFS =
 export const TAVIN_STARTING_BELIEFS =
   '# Beliefs\nEarlier today I moved an unattended red-stitched bag from the Mending Clearing work spot beside the rough stone to the Reed-side Store beside the split stone while clearing room for my work, assuming it was shared equipment. Its red fastening strap snagged on the rough stone edge as I lifted it, and I left a sorting note at the work spot. I neither inspected the bag’s contents nor identified its owner.';
 
-export function installMissingBelonging(world: WorldState): void {
+export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID): void {
   const layout = world.map.spatial!;
   const maraPoint = starterGroundAt(
     layout,
@@ -153,14 +153,14 @@ export function installMissingBelonging(world: WorldState): void {
 
   assignGivenName(
     world,
-    PLAYER_ID,
+    playerId,
     { subjectId: MARA_ID, expectedRevision: 0, givenName: 'Mara Reed' },
     [MARA_ID],
     true,
   );
   assignGivenName(
     world,
-    PLAYER_ID,
+    playerId,
     { subjectId: TAVIN_ID, expectedRevision: 0, givenName: 'Tavin Vale' },
     [TAVIN_ID],
     true,

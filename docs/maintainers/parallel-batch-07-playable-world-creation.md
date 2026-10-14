@@ -8,6 +8,8 @@ Work began from committed local `main` `1589297f496fdbfee6e631c1fcee78a391b9478d
 
 ## OC01 — Construct the selected fresh opening
 
+- [ ] **OC06 — Main world and solo testing ground.** Replace the two supplied references with the complete integrated main world and a simple solo testing ground; retain custom supported authoring. Reuse the ordinary initializer, prospective identities, native readiness and actual construction grants; confirm rivals are in the configured database and outside the opening player view. Exit: both choices prepare, activate and reopen correctly, browser selection/preview is truthful, scoped static checks pass, and the [accepted revision](../projects/parallel-batch-07-playable-world-creation-feature-spec.md#purpose-and-selected-scope) is reconciled. OC05's broader live-model acceptance remains separate.
+
 - [x] Extract common bundled definition installation and fresh-state initialization without changing ordinary `createWorld` behavior; add the world-owned supported initial-opening profile.
 - [x] Retain exact candidate/definition/identity/RNG values, explicit initial stock/knowledge and current-format validation. Construct omitted people as absent from the start; do not invoke removal or copy live state.
 - [x] Preserve character authorship, selected account-role bindings, actual placement and explicit opening grants.

@@ -6,6 +6,19 @@
 
 **Alignment updated:** 2026-10-14T08:14:37Z.
 
+## Main world and solo testing ground — October 14 implementation
+
+Mike requests two supplied starts: a simple player-only testing ground and the complete integrated wilderness. Keep custom small-opening authoring; replace its supplied inhabited reference with a compact main-world template. The main template invokes the ordinary world-owned initializer, with prospective world/player/resident identities supplied before construction. It includes the existing camp, hunting/cooking, shelter, fishing, practice, expeditions, missing belonging and Broken Watchpost. Do not copy a live world, duplicate scenario setup, prescribe resident decisions or replace diagnostic world laws with wilderness laws. Kest and Orin retain their distant placements and ordinary perception restrictions.
+
+Estimated 200–300 changed production logic lines; medium risk because initial identities, exact review, construction permissions and readiness cross creation boundaries. Work uses local `main` at `efabdcb3f9825378fbc20ce9c36a6e3d04b3d7a7`, with refreshed `origin/main` at `1cf678802d62652d8dd466776d4b95a9d0d19166` in `https://github.com/Macrofold/OpenLegend.git`; preserve the local guidance commit. No branch or checkout change is required.
+
+1. Make ordinary construction accept exact primary identities before creating any people, possessions or knowledge. Reuse its existing scenario installers and return the actual builder's material-use permission. Share the existing woven-container method with ordinary starting knowledge.
+2. Extend the selected creation profile with a bounded main-template candidate, validation, editor, preview and native readiness; expose exactly Main world and Solo testing ground. Preserve supported custom small openings and their existing preparation bounds.
+3. Verify both selected starts through native preparation, current-format validation, PostgreSQL activation/reopen and real browser selection. Check a refused identity/layout case, main grants, main scenario contents and absence of rivals from the ordinary opening view. No paid calls are needed.
+4. Inspect the current configured development database without replacing compatible progress. Confirm integrated rivals and their initial distance; add only missing agreed starting content through existing owners if necessary. Reconcile the persistent opening specification, limits, tracker and verification report; run relevant TypeScript/build/format checks and commit task changes.
+
+Preparation is explicit rather than per-tick work: one shared initializer constructs the fixed authored scene; existing exact preparation caching shares that immutable result across preview and review. Native readiness scans only this new opening's finite objects, reuses its definitions and routes, and invalidates on candidate/authority changes. Measure complete preparation and reopen rather than claim population capacity from this scene. Completion requires two truthful selectable starts, durable combined main content, a genuinely solo start, preserved account/spending authority and successful relevant checks. This scoped correction does not close OC05's separate live generated-tool acceptance.
+
 ## Baseline and independent completion
 
 The inspected repository is `/Users/mzw/Documents/ChatGPT/OpenLegend`, local `main` at **`2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5`**, equal to refreshed `origin/main`. That baseline includes the existing invention, World Agent, character, exploration and Batch 05 consumers. Batch 06 on `codex/rivals-and-contested-ground` is unavailable to this assignment; none of its runtime behavior is required. No Macrofold change is required by this design.

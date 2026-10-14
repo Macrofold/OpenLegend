@@ -21,7 +21,9 @@ import type { OpeningReadiness } from '../../world-creation.js';
  * Server-native route results must remain bound to this exact candidate/request.
  */
 export function checkBaseOpeningReadiness(
-  candidate: BaseInitialWorldCandidate,
+  candidate: Pick<BaseInitialWorldCandidate, 'opening' | 'harsh' | 'scene'> & {
+    player: { id: string };
+  },
   world: WorldState,
   completedRoutes: ReadonlyMap<string, NavigationResult> = new Map(),
 ): OpeningReadiness {

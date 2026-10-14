@@ -21,6 +21,7 @@ import { createActor, createFreshBaseWorld } from './world.js';
 import { NATIVE_ITEMS } from './items.js';
 import { ADA_IDENTITY } from './characters.js';
 import { KNOWN_SHIELD_METHOD } from './shield-family.js';
+import { BASE_WOVEN_CONTAINER_METHOD } from './container-method.js';
 import { RIVER_LINE_METHOD } from './river-fishing.js';
 import { STARTER_EXTENT, starterGroundAt } from './landscape.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
@@ -34,11 +35,21 @@ import { resolveSupport, surfaceContains, surfaceHeight } from '@open-legend/spa
  */
 export const BASE_OPENING_PROFILE = {
   id: 'base:playable-opening',
-  version: 1,
-  name: 'Small wilderness opening',
+  version: 2,
+  name: 'Wilderness starting worlds',
   description:
     'A supported wilderness locality with one controlled person and, when chosen, one independent resident. Gather finite supplies, make useful equipment and continue ordinary play.',
   openings: [
+    {
+      id: 'main',
+      label: 'Main world',
+      description:
+        'The complete wilderness: camp residents, hunting and cooking, shelter, fishing, expeditions, a missing belonging and distant rivals.',
+      activity:
+        'Start at camp, make useful equipment, obtain food and explore the surrounding people and places.',
+      payoff:
+        'All integrated wilderness scenarios share one persistent world; distant encounters are discovered through ordinary exploration.',
+    },
     {
       id: 'inhabited',
       label: 'A small inhabited camp',
@@ -50,9 +61,9 @@ export const BASE_OPENING_PROFILE = {
     },
     {
       id: 'solitary',
-      label: 'Solitary gathering and making',
+      label: 'Solo testing ground',
       description:
-        'One controlled person in a different locality, with finite fibers and a known container method.',
+        'A quiet player-only locality with basic resources, tools, a fire and a known container method. No residents or encounters.',
       activity: 'Gather and prepare fibers, then make a known woven container.',
       payoff: 'A reusable container for gathered supplies, without relying on another person.',
     },
@@ -77,7 +88,7 @@ export const BASE_OPENING_METHODS = [
   { id: 'wooden-shield', name: 'Wooden shield' },
 ] as const;
 export type BaseOpeningMethod = (typeof BASE_OPENING_METHODS)[number]['id'];
-export type BaseOpeningKind = (typeof BASE_OPENING_PROFILE.openings)[number]['id'];
+export type BaseOpeningKind = Exclude<(typeof BASE_OPENING_PROFILE.openings)[number]['id'], 'main'>;
 type Position = { x: number; y: number; z: number };
 
 /** The application's allocator supplies these identities once per retained opening. */
@@ -271,22 +282,8 @@ export const BASE_OPENING_STOCK_DEFINITIONS = [
   'bone',
 ] as const;
 
-const containerMethod: RecipeCandidate = {
-  family: { id: 'base:woven-container', version: 1 },
-  name: 'Woven gathering container',
-  description: 'Weave prepared fibers into a small pouch and secure it with cord.',
-  inputs: [
-    { role: 'pouch', definitionId: 'prepared_fiber', quantity: 2 },
-    { role: 'binding', definitionId: 'cord', quantity: 1 },
-  ],
-  output: {
-    name: 'Woven gathering pouch',
-    description: 'A small portable woven pouch for carrying gathered materials.',
-  },
-  parameters: {},
-};
 const methods: Record<BaseOpeningMethod, RecipeCandidate> = {
-  'woven-container': containerMethod,
+  'woven-container': BASE_WOVEN_CONTAINER_METHOD,
   'river-line': RIVER_LINE_METHOD,
   'wooden-shield': KNOWN_SHIELD_METHOD.candidate,
 };
@@ -400,7 +397,7 @@ export function validateBaseOpeningCandidate(
     !integer(candidate.rngState, 0xffffffff, 1) ||
     !name(candidate.title) ||
     !text(candidate.premise) ||
-    !BASE_OPENING_PROFILE.openings.some((opening) => opening.id === candidate.opening) ||
+    (candidate.opening !== 'inhabited' && candidate.opening !== 'solitary') ||
     typeof candidate.harsh !== 'boolean' ||
     !Array.isArray(candidate.scene) ||
     candidate.scene.length > BASE_OPENING_PROFILE.limits.scene ||
