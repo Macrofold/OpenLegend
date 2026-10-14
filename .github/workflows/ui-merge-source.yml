@@ -19,79 +19,42 @@ jobs:
           persist-credentials: false
           show-progress: false
           fetch-depth: 0
-      - name: Read the exact saved merge calculation
+      - name: Inspect exact owners and export failure
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          curl --fail --silent --show-error --location --max-time 120 \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header 'Accept: application/vnd.github+json' \
-            https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11918233550/zip \
-            --output "$RUNNER_TEMP/review.zip"
+          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11918233550/zip --output "$RUNNER_TEMP/review.zip"
           python3 - <<'PY'
-          import hashlib, io, json, os, re, subprocess, tarfile, urllib.request, zipfile
+          import os, re, subprocess, tarfile, zipfile
           from pathlib import Path
-          archive = Path(os.environ['RUNNER_TEMP']) / 'review.zip'
-          with archive.open('rb') as file:
-              assert hashlib.file_digest(file, 'sha256').hexdigest() == '42a2d3bc92a860e361e9178269cb75b9931e08e06ead61b4614b6669aaf52bbf'
-          def git(*args):
-              return subprocess.check_output(['git', *args])
-          def entries(ref):
-              result = {}
-              for record in git('ls-tree', '-rz', ref).split(b'\0'):
-                  if record:
-                      header, path = record.split(b'\t', 1)
-                      mode, kind, sha = header.decode().split()
-                      assert kind == 'blob'
-                      result[path.decode()] = (mode, sha)
-              return result
-          def api(path, payload):
-              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/' + path,
-                  data=json.dumps(payload).encode(), method='POST', headers={
-                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
-                  'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
-              with urllib.request.urlopen(request, timeout=120) as response:
-                  return json.load(response)
-          with zipfile.ZipFile(archive) as saved:
-              metadata = json.loads(saved.read('metadata.json'))
-              assert metadata['main_parent'] == '1cf678802d62652d8dd466776d4b95a9d0d19166'
-              assert metadata['ui_parent'] == 'b9157678a55fc09b21e90be4e03e708673751e15'
-              base = entries(metadata['main_parent'])
-              known = {sha for _, sha in [*base.values(), *entries('705efb2bd102ba151123659b129372aea62b6a79').values()]}
-              current = set()
-              changes = []
-              with saved.open('merged.tar') as stream, tarfile.open(fileobj=stream, mode='r|') as source:
-                  for member in source:
-                      if not member.isfile() and not member.issym():
-                          continue
-                      path = member.name
-                      assert not path.startswith('/') and '..' not in Path(path).parts
-                      assert path not in {'.github/workflows/ui-merge-source.yml', '.github/scripts/ui-reconcile.py', '.github/scripts/ui-reconcile-publish.py'}
-                      current.add(path)
-                      data = member.linkname.encode() if member.issym() else source.extractfile(member).read()
-                      mode = '120000' if member.issym() else '100755' if member.mode & 0o111 else '100644'
-                      sha = hashlib.sha1(f'blob {len(data)}\0'.encode() + data).hexdigest()
-                      if base.get(path) == (mode, sha):
-                          continue
-                      entry = {'path': path, 'mode': mode, 'type': 'blob'}
-                      if sha in known:
-                          entry['sha'] = sha
-                      else:
-                          entry['content'] = data.decode('utf-8')
-                      changes.append(entry)
-                      if b'<<<<<<< ' in data and path.endswith(('.ts', '.tsx', '.css', '.md')):
-                          lines = data.decode().splitlines()
-                          print('CONFLICT_FILE=' + path)
-                          for match in re.finditer(r'^<<<<<<< .*?^>>>>>>> [^\n]+', data.decode(), re.M | re.S):
-                              start = data.decode()[:match.start()].count('\n')
-                              end = data.decode()[:match.end()].count('\n')
-                              print('\n'.join(f'{i+1}: {lines[i]}' for i in range(max(0, start-4), min(len(lines), end+5))))
-              for path, (mode, _) in base.items():
-                  if path not in current:
-                      changes.append({'path': path, 'mode': mode, 'type': 'blob', 'sha': None})
-              result = api('git/trees', {'base_tree': git('rev-parse', metadata['main_parent'] + '^{tree}').decode().strip(), 'tree': changes})
-              assert result['sha'] == metadata['merged_tree'], (result['sha'], metadata['merged_tree'])
-              print('REVIEW_TREE=' + result['sha'])
-              print('No commits or branch references were changed by this export.')
+          main = '1cf678802d62652d8dd466776d4b95a9d0d19166'
+          paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', main], text=True).splitlines()
+          for path in paths:
+              if path.endswith('/AGENTS.md') and (path.startswith(('apps/', 'packages/', 'docs/', '.github/'))):
+                  print('GUIDANCE_PATH=' + path)
+                  print(subprocess.check_output(['git', 'show', main + ':' + path], text=True))
+          with zipfile.ZipFile(Path(os.environ['RUNNER_TEMP']) / 'review.zip') as saved, saved.open('merged.tar') as stream, tarfile.open(fileobj=stream, mode='r|') as archive:
+              for member in archive:
+                  if member.name not in {'apps/client/src/ui/panels.tsx', 'packages/domain/src/narration.ts', 'packages/domain/src/worlds/base/world.ts', 'packages/domain/src/world-composition.ts'}:
+                      continue
+                  text = archive.extractfile(member).read().decode()
+                  print('CURRENT_OWNER=' + member.name)
+                  lines = text.splitlines()
+                  if member.name.endswith('panels.tsx'):
+                      start = next(i for i, line in enumerate(lines) if 'function Character(' in line)
+                      end = next((i for i in range(start+1, len(lines)) if lines[i].startswith('export function ')), len(lines))
+                      print('\n'.join(f'{i+1}: {lines[i]}' for i in range(start, end)))
+                  elif member.name.endswith('narration.ts'):
+                      print('\n'.join(f'{i+1}: {lines[i]}' for i in range(78, min(145, len(lines)))))
+                  elif member.name.endswith('world.ts'):
+                      print('\n'.join(f'{i+1}: {line}' for i, line in enumerate(lines[:110])))
+                  else:
+                      print(text)
+          workflow = subprocess.check_output(['git', 'show', '59a86032d88653d50ae18d0c3cb1485409eec3c9:.github/workflows/ui-merge-source.yml'], text=True)
+          code = workflow.split("          python3 - <<'PY'\n", 1)[1].split('\n          PY', 1)[0]
+          code = '\n'.join(line[10:] for line in code.splitlines())
+          code = code.replace("if b'<<<<<<< ' in data and path.endswith(('.ts', '.tsx', '.css', '.md')):", 'if False:')
+          code = code.replace('with urllib.request.urlopen(request, timeout=120) as response:\n        return json.load(response)', "try:\n        with urllib.request.urlopen(request, timeout=120) as response:\n            return json.load(response)\n    except urllib.error.HTTPError as error:\n        print('GITHUB_TREE_ERROR=' + error.read().decode(), flush=True)\n        print('TREE_ENTRY_COUNT=' + str(len(payload.get('tree', []))), flush=True)\n        print('TREE_PAYLOAD_BYTES=' + str(len(json.dumps(payload).encode())), flush=True)\n        raise")
+          exec(compile(code, 'diagnosed-tree-export', 'exec'))
           PY
