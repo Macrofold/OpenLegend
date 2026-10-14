@@ -1,0 +1,13 @@
+{
+  "resolutions": {
+    "03b7bd7a18511c8fedcbf65c1ddfa07ee5b1f92d:docs/status-effects.md:cf2697b9b1dad2fe3bfbaf2a97b2ad8a1917edfb:7835af10a82c9c49382af62a0d1a74f3306e757d:d0c459522d84262d69633db1b66f498753af50e8": {
+      "before_sha256": "36e4c0560a93662f497814191b64ae6458e6a7d10b9d45f91f6b6d3522816425",
+      "after_sha256": "87424662fddc9a031ca5bcf96b8d0a4e2484bf070fdb1805fd2553fa6bdaa02a",
+      "blocks": [{"sha256": "fc239795161fdf9f0f20e6caefc349ffb50aec380858c7adcc1f754f9e74da11", "parts": [1]}],
+      "replacements": [[
+        "### Reviewed condition removal",
+        "The [reviewed World Agent write path](world-agent-runtime.md#durable-write-sessions) uses existing native policy admission through its `status-effect-policy` adapter, with exact draft approval and Apply receipts; removal also requires the complete review below. Any separate direct settings form is an interface extension, not a missing policy mutation mechanism. Broad non-actor attribute authoring remains unimplemented; the reviewed attribute-binding/value adapters operate on supported actor bodies.\n\n### Reviewed condition removal"
+      ]]
+    }
+  }
+}
