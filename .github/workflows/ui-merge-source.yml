@@ -4,146 +4,93 @@ on:
     branches: [docs/game-ui-research-redesign]
     paths: [.github/workflows/ui-merge-source.yml, .github/scripts/ui-reconcile.py]
 permissions:
-  contents: write
-  actions: read
+  contents: read
 jobs:
   reconcile:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: openlegend
-          POSTGRES_PASSWORD: fixture
-          POSTGRES_DB: postgres
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U openlegend -d postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
+    timeout-minutes: 15
     env:
-      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
       AI_BUDGET_USD: '0'
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
           show-progress: false
-      - name: Prepare final reviewed candidate and isolated check index
+          fetch-depth: 0
+      - name: Restore the previously reviewed candidate
         shell: bash
         run: |
-          git fetch --quiet --unshallow origin
           python3 - <<'PY'
           import subprocess
+          allowed = {'.github/workflows/ui-merge-source.yml', '.github/scripts/ui-reconcile.py', '.github/scripts/ui-reconcile-publish.py'}
+          changes = subprocess.check_output(['git', 'diff', '--name-only', '705efb2bd102ba151123659b129372aea62b6a79', 'HEAD'], text=True).splitlines()
+          assert set(changes) <= allowed, changes
           workflow = subprocess.check_output(['git', 'show', 'cc156ef87852d3e2bd743314cbbd4021c68ad0b9:.github/workflows/ui-merge-source.yml'], text=True)
           code = workflow.split("          python3 - <<'PY'\n", 1)[1].split('\n          PY', 1)[0]
-          exec(compile('\n'.join(line[10:] for line in code.splitlines()), 'final-reviewed-candidate-preparation', 'exec'))
+          exec(compile('\n'.join(line[10:] for line in code.splitlines()), 'previously-reviewed-candidate', 'exec'))
           PY
-          export GIT_DIR="$GITHUB_WORKSPACE/.git"
-          export GIT_WORK_TREE="$RUNNER_TEMP/ui-reconciled"
-          export GIT_INDEX_FILE="$RUNNER_TEMP/ui-check.index"
-          git read-tree 1404c65ec38ae7f4765ea303a13f00608e0dbfbf
-          git update-index --force-remove .github/workflows/ui-merge-source.yml
-          printf 'GIT_DIR=%s\nGIT_WORK_TREE=%s\nGIT_INDEX_FILE=%s\n' "$GIT_DIR" "$GIT_WORK_TREE" "$GIT_INDEX_FILE" >> "$GITHUB_ENV"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install pinned dependencies
+      - name: Install the pinned formatter
         working-directory: ${{ runner.temp }}/ui-reconciled
+        shell: bash
         run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-install.log"; exit 1; }
-      - name: Format resolved paths
+      - name: Reproduce the reviewed formatting
         working-directory: ${{ runner.temp }}/ui-reconciled
+        shell: bash
         run: xargs -d '\n' pnpm exec prettier --write < "$RUNNER_TEMP/ui-resolved-paths.txt"
-      - name: Guidance configuration formatting TypeScript and build
-        id: static
-        working-directory: ${{ runner.temp }}/ui-reconciled
-        shell: bash
-        run: |
-          for check in guidance:check config:check format:check typecheck build; do
-            log="$RUNNER_TEMP/ui-${check//:/-}.log"
-            pnpm run "$check" > "$log" 2>&1 || { tail -100 "$log"; exit 1; }
-            echo "CHECK_PASS=$check"
-          done
-      - name: Full test suite - retain actual failure result
-        id: tests
-        continue-on-error: true
-        working-directory: ${{ runner.temp }}/ui-reconciled
-        run: pnpm exec vitest run --reporter=json --outputFile="$RUNNER_TEMP/ui-test.json" > "$RUNNER_TEMP/ui-test.log" 2>&1 || { tail -30 "$RUNNER_TEMP/ui-test.log"; exit 1; }
-      - name: Report exact final test results before network comparison
-        id: report
+      - name: Calculate the refreshed merge without changing branch references
+        id: merge
         shell: bash
         run: |
           python3 - <<'PY'
-          import json, os
+          import hashlib, json, os, subprocess, tarfile
           from pathlib import Path
-          root = Path(os.environ['RUNNER_TEMP'])
-          report = json.loads((root / 'ui-test.json').read_text())
-          assert report['numTotalTests'] == 344, report['numTotalTests']
-          current = []
-          for file in report['testResults']:
-              relative = str(Path(file['name']).relative_to(root / 'ui-reconciled'))
-              for test in file['assertionResults']:
-                  if test['status'] == 'failed':
-                      name = ' > '.join([*test.get('ancestorTitles', []), test['title']])
-                      current.append([relative, name])
-                      print('FAILED_TEST=' + relative + ' > ' + name)
-                      print('FAILURE_REASON=' + '\n'.join(test.get('failureMessages', []))[:700])
-          (root / 'ui-failures.json').write_text(json.dumps(sorted(current), indent=2) + '\n')
-          print(f"CANDIDATE_RESULT={report['numFailedTests']} failed / {report['numPassedTests']} passed / {report['numTotalTests']} total")
-          assert len(current) == report['numFailedTests']
+          old = '1700f3b23a39acfdd14f3a6ab34c8ce330847bc3'
+          target = '1cf678802d62652d8dd466776d4b95a9d0d19166'
+          temp = Path(os.environ['RUNNER_TEMP'])
+          root = temp / 'ui-reconciled'
+          out = temp / 'ui-merge-review'
+          out.mkdir()
+          def git(*args, **kwargs):
+              return subprocess.check_output(['git', *args], **kwargs)
+          env = dict(os.environ, GIT_DIR=str(Path.cwd() / '.git'), GIT_WORK_TREE=str(root), GIT_INDEX_FILE=str(temp / 'ui-review.index'))
+          subprocess.run(['git', 'read-tree', '1404c65ec38ae7f4765ea303a13f00608e0dbfbf'], env=env, check=True)
+          subprocess.run(['git', 'add', '-u'], env=env, check=True)
+          tree = git('write-tree', env=env, text=True).strip()
+          subprocess.run(['git', 'diff', '--check', '705efb2bd102ba151123659b129372aea62b6a79', tree], check=True)
+          # This unreferenced, runner-local object supplies ancestry only. The
+          # connector will publish the real merge commit after final review.
+          local = git('-c', 'user.name=Open Legend reconciliation', '-c', 'user.email=reconciliation@invalid', 'commit-tree', tree, '-p', old, '-p', '705efb2bd102ba151123659b129372aea62b6a79', '-m', 'Temporary merge calculation; no branch reference', text=True).strip()
+          result = subprocess.run(['git', 'merge-tree', '--write-tree', local, target], text=True, capture_output=True)
+          assert result.returncode in (0, 1), result.stderr
+          merged = result.stdout.splitlines()[0]
+          (out / 'merge.txt').write_text(result.stdout)
+          (out / 'upstream.patch').write_bytes(git('diff', '--binary', old, target))
+          (out / 'overlap.patch').write_bytes(git('diff', '--binary', target, merged, '--', 'apps', 'packages'))
+          (out / 'reviewed.patch').write_bytes(git('diff', '--binary', '1404c65ec38ae7f4765ea303a13f00608e0dbfbf', tree))
+          metadata = {'ui_parent': os.environ['GITHUB_SHA'], 'old_main': old, 'main_parent': target, 'reviewed_tree': tree, 'merged_tree': merged, 'conflicted': result.returncode != 0}
+          (out / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
+          # Export repository sources, never credentials, databases or node_modules.
+          for label, ref in [('reviewed', tree), ('main', target), ('merged', merged)]:
+              (out / (label + '.tar')).write_bytes(git('archive', ref))
+          print(json.dumps(metadata, indent=2))
+          print(result.stdout)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('conflicted=' + str(result.returncode != 0).lower() + '\n')
           PY
-      - name: Compare failures with main's recorded Code result
-        id: comparison
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          curl --fail --silent --show-error --location --max-time 60 \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header 'Accept: application/vnd.github+json' \
-            https://api.github.com/repos/Macrofold/OpenLegend/actions/jobs/115928417532/logs \
-            --output "$RUNNER_TEMP/main-code.log"
-          python3 - <<'PY'
-          import hashlib, json, os, re
-          from pathlib import Path
-          root = Path(os.environ['RUNNER_TEMP'])
-          raw = (root / 'main-code.log').read_bytes()
-          log = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', raw.decode('utf-8-sig'))
-          previous = {(m[1], m[2].strip()) for m in re.finditer(r'\bFAIL\s+(\S+\.test\.tsx?)\s+>\s+([^\n]+)', log)}
-          assert previous, 'No baseline failure evidence was parsed.'
-          current = {tuple(test) for test in json.loads((root / 'ui-failures.json').read_text())}
-          added = current - previous
-          summary = {'main_commit': '1700f3b23a39acfdd14f3a6ab34c8ce330847bc3', 'main_job': 115928417532, 'main_log_sha256': hashlib.sha256(raw).hexdigest(), 'main_failed_identities': sorted(previous), 'candidate_failed_identities': sorted(current), 'new_failed_identities': sorted(added)}
-          (root / 'ui-comparison.json').write_text(json.dumps(summary, indent=2) + '\n')
-          print('MAIN_LOG_SHA256=' + summary['main_log_sha256'])
-          print('MAIN_RECORDED_RESULT=29 failed / 314 passed; job 115928417532')
-          print('NEWLY_FAILING_TESTS=' + json.dumps(sorted(added)))
-          assert not added, 'Review new failures before advancing the branch.'
-          print('RECONCILIATION_COMPARISON=No newly failing test identities; the full Code gate remains failed.')
-          PY
-      - name: Publish candidate tree for final review without changing branch refs
-        if: steps.static.outcome == 'success' && steps.report.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 .github/scripts/ui-reconcile-publish.py | tee "$RUNNER_TEMP/ui-tree.txt"
-      - name: Preserve final verification evidence
+      - name: Preserve exact sources for the affected-diff review
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-main-reconciliation-results
-          path: |
-            ${{ runner.temp }}/ui-test.json
-            ${{ runner.temp }}/ui-failures.json
-            ${{ runner.temp }}/ui-comparison.json
-            ${{ runner.temp }}/ui-tree.txt
+          name: ui-refreshed-merge-review
+          path: ${{ runner.temp }}/ui-merge-review/
           retention-days: 3
-      - name: Keep a failed baseline comparison visible
-        if: steps.comparison.outcome == 'failure'
+          if-no-files-found: error
+      - name: Keep unresolved conflicts visible
+        if: steps.merge.outputs.conflicted == 'true'
         run: exit 1
-      - name: Restore checkout environment
-        if: always()
-        run: printf 'GIT_DIR=%s/.git\nGIT_WORK_TREE=%s\nGIT_INDEX_FILE=%s/.git/index\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
