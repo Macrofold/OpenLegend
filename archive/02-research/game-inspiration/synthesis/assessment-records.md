@@ -2,7 +2,7 @@
 
 [Topic map](README.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Record requirements](progress.md) · [Structural source/goal review](source-and-goal-map.md).
 
-**No source-to-topic completion is claimed for the new shells.** This file intentionally contains no completed records. Earlier essays and active branches may contain learning; their coverage is X until reconciled, not discarded or automatically credited. Reading sources for the framework's structural review is recorded in the source/goal map, not relabeled here as substantive incorporation.
+The October 14 Rust refresh supplies the first 13 scoped records for the new guides. Earlier essays and active branches may contain learning; their coverage remains X until reconciled, not discarded or automatically credited. Reading sources for the framework's structural review is recorded in the source/goal map, not relabeled here as substantive incorporation.
 
 ## Record structure for future authorized work
 
@@ -25,4 +25,64 @@ A supporting essay may supply a clearly attributed interpretation, but reading i
 
 ## Assessments
 
-<!-- Empty by design. Populate only after the corresponding source assessment is actually performed. -->
+### Shared provenance for the October 14 Rust records
+
+**Reviewer:** ChatGPT. **Date:** October 14, 2026. **Identity:** game source `rust`, G131, PC Rust. Console/Mobile rules are excluded; dated Softcore, Hardcore and plugin examples remain explicitly scoped. The original R01–R14 dossier was read at main `3e059609b1fedfd775b70af35f5ecaa59483725e`, blob `0db0f4a0f22839092a9caf906e56afec1534cb76`, and is preserved unchanged as [rust-2026-09-27.md](../dossiers/rust-2026-09-27.md). The expanded [canonical dossier](../dossiers/rust.md) and [visual atlas](../dossiers/rust-visual-atlas.md) were published at immutable commit `3a202e5746fc2e0d96835439cbb1b76db42b83aa`; section references below specify each assessment's scope. Later source-link corrections do not expand that scope.
+
+The evidence includes dated developer rules/intent, community-maintained documentation checked against release dates, directly inspected visual assets, the preserved five independent review summaries and September player samples, and explicitly labeled analysis. The atlas's 48 assets are not 48 ordinary gameplay screenshots. No current Rust play session, video viewing, accessibility trial, benchmark, controlled retention study or private accounting inspection was performed. The old reviews are not a fresh October cohort; the dossier and its underlying source are not two independent confirmations.
+
+Seven guides were incorporated at `d9fb98fb50d1f5a7af1d100e8f4dcbefeb9f19e7` (BUILD, CRAFT, COMBAT, GEAR, LOOT, GROWTH, LOSS); six at `aa84d4d417ab217a052e4351a74e0907c35007b5` (MULTI, UX, SURVIVE, LOGISTICS, TRUST, BUSINESS). Source distinctions, counterpressures and the stable destination lessons were checked against the written changes. Connector comparison confirms exactly these 13 guide files changed in those two commits; existing scopes, candidate routes, OpenLegend-specific questions and design-register boundaries were retained. Matrix validation is recorded in [progress](progress.md#historical-initialization-and-corrections). Final patch/publication checks belong in the PR handoff, not a claim of game testing.
+
+These are scoped contributions to partial general guides. They do not complete the other games, worlds, Rust's other 22 topic pairs, the separately owned FUN/CREATE essays, or any OpenLegend feature design. Confidence below concerns transferability; directly documented rules and unmeasured player outcomes remain different evidence types.
+
+### BUILD--rust
+
+**Read scope:** [R02 building](../dossiers/rust.md#rust-building), original construction/raid cases and atlas A/B. **Contribution:** placement assistance can remove alignment burden without deciding circulation, use or security; privilege, access, stability, resistance and upkeep answer different questions. **Counterpressure/limit:** attachment can turn destructive or maintenance-heavy property into obligation; secure homes and simpler construction are valid alternatives. The full contemporary placement/correction sequence was not captured. **Destination:** [BUILD-L001](building-homes-and-settlements.md#build-l001) and [BUILD-L002](building-homes-and-settlements.md#build-l002). Moderate confidence in the general distinctions; no usability score or preferred raid model inferred.
+
+### CRAFT--rust
+
+**Read scope:** [R02 crafting](../dossiers/rust.md#rust-crafting), retained R03–R04 research/workbench material and industrial cases. **Contribution:** separate knowledge, stations, inputs and making; evaluate the chain through useful output and alternative acquisition/repair routes. **Counterpressure/limit:** authored recipe gates are not free invention; more prerequisites can become opaque chores. Recipe/queue interruption UX remains visually incomplete. **Destination:** [CRAFT-L001](crafting-and-invention.md#craft-l001) and [CRAFT-L002](crafting-and-invention.md#craft-l002). Moderate confidence; no universal technology tree or NPC teaching implementation inferred.
+
+### COMBAT--rust
+
+**Read scope:** [R06 combat](../dossiers/rust.md#rust-combat), original sound/encounter cases, dated recoil/crosshair changes and contrasting reviews. **Contribution:** perception, engagement choice and extraction can extend an encounter beyond damage exchange; aiming aids can coexist with mastery. **Counterpressure/limit:** numbers, gear, time and technical conditions are advantages rather than skills; post-victory exposure is not always desirable. No hit-registration or skill-curve test was performed. **Destination:** [COMBAT-L001](combat-and-encounters.md#combat-l001) and [COMBAT-L002](combat-and-encounters.md#combat-l002). Moderate confidence; no requirement for shooting, full loot or PvP.
+
+### GEAR--rust
+
+**Read scope:** [R03 inventory](../dossiers/rust.md#rust-looting), item provenance, original equipment/composition section and atlas's account-inventory distinction. **Contribution:** communicate transfer destination, displacement and full-capacity behavior; distinguish utility, custody, provenance and cosmetic entitlement. **Counterpressure/limit:** a maker label does not establish access rights; inventory limits can produce administration instead of preparation. Modern full-inventory swaps were documented in release text, not executed. **Destination:** [GEAR-L001](items-equipment-and-inventory.md#gear-l001) and [GEAR-L002](items-equipment-and-inventory.md#gear-l002). Moderate confidence; exact slot counts and accessibility outcomes are not generalized.
+
+### LOOT--rust
+
+**Read scope:** [R03 looting](../dossiers/rust.md#rust-looting), [R02 crafting](../dossiers/rust.md#rust-crafting) and retained expedition/workbench-upgrade cases. **Contribution:** distinguish finding, acquiring, securing and using; explain what a find makes possible rather than relying on rarity alone. **Counterpressure/limit:** a contested extraction can make a satisfying arc or invalidate a reward the player believed secure; technical delivery failure is not fictional risk. No representative drop-rate or loss-tolerance evidence was located. **Destination:** [LOOT-L001](loot-and-rewards.md#loot-l001) and [LOOT-L002](loot-and-rewards.md#loot-l002). Moderate confidence; safe gifts and fixed rewards remain valid comparisons.
+
+### GROWTH--rust
+
+**Read scope:** [R04 capability](../dossiers/rust.md#rust-progression), [R01 persistence](../dossiers/rust.md#rust-servers), original fragment changes and developer commentary. **Contribution:** equipment, knowledge, infrastructure and coordination need not advance together; a reset of wealth does not equalize retained advantage. **Counterpressure/limit:** a contested progression gate can favor organized groups; a simple level requirement can be clearer than many hidden prerequisites. Developer intent is not measured catch-up improvement. **Destination:** [GROWTH-L001](progression-and-builds.md#growth-l001) and [GROWTH-L002](progression-and-builds.md#growth-l002). Moderate confidence; no reset policy or replacement of accepted character rules proposed.
+
+### LOSS--rust
+
+**Read scope:** [R04 recovery](../dossiers/rust.md#rust-loss), [persistence boundaries](../dossiers/rust.md#rust-servers), bag changes and retained review disagreement. **Contribution:** publish what persists at death, absence, reset and relocation; evaluate the next interesting choice rather than only the loss magnitude. **Counterpressure/limit:** recovery can repeat mastered labor and persistent exposure can create obligation. No representative recovery-time or wellbeing study was found. **Destination:** [LOSS-L001](failure-recovery-and-persistence.md#loss-l001) and [LOSS-L002](failure-recovery-and-persistence.md#loss-l002). Moderate confidence; durable success, rescue and satisfied endings remain legitimate alternatives.
+
+### MULTI--rust
+
+**Read scope:** [R06 social participation](../dossiers/rust.md#rust-social), party joining, retained teams/clans and shared infrastructure cases. **Contribution:** invitation, admission, regrouping, equipment, access and activity readiness are separate steps; shared infrastructure creates roles but also concentrates advantage and work. **Counterpressure/limit:** initial join convenience does not solve later recovery or unequal schedules; human specialists are not evidence of autonomous NPC behavior. **Destination:** [MULTI-L001](multiplayer-and-player-social-systems.md#multi-l001) and [MULTI-L002](multiplayer-and-player-social-systems.md#multi-l002). Moderate confidence; no optimal team size or population-wide satisfaction inferred.
+
+### UX--rust
+
+**Read scope:** [R07 interface](../dossiers/rust.md#rust-ux), [loading](../dossiers/rust.md#rust-loading) and the complete classified atlas. **Contribution:** distinguish desired challenge from manipulation burden; translate relevant resource/time state into a decision horizon and show the actual transaction stage. **Counterpressure/limit:** a hidden shortcut, vague permission label or color-only blocker can defeat apparent convenience. Screenshots establish layout, not smoothness, accessibility or latency; vendor loading figures are not our benchmark. **Destination:** [UX-L001](onboarding-interface-and-accessibility.md#ux-l001) and [UX-L002](onboarding-interface-and-accessibility.md#ux-l002). Moderate confidence in the general questions, limited evidence about complete current micro-interactions.
+
+### SURVIVE--rust
+
+**Read scope:** [R04 provision/care](../dossiers/rust.md#rust-survival), retained bodily survival and farming evidence, October livestock release and April harvest-window change. **Contribution:** solved needs can become competence and free attention for chosen goals; care clocks must be evaluated against ordinary absence. **Counterpressure/limit:** developer intent to accommodate schedules is not an observed wellbeing outcome; more bodily detail can merely interrupt play. Plant and livestock genetics remain distinct. **Destination:** [SURVIVE-L001](survival-and-needs.md#survive-l001) and [SURVIVE-L002](survival-and-needs.md#survive-l002). Moderate confidence; peaceful comfort and omission of unnecessary meters are retained.
+
+### LOGISTICS--rust
+
+**Read scope:** [R04 automation](../dossiers/rust.md#rust-logistics), original industrial/public-infrastructure cases and machine imagery. **Contribution:** a process upgrade can change by-products and dependencies, not just throughput; diagnosis should identify the blocked stage. **Counterpressure/limit:** resilience can be an interesting choice or needless administration; machine behavior cannot stand in for a person's chosen obligation. The current filter/error interaction was not executed or captured end to end. **Destination:** [LOGISTICS-L001](logistics-automation-and-management.md#logistics-l001) and [LOGISTICS-L002](logistics-automation-and-management.md#logistics-l002). Moderate confidence; no universal factory-layer proposal.
+
+### TRUST--rust
+
+**Read scope:** [R06 trust](../dossiers/rust.md#rust-trust), [server contracts](../dossiers/rust.md#rust-servers), [building protection distinctions](../dossiers/rust.md#rust-building), contrasting reviews and official enforcement reporting. **Contribution:** state granular permissions and offline/reset risk before investment; separate permitted fictional adversity from harassment, cheating and service failure. **Counterpressure/limit:** incoherent configuration can be harder to consent to than clear rule bundles, and ban counts lack the denominator needed for prevalence claims. **Destination:** [TRUST-L001](trust-fairness-and-community-safety.md#trust-l001) and [TRUST-L002](trust-fairness-and-community-safety.md#trust-l002). Moderate confidence; no server moderation or plugin-security audit claimed.
+
+### BUSINESS--rust
+
+**Read scope:** [R11 commercial table](../dossiers/rust.md#rust-commercial), retained R09–R12 development/discovery/reception, publisher sales/participation reporting and qualified historical revenue report. **Contribution:** retain measurement scope/accounting distinctions before explaining an outcome; separate plausible design/channel mechanisms from measured sales attribution and support costs. **Counterpressure/limit:** sales and hours do not establish profit or enjoyment; realized prices, receipts and costs are insufficient for a defensible current lifetime estimate. **Destination:** [BUSINESS-L001](monetization-and-commercial-sustainability.md#business-l001) and [BUSINESS-L002](monetization-and-commercial-sustainability.md#business-l002). High confidence in metric distinctions, moderate/low confidence in unmeasured causal attribution; no commercial forecast or spending authorized.

@@ -6,17 +6,17 @@
 
 ## Current snapshot — October 14, 2026
 
-Baseline: published `Macrofold/OpenLegend` main at `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`. The later world-library integration at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e` adds the D&D world dossier as unassessed; the original structural-review scope remains unchanged. Counts below are recomputed from the matrices, not a second per-source status list.
+Framework baseline: published `Macrofold/OpenLegend` main at `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`. The world-library integration at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e` adds the D&D world dossier as unassessed. The later Rust refresh starts from main `3e059609b1fedfd775b70af35f5ecaa59483725e` and incorporates only the 13 source/topic pairs documented in the assessment records. Counts below are recomputed from the matrices, not a second per-source status list.
 
 | Measure                     | State                                                                                                         |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Topic pages                 | 35: 31 unfilled synthesis shells plus FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research       |
+| Topic pages                 | 35: 13 partial syntheses, 18 unfilled shells, and FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research |
 | Game/case sources           | 168 stable keys: 167 roster subjects plus the unnumbered EVE Online essay case                                |
 | Available game/case sources | 150 dossier files and 1 scoped essay case; availability is not full research certification                    |
-| Queued game sources         | 17 G150–G166 subjects on this inspected baseline; no claim about unpublished branch work                      |
-| Game matrix                 | 168 × 35 = 5,880 cells: 4,681 U, 527 W and 672 X                                                              |
-| World matrix                | 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X                                                  |
-| New incorporation           | No completed assessments, incorporated pairs or not-applicable exclusions are claimed by the framework review |
+| Queued game sources         | 17 G150–G166 subjects on the inspected source baseline; no claim about unpublished branch work                |
+| Game matrix                 | 168 × 35 = 5,880 cells: 4,668 U, 527 W, 672 X and 13 I                                                        |
+| World matrix                | 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X; unchanged by the Rust refresh                    |
+| New incorporation           | 13 scoped Rust-to-topic assessments, with 26 general lesson anchors; no complete cross-game survey or N exclusions |
 | Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent                             |
 
 Update this snapshot from the actual matrices when coverage changes. Do not inflate completion by calling a source available, by citing a summary, or by adding a research heading. A structural review may read source material to improve questions without completing the relevant source-to-topic assessment.
@@ -84,7 +84,7 @@ Edit only the intended source/topic cells and evidence records; preserve other t
 
 ## Verification and remaining work
 
-The current task delivers the source/goal review, organized topic set, skeletons, template and accurate tracking—not completed substantive syntheses. All 31 new guides remain unfilled; four existing owners require scoped coverage reconciliation. The world essays were read for structural coverage, not falsely marked incorporated into each new guide.
+The framework originally delivered the source/goal review, organized topic set, skeletons, template and accurate tracking. The Rust refresh adds substantive but partial evidence in 13 guides; 18 shells remain unfilled and four existing owners require scoped coverage reconciliation. The world essays were read for structural coverage, not falsely marked incorporated into each new guide. No complete cross-game survey is claimed.
 
 Check unique source keys and topic columns, valid codes, equal row widths, expected source identities, preserved existing cell meanings, working local paths/anchors and the actual affected diff. These are documentation checks, not game execution, fresh verification of every inherited fact, or a whole-archive audit. Check results belong in the handoff or focused review record, not fabricated assessment entries.
 
@@ -98,4 +98,6 @@ Research headings do not count as registered features. Completing a design does 
 
 The initial framework was based on published main `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`, with expansion material inspected at `7bef5a1e70adaa14c8a172f6b6ec2f076d6a164e`. It had 26 new guides plus four existing topics, 168 game keys and 5,040 cells: 3,874 U, 494 W and 672 X. Songs of Syx was external-only; Starfield's then-conflicting G149 and EVE were contextual candidates. Those dated facts are retained as provenance, not current warnings.
 
-The broader review uses main `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`, adds five topic columns, and adds the separate world matrix. It updates Songs of Syx availability, Starfield's canonical ID/availability and EVE's scoped availability. The only changes to pre-existing game/topic cells are Starfield and EVE's 52 W-to-U transitions for newly available source material. No existing game key, assessed revision, completed status or original dossier is removed, and no I/N status is inferred.
+The broader review uses main `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`, adds five topic columns, and adds the separate world matrix. It updates Songs of Syx availability, Starfield's canonical ID/availability and EVE's scoped availability. The only changes to pre-existing game/topic cells in that review were Starfield and EVE's 52 W-to-U transitions for newly available source material. No existing game key, assessed revision, completed status or original dossier was removed, and no I/N status was inferred by that structural review.
+
+The October 14 Rust refresh changes exactly 13 cells on the `rust` row from U to I. All other game cells, all source keys and all world cells are unchanged. The original CSV was reproduced with matching Git blob SHA `49cb7b436b50bd42af692372befea4ba1a201203`; the checked replacement is `6e123a827a60cf30bbde4c31b1bcc50c1b7d59ae`. Parsing confirms 168 unique keys, 35 topic columns, equal row widths and the counts above. The original Rust evidence remains byte-for-byte preserved in its dated file. These checks do not recertify every inherited source or resolve the other 22 Rust topic cells.
