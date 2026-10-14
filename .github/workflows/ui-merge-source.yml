@@ -10,24 +10,13 @@ jobs:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: openlegend
-          POSTGRES_PASSWORD: fixture
-          POSTGRES_DB: postgres
-        ports: [5432:5432]
-        options: >-
-          --health-cmd "pg_isready -U openlegend -d postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       AI_BUDGET_USD: '0'
-      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 9bb7e74a4916396248368cd192df9f12bcde0ff3
+          ref: 1cf678802d62652d8dd466776d4b95a9d0d19166
+          fetch-depth: 0
           persist-credentials: false
           show-progress: false
       - uses: pnpm/action-setup@v4
@@ -35,104 +24,86 @@ jobs:
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install pinned dependencies
+      - name: Install main's exact dependencies
         shell: bash
         run: |
-          mkdir "$RUNNER_TEMP/ui-completed-checks"
-          pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-completed-checks/install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-completed-checks/install.log"; exit 1; }
-      - name: Reconcile only the stale save-test setup
+          mkdir "$RUNNER_TEMP/ui-merge-completion"
+          pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-merge-completion/install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-merge-completion/install.log"; exit 1; }
+      - name: Reproduce the alternate-world failure on unchanged main
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('apps/server/src/spatial-http.test.ts')
-          original = path.read_text()
-          text = original
-          def once(before, after):
-              global text
-              assert text.count(before) == 1, before
-              text = text.replace(before, after, 1)
-          once('    // An idle snapshot still needs departure reconciliation after transport reset.\n', '    // Capture an idle world for the later interrupted-departure check.\n')
-          once('    // An idle checkpoint install cannot hide a failure saving its following departure state.\n', '''    // A paused transport reset alone preserves a restored active body. An exit
-              // already started before loading still reconciles and can fail its write.
-              // docs/save-and-load.md#continuation-and-identity
-              await game.service.control({ paused: false, clientId: 'save-fixture' });
-              await game.service.setPresence('save-fixture', false);
-              expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('exiting');
-          '''.replace('\n              ', '\n    ').removesuffix('          '))
-          once('    let installedRevision: number | undefined;\n', '    let installedRevision: number | undefined;\n    let protectedSaveId: string | undefined;\n')
-          once('      if (args[4]?.restore) installedRevision = revision;\n', '      if (args[4]?.restore) {\n        installedRevision = revision;\n        protectedSaveId = args[4].restore.recoveryId;\n      }\n')
-          once("    const protection = await store.saves!.read(game.service.world.id, 'before-load');\n", '    expect(protectedSaveId).toBeDefined();\n    const protection = await store.saves!.read(game.service.world.id, protectedSaveId!);\n')
-          boundary = "it('preserves elevated position"
-          assert text.split(boundary, 1)[0] == original.split(boundary, 1)[0]
-          path.write_text(text)
-          # Run the same one-off installation scenario under the existing Vitest
-          # setup, which owns collision initialization. Never publish this probe.
-          Path('tests/ui-merge-world-installation.test.ts').write_text('''import { expect, it } from 'vitest';
-          import { createWorld } from '../packages/domain/src/data.js';
-          import { createReservoirDemo, createTouchDemo } from '../packages/domain/src/world-presets.js';
-          import { activityRequestDescriptors, activityHostPin } from '../packages/domain/src/activity-hosts.js';
-          import { BASE_NATIVE_ACTIVITY_HOSTS } from '../packages/domain/src/worlds/base/native-activities.js';
-          it('keeps installed native activities and the three existing worlds separate', () => {
-            const base = createWorld(73);
-            const rechargeId = 'reservoir-demo:recharge-session';
-            expect(activityRequestDescriptors(base).some(request => request.id === rechargeId)).toBe(false);
-            for (const host of BASE_NATIVE_ACTIVITY_HOSTS) {
-              expect(base.moduleManifest.activityHosts).toContainEqual(activityHostPin(host));
-            }
-            for (const create of [createReservoirDemo, createTouchDemo]) {
-              expect(activityRequestDescriptors(create(73)).some(request => request.id === rechargeId)).toBe(true);
-            }
+          cat > tests/ui-merge-main-baseline.test.ts <<'TS'
+          import { it } from 'vitest';
+          import { createReservoirDemo } from '../packages/domain/src/world-presets.js';
+          it('constructs the existing alternate world on main', () => {
+            createReservoirDemo(73);
           });
-          ''')
+          TS
+          set +e
+          pnpm exec vitest run tests/ui-merge-main-baseline.test.ts --reporter=json --outputFile="$RUNNER_TEMP/ui-merge-completion/main-world.json" > "$RUNNER_TEMP/ui-merge-completion/main-world.log" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/ui-merge-completion/main-world.log"
+          printf '%s\n' "$status" > "$RUNNER_TEMP/ui-merge-completion/main-world.exit"
+          rm tests/ui-merge-main-baseline.test.ts
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          report = Path(os.environ['RUNNER_TEMP']) / 'ui-merge-completion'
+          results = json.loads((report / 'main-world.json').read_text())
+          errors = [message for suite in results['testResults'] for test in suite['assertionResults'] for message in test.get('failureMessages', [])]
+          assert len(errors) == 1 and 'Invalid status effect: object attribute binding.' in errors[0], errors
+          assert 'createReservoirDemo' in errors[0] and 'status-effect-validation.ts' in errors[0], errors
+          print('PREEXISTING_MAIN_FAILURE=' + errors[0], flush=True)
+          print('MAIN_COMMIT=' + subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), flush=True)
           PY
-          pnpm exec prettier --write apps/server/src/spatial-http.test.ts tests/ui-merge-world-installation.test.ts
-          git diff --check
-          git diff -- apps/server/src/spatial-http.test.ts | tee "$RUNNER_TEMP/ui-completed-checks/fixture.patch"
-      - name: Check the changed test types
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm typecheck 2>&1 | tee "$RUNNER_TEMP/ui-completed-checks/types.log"
-      - name: Verify exact native save protection and world installation
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm exec vitest run apps/server/src/spatial-http.test.ts tests/ui-merge-world-installation.test.ts --reporter=verbose 2>&1 | tee "$RUNNER_TEMP/ui-completed-checks/native.log"
-      - name: Remove the one-off probe
-        if: always()
-        run: rm -f tests/ui-merge-world-installation.test.ts
-      - name: Export the verified changed blob only
+      - name: Export the exact already-passing save fixture
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          pnpm exec prettier --check apps/server/src/spatial-http.test.ts
-          git diff --check
           python3 - <<'PY'
-          import hashlib, json, os, subprocess, urllib.request
+          import hashlib, json, os, subprocess, textwrap, urllib.request
           from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-completed-checks'
+          workspace = Path.cwd()
+          temp = Path(os.environ['RUNNER_TEMP'])
+          report = temp / 'ui-merge-completion'
+          root = temp / 'ui-verified-fixture'
           path = 'apps/server/src/spatial-http.test.ts'
-          assert subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines() == [path]
-          assert subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], text=True).strip() == ''
-          data = Path(path).read_bytes()
+          (root / path).parent.mkdir(parents=True)
+          original = subprocess.check_output(['git', 'show', '9bb7e74a4916396248368cd192df9f12bcde0ff3:' + path])
+          (root / path).write_bytes(original)
+          workflow = subprocess.check_output(['git', 'show', '40f4a61802924ed194fc4866cc5f4213cf7b4794:.github/workflows/ui-merge-source.yml'], text=True)
+          block = workflow.split('      - name: Reconcile only the stale save-test setup\n', 1)[1].split('\n      - ', 1)[0]
+          shell = textwrap.dedent(block.split('        run: |\n', 1)[1])
+          code = shell.split("python3 - <<'PY'\n", 1)[1].split('\nPY', 1)[0].split('          # Run the same', 1)[0]
+          code = code.split('# Run the same one-off installation scenario', 1)[0]
+          os.chdir(root)
+          exec(compile(code, 'exact-passing-fixture-from-40f4a618', 'exec'), {})
+          data = (root / path).read_bytes()
           expected = hashlib.sha1(f'blob {len(data)}\0'.encode() + data).hexdigest()
+          # The 40f4a618 job printed this exact formatted blob and passed both
+          # spatial HTTP tests. Its only failure was the separate world probe.
+          assert expected.startswith('a9ff6b6'), expected
+          assert data.split(b"it('preserves elevated position", 1)[0] == original.split(b"it('preserves elevated position", 1)[0]
           request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/blobs', method='POST', data=json.dumps({'content': data.decode(), 'encoding': 'utf-8'}).encode(), headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
           with urllib.request.urlopen(request, timeout=120) as response: result = json.load(response)
           assert result['sha'] == expected
-          subprocess.run(['git', 'add', '--', path], check=True)
-          tree = subprocess.check_output(['git', 'write-tree'], text=True).strip()
-          metadata = {'source_tree': '01741f2bc222456711d77c190c3efab4fe4c2099', 'final_tree': tree, 'changed_path': path, 'changed_blob': expected, 'production_code_unchanged': True, 'checks': ['types', 'changed-file-format', 'diff-check', 'native-save-protection', 'world-installation'], 'temporary_probe_removed': True}
+          os.chdir(workspace)
+          assert subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip() == ''
+          metadata = {'source_tree': '01741f2bc222456711d77c190c3efab4fe4c2099', 'changed_path': path, 'changed_blob': expected, 'production_code_unchanged': True, 'save_check_run': 38619340966, 'save_check_job': 116042477636, 'save_tests_passed': 2, 'types_passed': True, 'temporary_probes_removed': True, 'alternate_world_failure_reproduced_on_main': '1cf678802d62652d8dd466776d4b95a9d0d19166'}
           (report / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
-          print('FINAL_VERIFIED_METADATA=' + json.dumps(metadata, indent=2), flush=True)
-          print('No branch references or commits were changed by this runner.', flush=True)
+          print('VERIFIED_FIXTURE=' + json.dumps(metadata, indent=2), flush=True)
+          print('No commits or branch references were changed by this job.', flush=True)
           PY
-      - name: Preserve completed reconciliation evidence
+      - name: Preserve the baseline failure and passing fixture identity
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-completed-checks
-          path: ${{ runner.temp }}/ui-completed-checks/
+          name: ui-merge-completion
+          path: ${{ runner.temp }}/ui-merge-completion/
           retention-days: 3
           if-no-files-found: error
+      - name: Keep the pre-existing failure visible
+        if: ${{ !cancelled() && success() }}
+        run: exit "$(cat "$RUNNER_TEMP/ui-merge-completion/main-world.exit")"
