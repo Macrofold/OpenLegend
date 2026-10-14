@@ -1,0 +1,29 @@
+{
+  "resolutions": {
+    "a3ff8486baf040320ac3dd793f4adc124471b045:docs/maintainers/agent-guidance.md:65bd17f6f92709977d77f53e52632b21d6e28da9:7408af5f9dd1ca4d56c52520ec40c309aedcde0f:74c319ea142192afc8691df38f149fae547db22f": {
+      "before_sha256": "62e8b1d51ed052c9424712b19c3a6fbc387cdb262c19830e411370b38164c2fa",
+      "after_sha256": "88f3759836d07af3aaa20d10e550eccd85332035b90a14c531fb5df607881340",
+      "replacements": [["Root and scoped routing, six package boundaries, three policy files and nine skills.", "Root/scoped routes, package boundaries, shared policies and selectively loaded skills; the system guide records the current structure."]],
+      "blocks": [
+        {"sha256": "d85926d50c1df317b9245874a5c5cd565d273ccd9dde5f0264c343eedbde6f5d", "parts": [1]},
+        {"sha256": "ac0ad797cdf9164e64fc16b266c87821a523a33e9a84546d215dcd4d50214868", "parts": [1,2], "separator": "\n"},
+        {"sha256": "f309a19b9c79a393788e97cdd69638861694d48eb77f7e9f52634e05428cefc7", "parts": [2,1], "separator": "\n"}
+      ]
+    },
+    "a3ff8486baf040320ac3dd793f4adc124471b045:docs/maintainers/needs-design.md:c2d48e89271ac9ee7d96d5596ae1efd49357a6b3:e2b0ce0fd0d1cfa5034f6c76053cde073a93c182:1b456930b9b34782b3612a04702a269ae1e72374": {
+      "before_sha256": "c571ab4efdc24e48242fea90f7271d77b5eeb8e9fd6dde9ede3b82f7ea41b1c8",
+      "after_sha256": "84e8bc3f43b7e91f9e9f6ec03500b1c88cbd4d19ea349d5f1614543cf71440cf",
+      "replacements": [
+        ["Detailed designs and substantial delivery already exist. Keep remaining acceptance, material-crafting, camp-supply and reply-preview assignments with those owners. Broad historical \"not implemented\" descriptions do not reset them.", "NP01–NP05 have completed scoped acceptance, including material crafting, camp-supply discovery and reply previews. Keep broader live-model, density and playable-week qualification with the existing parents; do not reopen completed assignments."],
+        ["The selected condition-removal consumer is implemented and qualified on its unmerged branch; local-main integration remains separate.", "The selected condition-removal consumer is integrated in the reviewed main at `b72e9d9a`, with its recorded qualification retained; this is not an outstanding branch-integration prerequisite."]
+      ],
+      "blocks": [{"sha256": "9ddf88d7b1615b73dc9035feb23a5bbdcce9f39ecbf5e8789e824cffc30b59df", "parts": [1]}]
+    },
+    "a3ff8486baf040320ac3dd793f4adc124471b045:docs/maintainers/performance.md:fa8e6a67e103e443a42e5d476a5ce6fdc8069c02:9da5f3776eb9029b38d1e6646a6c9ca5c9e4b604:3cfe0e343373fcbb84d7d9fd6f1c1ef1173a26b6": {
+      "before_sha256": "ceddf5041d0cbbfee9ca5d8c75e0457c6198c5e76ca400c1777eb1db6dc76a17",
+      "after_sha256": "d02701e510466b870a09bec2192facae7ff1c1c82af4381749c2b4baf1bbc83a",
+      "replacements": [["## Proposed next measured slices", "## Selected measured slices"]],
+      "blocks": [{"sha256": "aceffb893e4d942fd75103cf6bdb98e8486ab90bd2046a566d413c63eb8cd4fc", "parts": [1]}]
+    }
+  }
+}
