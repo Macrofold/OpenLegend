@@ -29,71 +29,22 @@ jobs:
         with:
           persist-credentials: false
           show-progress: false
-      - name: Prepare explicitly resolved source
+      - name: Prepare reviewed candidate and isolated check index
         shell: bash
         run: |
           git fetch --quiet --unshallow origin
           python3 - <<'PY'
-          from pathlib import Path
-          import os, re
-          script = Path('.github/scripts/ui-reconcile.py').read_text()
-          script = script.replace("marker = '            New invention\\n          </Button>'", "marker = '          New invention\\n        </Button>'")
-          exec(compile(script, '.github/scripts/ui-reconcile.py', 'exec'))
-          world = ROOT / 'packages/domain/src/worlds/base/world.ts'
-          data = world.read_text()
-          data, count = re.subn(r'\[STOCK_ACTIVITY_HOST, BASE_FIRE_ACTIVITY_HOST, BASE_CAMP_ACTIVITY_HOST, BASE_OUTING_HOST\]\.map\(\s*activityHostPin,\s*\)', 'activityHostPins()', data, count=1)
-          assert count == 1, 'The pinned world activity registration changed.'
-          world.write_text(data)
-          presentation = ROOT / 'packages/domain/src/worlds/base/presentation.ts'
-          data = presentation.read_text()
-          for name in ['BASE_GUARD_TEXT', 'BASE_FOOD_ACTION_WORDING']:
-              owners = [p for p in (ROOT / 'packages/domain/src/worlds/base').glob('*.ts') if re.search(r'export const ' + name + r'\b', p.read_text())]
-              assert len(owners) == 1, (name, owners)
-              data = f"import {{ {name} }} from './{owners[0].stem}.js';\n" + data
-          data = replace(data, "  cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',", "  guard: BASE_GUARD_TEXT.description,\n  cook: BASE_FOOD_ACTION_WORDING.cookingDescription,\n  fish: BASE_FOOD_ACTION_WORDING.fishingDescription,")
-          presentation.write_text(data)
-          descriptions = ROOT / 'apps/server/src/action-descriptions.ts'
-          data = descriptions.read_text()
-          if data.count('BASE_GUARD_TEXT') == 1:
-              data = data.replace('  BASE_GUARD_TEXT,\n', '')
-          if data.count('BASE_FOOD_ACTION_WORDING') == 1:
-              data = data.replace('BASE_DEATH_COMMAND_DESCRIPTIONS, BASE_FOOD_ACTION_WORDING', 'BASE_DEATH_COMMAND_DESCRIPTIONS')
-          descriptions.write_text(data)
-          agent = ROOT / 'apps/client/src/ui/world-agent.tsx'
-          data = replace(agent.read_text(), 'create(true)', "create('invention')")
-          data = replace(data, "(inventionTarget === active ? 'New invention' : 'New conversation')", "(inventionTarget === active ? 'New invention' : creationTarget?.id === active ? 'New world' : 'New conversation')")
-          agent.write_text(data)
-          inventory = ROOT / 'apps/client/src/ui/inventory.tsx'
-          native = source(MAIN, 'apps/client/src/ui/inventory.tsx')
-          complete = between(native, '                  {item.recipeRecord && (', '                  <div className="ol-traits">')
-          data, count = re.subn(r'^[ \t]*\{item\.recipeRecord && \(\n.*?(?=^[ \t]*<dl className="ol-inventory-facts">)', lambda _: complete, inventory.read_text(), count=1, flags=re.M | re.S)
-          assert count == 1
-          inventory.write_text(data)
-          review = ROOT / 'apps/client/src/ui/world-agent-review.tsx'
-          data = replace(review.read_text(), "{plan.kind === 'creation' ? 'Review and start this world' : 'Review exact change'}", "{review?.plan.creation ? 'Review and start this world' : 'Review exact change'}")
-          duplicates = list(re.finditer(r'<WorldAgentPreparationDetails\b.*?/>', data, re.S))
-          if len(duplicates) == 2:
-              assert re.sub(r'\s+', ' ', duplicates[0].group()) == re.sub(r'\s+', ' ', duplicates[1].group())
-              data = data[:duplicates[1].start()] + data[duplicates[1].end():]
-          data = replace(data, "{review.plan.status === 'approved'\n                  ? 'Approved for this exact revision. Apply makes the change.'\n                  : 'Approval records your decision. Apply remains a separate action.'}", "{review.plan.creation\n                  ? review.plan.status === 'approved'\n                    ? 'This exact opening and host are approved. Start creates the world.'\n                    : 'Approval records your decision. Starting this world remains separate.'\n                  : review.plan.status === 'approved'\n                    ? 'Approved for this exact revision. Apply makes the change.'\n                    : 'Approval records your decision. Apply remains a separate action.'}")
-          review.write_text(data)
-          session = ROOT / 'apps/client/src/ui/world-agent-session.tsx'
-          data = session.read_text()
-          start = data.index("      {sessionPurpose === 'creation' && status")
-          end = data.index('      {session && (', start)
-          selector = data[start:end]
-          data = data[:start] + data[end:]
-          selector = selector.replace("visible={visible && view === 'conversation'}", "visible={readingVisible && view === 'conversation'}")
-          data = replace(data, '      <div className="ol-world-agent-reading">', '      <div className="ol-world-agent-reading">\n        <div hidden={view !== \'conversation\' || detailsOpen || navigationOpen}>\n' + selector + '        </div>')
-          session.write_text(data)
-          events = ROOT / 'apps/client/src/ui/world-events.tsx'
-          data = events.read_text()
-          data = replace(data, '  async function load(older = false) {', '  async function load(older = false) {\n    if (!visible) return;')
-          data = replace(data, '    setCursor(undefined);\n    void load();', '    setCursor(undefined);\n    loadedQuery.current = null;')
-          data = replace(data, '  }, [scope, type, query]);', '  }, [scope, type, query]);\n  useEffect(() => {\n    if (visible && loadedQuery.current !== query) void load();\n  }, [visible, scope, type, query]);')
-          events.write_text(data)
-          Path(os.environ['RUNNER_TEMP'], 'ui-resolved-paths.txt').write_text('\n'.join([*DECISIONS, 'packages/domain/src/worlds/base/presentation.ts']) + '\n')
+          import subprocess
+          workflow = subprocess.check_output(['git', 'show', '10a0f5db15e15a1b48cba7d1b03c59aa93571dd9:.github/workflows/ui-merge-source.yml'], text=True)
+          code = workflow.split("          python3 - <<'PY'\n", 1)[1].split('\n          PY', 1)[0]
+          exec(compile('\n'.join(line[10:] for line in code.splitlines()), 'reviewed-candidate-preparation', 'exec'))
           PY
+          export GIT_DIR="$GITHUB_WORKSPACE/.git"
+          export GIT_WORK_TREE="$RUNNER_TEMP/ui-reconciled"
+          export GIT_INDEX_FILE="$RUNNER_TEMP/ui-check.index"
+          git read-tree 1404c65ec38ae7f4765ea303a13f00608e0dbfbf
+          git update-index --force-remove .github/workflows/ui-merge-source.yml
+          printf 'GIT_DIR=%s\nGIT_WORK_TREE=%s\nGIT_INDEX_FILE=%s\n' "$GIT_DIR" "$GIT_WORK_TREE" "$GIT_INDEX_FILE" >> "$GITHUB_ENV"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -105,26 +56,24 @@ jobs:
       - name: Format resolved paths
         working-directory: ${{ runner.temp }}/ui-reconciled
         run: xargs -d '\n' pnpm exec prettier --write < "$RUNNER_TEMP/ui-resolved-paths.txt"
-      - name: Check reconciled current contracts
+      - name: Run every required Code check
         working-directory: ${{ runner.temp }}/ui-reconciled
-        run: pnpm run check > "$RUNNER_TEMP/ui-check.log" 2>&1 || { tail -160 "$RUNNER_TEMP/ui-check.log"; exit 1; }
+        shell: bash
+        run: |
+          failed=0
+          for check in guidance:check config:check format:check typecheck test build; do
+            log="$RUNNER_TEMP/ui-${check//:/-}.log"
+            if pnpm run "$check" > "$log" 2>&1; then
+              echo "CHECK_PASS=$check"
+              tail -8 "$log"
+            else
+              echo "CHECK_FAIL=$check"
+              tail -160 "$log"
+              failed=1
+            fi
+          done
+          test "$failed" -eq 0
       - name: Publish checked tree without changing branch refs
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/ui-reconcile-publish.py
-      - name: Report candidate checks
-        if: always()
-        shell: bash
-        run: |
-          test ! -f "$RUNNER_TEMP/ui-check.log" || tail -140 "$RUNNER_TEMP/ui-check.log"
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          path = Path(os.environ['RUNNER_TEMP'], 'ui-reconciled/apps/client/src/ui/world-agent-review.tsx')
-          if path.exists():
-              print('=== Reconciled review preparation controls ===')
-              lines = path.read_text().splitlines()
-              for i, line in enumerate(lines):
-                  if 'WorldAgentPreparationDetails' in line:
-                      print('\n'.join(f'{j+1}: {lines[j]}' for j in range(i, min(i+10, len(lines)))))
-          PY
