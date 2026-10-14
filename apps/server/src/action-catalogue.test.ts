@@ -105,6 +105,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     `knife-${NPC_ID}:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'knife')!.id}`,
     `talk-${NPC_ID}`,
     `teach-${NPC_ID}-${Object.values(service.world.recipes).find((recipe) => recipe.sourceCandidate.family.id === 'base:shield')!.id}`,
+    `teach-${NPC_ID}-${Object.values(service.world.recipes).find((recipe) => recipe.name === 'Woven gathering container')!.id}`,
     `teach-${NPC_ID}-${Object.values(service.world.recipes).find((recipe) => recipe.sourceCandidate.family.id === 'base:fishing-line')!.id}`,
     `invite-help:${NPC_ID}`,
     `invite-travel:${NPC_ID}`,
@@ -174,8 +175,10 @@ it('includes learned recipes beyond an AI retrieval limit while excluding anothe
     catalogue.actions.filter(
       (action) => action.intent.kind === 'command' && action.intent.command.type === 'craft',
     ),
-  ).toHaveLength(32);
-  expect(catalogue.actions.some((action) => action.label === 'Craft Wooden shield')).toBe(true);
+  ).toHaveLength(33);
+  for (const name of ['Wooden shield', 'Woven gathering container', 'River line']) {
+    expect(catalogue.actions.some((action) => action.label === `Craft ${name}`)).toBe(true);
+  }
   expect(JSON.stringify(catalogue)).not.toContain('Private fixture sling');
   expect(catalogue.actions.some((action) => action.label === 'Craft Fixture sling 29')).toBe(true);
   const craft = catalogue.actions.find((action) => action.label === 'Craft Fixture sling 29')!;

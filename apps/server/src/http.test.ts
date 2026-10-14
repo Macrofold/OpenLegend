@@ -151,6 +151,7 @@ describe('local HTTP boundary', () => {
     expect(initial.recipes.map((recipe) => [recipe.name, recipe.origin]).sort()).toEqual([
       ['River line', 'authored'],
       ['Wooden shield', 'authored'],
+      ['Woven gathering container', 'authored'],
     ]);
     expect(initial).not.toHaveProperty('memories');
     expect(initial).not.toHaveProperty('items');
