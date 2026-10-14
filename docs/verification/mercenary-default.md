@@ -62,6 +62,8 @@ A temporary loopback server served only the relocated `study/` directory. Instal
 
 ## Authored voxel iteration — October 14, 2026
 
+**Art direction rejected after these checks.** Mike rejected the first block figure as ugly and asked for a result closer to the original 3D model. The recorded renderer/geometry checks remain valid for that prototype; they do not establish acceptable art. [MER09](../maintainers/art/mercenary.md#rejected-first-block-figure-and-new-sculpted-iteration) and the [reopened plan](../projects/mercenary-voxel-iteration.md#revised-art-direction-after-explicit-rejection) own the replacement.
+
 Mike rejected camera-dependent sampled pixels, lost facial detail, small apparent height and thin clothing/body intersections. The new iteration constructs permanent colored cubic cells rather than voxelizing or rasterizing the previous mesh. The original GLB, renderer, cloth, external Blender study and dated package remain intact. [MER08](../maintainers/art/mercenary.md) owns sources/creator acceptance; [A3D16](../limits/3d-pixel-art.md#a3d16--authored-block-mercenary) owns the delivered art envelope, and [world presentation](../world-presentation.md#animated-character-pixels) describes current behavior.
 
 ### Source and geometry checks

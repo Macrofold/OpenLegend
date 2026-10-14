@@ -1,6 +1,6 @@
 # Progressive 3D pixel art — implementation tracker
 
-**Status: the new authored block mercenary and its integration have scoped browser evidence; the broader pipeline tasks below remain open.** Last reconciled October 14, 2026. Created September 27, 2026 from `main@412b5b480b4911d9977de73168c6072e2c023b83`. The original documentation task did not authorize code changes or paid provider work; the bundled art iterations have their own developer authorization.
+**Status: Mike rejected the first authored block figure; its renderer checks stand, and a closer source-guided art revision is in progress under MER09. The broader pipeline remains open.** Last reconciled October 14, 2026. Created September 27, 2026 from `main@412b5b480b4911d9977de73168c6072e2c023b83`. The original documentation task did not authorize code changes or paid provider work; the bundled art iterations have their own developer authorization.
 
 ## Maintained records
 

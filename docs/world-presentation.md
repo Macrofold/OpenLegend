@@ -52,6 +52,8 @@ Future long-gap smoothing should use authorized **recent past** motion segments,
 
 ## Animated character pixels
 
+**Current prototype, art direction rejected.** Mike rejected this first block figure's anatomy and style. A finer model guided by the original geometry is being authored under [MER09](maintainers/art/mercenary.md#rejected-first-block-figure-and-new-sculpted-iteration); it is not yet the delivered replacement. The behavior below describes the technically verified current prototype.
+
 The bundled mercenary now uses an authored 3D block model. New base worlds include the same separate NPC beside Ada; the existing scoped `mercenary-model` appearance selects this iteration. Character identity, native dimensions, movement, equipment, sight and saved progress do not change. [The base-world owner](worlds/base/survival.md#embodied-survival-and-authored-start) still defines that content. Existing worlds are not reseeded.
 
 Each block and its color belong permanently to a rigid body part. Explicit eyes, brows, nose, mouth, beard, hair, mail, quilted layers and cape embroidery are artwork, not details obtained by pixelating a smoother model. The [authoring source](../scripts/author-voxel-mercenary.py) constructs 0.025 m cubic cells in a 2.10 m source model. A fixed uniform display scale of 1.4 compensates for upright geometry being foreshortened relative to camera-facing sprites at the ordinary pitched camera: game blocks are 0.035 m and overall presentation height is 2.94 m. Lower pitch can make him appear larger. This deliberate art exaggeration changes no physical body. Zoom, orbit and projection never resize cells, add geometry or select a finer model. Ordinary raster edges and face lighting can still change as the camera moves.

@@ -88,6 +88,16 @@ const partNames = [
   'rightShin',
 ] as const;
 type PartName = (typeof partNames)[number];
+type LegName = 'leftThigh' | 'rightThigh';
+interface LegRest {
+  neutralY: number;
+  hipHeight: number;
+  kneeY: number;
+  kneeZ: number;
+  soleY: number;
+  minZ: number;
+  maxZ: number;
+}
 // Upright geometry is foreshortened at the ordinary pitched game camera; the
 // comparison sprites face that camera. A fixed art scale matches normal play
 // without resizing cells during zoom or orbit. Native body dimensions do not change.
@@ -98,7 +108,7 @@ const displayScale = 1.4;
 export class VoxelMercenaryActor {
   private node?: pc.Entity;
   private readonly parts = new Map<PartName, pc.GraphNode>();
-  private readonly neutralThighY = new Map<PartName, number>();
+  private readonly legs = new Map<LegName, LegRest>();
   private meshes: pc.MeshInstance[] = [];
   private bindings: RevealBinding[] = [];
   private surface?: ModelSurfaceDepth;
@@ -133,8 +143,6 @@ export class VoxelMercenaryActor {
           const part = node.findByName(name);
           if (!part) throw new Error(`Missing authored mercenary part: ${name}`);
           this.parts.set(name, part);
-          if (name === 'leftThigh' || name === 'rightThigh')
-            this.neutralThighY.set(name, part.getLocalPosition().y);
         }
         const components = node
           .findComponents('render')
@@ -149,6 +157,8 @@ export class VoxelMercenaryActor {
         }
         this.meshes = components.flatMap((component) => component.meshInstances);
         if (this.meshes.length === 0) throw new Error('Authored mercenary geometry missing');
+        this.prepareLeg('leftThigh', 'leftShin');
+        this.prepareLeg('rightThigh', 'rightShin');
         this.surface = new ModelSurfaceDepth(this.app, this.camera, this.meshes);
         for (const binding of this.bindings)
           for (const mesh of [...binding.meshes, ...(binding.protection ?? [])])
@@ -235,23 +245,55 @@ export class VoxelMercenaryActor {
   get revealStrength(): number {
     return this.visible ? (this.bindings[0]?.strength ?? 0) : 0;
   }
-  private poseLeg(name: PartName, degrees: number): void {
+  private prepareLeg(name: LegName, shinName: PartName): void {
+    const thigh = this.parts.get(name);
+    const shin = this.parts.get(shinName);
+    if (!thigh || !shin) throw new Error('Authored mercenary leg missing');
+    const toShin = shin.getWorldTransform().clone().invert();
+    const transform = new pc.Mat4();
+    const bound = new pc.BoundingBox();
+    const sole = new pc.BoundingBox();
+    let found = false;
+    for (const mesh of this.meshes) {
+      if (mesh.node !== shin && !mesh.node.isDescendantOf(shin)) continue;
+      transform.mul2(toShin, mesh.node.getWorldTransform());
+      bound.setFromTransformedAabb(mesh.mesh.aabb, transform);
+      if (found) sole.add(bound);
+      else sole.copy(bound);
+      found = true;
+    }
+    if (!found) throw new Error(`Authored mercenary sole missing: ${shinName}`);
+    const knee = shin.getLocalPosition();
+    const min = sole.getMin();
+    const max = sole.getMax();
+    // Capture rest geometry once, before heading/pose. Dividing the hip's
+    // height above the gameplay foot removes only the fixed display scale;
+    // the shin-local bounds already exclude parent placement and scale.
+    this.legs.set(name, {
+      neutralY: thigh.getLocalPosition().y,
+      hipHeight: (thigh.getPosition().y - this.parent.getPosition().y) / displayScale,
+      kneeY: knee.y,
+      kneeZ: knee.z,
+      soleY: min.y,
+      minZ: min.z,
+      maxZ: max.z,
+    });
+  }
+  private poseLeg(name: LegName, degrees: number): void {
     const part = this.parts.get(name);
-    const neutralY = this.neutralThighY.get(name);
-    if (!part || neutralY === undefined) return;
+    const rest = this.legs.get(name);
+    if (!part || !rest) return;
     part.setLocalEulerAngles(degrees, 0, 0);
     const thigh = degrees * pc.math.DEG_TO_RAD;
     const shin = thigh + Math.max(0, -thigh) * (2 / 3);
-    // Authored hip/knee/sole dimensions from author-voxel-mercenary.py. Keep
-    // both heel and toe above support through the paired thigh/knee motion;
-    // never change the gameplay foot or accumulate offsets.
-    const soleZ = Math.sin(shin) > 0 ? 0.25 : -0.1;
-    const lift = Math.max(
-      0,
-      0.425 * Math.cos(thigh) + 0.675 * Math.cos(shin) + soleZ * Math.sin(shin) - 1.1,
-    );
+    // These bounded walk angles keep cosine positive, so the lowest sole
+    // corner uses its minimum Y and the heel/toe selected by sine's sign.
+    const soleZ = Math.sin(shin) > 0 ? rest.maxZ : rest.minZ;
+    const kneeY = Math.cos(thigh) * rest.kneeY - Math.sin(thigh) * rest.kneeZ;
+    const soleY = Math.cos(shin) * rest.soleY - Math.sin(shin) * soleZ;
+    const lift = Math.max(0, -rest.hipHeight - kneeY - soleY);
     const position = part.getLocalPosition();
-    part.setLocalPosition(position.x, neutralY + lift, position.z);
+    part.setLocalPosition(position.x, rest.neutralY + lift, position.z);
   }
   get outlineMeshes(): readonly pc.MeshInstance[] {
     return this.meshes;
@@ -286,7 +328,7 @@ export class VoxelMercenaryActor {
     this.node?.destroy();
     this.node = undefined;
     this.parts.clear();
-    this.neutralThighY.clear();
+    this.legs.clear();
     this.meshes = [];
     this.visible = false;
   }
