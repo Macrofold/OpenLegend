@@ -30,9 +30,37 @@ jobs:
           persist-credentials: false
           show-progress: false
       - name: Prepare explicitly resolved source
+        shell: bash
         run: |
           git fetch --quiet --unshallow origin
-          python3 .github/scripts/ui-reconcile.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, re
+          script = Path('.github/scripts/ui-reconcile.py').read_text()
+          script = script.replace("marker = '            New invention\\n          </Button>'", "marker = '          New invention\\n        </Button>'")
+          exec(compile(script, '.github/scripts/ui-reconcile.py', 'exec'))
+          # Fresh-world construction now asks the activity owner for its complete
+          # installed pin list. The UI's presentation metadata remains separate.
+          world = ROOT / 'packages/domain/src/worlds/base/world.ts'
+          data = world.read_text()
+          data, count = re.subn(r'\[\s*activityHostPin,.*?\]', 'activityHostPins()', data, count=1, flags=re.S)
+          assert count == 1
+          world.write_text(data)
+          presentation = ROOT / 'packages/domain/src/worlds/base/presentation.ts'
+          data = presentation.read_text()
+          for name in ['BASE_GUARD_TEXT', 'BASE_FOOD_ACTION_WORDING']:
+              owners = [p for p in (ROOT / 'packages/domain/src/worlds/base').glob('*.ts') if re.search(r'export const ' + name + r'\b', p.read_text())]
+              assert len(owners) == 1, (name, owners)
+              data = f"import {{ {name} }} from './{owners[0].stem}.js';\n" + data
+          data = replace(data, "  cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',", "  guard: BASE_GUARD_TEXT.description,\n  cook: BASE_FOOD_ACTION_WORDING.cookingDescription,\n  fish: BASE_FOOD_ACTION_WORDING.fishingDescription,")
+          presentation.write_text(data)
+          # These words now have their single authored owner above.
+          descriptions = ROOT / 'apps/server/src/action-descriptions.ts'
+          data = descriptions.read_text().replace('  BASE_GUARD_TEXT,\n', '')
+          data = data.replace('BASE_DEATH_COMMAND_DESCRIPTIONS, BASE_FOOD_ACTION_WORDING', 'BASE_DEATH_COMMAND_DESCRIPTIONS')
+          descriptions.write_text(data)
+          Path(os.environ['RUNNER_TEMP'], 'ui-resolved-paths.txt').write_text('\n'.join([*DECISIONS, 'packages/domain/src/worlds/base/presentation.ts']) + '\n')
+          PY
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -40,37 +68,32 @@ jobs:
           cache: pnpm
       - name: Install pinned dependencies
         working-directory: ${{ runner.temp }}/ui-reconciled
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-install.log"; exit 1; }
       - name: Format resolved paths
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import ast, os
-          from pathlib import Path
-          module = ast.parse(Path('.github/scripts/ui-reconcile.py').read_text())
-          decisions = next(node.value for node in module.body if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'DECISIONS' for target in node.targets))
-          Path(os.environ['RUNNER_TEMP'], 'ui-resolved-paths.txt').write_text('\n'.join(key.value for key in decisions.keys) + '\n')
-          PY
-          cd "$RUNNER_TEMP/ui-reconciled"
-          xargs -d '\n' pnpm exec prettier --write < "$RUNNER_TEMP/ui-resolved-paths.txt"
+        working-directory: ${{ runner.temp }}/ui-reconciled
+        run: xargs -d '\n' pnpm exec prettier --write < "$RUNNER_TEMP/ui-resolved-paths.txt"
       - name: Check reconciled current contracts
         working-directory: ${{ runner.temp }}/ui-reconciled
-        run: pnpm run check
-      - name: Report candidate review and source hashes
+        run: pnpm run check > "$RUNNER_TEMP/ui-check.log" 2>&1 || { tail -160 "$RUNNER_TEMP/ui-check.log"; exit 1; }
+      - name: Report candidate checks
         if: always()
         shell: bash
         run: |
+          test ! -f "$RUNNER_TEMP/ui-check.log" || tail -100 "$RUNNER_TEMP/ui-check.log"
           python3 - <<'PY'
-          import hashlib, os
+          import os, re
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'], 'ui-reconciled')
           if root.exists():
-              for relative in ['apps/client/src/ui/world-events.tsx', 'apps/client/src/ui/world-agent-session.tsx', 'apps/client/src/ui/world-agent.tsx', 'packages/domain/src/worlds/base/world.ts']:
+              for relative in ['apps/client/src/ui/world-events.tsx', 'apps/client/src/ui/world-agent.tsx', 'packages/domain/src/worlds/base/world.ts']:
                   path = root / relative
                   if path.exists():
-                      data = path.read_text()
-                      print(relative, hashlib.sha256(data.encode()).hexdigest())
-                      for i, line in enumerate(data.splitlines(), 1):
-                          if any(term in line for term in ['<<<<<<<', '=======', '>>>>>>>', 'BASE_ACTION_DESCRIPTIONS', 'activityHostPin', 'requestedSelection', 'nativeOpeningSession', 'ScopedWorldEvents', 'ScopedComparisonOwner', 'visible={visible}', 'WorldEventScope']):
-                              print(f'{i}: {line}')
+                      lines = path.read_text().splitlines()
+                      print('===', relative)
+                      selected = set()
+                      for i, line in enumerate(lines):
+                          if any(term in line for term in ['activityHostPin', 'initialPurpose=', 'function create(', 'const activeTitle', 'New invention', 'function WorldEventScope', 'function ScopedWorldEvents', 'function ScopedComparisonOwner', 'visible={visible}']):
+                              selected.update(range(max(0, i-2), min(len(lines), i+12)))
+                      for i in sorted(selected):
+                          print(f'{i+1}: {lines[i]}')
           PY
