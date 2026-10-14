@@ -77,7 +77,7 @@ Slay the Spire's intentions and Final Fantasy X's turn order support planning un
 
 **Counterweight:** exposing every hidden fact can remove investigation, suspense or deduction. Explain the action's contract and provide discoverable evidence; do not automatically reveal the solution. A camera failure, inconsistent affordance or unregistered input is not productive uncertainty.
 
-Competence does not require constant dominance. Experimental work on close competitive outcomes found suspense could make a game more enjoyable than a larger victory that increased perceived competence. That is not an optimal win-rate rule. Our design distinction is between uncertainty about execution, opposition or discovery and confusion about what the interface accepted. Preserve the former when it serves the activity; do not defend the latter as challenge. [Theory T03–T05](../references/fun-research-expansion-theory.md#t05)
+Competence does not require constant dominance. Experimental work on close competitive outcomes found suspense could make a game more enjoyable than a larger victory that increased perceived competence. That is not an optimal win-rate rule. Our design distinction is between uncertainty about execution, opposition or discovery and confusion about what the interface accepted. Preserve the former when it serves the activity; do not defend the latter as challenge. [Theory T05](../references/fun-research-expansion-theory.md#t05)
 
 ### P05 — Make progress change possibilities, and keep its parts in proportion
 
@@ -101,7 +101,7 @@ Noita and Caves of Qud emphasize cross-system consequences. Linked Materia makes
 
 Scarcity, weight, time, durability and vulnerability can make preparation matter. Their value depends on what the player chooses because they exist. A journey that trades equipment against mobility is different from moving the same items among inconvenient menus after the decision is already settled.
 
-DayZ and Starsector make taking more equipment potentially costly. Oxygen Not Included turns a local solution into connected heat, water and power questions. Kingdom Come: Deliverance II makes learning a procedure distinct from owning its ingredients. These are different uses of friction. The inventory criticism in Ultima VII and Green Hell shows that physical presentation can be immersive and cumbersome simultaneously. [G114, G120, G128–G129, G132, M144](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
+DayZ and Starsector make taking more equipment potentially costly. Oxygen Not Included turns a local solution into connected heat, water and power questions. Kingdom Come: Deliverance II makes learning a procedure distinct from owning its ingredients. These are different uses of friction. The inventory criticism in Ultima VII and Green Hell shows that physical presentation can be immersive and cumbersome simultaneously. [G114, G120, G128–G129, G132, G144](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
 
 **Review question:** after the player understands the solution, what remains valuable about performing it again? Sometimes the answer is a chosen calming routine, not another puzzle. Sometimes it is nothing. Compress the latter without automatically erasing the former.
 

@@ -96,7 +96,7 @@ The comparison concerns command entry, not proof of superiority over excellent d
 
 **Sources:** Proxima's [official game site](https://www.playsuckup.com/) and [Steam product description](https://store.steampowered.com/app/2726370/Suck_Up/), inspected October 14, 2026. Steam records its release there as October 1, 2025; this is not asserted to be the game's first availability anywhere.
 
-The vampire premise gives conversation an objective: gain the confidence and access needed to feed without being caught. The official site separately presents other modes and character creation/sharing. **Our interpretation:** a bounded situation can make open language purposeful; a player need not first invent an entire reason to talk. However, a amusing response or a successful invitation does not prove the persuasion rules remain fair, coherent or interesting on repetition. This run did not play the game, test its service or audit its entire review population.
+The vampire premise gives conversation an objective: gain the confidence and access needed to feed without being caught. The official site separately presents other modes and character creation/sharing. **Our interpretation:** a bounded situation can make open language purposeful; a player need not first invent an entire reason to talk. However, an amusing response or a successful invitation does not prove the persuasion rules remain fair, coherent or interesting on repetition. This run did not play the game, test its service or audit its entire review population.
 
 <a id="a10"></a>
 ### A10 — Ubisoft Teammates: a playable research experiment, not a shipped-game result
