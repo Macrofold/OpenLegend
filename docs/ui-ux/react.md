@@ -48,7 +48,7 @@ Separate server truth, local draft, interaction state and derived values. Share 
 
 Controlled and uncontrolled inputs are both tools. Choose controlled state when synchronized selection, validation or draft ownership needs it; native/uncontrolled fields can suit simpler independent forms. Do not convert the whole app because an external checklist prefers one. The deciding requirement is predictable ownership and preservation through the actual workflow. [S07](research.md#s07)
 
-Use stable IDs, not index/name keys when items reorder, labels collide or older messages prepend. Preserve state across ordinary rerenders, resetting deliberately when its owning identity changes. Nested component definitions can unintentionally reset state. [F14](research.md#f14)
+Use stable IDs, not index/name keys when items reorder, labels collide or older messages prepend. Preserve state across ordinary rerenders, resetting deliberately when its owning viewing/authority identity (`worldId`, `saveTimeline`, `access.scope`, `player.id`) changes while keeping content/history revision bumps (`historyEpoch`, memory correction/forgetting) as in-place refresh props so active selections, comparisons and drafts survive live updates. Nested component definitions can unintentionally reset state. [F14](research.md#f14)
 
 Represent mutually exclusive states coherently, such as `idle | loading | ready | failed`, rather than impossible boolean combinations. A reducer is useful for a real transition-heavy workflow, not mandatory per field. Hide, clear query, discard draft, cancel request and end conversation are separate transitions even when they happen to clear values.
 
@@ -71,7 +71,7 @@ Review all meaningful shared-component variants: empty/disabled selection, local
 
 ## CSS must express layout, not repair accidents
 
-Use current token/component owners. Parents own gaps and placement; avoid negative margins that work only in one host. Prefer Grid/Flex for ordinary forms; use absolute positioning for intentional anchoring with defined collision behavior. Give shrinking children `min-inline-size: 0`, wrap long tokens deliberately and preserve access to complete content. Do not globally hide overflow.
+Use current token/component owners. Parents own gaps and placement; avoid negative margins that work only in one host. Prefer Grid/Flex for ordinary forms; use absolute positioning for intentional anchoring with defined collision behavior. Give shrinking children `min-inline-size: 0`, wrap long tokens deliberately and preserve access to complete content. Do not globally hide overflow. When using `:has()` to adapt dock or layout containers around child panels, exclude `[hidden]` slots (for example `.ol-panel-slot:not([hidden])`) because `:has()` matches elements inside hidden DOM subtrees.
 
 Reserve space for field utilities and sticky footers. A panel or pane may own a bounded scroller; do not nest competing scrollers for the same reading task. Focus and the last row must remain visible. Use actual available space for overlays and account for software keyboards, safe areas and zoom. [S03](research.md#s03) [S08](research.md#s08)
 

@@ -53,10 +53,10 @@ import { installExpeditions } from './expeditions.js';
 import {
   installMissingBelonging,
   MARA_ID,
-  MARA_STARTING_UNDERSTANDING,
+  MARA_STARTING_BELIEFS,
   MISSING_BELONGING_LOCATIONS,
   TAVIN_ID,
-  TAVIN_STARTING_UNDERSTANDING,
+  TAVIN_STARTING_BELIEFS,
 } from './missing-belonging.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
 import traitBank from './config/traits.json' with { type: 'json' };
@@ -70,10 +70,10 @@ export const PLAYER_ID = 'entity-0001';
 export const NPC_ID = 'entity-0002';
 export {
   MARA_ID,
-  MARA_STARTING_UNDERSTANDING,
+  MARA_STARTING_BELIEFS,
   MISSING_BELONGING_LOCATIONS,
   TAVIN_ID,
-  TAVIN_STARTING_UNDERSTANDING,
+  TAVIN_STARTING_BELIEFS,
 };
 const MERCENARY_ID = 'peacock-mercenary';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;

@@ -311,21 +311,21 @@ function ScopedWorldEvents({
 
   function assignSlot(slotIndex: 0 | 1, ref: WorldEventSourceReference) {
     lastTriggerId.current = ref.sourceId;
+    const otherIndex: 0 | 1 = slotIndex === 0 ? 1 : 0;
+    const clearOther = slots[otherIndex]?.sourceId === ref.sourceId;
     setComparisonOpen(true);
     setChoosingSlot(null);
     setSlots((prev) => {
-      const otherIndex: 0 | 1 = slotIndex === 0 ? 1 : 0;
       const next: ComparisonSlots = [...prev] as ComparisonSlots;
-      if (next[otherIndex]?.sourceId === ref.sourceId) {
+      if (clearOther || next[otherIndex]?.sourceId === ref.sourceId) {
         next[otherIndex] = null;
       }
       next[slotIndex] = ref;
       return next;
     });
     setOrigins((prev) => {
-      const otherIndex: 0 | 1 = slotIndex === 0 ? 1 : 0;
       const next: ComparisonOrigins = [...prev] as ComparisonOrigins;
-      if (slots[otherIndex]?.sourceId === ref.sourceId) {
+      if (clearOther) {
         next[otherIndex] = null;
       }
       next[slotIndex] = { type, query };
@@ -355,14 +355,15 @@ function ScopedWorldEvents({
   }
 
   function removeSlot(slotIndex: 0 | 1) {
+    const remainingSlot = slotIndex === 0 ? slots[1] : slots[0];
     setChoosingSlot((prev) => (prev === slotIndex ? null : prev));
+    if (!remainingSlot) setComparisonOpen(false);
     setSlots((prev) => {
       if (slotIndex === 0 && prev[1] !== null) {
         return [prev[1], null];
       }
       const next: ComparisonSlots = [...prev] as ComparisonSlots;
       next[slotIndex] = null;
-      if (!next[0] && !next[1]) setComparisonOpen(false);
       return next;
     });
     setOrigins((prev) => {
@@ -449,8 +450,7 @@ function ScopedWorldEvents({
     [events, slots, choosingSlot, type, query],
   );
 
-  const visibleSlotIndices: (0 | 1)[] =
-    slots[0] !== null || slots[1] !== null || choosingSlot !== null ? [0, 1] : [0];
+  const visibleSlotIndices = [0, 1] as const;
 
   return (
     <section
@@ -571,7 +571,7 @@ function ScopedWorldEvents({
                         <p className="ol-meta">
                           {choosingSlot === slotIndex
                             ? `Choosing Source ${slotIndex + 1} from the event list below…`
-                            : 'No second source selected yet.'}
+                            : `No ${slotIndex === 0 ? 'first' : 'second'} source selected yet.`}
                         </p>
                       </div>
                       <div className="ol-world-event-source-actions">
@@ -640,7 +640,7 @@ function ScopedWorldEvents({
                           <p className="ol-meta">
                             <strong>Observed here then:</strong> {detail.observedLocation.label}
                             {detail.observedLocation.point
-                              ? ` (${Math.round(detail.observedLocation.point.x)}, ${Math.round(detail.observedLocation.point.y)})`
+                              ? ` (${Math.round(detail.observedLocation.point.x)}, ${Math.round(detail.observedLocation.point.z)})`
                               : ''}{' '}
                             at <EventTime time={detail.time} /> (historical observation, not live
                             location)

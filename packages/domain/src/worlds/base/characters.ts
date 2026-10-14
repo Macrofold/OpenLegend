@@ -27,13 +27,12 @@ export const ADA_IDENTITY = {
 };
 
 export const MARA_IDENTITY = {
-  initialGoals: ['Keep my mending tools in order and recover my red-stitched satchel.'],
-  description:
-    'A careful camp mender in a patched wool coat, looking over her work kit with quiet concern.',
+  initialGoals: [] as string[],
+  description: 'A careful camp mender in a patched wool coat.',
   personality:
-    'Careful, observant, and appreciative of honest help. Speaks plainly about what she has noticed and avoids guessing what she has not seen.',
+    'Careful, patient about practical work, and sensitive to being dismissed. Speaks plainly about what she has noticed and avoids guessing what she has not seen.',
   backstory:
-    'I am Mara Reed. I learned to mend cordage, packs, and camp gear along the river crossings, keeping every tool and satchel neatly marked so shared supplies do not go astray.',
+    'I am Mara Reed. I learned to mend cordage, packs, and camp gear along the river crossings, keeping tools and work satchels neatly marked so shared supplies stay in good order.',
   traits: [
     {
       id: 'mara-methodical',
@@ -43,32 +42,29 @@ export const MARA_IDENTITY = {
     {
       id: 'mara-plain-dealing',
       name: 'Plain-dealing',
-      description:
-        'I state what I know directly and thank people who return or look after shared gear.',
+      description: 'I state what I know directly and prefer honest dealing over guesswork.',
     },
   ] satisfies CharacterTrait[],
 };
 
 export const TAVIN_IDENTITY = {
-  initialGoals: ['Keep the clearing work spot and dry reed-side stores tidy.'],
-  description:
-    'A practical camp sorter in a reed-woven vest, keeping clearing tools and dry stores in order.',
+  initialGoals: [] as string[],
+  description: 'A practical camp traveler in a reed-woven vest.',
   personality:
-    'Practical, tidy, and matter-of-fact. Moves unattended gear out of the damp and leaves clear notes about where he stored it.',
+    'Practical, tidy, and matter-of-fact. Values a clear work area, dislikes accusations, and can recognize a mistake.',
   backstory:
-    'I am Tavin Vale. I worked river landings and camp clearings where sudden damp ruined cordage left on the ground, developing a habit of sorting stray bundles under dry stone cover.',
+    'I am Tavin Vale. I worked river landings and camp clearings where sudden damp ruined cordage left on the ground, so I learned to keep work areas clear and dry stores orderly.',
   traits: [
     {
       id: 'tavin-dry-store-keeper',
       name: 'Dry-store keeper',
-      description:
-        'I set stray cordage and fiber bundles under dry stone cover before damp weather sets in.',
+      description: 'I prefer a clear work area and well-kept dry stores.',
     },
     {
       id: 'tavin-direct-recorder',
       name: 'Direct recorder',
       description:
-        'I leave plain notes at work spots and state where I moved unattended gear without guessing who owns it.',
+        'I speak plainly, dislike unfounded accusations, and can admit an honest mistake.',
     },
   ] satisfies CharacterTrait[],
 };

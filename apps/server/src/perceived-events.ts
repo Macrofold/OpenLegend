@@ -73,6 +73,21 @@ export async function initializePerceivedEventIndexes(db: SqlDatabase): Promise<
   `);
 }
 
+function correctionEventIdFor(
+  corrections: Record<string, string> | undefined,
+  sourceId: string,
+): string | undefined {
+  return corrections?.[sourceId] ?? corrections?.[`memory-${sourceId}`];
+}
+
+function unavailableSourceDetail(sourceId: string): WorldEventSourceDetail {
+  return {
+    status: 'unavailable',
+    sourceId,
+    reason: 'This source is no longer available in retained personal history.',
+  };
+}
+
 /** Keyset pagination of the existing actor/event perspectives. No alternate event writer.
  * docs/perceived-world-events.md#4-query-and-storage-behavior */
 export async function readPerceivedEvents(
@@ -212,7 +227,7 @@ export async function readPerceivedEvents(
         const event = JSON.parse(String(row['payload'])) as WorldEvent;
         const perspective = JSON.parse(String(row['perspective'])) as StorySource;
         const projected = projectEventEvidence(event, perspective.evidence);
-        const corr = corrections?.[projected.id] ?? corrections?.[`memory-${projected.id}`];
+        const corr = correctionEventIdFor(corrections, projected.id);
         const source =
           projected.type === 'speech' || projected.type === 'encounter'
             ? worldEventSourceReference(
@@ -263,12 +278,19 @@ export async function readPerceivedEventSources(
     )
       throw new HistoryCursorError('This source selection expired. Refresh the event log.');
   }
-  const forgottenSet = new Set(state?.forgotten ?? []);
-  const corrections = state?.corrections ?? {};
-  const requestedIds = [...new Set(references.map((ref) => ref.sourceId))];
+  const forgottenSet = state?.forgotten?.length ? new Set(state.forgotten) : undefined;
+  const isForgotten = (id: string) =>
+    Boolean(forgottenSet && (forgottenSet.has(id) || forgottenSet.has(`memory-${id}`)));
+  const corrections = state?.corrections;
+  const requestedIds = [
+    ...new Set(references.map((ref) => ref.sourceId).filter((id) => !isForgotten(id))),
+  ];
+  if (!requestedIds.length) {
+    return references.map((ref) => unavailableSourceDetail(ref.sourceId));
+  }
   const correctionIds = requestedIds.flatMap((id) => {
-    const corr = corrections[id] ?? corrections[`memory-${id}`];
-    return corr ? [corr] : [];
+    const corr = correctionEventIdFor(corrections, id);
+    return corr && !isForgotten(corr) ? [corr] : [];
   });
   const allIds = [...new Set([...requestedIds, ...correctionIds])];
   const position = perspectiveField('order', 'p');
@@ -278,29 +300,19 @@ export async function readPerceivedEventSources(
   const where = `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern')) AND p.event_id IN (${allIds.map(() => '?').join(',')})`;
   const snapshot = db.readTransaction?.bind(db) ?? db.transaction.bind(db);
   return snapshot(async () => {
-    const rows = allIds.length
-      ? await db
-          .prepare(
-            `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE ${where}`,
-          )
-          .all(worldId, actorId, ...allIds)
-      : [];
+    const rows = await db
+      .prepare(
+        `SELECT ${position} AS position,p.event_id AS id,e.payload,p.payload AS perspective FROM ${join} WHERE ${where}`,
+      )
+      .all(worldId, actorId, ...allIds);
     const byId = new Map(rows.map((row) => [String(row['id']), row]));
     return references.map((ref): WorldEventSourceDetail => {
-      if (forgottenSet.has(ref.sourceId) || forgottenSet.has(`memory-${ref.sourceId}`)) {
-        return {
-          status: 'unavailable',
-          sourceId: ref.sourceId,
-          reason: 'This source is no longer available in retained personal history.',
-        };
+      if (isForgotten(ref.sourceId)) {
+        return unavailableSourceDetail(ref.sourceId);
       }
       const row = byId.get(ref.sourceId);
       if (!row) {
-        return {
-          status: 'unavailable',
-          sourceId: ref.sourceId,
-          reason: 'This source is no longer available in retained personal history.',
-        };
+        return unavailableSourceDetail(ref.sourceId);
       }
       const event = JSON.parse(String(row['payload'])) as WorldEvent;
       const perspective = JSON.parse(String(row['perspective'])) as StorySource;
@@ -359,14 +371,11 @@ export async function readPerceivedEventSources(
                 label: exposure.observedLocation.label,
               }
           : undefined;
-      const correctionEventId = corrections[ref.sourceId] ?? corrections[`memory-${ref.sourceId}`];
+      const correctionEventId = correctionEventIdFor(corrections, ref.sourceId);
       const corrected = Boolean(correctionEventId);
       let correctionNote: string | undefined;
       if (correctionEventId) {
-        const corrRow =
-          !forgottenSet.has(correctionEventId) && !forgottenSet.has(`memory-${correctionEventId}`)
-            ? byId.get(correctionEventId)
-            : undefined;
+        const corrRow = !isForgotten(correctionEventId) ? byId.get(correctionEventId) : undefined;
         if (corrRow) {
           const corrEvent = JSON.parse(String(corrRow['payload'])) as WorldEvent;
           const corrPerspective = JSON.parse(String(corrRow['perspective'])) as StorySource;

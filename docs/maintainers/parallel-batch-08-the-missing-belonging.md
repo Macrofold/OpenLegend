@@ -8,7 +8,7 @@
 
 ## MY01 — Author the incident and reachable places
 
-- [x] Implement the two residents and their separate source-labeled starting understanding, concise disposition-only identities, ordinary opportunities and actual initial possessions.
+- [x] Implement the two residents and their separate `# Beliefs` starting beliefs (`MARA_STARTING_BELIEFS` / `TAVIN_STARTING_BELIEFS`), concise disposition-only identities, ordinary opportunities and actual initial possessions.
 - [x] Install the proposed clearing/store, marker, note, fastening and exact satchel/contents only in new starts; qualify physical reach, both routes, picking and observer scope with existing assets.
 - [x] Keep all incident facts, wording and tuned placement in the base-world owner; no hidden answer sent to characters, fabricated witnessed past, scripted future disclosure or new quest/ownership law.
 

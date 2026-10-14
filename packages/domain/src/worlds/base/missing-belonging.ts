@@ -20,11 +20,11 @@ export const MISSING_BELONGING_LOCATIONS = {
   reedSideStore: { x: 11, z: 22.5 },
 } as const;
 
-export const MARA_STARTING_UNDERSTANDING =
-  'I left my red-stitched satchel at the Mending Clearing work spot beside the rough stone before a walk; when I returned, the bag was gone and a torn red fastening strap with blue cross-stitching remained. It has “Mara Reed” stitched on the exterior flap and holds two lengths of cord, with one bundle of prepared fiber kept with my work supplies. I saw Tavin carrying a bundle earlier, though I did not see him take my satchel, and I suspect a connection.';
+export const MARA_STARTING_BELIEFS =
+  '# Beliefs\nI left my red-stitched satchel at the Mending Clearing work spot beside the rough stone before a walk; when I returned, the bag was gone and a torn red fastening strap with blue cross-stitching remained. The satchel has “Mara Reed” stitched on the exterior flap and held two lengths of cord when I left it. I saw Tavin carrying a bundle earlier, though I did not see him take my satchel, and I suspect a connection.';
 
-export const TAVIN_STARTING_UNDERSTANDING =
-  'Earlier today I moved an unattended red-stitched bag from the Mending Clearing work spot beside the rough stone to the Reed-side Store beside the split stone while clearing room for my work, assuming it was shared equipment. Its red fastening strap snagged on the rough stone edge as I lifted it, and I left a sorting note at the work spot. I neither inspected the bag’s contents nor identified its owner.';
+export const TAVIN_STARTING_BELIEFS =
+  '# Beliefs\nEarlier today I moved an unattended red-stitched bag from the Mending Clearing work spot beside the rough stone to the Reed-side Store beside the split stone while clearing room for my work, assuming it was shared equipment. Its red fastening strap snagged on the rough stone edge as I lifted it, and I left a sorting note at the work spot. I neither inspected the bag’s contents nor identified its owner.';
 
 export function installMissingBelonging(world: WorldState): void {
   const layout = world.map.spatial!;
@@ -136,7 +136,7 @@ export function installMissingBelonging(world: WorldState): void {
     general: {
       origin: 'authored-starting',
       subjectId: null,
-      text: MARA_STARTING_UNDERSTANDING,
+      text: MARA_STARTING_BELIEFS,
       revision: 1,
       evidenceIds: [],
     },
@@ -145,7 +145,7 @@ export function installMissingBelonging(world: WorldState): void {
     general: {
       origin: 'authored-starting',
       subjectId: null,
-      text: TAVIN_STARTING_UNDERSTANDING,
+      text: TAVIN_STARTING_BELIEFS,
       revision: 1,
       evidenceIds: [],
     },
