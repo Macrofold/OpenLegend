@@ -1,6 +1,6 @@
 # G131 — Rust
 
-**Status: expanded research dossier; operational and visual audit October 14, 2026.** [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [48-asset visual atlas](rust-visual-atlas.md). Research only, not an approved OpenLegend design or a Rust playtest.
+**Status: expanded research dossier; operational and visual audit October 14, 2026.** [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [53-asset visual atlas](rust-visual-atlas.md). Research only, not an approved OpenLegend design or a Rust playtest.
 
 This is the current entry point. The **[September 27 full study](rust-2026-09-27.md)** is preserved byte-for-byte, including all twelve worked cases, five substantive independent reviews, source annotations and earlier audit history. Its statements of currentness describe September 27, not this refresh. The present file adds the operational detail missing from that study and qualifies changed rules rather than discarding the earlier evidence.
 
@@ -128,6 +128,12 @@ Repair is also distinct from recrafting or research. The Repair Bench restores i
 
 March 2025's Crafting Update expanded domestic and workshop play with cooking, chickens, engineering-oriented production, armor inserts and item-creator provenance. These connect equipment and everyday activities; they are not a class/XP system or evidence of free-form player-authored recipes. The dated update also introduces spoilage and refrigeration, so food can have timing and storage requirements rather than being an indefinitely interchangeable healing stack. [Crafting Update](https://rust.facepunch.com/news/crafting-update/).
 
+### Recipe selection and queue controls — dated operational evidence
+
+The October 2019 release documents favourites in both Quick Craft and the full crafting screen, a separate favourites category, middle-click batching up to five affordable items, and right-click queue reprioritization that resets the interrupted item's progress. It also describes a short protection against clicks on a newly reordered Quick Craft list. These are concrete historical controls, not a fresh certification of every 2026 binding. [Horse Equipment Update](https://rust.facepunch.com/news/october-update).
+
+The inspected [recipe screen, V50](rust-visual-atlas.md#i-historical-native-workflows-and-designer-intent) makes the sequence tangible: choose a category/search result, inspect the selected recipe and ingredient requirement versus stock, choose quantity, press Craft, then use the separate queue region. Its displayed bandage costs are historical examples, not current tuning. V49 shows Quick Craft beside carried inventory instead of in the account's cosmetic catalogue. The missing current queue/cancellation/full-output sequence remains a distinct evidence gap.
+
 ## R03 — items, entities and composition
 
 <a id="rust-looting"></a>
@@ -241,9 +247,11 @@ Proximity speech makes a stranger's intentions uncertain; repeat dealings and sh
 
 ### Visual evidence and limits
 
-The **[visual atlas](rust-visual-atlas.md)** records 48 individually inspected assets: **24 interface captures/crops/presentations, 14 world/construction frames, four annotated diagrams, three contextual illustrations, one item icon, one publisher statistics graphic and one external planner view**. This is not 48 normal gameplay screenshots. The register identifies source, visible evidence and what each image cannot establish; failed requests are excluded.
+The **[visual atlas](rust-visual-atlas.md)** records 53 individually inspected assets: **29 interface captures/crops/presentations, 14 world/construction frames, four annotated diagrams, three contextual illustrations, one item icon, one publisher statistics graphic and one external planner view**. This is not 53 normal gameplay screenshots. The register identifies source, visible evidence and what each image cannot establish; failed requests are excluded.
 
 The strongest interface observations are contextual authorization/radial commands, funded versus empty upkeep, hotbar/HUD status grouping, spatial construction, crosshair customization, tech-tree paths, server filtering/map preview, item provenance, searchable settings and demo authoring. The most important correction was distinguishing account-cosmetic inventory from carried loot. A nearby blog image is not automatically a picture of the mechanism discussed in its heading.
+
+The continuation adds directly inspected historical carried-inventory, recipe-detail, respawn-map and inventory-control captures, plus a designer's home-screen presentation. [Atlas V49–V53](rust-visual-atlas.md#i-historical-native-workflows-and-designer-intent) explains each. These improve the concrete workflow evidence without substituting a 2019 screen for a current 2026 capture.
 
 ### What the interface helps the player do
 
@@ -289,13 +297,13 @@ A creator-friendly story must still correspond to a playable experience. Edited 
 
 | Evidence and measurement period | Metric and scope | Confidence and limit |
 | --- | --- | --- |
-| December 2019 reporting of Facepunch's year-end figures | About **US$142 million revenue** and roughly **9 million copies** reported for Rust at that time | Historical publisher figure relayed by PC Gamer. The original Facepunch 2019 URL returned unavailable during this pass; exact gross/net/tax/platform-accounting definition is not independently established here. Not present lifetime revenue or profit. |
+| December 21, 2019 reporting of Facepunch's year-end figures | About **US$142 million gross revenue** and roughly **9 million copies** reported for Rust at that time | Historical publisher figure relayed by PC Gamer. The original Facepunch 2019 URL returned unavailable during this pass; exact tax/platform-accounting coverage is not independently established here. Not present lifetime revenue, developer receipts or profit. |
 | Facepunch's 2023 anniversary | **16 million+ PC copies** | Dated publisher milestone; not 2026 sales or unique active players. |
 | Facepunch, July 3, 2025 | **Over 20 million copies sold on PC alone** | Primary written publisher statement. Strong evidence of commercial scale, not a disclosed dollar total. |
 | Facepunch's January 1, 2026 retrospective, reporting 2025 | **5.8 million+ unique players, 450 million+ sessions, 700 million+ hours; 259,646 peak players** | Different publisher-reported participation measures. Do not add them, call peak concurrency monthly users, or treat hours as satisfaction. |
 | Current lifetime dollar revenue, receipts and project profit through October 2026 | **Not estimable from the available evidence with a defensible narrow range** | Missing realized price/mix, regional discounts, refunds/taxes, channel/platform coverage, paid-content receipts, revenue share and costs. |
 
-Sources: [PC Gamer's historical revenue report](https://www.pcgamer.com/rust-has-made-142-million/), [10 Years of Rust](https://rust.facepunch.com/rust10), [Friends with Benefits](https://rust.facepunch.com/news/friends-with-benefits), [Surviving 12 Years](https://rust.facepunch.com/news/surviving-12-years).
+Sources: [PC Gamer's historical revenue report](https://www.pcgamer.com/rust-has-made-more-money-than-garrys-mod/), [10 Years of Rust](https://rust.facepunch.com/rust10), [Friends with Benefits](https://rust.facepunch.com/news/friends-with-benefits), [Surviving 12 Years](https://rust.facepunch.com/news/surviving-12-years).
 
 **Do not manufacture a current total by multiplying today's list price by every historical sale.** The tempting calculation conceals price changes, discounts and regional/channel mix, and leaves out or double-counts other receipts. Reports of studio-wide daily Steam revenue are not automatically Rust-only revenue. Nor are third-party review-count estimates independent confirmations when they share the same uncertain conversion model.
 
@@ -351,7 +359,7 @@ These are research candidates for the general topic owners, not a new specificat
 
 **Strongest evidence:** dated Facepunch release notes and publisher milestones; directly inspected images for visible layout; documented item/server concepts; the preserved independent reviews for contrasting experience. **Weaker or bounded evidence:** mutable community-hosted wiki explanations, staged promotional imagery, selected Steam helpful surfaces, historical revenue reporting through a secondary source, and our interpretation of why mechanics may produce enjoyment.
 
-**Still missing:** a complete current ordinary-PC carried-inventory → crafting detail/queue → loot transfer → full-inventory/armor-swap capture; the full building-plan → valid/blocked preview → hammer/correction sequence; a current industrial-filter troubleshooting sequence; current TC group-charge and livestock-needs interfaces; death/respawn and iron-sight combat captures; hands-on accessibility/error-recovery results; representative solo/group onboarding and recovery times; current lifetime financial accounting and causal retention/channel attribution. The [atlas failure register](rust-visual-atlas.md#failed-access-and-remaining-capture-gaps) names unsuccessful requests rather than calling them inspected.
+**Still missing:** a complete current ordinary-PC carried-inventory → crafting detail/queue → loot transfer → full-inventory/armor-swap capture; the full building-plan → valid/blocked preview → hammer/correction sequence; a current industrial-filter troubleshooting sequence; current TC group-charge and livestock-needs interfaces; current death/respawn and iron-sight combat captures; hands-on accessibility/error-recovery results; representative solo/group onboarding and recovery times; current lifetime financial accounting and causal retention/channel attribution. Historical inventory, recipe and respawn captures now appear in atlas V49–V52, but do not close the current-version gaps. The [atlas failure register](rust-visual-atlas.md#failed-access-and-remaining-capture-gaps) names unsuccessful requests rather than calling them inspected.
 
 Exact per-piece raid arithmetic, placement/correction timers, current weapon dispersion/recoil data, every server-variable default and every monument loot probability were not exhaustively validated. Those numbers can be essential to a competitive guide but are not interchangeable with the system-level research here. A targeted current-build check should resolve a number before using it in a design comparison; an old article carrying a new publication date is insufficient.
 

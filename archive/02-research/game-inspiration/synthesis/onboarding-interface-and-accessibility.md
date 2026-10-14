@@ -26,7 +26,7 @@ The interface should help someone choose and perform a meaningful action, recogn
 
 ## Cross-game evidence and counterexamples
 
-[Rust's UI analysis](../dossiers/rust.md#rust-ux) and [48-asset atlas](../dossiers/rust-visual-atlas.md) separate inspected screen layouts from inferred interaction quality. Contextual verbs, upkeep horizons, server filters and search are useful observations. The atlas also identifies mislabeled/reused imagery and missing current inventory/building sequences. This is one scoped case; no cross-game accessibility ranking or hands-on performance result is implied.
+[Rust's UI analysis](../dossiers/rust.md#rust-ux) and [visual atlas](../dossiers/rust-visual-atlas.md) separate inspected screen layouts from inferred interaction quality. Contextual verbs, upkeep horizons, server filters and search are useful observations. The atlas also identifies mislabeled/reused imagery and missing current inventory/building sequences. Its continuation adds historical native inventory, recipe and respawn screens without claiming those establish the current version. This is one scoped case; no cross-game accessibility ranking or hands-on performance result is implied.
 
 ## Consolidated lessons and tradeoffs
 
@@ -35,6 +35,8 @@ The interface should help someone choose and perform a meaningful action, recogn
 ### Preserve desired challenge while removing manipulation burden
 
 Snapping, understandable destinations, contextual verbs and reliable repeated actions can make interaction easier without selecting a strategy for the player. Explain actionable blockers and costs rather than expose implementation fields indiscriminately. A shortcut that is undiscoverable, a color-only refusal or a label that overstates protection can undermine that convenience. Compare simpler controls as well as more elaborate assistance.
+
+Preserve the intended target while options refresh or reorder, and make consequential shortcuts deliberate. Fewer clicks are not an improvement when a moving result list causes the wrong purchase, craft or deletion. Compare stable placement, deferred reordering and an explicit repeat action rather than assuming one delay fits every task. [Historical evidence and limits](../dossiers/rust-visual-atlas.md#i-historical-native-workflows-and-designer-intent).
 
 <a id="ux-l002"></a>
 
