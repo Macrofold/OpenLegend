@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 14, 2026 — Reconcile the remaining-design register
+
+[Future work needing design](maintainers/needs-design.md#current-design-dispositions) now gives all 37 stable entries an explicit current disposition against local `main` and their design/implementation owners. First-opening design, practice/coaching, flat/sloping shelters, barter/outings and static discovery are distinguished from their broader extensions and remaining acceptance. The integrated missing-belonging investigation is included; paired but unmerged combat and condition-removal work remains with its existing projects. Historical roadmap grouping and the original research exclusions no longer read as the current next-project ranking. Source requirements, IDs, conditional ideas and unresolved developer decisions are retained; no new feature, gameplay qualification or implementation approval is introduced.
+
 ## October 14, 2026 — Permit fresh development state after incompatibility
 
 Mike explicitly changed the [development save policy](../AGENTS.md#development-save-policy): agents may reset or replace incompatible development saves/databases with the latest intended initial world without asking again. The former blanket prohibition on automatic replacement is superseded. No legacy readers or migrations are introduced; same-format integrity, credentials, access controls and real spending/accounting remain protected. The tradeoff is loss of old development-world progress when starting fresh. The standard fresh world must combine the newest integrated scenarios, characters and feature prerequisites through its authored initializer, respecting the owner-selected branch scope rather than loading an old fixture or isolated demo. [Local setup](../README.md#run-locally) documents using a new database and save directory; runtime format validation still refuses older data rather than silently relabeling it.
