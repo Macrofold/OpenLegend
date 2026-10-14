@@ -1,0 +1,69 @@
+name: Documentation rebase inputs
+on:
+  push:
+    branches: [ops/doc-review-rebase-bf7366be-2026-10-14]
+    paths: [.github/workflows/doc-review-rebase.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Capture exact source and overlap for the requested rebase
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+          old = 'bf7366beb621e9c9c4cb03718c542c48ce2b6381'
+          main = '7a576214fbb9891b2e9f742db56bbeccaa3a58a1'
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          base = git('merge-base', old, main).decode().strip()
+          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'doc-review-inputs.zip'
+          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+          inventories = {}
+          with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
+              for label, rev in [('base', base), ('review', old), ('main', main)]:
+                  inventory = []
+                  entries = git('ls-tree', '-r', '-z', '--long', rev).split(b'\0')
+                  for entry in entries:
+                      if not entry:
+                          continue
+                      metadata, raw = entry.split(b'\t', 1)
+                      mode, kind, sha, size = metadata.decode().split()
+                      name = raw.decode()
+                      path = pathlib.PurePosixPath(name)
+                      included = kind == 'blob' and mode != '120000' and 'archive' not in path.parts and (path.suffix in extensions or name in ('LICENSE', '.env.example', '.gitignore', '.prettierignore'))
+                      row = {'path': name, 'mode': mode, 'type': kind, 'sha': sha, 'included': included, 'size': int(size) if size != '-' else None}
+                      if included:
+                          data = git('cat-file', 'blob', sha)
+                          data.decode('utf-8')
+                          row['sha256'] = hashlib.sha256(data).hexdigest()
+                          z.writestr(f'{label}/{name}', data)
+                      inventory.append(row)
+                  inventories[label] = {'revision': rev, 'files': inventory}
+              z.writestr('inventory.json', json.dumps(inventories, indent=2))
+              z.writestr('review.patch', git('diff', '--binary', base, old))
+              z.writestr('upstream.patch', git('diff', '--binary', base, main))
+              z.writestr('history.txt', git('log', '--reverse', '--format=%H%x09%P%x09%s', '--name-status', f'{base}..{old}'))
+              preview = subprocess.run(['git', 'merge-tree', '--write-tree', main, old], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+              z.writestr('overlap-preview.txt', preview.stdout)
+              assert preview.returncode in (0, 1), preview.stdout.decode()
+              print(json.dumps({'review': old, 'main': main, 'base': base, 'preview_status': preview.returncode, 'path_counts': {k: len(v['files']) for k,v in inventories.items()}}))
+          PY
+      - name: Preserve the repository-pinned formatting tool
+        run: npm pack prettier@3.6.2 --ignore-scripts --pack-destination "$RUNNER_TEMP"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doc-review-inputs-bf7366be-7a576214
+          path: |
+            ${{ runner.temp }}/doc-review-inputs.zip
+            ${{ runner.temp }}/prettier-3.6.2.tgz
+          retention-days: 7
+          if-no-files-found: error
