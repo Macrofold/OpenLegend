@@ -1,5 +1,10 @@
 # Maintainer TODO — cross-cutting work
 
+## Foundation review follow-through
+
+- [x] Complete the prioritized [foundation review tasks](foundation-review-todos.md), starting with private reads, stale private comparison text and observer-specific action facts. That document owns FR01–FR13, implementation instructions and acceptance; do not duplicate task bodies here. The [review](../verification/foundation-review.md) distinguishes reproduced behavior, static traces and existing unfinished work.
+- [x] Deliver the first [foundational test slice](foundational-tests.md): ten utility-contract tests passed, with TypeScript checking. This is deliberately limited coverage; the remaining table is conditional work, not a comprehensive test initiative.
+
 ## Existing documentation anchors needing reconciliation
 
 - [ ] The batch-numbering link audit on October 3 found five pre-existing references to absent headings: `limits/interface.md#iw03--creator-editor-layout` from `documentation-changelog.md`, `maintainers/extensible-world-foundation.md` and `maintainers/ui-ux.md`; and `maintainers/base-world.md#bw22--observer-safe-names-in-event-text` from the changelog and this tracker. Restore the intended inventory/anchor or retarget after checking its current owner; the numbered batch links themselves resolve. This is documentation repair, not reopened gameplay acceptance.
@@ -260,8 +265,8 @@ Automated tests were explicitly deferred for this implementation. These coverage
 - [x] Repair existing async-service fixture typing. The full test-inclusive typecheck now passes; [hardening evidence](../verification/data-runtime-hardening.md#data-runtime-hardening) records the changes. Runtime suite acceptance remains unverified.
 - [ ] ACT01–ACT06: current-format restart/idempotency and incompatible-input rejection, preserved IDs/positions/RNG/time/inventory/knowledge/person and animal state, native wandering/fleeing/hunting, finite harvest/retry/restart, generic revival (including missing/living/incompatible/stale/duplicate/rollback), full god revival after partial/complete harvesting without inventory clawback, simultaneous effects/conditions, body susceptibility, capability upgrades, privacy, god authorization, action catalogue and protocol/browser projection. Update legacy fixtures that still mutate animal health/alive fields.
 - [ ] Diagnostic FIFO: slow store off inference/Jev/poll critical path; A→B→C ordering; enqueue-time immutable snapshots; nested secret/abort/vector redaction; failure isolation; shutdown drain; unchanged workflow/job/billing outcomes; GET poll coalescing and capture/retention limits.
-- [ ] D0/D1: WorldChanges diff/apply and array splice bounds; incomplete/head/gap rejection; CAS conflicts; append hints versus edits/deletes; 120-revision and UTF-8 1 MiB snapshot thresholds; compaction, uncheckpointed backup, empty-target restore/import, interrupted commit, clean shutdown and required event/receipt/mind/job/accounting agreement. Exercise ambiguous provider completion without paid replay. Compare PostgreSQL current-format record digests and verify source preservation.
-- [ ] D2: separate event/awareness/memory/summary/commitment identities; mixed add/update/delete; correction/forgetting dependencies and protected obligations; transactional vector invalidation; restart privacy and non-resurrection; history paging/watermarks, explicit source edits/revocations, backup/restore/import. Measure mature journal size, snapshot bytes, recovery, backup/restore, queries/editor access, pgvector and routine commit CPU/bytes.
+- [ ] D0/D1: current-record completeness and compare-and-swap conflicts; append hints versus edits/deletes; compaction, complete backup, empty-target current restore, interrupted commit, clean shutdown and required event/receipt/mind/job/accounting agreement. Exercise ambiguous provider completion without paid replay. Compare PostgreSQL current-format record digests and verify source preservation. The obsolete WorldChanges/journal conversion checks and old snapshot thresholds were retired with that importer on October 14; retain current integrity/failure qualification, not compatibility tests.
+- [ ] D2: separate event/awareness/memory/summary/commitment identities; mixed add/update/delete; correction/forgetting dependencies and protected obligations; transactional vector invalidation; restart privacy and non-resurrection; history paging/watermarks, explicit source edits/revocations, backup/restore/import. Measure mature current-record storage, snapshot bytes, recovery, backup/restore, queries/editor access, pgvector and routine commit CPU/bytes.
 - [ ] NC01–NC12/CR12: all talk/act/think/silence combinations; expression zero-effects versus committed impact provenance; notable unseen retention; self-talk, two→five→two, join/leave/overhearing, merge races/duplicates/redirects/late responses, restart and legacy gaps; private narration provenance, source suppression, Journal/top-screen accessibility and read position. Cover generated Narrator execution, cancellation, coalescing, voices and fan-out.
 - [ ] Behavioral acceptance: greeting, direct/overheard speech, appropriate silence, private thoughts, old promises/deadlines/fulfillment evidence, directional relationships, corrections/forgetting, significant-event reflection, sleep/dream and later recall. Keep native runtime evidence separate from separately authorized capped live naturalness, recall usefulness, latency, token and cost measurements.
 
@@ -680,7 +685,7 @@ Implementation and load-envelope gates stay in [HE05](hearing-and-speech.md#he05
 
 ## Player clarity — deferred automated validation
 
-No automated tests were written for the [player clarity](../projects/player-clarity-ui.md) reads; [evidence](../verification/player-clarity-ui.md) is manual and API-level on one disposable world.
+No automated tests were written for the [player clarity](../projects/completed/player-clarity-ui.md) reads; [evidence](../verification/player-clarity-ui.md) is manual and API-level on one disposable world.
 
 - [ ] Extend HE-T06 with World Events `q` search: perspective-text-only matching, no match on unheard words or raw payloads, 8-word/64-character/200-character bounds, words glued to non-ASCII punctuation and uppercase accented letters under a C-locale database, `scanLimited` continuation to the oldest row, a cursor bound to its search digest, and cursor length independent of the search.
 - [ ] Memory history (`/api/memories`, `/api/god/memories`): forgotten and inferred-duplicate exclusion, corrected memories kept, fence rejection after forget/correct/restore, the private-thoughts window and continuation, owner-only and inspectable-NPC-only authority, and the Character panel moving from the live snapshot to history pages without duplicates.
@@ -691,7 +696,7 @@ No automated tests were written for the [player clarity](../projects/player-clar
 
 ## Camp fire care and sharing — deferred automated coverage
 
-The [camp fire and sharing](../projects/camp-fire-and-sharing.md) evidence is recorded in [Verification](../verification/camp-life.md) from ad hoc runs, with no committed suites. Committed regression coverage is still to be added for:
+The [camp fire and sharing](../projects/completed/camp-fire-and-sharing.md) evidence is recorded in [Verification](../verification/camp-life.md) from ad hoc runs, with no committed suites. Committed regression coverage is still to be added for:
 
 - fire refusal codes;
 - cancel-spends-nothing;

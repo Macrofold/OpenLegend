@@ -1,4 +1,5 @@
-import { worldPosition, worldSupport } from './spatial-state.js';
+import { occupiedBodySweepClear } from './spatial.js';
+import { bodyProfile, worldPosition, worldSupport } from './spatial-state.js';
 import {
   advanceWithNavigation as advanceWorld,
   prepareWorldNavigation,
@@ -13,6 +14,7 @@ import {
   hearsEntity,
   quantityOf,
   replaceSpatialLayout,
+  reviveActor,
   seesEntity,
   setSpatialPosition,
   soundOrigin,
@@ -34,6 +36,62 @@ function advance(world: WorldState, seconds: number) {
 }
 
 describe('native spatial-world integration without providers', () => {
+  it('continues explicitly shaped flight after a current JSON roundtrip', () => {
+    const world = active();
+    const bird = world.entities['bird-1']!;
+    bird.spatial.body = { ...bird.spatial.body, id: 'glider', radius: 0.1, height: 0.35 };
+    world.flightRoutes[bird.spatial.flight!.routeId]!.body = { ...bird.spatial.body };
+    const restored = JSON.parse(JSON.stringify(world)) as WorldState;
+    validateSpatialWorld(restored);
+    const direct = advance(world, 200),
+      continued = advance(restored, 200);
+    expect(worldPosition(continued.entities['bird-1']!)).toEqual(
+      worldPosition(direct.entities['bird-1']!),
+    );
+    expect(continued.entities['bird-1']!.spatial.flight).toEqual(
+      direct.entities['bird-1']!.spatial.flight,
+    );
+    const malformed = JSON.parse(JSON.stringify(restored)) as WorldState;
+    Reflect.deleteProperty(malformed.entities['bird-1']!.spatial.body, 'height');
+    expect(() => validateSpatialWorld(malformed)).toThrow('Invalid physical body profile');
+    const wrongRoute = structuredClone(restored);
+    wrongRoute.flightRoutes[bird.spatial.flight!.routeId]!.body.radius = 0.2;
+    expect(() => validateSpatialWorld(wrongRoute)).toThrow('Invalid flight progress');
+  });
+  it('keeps a tall body in conservative candidates when its feet are far below', () => {
+    const world = active(),
+      actor = world.entities[PLAYER_ID]!,
+      other = world.entities[NPC_ID]!;
+    setSpatialPosition(world, other, { x: 5, y: 0, z: 3 }, 'terrain');
+    other.spatial.body = { ...other.spatial.body, id: 'tall-column', height: 32 };
+    expect(occupiedBodySweepClear(world, actor, { x: 4, y: 30, z: 3 }, { x: 6, y: 30, z: 3 })).toBe(
+      false,
+    );
+  });
+  it('checks restored standing clearance before reviving an inactive body', () => {
+    const world = active(),
+      actor = world.entities[NPC_ID]!;
+    setSpatialPosition(world, actor, { x: 20, y: 0, z: 5.5 }, 'terrain');
+    actor.actor!.alive = false;
+    world.map.spatial.surfaces.find((surface) => surface.id === 'lookout-deck')!.y = 1;
+    world.map.spatial.revision++;
+    expect(reviveActor(world, NPC_ID).outcome.ok).toBe(false);
+  });
+  it('uses saved inactive posture instead of a universal corpse shape', () => {
+    const world = active(),
+      actor = world.entities[NPC_ID]!;
+    actor.actor!.alive = false;
+    actor.spatial.inactiveBody = {
+      ...actor.spatial.body,
+      height: 1.2,
+      eyeHeight: 1,
+      earHeight: 1,
+      interactionHeight: 1,
+    };
+    expect(bodyProfile(actor).height).toBe(1.2);
+    delete actor.spatial.inactiveBody;
+    expect(bodyProfile(actor).height).toBe(actor.spatial.body.height);
+  });
   it('moves onto the lookout, gathers its actual resource, and returns below', () => {
     let world = active();
     let t = executeCommand(world, {
@@ -204,7 +262,7 @@ describe('native spatial-world integration without providers', () => {
     bird.actor!.alive = false;
     world = advance(world, 80);
     expect(worldPosition(world.entities['bird-1']!).y).toBe(2);
-    expect(worldSupport(world.entities['bird-1']!)).toBe(`terrain-rock:${x}:${z}`);
+    expect(worldSupport(world.entities['bird-1']!)).toBe(`terrain-solid:${x}:${z}`);
     validateSpatialWorld(JSON.parse(JSON.stringify(world)) as WorldState);
   });
   it('rejects a saved route whose waypoint silently changes floor', () => {

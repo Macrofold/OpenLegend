@@ -7,7 +7,7 @@ import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-i
 import { releaseInvocationResources, resourceReservationWork } from './resource-claims.js';
 
 /** Deterministic units, independent of wall time and provider spending. Operational
- * containment, not authored world law. docs/projects/dependency-invalidation-tech-design.md#7-budget-model-and-static-admission */
+ * containment, not authored world law. docs/projects/completed/dependency-invalidation-tech-design.md#7-budget-model-and-static-admission */
 export const WORK_UNITS = [
   'candidates',
   'tests',

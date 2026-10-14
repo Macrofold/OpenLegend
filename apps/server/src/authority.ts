@@ -61,7 +61,7 @@ export const constructionPermissionSchema = z
 export type Capability = z.infer<typeof capabilitySchema>;
 /** Characterless grants share the one-grant-per-account row without a character. The marker
  * never leaves this repository; changing the existing NOT NULL column would convert saves.
- * docs/projects/multiplayer-entry-maintenance.md#decisions */
+ * docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
 const CHARACTERLESS = '#characterless:';
 const storedActor = (accountId: string, actorId: string | undefined) =>
   actorId ?? `${CHARACTERLESS}${accountId}`;
@@ -216,7 +216,7 @@ const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
 
 /** Current authority is deliberately outside WorldRecords and every gameplay save.
  * All mutations use the application's existing writer; SQL also checks publication fences.
- * docs/projects/multiplayer-authority-tech-design.md#2-identity-and-records
+ * docs/projects/completed/multiplayer-authority-tech-design.md#2-identity-and-records
  */
 export class AuthorityRepository {
   private construction = new Map<string, readonly ConstructionPermission[]>();

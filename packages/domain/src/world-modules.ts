@@ -1,3 +1,4 @@
+import { validateEventEvidence } from './speech.js';
 import {
   competenceValue,
   initializePractice,
@@ -849,6 +850,8 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  for (const entries of Object.values(world.experience?.awareness ?? {}))
+    for (const entry of entries) validateEventEvidence(entry);
   validateSocialPolicy(world);
   for (const event of world.events)
     if (event.narration !== undefined) validateNarration(event.narration);

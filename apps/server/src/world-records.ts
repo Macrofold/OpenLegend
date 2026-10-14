@@ -113,7 +113,7 @@ export class WorldRecords {
     if (!parent) return '';
     // A consumed material may retain attributes as cold history. Every owned component
     // follows its entity's residency, rather than leaving children without a loaded parent.
-    // docs/projects/persistent-objects-tech-design.md#2-identity-and-canonical-representation
+    // docs/projects/completed/persistent-objects-tech-design.md#2-identity-and-canonical-representation
     const joins = parents
       .map((table, index) => {
         const previous = index ? `owner${index - 1}` : 't';

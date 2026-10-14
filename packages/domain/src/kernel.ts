@@ -533,6 +533,7 @@ function approachPath(world: WorldState, actor: Entity, action: Action): RoutePl
       action.type === 'move' || action.type === 'assemble' || action.type === 'fish'
         ? action.destination!.surfaceId
         : (worldSupport(actionTarget(world, action)) ?? undefined),
+      bodyProfile(actor),
     );
     return path ? { status: 'reached', path, length: 0, expanded: 0 } : null;
   }

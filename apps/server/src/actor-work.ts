@@ -72,6 +72,13 @@ interface Work {
   /** Highest producer urgency among pending causes. */
   urgency: number;
   dependencies?: readonly Dependency[];
+  /** Save containing the latest relevant input change, not each subsequent poll. */
+  durabilityTicket?: number;
+}
+
+export interface WorkDurability {
+  capture(): number;
+  current(ticket: number): boolean;
 }
 
 /** Fairness bounds for choosing which pending characters to inspect. Scheduling hints only:
@@ -96,18 +103,13 @@ export class ActorWork {
   constructor(
     private readonly label = 'work',
     private readonly clock: () => number = Date.now,
+    private readonly durability?: WorkDurability,
   ) {}
   private worldId?: string;
   private scope?: string;
   private nextGeneration = 0;
   private readonly tickets = new Map<string, Work>();
   private inputs?: (id: string, world: WorldState, verify?: boolean) => IntakeInputs | unknown[];
-  /** Seam for EPR05's durable-evidence hold: when installed, a character is inspected only
-   * after the evidence it would consume is durably saved. Not yet wired to the save owner's
-   * durability tickets (`WorldService.durabilityTicket`/`isDurable`); until then every
-   * character is eligible, matching earlier behavior.
-   * docs/maintainers/events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake */
-  durable?: (actorId: string) => boolean;
   /** Local accounting by cause and outcome; aggregate metrics only leave this object. */
   readonly stats = {
     wakes: Object.fromEntries(INTAKE_REASONS.map((reason) => [reason, 0])) as Record<
@@ -162,6 +164,7 @@ export class ActorWork {
           generation: ++this.nextGeneration,
           reasons: new Set(['state']),
           urgency: next.urgency ?? 0,
+          durabilityTicket: this.durability?.capture(),
         });
         this.stats.wakes.state++;
         continue;
@@ -177,6 +180,7 @@ export class ActorWork {
         this.note(ticket, 'state');
       }
       if (changed) {
+        ticket.durabilityTicket = this.durability?.capture();
         ticket.inputs = next.values;
         ticket.urgency = Math.max(ticket.urgency, next.urgency ?? 0);
         this.markDirty(ticket, now);
@@ -209,12 +213,7 @@ export class ActorWork {
     for (const [id, ticket] of this.tickets) {
       order++;
       const due = !ticket.dirty && simTime >= ticket.simAt;
-      if (
-        now < ticket.wallAt ||
-        !(ticket.dirty || due) ||
-        (this.durable && !this.durable(id)) ||
-        !eligible(id)
-      )
+      if (now < ticket.wallAt || !(ticket.dirty || due) || !this.isDurable(ticket) || !eligible(id))
         continue;
       // A due deadline starts waiting now, so it ages and cannot sort behind dirty work forever.
       if (due) {
@@ -281,7 +280,7 @@ export class ActorWork {
   }
 
   /** A completed read acknowledges only its captured inputs, never a newer wake.
-   * docs/projects/dependency-invalidation-tech-design.md#4-revision-safe-compute-install-and-acknowledgment
+   * docs/projects/completed/dependency-invalidation-tech-design.md#4-revision-safe-compute-install-and-acknowledgment
    */
   inspected(
     id: string,
@@ -297,6 +296,7 @@ export class ActorWork {
       ticket &&
       capture &&
       ticket.generation === capture.generation &&
+      this.isDurable(ticket) &&
       this.scope === scope &&
       capture.scope === scope &&
       dependenciesCurrent(current, capture.dependencies, scope) &&
@@ -333,11 +333,19 @@ export class ActorWork {
   wake(id: string, signal: IntakeSignal = { reason: 'state' }): void {
     const ticket = this.tickets.get(id);
     if (ticket) {
+      ticket.durabilityTicket = this.durability?.capture();
       this.note(ticket, signal.reason);
       ticket.urgency = Math.max(ticket.urgency, signal.urgency ?? 0);
       this.markDirty(ticket);
       ticket.generation = ++this.nextGeneration;
     }
+  }
+
+  private isDurable(ticket: Work): boolean {
+    return (
+      ticket.durabilityTicket === undefined ||
+      this.durability?.current(ticket.durabilityTicket) === true
+    );
   }
 }
 

@@ -16,6 +16,12 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Action records and learned activities](verification/action-experience.md): native learning/execution, private PostgreSQL history, browser inspection, automatic meal behavior and exact provider costs.
 - [Precise action requests and composed activities](verification/composed-activities.md): no-provider typed commands, exact request details, follow stances/last-seen/stopping time, bounded requested activities, interrupt-then-resume, item quantities and work states.
 
+## Architecture and foundational regression checks
+
+- [Foundation hardening and feature-document audit](verification/foundation-hardening.md): immediate review fixes, selective stable tests, real PostgreSQL recovery, authored geometry and the final browser/status audit.
+
+- [October 14 foundation review](verification/foundation-review.md): broad code/architecture critique, prioritized implementation plans, native and injected probes, ten stable unit tests and explicit unrun qualification.
+
 ## Storage, startup and recovery
 
 - [History storage efficiency](verification/history-storage-efficiency.md): indexed startup, selective edits, query plans and storage costs.

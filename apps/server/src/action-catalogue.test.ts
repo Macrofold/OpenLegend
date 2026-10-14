@@ -97,19 +97,32 @@ it('scopes object menus to their target, including relevant missing prerequisite
     )?.enabled,
   ).toBe(false);
   const person = actionCatalogue(service, { targetId: NPC_ID }).actions;
-  expect(person.map((action) => action.id).filter((id) => !id.startsWith('offer:'))).toEqual([
+  expect(
+    person
+      .map((action) => action.id)
+      .filter((id) => !id.startsWith('offer:') && !id.startsWith('teach-')),
+  ).toEqual([
     `follow:${NPC_ID}`,
     'evade:point',
     'move',
     `punch-${NPC_ID}`,
     `knife-${NPC_ID}:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'knife')!.id}`,
     `talk-${NPC_ID}`,
-    `teach-${NPC_ID}-${Object.values(service.world.recipes).find((recipe) => recipe.sourceCandidate.family.id === 'base:shield')!.id}`,
-    `teach-${NPC_ID}-${Object.values(service.world.recipes).find((recipe) => recipe.sourceCandidate.family.id === 'base:fishing-line')!.id}`,
     `invite-help:${NPC_ID}`,
     `invite-travel:${NPC_ID}`,
     `coaching-request:wilderness:sling-handling:${NPC_ID}`,
   ]);
+  expect(
+    person
+      .filter((action) => action.id.startsWith('teach-'))
+      .map((action) => action.id)
+      .sort(),
+  ).toEqual(
+    service
+      .observe(PLAYER_ID)!
+      .knownRecipes.map((recipe) => `teach-${NPC_ID}-${recipe.id}`)
+      .sort(),
+  );
   // Offers are listed for the selected person and remain unavailable out of arm's reach.
   const offers = person.filter((action) => action.id.startsWith('offer:'));
   expect(offers.length).toBeGreaterThan(0);
@@ -147,6 +160,9 @@ it('refreshes availability after pause and never previews a hidden target', asyn
 
 it('includes learned recipes beyond an AI retrieval limit while excluding another actor’s private knowledge', async () => {
   const { service } = await setup();
+  const existingCrafts = actionCatalogue(service, { targetId: PLAYER_ID }).actions.filter(
+    (action) => action.intent.kind === 'command' && action.intent.command.type === 'craft',
+  );
   for (let index = 0; index < 30; index++) {
     expect(
       (
@@ -174,7 +190,7 @@ it('includes learned recipes beyond an AI retrieval limit while excluding anothe
     catalogue.actions.filter(
       (action) => action.intent.kind === 'command' && action.intent.command.type === 'craft',
     ),
-  ).toHaveLength(32);
+  ).toHaveLength(existingCrafts.length + 30);
   expect(catalogue.actions.some((action) => action.label === 'Craft Wooden shield')).toBe(true);
   expect(JSON.stringify(catalogue)).not.toContain('Private fixture sling');
   expect(catalogue.actions.some((action) => action.label === 'Craft Fixture sling 29')).toBe(true);

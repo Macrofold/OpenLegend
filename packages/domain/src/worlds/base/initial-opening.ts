@@ -1,3 +1,4 @@
+import { baseSpatial } from './spatial-definitions.js';
 import { createItemLot } from '../../objects.js';
 import { hasRecordFields, isSafeRecordId } from '../../records.js';
 import { installRecipe } from '../../declarations.js';
@@ -674,7 +675,7 @@ export function buildBaseInitialWorld(
       nameForm: 'proper',
       description: person.description,
       kind: person === candidate.player ? 'player' : 'npc',
-      spatial: { bodyProfileId: 'person', heading: 0 },
+      spatial: baseSpatial('person'),
       placement: worldPlacement(structuredClone(person.position), person.supportSurfaceId),
       actor: createActor(world, person === candidate.player ? 'player' : 'npc', person.fullness, {
         personality: person.personality,
@@ -692,7 +693,7 @@ export function buildBaseInitialWorld(
       id: scene.id,
       name: scene.name,
       kind: scene.kind === 'fire' ? 'campfire' : scene.kind === 'hare' ? 'animal' : 'resource',
-      spatial: { bodyProfileId: scene.kind === 'hare' ? 'hare' : 'object', heading: 0 },
+      spatial: baseSpatial(scene.kind === 'hare' ? 'hare' : 'object'),
       placement: worldPlacement(structuredClone(scene.position), scene.supportSurfaceId),
     };
     if (scene.kind === 'resource') {

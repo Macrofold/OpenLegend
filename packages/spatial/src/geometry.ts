@@ -1,5 +1,4 @@
 import {
-  BODY_PROFILES,
   MOVEMENT,
   SPATIAL_LIMITS,
   type BodyProfile,
@@ -63,7 +62,7 @@ export function surfaceSupportsRectangle(
     !surfaceContains(surface, { x: footprint.maxX, z: footprint.maxZ })
   )
     return false;
-  if (surface.material !== 'ground') return true;
+  if (!surface.terrain) return true;
   if (
     footprint.minX < 0 ||
     footprint.minZ < 0 ||
@@ -83,7 +82,7 @@ export function terrainWalkable(map: SpatialMap, point: WorldPoint): boolean {
   if (point.x < 0 || point.z < 0 || point.x > map.width - 1 || point.z > map.height - 1)
     return false;
   const tile = map.tiles[Math.round(point.z)]?.[Math.round(point.x)];
-  return tile === 'grass' || tile === 'sand';
+  return tile !== undefined && map.terrain[tile]?.walkable === true;
 }
 /** Resolve exact support only. Never snap an unspecified point to a different floor. */
 export function resolveSupport(
@@ -97,7 +96,7 @@ export function resolveSupport(
     if (!surface || !surfaceContains(surface, point)) return null;
     const y = surfaceHeight(surface, point.x, point.z);
     return Math.abs(y - point.y) <= SPATIAL_LIMITS.supportTolerance &&
-      (surface.material !== 'ground' || terrainWalkable(map, point))
+      (!surface.terrain || terrainWalkable(map, point))
       ? { x: point.x, y, z: point.z, surfaceId: surface.id }
       : null;
   }
@@ -113,7 +112,7 @@ export function resolveSupport(
       if (
         order < bestOrder &&
         Math.abs(y - point.y) <= SPATIAL_LIMITS.supportTolerance &&
-        (surface.material !== 'ground' || terrainWalkable(map, point))
+        (!surface.terrain || terrainWalkable(map, point))
       ) {
         best = { x: point.x, y, z: point.z, surfaceId: surface.id };
         bestOrder = order;
@@ -245,6 +244,7 @@ interface StanceMemo {
 }
 interface PreparedGeometry {
   revision: number;
+  terrain: SpatialMap['terrain'];
   shapes: PreparedShape[];
   blockers: SpatialBlocker[];
   supports: WalkableSurface[];
@@ -290,14 +290,17 @@ function surfaceBounds(s: WalkableSurface, topOnly = false): Bounds3 {
 }
 function preparedShapes(map: SpatialMap) {
   const cached = shapeCache.get(map);
-  if (cached?.revision === map.spatial.revision) return cached;
+  if (cached?.revision === map.spatial.revision && cached.terrain === map.terrain) return cached;
   const blockers: SpatialBlocker[] = [...map.spatial.blockers];
-  const ground = map.spatial.surfaces.filter((surface) => surface.material === 'ground');
-  // Rock geometry derives from the canonical terrain cells, not a second writable rock store.
+  const ground = map.spatial.surfaces.filter((surface) => surface.terrain);
+  // Compile authored cell solids once with the map, never once per actor or query.
+  const terrainNames = new Map<string, string>();
   for (let z = 0; z < map.height; z++)
     for (let x = 0; x < map.width; x++) {
-      if (map.tiles[z]?.[x] === 'rock') {
-        // Terrain rocks remain attached to raised ground, including a slope junction.
+      const tile = map.tiles[z]?.[x],
+        solid = tile === undefined ? undefined : map.terrain[tile]?.solid;
+      if (solid) {
+        // Cell solids remain attached to raised ground, including a slope junction.
         const heights = [-0.5, 0.5].flatMap((dx) =>
           [-0.5, 0.5].map((dz) => {
             const px = Math.max(0, Math.min(map.width - 1, x + dx));
@@ -306,16 +309,18 @@ function preparedShapes(map: SpatialMap) {
             return surface ? surfaceHeight(surface, px, pz) : 0;
           }),
         );
+        const id = `terrain-solid:${x}:${z}`;
+        terrainNames.set(id, solid.name);
         blockers.push({
-          id: `terrain-rock:${x}:${z}`,
+          id,
           bounds: {
             min: { x: x - 0.5, y: Math.min(...heights), z: z - 0.5 },
-            max: { x: x + 0.5, y: Math.max(...heights) + 2, z: z + 0.5 },
+            max: { x: x + 0.5, y: Math.max(...heights) + solid.height, z: z + 0.5 },
           },
-          movement: true,
-          sight: true,
-          acousticTransmission: 0.15,
-          material: 'stone',
+          movement: solid.movement,
+          sight: solid.sight,
+          acousticTransmission: solid.acousticTransmission,
+          material: solid.material,
         });
       }
     }
@@ -352,14 +357,13 @@ function preparedShapes(map: SpatialMap) {
   const supports = [
     ...map.spatial.surfaces,
     ...blockers
-      .filter((b) => b.id.startsWith('terrain-rock:'))
+      .filter((b) => terrainNames.has(b.id) && b.movement)
       .map(
         (b): WalkableSurface => ({
           id: b.id,
-          name: 'Rock top',
+          name: terrainNames.get(b.id)!,
           levelId:
-            map.spatial.surfaces.find((s) => s.material === 'ground')?.levelId ??
-            map.spatial.levels[0]!.id,
+            map.spatial.surfaces.find((s) => s.terrain)?.levelId ?? map.spatial.levels[0]!.id,
           minX: b.bounds.min.x,
           maxX: b.bounds.max.x,
           minZ: b.bounds.min.z,
@@ -369,12 +373,13 @@ function preparedShapes(map: SpatialMap) {
           slopeZ: 0,
           thickness: b.bounds.max.y - b.bounds.min.y,
           acousticTransmission: b.acousticTransmission,
-          material: 'stone',
+          material: b.material,
         }),
       ),
   ];
   const result: PreparedGeometry = {
     revision: map.spatial.revision,
+    terrain: map.terrain,
     stances: new WeakMap(),
     shapes,
     blockers,
@@ -391,8 +396,8 @@ function preparedShapes(map: SpatialMap) {
   shapeCache.set(map, result);
   return result;
 }
-/** Rock tops are semantic supports derived from the same canonical cells as their solid volume.
- * No duplicate geometry or second writable rock-top store is introduced. */
+/** Solid tops derive from the same authored cells as their collision volume; no second
+ * writable terrain geometry is introduced. */
 export function supportSurfaces(map: SpatialMap): readonly WalkableSurface[] {
   return preparedShapes(map).supports;
 }
@@ -785,11 +790,7 @@ function aboveSurfaceDuringContact(
   });
 }
 
-export function canStand(
-  map: SpatialMap,
-  point: SurfacePoint,
-  body: BodyProfile = BODY_PROFILES.person,
-): boolean {
+export function canStand(map: SpatialMap, point: SurfacePoint, body: BodyProfile): boolean {
   // Navigation reuses immutable points for many adjacent edges. Cache their exact stance,
   // not a guessed clearance class. Mutable positions always take the complete query path.
   // The owning map/revision invalidates these weak entries with all other derived geometry.
@@ -826,7 +827,7 @@ export function canWalkSegment(
   map: SpatialMap,
   from: SurfacePoint,
   to: SurfacePoint,
-  body: BodyProfile = BODY_PROFILES.person,
+  body: BodyProfile,
 ): boolean {
   if (
     from.surfaceId !== to.surfaceId &&
@@ -856,7 +857,7 @@ export function canWalkSegment(
     )
   )
     return false;
-  return a.material !== 'ground' || terrainSegmentWalkable(map, from, to);
+  return !a.terrain || terrainSegmentWalkable(map, from, to);
 }
 /** Visit crossed terrain cells exactly instead of sampling every 25 cm. Short diagonal
  * water crossings must not disappear between samples; this is not position quantization.
@@ -875,7 +876,7 @@ function terrainSegmentWalkable(map: SpatialMap, from: WorldPoint, to: WorldPoin
   let tz = dz === 0 ? Infinity : (z + sz * 0.5 - from.z) / dz;
   const allowed = (cx: number, cz: number): boolean => {
     const tile = map.tiles[cz]?.[cx];
-    return tile === 'grass' || tile === 'sand';
+    return tile !== undefined && map.terrain[tile]?.walkable === true;
   };
   while (true) {
     if (!allowed(x, z)) return false;
@@ -929,10 +930,7 @@ export function pickSurfaces(
     const t = (surfaceHeight(surface, from.x, from.z) - from.y) / dy;
     if (t < 0 || t > 1) continue;
     const point = { ...interpolate(from, to, t), surfaceId: surface.id };
-    if (
-      surfaceContains(surface, point) &&
-      (surface.material !== 'ground' || terrainWalkable(map, point))
-    )
+    if (surfaceContains(surface, point) && (!surface.terrain || terrainWalkable(map, point)))
       hits.push({ point, fraction: t });
   }
   return hits.sort(

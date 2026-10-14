@@ -140,7 +140,6 @@ try {
         }
       }
       // Keep restored story identities/revisions; projection fills only missing or changed sources.
-      await store.db.prepare('DELETE FROM meta WHERE key=?').run('integration:world-journal-head');
       validateCurrentWorldState(state.world);
       state.manuallyPaused = true;
       state.world.paused = true;

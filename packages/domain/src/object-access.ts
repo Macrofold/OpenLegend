@@ -5,7 +5,7 @@ import { itemHasReservations } from './resource-claims.js';
 import type { WorldState, ItemInstance } from './types.js';
 
 /** Physical access is separate from declared title and human-private knowledge.
- * docs/projects/immediate-gameplay-limits.md#decisions */
+ * docs/projects/completed/immediate-gameplay-limits.md#decisions */
 export function canAccessContainer(world: WorldState, actorId: string, id: string): boolean {
   const actor = world.entities[actorId],
     target = world.entities[id];

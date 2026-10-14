@@ -5,7 +5,6 @@ import { activelyParticipates } from './participation-state.js';
 import { worldRootEntities } from './entity-index.js';
 import { isDraft } from 'immer';
 import {
-  BODY_PROFILES,
   MOVEMENT,
   canStand,
   bodyIntersects,
@@ -93,8 +92,8 @@ export { distance3D };
 export function isWalkable(
   world: WorldState,
   position: Position,
-  surfaceId?: string,
-  profile: BodyProfile = BODY_PROFILES.person,
+  surfaceId: string | undefined,
+  profile: BodyProfile,
 ): boolean {
   const map = spatialMap(world),
     p = resolveSupport(map, position, surfaceId);
@@ -110,12 +109,11 @@ export function interactionAnchor(
   return { x: position.x, y: position.y + bodyProfile(entity).interactionHeight, z: position.z };
 }
 /** Roots are indexed at their feet, while reach is measured between interaction anchors.
- * Expand by the native profile bound before exact checks, including different body heights. */
-export function interactionCandidateBounds(entity: Entity, reach: number) {
+ * Expand by the current indexed bodies before exact checks, including different body heights. */
+export function interactionCandidateBounds(world: WorldState, entity: Entity, reach: number) {
   return {
     position: interactionAnchor(entity),
-    radius:
-      reach + Math.max(...Object.values(BODY_PROFILES).map((profile) => profile.interactionHeight)),
+    radius: reach + entityIndex(world).interactionHeight,
   };
 }
 export function hasLineOfEffect(
@@ -158,8 +156,7 @@ export function occupiedBodySweepClear(
 ): boolean {
   const profile = bodyProfile(actor),
     travel = distance3D(from, to);
-  const extent = Math.max(...Object.values(BODY_PROFILES).map((p) => p.height + p.radius));
-  for (const other of nearbyEntities(world, from, travel + extent + profile.radius)) {
+  for (const other of nearbyBodyEntities(world, from, travel + profile.radius)) {
     if (other.id === actor.id || !other.actor || !activelyParticipates(other)) continue;
     chargeWork({ tests: 1 });
     if (bodyIntersects({ bounds: bodySpace(world, other) }, from, to, profile)) return false;
@@ -253,9 +250,9 @@ export function findPath(
   world: WorldState,
   from: Position,
   to: Position,
-  fromSurfaceId?: string,
-  toSurfaceId?: string,
-  profile: BodyProfile = BODY_PROFILES.person,
+  fromSurfaceId: string | undefined,
+  toSurfaceId: string | undefined,
+  profile: BodyProfile,
 ): RoutePlan | null {
   const map = spatialMap(world);
   const start = resolveSupport(map, from, fromSurfaceId),
@@ -520,11 +517,17 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
 
 const entityIndexes = new WeakMap<
   WorldState['entities'],
-  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>>
+  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>> & {
+    bodyExtent: number;
+    interactionHeight: number;
+  }
 >();
 const livingEntityIndexes = new WeakMap<
   WorldState['entities'],
-  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>>
+  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>> & {
+    bodyExtent: number;
+    interactionHeight: number;
+  }
 >();
 function entityIndex(world: WorldState, livingOnly = false) {
   const indexes = livingOnly ? livingEntityIndexes : entityIndexes;
@@ -533,11 +536,17 @@ function entityIndex(world: WorldState, livingOnly = false) {
       ? indexes.get(world.entities)
       : undefined;
   if (!index) {
-    index = spatialCandidates(
-      worldRootEntities(world, true)
-        .filter((entity) => activelyParticipates(entity) && (!livingOnly || entity.actor?.alive))
-        .map((entity) => ({ entity, position: worldPosition(entity) })),
-    );
+    const entries = worldRootEntities(world, true)
+      .filter((entity) => activelyParticipates(entity) && (!livingOnly || entity.actor?.alive))
+      .map((entity) => ({ entity, position: worldPosition(entity) }));
+    let bodyExtent = 0,
+      interactionHeight = 0;
+    for (const { entity } of entries) {
+      const body = bodyProfile(entity);
+      bodyExtent = Math.max(bodyExtent, body.height + body.radius);
+      interactionHeight = Math.max(interactionHeight, body.interactionHeight);
+    }
+    index = Object.assign(spatialCandidates(entries), { bodyExtent, interactionHeight });
     if (!isDraft(world.entities) && Object.isFrozen(world.entities))
       indexes.set(world.entities, index);
   }
@@ -558,7 +567,8 @@ export function spatialCandidateMembershipKey(
   reach: number,
 ): string {
   const index = entityIndex(world),
-    { position, radius } = interactionCandidateBounds(actor, reach),
+    position = interactionAnchor(actor),
+    radius = reach + index.interactionHeight,
     bounds = JSON.stringify([position, radius]);
   let cached = entityMembershipKeys.get(index);
   if (cached?.bounds !== bounds) {
@@ -566,7 +576,7 @@ export function spatialCandidateMembershipKey(
       entity.id,
       position,
       entity.placement?.revision,
-      entity.spatial.bodyProfileId,
+      bodyProfile(entity),
       entity.inventoryRevision,
       entity.container?.access,
     ]);
@@ -577,6 +587,17 @@ export function spatialCandidateMembershipKey(
 }
 export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
   return entityIndex(world)(position, radius).map(({ entity }) => entity);
+}
+/** Expand foot-indexed candidates using their actual full body dimensions. The bound is
+ * prepared with the existing root index, so larger authored bodies cannot disappear. */
+export function nearbyBodyEntities(
+  world: WorldState,
+  position: Position,
+  radius: number,
+  livingOnly = false,
+): Entity[] {
+  const index = entityIndex(world, livingOnly);
+  return index(position, radius + index.bodyExtent).map(({ entity }) => entity);
 }
 /** Safety checks need living bodies, not every inert object in conservative grid cells. */
 export function nearbyLivingEntities(

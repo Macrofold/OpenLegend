@@ -4,6 +4,8 @@ A practical standard for deciding what the player sees, how controls behave and 
 
 **Research updated:** October 1, 2026. **Runtime evidence baseline:** `0382be76648879cf8a8397ad6c3534b4431916f5` on `Macrofold/OpenLegend/main`. The handbook integrates UI source/specification inspection, authoritative design and engineering guidance, pinned company code, game examples and player feedback. Exact source dates, revisions and access limits live in one [research ledger](research.md). No running-game or usability study is implied.
 
+**Contract review: October 14, 2026.** The foundation hardening reconciles [inventory continuity](inventory.md), [draft cleanup](chat-and-invention.md#composer-contract), [private detail reads](react.md#effects-asynchronous-work-and-mutations), and [Resume presentation](world-interaction.md#paused-game-tabs). These are current contracts; the [foundation tracker](../maintainers/foundation-review-todos.md) records implementation and still-open verification. The dated research evidence below is not a new usability certification.
+
 ## Start here, not everywhere
 
 Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.

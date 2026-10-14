@@ -3,7 +3,7 @@ import type { Named } from '@open-legend/language';
 import type { SurfacePoint, SpatialMap, WorldPoint } from '@open-legend/spatial';
 /** All authoritative state is JSON data. The kernel owns no I/O or ambient clock. */
 export type Position = WorldPoint;
-export type Terrain = 'grass' | 'sand' | 'water' | 'rock';
+export type Terrain = import('@open-legend/spatial').Terrain;
 export interface WorldMap extends SpatialMap {}
 export type MaterialProperty =
   | 'fiber'

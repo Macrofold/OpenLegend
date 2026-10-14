@@ -1,3 +1,4 @@
+import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { MARA_IDENTITY, TAVIN_IDENTITY } from './characters.js';
@@ -61,7 +62,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
       nameForm: 'proper',
       description: MARA_IDENTITY.description,
       kind: 'npc',
-      spatial: { bodyProfileId: 'person', heading: 0 },
+      spatial: baseSpatial('person'),
       placement: worldPlacement(maraPoint, maraPoint.surfaceId),
       actor: createActor(world, 'npc', 72, MARA_IDENTITY),
     },
@@ -71,7 +72,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
       nameForm: 'proper',
       description: TAVIN_IDENTITY.description,
       kind: 'npc',
-      spatial: { bodyProfileId: 'person', heading: 0 },
+      spatial: baseSpatial('person'),
       placement: worldPlacement(tavinPoint, tavinPoint.surfaceId),
       actor: createActor(world, 'npc', 74, TAVIN_IDENTITY),
     },
@@ -82,7 +83,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
       description:
         'A carved wooden marker identifies the Mending Clearing work area beside the rough stone and points south along the reed edge toward the Reed-side Store beside the split stone. Inspect what actually remains at each spot.',
       placement: worldPlacement(clearingMarker, clearingMarker.surfaceId),
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       appearance: 'crate-mesh',
     },
     {
@@ -92,7 +93,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
       description:
         'A ground work spot beside a rough mending stone in the Mending Clearing. Reach it and inspect what actually rests here.',
       placement: worldPlacement(mendingSpot, mendingSpot.surfaceId),
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
     },
     {
       id: 'reed-side-store-pile',
@@ -101,7 +102,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
       description:
         'A dry storage spot beside a split stone near the river reeds. Reach it and inspect what actually rests here.',
       placement: worldPlacement(reedStore, reedStore.surfaceId),
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       appearance: 'crate-mesh',
     },
   ];

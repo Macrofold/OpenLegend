@@ -25,7 +25,7 @@ function renders(root: pc.Entity): pc.RenderComponent[] {
 }
 
 /** One trusted bundled pilot. No generated URL intake, appearance authority, or world writes.
- * docs/projects/mercenary-scene-pilot.md */
+ * docs/projects/completed/mercenary-scene-pilot.md */
 export class MercenaryModels {
   private asset?: pc.Asset;
   private pending?: Promise<Container>;

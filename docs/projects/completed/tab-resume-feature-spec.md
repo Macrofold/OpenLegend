@@ -1,8 +1,8 @@
 # Explicit tab resume — feature specification
 
-| Status    | Current progress                                                                                                  | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Automatic sole-tab entry, exact transfer dialog and shared-login logout passed focused native/browser acceptance. | 2026-10-03   |
+| Status    | Current progress                                                                                                | Last updated |
+| --------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Tab entry/logout and later inventory/camera continuity passed their separate focused native/browser acceptance. | 2026-10-14   |
 
 ## Purpose and approved behavior
 
@@ -24,6 +24,14 @@ Log Out ends the shared game login and clears private presentation in all its br
 Reuse account, session, control generation, departure and return owners. Browser coordination contains only tab identities and the opaque permitted draft scope; it is a presentation/liveness hint, never command authorization. No new world law, save schema or paid AI work.
 
 Implement and review before the final browser acceptance session. Use focused existing PostgreSQL/native checks and existing browser journeys, then inspect the exact dialog visually and interact with both tabs. Cover reload/duplicate identity, sole-tab return, deliberate transfers, keyboard isolation, all-tab logout, sign-in recovery, narrow layout and no provider dispatch. Preserve the existing broader Auth0 qualification gap.
+
+## Subsequent continuity hardening — October 14, 2026
+
+**Feature specification updated 2026-10-14T21:11:40Z.**
+
+The completed October 3 tab-entry behavior remains the accepted contract. Foundation hardening preserves inventory navigation, search, unfinished quantities and camera/scene resources when the same player resumes, while refreshing private reads and clearing transient captions/hover. Failed or obsolete reads cannot restore private details; actual account, character or timeline replacement clears private work. The complete final-build browser journey now passes, including real geometry replacement and scene disposal/reload. [Inventory continuity](../../ui-ux/inventory.md#organize-around-player-tasks-not-container-internals) and [world presentation](../../world-presentation.md#camera-and-settings) own the current behavior; [FR10](../../maintainers/foundation-review-todos.md#fr10--preserve-same-character-work-and-camera-on-resume) and the [new browser evidence](../../verification/foundation-hardening.md#resume-and-private-draft-browser-acceptance--october-14) record this separate acceptance.
+
+Initial 3D construction now waits until the tab enters play, keeping cold graphics preparation out of control acquisition. A newly opened competing tab shows the permitted interface and Resume dialog before preparing its 3D background; an existing paused tab preserves its scene and receives current invalidation. Caption/perception preferences apply when that first scene is created. This changes presentation timing, not who may control the character or the authored departure rule.
 
 ## Maintained records
 

@@ -52,7 +52,7 @@ function InventoryHistory({
       controller.abort();
     };
   }, [open, key, visible]);
-  const current = result;
+  const current = result?.key === key ? result : undefined;
   const loading = result?.key !== key;
   return (
     <details onToggle={(event) => setOpen(event.currentTarget.open)}>
@@ -130,17 +130,14 @@ function MergeTargets({
       controller.abort();
     };
   }, [key, visible]);
-  // While another page loads, keep the previous controls so keyboard focus stays in place;
-  // merging waits for the current result.
-  const loading = result?.key !== key;
-  const current = result;
+  const current = result?.key === key ? result : undefined;
   if (!current) return <p role="status">Finding matching lots…</p>;
-  if (current.error && !loading) return <p role="alert">{current.error}</p>;
+  if (current.error) return <p role="alert">{current.error}</p>;
   const targets = current.page?.items ?? [];
   const target = targets.find((other) => other.id === targetId) ?? targets[0];
-  if (!target && !current.page?.next && !cursor && !loading) return null;
+  if (!target && !current.page?.next && !cursor) return null;
   return (
-    <div className="ol-actions" aria-busy={loading}>
+    <div className="ol-actions">
       {target ? (
         <>
           <label>
@@ -153,21 +150,13 @@ function MergeTargets({
               ))}
             </select>
           </label>
-          <Button
-            size="sm"
-            variant="quiet"
-            disabled={!canAct || loading}
-            onPress={() => onMerge(target)}
-          >
+          <Button size="sm" variant="quiet" disabled={!canAct} onPress={() => onMerge(target)}>
             Merge lots
           </Button>
         </>
       ) : (
         <p className="ol-caption">No matching lot in this part of the container.</p>
       )}
-      <span className="ol-caption" role="status">
-        {loading ? 'Finding matching lots…' : ''}
-      </span>
       {current.page?.next && (
         <Button size="sm" variant="quiet" onPress={() => setCursor(current.page!.next)}>
           Search more lots
@@ -207,13 +196,13 @@ type TransferDraft = {
   rootRevision: number;
 };
 
-/** A changed authority/timeline remounts private local work before it can render in another
- * character's inventory. Layout changes never change this identity. */
+/** Only private ownership/timeline replacement discards edits. Resume changes request
+ * authority below, so retained drafts must await fresh facts before becoming actionable. */
 export function Inventory(props: InventoryProps) {
   const scope = JSON.stringify([
     props.view.worldId,
     props.view.player.id,
-    props.view.access?.scope,
+    props.view.access?.privateDraftScope,
     props.view.saveTimeline,
   ]);
   return <InventoryWorkspace key={scope} {...props} scope={scope} />;
@@ -283,6 +272,7 @@ function InventoryWorkspace({
   }, [visible]);
   const base = JSON.stringify([
     scope,
+    view.access?.scope,
     view.player.inventoryRevision,
     view.player.inventory.map((entry) => [
       entry.id,
@@ -309,9 +299,11 @@ function InventoryWorkspace({
     readVisibility.revision,
   ]);
   const key = JSON.stringify([base, location.cursor]);
+  const currentReadKey = useRef<string | null>(key);
+  currentReadKey.current = visible ? key : null;
   const current = result?.base === base ? result : undefined;
-  const page =
-    current?.page ?? (result?.page?.container.id === location.id ? result.page : undefined);
+  // Retain editing/navigation, not private facts from an older authority or failed read.
+  const page = current?.page;
   const loading = current?.key !== key;
   useEffect(() => {
     if (!visible) return;
@@ -324,16 +316,22 @@ function InventoryWorkspace({
           controller.signal,
         )
           .then((response) => {
-            if (controller.signal.aborted) return;
+            if (controller.signal.aborted || currentReadKey.current !== key) return;
             if (response.ok)
               setSelection((selected) => {
-                if (!selected || selected.container.id !== response.container.id) return selected;
+                if (
+                  currentReadKey.current !== key ||
+                  !selected ||
+                  selected.container.id !== response.container.id
+                )
+                  return selected;
                 const inspected = response.items.find((entry) => entry.id === selected.item.id);
                 return inspected
                   ? { ...selected, item: inspected, container: response.container }
                   : selected;
               });
             setResult((previous) => {
+              if (currentReadKey.current !== key) return previous;
               if (!response.ok)
                 return { key, base, error: response.message ?? 'Inventory unavailable.' };
               const prior =
@@ -344,7 +342,7 @@ function InventoryWorkspace({
             });
           })
           .catch((error: unknown) => {
-            if (!controller.signal.aborted)
+            if (!controller.signal.aborted && currentReadKey.current === key)
               setResult({
                 key,
                 base,
@@ -370,11 +368,7 @@ function InventoryWorkspace({
     );
   const item =
     refreshedItem ??
-    (selection &&
-    page?.container.id === selection.container.id &&
-    page.container.revision === selection.container.revision
-      ? (compactItem ?? selection.item)
-      : undefined);
+    (selection && page?.container.id === selection.container.id ? compactItem : undefined);
   // A filter or a continuation-only window cannot certify absence from the container.
   const selectedMissing =
     !!selection &&
@@ -385,7 +379,8 @@ function InventoryWorkspace({
     !location.cursor &&
     !page?.next;
   const selectedUncertain = !!selection && !!current?.page && !loading && !item && !selectedMissing;
-  const canAct = visible && connected && view.player.canUseInventory && !pending && !loading;
+  const canAct =
+    visible && connected && view.player.canUseInventory && !!page && !pending && !loading;
   const amount = exactQuantity(selection?.quantity ?? '', item?.availableQuantity);
   const transferAmount = exactQuantity(transfer?.quantity ?? '', transfer?.item.availableQuantity);
   const transferStale =
@@ -667,6 +662,7 @@ function InventoryWorkspace({
       {picker && (
         <InventoryDestinations
           scope={scope}
+          authorityRevision={view.access?.scope}
           visible={visible}
           source={picker === 'move' ? transfer?.source : undefined}
           connected={connected && !pending}
@@ -1266,7 +1262,7 @@ function InventoryWorkspace({
           </Button>
         )}
         <InventoryHistory
-          scope={scope}
+          scope={JSON.stringify([scope, view.access?.scope])}
           revision={view.player.inventoryRevision}
           visible={visible}
           readRevision={readVisibility.revision}

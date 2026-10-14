@@ -111,10 +111,12 @@ describe('local HTTP boundary', () => {
       (item) => item.ownerId === PLAYER_ID && item.definitionId === 'wood',
     )!;
     expect(report.catalogue.actions.map((action: { id: string }) => action.id)).toEqual([
+      'evade:point',
       'move',
       'fire-extinguish:campfire',
       `fire-fuel:${wood.id}:campfire`,
-      'cook',
+      'cook-base:cook-meat',
+      'cook-base:cook-river-fish',
     ]);
     expect(JSON.stringify(game.service.world)).toBe(original);
     expect(await game.service.store.recentJobs()).toEqual([]);
@@ -145,7 +147,8 @@ describe('local HTTP boundary', () => {
     const { initial } = await start();
     expect(initial.clock.pauseReason).toBe('away');
     expect(initial.ai.mode).toBe('unconfigured');
-    expect(initial.recipes.map((recipe) => recipe.origin)).toEqual(['authored']);
+    expect(initial.recipes.length).toBeGreaterThan(0);
+    expect(new Set(initial.recipes.map((recipe) => recipe.origin))).toEqual(new Set(['authored']));
     expect(initial).not.toHaveProperty('memories');
     expect(initial).not.toHaveProperty('items');
     expect(JSON.stringify(initial)).not.toContain('planGeneration');

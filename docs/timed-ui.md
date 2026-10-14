@@ -6,7 +6,7 @@ Accepted presentation contract; current components and limitations are recorded 
 
 ## 1. Two small reusable pieces
 
-Build a pure `ProgressRing` visual component and a small presentation lifetime utility. Do not create a universal world-timer service, an animation framework, or another scheduler.
+The client implements a pure [ProgressRing](../apps/client/src/design-system/progress-ring.tsx), [presentation clock/lifetime helpers](../apps/client/src/ui-lifetime.ts), and their [speech-caption consumer](../apps/client/src/speech-captions.tsx). Do not create a universal world-timer service, an animation framework, or another scheduler.
 
 `ProgressRing` accepts a finite clamped fraction, accessible-label/semantics options, size, and visual direction. Its first use is remaining fraction: full at appearance, empty at expiry. A work consumer may use elapsed fraction instead. The component does not know about speech, cooldown admission, dates, save files, actors, model calls or expiration effects.
 

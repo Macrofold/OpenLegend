@@ -24,7 +24,7 @@ class CharacterPass extends pc.RenderPass {
 
 /** A live model sampled at a fixed character resolution. Cropping changes only clip X/Y:
  * each color pixel retains the model's original world-camera depth, not a billboard depth.
- * docs/projects/mercenary-scene-pilot.md#fixed-character-pixels-and-default-npc--authorized-follow-up */
+ * docs/projects/completed/mercenary-scene-pilot.md#fixed-character-pixels-and-default-npc--authorized-follow-up */
 export class PixelCharacter {
   readonly layer = new pc.Layer({ name: 'Character pixels' });
   private readonly pass: CharacterPass;

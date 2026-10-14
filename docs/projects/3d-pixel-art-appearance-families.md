@@ -1,12 +1,16 @@
 # Progressive 3D pixel art — appearance families and composition
 
-**Status: proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+
+**General composition remains proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
 
 ## Maintained records
 
 - Implementation: [V3D04–V3D06 and V3D09](../maintainers/3d-pixel-art.md).
 - Limits: [A3D asset inventory](../limits/3d-pixel-art.md), with existing [object](../limits/objects.md), [state-effect](../limits/state-effects.md), and [spatial](../limits/spatial.md) owners.
-- Contracts: [technical design](3d-pixel-art-tech-design.md); [persistent objects](persistent-objects-feature-spec.md); [engine/world boundaries](../engine-and-world-boundaries.md).
+- Contracts: [technical design](3d-pixel-art-tech-design.md); [persistent objects](completed/persistent-objects-feature-spec.md); [engine/world boundaries](../engine-and-world-boundaries.md).
 - Generation: [asset pipeline](3d-pixel-art-asset-pipeline.md). Appearance reference: [creative brief](../../art-direction/final-board/creative-brief.md).
 
 ## 1. Compose variation at the correct level

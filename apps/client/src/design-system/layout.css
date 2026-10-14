@@ -56,6 +56,12 @@ body,
   pointer-events: none;
   z-index: var(--z-hud);
 }
+.ol-play-workspace {
+  display: contents;
+}
+.ol-play-workspace[hidden] {
+  display: none;
+}
 .ol-hud :where(button, input, textarea, select, a, summary),
 .ol-card,
 .ol-panel,
@@ -997,7 +1003,7 @@ body,
   font-size: 12px;
   opacity: 0.85;
 }
-/* The player's own promises (docs/projects/readable-promises-feature-spec.md). */
+/* The player's own promises (docs/projects/completed/readable-promises-feature-spec.md). */
 .ol-promises {
   display: grid;
   gap: var(--space-3);

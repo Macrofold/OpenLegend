@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readDraft, saveDraft } from './draft';
+import { clearDraft, readDraft, saveDraft } from './draft';
 
 function memoryStorage(initial: Array<[string, string]> = []) {
   const data = new Map(initial);
@@ -26,24 +26,26 @@ describe('local composer draft', () => {
     expect(data.size).toBe(0);
   });
 
-  it('keeps plain text from the previous client and migrates its explicitly selected mode', () => {
+  it('never reads obsolete private text and clears all known keys on access replacement', () => {
     const { data, storage } = memoryStorage([['open-legend:composer-draft:v1', 'An older draft']]);
-    expect(readDraft(storage)).toEqual({ text: 'An older draft', mode: 'chat' });
-    saveDraft({ text: 'An older draft', mode: 'invention' }, storage);
-    expect(readDraft(storage)).toEqual({ text: 'An older draft', mode: 'invention' });
-    expect(data.has('open-legend:composer-draft:v1')).toBe(false);
-    saveDraft({ text: '', mode: 'invention' }, storage);
-    expect(readDraft(storage).text).toBe('');
+    expect(readDraft(storage)).toEqual({ text: '', mode: 'chat' });
+    data.set(
+      'open-legend:composer-draft:v2',
+      JSON.stringify({ text: 'Current', mode: 'invention' }),
+    );
+    clearDraft(storage);
+    expect(data.size).toBe(0);
+    expect(readDraft(storage)).toEqual({ text: '', mode: 'chat' });
   });
 
   it.each(['{broken', '{"text":"Wrong route","mode":"unknown"}'])(
-    'ignores malformed saved intent without losing a recoverable legacy draft: %s',
+    'does not turn malformed current data into a recovered older draft: %s',
     (saved) => {
       const { storage } = memoryStorage([
         ['open-legend:composer-draft:v2', saved],
         ['open-legend:composer-draft:v1', 'Recoverable draft'],
       ]);
-      expect(readDraft(storage)).toEqual({ text: 'Recoverable draft', mode: 'chat' });
+      expect(readDraft(storage)).toEqual({ text: '', mode: 'chat' });
     },
   );
 
@@ -53,11 +55,12 @@ describe('local composer draft', () => {
     };
     expect(readDraft(unavailable)).toEqual({ text: '', mode: 'chat' });
     expect(() => saveDraft({ text: 'Keep writing', mode: 'chat' }, unavailable)).not.toThrow();
+    expect(() => clearDraft(unavailable)).not.toThrow();
   });
 
   it('does not block editing when storage quota is exhausted', () => {
     const full = () => ({
-      getItem: () => 'Existing draft',
+      getItem: () => JSON.stringify({ text: 'Existing draft', mode: 'chat' }),
       setItem: () => {
         throw new Error('Quota exceeded');
       },

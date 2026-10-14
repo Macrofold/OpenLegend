@@ -1,6 +1,10 @@
 # Progressive 3D pixel art — generation and publication pipeline
 
-**Status: proposed, no provider integration or live generation performed.** This document specifies art production during play, including optional 2D-first/3D-later delivery. It implements the direction of the [feature specification](3d-pixel-art-feature-spec.md) through the [technical contracts](3d-pixel-art-tech-design.md); it does not authorize mechanical invention, spending, or arbitrary generated code by itself.
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+
+**General generation/publication pipeline remains proposed; no live-generation qualification is claimed.** This document specifies art production during play, including optional 2D-first/3D-later delivery. It implements the direction of the [feature specification](3d-pixel-art-feature-spec.md) through the [technical contracts](3d-pixel-art-tech-design.md); it does not authorize mechanical invention, spending, or arbitrary generated code by itself.
 
 ## Maintained records
 

@@ -2,7 +2,7 @@
 
 ## Bodily conditions and chosen responses
 
-Fullness below 40/30/20/10 is described as hungry/very hungry/famished/starving. At zero, starvation damages health. Health describes bodily integrity and the world's actual death/incapacity consequences; NPC death ends living activity with no assured return. The existing ghost/difficult-revival policy is unchanged, and this slice does not implement that future lifecycle work.
+Fullness below 40/30/20/10 is described as hungry/very hungry/famished/starving. At zero, starvation damages health. Health describes bodily integrity and the world's actual death/incapacity consequences; NPC death ends living activity with no assured return. [Player death and treatable scars](player-death.md) are implemented. Ordinary NPC summoning and difficult revival remain proposed under [lifecycle and protection](lifecycle-and-protection.md#npc-death-ghosts-and-revival); authorized creator revival is already available.
 
 The engine derives labels from installed numeric definitions and records private initial, worsening and critical-review opportunities. Saved episode state prevents duplicate notifications; sleep or unavailable cognition capability retains pending state without manufacturing conscious awareness. Recovery uses the authored margin, while the displayed condition always follows the current value. [BW07](../../limits/base-world.md#bw07) owns tuning, and [Architecture](../../architecture.md#embodied-conditions-and-inventory) owns integration.
 

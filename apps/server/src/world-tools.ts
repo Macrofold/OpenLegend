@@ -204,9 +204,19 @@ export class WorldToolService {
           message: 'Arguments do not match this tool.',
           cost: 'no-paid-work',
         };
+      // Retain each exact read's guard through nested async projection, then check at
+      // the common UI/MCP disclosure boundary rather than only inside the SQL reader.
+      const privateReads: Array<() => boolean> = [];
       const result: WorldToolResult = {
         status: 'ok',
-        data: await this.read(name as WorldReadToolName, checked.data, world, generation, grant),
+        data: await this.read(
+          name as WorldReadToolName,
+          checked.data,
+          world,
+          generation,
+          grant,
+          privateReads,
+        ),
         snapshot: {
           worldId: world.id,
           generation,
@@ -220,6 +230,11 @@ export class WorldToolService {
         (grant.scope && !this.service.currentScope(grant.scope, 'inspect'))
       )
         throw new GraphReadError('forbidden', 'World inspection grant changed.');
+      if (privateReads.some((current) => !current()))
+        throw new GraphReadError(
+          'stale',
+          'Selected evidence or access changed. Refresh this inspection.',
+        );
       // The whole result is rejected, never silently truncated into a misleading complete response.
       const serialized = JSON.stringify(result);
       if (Buffer.byteLength(serialized) > RESULT_BYTES)
@@ -263,6 +278,7 @@ export class WorldToolService {
     generation: string,
     id: string,
     grant: WorldReadGrant,
+    privateReads: Array<() => boolean>,
   ) {
     let pair: unknown;
     try {
@@ -280,6 +296,11 @@ export class WorldToolService {
     if (!this.canReadSubject(world, actorId, grant))
       throw new GraphReadError('forbidden', 'Evidence is unavailable.');
     const scope = await this.memoryScope(world.id, actorId);
+    privateReads.push(
+      this.service.privateReadFence(actorId, () =>
+        this.canReadSubject(this.service.world, actorId, grant),
+      ),
+    );
     const entry = await this.service.store.memories?.entry(scope, `memory:${memoryId}`);
     if (!entry || entry.source !== 'memory')
       throw new GraphReadError('unavailable', 'Retained memory is unavailable.');
@@ -292,6 +313,7 @@ export class WorldToolService {
     world: WorldState,
     generation: string,
     grant: WorldReadGrant,
+    privateReads: Array<() => boolean>,
   ): Promise<unknown> {
     const canRead = (id: string) => this.canReadSubject(world, id, grant);
     switch (name) {
@@ -381,7 +403,7 @@ export class WorldToolService {
         }
         const definitions = this.graph.read(world, generation);
         if (input.kind === 'memory-record') {
-          const record = await this.memoryRecord(world, generation, input.id, grant);
+          const record = await this.memoryRecord(world, generation, input.id, grant, privateReads);
           if (input.version && input.version !== record.node.ref.version)
             throw new GraphReadError('stale', 'Memory record changed.');
           return {
@@ -432,7 +454,7 @@ export class WorldToolService {
         const definitions = this.graph.read(world, generation);
         if (input.root.kind === 'memory-record')
           return (
-            await this.memoryRecord(world, generation, input.root.id, grant)
+            await this.memoryRecord(world, generation, input.root.id, grant, privateReads)
           ).index.neighborhood(input);
         const source =
           input.subject ??
@@ -518,6 +540,11 @@ export class WorldToolService {
         if (!repository)
           throw new GraphReadError('unavailable', 'Evidence storage is unavailable.');
         const scope = await this.memoryScope(world.id, input.actorId);
+        privateReads.push(
+          this.service.privateReadFence(input.actorId, () =>
+            this.canReadSubject(this.service.world, input.actorId, grant),
+          ),
+        );
         const binding = fingerprint([
           world.id,
           generation,

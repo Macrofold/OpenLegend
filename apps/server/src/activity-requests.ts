@@ -169,7 +169,7 @@ export function activityChoicePage(
         (request.query ?? '').trim().toLocaleLowerCase(),
         actor.inventoryRevision,
         actor.placement,
-        actor.spatial.bodyProfileId,
+        actor.spatial.body,
         actor.actor?.alive,
         visionRadius(world, actor),
         world.map.spatial.revision,

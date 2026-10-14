@@ -398,7 +398,7 @@ export function inventoryDestinationPage(
         parentId,
         query,
         effectivePosition(world, scope.actorId),
-        actor.spatial.bodyProfileId,
+        actor.spatial.body,
         visionRadius(world, actor),
         actor.actor!.alive,
         membershipDependency(world, 'installed-capabilities').revision,

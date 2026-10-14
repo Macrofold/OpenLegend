@@ -1,5 +1,5 @@
 import { worldPlacement } from '../../spatial-state.js';
-import { groundedSpatial } from '../../spatial-state.js';
+import { baseSpatial } from './spatial-definitions.js';
 import { nativeActor } from './bodies.js';
 import { nextEntityId } from '../../data.js';
 import { createActor, TRAIT_BANK } from './world.js';
@@ -27,6 +27,12 @@ export function personTraits(
   return traits.every((trait) => !!trait) ? traits.map((trait) => ({ ...trait! })) : null;
 }
 
+export function spawnSpatial(type: GodSpawnDraft['type']) {
+  return baseSpatial(
+    type === 'person' ? 'person' : type === 'hare' ? 'hare' : type === 'deer' ? 'deer' : 'object',
+  );
+}
+
 export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity | null {
   const id = nextEntityId(world, draft.type === 'person' ? 'person' : draft.type);
   const base = {
@@ -35,15 +41,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
       { x: draft.position.x, y: draft.position.y, z: draft.position.z },
       draft.position.surfaceId,
     ),
-    spatial: groundedSpatial(
-      draft.type === 'person'
-        ? 'person'
-        : draft.type === 'hare'
-          ? 'hare'
-          : draft.type === 'deer'
-            ? 'deer'
-            : 'object',
-    ),
+    spatial: spawnSpatial(draft.type),
   };
   switch (draft.type) {
     case 'person': {

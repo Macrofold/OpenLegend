@@ -1,3 +1,4 @@
+import { baseSpatial } from './spatial-definitions.js';
 import {
   surfaceContains,
   surfaceHeight,
@@ -209,7 +210,7 @@ export function populateOuterWilderness(world: WorldState): void {
       name: species[0]!.toUpperCase() + species.slice(1),
       kind: 'animal',
       ...(species === 'wolf' || species === 'bear' ? { appearance: `${species}-sprite` } : {}),
-      spatial: { bodyProfileId: species === 'hare' ? 'hare' : 'deer', heading: 0 },
+      spatial: baseSpatial(species === 'hare' ? 'hare' : 'deer'),
       placement: worldPlacement(p, p.surfaceId),
       actor: nativeActor(species, world.simTime, energy),
       animal: {
@@ -235,7 +236,7 @@ export function populateOuterWilderness(world: WorldState): void {
       name,
       ...(definitionId === 'berries' ? {} : { nameForm: 'plural' as const }),
       kind: 'resource',
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       placement: worldPlacement(p, p.surfaceId),
       resource: { definitionId, quantity, workSeconds },
     };

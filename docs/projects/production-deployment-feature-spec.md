@@ -1,5 +1,9 @@
 # Production deployment — feature specification
 
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-14   |
+
 **Status: researched proposal, updated 2 October 2026. Auth0 is Mike's selected authentication provider; the other platform choices below are recommendations, not deployed infrastructure.** This package authorizes no runtime change, provisioning, purchase, migration, or paid execution.
 
 ## Purpose
@@ -36,7 +40,7 @@ The [technical design](production-deployment-tech-design.md) contains the hostin
 
 **Later capabilities:** player/guild-owned domains, always-progressing unattended worlds, global discovery, cross-world travel/economy, voice, creator commerce and million-player deployments need their own consumed contracts and release gates. They are not prerequisites for an honest limited pilot.
 
-Current worlds pause after all controlling connections leave and do not catch up after downtime. Hosting a process continuously does not change that behavior. The intended living-world experience needs explicit time/lifecycle implementation before being advertised; do not introduce observer-dependent physics, cloned persistent NPCs, mandatory play windows or time dilation as hidden scaling shortcuts. The [simulation clock](../simulation-time.md), [multiplayer contract](multiplayer-authority-feature-spec.md) and existing world policies remain controlling.
+Current worlds pause after all controlling connections leave and do not catch up after downtime. Hosting a process continuously does not change that behavior. The intended living-world experience needs explicit time/lifecycle implementation before being advertised; do not introduce observer-dependent physics, cloned persistent NPCs, mandatory play windows or time dilation as hidden scaling shortcuts. The [simulation clock](../simulation-time.md), [multiplayer contract](completed/multiplayer-authority-feature-spec.md) and existing world policies remain controlling.
 
 ## Acceptance and decisions
 

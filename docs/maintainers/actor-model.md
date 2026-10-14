@@ -31,7 +31,7 @@ ACT01–ACT05 are implemented; acceptance gates remain open with automated cover
 
 ## Foundation execution notes — September 26, 2026
 
-P5 implementation is authorized by the [foundation execution plan](../projects/foundations-1-5.md#approved-implementation-plan).
+P5 implementation is authorized by the [foundation execution plan](../projects/completed/foundations-1-5.md#approved-implementation-plan).
 The baseline audit found damage-only appraisals in `social.ts`, two cognition context
 projections, and positional fallback in canonical `mind_appraisals`. The implementation
 now uses `appraisals.ts` for stable actor-owned records and `knowledge.ts` for the sole
@@ -114,7 +114,7 @@ The complete source/definition retirement audit, actual two-human payload races,
 
 ## Priority 5 implementation slices
 
-**Design status:** [feature specification](../projects/appraisal-social-continuity-feature-spec.md) and [technical design](../projects/appraisal-social-continuity-tech-design.md) are approved for this implementation by the foundation execution plan; the evidence above records current progress. These are child items of ACT07/ACT08, not a second cognition/social backlog. Apply current save/load in-place migration policy and the default verification guidance; completed implementation slices do not close broader deferred automated or live-quality gates. The foundation designs take precedence over inspected older branch assumptions; preserve the recorded DF02/current CR migration seams.
+**Design status:** [feature specification](../projects/completed/appraisal-social-continuity-feature-spec.md) and [technical design](../projects/completed/appraisal-social-continuity-tech-design.md) are approved for this implementation by the foundation execution plan; the evidence above records current progress. These are child items of ACT07/ACT08, not a second cognition/social backlog. Apply current save/load in-place migration policy and the default verification guidance; completed implementation slices do not close broader deferred automated or live-quality gates. The foundation designs take precedence over inspected older branch assumptions; preserve the recorded DF02/current CR migration seams.
 
 ### ACT07.1 — Appraisal, source and publication baseline
 
@@ -212,7 +212,7 @@ The complete source/definition retirement audit, actual two-human payload races,
 
 **Status: conditional proposed slice; unimplemented UI, not authorized by this documentation pass.** ACT07 already implements native process support. This task concerns a usable creator journey, not rebuilding the appraisal foundation or automatically enrolling actors. Consider it after [BW16/BW17](base-world.md#social-playable-slices) when a concrete world scenario needs it.
 
-- [ ] Extend the existing [feature specification](../projects/appraisal-social-continuity-feature-spec.md) and [technical design](../projects/appraisal-social-continuity-tech-design.md) with a separately approved slice: configure an NPC's supported condition-based feeling, observe its lifetime as the real condition changes, then safely stop the process.
+- [ ] Extend the existing [feature specification](../projects/completed/appraisal-social-continuity-feature-spec.md) and [technical design](../projects/completed/appraisal-social-continuity-tech-design.md) with a separately approved slice: configure an NPC's supported condition-based feeling, observe its lifetime as the real condition changes, then safely stop the process.
 - [ ] Resolve [D65](../../archive/05-project/open-decisions.md#social-exposure-decisions) before exposing enrollment: what does stopping/replacing a process do to its active feeling? Current process identity is immutable and has no dedicated unenrollment API; hiding a control is not lifecycle completion.
 - [ ] Reuse the appraisal/process owner, native-work admission, installed policy pins, permitted mind view and scoped creator authoring. Keep labels, conditions and timing in world definitions; do not introduce an expression engine, mandatory personality/emotion mapping, human mind control or periodic paid generation.
 - [ ] Define preview/refusal and stale-change handling for supported conditions, capacity and authority. Preserve process identity, cause deduplication, correction/forgetting and recovery behavior. Numeric/reframe editors remain outside this slice unless separately scoped.

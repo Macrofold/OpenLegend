@@ -74,7 +74,7 @@ function promiseView(world: WorldState, actorId: string, memory: MemoryRecord): 
  * obligations can never be named, and open ones come from resident world state (always
  * resident while unresolved), past ones from storage pages. The HTTP dispatcher runs this
  * inside the mutation lane, so no tick changes the world between the flush and the reads.
- * docs/projects/readable-promises-tech-design.md#3-algorithm-appsserversrccommitment-viewts */
+ * docs/projects/completed/readable-promises-tech-design.md#3-algorithm-appsserversrccommitment-viewts */
 export async function commitmentPage(
   service: WorldService,
   scope: RequestScope,

@@ -558,11 +558,7 @@ describe(
       expect(Object.keys(route.questions)).toEqual(
         expect.arrayContaining(['route', 'reflection', 'a0']),
       );
-      expect(
-        h.calls.judges
-          .map((request) => request.requestId)
-          .filter((id) => id.startsWith(`${job.id}:`)),
-      ).toEqual([`${job.id}:attempt:0:route`]);
+      expect(decisionJudges(h, job.id)).toEqual([`${job.id}:attempt:0:route`]);
       const stimulus = (route.state as { decisionContext: { stimulus: string } }).decisionContext
         .stimulus;
       expect(stimulus).toContain('The deer died');
@@ -773,15 +769,16 @@ describe(
         const criteria = (routing.body['questions'] as TypedQuestionMap)['route'] as {
           criteria: Record<string, string>;
         };
-        // Known camp work remains offered alongside the semantic thinking levels.
-        expect(Object.keys(criteria.criteria).sort()).toEqual([
+        // Installed activities may add request routes; the engine's thinking levels remain exact.
+        const routes = Object.keys(criteria.criteria);
+        expect(routes.filter((key) => !/^request_\d+$/.test(key)).sort()).toEqual([
           'level1',
           'level2',
           'level3',
           'level4',
           'native',
-          'request_1',
         ]);
+        expect(routes.some((key) => /^request_\d+$/.test(key))).toBe(true);
         const trace = await h.trace(job.id);
         expect(trace.route).toBe(route);
         expect(trace.kinds).toContain(`LM · ${want.stage} · npc_response`);
@@ -801,15 +798,18 @@ describe(
         (request) =>
           request.url === JEV_URL && 'route' in (request.body['questions'] as TypedQuestionMap),
       )!;
-      expect(
-        Object.keys(
-          (
-            (routing.body['questions'] as TypedQuestionMap)['route'] as {
-              criteria: Record<string, string>;
-            }
-          ).criteria,
-        ).sort(),
-      ).toEqual(['level1', 'native', 'request_1']);
+      const offeredRoutes = Object.keys(
+        (
+          (routing.body['questions'] as TypedQuestionMap)['route'] as {
+            criteria: Record<string, string>;
+          }
+        ).criteria,
+      );
+      expect(offeredRoutes.filter((key) => !/^request_\d+$/.test(key)).sort()).toEqual([
+        'level1',
+        'native',
+      ]);
+      expect(offeredRoutes.some((key) => /^request_\d+$/.test(key))).toBe(true);
       expect(jevOnlyTransport.requests.filter((request) => request.url !== JEV_URL)).toEqual([]);
       expect(jevOnly.npcResponses()).toEqual([]);
       // Speech uses the dependent path: routing first, then one separate level-1 rating request.
@@ -843,7 +843,8 @@ describe(
       });
       const trace = await jevOnly.trace(job.id);
       expect(trace).toMatchObject({ route: 'level1', disposition: 'deferred' });
-      expect(trace.input['offeredRoutes']).toEqual(['native', 'level1', 'request_1']);
+      expect(trace.input['offeredRoutes']).toEqual(expect.arrayContaining(offeredRoutes));
+      expect(trace.input['offeredRoutes']).toHaveLength(offeredRoutes.length);
       expect(trace.kinds.filter((kind) => kind.startsWith('LM ·'))).toEqual([]);
       const selection = trace.children.find((child) => child.id === `${job.id}:attempt:0:level1`)!;
       expect(selection).toMatchObject({

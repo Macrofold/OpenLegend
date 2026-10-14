@@ -691,6 +691,9 @@ function App({
   };
   useEffect(() => {
     if (!view || !canvas.current || sceneError) return;
+    // Cold graphics preparation must not block the tab-selection probe and control
+    // request. Existing scenes still receive paused-view invalidation below.
+    if (!scene.current && tabPaused) return;
     try {
       if (!scene.current)
         scene.current = createWorldRenderer(canvas.current, {
@@ -750,6 +753,7 @@ function App({
   }, [
     hasView,
     sceneError,
+    tabPaused,
     captionsEnabled,
     captionsPaused,
     captionReadingScale,
@@ -1156,6 +1160,12 @@ function App({
         return (
           <WorldEvents
             key={eventsReset}
+            ownerScope={JSON.stringify([
+              view.worldId,
+              view.saveTimeline,
+              view.access?.scope,
+              view.player.id,
+            ])}
             scope={captionScope(view)}
             revision={view.worldEventsRevision}
             type={eventsType}
@@ -1373,7 +1383,7 @@ function App({
         data-tight={width / scale < 360}
         style={{ '--ui-scale': scale } as CSSProperties}
       >
-        {!view || (tabPaused && !tab.blocked) ? (
+        {(!view || (tabPaused && !tab.blocked)) && (
           <EntryScreen
             status={entryStatus}
             onRetry={() => {
@@ -1385,8 +1395,11 @@ function App({
               retry.current();
             }}
           />
-        ) : (
-          <>
+        )}
+        {view && (
+          // A blur can pause before a competing tab is known. Keep drafts mounted
+          // through that connecting screen, just as through the Resume dialog.
+          <div className="ol-play-workspace" hidden={tabPaused && !tab.blocked} inert={tabPaused}>
             <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
             <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
               <div className="ol-survival-top">
@@ -1740,7 +1753,7 @@ function App({
                   />
                 ),
               )}
-          </>
+          </div>
         )}
         <div id="toast" role="status" className="ol-toast" hidden={!notice}>
           {notice}

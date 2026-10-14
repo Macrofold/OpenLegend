@@ -1,5 +1,9 @@
 # Production deployment — technical design
 
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The hosting proposal and playbook are prepared; deployment, provider qualification and capacity acceptance remain open. | 2026-10-14   |
+
 **Status: recommendation, researched 1–2 October 2026; not implemented or capacity-certified.** Auth0 is selected by Mike. Runtime baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
 
 ## 1. Decision

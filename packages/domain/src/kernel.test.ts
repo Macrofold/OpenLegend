@@ -1,3 +1,4 @@
+import { BASE_BODY_PROFILES } from './worlds/base/spatial-definitions.js';
 import { cookingChoices } from './food-preparation.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
@@ -179,14 +180,25 @@ describe('authoritative pure world', () => {
   it('routes around grid obstacles and rejects out-of-bounds ground', () => {
     let world = createWorld();
     const destination = { y: 0, x: 20, z: 7, surfaceId: 'terrain' };
-    const plan = findPath(world, { y: 0, x: 15, z: 7 }, destination);
+    const plan = findPath(
+      world,
+      { y: 0, x: 15, z: 7 },
+      destination,
+      undefined,
+      undefined,
+      BASE_BODY_PROFILES.person,
+    );
     expect(plan?.status).toBe('pending');
-    expect(isWalkable(world, { y: 0, x: -0.2, z: 12 })).toBe(false);
+    expect(isWalkable(world, { y: 0, x: -0.2, z: 12 }, undefined, BASE_BODY_PROFILES.person)).toBe(
+      false,
+    );
     world = command(world, { type: 'move', destination });
     world = prepareWorldNavigation(world);
     const path = world.entities[PLAYER_ID]!.actor!.action!.path;
     expect(path.length).toBeGreaterThan(0);
-    expect(path.every((point) => isWalkable(world, point))).toBe(true);
+    expect(
+      path.every((point) => isWalkable(world, point, point.surfaceId, BASE_BODY_PROFILES.person)),
+    ).toBe(true);
     world = advanceWorld(world, 240).world;
     expect(worldPosition(world.entities[PLAYER_ID]!)).toEqual({
       x: destination.x,

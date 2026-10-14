@@ -30,35 +30,28 @@ const filters = [
 type SlotOrigin = { type: string; query: string };
 type ComparisonSlots = [WorldEventSourceReference | null, WorldEventSourceReference | null];
 type ComparisonOrigins = [SlotOrigin | null, SlotOrigin | null];
+const sourceKey = (ref: WorldEventSourceReference) =>
+  JSON.stringify([ref.token, ref.family, ref.sourceId, ref.revision]);
+const sameSource = (a: WorldEventSourceReference | null, b: WorldEventSourceReference) =>
+  a?.family === b.family && a.sourceId === b.sourceId;
 
 /** A durable, read-only perspective. Opening this panel never creates awareness or captions. */
 type Props = { scope: string; revision: string | undefined };
-function comparisonOwnerScope(scope: string): string {
-  // captionScope(view) appends `:${view.historyEpoch}` so the event list and captions
-  // reset on transcript epoch bumps (such as memory correction or forgetting).
-  // Comparison slots must survive memory correction/forgetting and refresh in place
-  // via `revision`, resetting only when the viewing identity (`worldId`,
-  // `saveTimeline`, `access.scope`, or `player.id`) changes.
-  const parts = scope.split(':');
-  return parts.length >= 5 && /^\d+$/.test(parts.at(-1) ?? '')
-    ? parts.slice(0, -1).join(':')
-    : scope;
-}
-
 /** Keyed ownership clears old rows during the same render, not a later effect. The owner may
  * control the filter, for example to open Speech from the missed-caption notice. */
 export const WorldEvents = memo(function WorldEvents({
+  ownerScope,
   type: controlledType,
   onTypeChange,
   ...props
-}: Props & { type?: string; onTypeChange?: (type: string) => void }) {
+}: Props & { ownerScope: string; type?: string; onTypeChange?: (type: string) => void }) {
   const [localType, setLocalType] = useState('all');
   const type = controlledType ?? localType;
   const setType = onTypeChange ?? setLocalType;
   const [query, setQuery] = useState('');
   return (
     <ScopedComparisonOwner
-      key={comparisonOwnerScope(props.scope)}
+      key={ownerScope}
       {...props}
       type={type}
       setType={setType}
@@ -85,9 +78,12 @@ function ScopedComparisonOwner({
   const [origins, setOrigins] = useState<ComparisonOrigins>([null, null]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [choosingSlot, setChoosingSlot] = useState<0 | 1 | null>(null);
-  const [details, setDetails] = useState<Record<string, WorldEventSourceDetail>>({});
-  const [detailBusy, setDetailBusy] = useState(false);
-  const [detailError, setDetailError] = useState('');
+  const [detailRead, setDetailRead] = useState<{
+    key: string;
+    details: Record<string, WorldEventSourceDetail>;
+    busy: boolean;
+    error: string;
+  }>();
   const [pendingReturnId, setPendingReturnId] = useState<string | null>(null);
   const lastTriggerId = useRef<string | null>(null);
   const detailGeneration = useRef(0);
@@ -97,59 +93,70 @@ function ScopedComparisonOwner({
     () => slots.filter((ref): ref is WorldEventSourceReference => ref !== null),
     [slots],
   );
-  const refsKey = activeRefs
-    .map((ref) => `${ref.family}:${ref.sourceId}:${ref.revision}`)
-    .join('|');
+  const detailKey = JSON.stringify([scope, revision, activeRefs.map(sourceKey)]);
+  const currentDetailKey = useRef(detailKey);
+  currentDetailKey.current = detailKey;
+  // Selections survive correction/forgetting, but their old bodies stop rendering
+  // immediately, before the replacement read's effect runs.
+  // docs/memory-architecture.md#private-retrieval-fencing
+  const currentDetails = detailRead?.key === detailKey ? detailRead : undefined;
 
   async function loadDetails(references = activeRefs) {
     detailController.current?.abort();
-    if (!references.length) {
-      setDetailBusy(false);
-      setDetailError('');
-      return;
-    }
+    if (!references.length) return;
     const abort = new AbortController();
     detailController.current = abort;
     const request = ++detailGeneration.current;
-    setDetailBusy(true);
-    setDetailError('');
+    setDetailRead({ key: detailKey, details: {}, busy: true, error: '' });
     try {
       const response = await post<WorldEventSourcesView | { ok: false; message?: string }>(
         '/api/world-events/sources',
         { references },
         abort.signal,
       );
-      if (request !== detailGeneration.current) return;
+      if (
+        abort.signal.aborted ||
+        request !== detailGeneration.current ||
+        detailKey !== currentDetailKey.current
+      )
+        return;
       if (!response.ok) {
         throw new Error(response.message || 'Could not load source detail.');
       }
-      setDetails((previous) => {
-        const next = { ...previous };
-        for (const item of response.sources) {
-          const id = item.status === 'available' ? item.reference.sourceId : item.sourceId;
-          next[id] = item;
-        }
-        return next;
+      const details: Record<string, WorldEventSourceDetail> = {};
+      // The endpoint returns one result per requested reference, in request order,
+      // including unavailable records whose body/identity cannot be disclosed.
+      response.sources.forEach((item, index) => {
+        const reference = references[index];
+        if (reference) details[sourceKey(reference)] = item;
       });
+      setDetailRead({ key: detailKey, details, busy: false, error: '' });
     } catch (reason) {
-      if (abort.signal.aborted || request !== detailGeneration.current) return;
-      setDetailError(reason instanceof Error ? reason.message : String(reason));
-    } finally {
-      if (request === detailGeneration.current) setDetailBusy(false);
+      if (
+        abort.signal.aborted ||
+        request !== detailGeneration.current ||
+        detailKey !== currentDetailKey.current
+      )
+        return;
+      setDetailRead({
+        key: detailKey,
+        details: {},
+        busy: false,
+        error: reason instanceof Error ? reason.message : String(reason),
+      });
     }
   }
 
   useEffect(() => {
     if (!comparisonOpen || !activeRefs.length) {
       detailController.current?.abort();
-      setDetailBusy(false);
       return;
     }
     void loadDetails(activeRefs);
     return () => {
       detailController.current?.abort();
     };
-  }, [comparisonOpen, refsKey, revision]);
+  }, [comparisonOpen, detailKey]);
 
   return (
     <ScopedWorldEvents
@@ -168,9 +175,9 @@ function ScopedComparisonOwner({
       setComparisonOpen={setComparisonOpen}
       choosingSlot={choosingSlot}
       setChoosingSlot={setChoosingSlot}
-      details={details}
-      detailBusy={detailBusy}
-      detailError={detailError}
+      details={currentDetails?.details ?? {}}
+      detailBusy={comparisonOpen && activeRefs.length > 0 && (currentDetails?.busy ?? true)}
+      detailError={currentDetails?.error ?? ''}
       reloadDetails={() => void loadDetails(activeRefs)}
       pendingReturnId={pendingReturnId}
       setPendingReturnId={setPendingReturnId}
@@ -312,12 +319,12 @@ function ScopedWorldEvents({
   function assignSlot(slotIndex: 0 | 1, ref: WorldEventSourceReference) {
     lastTriggerId.current = ref.sourceId;
     const otherIndex: 0 | 1 = slotIndex === 0 ? 1 : 0;
-    const clearOther = slots[otherIndex]?.sourceId === ref.sourceId;
+    const clearOther = sameSource(slots[otherIndex], ref);
     setComparisonOpen(true);
     setChoosingSlot(null);
     setSlots((prev) => {
       const next: ComparisonSlots = [...prev] as ComparisonSlots;
-      if (clearOther || next[otherIndex]?.sourceId === ref.sourceId) {
+      if (clearOther || sameSource(next[otherIndex], ref)) {
         next[otherIndex] = null;
       }
       next[slotIndex] = ref;
@@ -340,8 +347,7 @@ function ScopedWorldEvents({
 
   function handleCompareSource(ref: WorldEventSourceReference) {
     lastTriggerId.current = ref.sourceId;
-    const existingIndex =
-      slots[0]?.sourceId === ref.sourceId ? 0 : slots[1]?.sourceId === ref.sourceId ? 1 : -1;
+    const existingIndex = sameSource(slots[0], ref) ? 0 : sameSource(slots[1], ref) ? 1 : -1;
     if (existingIndex !== -1 && choosingSlot === null) {
       removeSlot(existingIndex as 0 | 1);
       return;
@@ -408,8 +414,8 @@ function ScopedWorldEvents({
     () =>
       events.map((event) => {
         const source = event.source;
-        const inSlot0 = source && slots[0]?.sourceId === source.sourceId;
-        const inSlot1 = source && slots[1]?.sourceId === source.sourceId;
+        const inSlot0 = source && sameSource(slots[0], source);
+        const inSlot1 = source && sameSource(slots[1], source);
         const selectedSlot = inSlot0 ? 1 : inSlot1 ? 2 : null;
         return {
           id: event.id,
@@ -557,7 +563,7 @@ function ScopedWorldEvents({
           <div className="ol-world-event-comparison-grid">
             {visibleSlotIndices.map((slotIndex) => {
               const ref = slots[slotIndex];
-              const detail = ref ? details[ref.sourceId] : undefined;
+              const detail = ref ? details[sourceKey(ref)] : undefined;
               return (
                 <article
                   key={`slot-${slotIndex}`}
@@ -685,7 +691,9 @@ function ScopedWorldEvents({
                     <>
                       <div className="ol-world-event-source-meta">
                         <strong>Source {slotIndex + 1}</strong>
-                        <p className="ol-meta">Loading retained source…</p>
+                        <p className="ol-meta">
+                          {detailBusy ? 'Loading retained source…' : 'Source detail unavailable.'}
+                        </p>
                       </div>
                       <div className="ol-world-event-source-actions">
                         <Button

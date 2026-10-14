@@ -152,7 +152,7 @@ The existing design-system browser check still times out while looking for the w
 
 ## Historical fire-care baseline — September 28, 2026
 
-September 28, 2026, local macOS arm64, Node 22.23.2, PostgreSQL 14 on loopback. Base `origin/main` at `be68b1e0` plus this branch's implementation ([plan](../projects/camp-fire-and-sharing.md)). All worlds and databases were disposable. No provider was contacted: native runs have no AI configuration, and service runs inject a fixture Jev client that never makes network calls (additional Jev cost **$0**). Fixture choices prove the plumbing from candidate to effect, not what live Jev would choose. The scenarios are ad hoc scripts, not committed suites.
+September 28, 2026, local macOS arm64, Node 22.23.2, PostgreSQL 14 on loopback. Base `origin/main` at `be68b1e0` plus this branch's implementation ([plan](../projects/completed/camp-fire-and-sharing.md)). All worlds and databases were disposable. No provider was contacted: native runs have no AI configuration, and service runs inject a fixture Jev client that never makes network calls (additional Jev cost **$0**). Fixture choices prove the plumbing from candidate to effect, not what live Jev would choose. The scenarios are ad hoc scripts, not committed suites.
 
 ## Fire care
 

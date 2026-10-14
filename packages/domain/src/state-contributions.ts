@@ -80,7 +80,7 @@ export interface ContributionRequest {
 
 /** Attach is receipted; a new source cannot replace another cause by its label.
  * Ending never applies an inverse delta or restores a historical body snapshot.
- * docs/projects/shared-state-contributions-tech-design.md#6-active-effects-and-cancellation
+ * docs/projects/completed/shared-state-contributions-tech-design.md#6-active-effects-and-cancellation
  */
 export function attachCapabilityContribution(
   input: WorldState,

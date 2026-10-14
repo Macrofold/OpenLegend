@@ -1,5 +1,5 @@
 const storageKey = 'open-legend:composer-draft:v2';
-const legacyStorageKey = 'open-legend:composer-draft:v1';
+const obsoleteStorageKey = 'open-legend:composer-draft:v1';
 type DraftStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 type GetStorage = () => DraftStorage;
 export type ComposerMode = 'chat' | 'invention';
@@ -27,14 +27,24 @@ export function readDraft(getStorage: GetStorage = () => window.sessionStorage):
         )
           return { text: draft.text.slice(0, 1000), mode: draft.mode };
       } catch {
-        // A malformed newer record must not erase an older recoverable draft.
+        /* Malformed current data is not a draft. */
       }
     }
-    // Earlier clients saved plain text with no mode; preserve it under their Talk default.
-    return { text: (storage.getItem(legacyStorageKey) ?? '').slice(0, 1000), mode: 'chat' };
+    return emptyDraft();
   } catch {
     // Some embedded/private browsers disable storage; editing must still work.
     return emptyDraft();
+  }
+}
+
+/** Access replacement clears every known private composer key without reading old formats. */
+export function clearDraft(getStorage: GetStorage = () => window.sessionStorage): void {
+  try {
+    const storage = getStorage();
+    storage.removeItem(storageKey);
+    storage.removeItem(obsoleteStorageKey);
+  } catch {
+    // Storage can be disabled independently of in-memory editing.
   }
 }
 
@@ -51,7 +61,7 @@ export function saveDraft(
         JSON.stringify({ text: draft.text.slice(0, 1000), mode: draft.mode }),
       );
     else storage.removeItem(storageKey);
-    storage.removeItem(legacyStorageKey);
+    storage.removeItem(obsoleteStorageKey);
   } catch {
     // Quota/privacy failures must not break input or change submission behavior.
   }

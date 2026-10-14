@@ -86,7 +86,7 @@ What stands out:
   - no event is emitted;
   - its sightings and arrival are calculated exactly.
 
-  The 1 m stop exists only so that sight is re-checked, which can happen at a private stop, as it already does for birds. Stopping at route points was part of the original time design, when every stop was shared. When birds, falling bodies and fleeing or wandering animals got private stops, walkers stayed shared under a deliberate cautious default for movement that change had not examined ("Unknown mechanics keep existing shared bounds", [cadence integration plan](spatial-cadence-main-integration.md#motion-deadline-implementation-decision)). No walker-specific reason was recorded, and this analysis finds none.
+  The 1 m stop exists only so that sight is re-checked, which can happen at a private stop, as it already does for birds. Stopping at route points was part of the original time design, when every stop was shared. When birds, falling bodies and fleeing or wandering animals got private stops, walkers stayed shared under a deliberate cautious default for movement that change had not examined ("Unknown mechanics keep existing shared bounds", [cadence integration plan](completed/spatial-cadence-main-integration.md#motion-deadline-implementation-decision)). No walker-specific reason was recorded, and this analysis finds none.
 
   In a small test, four walkers on straight routes needed 14 calls over 120 game seconds, against 4 with no walkers. The same walks with extra route points along the same lines needed 33 calls and about 3.3 times the CPU (3.5 s against 1.1 s).
 

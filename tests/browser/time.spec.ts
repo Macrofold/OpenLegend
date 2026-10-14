@@ -10,7 +10,8 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
   // Native, zero-budget fixture with explicit server ticks, independent of browser speed.
   const clock = { now: Date.now() };
   const game = await createGameServer({
-    config: readConfig({ AI_BUDGET_USD: '0' }),
+    // One-player clock/control checks need the authored solo start, not unrelated character art.
+    config: readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_WORLD_PRESET: 'solo' }),
     store: await testRepository(),
     production: true,
     tick: false,
@@ -24,12 +25,27 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
   if (!address || typeof address === 'string') throw new Error('Missing listener');
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  // Headless Chromium reports each page as focused, so exercise the native event
-  // handlers explicitly; these are event fixtures, not OS tab-switch evidence.
+  // Headless Chromium reports each page as focused. Match that document fact to
+  // the synthetic event; this remains an event fixture, not OS tab-switch evidence.
   const focus = (focused: boolean) =>
     page.evaluate((active) => {
+      Object.defineProperty(document, 'hasFocus', { configurable: true, value: () => active });
       window.dispatchEvent(new Event(active ? 'focus' : 'blur'));
     }, focused);
+  const finishDeparture = async () => {
+    const actorId = game.service.controlledEntityId;
+    const deadline = game.service.world.exitExposures?.[actorId];
+    if (deadline === undefined) throw new Error('Missing simulated departure deadline');
+    // Explicit unsuspended time exercises normal mechanics, not wall-clock catch-up.
+    await game.service.tick(
+      (deadline - game.service.world.simTime) /
+        (game.service.config.baseRatio * game.service.speed),
+      0,
+    );
+    expect(game.service.world.simTime).toBeCloseTo(deadline);
+    expect(game.service.world.entities[actorId]?.actor?.participation?.phase).toBe('inactive');
+    expect(game.service.world.exitExposures?.[actorId]).toBeUndefined();
+  };
   try {
     await page.goto('http://127.0.0.1:' + address.port);
     await focus(true);
@@ -69,23 +85,41 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await focus(false);
     await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
     await expect.poll(() => game.service.present).toBe(false);
+    const departureStartedAt = game.service.world.simTime;
+    const gameSecondsPerRealSecond = game.service.config.baseRatio * game.service.speed;
+    await expect
+      .poll(() => game.service.world.exitExposures?.[game.service.controlledEntityId])
+      .toBeGreaterThan(departureStartedAt + gameSecondsPerRealSecond);
+    const departureDeadline = game.service.world.exitExposures?.[game.service.controlledEntityId];
     clock.now += 60_000;
+    expect(game.service.world.simTime).toBe(departureStartedAt);
     await game.service.tick(1);
-    expect(game.service.world.simTime).toBe(90);
+    expect(game.service.world.simTime).toBe(departureStartedAt + gameSecondsPerRealSecond);
+    expect(game.service.world.exitExposures?.[game.service.controlledEntityId]).toBe(
+      departureDeadline,
+    );
+    expect(game.service.paused).toBe(false);
+    await finishDeparture();
     expect(game.service.paused).toBe(true);
+    await game.service.tick(1);
+    expect(game.service.world.simTime).toBe(departureDeadline);
     await focus(true);
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
     await enterGame(page);
     await expect.poll(() => game.service.paused).toBe(false);
+    const resumedAt = game.service.world.simTime;
     await game.service.tick(1);
-    expect(game.service.world.simTime).toBe(120);
+    expect(game.service.world.simTime).toBe(resumedAt + gameSecondsPerRealSecond);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await expect.poll(() => game.service.pauseReason).toBe('manual');
     await focus(false);
     await focus(true);
     await enterGame(page);
     await expect.poll(() => game.service.pauseReason).toBe('manual');
+    const manuallyPausedAt = game.service.world.simTime;
+    await game.service.tick(1);
+    expect(game.service.world.simTime).toBe(manuallyPausedAt);
     await page.getByRole('button', { name: 'Resume world', exact: true }).click();
     await expect.poll(() => game.service.paused).toBe(false);
 
@@ -119,6 +153,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await other.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
+      await enterGame(other);
       await other.close();
       await focus(true);
       await enterGame(page); // The selected page is gone; one surviving tab needs no Resume.
@@ -160,7 +195,14 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(await game.service.store.recentJobs()).toEqual([]);
     await page.close();
     clock.now += 12_001;
-    await expect.poll(() => game.service.pauseReason).toBe('away');
+    await expect
+      .poll(
+        () =>
+          game.service.world.entities[game.service.controlledEntityId]?.actor?.participation?.phase,
+      )
+      .toBe('exiting');
+    await finishDeparture();
+    expect(game.service.pauseReason).toBe('away');
   } finally {
     await page.close();
     await game.close();

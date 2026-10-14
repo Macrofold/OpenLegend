@@ -1,3 +1,4 @@
+import { baseSpatial } from './worlds/base/spatial-definitions.js';
 import { worldPlacement } from './spatial-state.js';
 import type { WorldCreationAccounts } from './invention-attribution.js';
 import { seedAgency } from './agency.js';
@@ -119,7 +120,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     }
   }
   world.entities['charge-bank'] = {
-    spatial: { bodyProfileId: 'object', heading: 0 },
+    spatial: baseSpatial('object'),
     id: 'charge-bank',
     name: 'Charged capacitor',
     kind: 'resource',

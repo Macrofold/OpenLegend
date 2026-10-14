@@ -22,7 +22,7 @@ After an injury, can the player understand their condition, choose a practical r
 
 ## 2. Current reality and the exact gap
 
-This branch intentionally descends from the earlier five-design branch. The source audit also inspected newer main at [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425). Newer main's death and danger implementation is the dependency baseline for this proposal, although that runtime has not been merged into this branch. Older branch descriptions of living collapse and camp recovery are superseded context, not rules to restore.
+The original proposal audit inspected [main 0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425). Its death/Continue/scar and vulnerable-departure mechanics are now integrated into the current code. Older living-collapse wording is superseded; the additional camp-recovery and field-care activities below remain proposals, not delivered healing mechanics.
 
 The inspected implementation has a health amount, one undifferentiated injury amount and native injury/healing effects. It has biped, quadruped and avian body plans, without independently injured organs or limbs. Injury lowers health and slows movement. Quiet starvation or exhaustion can lower health without adding injury. Native healing can raise health and reduce injury, but the existence of an effect does not supply an ordinary recovery action. [Current survival](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/docs/worlds/base/survival.md).
 

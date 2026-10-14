@@ -1,7 +1,6 @@
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
-import { validateWorldModules } from '@open-legend/domain';
-import { HISTORY_TABLES } from './history.js';
+import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
 import type { AutosaveSettings, CheckpointFailure, GameSaveSummary } from '@open-legend/protocol';
 import { SaveFiles, compareSaves, type SavePosition, type SaveFileMetadata } from './save-files.js';
@@ -47,16 +46,15 @@ const safeJson = (text: string): unknown => {
     return undefined;
   }
 };
-/** The recovery row may contain a legacy payload or an integrity-checked file pointer. */
-export function recoveryFile(payload: unknown, checksum: unknown): string | undefined {
-  if (!payload || typeof payload !== 'object' || !('file' in payload)) return;
-  const file = z.string().uuid().safeParse(payload.file);
-  if (!file.success || digest(payload) !== checksum)
+const recoveryPointerSchema = z.object({ file: z.string().uuid() }).strict();
+/** The only database recovery payload is an integrity-checked pointer to a streamed slot. */
+export function recoveryFile(payload: unknown, checksum: unknown): string {
+  const pointer = recoveryPointerSchema.safeParse(payload);
+  if (!pointer.success || digest(payload) !== checksum)
     throw new GameSaveError('Recovery pointer integrity check failed.');
-  return file.data;
+  return pointer.data.file;
 }
-export const SAVE_FORMAT = 'development-2026-10-14-world-rules-and-contested-ground';
-const MAX_BYTES = 64 * 1024 * 1024;
+export const SAVE_FORMAT = 'development-2026-10-14-foundation-hardening';
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
   format: string;
@@ -508,36 +506,21 @@ export class GameSaves {
     }
   }
   async read(worldId: string, id: string): Promise<SavePayload> {
-    const row =
-      id === 'before-load'
-        ? await this.db
-            .prepare('SELECT format,checksum,payload FROM game_saves WHERE world_id=? AND id=?')
-            .get(worldId, id)
-        : await this.files.metadata(id);
-    if (!row) throw new GameSaveError('That save no longer exists.');
-    if ('worldId' in row && row.worldId !== worldId)
-      throw new GameSaveError('Save belongs to another world.');
-    if ('payload' in row && Buffer.byteLength(String(row['payload'])) > MAX_BYTES)
-      throw new GameSaveError('Legacy save exceeds the supported size.');
-    const stored: unknown = 'payload' in row ? JSON.parse(String(row['payload'])) : undefined;
-    const pointer = recoveryFile(stored, row['checksum']);
-    if (pointer) return this.read(worldId, pointer);
-    let payload: SavePayload;
-    if ('encoding' in row && row.encoding) {
-      payload = await readCheckpoint(
-        this.files.lines(row as SaveFileMetadata),
-        worldId,
-        String(row['format']),
-      );
-    } else {
-      const encoded =
-        'payload' in row ? String(row['payload']) : await this.files.read(id, MAX_BYTES);
-      if (Buffer.byteLength(encoded) > MAX_BYTES)
-        throw new GameSaveError('Legacy save exceeds the supported size.');
-      payload = (stored ?? JSON.parse(encoded)) as SavePayload;
-      if (digest(payload) !== row['checksum'])
-        throw new GameSaveError('Save integrity check failed.');
+    if (id === 'before-load') {
+      const row = await this.db
+        .prepare('SELECT format,checksum,payload FROM game_saves WHERE world_id=? AND id=?')
+        .get(worldId, id);
+      if (!row) throw new GameSaveError('That save no longer exists.');
+      if (row['format'] !== SAVE_FORMAT || Buffer.byteLength(String(row['payload'])) > 1024)
+        throw new GameSaveError('Unsupported recovery pointer; existing data was not changed.');
+      return this.read(worldId, recoveryFile(safeJson(String(row['payload'])), row['checksum']));
     }
+    const row = await this.files.metadata(id);
+    if (!row) throw new GameSaveError('That save no longer exists.');
+    if (row.worldId !== worldId) throw new GameSaveError('Save belongs to another world.');
+    if (row.format !== SAVE_FORMAT)
+      throw new GameSaveError('Unsupported save format; existing data was not changed.');
+    const payload = await readCheckpoint(this.files.lines(row), worldId, row.format);
     if (
       payload.format !== SAVE_FORMAT ||
       payload.format !== row['format'] ||
@@ -545,7 +528,7 @@ export class GameSaves {
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
     )
       throw new GameSaveError('Save integrity check failed.');
-    validateCurrentWorldState(payload.state.world);
+    this.validatePayload(payload);
     return payload;
   }
   async delete(worldId: string, id: string) {
@@ -580,7 +563,8 @@ export class GameSaves {
       Number(totals[0]!['event_count']) !== payload.history.history_events.length
     )
       throw new GameSaveError('Save event count disagrees with retained records.');
-    validateWorldModules(payload.state.world);
+    validateCurrentWorldState(payload.state.world);
+    validateHistoryEvidence(payload.history);
   }
   async install(current: SavedWorld, restore: RestoreSave) {
     this.validatePayload(restore.payload);

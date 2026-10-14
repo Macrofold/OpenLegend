@@ -87,6 +87,8 @@ Require finite numbers, bounded world extents, valid rotations, nonnegative dime
 
 ### One position owner
 
+**Consulted and supersession clarified 2026-10-14T18:59:17Z:** the `Entity.position` and `bodyProfileRef` illustration below is superseded by current tagged placement and saved numeric `body`/`inactiveBody` descriptions under [authored terrain and bodies](../../docs/spatial-world.md#authored-terrain-and-bodies). The single-owner and support-anchor principles remain; the proposed extension fields are not a claim of installed behavior. This is the audit/update time, not the original implementation date.
+
 Keep `Entity.position` as the only authoritative world position; replace its type with required `x,y,z`. Do not add independently writable `elevation`, `altitude`, renderer transform, and physics-body position copies. Support and movement mode describe that position rather than replacing it.
 
 ```text
@@ -139,14 +141,14 @@ Use one domain entrypoint for adding, moving, changing, or deleting meaningful g
 
 Distinguish dirty causes:
 
-| Change | Invalidates |
-| --- | --- |
-| Actor position/heading | Dynamic broad phase, affected exposure, applicable contact and route-start checks |
-| Static support or blocker geometry | Intersecting nav tiles/corridors, spatial queries, affected supports, sensory geometry |
-| Door/opening or acoustic material state | Relevant traversal/occlusion/transmission consumers, not all art or all goals |
-| Body clearance/capabilities | That actor's route compatibility and native constraints |
-| Appearance-only revision | Visual assets and applicable descriptive detail, not pathfinding or physical dimensions |
-| Knowledge/disclosure revision | That observer's permitted spatial projection and route-discovery input |
+| Change                                  | Invalidates                                                                             |
+| --------------------------------------- | --------------------------------------------------------------------------------------- |
+| Actor position/heading                  | Dynamic broad phase, affected exposure, applicable contact and route-start checks       |
+| Static support or blocker geometry      | Intersecting nav tiles/corridors, spatial queries, affected supports, sensory geometry  |
+| Door/opening or acoustic material state | Relevant traversal/occlusion/transmission consumers, not all art or all goals           |
+| Body clearance/capabilities             | That actor's route compatibility and native constraints                                 |
+| Appearance-only revision                | Visual assets and applicable descriptive detail, not pathfinding or physical dimensions |
+| Knowledge/disclosure revision           | That observer's permitted spatial projection and route-discovery input                  |
 
 Return an affected bounds/ID set rather than scanning every actor or rebuilding every model context. Update the authoritative geometry immediately when a real action changes it; a stale navmesh cannot postpone the physical existence of a closed door. Planned creator changes may prepare derived data before activation. Unexpected derived-data failure follows the explicit technical-pause policy below.
 
@@ -279,7 +281,7 @@ Start with a few useful altitude bands and vertical connectors over/around suppo
 
 Takeoff connects a supported stance/perch to a clear aerial node. Landing connects to a selected support surface whose footprint, occupancy, and vertical approach remain valid. A flyer can wait in a permitted holding location or seek another known landing point when landing fails. It cannot appear on the nearest ground plane by default.
 
-Use `ngraph.path` behind a small directed-route adapter. Supply explicit nonnegative cost and direction rules, normalize the returned order, and test one-way edges. A zero heuristic is the safe initial choice; a Euclidean/time lower bound may be enabled only when proven admissible for all included edge costs. Do not select a faster greedy search and describe it as optimal A*.
+Use `ngraph.path` behind a small directed-route adapter. Supply explicit nonnegative cost and direction rules, normalize the returned order, and test one-way edges. A zero heuristic is the safe initial choice; a Euclidean/time lower bound may be enabled only when proven admissible for all included edge costs. Do not select a faster greedy search and describe it as optimal A\*.
 
 A mixed route combines ground subroutes and supported traversal/air edges through a small semantic connector graph. The higher-level graph compares compatible connection points; ground and air providers solve their own segments. Limits bound connector expansion and subqueries. Partial graph coverage is `unsupported_mode` or incomplete coverage, not a fabricated physical obstruction.
 
@@ -323,7 +325,7 @@ Preserve the existing sensory policy: player current visual evidence is bodily v
 
 Send bounded camera intentions with monotonic view identity/revision through a coalesced path; validate focus extent, projection limits, world bounds, actor/controller association, and active-view lease. The server determines eligible exposure from canonical geometry and approved camera math. Client GPU visibility results never grant knowledge.
 
-Use approved camera frustum and coarse presentation-occlusion queries to narrow the player view where a wall hides an otherwise body-visible target from the camera. Approved cutaway masks may remove that *presentation* obstruction, but never the body-to-target physical obstruction. This reconciles a tactical roof cutaway with embodied parity without requiring server-side GPU pixel inspection. The renderer may further narrow what it draws; it cannot expand the authorized exposure. The sensory owner defines the detail/recognition meaning of the resulting exposure.
+Use approved camera frustum and coarse presentation-occlusion queries to narrow the player view where a wall hides an otherwise body-visible target from the camera. Approved cutaway masks may remove that _presentation_ obstruction, but never the body-to-target physical obstruction. This reconciles a tactical roof cutaway with embodied parity without requiring server-side GPU pixel inspection. The renderer may further narrow what it draws; it cannot expand the authorized exposure. The sensory owner defines the detail/recognition meaning of the resulting exposure.
 
 While a wider view is pending, the client can move its camera but cannot fill it with unapproved hidden entity state. Narrowing the view can immediately hide existing details; newly exposed details wait for the scoped response. This prevents a free-orbit frame from becoming an X-ray leak. Routine camera motion updates native exposure without dispatching a paid call per frame.
 

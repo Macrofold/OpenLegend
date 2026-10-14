@@ -124,7 +124,7 @@ export function interactionPageQuery(
   after = -1,
   pageSize = 201,
 ): QueryResult<{ value: Entity; after: number }> {
-  const bounds = interactionCandidateBounds(actor, reach);
+  const bounds = interactionCandidateBounds(world, actor, reach);
   const result = spatialPageQuery(world, bounds.position, bounds.radius, after, pageSize);
   return {
     ...result,

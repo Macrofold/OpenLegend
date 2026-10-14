@@ -251,7 +251,7 @@ saved. Deterministic conversation lifecycle notices are not generation failures.
 
 [Contract](../narration-and-conversations.md#9-triggers-ordering-and-transcript-reconstruction) ·
 [Implementation work](../maintainers/narration-and-conversations.md) ·
-[Plan](../projects/narration-failure-cleanup.md).
+[Plan](../projects/completed/narration-failure-cleanup.md).
 
 ## LA236
 
@@ -267,7 +267,7 @@ Conversation metadata admission retains the existing 8,192-row boundary, and unc
 
 **Assessment:** Keep the bounded projection; tune the split/model from continuity traces. Expand cold rebuild only with a bounded continuation strategy and spending evidence. There was no prior runtime compaction allocation to remove; the earlier full-transcript admission failure is replaced by on-demand compaction, with explicit capacity failures retained.
 
-[Canonical behavior](../narration-and-conversations.md#model-facing-conversation-compaction) · [Design](../projects/conversation-compaction-tech-design.md) · [Evidence](../verification/conversation-compaction.md#conversation-compaction) · [NC14–NC17](../maintainers/narration-and-conversations.md).
+[Canonical behavior](../narration-and-conversations.md#model-facing-conversation-compaction) · [Design](../projects/completed/conversation-compaction-tech-design.md) · [Evidence](../verification/conversation-compaction.md#conversation-compaction) · [NC14–NC17](../maintainers/narration-and-conversations.md).
 
 ## TX-L01 — Selected affordance and correspondents
 

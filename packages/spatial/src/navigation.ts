@@ -8,7 +8,6 @@ import {
   surfacesInBounds,
 } from './geometry.js';
 import {
-  BODY_PROFILES,
   SPATIAL_LIMITS,
   type BodyProfile,
   type RoutePlan,
@@ -91,7 +90,7 @@ export function findSurfaceRoute(
   map: SpatialMap,
   from: SurfacePoint,
   to: SurfacePoint,
-  body: BodyProfile = BODY_PROFILES.person,
+  body: BodyProfile,
 ): RoutePlan {
   if (!canStand(map, from, body) || !canStand(map, to, body))
     return { status: 'invalid-endpoint', path: [], expanded: 0 };

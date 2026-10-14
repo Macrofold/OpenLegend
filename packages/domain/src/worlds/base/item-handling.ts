@@ -1,3 +1,4 @@
+import { BASE_BODY_PROFILES } from './spatial-definitions.js';
 import type { ItemHandlingPolicy } from '../../item-handling.js';
 
 // Authored base-world rules, not universal properties of an engine actor.
@@ -9,6 +10,7 @@ export const BASE_ITEM_HANDLING: ItemHandlingPolicy = {
   reach: 1.6,
   pickupSeconds: 1,
   actorBodyProfiles: ['person'],
+  objectBody: BASE_BODY_PROFILES.object,
 };
 
 export const BASE_PICKUP_NARRATION =

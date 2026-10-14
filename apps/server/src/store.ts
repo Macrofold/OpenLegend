@@ -24,11 +24,8 @@ import {
 } from './history-residency.js';
 import { MemoryRepository } from './memory-repository.js';
 import { WorldRecords } from './world-records.js';
-import { isDeepStrictEqual } from 'node:util';
-import { randomUUID } from 'node:crypto';
 import { readAttemptBudget, type AttemptBudgetSnapshot } from './attempt-budget.js';
 import { WorldAgentStore } from './world-agent-store.js';
-import { KnowledgeStore } from './knowledge-store.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { CreationTargetRepository } from './creation-target.js';
 import { GameSaves, type RestoreSave } from './game-saves.js';
@@ -64,7 +61,7 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 import { digest } from './content-digest.js';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '13';
+export const DATABASE_SCHEMA = '14';
 
 export interface AttemptBudget {
   id: string;
@@ -95,19 +92,6 @@ export interface SavedWorld {
   actorMilestones?: Record<string, Record<string, boolean>>;
 }
 
-export type WorldChange =
-  | { op: 'set'; path: Array<string | number>; value: unknown }
-  | {
-      op: 'splice';
-      path: Array<string | number>;
-      index: number;
-      deleteCount: number;
-      values: unknown[];
-    }
-  | { op: 'remove'; path: Array<string | number> };
-export interface WorldChanges {
-  operations: WorldChange[];
-}
 export interface JobRecord extends AiJobView {
   authority?: RequestScope;
   responseReady?: boolean;
@@ -176,174 +160,6 @@ function exposureTotal(value: unknown): bigint {
   const text = String(value);
   if (!/^\d+$/.test(text)) throw new Error('Invalid spending exposure.');
   return BigInt(text);
-}
-
-function samePrimitive(left: unknown, right: unknown): boolean {
-  return left === right || (Number.isNaN(left) && Number.isNaN(right));
-}
-
-function collectChanges(
-  previous: unknown,
-  next: unknown,
-  path: Array<string | number>,
-  operations: WorldChange[],
-  appendEventCount?: number,
-): void {
-  if (samePrimitive(previous, next)) return;
-  if (
-    appendEventCount !== undefined &&
-    path.length === 2 &&
-    path[0] === 'world' &&
-    path[1] === 'events' &&
-    Array.isArray(previous) &&
-    Array.isArray(next) &&
-    next.length === previous.length + appendEventCount
-  ) {
-    // Draft-proven appends skip retained history; unknown or edited arrays use the diff.
-    if (appendEventCount)
-      operations.push({
-        op: 'splice',
-        path,
-        index: previous.length,
-        deleteCount: 0,
-        values: next.slice(previous.length),
-      });
-    return;
-  }
-  if (
-    previous === null ||
-    next === null ||
-    typeof previous !== 'object' ||
-    typeof next !== 'object' ||
-    Array.isArray(previous) !== Array.isArray(next)
-  ) {
-    operations.push({ op: 'set', path, value: structuredClone(next) });
-    return;
-  }
-  if (Array.isArray(previous) && Array.isArray(next)) {
-    const appended = appendedRecordCount(previous, next);
-    if (appended !== undefined) {
-      if (appended)
-        operations.push({
-          op: 'splice',
-          path,
-          index: previous.length,
-          deleteCount: 0,
-          values: next.slice(previous.length),
-        });
-      return;
-    }
-
-    if (previous.length !== next.length) {
-      let start = 0;
-      while (start < Math.min(previous.length, next.length) && previous[start] === next[start])
-        start++;
-      let end = 0;
-      while (
-        end < Math.min(previous.length, next.length) - start &&
-        previous[previous.length - 1 - end] === next[next.length - 1 - end]
-      )
-        end++;
-      operations.push({
-        op: 'splice',
-        path,
-        index: start,
-        deleteCount: previous.length - start - end,
-        values: next.slice(start, next.length - end),
-      });
-      return;
-    }
-    const shared = Math.min(previous.length, next.length);
-    for (let index = 0; index < shared; index++)
-      collectChanges(previous[index], next[index], [...path, index], operations, appendEventCount);
-    for (let index = shared; index < next.length; index++)
-      operations.push({ op: 'set', path: [...path, index], value: structuredClone(next[index]) });
-    if (previous.length !== next.length)
-      operations.push({ op: 'set', path: [...path, 'length'], value: next.length });
-    return;
-  }
-  const before = previous as Record<string, unknown>;
-  const after = next as Record<string, unknown>;
-  for (const key of Object.keys(before))
-    if (!Object.hasOwn(after, key)) operations.push({ op: 'remove', path: [...path, key] });
-  for (const [key, value] of Object.entries(after))
-    if (value === undefined) {
-      if (before[key] !== undefined) operations.push({ op: 'remove', path: [...path, key] });
-    } else if (!Object.hasOwn(before, key))
-      operations.push({ op: 'set', path: [...path, key], value: structuredClone(value) });
-    else collectChanges(before[key], value, [...path, key], operations, appendEventCount);
-}
-
-export function diffSavedWorld(
-  previous: SavedWorld | null,
-  next: SavedWorld,
-  _legacyAppendEventCount?: number,
-): WorldChanges {
-  if (!previous) return { operations: [{ op: 'set', path: [], value: structuredClone(next) }] };
-  const operations: WorldChange[] = [];
-  // A caller hint cannot certify an unchanged prefix; domain draft lineage can.
-  collectChanges(
-    previous,
-    next,
-    [],
-    operations,
-    provenAppendCount(previous.world.events, next.world.events),
-  );
-  return { operations };
-}
-
-export function applyWorldChanges(state: SavedWorld, changes: WorldChanges): SavedWorld {
-  let result: unknown = structuredClone(state);
-  if (!Array.isArray(changes.operations)) throw new Error('Invalid world journal operations.');
-  for (const change of changes.operations) {
-    if (
-      !['set', 'remove', 'splice'].includes(change.op) ||
-      !Array.isArray(change.path) ||
-      change.path.some(
-        (key) =>
-          (typeof key !== 'string' && (!Number.isSafeInteger(key) || key < 0)) ||
-          ['__proto__', 'prototype', 'constructor'].includes(String(key)),
-      )
-    )
-      throw new Error('Invalid world journal operation/path.');
-    if (change.op === 'splice') {
-      let target: any = result;
-      for (const key of change.path) {
-        if (!target || typeof target !== 'object' || !Object.hasOwn(target, key))
-          throw new Error('Missing journal splice parent.');
-        target = target[key];
-      }
-      if (!Array.isArray(target)) throw new Error('Journal splice requires an array.');
-      if (
-        !Number.isSafeInteger(change.index) ||
-        !Number.isSafeInteger(change.deleteCount) ||
-        change.index < 0 ||
-        change.deleteCount < 0 ||
-        change.index > target.length ||
-        change.index + change.deleteCount > target.length ||
-        !Array.isArray(change.values)
-      )
-        throw new Error('Invalid journal splice bounds.');
-      target.splice(change.index, change.deleteCount, ...structuredClone(change.values));
-      continue;
-    }
-    if (!change.path.length) {
-      if (change.op === 'remove') throw new Error('A world journal cannot remove its root.');
-      result = structuredClone(change.value);
-      continue;
-    }
-    let parent = result as Record<string | number, unknown>;
-    for (const key of change.path.slice(0, -1)) {
-      const child = parent[key];
-      if (!child || typeof child !== 'object')
-        throw new Error('World journal references a missing parent.');
-      parent = child as Record<string | number, unknown>;
-    }
-    const key = change.path.at(-1)!;
-    if (change.op === 'remove') delete parent[key];
-    else parent[key] = structuredClone(change.value);
-  }
-  return result as SavedWorld;
 }
 
 /** Record changes prepared for one exact baseline and expected revision. Preparation assigns
@@ -667,12 +483,6 @@ export class SqlGameRepository implements GameRepository {
       )
         throw new Error('Database schema marker is missing. Existing data was not changed.');
       const schema = `
-      CREATE TABLE IF NOT EXISTS world (
-        id BIGINT PRIMARY KEY CHECK (id = 1), revision BIGINT NOT NULL, payload TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS world_journal (
-        revision BIGINT PRIMARY KEY, payload TEXT NOT NULL, created_at BIGINT NOT NULL
-      );
       CREATE TABLE IF NOT EXISTS jobs (
         id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, created_at BIGINT NOT NULL
       );
@@ -701,14 +511,10 @@ export class SqlGameRepository implements GameRepository {
       );
     `;
       await this.db.exec(schema);
-      await this.db.exec(
-        `CREATE TABLE IF NOT EXISTS mind.inner_world (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, revision BIGINT NOT NULL, text TEXT NOT NULL, source_snapshot TEXT NOT NULL, publication_job_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id))`,
-      );
 
       this.vectors = new VectorStore(this.db);
       await this.vectors.initialize();
 
-      await new KnowledgeStore(this.db).initialize();
       await this.records.initialize();
       await this.memories.initialize();
       await new WorldAgentStore(this.db).initialize();
@@ -824,84 +630,9 @@ export class SqlGameRepository implements GameRepository {
       this.acceptedRevision = canonical.revision;
       return { revision: canonical.revision, state };
     }
-    const row = await this.db.prepare('SELECT revision, payload FROM world WHERE id = 1').get();
-    if (!row) {
-      this.acceptedState = null;
-      this.acceptedRevision = 0;
-      return null;
-    }
-    let state = JSON.parse(String(row['payload'])) as SavedWorld;
-    let revision = Number(row['revision']);
-    const journal = await this.db
-      .prepare('SELECT revision,payload FROM world_journal WHERE revision > ? ORDER BY revision')
-      .all(revision);
-    for (const entry of journal) {
-      const next = Number(entry['revision']);
-      if (next !== revision + 1)
-        throw new Error('World journal is incomplete; refusing partial recovery.');
-      state = applyWorldChanges(state, JSON.parse(String(entry['payload'])) as WorldChanges);
-      revision = next;
-    }
-    const head = await this.getIntegration('world-journal-head');
-    if (head !== undefined && head !== null && Number(head) !== revision)
-      throw new Error('World journal head mismatch; refusing incomplete recovery.');
-    // Keep the exact persisted baseline; restoration does not convert development state.
-    const acceptedState = structuredClone(state);
-    validateCurrentWorldState(state.world);
-    if (
-      (await (active
-        ? this.history.retainedEventCount(state.world.id)
-        : this.history.auditEventCount(state.world.id))) !==
-      (state.world.archivedEventCount ?? 0) + state.world.events.length
-    )
-      throw new Error(
-        'Archived history coverage disagrees with the save; restore the complete database.',
-      );
-    if (state.world.schemaVersion >= 2) {
-      const rows = await this.db
-        .prepare('SELECT actor_id,revision,text FROM mind.inner_world WHERE world_id=?')
-        .all(state.world.id);
-      for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {})) {
-        const accepted = rows.find((row) => row['actor_id'] === actorId);
-        if (
-          !accepted ||
-          Number(accepted['revision']) !== inner.revision ||
-          accepted['text'] !== inner.text
-        )
-          throw new Error(
-            'Accepted inner-world snapshot disagrees with its world commit; restore/reconcile before starting.',
-          );
-      }
-    }
-    if (state.world.actorKnowledge) await new KnowledgeStore(this.db).verify(acceptedState.world);
-    // Extract in place and compare the complete reconstructed value before retiring
-    // the old writable document. A failure rolls back every record and keeps the save.
-    await this.db.transaction(async () => {
-      await this.db
-        .prepare('INSERT INTO world_head VALUES (1,?,?,?)')
-        .run(acceptedState.world.id, revision, randomUUID());
-      const records = this.records.prepare(undefined, acceptedState);
-      await this.history.project(undefined, acceptedState.world);
-      const memoryChanges = await this.memories.project(acceptedState.world.id, revision, records);
-      await this.records.write(acceptedState.world.id, revision, records);
-      await this.memories.reconcile(acceptedState.world.id, memoryChanges);
-      const recovered = await this.records.load();
-      if (
-        !recovered ||
-        !isDeepStrictEqual(recovered.state, JSON.parse(JSON.stringify(acceptedState)))
-      )
-        throw new Error(
-          'Record migration did not preserve the complete world; migration rolled back.',
-        );
-      await this.db.exec(
-        'DELETE FROM world_journal; DELETE FROM world; DELETE FROM knowledge_documents',
-      );
-      await this.db.exec('DELETE FROM mind.inner_world');
-      await this.db.prepare('DELETE FROM meta WHERE key=?').run('integration:world-journal-head');
-    });
-    this.acceptedState = acceptedState;
-    this.acceptedRevision = revision;
-    return { revision, state };
+    this.acceptedState = null;
+    this.acceptedRevision = 0;
+    return null;
   }
 
   private readonly readyHistoryWorlds = new Set<string>();

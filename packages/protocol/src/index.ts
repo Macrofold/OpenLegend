@@ -579,6 +579,7 @@ export interface WorldEventSourcesView {
   ok: true;
   worldId: string;
   generation: string;
+  /** One result for each requested reference, in the same order, including unavailable records. */
   sources: WorldEventSourceDetail[];
 }
 
@@ -688,8 +689,8 @@ export interface GameView {
     height: number;
     seed: number;
     spatial: SpatialLayout;
-    tiles: Array<Array<'grass' | 'sand' | 'water' | 'rock'>>;
-    obstacles: Array<{ y: number; x: number; z: number; radius: number; kind: string }>;
+    tiles: string[][];
+    terrain: import('@open-legend/spatial').SpatialMap['terrain'];
   };
   clock: {
     seconds: number;
@@ -794,6 +795,15 @@ export interface GameView {
 }
 
 export interface GamePatch {
+  /** JSON omits undefined. Removed fields are explicit; null remains a meaningful value. */
+  remove?: {
+    view?: Array<
+      'commandEpoch' | 'worldEventsRevision' | 'historyRevision' | 'historyEpoch' | 'narrator'
+    >;
+    clock?: Array<keyof GameView['clock']>;
+    player?: Array<keyof GameView['player']>;
+    ai?: Array<keyof GameView['ai']>;
+  };
   scope?: string;
   commandEpoch?: string;
   worldEventsRevision?: string;
@@ -1296,7 +1306,7 @@ export * from './relationships.js';
 
 export * from './world-agent.js';
 
-/** Operational entry and maintenance DTOs; see docs/projects/multiplayer-entry-maintenance.md. */
+/** Operational entry and maintenance DTOs; see docs/projects/completed/multiplayer-entry-maintenance.md. */
 export type AccessCapability =
   | 'play'
   | 'spectate'
@@ -1333,7 +1343,12 @@ export interface MaintenanceWindowView {
 
 /** Public physical overview for spectators: no names, identities, possessions or speech. */
 export interface WorldOverview {
-  map: { width: number; height: number; tiles: GameView['map']['tiles'] };
+  map: {
+    width: number;
+    height: number;
+    tiles: GameView['map']['tiles'];
+    terrain: GameView['map']['terrain'];
+  };
   bodies: Array<{
     category: 'person' | 'animal' | 'resource' | 'fire' | 'object';
     x: number;

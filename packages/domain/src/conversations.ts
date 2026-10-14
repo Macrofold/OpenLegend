@@ -1,6 +1,6 @@
 import { activelyParticipates } from './participation-state.js';
 import { current, isDraft } from 'immer';
-import { spatialMap, worldPosition } from './spatial-state.js';
+import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import { withinHearingRange } from './perception.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import type { WorldState, Transition } from './types.js';
@@ -219,7 +219,7 @@ export function changeConversation(
 type ContinuityPose = {
   id: string;
   position: NonNullable<ReturnType<typeof worldPosition>>;
-  body: string;
+  body: import('@open-legend/spatial').BodyProfile;
   alive: boolean;
   participating: boolean;
   senses: string;
@@ -270,7 +270,7 @@ export function reconcileConversations(world: WorldState): void {
         position.y === pose.position.y &&
         position.z === pose.position.z &&
         activelyParticipates(entity) === pose.participating &&
-        entity!.spatial.bodyProfileId === pose.body &&
+        bodyProfile(entity) === pose.body &&
         !!entity!.actor?.alive === pose.alive &&
         (entity!.actor?.senses?.join('|') ?? 'default') === pose.senses
       );
@@ -331,7 +331,7 @@ export function reconcileConversations(world: WorldState): void {
         id,
         position: { ...worldPosition(entity) },
         participating: activelyParticipates(entity),
-        body: entity.spatial.bodyProfileId,
+        body: bodyProfile(entity),
         alive: !!entity.actor?.alive,
         senses: entity.actor?.senses?.join('|') ?? 'default',
       };

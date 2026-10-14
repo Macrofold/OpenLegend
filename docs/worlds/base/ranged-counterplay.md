@@ -1,6 +1,6 @@
 # Ranged counterplay and evasion
 
-**Implemented on the Batch 06 branch, October 9, 2026.** These are bundled-world choices, with [native and database evidence](../../verification/rivals-and-contested-ground.md); independent-character and combined player qualification remain open. [NPC combat participation](lifecycle-and-protection.md#npc-combat-participation) supplies common permission rather than ranged geometry deciding eligibility.
+**Implemented October 9, 2026, integrated in current main as checked October 14.** These are bundled-world choices, with [native and database evidence](../../verification/rivals-and-contested-ground.md); independent-character and combined player qualification remain open. [NPC combat participation](lifecycle-and-protection.md#npc-combat-participation) supplies common permission rather than ranged geometry deciding eligibility.
 
 ## Ranged tools and preparation
 

@@ -141,11 +141,14 @@ function distribution(keys: string[], weights: Record<string, number>): Judgment
 }
 
 const isEat = (description: string) =>
-  description.startsWith('Eat one. Selected item: the wild berries.');
+  description.startsWith('Eat one.') && /wild berries/i.test(description);
 const isContinue = (description: string) =>
   description.startsWith('Continue the') || description.startsWith('Remain in place');
 const noul = (rating: number): JudgmentAnswer => ({ type: 'noul', noul: rating });
 const handleKey = (key: string) => /^a\d+$/.test(key);
+/** Optional memory selection is separate from the decision's routing/action calls. */
+const decisionJudges = (requests: JudgeRequest[]) =>
+  requests.filter((request) => !/:attention:\d+$/.test(request.requestId));
 
 interface Script {
   /** Route weights; unspecified offered routes share the remainder. */
@@ -280,10 +283,14 @@ async function harness(
   const berries = () => quantityOf(service.world, NPC_ID, 'berries');
   const jobCalls = (jobId: string) => ({
     judges: calls.judges.filter((request) => request.requestId.startsWith(`${jobId}:`)),
+    decisions: decisionJudges(calls.judges).filter((request) =>
+      request.requestId.startsWith(`${jobId}:`),
+    ),
     generations: calls.generations.filter((request) => request.requestId.startsWith(`${jobId}:`)),
   });
   /** Admit one autonomous decision and wait for it; returns the only thought job. */
   async function thought(): Promise<JobRecord> {
+    await service.whenDurable();
     await director.considerThought();
     await director.idle();
     const jobs = (await store.recentJobs(50)).filter((job) => job.kind === 'thought');
@@ -360,13 +367,13 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     const job = await h.thought();
     // Exactly one Jev request carries the route/reflection Choices and every a* rating.
     const dispatched = h.jobCalls(job.id);
-    expect(dispatched.judges).toHaveLength(1);
-    const keys = Object.keys(dispatched.judges[0]!.questions);
-    expect(dispatched.judges[0]!.requestId).toBe(`${job.id}${ROUTE}`);
+    expect(dispatched.decisions).toHaveLength(1);
+    const keys = Object.keys(dispatched.decisions[0]!.questions);
+    expect(dispatched.decisions[0]!.requestId).toBe(`${job.id}${ROUTE}`);
     expect(keys).toEqual(expect.arrayContaining(['route', 'reflection']));
     expect(keys.filter(handleKey).length).toBeGreaterThan(1);
     expect(keys).not.toContain('possibleAction');
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
 
     expect(job.status).toBe('completed');
@@ -397,7 +404,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(own.map((event) => event.type)).not.toContain('speech');
     expect(await h.store.getIntegration(reflectionKey(h))).toBeFalsy();
     expect((await h.store.usage(h.config.budgetUsd)).usage).toMatchObject({
-      jevCalls: 1,
+      jevCalls: h.calls.judges.length,
       llmCalls: 0,
     });
 
@@ -406,7 +413,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(root.disposition).toBe('responded');
     // The trace names the routes actually offered in the dispatched route question.
     const offeredRoutes = Object.keys(
-      (dispatched.judges[0]!.questions['route'] as { criteria: object }).criteria,
+      (dispatched.decisions[0]!.questions['route'] as { criteria: object }).criteria,
     );
     expect(offeredRoutes).toEqual(expect.arrayContaining(['native', 'level1', 'level2']));
     expect((root.input as { offeredRoutes: string[] }).offeredRoutes).toEqual(offeredRoutes);
@@ -419,7 +426,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(input.ratings.filter((entry) => (entry.rating ?? 0) >= LEVEL1_POLICY.selectAt)).toEqual([
       expect.objectContaining({
         rating: 0.9,
-        description: expect.stringMatching(/^Eat one\. Selected item: the wild berries\./),
+        description: expect.stringMatching(/^Eat one\..*wild berries/i),
       }),
     ]);
     const eat = input.ratings.find((entry) => isEat(entry.description ?? ''))!;
@@ -434,7 +441,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       selectionRequest: 'combined',
       nativeGates: { generationAvailable: true, speechTrigger: false },
     });
-    expect(stage('Jev')).toHaveLength(1);
+    expect(stage('Jev')).toHaveLength(h.jobCalls(job.id).judges.length);
     expect(stage('Response admission')).toHaveLength(1);
     expect(stage('LM · fast · npc_response')).toHaveLength(0);
   });
@@ -472,7 +479,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(h.ada().planGeneration).toBe(before.planGeneration);
     expect(h.service.world.responseReceipts?.[job.id]?.outcome.ok).toBe(true);
     expect(h.service.world.responseReceipts?.[job.id]?.components).toEqual({});
-    expect(h.jobCalls(job.id).judges).toHaveLength(1);
+    expect(h.jobCalls(job.id).decisions).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
     const { input, output } = await level1Stage(h, job.id);
     const chosen = input.ratings.filter((entry) => entry.rating === 0.9);
@@ -486,6 +493,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     });
 
     // Ada has no new opportunity; other characters may receive their first decision.
+    await h.service.whenDurable();
     await h.director.considerThought();
     await h.director.idle();
     expect(
@@ -493,7 +501,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
         (entry) => entry.kind === 'thought' && entry.request.npcId === NPC_ID,
       ),
     ).toHaveLength(1);
-    expect(h.jobCalls(job.id).judges).toHaveLength(1);
+    expect(h.jobCalls(job.id).decisions).toHaveLength(1);
     expect(h.jobCalls(job.id).generations).toHaveLength(0);
     expect(h.ada().action).toEqual(before.action);
   });
@@ -507,8 +515,9 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     ],
     [
       'invalid-answers',
-      'continue rated 1.5',
-      (description: string) => (isContinue(description) ? noul(1.5) : defaultRate(description)),
+      'continue rated non-finite',
+      (description: string) =>
+        isContinue(description) ? noul(Number.NaN) : defaultRate(description),
       'invalid',
     ],
     [
@@ -529,7 +538,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       expect(job.result).toMatchObject({ disposition: 'deferred', reason });
       expect((job.result as { level1: object }).level1).not.toHaveProperty('escalationBlocked');
       expect(job.message).toContain('No automatic paid retry.');
-      expect(h.calls.judges).toHaveLength(1);
+      expect(decisionJudges(h.calls.judges)).toHaveLength(1);
       expect(h.calls.generations).toHaveLength(0);
       await h.service.tick(0.1);
       expect(h.berries()).toBe(2);
@@ -560,7 +569,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(job.result).toMatchObject({
       level1: { kind: 'escalate', reason: 'uncertain-selection', level: 2 },
     });
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(1);
     const [generation] = h.calls.generations;
     expect(generation).toMatchObject({
@@ -569,9 +578,8 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       task: 'npc_response',
     });
     // Generation reuses the ratings at the 0.5 relevance line instead of buying another request.
-    expect(String(generation!.context)).toContain(
-      'Eat one. Selected item: the wild berries. Restores up to 18',
-    );
+    expect(String(generation!.context)).toContain('Eat one.');
+    expect(String(generation!.context)).toMatch(/wild berries/i);
     expect(String(generation!.context)).not.toContain('Drop 2 Wild berries on the ground.');
     const { root, input, output } = await level1Stage(h, job.id);
     expect(root.route).toBe('level1→level2');
@@ -609,20 +617,20 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
           best: { rating: 0.6 },
         },
       });
-      expect(
-        Object.keys((h.calls.judges[0]!.questions['route'] as { criteria: object }).criteria),
-      ).toEqual(['native', 'level1', 'request_1']);
-      expect(h.calls.judges).toHaveLength(1);
+      const offeredRoutes = Object.keys(
+        (decisionJudges(h.calls.judges)[0]!.questions['route'] as { criteria: object }).criteria,
+      );
+      expect(offeredRoutes.filter((key) => !key.startsWith('request_'))).toEqual([
+        'native',
+        'level1',
+      ]);
+      expect(decisionJudges(h.calls.judges)).toHaveLength(1);
       expect(h.calls.generations).toHaveLength(0);
       await h.service.tick(0.1);
       expect(h.berries()).toBe(2);
       const { root } = await level1Stage(h, job.id);
       expect(root).toMatchObject({ route: 'level1', disposition: 'deferred' });
-      expect((root.input as { offeredRoutes: string[] }).offeredRoutes).toEqual([
-        'native',
-        'level1',
-        'request_1',
-      ]);
+      expect((root.input as { offeredRoutes: string[] }).offeredRoutes).toEqual(offeredRoutes);
     },
   );
 
@@ -635,7 +643,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(job.result).toMatchObject({
       level1: { kind: 'escalate', reason: 'no-suitable-action', level: 2 },
     });
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(1);
     const [generation] = h.calls.generations;
     const invention = JSON.stringify(generation!.schema).includes('"invention"');
@@ -692,10 +700,10 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       },
     });
     expect(job.message).toContain('The escalation allowance could not be reserved.');
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
     const usage = await h.store.usage(h.config.budgetUsd);
-    expect(usage.usage).toMatchObject({ jevCalls: 1, llmCalls: 0 });
+    expect(usage.usage).toMatchObject({ jevCalls: h.calls.judges.length, llmCalls: 0 });
     expect(usage.budget.reservedUsd).toBe(0);
     await h.service.tick(0.1);
     expect(h.berries()).toBe(2);
@@ -741,7 +749,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(job.status).toBe('completed');
     expect(disposition(job)).toBe('responded');
     const dispatched = h.jobCalls(job.id);
-    const ratings = dispatched.judges.find((request) => request.requestId.endsWith(RATINGS));
+    const ratings = dispatched.decisions.find((request) => request.requestId.endsWith(RATINGS));
     // Actions were available and rated for relevance, yet the conversational route still generated.
     expect(Object.keys(ratings?.questions ?? {}).length).toBeGreaterThan(1);
     expect(Object.keys(ratings!.questions).every(handleKey)).toBe(true);
@@ -794,7 +802,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       level1: { kind: 'act', reason: 'selected', rating: 0.9 },
     });
     const dispatched = h.jobCalls(job.id);
-    const decisions = dispatched.judges.filter(
+    const decisions = dispatched.decisions.filter(
       (request) => request.requestId.endsWith(ROUTE) || request.requestId.endsWith(RATINGS),
     );
     expect(decisions.map((request) => request.requestId)).toEqual([
@@ -834,12 +842,12 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     const job = await h.thought();
     // The size check ran once and rejected the combined question set before any dispatch.
     expect(oversize.rejected).toBe(1);
-    const dispatched = h.jobCalls(job.id).judges;
+    const dispatched = h.jobCalls(job.id).decisions;
     expect(dispatched.map((request) => request.requestId)).toEqual([
       `${job.id}${ROUTE}`,
       `${job.id}${RATINGS}`,
     ]);
-    expect(h.calls.judges).toHaveLength(2);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(2);
     const [route, ratings] = dispatched.map((request) => Object.keys(request.questions));
     expect(route).toEqual(expect.arrayContaining(['route', 'reflection']));
     expect(route).not.toContain('possibleAction');
@@ -860,7 +868,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     await h.service.tick(0.1);
     expect(h.berries()).toBe(1);
     expect((await h.store.usage(h.config.budgetUsd)).usage).toMatchObject({
-      jevCalls: 2,
+      jevCalls: h.calls.judges.length,
       llmCalls: 0,
     });
     const { input, stage } = await level1Stage(h, job.id);
@@ -904,6 +912,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
         return held.promise;
       },
     });
+    await h.service.whenDurable();
     await h.director.considerThought();
     const request = await started.promise;
     // Bindings were prepared before dispatch; Ada then drops the food through native admission.
@@ -940,29 +949,36 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(dropped?.quantity).toBe(2);
     expect(dropped?.ownerId).not.toBe(NPC_ID);
     // No automatic repair or retry after the rejection.
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
   });
 
   it('records but never executes an answer for an unoffered handle', async () => {
+    let unoffered = '';
     const h = await harness({
-      judge: (request) => answer(request, { rate: () => noul(0.1), extra: { a99: noul(0.99) } }),
+      judge: (request) => {
+        const handles = Object.keys(request.questions).filter(handleKey);
+        if (!handles.length) return answer(request, {});
+        // The growing bundled world can legitimately offer a99; choose outside this request.
+        unoffered = `a${Math.max(...handles.map((key) => Number(key.slice(1)))) + 1}`;
+        return answer(request, { rate: () => noul(0.1), extra: { [unoffered]: noul(0.99) } });
+      },
     });
     const job = await h.thought();
-    const [combined] = h.calls.judges;
-    expect(Object.keys(combined!.questions)).not.toContain('a99');
+    const [combined] = decisionJudges(h.calls.judges);
+    expect(Object.keys(combined!.questions)).not.toContain(unoffered);
     expect(job.result).toMatchObject({
       level1: { kind: 'escalate', reason: 'no-suitable-action', best: { rating: 0.1 } },
     });
     const { input } = await level1Stage(h, job.id);
-    expect(input.ignoredAnswers).toEqual(['a99']);
-    expect(input.ratings.map((entry) => entry.handle)).not.toContain('a99');
+    expect(input.ignoredAnswers).toEqual([unoffered]);
+    expect(input.ratings.map((entry) => entry.handle)).not.toContain(unoffered);
     expect(input.ratings.every((entry) => entry.status === 'rated' && entry.rating === 0.1)).toBe(
       true,
     );
     // The escalated generation cannot reference the unoffered handle either, and nothing
     // rated below the 0.5 relevance line is offered to it.
-    expect(JSON.stringify(h.calls.generations[0]!.schema)).not.toContain('"a99"');
+    expect(JSON.stringify(h.calls.generations[0]!.schema)).not.toContain(JSON.stringify(unoffered));
     expect(actionHandles(h.calls.generations[0]!.schema)).toEqual([]);
     await h.service.tick(0.1);
     expect(h.berries()).toBe(2);
@@ -974,10 +990,12 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     const started = deferred<JudgeRequest>();
     const h = await harness({
       judge: (request) => {
+        if (!request.requestId.endsWith(ROUTE)) return answer(request, {});
         started.resolve(request);
         return held.promise;
       },
     });
+    await h.service.whenDurable();
     await h.director.considerThought();
     const request = await started.promise;
     await h.service.control({ paused: true });
@@ -996,7 +1014,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     await h.director.idle();
     expect(h.berries()).toBe(2);
     expect(h.ada().agency.plan ?? null).toBeNull();
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
   });
 
@@ -1031,7 +1049,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
       expect(job.message).toContain(`Jev returned ${outcome}`);
       // The failing request is the level-1 selection itself (choose-action criteria), dispatched
       // after routing chose level 1; nothing follows it.
-      const judges = h.jobCalls(job.id).judges;
+      const judges = h.jobCalls(job.id).decisions;
       expect(judges.map((request) => request.requestId)).toContain(`${job.id}${ROUTE}`);
       expect(judges.at(-1)!.requestId).toBe(`${job.id}${RATINGS}`);
       expect(
@@ -1052,25 +1070,28 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
 
   it('fails an uncertain combined request as uncertain and keeps its reservation spent', async () => {
     const h = await harness({
-      judge: (request) => ({
-        outcome: 'failed',
-        reason: 'fixture timeout after dispatch',
-        receipt: {
-          ...receipt(request.requestId, 'jev'),
-          estimatedCostUsd: undefined,
-          completionUncertain: true,
-        },
-      }),
+      judge: (request) =>
+        request.requestId.endsWith(ROUTE)
+          ? {
+              outcome: 'failed',
+              reason: 'fixture timeout after dispatch',
+              receipt: {
+                ...receipt(request.requestId, 'jev'),
+                estimatedCostUsd: undefined,
+                completionUncertain: true,
+              },
+            }
+          : answer(request, {}),
     });
     const job = await h.thought();
     expect(job.status).toBe('failed');
     expect(disposition(job)).toBe('uncertain');
-    expect(h.calls.judges).toHaveLength(1);
-    expect(h.calls.judges[0]!.requestId).toBe(`${job.id}${ROUTE}`);
-    expect(Object.keys(h.calls.judges[0]!.questions).some(handleKey)).toBe(true);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)[0]!.requestId).toBe(`${job.id}${ROUTE}`);
+    expect(Object.keys(decisionJudges(h.calls.judges)[0]!.questions).some(handleKey)).toBe(true);
     expect(h.calls.generations).toHaveLength(0);
     const usage = await h.store.usage(h.config.budgetUsd);
-    expect(usage.usage.jevCalls).toBe(1);
+    expect(usage.usage.jevCalls).toBe(h.calls.judges.length);
     expect(usage.budget.spentUsd).toBeGreaterThanOrEqual(decisionAllowance(h.config, 'jev'));
     expect(h.berries()).toBe(2);
     const { root } = await h.trace(job.id);
@@ -1126,10 +1147,10 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     await h.director.idle();
     expect(h.berries()).toBe(1);
     expect(h.ada().agency.plan?.steps).toEqual(ada.agency.plan?.steps);
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
     expect((await h.store.usage(h.config.budgetUsd)).usage).toMatchObject({
-      jevCalls: 1,
+      jevCalls: h.calls.judges.length,
       llmCalls: 0,
     });
   });
@@ -1139,6 +1160,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     const started = deferred<JudgeRequest>();
     const h = await harness({
       judge: (request) => {
+        if (!request.requestId.endsWith(ROUTE)) return answer(request, {});
         started.resolve(request);
         return held.promise;
       },
@@ -1146,6 +1168,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     const saveId = randomUUID();
     await h.service.createSave('Hungry Ada', saveId);
     const payload = await h.store.saves.read(h.service.world.id, saveId);
+    await h.service.whenDurable();
     await h.director.considerThought();
     const request = await started.promise;
     // The held request is the combined routing-and-selection request.
@@ -1162,7 +1185,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect((await h.service.control({ paused: false })).ok).toBe(true);
     expect(h.service.paused).toBe(false);
     expect(h.berries()).toBe(2);
-    expect(h.calls.judges).toHaveLength(1);
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
 
     held.resolve(answer(request, {}));
     await h.director.idle();
@@ -1180,11 +1203,11 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     await h.director.idle();
     expect(h.berries()).toBe(2);
     expect(h.ada().agency.plan ?? null).toBeNull();
-    // No automatic retry: the one held request is the only dispatch.
-    expect(h.calls.judges).toHaveLength(1);
+    // No automatic retry: the held selection is the only decision dispatch.
+    expect(decisionJudges(h.calls.judges)).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
     expect((await h.store.usage(h.config.budgetUsd)).usage).toMatchObject({
-      jevCalls: 1,
+      jevCalls: h.calls.judges.length,
       llmCalls: 0,
     });
   });

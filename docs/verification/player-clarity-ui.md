@@ -1,6 +1,6 @@
 # Player clarity UI verification
 
-Branch `codex/player-clarity-ui` from `origin/main` `be68b1e0`, under the [player clarity plan](../projects/player-clarity-ui.md). Evidence is manual browser and direct-request observation on a disposable world, not automated regression coverage.
+Branch `codex/player-clarity-ui` from `origin/main` `be68b1e0`, under the [player clarity plan](../projects/completed/player-clarity-ui.md). Evidence is manual browser and direct-request observation on a disposable world, not automated regression coverage.
 
 **Environment (all sections unless noted):** macOS host, local PostgreSQL 14 disposable database `openlegend_playerclarity_20260928`, `OPEN_LEGEND_GOD_MODE=true`, `AI_BUDGET_USD=0`, no provider keys (no model calls possible), local loopback authentication, development server with Vite middleware (hot reload unavailable because another worktree held the HMR port; pages were reloaded manually). Browser: the Claude desktop browser pane at 1280×860 (desktop) and the 375×812 mobile preset. Paid provider cost: **$0**.
 

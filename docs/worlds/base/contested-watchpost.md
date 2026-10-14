@@ -1,6 +1,6 @@
 # Broken Watchpost: occupants, equipment and aftermath
 
-**Implemented new-start content on the Batch 06 branch, October 9, 2026; combined encounter acceptance remains open.** The [NPC combat participation rule](lifecycle-and-protection.md#npc-combat-participation) is owner-approved. This specific encounter composes that rule with ordinary people, items, knowledge and geometry. [CF01](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf01--armed-opponents-with-their-own-purpose) supplies character definitions and their decision consumers; [CF05](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) owns placement, finite stock and combined delivery.
+**Implemented new-start content October 9, 2026, integrated in current main as checked October 14; combined encounter acceptance remains open.** The [NPC combat participation rule](lifecycle-and-protection.md#npc-combat-participation) is owner-approved. This specific encounter composes that rule with ordinary people, items, knowledge and geometry. [CF01](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf01--armed-opponents-with-their-own-purpose) supplies character definitions and their decision consumers; [CF05](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) owns placement, finite stock and combined delivery.
 
 ## Optional place and two approaches
 

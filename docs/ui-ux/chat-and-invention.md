@@ -32,6 +32,8 @@ Enter/Shift+Enter follows the existing conversation and input-method contract. I
 
 Store drafts by their actual conversation/actor/world context under the existing storage/privacy policy. Hiding retains a draft; switching tabs does not transfer it; reconnect/refreshed projections do not erase it. Ending a conversation is an explicit lifecycle action, not hiding its panel. Restoring an ended transcript does not resurrect its tombstoned backend identity. Do not put private draft text in URLs to implement resumability. [Persistence](system-feedback.md#classify-navigation-drafts-and-persistence)
 
+Only the current composer storage format is read. Logout, account/private-owner replacement and timeline replacement clear current and obsolete composer keys through one cleanup owner; an obsolete draft must never reappear after a privacy boundary changes. This follows the [development compatibility policy](../../AGENTS.md#development-save-policy), not a migration path.
+
 When dispatch succeeds, clear only the draft revision that was sent; preserve text entered while pending. On pre-acceptance failure retain an editable draft or recoverable failed message. Existing server/draft limits remain controlling and should be disclosed near the boundary; never silently truncate work.
 
 Supported attachments/entity references appear as named context chips with a remove action. Removing a reference is not deleting its object. Do not imply that the agent can inspect private memories, entities or files simply because the UI can show their names.

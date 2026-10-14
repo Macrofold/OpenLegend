@@ -1,3 +1,4 @@
+import { BASE_BODY_PROFILES } from '../../packages/domain/src/worlds/base/spatial-definitions.js';
 import {
   advanceWorld,
   completeNavigation,
@@ -22,7 +23,7 @@ export function preparedRoute(
   map: SpatialMap,
   from: SurfacePoint,
   to: SurfacePoint,
-  body?: BodyProfile,
+  body: BodyProfile = BASE_BODY_PROFILES.person,
 ) {
   const planned = findSurfaceRoute(map, from, to, body);
   if (planned.status !== 'pending') return planned;

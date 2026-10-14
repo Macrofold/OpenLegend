@@ -597,7 +597,7 @@ export function createItemLot(
     nameForm: definition.nameForm,
     indefiniteArticle: definition.indefiniteArticle,
     placement: { mode: 'contained', parentEntityId: parentId, revision: 0 },
-    spatial: groundedSpatial('object'),
+    spatial: groundedSpatial(world.itemHandling.objectBody),
     item: lot,
     ...(materialRule
       ? {

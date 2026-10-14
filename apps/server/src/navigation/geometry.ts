@@ -7,7 +7,7 @@ import {
 } from '@open-legend/spatial';
 
 /** Mechanical geometry only: billboards never create navigation or collision. Terrain cells
- * retain water holes. Units/winding match the shared right-handed Y-up spatial contract.
+ * retain authored non-supporting holes. Units/winding match the shared right-handed Y-up spatial contract.
  */
 export function navigationTriangles(map: SpatialMap) {
   const positions: number[] = [],
@@ -45,10 +45,18 @@ export function navigationTriangles(map: SpatialMap) {
     quad(f, g, c, b);
   };
   for (const s of map.spatial.surfaces) {
-    if (s.material === 'ground') {
-      for (let z = 0; z < map.height; z++)
-        for (let x = 0; x < map.width; x++) {
-          if (map.tiles[z]?.[x] === 'water') continue;
+    if (s.terrain) {
+      // Cell squares are centered on integer coordinates. Visit only squares touching
+      // this patch; exact clipping below retains its original edges and triangle order.
+      const minX = Math.max(0, Math.floor(s.minX + 0.5)),
+        maxX = Math.min(map.width - 1, Math.ceil(s.maxX - 0.5)),
+        minZ = Math.max(0, Math.floor(s.minZ + 0.5)),
+        maxZ = Math.min(map.height - 1, Math.ceil(s.maxZ - 0.5));
+      for (let z = minZ; z <= maxZ; z++)
+        for (let x = minX; x <= maxX; x++) {
+          const tile = map.tiles[z]?.[x],
+            terrain = tile === undefined ? undefined : map.terrain[tile];
+          if (!terrain || (!terrain.walkable && !terrain.solid?.movement)) continue;
           const x0 = Math.max(s.minX, x - 0.5),
             x1 = Math.min(s.maxX, x + 0.5),
             z0 = Math.max(s.minZ, z - 0.5),

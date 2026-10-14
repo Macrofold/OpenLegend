@@ -260,8 +260,10 @@ The canonical [memory architecture](../../docs/memory-architecture.md) owns thes
 | Table | Key and essential fields | Invariants / indexes |
 | --- | --- | --- |
 | `mind.event_awareness` | `(W, actor_id, EventRef)`; perceived English text or scoped projection, modality/detail, awareness sequence and game time | One actor/event awareness binding; includes the player; actor/time/sequence and source-event indexes; never an unrestricted join to hidden event payload |
-| `mind.knowledge_documents` | `(W, actor_id, document_id)`; general/subject kind, optional subject ID, revision/tombstone, text and evidence | Target canonical records under `editKnowledge`; one general pad and one pad per subject enforced by scoped uniqueness. The current `knowledge_documents` projection migrates in place; no second writable copy. |
+| `mind.knowledge_documents` | `(W, actor_id, document_id)`; general/subject kind, optional subject ID, revision/tombstone, text and evidence | Target canonical records under `editKnowledge`; one general pad and one pad per subject enforced by scoped uniqueness. Current authority is `mind_knowledge_documents`; the former projection/importer was removed on October 14, 2026, under the development no-compatibility policy. |
 | `mind.inner_world` | `(W, actor_id)`; one current `text` value, revision, accepted workspace snapshot ref, publication job ID | Single current accepted row per actor; atomic publication after bounded file validation; previous text remains readable during reflection |
+
+The dotted names above retain the logical target design. Current PostgreSQL stores accepted self-understanding in `mind_inner_worlds`; the obsolete `mind.inner_world` projection and its reader were removed on October 14, 2026.
 
 `mind.memory_entries.narrative` is required English text. Add source coverage and consolidation status sufficient to summarize the union of raw memories and aware events once per actor. `mind.event_awareness` specializes the experiential audience join; existing `journal.event_audiences` must reuse it for actor witnessing rather than maintain a second independent awareness authority. Administrative grants are separate and never confer character knowledge. `mind.observations` can retain non-event exposures/delivery evidence, but must not duplicate every aware event as another recallable raw memory.
 
@@ -289,7 +291,7 @@ Mind records carry world scope plus an owning actor or explicit conversation par
 | `mind.conversation_audiences`  | `(W,conversation_id,turn_id,actor_id)`; permitted modality/content scope                                                                                                   | Per-turn view of event awareness; no second audience authority or retroactive access for later joiners                                                        |
 | `mind.memory_jobs`             | `(W,actor_id,job_id)`; type, input watermark/revisions, status, result proposal, execution ref                                                                             | Idempotent ingestion/consolidation; job completion never overwrites newer observations                                         |
 
-Directional `mind.relationships` is defined in section 5; evidence joins are actor-scoped like memory links. Subjective external understanding lives in revisioned [knowledge documents](../../docs/knowledge.md); accepted self-understanding remains in `mind.inner_world.text`. Attributed raw testimony and consolidated experiences remain in their experience stores. Queryable interpretations derive from their owning accepted document revision; they do not become independently writable prose. Existing accepted external-understanding files migrate without loss through the knowledge contract. Do not introduce a separate knowledge-graph service initially. Persist observer labels and recognition episode bindings in a separate actor-owned identity record; a subject note or canonical entity ID must not silently recognize a newly observed stranger.
+Directional `mind.relationships` is defined in section 5; evidence joins are actor-scoped like memory links. Subjective external understanding lives in revisioned [knowledge documents](../../docs/knowledge.md); accepted self-understanding remains in `mind.inner_world.text`. Attributed raw testimony and consolidated experiences remain in their experience stores. Queryable interpretations derive from their owning accepted document revision; they do not become independently writable prose. The earlier lossless file-conversion proposal is historical; current knowledge admission and restoration use explicit current-format documents, as required by the root development policy. Do not introduce a separate knowledge-graph service initially. Persist observer labels and recognition episode bindings in a separate actor-owned identity record; a subject note or canonical entity ID must not silently recognize a newly observed stranger.
 
 ### Recall sources, indexes and revision changes
 
@@ -494,7 +496,7 @@ Current task state and D0–D6 exit gates live only in the [Production data impl
 
 ## Accepted foundation contract additions
 
-The [priorities 1–5 implementation plan](../../docs/projects/foundations-1-5.md#approved-implementation-plan)
+The [priorities 1–5 implementation plan](../../docs/projects/completed/foundations-1-5.md#approved-implementation-plan)
 was authorized September 26, 2026. Its entity-backed lots, single tagged placement,
 source-aware appraisals, contribution/claim records and non-rewindable account/control
 records now use the existing canonical record catalogue. Supported records convert

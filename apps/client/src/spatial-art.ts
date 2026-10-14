@@ -19,7 +19,7 @@ export function groundMesh(
     uvs: number[] = [],
     indices: number[] = [];
   for (const surface of surfaces) {
-    if (surface.material !== 'ground') continue;
+    if (!surface.terrain) continue;
     const first = positions.length / 3,
       length = Math.hypot(surface.slopeX, 1, surface.slopeZ);
     for (const [x, z] of [
@@ -73,7 +73,7 @@ export function surroundingGroundMesh(
   const strips: WalkableSurface[] = [];
   const margin = 13;
   for (const surface of surfaces) {
-    if (surface.material !== 'ground') continue;
+    if (!surface.terrain) continue;
     const { minX, maxX, minZ, maxZ } = surface;
     const add = (x0: number, x1: number, z0: number, z1: number) =>
       strips.push({

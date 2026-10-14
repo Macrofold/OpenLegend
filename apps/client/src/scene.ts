@@ -94,6 +94,7 @@ interface RenderedEntity {
   assetKey: string;
   root: pc.Entity;
   sprite: pc.Entity;
+  meshes: pc.MeshInstance[];
   meshCasters: pc.MeshInstance[];
   reveal: RevealBinding;
   renderedSupport: string | null;
@@ -164,6 +165,8 @@ export class WildernessScene implements WorldRenderer {
   private elapsed = 0;
   private view: GameView | null = null;
   private mapKey = '';
+  private terrain?: GameView['map']['terrain'];
+  private terrainKey = '';
   private worldKey = '';
   private cutawayKey = '';
   private orientedYaw = NaN;
@@ -328,10 +331,27 @@ export class WildernessScene implements WorldRenderer {
     this.canvas.style.cursor = active ? 'crosshair' : '';
   }
   setView(view: GameView): void {
+    const controlChanged = this.view?.access?.scope !== view.access?.scope;
     this.view = view;
     this.perception.setView(view);
-    const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
-    const worldKey = `${view.worldId}:${view.saveTimeline}:${view.access?.scope}`;
+    if (this.terrain !== view.map.terrain) {
+      this.terrain = view.map.terrain;
+      this.terrainKey = JSON.stringify(view.map.terrain);
+    }
+    const key = JSON.stringify([
+      view.worldId,
+      view.map.seed,
+      view.map.width,
+      view.map.height,
+      view.map.spatial.revision,
+      this.terrainKey,
+    ]);
+    const worldKey = JSON.stringify([
+      view.worldId,
+      view.saveTimeline,
+      view.player.id,
+      view.access?.privateDraftScope,
+    ]);
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
@@ -365,6 +385,22 @@ export class WildernessScene implements WorldRenderer {
       ...(playerAbsent ? [] : [playerEntity(view)]),
     ];
     const visible = new Set(entities.map((entity) => entity.id));
+    if (controlChanged) {
+      // Resume retains current public assets/camera, never an old observer's ghosts
+      // or transient events. The new snapshot alone establishes current disclosure.
+      this.resetTransientCaptions();
+      this.knownEvents = new Set(view.events.map((event) => event.id));
+      this.clearHover();
+      for (const [id, entry] of this.actors)
+        if (!visible.has(id)) {
+          this.releaseEntity(entry);
+          this.actors.delete(id);
+        }
+      if (this.selected && !visible.has(this.selected)) {
+        this.selected = null;
+        this.callbacks.select(null);
+      }
+    }
     const departed = new Set(
       view.events
         .filter(
@@ -584,15 +620,7 @@ export class WildernessScene implements WorldRenderer {
         entry.view.id === this.view!.player.id;
       this.updateModelVisibility(entry);
       for (const mesh of entry.meshCasters) mesh.castShadow = entry.observed && entry.root.enabled;
-      for (const mesh of entry.sprite.render?.meshInstances ?? [])
-        mesh.setParameter(
-          'material_opacity',
-          entry.departedAt !== undefined
-            ? Math.max(0, 1 - (this.elapsed - entry.departedAt) / 0.4)
-            : entry.observed
-              ? 1
-              : 0.28,
-        );
+      this.applyEntityOpacity(entry, this.entityOpacity(entry));
     }
     this.canvas.dataset.projection = this.cameraSettings.projection;
     this.canvas.dataset.floor = level?.id ?? 'all';
@@ -1006,6 +1034,29 @@ export class WildernessScene implements WorldRenderer {
       this.appearanceAssets.delete(entry.assetKey);
     }
   }
+  private appearanceMeshes(root: pc.Entity): pc.MeshInstance[] {
+    const meshes = (root.findComponents('render') as pc.RenderComponent[]).flatMap(
+      (render) => render.meshInstances,
+    );
+    // Solid multipart objects need the same remembered fade as cards. Prepare shared
+    // materials once; per-entity opacity stays on mesh instances, not shared materials.
+    // docs/world-presentation.md#motion-and-depth
+    for (const mesh of meshes) {
+      const material = mesh.material as pc.StandardMaterial;
+      if (material.blendType === pc.BLEND_NONE && material.opacityDither === pc.DITHER_NONE) {
+        material.opacityDither = pc.DITHER_BAYER8;
+        material.update();
+      }
+    }
+    return meshes;
+  }
+  private applyEntityOpacity(entry: RenderedEntity, opacity: number): void {
+    for (const mesh of entry.meshes)
+      mesh.setParameter(
+        'material_opacity',
+        opacity * (mesh.material as pc.StandardMaterial).opacity,
+      );
+  }
   private makeEntity(view: EntityView, game: GameView): RenderedEntity {
     const root = new pc.Entity(view.name, this.app);
     this.app.root.addChild(root);
@@ -1049,12 +1100,12 @@ export class WildernessScene implements WorldRenderer {
           0.02,
           0.02,
         );
+      const meshes = this.appearanceMeshes(root);
       return {
         root,
         sprite,
-        meshCasters: (root.findComponents('render') as pc.RenderComponent[]).flatMap(
-          (r) => r.meshInstances,
-        ),
+        meshes,
+        meshCasters: meshes,
         reveal: this.presentation.addReveal(sprite, asset.materials[0]!, false, false),
         renderedSupport: view.supportSurfaceId,
         view,
@@ -1244,11 +1295,13 @@ export class WildernessScene implements WorldRenderer {
         view.kind !== 'station',
         asset.padding,
       );
+    const meshes = this.appearanceMeshes(root);
     return {
       model:
         !dead && view.appearance === 'mercenary-model' ? this.mercenary?.create(root) : undefined,
       root,
       sprite,
+      meshes,
       meshCasters: (root.findComponents('render') as pc.RenderComponent[])
         .flatMap((render) => render.meshInstances)
         .filter((mesh) => mesh.castShadow),
@@ -1295,22 +1348,23 @@ export class WildernessScene implements WorldRenderer {
     source.height = map.height * tileSize;
     const ctx = source.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
-    const grass = groundArt(map.seed);
-    const sand = earthArt(map.seed);
+    const groundTexture = groundArt(map.seed);
+    const earthTexture = earthArt(map.seed);
     for (let z = 0; z < map.height; z++)
       for (let x = 0; x < map.width; x++) {
-        const terrain = map.tiles[z]?.[x] ?? 'grass';
+        const terrain = map.terrain[map.tiles[z]![x]!]!.presentation;
         const px = x * tileSize,
           py = (map.height - 1 - z) * tileSize;
-        if (terrain === 'water') {
-          ctx.fillStyle = '#46736b';
+        if (terrain.style === 'liquid') {
+          ctx.fillStyle = terrain.color;
           ctx.fillRect(px, py, tileSize, tileSize);
           for (let i = 0; i < 65; i++) {
-            ctx.fillStyle = ['#416b63', '#4f7d70', '#587e6e', '#739785'][Math.floor(rng() * 4)]!;
+            ctx.fillStyle =
+              terrain.patternColors![Math.floor(rng() * terrain.patternColors!.length)]!;
             ctx.fillRect(px + rng() * tileSize, py + rng() * tileSize, 3 + rng() * 8, 1);
           }
         } else {
-          const texture = terrain === 'sand' ? sand : grass;
+          const texture = terrain.style === 'earth' ? earthTexture : groundTexture;
           ctx.drawImage(
             texture,
             Math.floor(rng() * (texture.width - tileSize)),
@@ -1323,11 +1377,12 @@ export class WildernessScene implements WorldRenderer {
             tileSize,
           );
           // Irregular shoreline lip stays inside the authoritative walkable bank tile.
-          if (map.tiles[z]?.[x - 1] === 'water') {
+          const neighbor = map.terrain[map.tiles[z]?.[x - 1] ?? '']?.presentation;
+          if (neighbor?.style === 'liquid') {
             for (let p = 0; p < tileSize; p += 2) {
-              ctx.fillStyle = '#c2b78b';
+              ctx.fillStyle = neighbor.bankColors![0];
               ctx.fillRect(px, py + p, 2 + rng() * 5, 2);
-              ctx.fillStyle = '#6d7960';
+              ctx.fillStyle = neighbor.bankColors![1];
               ctx.fillRect(px, py + p, 1, 2);
             }
           }
@@ -1346,7 +1401,7 @@ export class WildernessScene implements WorldRenderer {
       this.landscape.addChild(receiver);
     }
     // Matching repeated soil carries the view beyond finite support, without a dark rectangular plate.
-    const earth = this.material('#ffffff', grass);
+    const earth = this.material('#ffffff', groundTexture);
     earth.diffuseMap!.addressU = pc.ADDRESS_REPEAT;
     earth.diffuseMap!.addressV = pc.ADDRESS_REPEAT;
     earth.diffuseMapTiling.set(map.width / 16, map.height / 16);
@@ -1393,7 +1448,7 @@ export class WildernessScene implements WorldRenderer {
     setVisibilityStencil(deckMaterial, sceneryStencil);
     setVisibilityStencil(rampMaterial, sceneryStencil);
     for (const surface of map.spatial.surfaces) {
-      if (surface.material === 'ground') continue;
+      if (surface.terrain) continue;
       const mesh = surfaceMesh(this.app.graphicsDevice, surface);
       this.geometryMeshes.push(mesh);
       const node = new pc.Entity(surface.name, this.app);
@@ -1485,28 +1540,33 @@ export class WildernessScene implements WorldRenderer {
         this.landscape.addChild(node);
       }
     }
-    const waterCanvas = document.createElement('canvas');
-    waterCanvas.width = 32;
-    waterCanvas.height = 8;
-    const wctx = waterCanvas.getContext('2d')!;
-    wctx.fillStyle = '#a9bd9a';
-    wctx.fillRect(2, 3, 22, 1);
-    wctx.fillStyle = '#729a86';
-    wctx.fillRect(8, 6, 22, 1);
-    const waterShine = this.material('#ffffff', waterCanvas, true, true);
+    const liquidGlints = new Map<string, pc.StandardMaterial>();
     for (let i = 0; i < 36; i++) {
       const x = rng() * map.width,
         z = rng() * map.height;
-      if (map.tiles[Math.round(z)]?.[Math.round(x)] !== 'water') continue;
-      const support = map.spatial.surfaces.find(
-        (s) => s.material === 'ground' && surfaceContains(s, { x, z }),
-      );
+      const terrainId = map.tiles[Math.round(z)]?.[Math.round(x)];
+      const terrain = terrainId === undefined ? undefined : map.terrain[terrainId]?.presentation;
+      if (terrain?.style !== 'liquid') continue;
+      const support = map.spatial.surfaces.find((s) => s.terrain && surfaceContains(s, { x, z }));
       if (!support) continue;
+      let glint = liquidGlints.get(terrainId!);
+      if (!glint) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 8;
+        const context = canvas.getContext('2d')!;
+        context.fillStyle = terrain.glintColors![0];
+        context.fillRect(2, 3, 22, 1);
+        context.fillStyle = terrain.glintColors![1];
+        context.fillRect(8, 6, 22, 1);
+        glint = this.material('#ffffff', canvas, true, true);
+        liquidGlints.set(terrainId!, glint);
+      }
       const y = surfaceHeight(support, x, z);
       const entity = this.primitive(
-        'Stream glint',
+        'Liquid glint',
         'plane',
-        waterShine,
+        glint,
         this.landscape,
         x,
         y + 0.012,
@@ -1520,6 +1580,9 @@ export class WildernessScene implements WorldRenderer {
     this.landscapeMaterials = this.materials.slice(materialStart);
     this.canvas.dataset.sceneryCount = String(map.spatial.scenery?.length ?? 0);
     this.canvas.dataset.landscapeBuildMs = String(Math.round(performance.now() - started));
+    this.canvas.dataset.landscapeBuildCount = String(
+      Number(this.canvas.dataset.landscapeBuildCount ?? 0) + 1,
+    );
   }
   private placeCamera(): void {
     const pose = cameraPose(this.cameraSettings);
@@ -1543,23 +1606,22 @@ export class WildernessScene implements WorldRenderer {
       for (const card of this.cards.keys()) this.orientCard(card);
     }
   }
+  private entityOpacity(entry: RenderedEntity): number {
+    if (entry.departedAt !== undefined)
+      return Math.max(0, 1 - (this.elapsed - entry.departedAt) / 0.4);
+    return entry.observed ? 1 - (entry.view.departureProgress ?? 0) : 0.28;
+  }
   private update(dt: number): void {
     if (this.suspended) return;
     this.elapsed += Math.min(dt, 0.1);
     for (const [id, entry] of this.actors) {
-      if (entry.departedAt !== undefined) {
-        const opacity = Math.max(0, 1 - (this.elapsed - entry.departedAt) / 0.4);
-        if (opacity === 0) {
-          this.releaseEntity(entry);
-          this.actors.delete(id);
-          continue;
-        }
-        for (const mesh of entry.sprite.render?.meshInstances ?? [])
-          mesh.setParameter('material_opacity', opacity);
+      const opacity = this.entityOpacity(entry);
+      if (entry.departedAt !== undefined && opacity === 0) {
+        this.releaseEntity(entry);
+        this.actors.delete(id);
+        continue;
       }
-      if (entry.departedAt === undefined)
-        for (const mesh of entry.sprite.render?.meshInstances ?? [])
-          mesh.setParameter('material_opacity', 1 - (entry.view.departureProgress ?? 0));
+      this.applyEntityOpacity(entry, opacity);
       if (!entry.observed) {
         this.presentation.updateReveal(
           entry.reveal,

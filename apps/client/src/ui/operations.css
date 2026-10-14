@@ -1,4 +1,4 @@
-/* World operations console and maintenance notices (docs/projects/multiplayer-entry-maintenance.md). */
+/* World operations console and maintenance notices (docs/projects/completed/multiplayer-entry-maintenance.md). */
 .ol-operations {
   position: absolute;
   inset: 0;
@@ -92,18 +92,6 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
-}
-.ol-overview-map rect[data-terrain='grass'] {
-  fill: color-mix(in srgb, var(--accent) 22%, var(--surface));
-}
-.ol-overview-map rect[data-terrain='sand'] {
-  fill: color-mix(in srgb, var(--food) 28%, var(--surface));
-}
-.ol-overview-map rect[data-terrain='water'] {
-  fill: color-mix(in srgb, var(--energy) 40%, var(--canvas));
-}
-.ol-overview-map rect[data-terrain='rock'] {
-  fill: color-mix(in srgb, var(--ink-faint) 45%, var(--surface));
 }
 .ol-overview-map rect {
   shape-rendering: crispEdges;

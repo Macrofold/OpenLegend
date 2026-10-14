@@ -1,10 +1,16 @@
 # Parallel batch 01 — Engineer 5 — authorized implementation plan
 
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Memory retrieval and local incremental replies are delivered; provider deployment and combined release acceptance remain open. | 2026-10-14   |
+
+**Currency review, October 14, 2026.** The assignments, source observations and estimates below describe their original October 2 execution context. The table above and [PW tracking](../../maintainers/parallel-batch-01-playable-week.md) distinguish delivered work from remaining qualification; old branch/format references do not select the current development base or authorize compatibility work.
+
 Mike's October 2, 2026 chat authorizes PW05, PW09 and PW06 support despite the parent documents' proposed status. Starting base: assigned clean detached HEAD at `8005f7c7245cfecec128652efe3ef07926604e0a`; working branch `oct2-eng-5`. This explicit local commit takes precedence over remote main; no remote refresh/rebase substitutes for it.
 
 ## Scope and risk
 
-Implement the complete [PW05 contract](../parallel-batch-01-playable-week-tech-design.md#pw05--incremental-replies-without-a-second-execution-system) and [PW09 brief](memory-retrieval.md). Estimated 1,000–1,600 logic lines excluding tests. High risk: durable event order, split protected-value disclosure, multiple Runs per turn, restore/revocation fencing, uncertainty/accounting and transaction-safe caches. Existing turn/recovery, question, publication and mutation owners remain authoritative. No paid retries, retained-memory caps, production ANN or PF14 reimplementation.
+Implement the complete [PW05 contract](../parallel-batch-01-playable-week-tech-design.md#pw05--incremental-replies-without-a-second-execution-system) and [PW09 brief](../completed/parallel-batch-01-playable-week/memory-retrieval.md). Estimated 1,000–1,600 logic lines excluding tests. High risk: durable event order, split protected-value disclosure, multiple Runs per turn, restore/revocation fencing, uncertainty/accounting and transaction-safe caches. Existing turn/recovery, question, publication and mutation owners remain authoritative. No paid retries, retained-memory caps, production ANN or PF14 reimplementation.
 
 ## Requirement reconciliation
 

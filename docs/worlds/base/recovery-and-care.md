@@ -1,6 +1,6 @@
 # Wilderness recovery and care
 
-**Proposed world profile, October 6, 2026.** These values implement the product intent in [Recover from harm and return to play](../../projects/recovery-and-care-feature-spec.md) if adopted. They are not installed rules or measured balance. The relevant current source is newer main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425); this design branch retains its older runtime ancestry.
+**Proposed world profile, October 6, 2026.** These values implement the product intent in [Recover from harm and return to play](../../projects/recovery-and-care-feature-spec.md) if adopted. They are not installed rules or measured balance. The historical design inspected [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425). As checked on October 14, 2026, [player death, Continue and scar treatment](player-death.md) are integrated current behavior; the camp recovery and field-dressing methods below remain proposed.
 
 ## Camp recovery
 

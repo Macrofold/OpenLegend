@@ -1,7 +1,7 @@
 import { testRepository } from '../../../tests/fixtures/database.js';
-import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
-import { allItems } from '@open-legend/domain';
+import { allItems, validateDeclaration } from '@open-legend/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   AiClient,
@@ -14,6 +14,7 @@ import type {
 import { type DeclarationDraft, type WorldState } from '@open-legend/domain';
 import { AiDirector } from './ai-director.js';
 import { buildContext } from './context.js';
+import { inventionMaterials } from './invention-context.js';
 import { declarationSchema } from './ai-schemas.js';
 import type { AppConfig } from './config.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
@@ -291,15 +292,30 @@ describe('AI director with explicit fixtures, no live calls', () => {
       const draft = slingFixture();
       if (fault === 'mechanics') draft.parameters.damage = 999;
       if (fault === 'quantity') draft.inputs[0]!.quantity = 0;
-      if (fault === 'hidden-material')
-        draft.inputs.push({ definitionId: 'bone', quantity: 1, role: 'point' });
       const h = await harness({ generate: (request) => value(request.requestId, 'openai', draft) });
+      if (fault === 'hidden-material') {
+        // Bone is now known in the bundled opening. An unobserved fixture definition
+        // with the same supported properties isolates privacy from mechanical refusal.
+        const hiddenId = 'fixture-hidden-bone';
+        await editWorld(h.service, (world) => {
+          world.itemDefinitions[hiddenId] = { ...world.itemDefinitions.bone!, id: hiddenId };
+        });
+        draft.inputs.push({ definitionId: hiddenId, quantity: 1, role: 'point' });
+        expect(validateDeclaration(h.service.world, draft)).toEqual([]);
+        expect(
+          inventionMaterials(h.service.world, h.service.observe(PLAYER_ID)!).map((item) => item.id),
+        ).not.toContain(hiddenId);
+      }
       const beforeItems = structuredClone(allItems(h.service.world));
       const beforeRecipes = structuredClone(h.service.world.recipes);
       const beforeKnowledge = structuredClone(h.service.world.knowledge[PLAYER_ID]);
       await h.inventNew(`invalid-${fault}`, 'A physical sling.');
       await h.director.idle();
       expect((await h.job(`invalid-${fault}`))?.status).toBe('failed');
+      if (fault === 'hidden-material')
+        expect((await h.job(`invalid-${fault}`))?.message).toContain(
+          'materials unavailable to this inventor',
+        );
       expect(h.service.world.recipes).toEqual(beforeRecipes);
       expect(allItems(h.service.world)).toEqual(beforeItems);
       expect(h.service.world.knowledge[PLAYER_ID]).toEqual(beforeKnowledge);

@@ -1,6 +1,12 @@
 # Progressive 3D pixel art — feature specification
 
-**Status: proposed design, not implemented or approved for runtime delivery.** Requested by Mike on September 27, 2026. Source baseline: `Macrofold/OpenLegend` `main` at `412b5b480b4911d9977de73168c6072e2c023b83`. This task changes documentation only: zero runtime logic lines, no dependency changes, no paid generation, and no claimed graphics or provider qualification.
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+
+**Original proposal — September 27, 2026.** The general pipeline remains proposed; the separately authorized bundled-model pilot is delivered. Requested by Mike on September 27, 2026. Source baseline: `Macrofold/OpenLegend` `main` at `412b5b480b4911d9977de73168c6072e2c023b83`. The original proposal task changed documentation only: zero runtime logic lines, no dependency changes, no paid generation, and no claimed graphics or provider qualification.
+
+**Delivery review — October 14, 2026.** The [bundled mercenary pilot](completed/mercenary-scene-pilot.md) now supplies one authored animated model, fixed-resolution character rendering, actual-depth compositing and owned replacement resources in the default scene. Its [recorded evidence](../verification/mercenary-default.md) does not qualify general imported/generated assets, equipment composition, crowds or lower-end hardware. [V3D](../maintainers/3d-pixel-art.md) retains those open tasks; [world presentation](../world-presentation.md) owns current behavior. Earlier statements that no model delivery exists are superseded by this narrow pilot, not by acceptance of the entire proposal.
 
 ## Maintained records
 

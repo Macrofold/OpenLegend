@@ -277,5 +277,5 @@ The Indie Stone, [_Flame On_](https://projectzomboid.com/blog/news/2022/10/flame
 
 - [HM01–HM06](../maintainers/heat-and-materials.md), [HM-L01–HM-L10](../limits/heat-and-materials.md) and [BW26](../maintainers/base-world.md#bw26--heat-ignition-and-material-consequences) retain product, implementation and qualification status beneath INV-6.
 - [Base-world heat and materials](../worlds/base/heat-and-materials.md) owns all selected world balance and endowment; it is not duplicated as engine policy here.
-- [Persistent objects](persistent-objects-feature-spec.md), [shared state](shared-state-contributions-feature-spec.md), [simulation time](../simulation-time.md) and [action capabilities](../action-capabilities.md) retain identity, condition, clocks, actual work and authority.
+- [Persistent objects](completed/persistent-objects-feature-spec.md), [shared state](completed/shared-state-contributions-feature-spec.md), [simulation time](../simulation-time.md) and [action capabilities](../action-capabilities.md) retain identity, condition, clocks, actual work and authority.
 - [Editable shelters](editable-shelters-feature-spec.md), [changing supplies](changing-supplies-feature-spec.md), [continuing lives](continuing-lives-feature-spec.md) and [lifecycle/protection](../worlds/base/lifecycle-and-protection.md) own their separate combinations and unresolved policy.

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                 | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-07   |
+| In progress | Survival and weapon mechanics are implemented, including AV02 compatible equipment; broader survival qualification remains open. | 2026-10-14   |
 
 **Status: approved for implementation in chat, September 27, 2026; mechanics implemented and complete Jev-only meals demonstrated; broader qualification incomplete.** The owner requests cognitively chosen survival behavior, removal of automatic berry seeking/eating, a knife for Mike and Ada, and reusable melee mechanics. The owner accepted the starting scene, biography, initial tuning and delivery plan below; optimal tuning remains unqualified. The owner confirmed that existing NPC ghost/revival policy stays in place.
 
@@ -14,7 +14,7 @@ Ada should notice her body's condition, consider her possessions and surrounding
 
 An authored person necessarily starts with some knowledge and dispositions. Emergence here means that her operational goals and choice of means arise during play; it does not mean a blank model rediscovers biology. We can explain food, injury and death without prescribing a response. This supports believable characterization, not a claim that the model experiences hunger or consciousness.
 
-The first delivery ends at a real melee attempt and its visible outcome. It must support continuing attacks through ordinary chosen plans, including an eventual animal death when actual hits suffice. The owner has now authorized the [complete Jev-only meal follow-up](embodied-survival-tech-design.md#complete-jev-only-meal-follow-up): Ada must choose hunting, harvesting, cooking and eating through ordinary cognition. Native operations already exist, but a successful attack does not prove this complete chain. Reusable learned activities were subsequently implemented as the separate [AE project](action-experience.md). Its [current behavior](../action-experience.md) and [evidence](../verification/action-experience.md) supplement the original survival scope.
+The first delivery ends at a real melee attempt and its visible outcome. It must support continuing attacks through ordinary chosen plans, including an eventual animal death when actual hits suffice. The owner has now authorized the [complete Jev-only meal follow-up](embodied-survival-tech-design.md#complete-jev-only-meal-follow-up): Ada must choose hunting, harvesting, cooking and eating through ordinary cognition. Native operations already exist, but a successful attack does not prove this complete chain. Reusable learned activities were subsequently implemented as the separate [AE project](completed/action-experience.md). Its [current behavior](../action-experience.md) and [evidence](../verification/action-experience.md) supplement the original survival scope.
 
 ## A person before a task
 

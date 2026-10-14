@@ -164,8 +164,6 @@ describe('resolveLevel1 with defective ratings', () => {
     ],
     ['NaN', noul(Number.NaN)],
     ['Infinity', noul(Number.POSITIVE_INFINITY)],
-    ['a rating above 1', noul(1.01)],
-    ['a rating below 0', noul(-0.01)],
   ];
   const cases = [
     ...invalid.map(([name, answer]) => ({
@@ -206,7 +204,7 @@ describe('resolveLevel1 with defective ratings', () => {
   );
 
   it('reports invalid ratings ahead of missing ratings and accepts the 0 and 1 bounds', () => {
-    expect(resolve({ a0: noul(2), a2: noul(1) }).outcome).toStrictEqual({
+    expect(resolve({ a0: noul(Infinity), a2: noul(1) }).outcome).toStrictEqual({
       kind: 'defer',
       reason: 'invalid-answers',
     });
@@ -216,6 +214,17 @@ describe('resolveLevel1 with defective ratings', () => {
       handle: 'a2',
       rating: 1,
     });
+  });
+  it('compares finite ratings without enforcing the provider convention', () => {
+    expect(resolve(rate({ a0: -0.01, a1: 0.8, a2: 1.01 })).outcome).toStrictEqual({
+      kind: 'act',
+      reason: 'selected',
+      handle: 'a2',
+      rating: 1.01,
+    });
+    const result = resolve(rate({ a0: -0.01, a1: -2, a2: -1 }));
+    expect(result.outcome.reason).toBe('no-suitable-action');
+    expect(result.ratings.every((entry) => entry.status === 'rated')).toBe(true);
   });
 });
 

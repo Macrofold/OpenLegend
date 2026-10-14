@@ -1,6 +1,6 @@
 # Participation, absence, protection, and clocks
 
-**Status: accepted product direction with unresolved world-policy settings. These are target extensions, not a description of current logout, offline progression, or clock behavior.** The [multiplayer-authority design](../projects/multiplayer-authority-tech-design.md), [simulation-time contract](../simulation-time.md), [save/load](../save-and-load.md), and [world boundaries](../engine-and-world-boundaries.md) retain current implementation ownership.
+**Status: accepted product direction with unresolved world-policy settings. These are target extensions, not a description of current logout, offline progression, or clock behavior.** The [multiplayer-authority design](../projects/completed/multiplayer-authority-tech-design.md), [simulation-time contract](../simulation-time.md), [save/load](../save-and-load.md), and [world boundaries](../engine-and-world-boundaries.md) retain current implementation ownership.
 
 ## 1. Always-available play, bounded unattended activity
 

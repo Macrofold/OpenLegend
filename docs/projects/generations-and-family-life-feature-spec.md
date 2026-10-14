@@ -182,7 +182,7 @@ A return presents the current place and permitted people, with a compact operati
 
 ### 7.3 Actual death and the continuing person
 
-The branch's installed [survival description](../worlds/base/survival.md) still distinguishes human collapse from other controllers' actual death. DG21 explicitly targets a separately inspected newer-main mortality implementation with actual human death and Continue under retained identity. This proposal does not erase that distinction or claim the newer implementation is merged into the inspected baseline. Any family delivery consuming actual human death must first integrate and qualify that owning contract.
+The current [survival contract](../worlds/base/survival.md) includes actual human death and Continue with retained character identity and a new physical life. The original proposal audit predates that integration; its human-collapse distinction is historical. Any family delivery must consume and qualify the current death, corpse, memory and participation contracts without inventing inheritance or automatic family reactions.
 
 Where actual death occurs, the same retained person and existing family facts remain. Their body, dropped possessions, remains, knowledge and possible later revival follow the death owner. A parent does not become their child, and a child does not automatically inherit control, property or every learned method. A generic family notification cannot grant knowledge of an unwitnessed death. Someone learns through a supported observation, report or other permitted route.
 

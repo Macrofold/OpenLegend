@@ -2,6 +2,8 @@
 
 OpenLegend is an engine for authored realities with a playable bundled world. Deliver useful features without making that world's laws universal or building speculative infrastructure.
 
+Before acting, ensure these instructions are available through the end of [Completion and handoff — every task](#completion-and-handoff--every-task). If startup supplied only an excerpt or truncated text, read the missing remainder from this file; do not assume an injected excerpt is complete.
+
 ## Every response to the developer
 
 Apply this section **before sending every message to the user/developer (Mike)**: answers, questions, progress updates, explanations, reviews and final handoffs. These are required checks on the message itself; do not print the checklist as part of each response.

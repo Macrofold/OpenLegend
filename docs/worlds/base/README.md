@@ -5,19 +5,19 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 ## Mechanics
 
 - [Starting wilderness, terrain and population](landscape.md)
-- [Useful discoveries beyond the clearing](rewarding-expeditions.md) — implemented finite expedition rewards and physical recipe learning, with AV02 equipment integration still tracked.
-- [Held shields and chosen defense](shield-defense.md) — proposed compatible equipment and finite contact guard for AV02.
-- [A river catch becomes a meal](river-fishing.md) — proposed finite fishing and world-defined cooking for AV05.
+- [Useful discoveries beyond the clearing](rewarding-expeditions.md) — implemented finite expedition rewards, physical recipe learning and compatible equipment; broader qualification remains with AV01.
+- [Held shields and chosen defense](shield-defense.md) — implemented compatible equipment and finite contact guard, with native, PostgreSQL and browser evidence under AV02.
+- [A river catch becomes a meal](river-fishing.md) — implemented finite fishing and world-defined cooking, with native, PostgreSQL, browser and separate live-choice evidence under AV05.
 - [Items, ground piles and possession](items.md)
-- [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the existing four invention families.
+- [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the launcher, arrow and gathering-tool families; camp containers have their separate owner below.
 - [Inventable camp containers](camp-containers.md) — implemented finite woven-container family and ordinary storage. A [published coached live journey](https://github.com/Macrofold/OpenLegend/blob/34233ae24365eb8911fe1995c9c232bd57f34616/docs/verification/camp-life.md#live-player-journey--october-4-2026) qualifies generated cord/pouch manufacture, packing/retrieval and reopening; voluntary NPC choices and unattended use remain separate.
 - [Chosen camp supplies and fire watches](camp-routines.md) — implemented finite methods and explicitly selected one-session care; uncoached/live integration remains open, with no automatic goals or learned conditional policies.
-- [Light canopies and useful shelter](editable-shelters.md) — proposed finite materials, two arrangements, reversible work and nonpunitive moisture for DG13; runtime remains open.
-- [Sling handling, practice and coaching](practical-competence.md) — proposed finite competence gain, real quiet practice and voluntary instruction for DG14; runtime remains open.
+- [Light canopies and useful shelter](editable-shelters.md) — implemented flat one/two-bay canopies, a single-bay lean-to, reversible work and nonpunitive moisture; wider homes and scale qualification remain open.
+- [Sling handling, practice and coaching](practical-competence.md) — implemented finite competence gain, real quiet practice and voluntary instruction; human appreciation and broader stat proposals remain open.
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
-- [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; distinguishes newer main's actual death/scars from this branch's older runtime context.
+- [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; uses the current death/scar rules as its baseline; ordinary recovery and care remain proposed.
 - [Combat](combat.md)
 - [First optional threat encounter](first-threat-encounter.md)
 - [Player danger and leaving the world](player-danger.md)
@@ -41,7 +41,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 
 ## Code boundary
 
-The corresponding bundled content lives in `packages/domain/src/worlds/base/`: world/actor initialization, initial map and flight routes, item/preparation definitions, creation categories/templates, body and attribute/sense defaults, physiology, strike definitions, fire care (`fire.ts`), item-handling defaults and status-effect/trait configuration. YAML and generated JSON stay together under its `config/` directory; generators and reusable validators stay outside. The pure domain reads generated data, never YAML or filesystem APIs.
+The corresponding bundled content lives in `packages/domain/src/worlds/base/`: world/actor initialization, initial map, terrain/body presets and flight routes, item/preparation definitions, creation categories/templates, body and attribute/sense defaults, physiology, strike definitions, fire care (`fire.ts`), item-handling defaults and status-effect/trait configuration. YAML and generated JSON stay together under its `config/` directory; generators and reusable validators stay outside. The pure domain reads generated data, never YAML or filesystem APIs.
 
 Generic engine code owns command authority, identity, saved state, atomic transfers, spatial queries, registered effect execution and observation boundaries. Temporary public composition exports preserve existing imports while referring to the single base-world owner; they are not duplicate definitions. Visual assets remain in the renderer, and never grant mechanics.
 

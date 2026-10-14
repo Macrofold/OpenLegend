@@ -21,7 +21,7 @@ const PAUSE_TEXT = {
 } as const;
 
 /** World operations for operators, spectators and creators; see
- * docs/projects/multiplayer-entry-maintenance.md. */
+ * docs/projects/completed/multiplayer-entry-maintenance.md. */
 export function OperationsConsole() {
   const [theme] = useLocal('open-legend:theme', 'wilderness', (v): v is string =>
     ['wilderness', 'fantasy', 'scifi'].includes(String(v)),
@@ -189,6 +189,7 @@ function OverviewMap({ overview }: { overview: WorldOverview }) {
               width={run.width}
               height={1}
               data-terrain={run.terrain}
+              fill={overview.map.terrain[run.terrain]?.presentation.overviewColor}
             />
           ));
         })}

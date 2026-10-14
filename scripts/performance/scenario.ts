@@ -1,3 +1,7 @@
+import {
+  baseSpatial,
+  BASE_BODY_PROFILES,
+} from '../../packages/domain/src/worlds/base/spatial-definitions.js';
 import { worldPlacement } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import {
@@ -188,7 +192,8 @@ function populateGroup(
   const positions: Position[] = [];
   for (let z = 0; z < world.map.height; z++)
     for (let x = 0; x < world.map.width; x++)
-      if (isWalkable(world, { y: 0, x, z })) positions.push({ y: 0, x, z });
+      if (isWalkable(world, { y: 0, x, z }, undefined, BASE_BODY_PROFILES.person))
+        positions.push({ y: 0, x, z });
   if (!positions.length) throw new Error('No walkable fixture positions.');
   if (scenario.layout === 'crowded')
     positions.sort(
@@ -238,7 +243,7 @@ function populateGroup(
   // Fixture-only ordinary flight loops have staggered departure times and copied native bodies.
   // The manifest records their exact routes; gameplay randomness is not consumed here.
   const bird = world.entities['bird-1']!;
-  if (scenario.birds && (!bird?.actor || bird.spatial.bodyProfileId !== 'bird'))
+  if (scenario.birds && (!bird?.actor || bird.spatial.body.id !== 'bird'))
     throw new Error('Synthetic flight fixtures require the starter native bird body.');
   for (let index = 0; index < scenario.birds; index++) {
     const id = `profile-${groupId}-bird-${index}`;
@@ -250,6 +255,7 @@ function populateGroup(
     const routeId = `${id}-loop`;
     world.flightRoutes[routeId] = {
       id: routeId,
+      body: { ...bird!.spatial.body },
       speed: 0.6,
       climbSpeed: 0.3,
       points: [
@@ -265,7 +271,7 @@ function populateGroup(
       name: `Synthetic profile bird ${groupId} ${index}`,
       placement: worldPlacement({ x, y, z }, null),
       spatial: {
-        bodyProfileId: 'bird',
+        ...baseSpatial('bird'),
         heading: 0,
         flight: { routeId, next: 1, waitSeconds: (index * 7) % 53 },
       },
@@ -290,7 +296,7 @@ function populateGroup(
         id,
         name: group.definition.name,
         kind: 'resource',
-        spatial: { bodyProfileId: 'object', heading: 0 },
+        spatial: baseSpatial('object'),
         placement: worldPlacement({ ...position }, 'terrain'),
         resource: {
           definitionId: definition.id,

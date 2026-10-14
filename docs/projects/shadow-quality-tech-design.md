@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                   | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open. | 2026-10-04   |
+| In progress | Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open. | 2026-10-14   |
 
 Approved chat scope, 2026-09-27. [Feature specification](shadow-quality-feature-spec.md) describes the visible outcome. Base: refreshed `origin/main` (`Macrofold/OpenLegend`) at `412b5b480b4911d9977de73168c6072e2c023b83`; clean detached checkout moved to `codex/shadow-quality`, with no branch history rewritten.
 
