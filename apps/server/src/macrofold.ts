@@ -1837,6 +1837,11 @@ export class MacrofoldBackend implements AiClient {
       receipt.modelVersionStatus = 'reported';
     }
     await this.save(`result:${run}`, resolved);
+    if (!receipt.completionUncertain && resolved.status['failure_code'] === 'run_budget_exhausted')
+      throw new MacrofoldTerminalFailure(
+        'failed',
+        'The AI request exceeded its per-call spending limit.',
+      );
     return inference;
   }
   async message(

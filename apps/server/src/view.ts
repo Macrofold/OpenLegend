@@ -1297,7 +1297,9 @@ export async function projectView(
               replyStatus,
               replyRequestId: reply?.id,
               retryable: reply?.status === 'failed',
-              ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
+              ...(['failed', 'cancelled', 'stale'].includes(replyStatus)
+                ? { replyReason: replyMessage }
+                : {}),
             }
           : {}),
         speakerId: event.actorId,

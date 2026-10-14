@@ -213,6 +213,8 @@ Delivery state, dependencies and exit criteria live in the [Narration and conver
 
 ## Explicit failed-response retry
 
+Cancelled or stale replies display their permitted ending reason beside the originating player message, such as a play-session change or leaving hearing range. They end the waiting indicator and remain distinct from a technical failure; they do not offer the failed-request Retry action. The player can send a new message through ordinary admission. Live projection and paged saved history expose the same optional `replyReason` field, and an explicit retry clears the previous reason while its new attempt is pending.
+
 A failed chat response offers an icon labeled Retry beside its failure status. Retry keeps the original player bubble and speech event; it creates a new paid workflow with a new request ID linked through `retryOf` and the original speech event ID. The server retrieves text and recipient from the saved request, validates the local player's ownership and permits only the latest failed attempt without accepted effects. Duplicate submissions of the same retry ID return its existing status. A second retry of an already superseded failure is rejected. Response generation uses current permitted context; original speech is not emitted again. Pending UI replaces the failure indicator, and completion/failure updates the same bubble. All attempts and accounting remain retained. Uncertain provider charges keep their reservations but do not block an explicit retry of a terminal failed workflow. Active workflows remain protected by serialized admission; a currently sleeping, incapacitated or dead recipient is rejected before dispatch. This operation does not retry invention or world-agent requests.
 
 ## Replaceable story selection

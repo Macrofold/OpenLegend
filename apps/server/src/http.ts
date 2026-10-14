@@ -982,7 +982,6 @@ async function initializeGameServer(
           const messages = options.speechOnly
             ? page.items.map((item) => {
                 const job = speechJobs.get(item.id);
-                const failed = job?.status === 'failed';
                 return {
                   id: item.id,
                   kind: item.kind === 'speech' ? 'speech' : 'action',
@@ -1000,7 +999,9 @@ async function initializeGameServer(
                         replyStatus: job.status,
                         replyRequestId: job.id,
                         retryable: job.status === 'failed',
-                        ...(failed ? { replyFailure: job.message } : {}),
+                        ...(['failed', 'cancelled', 'stale'].includes(job.status)
+                          ? { replyReason: job.message }
+                          : {}),
                       }
                     : {}),
                 };

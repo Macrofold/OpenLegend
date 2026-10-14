@@ -588,8 +588,8 @@ export interface ChatMessage {
   kind?: 'speech' | 'action';
   mechanical?: boolean;
   replyStatus?: AiJobView['status'];
-  /** User-facing detail revealed from the message-local failure label. */
-  replyFailure?: string;
+  /** Permitted explanation of a failed, cancelled or stale reply. */
+  replyReason?: string;
   id: string;
   speakerId?: string;
   speech?: PerceivedSpeech;

@@ -155,6 +155,8 @@ The decoder scans message output beyond reasoning entries, handles refusals, rej
 
 ## Receipts, outcomes, and accounting
 
+A confirmed Macrofold `run_budget_exhausted` inference reports that the request exceeded its per-call spending limit after existing receipt/usage reconciliation. Its conservative provider admission bound can exceed the expected final bill; configure `JEV_CALL_RESERVE_USD` to cover the intended admitted request size and authorized spending. This does not increase the default reserve, retry a rejected call automatically, or turn uncertain completion into a free failure.
+
 Results are a discriminated union: `{outcome:'value',value,receipt}` or `{outcome,reason,receipt}`. Failure outcomes are `unavailable`, `invalid`, `failed`, `refused`, `cancelled`, and `uncertain`; `unknown` is reserved for adapters with explicit semantic abstention. These adapters preserve Jev’s unknown option instead. Reasons are stable short codes rather than provider messages.
 
 Receipts include request ID, provider, requested and reported model, timestamps, latency, dispatch status, completion uncertainty, context SHA-256, and the actual JSON request SHA-256 when assembled. Hashes are canonical exact-input identifiers; they neither prove equivalent meaning nor prevent stale-state reuse. Receipts contain no prompts or keys. Provider-reported models are recorded as reported, including aliases; absent model metadata leaves `modelVersionStatus:'unavailable'`. Callers should reject incompatible model changes rather than interpret metadata as a guarantee of immutable weights.
