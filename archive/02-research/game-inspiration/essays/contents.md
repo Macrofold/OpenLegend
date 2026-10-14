@@ -22,3 +22,9 @@
 - [Scoped completion and evidence ledger](../research-progress-modding-2026-10-14.md) — this addition only; earlier research status remains with its existing owner.
 
 ---
+
+## Cross-game topic guides and incorporation tracking
+
+[Core learning map](../synthesis/README.md) · [Game-by-topic coverage](../synthesis/coverage.csv) · [Progress and evidence rules](../synthesis/progress.md).
+
+The new topic shells cover economies, crafting, loot, social systems and the wider player experience. They preserve the existing essays above and reserve the ongoing fun/creator-tooling work rather than creating competing copies. Shell creation does not mark any game assessed or incorporated.
