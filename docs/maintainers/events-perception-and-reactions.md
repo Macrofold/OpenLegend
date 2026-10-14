@@ -99,7 +99,7 @@ PW08 branch delivery reduces repeated mapping assignments and exact crossing wor
 
 ## EPR03 — Actor-private perception acquisition and exposure deltas
 
-**Dependencies:** EPR01–EPR02. This task includes intentional semantics, so distinguish it from the behavior-preserving optimization above.
+**Dependencies:** EPR01–EPR02. This task includes intentional semantics, so distinguish it from the behavior-preserving optimization above. [Batch 08 (`MY02`)](parallel-batch-08-the-missing-belonging.md#my02--preserve-and-retrieve-exact-personal-evidence) extends observer-private `inventory_inspected` acquisition with event-time `observerPlaceId`, `observerPlaceLabel`, `holderLabel` and `readableText`, preserving historical inspection evidence after the object moves or changes ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
 - [x] Separate native visual acquisition from an outwardly observable encounter/action. `encounterEmitter` records observed evidence for only its awake observer through the existing ledger/experience owner. Designated introductions remain available only to that observer through the ordinary story policy; a September 28 fix restored this after the recorder's `acquisition` flag and the story selector's check diverged. This completes the initial scope correction, not the broader exposure-delta/hysteresis tasks below.
 - [x] Use current versus prior exposure to produce entry/exit/meaningful-feature deltas. Retain living-actor encounter opportunities, current ordinary-object baseline behavior, and supported recognition uncertainty. Memory-bearing people now produce private arrival, departure (`change: 'end'`) and outward-change records; the one-hour re-record window reads awareness, where sightings live, instead of the old memory array. Animals and objects keep membership-only exposure.
@@ -172,7 +172,7 @@ Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); e
 
 ## EPR07 — Named consumer integration without a universal engine bus
 
-**Dependencies:** EPR05–EPR06.
+**Dependencies:** EPR05–EPR06. [Batch 08 (`MY02`/`MY04`)](parallel-batch-08-the-missing-belonging.md) routes two-source comparison (`POST /api/world-events/sources`) and **World Events** revision updates through the existing history/experience projection paths without creating a new event bus or triggering cognitive stimuli ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
 - [ ] Use a small typed dispatch mapping for reaction intake and existing optional consumers. Connections are world-scoped and explicitly released/rebuilt on shutdown/restore.
 - [ ] Keep awareness, native social consequences, commitments, and required invalidation in the authoritative transaction. Do not convert them into best-effort post-commit callbacks.
@@ -187,7 +187,7 @@ Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); e
 
 ## EPR08 — Save/load, generation fencing, and overload
 
-**Dependencies:** begin design with EPR01; complete after EPR05–EPR07. Coordinate SL and PF, retaining their ownership.
+**Dependencies:** begin design with EPR01; complete after EPR05–EPR07. Coordinate SL and PF, retaining their ownership. [Batch 08 (`MY05`)](parallel-batch-08-the-missing-belonging.md#my05--full-continuity-and-completion) qualifies current-format PostgreSQL save/load of inspection evidence, pending/accepted/refused satchel offers, moved/removed clues, and delayed-response fencing across `forgetMemory`, `correctMemory` and save-timeline restore ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
 - [ ] Register semantic episode/latch/deadline state in current-format save capture where it affects continuation. Rebuild only truly derived spatial/ready indexes.
 - [ ] Fence old callbacks and pending work by current restore authority generation even when world ID and entity IDs recur. Do not use a rotating command-retry token as an unexplained substitute.

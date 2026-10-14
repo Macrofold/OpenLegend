@@ -97,6 +97,8 @@ Owner: server director/cognition and AI adapters. Depends on: CR01. Exit evidenc
 
 ### CR03 — Compact English context
 
+[MY02/MY03](parallel-batch-08-the-missing-belonging.md) extends English context projection with observer-permitted inspection facts (`observerPlaceId`, `observerPlaceLabel`, `holderLabel`, `readableText`) and source-attributed subject/general knowledge notes (`prepareKnowledgeContext`). [Batch 08 verification](../verification/parallel-batch-08-the-missing-belonging.md) qualifies two independent observers, same-name/namespace items, and live witness/return conversation without closing CR12's broader acceptance.
+
 - [x] Encode single-kind operations in provider schemas, validate remaining envelope constraints before interpretation, and scope speech/gesture options to actor capabilities. Identify speaker/recipient/overheard roles in current speech recall, distinguish trigger source from subject, and suppress duplicate references, excessive floating-point display precision and empty planning/withdrawal instructions. Limited live human/animal and private-thought observations are in [Verification](../verification/simulation-and-cognition-audit.md#simulation-and-cognition-audit); broader CR12 acceptance remains open.
 
 - [x] Build one projection contract for semantic calls: actual stimulus, complete accepted “About me” text, relevant body/environment, attended possessions/knowledge, and one recall section. Render calendar day/time and available temperature/weather in ordinary language; do not invent unimplemented weather.
@@ -141,7 +143,7 @@ Owner: server attention/retrieval, generic Jev execution. Depends on: CR01–CR0
 
 ### CR05 — Awareness and one experience source
 
-PX03’s [private place/item observation contract](../memory-architecture.md#personal-perspective-and-acquisition) extends this existing owner. Its Known places projection consumes cold retained evidence and responds to forgetting/correction without a second writable memory collection; authored place retention is separate from story importance. [Scoped native/browser/query evidence](../verification/useful-discoveries.md) closes this consumer subset of CR05–CR06, not CR12’s broad memory/model acceptance or longer-term personality behavior.
+PX03’s [private place/item observation contract](../memory-architecture.md#personal-perspective-and-acquisition) extends this existing owner. Its Known places projection consumes cold retained evidence and responds to forgetting/correction without a second writable memory collection; authored place retention is separate from story importance. [Scoped native/browser/query evidence](../verification/useful-discoveries.md) closes this consumer subset of CR05–CR06, not CR12’s broad memory/model acceptance or longer-term personality behavior. [MY02](parallel-batch-08-the-missing-belonging.md#my02--preserve-and-retrieve-exact-personal-evidence) further extends the same inspection/awareness capsule with observer-permitted place/holder/readable-text facts and indexed two-source comparison (`POST /api/world-events/sources`), qualified in [Batch 08 verification](../verification/parallel-batch-08-the-missing-belonging.md).
 
 Proposed [EPR03](events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) owns perception-acquisition integration and [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns change-fed intake. Recall/awareness behavior and its unique verification remain here.
 
@@ -240,6 +242,8 @@ Owner: server repository/protocol/client projection and documentation. Depends o
 CR12 may reuse [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) scenarios while retaining its memory/recall acceptance scope.
 
 ### CR12 — Acceptance and token/latency evidence
+
+[Batch 08 (`MY03`/`MY05`)](../verification/parallel-batch-08-the-missing-belonging.md) adds 7 bounded live-model turns (`$0.075162` USD cumulative spend, `0` uncertain completions) qualifying partial witness testimony (`Mara`, `Iven`), response to contrary physical clues, voluntary refusal/acceptance of the found `Weathered canvas satchel`, and subsequent grounded conversation reflecting kept, declined and accepted outcomes, plus delayed-response fencing across `forgetMemory`, `correctMemory` and save-timeline restore. Broader CR12/CE05 acceptance remains open.
 
 PG02 adds [October 5 evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices): unified required source-linked outcome memories, exact values, shared native personal rendering, cold linked-history invalidation and rejection of stale decisions. A compliant-content resident independently switched from finished cord work to hare observation, with contrary repetitions retained. Both selection stages now recognize current interests. Streaming requests no longer combine incompatible asynchronous delivery. [October 6 quiet reflection](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) completes verified provider persistence, accepted publication and subsequent action; earlier blocked attempts remain historical failures. Broader CR12/CE05 quality and lasting inner influence remain open.
 
@@ -487,7 +491,7 @@ Inactive-history integration is delivered: maintenance reads an actor-scoped dur
 
 ### CR13 — Editable knowledge documents
 
-Canonical contracts: [Knowledge](../knowledge.md), [base-world policy](../worlds/base/knowledge.md). Keep action-repertoire, hearing and spatial branch work with its existing owners.
+Canonical contracts: [Knowledge](../knowledge.md), [base-world policy](../worlds/base/knowledge.md). Keep action-repertoire, hearing and spatial branch work with its existing owners. [Batch 08 (`MY01–MY03`)](parallel-batch-08-the-missing-belonging.md) qualifies initial source-labeled general and subject knowledge documents (`Mara` ↔ `Iven`) and live witness conversation without leaking unshared subject notes across actors ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
 - [x] Add actor-owned general/subject documents, Unicode character limits, revisioned complete replacements, tombstones and one authoritative edit function.
 - [x] Separate accepted external understanding from About me without duplicating prose; reject an oversized in-place migration without discarding stored state.

@@ -1,6 +1,7 @@
 import {
   initializePerceivedEventIndexes,
   readPerceivedEvents,
+  readPerceivedEventSources,
   perspectiveField,
 } from './perceived-events.js';
 import { projectEventEvidence, type EventEvidence } from '@open-legend/domain';
@@ -25,7 +26,11 @@ import type {
 import { recordDuration } from './performance.js';
 import { prepareHistory } from './history-preparation.js';
 import { HistoryBatch } from './history-batch.js';
-import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
+import type {
+  TranscriptPage,
+  TranscriptItem,
+  WorldEventSourceReference,
+} from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
 
 export const HISTORY_TABLES = [
@@ -1055,6 +1060,8 @@ export class HistoryRepository {
     actorId: string,
     epoch: string,
     options: { type?: string; cursor?: string; limit?: number; q?: string } = {},
+    sourceEpoch = epoch,
+    corrections?: Record<string, string>,
   ) {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
@@ -1064,6 +1071,27 @@ export class HistoryRepository {
       actorId,
       JSON.stringify([worldId, ownerId, actorId, epoch]),
       options,
+      JSON.stringify([worldId, ownerId, actorId, sourceEpoch]),
+      corrections,
+    );
+  }
+  async perceivedEventSources(
+    worldId: string,
+    ownerId: string,
+    actorId: string,
+    sourceEpoch: string,
+    references: readonly WorldEventSourceReference[],
+    state?: { corrections?: Record<string, string>; forgotten?: readonly string[] },
+  ) {
+    if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
+      throw new Error('Unsupported history principal.');
+    return readPerceivedEventSources(
+      this.db,
+      worldId,
+      actorId,
+      JSON.stringify([worldId, ownerId, actorId, sourceEpoch]),
+      references,
+      state,
     );
   }
   async transcript(

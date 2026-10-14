@@ -924,12 +924,16 @@ async function initializeGameServer(
           if (!store.history)
             return send(response, 503, { message: 'History repository unavailable.' });
           const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
+          const sourceEpoch = `${service.timelineId}:${scopeKey(scope)}`;
+          const corrections = service.world.experience?.corrections?.[scope.actorId];
           const page = await store.history.perceivedEvents(
             service.world.id,
             scope.accountId,
             scope.actorId,
             epoch,
             options,
+            sourceEpoch,
+            corrections,
           );
           await assertHistoryRead(scope, epoch);
           return send(response, 200, page);
@@ -2120,6 +2124,52 @@ async function initializeGameServer(
                 scope,
               );
               return send(response, result.ok ? 200 : result.code === 'stale' ? 409 : 400, result);
+            }
+            case '/api/world-events/sources': {
+              const value = z
+                .object({
+                  references: z
+                    .array(
+                      z
+                        .object({
+                          family: z.enum(['speech', 'encounter']),
+                          sourceId: requestIdSchema,
+                          revision: z.string().min(1).max(200),
+                          token: z.string().min(1).max(200),
+                        })
+                        .strict(),
+                    )
+                    .min(1)
+                    .max(2),
+                })
+                .strict()
+                .parse(body);
+              if (!store.history)
+                return send(response, 503, { message: 'History repository unavailable.' });
+              const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
+              const sourceEpoch = `${service.timelineId}:${scopeKey(scope)}`;
+              const corrections = service.world.experience?.corrections?.[scope.actorId];
+              const forgotten = service.world.experience?.forgotten[scope.actorId];
+              const sources = await store.history.perceivedEventSources(
+                service.world.id,
+                scope.accountId,
+                scope.actorId,
+                sourceEpoch,
+                value.references,
+                { corrections, forgotten },
+              );
+              await assertHistoryRead(scope, epoch);
+              if (
+                service.world.experience?.corrections?.[scope.actorId] !== corrections ||
+                service.world.experience?.forgotten[scope.actorId] !== forgotten
+              )
+                throw new HistoryCursorError('History changed while loading. Refresh this page.');
+              return send(response, 200, {
+                ok: true,
+                worldId: service.world.id,
+                generation: service.generation,
+                sources,
+              });
             }
             case '/api/god/editor/world-events': {
               if (!config.godMode)

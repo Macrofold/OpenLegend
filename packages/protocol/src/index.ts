@@ -520,9 +520,60 @@ export interface KnownPlaceInspection {
   moveDescription: string;
 }
 
+export interface WorldEventSourceReference {
+  /** Opaque application-issued token binding world/timeline, actor, record family and sourceId. */
+  token: string;
+  sourceId: string;
+  revision: string;
+  family: 'speech' | 'encounter';
+}
+export type WorldEventSourceAcquisition =
+  | 'heard-speech'
+  | 'spoken-by-self'
+  | 'inspected-document'
+  | 'inspected-item'
+  | 'observed-place'
+  | 'observed-encounter';
+export interface WorldEventSourceObservedLocation {
+  kind: 'world' | 'possession';
+  label: string;
+  point?: SurfacePoint;
+}
+export type WorldEventSourceDetail =
+  | {
+      status: 'available';
+      reference: WorldEventSourceReference;
+      time: number;
+      order: number;
+      acquisition: WorldEventSourceAcquisition;
+      acquisitionLabel: string;
+      sourceLabel: string;
+      text: string;
+      inscription?: string;
+      speech?: PerceivedSpeech;
+      observedLocation?: WorldEventSourceObservedLocation;
+      corrected: boolean;
+      correctionNote?: string;
+    }
+  | {
+      status: 'unavailable';
+      sourceId: string;
+      reason: string;
+    };
+export interface WorldEventSourcesRequest {
+  references: WorldEventSourceReference[];
+}
+export interface WorldEventSourcesView {
+  ok: true;
+  worldId: string;
+  generation: string;
+  sources: WorldEventSourceDetail[];
+}
+
 export interface PublicEvent {
   speech?: PerceivedSpeech;
   modality?: 'heard' | 'observed' | 'felt' | 'internal';
+  source?: WorldEventSourceReference;
   id: string;
   time: number;
   type: string;

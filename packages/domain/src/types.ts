@@ -55,6 +55,8 @@ export interface ItemDefinition extends Named {
     method: import('./world-modules.js').DefinitionPin;
     disclosure: 'method';
   };
+  /** Authored written text disclosed only when the physical record is inspected. */
+  inscription?: string;
   /** Trusted compiler output, never independent proof of reusable material eligibility. */
   material?: import('./invention-families.js').MaterialInterface;
 }

@@ -921,7 +921,10 @@ export function invalidateExperience(
         (memory.activityId && affected.has(memory.activityId))
       )
         include(memory.id);
-      if (affected.has(memory.id)) include(memory.activityId);
+      if (affected.has(memory.id)) {
+        include(memory.activityId);
+        include(memory.eventId);
+      }
     }
     for (const occurrence of world.actionExperience.occurrences[actorId] ?? []) {
       if (affected.has(occurrence.id)) include(occurrence.resultMemoryId);

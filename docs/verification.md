@@ -26,6 +26,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 ## Characters, cognition and creation
 
 - [Playable world creation](verification/playable-world-creation.md): connected fresh-host activation, exact authority/receipt recovery, native manufacture/save/reopen, browser entry, bounded maximum openings and the remaining live model-service blocker.
+- [The missing belonging](verification/parallel-batch-08-the-missing-belonging.md): native clue/custody chain, PostgreSQL continuation and delayed-response fencing, two-source `World Events` comparison across viewports, and seven live NPC turns across three resolution paths with exact costs.
 
 - [Useful place and inspected-item discoveries](verification/useful-discoveries.md): private observed facts, introduction fallback, Known places, correction/forgetting, unavailable destinations and current-format reload.
 

@@ -2646,6 +2646,71 @@ body,
   margin: 4px 0 0;
   white-space: pre-wrap;
 }
+.ol-world-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ol-world-event-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid var(--ol-border-subtle, rgba(255, 255, 255, 0.14));
+  border-radius: 6px;
+  background: var(--ol-surface-raised, rgba(0, 0, 0, 0.22));
+  max-height: min(44vh, 280px);
+  overflow-y: auto;
+}
+.ol-world-event-comparison-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ol-world-event-comparison-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ol-world-event-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+@media (max-width: 720px), (max-height: 560px) {
+  .ol-world-event-comparison {
+    max-height: min(26vh, 180px);
+  }
+  .ol-world-event-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.ol-world-event-source-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--ol-border-subtle, rgba(255, 255, 255, 0.12));
+  border-radius: 4px;
+  min-width: 0;
+}
+.ol-world-event-source-meta p,
+.ol-world-event-source-body p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ol-world-event-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
 /* World Agent drafts use ordinary panels; no generated markup enters a review. */
 .ol-agent-reviews {
@@ -2823,8 +2888,10 @@ body,
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
   bottom: calc(var(--control-md) + 2 * var(--space-3));
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock:has(.ol-panel[data-workspace]),
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock:has(#composerPanel) {
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs)
+  .ol-dock:has(.ol-panel-slot:not([hidden]) > .ol-panel[data-workspace]),
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs)
+  .ol-dock:has(.ol-panel-slot:not([hidden]) > #composerPanel) {
   height: calc(100% - 70px - var(--control-md) - 2 * var(--space-3));
 }
 .ol-perception-hint {
@@ -2846,7 +2913,7 @@ body,
 
 .ol-hud[data-narrow='true']:not([data-tight='true']):not(
     :has(.ol-panel-slot:not([hidden]) > #composerPanel)
-  ):not(:has(.ol-panel[data-workspace]))
+  ):not(:has(.ol-panel-slot:not([hidden]) > .ol-panel[data-workspace]))
   .ol-mobile-tabs {
   bottom: calc(55% + var(--control-md) + 2 * var(--space-3));
 }

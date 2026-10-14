@@ -231,6 +231,41 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     nutrition: 38,
     cooked: true,
   },
+  torn_red_fastening: {
+    id: 'torn_red_fastening',
+    version: 1,
+    portable: true,
+    packingLoad: 1,
+    name: 'Torn red fastening',
+    description:
+      'A frayed red-dyed fiber strap with a distinctive blue cross-stitch and a torn end, snagged from a satchel clasp.',
+    properties: ['fiber'],
+    mechanismFields: { story_importance: { story_importance: 7 } },
+  },
+  tavins_sorting_note: {
+    id: 'tavins_sorting_note',
+    version: 1,
+    portable: true,
+    packingLoad: 1,
+    name: "Tavin's sorting note",
+    description: 'A folded bark-and-reed note left at the Mending Clearing work spot.',
+    inscription:
+      'I moved the red-stitched bag from the shared work spot to the Reed-side Store, beside the split stone. The fastening snagged as I lifted it. — Tavin.',
+    properties: [],
+    mechanismFields: { story_importance: { story_importance: 8 } },
+  },
+  red_stitched_satchel: {
+    id: 'red_stitched_satchel',
+    version: 1,
+    portable: true,
+    packingLoad: 2,
+    container: { capacity: 24, maximumDepth: 16 },
+    name: 'Red-stitched satchel',
+    description:
+      'A woven fiber satchel with matching red-and-blue cross-stitching, a damaged fastening clasp where a red strap tore away, and “Mara Reed” stitched on its exterior flap. Inspect its contents to see what rests inside.',
+    properties: ['fiber', 'pouch'],
+    mechanismFields: { story_importance: { story_importance: 8 } },
+  },
 };
 
 export const NATIVE_PREPARATIONS = {

@@ -17,6 +17,18 @@ export interface PlaceDefinition {
   mechanismFields?: Record<string, Record<string, number>>;
 }
 
+export type ObservedItemLocation =
+  | {
+      kind: 'world';
+      point: SurfacePoint;
+      label: string;
+      containerId: string;
+    }
+  | {
+      kind: 'possession';
+      label: string;
+    };
+
 export type EncounterExposure =
   | {
       kind: 'place';
@@ -36,12 +48,32 @@ export type EncounterExposure =
       label: string;
       description: string;
       introductionKey: string;
+      inscription?: string;
+      observedLocation?: ObservedItemLocation;
       mechanismFields?: Record<string, Record<string, number>>;
     };
 
 const indexes = new WeakMap<object, Map<string, PlaceDefinition[]>>();
 const text = (value: unknown, maximum: number): value is string =>
   typeof value === 'string' && !!value.trim() && value.length <= maximum;
+function validObservedItemLocation(value: unknown): value is ObservedItemLocation {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const location = value as ObservedItemLocation;
+  if (location.kind === 'world') {
+    return (
+      hasRecordFields(location, ['kind', 'point', 'label', 'containerId']) &&
+      finitePoint(location.point) &&
+      isSafeRecordId(location.point.surfaceId) &&
+      text(location.label, 160) &&
+      isSafeRecordId(location.containerId)
+    );
+  }
+  return (
+    location.kind === 'possession' &&
+    hasRecordFields(location, ['kind', 'label']) &&
+    text(location.label, 160)
+  );
+}
 function validFields(value: unknown): boolean {
   return (
     value === undefined ||
@@ -89,12 +121,15 @@ export function validEncounterExposure(value: unknown): value is EncounterExposu
         hasRecordFields(
           exposure,
           ['kind', 'id', 'definition', 'label', 'description', 'introductionKey'],
-          ['mechanismFields'],
+          ['inscription', 'observedLocation', 'mechanismFields'],
         ) &&
         hasRecordFields(exposure.definition, ['id', 'version']) &&
         isSafeRecordId(exposure.definition.id) &&
         Number.isSafeInteger(exposure.definition.version) &&
         exposure.definition.version > 0 &&
+        (exposure.inscription === undefined || text(exposure.inscription, 600)) &&
+        (exposure.observedLocation === undefined ||
+          validObservedItemLocation(exposure.observedLocation)) &&
         [
           `inventory-item:${exposure.id}`,
           `inventory-definition:${exposure.definition.id}`,
