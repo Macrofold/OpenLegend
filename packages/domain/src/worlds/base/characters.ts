@@ -72,4 +72,3 @@ export const TAVIN_IDENTITY = {
     },
   ] satisfies CharacterTrait[],
 };
-

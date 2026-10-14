@@ -258,7 +258,8 @@ export async function readPerceivedEventSources(
       ref.revision.length === 0 ||
       ref.revision.length > 200 ||
       typeof ref.token !== 'string' ||
-      ref.token !== worldEventSourceReference(sourceScope, ref.family, ref.sourceId, ref.revision).token
+      ref.token !==
+        worldEventSourceReference(sourceScope, ref.family, ref.sourceId, ref.revision).token
     )
       throw new HistoryCursorError('This source selection expired. Refresh the event log.');
   }
@@ -358,8 +359,7 @@ export async function readPerceivedEventSources(
                 label: exposure.observedLocation.label,
               }
           : undefined;
-      const correctionEventId =
-        corrections[ref.sourceId] ?? corrections[`memory-${ref.sourceId}`];
+      const correctionEventId = corrections[ref.sourceId] ?? corrections[`memory-${ref.sourceId}`];
       const corrected = Boolean(correctionEventId);
       let correctionNote: string | undefined;
       if (correctionEventId) {

@@ -1,10 +1,10 @@
 # Batch 08 — The missing belonging implementation prompt
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | One independent prompt covers the complete investigation; required existing mechanisms are available and runtime work is open. | 2026-10-11   |
+| Status    | Current progress                                                                                                          | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | MY01–MY05 implemented and verified on `codex/missing-belonging`; broader parent trackers retain their remaining criteria. | 2026-10-13   |
 
-MY01–MY05 are internal parts of one assignment. [Feature](parallel-batch-08-the-missing-belonging-feature-spec.md), [design](parallel-batch-08-the-missing-belonging-tech-design.md), [tracker](../maintainers/parallel-batch-08-the-missing-belonging.md) and [world profile](../worlds/base/missing-belonging.md) supply the complete definition. Writing this prompt does not dispatch or authorize runtime work.
+MY01–MY05 are internal parts of one assignment. [Feature](parallel-batch-08-the-missing-belonging-feature-spec.md), [design](parallel-batch-08-the-missing-belonging-tech-design.md), [tracker](../../maintainers/parallel-batch-08-the-missing-belonging.md), [world profile](../../worlds/base/missing-belonging.md) and [verification](../../verification/parallel-batch-08-the-missing-belonging.md) supply the complete definition and evidence. Writing this prompt does not dispatch or authorize runtime work.
 
 ## One assignment — Investigate and return a missing belonging
 
@@ -40,6 +40,6 @@ Keep the world profile, current knowledge/memory/World Events/social/save behavi
 
 ## Maintained records
 
-- Implementation: [MY01–MY05](../maintainers/parallel-batch-08-the-missing-belonging.md).
-- Limits and constraints: [Batch 08 inventory](../limits/parallel-batch-08-the-missing-belonging.md).
-- Related contract/design: [Feature](parallel-batch-08-the-missing-belonging-feature-spec.md), [technical definition](parallel-batch-08-the-missing-belonging-tech-design.md) and [authored world profile](../worlds/base/missing-belonging.md).
+- Implementation: [MY01–MY05](../../maintainers/parallel-batch-08-the-missing-belonging.md).
+- Limits and constraints: [Batch 08 inventory](../../limits/parallel-batch-08-the-missing-belonging.md).
+- Related contract/design: [Feature](parallel-batch-08-the-missing-belonging-feature-spec.md), [technical definition](parallel-batch-08-the-missing-belonging-tech-design.md) and [authored world profile](../../worlds/base/missing-belonging.md).

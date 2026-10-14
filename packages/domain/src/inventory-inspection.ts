@@ -102,7 +102,8 @@ function inspectionLocationLabel(
   containerId?: string,
 ): string {
   const observed = observedItemLocation(world, actorId, itemId);
-  if (!observed) return containerId ? 'in the selected accessible container' : 'accessible possession';
+  if (!observed)
+    return containerId ? 'in the selected accessible container' : 'accessible possession';
   return observed.kind === 'world' ? `at ${observed.label}` : observed.label;
 }
 

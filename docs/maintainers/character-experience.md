@@ -6,7 +6,7 @@ The first useful scope is one resident whose body experience, desire for contact
 
 ## CE01 — A coherent authored person in a supported world
 
-[Batch 08](parallel-batch-08-the-missing-belonging.md) proposes two ordinary witnesses with distinct authored circumstances and partial knowledge in a complete investigation. Actual voluntary conversation and later recollection belong to that assignment's acceptance. Its authored incident is not evidence of spontaneous motivation, general psychological satisfaction or a complete ordinary life; D69 and wider CE acceptance remain open.
+[Batch 08 (`MY01–MY05`)](parallel-batch-08-the-missing-belonging.md) delivers two ordinary witnesses (`Mara Reed`, `Tavin Vale`) with disposition-only identities, distinct authored circumstances, source-labeled initial understanding (`Authored starting understanding` in `world.actorKnowledge[actorId].general`) and actual voluntary conversation and later recollection ([world profile](../worlds/base/missing-belonging.md), [verification](../verification/parallel-batch-08-the-missing-belonging.md)). Its authored incident is not evidence of spontaneous motivation, general psychological satisfaction or a complete ordinary life; D69 and wider CE acceptance remain open.
 
 [CF01/CF04](parallel-batch-06-rivals-and-contested-ground.md) propose hostile residents and voluntary combat help as further consumers of ordinary minds. Explicit authored initial purposes do not prove spontaneous motivation, and a biography must not prescribe the decision algorithm. Their planned evidence does not close this broader character-quality scope.
 
@@ -42,7 +42,7 @@ PX04 supplies an actual optional social activity with exact consent and withdraw
 
 ## CE03 — The world and inner experience enter attention coherently
 
-PX04 connects invitation terms, own travel outcomes and observed loss of company to existing personal evidence and ordinary decisions. The [outing report](../verification/voluntary-outings.md) distinguishes observable consent from private interpretation; no new inner-state or reflection scheduler is introduced.
+PX04 connects invitation terms, own travel outcomes and observed loss of company to existing personal evidence and ordinary decisions. The [outing report](../verification/voluntary-outings.md) distinguishes observable consent from private interpretation; no new inner-state or reflection scheduler is introduced. [Batch 08 (`MY02`/`MY03`)](parallel-batch-08-the-missing-belonging.md) connects observer-permitted inspection facts, source-labeled subject/general knowledge notes and actual handover outcomes to ordinary decision context and live conversation ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
 PG02 selects exact outcomes as required personal memories and keeps current/paused execution status separate. Optional relevance failure, cold storage, correction/forgetting, source freshness and literal quotes are qualified natively. [October 6 evidence](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) completes ordinary quiet reflection with corrected content, verified publication and a subsequent real greeting/cord action. It adds no changed files, goals, knowledge or feelings, so lasting content-specific influence remains unqualified. Displayed reflection thoughts alone remain presentation, not accepted knowledge. No new review cadence or scheduler was added.
 
@@ -59,7 +59,7 @@ PG02 selects exact outcomes as required personal memories and keeps current/paus
 
 ## CE04 — A complete life episode with continued activity
 
-PX04 delivers the narrow voluntary travel episode: invitation, separately owned movement, arrival and independent next choices, with leaving and interruption. [Evidence](../verification/voluntary-outings.md) does not close the full-afternoon, enjoyment, satisfaction or broader resumption requirements below.
+PX04 delivers the narrow voluntary travel episode: invitation, separately owned movement, arrival and independent next choices, with leaving and interruption. [Evidence](../verification/voluntary-outings.md) does not close the full-afternoon, enjoyment, satisfaction or broader resumption requirements below. [Batch 08 (`MY03`/`MY04`)](parallel-batch-08-the-missing-belonging.md) delivers the complete noncombat investigation episode (notice → ask/inspect → compare → find → keep/offer → later conversation), without closing the full-afternoon or broader life-episode targets ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
 PG02 now demonstrates a bounded cord-to-observation switch with disposition-only biography. Bodily urgency can replace unfinished work, retaining committed costs; native controls separately prove remaining-step resumption and exactly-once meal effects. A later live comparison returned to stockpiling after eating, so freely chosen resumption, reliable endings and a whole ordinary afternoon remain unqualified. [Evidence](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices).
 
@@ -73,7 +73,7 @@ PG02 now demonstrates a bounded cord-to-observation switch with disposition-only
 
 ## CE05 — Integrated character quality and complete-cost qualification
 
-[PX04’s comparison report](../verification/voluntary-outings.md) retains limited live decisions, native/browser evidence and all known cost. It qualifies this concrete small-cooperation slice, not repeatable personality quality or the complete character flows.
+[PX04’s comparison report](../verification/voluntary-outings.md) retains limited live decisions, native/browser evidence and all known cost. It qualifies this concrete small-cooperation slice, not repeatable personality quality or the complete character flows. [Batch 08’s verification report](../verification/parallel-batch-08-the-missing-belonging.md) similarly records 7 bounded live witness/return turns (`$0.075162` USD cumulative task spend, `0` uncertain completions), native/PostgreSQL/browser checks and retained unsuccessful prompt attempts for the missing-belonging investigation slice.
 
 PG02 retains provider outages, invalid/confounded setups, unsuccessful interest/rubric/generation comparisons, stockpiling and rejected requests alongside successful native/live controls. Required memories and shared native grammar are delivered; the generalized action policy recognizes current interests in both shortlist and final selection. [October 5 comparisons](../verification/cognition-context.md#october-5--unified-experience-and-unprescribed-choices) and [October 6 completion](../verification/cognition-context.md#october-6--quiet-reflection-completes-after-provider-recovery) record complete known cost and conservative uncertainty. Repeatability, lasting inner influence, freely chosen resumption and whole-life quality remain open.
 

@@ -25,6 +25,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [The missing belonging](verification/parallel-batch-08-the-missing-belonging.md): native clue/custody chain, PostgreSQL continuation and delayed-response fencing, two-source `World Events` comparison across viewports, and seven live NPC turns across three resolution paths with exact costs.
+
 - [Useful place and inspected-item discoveries](verification/useful-discoveries.md): private observed facts, introduction fallback, Known places, correction/forgetting, unavailable destinations and current-format reload.
 
 - [Voluntary outings](verification/voluntary-outings.md): exact consent, independent travel, interruption/privacy, PostgreSQL restart, browser departure/leave and bounded live acceptance/refusal/arrival choices with complete cost.

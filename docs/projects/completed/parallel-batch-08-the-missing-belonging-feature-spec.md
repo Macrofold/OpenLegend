@@ -1,16 +1,16 @@
 # Batch 08 — The missing belonging
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The complete investigation is defined as one independent assignment; implementation and player/model qualification remain open. | 2026-10-11   |
+| Status    | Current progress                                                                                                                                 | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | MY01–MY05 delivered and verified on `codex/missing-belonging`; broader parent social, memory and agency acceptance remains with parent trackers. | 2026-10-13   |
 
-[Technical design](parallel-batch-08-the-missing-belonging-tech-design.md) · [One implementation prompt](parallel-batch-08-the-missing-belonging-prompts.md) · [MY01–MY05 tracker](../maintainers/parallel-batch-08-the-missing-belonging.md) · [Constraints](../limits/parallel-batch-08-the-missing-belonging.md)
+[Technical design](parallel-batch-08-the-missing-belonging-tech-design.md) · [One implementation prompt](parallel-batch-08-the-missing-belonging-prompts.md) · [MY01–MY05 tracker](../../maintainers/parallel-batch-08-the-missing-belonging.md) · [Constraints](../../limits/parallel-batch-08-the-missing-belonging.md) · [Verification](../../verification/parallel-batch-08-the-missing-belonging.md)
 
 ## Experience and selection
 
 A player reaches a shared work clearing and finds a missing satchel has caused a misunderstanding. They can question two people, inspect a physical note and a torn fastening, compare what they personally saw with what somebody said, find the actual bag and decide what to do with it. Returning later brings them back to the same people, possessions and remembered conduct. The interest is figuring out what happened and choosing how to treat the people involved, without a fight or an automatic verdict.
 
-This selects [AD-076, The missing market purse — Core](../repertoires/adventure-discovery.md), adapting its bounded investigation to the existing wilderness. [LKN129, The note that says who actually saw it — Complete](../repertoires/languages-knowledge.md) supports clear source attribution. [Coverage](../repertoires/coverage.md) ranks a meaningful independent character consequence as Core and further mysteries/destinations as Complete. These repertoire entries are proposals; this allocation supplies the particular incident and delivery definition, not proof of implementation or enjoyment.
+This selects [AD-076, The missing market purse — Core](../../repertoires/adventure-discovery.md), adapting its bounded investigation to the existing wilderness. [LKN129, The note that says who actually saw it — Complete](../../repertoires/languages-knowledge.md) supports clear source attribution. [Coverage](../../repertoires/coverage.md) ranks a meaningful independent character consequence as Core and further mysteries/destinations as Complete. These repertoire entries are proposals; this allocation supplies the particular incident and delivery definition, not proof of implementation or enjoyment.
 
 The current game already supplies two expedition sites, finite gear, physical method learning, barter, outings, practice, fishing and editable open shelters. Another chain of directions leading to loot would duplicate that benefit. Here, partial accounts and physical comparison change the player's understanding; actual custody and consent determine the result. Batch 06 already owns the higher-priority combat work. Enclosed homes and full psychological-life design retain their unresolved choices; neither is a prerequisite or hidden addition here. Recent world-library and story-perspective proposals remain separate experiences.
 
@@ -24,7 +24,7 @@ Existing inspection records the exact item description and definition the observ
 
 ## The authored incident
 
-[The proposed base-world profile](../worlds/base/missing-belonging.md) owns the incident, Mara and Tavin's distinct partial understanding, the clearing/store, exact physical clues and finite satchel contents. The past is fixed: a mistaken relocation caused suspicion. Present speech, interpretation, custody and consent remain live. These circumstances are authored starting information, never fabricated runtime observations or a future-answer script.
+[The base-world profile](../../worlds/base/missing-belonging.md) owns the incident, Mara and Tavin's distinct partial understanding, the clearing/store, exact physical clues and finite satchel contents. The past is fixed: a mistaken relocation caused suspicion. Present speech, interpretation, custody and consent remain live. These circumstances are authored starting information, never fabricated runtime observations or a future-answer script.
 
 The note and physical route permit recovery without a witness's cooperation. Witnesses offer interpretation and social consequences, not compulsory dialogue gates. If another visitor removes the bag or all useful clues, an unresolved or partial result is legitimate; the system does not recreate the original puzzle. No crime model, guaranteed confession, relationship improvement or automatic verdict follows from the incident.
 
@@ -75,7 +75,7 @@ This scope adds neither combat nor a quest engine, hidden conclusion flag, compu
 
 ## Maintained records
 
-- Implementation: [MY01–MY05](../maintainers/parallel-batch-08-the-missing-belonging.md).
-- Limits and constraints: [Batch 08 inventory](../limits/parallel-batch-08-the-missing-belonging.md).
+- Implementation: [MY01–MY05](../../maintainers/parallel-batch-08-the-missing-belonging.md).
+- Limits and constraints: [Batch 08 inventory](../../limits/parallel-batch-08-the-missing-belonging.md).
 - Related design: [Technical contracts, source map and parent reconciliation](parallel-batch-08-the-missing-belonging-tech-design.md).
-- Current contracts: [Knowledge](../knowledge.md), [personal evidence](../memory-architecture.md#personal-perspective-and-acquisition), [World Events](../perceived-world-events.md), [gift consent](../worlds/base/social.md#offering-and-accepting-possessions), [authored incident](../worlds/base/missing-belonging.md), [character authorship](compelling-characters-feature-spec.md#character-authorship-and-changing-personality).
+- Current contracts: [Knowledge](../../knowledge.md), [personal evidence](../../memory-architecture.md#personal-perspective-and-acquisition), [World Events](../../perceived-world-events.md), [gift consent](../../worlds/base/social.md#offering-and-accepting-possessions), [authored incident](../../worlds/base/missing-belonging.md), [character authorship](../compelling-characters-feature-spec.md#character-authorship-and-changing-personality).

@@ -33,6 +33,18 @@ type ComparisonOrigins = [SlotOrigin | null, SlotOrigin | null];
 
 /** A durable, read-only perspective. Opening this panel never creates awareness or captions. */
 type Props = { scope: string; revision: string | undefined };
+function comparisonOwnerScope(scope: string): string {
+  // captionScope(view) appends `:${view.historyEpoch}` so the event list and captions
+  // reset on transcript epoch bumps (such as memory correction or forgetting).
+  // Comparison slots must survive memory correction/forgetting and refresh in place
+  // via `revision`, resetting only when the viewing identity (`worldId`,
+  // `saveTimeline`, `access.scope`, or `player.id`) changes.
+  const parts = scope.split(':');
+  return parts.length >= 5 && /^\d+$/.test(parts.at(-1) ?? '')
+    ? parts.slice(0, -1).join(':')
+    : scope;
+}
+
 /** Keyed ownership clears old rows during the same render, not a later effect. The owner may
  * control the filter, for example to open Speech from the missed-caption notice. */
 export const WorldEvents = memo(function WorldEvents({
@@ -46,7 +58,7 @@ export const WorldEvents = memo(function WorldEvents({
   const [query, setQuery] = useState('');
   return (
     <ScopedComparisonOwner
-      key={props.scope}
+      key={comparisonOwnerScope(props.scope)}
       {...props}
       type={type}
       setType={setType}
@@ -85,7 +97,9 @@ function ScopedComparisonOwner({
     () => slots.filter((ref): ref is WorldEventSourceReference => ref !== null),
     [slots],
   );
-  const refsKey = activeRefs.map((ref) => `${ref.family}:${ref.sourceId}:${ref.revision}`).join('|');
+  const refsKey = activeRefs
+    .map((ref) => `${ref.family}:${ref.sourceId}:${ref.revision}`)
+    .join('|');
 
   async function loadDetails(references = activeRefs) {
     detailController.current?.abort();
@@ -365,6 +379,9 @@ function ScopedWorldEvents({
     setComparisonOpen(false);
     setChoosingSlot(null);
     const triggerId = lastTriggerId.current;
+    if (!triggerId || !focusSourceRow(triggerId)) {
+      searchInput.current?.focus();
+    }
     requestAnimationFrame(() => {
       if (triggerId && focusSourceRow(triggerId)) return;
       searchInput.current?.focus();
@@ -412,9 +429,7 @@ function ScopedWorldEvents({
                     data-source-inspect={event.id}
                     onPress={() => handleInspectSource(source)}
                   >
-                    {choosingSlot !== null
-                      ? `Use as Source ${choosingSlot + 1}`
-                      : 'Inspect source'}
+                    {choosingSlot !== null ? `Use as Source ${choosingSlot + 1}` : 'Inspect source'}
                   </Button>
                   <Button
                     size="sm"
@@ -511,10 +526,7 @@ function ScopedWorldEvents({
         </Button>
       </form>
       {comparisonOpen && (slots[0] !== null || slots[1] !== null || choosingSlot !== null) && (
-        <section
-          className="ol-world-event-comparison"
-          aria-label="Compare sources"
-        >
+        <section className="ol-world-event-comparison" aria-label="Compare sources">
           <div className="ol-world-event-comparison-header">
             <strong>
               {slots[0] && slots[1] ? 'Comparing two sources' : 'Source detail & comparison'}
@@ -525,8 +537,8 @@ function ScopedWorldEvents({
           </div>
           {choosingSlot !== null && (
             <p className="ol-meta" role="status">
-              Select an encounter or speech row below to place in Source {choosingSlot + 1}. You
-              can search or load older events without losing your other selection.
+              Select an encounter or speech row below to place in Source {choosingSlot + 1}. You can
+              search or load older events without losing your other selection.
             </p>
           )}
           {detailBusy && (
@@ -595,11 +607,7 @@ function ScopedWorldEvents({
                         >
                           Choose another source
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onPress={() => removeSlot(slotIndex)}
-                        >
+                        <Button size="sm" variant="secondary" onPress={() => removeSlot(slotIndex)}>
                           Remove
                         </Button>
                         <Button
@@ -661,11 +669,7 @@ function ScopedWorldEvents({
                         >
                           Choose another source
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onPress={() => removeSlot(slotIndex)}
-                        >
+                        <Button size="sm" variant="secondary" onPress={() => removeSlot(slotIndex)}>
                           Remove
                         </Button>
                         <Button
@@ -694,11 +698,7 @@ function ScopedWorldEvents({
                         >
                           Choose another source
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onPress={() => removeSlot(slotIndex)}
-                        >
+                        <Button size="sm" variant="secondary" onPress={() => removeSlot(slotIndex)}>
                           Remove
                         </Button>
                         <Button
