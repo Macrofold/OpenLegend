@@ -1,89 +1,101 @@
 # Synthesis progress and evidence rules
 
-[Topic map](README.md) · [Game-by-topic matrix](coverage.csv) · [Source inventory](subjects.csv) · [Assessment evidence](assessment-records.md).
+[Topic map](README.md) · [Game coverage](coverage.csv) · [Game source inventory](subjects.csv) · [World coverage](world-coverage.csv) · [Source and goal map](source-and-goal-map.md) · [Assessment evidence](assessment-records.md).
 
-**Scope:** this tracker owns only the assessment and incorporation of game evidence into the 30 topics in the map. It does not replace the per-game research ledgers, mark new games researched, or record implementation progress. Creation of the empty framework is distinct from completion of its guides.
+**Scope:** these records track assessment and incorporation into the 35 learning topics. They do not replace per-game or world research ledgers, certify that a source dossier is complete, allocate features, or record implementation progress. Building or reviewing the framework is distinct from filling its guides.
 
-## Initial snapshot — October 14, 2026
+## Current snapshot — October 14, 2026
+
+Baseline: published `Macrofold/OpenLegend` main at `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`. Counts below are recomputed from the matrices, not a second per-source status list.
 
 | Measure | State |
 | --- | --- |
-| New guides | 26 shells; substantive sections intentionally empty |
-| Existing/ongoing topics | FUN, CREATE, DISCOVERY, PRODUCTION; existing owners preserved and coverage not reconciled |
-| Source rows | 166 approved roster subjects plus 2 explicitly unnumbered/conflicted contextual candidates |
-| New-guide assessments | 0 assessed; 0 incorporated; 0 excluded as not applicable |
-| New-guide cells | 3,874 U cells for 149 available dossier sources; 494 W cells for 19 sources awaiting an available dossier/topical case |
-| Existing-owner cells | 672 X cells; no claim that earlier work is absent or has zero incorporation |
-| Matrix size | 168 game keys by 30 topic columns = 5,040 independent coverage cells |
+| Topic pages | 35: 31 unfilled synthesis shells plus FUN, CREATE, DISCOVERY and PRODUCTION routes to existing research |
+| Game/case sources | 168 stable keys: 167 roster subjects plus the unnumbered EVE Online essay case |
+| Available game/case sources | 150 dossier files and 1 scoped essay case; availability is not full research certification |
+| Queued game sources | 17 G150–G166 subjects on this inspected baseline; no claim about unpublished branch work |
+| Game matrix | 168 × 35 = 5,880 cells: 4,681 U, 527 W and 672 X |
+| World matrix | 28 listed world dossiers × 35 = 980 cells: 868 U and 112 X |
+| New incorporation | No completed assessments, incorporated pairs or not-applicable exclusions are claimed by the framework review |
+| Existing owners | X retains unreconciled evidence, not an assertion that earlier learning is absent |
 
-These counts initialize the framework, not certify the quality of any dossier or the state of unpublished work. When changing coverage, replace this snapshot with a dated recomputation from the CSV rather than keeping a competing hand-maintained completion list.
+Update this snapshot from the actual matrices when coverage changes. Do not inflate completion by calling a source available, by citing a summary, or by adding a research heading. A structural review may read source material to improve questions without completing the relevant source-to-topic assessment.
 
 ## What a cell means
 
-`coverage.csv` is the sole current per-game/per-topic status table. `subjects.csv` supplies stable identities and source availability. The topic map owns column definitions and destinations. Assessment records own evidence, not a second status table.
+`coverage.csv` is the sole per-game/per-topic status table. `world-coverage.csv` is the sole per-fictional-world/per-topic table, using the same topic columns and status codes. Their source kinds are distinct; neither is a duplicate status owner for the other. `subjects.csv` owns game identities and availability; world keys resolve to the corresponding file in the world library. Assessment records own evidence, not a second current status list.
 
 | Code | Meaning | Required evidence |
 | --- | --- | --- |
-| U | Unassessed for this particular topic | No incorporation is claimed. A candidate link or dossier title does not advance this status. |
-| W | Waiting for an available dossier or scoped source | Source availability in subjects.csv explains the wait. This is not a finding of irrelevance or permission to start game research. |
-| X | Existing or branch-owned coverage not yet reconciled | Reserve existing work; inspect the actual owner and its source trail before assigning a research outcome. |
-| R | Review in progress | An assessment record names the source revision, sections being reviewed and remaining scope. |
+| U | Unassessed for this particular topic | No incorporation is claimed. A candidate route, title or metadata read does not advance the status. |
+| W | Waiting for an available dossier or scoped source | Identify the unavailable source and its location/status. Not a finding of irrelevance or permission to start unrelated research. |
+| X | Existing or branch-owned coverage not yet reconciled | Inspect the actual owner and its source trail before assigning a research outcome. |
+| R | Review in progress | A record names the source revision, sections being reviewed and remaining scope. |
 | A | Assessed; relevant evidence identified but not incorporated | A record describes findings, counterevidence and the intended destination. |
-| I | Incorporated into the substantive topic synthesis | A record links the exact source revision/sections and stable destination lesson anchors. Full agreed source scope for this pair has been addressed and reviewed. |
-| N | Assessed; no material contribution or intentionally excluded | A record gives the reviewed scope and reason. Absence can itself supply a useful counterexample; do not blanket-exclude by genre. |
-| B | Blocked after beginning review | A record states the concrete evidence or access gap, partial work and next action. |
-| S | Needs refresh | A record names changed source material, affected lessons and the review still needed; preserve earlier evidence. |
+| I | Incorporated into the substantive topic synthesis | A record links the exact source revision/sections and stable destination lesson anchors; the agreed source scope for this pair has been addressed and reviewed. |
+| N | Assessed; no material contribution or intentionally excluded | A record gives the reviewed scope and reason. Absence can itself supply a counterexample; do not blanket-exclude by genre or source medium. |
+| B | Blocked after beginning review | A record states the evidence/access gap, partial work and next action. |
+| S | Needs refresh | A record names changed source material, affected lessons and review still needed; preserve earlier evidence. |
 
-An I cell can contribute a counterexample, a disagreement or a carefully scoped absence; it need not endorse a rule. Mentioning a game's name or adding a bibliography entry is not incorporation. A partial excerpt does not establish completion of the dossier's relevant coverage.
+I can represent a counterexample, disagreement or carefully scoped absence; it need not endorse a rule. Merely mentioning a source, quoting a passage or adding a bibliography entry is not incorporation. Reading one excerpt does not establish completion of all relevant source coverage.
 
-## How to assess and incorporate one game
+## How to assess and incorporate one source
 
-1. Resolve the game by its stable `game_key`, not a bare G number. Locate the actual dossier and its relevant earlier chapter, mechanics studies or supplements. Read enough contiguous material to understand the interaction and reception; keep version and access qualifications.
-2. Create the evidence record `<TOPIC>--<game_key>` in assessment-records.md and mark R. Record source paths, immutable commit/blob references, the sections read, date and reviewer. A source's available revision is not the revision assessed until it has actually been read.
-3. Identify what the game contributes: concrete player situations, the supporting and contrary accounts, the plausible mechanism, limits and alternative explanations. Mark A when assessment is done but synthesis is still unwritten. Keep B when a real gap prevents a defensible conclusion.
-4. Incorporate useful evidence into the owning guide's comparisons and lessons, not a disconnected appendix of game summaries. Give conclusions stable anchors such as `econ-l001`. Cite dossier sections and their underlying sources where needed; compare like metrics and versions and preserve disagreements.
-5. Record exact destination file/anchors, contribution summary, remaining qualifications and review evidence. Mark I only after the actual source-to-lesson links and resulting diff are checked. Use N with an explicit rationale when no contribution belongs here. There are no automatic bulk N decisions.
-6. Update the matrix and topic header in the same change. Change shell-only wording once real evidence is incorporated. Follow the repository's existing commit/review policies; do not create new gameplay tests, runtime policies or research tasks merely to maintain this tracker.
+1. Resolve the stable game key or world key and declared edition/continuity. Locate the relevant dossier, earlier chapter, mechanics study and supplements. Read enough contiguous material to understand the interaction or fictional context and its qualifications.
+2. Create a record in `assessment-records.md` and mark R in the appropriate matrix. Preserve existing game record IDs as `<TOPIC>--<game_key>`; use `<TOPIC>--world--<world_key>` for world records. Record source kind, paths, immutable commit/blob revisions, sections actually read, date and reviewer.
+3. Identify the contribution, supporting and contrary material, explanation, limits and alternatives. Keep player testimony, literary interpretation, developer intent, product goals and runtime evidence distinct. Mark A when assessment is complete but the synthesis has not been written; use B for a real blocking gap.
+4. Incorporate useful evidence into the guide's comparisons and lessons, not a disconnected appendix of summaries. Give actual lessons stable anchors such as `econ-l001`. Cite the dossier and its underlying source where needed. Do not treat the same franchise, underlying report and later summary as independent corroboration.
+5. Record exact destination anchors, contribution, qualifications and actual review. Mark I only after checking source-to-lesson links and the resulting diff. Use N with a concrete reason when no contribution belongs here. There are no automatic bulk N decisions.
+6. Update the relevant matrix and topic wording in the same change. Replace shell-only wording once real evidence is incorporated. Follow existing commit and review policies rather than create a separate gameplay-test or implementation workflow.
 
-The record can name the incorporation commit after it exists, but a same-commit relative destination anchor plus the repository history is sufficient; do not invent a self-referential commit hash. One pair's record may retain several dated assessments for different editions or later revisions. Its current status is still owned only by coverage.csv.
+A source's available revision is not its assessed revision until read. The record may name the incorporation commit after it exists; same-change relative anchors and repository history are sufficient without an invented self-referential hash. Preserve several dated assessments when editions or later revisions matter. Current status remains in the matrix, not repeated in every record.
 
 ## Reading progress without misleading percentages
 
-Report **assessed**, **incorporated**, **excluded**, **in progress**, **waiting/blocked**, **unassessed** and **unreconciled existing coverage** separately. At the current reviewed source scope, A/I/N are finished assessments; only I is incorporated. I/N are resolved dispositions, but N is not incorporated evidence. R, W, X, B and S remain open; stale historical incorporation is not current completion.
+Report assessed, incorporated, excluded, in progress, waiting/blocked, unassessed and unreconciled existing coverage separately. At the named source scope, A/I/N are finished assessments; only I is incorporated. I/N are resolved dispositions, but N is not incorporated evidence. R/W/X/B/S remain open; stale historical incorporation is not current completion.
 
-For an individual topic, state the number of available sources and queued/contextual sources as well as the numerator. Do not count W or X as completed, or make a guide look finished by dropping difficult games from the denominator. A full topical pass is complete only for an explicitly named source snapshot with every in-scope pair resolved and its lessons reviewed. It can remain usable before it is exhaustive.
+State the source kind and denominator. For games, distinguish available dossiers, available scoped cases and queued work. Report world coverage separately; adding a literary example does not advance a game's row or prove audience enjoyment. Shared intellectual-property worlds and their games can both contribute, but that is not automatically two independent demonstrations.
 
-No guide must contain a lesson from every game. The goal is useful comparative understanding, not a quota of extracted rules or a promise of universal best practices. Global research/packet-preservation gates remain with the original ledgers.
+A full topical pass is complete only for an explicit source snapshot and scope, with the in-scope pairs resolved and lessons reviewed. A useful partial guide is allowed. Do not hide difficult cases by changing the denominator or require every guide to extract a positive lesson from every source. The purpose is useful comparison, not an invented quota of universal rules.
 
 ## Source inventory and branch boundaries
 
-The stable key is the dossier basename without `.md`. Titles and G numbers are navigation labels only. Edition boundaries continue to belong to the research roster and dossier. Paired games remain separate where rostered; supplemental cases must not silently become full researched subjects.
+Game keys are dossier basenames without `.md`; titles and G numbers are navigation labels. Edition boundaries belong to the roster and dossiers. Paired games stay separate where rostered, and a supplemental case never silently becomes a full-game study.
 
-| Availability | Snapshot meaning and location |
+| Game availability code | Meaning |
 | --- | --- |
-| M | Dossier present under `../dossiers/<game_key>.md` on inspected GitHub main `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`. This is file availability, not a fresh full research certification. |
-| E | Songs of Syx dossier present only in the inspected [expansion snapshot](https://github.com/Macrofold/OpenLegend/blob/7bef5a1e70adaa14c8a172f6b6ec2f076d6a164e/archive/02-research/game-inspiration/dossiers/songs-of-syx.md). Do not create a broken local link or pretend it is merged. |
-| P | G150–G166 listed as roster-only in that [expansion ledger](https://github.com/Macrofold/OpenLegend/blob/7bef5a1e70adaa14c8a172f6b6ec2f076d6a164e/archive/02-research/game-inspiration/research-progress-expansion-2026-10-13.md). No dossiers were found on the inspected bases; this is not a census of unpublished branches. |
-| C | Contextual source candidate in the [modding branch ledger](https://github.com/Macrofold/OpenLegend/blob/research/modding-ecosystems-2026-10-14/archive/02-research/game-inspiration/research-progress-modding-2026-10-14.md), which still records the relevant dossier/case work in progress. No full-pass completion is claimed. |
+| M | Dossier exists under `../dossiers/<game_key>.md` on the inspected main baseline. Availability is not a new quality or completion certification. |
+| T | A scoped source is available, not a full-game dossier. Current case: EVE Online in [Player-created content, modding tools and marketplaces](../essays/player-created-content-modding-and-marketplaces.md). Its assessment must remain limited to the actual evidence. |
+| P | Rostered/queued subject with no dossier on the inspected baseline. The [expansion ledger](../research-progress-expansion-2026-10-13.md) and current roster retain research authorization/status. |
+| E | Available only on an explicitly inspected external branch/snapshot; record its exact route. No current row needs this code after Songs of Syx merged. |
+| C | Contextual candidate whose actual source is not yet available; record the gap. No current row needs this code after the Starfield/EVE sources became available. |
 
-**Numbering conflict:** the inspected main roster ends at G148; the expansion uses G149 for Songs of Syx and G150–G166 for the approved additions; the modding branch separately calls Starfield G149. Keep `songs-of-syx` and `starfield` distinct. Starfield's label is `unresolved-G149`, EVE Online's is `unnumbered`; these two rows are contextual candidates, not new numbered roster additions. No renumbering or branch merge was performed here. Reconcile the authoritative roster before assigning a permanent new G number.
+**Current identities:** Songs of Syx remains G149; Starfield is G167 in the merged roster; EVE Online remains unnumbered and scoped. Preserve all 168 existing keys. The earlier duplicate G149 was resolved by the merged source work, not by inventing a new assignment during this review.
 
-Refresh source availability after an actual merge or new publication without granting incorporation automatically. Preserve the source revision already assessed in each evidence record. If later edits materially affect a lesson, mark S and describe the scope; an unrelated typo does not require rereading every game. Add newly authorized source rows to both CSVs with U or W, never inferred I/N. If an existing synthesis supplies reliable coverage, import its evidence and destination links before replacing X.
+For `world-coverage.csv`, `world_key` is the exact dossier basename under `../../worldbuilding/worlds/`. The 28 initial keys come from the inspected [world index](../../worldbuilding/README.md); the baseline files are available, but no new per-world assessments are implied. Record continuity and source revision in the evidence record. Add later worlds or tabletop sources only after inspecting their identity and scope; do not guess keys or assume an uninspected referenced addition was included.
+
+Supporting world essays, game essays, source atlases and current goal/design documents are listed in the [source and goal map](source-and-goal-map.md). Cite the relevant passages in assessment evidence; they do not need a second completion matrix or count as newly independent game/world dossiers. Product intent can guide selection without becoming empirical proof that a feature works.
+
+Refresh source availability after an actual merge or publication without granting incorporation. Preserve each assessed revision. Mark S only when later changes materially affect a lesson; unrelated typos do not require rereading every source. Add new authorized game keys to both game CSVs and new world keys to their matrix, with U/W/X as justified, never inferred I/N. New topic columns must be added to both matrices without altering other statuses.
 
 ## Working alongside other branches
 
-Edit only the intended game/topic cells and evidence records; preserve other topics, prior conclusions and source IDs. Do not duplicate or overwrite the FUN/CREATE work in progress. No contribution depends on another agent finishing, and this framework grants no branch-merging or history-rewriting authority.
+Edit only the intended source/topic cells and evidence records; preserve other topics, conclusions, source IDs and current owners. Do not duplicate or overwrite the ongoing FUN work or the merged CREATE essay. A writer can finish a selected topic without another agent completing first. This framework grants no branch-merging or history-rewriting authority.
 
 ## Verification and remaining work
 
-The creation task is to deliver the topic list, empty shells and honest tracking, not to fill them. Substantive synthesis remains unstarted in all 26 new guides. The existing four owners require a future, explicitly scoped coverage reconciliation; their current branch work is neither completed nor erased by this scaffold.
+The current task delivers the source/goal review, organized topic set, skeletons, template and accurate tracking—not completed substantive syntheses. All 31 new guides remain unfilled; four existing owners require scoped coverage reconciliation. The world essays were read for structural coverage, not falsely marked incorporated into each new guide.
 
-Before handing off framework changes, verify unique game keys and topic columns, valid state codes, equal CSV row widths, all expected subjects, working new local paths and preservation of existing documents. These are documentation checks, not game execution, new external research or a full archive audit. Record actual check results in the handoff rather than manufacturing research completion evidence here.
+Check unique source keys and topic columns, valid codes, equal row widths, expected source identities, preserved existing cell meanings, working local paths/anchors and the actual affected diff. These are documentation checks, not game execution, fresh verification of every inherited fact, or a whole-archive audit. Check results belong in the handoff or focused review record, not fabricated assessment entries.
 
 ## Research, design and implementation are separate
 
-The [coverage review](coverage-review.md) expands topic questions and adds a [flexible main-topic template](main-topic-template.md). All 30 topics now have local entry pages with empty design-reference tables; the four existing/ongoing topics still route to their substantive owners. This structural work does not assess a source game or change any coverage cell, source-inventory row or assessment record.
+Use the [template](main-topic-template.md) for actual scoped proposals. Their ND identity and design disposition remain in [Future work needing design](../../../../docs/maintainers/needs-design.md), with reciprocal topic and eventual feature-spec/technical-design links. The technical design defines modules; the existing focused maintainer tracker owns implementation progress. No new ND entries are allocated by a topic or source-coverage row.
 
-When a scoped design subtopic is actually added, its ND identifier and design state belong to the existing [Future work needing design](../../../../docs/maintainers/needs-design.md) register, with reciprocal links from the topic and the eventual feature specification and technical design. The technical design defines implementation modules; a focused maintainer tracker owns their progress. Do not put design or implementation statuses in this game-by-topic matrix.
+Research headings do not count as registered features. Completing a design does not complete research incorporation, runtime delivery, player evidence or a whole project. Keep the existing rules for design authorization, spending, privacy and accepted world/engine boundaries.
 
-No new design entries have been registered by this framework; existing ND entries remain intact. Research headings do not count as registered features. Completing a design does not close game-research coverage, mark a project implemented, approve spending or authorize new gameplay. Use each record only for the distinct question it owns.
+## Historical initialization and corrections
+
+The initial framework was based on published main `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`, with expansion material inspected at `7bef5a1e70adaa14c8a172f6b6ec2f076d6a164e`. It had 26 new guides plus four existing topics, 168 game keys and 5,040 cells: 3,874 U, 494 W and 672 X. Songs of Syx was external-only; Starfield's then-conflicting G149 and EVE were contextual candidates. Those dated facts are retained as provenance, not current warnings.
+
+The broader review uses main `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`, adds five topic columns, and adds the separate world matrix. It updates Songs of Syx availability, Starfield's canonical ID/availability and EVE's scoped availability. The only changes to pre-existing game/topic cells are Starfield and EVE's 52 W-to-U transitions for newly available source material. No existing game key, assessed revision, completed status or original dossier is removed, and no I/N status is inferred.
