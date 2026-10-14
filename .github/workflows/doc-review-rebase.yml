@@ -1,69 +1,167 @@
-name: Documentation rebase inputs
+name: Reviewed documentation rebase
 on:
   push:
     branches: [ops/doc-review-rebase-bf7366be-2026-10-14]
-    paths: [.github/workflows/doc-review-rebase.yml]
+    paths:
+      - .github/workflows/doc-review-rebase.yml
+      - .github/doc-review-rebase-resolutions.json
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: doc-review-rebase-bf7366be-2026-10-14
+  cancel-in-progress: false
 jobs:
-  inspect:
+  reconcile:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     env:
       AI_BUDGET_USD: '0'
+      GIT_TERMINAL_PROMPT: '0'
+      GIT_EDITOR: 'true'
+      GIT_COMMITTER_DATE: '2026-10-14T06:00:00Z'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Capture exact source and overlap for the requested rebase
+      - name: Replay original commits and stop at unreviewed conflicts
         run: |
           python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess, zipfile
-          old = 'bf7366beb621e9c9c4cb03718c542c48ce2b6381'
-          main = '7a576214fbb9891b2e9f742db56bbeccaa3a58a1'
-          def git(*args):
-              return subprocess.check_output(['git', *args])
-          base = git('merge-base', old, main).decode().strip()
-          out = pathlib.Path(os.environ['RUNNER_TEMP']) / 'doc-review-inputs.zip'
-          extensions = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
-          inventories = {}
-          with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
-              for label, rev in [('base', base), ('review', old), ('main', main)]:
-                  inventory = []
-                  entries = git('ls-tree', '-r', '-z', '--long', rev).split(b'\0')
-                  for entry in entries:
+          root = pathlib.Path.cwd()
+          controls = root / '.github/doc-review-rebase-resolutions.json'
+          config = json.loads(controls.read_text()) if controls.exists() else {}
+          old = '51fcfc0dbc62c3e49ddedfbab140757b2cef9917'
+          target = '74e081a2ddc39a18da1ffe3357ffc298a4f14dce'
+          log = []
+          def git(*args, check=True):
+              p = subprocess.run(['git', *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              if check and p.returncode:
+                  raise RuntimeError(p.stderr.decode())
+              return p
+          def data(*args):
+              return git(*args).stdout
+          base = data('merge-base', old, target).decode().strip()
+          assert base == '34233ae24365eb8911fe1995c9c232bd57f34616'
+          git('config', 'user.name', 'OpenLegend documentation review')
+          git('config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com')
+          git('config', 'core.hooksPath', '/dev/null')
+          git('checkout', '--detach', old)
+          p = git('rebase', '--onto', target, base, '--empty=drop', check=False)
+          log.append(p.stdout.decode() + p.stderr.decode())
+          applied = []
+          conflicts = []
+          stopped = None
+          for iteration in range(1000):
+              if p.returncode == 0:
+                  break
+              unmerged = data('ls-files', '-u', '-z').split(b'\0')
+              stages = {}
+              for entry in unmerged:
+                  if not entry:
+                      continue
+                  metadata, raw_name = entry.split(b'\t', 1)
+                  mode, sha, stage = metadata.decode().split()
+                  stages.setdefault(raw_name.decode(), {})[stage] = {'mode': mode, 'sha': sha}
+              if not stages:
+                  raise RuntimeError('Rebase stopped without a recognized file conflict; no automatic skip.')
+              stopped = data('rev-parse', 'REBASE_HEAD').decode().strip()
+              conflicts = []
+              planned = []
+              for name, entries in stages.items():
+                  path = root / name
+                  key = ':'.join([stopped, name, *(entries.get(str(s), {}).get('sha', '-') for s in (1,2,3))])
+                  before = path.read_bytes() if path.exists() else b''
+                  row = {'path': name, 'key': key, 'stages': entries, 'working_sha256': hashlib.sha256(before).hexdigest()}
+                  conflicts.append(row)
+                  resolution = config.get('resolutions', {}).get(key)
+                  if resolution is None:
+                      continue
+                  assert path.resolve().is_relative_to(root) and not path.is_symlink()
+                  assert name.endswith(('.md', '.mdc', '.txt')), ('unexpected conflict type', name)
+                  assert row['working_sha256'] == resolution['before_sha256'], ('changed conflict', name)
+                  text = before.decode('utf-8')
+                  for old_text, new_text in resolution['replacements']:
+                      assert text.count(old_text) == 1, ('ambiguous replacement', name)
+                      text = text.replace(old_text, new_text, 1)
+                  assert not any(line.startswith(('<<<<<<< ', '=======', '>>>>>>> ')) for line in text.splitlines()), ('unresolved markers', name)
+                  assert hashlib.sha256(text.encode()).hexdigest() == resolution['after_sha256'], ('unexpected resolution', name)
+                  planned.append((path, text, key))
+              if len(planned) != len(conflicts):
+                  break
+              for path, text, key in planned:
+                  path.write_text(text)
+                  git('add', '--', str(path.relative_to(root)))
+                  applied.append(key)
+              p = git('rebase', '--continue', check=False)
+              log.append(p.stdout.decode() + p.stderr.decode())
+          else:
+              raise RuntimeError('Rebase iteration limit reached.')
+          complete = p.returncode == 0
+          head = data('rev-parse', 'HEAD').decode().strip()
+          state = {'old': old, 'target': target, 'base': base, 'complete': complete, 'head': head, 'stopped_commit': None if complete else stopped, 'conflicts': [] if complete else conflicts, 'applied_resolutions': applied, 'tree': data('rev-parse', 'HEAD^{tree}').decode().strip()}
+          destination = pathlib.Path(os.environ['RUNNER_TEMP']) / 'doc-review-rebase.zip'
+          with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as z:
+              z.writestr('state.json', json.dumps(state, indent=2))
+              z.writestr('rebase.log', '\n'.join(log))
+              z.writestr('status.txt', data('status', '--short'))
+              z.writestr('current.patch', data('diff', '--binary'))
+              z.writestr('target-changes.patch', data('diff', '--binary', '7a576214fbb9891b2e9f742db56bbeccaa3a58a1', target))
+              z.writestr('target-inventory.json', json.dumps([line.decode() for line in data('ls-tree', '-r', '-z', '--long', target).split(b'\0') if line], indent=2))
+              if not complete:
+                  z.writestr('stopped.patch', data('show', '--format=fuller', '--binary', stopped))
+                  for row in conflicts:
+                      name = row['path']
+                      for stage, item in row['stages'].items():
+                          z.writestr(f'conflicts/{name}.stage{stage}', data('cat-file', 'blob', item['sha']))
+                      if (root / name).exists():
+                          z.writestr(f'conflicts/{name}.working', (root / name).read_bytes())
+              if config.get('include_source', not controls.exists()):
+                  allowed = {'.md', '.mdc', '.txt', '.ts', '.tsx', '.mts', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.css', '.html', '.sql', '.py', '.sh', '.toml'}
+                  for entry in data('ls-tree', '-r', '-z', target).split(b'\0'):
                       if not entry:
                           continue
-                      metadata, raw = entry.split(b'\t', 1)
-                      mode, kind, sha, size = metadata.decode().split()
-                      name = raw.decode()
+                      meta, raw_name = entry.split(b'\t', 1)
+                      mode, kind, sha = meta.decode().split()
+                      name = raw_name.decode()
                       path = pathlib.PurePosixPath(name)
-                      included = kind == 'blob' and mode != '120000' and 'archive' not in path.parts and (path.suffix in extensions or name in ('LICENSE', '.env.example', '.gitignore', '.prettierignore'))
-                      row = {'path': name, 'mode': mode, 'type': kind, 'sha': sha, 'included': included, 'size': int(size) if size != '-' else None}
-                      if included:
-                          data = git('cat-file', 'blob', sha)
-                          data.decode('utf-8')
-                          row['sha256'] = hashlib.sha256(data).hexdigest()
-                          z.writestr(f'{label}/{name}', data)
-                      inventory.append(row)
-                  inventories[label] = {'revision': rev, 'files': inventory}
-              z.writestr('inventory.json', json.dumps(inventories, indent=2))
-              z.writestr('review.patch', git('diff', '--binary', base, old))
-              z.writestr('upstream.patch', git('diff', '--binary', base, main))
-              z.writestr('history.txt', git('log', '--reverse', '--format=%H%x09%P%x09%s', '--name-status', f'{base}..{old}'))
-              preview = subprocess.run(['git', 'merge-tree', '--write-tree', main, old], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-              z.writestr('overlap-preview.txt', preview.stdout)
-              assert preview.returncode in (0, 1), preview.stdout.decode()
-              print(json.dumps({'review': old, 'main': main, 'base': base, 'preview_status': preview.returncode, 'path_counts': {k: len(v['files']) for k,v in inventories.items()}}))
+                      if kind == 'blob' and mode != '120000' and 'archive' not in path.parts and (path.suffix in allowed or name in ('LICENSE', '.env.example', '.gitignore', '.prettierignore')):
+                          z.writestr(f'target/{name}', data('cat-file', 'blob', sha))
+              if complete:
+                  z.writestr('result.patch', data('diff', '--binary', target, head))
+                  z.writestr('range-diff.txt', data('range-diff', '--no-color', f'{base}..{old}', f'{target}..{head}'))
+                  z.writestr('result-history.txt', data('log', '--reverse', '--format=%H%x09%P%x09%s', '--name-status', f'{target}..{head}'))
+                  for name in data('diff', '--name-only', '--diff-filter=ACMR', target, head).decode().splitlines():
+                      path = root / name
+                      if path.is_file() and not path.is_symlink():
+                          z.writestr(f'result/{name}', path.read_bytes())
+          print(json.dumps(state, indent=2))
+          if config.get('publish'):
+              assert complete and state['tree'] == config['approved_tree'], 'No reviewed final tree.'
+              git('diff', '--check', target, head)
+              assert not data('status', '--porcelain'), 'Uncommitted replay files.'
+              assert data('merge-base', target, head).decode().strip() == target
+              pathlib.Path(os.environ['RUNNER_TEMP'], 'approved-publication.json').write_text(json.dumps(state))
           PY
-      - name: Preserve the repository-pinned formatting tool
-        run: npm pack prettier@3.6.2 --ignore-scripts --pack-destination "$RUNNER_TEMP"
       - uses: actions/upload-artifact@v4
         with:
-          name: doc-review-inputs-bf7366be-7a576214
-          path: |
-            ${{ runner.temp }}/doc-review-inputs.zip
-            ${{ runner.temp }}/prettier-3.6.2.tgz
+          name: doc-review-rebase-${{ github.run_number }}
+          path: ${{ runner.temp }}/doc-review-rebase.zip
           retention-days: 7
           if-no-files-found: error
+      - name: Publish only the exact reviewed replay with a branch-head lease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          marker = pathlib.Path(os.environ['RUNNER_TEMP'], 'approved-publication.json')
+          if not marker.exists():
+              print('Inspection only: no branch reference changed.')
+              raise SystemExit(0)
+          state = json.loads(marker.read_text())
+          branch = 'docs/full-documentation-review-reconciled-2026-10-03'
+          helper = '!f() { printf "username=x-access-token\npassword=%s\n" "$GH_TOKEN"; }; f'
+          subprocess.run(['git', '-c', 'credential.helper=' + helper, 'push', '--force-with-lease=refs/heads/' + branch + ':' + state['old'], 'origin', state['head'] + ':refs/heads/' + branch], check=True)
+          print('Published the reviewed rebase; main and concurrent work were not overwritten.')
+          PY
