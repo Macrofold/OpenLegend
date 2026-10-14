@@ -802,7 +802,7 @@ All four were read completely at the G141–G148 revision pinned above and commi
 ### World and supplementary reading checkpoint
 
 - [x] All 28 dossiers indexed by the [worldbuilding library](../../archive/02-research/worldbuilding/README.md) at the pinned world revision — inherited complete readings.
-- [x] [Dungeons & Dragons world dossier](https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md) at the baseline — inherited complete reading; brings the world total to 29.
+- [x] [Dungeons & Dragons world dossier](../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md) at the baseline — inherited complete reading; brings the world total to 29.
 - [x] Six main world thematic studies plus the D&D planes/lived-magic study — seven complete; inherited readings.
 - [x] All 38 original game chapters and all 12 game comparative/theme essays at the game-library pin. The final continuation closed the outstanding original chapters rather than inferring them read from their dossiers.
 - [x] All 29 mechanics studies: the 25 original granular studies and four later operational studies. Shared chapters/studies were read in full, not only the half concerning the next numbered game.

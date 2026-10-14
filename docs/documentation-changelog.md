@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## October 14, 2026 — Integrate completed world reassessment and richer proposed casts
+
+Integrated the [29-world reassessment](../archive/02-research/worldbuilding/reassessment-progress.md) from `codex/world-idea-repertoires` at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e`, including revised dossiers, six comparative essays, the rebuilt comparison matrix, D&D edition/adjudication/SRD and planes/lived-magic studies, and explicit remaining source-access and audiovisual evidence priorities. Research completion retains its recorded limits; it does not establish implemented gameplay or exhaustive external-source verification.
+
+The four [world proposals](repertoires/README.md#four-possible-world-families) now describe fifteen people each with established deeds, ordinary lives, bounded present power and specific ways to meet them. The [casting guidance](repertoires/characters-backstories.md#casting-an-already-inhabited-world) and [design foundation](repertoires/design-foundation.md#people-and-factions-have-their-own-purposes) distinguish authored history from reputation and future behavior. These remain proposals rather than changes to the playable starting world.
+
+Retained main's consolidated catalogue descriptions, current priorities, added ordinary melee action, newer research roster and documentation history. D&D source links now resolve locally; the [source atlas](repertoires/source-atlas.md#later-world-research-integration) preserves historical pins and links the later studies. An incoming obsolete save-policy passage was reconciled to the current [development policy](../AGENTS.md#development-save-policy); no runtime contract or acceptance criterion changed.
+
 ## October 14, 2026 — Reconcile the remaining-design register
 
 [Future work needing design](maintainers/needs-design.md#current-design-dispositions) now gives all 37 stable entries an explicit current disposition against local `main` and their design/implementation owners. First-opening design, practice/coaching, flat/sloping shelters, barter/outings and static discovery are distinguished from their broader extensions and remaining acceptance. The integrated missing-belonging investigation is included; paired but unmerged combat and condition-removal work remains with its existing projects. Historical roadmap grouping and the original research exclusions no longer read as the current next-project ranking. Source requirements, IDs, conditional ideas and unresolved developer decisions are retained; no new feature, gameplay qualification or implementation approval is introduced.

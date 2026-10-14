@@ -6,7 +6,7 @@
 
 ## Current snapshot — October 14, 2026
 
-Baseline: published `Macrofold/OpenLegend` main at `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`. Counts below are recomputed from the matrices, not a second per-source status list.
+Baseline: published `Macrofold/OpenLegend` main at `74e081a2ddc39a18da1ffe3357ffc298a4f14dce`. The later world-library integration at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e` adds the D&D world dossier as unassessed; the original structural-review scope remains unchanged. Counts below are recomputed from the matrices, not a second per-source status list.
 
 | Measure                     | State                                                                                                         |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -15,7 +15,7 @@ Baseline: published `Macrofold/OpenLegend` main at `74e081a2ddc39a18da1ffe3357ff
 | Available game/case sources | 150 dossier files and 1 scoped essay case; availability is not full research certification                    |
 | Queued game sources         | 17 G150–G166 subjects on this inspected baseline; no claim about unpublished branch work                      |
 | Game matrix                 | 168 × 35 = 5,880 cells: 4,681 U, 527 W and 672 X                                                              |
-| World matrix                | 28 listed world dossiers × 35 = 980 cells: 868 U and 112 X                                                    |
+| World matrix                | 29 listed world dossiers × 35 = 1,015 cells: 903 U and 112 X                                                  |
 | New incorporation           | No completed assessments, incorporated pairs or not-applicable exclusions are claimed by the framework review |
 | Existing owners             | X retains unreconciled evidence, not an assertion that earlier learning is absent                             |
 
@@ -72,7 +72,7 @@ Game keys are dossier basenames without `.md`; titles and G numbers are navigati
 
 **Current identities:** Songs of Syx remains G149; Starfield is G167 in the merged roster; EVE Online remains unnumbered and scoped. Preserve all 168 existing keys. The earlier duplicate G149 was resolved by the merged source work, not by inventing a new assignment during this review.
 
-For `world-coverage.csv`, `world_key` is the exact dossier basename under `../../worldbuilding/worlds/`. The 28 initial keys come from the inspected [world index](../../worldbuilding/README.md); the baseline files are available, but no new per-world assessments are implied. Record continuity and source revision in the evidence record. Add later worlds or tabletop sources only after inspecting their identity and scope; do not guess keys or assume an uninspected referenced addition was included.
+For `world-coverage.csv`, `world_key` is the exact dossier basename under `../../worldbuilding/worlds/`. The original 28 keys came from the inspected [world index](../../worldbuilding/README.md); the baseline files are available, but no new per-world assessments are implied. The later D&D dossier uses `29-dungeons-and-dragons`; its 35 cells are U until assessed. Supplementary D&D game studies remain discoverable from the game hub and source map without renumbering the original game snapshot. Record continuity and source revision in the evidence record. Add later worlds or tabletop sources only after inspecting their identity and scope; do not guess keys or assume an uninspected referenced addition was included.
 
 Supporting world essays, game essays, source atlases and current goal/design documents are listed in the [source and goal map](source-and-goal-map.md). Cite the relevant passages in assessment evidence; they do not need a second completion matrix or count as newly independent game/world dossiers. Product intent can guide selection without becoming empirical proof that a feature works.
 

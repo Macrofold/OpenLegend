@@ -20,6 +20,12 @@ The active research branches can continue changing independently. The original p
 - [G121–G130 continuation](https://github.com/Macrofold/OpenLegend/blob/757bafba40efa875733aba635c3aec829d4c92ad/archive/02-research/game-inspiration) — `757bafba40efa875733aba635c3aec829d4c92ad`.
 - [28-world research and thematic essays](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding) — `b387e7caeda5cec301045b877ca50a2815a869dd`.
 
+## Later world-research integration
+
+The original 28-world source pins remain historical. The later [29-world reassessment](../../archive/02-research/worldbuilding/reassessment-progress.md), integrated from `codex/world-idea-repertoires` at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e`, supplies revised dossiers, comparative essays, D&D supplements and explicit evidence follow-ups. That research is now local; its source-reading limits remain with the research owners. This integration does not claim a fresh assessment of every source-to-catalogue link.
+
+Spore's detailed Q&A does not establish released native branching dialogue; catalogue proposals remain original OpenLegend ideas. Worlds Adrift's historical save-discard practices do not determine OpenLegend's [current development save policy](../../AGENTS.md#development-save-policy): incompatible development saves may be replaced, while current-format integrity, credentials and real spending records remain protected.
+
 ## Research basis for the foundation revision
 
 The [revised foundation](design-foundation.md) uses the integrated **148-game snapshot at [`9c24bc58bd6d640ba475bc9bd3030332704f7809`](https://github.com/Macrofold/OpenLegend/tree/9c24bc58bd6d640ba475bc9bd3030332704f7809/archive/02-research/game-inspiration)** and the **28-world snapshot at `b387e7caeda5cec301045b877ca50a2815a869dd`** linked above. These pins establish the research available for this pass while the source branches continue independently.
@@ -1550,6 +1556,19 @@ These primary-author or estate-published sources were consulted on September 27,
 
 **New catalogue:** [technology](technology.md)
 
+## Additional studies and navigation
+
+These studies deepen the numbered game and world dossiers without renumbering the current game roster. Their source-specific evidence remains in the research library; the catalogue entries link them where a lesson was actually incorporated.
+
+| Study                      | Research route                                                                                                | Repertoire destinations                                                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dragon Age series          | [Series dossier](../../archive/02-research/game-inspiration/dossiers/dragon-age-series.md)                    | [Languages and knowledge](languages-knowledge.md), [History and myth](history-myth.md), [Faith and ritual](faith-ritual.md)                                                  |
+| D&D 2024                   | [Edition dossier](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-2024.md)           | [Magic](magic.md), [Abilities and progression](abilities-progression.md), [Institutions and politics](institutions-politics.md)                                              |
+| D&D 3.5                    | [Edition dossier](../../archive/02-research/game-inspiration/dossiers/dungeons-and-dragons-3-5.md)            | [Magic](magic.md), [Combat and rescue](combat-rescue.md), [Abilities and progression](abilities-progression.md)                                                              |
+| D&D adjudication           | [Mechanics study](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-adjudication.md)  | [Actions](actions.md), [Mechanics](mechanics.md), [Languages and knowledge](languages-knowledge.md)                                                                          |
+| D&D SRD systems            | [Systems synthesis](../../archive/02-research/game-inspiration/mechanics/dungeons-and-dragons-srd-systems.md) | [Magic](magic.md), [Combat and rescue](combat-rescue.md), [Objects](objects.md), [Work and crafting](work-crafting.md)                                                       |
+| D&D planes and lived magic | [Worldbuilding study](../../archive/02-research/worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) | [Magic](magic.md), [Ecology and weather](ecology-weather.md), [Settlements and architecture](settlements-architecture.md), [Languages and knowledge](languages-knowledge.md) |
+
 ## Worlds
 
 ### W01
@@ -1831,6 +1850,16 @@ These primary-author or estate-published sources were consulted on September 27,
 **Caution to carry forward:** Do not confuse unequal factions with morally equivalent choices, or freeze every settlement in rubble; rebuilding and political victory should be allowed to change ordinary life.
 
 **New catalogue:** [diplomacy conflict](diplomacy-conflict.md)
+
+### W29
+
+[Dungeons & Dragons](../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md)
+
+**Design takeaway:** A large setting becomes inhabitable through consequential local differences: institutions, occupations, faiths, magical infrastructure, borders, portals and social pleasures give people understandable footholds before they master the cosmology. Distinct settings and editions must remain separate continuities, while inherited laws can shape ordinary work and belonging.
+
+**Caution to carry forward:** Do not collapse D&D's settings, editions, published stories, creator interpretations and table outcomes into one universal canon. Extraordinary powers need limits, access conditions and local consequences; a broad setting can offer many entrances without requiring every resident to know its entire history.
+
+**New catalogue:** [magic](magic.md)
 
 ## Catalogue source revisions
 

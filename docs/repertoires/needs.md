@@ -553,7 +553,7 @@ Integration dependencies: update shared inventory counts and reconcile source-at
 [EX]: ../../archive/02-research/worldbuilding/worlds/15-the-expanse.md
 [MV]: ../../archive/02-research/worldbuilding/worlds/05-marvel.md
 [DI]: ../../archive/02-research/worldbuilding/worlds/12-discworld.md
-[DDW]: https://github.com/Macrofold/OpenLegend/blob/7e8c27ab3d933642302cf08076dae2a9ced05437/archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
+[DDW]: ../../archive/02-research/worldbuilding/worlds/29-dungeons-and-dragons.md
 [NA]: ../../archive/02-research/worldbuilding/worlds/19-narnia.md
 [SO]: ../../archive/02-research/worldbuilding/worlds/22-the-sopranos.md
 [AS]: ../../archive/02-research/worldbuilding/worlds/10-a-song-of-ice-and-fire.md

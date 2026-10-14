@@ -140,3 +140,7 @@ Published main now contains Songs of Syx at G149, the expanded roster and amendm
 The game matrix retains all 168 stable keys and adds the five topic columns. Starfield and the available EVE case move from waiting to unassessed for the new-guide topics; no completed assessment is inferred. A separate world matrix covers the 28 source dossiers listed in the worldbuilding index, using their own identities rather than game numbers. Additional worlds, tabletop studies or later dossiers require inspected source identities before being added; this review does not claim to have audited unpublished or uninspected additions.
 
 All new substantive topic syntheses remain unstarted. Existing-topic coverage remains unreconciled until exact source-to-lesson evidence is imported. Future writers should assess relevant sources, compare real alternatives and contrary cases, and register only genuinely scoped design proposals in the existing ND owner. The present task changes the research framework, not implementation or design-completion status.
+
+### Later library integration — October 14, 2026
+
+The [29-world reassessment](../../worldbuilding/reassessment-progress.md) and [D&D tabletop hub](../games/dungeons-and-dragons.md) are now available from `codex/world-idea-repertoires` at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e`. The world matrix adds `29-dungeons-and-dragons` as unassessed. This navigation update does not extend the original structural review's recorded reading or claim substantive incorporation of the new dossier or supplementary studies.
