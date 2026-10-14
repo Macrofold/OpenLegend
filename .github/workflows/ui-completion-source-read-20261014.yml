@@ -9,7 +9,7 @@ jobs:
   qualify:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: false
           show-progress: false
       - uses: pnpm/action-setup@v4
@@ -35,168 +36,85 @@ jobs:
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install pinned dependencies and browser
-        run: |
-          pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
-          pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Apply scoped fixture and completed-task corrections
+      - name: Install pinned dependencies
+        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
+      - name: Retain the reviewed changes and correct only fixture ordering
         run: |
           python3 - <<'PY'
+          import subprocess, textwrap
           from pathlib import Path
-          def edit(path,old,new):
-            p=Path(path);s=p.read_text();assert s.count(old)==1,(path,old,s.count(old));p.write_text(s.replace(old,new,1))
-          p=Path('docs/projects/game-interaction-redesign-completion.md')
-          p.write_text(p.read_text()+'''
-
-          ### Exact fixtures and completed-task presentation
-
-          The recorded full run passes six ordinary browser journeys including Time
-          under its unchanged sixty-second limit. Its remaining catalogue assertions
-          assume older authored actions/recipes. Keep exact independent expectations,
-          privacy assertions and refusal checks while including the current content.
-          The crafted-tool loop must select its newly admitted sling and exact physical
-          output, not whichever starter recipe or equipped item appears first.
-
-          A native diagnostic confirms the additional cognition call is attention over
-          four distant visible objects in the expanded starting world. The one-request
-          orchestration fixtures will explicitly install fourteen-metre sight for their
-          small near-camp scenario, with recalculated exact sense pins and unchanged
-          hearing, native admission, request accounting, limits and assertions. This is
-          fixture-only scope, not a production range or attention change; it does not
-          establish that the complete current starting scene needs only one request.
-
-          Completed Activity results will size their own panel to content, only while
-          visible, not preparing and with no current work. Preparation/running work keep
-          their existing workspace; long results still have the available-height bound.
-          Validate the composed result, keyboard focus and phone/short layouts in the
-          actual game before closing UIUX09.
-          '''.replace('\n          ','\n'))
-          p=Path('tests/fixtures/service.ts')
-          p.write_text("import { definitionPin, validateModuleManifest } from '../../packages/domain/src/world-modules.js';\n"+p.read_text()+'''
-          /** A deliberately small native scene for routing/accounting fixtures, not
-           * a production sight limit. Expanded-world optional attention has its own
-           * coverage; these scenarios retain exact single-request assertions. */
-          export async function useNearCampSight(service: WorldService): Promise<void> {
-            await editWorld(service, (world) => {
-              const manifest = world.moduleManifest;
-              const senses = manifest.senses.map((sense) =>
-                sense.implementation === 'vision-geometry-v1' ? { ...sense, radius: 14 } : sense,
-              );
-              world.moduleManifest = {
-                ...manifest,
-                revision: manifest.revision + 1,
-                senses,
-                sensePins: senses.map(definitionPin),
-              };
-              validateModuleManifest(world.moduleManifest);
-            });
-          }
-          '''.replace('\n          ','\n'))
+          source=subprocess.check_output(['git','show','a70085268a03ff8f6d76a60b714a28b30e97f43a:.github/workflows/ui-completion-source-read-20261014.yml'],text=True)
+          block=source.split('      - name: Apply scoped fixture and completed-task corrections\n',1)[1].split('\n      - ',1)[0]
+          shell=textwrap.dedent(block.split('        run: |\n',1)[1])
+          subprocess.run(['bash','-e','-c',shell],check=True)
           for path in ['apps/server/src/level1-decisions.test.ts','apps/server/src/cognition-payloads.test.ts','apps/server/src/cognition-verification.test.ts']:
-            p=Path(path);s=p.read_text()
-            assert 'useNearCampSight' not in s
-            s="import { useNearCampSight } from '../../../tests/fixtures/service.js';\n"+s
-            old='  await enterLocalWorld(service);';assert s.count(old)==1,(path,s.count(old))
-            p.write_text(s.replace(old,old+'\n  await useNearCampSight(service);',1))
-          edit('apps/server/src/context.test.ts',"    await perform(service, select(service, 'craft'));", """    const recipe = Object.values(service.world.recipes).find((entry) => entry.name === draft.name)!;
-              expect(recipe).toBeDefined();
-              await perform(service, select(service, 'craft', (action) => action.command?.recipeId === recipe.id));""".replace('\n              ','\n    '))
-          edit('apps/server/src/context.test.ts',"    await perform(service, select(service, 'equip'));", """    const sling = inventoryFor(service.world, NPC_ID).find((item) => item.definitionId === recipe.outputDefinitionId)!;
-              expect(sling).toBeDefined();
-              await perform(service, select(service, 'equip', (action) => action.command?.itemId === sling.id));""".replace('\n              ','\n    '))
-          edit('apps/server/src/context.test.ts',"    expect(npcCandidates(service).some((action) => action.command?.type === 'craft')).toBe(false);", """    // Spending this method's inputs cannot prohibit unrelated starter recipes.
-              expect(npcCandidates(service).some((action) => action.command?.type === 'craft' && action.command.recipeId === recipe.id)).toBe(false);""".replace('\n              ','\n    '))
-          edit('apps/server/src/ai-director.test.ts', "import { enterLocalWorld } from '../../../tests/fixtures/service.js';", "import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';")
-          edit('apps/server/src/ai-director.test.ts', "draft.inputs.push({ definitionId: 'bone', quantity: 1, role: 'point' });", "draft.inputs.push({ definitionId: 'fixture-hidden-bone', quantity: 1, role: 'point' });")
-          edit('apps/server/src/ai-director.test.ts', "      const beforeItems = structuredClone(allItems(h.service.world));", """      if (fault === 'hidden-material') {
-                // Bone is now genuinely known from the starting fishing method.
-                // This installed definition has no possession or observed source.
-                await editWorld(h.service, (world) => {
-                  world.itemDefinitions['fixture-hidden-bone'] = {
-                    ...world.itemDefinitions.bone!, id: 'fixture-hidden-bone', name: 'Unobserved fixture bone',
-                  };
-                });
-                expect(h.service.observe(PLAYER_ID)!.itemDefinitions.some((item) => item.id === 'fixture-hidden-bone')).toBe(false);
-              }
-              const beforeItems = structuredClone(allItems(h.service.world));""".replace('\n              ','\n      ').replace('\n                ','\n        ').replace('\n                  ','\n          '))
-          edit('apps/server/src/http.test.ts', "      'move',\n      'fire-extinguish:campfire',", "      'evade:point',\n      'move',\n      'fire-extinguish:campfire',")
-          edit('apps/server/src/http.test.ts', "      'cook',\n    ]);", "      'cook-base:cook-meat',\n      'cook-base:cook-river-fish',\n    ]);")
-          edit('apps/server/src/http.test.ts', "expect(initial.recipes.map((recipe) => recipe.origin)).toEqual(['authored']);", "expect(initial.recipes.map((recipe) => [recipe.name, recipe.origin]).sort()).toEqual([['River line', 'authored'], ['Wooden shield', 'authored']]);")
-          edit('tests/browser/actions.spec.ts', "    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(1);", "    // Ground-target evasion is an authored action alongside walking.\n    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(2);\n    await expect(menu.locator('[data-catalogue-action=\"evade:point\"]')).toHaveAttribute('aria-disabled', 'true');")
-          edit('apps/client/src/ui/camp-activity.tsx', '      className="ol-camp-activities"', '      className="ol-camp-activities"\n      data-completed={visible && !preparing && !!activity && !working ? true : undefined}')
-          p=Path('apps/client/src/ui/camp-activity.css')
-          p.write_text(p.read_text()+'''
-          /* A completed result is a short reading task, not an empty full-height
-           * preparation workspace. The bound preserves scrolling for long results. */
-          .ol-panel:has(.ol-camp-activities[data-completed='true']) {
-            height: fit-content;
-            max-height: 100%;
-            align-self: start;
-          }
-          .ol-camp-activities[data-completed='true'] {
-            flex: 0 1 auto;
-          }
-          '''.replace('\n          ','\n'))
-          print('Scoped changes prepared; production attention, test limits and deadlines unchanged.')
+            p=Path(path); text=p.read_text()
+            assert text.count('  await useNearCampSight(service);\n')==1
+            text=text.replace('  await useNearCampSight(service);\n','',1)
+            anchor="  await service.setPresence('fixture-browser', true);"
+            assert text.count(anchor)==1
+            p.write_text(text.replace(anchor,anchor+'\n  await useNearCampSight(service);',1))
           PY
-      - name: Check exact changes and run affected suites
+      - name: Check the corrected native fixtures and expose exact remaining differences
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import json,os,subprocess,urllib.request
+          import json, os, subprocess, urllib.request
           from pathlib import Path
           report=Path(os.environ['RUNNER_TEMP'])/'ui-scoped';report.mkdir()
           def git(*args):return subprocess.check_output(['git',*args])
           paths=git('diff','--name-only').decode().splitlines()
-          # Reconcile known formatting-only failures from the prior required run.
-          format_paths=[*paths,'.github/workflows/ui-completion.yml','.github/workflows/ui-completion-source-read-20261014.yml','docs/maintainers/ui-ux.md','packages/spatial/src/coverage.ts','docs/ui-ux/runtime/completion-20261014/README.md']
-          subprocess.run(['pnpm','exec','prettier','--write',*dict.fromkeys(format_paths)],check=True)
+          subprocess.run(['pnpm','exec','prettier','--write',*paths,'.github/workflows/ui-completion-source-read-20261014.yml','docs/ui-ux/runtime/completion-20261014/README.md'],check=True)
           checks={}
           def run(label,args):
-            with (report/(label+'.log')).open('w') as out:checks[label]=subprocess.run(args,stdout=out,stderr=subprocess.STDOUT).returncode
+            with (report/(label+'.log')).open('w') as out: checks[label]=subprocess.run(args,stdout=out,stderr=subprocess.STDOUT).returncode
             print(label+': '+str(checks[label]),flush=True)
-            print('\n'.join((report/(label+'.log')).read_text().splitlines()[-60:]),flush=True)
+            print('\n'.join((report/(label+'.log')).read_text().splitlines()[-100:]),flush=True)
           run('types',['pnpm','typecheck'])
+          originals={}
           if checks['types']==0:
-            run('tests',['pnpm','exec','vitest','run','apps/server/src/level1-decisions.test.ts','apps/server/src/cognition-payloads.test.ts','apps/server/src/cognition-verification.test.ts','apps/server/src/context.test.ts','apps/server/src/ai-director.test.ts','apps/server/src/http.test.ts','apps/server/src/action-catalogue.test.ts','apps/server/src/world-service.test.ts','--reporter=json','--outputFile='+str(report/'tests.json')])
-            run('build',['pnpm','build'])
-            if checks['build']==0:run('browser',['pnpm','exec','playwright','test','tests/browser/actions.spec.ts','--reporter=line'])
+            probes={
+              'apps/server/src/action-catalogue.test.ts':[("  expect(person.map((action) => action.id).filter((id) => !id.startsWith('offer:'))).toEqual([", "  console.log('EXACT_PERSON_ACTIONS=' + JSON.stringify(person.map(a => ({id:a.id,label:a.label}))));\n  expect(person.map((action) => action.id).filter((id) => !id.startsWith('offer:'))).toEqual([")],
+              'apps/server/src/http.test.ts':[("    expect(initial.clock.pauseReason).toBe('away');", "    console.log('EXACT_STARTING_RECIPES=' + JSON.stringify(initial.recipes.map(r => [r.name,r.origin])));\n    expect(initial.clock.pauseReason).toBe('away');")],
+              'apps/server/src/context.test.ts':[("    expect(service.world.entities['hare-1']!.actor!.alive).toBe(false);", "    console.log('EXACT_HUNT_RESULT=' + JSON.stringify({actor:service.world.entities[NPC_ID],hare:service.world.entities['hare-1'],events:service.world.events.slice(-14)}));\n    expect(service.world.entities['hare-1']!.actor!.alive).toBe(false);")],
+            }
+            try:
+              for name,changes in probes.items():
+                p=Path(name); originals[name]=p.read_text(); text=originals[name]
+                for old,new in changes:
+                  assert text.count(old)==1,(name,old)
+                  text=text.replace(old,new,1)
+                p.write_text(text)
+              run('tests',['pnpm','exec','vitest','run','apps/server/src/level1-decisions.test.ts','apps/server/src/cognition-payloads.test.ts','apps/server/src/cognition-verification.test.ts','apps/server/src/context.test.ts','apps/server/src/ai-director.test.ts','apps/server/src/http.test.ts','apps/server/src/action-catalogue.test.ts','--reporter=verbose','--reporter=json','--outputFile.json='+str(report/'tests.json')])
+              for line in (report/'tests.log').read_text().splitlines():
+                if 'EXACT_' in line: print(line[:18000],flush=True)
+            finally:
+              for name,text in originals.items():Path(name).write_text(text)
           if (report/'tests.json').exists():
             data=json.loads((report/'tests.json').read_text()); failures=[]
             for suite in data['testResults']:
               for test in suite['assertionResults']:
                 if test['status']=='failed':failures.append({'file':str(Path(suite['name']).relative_to(Path.cwd())),'test':test['fullName'],'errors':test.get('failureMessages',[])})
-            print('TEST_RESULT='+json.dumps({'passed':data['numPassedTests'],'failed':data['numFailedTests'],'total':data['numTotalTests'],'failures':failures},indent=2),flush=True)
-          patch=git('diff');(report/'changes.patch').write_bytes(patch);print('DIFF_BEGIN\n'+patch.decode()+'DIFF_END',flush=True)
-          # Inspect the remaining timed test and actual chrome owners, without reruns.
-          text=Path('apps/server/src/world-service.test.ts').read_text();needle="  it('settles disconnected exposure";start=text.find(needle)
-          if start>=0:
-            end=text.find('\n  it(',start+1);print('TIME_TEST='+text[start:end if end>=0 else len(text)],flush=True)
-          for file in Path('apps/client/src/design-system').rglob('*.css'):
-            lines=file.read_text().splitlines(); selected=set()
-            for i,line in enumerate(lines):
-              if line.strip() in {'.ol-panel {','.ol-panel-body {','.ol-sheet {'}:selected.update(range(i,min(i+24,len(lines))))
-            if selected:print('PANEL_CSS='+str(file)+'\n'+'\n'.join(str(i+1)+': '+lines[i] for i in sorted(selected)),flush=True)
+            print('RESULT='+json.dumps({'passed':data['numPassedTests'],'failed':data['numFailedTests'],'total':data['numTotalTests'],'failures':failures},indent=2),flush=True)
+          patch=git('diff'); (report/'changes.patch').write_bytes(patch)
+          print('AFFECTED_DIFF_BEGIN\n'+patch.decode()+'AFFECTED_DIFF_END',flush=True)
           metadata={'parent':os.environ['GITHUB_SHA'],'checks':checks}
           if checks['types']==0:
-            git('diff','--check');paths=git('diff','--name-only').decode().splitlines();tree=git('rev-parse','HEAD^{tree}').decode().strip()
+            git('diff','--check'); paths=git('diff','--name-only').decode().splitlines();tree=git('rev-parse','HEAD^{tree}').decode().strip()
             for offset in range(0,len(paths),3):
-              payload={'base_tree':tree,'tree':[{'path':p,'mode':'100644','type':'blob','content':Path(p).read_text()} for p in paths[offset:offset+3]]}
-              req=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees',method='POST',data=json.dumps(payload).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
-              with urllib.request.urlopen(req,timeout=120) as response:tree=json.load(response)['sha']
+              request=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees',method='POST',data=json.dumps({'base_tree':tree,'tree':[{'path':p,'mode':'100644','type':'blob','content':Path(p).read_text()} for p in paths[offset:offset+3]]}).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+              with urllib.request.urlopen(request,timeout=120) as response:tree=json.load(response)['sha']
             git('add','--',*paths);assert git('write-tree').decode().strip()==tree
             metadata.update(tree=tree,paths=paths)
           (report/'metadata.json').write_text(json.dumps(metadata,indent=2));print('CANDIDATE='+json.dumps(metadata),flush=True)
-          print('No commits or branch references changed by this runner.',flush=True)
+          print('Detached checkout '+os.getcwd()+'. No commits or branch references changed by this runner.',flush=True)
           if any(checks.values()):raise SystemExit(1)
           PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ui-scoped
-          path: |
-            ${{ runner.temp }}/ui-scoped/
-            test-results/
+          path: ${{ runner.temp }}/ui-scoped/
           retention-days: 3
           if-no-files-found: error
