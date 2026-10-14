@@ -12,39 +12,46 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: [app-0, app-1, app-2, app-3, docs, guidance]
+        part: [index, app-0, app-1, app-2, app-3, other-0, other-1, other-2, other-3, guidance]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           ref: 705efb2bd102ba151123659b129372aea62b6a79
-          fetch-depth: 0
           persist-credentials: false
-      - name: Inspect selected conflicts and owning instructions
+          show-progress: false
+      - name: Inspect pinned conflict sources
         env:
           PART: ${{ matrix.part }}
         shell: bash
         run: |
           set -euo pipefail
+          git fetch --quiet --unshallow origin
           status=0
           git merge-tree --write-tree 705efb2bd102ba151123659b129372aea62b6a79 1700f3b23a39acfdd14f3a6ab34c8ce330847bc3 > "$RUNNER_TEMP/merge-tree.txt" || status=$?
           test "$status" -le 1
-          python3 - "$(head -n 1 "$RUNNER_TEMP/merge-tree.txt")" <<'PY'
+          python3 - "$RUNNER_TEMP/merge-tree.txt" <<'PY'
           import os, re, subprocess, sys
-          tree = sys.argv[1]
+          report = open(sys.argv[1]).read()
+          tree = report.splitlines()[0]
           part = os.environ['PART']
           def read(path):
               return subprocess.check_output(['git', 'show', f'{tree}:{path}'], text=True)
-          if part == 'guidance':
-              paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', tree], text=True).splitlines()
-              for path in paths:
+          paths = sorted(set(re.findall(r'^\d+ [0-9a-f]+ [123]\t(.+)$', report, re.M)))
+          if part == 'index':
+              print(report)
+          elif part == 'guidance':
+              all_paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', tree], text=True).splitlines()
+              for path in all_paths:
                   if path.endswith('AGENTS.md') and path != 'AGENTS.md' and path.startswith(('apps/', 'docs/', '.github/')):
                       print(f'=== {path} ===\n{read(path)}')
               print('=== Root instruction overlap ===')
               print(subprocess.check_output(['git', 'diff', '705efb2bd102ba151123659b129372aea62b6a79', tree, '--', 'AGENTS.md'], text=True))
           else:
-              paths = ['apps/client/src/App.tsx'] if part.startswith('app-') else ['docs/action-discovery.md', 'docs/maintainers/autonomy-experience.md', 'docs/ui-ux/react-ui.md']
-              for path in paths:
+              selected = [path for path in paths if path.endswith('/App.tsx')] if part.startswith('app-') else [path for path in paths if not path.endswith('/App.tsx')]
+              for file_index, path in enumerate(selected):
+                  if part.startswith('other-') and file_index % 4 != int(part[-1]):
+                      continue
                   data = read(path)
                   matches = list(re.finditer(r'^<{7,} .+?\n.*?^>{7,} .+?(?:\n|$)', data, re.M | re.S))
                   print(f'=== {path}: {len(matches)} conflicts ===')
