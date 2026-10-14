@@ -31,8 +31,8 @@ jobs:
           root = pathlib.Path.cwd()
           controls = root / '.github/doc-review-rebase-resolutions.json'
           config = json.loads(controls.read_text()) if controls.exists() else {}
-          old = '51fcfc0dbc62c3e49ddedfbab140757b2cef9917'
-          target = '74e081a2ddc39a18da1ffe3357ffc298a4f14dce'
+          old = 'd47995702e485268b80df5f1814f317a22fe9d42'
+          target = 'b72e9d9aab8072eb1b5ae9d25f620a4421509148'
           log = []
           def git(*args, check=True):
               p = subprocess.run(['git', *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
