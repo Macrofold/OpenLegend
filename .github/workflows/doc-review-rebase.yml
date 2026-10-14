@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/doc-review-rebase.yml
       - .github/doc-review-rebase-resolutions.json
+      - .github/doc-review-rebase-resolutions/*.json
 permissions:
   contents: write
 concurrency:
@@ -31,6 +32,11 @@ jobs:
           root = pathlib.Path.cwd()
           controls = root / '.github/doc-review-rebase-resolutions.json'
           config = json.loads(controls.read_text()) if controls.exists() else {}
+          resolutions = config.setdefault('resolutions', {})
+          for resolution_path in sorted((root / '.github/doc-review-rebase-resolutions').glob('*.json')):
+              additions = json.loads(resolution_path.read_text())['resolutions']
+              assert not (resolutions.keys() & additions.keys()), 'Duplicate conflict resolution key.'
+              resolutions.update(additions)
           old = 'd47995702e485268b80df5f1814f317a22fe9d42'
           target = 'b72e9d9aab8072eb1b5ae9d25f620a4421509148'
           log = []
