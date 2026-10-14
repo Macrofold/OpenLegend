@@ -1,7 +1,8 @@
 import * as pc from 'playcanvas';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
-import modelUrl from './mercenary-assets/mercenary-voxel.glb?url';
+import modelUrl from './mercenary-assets/mercenary-sculpted.glb?url';
+import modelArt from './mercenary-assets/mercenary-sculpted-provenance.json';
 import { WorldPresentation, type RevealBinding } from '../world-presentation';
 import { personStencil, setVisibilityStencil } from '../visibility-stencil';
 import { ModelSurfaceDepth } from './model-surface-depth';
@@ -119,8 +120,8 @@ export class VoxelMercenaryActor {
   private stride = 0;
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
-  readonly height = 2.1 * displayScale;
-  readonly width = 0.9 * displayScale;
+  readonly height = modelArt.heightMetres * displayScale;
+  readonly width = modelArt.widthMetres * displayScale;
   constructor(
     private readonly parent: pc.Entity,
     private readonly presentation: WorldPresentation,
@@ -313,7 +314,7 @@ export class VoxelMercenaryActor {
       state: this.state,
       visible: this.visible,
       representation: 'authored-voxels',
-      cellSize: 0.025 * displayScale,
+      cellSize: modelArt.cellSizeMetres * displayScale,
       height: this.height,
       meshes: this.meshes.length,
       stride: this.stride,
