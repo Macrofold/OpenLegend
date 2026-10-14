@@ -46,6 +46,7 @@ import {
   renderActivity,
   acquiredActivities,
   bindActivityRequest,
+  combatHelpBinding,
   reviewActivityRequest,
   isCookingInputRole,
   BASE_FOOD_ACTION_WORDING,
@@ -205,6 +206,7 @@ export const commandInputSchema = z
       'merge-item',
       'unequip',
       'move',
+      'evade',
       'follow',
       'confirm-attempt',
       'withdraw-attempt',
@@ -215,6 +217,9 @@ export const commandInputSchema = z
       'guard',
       'strike',
       'hunt',
+      'aim',
+      'shoot-once',
+      'release-shot',
       'practice-shot',
       'coaching',
       'harvest',
@@ -270,6 +275,7 @@ export const commandInputSchema = z
     conversationId: id.optional(),
     text: z.string().trim().min(1).max(1500).optional(),
     facing: z.number().finite().optional(),
+    aimId: id.optional(),
     autoEquip: z.boolean().optional(),
     generation: z.number().int().nonnegative().optional(),
     operation: z.enum(['join', 'leave']).optional(),
@@ -278,7 +284,8 @@ export const commandInputSchema = z
     coachingOperation: z.enum(['request', 'accept', 'decline', 'withdraw', 'feedback']).optional(),
     episodeId: id.optional(),
     handoverOperation: z.enum(['offer', 'counter', 'accept', 'decline', 'withdraw']).optional(),
-    outingOperation: z.enum(['invite', 'accept', 'decline', 'leave']).optional(),
+    opponentId: id.optional(),
+    outingOperation: z.enum(['help', 'invite', 'accept', 'decline', 'leave']).optional(),
     outingId: id.optional(),
     outingMode: z.enum(['enqueue', 'replace', 'interrupt']).optional(),
     destinationId: id.optional(),
@@ -877,7 +884,8 @@ export class WorldService {
     // Restart has no verified live transports. Existing deadlines are retained, never extended.
     // Before the first entry, absence is not a fictional physical departure. Later
     // restarts retain the ordinary saved-work and participation recovery behavior.
-    if (!createdActivation || existing?.revision !== 1) await this.reconcileParticipation(true);
+    if (!createdActivation || existing?.revision !== 1)
+      await this.reconcileParticipation(!!existing);
   }
 
   get controlledEntityId(): string {
@@ -2589,15 +2597,10 @@ export class WorldService {
         continue;
       }
       // Resetting transports during a paused current-format return is not yet a physical
-      // departure. Keep committed work until presence is re-established or ordinary absence
-      // reconciliation runs; a previously committed exit still wins, without renewed deadlines.
+      // departure. Preserve the restored embodiment and relationships until reconnection or
+      // ordinary absence reconciliation; a previous exit still wins, without renewed deadlines.
       // docs/save-and-load.md#continuation-and-identity
-      if (
-        pausedRestore &&
-        actor.action &&
-        !this.exits.has(entity.id) &&
-        actor.participation?.phase !== 'exiting'
-      )
+      if (pausedRestore && !this.exits.has(entity.id) && actor.participation?.phase !== 'exiting')
         this.awaitingRestoredPresence.add(entity.id);
       if (this.world.paused && this.awaitingRestoredPresence.has(entity.id)) continue;
       this.awaitingRestoredPresence.delete(entity.id);
@@ -3303,6 +3306,7 @@ export class WorldService {
     return (
       !!command &&
       (command.type === 'inspect-inventory' ||
+        command.type === 'cancel' ||
         endsCoachingConsent(command) ||
         endsOutingConsent(command)) &&
       this.saved.manuallyPaused &&
@@ -4345,8 +4349,20 @@ export class WorldService {
   }
 
   /** Run current admission; native pure prerequisites or disposable effects never commit. */
-  previewCommand(input: CommandInput, actorId = this.controlledEntityId): ApiResult {
-    const result = this.evaluateCommand(randomUUID(), input, actorId, true) as ApiResult;
+  previewCommand(
+    input: CommandInput,
+    actorId = this.controlledEntityId,
+    humanInitiated = true,
+  ): ApiResult {
+    const result = this.evaluateCommand(
+      randomUUID(),
+      input,
+      actorId,
+      true,
+      undefined,
+      undefined,
+      humanInitiated,
+    ) as ApiResult;
     if (result.code === 'lethal-review-required') return { ...result, ok: true };
     if (result.ok && input.type === 'activity-request') {
       const notes = reviewActivityRequest(this.world, actorId, {
@@ -4363,16 +4379,28 @@ export class WorldService {
     commandId: string,
     input: CommandInput,
     actorId: string,
+    humanInitiated = true,
   ): Command | ApiResult {
+    const combatHelpId = combatHelpBinding(this.world, actorId, input);
     const envelope = {
       id: commandId,
       actorId,
+      ...(humanInitiated ? { humanInitiated: true as const } : {}),
       ...(input.purpose ? { purpose: input.purpose } : {}),
       ...(input.autoEquip ? { autoEquip: true } : {}),
+      ...(combatHelpId ? { combatHelpId } : {}),
     };
     let command: Command;
     switch (input.type) {
       case 'outing':
+        if (input.outingOperation === 'help' && input.targetId && input.opponentId)
+          return {
+            ...envelope,
+            type: 'outing',
+            operation: 'help',
+            recipientId: input.targetId,
+            opponentId: input.opponentId,
+          };
         if (input.outingOperation === 'invite' && input.targetId && input.outingMode)
           return {
             ...envelope,
@@ -4435,7 +4463,11 @@ export class WorldService {
           });
           return 'ok' in bound
             ? bound
-            : { ...bound, ...(input.purpose ? { purpose: input.purpose } : {}) };
+            : {
+                ...bound,
+                ...(humanInitiated ? { humanInitiated: true as const } : {}),
+                ...(input.purpose ? { purpose: input.purpose } : {}),
+              };
         }
       case 'activity':
         if (!input.methodId || !input.bindings)
@@ -4473,10 +4505,11 @@ export class WorldService {
           generation: input.generation,
         };
         break;
+      case 'evade':
       case 'move':
         if (!input.position)
           return { ok: false, code: 'position', message: 'Choose a destination.' };
-        command = { ...envelope, type: 'move', destination: input.position };
+        command = { ...envelope, type: input.type, destination: input.position };
         break;
       case 'status-effect':
         if (!input.targetId || !input.definitionId || !input.effectOperation)
@@ -4740,19 +4773,24 @@ export class WorldService {
         command = {
           ...envelope,
           type: 'strike',
-          humanInitiated: true,
           targetId: input.targetId,
           definitionId: input.definitionId,
           ...(input.itemId ? { weaponItemId: input.itemId } : {}),
         };
         break;
+      case 'release-shot':
+        if (!input.aimId)
+          return { ok: false, code: 'aim', message: 'Choose the current prepared aim.' };
+        command = { ...envelope, type: 'release-shot', aimId: input.aimId };
+        break;
       case 'practice-shot':
+      case 'aim':
+      case 'shoot-once':
       case 'hunt':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
         command = {
           ...envelope,
           type: input.type,
-          humanInitiated: true,
           targetId: input.targetId,
           ...(input.itemId ? { weaponItemId: input.itemId } : {}),
           ...(input.ammunitionId ? { ammoItemId: input.ammunitionId } : {}),
@@ -4835,6 +4873,10 @@ export class WorldService {
       : { world, events: [], outcome: bound };
   }
 
+  /** Manual clock pause permits ending one's held work, never starting work or
+   * bypassing absence, maintenance or storage protection. Committed costs survive.
+   * docs/ui-ux/world-interaction.md#paused-game-tabs */
+
   private evaluateCommand(
     commandId: string,
     input: CommandInput,
@@ -4842,8 +4884,9 @@ export class WorldService {
     preview: boolean,
     gameplay?: Omit<GameplayReceipt, 'result'>,
     scope?: RequestScope,
+    humanInitiated = true,
   ): ApiResult | Promise<ApiResult> {
-    const bound = this.bindCommand(commandId, input, actorId);
+    const bound = this.bindCommand(commandId, input, actorId, humanInitiated);
     if (!('actorId' in bound)) return bound;
     let command = bound;
     if (preview) {
@@ -4870,7 +4913,10 @@ export class WorldService {
         review.scope !== reviewScope ||
         review.expiresAt <= this.now() ||
         review.inputDigest !== inputDigest ||
-        (review.command.type !== 'strike' && review.command.type !== 'hunt')
+        (review.command.type !== 'strike' &&
+          review.command.type !== 'hunt' &&
+          review.command.type !== 'shoot-once' &&
+          review.command.type !== 'release-shot')
       )
         return {
           ok: false,
@@ -4878,7 +4924,7 @@ export class WorldService {
           message: 'That attack review expired or changed. Choose the attack again.',
         };
       command = { ...review.command, id: commandId, lethalPermission: review.permission };
-    } else if (scope && (command.type === 'strike' || command.type === 'hunt')) {
+    } else if (scope && ['strike', 'hunt', 'shoot-once', 'release-shot'].includes(command.type)) {
       const preview = executeCommand(this.world, command, {
         preview: true,
         constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),

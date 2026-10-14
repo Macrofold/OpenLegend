@@ -91,6 +91,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   actor.action = null;
   for (const item of equippedItems(world, entity.id)) unequipLot(world, entity.id, item.id);
   delete actor.combatReadyAt;
+  delete actor.evasionReadyAt;
   const corpseId = nextEntityId(world, 'body');
   const body = actor.body!;
   const corpse: Entity = {
@@ -296,6 +297,7 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   setBodyHealth(actor, actor.body!.maxHealth);
   actor.action = null;
   delete actor.combatReadyAt;
+  delete actor.evasionReadyAt;
   delete actor.pendingDeath;
   delete entity.spatial.flight;
   delete entity.spatial.fallVelocity;

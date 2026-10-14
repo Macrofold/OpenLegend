@@ -69,9 +69,11 @@ import { canonicalJson, contentLabel, emit } from './events.js';
 import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
 import { validateEquipment } from './equipment.js';
 import { validateContactDefense } from './contact-defense.js';
+import { validateEvasion } from './evasion.js';
+import { validateRanged } from './ranged.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
-import { validateOutings } from './outings.js';
+import { validateOutings, validateCombatHelpReference } from './outings.js';
 import { validateSocialPolicy } from './social-policy.js';
 
 export type AttributeValue = number | string;
@@ -884,6 +886,8 @@ export function validateWorldModules(world: WorldState): void {
   validateGatheringTools(world);
   validateEquipment(world);
   validateContactDefense(world);
+  validateRanged(world);
+  validateEvasion(world);
   validateFoodPreparations(world);
   validateFiniteCasts(world);
   for (const definition of Object.values(world.itemDefinitions)) {
@@ -1127,7 +1131,7 @@ export function validateWorldModules(world: WorldState): void {
     const activeAction = e.actor?.action;
     if (
       activeAction?.targetLife !== undefined &&
-      (!['strike', 'hunt'].includes(activeAction.type) ||
+      (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         !Number.isSafeInteger(activeAction.targetLife) ||
         activeAction.targetLife < 0)
     )
@@ -1135,7 +1139,7 @@ export function validateWorldModules(world: WorldState): void {
     if (activeAction?.lethalPermission) {
       const permission = activeAction.lethalPermission;
       if (
-        !['strike', 'hunt'].includes(activeAction.type) ||
+        !['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         permission.actorId !== e.id ||
         permission.sourceLife !== (e.actor!.physicalLife ?? 0) ||
         permission.targetId !== activeAction.targetId ||
@@ -1145,9 +1149,10 @@ export function validateWorldModules(world: WorldState): void {
       )
         throw new Error('Invalid saved lethal permission.');
     }
+    if (activeAction) validateCombatHelpReference(world, e.id, activeAction);
     if (
       activeAction?.requiresLethalReview !== undefined &&
-      (!['strike', 'hunt'].includes(activeAction.type) ||
+      (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
         typeof activeAction.requiresLethalReview !== 'boolean')
     )
       throw new Error('Invalid saved attack origin.');

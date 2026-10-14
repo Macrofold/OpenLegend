@@ -303,8 +303,25 @@ describe('bounded invented mechanisms', () => {
   });
   it('completes a generated sling → hunt → finite harvest → cook → eat loop', () => {
     let world = makeSling();
+    // Controlled stationary prey qualifies the successful custody/meal chain; moving misses
+    // use the separate flight specimen below. This is not a natural hunting success rate.
+    world.entities['hare-1']!.actor!.incapacitated = true;
+    setSpatialPosition(
+      world,
+      world.entities['hare-1']!,
+      {
+        ...worldPosition(world.entities[PLAYER_ID]!),
+        x: worldPosition(world.entities[PLAYER_ID]!).x + 2,
+      },
+      worldSupport(world.entities[PLAYER_ID]!),
+    );
+    world.rngState = 73;
     const ammoBefore = quantityOf(world, PLAYER_ID, 'stone');
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
+    world = advanceWorld(world, 18).world;
+    world.entities['hare-1']!.actor!.incapacitated = false;
+    world.entities['hare-1']!.animal!.escapeHeading = null;
+    world.entities['hare-1']!.animal!.reviewAt = world.simTime + 40;
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(ammoBefore - 1);
     expect(world.entities['hare-1']!.actor!.alive).toBe(false);
@@ -373,7 +390,9 @@ describe('bounded invented mechanisms', () => {
     world = advanceWorld(world, 30).world;
     expect(quantityOf(world, PLAYER_ID, world.recipes[recipeId]!.outputDefinitionId)).toBe(0);
     expect(
-      world.events.some((event) => event.type === 'shot' && event.data?.ammunitionKind === 'arrow'),
+      world.events.some(
+        (event) => event.type === 'shot-released' && event.data?.ammunitionKind === 'arrow',
+      ),
     ).toBe(true);
   });
   it('records misses, spends one projectile and makes the animal react', () => {
@@ -382,17 +401,34 @@ describe('bounded invented mechanisms', () => {
     let world = makeSling(73, draft);
     world.rngState = 12345;
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
-    world = advanceWorld(world, 20).world;
-    expect(world.events.some((event) => event.type === 'shot' && event.data?.hit === false)).toBe(
-      true,
-    );
+    world = advanceWorld(world, 40).world;
+    expect(
+      world.events.some(
+        (event) => event.type === 'projectile-ended' && event.data?.result !== 'hit',
+      ),
+    ).toBe(true);
     expect(world.entities['hare-1']!.animal!.danger).toBeGreaterThan(0);
     expect(world.entities['hare-1']!.actor!.health).toBe(18);
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(5);
   });
   it('resolves competing harvesters once and never duplicates finite remains', () => {
     let world = makeSling();
+    world.entities['hare-1']!.actor!.incapacitated = true;
+    setSpatialPosition(
+      world,
+      world.entities['hare-1']!,
+      {
+        ...worldPosition(world.entities[PLAYER_ID]!),
+        x: worldPosition(world.entities[PLAYER_ID]!).x + 2,
+      },
+      worldSupport(world.entities[PLAYER_ID]!),
+    );
+    world.rngState = 73;
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
+    world = advanceWorld(world, 18).world;
+    world.entities['hare-1']!.actor!.incapacitated = false;
+    world.entities['hare-1']!.animal!.escapeHeading = null;
+    world.entities['hare-1']!.animal!.reviewAt = world.simTime + 40;
     world = advanceWorld(world, 24).world;
     const position = worldPosition(world.entities['hare-1']!);
     setSpatialPosition(
@@ -421,7 +457,7 @@ describe('bounded invented mechanisms', () => {
     world.entities['hare-1']!.actor!.alive = false;
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(6);
-    expect(world.events.some((event) => event.type === 'shot')).toBe(false);
+    expect(world.events.some((event) => event.type === 'shot-released')).toBe(false);
     expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
   });
   it('requires shaft-capable material for an arrow, not merely any rigid object', () => {
@@ -471,7 +507,7 @@ describe('bounded invented mechanisms', () => {
         world = advanceWorld(world, 1).world;
       expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
     }
-    expect(world.events.filter((event) => event.type === 'shot')).toHaveLength(2);
+    expect(world.events.filter((event) => event.type === 'shot-released')).toHaveLength(2);
     expect(
       world.events.some(
         (event) => event.type === 'action-stopped' && event.text.includes('out of range'),

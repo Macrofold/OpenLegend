@@ -42,11 +42,13 @@ export const BASE_FAMILY_FACTS = {
   toolFields: {
     strike: ['weaponItemId'],
     hunt: ['weaponItemId', 'ammoItemId'],
+    aim: ['weaponItemId', 'ammoItemId'],
+    'shoot-once': ['weaponItemId', 'ammoItemId'],
     equip: ['itemId'],
     fish: ['itemId'],
   } as Readonly<Record<string, readonly string[]>>,
   unitPerCommand: ['eat'],
-  unpausableWhileWorking: ['strike', 'hunt', 'practice-shot', 'coaching'],
+  unpausableWhileWorking: ['strike', 'hunt', 'aim', 'shoot-once', 'practice-shot', 'coaching'],
 } as const;
 
 /** Native locomotion and deadline planning use the same authored speed. */
@@ -55,6 +57,7 @@ export function nativeMovementSpeed(
   entity: import('../../types.js').Entity,
   fleeing = false,
 ): number {
+  if (entity.actor?.action?.evasion) return entity.actor.action.evasion.speed;
   return (
     (fleeing
       ? BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond

@@ -10,8 +10,13 @@ import {
   isEquipped,
   guardChoiceLabel,
   BASE_GUARD_TEXT,
+  rangedChoiceLabel,
+  BASE_RANGED_TEXT,
+  BASE_EVASION_KEYWORDS,
+  evasionChoices,
   BASE_OUTING,
   outingInvitationProblem,
+  BASE_COMBAT_HELP,
   activityRequestHost,
   observerDescription,
 } from '@open-legend/domain';
@@ -149,7 +154,7 @@ export function actionCatalogue(
   ) => {
     if (actionIds.has(id) || !nativeCommandSupported(world, nativeCommandKind(command.type)))
       return;
-    // Ground exposes destination movement only. Personal work belongs to self;
+    // Ground exposes chosen destination movement, including a short evasive step. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
     if (context.itemId) {
       if (
@@ -157,7 +162,13 @@ export function actionCatalogue(
         !(command.type === 'cook' && Object.values(command.inputs ?? {}).includes(context.itemId))
       )
         return;
-    } else if (!context.catalogue && !selected && command.type !== 'move') return;
+    } else if (
+      !context.catalogue &&
+      !selected &&
+      command.type !== 'move' &&
+      command.type !== 'evade'
+    )
+      return;
     if (
       !context.catalogue &&
       selected &&
@@ -269,6 +280,25 @@ export function actionCatalogue(
       ? { ...worldPosition(selected), surfaceId: worldSupport(selected)! }
       : undefined
     : context.position;
+  if (position && bodyPolicy(world)?.evasion)
+    add(
+      'evade:point',
+      `${bodyPolicy(world)!.evasion!.label} here`,
+      'Defense',
+      { type: 'evade', position },
+      BASE_EVASION_KEYWORDS,
+      selected?.id,
+    );
+  if (context.catalogue || selected?.id === scope.actorId)
+    for (const choice of evasionChoices(world, observation.actor))
+      add(
+        `evade:${choice.label}`,
+        choice.label,
+        'Defense',
+        { type: 'evade', position: choice.destination },
+        BASE_EVASION_KEYWORDS,
+        selected?.id,
+      );
   if (position)
     add(
       'move',
@@ -406,7 +436,26 @@ export function actionCatalogue(
         [world.itemDefinitions[target.resource.definitionId]!.name, 'collect'],
         target.id,
       );
-    if (rangedTargetAllowed(world, target)) {
+    if (rangedTargetAllowed(world, target) && target.id !== scope.actorId)
+      for (const item of launchers)
+        for (const type of ['aim', 'shoot-once'] as const)
+          add(
+            `${type}:${target.id}:${item.id}`,
+            rangedChoiceLabel(type, target.name, world.itemDefinitions[item.definitionId]!.name),
+            'Combat',
+            {
+              type,
+              autoEquip: true,
+              targetId: target.id,
+              itemId: item.id,
+              ammunitionId: projectiles.get(
+                world.itemDefinitions[item.definitionId]!.launcher!.ammunitionKind,
+              ),
+            },
+            BASE_RANGED_TEXT.keywords,
+            target.id,
+          );
+    if (rangedTargetAllowed(world, target) && target.animal) {
       if (!launchers.length)
         add(
           `hunt-${target.id}`,
@@ -507,6 +556,26 @@ export function actionCatalogue(
   if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
     for (const target of actionTargets) {
       if (!BASE_OUTING.participant(target) || target.id === scope.actorId) continue;
+      const helpRefused = outingInvitationProblem(world, scope.actorId, target.id, 'combat-help');
+      if (activityRequestHost(world, BASE_COMBAT_HELP.family))
+        actions.push({
+          id: `invite-help:${target.id}`,
+          label: BASE_COMBAT_HELP.label,
+          category: 'Social',
+          description: BASE_COMBAT_HELP.description,
+          keywords: [
+            ...BASE_COMBAT_HELP.keywords,
+            observerDescription(world, scope.actorId, target.id, 'definite'),
+          ],
+          targetId: target.id,
+          enabled: controlling && !helpRefused,
+          ...(helpRefused ? { reason: helpRefused.message } : {}),
+          intent: {
+            kind: 'activity',
+            family: BASE_COMBAT_HELP.family,
+            arguments: { recipientId: target.id },
+          },
+        });
       const refused = outingInvitationProblem(world, scope.actorId, target.id);
       actions.push({
         id: `invite-travel:${target.id}`,

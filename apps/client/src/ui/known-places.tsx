@@ -143,7 +143,7 @@ export function KnownPlaces({
   return (
     <div className="ol-known-places">
       <p className="ol-caption">
-        Places you observed, with their last-known locations. Conditions may have changed.
+        Places you learned about, with their last-known locations. Conditions may have changed.
       </p>
       <form
         className="ol-memory-search"

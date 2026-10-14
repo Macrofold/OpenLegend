@@ -306,6 +306,9 @@ export function recordInspectedItems(
     const item = itemFor(world, id)!;
     const definition = world.itemDefinitions[item.definitionId]!;
     const observedLocation = observedItemLocation(world, actorId, id);
+
+    if (definition.placeReport)
+      acquireExposure(world, events, observer, id, cloneValue(definition.placeReport));
     acquireExposure(world, events, observer, id, {
       kind: 'inventory-item',
       id,

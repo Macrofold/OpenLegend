@@ -83,6 +83,12 @@ export function rangedTargetAllowed(world: WorldState, target: Entity): boolean 
     !!policy && !!target.actor?.alive && (policy.targetRule === 'living-actor' || !!target.animal)
   );
 }
+export function shotPreparationSeconds(
+  world: WorldState,
+  practice?: { windupSeconds: number },
+): number {
+  return practice?.windupSeconds ?? rangedPolicy(world)!.windupSeconds;
+}
 export function rangedAccuracy(world: WorldState, target: Entity, accuracy: number): number {
   const policy = rangedPolicy(world);
   if (!policy) return accuracy;
@@ -103,10 +109,14 @@ export function rangedApproachRange(world: WorldState, range: number): number {
 export function validateRangedActions(world: WorldState): void {
   for (const entity of Object.values(world.entities)) {
     const action = entity.actor?.action;
-    if (!action || (action.type !== 'hunt' && !action.rangedPolicyPin)) continue;
+    if (
+      !action ||
+      (!['hunt', 'aim', 'shoot-once'].includes(action.type) && !action.rangedPolicyPin)
+    )
+      continue;
     const pin = world.moduleManifest.rangedPolicyPin;
     if (
-      action.type !== 'hunt' ||
+      !['hunt', 'aim', 'shoot-once'].includes(action.type) ||
       !pin ||
       !isDefinitionPin(action.rangedPolicyPin) ||
       !sameDefinitionPin(action.rangedPolicyPin, pin)

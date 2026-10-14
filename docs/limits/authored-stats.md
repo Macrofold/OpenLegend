@@ -38,7 +38,7 @@ Before adopting it, compare the real player's goal, pause/speed controls, helper
 
 ## ST-L08 — First useful competence effect
 
-**Implemented selected consumer · Restrictiveness: Safe.** The base-world Sling handling consumer has only states 0 and 1: ordinary current performance and practiced handling. At 1, weapon-related miss chance is reduced by 25% before the existing animal condition: a becomes a + 0.25 × (1 − a). The weapon's authored 0.6–0.9 accuracy range is unchanged, and the existing 0.85 animal factor applies afterward. There is one existing hit draw, with no new damage, range, yield, ammunition or target permission. This applies across admitted sling-like definitions, not to bows or arbitrarily renamed items. Revisit through actual hunting/target choices, weapon-quality ordering and scoped forecasts; arithmetic is not balance or enjoyment evidence.
+**Implemented selected consumer · Restrictiveness: Safe.** Sling handling retains states 0 and 1. Practiced handling changes release steadiness from **a** to **a + 0.25 × (1 − a)**, reducing deviation chance by 25%, with the authored 0.6–0.9 range unchanged. [CF02](../worlds/base/ranged-counterplay.md) replaces the old immediate hit draw and subsequent 0.85 fleeing factor with saved straight flight and actual contact. No competence changes damage, range, ammunition or permission. This applies across admitted sling-like definitions, not bows or cosmetic names. Arithmetic and native release evidence do not establish balance, enjoyment or human appreciation; broader ST acceptance remains open.
 
 ## ST-L09 — Finite progression
 

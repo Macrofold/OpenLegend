@@ -8,7 +8,7 @@ This inventory owns newly proposed restrictions for [batch 05](../projects/paral
 
 ## AV-L02 — Equipment and finite contact guard
 
-**Adopted October 6, 2026.** The former single equipment-slot restriction and admitted occupied-port boundary now belong to [OB05](objects.md#ob05); the finite contact-only choice and unsupported defensive systems belong to [SD01](base-world.md#sd01--finite-chosen-shield-defense). [The shield profile](../worlds/base/shield-defense.md) remains the sole authored tuning/wording owner, and [AV02](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment) links actual native, PostgreSQL and browser evidence. This disposition replaces the proposed inventory here rather than maintaining a second editable copy.
+**Adopted October 6, 2026.** The former single equipment-slot restriction and admitted occupied-port boundary now belong to [OB05](objects.md#ob05); the finite contact defense (with CF02's supported straight projectile integration) choice and unsupported defensive systems belong to [SD01](base-world.md#sd01--finite-chosen-shield-defense). [The shield profile](../worlds/base/shield-defense.md) remains the sole authored tuning/wording owner, and [AV02](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av02--shield-defense-and-compatible-equipment) links actual native, PostgreSQL and browser evidence. This disposition replaces the proposed inventory here rather than maintaining a second editable copy.
 
 ## AV-L03 — Finite river casts and preparation
 

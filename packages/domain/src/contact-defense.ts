@@ -3,7 +3,7 @@ import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { sameDefinitionPin } from './state-owners.js';
 import { worldPosition } from './spatial-state.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
-import type { Entity, WorldState, WorldEvent } from './types.js';
+import type { Entity, WorldState, WorldEvent, Position } from './types.js';
 import { commitBodyEffects } from './living.js';
 import { emit } from './events.js';
 import { subjectNarration } from './narration.js';
@@ -95,6 +95,7 @@ export function contactImpact(
   source: Entity,
   defender: Entity,
   rawInjury: number,
+  incomingDirection?: Position,
 ): ContactImpact {
   const ordinary: ContactImpact = { rawInjury, preventedInjury: 0, injury: rawInjury };
   const action = defender.actor?.action,
@@ -122,8 +123,8 @@ export function contactImpact(
     return ordinary;
   const from = worldPosition(source),
     to = worldPosition(defender);
-  const dx = from.x - to.x,
-    dz = from.z - to.z,
+  const dx = incomingDirection?.x ?? from.x - to.x,
+    dz = incomingDirection?.z ?? from.z - to.z,
     length = Math.hypot(dx, dz);
   if (
     length <= 1e-8 ||
@@ -215,8 +216,9 @@ export function commitContactImpact(
   rawInjury: number,
   cause: string,
   events: WorldEvent[],
+  incomingDirection?: Position,
 ) {
-  const impact = contactImpact(world, source, defender, rawInjury);
+  const impact = contactImpact(world, source, defender, rawInjury, incomingDirection);
   const before = defender.actor!.health;
   consumeContactGuard(world, defender, impact);
   const committed = commitBodyEffects(

@@ -116,6 +116,16 @@ export function memoryCandidate(
     summary = awareness.intelligible
       ? `${relation}: ${JSON.stringify(awareness.content)}`
       : `${personalPronoun('subject')} heard indistinct speech.`;
+  } else if (awareness && awareness.eventType !== 'speech') {
+    // Event roles use the retained observation, never inferred causality or a new exposure.
+    // A projectile contact's source may be the struck body, not an unseen shooter.
+    const roles = [
+      [awareness.sourceId, 'source'],
+      [awareness.targetId, 'subject'],
+    ] as const;
+    for (const [id, role] of roles)
+      if (id && world.entities[id] && awarenessBindsSubject(world, actorId, awareness, id))
+        summary += ` Occurrence ${role}: ${id === actorId ? personalPronoun('object') : entityLabel(world, world.entities[id]!, actorId, 'indefinite')}.`;
   }
   const required =
     matches(requiredIds) ||
@@ -126,19 +136,19 @@ export function memoryCandidate(
     id: memory.id,
     kind: matches(conversationIds) ? 'conversation' : 'memory',
     text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${summary}`,
-    ...(awareness?.speech
+    ...(awareness
       ? {
           embeddingText: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${memory.summary}`,
         }
       : {}),
-    revision: awareness?.speech ? digest(memory) : digest({ ...memory, summary }),
+    revision: awareness ? digest(memory) : digest({ ...memory, summary }),
     required,
     requiredSource: required,
     automatic: matches(automaticIds),
     entityIds: [...new Set(memory.entityIds)].filter(
       (id) =>
         recognizesSubject(world, actorId, id) ||
-        (awareness?.eventType === 'speech' && awarenessBindsSubject(world, actorId, awareness, id)),
+        (!!awareness && awarenessBindsSubject(world, actorId, awareness, id)),
     ),
     at: memory.at,
     salience: memory.importance,

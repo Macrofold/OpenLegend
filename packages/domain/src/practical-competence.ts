@@ -581,7 +581,7 @@ export function validatePractice(world: WorldState): void {
     if (action?.competencePin) {
       const definition = practiceDefinition(world, action.competencePin.id);
       if (
-        !['hunt', 'practice-shot', 'coaching'].includes(action.type) ||
+        !['hunt', 'aim', 'shoot-once', 'practice-shot', 'coaching'].includes(action.type) ||
         !isDefinitionPin(action.competencePin) ||
         !definition ||
         !sameDefinitionPin(action.competencePin, definitionPin(definition))

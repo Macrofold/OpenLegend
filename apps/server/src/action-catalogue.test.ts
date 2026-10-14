@@ -50,6 +50,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     `fire-fuel:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'wood')!.id}:campfire`,
   ];
   expect(fire().map((action) => action.id)).toEqual([
+    'evade:point',
     'move',
     ...care(),
     'cook-base:cook-meat',
@@ -66,12 +67,13 @@ it('scopes object menus to their target, including relevant missing prerequisite
   const meat = 'fixture-meat';
   await editWorld(service, (world) => createItemLot(world, PLAYER_ID, 'raw_meat', 1, meat));
   expect(fire().map((action) => action.id)).toEqual([
+    'evade:point',
     'move',
     expect.stringMatching(/^cook-[a-f0-9]{64}$/),
     ...care(),
     'cook-base:cook-river-fish',
   ]);
-  expect(fire()[1]?.intent).toMatchObject({
+  expect(fire()[2]?.intent).toMatchObject({
     kind: 'command',
     command: {
       type: 'cook',
@@ -85,7 +87,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
   });
   expect(fire().find((action) => action.id.startsWith('cook-'))?.enabled).toBe(false);
   const reeds = actionCatalogue(service, { targetId: 'reeds' }).actions;
-  expect(reeds.map((action) => action.id)).toEqual(['move', 'gather-reeds']);
+  expect(reeds.map((action) => action.id)).toEqual(['evade:point', 'move', 'gather-reeds']);
   await editWorld(service, (world) => {
     world.entities.reeds!.resource!.quantity = 0;
   });
@@ -97,12 +99,14 @@ it('scopes object menus to their target, including relevant missing prerequisite
   const person = actionCatalogue(service, { targetId: NPC_ID }).actions;
   expect(person.map((action) => action.id).filter((id) => !id.startsWith('offer:'))).toEqual([
     `follow:${NPC_ID}`,
+    'evade:point',
     'move',
     `punch-${NPC_ID}`,
     `knife-${NPC_ID}:${inventoryFor(service.world, PLAYER_ID).find((item) => item.definitionId === 'knife')!.id}`,
     `talk-${NPC_ID}`,
     `teach-${NPC_ID}-${Object.values(service.world.recipes).find((recipe) => recipe.sourceCandidate.family.id === 'base:shield')!.id}`,
     `teach-${NPC_ID}-${Object.values(service.world.recipes).find((recipe) => recipe.sourceCandidate.family.id === 'base:fishing-line')!.id}`,
+    `invite-help:${NPC_ID}`,
     `invite-travel:${NPC_ID}`,
     `coaching-request:wilderness:sling-handling:${NPC_ID}`,
   ]);
@@ -114,7 +118,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     actionCatalogue(service, {
       position: { y: 0, x: 11, z: 13, surfaceId: 'terrain' },
     }).actions.map((action) => action.id),
-  ).toEqual(['move']);
+  ).toEqual(['evade:point', 'move']);
 });
 
 it('refreshes availability after pause and never previews a hidden target', async () => {

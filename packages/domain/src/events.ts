@@ -16,7 +16,7 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { perceiveSpeech, prepareSpeechWords } from './speech.js';
 import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
-import { soundOrigin, speechObservers } from './perception.js';
+import { soundOrigin, speechObservers, seesEntity } from './perception.js';
 import { appraiseEvent } from './worlds/base/appraisals.js';
 import { mutateExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
@@ -98,17 +98,29 @@ export function emit(
   targetId?: string,
   data?: WorldEvent['data'],
   scope: EventScope = 'external',
-): WorldEvent {
+  origin?: WorldEvent['origin'],
+): Readonly<WorldEvent> {
   return recordEvent(
     world,
     events,
     type,
     text,
-    type === 'speech' ? [] : eventAudience(world, type, source, scope),
+    type === 'speech'
+      ? []
+      : eventAudience(
+          world,
+          type,
+          source,
+          scope,
+          data?.['targetMustBeVisible'] === true ? targetId : undefined,
+        ),
     source,
     targetId,
     data,
     scope,
+    undefined,
+    undefined,
+    origin,
   );
 }
 
@@ -137,9 +149,13 @@ export function emitWitnessObservation(
   targetId: string,
   data?: WorldEvent['data'],
 ): WorldEvent {
-  const witnesses = eventAudience(world, type, source, 'external').filter(
-    (id) => id !== source.id && id !== targetId,
-  );
+  const witnesses = eventAudience(
+    world,
+    type,
+    source,
+    'external',
+    data?.['targetMustBeVisible'] === true ? targetId : undefined,
+  ).filter((id) => id !== source.id && id !== targetId);
   return recordEvent(world, events, type, text, witnesses, source, targetId, data, 'external');
 }
 
@@ -148,10 +164,19 @@ function eventAudience(
   type: string,
   source: Entity | undefined,
   scope: EventScope,
+  visibleTargetId?: string,
 ): string[] {
   // A control notice has no perceiver, not even its subject.
   if (scope === 'system') return [];
-  const audience = scope === 'private' || !source ? [] : externalAudience(world, source);
+  // Seeing the acting person does not reveal an unseen object's exact transfer.
+  // Native callers opt into this additional event-time observation requirement.
+  let audience = scope === 'private' || !source ? [] : externalAudience(world, source);
+  if (visibleTargetId !== undefined) {
+    const target = world.entities[visibleTargetId];
+    audience = target
+      ? audience.filter((id) => seesEntity(world, world.entities[id]!, target))
+      : [];
+  }
   if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
   return audience;
 }
@@ -175,7 +200,9 @@ export function acquireExposure(
       : '';
   const text =
     exposure.kind === 'place'
-      ? `I reached ${exposure.label}. ${exposure.description}`
+      ? exposure.reportedBy
+        ? `I read directions to ${exposure.label}, reported by ${exposure.reportedBy}. ${exposure.description}`
+        : `I reached ${exposure.label}. ${exposure.description}`
       : `I inspected ${exposure.label}${locationSuffix}. ${exposure.description}`;
   return recordEvent(
     world,
@@ -266,6 +293,7 @@ function recordEvent(
   scope: EventScope,
   awarenessBatch?: ExperienceMutation[],
   exposure?: import('./places.js').EncounterExposure,
+  origin?: WorldEvent['origin'],
 ): WorldEvent {
   const text = typeof narration === 'string' ? narration : renderNarration(world, narration);
   const boundedMetric = (value: unknown, fallback: number) =>
@@ -282,7 +310,8 @@ function recordEvent(
             [
               'crafted',
               'declaration-admitted',
-              'shot',
+              'shot-released',
+              'projectile-contact',
               'struck',
               'fire-out',
               'fire-lit',
@@ -298,15 +327,17 @@ function recordEvent(
   );
   const event: WorldEvent = {
     ...(exposure ? { exposure: cloneValue(exposure) } : {}),
-    ...(source
-      ? {
-          // Copy the committed pose without walking a live draft through proxy traps.
-          origin:
-            type === 'speech'
-              ? soundOrigin(source)
-              : { ...readOnlyDraftView(worldPosition(source)) },
-        }
-      : {}),
+    ...(origin
+      ? { origin: { ...origin } }
+      : source
+        ? {
+            // Copy the committed pose without walking a live draft through proxy traps.
+            origin:
+              type === 'speech'
+                ? soundOrigin(source)
+                : { ...readOnlyDraftView(worldPosition(source)) },
+          }
+        : {}),
     scope,
     id: nextId(world, 'event'),
     order: world.nextId,
@@ -380,7 +411,8 @@ function recordEvent(
       'fire-extinguished',
       'struck',
       'guarded',
-      'shot',
+      'shot-released',
+      'shot-ended',
       'body-effect',
       'moved',
       'action-stopped',

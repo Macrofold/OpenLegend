@@ -17,6 +17,20 @@ export interface BodyPolicy {
   version: number;
   reincarnation: import('./reincarnation.js').ReincarnationPolicy | null;
   lethalAttackReview: import('./combat-consent.js').LethalReviewPolicy | null;
+  evasion: null | {
+    bodyPlans: Array<import('./living.js').LivingBody['plan']>;
+    maximumDistance: number;
+    seconds: number;
+    repeatSeconds: number;
+    label: string;
+    description: string;
+  };
+  combat: null | {
+    targets: Record<'player' | 'npc' | 'native', Array<'player' | 'npc' | 'native'>>;
+    humanIssuedTargets: Array<'player' | 'npc' | 'native'>;
+    impactAttention: { importance: number; urgency: number };
+    unavailableText: string;
+  };
   zeroHealth: {
     player: 'incapacitate' | 'die';
     npc: 'incapacitate' | 'die';
@@ -93,6 +107,8 @@ export function validateBodyPolicy(
     'version',
     'reincarnation',
     'lethalAttackReview',
+    'combat',
+    'evasion',
     'zeroHealth',
     'recovery',
     'revival',
@@ -102,6 +118,49 @@ export function validateBodyPolicy(
     'backgroundThinking',
   ]);
   validateReincarnationPolicy(policy.reincarnation);
+  if (policy.evasion !== null) {
+    fields(policy.evasion, [
+      'bodyPlans',
+      'maximumDistance',
+      'seconds',
+      'repeatSeconds',
+      'label',
+      'description',
+    ]);
+    const p = policy.evasion;
+    if (
+      !Array.isArray(p.bodyPlans) ||
+      !p.bodyPlans.length ||
+      new Set(p.bodyPlans).size !== p.bodyPlans.length ||
+      p.bodyPlans.some((plan) => !['biped', 'quadruped', 'avian'].includes(plan)) ||
+      ![p.maximumDistance, p.seconds, p.repeatSeconds].every((n) => Number.isFinite(n) && n > 0)
+    )
+      throw new Error('Invalid installed evasion profile.');
+    text(p.label);
+    text(p.description);
+  }
+  if (policy.combat !== null) {
+    fields(policy.combat, ['targets', 'humanIssuedTargets', 'impactAttention', 'unavailableText']);
+    fields(policy.combat.impactAttention, ['importance', 'urgency']);
+    if (
+      !Object.values(policy.combat.impactAttention).every(
+        (value) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 10,
+      )
+    )
+      throw new Error('Invalid combat impact attention.');
+    fields(policy.combat.targets, ['player', 'npc', 'native']);
+    for (const targets of [
+      ...Object.values(policy.combat.targets),
+      policy.combat.humanIssuedTargets,
+    ])
+      if (
+        !Array.isArray(targets) ||
+        new Set(targets).size !== targets.length ||
+        targets.some((target) => !['player', 'npc', 'native'].includes(target))
+      )
+        throw new Error('Invalid combat participation targets.');
+    text(policy.combat.unavailableText);
+  }
   if (policy.lethalAttackReview !== null) {
     fields(policy.lethalAttackReview, ['title', 'description', 'confirmLabel', 'cancelLabel']);
     for (const value of Object.values(policy.lethalAttackReview)) text(value);

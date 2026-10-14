@@ -54,6 +54,7 @@ import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import type { ActorComponent, Command, Outcome, WorldState } from './types.js';
+import { validateCombatHelpReference } from './outings.js';
 
 /** The item kind a producing step yields when that is known before it runs, from the step's
  * own target or the world's installed preparation definition. */
@@ -1090,6 +1091,10 @@ export function validateAgency(world: WorldState): void {
         throw new Error('Saved pending work requires its installed action support.');
       if (plan && !validOutputReferences(plan.steps.map((step) => step.command)))
         throw new Error('Invalid saved plan output references.');
+      if (plan?.status === 'active' || plan?.status === 'blocked')
+        for (const step of plan.steps)
+          if (step.status === 'queued' || step.status === 'running' || step.status === 'blocked')
+            validateCombatHelpReference(world, entity.id, step.command);
     }
     for (const step of [
       ...(agency.plan?.steps ?? []),
@@ -1236,7 +1241,14 @@ export function deferAttempt(
 
 /** Finite native command families only; saved JSON never installs an executor. */
 export function isPhysicalCommand(command: Command): boolean {
-  if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
+  if (
+    !command ||
+    !isSafeRecordId(command.id) ||
+    !isSafeRecordId(command.actorId) ||
+    (command.humanInitiated !== undefined && command.humanInitiated !== true) ||
+    (command.combatHelpId !== undefined && !isSafeRecordId(command.combatHelpId))
+  )
+    return false;
   if (
     'autoEquip' in command &&
     command.autoEquip !== undefined &&
@@ -1277,6 +1289,7 @@ export function isPhysicalCommand(command: Command): boolean {
         command.minimumHeld >= 0
       );
     case 'move':
+    case 'evade':
       return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
     case 'follow':
       return (
@@ -1327,6 +1340,8 @@ export function isPhysicalCommand(command: Command): boolean {
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId))
       );
     case 'practice-shot':
+    case 'aim':
+    case 'shoot-once':
     case 'hunt':
       return (
         isSafeRecordId(command.targetId) &&

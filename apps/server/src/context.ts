@@ -1,5 +1,8 @@
 import { nativeCommandKind } from './native-command-kind.js';
 import { nativeCommandSupported, rangedTargetAllowed, rangedPolicy } from '@open-legend/domain';
+
+import { combatHelpBinding, combatHelpFor, BASE_COMBAT_HELP } from '@open-legend/domain';
+import { domainCommand } from './cognition.js';
 import { outingActions } from './outing-view.js';
 import {
   isEquipped,
@@ -36,7 +39,14 @@ import {
   availableStrikes,
   strikeDefinition,
   huntingDescription,
-  observedAnimalHealth,
+  rangedChoiceLabel,
+  BASE_EVASION_TEXT,
+  nativeActivityViews,
+  possessionItems,
+  evasionChoices,
+  observedCombatActivity,
+  observedAttackPreparation,
+  observedBodyHealth,
   describeAttack,
 } from '@open-legend/domain';
 import {
@@ -102,30 +112,57 @@ function describeTargets(
   const health = new Map<string, string>();
   const positions = new Map<string, ReturnType<typeof effectivePosition>>();
   const origin = worldPosition(service.world.entities[actorId]!);
-  return candidates
+  const help = combatHelpFor(service.world, actorId);
+  const purpose = help?.recipientId === actorId ? BASE_COMBAT_HELP.purpose : undefined;
+  const choices = candidates
     .filter(
       (candidate) =>
         !candidate.command ||
         nativeCommandSupported(service.world, nativeCommandKind(candidate.command.type)),
     )
-    .map((candidate) => {
-      const command = candidate.command;
-      const id = command && 'targetId' in command ? command.targetId : undefined;
-      const target = id ? service.world.entities[id] : undefined;
-      if (target && !health.has(target.id)) {
-        health.set(target.id, observedAnimalHealth(service.world, actorId, target.id));
-        positions.set(target.id, effectivePosition(service.world, target.id));
-      }
-      const position = target && positions.get(target.id);
-      // Descriptions already use permitted names where they are constructed.
-      // Substring replacement here would corrupt personal names and their articles.
-      return target && position
-        ? {
-            ...candidate,
-            description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
-          }
-        : candidate;
+    .flatMap((candidate, index) => {
+      if (!candidate.command || !purpose) return [candidate];
+      const command = { ...candidate.command, purpose };
+      const combatHelpId = combatHelpBinding(service.world, actorId, command);
+      if (!combatHelpId) return [candidate];
+      // Existing goal-owned work already helps; only the unbound alternative ends consent.
+      // docs/worlds/base/social.md#voluntary-combat-help
+      const ordinaryHelps = combatHelpBinding(service.world, actorId, candidate.command);
+      return [
+        ordinaryHelps
+          ? candidate
+          : {
+              ...candidate,
+              description: BASE_COMBAT_HELP.separateActionDescription(candidate.description),
+            },
+        {
+          id: `help:${index}`,
+          description: BASE_COMBAT_HELP.actionDescription(
+            help!.combat!.labels[actorId]!,
+            candidate.description,
+          ),
+          command: { ...command, combatHelpId },
+        },
+      ];
     });
+  return choices.map((candidate) => {
+    const command = candidate.command;
+    const id = command && 'targetId' in command ? command.targetId : undefined;
+    const target = id ? service.world.entities[id] : undefined;
+    if (target && !health.has(target.id)) {
+      health.set(target.id, observedBodyHealth(service.world, actorId, target.id));
+      positions.set(target.id, effectivePosition(service.world, target.id));
+    }
+    const position = target && positions.get(target.id);
+    // Descriptions already use permitted names where they are constructed.
+    // Substring replacement here would corrupt personal names and their articles.
+    return target && position
+      ? {
+          ...candidate,
+          description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
+        }
+      : candidate;
+  });
 }
 
 export const CONTEXT_BYTE_LIMIT = 100_000;
@@ -207,7 +244,14 @@ export function buildContext(
         ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.danger > 0 } }
         : {}),
       ...(entity.actor
-        ? { activity: entity.actor.action?.type ?? 'idle', alive: entity.actor.alive }
+        ? {
+            activity: entity.actor.action?.type ?? 'idle',
+            alive: entity.actor.alive,
+            ...(() => {
+              const combat = observedCombatActivity(service.world, observed.actor, entity);
+              return combat ? { combat } : {};
+            })(),
+          }
         : {}),
     })),
     // Ownership is implicit in this actor-scoped list; IDs and quantities are exact.
@@ -343,6 +387,7 @@ export function npcCandidates(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );
   const inventory = observed.inventory.filter((item) => item.quantity > 0);
+  let shotView: ReturnType<typeof nativeActivityViews> | undefined;
   const castTools = fishingTools(service.world, inventory);
   const gatheringTools = carriedGatheringTools(observed);
   const quantity = (definitionId: string) =>
@@ -358,7 +403,7 @@ export function npcCandidates(
       targetId: target.id,
       attributeId: definition.id,
     };
-    return service.previewCommand(command, actorId).ok
+    return service.previewCommand(command, actorId, false).ok
       ? [
           {
             id: `replenish-${target.id}`,
@@ -405,7 +450,7 @@ export function npcCandidates(
     ...inspectedRecipeRecords(service.world, actorId).flatMap(({ definition, recipe, command }) => {
       if (service.world.knowledge[actorId]?.some((record) => record.recipeId === recipe.id))
         return [];
-      return service.previewCommand(command, actorId).ok
+      return service.previewCommand(command, actorId, false).ok
         ? [
             {
               id: `learn-record-${command.itemId}`,
@@ -418,7 +463,7 @@ export function npcCandidates(
     ...replenishments,
     ...observed.visibleEntities.flatMap((target) =>
       pickupActions(service.world, observed.actor, target, (command) =>
-        service.previewCommand(command, actorId),
+        service.previewCommand(command, actorId, false),
       )
         .filter((option) => option.availability.ok)
         .map((option) => ({
@@ -531,10 +576,10 @@ export function npcCandidates(
         };
         // The same native owner checks unknown load, nesting, reservations and access.
         // If the whole lot will not fit, offer one exact unit only when it is admitted.
-        if (!service.previewCommand(command, actorId).ok) {
+        if (!service.previewCommand(command, actorId, false).ok) {
           if (available === 1) continue;
           command.quantity = 1;
-          if (!service.previewCommand(command, actorId).ok) continue;
+          if (!service.previewCommand(command, actorId, false).ok) continue;
         }
         suggestions++;
         const name = service.world.itemDefinitions[item.definitionId]!.name;
@@ -559,7 +604,7 @@ export function npcCandidates(
     .filter((e) => e.actor?.alive && e.id !== actorId)
     .slice(0, 4)) {
     const command: CommandInput = { type: 'follow', targetId: target.id };
-    if (service.previewCommand(command, actorId).ok)
+    if (service.previewCommand(command, actorId, false).ok)
       actions.push({
         id: `follow:${target.id}`,
         description: `Follow ${namePhrase(target, 'definite')} while visible; no stealth or automatic sunset stop.`,
@@ -638,13 +683,13 @@ export function npcCandidates(
         option.command.handoverOperation === 'offer' ||
         option.command.handoverOperation === 'counter';
       if (isOffer && offerCandidates >= (typed ? 24 : 12)) continue;
-      if (!service.previewCommand(option.command, actorId).ok) continue;
+      if (!service.previewCommand(option.command, actorId, false).ok) continue;
       if (isOffer) offerCandidates++;
       actions.push({ id: option.id, description: option.description, command: option.command });
     }
   }
   for (const choice of outingActions(service.world, actorId)) {
-    if (service.previewCommand(choice.command, actorId).ok)
+    if (service.previewCommand(choice.command, actorId, false).ok)
       actions.push({ id: choice.id, description: choice.description, command: choice.command });
   }
   // Starting another timed task would discard actual work/materials. The actor can
@@ -654,13 +699,28 @@ export function npcCandidates(
     for (const option of competenceOptions(service.world, actorId, target, inventory))
       if (
         !(actor.action && option.command.type === 'practice-shot') &&
-        service.previewCommand(option.command, actorId).ok
+        service.previewCommand(option.command, actorId, false).ok
       )
         actions.push({
           id: option.id,
           description: `${option.description} ${practiceContext}`,
           command: option.command,
         });
+  if (
+    observed.visibleEntities.some(
+      (e) => e.actor?.alive && observedCombatActivity(service.world, observed.actor, e),
+    ) ||
+    combatRecoveryDeadline(service.world, observed.actor) > service.world.simTime
+  )
+    for (const choice of evasionChoices(service.world, observed.actor)) {
+      const command: CommandInput = { type: 'evade', position: choice.destination };
+      if (service.previewCommand(command, actorId, false).ok)
+        actions.push({
+          id: `evade:${choice.label}`,
+          description: `${choice.label}. ${choice.description} ${BASE_EVASION_TEXT.destinationScope}`,
+          command,
+        });
+    }
   if (actor.action) return describeTargets(service, actorId, actions);
 
   if (visionRadius(service.world, observed.actor) === 0) {
@@ -708,7 +768,7 @@ export function npcCandidates(
       approach?.status === 'pending' ? approach.request.destinations[0] : approach?.path.at(-1);
     if (!position) continue;
     const command: CommandInput = { type: 'move', position };
-    if (service.previewCommand(command, actorId).ok)
+    if (service.previewCommand(command, actorId, false).ok)
       actions.push({
         id: `approach:${entity.id}`,
         description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id, 'definite')}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
@@ -749,7 +809,7 @@ export function npcCandidates(
         (definition.launcher && compatibleAmmo(definition.launcher.ammunitionKind)))
     ) {
       const command: CommandInput = { type: 'equip', itemId: item.id };
-      if (!service.previewCommand(command, actorId).ok) continue;
+      if (!service.previewCommand(command, actorId, false).ok) continue;
       actions.push({
         id: `equip:${item.id}`,
         description: `Equip ${namePhrase(definition)}: ${definition.description}`,
@@ -789,7 +849,7 @@ export function npcCandidates(
           }),
       ]
     : [];
-  // Only an actually visible prepared contact attack makes defense relevant here. A guard
+  // Visible contact or ranged preparation makes supported defense relevant here. A guard
   // offer neither selects it nor binds an unperceived attacker or future pursuit.
   const shields = (readyForCombat ? inventory : []).filter(
     (item) =>
@@ -797,10 +857,7 @@ export function npcCandidates(
       !equipmentProblem(service.world, actorId, item.id, 'guard'),
   );
   for (const target of observed.visibleEntities.filter(
-    (e) =>
-      e.actor?.alive &&
-      e.actor.action?.type === 'strike' &&
-      e.actor.action.strikePhase === 'windup',
+    (e) => e.actor?.alive && observedAttackPreparation(service.world, observed.actor, e),
   ))
     for (const shield of shields) {
       const profile = definitions.get(shield.definitionId)!.contactDefense!;
@@ -810,7 +867,7 @@ export function npcCandidates(
         targetId: target.id,
         autoEquip: true,
       };
-      if (service.previewCommand(command, actorId).ok)
+      if (service.previewCommand(command, actorId, false).ok)
         actions.push({
           id: `guard:${shield.id}:${target.id}`,
           description: `${equipmentChangeDescription(service.world, actorId, shield.id)}${guardChoiceLabel(definitions.get(shield.definitionId)!.name, target.name)}. ${guardDescription(profile)}`,
@@ -823,10 +880,12 @@ export function npcCandidates(
     // geometry used by native movement, never a search for hidden entities/items.
     // Ranged offers use their own reach, even when the target cannot be approached
     // for contact. Equal ranges share geometry work within this observed snapshot.
-    if (rangedTargetAllowed(service.world, entity)) {
+    if (rangedTargetAllowed(service.world, entity) && entity.id !== actorId) {
       const reachable = new Map<number, boolean>();
       for (const { item, definition, launcher, ammunition } of launchers) {
-        const description = `${rangedPolicy(service.world)!.actionLabel} ${namePhrase(entity)} with ${namePhrase(definition)}. ${rangedPolicy(service.world)!.scope} ${rangedPolicy(service.world)!.accuracyExplanation}`;
+        const description =
+          huntingDescription(entity.actor?.species, 'launcher', entity, definition) ??
+          `${rangedChoiceLabel('shoot-once', namePhrase(entity), namePhrase(definition))}.`;
         if (!reachable.has(launcher.range))
           reachable.set(
             launcher.range,
@@ -835,16 +894,21 @@ export function npcCandidates(
           );
         if (!reachable.get(launcher.range)) continue;
         const command: CommandInput = {
-          type: 'hunt',
+          type: entity.animal ? 'hunt' : 'shoot-once',
           autoEquip: true,
           targetId: entity.id,
           itemId: item.id,
           ammunitionId: ammunition.id,
         };
-        if (!service.previewCommand(command, actorId).ok) continue;
+        if (!service.previewCommand(command, actorId, false).ok) continue;
         actions.push({
-          id: `hunt:${item.id}:${entity.id}`,
-          description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: rangedPolicy(service.world)!.windupSeconds })}`,
+          id: `shot:${item.id}:${entity.id}`,
+          description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${(shotView ??=
+            nativeActivityViews(service.world, [...possessionItems(service.world, actorId)]))(
+            domainCommand(command, actorId, 'offered-shot'),
+          )
+            .facts.map((fact) => `${fact.name}: ${String(fact.value)}`)
+            .join('; ')}`,
           command,
         });
       }
@@ -871,7 +935,7 @@ export function npcCandidates(
           itemId: definition.weaponItemId,
           targetId: entity.id,
         };
-        if (!service.previewCommand(command, actorId).ok) continue;
+        if (!service.previewCommand(command, actorId, false).ok) continue;
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
           description: `${definition.weaponItemId ? equipmentChangeDescription(service.world, actorId, definition.weaponItemId) : ''}${description ?? `${strikeDefinition(definition.id, service.world, definition.weaponItemId, entity)?.label ?? definition.label}. Approach and attempt one attack.`} ${definition.weaponItemId ? `${tool}: ${definitions.get(definition.id)!.description}` : `${definition.label} with bare hands.`} ${describeAttack(definition)}`,
@@ -908,7 +972,7 @@ export function npcCandidates(
         command: { type: 'harvest', targetId: entity.id },
       });
     for (const option of fishingOptions(service.world, castTools, entity))
-      if (service.previewCommand(option.command, actorId).ok)
+      if (service.previewCommand(option.command, actorId, false).ok)
         actions.push({
           id: option.id,
           description: `${option.label} at ${entity.name}. ${option.description}`,
@@ -917,7 +981,7 @@ export function npcCandidates(
     // Fire care is offered per perceived fire from current state; native admission rechecks it.
     if (entity.heat)
       for (const option of fireCareOptions(service.world, inventory, entity))
-        if (service.previewCommand(option.command, actorId).ok)
+        if (service.previewCommand(option.command, actorId, false).ok)
           actions.push({ id: option.id, description: option.description, command: option.command });
     if (entity.heat?.lit) {
       let previous = worldPosition(observed.actor);
@@ -949,7 +1013,7 @@ export function npcCandidates(
     if (!cookingFire) continue;
     const option = cookingOptions([preparation], cookingFire.id)[0]!;
     const command = option.command;
-    if (service.previewCommand(command, actorId).ok)
+    if (service.previewCommand(command, actorId, false).ok)
       actions.push({
         id: option.id,
         description: `${option.definition.description} Work takes ${option.definition.workSeconds} game seconds after approach; spent inputs are not returned on interruption.`,

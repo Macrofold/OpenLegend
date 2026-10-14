@@ -30,6 +30,7 @@ import {
   bodyContext,
   bodyPolicy,
   bodyEligibilityRevision,
+  subjectReferenceCurrent,
   attributeDefinition,
   readAttribute,
   supportsManualWork,
@@ -616,8 +617,26 @@ export async function prepareDecision(
     ...(retainedEvidence ?? []).map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
   ];
   const outcomeBinding = JSON.stringify(outcomeIds);
+  const rememberedSubjects = new Set(
+    selection.selected
+      .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
+      .flatMap((candidate) => candidate.entityIds),
+  );
   const validatePrepared = async (flush = true) => {
     await conversation.validate(flush, sources);
+    // Attention/generation can outlive an unnamed person's observation. Historical
+    // source revisions cannot authorize rebinding that old account to a new exposure.
+    // docs/memory-architecture.md#personal-perspective-and-acquisition
+    for (const id of rememberedSubjects)
+      if (
+        !subjectReferenceCurrent(
+          service.world,
+          actorId,
+          id,
+          world.perceptionEpisodes?.[actorId]?.[id] ?? null,
+        )
+      )
+        throw new Error('A remembered participant changed observation; discard stale context.');
     // The same fence runs after generation: a newly completed action is material
     // evidence even when none of the previously selected memory records changed.
     if (outcomeBinding !== JSON.stringify(requiredOutcomeMemoryIds(service.world, actorId)))

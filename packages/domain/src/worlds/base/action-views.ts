@@ -1,4 +1,7 @@
-import { practiceDefinition } from '../../practical-competence.js';
+import { observedBodyHealth } from './hunting.js';
+import { bodyPolicy } from '../../body-policy.js';
+import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import { practiceDefinition, toolPracticeDefinition } from '../../practical-competence.js';
 import { preparationDefinition } from '../../food-preparation.js';
 import { castDefinition } from '../../finite-casts.js';
 import type { Command, Entity, ItemInstance, WorldState } from '../../types.js';
@@ -10,11 +13,12 @@ import { seesEntity } from '../../perception.js';
 import { observerDescription } from './knowledge.js';
 import { strikeDefinition, describeAttack } from '../../strikes.js';
 import { BASE_ACTION_DEFAULTS } from './actions.js';
-import { rangedPolicy, rangedApproachRange } from '../../ranged-policy.js';
+import { rangedPolicy, rangedApproachRange, shotPreparationSeconds } from '../../ranged-policy.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
 import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
+import { evasionDescription } from './combat-views.js';
 
 export const BASE_FOOD_ACTION_WORDING = {
   cookingDescription:
@@ -49,7 +53,9 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
   const selected = offers.find(
     (offer) =>
       (offer.command.type === 'strike' && offer.command.itemId === equipment.id) ||
-      (offer.command.type === 'hunt' && !!definition?.launcher) ||
+      (['hunt', 'aim', 'shoot-once'].includes(offer.command.type) &&
+        offer.command.itemId === equipment.id &&
+        !!definition?.launcher) ||
       (offer.command.type === 'practice-shot' && offer.command.itemId === equipment.id) ||
       (offer.command.type === 'gather' &&
         !!definition?.gatheringTool &&
@@ -93,6 +99,9 @@ function activityView(
   const names: Partial<Record<Command['type'], string>> = {
     strike: 'Attack once',
     hunt: 'Hunt once',
+    aim: BASE_RANGED_TEXT.aimName,
+    'shoot-once': BASE_RANGED_TEXT.shotName,
+    'release-shot': BASE_RANGED_TEXT.shootingName,
     harvest: 'Harvest',
     cook: 'Cook',
     fish: BASE_FOOD_ACTION_WORDING.fishingLabel,
@@ -101,6 +110,7 @@ function activityView(
     equip: 'Equip',
     guard: 'Guard with shield',
     move: 'Move',
+    evade: bodyPolicy(world)?.evasion?.label,
     gather: 'Gather',
     prepare: 'Prepare',
     craft: 'Make',
@@ -161,10 +171,11 @@ function activityView(
       value: directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8]!,
       critical: true,
     });
-    if (target.animal && target.actor)
+    const health = observedBodyHealth(world, command.actorId, target.id);
+    if (health)
       view.facts.push({
         name: 'health',
-        value: `${target.actor.health}/${target.actor.body?.maxHealth ?? 'unknown'}`,
+        value: health,
         critical: true,
       });
   }
@@ -207,6 +218,15 @@ function activityView(
       critical: true,
     });
   }
+  if (command.type === 'evade' && actor) {
+    const description = evasionDescription(world, actor, command.destination);
+    if (description)
+      view.facts.push({
+        name: 'movement',
+        value: description,
+        critical: true,
+      });
+  }
   if (command.type === 'strike') {
     const profile =
       !command.weaponItemId || item
@@ -221,7 +241,12 @@ function activityView(
       });
     }
   }
-  if (command.type === 'hunt' && definition?.launcher && rangedPolicy(world)) {
+  if (
+    ['hunt', 'aim', 'shoot-once'].includes(command.type) &&
+    'ammoItemId' in command &&
+    definition?.launcher &&
+    rangedPolicy(world)
+  ) {
     const compatible = (item: ItemInstance) =>
       world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
       definition.launcher!.ammunitionKind;
@@ -236,12 +261,13 @@ function activityView(
           );
     const ammo = ammunition && world.itemDefinitions[ammunition.definitionId];
     view.facts.push({
-      name: 'attack',
-      value: describeAttack({
-        ...definition.launcher,
-        damage: definition.launcher.damage + (ammo?.ammunition?.damageBonus ?? 0),
-        workSeconds: rangedPolicy(world)!.windupSeconds,
-      }),
+      name: 'shot',
+      value: `${definition.launcher.damage + (ammo?.ammunition?.damageBonus ?? 0)} injury before protection; range ${definition.launcher.range} m; base aim steadiness ${Math.round(definition.launcher.accuracy * 100)}%; straight flight ${definition.launcher.flightSpeed} m per game second. Movement and solid cover determine contact.`,
+      critical: false,
+    });
+    view.facts.push({
+      name: 'preparation',
+      value: `${shotPreparationSeconds(world, toolPracticeDefinition(world, definition)?.practice)} game seconds after any approach; ${command.type === 'aim' ? 'then choose Shoot or Cancel aim' : 'then releases one projectile automatically'}`,
       critical: true,
     });
     view.facts.push({
@@ -479,7 +505,10 @@ function nativeCatalogueCommitments(
   const heldItemId =
     command.type === 'guard'
       ? command.itemId
-      : command.type === 'hunt' || command.type === 'strike'
+      : command.type === 'hunt' ||
+          command.type === 'aim' ||
+          command.type === 'shoot-once' ||
+          command.type === 'strike'
         ? command.weaponItemId
         : undefined;
   if (heldItemId)
@@ -487,9 +516,13 @@ function nativeCatalogueCommitments(
       'Equipment',
       `${'autoEquip' in command && command.autoEquip ? equipmentChangeDescription(world, command.actorId, heldItemId) : ''}Requires this exact item to be held${command.type === 'guard' ? '; guarding stays in place' : '; approach is automatic'}`,
     ]);
-  if (command.type === 'hunt') {
-    const policy = rangedPolicy(world);
-    if (policy) facts.push(['Time', `${policy.windupSeconds} seconds of game time, plus approach`]);
+  if (command.type === 'hunt' || command.type === 'aim' || command.type === 'shoot-once') {
+    const tool = command.weaponItemId && itemFor(world, command.weaponItemId);
+    const definition = tool && world.itemDefinitions[tool.definitionId];
+    facts.push([
+      'Time',
+      `${shotPreparationSeconds(world, definition ? toolPracticeDefinition(world, definition)?.practice : undefined)} seconds of game time, plus approach`,
+    ]);
     if (command.ammoItemId) {
       const projectile = activityView(
         world,
@@ -505,7 +538,12 @@ function nativeCatalogueCommitments(
     } else if (command.weaponItemId)
       facts.push(['Ammunition', 'No compatible accessible, unreserved projectile is available.']);
   }
-  if (command.type === 'hunt' || command.type === 'strike')
+  if (
+    command.type === 'hunt' ||
+    command.type === 'aim' ||
+    command.type === 'shoot-once' ||
+    command.type === 'strike'
+  )
     facts.push([
       'Uncertainty',
       'An attempt, not a promised hit or kill; range and line of effect are checked at impact',
@@ -519,6 +557,33 @@ export function nativeCatalogueView(
   world: WorldState,
   items: readonly ItemInstance[],
 ): (command: Command) => ActivityView {
+  const possessions = prepareViewPossessions(world, items);
+  return (command) => {
+    const view = activityView(world, command, possessions);
+    for (const [name, value] of nativeCatalogueCommitments(world, command, possessions))
+      view.facts.push({ name, value, critical: true });
+    return view;
+  };
+}
+/** Share physical naming and exact ammunition reads without adding catalogue-only facts. */
+export function nativeActivityViews(
+  world: WorldState,
+  items: readonly ItemInstance[],
+): (command: Command) => ActivityView {
+  let possessions: ViewPossessions | undefined;
+  return (command) =>
+    activityView(
+      world,
+      command,
+      ('weaponItemId' in command && command.weaponItemId) || ('itemId' in command && command.itemId)
+        ? (possessions ??= prepareViewPossessions(world, items))
+        : undefined,
+    );
+}
+function prepareViewPossessions(
+  world: WorldState,
+  items: readonly ItemInstance[],
+): ViewPossessions {
   const counts = new Map<string, number>(),
     ordinals = new Map<string, number>();
   for (const item of items) {
@@ -532,15 +597,9 @@ export function nativeCatalogueView(
     ordinals.set(name, ordinal);
     names.set(item.id, toolName(name, ordinal, counts.get(name)!));
   }
-  const possessions: ViewPossessions = {
+  return {
     items,
     names,
     byId: new Map(items.map((item) => [item.id, item])),
-  };
-  return (command) => {
-    const view = activityView(world, command, possessions);
-    for (const [name, value] of nativeCatalogueCommitments(world, command, possessions))
-      view.facts.push({ name, value, critical: true });
-    return view;
   };
 }

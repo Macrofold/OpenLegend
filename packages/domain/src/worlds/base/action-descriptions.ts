@@ -1,3 +1,5 @@
+import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
+import { BASE_EVASION_TEXT } from './ranged-counterplay.js';
 import { BASE_OUTING } from './outing-policy.js';
 import { BASE_CONSTRUCTION_DESCRIPTIONS } from './canopies.js';
 import { BASE_GUARD_TEXT } from './shield-defense.js';
@@ -35,6 +37,10 @@ export const BASE_COMMAND_DESCRIPTIONS: Record<string, string> = {
   'withdraw-attempt': 'Decline or withdraw a pending action; ongoing work is unchanged.',
   follow:
     'Follow a currently perceived actor, stopping when the target is lost or the activity is interrupted. No attack or stealth is implied.',
+  evade: BASE_EVASION_TEXT.description,
+  aim: BASE_RANGED_TEXT.aimDescription,
+  'shoot-once': BASE_RANGED_TEXT.shotDescription,
+  'release-shot': BASE_RANGED_TEXT.releaseDescription,
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',
   gather:
     'Approach a resource and collect a small batch into your inventory. Supplies at each source are finite.',

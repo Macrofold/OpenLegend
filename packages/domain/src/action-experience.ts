@@ -28,6 +28,8 @@ import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { cloneValue } from './draft.js';
 import { activityManifest } from './world-modules.js';
 
+import { validateCombatHelpReference } from './outings.js';
+
 /** Admission bounds, not promises about how much an actor remembers. Historical
  * records can live in the repository after leaving the resident working set.
  * docs/projects/completed/action-experience-tech-design.md#four-records-one-execution-owner
@@ -102,8 +104,8 @@ export interface ActivityOccurrence {
     ammunitionItemId: string;
     ammunitionDefinitionId: string;
     quantity: 1;
-    hit: boolean;
-    damage: number;
+    hit?: boolean;
+    damage?: number;
   };
   id: string;
   actorId: string;
@@ -449,9 +451,12 @@ export function beginActivity(
   parentId?: string,
 ): ActivityOccurrence | Outcome {
   // A learned success may reproduce the physical action, never a human's one-attack consent.
-  const { humanInitiated: _human, ...recordable } = command;
+  const { humanInitiated: _human, combatHelpId: _help, ...recordable } = command;
   command = recordable;
-  if (command.type === 'strike' || command.type === 'hunt') {
+  if (
+    ['strike', 'hunt', 'aim', 'shoot-once'].includes(command.type) &&
+    'lethalPermission' in command
+  ) {
     const { lethalPermission: _permission, ...physical } = command;
     command = physical;
   }
@@ -1281,7 +1286,7 @@ export function validateActionExperience(world: WorldState): void {
       const release = entry.release;
       if (
         release &&
-        (!['hunt', 'practice-shot'].includes(entry.command.type) ||
+        (!['hunt', 'practice-shot', 'aim', 'shoot-once'].includes(entry.command.type) ||
           !isSafeRecordId(release.eventId) ||
           !isDefinitionPin(release.tool) ||
           (release.family !== undefined && !isDefinitionPin(release.family)) ||
@@ -1294,11 +1299,13 @@ export function validateActionExperience(world: WorldState): void {
           !isSafeRecordId(release.ammunitionItemId) ||
           !isSafeRecordId(release.ammunitionDefinitionId) ||
           release.quantity !== 1 ||
-          typeof release.hit !== 'boolean' ||
-          !Number.isFinite(release.damage) ||
-          release.damage < 0 ||
-          (!release.hit && release.damage !== 0) ||
-          (entry.command.type === 'practice-shot' && release.damage !== 0))
+          (release.hit !== undefined && typeof release.hit !== 'boolean') ||
+          (release.damage !== undefined &&
+            (!Number.isFinite(release.damage) || release.damage < 0)) ||
+          (release.hit === false && release.damage !== undefined && release.damage !== 0) ||
+          (entry.command.type === 'practice-shot' &&
+            release.damage !== undefined &&
+            release.damage !== 0))
       )
         throw new Error('Invalid committed shot evidence.');
       validateStockResolution(entry);
@@ -1465,6 +1472,8 @@ function validateExecution(
   const state = world.actionExperience,
     simTime = world.simTime;
   exactFields(execution, [
+    'combatHelpId',
+    'humanInitiated',
     'methodId',
     'request',
     'bindings',
@@ -1483,6 +1492,8 @@ function validateExecution(
     'terminal',
   ]);
   if (
+    (execution.combatHelpId !== undefined && !isSafeRecordId(execution.combatHelpId)) ||
+    (execution.humanInitiated !== undefined && execution.humanInitiated !== true) ||
     !execution.bindings ||
     typeof execution.bindings !== 'object' ||
     Array.isArray(execution.bindings) ||
@@ -1492,6 +1503,8 @@ function validateExecution(
     Array.isArray(execution.outputs)
   )
     throw new Error('Invalid saved activity execution shape.');
+  if (plan.status === 'active' || plan.status === 'blocked')
+    validateCombatHelpReference(world, actorId, execution);
   {
     const method = execution.request
       ? undefined

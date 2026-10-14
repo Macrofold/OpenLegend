@@ -2,6 +2,8 @@ import { nativeCommandKind } from './native-command-kind.js';
 import { commandDescriptions, installedActionMeaning } from '@open-legend/domain';
 import {
   BASE_OUTING,
+  BASE_RANGED_TEXT,
+  BASE_EVASION_TEXT,
   BASE_CONSTRUCTION_DESCRIPTIONS,
   equippedItem,
   guardDescription,

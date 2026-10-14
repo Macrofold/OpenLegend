@@ -6,28 +6,47 @@ import {
   affectedOutingIds,
 } from './outing-index.js';
 export { nextOutingDeadline } from './outing-index.js';
-import type { SurfacePoint } from '@open-legend/spatial';
+import type { SurfacePoint, WorldPoint } from '@open-legend/spatial';
 import type { Command, Outcome, WorldEvent, WorldState } from './types.js';
 import { outcome, emit, canonicalJson } from './events.js';
 import { person } from './narration.js';
 import { nextId } from './data.js';
 import { cloneValue, changedDraftEntityIds } from './draft.js';
-import { isSafeRecordId, getOwn } from './records.js';
+import { isSafeRecordId, getOwn, hasRecordFields } from './records.js';
 import { activelyParticipates } from './participation-state.js';
 import { seesEntity } from './perception.js';
 import { canReachEntity } from './spatial.js';
 import { nativeOperationAvailable } from './kernel.js';
-import { cancelPlan, discardSuspended, pauseRefusal, linkPlanResult } from './agency.js';
+import {
+  cancelPlan,
+  discardSuspended,
+  pauseRefusal,
+  linkPlanResult,
+  changeGoal,
+} from './agency.js';
 import { startRequestedActivity } from './activity-execution.js';
 import { capabilityBlocked } from './status-capabilities.js';
-import { BASE_OUTING } from './worlds/base/outing-policy.js';
+import { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
 import { activityCommandSupported } from './activity-hosts.js';
 import { targetApproachPoint } from './action-capabilities.js';
+import { attackPermissionProblem } from './combat-consent.js';
+import { observerDescription } from './worlds/base/knowledge.js';
+import { worldPosition } from './spatial-state.js';
+import { endActivity } from './action-experience.js';
+import { releaseInvocationResources } from './resource-claims.js';
 import { countDomainWork } from './diagnostic-counters.js';
 
 export type OutingMode = 'enqueue' | 'replace' | 'interrupt';
-export interface OutingDestination {
-  point: SurfacePoint;
+export type OutingEndCause =
+  | 'declined'
+  | 'left'
+  | 'expired'
+  | 'changed'
+  | 'unavailable'
+  | 'interrupted'
+  | 'finished';
+export interface OutingDestination<Point extends WorldPoint = SurfacePoint> {
+  point: Point;
   label: string;
   /** The fixed place's identity/placement is checked, never followed to a new position. */
   entityId?: string;
@@ -35,16 +54,22 @@ export interface OutingDestination {
 }
 /** Only live consent is retained here. Each participant's existing plan owns all motion.
  * docs/projects/parallel-batch-04-expeditions-and-exchange-tech-design.md#exact-invitation-separate-agency */
-export interface Outing {
+interface CombatHelp {
+  opponentId: string;
+  opponentLife: number;
+  lives: Record<string, number>;
+  labels: Record<string, string>;
+  humanProposed: boolean;
+  goalId?: string;
+}
+interface OutingTerms {
   id: string;
   revision: number;
   proposerId: string;
   recipientId: string;
-  destination: OutingDestination;
   purpose?: string;
   createdAt: number;
   expiresAt: number;
-  status: 'pending' | 'traveling';
   work: Record<string, number>;
   proposerMode: OutingMode;
   plans?: Record<string, string>;
@@ -52,7 +77,23 @@ export interface Outing {
   /** Last perceived company, not the companion's position. */
   company: Record<string, boolean>;
 }
+export type Outing = OutingTerms &
+  (
+    | {
+        kind: 'travel';
+        combat?: never;
+        destination: OutingDestination;
+        status: 'pending' | 'traveling';
+      }
+    | {
+        kind: 'combat-help';
+        combat: CombatHelp;
+        destination: OutingDestination<WorldPoint>;
+        status: 'pending' | 'helping';
+      }
+  );
 export type OutingCommand =
+  | { type: 'outing'; operation: 'help'; recipientId: string; opponentId: string }
   | {
       type: 'outing';
       operation: 'invite';
@@ -98,15 +139,16 @@ export function outingInvitationProblem(
   world: WorldState,
   actorId: string,
   otherId: string,
+  kind: Outing['kind'] = 'travel',
 ): Outcome | undefined {
   const unavailable = outingRecipientProblem(world, actorId, otherId);
   if (unavailable) return unavailable;
-  const current = actorOutings(world, actorId);
+  const current = actorOutings(world, actorId).filter((trip) => trip.kind === kind);
   if (current.some((trip) => participants(trip).includes(otherId)))
     return outcome(false, 'outing-pending', BASE_OUTING.messages.pending);
   if (
-    acceptedOutingId(world, actorId) ||
-    acceptedOutingId(world, otherId) ||
+    acceptedOutingId(world, actorId, kind) ||
+    acceptedOutingId(world, otherId, kind) ||
     current.filter((trip) => trip.proposerId === actorId).length >= BASE_OUTING.pendingPerProposer
   )
     return outcome(false, 'outing-limit', BASE_OUTING.messages.limit);
@@ -143,6 +185,7 @@ export function outingDestination(
   };
 }
 function destinationCurrent(world: WorldState, trip: Outing): boolean {
+  if (trip.kind === 'combat-help') return combatCurrent(world, trip);
   const destination = trip.destination;
   if (!destination.entityId) return true;
   const entity = world.entities[destination.entityId];
@@ -151,7 +194,7 @@ function destinationCurrent(world: WorldState, trip: Outing): boolean {
   );
 }
 function travelCommand(
-  trip: Outing,
+  trip: Extract<Outing, { kind: 'travel' }>,
   actorId: string,
   mode: OutingMode,
 ): Extract<Command, { type: 'compose' }> {
@@ -174,7 +217,7 @@ function travelCommand(
 }
 function workProblem(
   world: WorldState,
-  trip: Outing,
+  trip: Extract<Outing, { kind: 'travel' }>,
   actorId: string,
   mode: OutingMode,
 ): Outcome | undefined {
@@ -215,8 +258,11 @@ function heldProblem(world: WorldState, trip: Outing): Outcome | undefined {
     participants(trip).some(
       (id) =>
         !able(world, id) ||
-        world.entities[id]!.actor!.planGeneration !== trip.work[id] ||
-        acceptedOutingId(world, id) !== undefined,
+        // Help adds a purpose without replacing work; fighting while awaiting a
+        // reply must not revoke it. Travel acceptance still replaces exact work.
+        // docs/worlds/base/social.md#voluntary-combat-help
+        (trip.kind === 'travel' && world.entities[id]!.actor!.planGeneration !== trip.work[id]) ||
+        acceptedOutingId(world, id, trip.kind) !== undefined,
     )
   )
     return outcome(false, 'outing-changed', BASE_OUTING.messages.changed);
@@ -226,10 +272,71 @@ export function prepareOuting(
   command: OwnedCommand,
 ): Outcome | { trip: Outing } {
   if (
-    (command.operation === 'invite' || command.operation === 'accept') &&
+    (command.operation === 'invite' ||
+      command.operation === 'help' ||
+      command.operation === 'accept') &&
     !activityCommandSupported(world, 'outing')
   )
     return outcome(false, 'unsupported-command', BASE_OUTING.messages.unavailable);
+  if (command.operation === 'help') {
+    if (!isSafeRecordId(command.recipientId) || !isSafeRecordId(command.opponentId))
+      return outcome(false, 'invalid-command', BASE_COMBAT_HELP.opponent);
+    const problem = outingInvitationProblem(
+      world,
+      command.actorId,
+      command.recipientId,
+      'combat-help',
+    );
+    if (problem) return problem;
+    const opponent = world.entities[command.opponentId];
+    const humanProposed =
+      !!command.humanInitiated || world.entities[command.actorId]!.actor!.controller === 'player';
+    const ids = [command.actorId, command.recipientId];
+    if (
+      !opponent ||
+      ids.some(
+        (id) =>
+          id === opponent.id ||
+          !seesEntity(world, world.entities[id]!, opponent) ||
+          attackPermissionProblem(world, world.entities[id]!, opponent, {
+            requiresLethalReview: humanProposed,
+          }),
+      )
+    )
+      return outcome(false, 'help-opponent', BASE_COMBAT_HELP.opponent);
+    return {
+      trip: {
+        id: command.id,
+        kind: 'combat-help',
+        revision: 1,
+        proposerId: command.actorId,
+        recipientId: command.recipientId,
+        destination: {
+          point: { ...worldPosition(opponent) },
+          label: BASE_COMBAT_HELP.purpose,
+        },
+        purpose: BASE_COMBAT_HELP.purpose,
+        createdAt: world.simTime,
+        expiresAt: world.simTime + BASE_OUTING.offerSeconds,
+        status: 'pending',
+        proposerMode: 'enqueue',
+        work: Object.fromEntries(ids.map((id) => [id, world.entities[id]!.actor!.planGeneration])),
+        arrived: [],
+        company: {},
+        combat: {
+          opponentId: opponent.id,
+          opponentLife: opponent.actor!.physicalLife ?? 0,
+          humanProposed,
+          lives: Object.fromEntries(
+            ids.map((id) => [id, world.entities[id]!.actor!.physicalLife ?? 0]),
+          ),
+          labels: Object.fromEntries(
+            ids.map((id) => [id, observerDescription(world, id, opponent.id, 'definite')]),
+          ),
+        },
+      },
+    };
+  }
   if (command.operation === 'invite') {
     if (
       !['enqueue', 'replace', 'interrupt'].includes(command.mode) ||
@@ -258,6 +365,7 @@ export function prepareOuting(
         : undefined;
     if (!destination) return outcome(false, 'outing-destination', BASE_OUTING.messages.destination);
     const trip: Outing = {
+      kind: 'travel',
       id: command.id,
       revision: 1,
       proposerId: command.actorId,
@@ -293,24 +401,150 @@ export function prepareOuting(
   if (command.operation === 'decline') return { trip };
   if (
     command.operation !== 'accept' ||
-    !command.mode ||
-    !['enqueue', 'replace', 'interrupt'].includes(command.mode)
+    (trip.kind === 'travel' &&
+      (!command.mode || !['enqueue', 'replace', 'interrupt'].includes(command.mode)))
   )
     return outcome(false, 'invalid-command', BASE_OUTING.messages.terms);
   const held = heldProblem(world, trip);
   if (held) return held;
   const nearby = outingRecipientProblem(world, command.actorId, trip.proposerId);
   if (nearby) return nearby;
+  if (trip.kind === 'combat-help')
+    return combatCurrent(world, trip, true)
+      ? { trip }
+      : outcome(false, 'help-unavailable', BASE_COMBAT_HELP.unavailable);
   for (const id of participants(trip)) {
     const refused = workProblem(
       world,
       trip,
       id,
-      id === command.actorId ? command.mode : trip.proposerMode,
+      id === command.actorId ? command.mode! : trip.proposerMode,
     );
     if (refused) return refused;
   }
   return { trip };
+}
+function combatCurrent(world: WorldState, trip: Outing, requireSight = false): boolean {
+  const combat = trip.combat;
+  if (!combat) return false;
+  const opponent = world.entities[combat.opponentId];
+  return (
+    !!opponent &&
+    participants(trip).every((id) => {
+      const actor = world.entities[id];
+      return (
+        !!actor?.actor &&
+        able(world, id) &&
+        (actor.actor.physicalLife ?? 0) === combat.lives[id] &&
+        !attackPermissionProblem(world, actor, opponent, {
+          targetLife: combat.opponentLife,
+          requiresLethalReview: combat.humanProposed,
+        }) &&
+        (!requireSight || seesEntity(world, actor, opponent))
+      );
+    })
+  );
+}
+/** Exact live consent is checked at admission and while unfinished work continues.
+ * Released projectiles deliberately do not retain this revocable link. */
+export function combatHelpProblem(
+  world: WorldState,
+  actorId: string,
+  helpId: string,
+  targetId?: string,
+): Outcome | undefined {
+  const trip = world.outings?.[helpId];
+  if (
+    !trip ||
+    trip.kind !== 'combat-help' ||
+    trip.status !== 'helping' ||
+    trip.recipientId !== actorId ||
+    !combatCurrent(world, trip) ||
+    (targetId && targetId !== trip.combat!.opponentId) ||
+    !seesEntity(world, world.entities[actorId]!, world.entities[trip.combat!.opponentId]!)
+  )
+    return outcome(false, 'help-ended', BASE_COMBAT_HELP.unavailable);
+}
+/** Current work must name its recipient's live agreement. History is checked by its
+ * own owner, without demanding consent that has since ended.
+ * docs/save-and-load.md#continuation-and-identity */
+export function validateCombatHelpReference(
+  world: WorldState,
+  actorId: string,
+  reference: { combatHelpId?: string; type?: string; targetId?: string; targetLife?: number },
+): void {
+  if (reference.combatHelpId === undefined) return;
+  const trip = world.outings?.[reference.combatHelpId];
+  const helper = world.entities[actorId]?.actor;
+  const combat = trip?.combat;
+  const opponentBound = ['strike', 'aim', 'shoot-once', 'hunt', 'follow'].includes(
+    reference.type ?? '',
+  );
+  if (
+    !isSafeRecordId(reference.combatHelpId) ||
+    trip?.kind !== 'combat-help' ||
+    trip.status !== 'helping' ||
+    trip.recipientId !== actorId ||
+    !helper ||
+    !combat ||
+    (helper.physicalLife ?? 0) !== combat.lives?.[actorId] ||
+    !helper.agency.goals.some((goal) => goal.id === combat.goalId && goal.status === 'active') ||
+    (opponentBound && reference.targetId !== combat.opponentId) ||
+    (opponentBound &&
+      reference.targetLife !== undefined &&
+      reference.targetLife !== combat.opponentLife)
+  )
+    throw new Error('Invalid saved combat help reference.');
+}
+export function combatHelpFor(world: WorldState, actorId: string): Outing | undefined {
+  const id = acceptedOutingId(world, actorId, 'combat-help');
+  return id ? world.outings?.[id] : undefined;
+}
+/** Cancelling an owned trip's work does not choose a competing combat priority.
+ * Preserve consent only when no earlier independent work already invalidated its baseline.
+ * docs/worlds/base/social.md#voluntary-combat-help */
+function preserveCombatHelpWork(
+  world: WorldState,
+  actorId: string,
+  previousGeneration: number,
+): void {
+  const help = combatHelpFor(world, actorId);
+  if (help?.recipientId === actorId && help.work[actorId] === previousGeneration)
+    help.work[actorId] = world.entities[actorId]!.actor!.planGeneration;
+}
+export function combatHelpBinding(
+  world: WorldState,
+  actorId: string,
+  command: { type: string; targetId?: string; purpose?: string },
+): string | undefined {
+  const trip = combatHelpFor(world, actorId);
+  if (
+    !trip ||
+    trip.recipientId !== actorId ||
+    !['strike', 'aim', 'shoot-once', 'hunt', 'guard', 'evade', 'move', 'follow'].includes(
+      command.type,
+    )
+  )
+    return;
+  const helper = world.entities[actorId]!.actor!;
+  const purpose = BASE_COMBAT_HELP.purpose;
+  // A compatible physical action is not evidence that the helper chose this purpose.
+  // Explicit candidates or the existing goal owner establish it; independent work survives.
+  // docs/worlds/base/social.md#voluntary-combat-help
+  if (
+    command.purpose !== purpose &&
+    !(
+      (helper.agency.plan?.status === 'active' || helper.agency.plan?.status === 'blocked') &&
+      helper.agency.plan.goalId === trip.combat!.goalId
+    )
+  )
+    return;
+  if (
+    ['strike', 'aim', 'shoot-once', 'hunt', 'follow'].includes(command.type) &&
+    command.targetId !== trip.combat!.opponentId
+  )
+    return;
+  return trip.id;
 }
 function notice(
   world: WorldState,
@@ -318,6 +552,7 @@ function notice(
   trip: Outing,
   actorId: string,
   text: string,
+  ending?: { cause: OutingEndCause; actorId?: string },
 ): void {
   const actor = world.entities[actorId];
   if (!actor?.actor) return;
@@ -328,19 +563,26 @@ function notice(
     {
       parts: [
         person(actorId),
-        ` ${text}${BASE_OUTING.companionPrefix}`,
+        ` ${text}${trip.kind === 'combat-help' ? BASE_COMBAT_HELP.companionPrefix : BASE_OUTING.companionPrefix}`,
         person(actorId === trip.proposerId ? trip.recipientId : trip.proposerId),
         '.',
       ],
     },
     actor,
-    undefined,
+    trip.combat?.opponentId,
     {
       outingId: trip.id,
+      ...(ending
+        ? {
+            endingCause: ending.cause,
+            ...(ending.actorId ? { endingActorId: ending.actorId } : {}),
+          }
+        : {}),
+      ...(trip.combat ? { opponentLife: trip.combat.opponentLife } : {}),
       destinationX: trip.destination.point.x,
       destinationY: trip.destination.point.y,
       destinationZ: trip.destination.point.z,
-      destinationSurface: trip.destination.point.surfaceId,
+      ...(trip.kind === 'travel' ? { destinationSurface: trip.destination.point.surfaceId } : {}),
       semanticTrigger: true,
       importance: 6,
     },
@@ -350,7 +592,14 @@ function notice(
   const plan = actor.actor.agency.plan;
   if (plan && plan.id === trip.plans?.[actorId]) linkPlanResult(world, actorId, plan, event.id);
 }
-function closeOuting(world: WorldState, events: WorldEvent[], trip: Outing, reason: string): void {
+function closeOuting(
+  world: WorldState,
+  events: WorldEvent[],
+  trip: Outing,
+  cause: OutingEndCause,
+  endingActorId?: string,
+): void {
+  const reason = BASE_OUTING.messages[cause];
   // Remove consent first. A cancellation cannot rediscover or resurrect its own trip.
   prepareOutingIndex(world);
   delete world.outings![trip.id];
@@ -358,14 +607,70 @@ function closeOuting(world: WorldState, events: WorldEvent[], trip: Outing, reas
   for (const actorId of participants(trip)) {
     const actor = world.entities[actorId]?.actor;
     if (!actor) continue;
+    const previousGeneration = actor.planGeneration;
     const planId = trip.plans?.[actorId];
     if (planId && actor.agency.suspended?.id === planId) discardSuspended(world, actor, actorId);
     if (planId && actor.agency.plan?.id === planId) {
       cancelPlan(world, actor, actorId, false);
       if (actor.agency.plan.activity) actor.agency.plan.activity.reason = reason;
     }
+    if (trip.kind === 'travel' && actor.planGeneration !== previousGeneration) {
+      // Cancelling this exact walk is not choosing a competing combat priority.
+      // Preserve separate consent only if no earlier independent replacement invalidated it.
+      // docs/worlds/base/social.md#voluntary-combat-help
+      preserveCombatHelpWork(world, actorId, previousGeneration);
+    }
+    if (trip.kind === 'combat-help') {
+      const owned = (plan: typeof actor.agency.plan | undefined) =>
+        plan &&
+        (plan.activity?.combatHelpId === trip.id ||
+          plan.goalId === trip.combat!.goalId ||
+          plan.steps.some(
+            (step) => 'combatHelpId' in step.command && step.command.combatHelpId === trip.id,
+          ));
+      if (owned(actor.agency.suspended)) discardSuspended(world, actor, actorId);
+      if (owned(actor.agency.plan)) cancelPlan(world, actor, actorId, false);
+      if (actor.action?.combatHelpId === trip.id) {
+        endActivity(
+          world,
+          actorId,
+          actor.action.id,
+          outcome(false, 'help-ended', BASE_COMBAT_HELP.ended),
+        );
+        releaseInvocationResources(world, actor.action.id);
+        actor.action = null;
+        actor.planGeneration++;
+      }
+      const goal = actor.agency.goals.find((goal) => goal.id === trip.combat!.goalId);
+      if (goal && (goal.status === 'active' || goal.status === 'paused'))
+        changeGoal(
+          actor,
+          {
+            operation: 'abandon',
+            goalId: goal.id,
+            expectedRevision: goal.revision,
+            objective: null,
+            parentId: null,
+          },
+          nextId(world, 'help-ended'),
+          'actor',
+        );
+    }
     // No remote position, private work, health or unseen arrival is disclosed.
-    notice(world, events, trip, actorId, BASE_OUTING.ended(trip.destination.label, reason));
+    notice(
+      world,
+      events,
+      trip,
+      actorId,
+      trip.kind === 'combat-help'
+        ? BASE_COMBAT_HELP.closed(
+            cause,
+            trip.status === 'pending',
+            endingActorId === undefined ? undefined : endingActorId === actorId,
+          )
+        : BASE_OUTING.ended(trip.destination.label, reason),
+      { cause, ...(endingActorId ? { actorId: endingActorId } : {}) },
+    );
   }
 }
 export function executeOuting(
@@ -376,7 +681,7 @@ export function executeOuting(
   const prepared = prepareOuting(world, command);
   if ('ok' in prepared) return prepared;
   const trip = prepared.trip;
-  if (command.operation === 'invite') {
+  if (command.operation === 'invite' || command.operation === 'help') {
     trip.id = nextId(world, 'outing');
     prepareOutingIndex(world);
     (world.outings ??= {})[trip.id] = trip;
@@ -387,22 +692,64 @@ export function executeOuting(
         events,
         trip,
         id,
-        BASE_OUTING.invited(trip.destination.label, trip.purpose, id === trip.proposerId),
+        trip.kind === 'combat-help'
+          ? BASE_COMBAT_HELP.invited(id === trip.proposerId)
+          : BASE_OUTING.invited(trip.destination.label, trip.purpose, id === trip.proposerId),
       );
-    return outcome(true, 'outing-invited', BASE_OUTING.messages.invited);
+    return outcome(
+      true,
+      'outing-invited',
+      trip.kind === 'combat-help' ? BASE_COMBAT_HELP.sent : BASE_OUTING.messages.invited,
+    );
   }
   if (command.operation === 'decline' || command.operation === 'leave') {
+    const message =
+      trip.kind === 'combat-help'
+        ? command.operation === 'decline'
+          ? BASE_COMBAT_HELP.declined
+          : BASE_COMBAT_HELP.ended
+        : command.operation === 'decline'
+          ? BASE_OUTING.messages.declined
+          : BASE_OUTING.messages.left;
     closeOuting(
       world,
       events,
       trip,
-      command.operation === 'decline' ? BASE_OUTING.messages.declined : BASE_OUTING.messages.left,
+      command.operation === 'decline' ? 'declined' : 'left',
+      command.actorId,
     );
-    return outcome(
-      true,
-      'outing-ended',
-      command.operation === 'decline' ? BASE_OUTING.messages.declined : BASE_OUTING.messages.left,
+    return outcome(true, 'outing-ended', message);
+  }
+  if (trip.kind === 'combat-help') {
+    const helper = world.entities[trip.recipientId]!.actor!;
+    const goalId = nextId(world, 'help-goal');
+    const result = changeGoal(
+      helper,
+      {
+        operation: 'create',
+        goalId: null,
+        expectedRevision: null,
+        parentId: null,
+        objective: BASE_COMBAT_HELP.objective(
+          observerDescription(world, trip.recipientId, trip.proposerId, 'definite'),
+          trip.combat!.labels[trip.recipientId]!,
+        ),
+      },
+      goalId,
+      'actor',
     );
+    if (!result.ok) return result;
+    prepareOutingIndex(world);
+    trip.combat!.goalId = goalId;
+    trip.work[trip.recipientId] = helper.planGeneration;
+    trip.status = 'helping';
+    trip.revision++;
+    indexOuting(world, trip.id, trip);
+    for (const id of participants(trip)) {
+      trip.company[id] = true;
+      notice(world, events, trip, id, BASE_COMBAT_HELP.accepted(id === trip.recipientId));
+    }
+    return outcome(true, 'help-accepted', BASE_COMBAT_HELP.accepted(true));
   }
   // The caller's draft is discarded on any refusal, so both plan admissions are atomic.
   const plans: Record<string, string> = {};
@@ -444,8 +791,8 @@ export function reconcileOutings(
   for (const tripId of ids) {
     const trip = world.outings[tripId];
     if (!trip) continue;
-    const close = (reason: string) => {
-      closeOuting(world, events, trip, reason);
+    const close = (cause: OutingEndCause) => {
+      closeOuting(world, events, trip, cause);
       if (trip.status !== 'traveling') return;
       // Cancelling the partner's owned walk can invalidate their other pending invitations,
       // including one checked earlier in this transition. Visit those dependents once more.
@@ -457,17 +804,62 @@ export function reconcileOutings(
     };
     countDomainWork('outingChecked');
     if (trip.status === 'pending') {
-      if (heldProblem(world, trip))
-        close(
-          world.simTime >= trip.expiresAt
-            ? BASE_OUTING.messages.expired
-            : BASE_OUTING.messages.changed,
-        );
+      if (heldProblem(world, trip)) close(world.simTime >= trip.expiresAt ? 'expired' : 'changed');
       continue;
     }
     const actors = participants(trip);
     if (!destinationCurrent(world, trip) || actors.some((id) => !able(world, id))) {
-      close(BASE_OUTING.messages.unavailable);
+      close('unavailable');
+      continue;
+    }
+    if (trip.kind === 'combat-help') {
+      const helper = world.entities[trip.recipientId]!.actor!;
+      const goal = helper.agency.goals.find((goal) => goal.id === trip.combat!.goalId);
+      const plan = helper.agency.plan;
+      const ownsWork =
+        helper.action?.combatHelpId === trip.id ||
+        ((plan?.status === 'active' || plan?.status === 'blocked') &&
+          (plan.activity?.combatHelpId === trip.id ||
+            plan.goalId === goal?.id ||
+            plan.steps.some(
+              (step) =>
+                'combatHelpId' in step.command &&
+                step.command.combatHelpId === trip.id &&
+                (step.status === 'running' ||
+                  step.status === 'queued' ||
+                  step.status === 'blocked'),
+            )));
+      if (
+        !combatCurrent(world, trip) ||
+        !goal ||
+        goal.status !== 'active' ||
+        (helper.planGeneration !== trip.work[trip.recipientId] && !ownsWork) ||
+        !seesEntity(
+          world,
+          world.entities[trip.recipientId]!,
+          world.entities[trip.combat!.opponentId]!,
+        )
+      ) {
+        close('unavailable');
+        continue;
+      }
+      if (ownsWork) trip.work[trip.recipientId] = helper.planGeneration;
+      for (const id of actors) {
+        const otherId = id === trip.proposerId ? trip.recipientId : trip.proposerId;
+        const company = options.companyObserved
+          ? (world.visiblePeople?.[id]?.includes(otherId) ?? false)
+          : seesEntity(world, world.entities[id]!, world.entities[otherId]!);
+        if (trip.company[id] !== company) {
+          trip.company[id] = company;
+          notice(
+            world,
+            events,
+            trip,
+            id,
+            company ? BASE_COMBAT_HELP.company : BASE_COMBAT_HELP.separated,
+          );
+        }
+      }
       continue;
     }
     let ended = false;
@@ -484,7 +876,7 @@ export function reconcileOutings(
             (step) => step.status === 'running' && step.actionId === actor.actor!.action!.id,
           ))
       ) {
-        close(BASE_OUTING.messages.interrupted);
+        close('interrupted');
         ended = true;
         break;
       }
@@ -508,7 +900,7 @@ export function reconcileOutings(
         );
       }
     }
-    if (!ended && trip.arrived.length === 2) close(BASE_OUTING.messages.finished);
+    if (!ended && trip.arrived.length === 2) close('finished');
   }
 }
 export function validateOutings(world: WorldState): void {
@@ -517,6 +909,7 @@ export function validateOutings(world: WorldState): void {
     throw new Error('Invalid outing records.');
   const active = new Set<string>();
   for (const [id, trip] of Object.entries(world.outings)) {
+    const status: string = trip?.status;
     if (
       !trip ||
       id !== trip.id ||
@@ -525,7 +918,10 @@ export function validateOutings(world: WorldState): void {
       !isSafeRecordId(trip.proposerId) ||
       !isSafeRecordId(trip.recipientId) ||
       trip.proposerId === trip.recipientId ||
-      !['pending', 'traveling'].includes(trip.status) ||
+      !['pending', 'traveling', 'helping'].includes(trip.status) ||
+      !['travel', 'combat-help'].includes(trip.kind) ||
+      (trip.kind === 'travel' && (trip.combat !== undefined || status === 'helping')) ||
+      (trip.kind === 'combat-help' && (status === 'traveling' || !trip.combat)) ||
       !['enqueue', 'replace', 'interrupt'].includes(trip.proposerMode) ||
       !Number.isFinite(trip.createdAt) ||
       !Number.isFinite(trip.expiresAt) ||
@@ -537,7 +933,7 @@ export function validateOutings(world: WorldState): void {
       ![trip.destination.point.x, trip.destination.point.y, trip.destination.point.z].every(
         Number.isFinite,
       ) ||
-      !isSafeRecordId(trip.destination.point.surfaceId) ||
+      (trip.kind === 'travel' && !isSafeRecordId(trip.destination.point.surfaceId)) ||
       (trip.purpose !== undefined &&
         (typeof trip.purpose !== 'string' || trip.purpose.length > 120)) ||
       (trip.destination.entityId !== undefined &&
@@ -558,15 +954,54 @@ export function validateOutings(world: WorldState): void {
       throw new Error('Invalid outing consent.');
     if (trip.status === 'pending' && (trip.plans !== undefined || trip.arrived.length))
       throw new Error('Invalid pending outing.');
+    if (trip.kind === 'combat-help') {
+      const combat = trip.combat!;
+      if (
+        !hasRecordFields(
+          combat,
+          ['opponentId', 'opponentLife', 'humanProposed', 'lives', 'labels'],
+          ['goalId'],
+        ) ||
+        Object.keys(combat.lives ?? {}).length !== 2 ||
+        Object.keys(combat.labels ?? {}).length !== 2 ||
+        !isSafeRecordId(combat.opponentId) ||
+        !world.entities[combat.opponentId]?.actor ||
+        !Number.isSafeInteger(combat.opponentLife) ||
+        combat.opponentLife < 0 ||
+        typeof combat.humanProposed !== 'boolean' ||
+        !combat.lives ||
+        !combat.labels ||
+        participants(trip).some(
+          (id) =>
+            !Number.isSafeInteger(combat.lives[id]) ||
+            combat.lives[id]! < 0 ||
+            typeof combat.labels[id] !== 'string' ||
+            !combat.labels[id]!.trim(),
+        ) ||
+        (trip.status === 'pending'
+          ? combat.goalId !== undefined
+          : !world.entities[trip.recipientId]!.actor!.agency.goals.some(
+              (goal) => goal.id === combat.goalId && goal.status === 'active',
+            )) ||
+        !combatCurrent(world, trip)
+      )
+        throw new Error('Invalid combat help consent.');
+      if (trip.status === 'helping')
+        for (const actorId of participants(trip)) {
+          const key = `${trip.kind}\0${actorId}`;
+          if (active.has(key)) throw new Error('Invalid combat help participation.');
+          active.add(key);
+        }
+    }
     if (trip.status === 'traveling')
       for (const actorId of participants(trip)) {
         if (
-          active.has(actorId) ||
+          active.has(`${trip.kind}\0${actorId}`) ||
           !isSafeRecordId(trip.plans?.[actorId]) ||
           world.entities[actorId]!.actor!.agency.plan?.id !== trip.plans?.[actorId]
         )
           throw new Error('Invalid outing participation.');
-        active.add(actorId);
+        active.add(`${trip.kind}\0${actorId}`);
       }
   }
 }

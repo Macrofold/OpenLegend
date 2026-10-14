@@ -9,6 +9,7 @@ import { COGNITION_PERMISSIONS } from './macrofold-provisioning.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { macrofoldModelParameters, cognitionOutputTokens } from './macrofold-model.js';
 import { MacrofoldProvisioner } from './macrofold-provisioning.js';
+import { decisionAllowance } from './cognition-budget.js';
 import { buildStoredContext } from './context.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
@@ -1728,7 +1729,7 @@ export class MacrofoldBackend implements AiClient {
           },
           input: { state: request.state, questions: request.questions },
           limits: {
-            max_cost_micro_usd: microdollarLimit(config.jevReserveUsd),
+            max_cost_micro_usd: microdollarLimit(decisionAllowance(config, 'jev')),
             max_output_tokens: Math.min(
               16384,
               Math.max(1024, Object.keys(request.questions).length * 64),

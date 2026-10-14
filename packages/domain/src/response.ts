@@ -649,6 +649,7 @@ export function commitActorResponse(
         input.entities[actorId]!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
+      else if (bound.type === 'outing' && bound.operation === 'help') command('act', bound);
       else if (bound.type === 'compose' || bound.type === 'outing') {
         if (bound.mode !== act.mode)
           components[localId] = outcome(

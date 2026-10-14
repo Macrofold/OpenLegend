@@ -148,6 +148,24 @@ export interface PhysicalWorkPoint {
   /** A part created only after the work must also leave the builder standing clear. */
   obstruction?: CollisionSolid;
 }
+/** Conservative occupied-body clearance for chosen short movement. Static support and
+ * solids remain canWalkSegment's responsibility; body bounds include their whole height. */
+export function occupiedBodySweepClear(
+  world: WorldState,
+  actor: Entity,
+  from: Position,
+  to: Position,
+): boolean {
+  const profile = bodyProfile(actor),
+    travel = distance3D(from, to);
+  const extent = Math.max(...Object.values(BODY_PROFILES).map((p) => p.height + p.radius));
+  for (const other of nearbyEntities(world, from, travel + extent + profile.radius)) {
+    if (other.id === actor.id || !other.actor || !activelyParticipates(other)) continue;
+    chargeWork({ tests: 1 });
+    if (bodyIntersects({ bounds: bodySpace(world, other) }, from, to, profile)) return false;
+  }
+  return true;
+}
 export function physicalWorkPointAvailable(
   world: WorldState,
   actor: Entity,

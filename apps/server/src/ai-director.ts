@@ -297,7 +297,7 @@ export class AiDirector {
             entity.actor.incapacitated ||
             !entity.actor.alive)
         ) {
-          run.cancelReason = `${namePhrase(entity, 'definite', { capitalize: true })} became unavailable; the pending reply was cancelled.`;
+          run.cancelReason = 'The pending reply became unavailable and was cancelled.';
           run.controller.abort();
           return;
         }
@@ -525,6 +525,7 @@ export class AiDirector {
       await this.groundAttempts(run, actorId, response, unique, 'player-action')
     ).map((binding) => ({
       ...binding,
+      commands: binding.commands.map((command) => ({ ...command, humanInitiated: true as const })),
       targetEpisodes: { ...binding.targetEpisodes, ...request.targetEpisodes },
     }));
     await this.prepareResponseAdmission(run);
@@ -595,12 +596,6 @@ export class AiDirector {
     volume: SpeechVolume = 'normal',
     mode?: 'workshop',
   ): Promise<ApiResult> {
-    // Independent inference does not wait for remote reflection cancellation/cleanup.
-    this.maintenance.cancel();
-    if (this.running?.job.kind === 'thought') {
-      await this.cancel(this.running.job.id);
-      this.running = null;
-    }
     return await this.submit(
       kind,
       id,
@@ -1013,7 +1008,7 @@ export class AiDirector {
         ...(spokenEventId ? { playerSpeechEventId: spokenEventId } : {}),
         message:
           kind === 'chat'
-            ? `${this.service.world.entities[targetId!]?.name ?? 'The person'} is considering your words.`
+            ? `${namePhrase(observerName(this.service.world, inventorId, targetId!), 'definite', { capitalize: true })} is considering your words.`
             : 'Checking known techniques and supported mechanisms.',
         request: {
           text,
@@ -1191,6 +1186,11 @@ export class AiDirector {
   }
 
   private async begin(job: JobRecord, onCompleted?: () => Promise<void>): Promise<void> {
+    // Invalid/busy requests cannot discard another mind's funded decision.
+    // Reflection cleanup remains asynchronous once admission has actually succeeded.
+    // docs/ai-providers.md#admission-and-cancellation
+    if (job.authority && (job.kind === 'chat' || job.kind === 'invention'))
+      this.maintenance.cancel();
     job = {
       ...job,
       startedAt: this.now(),
@@ -1437,7 +1437,7 @@ export class AiDirector {
           ? 'Generating a new material-and-mechanism definition.'
           : run.job.kind === 'action'
             ? 'Interpreting the requested action.'
-            : 'Preparing the selected character’s decision.',
+            : 'Preparing a detailed decision. This may take about a minute.',
     );
     const result = await dispatch(id);
     const accountingStartedAt = new Date().toISOString();
@@ -1714,15 +1714,26 @@ export class AiDirector {
       run.job.kind === 'chat' ? 'Speech evidence unavailable.' : run.job.request.text,
       evidence,
     );
-    const addressedSpeech = evidenceIds.some((id) =>
-      evidence.some((entry) => entry.eventId === id && entry.triggerKind === 'addressed_speech'),
+    const decisionEvidenceIds = new Set([
+      ...evidenceIds,
+      ...(triggerEvidenceId ? [triggerEvidenceId] : []),
+    ]);
+    const decisionEvidence = evidence.filter((entry) => decisionEvidenceIds.has(entry.eventId));
+    const addressedSpeech = decisionEvidence.some(
+      (entry) => entry.triggerKind === 'addressed_speech',
     );
-    const speechTrigger = evidenceIds.some((id) =>
-      evidence.some(
-        (entry) =>
-          entry.eventId === id && entry.eventType === 'speech' && entry.modality !== 'observed',
-      ),
+    const speechEvidenceIds = new Set(
+      decisionEvidence
+        .filter((entry) => entry.eventType === 'speech')
+        .map((entry) => entry.eventId),
     );
+    // A conversational shortcut cannot suppress options for a coalesced physical cause.
+    // Personal result IDs need not be awareness rows; an omitted ID cannot prove pure speech.
+    // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
+    const speechTrigger =
+      decisionEvidence.some(
+        (entry) => entry.eventType === 'speech' && entry.modality !== 'observed',
+      ) && speechEvidenceIds.size === decisionEvidenceIds.size;
     let attentionCall = 0;
     const contextStartedAt = new Date().toISOString();
     let prepared = await prepareDecision(

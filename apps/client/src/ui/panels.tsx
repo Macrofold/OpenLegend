@@ -33,7 +33,18 @@ export function Actions({
           <Button size="sm" disabled={!a.enabled || !connected} onPress={() => command(a)}>
             {a.label}
           </Button>
+          {a.facts?.map(([name, value]) => (
+            <p className="ol-caption" key={name}>
+              {name}: {value}
+            </p>
+          ))}
           {!a.enabled && a.reason && <p className="ol-caption">{a.reason}</p>}
+          {a.detail && (
+            <details>
+              <summary>Stats and details</summary>
+              <p className="ol-caption">{a.detail}</p>
+            </details>
+          )}
         </div>
       ))}
     </div>

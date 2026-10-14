@@ -41,7 +41,8 @@ function host(
       if (command === 'fish') return Object.keys(world.castDefinitions).length > 0;
       if (command === 'craft' || command === 'teach')
         return world.moduleManifest.recipeFamilies.length > 0;
-      if (command === 'hunt') return !!world.moduleManifest.rangedPolicy;
+      if (['hunt', 'aim', 'shoot-once', 'release-shot'].includes(command))
+        return !!world.moduleManifest.rangedPolicy;
       if (command === 'practice-shot' || command === 'coaching')
         return world.moduleManifest.definitions.some((definition) => !!definition.practice);
       return true;
@@ -73,7 +74,7 @@ export const BASE_NATIVE_ACTIVITY_HOSTS = [
     category: 'Create',
     reason: 'Invent or learn a recipe first.',
   }),
-  host('base:hunting', ['hunt'], {
+  host('base:hunting', ['hunt', 'aim', 'shoot-once', 'release-shot'], {
     label: 'Hunt an animal',
     category: 'Hunt',
     reason: 'Move within sight of a living animal.',

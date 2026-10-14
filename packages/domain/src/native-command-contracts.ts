@@ -25,6 +25,7 @@ export const invocationFields: Partial<
   pickup: { required: ['targetId'], optional: ['itemId', 'quantity'] },
   drop: { required: ['itemId', 'quantity'] },
   move: { required: ['destination'] },
+  evade: { required: ['destination'] },
   // Requested activities may end a follow at an absolute deadline; learning refuses to
   // generalize one (activity-learning.ts), since a past deadline is not reusable.
   follow: { required: ['targetId'], optional: ['distance', 'relation', 'onLost', 'until'] },
@@ -42,6 +43,8 @@ export const invocationFields: Partial<
   },
   strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId', 'autoEquip'] },
   hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId', 'autoEquip'] },
+  aim: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId', 'autoEquip'] },
+  'shoot-once': { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId', 'autoEquip'] },
   'practice-shot': { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
   coaching: { required: ['targetId', 'attributeId', 'operation'], optional: ['episodeId'] },
   'treat-scar': { required: ['targetId', 'scarId'] },

@@ -3,8 +3,47 @@ import { bodyPolicy } from './body-policy.js';
 import { itemFor } from './objects.js';
 import { strikeDefinition } from './strikes.js';
 import { definitionPin } from './world-modules.js';
-import { scarFactor } from './reincarnation.js';
+import { scarFactor } from './scar-effects.js';
 import type { Action, Entity, Outcome, WorldState } from './types.js';
+import { activelyParticipates } from './participation-state.js';
+
+/** Admission never chooses hostility. A released projectile checks its captured source
+ * attribution separately from the body's ability to begin another action. */
+export function attackPermissionProblem(
+  world: WorldState,
+  actor: Entity,
+  target: Entity | undefined,
+  attack: { requiresLethalReview?: boolean; targetLife?: number },
+  committedSource?: { controller: 'player' | 'npc' | 'native' },
+): Outcome | null {
+  const policy = bodyPolicy(world)?.combat;
+  const sourceController = committedSource?.controller ?? actor.actor?.controller;
+  if (
+    !committedSource &&
+    (!actor.actor?.alive || actor.actor.incapacitated || !activelyParticipates(actor))
+  )
+    return outcome(false, 'attack-source-unavailable', 'This body cannot begin an attack.');
+  if (
+    !target?.actor?.alive ||
+    !activelyParticipates(target) ||
+    target.id === actor.id ||
+    (attack.targetLife !== undefined && attack.targetLife !== (target.actor.physicalLife ?? 0))
+  )
+    return outcome(false, 'attack-target-unavailable', 'The selected living body is unavailable.');
+  if (
+    !policy ||
+    !sourceController ||
+    !policy.targets[sourceController].includes(target.actor.controller) ||
+    ((sourceController === 'player' || attack.requiresLethalReview) &&
+      !policy.humanIssuedTargets.includes(target.actor.controller))
+  )
+    return outcome(
+      false,
+      'attack-not-permitted',
+      policy?.unavailableText ?? 'Combat is unavailable in this world.',
+    );
+  return null;
+}
 
 export interface LethalReviewPolicy {
   title: string;

@@ -1572,7 +1572,16 @@ export async function commitTypedAction(
         refs,
         world.entities[actorId]?.actor?.planGeneration ?? 0,
         binding
-          ? [{ ...binding, targetEpisodes: captureActionTargets(world, actorId, binding.commands) }]
+          ? [
+              {
+                ...binding,
+                commands: binding.commands.map((command) => ({
+                  ...command,
+                  humanInitiated: true as const,
+                })),
+                targetEpisodes: captureActionTargets(world, actorId, binding.commands),
+              },
+            ]
           : [],
       );
     },

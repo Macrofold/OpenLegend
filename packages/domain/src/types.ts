@@ -22,6 +22,7 @@ export interface Launcher {
   damage: number;
   range: number;
   accuracy: number;
+  flightSpeed: number;
 }
 export interface Ammunition {
   kind: 'stone' | 'arrow';
@@ -51,6 +52,7 @@ export interface ItemDefinition extends Named {
   ammunition?: Ammunition;
   recipeId?: string;
   /** Trusted disclosure of one exact installed method; prose grants no execution. */
+  placeReport?: Extract<import('./places.js').EncounterExposure, { kind: 'place' }>;
   recipeRecord?: {
     method: import('./world-modules.js').DefinitionPin;
     disclosure: 'method';
@@ -123,11 +125,14 @@ export interface RecipeDefinition {
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
+  | 'aim'
+  | 'shoot-once'
   | 'guard'
   | 'pickup'
   | 'strike'
   | 'follow'
   | 'move'
+  | 'evade'
   | 'gather'
   | 'prepare'
   | 'craft'
@@ -143,6 +148,9 @@ export type ActionType =
   | 'tend-fire'
   | 'assemble';
 export interface Action {
+  combatHelpId?: string;
+  evasion?: import('./evasion.js').EvasionState;
+  ranged?: import('./ranged.js').AimState;
   competencePin?: import('./world-modules.js').DefinitionPin;
   rangedPolicyPin?: import('./world-modules.js').DefinitionPin;
   coachingEpisodeId?: string;
@@ -227,6 +235,7 @@ export interface ActorComponent {
   conditions?: Record<string, import('./conditions.js').ConditionEpisode>;
   /** Committed strike/defense recovery belongs to this body and survives action cancellation. */
   combatReadyAt?: number;
+  evasionReadyAt?: number;
   inventoryInspection?: import('./inventory-inspection.js').InventoryInspection;
   /** Explicitly disclosed offer terms, not a live view of another person's inventory. */
   knownTradeLots?: Record<string, Record<string, import('./handover.js').KnownTradeLot>>;
@@ -397,6 +406,7 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  projectiles?: Record<string, import('./ranged.js').ProjectileFlight>;
   places: Record<string, import('./places.js').PlaceDefinition>;
   /** Currently exposed definition revisions; derived perception, never remembered knowledge. */
   visiblePlaces?: Record<string, Record<string, number>>;
@@ -487,6 +497,8 @@ export interface WorldState {
   nextId: number;
 }
 interface Envelope {
+  /** Exact revocable purpose; trusted callers bind this from current consent. */
+  combatHelpId?: string;
   /** Trusted caller classification; never accepted from a public command body. */
   humanInitiated?: true;
   /** Selected meaning only; never native effect authority. */
@@ -557,7 +569,7 @@ export type Command = Envelope &
         targetRevision: number;
       }
     | { type: 'unequip'; itemId: string; expectedRevision: number; placementRevision: number }
-    | { type: 'move'; destination: SurfacePoint }
+    | (({ type: 'move' } | { type: 'evade' }) & { destination: SurfacePoint })
     | {
         type: 'follow';
         targetId: string;
@@ -590,11 +602,16 @@ export type Command = Envelope &
         lethalPermission?: import('./combat-consent.js').LethalPermission;
       }
     | {
-        type: 'hunt';
+        type: 'hunt' | 'aim' | 'shoot-once';
         autoEquip?: boolean;
         targetId: string;
         weaponItemId?: string;
         ammoItemId?: string;
+        lethalPermission?: import('./combat-consent.js').LethalPermission;
+      }
+    | {
+        type: 'release-shot';
+        aimId: string;
         lethalPermission?: import('./combat-consent.js').LethalPermission;
       }
     | { type: 'treat-scar'; scarId: string; targetId: string }

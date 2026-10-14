@@ -70,6 +70,8 @@ The [canonical memory specification](../memory-architecture.md) remains the beha
 
 Owner: `apps/server` context/cognition; generic limits in `packages/ai`. Depends on: none. Exit evidence: small model-facing examples plus separately retained authority bindings, with no private-world leakage.
 
+**Existing fixture gap, October 14 integration:** `cognition-payloads.test.ts` has six failures after allowing the already present optional-activity heading. Pre-merge main at `41d85cd8b` fails eight cases before that heading correction. Reconcile fixture dispatch ordering, action judgments/schema assumptions and its large-context acceptance through CR01; these failures are not closed by passing native combat or static checks. [Comparison evidence](../verification/rivals-and-contested-ground.md#integration-with-selected-world-rules--october-14-2026).
+
 ### CR02 — Semantic levels and immediate speech
 
 [NP05](parallel-batch-02-foundations-and-usability.md#np05--read-npc-replies-before-generation-finishes) delivers private early reading for the qualified Macrofold direct-chat route, without changing semantic routing or final admission. Mike authorized correcting the local decision-model setting to Jev; the reply generator stayed unchanged. Only the first complete independent speech operation addressed to the player with clear hearing and visible attribution can appear early. [Evidence](../verification/npc-reply-preview.md) does not qualify direct Responses, full-harness or other structured callers, or close CR02's broader acceptance.
@@ -119,6 +121,8 @@ Owner: server director/cognition and AI adapters. Depends on: CR01. Exit evidenc
 Owner: server context and projection. Depends on: CR01; integrate CR04–CR06 as available. Exit evidence: serialized requests contain useful English and tiny route-specific output schemas, with total byte/token estimates recorded as fixture measurements.
 
 ### CR04 — Jev attention across all candidate sources
+
+October 13 scoped rivals correction: raw observation-backed records retain their embedding text/revision while fresh non-speech participant references use the existing continuous-observation guard. Actual preparation rejects a selected participant whose observation changes during attention or later generation. Native actual-source/reference and asynchronous caller checks pass; broader retrieval/model-quality acceptance remains open. [Evidence](../verification/rivals-and-contested-ground.md#remembered-participants-voluntary-travel-and-return--october-13-2026).
 
 Proposed [EPR03](events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) owns perception-acquisition integration and [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns change-fed intake. Recall/awareness behavior and its unique verification remain here.
 

@@ -6,7 +6,7 @@
 
 **Second review completed, October 7:** an independently changed inspection now immediately clears obsolete method facts and learning controls from the selected record. Unchanged immutable method identities share one calculation; compiled validation, access and stock remain current. The browser case, full native journey/restart and 37 existing checks pass. [Actual publication/record evidence](../verification/rewarding-expeditions.md#second-requested-review--october-7-2026) records the narrow improvement and variable server tails; wider PF05 qualification remains open. The [completed plan](../projects/completed/rewarding-expeditions-implementation.md#second-requested-review--october-7) records the unchanged checkout/base.
 
-[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) later reuses this field-sling method, workshop note and physical-learning owner at a contested destination. That required AV01 implementation is now available on local main at `9ec1ad0c4`; the consolidated Batch 06 assignment reuses it without closing broader AV01 qualification.
+[CF05](parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) reuses this field-sling method, workshop note and physical-learning owner at a contested destination. That required AV01 implementation is now available on local main at `9ec1ad0c4`; the consolidated Batch 06 assignment reuses it without closing broader AV01 qualification.
 
 **Requested review, October 6:** stale recipe-detail refresh and source-receipt consistency are corrected; exact method validation and accessible carried-material totals now share immutable reads through existing owners. The complete native journey/restart and 37 selected existing checks pass. [Matched review evidence](../verification/rewarding-expeditions.md#requested-review--october-6-2026) separates cheaper record pages from the complete-menu cost still tracked in [PF05](performance.md#pf05--public-view-and-browser-responsiveness). The [review plan](../projects/completed/rewarding-expeditions-implementation.md#requested-review--october-6) retains scope and base reconciliation.
 
@@ -24,7 +24,7 @@
 
 ## AV02 — Shield defense and compatible equipment
 
-[Batch 06](parallel-batch-06-rivals-and-contested-ground.md) consumes this equipment/guard owner. CF02 owns the later supported-projectile extension; CF03 interruption and CF01/CF04 loadouts consume the existing contract. These open consumers do not expand AV02 into a duplicate defense implementation or establish its completion.
+[Batch 06](parallel-batch-06-rivals-and-contested-ground.md) consumes this equipment/guard owner. CF02 supplies the supported-projectile extension with [native impact/recovery evidence](../verification/rivals-and-contested-ground.md); CF03 interruption and CF01/CF04 loadouts consume the existing contract. These open consumers do not expand AV02 into a duplicate defense implementation or establish its completion.
 
 - [x] Replace single-equipped-item authority with admitted body-port attachment through the existing object owner; update all current callers, cleanup and current-format validation together.
 - [x] Deliver known shield manufacture, finite family authoring, readable knife/shield versus two-handed equipment, auto-equip conflict explanation and one chosen guard.

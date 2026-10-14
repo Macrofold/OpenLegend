@@ -239,6 +239,7 @@ const KNOWN_HEADINGS = new Set([
   'Task',
   'Conversation so far',
   'Known planning techniques',
+  'Optional installed activity requests',
   'Private intent controls',
   'Private intentions and native work',
   'Native navigation',

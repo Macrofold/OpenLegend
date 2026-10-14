@@ -30,6 +30,7 @@ export interface CommandInput {
     | 'merge-item'
     | 'unequip'
     | 'move'
+    | 'evade'
     | 'follow'
     | 'confirm-attempt'
     | 'withdraw-attempt'
@@ -40,6 +41,9 @@ export interface CommandInput {
     | 'guard'
     | 'strike'
     | 'hunt'
+    | 'aim'
+    | 'shoot-once'
+    | 'release-shot'
     | 'practice-shot'
     | 'coaching'
     | 'harvest'
@@ -75,6 +79,7 @@ export interface CommandInput {
   conversationId?: string;
   text?: string;
   facing?: number;
+  aimId?: string;
   autoEquip?: boolean;
   generation?: number;
   operation?: 'join' | 'leave';
@@ -83,7 +88,10 @@ export interface CommandInput {
   coachingOperation?: 'request' | 'accept' | 'decline' | 'withdraw' | 'feedback';
   episodeId?: string;
   handoverOperation?: 'offer' | 'counter' | 'accept' | 'decline' | 'withdraw';
-  outingOperation?: 'invite' | 'accept' | 'decline' | 'leave';
+  outingOperation?: 'help' | 'invite' | 'accept' | 'decline' | 'leave';
+  opponentId?: string;
+  /** Offered server-derived purpose; public dispatch rebinds current consent. */
+  combatHelpId?: string;
   outingId?: string;
   outingMode?: 'enqueue' | 'replace' | 'interrupt';
   destinationId?: string;
@@ -128,9 +136,10 @@ export interface OutingView {
   revision: number;
   destination: string;
   companion: string;
-  distance: number;
+  distance: number | null;
+  kind: 'travel' | 'combat-help';
   purpose?: string;
-  status: 'pending' | 'traveling' | 'arrived';
+  status: 'pending' | 'traveling' | 'arrived' | 'helping';
   company: string;
   description: string;
   choices: Array<{ id: string; label: string; description: string; command: CommandInput }>;
@@ -219,6 +228,9 @@ export interface ActionOption {
   command: CommandInput;
   enabled: boolean;
   reason?: string;
+  /** Essential permitted facts beside the choice; optional statistics stay in detail. */
+  facts?: Array<[string, string]>;
+  detail?: string;
 }
 
 /** A discoverable option is either a native intention, a composer, or a missing prerequisite. */
@@ -695,6 +707,7 @@ export interface GameView {
     offsetHours: number;
   };
   player: Named & {
+    evasion?: { label: string; readyIn: number };
     life?: number;
     death?: {
       message: string;
@@ -730,6 +743,8 @@ export interface GameView {
       durationSeconds: number;
       elapsedSeconds: number;
       advancing: boolean;
+      controls?: ActionOption[];
+      detail?: string;
     } | null;
     traits?: Array<{ id: string; name: string; description: string }>;
     memories?: MemoryEntryView[];

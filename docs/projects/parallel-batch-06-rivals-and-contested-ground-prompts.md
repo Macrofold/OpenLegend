@@ -1,10 +1,10 @@
 # Batch 06 — Rivals and contested ground implementation prompt
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | One assignment covers all CF01–CF05 work; required earlier implementations are available on local main, and runtime delivery remains open. | 2026-10-08   |
+| Status      | Current progress                                                                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-14   |
 
-This replaces the five separate prompts at the owner's request. Their interleaving dependencies are now internal steps for one agent, on one branch; all existing scope and acceptance remain. CF01–CF05 identify work parts, not separate workers. This document prepares a future implementation assignment; updating it does not launch that work.
+This replaces the five separate prompts at the owner's request. Their interleaving dependencies are now internal steps for one agent, on one branch; all existing scope and acceptance remain. CF01–CF05 identify work parts, not separate workers. This document originally prepared the future assignment; the owner subsequently authorized its complete implementation. Editing the prompt itself grants no additional authorization.
 
 [Full feature scope](parallel-batch-06-rivals-and-contested-ground-feature-spec.md) · [Technical design and readiness evidence](parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites) · [Work tracker](../maintainers/parallel-batch-06-rivals-and-contested-ground.md)
 

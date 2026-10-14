@@ -8,9 +8,9 @@ A player who has invented or obtained a usable sling can already hunt with it. P
 
 The current base-world clock advances one game minute per real second at ordinary speed. Current cord preparation takes 60 game seconds, and cooking takes 90; a small duration improvement there would save only a fraction of a real second. That is a useful integration example but a weak reason to add progression. [Current clock](time.md#clock-and-fallback-horizon), [cord method](items.md#cordage-manufacture-and-reuse), [action defaults](../../../packages/domain/src/worlds/base/actions.ts).
 
-Current ranged hunting already has one meaningful uncertainty. After its 18-game-second windup, a valid shot consumes one compatible projectile and makes one hit comparison. The admitted launcher supplies accuracy; a dangerous nonterritorial animal, or a territorial animal actively returning, applies the existing 0.85 factor. The [selected bundled ranged policy](../../../packages/domain/src/worlds/base/hunting.ts) owns this animal-only target rule, adjustment and preparation/approach tuning. Invalid range or unavailable target/equipment/ammunition blocks release through the [shared execution owner](../../../packages/domain/src/kernel.ts). The separate inert-target action shares that one-shot release accounting without the animal adjustment. Neither action is a general ballistic simulation; Batch 06 flight remains separate unfinished work.
+Current hunting, explicit aiming and inert practice share [straight projectile flight](ranged-counterplay.md). Preparation holds ammunition without spending it; a valid release spends once. Competence changes the steadiness of the released ray, while actual movement, physical cover and a chosen shield determine later contact. This replaces immediate hit/injury and the old extra fleeing multiplier. It does not add a general ballistic simulation.
 
-The character must approach within the equipped tool's actual firing range before preparing a shot. A larger authored approach allowance cannot substitute for that range. Entity menus use the selected ranged target rule and action label, including differently configured supported targets; omission supplies no hunting offer or hunting shortcut for an equipped tool. [Full review](../../verification/world-engine-boundaries.md#requested-full-review--october-14-2026).
+The character must approach within the tool's actual firing range; the selected world owns approach and preparation tuning. Omitted ranged support supplies no offer or equipped shortcut.
 
 ## One narrow competence
 
@@ -18,24 +18,24 @@ The exact installed competence definition owns the two rank labels, current prog
 
 The implemented **Sling handling** value has two authored states:
 
-| Value | Player-facing meaning                | Mechanical effect                                                                                       |
-| ----- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| 0     | Still becoming practiced with slings | Current ordinary sling accuracy, with all current conditions                                            |
-| 1     | Practiced with slings                | Reduce the weapon-related chance of a miss by one quarter before applying the existing animal condition |
+| Value | Player-facing meaning                | Mechanical effect                                      |
+| ----- | ------------------------------------ | ------------------------------------------------------ |
+| 0     | Still becoming practiced with slings | Ordinary base sling aim steadiness                     |
+| 1     | Practiced with slings                | Reduce the chance of a deviated release by one quarter |
 
-This applies to the supported sling-like mechanism across eligible admitted definitions, including a genuinely invented sling. A cosmetic rename or a second otherwise equivalent recipe does not create another skill track. It does not apply to bows, throwing by hand, melee weapons or arbitrary items named sling.
+This applies to the supported sling-like mechanism across eligible admitted definitions, including an invented sling. A cosmetic rename or equivalent recipe does not create another skill track. It does not apply to bows, throwing by hand, melee weapons or arbitrary items named sling.
 
-If the current sling's authored accuracy is **a**, the practiced handling accuracy is **a + 0.25 × (1 − a)**. This remains an actor contribution, separate from the unchanged weapon-authoring accuracy range of 0.6–0.9. The existing animal factor is applied afterward. There is still one real shot and one hit result; the proficiency does not roll again after a miss.
+For authored accuracy **a**, practiced steadiness is **a + 0.25 × (1 − a)**, separate from the unchanged weapon-authoring range of 0.6–0.9. One saved draw selects steady versus deviated aim; only a deviated release needs another draw to choose its error direction. Competence does not reroll a miss or a later collision.
 
-| Authored sling accuracy | Current / unpracticed handling | Practiced handling | With the existing 0.85 animal factor, before → after |
-| ----------------------- | ------------------------------ | ------------------ | ---------------------------------------------------- |
-| 0.60                    | 60%                            | 70%                | 51% → 59.5%                                          |
-| 0.75                    | 75%                            | 81.25%             | 63.75% → 69.0625%                                    |
-| 0.90                    | 90%                            | 92.5%              | 76.5% → 78.625%                                      |
+| Authored base steadiness | Unpracticed | Practiced |
+| ------------------------ | ----------- | --------- |
+| 0.60                     | 60%         | 70%       |
+| 0.75                     | 75%         | 81.25%    |
+| 0.90                     | 90%         | 92.5%     |
 
-These are arithmetic illustrations for the implemented law, not measured hunting outcomes or human appreciation. A higher-quality sling remains better at each competence state. Practice does not erase all uncertainty, and it does not reduce every possible miss by 25%: the animal's additional condition remains. Exact live percentages appear only when the character may know all relevant inputs.
+These are arithmetic illustrations, not measured hit rates or human appreciation. A higher-quality sling remains steadier at each competence state. Practice cannot prevent misses caused by movement or cover; percentages appear only when the character may know the inputs.
 
-Damage, ammunition type/quantity, range, body eligibility, reach/clearance, actual target state and subsequent animal behavior remain unchanged. No proficiency creates a projectile, lets a shot pass through an obstacle, turns a practice target into food, or permits attacks on a protected person.
+Competence changes no damage, ammunition, range, target eligibility or animal behavior. It creates no projectile, obstacle penetration, practice-target food or permission to attack a protected person.
 
 ## Starting and enduring state
 

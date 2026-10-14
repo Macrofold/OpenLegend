@@ -13,13 +13,15 @@ import { setBodyHealth } from './body-state.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { finishPlanAction } from './agency.js';
 import { releaseInvocationResources } from './resource-claims.js';
-import { separateDeadLife, scarFactor } from './reincarnation.js';
+import { separateDeadLife } from './reincarnation.js';
+import { scarFactor } from './scar-effects.js';
 import { strikeDefinition } from './strikes.js';
 import type { Entity, WorldEvent, WorldState, Transition } from './types.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { projectAttributes } from './world-modules.js';
 import { BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
+import { baseCombatInjuryInterruption } from './worlds/base/body-policy.js';
 
 export interface LivingBody {
   equipmentPorts: import('./equipment.js').EquipmentPort[];
@@ -233,6 +235,18 @@ export function commitBodyEffects(
           projectAttributes(world, entity, 'public').some((attribute) => attribute.bodyHealth))),
   );
   if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
+  const combatInterruption = baseCombatInjuryInterruption(before, actor);
+  if (combatInterruption && actor.action) {
+    const interrupted = actor.action;
+    if (interrupted.ranged) releaseInvocationResources(world, interrupted.id);
+    finishPlanAction(
+      world,
+      entity.id,
+      interrupted.id,
+      outcome(false, 'interrupted', combatInterruption),
+    );
+    actor.action = null;
+  }
   if (actor.health < before && actor.action?.type === 'treat-scar') {
     finishPlanAction(
       world,

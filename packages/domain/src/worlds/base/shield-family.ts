@@ -85,7 +85,7 @@ export const BASE_SHIELD_FAMILY: RecipeFamilyDescriptor = {
     effects: ['finite-crafted-item', 'one-contact-injury-reduction'],
     reads: ['known-recipe', 'inventory', 'body-ports', 'chosen-facing', 'contact-phase'],
     limitation:
-      'Contact blows only; no passive armor, projectile interception, durability, stamina, automatic retaliation or permission to harm another player.',
+      'Chosen contact blows and supported stone/arrow projectile impacts; no passive armor, durability, stamina, automatic retaliation or permission to harm another player.',
     guidance: [
       'Use three rigid body items and two binding items. Guard timing and exclusive physical action rules are fixed by this world.',
       `Choose injury reduction ${rules.minimumReduction}–${rules.maximumReduction} and front coverage ${rules.minimumCoverage}–${rules.maximumCoverage} degrees.`,

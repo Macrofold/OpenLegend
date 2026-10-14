@@ -1,6 +1,7 @@
 import {
   actorOutings,
   BASE_OUTING,
+  BASE_COMBAT_HELP,
   observerDescription,
   seesEntity,
   worldPosition,
@@ -27,19 +28,33 @@ function outingTerms(world: WorldState, actorId: string): Omit<OutingView, 'choi
     const status =
       trip.status === 'pending'
         ? 'pending'
-        : trip.arrived.includes(actorId)
-          ? 'arrived'
-          : 'traveling';
+        : trip.status === 'helping'
+          ? 'helping'
+          : trip.arrived.includes(actorId)
+            ? 'arrived'
+            : 'traveling';
     return {
       id: trip.id,
+      kind: trip.kind,
       revision: trip.revision,
-      destination: trip.destination.label,
-      distance: Math.hypot(here.x - destination.x, here.y - destination.y, here.z - destination.z),
+      destination: trip.combat?.labels[actorId] ?? trip.destination.label,
+      distance:
+        trip.kind === 'combat-help'
+          ? (() => {
+              const opponent = world.entities[trip.combat!.opponentId];
+              if (!opponent || !seesEntity(world, actor, opponent)) return null;
+              const point = worldPosition(opponent);
+              return Math.hypot(here.x - point.x, here.y - point.y, here.z - point.z);
+            })()
+          : Math.hypot(here.x - destination.x, here.y - destination.y, here.z - destination.z),
       companion: observerDescription(world, actorId, otherId, 'definite'),
       purpose: trip.purpose,
       status,
       company: BASE_OUTING.companyLabel(visible),
-      description: BASE_OUTING.agreementDescription,
+      description:
+        trip.kind === 'combat-help'
+          ? `${BASE_COMBAT_HELP.description}${trip.status === 'helping' ? ` ${BASE_COMBAT_HELP.workChoiceTerms}` : ''}`
+          : BASE_OUTING.agreementDescription,
     };
   });
 }
@@ -58,10 +73,12 @@ function outingChoices(world: WorldState, actorId: string, trip: Outing): Outing
     expectedRevision: trip.revision,
     ...(mode ? { outingMode: mode } : {}),
   });
+  const description =
+    trip.kind === 'combat-help' ? BASE_COMBAT_HELP.description : BASE_OUTING.agreementDescription;
   const make = (id: string, label: string, input: CommandInput) => ({
     id: `${id}:${trip.id}`,
     label,
-    description: `${label}. ${BASE_OUTING.agreementDescription}${BASE_OUTING.purposeText(trip.purpose)}`,
+    description: `${label}. ${description}${BASE_OUTING.purposeText(trip.purpose)}`,
     command: input,
   });
   if (trip.status === 'pending' && trip.recipientId === actorId) {
@@ -74,18 +91,30 @@ function outingChoices(world: WorldState, actorId: string, trip: Outing): Outing
     return [
       make(
         'outing-accept',
-        BASE_OUTING.acceptLabel(trip.destination.label, busy),
+        trip.kind === 'combat-help'
+          ? BASE_COMBAT_HELP.accept
+          : BASE_OUTING.acceptLabel(trip.destination.label, busy),
         command('accept', busy ? 'replace' : 'enqueue'),
       ),
-      make('outing-decline', BASE_OUTING.declineLabel(trip.destination.label), command('decline')),
+      make(
+        'outing-decline',
+        trip.kind === 'combat-help'
+          ? BASE_COMBAT_HELP.decline
+          : BASE_OUTING.declineLabel(trip.destination.label),
+        command('decline'),
+      ),
     ];
   }
   return [
     make(
       'outing-leave',
-      trip.status === 'pending'
-        ? BASE_OUTING.withdrawLabel(trip.destination.label)
-        : BASE_OUTING.leaveLabel,
+      trip.kind === 'combat-help'
+        ? trip.status === 'pending'
+          ? BASE_COMBAT_HELP.cancel
+          : BASE_COMBAT_HELP.stop
+        : trip.status === 'pending'
+          ? BASE_OUTING.withdrawLabel(trip.destination.label)
+          : BASE_OUTING.leaveLabel,
       command('leave'),
     ),
   ];
@@ -94,7 +123,7 @@ export function outingContext(world: WorldState, actorId: string): string {
   return outingTerms(world, actorId)
     .map(
       (trip) =>
-        `${BASE_OUTING.context(trip.companion, trip.destination, trip.distance, trip.status, trip.company)}${BASE_OUTING.purposeText(trip.purpose)} ${trip.description}`,
+        `${trip.kind === 'combat-help' ? BASE_COMBAT_HELP.context(trip.companion, trip.destination, trip.distance, trip.status, trip.company) : BASE_OUTING.context(trip.companion, trip.destination, trip.distance!, trip.status, trip.company)}${BASE_OUTING.purposeText(trip.purpose)} ${trip.description}`,
     )
     .join('\n');
 }

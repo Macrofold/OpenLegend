@@ -10,3 +10,6 @@ export const BASE_ITEM_HANDLING: ItemHandlingPolicy = {
   pickupSeconds: 1,
   actorBodyProfiles: ['person'],
 };
+
+export const BASE_PICKUP_NARRATION =
+  '{actor.subject} picked up {items.name} from {source.name:definite}.';

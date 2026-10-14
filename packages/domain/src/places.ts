@@ -32,6 +32,7 @@ export type ObservedItemLocation =
 export type EncounterExposure =
   | {
       kind: 'place';
+      reportedBy?: string;
       id: string;
       revision: number;
       label: string;
@@ -109,14 +110,15 @@ export function validEncounterExposure(value: unknown): value is EncounterExposu
     ? hasRecordFields(
         exposure,
         ['kind', 'id', 'revision', 'label', 'description', 'point', 'locationLabel', 'landmarkId'],
-        ['mechanismFields'],
+        ['mechanismFields', 'reportedBy'],
       ) &&
         Number.isSafeInteger(exposure.revision) &&
         exposure.revision > 0 &&
         finitePoint(exposure.point) &&
         isSafeRecordId(exposure.point.surfaceId) &&
         text(exposure.locationLabel, 160) &&
-        isSafeRecordId(exposure.landmarkId)
+        isSafeRecordId(exposure.landmarkId) &&
+        (exposure.reportedBy === undefined || text(exposure.reportedBy, 200))
     : exposure.kind === 'inventory-item' &&
         hasRecordFields(
           exposure,
@@ -202,7 +204,7 @@ export function currentPlaceObservation(
     !!place &&
     place.revision === exposure.revision &&
     place.landmarkId === exposure.landmarkId &&
-    landmarkAtPlace(world, place) &&
+    (exposure.reportedBy !== undefined || landmarkAtPlace(world, place)) &&
     place.label === exposure.label &&
     place.description === exposure.description &&
     place.point.surfaceId === exposure.point.surfaceId &&
@@ -213,6 +215,14 @@ export function currentPlaceObservation(
 }
 
 export function validatePlaces(world: WorldState): void {
+  for (const definition of Object.values(world.itemDefinitions))
+    if (
+      definition.placeReport !== undefined &&
+      (!validEncounterExposure(definition.placeReport) ||
+        definition.placeReport.kind !== 'place' ||
+        !definition.placeReport.reportedBy)
+    )
+      throw new Error('Invalid installed written place report.');
   if (!world.places || Array.isArray(world.places) || typeof world.places !== 'object')
     throw new Error('Missing current authored place definitions.');
   if (

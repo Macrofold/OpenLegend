@@ -1,8 +1,8 @@
 # Batch 06 — Rivals and contested ground
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | One assignment covers all five work parts; required earlier implementations are on local main, and all runtime acceptance remains open. | 2026-10-08   |
+| Status      | Current progress                                                                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Combat mechanics, useful independent help and defensive response verified; hostile choices and the combined visual encounter remain open. | 2026-10-14   |
 
 ## Purpose and planning horizon
 
@@ -10,7 +10,7 @@ Make venturing out create conflict worth engaging with: an opponent wants someth
 
 At Mike's request, **assume all previously suggested assignments are delivered when deciding what to select next**. That is a planning horizon, not evidence that their branches have merged. The [dependency ledger](parallel-batch-06-rivals-and-contested-ground-tech-design.md#open-prerequisites) records actual readiness separately. No previous task is marked complete by this allocation.
 
-The request authorizes planning documents and future implementation prompts, not implementation or task dispatch. The mechanics below are proposals, not current behavior. The owner consolidated the five interdependent assignments into one implementation assignment on October 8. CF01–CF05 retain their complete scope and acceptance as internal work parts, not separate workers or design-only substitutes.
+The original planning request authorized these documents and future prompts. The owner consolidated the five interdependent assignments on October 8, then authorized the complete implementation on `codex/rivals-and-contested-ground`. The requirements below remain the accepted target; current branch evidence and unfinished acceptance are tracked separately. CF01–CF05 retain their complete scope as internal work parts, not separate workers or design-only substitutes.
 
 ## Why this batch
 
@@ -53,6 +53,8 @@ They can warn, refuse, attack, seek a useful firing position, guard, evade, retr
 The player's choices include fighting, using cover, leaving, talking without a guaranteed negotiation outcome, or approaching another route. Targets show only permitted identity, distance, health, equipment and preparation. A purposeful ranged opponent must actually select a supported shot; a deterministic script firing on proximity is insufficient. A human who deliberately selects a potentially lethal attack sees the existing review. Ada and the opponents receive the same ordinary NPC death consequences.
 
 **Completion:** demonstrate a genuinely selected attack with each loadout, an observation-grounded pursuit that stops using lost information, changed behavior after a meaningful adverse result, finite ammunition, retreat/refusal, a different compatible weapon, and actual NPC-to-NPC injury/death with no replay or revival. Demonstrate the existing human death/review/protection boundaries. Native scenarios establish safety; separate live character runs establish actual choices and their limitations. CF01 supplies character content and common attack eligibility; CF05 owns where these people and their supplies start. [Technical scope](parallel-batch-06-rivals-and-contested-ground-tech-design.md#cf01--purposeful-opponents-through-ordinary-agency).
+
+October 13 implementation correction: [authored impact attention](../worlds/base/lifecycle-and-protection.md#npc-combat-participation) can prompt timely reconsideration, and coalesced speech cannot remove optional physical choices. Neither change requires an attack. Native checks pass; independent choices and live timing remain acceptance work.
 
 ## CF02 — Aim, projectiles and real cover
 

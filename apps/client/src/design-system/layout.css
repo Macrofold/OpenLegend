@@ -48,6 +48,7 @@ body,
 }
 .ol-hud {
   --status-height: 180px;
+  --clock-height: 56px;
   --status-scale: 1;
   --status-bottom: calc(var(--hud-inset) + 48px + var(--status-height) * var(--status-scale));
   position: absolute;
@@ -1435,7 +1436,10 @@ body,
 .ol-hud[data-narrow='true'] {
   --hud-inset: var(--space-3);
   --status-scale: 0.72;
-  --dock-top: max(230px, calc(var(--status-bottom) + var(--space-3) + 56px + var(--space-3)));
+  --dock-top: max(
+    230px,
+    calc(var(--status-bottom) + var(--space-3) + var(--clock-height) + var(--space-3))
+  );
 }
 .ol-hud[data-narrow='true'] .ol-survival {
   transform: scale(0.72);
@@ -1637,7 +1641,10 @@ body,
 }
 .ol-hud[data-tight='true'] {
   --status-scale: 0.6;
-  --dock-top: max(280px, calc(var(--status-bottom) + var(--space-3) + 88px + var(--space-3)));
+  --dock-top: max(
+    280px,
+    calc(var(--status-bottom) + var(--space-3) + var(--clock-height) + var(--space-3))
+  );
   --mobile-tabs-top: calc(var(--dock-top) + var(--space-8) + var(--space-2));
 }
 .ol-hud[data-tight='true'] .ol-timebar {
@@ -2999,4 +3006,29 @@ body,
 }
 .ol-family-confirm p {
   flex-basis: 100%;
+}
+
+.ol-combat-controls {
+  margin-top: var(--space-2, 8px);
+}
+.ol-combat-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ol-combat-controls p {
+  overflow-wrap: anywhere;
+}
+
+.ol-aim-status {
+  margin-top: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  max-height: min(240px, 40vh);
+  overflow: auto;
+}
+.ol-panel-foot .ol-combat-controls {
+  margin-top: 0;
+  max-height: 30vh;
+  overflow: auto;
 }

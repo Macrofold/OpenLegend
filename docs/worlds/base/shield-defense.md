@@ -14,7 +14,7 @@ Choosing a weapon action can still auto-equip its exact item. Show **Auto-equip;
 
 Offer a known wooden-shield method using three wood and two cord, producing one shield after 240 game seconds. Give applicable starting characters this ordinary recipe knowledge through the authored knowledge source; do not spawn a shield in everyone's bag or pretend the known recipe was invented live. It has packing load 3. Reuse current material roles/admission and expose a finite shield family for compatible newly admitted definitions.
 
-The shield profile supports contact injury defense only. Its authored guard reduces injury by one half when the actual incoming contact is in the front 120-degree horizontal sector and the guard is active. It supplies no protection against starvation, exhaustion, unmodeled falls, heat, projectiles or every status contribution named damage. There is no second block probability or reroll; a late, wrong-facing or unavailable shield fails the guard conditions. Existing attack accuracy still determines whether a blow connects.
+The shield profile supports contact injury defense, including the scoped stone/arrow projectile integration below. Its authored guard reduces injury by one half when the actual incoming contact is in the front 120-degree horizontal sector and the guard is active. It supplies no protection against starvation, exhaustion, unmodeled falls, heat or every status contribution named damage. There is no second block probability or reroll; a late, wrong-facing or unavailable shield fails the guard conditions. Existing attack accuracy still determines whether a blow connects.
 
 Finite family authoring may vary the reduction from 0.25 to 0.6 and the sector from 90 to 140 degrees. The first known shield uses 0.5 and 120 degrees. Duration and action-channel rules remain this world's guard law, not candidate-provided executable behavior. A different admitted profile must affect the actual outcome and displayed explanation, proving the known shield is not a hard-coded exception.
 
@@ -30,11 +30,11 @@ At contact resolution, use the attack's actual source position, defender positio
 
 The result can say “Shield blocked 9 of 18 injury; you lost 9 health.” If an observer is not permitted to know an exact value or attacker identity, use the permitted physical account instead. A prevented component and actual health change belong to one action result, not two attacks. Existing death/incapacity rules use the final actual injury.
 
-No passive auto-guard, endless held stance, stamina meter, shield wear, parry stun, counterattack, projectile interception or new PvP permission is introduced. A finite guard makes defense an action with a time/opportunity cost while keeping walking away a legitimate option. Expansion needs a useful encounter that this scope cannot express.
+No passive auto-guard, endless held stance, stamina meter, shield wear, parry stun, counterattack, ally interception or new PvP permission is introduced. A finite guard makes defense an action with a time/opportunity cost while keeping walking away a legitimate option. Expansion needs a useful encounter that this scope cannot express.
 
-## Proposed batch 06 projectile extension
+## Batch 06 projectile extension
 
-[CF02](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf02--aim-projectiles-and-real-cover) later extends this same guard to the supported stone/arrow impacts under [ranged counterplay](ranged-counterplay.md#ranged-tools-and-preparation). That extension is outside AV02's contact-only delivery above and remains unimplemented. It reuses the current shield sector, reduction, readiness, one-interception consumption and recovery; no independent projectile shield or ally protection is introduced.
+[CF02](../../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf02--aim-projectiles-and-real-cover) extends this same guard to the supported stone/arrow impacts under [ranged counterplay](ranged-counterplay.md#ranged-tools-and-preparation). That extension is implemented on the Batch 06 branch, beyond AV02's original contact-only delivery; [native evidence](../../verification/rivals-and-contested-ground.md) demonstrates actual reduction and preserved recovery. Incoming direction is the reversed committed trajectory, so moving the shooter after release cannot turn an old shot into a front attack. It reuses the current shield sector, reduction, readiness, one-interception consumption and recovery; no independent projectile shield or ally protection is introduced.
 
 ## Maintained records
 
@@ -44,6 +44,6 @@ No passive auto-guard, endless held stance, stamina meter, shield wear, parry st
 
 ## Ordinary choices and current-format return
 
-Inventory and ordinary actions expose the exact shield, equipment changes and timing explanation. The player’s visible work label says Preparing guard, Guard ready or Recovering from guard. Visible threat preparation remains readable through ordinary observation. NPCs with an accessible shield can receive the same admitted guard choice when they see a contact strike being prepared, alongside ordinary alternatives. Offering it does not select it or establish that a model will choose well.
+Inventory and ordinary actions expose the exact shield, equipment changes and timing explanation. The player's visible work label says Preparing guard, Guard ready or Recovering from guard. Visible threat preparation remains readable through ordinary observation. NPCs with an accessible shield can receive the same admitted guard choice when they see a contact strike or ranged shot being prepared, including held aim, alongside ordinary alternatives. Offering it does not select it or establish that a model will choose well.
 
 Current-format saves retain exact attachments, shield/profile/life references, facing and original deadlines. Paused startup/load preserves committed physical work while control reconnects; genuine absence still interrupts it under the existing departure law. A returned expired guard receives no protection. Committed recovery and damage cannot renew or repeat because a request or save is reopened. Death stows attachments before the existing item-type retention decision and clears the retired body’s guard/recovery; it changes neither retention probabilities nor new-life rules.

@@ -14,6 +14,8 @@ export * from './finite-casts.js';
 export { BASE_DEATH_COMMAND_DESCRIPTIONS } from './worlds/base/death.js';
 export * from './reincarnation.js';
 export * from './combat-consent.js';
+export * from './ranged.js';
+export * from './worlds/base/ranged-counterplay.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';
 export {
   activeStimuli,
@@ -35,6 +37,7 @@ export {
   BASE_FOOD_ACTION_WORDING,
   equippedTargetAction,
   nativeCatalogueView,
+  nativeActivityViews,
   nativeHuntCatalogueLabel,
 } from './worlds/base/action-views.js';
 export * from './item-handling.js';
@@ -178,7 +181,7 @@ export { isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
-export { BASE_HUNTING, huntingDescription, observedAnimalHealth } from './worlds/base/hunting.js';
+export { BASE_HUNTING, huntingDescription, observedBodyHealth } from './worlds/base/hunting.js';
 export * from './handover.js';
 export { BASE_HANDOVER } from './worlds/base/handover.js';
 export {
@@ -281,7 +284,7 @@ export { DEFAULT_COGNITION_POLICY } from './worlds/base/cognition.js';
 export { basePlaytestMilestones } from './worlds/base/playtest.js';
 
 export * from './outings.js';
-export { BASE_OUTING } from './worlds/base/outing-policy.js';
+export { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
 export * from './practical-competence.js';
 export * from './coaching.js';
 export {
@@ -301,3 +304,9 @@ export * from './assembly-validation.js';
 export * from './assembly-use.js';
 export * from './construction-scene.js';
 export { BASE_CONSTRUCTION_DESCRIPTIONS } from './worlds/base/canopies.js';
+
+export * from './evasion.js';
+
+export * from './worlds/base/combat-views.js';
+
+export * from './worlds/base/watchpost.js';

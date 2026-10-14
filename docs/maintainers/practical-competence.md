@@ -1,5 +1,7 @@
 # Practical competence
 
+CF02 now consumes this release owner: handling contributes to aim steadiness, while later moving-body/cover geometry determines contact. It removes the previous extra fleeing multiplier and records practice once at committed release, without credit for aiming/cancellation or reloading an occurrence. [Batch 06 evidence](../verification/rivals-and-contested-ground.md) retains combined player/opponent qualification as open; it does not close human appreciation or all competence uses.
+
 **Selected runtime delivered, reviewed and qualified October 6, 2026; human appreciation remains open.** This tracker owns only DG14's selected sling-handling, finite practice, inert-target and coaching consumer. It does not replace EWF's typed state, AE's method learning, AC's execution, INV's definition admission or SC's shared effect ownership.
 
 - Product behavior and research: [authored-stats specification, DG14](../projects/authored-stats-feature-spec.md#16-dg14-expansion--become-more-capable-at-something-worth-doing).

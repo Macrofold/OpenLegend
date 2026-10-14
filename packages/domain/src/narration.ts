@@ -95,16 +95,18 @@ export function narrationTemplate(
     if (!token) continue;
     parts.push(template.slice(end, match.index));
     const value = bindings[token.binding];
+    // Definition IDs identify content; only physical entities carry observer identity.
+    const entity = value && 'kind' in value ? value : undefined;
     if (token.verb) {
       parts.push(
-        value && 'id' in value
-          ? presentVerb(value.id, token.verb)
+        entity
+          ? presentVerb(entity.id, token.verb)
           : presentTense(token.verb, false, value?.nameForm === 'plural'),
       );
-    } else if (value && 'id' in value) {
+    } else if (entity) {
       // Even explicit name tokens pass through observer identity, never global names.
       parts.push({
-        entityId: value.id,
+        entityId: entity.id,
         role: token.role!,
         ...(token.article ? { article: token.article } : {}),
       });

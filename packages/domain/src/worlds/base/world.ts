@@ -10,6 +10,7 @@ import {
   populateOuterWilderness,
 } from './landscape.js';
 import { emptyActionExperience } from '../../action-experience.js';
+import { installWatchpost } from './watchpost.js';
 import { ADA_IDENTITY } from './characters.js';
 import { installKnownShieldMethod } from './shield-family.js';
 import { startingRecipeKnowledge } from './knowledge.js';
@@ -529,6 +530,7 @@ export function createWorld(
   installFirstThreat(world);
   installExpeditions(world);
   installMissingBelonging(world);
+  installWatchpost(world, createActor);
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);

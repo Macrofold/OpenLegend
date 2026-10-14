@@ -1,4 +1,5 @@
-import { subjectNarration } from './narration.js';
+import { subjectNarration, narrationTemplate } from './narration.js';
+import { BASE_PICKUP_NARRATION } from './worlds/base/item-handling.js';
 import { namePhrase } from '@open-legend/language';
 import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
@@ -165,9 +166,12 @@ export function pickUpItems(
     world,
     events,
     'items-picked-up',
-    subjectNarration(actor, `picked up ${description}.`),
+    // Render the observed source before an empty pile disappears; later history must
+    // not guess its identity from a now-missing object. No current reference is revived.
+    narrationTemplate(BASE_PICKUP_NARRATION, { actor, items: { name: description }, source: pile }),
     actor,
     pile.id,
+    { targetMustBeVisible: true },
   );
   if (pile.kind === 'item-pile' && !itemsForOwner(world, pileId).length) {
     delete world.entities[pileId];

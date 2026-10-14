@@ -110,6 +110,7 @@ export function nativeInterval(
         g.phase === 'preparing' ? g.readyAt : g.phase === 'ready' ? g.expiresAt : g.recoveryUntil!,
       );
     }
+    if (action?.evasion) at(action.evasion.endsAt);
     const plan = actor.agency.plan;
     if (plan?.status === 'active' && plan.activity)
       at(nextActivityBoundary(world, id, plan.activity));

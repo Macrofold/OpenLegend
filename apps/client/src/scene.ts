@@ -32,6 +32,7 @@ import {
   surfaceById,
   surfaceContains,
   surfaceHeight,
+  surfacesInBounds,
   type SceneryInstance,
   type WorldPoint,
 } from '@open-legend/spatial';
@@ -541,8 +542,35 @@ export class WildernessScene implements WorldRenderer {
           if (surface.levelId !== level.id && minimum > level.focusY + 0.05)
             this.cutaways.add(surface.id);
         }
-        for (const blocker of spatialBlockers(map))
-          if (blocker.bounds.min.y > level.focusY + 0.05) this.cutaways.add(blocker.id);
+        for (const blocker of spatialBlockers(map)) {
+          const { min, max } = blocker.bounds;
+          if (min.y <= level.focusY + 0.05) continue;
+          // A named floor can include raised/sloping ground. Keep its actual cover visible;
+          // a nominal focus height alone would hide walls which still stop movement and shots.
+          // docs/spatial-world.md#levels-and-cutaways
+          const onSelectedFloor = surfacesInBounds(map, {
+            min: { ...min, y: min.y - 0.05 },
+            max: { ...max, y: max.y + 0.05 },
+          }).some((surface) => {
+            if (surface.levelId !== level.id) return false;
+            const lowX = Math.max(min.x, surface.minX),
+              highX = Math.min(max.x, surface.maxX),
+              lowZ = Math.max(min.z, surface.minZ),
+              highZ = Math.min(max.z, surface.maxZ);
+            const lowest = surfaceHeight(
+                surface,
+                surface.slopeX >= 0 ? lowX : highX,
+                surface.slopeZ >= 0 ? lowZ : highZ,
+              ),
+              highest = surfaceHeight(
+                surface,
+                surface.slopeX >= 0 ? highX : lowX,
+                surface.slopeZ >= 0 ? highZ : lowZ,
+              );
+            return lowest <= max.y + 0.05 && highest >= min.y - 0.05;
+          });
+          if (!onSelectedFloor) this.cutaways.add(blocker.id);
+        }
       }
       for (const [id, node] of this.geometryNodes)
         this.presentation.setCutaway(node, this.cutaways.has(id));

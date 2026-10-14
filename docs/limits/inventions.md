@@ -350,6 +350,8 @@ The strict RecipeCandidate envelope carries a family ID/version, role inputs and
 
 **Reason / tradeoff:** Remove a repeated engine edit requirement for each family while retaining positive proof that an admitted object has real semantics. This deliberately does not pretend arbitrary material/effect composition is solved. Historical PW02 implementation base: inherited planning commit `8005f7c7`; its native four-family admission, repeated receipt, craft/use and exact current-state restore probes passed. Later container and NP03 evidence is linked above; whole request-cost measurements and broader integrated acceptance remain tracked under PW02. [Design](../projects/parallel-batch-01-playable-week-tech-design.md#pw02--family-definitions-not-engine-recipe-switches).
 
+CF02 consumes admitted launcher speed, range, ammunition and injury through the shared straight-flight owner for permitted living opponents. Base accuracy now means release steadiness; actual contact accounts for movement/cover instead of the old extra fleeing factor. [World definitions](../worlds/base/ranged-counterplay.md) retain tuning, and [Batch 06](../maintainers/parallel-batch-06-rivals-and-contested-ground.md) owns the new consumer qualification. No generated trajectory code, arbitrary effect or broader invented-input contract is admitted.
+
 ## WS01 — World Agent stream delivery
 
 **Implemented; bounded native/browser evidence, deployed acceptance blocked · Restrictiveness: Safe.** [PW05](../maintainers/parallel-batch-01-playable-week.md#pw05--streamed-world-agent-replies) adds incremental owner-session delivery with these application-side guards:

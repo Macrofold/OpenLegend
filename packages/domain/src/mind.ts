@@ -5,6 +5,7 @@ import { experiences } from './experience.js';
 import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { executeCommand } from './kernel.js';
+import { actionTargetsCurrent } from './action-targets.js';
 
 export const MIND_POLICY = 'mind-v1';
 export const MIND_LIMITS = {
@@ -344,6 +345,10 @@ export function commitCognition(
       return reject('Action candidate or plan is stale.');
     const command = binding.actions[proposal.actionId];
     if (command) {
+      // Unchanged work cannot re-identify a person whose observation ended during thinking.
+      // docs/identity-and-references.md#contract
+      if (!actionTargetsCurrent(input, binding.actorId, [command], binding.entityEpisodes))
+        return reject('The selected action target changed observation.');
       const transition = executeCommand(world, {
         ...command,
         id: `${binding.decisionId}:action`,

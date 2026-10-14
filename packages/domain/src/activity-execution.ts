@@ -51,6 +51,9 @@ export interface ChosenActivityControl {
 }
 
 export interface ActivityExecution {
+  combatHelpId?: string;
+  /** Origin belongs to this invocation, never to the learned method. */
+  humanInitiated?: true;
   /** A personally learned method, or absent for a requested composition. */
   methodId?: string;
   /** A requested composition carries its own validated root and chosen name. */
@@ -387,14 +390,32 @@ function predicate(
 }
 export function bindActivityCommand(
   node: Extract<ActivityNode, { kind: 'invoke' }>,
-  execution: Pick<ActivityExecution, 'bindings' | 'outputs'>,
+  execution: Pick<ActivityExecution, 'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId'>,
   actorId: string,
   id: string,
 ): Command | undefined {
-  const command = { id, actorId, type: node.command, purpose: node.name } as Command &
-    Record<string, unknown>;
+  const command = {
+    id,
+    actorId,
+    type: node.command,
+    purpose: node.name,
+    ...(execution.humanInitiated ? { humanInitiated: true } : {}),
+    ...(execution.combatHelpId ? { combatHelpId: execution.combatHelpId } : {}),
+  } as Command & Record<string, unknown>;
   for (const [field, value] of Object.entries(node.args)) {
-    if (['id', 'actorId', 'type', '__proto__', 'constructor', 'prototype'].includes(field)) return;
+    if (
+      [
+        'id',
+        'actorId',
+        'type',
+        'humanInitiated',
+        'combatHelpId',
+        '__proto__',
+        'constructor',
+        'prototype',
+      ].includes(field)
+    )
+      return;
     let bound: unknown;
     if ('role' in value) bound = execution.bindings[value.role];
     else if ('literal' in value) bound = value.literal;
@@ -581,6 +602,8 @@ export function startLearnedActivity(
   bindings: Record<string, ActivityBinding>,
   resume = false,
   constructionPermissions: readonly ConstructionPermission[] = [],
+  humanInitiated?: true,
+  combatHelpId?: string,
 ) {
   const actor = world.entities[actorId]?.actor;
   const method = acquiredActivities(world, actorId).find((method) => method.id === methodId);
@@ -631,6 +654,8 @@ export function startLearnedActivity(
     status: 'active',
     steps: [],
     activity: {
+      ...(combatHelpId ? { combatHelpId } : {}),
+      ...(humanInitiated ? { humanInitiated } : {}),
       methodId,
       bindings: cloneValue(bindings),
       pending: [{ node: cloneValue(method.root), iteration: 0 }],
@@ -760,6 +785,8 @@ export function startRequestedActivity(
       'The activity needs current things you can perceive or carry.',
     );
   const execution: ActivityExecution = {
+    ...(command.combatHelpId ? { combatHelpId: command.combatHelpId } : {}),
+    ...(command.humanInitiated ? { humanInitiated: true } : {}),
     request: { name: command.name.trim(), root: cloneValue(command.root) },
     bindings: cloneValue(command.bindings),
     pending: [{ node: cloneValue(command.root), iteration: 0 }],

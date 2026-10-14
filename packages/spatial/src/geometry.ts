@@ -442,8 +442,12 @@ export function rayHits(
   });
   return hits.sort((a, b) => a.fraction - b.fraction || a.id.localeCompare(b.id));
 }
+// A surface or corner touched only at one point is visible; penetration still blocks.
+// Direct and prepared sight queries must agree. docs/spatial-world.md#seeing-and-hearing-in-3d
+const blocksSight = (interval: readonly [number, number] | null): boolean =>
+  !!interval && interval[0] < interval[1];
 export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
-  !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, () => true);
+  !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, (_, interval) => blocksSight(interval));
 /** Physical work cannot reach through a transparent movement blocker. End-face
  * contact uses the same shrunken planes as ordinary rays, without ignoring a part. */
 export const clearPhysicalSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
@@ -614,7 +618,7 @@ export function clearOf(
   from: WorldPoint,
   to: WorldPoint,
 ): boolean {
-  return !obstacles.some((obstacle) => clipSegment(from, to, obstacle.planes));
+  return !obstacles.some((obstacle) => blocksSight(clipSegment(from, to, obstacle.planes)));
 }
 /** Real roots of a·t² + b·t + c, appended; cancellation-free form, linear when a vanishes. */
 export function quadraticRoots(a: number, b: number, c: number, roots: number[]): void {
@@ -632,7 +636,7 @@ export function quadraticRoots(a: number, b: number, c: number, roots: number[])
  * move linearly (from0→from1, to0→to1), against obstacles gathered for a hull containing all
  * four points. They are the roots of the comparisons clipSegment makes: parallel-rule switches,
  * crossings of a segment end, and an entered plane's crossing fraction meeting an exited one's
- * inside the segment (only those can flip enter ≤ exit). Between consecutive fractions the
+ * inside the segment (only those can flip enter < exit). Between consecutive fractions the
  * answer is constant; callers classify each piece with clearOf, never from these roots.
  * docs/maintainers/simulation-boundaries.md#perception-sound-and-cognition */
 export function sightChangeFractions(

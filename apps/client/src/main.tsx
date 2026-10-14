@@ -1,3 +1,4 @@
+import { AimControls } from './ui/aim-controls';
 import { Construction } from './ui/construction';
 import { namePhrase } from '@open-legend/language';
 import { FamilyEditor } from './ui/family-editor';
@@ -495,11 +496,26 @@ function App({
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, [scale, narrow]);
+  const aimPanel =
+    view?.player.action?.controls &&
+    ((narrow && open.length > 0) || expandedWorkspaces.some((id) => open.includes(id)))
+      ? open.at(-1)
+      : undefined;
   const hasView = view !== null;
   useEffect(() => {
     if (!hasView || !survival.current || !hud.current || !canvas.current) return;
     return observeHudLayout(hud.current, canvas.current, survival.current, setCaptionOcclusions);
-  }, [hasView, width, height, scale, open, timeSettings, expandedWorkspaces]);
+  }, [
+    hasView,
+    width,
+    height,
+    scale,
+    open,
+    timeSettings,
+    expandedWorkspaces,
+    !!view?.player.action?.controls,
+    aimPanel,
+  ]);
   const workspaceWidth = Math.min(792, Math.max(336, width / scale - 184));
   function fit(panels: PanelId[]) {
     const available = width / scale;
@@ -541,7 +557,12 @@ function App({
   }, [open]);
   async function command(action: ActionOption) {
     if (
-      (isPaused() && action.command.type !== 'inspect-inventory') ||
+      (isPaused() &&
+        !['inspect-inventory', 'cancel'].includes(action.command.type) &&
+        !(
+          action.command.type === 'outing' &&
+          ['leave', 'decline'].includes(action.command.outingOperation ?? '')
+        )) ||
       !latest.current?.access?.controlling
     ) {
       return { ok: false, code: 'paused', message: 'Resume here to play.' };
@@ -1378,6 +1399,15 @@ function App({
                 <span className="ol-meta">The first clearing</span>
               </div>
               <Condition {...view.player} />
+              {view.player.evasion && (
+                <p className="ol-caption">
+                  {view.player.evasion.label}:{' '}
+                  {view.player.evasion.readyIn > 0
+                    ? `ready in ${Math.ceil(view.player.evasion.readyIn)} game seconds`
+                    : 'ready'}
+                </p>
+              )}
+
               <p className="ol-caption ol-player-state">
                 {view.player.participation === 'inactive'
                   ? 'Away from the world'
@@ -1434,6 +1464,16 @@ function App({
                   onPress={() => setTimeSettings(!timeSettings)}
                 />
               </div>
+              {view.player.action?.controls && !aimPanel && (
+                <div className="ol-card ol-aim-status">
+                  <AimControls
+                    action={view.player.action}
+                    connected={connected}
+                    controlling={!!view.access?.controlling}
+                    command={(choice) => void command(choice)}
+                  />
+                </div>
+              )}
               {timeSettings && (
                 <div className="ol-card ol-time-settings" role="region" aria-label="Time settings">
                   <p>
@@ -1559,6 +1599,16 @@ function App({
                                 },
                               }
                             : undefined
+                        }
+                        footer={
+                          id === aimPanel && view.player.action?.controls ? (
+                            <AimControls
+                              action={view.player.action}
+                              connected={connected}
+                              controlling={!!view.access?.controlling}
+                              command={(choice) => void command(choice)}
+                            />
+                          ) : undefined
                         }
                         onClose={() => hide(id)}
                         onBack={

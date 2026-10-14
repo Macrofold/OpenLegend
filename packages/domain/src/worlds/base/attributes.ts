@@ -5,7 +5,7 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
   SLING_HANDLING,
   {
     id: 'wilderness:health',
-    version: 2,
+    version: 3,
     implementation: 'native-health-v1',
     name: 'Health',
     disclosure: 'public',
@@ -21,7 +21,7 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
       reconsider: false,
     },
     meaning:
-      'Health measures bodily integrity. Severe injury can prevent action. At zero, ordinary living activity ends: NPCs die, with no assured return to life. Human-controlled people can recover from collapse.',
+      'Health measures bodily integrity. Severe injury can prevent action. At zero, this body dies. Ordinary NPC and animal revival is unavailable. Human-controlled people can return in another life, carrying a scar and leaving some possessions on their old body.',
   },
   {
     id: 'wilderness:fullness',

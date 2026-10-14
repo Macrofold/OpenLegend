@@ -9,7 +9,16 @@ import { nativeCommandKind } from './native-command-kind.js';
 import { outingViews } from './outing-view.js';
 
 import { recipeDetailsView } from './recipe-view.js';
-import { equippedItem, guardWorkLabel, BASE_GUARD_TEXT } from '@open-legend/domain';
+import {
+  equippedItem,
+  guardWorkLabel,
+  BASE_GUARD_TEXT,
+  BASE_RANGED_TEXT,
+  rangedChoiceLabel,
+  nativeActivityViews,
+  observedCombatActivity,
+  combatRecoveryDeadline,
+} from '@open-legend/domain';
 import { competenceOptions, waitingForFeedback } from './competence-actions.js';
 import {
   ownPractice,
@@ -325,6 +334,18 @@ export async function projectView(
           : {}),
     };
   };
+  let activityView: ReturnType<typeof nativeActivityViews> | undefined;
+  const attackDetails = (command: import('@open-legend/domain').Command) => {
+    const view = (activityView ??= nativeActivityViews(world, observation.inventory))(command);
+    const facts = view.facts
+      .filter((fact) => fact.critical)
+      .map((fact) => [fact.name, String(fact.value)] as [string, string]);
+    const detail = view.facts
+      .filter((fact) => !fact.critical)
+      .map((fact) => `${fact.name}: ${String(fact.value)}`)
+      .join('; ');
+    return { facts, detail };
+  };
   const equipment =
     equippedItem(world, scope.actorId, 'ranged') ??
     equippedItem(world, scope.actorId, 'melee') ??
@@ -369,6 +390,11 @@ export async function projectView(
           entity,
           entity.assembly ? world.entities : undefined,
           entity.assembly ? world.simTime : undefined,
+          // Recovery can count down while the body itself stays unchanged. Rebuild only
+          // when the whole-second description changes, rather than on every clock tick.
+          entity.actor
+            ? Math.max(0, Math.ceil(combatRecoveryDeadline(world, entity) - world.simTime))
+            : undefined,
           entity.assembly ? service.constructionAllowed(scope.actorId) : undefined,
           world.observerIdentities?.[scope.actorId]?.[entity.id],
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
@@ -419,6 +445,7 @@ export async function projectView(
           world.statusEffectPolicy,
         ],
         () => {
+          const attributes = entity.actor ? projectAttributes(world, entity, 'public') : [];
           const display = observerName(world, scope.actorId, entity.id);
           const displayName = display.name;
           const sentenceName = namePhrase(display, 'definite');
@@ -447,15 +474,55 @@ export async function projectView(
                 targetId: entity.id,
               };
               const preview = service.previewCommand(command, scope.actorId);
-              actions.push(
-                action(
+              actions.push({
+                ...action(
                   `${definition.id}-${entity.id}`,
                   definition.label,
                   command,
                   preview.ok,
                   preview.message,
                 ),
-              );
+                ...attackDetails({
+                  id: `preview:${definition.id}`,
+                  actorId: scope.actorId,
+                  type: 'strike',
+                  definitionId: definition.id,
+                  targetId: entity.id,
+                  weaponItemId: definition.weaponItemId,
+                }),
+              });
+            }
+
+          if (entity.actor?.alive && equipment && launcher)
+            for (const type of ['aim', 'shoot-once'] as const) {
+              const command = {
+                type,
+                targetId: entity.id,
+                itemId: equipment.id,
+                ammunitionId: ammunition?.id,
+              };
+              const preview = service.previewCommand(command, scope.actorId);
+              actions.push({
+                ...action(
+                  `${type}:${entity.id}:${equipment.id}`,
+                  rangedChoiceLabel(
+                    type,
+                    displayName,
+                    world.itemDefinitions[equipment.definitionId]!.name,
+                  ),
+                  command,
+                  preview.ok,
+                  preview.message,
+                ),
+                ...attackDetails({
+                  id: `preview:${type}`,
+                  actorId: scope.actorId,
+                  type,
+                  targetId: entity.id,
+                  weaponItemId: equipment.id,
+                  ammoItemId: ammunition?.id,
+                }),
+              });
             }
 
           const speechCapable = canSpeak(entity);
@@ -594,7 +661,8 @@ export async function projectView(
                 'These remains have already been harvested.',
               ),
             );
-          if (canSpeak(entity) && entity.actor?.controller === 'npc')
+          // Speech-capable body metadata survives death; only a living listener can learn.
+          if (canSpeak(entity) && entity.actor?.alive && entity.actor.controller === 'npc')
             for (const recipe of observation.knownRecipes)
               actions.push(
                 action(`teach-${recipe.id}`, `Teach ${recipe.name}`, {
@@ -685,48 +753,52 @@ export async function projectView(
                 ? ((entity.remains?.phase === 'rotting'
                     ? bodyPolicy(world)?.remains?.rottingLabel
                     : bodyPolicy(world)?.remains?.freshLabel) ?? '')
-                : projectStatusEffects(world, entity).length
-                  ? projectStatusEffects(world, entity)
-                      .map((d) => d.label)
-                      .join(', ')
-                  : entity.actor.action
-                    ? ({
-                        assemble: entity.actor.action.assemblyPhase
-                          ? world.assemblyFamilies?.[entity.actor.action.assemblyPhase.familyId]
-                              ?.labels[entity.actor.action.assemblyPhase.operation]
-                          : undefined,
-                        guard: BASE_GUARD_TEXT.activityLabel,
-                        pickup: 'Picking up items',
-                        move: 'Walking',
-                        follow: 'Following',
-                        replenish: 'Replenishing',
-                        gather: 'Gathering',
-                        'status-effect': 'Active state',
-                        hunt: rangedPolicy(world)?.activityLabel,
-                        'practice-shot': practiceDefinition(
-                          world,
-                          entity.actor.action.competencePin?.id ?? '',
-                        )?.practice?.presentation.practiceActivityLabel,
-                        coaching: practiceDefinition(
-                          world,
-                          entity.actor.action.competencePin?.id ?? '',
-                        )?.practice?.presentation.coachingActivityLabel,
-                        strike: 'Striking',
-                        harvest: 'Harvesting',
-                        cook: 'Cooking',
-                        fish: 'Fishing',
-                        'tend-fire': 'Tending a fire',
-                        'treat-scar': 'Treating an injury',
-                        prepare: 'Preparing',
-                        craft: 'Crafting',
-                      }[entity.actor.action.type] ?? 'Working')
-                    : entity.threat
-                      ? ''
-                      : entity.animal
-                        ? entity.animal.danger > 0
-                          ? 'Fleeing'
-                          : 'Foraging'
-                        : 'Watching the clearing'
+                : (observedCombatActivity(world, player, entity) ??
+                  (projectStatusEffects(world, entity).length
+                    ? projectStatusEffects(world, entity)
+                        .map((d) => d.label)
+                        .join(', ')
+                    : entity.actor.action
+                      ? ({
+                          assemble: entity.actor.action.assemblyPhase
+                            ? world.assemblyFamilies?.[entity.actor.action.assemblyPhase.familyId]
+                                ?.labels[entity.actor.action.assemblyPhase.operation]
+                            : undefined,
+                          guard: BASE_GUARD_TEXT.activityLabel,
+                          pickup: 'Picking up items',
+                          move: 'Walking',
+                          evade: bodyPolicy(world)?.evasion?.label,
+                          follow: 'Following',
+                          replenish: 'Replenishing',
+                          gather: 'Gathering',
+                          'status-effect': 'Active state',
+                          hunt: rangedPolicy(world)?.activityLabel,
+                          aim: BASE_RANGED_TEXT.aimingLabel,
+                          'shoot-once': BASE_RANGED_TEXT.shootingLabel,
+                          'practice-shot': practiceDefinition(
+                            world,
+                            entity.actor.action.competencePin?.id ?? '',
+                          )?.practice?.presentation.practiceActivityLabel,
+                          coaching: practiceDefinition(
+                            world,
+                            entity.actor.action.competencePin?.id ?? '',
+                          )?.practice?.presentation.coachingActivityLabel,
+                          strike: 'Striking',
+                          harvest: 'Harvesting',
+                          cook: 'Cooking',
+                          fish: 'Fishing',
+                          'tend-fire': 'Tending a fire',
+                          'treat-scar': 'Treating an injury',
+                          prepare: 'Preparing',
+                          craft: 'Crafting',
+                        }[entity.actor.action.type] ?? 'Working')
+                      : entity.threat
+                        ? ''
+                        : entity.animal
+                          ? entity.animal.danger > 0
+                            ? 'Fleeing'
+                            : 'Foraging'
+                          : 'Watching the clearing'))
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
@@ -759,8 +831,10 @@ export async function projectView(
               : {}),
             ...(entity.actor
               ? {
-                  attributes: projectAttributes(world, entity, 'public'),
-                  health: entity.actor.health,
+                  attributes,
+                  ...(attributes.some((attribute) => attribute.bodyHealth)
+                    ? { health: entity.actor.health }
+                    : {}),
                   bodyRevision: entity.actor.body?.revision,
                   ...(!entity.actor.alive
                     ? {
@@ -956,6 +1030,18 @@ export async function projectView(
       }
   }
   const work = actor.action;
+  const aimDetails =
+    work?.type === 'aim'
+      ? attackDetails({
+          id: work.id,
+          actorId: scope.actorId,
+          type: 'aim',
+          targetId: work.targetId!,
+          weaponItemId: work.weaponItemId,
+          ammoItemId: work.ammoItemId,
+        })
+      : undefined;
+
   const consumption = applicableConsumption(world, player);
   const suggestedConsumption =
     consumption &&
@@ -996,7 +1082,10 @@ export async function projectView(
     coaching: waitingForFeedback(world, player)
       ? 'Waiting for the other person to choose feedback'
       : 'Guided feedback',
+    evade: bodyPolicy(world)?.evasion?.label ?? 'Moving',
     hunt: `Hunting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
+    aim: `${work?.ranged ? `${world.itemDefinitions[work.ranged.tool.id]?.name ?? 'Selected tool'} · ` : ''}${work?.ranged?.ready ? BASE_RANGED_TEXT.readyLabel : BASE_RANGED_TEXT.aimingLabel}${targetName ? ` · ${targetName}` : ''}`,
+    'shoot-once': `${BASE_RANGED_TEXT.shootingLabel}${targetName ? ` · ${targetName}` : ''}`,
     cook: 'Cooking',
     fish: 'Fishing',
     'tend-fire':
@@ -1141,11 +1230,20 @@ export async function projectView(
           }
         : {}),
       statusEffects: projectStatusEffects(world, player, 'owner'),
+      ...(bodyPolicy(world)?.evasion
+        ? {
+            evasion: {
+              label: bodyPolicy(world)!.evasion!.label,
+              readyIn: Math.max(0, (actor.evasionReadyAt ?? 0) - world.simTime),
+            },
+          }
+        : {}),
       action: actor.action
         ? {
             id: actor.action.id,
             // Floating progress is opt-in; routine movement never gets a status.
             showStatus:
+              actor.action.type === 'aim' ||
               !!actor.action.navigation ||
               (actor.action.stage === 'working' &&
                 [
@@ -1157,6 +1255,8 @@ export async function projectView(
                   'harvest',
                   'treat-scar',
                   'hunt',
+                  'aim',
+                  'shoot-once',
                   'practice-shot',
                   'coaching',
                   'strike',
@@ -1164,13 +1264,43 @@ export async function projectView(
                   'replenish',
                   'tend-fire',
                 ].includes(actor.action.type)),
+            ...(actor.action.type === 'aim'
+              ? {
+                  detail:
+                    aimDetails &&
+                    [
+                      BASE_RANGED_TEXT.aimDescription,
+                      ...(work?.ranged?.ready ? [BASE_RANGED_TEXT.ready] : []),
+                      ...aimDetails.facts.map(([name, value]) => `${name}: ${value}`),
+                      aimDetails.detail,
+                    ].join('; '),
+                  controls: [
+                    {
+                      id: `release:${actor.action.id}`,
+                      label: BASE_RANGED_TEXT.shootingName,
+                      command: { type: 'release-shot' as const, aimId: actor.action.id },
+                      enabled: !!actor.action.ranged?.ready && !paused,
+                      ...(!actor.action.ranged?.ready ? { reason: BASE_RANGED_TEXT.notReady } : {}),
+                    },
+                    {
+                      id: `cancel:${actor.action.id}`,
+                      label: BASE_RANGED_TEXT.cancelName,
+                      command: { type: 'cancel' as const },
+                      enabled: true,
+                    },
+                  ],
+                }
+              : {}),
             durationSeconds: actor.action.totalSeconds,
             elapsedSeconds:
               actor.action.stage === 'working'
                 ? actor.action.totalSeconds - actor.action.remainingSeconds
                 : 0,
             advancing:
-              !paused && actor.action.stage === 'working' && !waitingForFeedback(world, player),
+              !paused &&
+              actor.action.stage === 'working' &&
+              !actor.action.ranged?.ready &&
+              !waitingForFeedback(world, player),
             label: actor.action.navigation
               ? 'Preparing route'
               : actor.action.assemblyPhase

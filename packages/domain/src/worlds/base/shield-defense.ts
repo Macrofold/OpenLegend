@@ -32,7 +32,7 @@ export function guardChoiceLabel(shieldName: string, targetName?: string): strin
   return `${BASE_GUARD_PROFILE.label} with ${shieldName} ${targetName ? `facing ${targetName}` : 'in this direction'}`;
 }
 export function guardDescription(profile: ContactDefenseProfile): string {
-  return `Prepare for ${profile.preparationSeconds} game seconds, then guard one connecting contact blow for up to ${profile.readySeconds} game seconds. Reduces injury by ${profile.reduction * 100}% within the front ${profile.coverageDegrees}°; then recover for ${profile.recoverySeconds} game seconds. Facing stays fixed. A late or rear blow still hurts; projectiles and other hazards are not blocked. Movement ends readiness and remains available during recovery.`;
+  return `Prepare for ${profile.preparationSeconds} game seconds, then guard one connecting melee blow or supported projectile for up to ${profile.readySeconds} game seconds. Reduces injury by ${profile.reduction * 100}% within the front ${profile.coverageDegrees}°; then recover for ${profile.recoverySeconds} game seconds. Facing stays fixed. A late or rear blow still hurts. Other hazards are not blocked. Movement ends readiness and remains available during recovery.`;
 }
 export function guardContactResult(
   result: {
