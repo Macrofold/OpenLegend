@@ -1,0 +1,30 @@
+{
+  "resolutions": {
+    "d0895109cfc8a2b0e42fdd50f659619682088ca3:docs/maintainers/narration-and-conversations.md:3b757acc12b0a5bd9b62bd4be6d1246404c2efe0:d3b5b83f6033eb969ad1653d1b458ef057713d31:41fc0a3f706c2f2235100184bccb707d52482363": {
+      "before_sha256": "01a07203358716712a6bb46d49265aea78a669be06070fe280182abb99813808",
+      "after_sha256": "6c3ddad2c2a793cda794fc42752d166b2f36ce55fc6e321d0ad64b47e465f75b",
+      "blocks": [
+        {"sha256": "afc9c8aa987e9f87df2e840c7b7afb0c4b962b894b1eed1978189ab7a8245504", "parts": [2]},
+        {"sha256": "95bdc5e2d15290af7aba840ed02bbcdd59da7b607b0a9e564a6461297cb73042", "parts": [1]}
+      ],
+      "replacements": [
+        [
+          "explicit failure presentation are implemented. Complete the remaining source/privacy/grounding and cost-accounting acceptance;",
+          "explicit failure presentation are implemented. Apply the current [failure policy](../narration-and-conversations.md#replaceable-story-selection), including PX03 authored introduction text, without automatic retry. Complete the remaining source/privacy/grounding and cost-accounting acceptance;"
+        ],
+        [
+          "Complete the named multi-audience ordering and exactly-once acceptance; place/item introductions still require their missing exposure contract below.",
+          "Complete the named multi-audience ordering and exactly-once acceptance. PX03 already supplies static place-arrival and exact permitted inventory-inspection exposure, extended by AV01 and MY02–MY05 through the existing selector/history owners below; this does not close broader story, audience or provider qualification."
+        ],
+        [
+          " bounded delivery and current failure/accessibility behavior. Resolve preview lifecycle and disclosure dependencies in the implementation design before coding.",
+          " bounded delivery and current failure/accessibility behavior. Resolve each additional caller's preview lifecycle and disclosure dependencies before expanding the delivered direct-chat design."
+        ],
+        [
+          "canonical behavior, affected limits and concise verification evidence when delivered; leave this task unchecked until its demonstrated scope passes.",
+          "canonical behavior, affected limits and concise verification evidence per additional caller. The direct-chat slice stays completed under NP05; NC19 remains open for its separately inventoried callers, not a request to rebuild or requalify unchanged direct-chat behavior."
+        ]
+      ]
+    }
+  }
+}
