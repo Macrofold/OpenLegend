@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 14, 2026 — Preserve the union of useful starting-world content
+
+Mike explicitly strengthened the [development save policy](../AGENTS.md#development-save-policy): selecting the newest code or save/database format is insufficient when useful content differs. [Starting-world content reconciliation](save-and-load.md#starting-world-content-reconciliation) requires comparing relevant saved worlds and both sides' authored definitions, retaining useful saved-only content through current world-owned setup, deduplicating shared meaning and relocating/adapting overlapping or contrived encounters into an accessible coherent main world. The actual saved/reopened result must be checked against that inventory and differences accounted for. This changes the former newest-definitions-first instruction into an explicit content-union obligation.
+
+The merge/rebase route loads the procedure only when saved content, versions or starting definitions are involved. Deliberate solo/custom scope, explicitly superseded choices, integration authorization, uncertain-conflict stops, no legacy support and exact privacy/access/spending preservation remain controlling. Arbitrary play history is not blindly merged into a fresh start. [CG29](maintainers/agent-guidance.md) tracks the instruction change; it performs no world/database reconciliation by itself.
+
 ## October 14, 2026 — Complete foundation hardening and browser acceptance
 
 All [immediate foundation tasks](maintainers/foundation-review-todos.md) are complete, with the [plan](projects/completed/foundation-hardening-plan.md) moved to completed projects. Actual browser review found that remembered multipart objects could remain opaque; the renderer now applies remembered visibility to every appearance part while preserving each material's alpha, with no per-frame scene traversal. Initial 3D construction waits until a tab is selected so optional graphics do not delay control acquisition; existing paused scenes retain the player's camera. This changes a newly opened competing tab's background timing, not its permissions or world behavior. [Current presentation](world-presentation.md) owns those behaviors.
