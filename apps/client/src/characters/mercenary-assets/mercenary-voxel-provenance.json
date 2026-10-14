@@ -1,0 +1,273 @@
+{
+  "purpose": "New authored cubic-cell mercenary iteration; original model preserved",
+  "authoring": "Explicit designed integer volumes and permanent color placements; no source-model voxelization",
+  "license": "AGPL-3.0-only first-party script and newly authored geometry",
+  "visualReference": "Owner-selected Peacock Mercenary study; no source geometry, textures or reference image embedded",
+  "cellSizeMetres": 0.025,
+  "heightMetres": 2.1,
+  "coordinateSystem": "Y-up, front +Z",
+  "parts": [
+    {
+      "name": "torso",
+      "parent": "MercenaryVoxel",
+      "pivotMetresYUp": [
+        0.0,
+        1.125,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.0,
+        1.125,
+        0.0
+      ],
+      "cells": 8161,
+      "connected": true,
+      "exposedCellFaces": 3874,
+      "quads": 676,
+      "triangles": 1352
+    },
+    {
+      "name": "head",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        0.0,
+        1.75,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.0,
+        0.625,
+        0.0
+      ],
+      "cells": 1296,
+      "connected": true,
+      "exposedCellFaces": 826,
+      "quads": 205,
+      "triangles": 410
+    },
+    {
+      "name": "leftUpperArm",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        0.325,
+        1.6,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.325,
+        0.47500000000000003,
+        0.0
+      ],
+      "cells": 832,
+      "connected": true,
+      "exposedCellFaces": 620,
+      "quads": 126,
+      "triangles": 252
+    },
+    {
+      "name": "leftForearm",
+      "parent": "leftUpperArm",
+      "pivotMetresYUp": [
+        0.325,
+        1.2750000000000001,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.0,
+        -0.325,
+        0.0
+      ],
+      "cells": 680,
+      "connected": true,
+      "exposedCellFaces": 564,
+      "quads": 110,
+      "triangles": 220
+    },
+    {
+      "name": "rightUpperArm",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        -0.325,
+        1.6,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        -0.325,
+        0.47500000000000003,
+        0.0
+      ],
+      "cells": 832,
+      "connected": true,
+      "exposedCellFaces": 620,
+      "quads": 88,
+      "triangles": 176
+    },
+    {
+      "name": "rightForearm",
+      "parent": "rightUpperArm",
+      "pivotMetresYUp": [
+        -0.325,
+        1.2750000000000001,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.0,
+        -0.325,
+        0.0
+      ],
+      "cells": 680,
+      "connected": true,
+      "exposedCellFaces": 570,
+      "quads": 110,
+      "triangles": 220
+    },
+    {
+      "name": "leftThigh",
+      "parent": "MercenaryVoxel",
+      "pivotMetresYUp": [
+        0.125,
+        1.1,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.125,
+        1.1,
+        0.0
+      ],
+      "cells": 1168,
+      "connected": true,
+      "exposedCellFaces": 740,
+      "quads": 194,
+      "triangles": 388
+    },
+    {
+      "name": "leftShin",
+      "parent": "leftThigh",
+      "pivotMetresYUp": [
+        0.125,
+        0.675,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.0,
+        -0.42500000000000004,
+        0.0
+      ],
+      "cells": 1486,
+      "connected": true,
+      "exposedCellFaces": 1048,
+      "quads": 115,
+      "triangles": 230
+    },
+    {
+      "name": "rightThigh",
+      "parent": "MercenaryVoxel",
+      "pivotMetresYUp": [
+        -0.125,
+        1.1,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        -0.125,
+        1.1,
+        0.0
+      ],
+      "cells": 1168,
+      "connected": true,
+      "exposedCellFaces": 740,
+      "quads": 175,
+      "triangles": 350
+    },
+    {
+      "name": "rightShin",
+      "parent": "rightThigh",
+      "pivotMetresYUp": [
+        -0.125,
+        0.675,
+        0.0
+      ],
+      "localPivotMetresYUp": [
+        0.0,
+        -0.42500000000000004,
+        0.0
+      ],
+      "cells": 1486,
+      "connected": true,
+      "exposedCellFaces": 1048,
+      "quads": 115,
+      "triangles": 230
+    },
+    {
+      "name": "cape",
+      "parent": "torso",
+      "pivotMetresYUp": [
+        0.0,
+        1.6,
+        -0.275
+      ],
+      "localPivotMetresYUp": [
+        0.0,
+        0.47500000000000003,
+        -0.275
+      ],
+      "cells": 3824,
+      "connected": true,
+      "exposedCellFaces": 5572,
+      "quads": 1031,
+      "triangles": 2062
+    }
+  ],
+  "cells": 21613,
+  "triangles": 5890,
+  "materials": 1,
+  "palette": {
+    "skin": "bb895f",
+    "skinLight": "d9ad79",
+    "skinShade": "956544",
+    "skinWarm": "c79367",
+    "eyeWhite": "ead8ad",
+    "eye": "243e3b",
+    "hair": "2c2928",
+    "hairLight": "514235",
+    "hairWarm": "6a503b",
+    "mouth": "764638",
+    "mail": "667776",
+    "mailLight": "90a29a",
+    "mailShade": "455958",
+    "quilt": "865b3c",
+    "quiltLight": "ae7e50",
+    "quiltShade": "63432e",
+    "wrap": "b4a27b",
+    "wrapLight": "d2bd90",
+    "wrapShade": "8b7b5d",
+    "leather": "574032",
+    "leatherLight": "835c3c",
+    "leatherShade": "382e29",
+    "sole": "272827",
+    "cape": "974831",
+    "capeLight": "b45b3c",
+    "capeHighlight": "cc744a",
+    "capeShade": "71372d",
+    "capeDeep": "4a2c29",
+    "gold": "d4a45b",
+    "goldLight": "f0d092",
+    "goldShade": "a7783f",
+    "peacock": "355e57"
+  },
+  "textures": 0,
+  "skins": 0,
+  "clips": 0,
+  "animation": "Rigid part transforms; renderer owns bounded idle/walk pose and pause",
+  "clothing": "Opaque garment cells replace the body exterior; closed two-cell cape with fixed clearance",
+  "costUSD": 0,
+  "sha256": {
+    "mercenary-voxel.glb": "533922d6d0b3c8f372c1f583aefac7e60f241f21c2b69a72664bd22a5ce93d41",
+    "mercenary-voxel.blend": "db902ed3c39b8b8dd0db01b46926ab350425888e08c6afb614662942bac7c728"
+  },
+  "sourceSha256": "db6f4c0af887388d6134b3f9ae64b51263bb42485eee23717b5c506f0e52833d",
+  "remaining": [
+    "Creator style acceptance",
+    "Arbitrary poses and equipment",
+    "Physical-device crowd qualification"
+  ]
+}

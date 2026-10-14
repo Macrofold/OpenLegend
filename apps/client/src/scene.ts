@@ -257,7 +257,7 @@ export class WildernessScene implements WorldRenderer {
       this.app.root.addChild(sun);
       this.presentation = new WorldPresentation(this.app, this.camera, sun);
       this.outline = new HoverOutline(this.app, this.camera);
-      this.mercenary = new VoxelMercenaryModels(this.app, this.presentation);
+      this.mercenary = new VoxelMercenaryModels(this.app, this.presentation, this.camera);
       this.shadowBatches = new SpriteShadowBatches(
         this.app.graphicsDevice,
         this.app.scene.layers.getLayerById(pc.LAYERID_WORLD)!,
@@ -2063,10 +2063,11 @@ export class WildernessScene implements WorldRenderer {
         const hit = bodyPoint ?? ray.from.clone().lerp(ray.from, ray.to, fraction),
           foot = entry.root.getPosition();
         const height = entry.model?.visible ? entry.model.height : entry.height;
+        const width = entry.model?.visible ? entry.model.width : entry.width;
         const q = Math.hypot(
-          (hit.x - foot.x) / Math.max(entry.width * 0.7, 0.1),
+          (hit.x - foot.x) / Math.max(width * 0.7, 0.1),
           (hit.y - foot.y - height / 2) / Math.max(height * 0.65, 0.1),
-          (hit.z - foot.z) / Math.max(entry.width * 0.7, 0.1),
+          (hit.z - foot.z) / Math.max(width * 0.7, 0.1),
         );
         // Match the shader's feather, not the whole bounding rectangle of a hidden sprite.
         const t = Math.max(0, Math.min(1, (q - 0.65) / 0.7));
