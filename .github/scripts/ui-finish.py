@@ -29,12 +29,10 @@ assert text.count(needle) == 2
 path.write_text(text.replace(needle, '      inFlight.current = false;\n      if (alive.current) { setRequestPhase(null); setBusy(false); }'))
 
 edit('apps/client/src/ui/game-saves.tsx', [
-    ('{confirm && !unresolved && (', '{confirm && (!unresolved || rowBusy) && ('),
+    ('{confirm?.save.id === save.id && !unresolved && (', '{confirm?.save.id === save.id && (!unresolved || rowBusy) && ('),
     ('            <strong>Checkpoint result not confirmed</strong>', "            <strong>{creating || rowBusy ? 'Checkpoint operation in progress…' : checking ? 'Checking original checkpoint…' : 'Checkpoint result not confirmed'}</strong>"),
 ])
 
-# The diagnostic world deliberately reuses camp materials and practice objects. Keep
-# their authored definitions without making those laws defaults for other worlds.
 edit('packages/domain/src/world-presets.ts', [
     ("import { worldPlacement } from './spatial-state.js';", "import { CANOPY_ATTRIBUTES } from './worlds/base/canopies.js';\nimport { SLING_HANDLING } from './worlds/base/practical-competence.js';\nimport { worldPlacement } from './spatial-state.js';"),
     ('    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES],', "    // This preset reuses the camp's actual shelter materials and practice target.\n    // Their rules remain authored dependencies; human food/energy meters do not.\n    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES, ...CANOPY_ATTRIBUTES, SLING_HANDLING],"),
