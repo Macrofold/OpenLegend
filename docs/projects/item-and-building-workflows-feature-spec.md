@@ -1,8 +1,8 @@
 # Item and building workflows — feature specification
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | The follow-on design is prepared; implementation and its acceptance checks have not started. | 2026-10-14 |
+| Status      | Current progress                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The follow-on design is prepared; implementation and its acceptance checks have not started. | 2026-10-14   |
 
 **Design scope selected by Mike:** turn the inventory, crafting, equipment and construction learnings into a concrete OpenLegend follow-on with implementation tasks. This document proposes the additions; it does not authorize runtime implementation or change current world rules. Parent design needs remain [ND13 — usable action controls](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND07 — usable buildings](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes). Neither broader entry is closed by this selected slice.
 
@@ -17,13 +17,21 @@
 
 The missing sequence in the Rust research was **missing current-version visual evidence about Rust**, not a finding that OpenLegend has no inventory or construction. The owner audit began at `b72e9d9aab8072eb1b5ae9d25f620a4421509148`; this project branches from published main `57a2977e22bab3f7293caa4a176c9ef4ba800751`, which also integrates foundation privacy and continuity repairs. Current client excerpts were checked at that latter revision. Described delivery below relies on the named current owners and their recorded evidence, not a new playtest.
 
-| Existing capability | Existing design and delivery owner | Addition selected here |
-| --- | --- | --- |
-| Exact-quantity inventory moves, nested-container navigation, scoped search and native equipment comparison | [PW04 and UIUX04](../maintainers/ui-ux.md#uiux04), [persistent objects](../projects/persistent-objects-feature-spec.md) | Connect inspection, an exact transfer and the resulting item without lost selection; add deliberate equip-and-stow destination review. |
-| Learned-recipe details and ordinary Craft; creator recipe editing is a separate workflow | [PW11 ordinary recipe inspection](parallel-batch-01-playable-week/invention-workspace.md#ordinary-player-recipe-inspection), [UIUX05](../maintainers/ui-ux.md#uiux05) | A finite player-selected crafting list, clear pending/current/produced states, and a route from actual output to ordinary use or storage. |
-| Native finite activity execution and actual produced-output bindings | [action records and learned activities](../action-experience.md#selected-execution-and-inspection) | A player-facing manufacturing-list editor and its explicit lifecycle controls, using the existing executor rather than a second queue engine. |
-| Flat one/two-bay shelters and a single-bay lean-to; preview, build, stop/resume, replacement and reclaim | [shelter pair](editable-shelters-feature-spec.md), [SH delivery](../maintainers/editable-shelters.md) | Better placement/refusal/correction continuity and a coherent choose → review → build → use → revise journey over the supported arrangements. |
-| Same-character draft continuity, current private reads and truthful transaction recovery | [foundation follow-through](../maintainers/ui-ux.md#future-improvements-from-the-foundation-review), [save/load](../save-and-load.md#continuation-and-identity) | Apply these existing guarantees across the newly connected tasks, without reopening completed foundation repairs. |
+### Existing inventory foundation
+
+Exact-quantity moves, nested-container navigation, scoped search and native equipment comparison are already delivered in the scope recorded by [PW04 and UIUX04](../maintainers/ui-ux.md#uiux04) and the [persistent-object design](persistent-objects-feature-spec.md). The addition connects inspection, an exact transfer and the resulting item without lost selection, and adds deliberate equip-and-stow destination review.
+
+### Existing recipe and activity foundations
+
+Learned-recipe detail and ordinary Craft exist; creator recipe editing is a separate workflow. [PW11 ordinary recipe inspection](parallel-batch-01-playable-week/invention-workspace.md#ordinary-player-recipe-inspection) and [UIUX05](../maintainers/ui-ux.md#uiux05) retain their delivery and remaining qualification. The addition is a finite player-selected crafting list, clear pending/current/produced states, and a route from actual output to ordinary use or storage.
+
+[Action records and learned activities](../action-experience.md#selected-execution-and-inspection) already provide native finite execution and actual produced-output bindings. The addition is a player-facing manufacturing-list editor and explicit lifecycle controls over that executor, not a second queue engine.
+
+### Existing shelter and continuity foundations
+
+Flat one/two-bay shelters and a single-bay lean-to already have preview, build, stop/resume, replacement and reclaim within the [shelter design](editable-shelters-feature-spec.md) and [SH delivery](../maintainers/editable-shelters.md). The addition improves placement/refusal/correction continuity and the complete choose → review → build → use → revise journey over those supported arrangements.
+
+Same-character draft continuity, current private reads and truthful transaction recovery remain owned by the [foundation follow-through](../maintainers/ui-ux.md#future-improvements-from-the-foundation-review) and [save/load contract](../save-and-load.md#continuation-and-identity). Apply these guarantees across the connected tasks without reopening completed foundation repairs.
 
 The new project owns these additions, not the unfinished broad PW04/PW11/SH/UIUX qualification programs. A defect in an existing primitive is repaired in its existing owner and referenced here; it is not a second implementation of that primitive. Existing project documents retain their delivered subsets and unmet acceptance.
 
@@ -73,7 +81,7 @@ Display the current craft, progress actually reported by its owner, completed co
 
 **Pause after this craft** finishes the currently admitted craft and stops before starting the next. **Stop current work** uses the existing interruption rule and clearly explains any already-consumed material or preserved partial work. Removing an unstarted entry spends nothing for it. Reordering the pending suffix does not restart the active craft or erase completed products. A dependent entry cannot be moved ahead of its producer.
 
-When a step fails, the list identifies the failure and stops further dependent work. It does not silently skip, retry or refund. **Review remaining work** opens the unstarted remainder with fresh facts. Resuming a supported paused list and starting a new attempt after a cancelled craft remain different choices; already completed steps never run again accidentally.
+When a step fails, the list identifies the failure and stops further automatic dispatch, including independent later entries. It does not silently skip, retry or refund. **Review remaining work** opens the unstarted remainder with fresh facts. Resuming a supported paused list and starting a new attempt after a cancelled craft remain different choices; already completed steps never run again accidentally.
 
 ### Finish with something useful
 
@@ -133,18 +141,25 @@ NPCs remain independent actors. This interface grants no permission to assign th
 
 These are future checks, not reported tests. The tracker assigns their delivery; inherited wider programs keep their own exits.
 
-| Journey | Required observable outcome |
-| --- | --- |
-| Prepare for an outing | Find an exact item in a nested bag, inspect a known recipe, make a finite quantity, identify the actual product, equip/use or deliberately store it; no creator permissions or model call required. |
-| Shared material shortage | Two entries compete for the same free stock; list review does not double-count it. A later shortage stops at the real boundary and preserves earlier completed outputs. |
-| Pause, reorder and stop | Pause after the active craft; reorder only a valid pending suffix; resume once. Separately stop a craft and show its native sunk cost without replay/refund. |
-| Full storage after crafting | Product exists exactly once; failed move leaves it in its real location and offers a fresh storage choice, not another Craft. |
-| Full-bag equipment replacement | An exact candidate leaving a full bag creates sufficient final room for the displaced item where the capacity rule permits it. An impossible or stale swap changes neither equipment nor stock. |
-| Loot/transfer changes | Another actor removes an item or revokes container access during inspection; no substitute item, hidden-content leak or stale action survives. Existing changing-all pickup and new exact review remain distinct. |
-| Build after a refusal | Draft placement is blocked, the safe explanation guides a valid correction, fresh review precedes Build, and the completed structure supports its intended ordinary use. |
-| Revise while preserving material | Replace or reclaim actual shelter parts; keep-covered refusal, full destination and occupied work-space failure preserve exact completed phases and state. |
-| Lost reply and changed timeline | Reconcile the original committed operation once; old reads, ghosts and pending submissions cannot publish into the restored world. |
-| Accessible ordinary controls | Pointer and keyboard/no-drag journeys work in desktop, narrow and short layouts with long names and enlarged text; popup dismissal does not move the character and updates do not move the intended target. |
+**Prepare for an outing:** find an exact item in a nested bag, inspect a known recipe, make a finite quantity, identify the actual product, equip/use or deliberately store it. No creator permissions or model call are required.
+
+**Shared material shortage:** two entries compete for the same free stock; list review does not double-count it. A later shortage stops at the real boundary and preserves earlier completed outputs.
+
+**Pause, reorder and stop:** pause after the active craft, reorder only a valid pending suffix and resume once. Separately stop a craft and show its native sunk cost without replay/refund.
+
+**Full storage after crafting:** the product exists exactly once. A failed move leaves it in its real location and offers a fresh storage choice, not another Craft.
+
+**Full-bag equipment replacement:** an exact candidate leaving a full bag creates sufficient final room for the displaced item where the capacity rule permits it. An impossible or stale swap changes neither equipment nor stock.
+
+**Loot/transfer changes:** another actor removes an item or revokes container access during inspection. No substitute item, hidden-content leak or stale action survives. Existing changing-all pickup and new exact review remain distinct.
+
+**Build after a refusal:** draft placement is blocked, the safe explanation guides a valid correction, fresh review precedes Build, and the completed structure supports its intended ordinary use.
+
+**Revise while preserving material:** replace or reclaim actual shelter parts. Keep-covered refusal, full destination and occupied work-space failure preserve exact completed phases and state.
+
+**Lost reply and changed timeline:** reconcile the original committed operation once. Old reads, ghosts and pending submissions cannot publish into the restored world.
+
+**Accessible ordinary controls:** pointer and keyboard/no-drag journeys work in desktop, narrow and short layouts with long names and enlarged text. Popup dismissal does not move the character and updates do not move the intended target.
 
 Use genuinely different supported content, not just renamed items: single versus multi-output manufacturing where installed, one-hand versus multi-port equipment, and flat versus sloping cover. Omitted capabilities must not appear as mysteriously unavailable variants. Record native correctness, observed UI behavior, measured cost and uncoached human understanding separately.
 

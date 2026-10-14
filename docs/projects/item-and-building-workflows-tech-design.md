@@ -1,8 +1,8 @@
 # Item and building workflows — technical design
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| Not started | The follow-on contracts and staged delivery are designed; no new runtime behavior has been implemented or verified. | 2026-10-14 |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The follow-on contracts and staged delivery are designed; no new runtime behavior has been implemented or verified. | 2026-10-14   |
 
 Counterpart: [feature specification](item-and-building-workflows-feature-spec.md). Parent needs: [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) for usable item/manufacturing controls and [ND07](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes) for supported shelter refinement. This is an additive delivery project, not a replacement for the implemented PW04/PW11, native activity or SH foundations.
 
@@ -22,17 +22,23 @@ This design changes no recipe, body, packing, loss or building policy by itself.
 
 ## 2. Existing owners and affected callers
 
-| Responsibility | Current source/contract owner | Change boundary |
-| --- | --- | --- |
-| Item task and destination presentation | `apps/client/src/ui/inventory.tsx`, `inventory-controls.tsx`, `inventory-destinations.tsx`; [inventory handbook](../ui-ux/inventory.md) | Reuse exact selection, quantity text, scoped readers and destination controls. Add connected return paths and compound equip/stow review without duplicating the inventory store. |
-| Recipe details and ordinary craft entry | `apps/client/src/ui/recipe-details.tsx`, `inventions.tsx`; PW11 ordinary recipe inspection | Distinguish expected from produced output and add a finite list entry point. Creator Work editing/Approve/Apply is not this queue. |
-| Inventory/current action facts | `apps/server/src/inventory-view.ts`, `action-catalogue.ts`, existing API/command dispatch | Extend permitted task facts and shared native preparation; maintain ordinary inventory, contextual and NPC callers when shared facts change. |
-| Custody, packing and body equipment | `packages/domain/src/objects.ts`, `item-handling.ts`, selected world handling/equipment definitions | Add explicit final stow destinations to the existing equip transaction. Reuse the same eligibility, conflict, quantity and final-load checks. |
-| Chosen finite work and outcomes | `packages/domain/src/activity-execution.ts`, `action-experience.ts`, existing ActorPlan and native craft implementation | Admit a player-selected manufacturing program; edit only a pending suffix and support a pause at the next craft boundary. No second executor. |
-| Shelter form and preview | `apps/client/src/ui/construction.tsx`, `packages/protocol/src/construction.ts` and the existing renderer preview-shape boundary | Preserve existing preview callback, plan/site/heading/material selections and family operations. Refine status, blockers and correction controls. |
-| Real construction and geometry | [shelter technical owner](editable-shelters-tech-design.md), [world profile](../worlds/base/editable-shelters.md), domain/spatial/assembly owners | Reuse pure edit evaluation and admitted phases. Missing presentation facts are added at that owner; no React geometry simulation or extra saved transforms. |
-| Authoritative commit, replay and current records | `apps/server/src/world-service.ts`, existing command receipts, `world-record-schema.ts`, `store.ts`, `game-saves.ts` | Save accepted work through existing catalog/transactions. Reconcile original outcomes before a new action; retain current authority across disclosure waits. |
-| Client identity and lifecycle | Existing API/private-draft ownership and connected world presentation; [FRL05](../maintainers/ui-ux.md#future-improvements-from-the-foundation-review) | Share a focused helper only where these real callers need it. Keep draft identity, read authority and world-render lifecycle separate. |
+**Item task and destination presentation:** `apps/client/src/ui/inventory.tsx`, `inventory-controls.tsx`, `inventory-destinations.tsx` and the [inventory handbook](../ui-ux/inventory.md). Reuse exact selection, quantity text, scoped readers and destination controls. Add connected return paths and compound equip/stow review without duplicating the inventory store.
+
+**Recipe details and ordinary craft entry:** `apps/client/src/ui/recipe-details.tsx`, `inventions.tsx` and PW11 ordinary recipe inspection. Distinguish expected from produced output and add a finite list entry point. Creator Work editing/Approve/Apply is not this queue.
+
+**Inventory/current action facts:** `apps/server/src/inventory-view.ts`, `action-catalogue.ts` and existing API/command dispatch. Extend permitted task facts and shared native preparation; maintain ordinary inventory, contextual and NPC callers when shared facts change.
+
+**Custody, packing and body equipment:** `packages/domain/src/objects.ts`, `item-handling.ts` and selected world handling/equipment definitions. Add explicit final stow destinations to the existing equip transaction. Reuse the same eligibility, conflict, quantity and final-load checks.
+
+**Chosen finite work and outcomes:** `packages/domain/src/activity-execution.ts`, `action-experience.ts`, existing ActorPlan and native craft implementation. Admit a player-selected manufacturing program; edit only a pending suffix and support a pause at the next craft boundary. No second executor.
+
+**Shelter form and preview:** `apps/client/src/ui/construction.tsx`, `packages/protocol/src/construction.ts` and the existing renderer preview-shape boundary. Preserve existing preview callback, plan/site/heading/material selections and family operations. Refine status, blockers and correction controls.
+
+**Real construction and geometry:** the [shelter technical owner](editable-shelters-tech-design.md), [world profile](../worlds/base/editable-shelters.md) and domain/spatial/assembly owners. Reuse pure edit evaluation and admitted phases. Missing presentation facts are added at that owner; no React geometry simulation or extra saved transforms.
+
+**Authoritative commit, replay and current records:** `apps/server/src/world-service.ts`, existing command receipts, `world-record-schema.ts`, `store.ts` and `game-saves.ts`. Save accepted work through existing catalog/transactions. Reconcile original outcomes before a new action; retain current authority across disclosure waits.
+
+**Client identity and lifecycle:** existing API/private-draft ownership and connected world presentation, with [FRL05](../maintainers/ui-ux.md#future-improvements-from-the-foundation-review). Share a focused helper only where these real callers need it. Keep draft identity, read authority and world-render lifecycle separate.
 
 Direct inventory transactions are not all reusable activity leaves today. Do not infer automatic transport from the existence of a generic finite plan. The selected crafting list contains native manufacturing; moving/equipping its products is a separate deliberate command. A future transport adapter requires its own supported invocation contract and qualification.
 
@@ -134,29 +140,35 @@ Follow the root [development save policy](../../AGENTS.md#development-save-polic
 
 ## 8. Cost, query growth and extension seams
 
-| Added/changed path | What grows and when | Shared preparation and invalidation | Required measurement |
-| --- | --- | --- | --- |
-| Item/destination review | Direct contents, nesting/ancestors and relevant destinations on explicit open/refresh | Existing permitted indexes, exact selected object and one reservation/load view per read; invalidate access/custody/holds/material changes | Complete cold and warm selected-task calls, visited candidates, payload and UI cost; returned-row count alone is insufficient. |
-| Manufacturing review | Selected entry count, repeated craft counts, recipe requirements and candidate stock | Validate size/counts before expansion; reuse immutable recipe facts and a compatible snapshot of free stock; exact definition/knowledge/resource changes invalidate | Shared-input valid and impossible lists, multi-output/dependent entries, large finite count rejection before allocation. |
-| Native continuation | One current actor program and its next due transition | Existing scheduler/frontier, no tick-wide scan of all future entries or all actors' lists | Start, phase completion, boundary pause/edit race, cancellation and current-format reopen through real callers. |
-| Equip/stow | Actual conflicting equipment, selected containers/ancestors and affected loads | Existing equipment/placement/custody queries and one complete native final-layout preparation | Full-to-full net-valid case and impossible case, deep nesting and held/changed items; include final commit and publication. |
-| Construction preview | Selected assembly/parts, local conservative geometry candidates and rapid input | One in-flight optional request plus latest replacement; existing geometry preparation, real relevant revisions | Blocked/valid flat and slope, concentrated edits, occupied work stances, cold geometry preparation and renderer disposal. |
+**Item/destination review.** Growth comes from direct contents, nesting/ancestors and relevant destinations on explicit open/refresh. Reuse permitted indexes, exact selected identity and one reservation/load view per compatible read; invalidate access, custody, holds and relevant material changes. Measure complete cold/warm task calls, visited candidates, payload and browser cost. Returned-row count alone is insufficient.
 
-Use [IWB-L02/L05](../limits/item-and-building-workflows.md#iwb-l02) and the owning existing action/object/interface/spatial allowances. No new total item cap or performance guarantee is selected. A bounded result page must not repeatedly scan or hydrate the full world. Future exact APIs should share native prerequisite owners, not copy their logic into each UI consumer. Optional reading/preview cannot create a new technical pause for the entire world; genuine required preparation at action start follows the existing service contract.
+**Manufacturing review.** Growth comes from selected entries, repeated craft counts, recipe requirements and candidate stock. Validate size/count before expansion and reuse immutable recipe facts plus a compatible free-stock snapshot. Exact definition, knowledge and resource changes invalidate it. Measure valid and impossible shared-input lists, multi-output/dependent entries and oversized finite-count rejection before allocation.
+
+**Native continuation.** The growing source is one current actor program and its next due transition. Use the existing scheduler/frontier rather than scanning all future entries or all actors' lists every tick. Measure start, phase completion, the boundary-pause/edit race, cancellation and current-format reopen through real callers.
+
+**Equip/stow.** Work grows with actual conflicting equipment, selected containers/ancestors and affected loads. Reuse equipment/placement/custody queries and one complete native final-layout preparation. Measure full-to-full net-valid and impossible cases, deeper nesting and held/changed items, including final commit and publication.
+
+**Construction preview.** Work grows with the selected assembly/parts, conservative local geometry candidates and rapid editing. Bound optional requests to one in flight plus the latest replacement, using existing geometry preparation and real relevant revisions. Measure blocked/valid flat and slope, concentrated edits, occupied working stances, cold preparation and renderer disposal.
+
+Use [IWB-L02](../limits/item-and-building-workflows.md#iwb-l02), [IWB-L05](../limits/item-and-building-workflows.md#iwb-l05) and the owning existing action/object/interface/spatial allowances. No new total item cap or performance guarantee is selected. A bounded result page must not repeatedly scan or hydrate the full world. Future exact APIs should share native prerequisite owners, not copy their logic into each UI consumer. Optional reading/preview cannot create a new technical pause for the entire world; genuine required preparation at action start follows the existing service contract.
 
 Reuse the existing privacy/identity helper only when the two actual consumers need identical behavior, as FRL05 requires. Do not generalize four task panels into an all-purpose mutable workflow engine. A future world with a different packing metric, body layout or manufacturing output cardinality should use the same narrow contracts; a missing native behavior stays unsupported rather than being interpreted by generated code.
 
 ## 9. Implementation modules and verification boundary
 
-| Module | Parent design need | Technical deliverable | Depends on |
-| --- | --- | --- | --- |
-| IWB01 | ND13 / ND07 | Shared exact-task facts and scoped draft/read/outcome continuity, with no new authority owner | Existing PW04/PW11/SH/native foundations |
-| IWB02 | ND13 | Native equip/stow destination operation, final-load review and connected equipment controls | IWB01 |
-| IWB03 | ND13 | Bounded player manufacturing-list admission, pending-suffix editing and boundary-pause lifecycle | IWB01 and existing activity execution |
-| IWB04 | ND13 | List UI, prospective-versus-produced language and explicit output follow-through | IWB03 |
-| IWB05 | ND07 | Current construction preview/blocker/correction refinement with ordinary use/return | IWB01 and existing SH phases |
-| IWB06 | ND13 / ND07 | Connected task transitions, exact write reconciliation and current-format lifecycle integration | IWB02, IWB04, IWB05 |
-| IWB07 | ND13 / ND07 | Complete selected journeys, focused work-growth measurements and final documentation reconciliation | IWB06; checks also accompany each preceding slice |
+**IWB01 — ND13 / ND07:** shared exact-task facts and scoped draft/read/outcome continuity, with no new authority owner. Depends on existing PW04/PW11/SH/native foundations.
+
+**IWB02 — ND13:** native equip/stow destination operation, final-load review and connected equipment controls. Depends on IWB01.
+
+**IWB03 — ND13:** bounded player manufacturing-list admission, pending-suffix editing and boundary-pause lifecycle. Depends on IWB01 and existing activity execution.
+
+**IWB04 — ND13:** list UI, prospective-versus-produced language and explicit output follow-through. Depends on IWB03.
+
+**IWB05 — ND07:** current construction preview/blocker/correction refinement with ordinary use/return. Depends on IWB01 and existing SH phases.
+
+**IWB06 — ND13 / ND07:** connected task transitions, exact write reconciliation and current-format lifecycle integration. Depends on IWB02, IWB04 and IWB05.
+
+**IWB07 — ND13 / ND07:** complete selected journeys, focused work-growth measurements and final documentation reconciliation. Depends on IWB06; checks also accompany each preceding slice.
 
 The [tracker](../maintainers/item-and-building-workflows.md) owns checkboxes, scoped delivery and concrete exits. No module is complete because a design paragraph exists. No shared foundation release gate is closed by this table.
 
