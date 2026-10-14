@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 14, 2026 — Mercenary likeness after rejected block figure
+
+Mike rejected the first authored block figure as ugly and asked for a result closer to the actual 3D model. The replacement uses the original standing anatomy and fitted cape as an offline shape scaffold, with finer permanent cells and deliberately repainted face, hair/beard, mail, quilt, wraps, leather and two-peacock cape details. Both earlier art sets remain preserved. This changes the first figure's independent cuboid construction to source-guided sculpting; the derivative retains the original model's unresolved production rights.
+
+The game still draws fixed colored geometry with bounded rigid walking, a rigid cape and camera-independent display scale. Boot clearance now uses the actual new part dimensions instead of the first figure's measurements. Finer sculpture carries more geometry; the rejected figure's reduction is not evidence of crowd/device performance for its replacement. [Current presentation](world-presentation.md#animated-character-pixels), [MER09](maintainers/art/mercenary.md#rejected-first-block-figure-and-new-sculpted-iteration), [A3D17](limits/3d-pixel-art.md#a3d17--sculpted-source-guided-mercenary) and [scoped evidence](verification/mercenary-default.md#sculpted-source-guided-iteration--october-14-2026) retain that distinction. No provider dispatch or native mechanics change.
+
 ## October 14, 2026 — Mercenary built from authored blocks
 
 Mike's feedback replaces the default mercenary's sampled-image treatment with a separately authored fixed-block GLB: explicit facial features, permanent garment colors, solid clothing and a thick cape. The previous model, cloth renderer and editable study remain preserved for comparison. A fixed display enlargement compensates for normal camera pitch relative to the existing sprites; it never changes on zoom. Rigid walking and garment clearance replace freely simulated cloth for this iteration, trading fabric motion for stable geometry and coverage.
