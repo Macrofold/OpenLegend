@@ -4,12 +4,13 @@ on:
     branches: [docs/game-ui-research-redesign]
     paths: [.github/workflows/ui-merge-source.yml, .github/scripts/ui-reconcile.py]
 permissions:
-  contents: read
+  contents: write
+  actions: read
 jobs:
   reconcile:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     env:
       AI_BUDGET_USD: '0'
     steps:
@@ -18,79 +19,79 @@ jobs:
           persist-credentials: false
           show-progress: false
           fetch-depth: 0
-      - name: Restore the previously reviewed candidate
+      - name: Read the exact saved merge calculation
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          curl --fail --silent --show-error --location --max-time 120 \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header 'Accept: application/vnd.github+json' \
+            https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11918233550/zip \
+            --output "$RUNNER_TEMP/review.zip"
           python3 - <<'PY'
-          import subprocess
-          allowed = {'.github/workflows/ui-merge-source.yml', '.github/scripts/ui-reconcile.py', '.github/scripts/ui-reconcile-publish.py'}
-          changes = subprocess.check_output(['git', 'diff', '--name-only', '705efb2bd102ba151123659b129372aea62b6a79', 'HEAD'], text=True).splitlines()
-          assert set(changes) <= allowed, changes
-          workflow = subprocess.check_output(['git', 'show', 'cc156ef87852d3e2bd743314cbbd4021c68ad0b9:.github/workflows/ui-merge-source.yml'], text=True)
-          code = workflow.split("          python3 - <<'PY'\n", 1)[1].split('\n          PY', 1)[0]
-          exec(compile('\n'.join(line[10:] for line in code.splitlines()), 'previously-reviewed-candidate', 'exec'))
-          PY
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - name: Install the pinned formatter
-        working-directory: ${{ runner.temp }}/ui-reconciled
-        shell: bash
-        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-install.log" 2>&1 || { tail -80 "$RUNNER_TEMP/ui-install.log"; exit 1; }
-      - name: Reproduce the reviewed formatting
-        working-directory: ${{ runner.temp }}/ui-reconciled
-        shell: bash
-        run: xargs -d '\n' pnpm exec prettier --write < "$RUNNER_TEMP/ui-resolved-paths.txt"
-      - name: Calculate the refreshed merge without changing branch references
-        id: merge
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import hashlib, json, os, subprocess, tarfile
+          import hashlib, io, json, os, re, subprocess, tarfile, urllib.request, zipfile
           from pathlib import Path
-          old = '1700f3b23a39acfdd14f3a6ab34c8ce330847bc3'
-          target = '1cf678802d62652d8dd466776d4b95a9d0d19166'
-          temp = Path(os.environ['RUNNER_TEMP'])
-          root = temp / 'ui-reconciled'
-          out = temp / 'ui-merge-review'
-          out.mkdir()
-          def git(*args, **kwargs):
-              return subprocess.check_output(['git', *args], **kwargs)
-          env = dict(os.environ, GIT_DIR=str(Path.cwd() / '.git'), GIT_WORK_TREE=str(root), GIT_INDEX_FILE=str(temp / 'ui-review.index'))
-          subprocess.run(['git', 'read-tree', '1404c65ec38ae7f4765ea303a13f00608e0dbfbf'], env=env, check=True)
-          subprocess.run(['git', 'add', '-u'], env=env, check=True)
-          tree = git('write-tree', env=env, text=True).strip()
-          subprocess.run(['git', 'diff', '--check', '705efb2bd102ba151123659b129372aea62b6a79', tree], check=True)
-          # This unreferenced, runner-local object supplies ancestry only. The
-          # connector will publish the real merge commit after final review.
-          local = git('-c', 'user.name=Open Legend reconciliation', '-c', 'user.email=reconciliation@invalid', 'commit-tree', tree, '-p', old, '-p', '705efb2bd102ba151123659b129372aea62b6a79', '-m', 'Temporary merge calculation; no branch reference', text=True).strip()
-          result = subprocess.run(['git', 'merge-tree', '--write-tree', local, target], text=True, capture_output=True)
-          assert result.returncode in (0, 1), result.stderr
-          merged = result.stdout.splitlines()[0]
-          (out / 'merge.txt').write_text(result.stdout)
-          (out / 'upstream.patch').write_bytes(git('diff', '--binary', old, target))
-          (out / 'overlap.patch').write_bytes(git('diff', '--binary', target, merged, '--', 'apps', 'packages'))
-          (out / 'reviewed.patch').write_bytes(git('diff', '--binary', '1404c65ec38ae7f4765ea303a13f00608e0dbfbf', tree))
-          metadata = {'ui_parent': os.environ['GITHUB_SHA'], 'old_main': old, 'main_parent': target, 'reviewed_tree': tree, 'merged_tree': merged, 'conflicted': result.returncode != 0}
-          (out / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
-          # Export repository sources, never credentials, databases or node_modules.
-          for label, ref in [('reviewed', tree), ('main', target), ('merged', merged)]:
-              (out / (label + '.tar')).write_bytes(git('archive', ref))
-          print(json.dumps(metadata, indent=2))
-          print(result.stdout)
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write('conflicted=' + str(result.returncode != 0).lower() + '\n')
+          archive = Path(os.environ['RUNNER_TEMP']) / 'review.zip'
+          with archive.open('rb') as file:
+              assert hashlib.file_digest(file, 'sha256').hexdigest() == '42a2d3bc92a860e361e9178269cb75b9931e08e06ead61b4614b6669aaf52bbf'
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          def entries(ref):
+              result = {}
+              for record in git('ls-tree', '-rz', ref).split(b'\0'):
+                  if record:
+                      header, path = record.split(b'\t', 1)
+                      mode, kind, sha = header.decode().split()
+                      assert kind == 'blob'
+                      result[path.decode()] = (mode, sha)
+              return result
+          def api(path, payload):
+              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/' + path,
+                  data=json.dumps(payload).encode(), method='POST', headers={
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                  'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
+              with urllib.request.urlopen(request, timeout=120) as response:
+                  return json.load(response)
+          with zipfile.ZipFile(archive) as saved:
+              metadata = json.loads(saved.read('metadata.json'))
+              assert metadata['main_parent'] == '1cf678802d62652d8dd466776d4b95a9d0d19166'
+              assert metadata['ui_parent'] == 'b9157678a55fc09b21e90be4e03e708673751e15'
+              base = entries(metadata['main_parent'])
+              known = {sha for _, sha in [*base.values(), *entries('705efb2bd102ba151123659b129372aea62b6a79').values()]}
+              current = set()
+              changes = []
+              with saved.open('merged.tar') as stream, tarfile.open(fileobj=stream, mode='r|') as source:
+                  for member in source:
+                      if not member.isfile() and not member.issym():
+                          continue
+                      path = member.name
+                      assert not path.startswith('/') and '..' not in Path(path).parts
+                      assert path not in {'.github/workflows/ui-merge-source.yml', '.github/scripts/ui-reconcile.py', '.github/scripts/ui-reconcile-publish.py'}
+                      current.add(path)
+                      data = member.linkname.encode() if member.issym() else source.extractfile(member).read()
+                      mode = '120000' if member.issym() else '100755' if member.mode & 0o111 else '100644'
+                      sha = hashlib.sha1(f'blob {len(data)}\0'.encode() + data).hexdigest()
+                      if base.get(path) == (mode, sha):
+                          continue
+                      entry = {'path': path, 'mode': mode, 'type': 'blob'}
+                      if sha in known:
+                          entry['sha'] = sha
+                      else:
+                          entry['content'] = data.decode('utf-8')
+                      changes.append(entry)
+                      if b'<<<<<<< ' in data and path.endswith(('.ts', '.tsx', '.css', '.md')):
+                          lines = data.decode().splitlines()
+                          print('CONFLICT_FILE=' + path)
+                          for match in re.finditer(r'^<<<<<<< .*?^>>>>>>> [^\n]+', data.decode(), re.M | re.S):
+                              start = data.decode()[:match.start()].count('\n')
+                              end = data.decode()[:match.end()].count('\n')
+                              print('\n'.join(f'{i+1}: {lines[i]}' for i in range(max(0, start-4), min(len(lines), end+5))))
+              for path, (mode, _) in base.items():
+                  if path not in current:
+                      changes.append({'path': path, 'mode': mode, 'type': 'blob', 'sha': None})
+              result = api('git/trees', {'base_tree': git('rev-parse', metadata['main_parent'] + '^{tree}').decode().strip(), 'tree': changes})
+              assert result['sha'] == metadata['merged_tree'], (result['sha'], metadata['merged_tree'])
+              print('REVIEW_TREE=' + result['sha'])
+              print('No commits or branch references were changed by this export.')
           PY
-      - name: Preserve exact sources for the affected-diff review
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-refreshed-merge-review
-          path: ${{ runner.temp }}/ui-merge-review/
-          retention-days: 3
-          if-no-files-found: error
-      - name: Keep unresolved conflicts visible
-        if: steps.merge.outputs.conflicted == 'true'
-        run: exit 1
