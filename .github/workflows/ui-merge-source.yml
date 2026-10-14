@@ -65,16 +65,27 @@ jobs:
           agent.write_text(data)
           inventory = ROOT / 'apps/client/src/ui/inventory.tsx'
           native = source(MAIN, 'apps/client/src/ui/inventory.tsx')
-          truncated = re.search(r'(\s*\{item\.recipeRecord && \(.*?\n\s*\)\})', native, re.S).group(1)
           complete = between(native, '                  {item.recipeRecord && (', '                  <div className="ol-traits">')
-          inventory.write_text(replace(inventory.read_text(), truncated, '\n' + complete))
+          data, count = re.subn(r'^[ \t]*\{item\.recipeRecord && \(\n.*?(?=^[ \t]*<dl className="ol-inventory-facts">)', lambda _: complete, inventory.read_text(), count=1, flags=re.M | re.S)
+          assert count == 1
+          inventory.write_text(data)
           review = ROOT / 'apps/client/src/ui/world-agent-review.tsx'
           data = replace(review.read_text(), "{plan.kind === 'creation' ? 'Review and start this world' : 'Review exact change'}", "{review?.plan.creation ? 'Review and start this world' : 'Review exact change'}")
           duplicates = list(re.finditer(r'<WorldAgentPreparationDetails\b.*?/>', data, re.S))
           if len(duplicates) == 2:
               assert re.sub(r'\s+', ' ', duplicates[0].group()) == re.sub(r'\s+', ' ', duplicates[1].group())
               data = data[:duplicates[1].start()] + data[duplicates[1].end():]
+          data = replace(data, "{review.plan.status === 'approved'\n                  ? 'Approved for this exact revision. Apply makes the change.'\n                  : 'Approval records your decision. Apply remains a separate action.'}", "{review.plan.creation\n                  ? review.plan.status === 'approved'\n                    ? 'This exact opening and host are approved. Start creates the world.'\n                    : 'Approval records your decision. Starting this world remains separate.'\n                  : review.plan.status === 'approved'\n                    ? 'Approved for this exact revision. Apply makes the change.'\n                    : 'Approval records your decision. Apply remains a separate action.'}")
           review.write_text(data)
+          session = ROOT / 'apps/client/src/ui/world-agent-session.tsx'
+          data = session.read_text()
+          start = data.index("      {sessionPurpose === 'creation' && status")
+          end = data.index('      {session && (', start)
+          selector = data[start:end]
+          data = data[:start] + data[end:]
+          selector = selector.replace("visible={visible && view === 'conversation'}", "visible={readingVisible && view === 'conversation'}")
+          data = replace(data, '      <div className="ol-world-agent-reading">', '      <div className="ol-world-agent-reading">\n        <div hidden={view !== \'conversation\' || detailsOpen || navigationOpen}>\n' + selector + '        </div>')
+          session.write_text(data)
           events = ROOT / 'apps/client/src/ui/world-events.tsx'
           data = events.read_text()
           data = replace(data, '  async function load(older = false) {', '  async function load(older = false) {\n    if (!visible) return;')
@@ -101,25 +112,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/ui-reconcile-publish.py
-      - name: Report candidate checks and bounded source
+      - name: Report candidate checks
         if: always()
         shell: bash
         run: |
-          test ! -f "$RUNNER_TEMP/ui-check.log" || tail -110 "$RUNNER_TEMP/ui-check.log"
+          test ! -f "$RUNNER_TEMP/ui-check.log" || tail -140 "$RUNNER_TEMP/ui-check.log"
           python3 - <<'PY'
           import os
           from pathlib import Path
-          root = Path(os.environ['RUNNER_TEMP'], 'ui-reconciled')
-          for relative, ranges in {
-              'apps/client/src/ui/inventory.tsx': [(1140, 1235)],
-              'apps/client/src/ui/world-agent-review.tsx': [(390, 470)],
-              'apps/client/src/ui/world-agent-session.tsx': [(500, 565)],
-          }.items():
-              path = root / relative
-              if path.exists():
-                  print('===', relative)
-                  lines = path.read_text().splitlines()
-                  for start, end in ranges:
-                      for i in range(start-1, min(end, len(lines))):
-                          print(f'{i+1}: {lines[i]}')
+          path = Path(os.environ['RUNNER_TEMP'], 'ui-reconciled/apps/client/src/ui/world-agent-review.tsx')
+          if path.exists():
+              print('=== Reconciled review preparation controls ===')
+              lines = path.read_text().splitlines()
+              for i, line in enumerate(lines):
+                  if 'WorldAgentPreparationDetails' in line:
+                      print('\n'.join(f'{j+1}: {lines[j]}' for j in range(i, min(i+10, len(lines)))))
           PY
