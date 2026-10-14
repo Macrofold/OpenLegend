@@ -5,69 +5,79 @@ on:
     paths: [.github/workflows/ui-completion-source-read-20261014.yml]
 permissions:
   contents: read
-  actions: read
 jobs:
   inspect:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: openlegend
+          POSTGRES_PASSWORD: fixture
+          POSTGRES_DB: postgres
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U openlegend -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      AI_BUDGET_USD: '0'
+      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
           show-progress: false
-      - name: Inspect the recorded menu failure and its exact remaining owners
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install pinned dependencies
+        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
+      - name: Observe the existing failing fixture without changing its assertions
         run: |
-          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11932649855/zip --output "$RUNNER_TEMP/required.zip"
           python3 - <<'PY'
-          import hashlib, io, json, os, re, subprocess, zipfile
           from pathlib import Path
-          archive=Path(os.environ['RUNNER_TEMP'])/'required.zip'
-          assert hashlib.sha256(archive.read_bytes()).hexdigest()=='1b1ae23fa00ac06885e32bb039fdc83c119f7ecf1c796033460823f4a4f24e22'
-          with zipfile.ZipFile(archive) as saved:
-            assert saved.testzip() is None
-            for name in saved.namelist():
-              if name.endswith('error-context.md'): print('ORIGINAL_ERROR='+saved.read(name).decode(),flush=True)
-              if not name.endswith('trace.zip'): continue
-              with zipfile.ZipFile(io.BytesIO(saved.read(name))) as trace:
-                assert trace.testzip() is None
-                for member in trace.namelist():
-                  if not member.endswith('.network'): continue
-                  for line in trace.read(member).decode().splitlines():
-                    data=json.loads(line).get('snapshot',{}); request=data.get('request',{}); response=data.get('response',{})
-                    if not any(part in request.get('url','') for part in ['/api/actions','/api/action-catalogue']): continue
-                    key=response.get('content',{}).get('_sha1')
-                    if key and 'resources/'+key in trace.namelist(): print('ORIGINAL_CATALOGUE='+trace.read('resources/'+key).decode(),flush=True)
-          ranges={
-            'apps/server/src/action-catalogue.test.ts':[(1,210)],
-            'apps/server/src/context.test.ts':[(1,160)],
-            'apps/server/src/http.test.ts':[(75,165)],
-            'apps/server/src/ai-director.test.ts':[(1,320)],
-            'apps/server/src/level1-decisions.test.ts':[(1,250),(315,385),(1125,1185)],
-            'apps/server/src/cognition-payloads.test.ts':[(1,140),(790,850),(895,960),(1430,1470)],
-            'apps/server/src/cognition-verification.test.ts':[(1,100),(500,575),(740,785)],
-            'tests/browser/actions.spec.ts':[(1,200)],
-          }
-          for name, spans in ranges.items():
-            lines=Path(name).read_text().splitlines(); print('OWNER='+name,flush=True)
-            for start,end in spans:print('\n'.join(str(i+1)+': '+lines[i] for i in range(start-1,min(end,len(lines)))),flush=True)
-          for file in Path('apps/client/src/design-system').glob('*.css'):
-            lines=file.read_text().splitlines(); selected=set()
-            for i,line in enumerate(lines):
-              if re.search(r'\.ol-(panel|panel-body|sheet|sheet-host|panel-slot)\b',line):selected.update(range(max(0,i-1),min(len(lines),i+14)))
-            if selected: print('PANEL_LAYOUT='+str(file)+'\n'+'\n'.join(str(i+1)+': '+lines[i] for i in sorted(selected)),flush=True)
-          names=['apps/server/src/config.ts','apps/client/src/ui/inventory.tsx']
-          for name in names:
-            lines=Path(name).read_text().splitlines();selected=set()
-            for i,line in enumerate(lines):
-              if any(term in line for term in (['worldPreset','WORLD_PRESET'] if name.endswith('config.ts') else ['trade','Trade'])):selected.update(range(max(0,i-8),min(len(lines),i+20)))
-            print('SELECTED_OWNER='+name+'\n'+'\n'.join(str(i+1)+': '+lines[i] for i in sorted(selected)),flush=True)
-          for name in subprocess.check_output(['git','grep','-l','function createBaseStartingWorld','--','packages'],text=True).splitlines():
-            print('STARTING_PRESET_OWNER='+name+'\n'+Path(name).read_text(),flush=True)
-          for file in Path('apps/client/src/ui').glob('*trade*'):
-            print('TRADE_OWNER='+str(file)+'\n'+file.read_text(),flush=True)
-          print('Read-only detached checkout '+os.getcwd()+'. No gameplay, commits or references changed.',flush=True)
+          p=Path('apps/server/src/level1-decisions.test.ts');text=p.read_text()
+          old='      calls.judges.push(request);'
+          assert text.count(old)==1
+          p.write_text(text.replace(old,old+"\n      console.log('EXACT_FIXTURE_REQUEST=' + JSON.stringify({id: request.requestId, questions: request.questions, state: request.state}));",1))
           PY
+          set +e
+          pnpm exec vitest run apps/server/src/level1-decisions.test.ts -t 'eats owned food from one combined Jev request' --reporter=verbose > "$RUNNER_TEMP/fixture.log" 2>&1
+          result=$?
+          set -e
+          python3 - <<'PY'
+          import os,re,subprocess
+          from pathlib import Path
+          text=Path(os.environ['RUNNER_TEMP'],'fixture.log').read_text()
+          for line in text.splitlines():
+            if 'EXACT_FIXTURE_REQUEST=' in line:
+              print(line[:22000],flush=True)
+          print('\n'.join(text.splitlines()[-45:]),flush=True)
+          print('SOURCE_CONTEXT',flush=True)
+          spans={
+            'apps/server/src/cognition-payloads.test.ts':[(100,260),(1410,1465)],
+            'apps/server/src/cognition-verification.test.ts':[(110,255)],
+            'apps/server/src/action-catalogue.test.ts':[(30,95)],
+            'apps/server/src/http.test.ts':[(100,160)],
+            'tests/browser/actions.spec.ts':[(75,130)],
+            'apps/client/src/design-system/chrome.css':[(1,180)],
+          }
+          for name,ranges in spans.items():
+            lines=Path(name).read_text().splitlines(); print('FILE='+name,flush=True)
+            for a,b in ranges: print('\n'.join(str(i+1)+': '+lines[i] for i in range(a-1,min(b,len(lines)))),flush=True)
+          p=Path('apps/server/src/world-service.test.ts');text=p.read_text();start=text.index("  it('settles disconnected exposure")
+          end=text.find('\n  it(',start+1)
+          print('TIME_TEST='+text[start:end if end>=0 else len(text)],flush=True)
+          for file in ['apps/server/src/cognition-payloads.test.ts','apps/server/src/cognition-verification.test.ts']:
+            text=Path(file).read_text()
+            for match in re.finditer(r'async function (?:harness|setup)\(',text):
+              end=text.find('\n}\n',match.start())+3
+              print('SETUP='+file+'\n'+text[match.start():end],flush=True)
+          print('This diagnostic changed no assertion or production code; no branch references updated.',flush=True)
+          PY
+          exit "$result"
