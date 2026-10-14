@@ -16,39 +16,47 @@ jobs:
           ref: 705efb2bd102ba151123659b129372aea62b6a79
           fetch-depth: 0
           persist-credentials: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Export pinned tracked source and three-way comparison
+      - name: Inspect pinned three-way conflicts
         shell: bash
         run: |
           set -euo pipefail
           base=741e8cf7e0e3f4ab7b1eea47d32d33e5f483eda6
           branch=705efb2bd102ba151123659b129372aea62b6a79
           main=1700f3b23a39acfdd14f3a6ab34c8ce330847bc3
-          out="$RUNNER_TEMP/openlegend-merge-source"
-          mkdir -p "$out"
           test "$(git merge-base "$branch" "$main")" = "$base"
-          test "$(git rev-parse "$branch:pnpm-lock.yaml")" = "$(git rev-parse "$main:pnpm-lock.yaml")"
-          for name in base branch main; do
-            ref=${!name}
-            git archive "$ref" | gzip > "$out/$name.tar.gz"
-            git ls-tree -r "$ref" > "$out/$name.tree"
-          done
           status=0
-          git merge-tree --write-tree "$branch" "$main" > "$out/merge-tree.txt" || status=$?
+          git merge-tree --write-tree "$branch" "$main" > "$RUNNER_TEMP/merge-tree.txt" || status=$?
           test "$status" -le 1
-          tree=$(head -n 1 "$out/merge-tree.txt")
-          git archive "$tree" | gzip > "$out/candidate.tar.gz"
-          git ls-tree -r "$tree" > "$out/candidate.tree"
-          { printf 'node_modules\0'; find apps packages -maxdepth 2 -type d -name node_modules -print0; } | tar --null -T - -czf "$out/dependencies.tar.gz"
-          (cd "$out" && sha256sum *.tar.gz *.tree merge-tree.txt > SHA256SUMS)
+          cat "$RUNNER_TEMP/merge-tree.txt"
+          tree=$(head -n 1 "$RUNNER_TEMP/merge-tree.txt")
+          echo '=== Conflict hunks ==='
+          python3 - "$tree" <<'PY'
+          import re, subprocess, sys
+          tree = sys.argv[1]
+          paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', tree], text=True).splitlines()
+          for path in paths:
+              if not path.endswith(('.md', '.ts', '.tsx', '.css', '.yml', '.yaml', '.json')):
+                  continue
+              data = subprocess.check_output(['git', 'show', f'{tree}:{path}']).decode('utf-8')
+              if '<<<<<<< ' not in data:
+                  continue
+              print(f'\n=== {path} ===')
+              lines = data.splitlines()
+              active = False
+              for index, line in enumerate(lines):
+                  if line.startswith('<<<<<<< '):
+                      active = True
+                      for before in range(max(0, index - 8), index):
+                          print(f'{before + 1}: {lines[before]}')
+                  if active:
+                      print(f'{index + 1}: {line}')
+                  if line.startswith('>>>>>>> '):
+                      active = False
+                      for after in range(index + 1, min(len(lines), index + 9)):
+                          print(f'{after + 1}: {lines[after]}')
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: openlegend-ui-merge-source
-          path: ${{ runner.temp }}/openlegend-merge-source/
-          compression-level: 0
+          name: openlegend-ui-merge-conflicts
+          path: ${{ runner.temp }}/merge-tree.txt
           retention-days: 1
