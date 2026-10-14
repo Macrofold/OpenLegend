@@ -1,6 +1,6 @@
 # Authorship, medium, and accessibility: how a world becomes an experience
 
-Reconciled on 2026-09-27 against the [29 revised dossiers](README.md). The [main synthesis](comparative-synthesis.md) compares represented lives and consequences; this essay asks how worlds are made and encountered. Creator testimony, an established fictional event, a critic's reading, and a reported audience response are different kinds of evidence.
+Reconciled on 2026-09-27 against the [29 revised dossiers](README.md); targeted visual-evidence completion on 2026-10-14. The [main synthesis](comparative-synthesis.md) compares represented lives and consequences; this essay asks how worlds are made and encountered. Creator testimony, an established fictional event, a critic's reading, and a reported audience response are different kinds of evidence.
 
 ## 1. Apparent inevitability can conceal revision
 
@@ -41,6 +41,20 @@ Film can give simultaneous evidence of hierarchy through rooms, routes, bodies, 
 Serial television accumulates familiarity through return. A changed relationship can change the meaning of a room. DS9 cannot simply depart from the consequences of its setting; a Sopranos meal carries unresolved history as well as actual enjoyment. Recurrence also permits events that matter as ordinary life rather than as clues to the season's main crisis. [Star Trek](worlds/04-star-trek.md); [The Sopranos](worlds/22-the-sopranos.md).
 
 Comics and manga create rhythm through panels, pages, expressive bodies, and release intervals. Criticism of a One Piece arc encountered weekly need not match a later reader's experience in volumes. Interactive work adds discovery order, optional encounters, and choices; authored alternatives are not one character's combined biography. [One Piece](worlds/14-one-piece.md); [The Elder Scrolls](worlds/27-the-elder-scrolls.md); [Fallout](worlds/28-fallout.md).
+
+### Three inspected visual cases
+
+The October completion pass directly inspected the images below. These are close readings of composition, not fresh screenings, recordings of player behavior, or measurements of emotional effects. Plot context remains with the dossiers; no image is copied into the repository or offered as a reusable game asset.
+
+**A train remains public space.** In Ghibli's official still 042, Chihiro and No-Face share a red bench with translucent passengers. Repeated windows and hanging straps organize the compartment; water and clouds are visible outside. The other passengers do not form an audience around the child. **Interpretation:** familiar travel arrangements give a strange environment an immediately readable use. The viewer can look outward or attend to unfamiliar neighbors without first receiving their biographies. This is a different invitation from presenting every surrounding body as an encounter awaiting the protagonist. The image does not establish where those strangers are going or whether the entire transport system works reliably. [V1]
+
+**Hospitality is visible in what has been used.** Still 044 places Chihiro, Zeniba, and No-Face around cups, plates, a cut cake, and a teapot. The crowded table and domestic furnishings give attention somewhere to rest besides the characters' extraordinary appearances. **Interpretation:** provision and shared company have material form; “a welcoming house” is not merely a narrator's assertion. The familiar masked figure occupies another social arrangement rather than changing into an ordinary-looking person before admission. The dossier's account of the encounter supplies its narrative meaning. One still alone cannot prove the host's permanent character, the visitors' future safety, or the ethics of every household in this world. [V2]
+
+**A street, not a creature catalogue.** Sigil's receding route puts striking bodies among textiles and vessels rather than isolating each as a specimen. **Interpretation:** curiosity can concern passage, goods, and coexistence as well as danger. The [D&D dossier](worlds/29-dungeons-and-dragons.md#11-three-other-settings-as-contrasting-lenses) supplies the institutional context; the image does not supply private motives. [V3]
+
+The comparison is deliberately narrow. The train distributes attention among strangers, the table concentrates a shared occasion, and the street suggests onward exploration. None proves that spectacle, hostility, or combat would be an inferior use of another composition. These are different means of making the surroundings worth attending to, not a universal preference for quiet scenes.
+
+**Sound and duration remain a separate evidence gap.** Ghibli's official credits identify Joe Hisaishi's music, but credits do not reveal the score playing at a given instant. A still cannot establish a pause's duration, silence, vocal delivery, camera movement, or the relation between a sound and an on-screen action. Those claims require the actual sequence and soundtrack or precisely attributed testimony. The earlier dossier's film criticism retains its own status; the new inspection upgrades only the visual observations identified here. [V4]
 
 ## 5. Entry, return, and deeper investigation offer different pleasures
 
@@ -122,4 +136,18 @@ Possible transfer is to make an encounter worth having before demanding exhausti
 
 These references retain their original 2026-09-26 retrieval record. Later successes and limits, including the fresh Miyazaki reading, are recorded in the owning dossiers rather than silently upgrading every retained reference.
 
+## Visual sources inspected on 2026-10-14
+
+[V1]: https://www.ghibli.jp/gallery/chihiro042.jpg
+[V2]: https://www.ghibli.jp/gallery/chihiro044.jpg
+[V3]: https://www.dndbeyond.com/attachments/10/868/the-wards-of-sigil.jpg
+[V4]: https://www.ghibli.jp/works/chihiro/
+
+- [V1] Studio Ghibli, official *Spirited Away* still 042; directly inspected train composition, not a timed clip.
+- [V2] Studio Ghibli, official still 044; directly inspected table scene, not independent evidence of its entire narrative aftermath.
+- [V3] Terraform Studios, Sigil illustration; attribution and setting context in dossier 29, W10–W11.
+- [V4] Studio Ghibli, official film page; credits and gallery provenance, not an audio recording. Its availability does not transfer image rights to this project.
+
 **Reconciliation record:** preserved iteration, biography, collaboration, medium, entry, novelty, participation, continuity, and evidentiary limits. Added differentiated pleasures and critical disagreements from the completed dossier pass, including D&D's sourcebook/film/campaign boundary. No causal popularity model, current audience census, complete viewing, or uninspected full source is claimed.
+
+**2026-10-14 completion review:** reread the essay as a whole and integrated three bounded visual cases in section 4 without replacing the existing comparative argument. Inspected V1–V4; also inspected Ghibli still 041 as supplementary orientation, without requiring it for the cases. No new screening or soundtrack listening occurred. A direct Ebert/Miyazaki interview request failed; quotations reproduced elsewhere were not upgraded to a newly read original interview. The [source audit](source-audit.md) retains audiovisual playback as a specific future evidence improvement, not a completed check.
