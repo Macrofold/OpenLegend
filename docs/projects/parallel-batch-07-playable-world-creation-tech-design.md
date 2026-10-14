@@ -1,8 +1,8 @@
 # Batch 07 — Technical design for playable world creation
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-14   |
 
 **Alignment updated:** 2026-10-14T08:14:37Z.
 
@@ -18,6 +18,8 @@ Estimated 200–300 changed production logic lines; medium risk because initial 
 4. Inspect the current configured development database without replacing compatible progress. Confirm integrated rivals and their initial distance; add only missing agreed starting content through existing owners if necessary. Reconcile the persistent opening specification, limits, tracker and verification report; run relevant TypeScript/build/format checks and commit task changes.
 
 Preparation is explicit rather than per-tick work: one shared initializer constructs the fixed authored scene; existing exact preparation caching shares that immutable result across preview and review. Native readiness scans only this new opening's finite objects, reuses its definitions and routes, and invalidates on candidate/authority changes. Measure complete preparation and reopen rather than claim population capacity from this scene. Completion requires two truthful selectable starts, durable combined main content, a genuinely solo start, preserved account/spending authority and successful relevant checks. This scoped correction does not close OC05's separate live generated-tool acceptance.
+
+**Delivered:** both choices prepare, activate and reopen on disposable PostgreSQL; direct solo startup and reopening work at the default seed; browser choice/preview and configured-database content were checked. Native startup exposed a rock at the solo arrival point, so the authored riverside clearing is reserved during landscape generation, with normal collision checks retained. Exact identity review fixed potential overwriting of a fixed scenario object and retained custom authoring's default. [Evidence and limitations](../verification/playable-world-creation.md#october-14-main-world-and-solo-testing-ground) qualify this correction, not broader first-play acceptance.
 
 ## Baseline and independent completion
 

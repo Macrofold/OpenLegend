@@ -1,10 +1,12 @@
 # Batch 07 — Playable world creation implementation plan
 
-| Status      | Current progress                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-13   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Main and solo starts pass native creation, reload and browser preview; generated-tool play and parent acceptance remain open. | 2026-10-14   |
 
 ## Authority, baseline and completion
+
+**October 14 scoped continuation:** Mike requested the complete integrated Main world and a minimal Solo testing ground as the two supplied starts, plus confirmation that the configured database contains the distant rivals. This correction runs in the primary checkout on local `main`; the original branch/checkout baseline below is historical. The [scoped technical plan](parallel-batch-07-playable-world-creation-tech-design.md#main-world-and-solo-testing-ground--october-14-implementation) and [OC06 evidence](../verification/playable-world-creation.md#october-14-main-world-and-solo-testing-ground) record delivery. Both supplied choices and direct solo startup pass native creation/reload and browser preview. Compatible existing progress was preserved. This does not complete OC05's separate generated-tool first-play acceptance.
 
 The developer authorized the entire [Batch 07 assignment](parallel-batch-07-playable-world-creation-prompts.md), including integration, verification, review fixes, documentation and evidence-backed guidance improvements. Work starts from local `main` at `1589297f496fdbfee6e631c1fcee78a391b9478d` in the OpenLegend repository whose primary checkout is `/Users/mzw/Documents/ChatGPT/OpenLegend`; no remote ref is substituted. The working checkout is `/Users/mzw/.codex/worktrees/94ff/OpenLegend` on `codex/playable-world-creation`. The main checkout is not modified.
 
