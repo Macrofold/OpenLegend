@@ -58,6 +58,8 @@ jobs:
           native = native.replace(before, "  const store = await testRepository();\n  const game = await createGameServer({ config: readConfig({ AI_BUDGET_USD: '0' }), store, production: true, tick: false });")
           assert native.count('game.service.store.db') == 2
           native = native.replace('game.service.store.db', 'store.db')
+          native = native.replace("from '@open-legend/domain'", "from '../packages/domain/src/index.js'")
+          native = native.replace('expect(admitted.ok).toBe(true);', 'expect(admitted, JSON.stringify(admitted)).toMatchObject({ ok: true });')
           (temp / 'ui-native.sh').write_text(native)
           (temp / 'ui-export.sh').write_text(step('Export the exact checked candidate without updating any branch'))
           PY
