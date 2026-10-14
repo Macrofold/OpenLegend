@@ -2,51 +2,87 @@ name: UI completion verification
 on:
   push:
     branches: [docs/game-ui-research-redesign]
-    paths: [.github/workflows/ui-completion.yml, .github/scripts/ui-finish.py, .github/scripts/ui-verify.py]
+    paths: [.github/workflows/ui-completion.yml]
 permissions:
   contents: write
+  actions: read
 jobs:
-  verify:
+  inspect:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: openlegend
-          POSTGRES_PASSWORD: fixture
-          POSTGRES_DB: postgres
-        ports: [5432:5432]
-        options: >-
-          --health-cmd "pg_isready -U openlegend -d postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
+    timeout-minutes: 5
     env:
       AI_BUDGET_USD: '0'
-      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
           show-progress: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - name: Install pinned dependencies and Chromium
-        run: |
-          pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
-          pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Exercise the real App server and PostgreSQL recovery paths
+      - name: Inspect the original recorded failures without repeating gameplay
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 .github/scripts/ui-verify.py
-      - name: Preserve exact results and images
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-finish
-          path: ${{ runner.temp }}/ui-finish/
-          retention-days: 3
-          if-no-files-found: error
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --location --max-time 120 --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/vnd.github+json' https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/11932430537/zip --output "$RUNNER_TEMP/original.zip"
+          python3 - <<'PY'
+          import base64, hashlib, io, json, os, urllib.request, zipfile
+          from pathlib import Path
+          original=Path(os.environ['RUNNER_TEMP'])/'original.zip'
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=='cca78ac1abb09acf536c62b5a8ea12bee8efa34a56054e6b942631c023c860a9'
+          def api(path,payload):
+              request=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/'+path,method='POST',data=json.dumps(payload).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+              with urllib.request.urlopen(request,timeout=60) as response:return json.load(response)
+          images=[]
+          with zipfile.ZipFile(original) as saved:
+              assert saved.testzip() is None
+              for name in saved.namelist():
+                  if name.endswith('error-context.md'):
+                      print('ERROR_CONTEXT='+name+'\n'+saved.read(name).decode(),flush=True)
+                  if name.endswith('.png'):
+                      data=saved.read(name); sha=api('blobs',{'encoding':'base64','content':base64.b64encode(data).decode()})['sha']
+                      images.append({'path':name.replace('/','--'),'mode':'100644','type':'blob','sha':sha})
+                  if not name.endswith('trace.zip'):continue
+                  print('ORIGINAL_TRACE='+name,flush=True)
+                  with zipfile.ZipFile(io.BytesIO(saved.read(name))) as trace:
+                      assert trace.testzip() is None
+                      for member in trace.namelist():
+                          if member.endswith('.trace'):
+                              for line in trace.read(member).decode().splitlines():
+                                  event=json.loads(line)
+                                  if event.get('type') not in {'before','after','input'}:continue
+                                  if event.get('type')=='before':
+                                      params=event.get('params',{})
+                                      print('STEP='+json.dumps({'id':event.get('callId'),'time':event.get('startTime'),'api':event.get('apiName'),'method':event.get('method'),'selector':params.get('selector'),'expression':params.get('expression'),'url':params.get('url'),'key':params.get('key')}),flush=True)
+                                  elif event.get('type')=='input':print('INPUT='+json.dumps(event),flush=True)
+                                  elif event.get('error'):print('STEP_ERROR='+json.dumps({'id':event.get('callId'),'time':event.get('endTime'),'error':event['error']})[:1600],flush=True)
+                          if member.endswith('.network'):
+                              for line in trace.read(member).decode().splitlines():
+                                  record=json.loads(line).get('snapshot',{})
+                                  url=record.get('request',{}).get('url','');response=record.get('response',{})
+                                  if not any(part in url for part in ['/api/state','/api/events','/api/saves/','/api/control','/api/entry']):continue
+                                  value={'url':url.split('?')[0],'status':response.get('status'),'time':record.get('_monotonicTime')}
+                                  key=response.get('content',{}).get('_sha1')
+                                  if key and 'resources/'+key in trace.namelist():
+                                      try:
+                                          body=json.loads(trace.read('resources/'+key))
+                                          value['result']={k:body.get(k) for k in ['ok','code','message','saveTimeline','worldId'] if k in body}
+                                          access=body.get('access',{});checkpoint=body.get('checkpoint',{})
+                                          value['view']={'controlling':access.get('controlling'),'privateScopeHash':hashlib.sha256(str(access.get('privateDraftScope')).encode()).hexdigest()[:12],'checkpointScopeHash':hashlib.sha256(str(checkpoint.get('recoveryScope')).encode()).hexdigest()[:12]}
+                                      except (ValueError,AttributeError):pass
+                                  print('NETWORK='+json.dumps(value),flush=True)
+          if images:print('FAILURE_IMAGE_TREE='+api('trees',{'tree':images})['sha'],flush=True)
+          for file,terms in {
+              'apps/client/src/api.ts':['clearAccess(', 'access-changed'],
+              'apps/server/src/http.ts':['access-changed'],
+              'apps/server/src/authority.ts':['checkpointRecovery', 'recoveryScope'],
+              'apps/server/src/view.ts':['checkpoint:'],
+              'packages/domain/src/objects.ts':['Invalid equipment attachment.', 'export function unequip'],
+              'packages/domain/src/living.ts':['construct:'],
+          }.items():
+              lines=Path(file).read_text().splitlines()
+              print('SOURCE_OWNER='+file,flush=True)
+              for i,line in enumerate(lines):
+                  if any(term in line for term in terms):print('\n'.join(str(n+1)+': '+lines[n] for n in range(max(0,i-12),min(len(lines),i+20))),flush=True)
+          print('Original artifact and CRC-valid traces inspected. No gameplay rerun, commits or references changed by this job.',flush=True)
+          PY
