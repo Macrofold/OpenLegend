@@ -1,6 +1,6 @@
-# Generations and family life — proposed adult scenario
+# Generations and family life — proposed world profiles
 
-This is the authored-world companion to the [DG31 product specification](../../projects/generations-and-family-life-feature-spec.md). It proposes an independently useful adult-family encounter. It is not installed content, an adopted audience policy, a reproductive system or a replacement for the current [biological family facts](social.md). [GEN delivery](../../maintainers/generations-and-family-life.md) and [GEN limits](../../limits/generations-and-family-life.md) own remaining work and discretionary scope.
+This is the authored-world companion to the [DG31 product specification](../../projects/generations-and-family-life-feature-spec.md) and its [childhood and population chapter](../../projects/generations-and-family-life/childhood-and-population.md). Mike approved the adult audience and non-explicit sexual presentation on October 14, 2026. The mechanical profiles below remain proposals, not installed content or a replacement for current [biological family facts](social.md). [GEN delivery](../../maintainers/generations-and-family-life.md) and [GEN limits](../../limits/generations-and-family-life.md) own remaining work and discretionary scope.
 
 ## A return to the lookout
 
@@ -24,17 +24,17 @@ Family labels give no inventory access, relationship score, right to issue order
 
 The starting ages above are deliberately authored context, not measurements of earlier simulated lives. They do not prove that thousands of earlier meals, lessons, payments or observations occurred. Where truthful age progression is enabled, it means calendar chronology from the authored reference, using actual advancing world calendar time. An inactive human's calendar chronology may advance while their world runs, without bodily aging or experienced history. The current normal clock remains 60 game seconds per real second under [simulation time](../../simulation-time.md); opening a detail panel, returning from absence or loading a save generates no elapsed life.
 
-No newly selected birthday rule reduces health, movement, learning, fertility or life expectancy. No automatic retirement, forced death or transfer of the player's controls is selected. Age can affect an individual's authored perspective or independently chosen purpose without making all adults of that age alike. A movement limitation, illness or age-derived bodily transition requires its own worthwhile selected behavior and actual world capability; a gray-haired presentation cannot supply it.
+No newly selected birthday rule in the adult-relative profile reduces health, movement, learning, fertility or life expectancy. No automatic retirement, forced death or transfer of the player's controls is selected. Age can affect an individual's authored perspective or independently chosen purpose without making all adults of that age alike. A movement limitation, illness or age-derived bodily transition requires its own worthwhile selected behavior and actual world capability; a gray-haired presentation cannot supply it.
 
 The first optional age consumer is qualified within one world. Later compatible travel must preserve age across different calendar origins: label original dates by their world/calendar, count each actual elapsed interval once, and never derive a traveler's new age by subtracting an origin birth date from a destination date. Source and destination progression cannot both be credited for the same interval. A held traveler gains no invented lived time. Any claimed calendar-age display during protected absence remains distinct from bodily aging.
 
-The optional age record must respect the actual body's participation and protection rules. A protected absent human cannot silently accumulate bodily deterioration or catch-up harm. The current contract does not guarantee that an NPC relative pauses with them. If a later lifecycle needs biological age to differ from world chronology, that is an explicit clock decision under PS-D03, not an invisible multiplier. DG31's current independent scope adopts no such multiplier or long-range time skip.
+The optional age record must respect the actual body's participation and protection rules. A protected absent human cannot silently accumulate bodily deterioration or catch-up harm. The current contract does not guarantee that an NPC relative pauses with them. The separate proposed child-development rule below explicitly differs from calendar chronology; it does not reinterpret these adult records, install an independent calendar or perform a long-range time skip. PS-D03 retains the broader clock decision and qualification owner.
 
 ## Food, help and leaving
 
 Each adult retains their ordinary needs and real access to resources. Meals use actual edible items and the normal eating action. Handing over food is not feeding someone or proving they ate. Saying that two people share a home supplies neither a pantry nor permission to use another person's possessions. A pleasant small group must be possible without building a full village service economy.
 
-Ordinary help is occasional and voluntary. If the separate [recovery-and-care proposal](recovery-and-care.md) is implemented and selected, its actual living, awake, willing participants, range, duration, supplies, interruption and effect rules apply. It does not cure age or provide assisted feeding, incapacity treatment or dependent-child care. A relative can accept help, decline, stop or choose another legitimate response. Care earns no automatic affection or permanent obligation.
+Ordinary help is occasional and voluntary. If the separate [recovery-and-care proposal](recovery-and-care.md) is implemented and selected, its actual living, awake, willing participants, range, duration, supplies, interruption and effect rules apply. It does not cure age or provide assisted feeding, incapacity treatment or dependent-child care. A relative can accept help, decline, stop or choose another legitimate response. Care earns no automatic affection or permanent obligation. The child-feeding consumer below is separate new work; it is not supplied by relabeling DG21 treatment.
 
 Leaving is an ordinary valid choice. No family attendance streak, birthday deadline, mandatory visit, pending-care dashboard or penalty for closing the game is introduced. Human absence follows current participation protection; it does not preserve goods left behind or establish off-screen care. A continuing world must use its genuinely qualified population, food, service, finite funding and recovery policy. The two-resident, three-game-day proposal in [continuing communities](continuing-communities.md) does not automatically extend to this cast or to growing families.
 
@@ -46,15 +46,62 @@ This profile consumes the mortality dependency explicitly identified by [DG21](.
 
 A permitted dead-person description retains age at death and, where known, time since death as distinct facts; it does not imply continuously lived years while the identity is retained. A death does not make ancestry public, turn a relative into a controllable replacement, award their property automatically or erase a lived relationship. Memory and actual objects can remain meaningful. A person can mourn, choose company, continue work or feel something more complicated through the ordinary appraisal/agency owners; there is no compulsory mourning chore or automatic settlement-wide productivity penalty. Ordinary ghosts, revival and unusual shared identities remain DG33's separately selected scope.
 
-## Reserved reproductive and dependent-care scope
+## Approved audience and presentation
 
-The original PG presentation requirement remains intact. D16 still reserves the actual player audience and related content boundary, and ND06 requires that choice before the affected feature design. This profile does not choose conception, pregnancy, birth, new child interactions, heredity, dependent-care autonomy, population-growth rates or an accelerated family clock around an assumed answer.
+The intended players are adults. Optional sex between eligible consenting adult characters remains available in the product direction, with an opaque heart, already-non-explicit obscured scene or fade instead of anatomical depiction. The default short heart scene and Fade only preference are presentation choices; hiding the scene is not cancelling the actual activity. There is no explicit asset behind an optional censor, and missing effects fall back to the fade. Text, audio, camera, captions and inspection retain the same non-explicit boundary. This is not a formal rating or a ban on difficult adult themes elsewhere in the world.
 
-The [feature's research and decision preparation](../../projects/generations-and-family-life-feature-spec.md) must inform that remaining choice. Actual new population would require real food, capable willing care, permitted access, attention, whole service cost and a credible interruption/absence outcome before admission. Those are identified dependencies, not a completed dependent-child policy or an assurance of automatic survival.
+Child characters have family, learning and play experiences, never sexual roles or adult sexual commentary. A label or cosmetic age edit cannot create adult eligibility. Adult audience is a real-player scope; adult character eligibility is a separate supported body and participation rule. The [product chapter](../../projects/generations-and-family-life/childhood-and-population.md#2-intimacy-reproductive-intent-and-care-are-different-choices) owns assent, privacy, interruption and the distinction between intimacy, reproductive intent and responsibility.
+
+## The growing-family profile
+
+This is a separate optional authored scenario, not an expansion of Mara and Ivo's relationship or an automatic change to every running world. First qualify one human adult and one unrelated, independently willing adult resident, with one child. Visiting an already-authored family is a separate useful scene and must count all of its actual participants. No family member is silently added to the existing camp.
+
+The first growing-family world is isolated and attended by that human. It stops under the existing supported departure/whole-world hold when the human leaves. It does not offer public-world family persistence, cross-world pregnancy/child custody, unattended care or a fresh free service allowance. Human pregnancy does not advance while that human is protected and inactive. Current biological parent facts stay separate from newly accepted caregiving authority; the initial responsible caregiver and any helper must actually accept their roles before planned conception is admitted.
+
+The proposed values below are game tuning for this optional profile, not medical claims, installed settings or measured optimums. The main game's normal mechanical clock remains unchanged.
+
+| Choice | Proposed value and actual boundary |
+| --- | --- |
+| Adult intimate encounter | 180 game seconds of actual mutual physical participation after legitimate arrival; three normal real seconds. Either may stop. No completion reward or automatic pregnancy. |
+| Planned conception | A separate exact mutually accepted choice using the same brief non-explicit activity; successful admission/completion creates one pregnancy without fertility rolls. |
+| First dependent scope | One pregnancy or dependent child per selected household; host admission counts the eventual adult as well as current people. No lifetime child cap or automatic vacancy on adulthood. |
+| Pregnancy | Three advancing game days; 72 normal real minutes. No default illness, movement penalty, extra need multiplier, mandatory clinician or lethal birth roll. |
+| Birth | One native supported transition at the due boundary, with actual placement and no timed naming task. Unavailable required execution causes a coherent isolated-world stop, not a fictional medical loss. |
+| Newborn | Birth to one advancing game day; 24 normal real minutes. Supported comfort, feeding, safe support/carrying and nonverbal expression. |
+| Young child | One to five advancing game days since birth; 96 normal real minutes in this stage. Local movement, simple communication, play and supported self-feeding. |
+| Child | Five to twelve advancing game days; 168 normal real minutes in this stage. Questions, exploration, actual learning and optional small safe help. |
+| Adolescent | Twelve to eighteen advancing game days; 144 normal real minutes. Greater independent choice and supported learning; still outside sexual activity. |
+| Adult | From eighteen advancing game days, only with the actual compatible adult body/presentation and capabilities. No inherited sexual consent, automatic account control, profession or debt. |
+| Child food reserve | Capacity 100 fullness points, initial newborn reserve 75; no stage-change refill. The starting reserve is a finite authored source attached to one actual birth. |
+| Child nourishment drain | Newborn 0.25, young child 0.5, child 0.75, adolescent/adult 1.0 times the installed ordinary adult rate; stage changes retain actual remaining reserves. |
+| Nursery portion | One finite age-appropriate 25-point portion; no automatic substitution of an adult meal or creation from a caregiving label. More portions need an admitted source or positive-input recipe. |
+| Feed | 120 uninterrupted game seconds, two normal real seconds, within 2.2 world units. One real portion and its nourishment commit together. Refuse unnecessary feeding above 75 fullness; ordinary alternatives remain available. |
+| Comfort | A short ordinary chosen interaction, not a guaranteed affection or global mood bonus. Stop remains available; no separate care currency or compulsory hourly sequence. |
+| Carry and handoff | One actual carrier; native supported pickup, movement, handoff and safe lowering. Never inventory storage, remote transfer, two simultaneous carriers or teleportation home. |
+| Finite care continuation | Up to six game hours per accepted continuation, six normal real minutes. It is an intention with discrete physical actions, not continuously occupied hands; the adult can meet their own needs. A resident may independently choose another continuation without a new human instruction, but cannot renew spending or unattended authority. |
+| Sleep and energy | The installed supported child body uses its explicit ordinary energy/rest policy; no new lethal sleep-deprivation or compulsory nap-management mechanic is added here. Required food during sleep is included in the full nourishment rate. |
+| First inherited content | Supported physical resemblance sampled once for this child; no inherited recipes, memories, skills, morality, title or unimplemented abilities. |
+| Harvest scope | The selected growing-person body has no harvest output at any stage. This is a local qualification restriction, not a universal rule about every creature or world. |
+
+Condensed development is an expressly proposed body-stage rule using the one actual game clock, not an invented calendar or a claim of eighteen experienced years. Describe stage and actual elapsed life truthfully. It changes no existing adult chronology, speeds up no crafting and creates no off-screen memories. The full pregnancy-to-adulthood example takes 8.4 normal active real hours; that is an evaluation input, not a promised fun duration or a requirement for a short visit. A same-version save preserves the actual stage once.
+
+The gestating person may deliberately end a pregnancy through the proposed non-graphic body action, without a partner's veto or refund of elapsed time/resources. Ending a relationship or ordinary intimacy does not do so automatically. Actual death ends the pregnancy without spawning a hidden child; revival does not resume it. No additional involuntary-loss, surgery, disease, artificial-gestation or generic fertility system is selected.
+
+A child is a new person with a finite body and care needs, not a copied parental mind. Their actual experience can shape interests, disagreements and later learning. No parent assigns permanent personality from a birthday reward screen. Adoption changes explicitly accepted social care responsibility, not biological links or affection. At adulthood, former child-care authority ceases; ordinary voluntary help and existing relationships can continue.
+
+## Finite provisions and the wider population promise
+
+With the inspected adult drain of 259.2 fullness per game day, two adults plus a newborn need 583.2 points per day, rising to 777.6 when the child is adult. The proposed four-patch DG19 renewal ceiling of 576 does not support either offered mature family merely by being called a settlement. Actual accessible supplies, waste, actor decisions and service need qualification.
+
+A three-day pregnancy plus one newborn-day fixture uses 2,138.4 total fullness before starting reserves. As a finite authored example, sixty current 38-point adult portions supply 2,280 adult-food points and four 25-point nursery portions supply 100 infant-food points. Food eligibility remains distinct: adult surplus is not automatically infant food. This example creates no recurring stock and proves no self-sufficiency. A late-pregnancy authored start can qualify birth and early care without claiming the preceding days occurred in play.
+
+The full proposed progression uses 10,886.4 adult-food points plus 3,499.2 staged child points before waste, additional people and initial reserves. It is not a requirement to hoard an entire lifetime at admission. Longer operation needs an actual finite renewal/resupply and service plan; controlled test resupply must be labeled, not counted as a functioning economy. Scarce food is not repaired by compulsory child labor or automatic elder removal.
+
+When required service cannot support admitted work, the isolated world stops coherently before further unsupported depletion, birth or care. No selective baby freeze, hidden pantry, paid retry loop or blame for real-player absence is allowed. Wider public or unattended operation needs its actual existing PS/participation/funding contracts; this profile does not extend the prior two-adult continuation offer by implication.
 
 ## Maintained records
 
-- Product behavior and research: [DG31 feature specification](../../projects/generations-and-family-life-feature-spec.md).
-- Implementation and unfinished design: [GEN01–GEN04](../../maintainers/generations-and-family-life.md).
-- Proposed limits and growth gaps: [GEN-L01–GEN-L06](../../limits/generations-and-family-life.md).
+- Product behavior and research: [DG31 feature specification](../../projects/generations-and-family-life-feature-spec.md) and [childhood/population chapter](../../projects/generations-and-family-life/childhood-and-population.md).
+- Implementation and qualification: [GEN01–GEN07](../../maintainers/generations-and-family-life.md). Product preparation is distinct from the open runtime work.
+- Proposed limits and growth gaps: [GEN-L01–GEN-L12](../../limits/generations-and-family-life.md).
 - Shared current meaning: [social facts](social.md), [simulation time](../../simulation-time.md), and the mortality baseline explicitly identified by [recovery and care](../../projects/recovery-and-care-feature-spec.md).
