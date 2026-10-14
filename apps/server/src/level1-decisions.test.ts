@@ -611,21 +611,24 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
           best: { rating: 0.6 },
         },
       });
-      expect(
-        Object.keys((h.calls.judges[0]!.questions['route'] as { criteria: object }).criteria),
-      ).toEqual(['native', 'level1', 'request_1', 'request_2']);
+      const offeredRoutes = Object.keys(
+        (h.calls.judges[0]!.questions['route'] as { criteria: object }).criteria,
+      );
+      // Native request handles need not be consecutive after availability filtering.
+      // Keep both installed choices and forbid every generative route.
+      expect(offeredRoutes).toEqual([
+        'native',
+        'level1',
+        expect.stringMatching(/^request_\d+$/),
+        expect.stringMatching(/^request_\d+$/),
+      ]);
       expect(h.calls.judges).toHaveLength(1);
       expect(h.calls.generations).toHaveLength(0);
       await h.service.tick(0.1);
       expect(h.berries()).toBe(2);
       const { root } = await level1Stage(h, job.id);
       expect(root).toMatchObject({ route: 'level1', disposition: 'deferred' });
-      expect((root.input as { offeredRoutes: string[] }).offeredRoutes).toEqual([
-        'native',
-        'level1',
-        'request_1',
-        'request_2',
-      ]);
+      expect((root.input as { offeredRoutes: string[] }).offeredRoutes).toEqual(offeredRoutes);
     },
   );
 

@@ -116,9 +116,7 @@ describe('actor-scoped native decision candidates', () => {
     expect(
       service.world.events.some(
         (event) =>
-          event.type === 'shot-released' &&
-          event.actorId === NPC_ID &&
-          event.targetId === 'hare-1',
+          event.type === 'shot-released' && event.actorId === NPC_ID && event.targetId === 'hare-1',
       ),
     ).toBe(true);
     // Releasing the shot does not resolve its flight or guarantee an impact.
@@ -126,7 +124,10 @@ describe('actor-scoped native decision candidates', () => {
     for (let step = 0; step < 20 && service.world.entities['hare-1']!.actor!.alive; step++) {
       await service.transition((world) => advanceWorld(world, 0.1));
     }
-    expect(service.world.entities['hare-1']!.actor!.alive).toBe(false);
+    expect(
+      service.world.entities['hare-1']!.actor!.alive,
+      JSON.stringify(service.world.events.slice(-10)),
+    ).toBe(false);
     await perform(
       service,
       select(service, 'harvest', (action) => action.command?.targetId === 'hare-1'),

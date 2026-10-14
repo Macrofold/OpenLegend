@@ -2,7 +2,12 @@ name: UI completion qualification
 on:
   push:
     branches: [docs/game-ui-research-redesign]
-    paths: [.github/workflows/ui-completion-source-read-20261014.yml]
+    paths:
+      - .github/workflows/ui-completion-source-read-20261014.yml
+      - apps/server/src/level1-decisions.test.ts
+      - apps/server/src/cognition-payloads.test.ts
+      - apps/server/src/cognition-verification.test.ts
+      - apps/server/src/context.test.ts
 permissions:
   contents: read
 jobs:
