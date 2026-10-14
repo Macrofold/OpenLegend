@@ -1,10 +1,12 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The authored block mercenary is implemented; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
 
 **Broader qualification remains required; the bundled-model pilot has its own limited evidence.** This document turns the [feature specification](3d-pixel-art-feature-spec.md) into reviewable experiments and acceptance scenarios. It does not authorize game changes, automated test authoring, live provider work, or spending.
+
+The separately authorized [authored block iteration](mercenary-voxel-iteration.md) has delivered source geometry and renderer integration. Its [focused evidence](../verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) records source/hash, bounded garment and scoped browser checks; hidden-character fading and interrupted/failed-load checks also passed in the final focused scenario. [World presentation](../world-presentation.md#animated-character-pixels) owns the behavior being checked. Creator style approval, matched moving populations and physical-device qualification remain open; the reduced asset counts alone do not satisfy this broader matrix.
 
 ## Maintained records
 
@@ -110,4 +112,4 @@ For each slice, retain commit/source baseline, exact feature/profile/asset versi
 
 Advance the visual direction when the moving scene is compelling, identity/interaction depiction remains truthful, critical lifecycle/privacy/spending scenarios pass for that slice, and measured authoring/runtime costs support expansion. Otherwise narrow the family, improve the art/profile, or retain sprites. Bulk conversion is not the default response to an inconclusive experiment.
 
-At this documentation baseline, no Q scenario, graphics profile, provider route, target device, performance target, or art family is newly qualified. [V3D delivery](../maintainers/3d-pixel-art.md) retains all runtime gates as open.
+The original September 27 documentation baseline qualified no Q scenario, graphics profile, provider route, target device, performance target or art family. The later bundled pilot and authored block iteration have separately scoped evidence; they do not qualify the wider appearance pipeline or close the remaining [V3D delivery](../maintainers/3d-pixel-art.md) gates.

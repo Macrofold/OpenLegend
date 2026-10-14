@@ -10,16 +10,8 @@
     {
       "name": "torso",
       "parent": "MercenaryVoxel",
-      "pivotMetresYUp": [
-        0.0,
-        1.125,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.0,
-        1.125,
-        0.0
-      ],
+      "pivotMetresYUp": [0.0, 1.125, 0.0],
+      "localPivotMetresYUp": [0.0, 1.125, 0.0],
       "cells": 8161,
       "connected": true,
       "exposedCellFaces": 3874,
@@ -29,16 +21,8 @@
     {
       "name": "head",
       "parent": "torso",
-      "pivotMetresYUp": [
-        0.0,
-        1.75,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.0,
-        0.625,
-        0.0
-      ],
+      "pivotMetresYUp": [0.0, 1.75, 0.0],
+      "localPivotMetresYUp": [0.0, 0.625, 0.0],
       "cells": 1296,
       "connected": true,
       "exposedCellFaces": 826,
@@ -48,16 +32,8 @@
     {
       "name": "leftUpperArm",
       "parent": "torso",
-      "pivotMetresYUp": [
-        0.325,
-        1.6,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.325,
-        0.47500000000000003,
-        0.0
-      ],
+      "pivotMetresYUp": [0.325, 1.6, 0.0],
+      "localPivotMetresYUp": [0.325, 0.47500000000000003, 0.0],
       "cells": 832,
       "connected": true,
       "exposedCellFaces": 620,
@@ -67,16 +43,8 @@
     {
       "name": "leftForearm",
       "parent": "leftUpperArm",
-      "pivotMetresYUp": [
-        0.325,
-        1.2750000000000001,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.0,
-        -0.325,
-        0.0
-      ],
+      "pivotMetresYUp": [0.325, 1.2750000000000001, 0.0],
+      "localPivotMetresYUp": [0.0, -0.325, 0.0],
       "cells": 680,
       "connected": true,
       "exposedCellFaces": 564,
@@ -86,16 +54,8 @@
     {
       "name": "rightUpperArm",
       "parent": "torso",
-      "pivotMetresYUp": [
-        -0.325,
-        1.6,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        -0.325,
-        0.47500000000000003,
-        0.0
-      ],
+      "pivotMetresYUp": [-0.325, 1.6, 0.0],
+      "localPivotMetresYUp": [-0.325, 0.47500000000000003, 0.0],
       "cells": 832,
       "connected": true,
       "exposedCellFaces": 620,
@@ -105,16 +65,8 @@
     {
       "name": "rightForearm",
       "parent": "rightUpperArm",
-      "pivotMetresYUp": [
-        -0.325,
-        1.2750000000000001,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.0,
-        -0.325,
-        0.0
-      ],
+      "pivotMetresYUp": [-0.325, 1.2750000000000001, 0.0],
+      "localPivotMetresYUp": [0.0, -0.325, 0.0],
       "cells": 680,
       "connected": true,
       "exposedCellFaces": 570,
@@ -124,16 +76,8 @@
     {
       "name": "leftThigh",
       "parent": "MercenaryVoxel",
-      "pivotMetresYUp": [
-        0.125,
-        1.1,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.125,
-        1.1,
-        0.0
-      ],
+      "pivotMetresYUp": [0.125, 1.1, 0.0],
+      "localPivotMetresYUp": [0.125, 1.1, 0.0],
       "cells": 1168,
       "connected": true,
       "exposedCellFaces": 740,
@@ -143,16 +87,8 @@
     {
       "name": "leftShin",
       "parent": "leftThigh",
-      "pivotMetresYUp": [
-        0.125,
-        0.675,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.0,
-        -0.42500000000000004,
-        0.0
-      ],
+      "pivotMetresYUp": [0.125, 0.675, 0.0],
+      "localPivotMetresYUp": [0.0, -0.42500000000000004, 0.0],
       "cells": 1486,
       "connected": true,
       "exposedCellFaces": 1048,
@@ -162,16 +98,8 @@
     {
       "name": "rightThigh",
       "parent": "MercenaryVoxel",
-      "pivotMetresYUp": [
-        -0.125,
-        1.1,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        -0.125,
-        1.1,
-        0.0
-      ],
+      "pivotMetresYUp": [-0.125, 1.1, 0.0],
+      "localPivotMetresYUp": [-0.125, 1.1, 0.0],
       "cells": 1168,
       "connected": true,
       "exposedCellFaces": 740,
@@ -181,16 +109,8 @@
     {
       "name": "rightShin",
       "parent": "rightThigh",
-      "pivotMetresYUp": [
-        -0.125,
-        0.675,
-        0.0
-      ],
-      "localPivotMetresYUp": [
-        0.0,
-        -0.42500000000000004,
-        0.0
-      ],
+      "pivotMetresYUp": [-0.125, 0.675, 0.0],
+      "localPivotMetresYUp": [0.0, -0.42500000000000004, 0.0],
       "cells": 1486,
       "connected": true,
       "exposedCellFaces": 1048,
@@ -200,16 +120,8 @@
     {
       "name": "cape",
       "parent": "torso",
-      "pivotMetresYUp": [
-        0.0,
-        1.6,
-        -0.275
-      ],
-      "localPivotMetresYUp": [
-        0.0,
-        0.47500000000000003,
-        -0.275
-      ],
+      "pivotMetresYUp": [0.0, 1.6, -0.275],
+      "localPivotMetresYUp": [0.0, 0.47500000000000003, -0.275],
       "cells": 3824,
       "connected": true,
       "exposedCellFaces": 5572,

@@ -1,10 +1,12 @@
 # Progressive 3D pixel art — appearance families and composition
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The authored block mercenary is implemented; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
 
 **General composition remains proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
+
+The separately authorized [authored block mercenary](mercenary-voxel-iteration.md) now supplies one fixed outfit and a bounded rigid walking pose, with source details in [MER08](../maintainers/art/mercenary.md#completed-milestones). [World presentation](../world-presentation.md#animated-character-pixels) owns its current behavior. It does not deliver interchangeable body/outfit/equipment families; the [focused evidence](../verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) records scoped browser checks and the remaining hidden-character/load cases, and creator style approval remains open.
 
 ## Maintained records
 

@@ -1,12 +1,14 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The authored block mercenary is implemented; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
 
 **Original proposal — September 27, 2026.** The general pipeline remains proposed; the separately authorized bundled-model pilot is delivered. Requested by Mike on September 27, 2026. Source baseline: `Macrofold/OpenLegend` `main` at `412b5b480b4911d9977de73168c6072e2c023b83`. The original proposal task changed documentation only: zero runtime logic lines, no dependency changes, no paid generation, and no claimed graphics or provider qualification.
 
-**Delivery review — October 14, 2026.** The [bundled mercenary pilot](completed/mercenary-scene-pilot.md) now supplies one authored animated model, fixed-resolution character rendering, actual-depth compositing and owned replacement resources in the default scene. Its [recorded evidence](../verification/mercenary-default.md) does not qualify general imported/generated assets, equipment composition, crowds or lower-end hardware. [V3D](../maintainers/3d-pixel-art.md) retains those open tasks; [world presentation](../world-presentation.md) owns current behavior. Earlier statements that no model delivery exists are superseded by this narrow pilot, not by acceptance of the entire proposal.
+**Earlier bundled-model delivery — historical review recorded October 14, 2026.** The [original mercenary pilot](completed/mercenary-scene-pilot.md) supplied one animated model, fixed-resolution character rendering, actual-depth compositing and owned replacement resources in the default scene. Its [recorded evidence](../verification/mercenary-default.md) does not qualify general imported/generated assets, equipment composition, crowds or lower-end hardware. This narrow delivery superseded earlier statements that no model existed, without accepting the entire proposal.
+
+**Authored block iteration — October 14, 2026.** Mike's feedback authorized a separate mercenary built from permanent colored cells, with an explicit face and solid clothing. Its source and renderer are implemented; the original sampled model remains preserved for comparison. [World presentation](../world-presentation.md#animated-character-pixels) owns current behavior, the [iteration plan](mercenary-voxel-iteration.md) owns this scoped delivery, and [focused evidence](../verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) records scoped source/browser checks, including the final hidden-character fading and interrupted/failed-load checks. Mike's final aesthetic acceptance and the broader [V3D](../maintainers/3d-pixel-art.md) pipeline gates remain open.
 
 ## Maintained records
 

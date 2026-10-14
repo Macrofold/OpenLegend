@@ -4,13 +4,8 @@ class SurfacePass extends pc.RenderPass {
   constructor(
     device: pc.GraphicsDevice,
     private readonly draw: () => void,
-    private readonly prepare: () => void,
   ) {
     super(device);
-  }
-  override frameUpdate(): void {
-    super.frameUpdate();
-    this.prepare();
   }
   override execute(): void {
     this.draw();
@@ -26,7 +21,6 @@ export class ModelSurfaceDepth {
   private readonly pass: SurfacePass;
   private readonly material: pc.ShaderMaterial;
   private readonly copies: pc.MeshInstance[];
-  private readonly layer = new pc.Layer({ name: 'Mercenary nearest surface' });
   private readonly size = new Float32Array(2);
   private readonly bound = new WeakSet<pc.MeshInstance>();
   constructor(
@@ -70,22 +64,20 @@ export class ModelSurfaceDepth {
       copy.castShadow = copy.receiveShadow = false;
       return copy;
     });
-    this.layer.addMeshInstances(this.copies, true);
-    this.pass = new SurfacePass(
-      device,
-      () => {
-        this.size[0] = this.depth.width;
-        this.size[1] = this.depth.height;
-        app.renderer.renderForwardLayer(
-          camera.camera!.camera,
-          this.target,
-          this.layer,
-          false,
-          pc.SHADER_FORWARD,
-        );
-      },
-      () => app.renderer.culler.requestMeshInstanceCull(camera.camera!.camera, this.layer),
-    );
+    this.pass = new SurfacePass(device, () => {
+      this.size[0] = this.depth.width;
+      this.size[1] = this.depth.height;
+      app.renderer.renderForwardLayer(
+        camera.camera!.camera,
+        this.target,
+        // @ts-expect-error The pinned engine accepts null for an explicit
+        // meshInstances list; its Layer-only declaration omits that branch.
+        null,
+        false,
+        pc.SHADER_FORWARD,
+        { meshInstances: this.copies },
+      );
+    });
     this.pass.init(this.target);
     this.pass.setClearDepth(1);
     this.pass.enabled = false;
@@ -135,7 +127,6 @@ export class ModelSurfaceDepth {
     const index = passes.indexOf(this.pass);
     if (index >= 0) passes.splice(index, 1);
     this.pass.destroy();
-    this.layer.removeMeshInstances(this.copies, true);
     for (const copy of this.copies) copy.destroy();
     this.material.destroy();
     this.target.destroy();

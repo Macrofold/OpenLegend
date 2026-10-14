@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 14, 2026 — Mercenary built from authored blocks
+
+Mike's feedback replaces the default mercenary's sampled-image treatment with a separately authored fixed-block GLB: explicit facial features, permanent garment colors, solid clothing and a thick cape. The previous model, cloth renderer and editable study remain preserved for comparison. A fixed display enlargement compensates for normal camera pitch relative to the existing sprites; it never changes on zoom. Rigid walking and garment clearance replace freely simulated cloth for this iteration, trading fabric motion for stable geometry and coverage.
+
+Nearest-surface depth protects selected/revealed clothing while the ordinary scene draws real geometry directly. [Current presentation](world-presentation.md#animated-character-pixels), [MER08 sources](maintainers/art/mercenary.md), [A3D16 limits](limits/3d-pixel-art.md#a3d16--authored-block-mercenary) and [scoped evidence](verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) distinguish delivered art and verification from pending creator style acceptance and broader pipeline/crowd work. No provider dispatch or native mechanics change.
+
 ## October 14, 2026 — Complete foundation hardening and browser acceptance
 
 All [immediate foundation tasks](maintainers/foundation-review-todos.md) are complete, with the [plan](projects/completed/foundation-hardening-plan.md) moved to completed projects. Actual browser review found that remembered multipart objects could remain opaque; the renderer now applies remembered visibility to every appearance part while preserving each material's alpha, with no per-frame scene traversal. Initial 3D construction waits until a tab is selected so optional graphics do not delay control acquisition; existing paused scenes retain the player's camera. This changes a newly opened competing tab's background timing, not its permissions or world behavior. [Current presentation](world-presentation.md) owns those behaviors.

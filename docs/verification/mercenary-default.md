@@ -59,3 +59,42 @@ The fixture servers/browser and owned database cluster were stopped afterward; n
 Moved the editable study to `/Users/mzw/Documents/ChatGPT/OpenLegend-art/mercenary/study/`, private job records to its sibling directory, and the dated package to `mercenary/snapshots/2026-10-01-r1/`. SHA-256 inventories matched before/after for all 60 study files, four private-record files and four package files. Original visualization paths remain symlinks to the new locations. Source/art bytes and the dated ZIP were unchanged; new workspace READMEs provide navigation.
 
 A temporary loopback server served only the relocated `study/` directory. Installed Chrome loaded the model, reached `window.mercenary.ready`, and selected the Walk animation without uncaught page errors or failed requests. The browser/server were stopped after the check. This validates the relocated isolated viewer, not new game performance or final art acceptance. Repository/local link checks, focused formatting and diff review passed. [Art progress](../maintainers/art/mercenary.md) owns the new source links and remaining art review. No provider calls; additional and cumulative task Jev cost $0.
+
+## Authored voxel iteration — October 14, 2026
+
+Mike rejected camera-dependent sampled pixels, lost facial detail, small apparent height and thin clothing/body intersections. The new iteration constructs permanent colored cubic cells rather than voxelizing or rasterizing the previous mesh. The original GLB, renderer, cloth, external Blender study and dated package remain intact. [MER08](../maintainers/art/mercenary.md) owns sources/creator acceptance; [A3D16](../limits/3d-pixel-art.md#a3d16--authored-block-mercenary) owns the delivered art envelope, and [world presentation](../world-presentation.md#animated-character-pixels) describes current behavior.
+
+### Source and geometry checks
+
+The reproducible authoring script and editable Blender source produce a standalone GLB with 21,613 intentionally placed source cells, explicit eyes/brows/nose/beard/hair, quilted clothes, mail, wraps, leather and gold peacock embroidery. Only exposed faces are exported; same-color coplanar face merging changes no solid shape or paint. An independent parse verified finite positions, 11,780 exported vertices, 5,890 triangles, 11 mesh primitives, one material, 467,296 bytes, and no textures, skins, clips, cameras, lights or external dependencies. Source/GLB/Blender digests match the provenance record; GLB SHA-256 is `533922d6d0b3c8f372c1f583aefac7e60f241f21c2b69a72664bd22a5ce93d41`.
+
+Every body part passed solid-cell connectivity. The cape is two source cells thick. A 360-phase geometric check over the delivered rigid walking angles and visual leg lift found no conservative cape/body overlap candidates and no boot corner below support beyond floating-point zero (minimum about −4.1e−16 m). Maximum source-unit lift was 0.0280504 m. Front/back/profile/face Blender renders were inspected. These are authored-volume checks for the finite gait, not arbitrary cloth, equipment, sloped-foot or physical gameplay collision qualification.
+
+The source model is 2.10 m with 0.025 m cells. The fixed uniform game scale is 1.4: 2.94 m presentation height, 1.26 m width and 0.035 m blocks. Normal elevated-view comparison beside the existing people informed that scale; lower-pitch views can make him appear larger. Sprite artwork faces the camera, whereas his 3D body remains upright. No native body dimension changed, and no camera-dependent scale adjustment was added.
+
+### Actual renderer and interaction
+
+Checked the real `WildernessScene` against a fresh disposable PostgreSQL starting-world projection, native-only configuration and zero AI allowance. A temporary loopback viewer imported the actual client source and used permitted public views for controlled movement, lighting, condition and appearance cases. Chrome **155.0.8059.40**, Apple M1 Pro, **ANGLE Metal**, 1440×960 framebuffer; a resize case used 1280×720. Source transforms were explicitly refreshed after an early preview cache retained older code; those stale intermediate results are not final evidence.
+
+- Ordinary play, close front/profile/back, orthographic/perspective and distant perspective zoom retained the same mesh identities, 11,780 vertices, 5,890 triangles and fixed 0.035 m cells. Paused orbit did not change authored blocks/colors. Screenshots were visually inspected; ordinary raster edges and lighting still vary with the camera.
+- Daylight and firelight rendered the explicit face, mail, solid clothes and cape. Walking moved rigid parts; pause kept the same walking phase across 30 further frames. A dead body used its sprite representation. Final creator style approval remains open.
+- Selection retained the nearest clothing surface. A controlled opaque scenery block hid the lower body with read-through off; enabling read-through showed the correct nearest garments/limbs. The depth-only pass stayed active while actual reveal strength faded (0.314 in the recorded intermediate sample), then stopped at zero. The target resized from 1440×960 to 1280×720. This fixture proves renderer layering, not a new physical obstruction or sight grant.
+- Blocking the GLB with 404 responses ended in explicit failure with the sprite retained. The engine made six free asset-fetch attempts; no provider retry or spending was involved. Delaying the asset until after replacement by the sprite left the old actor disposed, with no node and no before-pass reattached.
+- Four model/sprite replacement cycles retained 13 scene asset entries, one model before-pass and identical engine-accounted texture/vertex/index bytes (63,534,428 / 2,623,440 / 234,012). Full scene destruction cleared vertex/index/uniform counters to zero and left 150,232 accounted texture bytes; remount loaded normally. These are stable endpoint counters, not driver memory or long-session leak proof.
+
+Review found and fixed rear-surface overpainting in selection/read-through, mismatch between rendered/pickable reveal strength/width, soles entering the floor and stale depth during reveal fade. Browser evidence also caught an engine draw-list branch mismatch missed by initial source inspection; direct borrowed-mesh drawing now exercises the actual supported pinned API.
+
+### Cost, static checks and limits
+
+One fresh-page source-viewer load reached ready art in **2,222 ms**, with warm OS/provider-free local assets. One matched paused scene, daylight, reveal off, 30 warm frames then 60 animation-frame samples per representation:
+
+| Representation           | Median frame interval | p95 frame interval | Total draws |
+| ------------------------ | --------------------: | -----------------: | ----------: |
+| Authored block mercenary |               16.7 ms |            17.6 ms |         365 |
+| Its sprite fallback      |               16.7 ms |            17.6 ms |         322 |
+
+These displayed intervals are limited by synchronization and do not measure GPU headroom or qualify crowds/low-end hardware. The extra 43 draws include ordinary geometry and world shadows. No matched performance comparison against the old sampled model was run; older GPU/cloth measurements above retain their own environments and cannot establish a speedup for this workload.
+
+TypeScript, production build and changed-file formatting passed. The existing focused camera gesture test passed on installed Chrome/Metal (17.3 s test, 24.8 s run) with a temporary 20 s startup expectation. Its initial default SwiftShader/5 s startup attempt timed out before the already-rendering interface became available; the trace showed the time controls later appearing. This is a fixture/backend qualification difference, not a promised startup deadline or a test-source change. No new automated tests, broad suite, dependency changes, user-save reset or paid calls were made.
+
+The fixture hosts and isolated browser were stopped; known owned databases were dropped. One failed setup allocated a database without logging its identity; it was left intact because ownership could not be proven among pre-existing fixture databases. Generated screenshots/logs/harnesses remain outside Git. Additional and cumulative task Jev cost **$0**. MER05/MER07 retain creator style approval; V3D05/V3D11 retain broader poses, equipment, exact silhouette picking, moving populations and device qualification.
