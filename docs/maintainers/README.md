@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Full documentation reconciliation
+
+[Exhaustive reconciliation TODO](full-documentation-reconciliation.md) tracks the remaining file-by-file review, upstream integration, historical moves, requirement ownership and final checks under CG17. [The review project](../projects/full-documentation-review.md) retains scope and prior evidence; feature implementation and acceptance stay in their existing trackers.
+
 ## Product design groups 11–15
 
 [The completed five-group design review](../projects/completed/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal; [practical-competence tasks](practical-competence.md) track the selected sling practice/coaching consumer. [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) tracks the optional story consumer. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.
