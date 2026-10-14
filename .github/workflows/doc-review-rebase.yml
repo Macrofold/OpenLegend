@@ -28,7 +28,7 @@ jobs:
       - name: Replay original commits and stop at unreviewed conflicts
         run: |
           python3 - <<'PY'
-          import hashlib, json, os, pathlib, subprocess, zipfile
+          import hashlib, json, os, pathlib, re, subprocess, zipfile
           root = pathlib.Path.cwd()
           controls = root / '.github/doc-review-rebase-resolutions.json'
           config = json.loads(controls.read_text()) if controls.exists() else {}
@@ -87,7 +87,15 @@ jobs:
                   assert name.endswith(('.md', '.mdc', '.txt')), ('unexpected conflict type', name)
                   assert row['working_sha256'] == resolution['before_sha256'], ('changed conflict', name)
                   text = before.decode('utf-8')
-                  for old_text, new_text in resolution['replacements']:
+                  for choice in resolution.get('blocks', []):
+                      matches = [m for m in re.finditer(r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]*\n', text, re.M | re.S) if hashlib.sha256(m.group(0).encode()).hexdigest() == choice['sha256']]
+                      assert len(matches) == 1, ('unknown or ambiguous conflict block', name)
+                      parts = choice['parts']
+                      assert parts and len(parts) == len(set(parts)) and all(part in (1, 2) for part in parts), ('invalid selected conflict parts', name)
+                      match = matches[0]
+                      selected = choice.get('separator', '').join(match.group(part) for part in parts)
+                      text = text[:match.start()] + selected + text[match.end():]
+                  for old_text, new_text in resolution.get('replacements', []):
                       assert text.count(old_text) == 1, ('ambiguous replacement', name)
                       text = text.replace(old_text, new_text, 1)
                   assert not any(line.startswith(('<<<<<<< ', '=======', '>>>>>>> ')) for line in text.splitlines()), ('unresolved markers', name)
