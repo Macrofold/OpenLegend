@@ -2,173 +2,51 @@ name: UI completion verification
 on:
   push:
     branches: [docs/game-ui-research-redesign]
-    paths: [.github/workflows/ui-completion.yml]
+    paths: [.github/workflows/ui-completion.yml, .github/scripts/ui-finish.py, .github/scripts/ui-verify.py]
 permissions:
   contents: write
 jobs:
-  reconcile:
+  verify:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: openlegend
+          POSTGRES_PASSWORD: fixture
+          POSTGRES_DB: postgres
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U openlegend -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       AI_BUDGET_USD: '0'
+      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
           persist-credentials: false
           show-progress: false
-      - name: Preserve both reviewed sets of behavior
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json, os, re, subprocess
-          from pathlib import Path
-          main='b72e9d9aab8072eb1b5ae9d25f620a4421509148'
-          def git(*args): return subprocess.check_output(['git',*args],text=True)
-          result=subprocess.run(['git','merge-tree','--write-tree','HEAD',main],capture_output=True,text=True)
-          assert result.returncode==1, result.stdout
-          tree=result.stdout.splitlines()[0]
-          git('read-tree','--reset','-u',tree)
-          def once(text,old,new):
-              assert text.count(old)==1,(old,text.count(old))
-              return text.replace(old,new,1)
-          marker=re.compile(r'^<<<<<<< [^\n]+\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]+\n?',re.M|re.S)
-          both=lambda a,b:a+b
-          left=lambda a,b:a
-          right=lambda a,b:b
-          inspection_callback=None
-          inspection_modal=None
-          def agent_body(a,b):
-              global inspection_callback
-              inspection_callback=re.search(r'          \{inspecting && \(\n(.*?)          \)\}',b,re.S).group(1)
-              return a
-          def agent_end(a,b):
-              global inspection_modal
-              start=b.index('          {inspectionReview && (')
-              end=b.index('        </>',start)
-              inspection_modal=b[start:end].replace('{inspectionReview && (','{godMode && inspectionReview && (',1)
-              return a
-          def inspected(a,b):
-              b=once(b,'function inspect(ref: { kind: string; id: string; version?: string; label?: string })','function inspect(ref: { kind: string; id: string; version?: string; label?: string }, newPath = false)')
-              trail=a[a.index('      const resolved'):a.index('      setDirection')]
-              return once(b,'        setInspection(value);','        setInspection(value);\n'+trail)
-          def search_results(a,b):
-              message=b[:b.index('      <ul')]
-              return message+a.replace('searched && !nodes.length','searched && !resultsStale && !nodes.length')
-          def source_controls(a,b):
-              controls=b[b.index("          {root.kind === 'status-effect'"):b.rindex('          <div')]
-              return once(a,'          <div\n            className="ol-agent-tools ol-creator-views"',controls+'          <div\n            className="ol-agent-tools ol-creator-views"')
-          rules={
-            'apps/client/src/ui/world-agent-review.tsx':[
-              right,
-              lambda a,b:b+a[a.index('            {review && ('):],
-              both,
-            ],
-            'apps/client/src/ui/world-agent-session.tsx':[both,both],
-            'apps/client/src/ui/world-agent-work.css':[right,right],
-            'apps/client/src/ui/world-agent.tsx':[
-              lambda a,b:once(a,'useEffect,','useCallback, useEffect,'),agent_body,both,agent_end,
-            ],
-            'apps/client/src/ui/world-inspection.tsx':[
-              both,lambda a,b:a+b[b.index('  const [selection'):],both,inspected,both,both,search_results,
-              lambda a,b:once(b,'inspect({ ...node.ref, label: node.label });','inspect({ ...node.ref, label: node.label }, true);'),source_controls,
-            ],
-            'apps/server/src/world-service.ts':[
-              lambda a,b:once(b,'          fingerprint,\n          epoch: 0,','          fingerprint,\n          recoveryFingerprint: null,\n          epoch: 0,'),
-            ],
-            'docs/architecture.md':[lambda a,b:b.rstrip()+' The available review/adapters and their remaining limits are described under [reviewed authoring](#reviewed-mcp-authoring-and-native-harness).\n'],
-            'docs/maintainers/ui-ux.md':[lambda a,b:b[:b.index('- [ ] Reconcile')]+a],
-            'packages/domain/src/worlds/base/landscape.ts':[both],
-            'packages/domain/src/worlds/base/world.ts':[both],
-          }
-          for path,choices in rules.items():
-              file=Path(path);text=file.read_text();matches=list(marker.finditer(text))
-              assert len(matches)==len(choices),(path,len(matches),len(choices))
-              replacements=[choice(match[1],match[2]) for match,choice in zip(matches,choices)]
-              for match,replacement in reversed(list(zip(matches,replacements))):text=text[:match.start()]+replacement+text[match.end():]
-              file.write_text(text)
-          path=Path('apps/client/src/ui/world-agent.tsx');text=path.read_text()
-          assert inspection_callback and inspection_modal
-          text=once(text,'          <WorldInspection actorId={actorId} />',inspection_callback.rstrip())
-          text=once(text,'      <div hidden={workspace !== \'workshop\'}',inspection_modal+'      <div hidden={workspace !== \'workshop\'}')
-          path.write_text(text)
-          # The current review intentionally uses a single dialog scroller for
-          # very short/enlarged screens. Retain its reading-position owner.
-          path=Path('apps/client/src/ui/world-agent-work.css');text=path.read_text()
-          text=once(text,'.ol-modal.ol-agent-work-review-modal {\n  --review-max-height: calc(100dvh - var(--space-6));\n  max-height: var(--review-max-height);\n}\n','')
-          path.write_text(text)
-          for path in git('ls-files').splitlines():
-              if path.endswith(('.ts','.tsx','.css','.md')):
-                  assert not re.search(r'^<<<<<<< |^>>>>>>> ',Path(path).read_text(),re.M),path
-          report=Path(os.environ['RUNNER_TEMP'])/'ui-reconciled';report.mkdir()
-          (report/'metadata.json').write_text(json.dumps({'source':os.environ['GITHUB_SHA'],'main':main,'merge_tree':tree,'resolved':list(rules)},indent=2))
-          print('Resolved original overlap; detached checkout '+os.getcwd()+'. No branch references changed.',flush=True)
-          PY
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
-      - name: Inspect and check the affected resolution
-        shell: bash
+      - name: Install pinned dependencies and Chromium
         run: |
-          pnpm install --frozen-lockfile > "$RUNNER_TEMP/ui-reconciled/install.log" 2>&1
-          python3 - <<'PY'
-          import json,os,subprocess
-          from pathlib import Path
-          report=Path(os.environ['RUNNER_TEMP'])/'ui-reconciled';data=json.loads((report/'metadata.json').read_text())
-          subprocess.run(['pnpm','exec','prettier','--write',*data['resolved']],check=True)
-          subprocess.run(['git','add','-u'],check=True)
-          tree=subprocess.check_output(['git','write-tree'],text=True).strip()
-          patch=subprocess.check_output(['git','diff',data['merge_tree'],tree,'--',*data['resolved']],text=True)
-          (report/'resolution.patch').write_text(patch)
-          print('RESOLUTION_DIFF_BEGIN\n'+patch+'RESOLUTION_DIFF_END',flush=True)
-          subprocess.run(['git','diff','--check','HEAD',tree],check=True)
-          checks={}
-          for label,command in [('types',['pnpm','typecheck']),('guidance',['pnpm','guidance:check'])]:
-              with (report/(label+'.log')).open('w') as out: checks[label]=subprocess.run(command,stdout=out,stderr=subprocess.STDOUT).returncode
-              print(label+': '+str(checks[label])+'\n'+(report/(label+'.log')).read_text(),flush=True)
-          data.update(tree=tree,checks=checks);(report/'metadata.json').write_text(json.dumps(data,indent=2))
-          assert not any(checks.values()),checks
-          PY
-      - name: Export the exact resolved tree without updating a branch
+          pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
+          pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
+      - name: Exercise the real App server and PostgreSQL recovery paths
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json,os,subprocess,urllib.request
-          from pathlib import Path
-          report=Path(os.environ['RUNNER_TEMP'])/'ui-reconciled';data=json.loads((report/'metadata.json').read_text())
-          def git(*args):return subprocess.check_output(['git',*args])
-          def entries(ref):
-              result={}
-              for item in git('ls-tree','-rz',ref).split(b'\0'):
-                  if not item:continue
-                  header,path=item.split(b'\t',1);mode,kind,sha=header.decode().split();assert kind=='blob'
-                  result[path.decode()]=(mode,sha)
-              return result
-          old=entries('HEAD');new=entries(data['tree']);known={sha for _,sha in [*old.values(),*entries(data['main']).values()]}
-          changes=[]
-          for path,(mode,sha) in new.items():
-              if old.get(path)==(mode,sha):continue
-              entry={'path':path,'mode':mode,'type':'blob'}
-              if sha in known:entry['sha']=sha
-              else:entry['content']=git('cat-file','blob',sha).decode()
-              changes.append(entry)
-          changes += [{'path':path,'mode':mode,'type':'blob','sha':None} for path,(mode,_) in old.items() if path not in new]
-          current=git('rev-parse','HEAD^{tree}').decode().strip()
-          for n in range(0,len(changes),8):
-              request=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees',method='POST',data=json.dumps({'base_tree':current,'tree':changes[n:n+8]}).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
-              with urllib.request.urlopen(request,timeout=60) as response:current=json.load(response)['sha']
-          assert current==data['tree'],(current,data['tree'])
-          print('VERIFIED_MERGE='+json.dumps(data),flush=True)
-          PY
-      - uses: actions/upload-artifact@v4
+        run: python3 .github/scripts/ui-verify.py
+      - name: Preserve exact results and images
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: ui-reconciled
-          path: ${{ runner.temp }}/ui-reconciled/
+          name: ui-finish
+          path: ${{ runner.temp }}/ui-finish/
           retention-days: 3
+          if-no-files-found: error

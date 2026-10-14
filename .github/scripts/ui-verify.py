@@ -38,20 +38,24 @@ def api(path, payload):
 native = Path('tests/ui-finish-worlds.test.ts')
 browser = Path('tests/browser/ui-finish-recovery.spec.ts')
 try:
+    shutil.copyfile('.github/scripts/ui-native-worlds.ts', native)
+    shutil.copyfile('.github/scripts/ui-recovery-browser.ts', browser)
     if not run('prepare', ['python3', '.github/scripts/ui-finish.py']):
         raise RuntimeError('Preparation failed; candidate not ready for checks.')
     changed = git('diff', '--name-only').decode().splitlines()
-    run('format', ['pnpm', 'exec', 'prettier', '--write', *changed])
-    shutil.copyfile('.github/scripts/ui-native-worlds.ts', native)
-    shutil.copyfile('.github/scripts/ui-recovery-browser.ts', browser)
+    run('format', ['pnpm', 'exec', 'prettier', '--write', *changed, str(native), str(browser)])
     if run('types', ['pnpm', 'typecheck']):
         run('worlds', ['pnpm', 'exec', 'vitest', 'run', str(native), '--reporter=verbose'])
         if run('build', ['pnpm', 'build']):
             run('browser', ['pnpm', 'exec', 'playwright', 'test', str(browser), '--reporter=line'])
 finally:
+    if browser.exists():
+        shutil.copyfile(browser, report / 'recovery-probe.ts')
     native.unlink(missing_ok=True)
     browser.unlink(missing_ok=True)
-    (report / 'changes.patch').write_bytes(git('diff', 'HEAD', '--', 'apps', 'packages', 'docs'))
+    patch = git('diff', 'HEAD', '--', 'apps', 'packages', 'docs')
+    (report / 'changes.patch').write_bytes(patch)
+    print('AFFECTED_DIFF_BEGIN\n' + patch.decode() + 'AFFECTED_DIFF_END', flush=True)
     metadata = {'parent': os.environ['GITHUB_SHA'], 'checks': checks}
     if checks.get('types') == 0 and checks.get('format') == 0:
         paths = git('diff', '--name-only').decode().splitlines()
