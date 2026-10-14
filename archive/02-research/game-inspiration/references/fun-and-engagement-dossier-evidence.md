@@ -1,8 +1,10 @@
 # Fun and engagement — dossier evidence map
 
-**Research synthesis checkpoint, October 14, 2026.** This map records a topic-focused reread of the existing dossiers: relevant mechanics, interpretations, worked examples, reception and limits. It is not a claim to replay the games, reread every external source, repeat every original R01–R14 pass, or finish the older packet-wide preservation audit.
+**Topic-focused review completed, October 14, 2026.** This map records a topic-focused reread of the existing dossiers: relevant mechanics, interpretations, worked examples, reception and limits. It is not a claim to replay the games, reread every external source, repeat every original R01–R14 pass, or finish the older packet-wide preservation audit.
 
-**Coverage at this checkpoint: G01–G80 and the additional Dragon Age series supplement reviewed; 80 of 148 roster subjects. G81–G148 remain to be reviewed.** Rows are added only after inspecting the dossier's relevant content. The [roster](../research-roster.md) owns subject identity and edition boundaries; this file owns the evidence map for the fun/engagement synthesis, not a new implementation backlog.
+**Complete coverage: all 148 roster subjects plus the additional Dragon Age series supplement.** This volume contains G01–G80 and the supplement; [volume two contains G81–G148](fun-and-engagement-dossier-evidence-g81-g148.md). Rows were added only after inspecting the dossier's relevant content. The [roster](../research-roster.md) owns subject identity and edition boundaries; these two volumes own the evidence map for the fun/engagement synthesis, not a new implementation backlog. Earlier partial checkpoints remain in Git history, not as current pending work.
+
+**Read the conclusions:** [canonical fun and sustainable engagement synthesis](../essays/fun-and-sustainable-engagement.md). **Read the terminology and selected primary research:** [fun, engagement and compulsion foundations](fun-engagement-and-compulsion-research.md).
 
 **Corpus boundary:** the branch began at GitHub main commit `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`. Original dossier facts retain their own dates and source limits. The new [Roblox transcript study](roblox-addictiveness-video.md) is an additional supplied source, not 22 newly completed full dossiers. The [earlier fun essay](../essays/what-actually-makes-these-worlds-fun.md) remains a preserved cross-case interpretation.
 
