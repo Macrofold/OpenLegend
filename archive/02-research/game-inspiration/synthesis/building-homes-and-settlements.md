@@ -1,6 +1,6 @@
 # Building, homes and settlements
 
-**Status: Not started — shell only. Topic: BUILD.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: BUILD.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns inhabited construction and place attachment. Construction processes belong 
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+A builder should be able to make a place that supports a chosen life, recognize their contribution and understand the consequences of changing it. Modular snapping, freeform placement and authored expandable rooms offer different expression/precision tradeoffs. Destructible competitive property is one option; secure homes and freely reversible construction are legitimate alternatives, not lesser versions of the same goal.
 
 ## Cross-game evidence and counterexamples
 
+Initial evidence is one scoped case, not a completed cross-game conclusion. [Rust's building account](../dossiers/rust.md#rust-building) separates placement, permission, locks, support, resistance and upkeep. Its [visual atlas](../dossiers/rust-visual-atlas.md#a-building-privilege-upkeep-and-spatial-reasoning) shows spatial layouts and upkeep feedback, while the preserved contrasting reviews describe both attachment and punishing loss. Those observations do not establish that constant vulnerability improves every home-building experience.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="build-l001"></a>
+
+### Assist manipulation without deciding the building's purpose
+
+Reduce repeated alignment and accidental placement while preserving decisions about circulation, use, privacy, appearance, expansion and, where appropriate, defense. A small consistent construction grammar can support varied outcomes. Assistance becomes restrictive when the snapping system prevents a wanted valid arrangement or hides which constraint is failing. Compare manual override and simpler room templates rather than assuming maximum geometric freedom is always best.
+
+<a id="build-l002"></a>
+
+### A finished silhouette is not a complete home
+
+Assess entrance, storage, recovery, work space, maintenance and other inhabitants' access as one daily-use situation. Distinguish ownership from use permission, structural support, decay and damage protection; one reassuring status label should not imply all six. Upkeep can make scale consequential, but its horizon should be legible and compatible with ordinary absence. A permanently comfortable home can remain a successful outcome.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-build) to locate rele
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** a household wants room for shared meals and a workshop. Before adding a wing, the builder evaluates access, available resources and any ongoing obligations. Other occupants need a usable route and appropriate permissions. After construction, carry supplies through the entrance, perform the intended activity and leave/return. A competitive variant may trade convenient circulation for defensive compartments; a peaceful variant may prioritize hospitality. Neither is validated by an attractive exterior alone. Link CRAFT, GEAR, MULTI and LOSS rather than reproducing their full rules here.
 
 ## Possible OpenLegend applications and limits
 
+Evaluate understandable placement/correction and the first genuinely useful shelter within the selected world. Do not import universal raiding, forced decay or a solved defensive layout as requirements. NPC access and purpose would need their own actual behavior, not assumptions drawn from human multiplayer.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Compare novice and experienced builders on an ordinary expansion and one blocked placement. Can they predict why it fails, correct it and use the result? The Rust atlas lacks a complete current preview-to-correction capture; it cannot certify smooth interaction or accessibility.
 
 ## OpenLegend-specific research subtopics
 

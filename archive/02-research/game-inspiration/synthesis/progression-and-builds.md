@@ -1,6 +1,6 @@
 # Progression, skills and build diversity
 
-**Status: Not started — shell only. Topic: GROWTH.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: GROWTH.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns advancement and build choices. Immediate power delivery belongs to MAGIC/GE
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+Growth should change what can be attempted or understood, not merely display accumulation. Character levels, learned methods, practical infrastructure, relationships and player mastery are different forms of advancement. A finite plateau, change of vocation or satisfying completion can be preferable to endless vertical escalation.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's progression account](../dossiers/rust.md#rust-progression) describes capability without a conventional XP/class ladder. Its separate [server/reset model](../dossiers/rust.md#rust-servers) shows why a new map does not reset human knowledge, organization or necessarily blueprints. The fragment experiment's developer intent and criticism of group advantage are retained as contrary evidence, not a proven improvement. Broader candidate-game comparisons remain open.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="growth-l001"></a>
+
+### Model capability as several dimensions, not one level
+
+Distinguish knowledge, tools, station access, supplies, social access and execution skill. Two participants with the same nominal tier may have very different options. A found or traded object can open a capability without immediately granting the ability to reproduce it. Multiple routes can support agency, but an unreadable set of prerequisites can become less accessible than a simple level requirement.
+
+<a id="growth-l002"></a>
+
+### Resetting wealth does not reset advantage
+
+When evaluating catch-up or a fresh start, state exactly which dimensions persist. A shared start time can still favor practiced groups, retained knowledge and concentrated access to progression gates. Geography can make learning purposeful, but a monopolizable gate may shut newcomers out. Compare alternatives such as trade, teaching, different routes or a deliberately noncompetitive progression promise rather than assuming periodic erasure solves fairness.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-growth) to locate rel
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** a newcomer joins people with an established workshop. Access to a useful tool can make them immediately helpful, while instruction, materials and practice determine later independence. An experienced character displaced from that workshop retains some knowledge but loses other capabilities. The worthwhile next step differs for each. Examine whether both can contribute without repeating identical chores; NPC teaching requires actual motivation and behavior, not an assumed unlock service.
 
 ## Possible OpenLegend applications and limits
 
+Use capability distinctions to inspect a selected-world activity and its alternative routes. Do not replace accepted character rules with a gear-only model or add mandatory seasonal resets. Different authored worlds can make different promises about expertise and identity.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Which advantage actually blocks the next meaningful action? Compare newcomers, returning players and organized groups, not just average tier. Rust evidence here does not supply controlled catch-up times or prove a particular progression-gate design improves retention.
 
 ## OpenLegend-specific research subtopics
 

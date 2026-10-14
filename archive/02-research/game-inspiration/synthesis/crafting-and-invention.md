@@ -1,6 +1,6 @@
 # Crafting, invention and repair
 
-**Status: Not started — shell only. Topic: CRAFT.** No game has been assessed or incorporated into this guide.
+**Status: Partial synthesis. Topic: CRAFT.** Rust's scoped evidence is incorporated; broader game/world comparison remains open.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,11 +22,25 @@ Owns the making process. Output properties belong to GEAR, mass production to LO
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+Making can reward discovery, practiced execution, planning, expression or helping another person. Fixed recipes provide predictability; substitution and invention provide different kinds of agency and uncertainty. Neither needs maximum ingredient complexity. A short reliable process can be preferable when crafting supports rather than constitutes the wanted activity.
 
 ## Cross-game evidence and counterexamples
 
+[Rust's scoped crafting evidence](../dossiers/rust.md#rust-crafting) distinguishes recipe knowledge, station access, inputs, manufacturing and useful output. Found equipment offers an alternative to self-production; the preserved reviews also criticize menu labor and time-heavy progress. This supports a useful decomposition, not a claim that authored recipes are unrestricted invention or that more gates always improve making. Other candidate games remain unassessed here.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="craft-l001"></a>
+
+### Separate knowing, being equipped, supplying and making
+
+A technique, an appropriate place/tool, available inputs and an actual production process answer different questions. Show the specific missing dependency and a useful next action. Combining every refusal into “cannot craft” hides agency; introducing all four gates where one would suffice creates needless ceremony. Researching or learning a method should also state whether a physical sample is consumed and what capability is acquired.
+
+<a id="craft-l002"></a>
+
+### Judge a production chain by the activity it enables
+
+Trace acquisition through processing, manufacture and use. Retaining a component, recycling it, repairing an existing object, buying one or commissioning another maker can be meaningfully different solutions. Extra transformations are valuable only when they change a decision or express craft. Automatic mass production belongs to LOGISTICS; a fixed recipe renamed by generated text is not invention.
 
 ## Current OpenLegend baseline and existing design owners
 
@@ -34,13 +48,15 @@ Use the [source and goal map](source-and-goal-map.md#topic-craft) to locate rele
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed comparison:** someone needs a dependable tool for a new task. They can use a found example now, commit it to learning where that rule exists, repair an older tool, or ask a skilled resident to make one. Each route has different prerequisites and opportunity costs. After making, perform the intended task and confirm the output was worthwhile. A purely decorative or ceremonial object can also be the intended result; it need not justify itself through combat efficiency. CRAFT owns the making, GEAR its use, and NPC the other person's motives.
 
 ## Possible OpenLegend applications and limits
 
+Evaluate a complete useful-tool or cooking activity before proposing a universal crafting tree. Preserve clear ordinary production alongside genuinely supported experimentation. Rust does not establish NPC teaching, flexible material inference or arbitrary generated recipes as working features.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+Can a newcomer explain the blocker and choose another valid route? Compare making the first item with repeating it many times. Current Rust recipe/queue/error screens were not captured as a complete sequence; smoothness and interruption recovery remain unverified.
 
 ## OpenLegend-specific research subtopics
 
