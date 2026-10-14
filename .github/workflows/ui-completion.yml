@@ -31,6 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
           show-progress: false
       - uses: pnpm/action-setup@v4
@@ -38,131 +39,42 @@ jobs:
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install the pinned dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Apply the connected recovery changes
+      - name: Install pinned dependencies and restore exact verification scripts
         shell: bash
         run: |
-          mkdir "$RUNNER_TEMP/ui-recovery"
-          python3 .github/scripts/ui-completion-context.py
-          pnpm exec prettier --write apps/client/src/retained-request.ts apps/client/src/ui/action-attempts.tsx apps/client/src/ui/game-saves.tsx apps/client/src/ui/operations-console.tsx apps/client/src/api.ts apps/client/src/main.tsx apps/server/src/action-request-recovery.ts apps/server/src/ai-director.ts apps/server/src/http.ts apps/server/src/game-saves.ts apps/server/src/authority.ts apps/server/src/view.ts apps/server/src/operations-routes.ts packages/protocol/src docs/projects/game-interaction-redesign-completion.md
-          git diff --check
-      - name: Static checks and the production build
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm typecheck 2>&1 | tee "$RUNNER_TEMP/ui-recovery/types.log"
-          pnpm guidance:check 2>&1 | tee "$RUNNER_TEMP/ui-recovery/guidance.log"
-          pnpm config:check 2>&1 | tee "$RUNNER_TEMP/ui-recovery/config.log"
-          pnpm format:check 2>&1 | tee "$RUNNER_TEMP/ui-recovery/format.log"
-          pnpm build 2>&1 | tee "$RUNNER_TEMP/ui-recovery/build.log"
-      - name: Exercise original results through the real HTTP and PostgreSQL owners
-        shell: bash
-        run: |
-          cat > tests/ui-completion-recovery.test.ts <<'TS'
-          import { afterAll, expect, it } from 'vitest';
-          import { randomUUID } from 'node:crypto';
-          import { advanceWorld } from '@open-legend/domain';
-          import type { GameView, RequestRecoveryResult } from '@open-legend/protocol';
-          import { createGameServer } from '../apps/server/src/http.js';
-          import { digest } from '../apps/server/src/store.js';
-          import { readConfig, testRepository, closeTestDatabases } from './fixtures/database.js';
-          import { localHttpClient } from './fixtures/http.js';
-          afterAll(closeTestDatabases);
-          it('recovers exact admitted actions and checkpoint outcomes without another game effect', async () => {
-            const game = await createGameServer({ config: readConfig({ AI_BUDGET_USD: '0' }), store: await testRepository(), production: true, tick: false });
-            await new Promise<void>(resolve => game.server.listen(0, '127.0.0.1', resolve));
-            const address = game.server.address();
-            if (!address || typeof address === 'string') throw new Error('No listener');
-            const base = `http://127.0.0.1:${address.port}`;
-            try {
-              const client = await localHttpClient(base);
-              async function view() {
-                return await (await fetch(base + '/api/state', { headers: { Cookie: client.cookie } })).json() as GameView;
-              }
-              async function post(path: string, body: unknown) {
-                const current = await view();
-                return await fetch(base + path, { method: 'POST', headers: {
-                  'Content-Type': 'application/json', Origin: base, Cookie: client.cookie,
-                  'X-OL-Scope': current.access!.scope,
-                  'X-OL-Generation': current.historyEpoch!.split(':')[0]!,
-                }, body: JSON.stringify(body) });
-              }
-              expect((await (await post('/api/control', { paused: false, clientId: 'recovery-check' })).json()).ok).toBe(true);
-              const initial = await view();
-              const action = { requestId: randomUUID(), text: 'wait 1 minutes', mode: 'enqueue', targetId: initial.player.id };
-              const admitted = await (await post('/api/action-attempt', action)).json();
-              expect(admitted.ok).toBe(true);
-              expect(admitted.jobId).toBeTruthy();
-              await game.service.transition(world => advanceWorld(world, 61));
-              const beforeActionCheck = digest(game.service.world);
-              const recovered = await (await post('/api/action-attempt/receipt', { ...action, timeline: initial.saveTimeline })).json() as RequestRecoveryResult;
-              expect(recovered).toMatchObject({ ok: true, status: 'resolved', result: { jobId: admitted.jobId } });
-              expect(digest(game.service.world)).toBe(beforeActionCheck);
-              expect(await (await post('/api/action-attempt/receipt', { ...action, mode: 'replace', timeline: initial.saveTimeline })).json()).toMatchObject({ ok: false, code: 'idempotency-conflict' });
-              expect(await (await post('/api/action-attempt/receipt', { ...action, requestId: randomUUID(), timeline: initial.saveTimeline })).json()).toMatchObject({ ok: true, status: 'unknown' });
-              expect(digest(game.service.world)).toBe(beforeActionCheck);
-              const checkpointId = randomUUID();
-              expect((await (await post('/api/saves/create', { id: checkpointId, label: 'Original checkpoint' })).json()).ok).toBe(true);
-              const beforeCreateCheck = digest(game.service.world);
-              expect(await (await post('/api/saves/receipt', { operation: 'create', requestId: checkpointId, label: 'Original checkpoint', timeline: initial.saveTimeline })).json()).toMatchObject({ ok: true, status: 'resolved' });
-              expect(digest(game.service.world)).toBe(beforeCreateCheck);
-              const loadId = randomUUID();
-              expect((await (await post('/api/saves/load', { id: checkpointId, requestId: loadId })).json()).ok).toBe(true);
-              expect(game.service.timelineId).not.toBe(initial.saveTimeline);
-              expect((await view()).checkpoint?.recoveryScope).toBe(initial.checkpoint!.recoveryScope);
-              const beforeLoadCheck = digest(game.service.world);
-              const revision = await game.service.store.records!.head();
-              const protection = await game.service.store.db.prepare("SELECT payload, checksum FROM game_saves WHERE id='before-load'").get();
-              const loaded = await (await post('/api/saves/receipt', { operation: 'load', requestId: loadId, saveId: checkpointId, label: 'Original checkpoint', timeline: initial.saveTimeline })).json();
-              expect(loaded).toMatchObject({ ok: true, status: 'resolved', result: { code: 'loaded' } });
-              expect(digest(game.service.world)).toBe(beforeLoadCheck);
-              expect(await game.service.store.records!.head()).toEqual(revision);
-              expect(await game.service.store.db.prepare("SELECT payload, checksum FROM game_saves WHERE id='before-load'").get()).toEqual(protection);
-              const operations = await (await fetch(base + '/api/operations', { headers: { Cookie: client.cookie } })).json();
-              expect(operations.checkpoint.recoveryScope).toBe(initial.checkpoint!.recoveryScope);
-              expect(await (await post('/api/action-attempt/receipt', { ...action, timeline: initial.saveTimeline })).json()).toMatchObject({ ok: false, code: 'stale-world' });
-              console.log('PASS: original action after physical work, changed-body refusal, unknown lookup, create outcome, cross-timeline load outcome, operator entry and unchanged protection; no provider calls.');
-            } finally { await game.close(); }
-          });
-          TS
-          set -o pipefail
-          pnpm typecheck 2>&1 | tee "$RUNNER_TEMP/ui-recovery/observation-types.log"
-          pnpm exec vitest run tests/ui-completion-recovery.test.ts --reporter=verbose 2>&1 | tee "$RUNNER_TEMP/ui-recovery/native.log"
+          pnpm install --frozen-lockfile
+          python3 - <<'PY'
+          import os, subprocess, textwrap
+          from pathlib import Path
+          source = subprocess.check_output(['git', 'show', 'd4b7ac01c751864f69e4a6b2f543173c65f2b256:.github/workflows/ui-completion.yml'], text=True)
+          temp = Path(os.environ['RUNNER_TEMP'])
+          def step(name):
+              block = source.split('      - name: ' + name + '\n', 1)[1].split('\n      - ', 1)[0]
+              return textwrap.dedent(block.split('        run: |\n', 1)[1])
+          (temp / 'ui-prepare.sh').write_text(step('Apply the connected recovery changes'))
+          native = step('Exercise original results through the real HTTP and PostgreSQL owners')
+          before = "  const game = await createGameServer({ config: readConfig({ AI_BUDGET_USD: '0' }), store: await testRepository(), production: true, tick: false });"
+          assert native.count(before) == 1
+          native = native.replace(before, "  const store = await testRepository();\n  const game = await createGameServer({ config: readConfig({ AI_BUDGET_USD: '0' }), store, production: true, tick: false });")
+          assert native.count('game.service.store.db') == 2
+          native = native.replace('game.service.store.db', 'store.db')
+          (temp / 'ui-native.sh').write_text(native)
+          (temp / 'ui-export.sh').write_text(step('Export the exact checked candidate without updating any branch'))
+          PY
+          bash -e -o pipefail "$RUNNER_TEMP/ui-prepare.sh"
+      - name: Build the unchanged production candidate
+        run: pnpm build
+      - name: Verify the corrected native observation
+        run: bash -e -o pipefail "$RUNNER_TEMP/ui-native.sh"
       - name: Remove the temporary observation
         if: always()
         run: rm -f tests/ui-completion-recovery.test.ts
-      - name: Export the exact checked candidate without updating any branch
+      - name: Export immutable checked sources
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json, os, subprocess, urllib.request
-          from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-recovery'
-          def git(*args): return subprocess.check_output(['git', *args])
-          paths = git('diff', '--name-only').decode().splitlines()
-          assert paths and all(p.startswith(('apps/','packages/','docs/')) for p in paths), paths
-          assert not git('ls-files', '--others', '--exclude-standard').decode().strip()
-          git('diff', '--check')
-          changes = [{'path': p, 'mode': '100644', 'type': 'blob', 'content': Path(p).read_text()} for p in paths]
-          tree = git('rev-parse','HEAD^{tree}').decode().strip()
-          # Bound each request rather than relying on a large JSON payload.
-          for offset in range(0, len(changes), 3):
-              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees', method='POST', data=json.dumps({'base_tree': tree, 'tree': changes[offset:offset+3]}).encode(), headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
-              with urllib.request.urlopen(request, timeout=120) as response: tree = json.load(response)['sha']
-          git('add', '--', *paths)
-          expected = git('write-tree').decode().strip()
-          assert tree == expected, (tree, expected)
-          metadata = {'parent': os.environ['GITHUB_SHA'], 'tree': tree, 'paths': paths, 'native_and_static_checks_passed': True}
-          (report / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
-          print('CHECKED_CANDIDATE=' + json.dumps(metadata, indent=2), flush=True)
-          print('No commits or branch references were changed by this runner.', flush=True)
-          PY
-      - name: Preserve the exact affected diff
+        run: bash -e -o pipefail "$RUNNER_TEMP/ui-export.sh"
+      - name: Retain exact evidence and affected diff
         if: always()
-        shell: bash
         run: |
           git diff HEAD -- apps packages docs > "$RUNNER_TEMP/ui-recovery/changes.patch"
           git diff --stat HEAD -- apps packages docs
