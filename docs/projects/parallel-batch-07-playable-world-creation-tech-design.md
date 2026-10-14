@@ -2,7 +2,9 @@
 
 | Status      | Current progress                                                                                          | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-13   |
+| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-14   |
+
+**Alignment updated:** 2026-10-14T08:14:37Z.
 
 ## Baseline and independent completion
 
@@ -24,9 +26,11 @@ The [feature allocation](parallel-batch-07-playable-world-creation-feature-spec.
 | Host startup and serving                                            | `apps/server/src/http.ts`, `config.ts`, `postgres.ts` and `world-service.ts`. Add the explicit awaiting-creation startup mode and adopt a committed initial world once.                                                           |
 | Creator presentation and entry                                      | Existing World Agent workspace, design-system controls, protocol DTOs and current authentication/control entry. Add scoped creation/preview/target views; no browser-authored authority.                                          |
 
-Today `WorldService.initialize` automatically chooses `createWorld`, `createTouchDemo` or `createReservoirDemo` when storage is empty. It then prepares startup state, establishes authority and commits before the HTTP runtime is served. This cannot serve as the prepared empty target: it would fill that target before the creator confirms. The supported authoring-kind enum likewise has no initial-world assembly. Both missing paths are included in OC01/OC04.
+At the planning baseline, `WorldService.initialize` automatically chose `createWorld`, `createTouchDemo` or `createReservoirDemo` when storage was empty. It then prepared startup state, established authority and committed before the HTTP runtime was served. That path could not serve as the prepared empty target: it would fill that target before the creator confirmed. The supported authoring-kind enum likewise had no initial-world assembly. Both missing paths were included in OC01/OC04.
 
-Current startup also seeds a particular canopy construction grant. Move selected opening grants into the world-owned initial-setup result and provision only those actually included. A new solitary opening must not acquire references to absent actors or the bundled canopy through hidden startup assumptions. Preserve the ordinary existing start's meaning.
+Startup at that baseline also seeded a particular canopy construction grant. The design moves selected opening grants into the world-owned initial-setup result and provisions only those actually included. A new solitary opening must not acquire references to absent actors or the bundled canopy through hidden startup assumptions. Preserve the ordinary existing start's meaning.
+
+The delivered creation path now selects a narrow trusted profile through `world-composition.ts`. The contract in `world-creation.ts` shares candidate identity while the bundled `worlds/base/creation-profile.ts` owns candidate fields, validation, construction, editing, readiness and preview. The profile declares identity slots; the application allocates their stable IDs. Server transport and activation retain current source/destination authorization, exact review including effective operator configuration, account mapping, empty-target checks, atomic publication and replay receipts. Awaiting-creation startup seeds no game world, and prepared setup supplies only its explicit initial grants. Startup preserves authored social settings unless an explicit operator override changes its named setting; preview notices come from actual candidate supplies. [October 14 boundary evidence](../verification/world-engine-boundaries.md#creation-startup-construction-and-opening-presentation) records this alignment without closing the remaining first-play acceptance below.
 
 ## OC01 — A deterministic supported initial-world candidate
 

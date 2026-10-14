@@ -3,6 +3,11 @@ import type { AssemblyFamily } from '../../assembly-types.js';
 import type { AttributeDefinition } from '../../world-modules.js';
 import type { ItemDefinition } from '../../types.js';
 
+const CONDITION_ATTRIBUTE = 'base:canopy-material-condition';
+const MOISTURE_ATTRIBUTE = 'base:material-moisture';
+const UNQUALIFIED_BAG_EXPOSURE =
+  'This material has no qualified exposure rule inside a bag. Keep it directly carried or on exposed ground.';
+
 /** One authored source for DG13 content and tuning. docs/worlds/base/editable-shelters.md */
 export const BASE_CANOPY: AssemblyFamily = {
   id: 'base:light-canopy',
@@ -67,9 +72,35 @@ export const BASE_CANOPY: AssemblyFamily = {
     'reclaim-post': 'Reclaim an unloaded post',
     'reclaim-lowered': 'Reclaim lowered material',
   },
-  conditionAttribute: 'base:canopy-material-condition',
+  conditionAttribute: CONDITION_ATTRIBUTE,
   usableCondition: 'intact',
-  moistureAttribute: 'base:material-moisture',
+  moistureAttribute: MOISTURE_ATTRIBUTE,
+  inventory: {
+    post: {
+      initialAttributes: [CONDITION_ATTRIBUTE],
+      stateAttributes: [CONDITION_ATTRIBUTE],
+      homogeneous: false,
+      bagRefusal: null,
+    },
+    cover: {
+      initialAttributes: [CONDITION_ATTRIBUTE, MOISTURE_ATTRIBUTE],
+      stateAttributes: [CONDITION_ATTRIBUTE, MOISTURE_ATTRIBUTE],
+      homogeneous: false,
+      bagRefusal: UNQUALIFIED_BAG_EXPOSURE,
+    },
+    binding: {
+      initialAttributes: [CONDITION_ATTRIBUTE],
+      stateAttributes: [MOISTURE_ATTRIBUTE, CONDITION_ATTRIBUTE],
+      homogeneous: true,
+      bagRefusal: null,
+    },
+    fiber: {
+      initialAttributes: [CONDITION_ATTRIBUTE, MOISTURE_ATTRIBUTE],
+      stateAttributes: [MOISTURE_ATTRIBUTE, CONDITION_ATTRIBUTE],
+      homogeneous: true,
+      bagRefusal: UNQUALIFIED_BAG_EXPOSURE,
+    },
+  },
   wettingSeconds: 1800,
   dryingSeconds: 5400,
   moistureLabels: {

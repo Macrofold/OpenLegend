@@ -29,6 +29,7 @@ import {
   type NativeDrain,
 } from './status-effects.js';
 import type { WorldState } from './types.js';
+import { selectedSocialPolicy } from './social-policy.js';
 
 /** Finite-family composition, not an omniscient scheduler for arbitrary future rules.
  * docs/simulation-time.md and docs/maintainers/simulation-boundaries.md */
@@ -220,7 +221,7 @@ export function nativeInterval(
   at(nextOutingDeadline(world));
   for (const process of Object.values(world.appraisalProcesses ?? {})) at(process.nextAt);
   if (world.conversations) {
-    const timeout = world.socialPolicy?.conversationInactivitySeconds ?? 1800;
+    const timeout = selectedSocialPolicy(world).conversationInactivitySeconds;
     // The owner's own sum, so the clock lands exactly where it compares.
     for (const id of new Set(Object.values(world.conversations.active))) {
       const c = world.conversations.records[id];

@@ -10,6 +10,7 @@ import { canonicalJson, finish, outcome } from './events.js';
 import { canSpeak } from './living.js';
 import { hearsEntity } from './perception.js';
 import { loudestSpeechVolume } from './acoustics.js';
+import { selectedSocialPolicy } from './social-policy.js';
 
 export interface Conversation {
   id: string;
@@ -251,7 +252,7 @@ export function reconcileConversations(world: WorldState): void {
   const manifest = isDraft(world.moduleManifest)
     ? current(world.moduleManifest)
     : world.moduleManifest;
-  const timeout = world.socialPolicy?.conversationInactivitySeconds ?? 1800;
+  const timeout = selectedSocialPolicy(world).conversationInactivitySeconds;
   const old = Object.isFrozen(records) ? continuity.get(records) : undefined;
   if (
     old &&

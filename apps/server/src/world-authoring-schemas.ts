@@ -186,6 +186,20 @@ export const statusPolicySchema = z
   .strict();
 export const cognitionPolicySchema = z
   .object({
+    actionGuidance: z
+      .object({
+        reasons: text(2000),
+        consideration: text(2000),
+        selection: text(2000),
+        criteria: z.object({ true: text(2000), false: text(2000) }).strict(),
+      })
+      .strict(),
+    recording: z
+      .object({
+        actionResultImportance: finite.min(0).max(10),
+        exposureImportance: finite.min(0).max(10),
+      })
+      .strict(),
     version: z.literal(1),
     revision: z.number().int().positive(),
     maxImmediateLevel: z.union([z.literal(2), z.literal(3), z.literal(4)]),

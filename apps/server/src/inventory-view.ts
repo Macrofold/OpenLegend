@@ -1,5 +1,7 @@
 import { isEquipped, equipmentConflicts } from '@open-legend/domain';
+import { nativeCommandKind } from './native-command-kind.js';
 import {
+  nativeCommandSupported,
   materialExposureView,
   NATIVE_PREPARATIONS,
   quantityOf,
@@ -775,7 +777,7 @@ export function inventoryItemView(
       actions.push(
         action(
           `prepare-${key}`,
-          key === 'fiber' ? 'Clean fibers' : 'Twist cord',
+          recipe.label,
           { type: 'prepare', preparation: key as 'fiber' | 'cord' },
           quantityOf(world, player.id, recipe.input) >= recipe.inputQuantity,
           `Requires ${recipe.inputQuantity} ${world.itemDefinitions[recipe.input]!.name} across carried supplies.`,
@@ -906,6 +908,8 @@ export function inventoryItemView(
     ),
     equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
-    actions,
+    actions: actions.filter((option) =>
+      nativeCommandSupported(world, nativeCommandKind(option.command.type)),
+    ),
   };
 }

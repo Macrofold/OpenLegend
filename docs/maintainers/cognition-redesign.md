@@ -10,6 +10,8 @@ Status: **CR01–CR11 runtime foundation implemented; verification and condition
 
 Each task must update implementation status with actual evidence when delivered. Fixture results establish contracts only; live quality, cost and latency require separately authorized execution with configured credentials and a nonzero cap. No automatic paid retries.
 
+The [October 14 boundary review](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) removes whole-world knowledge validation from initializing one character's cognition; that operation no longer edits knowledge. Current-format admission and document edits retain their owning validators. Forgetting the player's real inventory-inspection event on the frozen publication boundary took 21.537–26.652 ms before and 0.511–0.797 ms after with 5,000 unrelated notes, preserving the other character's document identity and the player's forgetting record. This qualifies that local scan removal, not full request/storage latency or CR12/PF08 model/population acceptance. Selected cognition judgments and both authored/edited knowledge origins still passed native and PostgreSQL continuation checks with no provider calls.
+
 ## Delivery order
 
 Delivered [AE05–AE08 activity learning](action-experience.md) uses CR preparation, maintenance scheduling and relevant retrieval. Individual and learned-method descriptions retain later requirements, costs and uncertainty. A separate typed idle-learning operation runs in Jev-only mode; full generative reflection remains disabled there. Existing admission/accounting controls it; [evidence](../verification/action-experience.md) owns measured qualification.
@@ -496,7 +498,8 @@ Inactive-history integration is delivered: maintenance reads an actor-scoped dur
 Canonical contracts: [Knowledge](../knowledge.md), [base-world policy](../worlds/base/knowledge.md). Keep action-repertoire, hearing and spatial branch work with its existing owners. [Batch 08 (`MY01–MY03`)](parallel-batch-08-the-missing-belonging.md) qualifies initial source-labeled general and subject knowledge documents (`Mara` ↔ `Iven`) and live witness conversation without leaking unshared subject notes across actors ([verification](../verification/parallel-batch-08-the-missing-belonging.md)).
 
 - [x] Add actor-owned general/subject documents, Unicode character limits, revisioned complete replacements, tombstones and one authoritative edit function.
-- [x] Separate accepted external understanding from About me without duplicating prose; reject an oversized in-place migration without discarding stored state.
+- [x] Separate accepted external understanding from About me without duplicating prose. Fresh construction installs world-owned defaults; the former conversion of older self-description files is removed under the development policy.
+- [x] Store current-text origin at authored creation and ordinary publication, require it in current-format validation and preserve it in permitted context/inspection and save records. First ordinary edits cannot become authored starting understanding merely by having revision one and no evidence.
 - [x] Project individual document rows transactionally, validate on reopen, include state in save/load and reproject on restore.
 - [x] Integrate optional immediate and reflection proposals, required general/subject context, existing scoped semantic retrieval, owner inspection/editing, private diagnostics and invalidation.
 - [x] Add saved perception episodes and scoped references so server identity cannot alone reconnect private knowledge after a disappearance. Base-world name policy remains BW08.

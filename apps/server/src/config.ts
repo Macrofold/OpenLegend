@@ -303,13 +303,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
     budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
     jevOnly: env['AI_JEV_ONLY'] === 'true',
-    conversationInactivitySeconds: numberSetting(
-      env,
-      'CONVERSATION_INACTIVITY_SECONDS',
-      1800,
-      60,
-      86400,
-    ),
+    // Absence preserves the world's authored timeout; this records only an explicit override.
+    conversationInactivitySeconds:
+      env['CONVERSATION_INACTIVITY_SECONDS'] === undefined
+        ? undefined
+        : numberSetting(env, 'CONVERSATION_INACTIVITY_SECONDS', 60, 60, 86400),
     conversationDisconnectMs:
       numberSetting(env, 'CONVERSATION_DISCONNECT_SECONDS', 60, 5, 600) * 1000,
     narrationBatchMs: numberSetting(env, 'NARRATION_BATCH_MS', 750, 0, 10000),

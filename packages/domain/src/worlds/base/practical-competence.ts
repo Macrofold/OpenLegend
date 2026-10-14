@@ -14,6 +14,60 @@ export const SLING_HANDLING: AttributeDefinition = {
   meaning:
     'Beginners can already hunt. Actual released sling shots, including misses, improve handling once; a willing practiced coach can reduce the remaining practice. This grants no recipe, personality trait or guaranteed hit.',
   practice: {
+    coachingEligibility: { communication: 'spoken', manualWork: true },
+    presentation: {
+      ranks: ['Beginner', 'Practiced'],
+      unavailableRank: 'unavailable',
+      effect:
+        '{missReductionPercent}% reduction of the tool-related miss chance; later shots only.',
+      progress: '{releases}/{independentRequired} real releases · Completed coaching: {coached}',
+      authoredStarting: 'Practiced starting competence was explicitly authored.',
+      evidenceHeading: 'Supporting releases',
+      evidenceItem: 'Release {number}: {description}',
+      evidenceFallback:
+        'Retained released-shot evidence; inspect the recorded action for its historical details.',
+      laneOutOfReach: 'The practice target is outside a clear firing range. No shot was released.',
+      laneBlocked: 'The firing lane is blocked. No shot was released.',
+      laneUnsafe: 'The firing lane is not safely clear. No shot was released.',
+      practiceDescription:
+        '{label} at {target}. {tool} {windupSeconds} game seconds of preparation after approach; one real projectile is consumed only on release. {chance}{scope} No automatic next shot. The firing lane must remain safely clear; stopping before release spends no projectile and earns no practice.',
+      practiceActivityLabel: 'Practicing a shot',
+      coachingActivityLabel: 'Giving/receiving guided feedback',
+      selectedTool: 'Tool: {toolName}.',
+      missingTool: 'Select a compatible tool and ammunition first.',
+      targetChance: 'Known inert-target chance: {accuracyPercent}%. ',
+      requestLabel: 'Ask {target} for {skill} coaching',
+      requestDescription:
+        'Ask {target} to observe one actual release and, if both later choose, give guided feedback. They may decline or lack the applicable competence. {scope} Completed help does not stack or disclose a private recipe.',
+      acceptLabel: 'Agree to observe {target}',
+      acceptDescription:
+        "Choose to observe {target}'s next eligible release for {skill} coaching. Speaking agreement alone does not start observation; choose this action if willing. This promises no future shot or feedback and does not transfer a recipe. I can decline or later withdraw.",
+      declineLabel: 'Decline coaching {target}',
+      declineDescription:
+        "Decline {target}'s request. They keep their independent practice route; nothing is taught or transferred.",
+      feedbackDescription:
+        'Choose {feedbackSeconds} game seconds of guided feedback with {target} about the shot actually observed in this episode. Speaking advice alone does not complete feedback; both must choose this activity and remain able to communicate. {guidance} A completed episode helps once; it grants no recipe or personality trait.',
+      withdrawLabel: 'Withdraw from this coaching episode',
+      withdrawDescription:
+        'End this unfinished episode now. Actual released shots remain; incomplete feedback earns no coaching benefit.',
+      unavailable:
+        'This coaching episode is unavailable. Actual releases still count independently.',
+      observationRequired:
+        'Feedback requires a shot actually observed during this agreed episode, and each person must choose feedback once.',
+      requestResult: 'Requested one coaching episode. The other person can accept or decline.',
+      requestEventSuffix:
+        ' for {skill} coaching. Agreement does not choose any future shot or feedback.',
+      acceptResult: 'Agreed to observe. The learner still chooses each real shot.',
+      acceptEventSuffix: '. Both still choose feedback after an actual observed shot.',
+      endResult: 'Coaching ended without completed feedback; actual shots remain.',
+      observedEvent:
+        'The agreed coach observed a released shot and its visible result. Each person can now choose the guided feedback activity.',
+      completeResult:
+        '{guidance} Completed coaching is retained once. {remaining} further real releases remain for the coached route.',
+      cancelResult: 'Feedback ended without completion. Actual shots remain.',
+      endedEvent:
+        'The coaching episode {reason}. No completed lesson was credited; actual shots remain.',
+    },
     family: {
       id: 'base:swing',
       version: 1,

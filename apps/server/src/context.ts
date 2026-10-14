@@ -1,3 +1,5 @@
+import { nativeCommandKind } from './native-command-kind.js';
+import { nativeCommandSupported, rangedTargetAllowed, rangedPolicy } from '@open-legend/domain';
 import { outingActions } from './outing-view.js';
 import {
   isEquipped,
@@ -100,24 +102,30 @@ function describeTargets(
   const health = new Map<string, string>();
   const positions = new Map<string, ReturnType<typeof effectivePosition>>();
   const origin = worldPosition(service.world.entities[actorId]!);
-  return candidates.map((candidate) => {
-    const command = candidate.command;
-    const id = command && 'targetId' in command ? command.targetId : undefined;
-    const target = id ? service.world.entities[id] : undefined;
-    if (target && !health.has(target.id)) {
-      health.set(target.id, observedAnimalHealth(service.world, actorId, target.id));
-      positions.set(target.id, effectivePosition(service.world, target.id));
-    }
-    const position = target && positions.get(target.id);
-    // Descriptions already use permitted names where they are constructed.
-    // Substring replacement here would corrupt personal names and their articles.
-    return target && position
-      ? {
-          ...candidate,
-          description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
-        }
-      : candidate;
-  });
+  return candidates
+    .filter(
+      (candidate) =>
+        !candidate.command ||
+        nativeCommandSupported(service.world, nativeCommandKind(candidate.command.type)),
+    )
+    .map((candidate) => {
+      const command = candidate.command;
+      const id = command && 'targetId' in command ? command.targetId : undefined;
+      const target = id ? service.world.entities[id] : undefined;
+      if (target && !health.has(target.id)) {
+        health.set(target.id, observedAnimalHealth(service.world, actorId, target.id));
+        positions.set(target.id, effectivePosition(service.world, target.id));
+      }
+      const position = target && positions.get(target.id);
+      // Descriptions already use permitted names where they are constructed.
+      // Substring replacement here would corrupt personal names and their articles.
+      return target && position
+        ? {
+            ...candidate,
+            description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.${health.get(target.id) ? ` ${health.get(target.id)}` : ''} Distance: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
+          }
+        : candidate;
+    });
 }
 
 export const CONTEXT_BYTE_LIMIT = 100_000;
@@ -653,7 +661,7 @@ export function npcCandidates(
           description: `${option.description} ${practiceContext}`,
           command: option.command,
         });
-  if (actor.action) return actions;
+  if (actor.action) return describeTargets(service, actorId, actions);
 
   if (visionRadius(service.world, observed.actor) === 0) {
     // Offer probes independently of hidden walkability; native admission supplies blocked feedback.
@@ -815,12 +823,10 @@ export function npcCandidates(
     // geometry used by native movement, never a search for hidden entities/items.
     // Ranged offers use their own reach, even when the target cannot be approached
     // for contact. Equal ranges share geometry work within this observed snapshot.
-    if (entity.animal && entity.actor?.alive) {
+    if (rangedTargetAllowed(service.world, entity)) {
       const reachable = new Map<number, boolean>();
       for (const { item, definition, launcher, ammunition } of launchers) {
-        const description =
-          huntingDescription(entity.actor.species, 'launcher', entity, definition) ??
-          `Shoot ${namePhrase(entity)} with ${namePhrase(definition)}. One shot.`;
+        const description = `${rangedPolicy(service.world)!.actionLabel} ${namePhrase(entity)} with ${namePhrase(definition)}. ${rangedPolicy(service.world)!.scope} ${rangedPolicy(service.world)!.accuracyExplanation}`;
         if (!reachable.has(launcher.range))
           reachable.set(
             launcher.range,
@@ -838,7 +844,7 @@ export function npcCandidates(
         if (!service.previewCommand(command, actorId).ok) continue;
         actions.push({
           id: `hunt:${item.id}:${entity.id}`,
-          description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: SIMULATION_RULES.shotSeconds })}`,
+          description: `${equipmentChangeDescription(service.world, actorId, item.id)}${description} ${definition.name}: ${definition.description} ${describeAttack({ ...launcher, damage: launcher.damage + (definitions.get(ammunition.definitionId)?.ammunition?.damageBonus ?? 0), workSeconds: rangedPolicy(service.world)!.windupSeconds })}`,
           command,
         });
       }

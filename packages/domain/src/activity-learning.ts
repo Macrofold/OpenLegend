@@ -1,3 +1,4 @@
+import { commandEntityFields, nativeOutputBinding } from './native-command-contracts.js';
 import {
   activityCommandFields,
   isCookingInputField,
@@ -16,7 +17,7 @@ import {
   type ActivityOccurrence,
   type ActivityBinding,
 } from './action-experience.js';
-import { definitionPin } from './world-modules.js';
+import { definitionPin, activityManifest } from './world-modules.js';
 import {
   activityHostForCommand,
   activityHostPin,
@@ -28,7 +29,7 @@ import { seesEntity } from './perception.js';
 import { isSafeRecordId } from './records.js';
 import { isDefinitionPin } from './state-owners.js';
 import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
-import { sharedNativeActivityName } from './worlds/base/action-views.js';
+import { sharedNativeActivityName } from './world-composition.js';
 import { finitePoint } from '@open-legend/spatial';
 import type { WorldState } from './types.js';
 
@@ -44,16 +45,6 @@ export interface ActivityCandidate {
   matches?: { methodId: string; occurrenceIds: string[] }[];
   matchingDeferred?: boolean;
 }
-const roleFields = new Set([
-  'targetId',
-  'intendedRecipientId',
-  'itemId',
-  'weaponItemId',
-  'ammoItemId',
-  'heatId',
-  'sourceId',
-  'destinationId',
-]);
 /** One current binding check shared by the native chooser and prepared offers.
  * Seeing a basket does not disclose its contents or authorize fresh stock selection.
  * docs/projects/parallel-batch-01-playable-week/camp-activities.md#actual-outputs-and-learning */
@@ -196,13 +187,14 @@ export function normalizeActivity(
   const children: ActivityNode[] = [];
   for (const [index, entry] of entries.entries()) {
     const args: Extract<ActivityNode, { kind: 'invoke' }>['args'] = {};
+    const entityFields = new Set(commandEntityFields(entry.command));
     for (const [field, value] of Object.entries(activityCommandFields(entry.command))) {
       if (['id', 'actorId', 'type', 'purpose'].includes(field) || value === undefined) continue;
       // An absolute deadline belongs to one occasion, not a reusable method.
       if (entry.command.type === 'follow' && field === 'until') return;
-      if (typeof value === 'string' && (roleFields.has(field) || isCookingInputField(field))) {
+      if (typeof value === 'string' && entityFields.has(field)) {
         const produced = outputs.get(value);
-        if (produced && (field === 'itemId' || isCookingInputField(field))) {
+        if (produced && nativeOutputBinding(field)) {
           const required =
             entry.command.type === 'cook' && isCookingInputField(field)
               ? (world.foodPreparations[entry.command.preparationId]?.inputs.find(
@@ -328,7 +320,7 @@ export function normalizeActivity(
   } catch {
     return;
   }
-  const manifest = canonicalJson(world.moduleManifest);
+  const manifest = activityManifest(world);
   const executable =
     !incomplete && entries.every((entry) => entry.status === 'completed' && !entry.incomplete);
   const signature = canonicalJson({ root, roles, manifest, executable });
@@ -573,7 +565,7 @@ export function retainActivity(
   candidate: ActivityCandidate,
 ): string | undefined {
   validateActivityNode(candidate.method.root);
-  if (candidate.method.manifest !== canonicalJson(world.moduleManifest)) return;
+  if (candidate.method.manifest !== activityManifest(world)) return;
   const entries = world.actionExperience.occurrences[actorId] ?? [];
   const sources = candidate.occurrenceIds.map((id) => entries.find((entry) => entry.id === id));
   if (
@@ -654,7 +646,7 @@ export function revokeActivityEvidence(world: WorldState, actorId: string, ids: 
         support.revoked = true;
 }
 export function acquiredActivities(world: WorldState, actorId: string): ActivityMethod[] {
-  const manifest = canonicalJson(world.moduleManifest);
+  const manifest = activityManifest(world);
   return Object.values(world.actionExperience.acquisitions[actorId] ?? {})
     .filter((acquisition) => acquisition.supports.some((support) => !support.revoked))
     .map((acquisition) => world.actionExperience.methods[acquisition.methodId]!)

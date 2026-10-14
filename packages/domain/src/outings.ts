@@ -70,6 +70,12 @@ export type OutingCommand =
       mode?: OutingMode;
     };
 type OwnedCommand = Extract<Command, { type: 'outing' }>;
+/** Ending consent requires the exact current outing terms, not physical ability. */
+export function endsOutingConsent(command: Command): boolean {
+  return (
+    command.type === 'outing' && (command.operation === 'leave' || command.operation === 'decline')
+  );
+}
 
 const participants = (trip: Outing) => [trip.proposerId, trip.recipientId];
 export function actorOutings(world: WorldState, actorId: string): Outing[] {

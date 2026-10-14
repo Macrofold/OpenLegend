@@ -6,7 +6,8 @@ import { recordSemanticChange } from './dependencies.js';
 import { nextEntityId, nextId, reserveEntityId } from './data.js';
 import { canonicalJson } from './events.js';
 import { getOwn, isSafeRecordId, hasRecordFields } from './records.js';
-import { definitionPin, type DefinitionPin } from './world-modules.js';
+import { attributeDefinition, definitionPin, type DefinitionPin } from './world-modules.js';
+import { materialInventoryRule } from './material-inventory.js';
 import { sameDefinitionPin } from './state-owners.js';
 import {
   assertReservedStock,
@@ -491,19 +492,17 @@ function lotCarriesState(entity: Entity): boolean {
 /** Only the installed material law explicitly admits homogeneous copying/equivalence.
  * Other per-item attributes retain their existing split/merge refusal. */
 function homogeneousMaterialState(world: WorldState, entity: Entity): string | undefined {
-  const material =
-    entity.item && world.itemDefinitions[entity.item.definitionPin.id]?.assemblyMaterial;
-  const family = material && world.assemblyFamilies?.[material.familyId];
+  const definition = entity.item && world.itemDefinitions[entity.item.definitionPin.id];
+  const rule = definition && materialInventoryRule(world, definition);
   if (
-    !family ||
-    !['fiber', 'binding'].includes(material?.role ?? '') ||
+    !rule?.homogeneous ||
     entity.item?.assemblyClaim ||
     entity.container ||
     Object.keys(entity.mechanismFields ?? {}).length ||
     Object.keys(entity.statusEffects ?? {}).length
   )
     return;
-  const allowed = [family.moistureAttribute, family.conditionAttribute];
+  const allowed = rule.stateAttributes;
   if (Object.keys(entity.attributes ?? {}).some((id) => !allowed.includes(id))) return;
   return canonicalJson(allowed.map((id) => entity.attributes?.[id]?.value ?? null));
 }
@@ -547,23 +546,23 @@ export function createItemLot(
   parentId: string,
   definitionId: string,
   quantity: number,
-  id = nextEntityId(world, 'item'),
+  id?: string,
 ): string {
   const definition = getOwn(world.itemDefinitions, definitionId),
     parent = getOwn(world.entities, parentId);
   if (
-    !isSafeRecordId(id) ||
+    (id !== undefined && !isSafeRecordId(id)) ||
     !definition ||
     !parent ||
     !(parent.actor || parent.kind === 'item-pile' || parent.container) ||
     !quantity ||
     checked(quantity) !== quantity ||
-    getOwn(world.entities, id)
+    (id !== undefined && getOwn(world.entities, id))
   )
     throw new Error('Invalid object source, identity, quantity or destination.');
-  const individual =
-    !!definition.container ||
-    !!(definition.assemblyMaterial && ['post', 'cover'].includes(definition.assemblyMaterial.role));
+  const materialRule = materialInventoryRule(world, definition);
+  if (parent.container && materialRule?.bagRefusal) throw new Error(materialRule.bagRefusal);
+  const individual = !!definition.container || (!!materialRule && !materialRule.homogeneous);
   if (individual && quantity !== 1)
     throw new Error('Each individual object must have its own identity. Create one at a time.');
   const ancestors = objectAncestors(world, parentId);
@@ -578,6 +577,7 @@ export function createItemLot(
   )
     throw new Error('This destination exceeds the admitted nesting depth.');
   const pin = definitionPin(definition);
+  id ??= nextEntityId(world, 'item');
   reserveEntityId(world, id);
   const lot: ItemLot = {
     definitionPin: pin,
@@ -599,20 +599,11 @@ export function createItemLot(
     placement: { mode: 'contained', parentEntityId: parentId, revision: 0 },
     spatial: groundedSpatial('object'),
     item: lot,
-    ...(definition.assemblyMaterial &&
-    world.assemblyFamilies?.[definition.assemblyMaterial.familyId]
+    ...(materialRule
       ? {
           attributes: Object.fromEntries(
-            world.moduleManifest.definitions
-              .filter((d) => {
-                const family = world.assemblyFamilies![definition.assemblyMaterial!.familyId]!;
-                return (
-                  d.id === family.conditionAttribute ||
-                  ((definition.assemblyMaterial!.role === 'cover' ||
-                    definition.assemblyMaterial!.role === 'fiber') &&
-                    d.id === family.moistureAttribute)
-                );
-              })
+            materialRule.initialAttributes
+              .map((id) => attributeDefinition(world, id)!)
               .map((d) => [d.id, { value: d.schema.initial, revision: 0 }]),
           ),
         }
@@ -853,16 +844,9 @@ function itemMovePlan(
     throw new Error(
       'This material belongs to installed or lowered structure work. Use authorized reclaim first.',
     );
-  const material = lot && world.itemDefinitions[lot.definitionPin.id]?.assemblyMaterial;
-  if (
-    material &&
-    ['cover', 'fiber'].includes(material.role) &&
-    destination?.container &&
-    world.assemblyFamilies?.[material.familyId]
-  )
-    throw new Error(
-      'This material has no qualified exposure rule inside a bag. Keep it directly carried or on exposed ground.',
-    );
+  const definition = lot && world.itemDefinitions[lot.definitionPin.id];
+  const bagRefusal = definition && materialInventoryRule(world, definition)?.bagRefusal;
+  if (bagRefusal && destination?.container) throw new Error(bagRefusal);
   if (
     !entity ||
     !lot ||

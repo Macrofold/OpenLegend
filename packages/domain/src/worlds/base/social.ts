@@ -1,5 +1,8 @@
-/** Retained bundled social setup; this notability value currently has no native
- * consumer. Preserve the existing saved shape during fresh-start extraction.
+/** Bundled social defaults; startup fills only missing authored settings.
+ * Retained notability tuning does not prescribe a character's social behavior.
  * docs/worlds/base/social.md
  */
-export const BASE_SOCIAL_POLICY = { notableThreshold: 8 } as const;
+export const BASE_SOCIAL_POLICY = {
+  conversationInactivitySeconds: 1800,
+  notableThreshold: 8,
+} as const;

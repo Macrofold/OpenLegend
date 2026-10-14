@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                         | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Flat one/two-bay and the single-bay lean-to are delivered and reviewed; wider homes and scale qualification remain open. | 2026-10-07   |
+| In progress | Flat one/two-bay and the single-bay lean-to are delivered and reviewed; wider homes and scale qualification remain open. | 2026-10-14   |
 
 **Flat canopy/two-bay delivered October 6; corrected contacts and the single-bay lean-to delivered October 7, 2026. Wider behavior remains proposed.** This develops ND07 and the rain/exposure portion of ND08 under INV-6.4. Its [technical counterpart](editable-shelters-tech-design.md) and [SH01–SH06 delivery breakdown](../maintainers/editable-shelters.md) now define the selected one-builder open-shelter journey. AV04 implements finite parts, phased building, ordinary use, alteration/reclaim and local rain/moisture/drying for that profile. Existing object, spatial, state, work, authority and world-policy owners retain their responsibilities. Enclosed buildings and household behavior remain unimplemented.
 

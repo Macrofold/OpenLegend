@@ -24,7 +24,8 @@ export function Construction({
   preview(shapes: readonly ConstructionShape[] | null, valid?: boolean): void;
 }) {
   const [opened, setOpened] = useState(false),
-    [data, setData] = useState<ConstructionView>(),
+    [data, setData] = useState<Extract<ConstructionView, { ok: true }>>(),
+    [unsupported, setUnsupported] = useState(''),
     [error, setError] = useState(''),
     [readError, setReadError] = useState(''),
     [readRevision, setReadRevision] = useState(0),
@@ -45,7 +46,9 @@ export function Construction({
       plan: ConstructionPlan;
       key: string;
     }>();
-  const roots = view.entities.filter((entity) => entity.assembly),
+  const roots = view.entities.filter(
+      (entity) => !!data && entity.assembly?.familyId === data.family.id,
+    ),
     root = roots.find((entity) => entity.id === rootId);
   useEffect(() => {
     if (!opened || !visible || !connected) return;
@@ -56,9 +59,17 @@ export function Construction({
       try {
         const next = await getScoped<ConstructionView>('/api/construction', abort.signal);
         if (live) {
-          setData(next);
           setReadError('');
-          setSite((old) => old ?? next.suggested);
+          if (next.ok) {
+            setData(next);
+            setUnsupported('');
+            setSite((old) => old ?? next.suggested);
+          } else {
+            setData(undefined);
+            setUnsupported(next.message);
+            setReview(undefined);
+            preview(null);
+          }
         }
       } catch (reason) {
         if (live && !abort.signal.aborted) setReadError(String(reason));
@@ -75,41 +86,48 @@ export function Construction({
       clearTimeout(timer);
     };
   }, [opened, visible, connected, view.access?.scope, view.saveTimeline, readRevision]);
-  const { covers, defaultBindings, postOptionsByHeight, coverOptions, bindingOptions } =
-    useMemo(() => {
-      const materials = data?.materials ?? [],
-        posts = materials.filter((m) => m.role === 'post' && m.eligible),
-        covers = materials.filter((m) => m.role === 'cover' && m.eligible),
-        bindings = materials.filter((m) => m.role === 'binding' && m.eligible);
-      // Only four units are needed. Clock/player updates reuse these choices, and
-      // a large stock list never expands every binding lot merely to take its prefix.
-      const defaultBindings: string[] = [];
-      for (const binding of bindings) {
-        const units = Math.min(4 - defaultBindings.length, binding.quantity);
-        for (let n = 0; n < units; n++) defaultBindings.push(binding.id);
-        if (defaultBindings.length === 4) break;
-      }
-      const options = (choices: typeof materials) =>
-        choices.map((item) => ({
-          id: item.id,
-          label: `${item.name} · ${item.quantity}${item.condition ? ` · ${item.condition}` : ''}`,
-        }));
-      const postOptionsByHeight = new Map<number, ReturnType<typeof options>>();
-      for (const p of posts) {
-        if (!p.postHeight) continue;
-        const group = postOptionsByHeight.get(p.postHeight) ?? [];
-        group.push({ id: p.id, label: `${p.name} · ${p.quantity}` });
-        postOptionsByHeight.set(p.postHeight, group);
-      }
-      return {
-        posts,
-        covers,
-        defaultBindings,
-        postOptionsByHeight,
-        coverOptions: options(covers),
-        bindingOptions: options(bindings),
-      };
-    }, [data]);
+  const {
+    covers,
+    defaultBindings,
+    postOptionsByHeight,
+    coverOptions,
+    bindingOptions,
+    materialsById,
+  } = useMemo(() => {
+    const materials = data?.materials ?? [],
+      posts = materials.filter((m) => m.role === 'post' && m.eligible),
+      covers = materials.filter((m) => m.role === 'cover' && m.eligible),
+      bindings = materials.filter((m) => m.role === 'binding' && m.eligible);
+    // Only four units are needed. Clock/player updates reuse these choices, and
+    // a large stock list never expands every binding lot merely to take its prefix.
+    const defaultBindings: string[] = [];
+    for (const binding of bindings) {
+      const units = Math.min(4 - defaultBindings.length, binding.availableQuantity);
+      for (let n = 0; n < units; n++) defaultBindings.push(binding.id);
+      if (defaultBindings.length === 4) break;
+    }
+    const options = (choices: typeof materials) =>
+      choices.map((item) => ({
+        id: item.id,
+        label: `${item.name} · ${item.availableQuantity === item.quantity ? item.quantity : `${item.availableQuantity} available of ${item.quantity}`}${item.condition ? ` · ${item.condition}` : ''}`,
+      }));
+    const postOptionsByHeight = new Map<number, ReturnType<typeof options>>();
+    for (const p of posts) {
+      if (!p.postHeight) continue;
+      const group = postOptionsByHeight.get(p.postHeight) ?? [];
+      group.push({ id: p.id, label: `${p.name} · ${p.availableQuantity}` });
+      postOptionsByHeight.set(p.postHeight, group);
+    }
+    return {
+      posts,
+      covers,
+      defaultBindings,
+      postOptionsByHeight,
+      coverOptions: options(covers),
+      bindingOptions: options(bindings),
+      materialsById: new Map(materials.map((material) => [material.id, material])),
+    };
+  }, [data]);
   const bay =
     operation === 'extend'
       ? 1
@@ -186,7 +204,28 @@ export function Construction({
       view.player.id,
     ],
   );
-  const key = JSON.stringify(plan);
+  // Refresh only facts this read can represent, rather than every clock revision.
+  // Actual placement and permission are checked again by native Start admission.
+  const key = useMemo(
+    () =>
+      JSON.stringify([
+        plan,
+        data?.family,
+        data?.authorized,
+        plan &&
+          [
+            ...new Set([
+              ...plan.postIds,
+              ...plan.bindingIds,
+              ...(plan.coverId ? [plan.coverId] : []),
+            ]),
+          ].map((id) => materialsById.get(id) ?? { id, unavailable: true }),
+        plan?.operation === 'reclaim'
+          ? data?.lowered.find((material) => material.id === plan.outgoingId)
+          : undefined,
+      ]),
+    [plan, data?.family, data?.authorized, data?.lowered, materialsById],
+  );
   const currentKey = useRef(key);
   currentKey.current = key;
   useEffect(() => {
@@ -212,7 +251,7 @@ export function Construction({
         setReview({ result, shapes: result.shapes, plan, key });
       }
     } catch (reason) {
-      setError(String(reason));
+      if (currentKey.current === key) setError(String(reason));
     } finally {
       setBusy(false);
     }
@@ -245,6 +284,8 @@ export function Construction({
         <div className="ol-construction">
           {!connected ? (
             <p>Reconnect to inspect the current place and materials.</p>
+          ) : unsupported ? (
+            <p role="status">{unsupported}</p>
           ) : !data ? (
             <p>Reading current building choices…</p>
           ) : (
@@ -504,6 +545,10 @@ export function Construction({
                     covering takes {data.family.coverSeconds / 60}, including work at every corner.
                     Stop releases unused material and leaves completed parts.
                   </p>
+                  <p className="ol-caption">
+                    The preview shows the last checked placement. Starting work checks the current
+                    place, materials and permissions again.
+                  </p>
                   <div className="ol-actions">
                     <Button
                       busy={busy}
@@ -535,7 +580,7 @@ export function Construction({
                   {review && (
                     <p role="status">
                       {review.key !== key
-                        ? 'The place or selections changed. Review again.'
+                        ? 'The place, materials or permissions changed. Review again.'
                         : review.result.message}
                     </p>
                   )}
@@ -545,7 +590,9 @@ export function Construction({
                 <Button
                   disabled={!connected || view.clock.paused}
                   onPress={() =>
-                    void post<ApiResult>('/api/god/canopy-shower', { id: crypto.randomUUID() })
+                    void post<ApiResult>('/api/god/construction-shower', {
+                      id: crypto.randomUUID(),
+                    })
                       .then((result) => {
                         setError(result.message);
                         setReadRevision((revision) => revision + 1);
@@ -553,15 +600,17 @@ export function Construction({
                       .catch((reason) => setError(String(reason)))
                   }
                 >
-                  Run a {data.family.showerSeconds / 60}-minute shower
+                  {data.shower?.actionLabel}
                 </Button>
               )}
-              {data.weather && (
+              {data.weather && data.shower && (
                 <p>
                   {view.clock.seconds < data.weather.endsAt
-                    ? `The shower has ${Math.ceil((data.weather.endsAt - view.clock.seconds) / 60)} game minutes remaining.`
-                    : 'The shower ended.'}{' '}
-                  Drying continues during ordinary world time.
+                    ? data.shower.remainingText.replace(
+                        '{minutes}',
+                        String(Math.ceil((data.weather.endsAt - view.clock.seconds) / 60)),
+                      )
+                    : data.shower.endedText}
                 </p>
               )}
             </>

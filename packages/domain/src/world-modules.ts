@@ -51,7 +51,7 @@ import { validateFoodPreparations } from './food-preparation.js';
 import { validateFiniteCasts } from './finite-casts.js';
 import { validateActionExperience } from './action-experience.js';
 import { validateActivityHostPins } from './activity-hosts.js';
-import { activityHostForCommand } from './activity-hosts.js';
+import { nativeCommandSupported, activityHostForCommand } from './activity-hosts.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { isFuel } from './worlds/base/fire.js';
 import { validateAgency } from './agency.js';
@@ -61,16 +61,18 @@ import { bodyPolicy, validateBodyPolicy, type BodyPolicy } from './body-policy.j
 import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
-import { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
+import { trustedRecipeImplementations } from './world-composition.js';
+import { validateRangedPolicy, validateRangedActions, type RangedPolicy } from './ranged-policy.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
-import { hasRecordFields, isSafeRecordId } from './records.js';
+import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
 import { validateEquipment } from './equipment.js';
 import { validateContactDefense } from './contact-defense.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { validateOutings } from './outings.js';
+import { validateSocialPolicy } from './social-policy.js';
 
 export type AttributeValue = number | string;
 /** Consequences of advanceReservoirs and kernel's native replenish action. These
@@ -149,6 +151,8 @@ export interface WorldModuleManifest {
   sensePins: DefinitionPin[];
   acoustics: AcousticPolicy;
   acousticsPin: DefinitionPin;
+  rangedPolicy: RangedPolicy | null;
+  rangedPolicyPin: DefinitionPin | null;
   activityHosts: DefinitionPin[];
   recipeFamilies: DefinitionPin[];
 }
@@ -207,22 +211,39 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
     storage: 'attributes',
   },
 } as const);
-const definitionPins = new WeakMap<object, DefinitionPin>();
+const definitionPins = new WeakMap<object, Readonly<DefinitionPin>>();
 export function definitionPin<T extends { id: string; version: number }>(
   definition: T,
-): DefinitionPin {
+): Readonly<DefinitionPin> {
   // Unchanged draft definitions resolve to their frozen original, so native state
   // reads share its exact pin. Changed drafts produce a fresh, uncached snapshot.
   const snapshot = isDraft(definition) ? current(definition) : definition;
   const cached = definitionPins.get(snapshot);
   if (cached) return cached;
-  const pin = {
+  // Shared derived identity is read-only; callers replace or copy pins when authoring.
+  const pin = Object.freeze({
     id: snapshot.id,
     version: snapshot.version,
     digest: contentLabel(canonicalJson(snapshot)),
-  };
-  if (Object.isFrozen(snapshot)) definitionPins.set(snapshot, pin);
+  });
+  if (isImmutableData(snapshot)) definitionPins.set(snapshot, pin);
   return pin;
+}
+
+/** Learned activities retain the exact current authored meaning without storing
+ * every definition twice in their bounded record and signature. Resolve actual
+ * data too: a mutable authoring draft cannot hide edits behind unchanged saved pins.
+ */
+export function activityManifest(world: WorldState): string {
+  const manifest = world.moduleManifest;
+  return canonicalJson({
+    ...manifest,
+    definitions: manifest.definitions.map(definitionPin),
+    senses: manifest.senses.map(definitionPin),
+    bodyPolicy: manifest.bodyPolicy && definitionPin(manifest.bodyPolicy),
+    acoustics: definitionPin(manifest.acoustics),
+    rangedPolicy: manifest.rangedPolicy && definitionPin(manifest.rangedPolicy),
+  });
 }
 export function createModuleManifest(
   definitions: AttributeDefinition[],
@@ -230,6 +251,7 @@ export function createModuleManifest(
   bodyPolicy: BodyPolicy | null,
   recipeFamilies: readonly DefinitionPin[],
   activityHosts: readonly DefinitionPin[] = [],
+  rangedPolicy: RangedPolicy | null = null,
 ): WorldModuleManifest {
   const manifest: WorldModuleManifest = {
     appraisals: structuredClone(BASE_APPRAISAL_POLICY),
@@ -246,6 +268,8 @@ export function createModuleManifest(
     acousticsPin: definitionPin(DEFAULT_ACOUSTICS),
     recipeFamilies: recipeFamilies.map((pin) => ({ ...pin })),
     activityHosts: activityHosts.map((pin) => ({ ...pin })),
+    rangedPolicy: rangedPolicy && structuredClone(rangedPolicy),
+    rangedPolicyPin: rangedPolicy && definitionPin(rangedPolicy),
   };
   validateModuleManifest(manifest);
   return manifest;
@@ -253,17 +277,22 @@ export function createModuleManifest(
 
 // Trusted definitions are immutable host content. Keep their pins once, while checking
 // every live manifest pin; caching mutable world manifests could admit changed meaning.
-const trustedRecipeFamilies = new Map(
-  BASE_RECIPE_FAMILIES.map((family) => {
-    freeze(family.definition, true);
-    return [
-      family.definition.id,
-      { family, pin: Object.freeze(definitionPin(family.definition)) },
-    ] as const;
-  }),
-);
+let trustedRecipeFamilies:
+  | Map<string, { family: RecipeFamilyDescriptor; pin: DefinitionPin }>
+  | undefined;
+function recipeImplementations() {
+  return (trustedRecipeFamilies ??= new Map(
+    trustedRecipeImplementations().map((family) => {
+      freeze(family.definition, true);
+      return [
+        family.definition.id,
+        { family, pin: Object.freeze(definitionPin(family.definition)) },
+      ] as const;
+    }),
+  ));
+}
 function exactRecipeFamily(pin: DefinitionPin): RecipeFamilyDescriptor | undefined {
-  const trusted = trustedRecipeFamilies.get(pin.id);
+  const trusted = recipeImplementations().get(pin.id);
   return trusted &&
     Object.keys(pin).length === 3 &&
     pin.id === trusted.pin.id &&
@@ -320,9 +349,19 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'acousticsPin',
     'activityHosts',
     'recipeFamilies',
+    'rangedPolicy',
+    'rangedPolicyPin',
   ]);
   validateAppraisalPolicy(manifest.appraisals);
   validateActivityHostPins(manifest.activityHosts);
+  validateRangedPolicy(manifest.rangedPolicy);
+  if (
+    manifest.rangedPolicy === null
+      ? manifest.rangedPolicyPin !== null
+      : !isDefinitionPin(manifest.rangedPolicyPin) ||
+        !sameDefinitionPin(manifest.rangedPolicyPin, definitionPin(manifest.rangedPolicy))
+  )
+    throw new Error('Missing exact ranged policy dependency.');
   if (
     manifest.interface !== 'world-modules-v1' ||
     !Number.isSafeInteger(manifest.revision) ||
@@ -808,6 +847,7 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  validateSocialPolicy(world);
   for (const event of world.events)
     if (event.narration !== undefined) validateNarration(event.narration);
   const interval = world.nativeInterval;
@@ -891,6 +931,7 @@ export function validateWorldModules(world: WorldState): void {
   );
   validateCognitionPolicy(world, world.cognitionPolicy);
   validateReincarnation(world);
+  validateRangedActions(world);
   validateNativeStrikes(world);
   validateTerritorialThreats(world);
   for (const e of Object.values(world.entities)) {
@@ -1057,6 +1098,8 @@ export function validateWorldModules(world: WorldState): void {
         throw new Error('Invalid replenishment source.');
     }
     const fireAction = e.actor?.action;
+    if (fireAction && !nativeCommandSupported(world, fireAction.type))
+      throw new Error('Active work requires its installed action support.');
     if (fireAction?.fireGuard !== undefined) {
       const guard = fireAction.fireGuard;
       if (

@@ -8,6 +8,8 @@ The base world uses editable notepads for current understanding and observer-ass
 
 General knowledge describes the actor's external understanding. Subject pads describe what it knows or believes about one individual or object. Keep uncertainty and contrary evidence. Do not copy live inventory, body state, executable techniques, operational goals or event histories into a competing authority. At capacity, rewrite rather than append; no automatic paid rewrite is authorized. Existing self-description workspace quotas are separate.
 
+Fresh base-world construction installs these defaults once. Ada's initial understanding of her camp and practical background is an explicitly authored general knowledge document, preserving the previous wording without presenting it as an observed memory. The missing-belonging opening likewise supplies Mara's and Tavin's authored starting understanding with explicit origin and no fabricated experiential evidence. Ordinary changed edits replace that source with an ordinary publication; restart never reseeds accepted knowledge or converts older self-description files.
+
 Immediate cognition may propose optional `note` and `name` operations. Reflection returns optional-in-purpose `knowledgeChanges` and `nameChanges` arrays, normally empty. Each edit replaces a pad under its supplied revision; creator edits use the same engine mutation through god-only inspection. Accepting a name or writing a note is not required for speaking or acting.
 
 ## Identity and recognition

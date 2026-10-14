@@ -26,10 +26,13 @@ export const BASE_DEATH_SCARS: DeathScar[] = [
   },
 ];
 export const BASE_REINCARNATION_POLICY: ReincarnationPolicy = {
+  implementation: 'rest-replacement',
+  qualifyingController: 'player',
   retainedTypeFraction: 0.5,
   restKind: 'campfire',
   radius: 396,
   spawnOffset: 1.8,
+  placement: { samples: 8, neighborMargin: 3, occupantClearance: 0.75, threatReachMargin: 0.5 },
   fillAttributes: ['wilderness:fullness', 'wilderness:energy'],
   scars: BASE_DEATH_SCARS,
   treatment: { materialId: 'prepared_fiber', quantity: 1, workSeconds: 600, reach: 2.2 },

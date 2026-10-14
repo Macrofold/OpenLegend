@@ -54,6 +54,8 @@ For a move, make **source → destination**, quantity and relevant capacity visi
 
 Use an exact numeric input for quantities, with whole-unit rules only when required by the item/world. Show available quantity and the effect of Split, Move, Give or Drop. All/Half presets are accelerators, not ambiguous defaults. Do not turn blank draft input into a zero-unit mutation. Splits/merges must preserve server identity/history; visual sorting is not merging lots.
 
+Total holdings and units usable for the selected operation are separate facts. Defaults, selectable amounts and material-review dependencies use current usable quantities from the existing quantity/reservation owner; expose the total separately when it helps explain held units. Verify a partial hold that leaves the object eligible, such as six units with four committed to other work, rather than checking only fully free or fully unavailable lots. Current execution still follows [action admission](../action-capabilities.md#action-availability-and-temporary-execution); the chooser grants no reservation.
+
 After a move, keep sensible neighboring focus and announce the actual result. Offer undo only when the backend can genuinely reverse the operation. Consumption, trading or irreversible world effects cannot acquire fake undo just because a toast has room for a button.
 
 ## Bulk operations without bulk mistakes

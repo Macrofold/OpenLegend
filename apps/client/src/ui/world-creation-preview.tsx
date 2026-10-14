@@ -17,7 +17,11 @@ export function WorldCreationPreviewView({ preview }: { preview: WorldCreationPr
       <h4 id={title}>{preview.title}: proposed opening</h4>
       <p>{preview.activity}</p>
       <p>{preview.payoff}</p>
-      {preview.harsh && <p role="status">This opening deliberately includes scarce supplies.</p>}
+      {preview.notices.map((notice, index) => (
+        <p key={index} role="status">
+          {notice}
+        </p>
+      ))}
       <p className="ol-caption">
         Preview only. Nothing here advances the world, uses supplies or teaches a character.
       </p>

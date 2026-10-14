@@ -930,6 +930,7 @@ export interface GodMindView {
   generation?: string;
   notepads?: {
     subjectId: string | null;
+    origin: 'authored-starting' | 'actor-edit';
     label: string;
     text: string;
     revision: number;
@@ -1416,6 +1417,11 @@ export interface FamilyView {
 }
 
 export interface PracticeProgressView {
+  rankLabel: string;
+  progressText: string;
+  authoredStartingText: string;
+  evidenceHeading: string;
+  evidenceItemTemplate: string;
   id: string;
   name: string;
   value: 0 | 1;

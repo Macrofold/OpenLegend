@@ -28,10 +28,8 @@ import type {
   WorldCreationTargetView,
 } from '@open-legend/protocol';
 import {
-  BASE_OPENING_IDENTITY_KEYS,
-  BASE_OPENING_PROFILE,
-  createBaseOpeningCandidate,
-  validateBaseOpeningCandidate,
+  selectedCreationProfileForWorld,
+  selectedCreationProfileForCandidate,
 } from '@open-legend/domain';
 import { countMetric } from './performance.js';
 import { creationOperatingSettings } from './creation-host.js';
@@ -252,48 +250,21 @@ export class WorldAuthoringService {
   }
   private allocateOpeningIdentities(session: AgentSession) {
     if (session.openingIdentities) return;
-    const keys = [
-      ...BASE_OPENING_IDENTITY_KEYS,
-      ...Array.from(
-        { length: BASE_OPENING_PROFILE.limits.scene },
-        (_, index) => `scene-slot-${index}`,
-      ),
-      ...Array.from(
-        { length: BASE_OPENING_PROFILE.limits.stock },
-        (_, index) => `stock-slot-${index}`,
-      ),
-    ];
+    const profile = selectedCreationProfileForWorld(this.service.world);
     session.openingIdentities = {
       worldId: randomUUID(),
-      playerId: randomUUID(),
-      residentId: randomUUID(),
-      objects: Object.fromEntries(keys.map((key) => [key, randomUUID()])),
+      ids: Object.fromEntries(profile.identityKeys.map((key) => [key, randomUUID()])),
     };
   }
   private assertOpeningCandidate(session: AgentSession, payload: unknown) {
-    const value = record(payload);
     const identities = session.openingIdentities;
     if (!identities)
       throw new AuthoringRequestError('Choose a supported opening in a creation session first.');
-    const expected = createBaseOpeningCandidate(identities);
-    const allowed = new Set([
-      identities.playerId,
-      identities.residentId,
-      ...Object.values(identities.objects),
-    ]);
-    if (
-      value.worldId !== identities.worldId ||
-      record(value.player).id !== identities.playerId ||
-      (value.resident !== null && record(value.resident).id !== identities.residentId) ||
-      value.seed !== expected.seed ||
-      value.rngState !== expected.rngState ||
-      !Array.isArray(value.scene) ||
-      !Array.isArray(value.stock) ||
-      [...value.scene, ...value.stock].some((object) => !allowed.has(record(object).id as string))
-    )
-      throw new AuthoringRequestError(
-        'Preserve the application-assigned opening identities and random results. Revise the authored circumstances, not another world’s identifiers.',
-      );
+    const { profile, candidate } = selectedCreationProfileForCandidate(payload);
+    const selected = selectedCreationProfileForWorld(this.service.world);
+    if (profile.id !== selected.id || profile.version !== selected.version)
+      throw new AuthoringRequestError('The candidate uses a different selected creation profile.');
+    profile.assertSessionCandidate(candidate, identities);
   }
 
   openingChoices(scope = this.service.localScope) {
@@ -302,11 +273,13 @@ export class WorldAuthoringService {
     return workResult(
       'ok',
       undefined,
-      BASE_OPENING_PROFILE.openings.map(({ id, label, description }) => ({
-        id,
-        label,
-        description,
-      })),
+      selectedCreationProfileForWorld(this.service.world).choices.map(
+        ({ id, label, description }) => ({
+          id,
+          label,
+          description,
+        }),
+      ),
     );
   }
 
@@ -327,14 +300,13 @@ export class WorldAuthoringService {
       args,
       scope,
       async (session) => {
-        const choice = BASE_OPENING_PROFILE.openings.find(
-          (opening) => opening.id === args.openingId,
-        );
+        const profile = selectedCreationProfileForWorld(this.service.world);
+        const choice = profile.choices.find((opening) => opening.id === args.openingId);
         if (!choice || !session.openingIdentities)
           throw new AuthoringRequestError(
             'Select a supported prepared opening in a creation session.',
           );
-        const payload = createBaseOpeningCandidate(session.openingIdentities, choice.id);
+        const payload = profile.create(session.openingIdentities, choice.id);
         const response = await this.dispatch(
           {
             name: 'ol_draft_create',
@@ -429,14 +401,15 @@ export class WorldAuthoringService {
               prepared.preparation.next,
               'Resolve the retained required findings before reviewing Start.',
             );
-          validateBaseOpeningCandidate(draft.payload);
-          const openingCandidate = draft.payload;
+          const { candidate: openingCandidate } = selectedCreationProfileForCandidate(
+            draft.payload,
+          );
           await this.assertNoEarlierCreation(session, openingCandidate.worldId);
           // This remote wait holds no source database transaction or world mutation lane.
           const checked = await this.creationClient.check(
             args.targetId,
             session.principal,
-            draft.payload,
+            openingCandidate,
           );
           if (checked.status !== 'ready' || !checked.compiledWorldDigest)
             throw new AuthoringRequestError(checked.message, 'blocked');
@@ -595,14 +568,16 @@ export class WorldAuthoringService {
               'The reviewed opening or authority changed. Prepare a new review.',
               'stale',
             );
-          validateBaseOpeningCandidate(draft.payload);
+          const { candidate: openingCandidate } = selectedCreationProfileForCandidate(
+            draft.payload,
+          );
           const installationId = this.service.config.creation.installationId;
           if (!installationId)
             throw new AuthoringRequestError(
               'This source installation has no configured creation target.',
               'unavailable',
             );
-          await this.assertNoEarlierCreation(session, draft.payload.worldId);
+          await this.assertNoEarlierCreation(session, openingCandidate.worldId);
           const request: CreationActivationRequest = {
             sourceInstallationId: installationId,
             creatorAccountId: session.principal,
@@ -614,7 +589,7 @@ export class WorldAuthoringService {
             candidateDigest: plan.creation.candidateDigest,
             compiledWorldDigest: plan.creation.worldDigest,
             expiresAt: plan.creation.expiresAt,
-            candidate: draft.payload,
+            candidate: openingCandidate,
           };
           const operation: OpeningOperation = {
             request,

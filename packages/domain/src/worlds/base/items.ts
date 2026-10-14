@@ -6,6 +6,7 @@ import { BASE_KNIFE_EQUIPMENT, BASE_SPEAR_EQUIPMENT } from './equipment.js';
 /** Native preparation and invented cord share these authored costs and output semantics.
  * docs/worlds/base/items.md#cordage-manufacture-and-reuse */
 export const BASE_CORDAGE_RULE = {
+  label: 'Twist cord',
   input: 'prepared_fiber',
   inputQuantity: 2,
   output: 'cord',
@@ -270,6 +271,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
 
 export const NATIVE_PREPARATIONS = {
   fiber: {
+    label: 'Clean fibers',
     input: 'raw_fiber',
     inputQuantity: 2,
     output: 'prepared_fiber',

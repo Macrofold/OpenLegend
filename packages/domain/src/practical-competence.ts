@@ -2,7 +2,7 @@ import { emit, outcome } from './events.js';
 import { occurrenceFor, renderActivity } from './action-experience.js';
 import { BODY_PROFILES } from '@open-legend/spatial';
 import { recordSemanticChange } from './dependencies.js';
-import { isSafeRecordId } from './records.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { supportsManualWork } from './living.js';
 import { nearbyLivingEntities, canReachEntity, hasLineOfSight, distance } from './spatial.js';
@@ -22,6 +22,8 @@ import type {
 /** Trusted finite-release consumer; authored names/numbers live in the installed definition.
  * docs/projects/authored-stats-tech-design.md#owners-and-data-flow */
 export interface PracticeProfile {
+  coachingEligibility: { communication: 'spoken'; manualWork: boolean };
+  presentation: PracticePresentation;
   family: DefinitionPin;
   independentReleases: number;
   coachedReleases: number;
@@ -35,6 +37,80 @@ export interface PracticeProfile {
   scope: string;
   guidance: string;
   improvedText: string;
+}
+export interface PracticePresentation {
+  ranks: [string, string];
+  unavailableRank: string;
+  effect: string;
+  progress: string;
+  authoredStarting: string;
+  evidenceHeading: string;
+  evidenceItem: string;
+  evidenceFallback: string;
+  laneOutOfReach: string;
+  laneBlocked: string;
+  laneUnsafe: string;
+  practiceDescription: string;
+  practiceActivityLabel: string;
+  coachingActivityLabel: string;
+  selectedTool: string;
+  missingTool: string;
+  targetChance: string;
+  requestLabel: string;
+  requestDescription: string;
+  acceptLabel: string;
+  acceptDescription: string;
+  declineLabel: string;
+  declineDescription: string;
+  feedbackDescription: string;
+  withdrawLabel: string;
+  withdrawDescription: string;
+  unavailable: string;
+  observationRequired: string;
+  requestResult: string;
+  requestEventSuffix: string;
+  acceptResult: string;
+  acceptEventSuffix: string;
+  endResult: string;
+  observedEvent: string;
+  completeResult: string;
+  cancelResult: string;
+  endedEvent: string;
+}
+/** Bounded descriptive substitution, never executable prose or permission. */
+export function practiceText(
+  profile: PracticeProfile,
+  key: Exclude<keyof PracticePresentation, 'ranks'>,
+  values: Readonly<Record<string, string | number>> = {},
+): string {
+  return profile.presentation[key].replace(/\{([a-zA-Z]+)\}/g, (match, name: string) =>
+    Object.hasOwn(values, name) ? String(values[name]) : match,
+  );
+}
+export function practiceRank(profile: PracticeProfile, value: 0 | 1 | undefined): string {
+  return value === undefined
+    ? profile.presentation.unavailableRank
+    : profile.presentation.ranks[value];
+}
+export function describePractice(
+  profile: PracticeProfile,
+  targetName: string,
+  toolName?: string,
+  accuracy?: number,
+): string {
+  return practiceText(profile, 'practiceDescription', {
+    label: profile.practiceLabel,
+    target: targetName,
+    tool: toolName
+      ? practiceText(profile, 'selectedTool', { toolName })
+      : profile.presentation.missingTool,
+    windupSeconds: profile.windupSeconds,
+    chance:
+      accuracy === undefined
+        ? ''
+        : practiceText(profile, 'targetChance', { accuracyPercent: accuracy * 100 }),
+    scope: profile.scope,
+  });
 }
 export interface ReleaseSupport {
   occurrenceId: string;
@@ -64,6 +140,11 @@ export interface PracticeView {
   coached: boolean;
   scope: string;
   effect: string;
+  rankLabel: string;
+  progressText: string;
+  authoredStartingText: string;
+  evidenceHeading: string;
+  evidenceItemTemplate: string;
   evidence: (ReleaseSupport & { description: string })[];
 }
 export type PracticeStatus = Omit<PracticeView, 'evidence'>;
@@ -88,7 +169,7 @@ export function initializePractice(
   starting: unknown,
 ): void {
   if (starting !== 0 && starting !== 1)
-    throw new Error('Starting competence must be explicitly beginner or practiced.');
+    throw new Error('Starting competence must be explicitly rank 0 or rank 1.');
   if (actor.practice?.[definition.id]) throw new Error('Competence is already initialized.');
   (actor.practice ??= {})[definition.id] = { starting, revision: 0, releases: [] };
 }
@@ -132,7 +213,7 @@ export function handlingAccuracy(
   world: WorldState,
   actor: Entity,
   tool: ItemDefinition,
-): { accuracy: number; competence?: number; definition?: AttributeDefinition } {
+): { accuracy: number; competence?: 0 | 1; definition?: AttributeDefinition } {
   const definition = toolPracticeDefinition(world, tool);
   const competence = definition && actor.actor && competenceValue(actor.actor, definition);
   const accuracy = tool.launcher!.accuracy;
@@ -162,7 +243,18 @@ export function practiceStatus(world: WorldState, actor: Entity): PracticeStatus
             coachedRequired: profile.coachedReleases,
             coached: !!p.coaching,
             scope: profile.scope,
-            effect: `${profile.missReduction * 100}% reduction of the tool-related miss chance; later shots only.`,
+            effect: practiceText(profile, 'effect', {
+              missReductionPercent: profile.missReduction * 100,
+            }),
+            rankLabel: practiceRank(profile, value),
+            progressText: practiceText(profile, 'progress', {
+              releases: p.releases.length,
+              independentRequired: profile.independentReleases,
+              coached: p.coaching ? 'yes' : 'no',
+            }),
+            authoredStartingText: profile.presentation.authoredStarting,
+            evidenceHeading: profile.presentation.evidenceHeading,
+            evidenceItemTemplate: profile.presentation.evidenceItem,
           },
         ];
   });
@@ -176,7 +268,7 @@ export function ownPractice(world: WorldState, actor: Entity): PracticeView[] {
         ...support,
         description: recorded
           ? renderActivity(recorded.view, 'What happened')
-          : 'Retained released-shot evidence; inspect the recorded action for its historical details.',
+          : practiceDefinition(world, status.id)!.practice!.presentation.evidenceFallback,
       };
     }),
   }));
@@ -291,31 +383,24 @@ export function practiceLaneProblem(
   actor: Entity,
   target: Entity,
   range: number,
-  margin: number,
+  profile: PracticeProfile,
 ): Outcome | null {
+  const margin = profile.laneMargin;
   if (!canReachEntity(world, actor, target, range))
-    return outcome(
-      false,
-      'out-of-reach',
-      'The practice target is outside a clear firing range. No shot was released.',
-    );
+    return outcome(false, 'out-of-reach', profile.presentation.laneOutOfReach);
   const from = worldPosition(actor),
     to = worldPosition(target),
     length = distance(from, to);
   const eye = { ...from, y: from.y + bodyProfile(actor).height / 2 },
     aim = { ...to, y: to.y + bodyProfile(target).height / 2 };
   if (!hasLineOfSight(world, eye, aim))
-    return outcome(false, 'blocked-lane', 'The firing lane is blocked. No shot was released.');
+    return outcome(false, 'blocked-lane', profile.presentation.laneBlocked);
   for (const entity of nearbyLivingEntities(world, from, length + margin + bodyExtent)) {
     chargeWork({ tests: 1 });
     if (entity.id === actor.id || !entity.actor?.alive) continue;
     const body = bodyProfile(entity);
     if (crossesBody(eye, aim, worldPosition(entity), body.radius + margin, body.height))
-      return outcome(
-        false,
-        'blocked-lane',
-        'The firing lane is not safely clear. No shot was released.',
-      );
+      return outcome(false, 'blocked-lane', profile.presentation.laneUnsafe);
   }
   return null;
 }
@@ -361,6 +446,55 @@ export function validatePracticeProfile(definition: AttributeDefinition): void {
   const p = definition.practice;
   if (
     !p ||
+    !hasRecordFields(p.coachingEligibility, ['communication', 'manualWork']) ||
+    p.coachingEligibility.communication !== 'spoken' ||
+    typeof p.coachingEligibility.manualWork !== 'boolean' ||
+    !hasRecordFields(p.presentation, [
+      'ranks',
+      'unavailableRank',
+      'effect',
+      'progress',
+      'authoredStarting',
+      'evidenceHeading',
+      'evidenceItem',
+      'evidenceFallback',
+      'laneOutOfReach',
+      'laneBlocked',
+      'laneUnsafe',
+      'practiceDescription',
+      'practiceActivityLabel',
+      'coachingActivityLabel',
+      'selectedTool',
+      'missingTool',
+      'targetChance',
+      'requestLabel',
+      'requestDescription',
+      'acceptLabel',
+      'acceptDescription',
+      'declineLabel',
+      'declineDescription',
+      'feedbackDescription',
+      'withdrawLabel',
+      'withdrawDescription',
+      'unavailable',
+      'observationRequired',
+      'requestResult',
+      'requestEventSuffix',
+      'acceptResult',
+      'acceptEventSuffix',
+      'endResult',
+      'observedEvent',
+      'completeResult',
+      'cancelResult',
+      'endedEvent',
+    ]) ||
+    !Array.isArray(p.presentation.ranks) ||
+    p.presentation.ranks.length !== 2 ||
+    !Object.values(p.presentation)
+      .flat()
+      .every(
+        (value) => typeof value === 'string' && value.trim().length > 0 && value.length <= 1600,
+      ) ||
     definition.schema.kind !== 'number' ||
     definition.schema.min !== 0 ||
     definition.schema.max !== 1 ||

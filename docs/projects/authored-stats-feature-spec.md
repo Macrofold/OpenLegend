@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected sling practice and coaching consumer is delivered and reviewed; human appreciation and broader optional stats/checks remain open. | 2026-10-07   |
+| In progress | The selected sling practice and coaching consumer is delivered and reviewed; human appreciation and broader optional stats/checks remain open. | 2026-10-14   |
 
 **Status: selected DG14 consumer delivered October 6, 2026; broader examples remain proposals.** This develops ND03 and ND04's selected practical-skill slice. The [scoped technical counterpart](authored-stats-tech-design.md) and [qualification](../verification/practical-competence.md) cover section 16's sling releases, target, private progress and voluntary coaching. Human appreciation remains open. Configurable contested checks, the roof/2d6 example and other stats remain future work. Existing action, state, knowledge, invention, world-policy and accounting owners remain authoritative.
 

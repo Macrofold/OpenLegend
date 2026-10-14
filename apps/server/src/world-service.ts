@@ -1,5 +1,6 @@
 import { assemblyView } from './construction.js';
 import { reconcileConstructionAuthority } from '@open-legend/domain';
+import { endsCoachingConsent, endsOutingConsent } from '@open-legend/domain';
 import {
   inventoryFor,
   nearbyEntities,
@@ -8,7 +9,9 @@ import {
   seesEntity,
   worldRootEntities,
   compileAssemblyRest,
-  beginCanopyShower,
+  beginConstructionShower,
+  constructionProfile,
+  constructionShowerText,
 } from '@open-legend/domain';
 import { constructionPlanSchema } from './construction.js';
 import {
@@ -30,7 +33,6 @@ import {
 } from '@open-legend/domain';
 import type { ConstructionView, ConstructionShape } from '@open-legend/protocol';
 import {
-  BASE_CANOPY_SCENE,
   compileAssemblyActivity,
   type ConstructionPermission,
   type AssemblyPlan,
@@ -3039,17 +3041,26 @@ export class WorldService {
       };
     });
   }
-  async canopyShower(id: string, scope = this.localScope): Promise<ApiResult> {
+  async constructionShower(id: string, scope = this.localScope): Promise<ApiResult> {
     this.assertScope(scope, 'create');
-    return this.transition((world) => beginCanopyShower(world, id));
+    return this.transition((world) => beginConstructionShower(world, id));
   }
   constructionView(scope = this.localScope): ConstructionView {
     this.assertScope(scope);
-    const world = this.world,
-      family = Object.values(world.assemblyFamilies!)[0]!,
-      permissions = this.store
-        .authority!.constructionPermissions(world.id)
-        .filter((p) => p.actorId === scope.actorId && !p.revoked);
+    const world = this.world;
+    const selected = constructionProfile(world);
+    if (!selected)
+      return {
+        ok: false,
+        revision: this.version,
+        authorized: false,
+        canCueShower: false,
+        message: 'This world has no supported construction selection.',
+      };
+    const { family, profile } = selected;
+    const permissions = this.store
+      .authority!.constructionPermissions(world.id)
+      .filter((p) => p.actorId === scope.actorId && !p.revoked);
     const visible = new Set(
       nearbyEntities(
         world,
@@ -3061,16 +3072,16 @@ export class WorldService {
     );
     const materials = inventoryFor(world, scope.actorId).flatMap((item) => {
       const descriptor = world.itemDefinitions[item.definitionId]?.assemblyMaterial;
-      if (!descriptor) return [];
-      const role = descriptor.role,
-        materialFamily = world.assemblyFamilies![descriptor.familyId]!;
+      if (!descriptor || descriptor.familyId !== family.id) return [];
+      const role = descriptor.role;
+      const availableQuantity = availableItemQuantity(world, item.id);
       const reason = world.entities[item.id]?.item?.assemblyClaim
         ? 'This piece belongs to the structure; reclaim it through its building controls.'
         : !permissions.some((p) => materialAuthorized(world, item.id, p))
           ? 'Carrying this material does not grant permission to build with it.'
-          : !materialUsable(world, item.id, materialFamily, role)
+          : !materialUsable(world, item.id, family, role)
             ? 'This material does not meet the condition required for the selected attachment.'
-            : availableItemQuantity(world, item.id) < 1
+            : availableQuantity < 1
               ? 'This material is held for unfinished work.'
               : undefined;
       const eligible = !reason;
@@ -3080,6 +3091,7 @@ export class WorldService {
           id: item.id,
           name: world.entities[item.id]!.name,
           quantity: item.quantity,
+          availableQuantity,
           role,
           eligible,
           ...(descriptor.postHeight ? { postHeight: descriptor.postHeight } : {}),
@@ -3091,6 +3103,7 @@ export class WorldService {
     const lowered = Object.values(world.entities).flatMap((item) => {
       const rootId = item.item?.assemblyClaim?.rootId;
       return rootId &&
+        world.entities[rootId]?.assembly?.family.id === family.id &&
         visible.has(rootId) &&
         !world.entities[rootId]?.assembly?.parts[item.id] &&
         permissions.length
@@ -3101,7 +3114,7 @@ export class WorldService {
       ok: true,
       revision: this.version,
       authorized: permissions.length > 0,
-      canCueShower: this.currentScope(scope, 'create'),
+      canCueShower: !!profile.shower && this.currentScope(scope, 'create'),
       family: {
         id: family.id,
         name: family.name,
@@ -3118,9 +3131,20 @@ export class WorldService {
         invitationText: family.presentation.invitationText,
         postSeconds: family.seconds.post,
         coverSeconds: family.seconds.cover,
-        showerSeconds: BASE_CANOPY_SCENE.rainSeconds,
       },
-      suggested: BASE_CANOPY_SCENE.suggested,
+      suggested: { ...profile.suggested },
+      ...(profile.shower
+        ? {
+            shower: {
+              actionLabel: constructionShowerText(
+                profile.shower.actionLabel,
+                profile.shower.seconds,
+              ),
+              remainingText: profile.shower.remainingText,
+              endedText: profile.shower.endedText,
+            },
+          }
+        : {}),
       materials,
       lowered,
       ...(world.finiteRain
@@ -3273,12 +3297,27 @@ export class WorldService {
     }
     return [...fences].map(([id, revision]) => ({ id, revision }));
   }
+  /** Manual pause permits deliberate inspection and revoking one's own cooperation
+   * consent. Forced pauses and current control/episode admission still protect writes. */
+  private commandWhileManuallyPaused(command: Command | undefined): boolean {
+    return (
+      !!command &&
+      (command.type === 'inspect-inventory' ||
+        endsCoachingConsent(command) ||
+        endsOutingConsent(command)) &&
+      this.saved.manuallyPaused &&
+      !this.maintenanceHeld &&
+      !this.absent &&
+      this.storageError === null
+    );
+  }
+
   async transition(
     operation: (world: WorldState) => Transition,
     gameplay?: Omit<GameplayReceipt, 'result'>,
     responseJobId?: string,
     validateSources?: (world: WorldState) => Promise<boolean>,
-    commandType?: Command['type'],
+    command?: Command,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
@@ -3308,13 +3347,7 @@ export class WorldService {
         };
       // Deliberate inspection records permitted facts at frozen time. Other reasons
       // for holding the writer still apply (docs/ui-ux/world-interaction.md#paused-game-tabs).
-      const manuallyPausedInspection =
-        commandType === 'inspect-inventory' &&
-        this.saved.manuallyPaused &&
-        !this.maintenanceHeld &&
-        !this.absent &&
-        this.storageError === null;
-      if (this.paused && !manuallyPausedInspection)
+      if (this.paused && !this.commandWhileManuallyPaused(command))
         return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
       const result = operation(this.world);
       const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
@@ -4814,7 +4847,11 @@ export class WorldService {
     if (!('actorId' in bound)) return bound;
     let command = bound;
     if (preview) {
-      if (this.paused && input.type !== 'inspect-inventory')
+      if (
+        this.paused &&
+        input.type !== 'inspect-inventory' &&
+        !this.commandWhileManuallyPaused(command)
+      )
         return { ok: false, code: 'paused', message: 'Resume the world to act.' };
       const { outcome } = executeCommand(this.world, command, {
         preview: true,
@@ -4907,7 +4944,7 @@ export class WorldService {
       gameplay,
       undefined,
       undefined,
-      command.type,
+      command,
     ).then((result) => {
       if (lethalReviewId && (result.ok || result.code === 'lethal-review-stale'))
         this.lethalReviews.delete(actorId);

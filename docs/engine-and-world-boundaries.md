@@ -120,6 +120,16 @@ Keep authoritative event facts and each observer’s permitted evidence distinct
 
 When a newly discovered case fails, trace the owner and complete producer-to-consumer path against these principles before adding a local branch, duplicate state or stronger prompt. State the general missing fact, contract or operation, repair its owner, and check a materially different case plus a meaningful failure. A successful forced experiment identifies a missing link; it cannot establish that the general design works. Reassess the architecture when the repair would bypass an owner or create competing representations. Do not change acceptance to excuse a defect.
 
+### Trace selected world behavior through its consumers
+
+Before changing a selected rule, installation or authored explanation, identify the actual producer and every consumer that independently constructs its meaning: ordinary and inventory menus, entity/equipped shortcuts, resident choices, grounding/help/schema examples, activity/status descriptions, records, learned methods and restoration. Trace defaults and explicit operator overrides through actual execution as well as startup. Component presence or linked implementation code alone cannot establish installation. A temporary missing prerequisite differs from an omitted capability; each affected consumer uses the same selected owner rather than recreating a bundled fallback.
+
+Verify the changed selected meaning through its affected downstream callers, including secondary shortcuts and current wording. For behavior or installation changes, include a materially different supported rule and omission. Preserve historical facts separately from current availability: exact trusted meaning can interpret finished records without granting another attempt, while resumable work needs its current required support. For action records, output bindings or reusable methods, also read the relevant [action-experience contract](action-experience.md). [The October 14 review](verification/world-engine-boundaries.md#requested-full-review--october-14-2026) found these missed consumers after the primary menu/executor already used the selected rules; it supplies examples, not new universal gameplay laws.
+
+### Delivered selected boundaries
+
+The [current architecture](architecture.md#selected-world-behavior-and-protected-execution) resolves activity/recipe implementations at one trusted composition point and uses exact saved installation for discovery, admission and continuation. Service-specific creation, ranged, material, lifecycle, competence and cognition contracts own the meaning consumed by their shared execution/presentation paths. The shipped creation profile remains finite; bounded definitions select supported computation rather than loading code. [Verification](verification/world-engine-boundaries.md) demonstrates materially different native configurations and current repository continuation; this does not complete EWF03's optional health or EWF09's broader release gates.
+
 ### Intentional v1 specificity
 
 Do not scatter placeholder interfaces everywhere. A deliberate fixed implementation is acceptable when:

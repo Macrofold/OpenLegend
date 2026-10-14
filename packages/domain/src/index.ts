@@ -1,3 +1,8 @@
+export * from './world-creation.js';
+export * from './world-composition.js';
+export * from './social-policy.js';
+export * from './ranged-policy.js';
+export * from './native-command-contracts.js';
 export * from './types.js';
 export * from './worlds/base/initial-opening.js';
 export * from './worlds/base/opening-readiness.js';
@@ -28,7 +33,6 @@ export * from './activity-learning.js';
 export * from './activity-execution.js';
 export {
   BASE_FOOD_ACTION_WORDING,
-  nativeActivityView,
   equippedTargetAction,
   nativeCatalogueView,
   nativeHuntCatalogueLabel,
@@ -295,5 +299,5 @@ export * from './material-exposure.js';
 export * from './assembly-validation.js';
 
 export * from './assembly-use.js';
-export { beginCanopyShower } from './worlds/base/canopy-scene.js';
+export * from './construction-scene.js';
 export { BASE_CONSTRUCTION_DESCRIPTIONS } from './worlds/base/canopies.js';

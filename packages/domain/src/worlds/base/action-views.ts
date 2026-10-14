@@ -9,7 +9,8 @@ import { worldPosition } from '../../spatial-state.js';
 import { seesEntity } from '../../perception.js';
 import { observerDescription } from './knowledge.js';
 import { strikeDefinition, describeAttack } from '../../strikes.js';
-import { BASE_ACTION_DEFAULTS, rangedApproachRange } from './actions.js';
+import { BASE_ACTION_DEFAULTS } from './actions.js';
+import { rangedPolicy, rangedApproachRange } from '../../ranged-policy.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
@@ -220,7 +221,7 @@ function activityView(
       });
     }
   }
-  if (command.type === 'hunt' && definition?.launcher) {
+  if (command.type === 'hunt' && definition?.launcher && rangedPolicy(world)) {
     const compatible = (item: ItemInstance) =>
       world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
       definition.launcher!.ammunitionKind;
@@ -239,13 +240,13 @@ function activityView(
       value: describeAttack({
         ...definition.launcher,
         damage: definition.launcher.damage + (ammo?.ammunition?.damageBonus ?? 0),
-        workSeconds: BASE_ACTION_DEFAULTS.shotSeconds,
+        workSeconds: rangedPolicy(world)!.windupSeconds,
       }),
       critical: true,
     });
     view.facts.push({
       name: 'approach',
-      value: `Move to within ${rangedApproachRange(definition.launcher.range).toFixed(2)} m; the route length is not known`,
+      value: `Move to within ${rangedApproachRange(world, definition.launcher.range).toFixed(2)} m; the route length is not known`,
       critical: true,
     });
     view.facts.push({
@@ -487,7 +488,8 @@ function nativeCatalogueCommitments(
       `${'autoEquip' in command && command.autoEquip ? equipmentChangeDescription(world, command.actorId, heldItemId) : ''}Requires this exact item to be held${command.type === 'guard' ? '; guarding stays in place' : '; approach is automatic'}`,
     ]);
   if (command.type === 'hunt') {
-    facts.push(['Time', `${BASE_ACTION_DEFAULTS.shotSeconds} seconds of game time, plus approach`]);
+    const policy = rangedPolicy(world);
+    if (policy) facts.push(['Time', `${policy.windupSeconds} seconds of game time, plus approach`]);
     if (command.ammoItemId) {
       const projectile = activityView(
         world,

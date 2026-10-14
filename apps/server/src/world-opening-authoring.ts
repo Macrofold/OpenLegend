@@ -1,14 +1,10 @@
 import {
-  BASE_OPENING_PROFILE,
-  baseOpeningEditorFields,
-  buildBaseInitialWorld,
-  checkBaseOpeningReadiness,
+  selectedCreationProfileForCandidate,
   freezeWorld,
-  supportedPosition,
   spatialMap,
-  validateBaseOpeningCandidate,
-  type BaseInitialWorldCandidate,
-  type BaseInitialWorldPreparation,
+  type WorldCreationCandidate,
+  type InitialWorldPreparation,
+  type OpeningReadiness,
   type WorldState,
 } from '@open-legend/domain';
 import type {
@@ -29,9 +25,9 @@ import { prepareCandidateNavigation } from './navigation/preparation.js';
 export const OPENING_CHECKER_VERSION = 'initial-opening-native-1';
 export interface PreparedOpening {
   key: string;
-  candidate: BaseInitialWorldCandidate;
-  preparation: BaseInitialWorldPreparation;
-  readiness: ReturnType<typeof checkBaseOpeningReadiness>;
+  candidate: WorldCreationCandidate;
+  preparation: InitialWorldPreparation;
+  readiness: OpeningReadiness;
   pending?: Promise<void>;
 }
 // Only the last complete preparation is retained by each service. It is owned data,
@@ -47,7 +43,7 @@ export function inspectOpening(
 ) {
   service.assertScope(scope, 'create');
   service.assertScope(scope, 'inspect');
-  validateBaseOpeningCandidate(payload);
+  const { profile, candidate: validated } = selectedCreationProfileForCandidate(payload);
   const key = fingerprint([payload, scope.accountId]);
   // An admitted operation can retain its exact immutable preparation across storage
   // waits even if another creator replaces the service's single recent cache entry.
@@ -56,13 +52,13 @@ export function inspectOpening(
   if (result?.key !== key) {
     // The profile's fresh preparation receives only authenticated account meaning.
     // No source-world people, inventory, knowledge or history enter this builder.
-    const candidate = structuredClone(payload);
-    const preparation = buildBaseInitialWorld(candidate, {
+    const candidate = structuredClone(validated);
+    const preparation = profile.build(candidate, {
       creatorAccountIds: [scope.accountId],
       playerAccountId: scope.accountId,
     });
     validateCurrentWorldState(preparation.world);
-    const readiness = checkBaseOpeningReadiness(candidate, preparation.world);
+    const readiness = profile.readiness(candidate, preparation.world);
     freezeWorld(preparation.world);
     result = { key, candidate, preparation, readiness };
     prepared.set(service, result);
@@ -76,10 +72,11 @@ export function inspectOpening(
 let recentRoutes: { key: string; value: ReturnType<typeof prepareCandidateNavigation> } | undefined;
 
 export async function prepareOpeningReadiness(
-  candidate: BaseInitialWorldCandidate,
+  candidate: WorldCreationCandidate,
   world: WorldState,
 ) {
-  const initial = checkBaseOpeningReadiness(candidate, world);
+  const { profile } = selectedCreationProfileForCandidate(candidate);
+  const initial = profile.readiness(candidate, world);
   if (!initial.navigation.length) return initial;
   const map = spatialMap(world);
   const key = fingerprint([map, initial.navigation]);
@@ -104,7 +101,7 @@ export async function prepareOpeningReadiness(
     recentRoutes === batch
   )
     recentRoutes = undefined;
-  return checkBaseOpeningReadiness(candidate, world, routes);
+  return profile.readiness(candidate, world, routes);
 }
 
 export async function settleOpeningReadiness(
@@ -117,7 +114,10 @@ export async function settleOpeningReadiness(
     result.readiness.findings.some((finding) => finding.status === 'incomplete') &&
     !result.pending
   )
-    result.readiness = checkBaseOpeningReadiness(result.candidate, result.preparation.world);
+    result.readiness = selectedCreationProfileForCandidate(result.candidate).profile.readiness(
+      result.candidate,
+      result.preparation.world,
+    );
   if (result.readiness.navigation.length) {
     result.pending ??= prepareOpeningReadiness(result.candidate, result.preparation.world)
       .then((readiness) => {
@@ -171,76 +171,18 @@ export function openingPreview(
 ): WorldCreationPreview {
   service.assertScope(scope, 'create');
   service.assertScope(scope, 'inspect');
-  validateBaseOpeningCandidate(payload);
-  const candidate = payload;
-  let native: PreparedOpening;
+  const { profile, candidate } = selectedCreationProfileForCandidate(payload);
   try {
-    native = inspectOpening(service, payload, scope, settled);
+    const native = inspectOpening(service, payload, scope, settled);
+    return profile.preview(candidate, native.preparation.world, native.readiness);
   } catch (error) {
-    const activity = BASE_OPENING_PROFILE.openings.find(
-      (opening) => opening.id === candidate.opening,
-    )!;
-    // These are declared starting circumstances, never a successfully prepared world.
-    // Keep invalid geometry visible so the creator can repair the exact retained idea.
-    return {
-      worldId: candidate.worldId,
-      title: candidate.title,
-      activity: activity.activity,
-      payoff: activity.payoff,
-      harsh: candidate.harsh,
-      entries: [
-        candidate.player,
-        ...(candidate.resident ? [candidate.resident] : []),
-        ...candidate.scene,
-      ].map((entry) => ({
-        id: entry.id,
-        label: entry.name,
-        kind: 'initialGoals' in entry ? 'person' : entry.kind,
-        position: entry.position,
-        description: 'description' in entry ? entry.description : '',
-      })),
-      findings: [
-        {
-          id: 'native-preparation',
-          status: 'failed',
-          message: `Declared layout only; native preparation failed: ${error instanceof Error ? error.message : 'the opening is unusable.'}`,
-        },
-      ],
-    };
+    return profile.preview(
+      candidate,
+      undefined,
+      undefined,
+      error instanceof Error ? error.message : 'the opening is unusable.',
+    );
   }
-  const { preparation, readiness } = native;
-  const activity = BASE_OPENING_PROFILE.openings.find(
-    (opening) => opening.id === candidate.opening,
-  );
-  if (!activity) throw new Error('The selected opening profile is unavailable.');
-  return {
-    worldId: candidate.worldId,
-    title: candidate.title,
-    activity: activity.activity,
-    payoff: activity.payoff,
-    harsh: candidate.harsh,
-    entries: Object.values(preparation.world.entities).flatMap((entity) => {
-      if (entity.placement?.mode !== 'world') return [];
-      const position = supportedPosition(entity);
-      if (!position) throw new Error('A starting object has no native world position.');
-      return [
-        {
-          id: entity.id,
-          label: entity.name,
-          kind: entity.kind,
-          position: { x: position.x, y: position.y, z: position.z },
-          description: entity.description ?? '',
-          ...(entity.resource ? { quantity: entity.resource.quantity } : {}),
-        },
-      ];
-    }),
-    findings: readiness.findings.map((finding) => ({
-      id: finding.id,
-      status:
-        finding.status === 'ready' ? 'passed' : finding.status === 'blocked' ? 'failed' : 'pending',
-      message: finding.message,
-    })),
-  };
 }
 
 export function openingEditor(
@@ -250,21 +192,8 @@ export function openingEditor(
 ): WorldAgentDraftEditorView {
   service.assertScope(scope, 'create');
   service.assertScope(scope, 'inspect');
-  validateBaseOpeningCandidate(payload);
-  const candidate = payload;
-  return {
-    family: { ...candidate.profile },
-    fields: baseOpeningEditorFields(candidate),
-    facts: [
-      { id: 'people', label: 'People initially present', value: candidate.resident ? 2 : 1 },
-      { id: 'stock', label: 'Explicit initial stock lots', value: candidate.stock.length },
-      {
-        id: 'world',
-        label: 'Publication',
-        value: 'Fresh paused world; no existing world is replaced.',
-      },
-    ],
-  };
+  const { profile, candidate } = selectedCreationProfileForCandidate(payload);
+  return profile.editor(candidate);
 }
 
 export function prepareOpeningAuthoring(

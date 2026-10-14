@@ -9,6 +9,7 @@ import {
   acquiredActivities,
   activityRequestChoices,
   activityRequestDescriptors,
+  itemOutputFamilies,
   portableItems,
   worldPosition,
   worldSupport,
@@ -57,7 +58,11 @@ import {
   responseTriggerContext,
 } from './response-context.js';
 import { attentionRequest } from './attention-request.js';
-import { ACTION_REASON_POLICY, attentionIncludes, JEV_ACTION_THRESHOLD } from './jev-questions.js';
+import {
+  ACTION_EVIDENCE_POLICY,
+  attentionIncludes,
+  JEV_ACTION_THRESHOLD,
+} from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { navigationInstructions } from './navigation-contracts.js';
 import { buildConversationContext, type ConversationGenerate } from './conversation-context.js';
@@ -412,6 +417,7 @@ export async function prepareDecision(
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
     navigation: navigationInstructions(world),
     namedTimes: namedClockTimes(world),
+    outputFamilies: itemOutputFamilies(world),
     currentPosition: worldPosition(observed.actor),
     currentSupport: worldSupport(observed.actor),
     publicSurfaces:
@@ -680,6 +686,7 @@ export async function prepareDecision(
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
     navigation: navigationInstructions(currentWorld),
     namedTimes: namedClockTimes(currentWorld),
+    outputFamilies: itemOutputFamilies(currentWorld),
     currentPosition: worldPosition(currentObserved.actor),
     currentSupport: worldSupport(currentObserved.actor),
     publicSurfaces:
@@ -849,6 +856,7 @@ export async function prepareDecision(
   return {
     context,
     prompt,
+    actionGuidance: structuredClone(currentWorld.cognitionPolicy.actionGuidance),
     // Entity handles were projected with the rest of the permitted context above;
     // retain their known producer type for the typed activity chooser.
     activityRequests: context['activityRequests'] as typeof currentActivity.activityRequests,
@@ -933,10 +941,11 @@ export async function selectDecisionActions(
           ([key]) => !['knowledgeInstructions', 'navigation', 'planOffers'].includes(key),
         ),
       ),
-      attentionPolicy: `${ACTION_REASON_POLICY}${purpose === 'actions' ? ' Include uncertain but plausible options without choosing a final action. Listing is not endorsement; no action and unlisted attempts remain valid.' : ''}`,
+      attentionPolicy: `${prepared.actionGuidance.reasons} ${ACTION_EVIDENCE_POLICY}${purpose === 'actions' ? ' Include uncertain but plausible options without choosing a final action. Listing is not endorsement; no action and unlisted attempts remain valid.' : ''}`,
     },
     Object.entries(candidateDescriptions),
     purpose,
+    prepared.actionGuidance,
   );
   const judged = Object.keys(request.questions).length ? await judge(request) : { answers: {} };
   const selected = candidates.filter((_, index) => {

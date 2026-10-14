@@ -1348,7 +1348,7 @@ async function initializeGameServer(
               : 'play';
         responseCapability = required;
         const controlling = [
-          '/api/god/canopy-shower',
+          '/api/god/construction-shower',
           '/api/construction/preview',
           '/api/command',
           '/api/knowledge',
@@ -1654,11 +1654,11 @@ async function initializeGameServer(
                 ok: true,
                 profile: await service.setPreferences(preferences.parse(body), scope),
               });
-            case '/api/god/canopy-shower':
+            case '/api/god/construction-shower':
               return send(
                 response,
                 200,
-                await service.canopyShower(
+                await service.constructionShower(
                   z.object({ id: z.string().uuid() }).strict().parse(body).id,
                   scope,
                 ),

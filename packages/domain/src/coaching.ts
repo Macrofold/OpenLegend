@@ -18,6 +18,8 @@ import {
   creditCoaching,
   practiceDefinition,
   validReleaseSupport,
+  practiceText,
+  type PracticeProfile,
   type ReleaseSupport,
 } from './practical-competence.js';
 import type { DefinitionPin } from './world-modules.js';
@@ -34,14 +36,26 @@ export interface CoachingEpisode {
   startedAt?: number;
 }
 type CoachingCommand = Extract<Command, { type: 'coaching' }>;
+/** Ending consent admits no new physical work; the current participant/episode is
+ * still checked by coachingProblem before any effect. */
+export function endsCoachingConsent(command: Command): boolean {
+  return (
+    command.type === 'coaching' &&
+    (command.operation === 'withdraw' || command.operation === 'decline')
+  );
+}
 const allocation = { live: 1, retainedBytes: 2048, subscriptions: 2 };
-const available = (world: WorldState, entity: Entity | undefined): entity is Entity =>
+const available = (
+  world: WorldState,
+  entity: Entity | undefined,
+  profile: PracticeProfile,
+): entity is Entity =>
   !!entity?.actor?.alive &&
   !entity.actor.incapacitated &&
   !entity.retirement &&
   activelyParticipates(entity) &&
-  supportsManualWork(entity) &&
-  canSpeak(entity) &&
+  (!profile.coachingEligibility.manualWork || supportsManualWork(entity)) &&
+  (profile.coachingEligibility.communication !== 'spoken' || canSpeak(entity)) &&
   worldSupport(entity) !== null &&
   !capabilityBlocked(world, entity, 'actions') &&
   !capabilityBlocked(world, entity, 'speech');
@@ -79,8 +93,8 @@ function episodeValid(world: WorldState, episode: CoachingEpisode): boolean {
   if (
     !definition ||
     !sameDefinitionPin(definitionPin(definition), episode.pin) ||
-    !available(world, learner) ||
-    !available(world, coach) ||
+    !available(world, learner, definition.practice!) ||
+    !available(world, coach, definition.practice!) ||
     competenceValue(learner.actor!, definition) === undefined ||
     !seesEntity(world, coach, learner) ||
     !seesEntity(world, learner, coach) ||
@@ -111,14 +125,14 @@ export function coachingProblem(
   actor: Entity,
   command: CoachingCommand,
 ): Outcome | null {
+  const definition = practiceDefinition(world, command.attributeId);
   const rejected = () =>
     outcome(
       false,
       'coaching-unavailable',
-      'This coaching episode is unavailable. Actual releases still count independently.',
+      definition?.practice?.presentation.unavailable ?? 'This selected activity is unavailable.',
     );
-  const other = world.entities[command.targetId],
-    definition = practiceDefinition(world, command.attributeId);
+  const other = world.entities[command.targetId];
   const episode = coachingFor(world, actor.id);
   const matched =
     !!episode &&
@@ -135,8 +149,8 @@ export function coachingProblem(
       : rejected();
   if (
     !definition ||
-    !available(world, actor) ||
-    !available(world, other) ||
+    !available(world, actor, definition.practice!) ||
+    !available(world, other, definition.practice!) ||
     actor.id === other.id ||
     !seesEntity(world, actor, other) ||
     !canReachEntity(world, actor, other, definition.practice!.communicationRange)
@@ -166,7 +180,7 @@ export function coachingProblem(
       return outcome(
         false,
         'observation-required',
-        'Feedback requires a shot actually observed during this agreed episode, and each person must choose feedback once.',
+        definition.practice!.presentation.observationRequired,
       );
     if (actor.actor?.action)
       return outcome(
@@ -214,17 +228,15 @@ export function applyCoaching(
       subjectNarration(actor, [
         'asked ',
         person(command.targetId, 'object'),
-        ` for ${definition.name.toLowerCase()} coaching. Agreement does not choose any future shot or feedback.`,
+        practiceText(definition.practice!, 'requestEventSuffix', {
+          skill: definition.name.toLowerCase(),
+        }),
       ]),
       actor,
       command.targetId,
       { episodeId: episode.id, semanticTrigger: true },
     );
-    return outcome(
-      true,
-      'coaching-requested',
-      'Requested one coaching episode. The other person can accept or decline.',
-    );
+    return outcome(true, 'coaching-requested', definition.practice!.presentation.requestResult);
   }
   const episode = coachingFor(world, actor.id)!;
   if (command.operation === 'accept') {
@@ -236,17 +248,13 @@ export function applyCoaching(
       subjectNarration(actor, [
         'agreed to observe ',
         person(episode.learnerId, 'object'),
-        '. Both still choose feedback after an actual observed shot.',
+        definition.practice!.presentation.acceptEventSuffix,
       ]),
       actor,
       episode.learnerId,
       { episodeId: episode.id, semanticTrigger: true },
     );
-    return outcome(
-      true,
-      'coaching-accepted',
-      'Agreed to observe. The learner still chooses each real shot.',
-    );
+    return outcome(true, 'coaching-accepted', definition.practice!.presentation.acceptResult);
   }
   closeCoaching(
     world,
@@ -255,11 +263,7 @@ export function applyCoaching(
     command.operation === 'decline' ? 'declined' : 'withdrawn',
     actor,
   );
-  return outcome(
-    true,
-    'coaching-ended',
-    'Coaching ended without completed feedback; actual shots remain.',
-  );
+  return outcome(true, 'coaching-ended', definition.practice!.presentation.endResult);
 }
 export function registerFeedback(world: WorldState, actor: Entity, action: Action): void {
   const episode = coachingFor(world, actor.id)!;
@@ -306,7 +310,7 @@ export function observeCoachedRelease(
     world,
     events,
     'coaching-observed',
-    'The agreed coach observed a released shot and its visible result. Each person can now choose the guided feedback activity.',
+    profile.presentation.observedEvent,
     learner,
     coach.id,
     { episodeId: episode.id, semanticTrigger: true },
@@ -377,7 +381,10 @@ export function completeFeedback(
   const result = outcome(
     true,
     'coaching-completed',
-    `${definition.practice!.guidance} Completed coaching is retained once. ${Math.max(0, definition.practice!.coachedReleases - progress.releases.length)} further real releases remain for the coached route.`,
+    practiceText(definition.practice!, 'completeResult', {
+      guidance: definition.practice!.guidance,
+      remaining: Math.max(0, definition.practice!.coachedReleases - progress.releases.length),
+    }),
   );
   for (const participant of [learner!, coach!]) {
     const own = participant.actor!.action;
@@ -403,6 +410,7 @@ export function closeCoaching(
   reason: string,
   source?: Entity,
 ): void {
+  const profile = practiceDefinition(world, episode.pin.id)?.practice;
   for (const id of [episode.learnerId, episode.coachId]) {
     const participant = world.entities[id],
       action = participant?.actor?.action;
@@ -411,7 +419,11 @@ export function closeCoaching(
         world,
         id,
         action.id,
-        outcome(false, 'cancelled', 'Feedback ended without completion. Actual shots remain.'),
+        outcome(
+          false,
+          'cancelled',
+          profile?.presentation.cancelResult ?? 'This activity ended without completion.',
+        ),
       );
       participant!.actor!.action = null;
     }
@@ -420,7 +432,7 @@ export function closeCoaching(
     world,
     events,
     'coaching-ended',
-    `The coaching episode ${reason}. No completed lesson was credited; actual shots remain.`,
+    profile ? practiceText(profile, 'endedEvent', { reason }) : 'The selected activity ended.',
     source ?? world.entities[episode.learnerId],
     undefined,
     { episodeId: episode.id, semanticTrigger: true },

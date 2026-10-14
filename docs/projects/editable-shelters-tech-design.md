@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                         | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Flat one/two-bay and the single-bay lean-to are delivered and reviewed; wider homes and scale qualification remain open. | 2026-10-07   |
+| In progress | Flat one/two-bay and the single-bay lean-to are delivered and reviewed; wider homes and scale qualification remain open. | 2026-10-14   |
 
 **PX05 design consumed by AV04; flat runtime delivered October 6 and corrected contact/single-bay slope October 7, 2026.** This is the counterpart to the [existing feature specification](editable-shelters-feature-spec.md), not a second product proposal. It completes [PX05](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px05--editable-shelter-technical-design) for a useful open shelter and its ordinary alteration/reclaim journey. The selected flat canopy/two-bay operations and records below are implemented. The single-bay slope is implemented; explicitly gated extensions remain targets. PX05 itself ran no game, provider, browser or structural benchmark; [AV04 evidence](../verification/editable-shelters.md) separately records actual runtime qualification.
 
@@ -280,6 +280,8 @@ Keyboard users can choose a known surface/nearby site, nudge the preview through
 Use existing shared panels/tokens/React Aria primitives. The material chooser is a button-opened searchable picker with its input outside the button and separate local selection/commit; orientation/layout is a small labeled choice group. In narrow/short layouts stack selection, consequence and actions, retain draft/site/query/reading position and keep Start/Cancel or Resume/Stop reachable. Do not add a second permanent construction HUD, a new theme or compulsory coordinates/graph fields.
 
 Preview is free to adjust/revert. After a phase commits, offer the real detach/rebuild operation and cost; no global Undo rewinds rain, another actor or consumption. Read failures retain a safe draft but suppress stale executable choices. Work progress starts only with actual labor, stops on actual interruption and reports completed parts separately from a failed remaining phase. Technical preparation and unknown acknowledgement remain distinct from a finished shelter.
+
+The current selected controls preserve exact total quantity alongside available quantity from the existing reservation owner. Default bindings take at most four available units, without expanding every lot. A per-read material lookup supplies the selected review dependencies: plan, family presentation/requirements, displayed permission, selected material facts and selected lowered material. A refresh that changes those facts invalidates the review while retaining selections; late review failures cannot overwrite a changed selection. This avoids invalidation on every clock revision. The displayed geometry remains the last native check between reviews; Start and each real phase assess the current place, including relevant moving or hidden obstacles, through native admission. [October 14 requested-review evidence](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) records the actual material-change and partial-reservation controls without closing broader UI or population qualification.
 
 ### 8.2 Growth, locality and overload
 

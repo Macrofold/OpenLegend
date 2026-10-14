@@ -20,9 +20,9 @@ import {
 import { attributeDefinition, setAttribute } from './world-modules.js';
 import { reconcileBody } from './living.js';
 import { setBodyHealth } from './body-state.js';
-import { canReachEntity, nearbyEntities } from './spatial.js';
+import { canReachEntity, nearbyLivingEntities } from './spatial.js';
 import { activelyParticipates } from './participation-state.js';
-import { isSafeRecordId } from './records.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
 import type { Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface DeathScar {
@@ -35,10 +35,18 @@ export interface DeathScar {
 }
 /** Optional installed world law; the engine supplies custody and replacement-body execution. */
 export interface ReincarnationPolicy {
+  implementation: 'rest-replacement';
+  qualifyingController: 'player';
   restKind: Entity['kind'];
   radius: number;
   retainedTypeFraction: number;
   spawnOffset: number;
+  placement: {
+    samples: number;
+    neighborMargin: number;
+    occupantClearance: number;
+    threatReachMargin: number;
+  };
   fillAttributes: string[];
   /** An empty authored list disables death scars and their random selection. */
   scars: DeathScar[];
@@ -63,16 +71,11 @@ export interface PendingDeath {
 export function reincarnationPolicy(world: WorldState): ReincarnationPolicy | null {
   return bodyPolicy(world)?.reincarnation ?? null;
 }
-export function scarFactor(
-  world: WorldState,
-  entity: Entity,
-  effect: 'movementFactor' | 'outgoingInjuryFactor' | 'incomingInjuryFactor',
-): number {
-  return (reincarnationPolicy(world)?.scars ?? []).reduce(
-    (factor, scar) => factor * (entity.actor?.scars?.[scar.id] ? scar[effect] : 1),
-    1,
-  );
+export function replacementRest(world: WorldState, entity: Entity): boolean {
+  const policy = reincarnationPolicy(world);
+  return !!policy && entity.kind === policy.restKind;
 }
+export { scarFactor } from './scar-effects.js';
 
 /** Called only by the body owner after a real player death. Each lot is visited once;
  * quantities never become individual lottery entries. Bags count independently of contents.
@@ -80,7 +83,7 @@ export function scarFactor(
 export function separateDeadLife(world: WorldState, entity: Entity, events: WorldEvent[]): void {
   const policy = reincarnationPolicy(world),
     actor = entity.actor!;
-  if (!policy || actor.controller !== 'player' || actor.pendingDeath) return;
+  if (!policy || actor.controller !== policy.qualifyingController || actor.pendingDeath) return;
   if (actor.action) releaseInvocationResources(world, actor.action.id);
   cancelPlan(world, actor, entity.id);
   discardSuspended(world, actor, entity.id);
@@ -196,23 +199,33 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   );
 }
 
-function spawnCandidates(world: WorldState, entity: Entity, rest: Entity): SurfacePoint[] {
+function spawnCandidates(
+  world: WorldState,
+  entity: Entity,
+  rest: Entity,
+  exclusionDistance: number,
+): SurfacePoint[] {
   const policy = reincarnationPolicy(world)!,
     support = supportedPosition(rest);
   if (!support) return [];
   const map = spatialMap(world),
     surface = map.spatial.surfaces.find((s) => s.id === support.surfaceId);
   if (!surface) return [];
-  const nearby = nearbyEntities(world, support, policy.spawnOffset + 3).filter(
+  // An authored search allowance cannot hide a body whose actual exclusion reaches
+  // a sampled point. The request computes this bound once from current living roots.
+  const neighborRange =
+    policy.spawnOffset + Math.max(policy.placement.neighborMargin, exclusionDistance);
+  const nearby = nearbyLivingEntities(world, support, neighborRange).filter(
     (other) =>
       other.id !== entity.id &&
       other.actor?.alive &&
       activelyParticipates(other) &&
-      distance3D(worldPosition(other), support) <= policy.spawnOffset + 3,
+      distance3D(worldPosition(other), support) <= neighborRange,
   );
-  return Array.from({ length: 8 }, (_, i) => {
-    const x = support.x + Math.cos((i * Math.PI) / 4) * policy.spawnOffset,
-      z = support.z + Math.sin((i * Math.PI) / 4) * policy.spawnOffset;
+  return Array.from({ length: policy.placement.samples }, (_, i) => {
+    const angle = (i * Math.PI * 2) / policy.placement.samples;
+    const x = support.x + Math.cos(angle) * policy.spawnOffset,
+      z = support.z + Math.sin(angle) * policy.spawnOffset;
     return { ...support, x, z, y: surfaceHeight(surface, x, z) };
   }).filter(
     (point) =>
@@ -220,7 +233,9 @@ function spawnCandidates(world: WorldState, entity: Entity, rest: Entity): Surfa
       !nearby.some(
         (other) =>
           distance3D(worldPosition(other), point) <
-          (other.threat ? other.threat.policy.attackRange + 0.5 : 0.75),
+          (other.threat
+            ? other.threat.policy.attackRange + policy.placement.threatReachMargin
+            : policy.placement.occupantClearance),
       ),
   );
 }
@@ -229,23 +244,34 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   const policy = reincarnationPolicy(world),
     actor = entity.actor!,
     death = actor.pendingDeath;
-  if (!policy || !death || actor.alive)
+  if (!policy || !death || actor.alive || actor.controller !== policy.qualifyingController)
     return outcome(false, 'respawn-unavailable', 'There is no lost life to continue.');
   if (actor.participation?.phase !== undefined && actor.participation.phase !== 'active')
     return outcome(false, 'inactive', 'Return to the world before continuing.');
-  const rests = worldRootEntities(world, true)
-    .filter((rest) => rest.kind === policy.restKind)
+  const roots = worldRootEntities(world, true);
+  const exclusionDistance = roots.reduce(
+    (maximum, other) =>
+      other.id !== entity.id && other.actor?.alive && activelyParticipates(other) && other.threat
+        ? Math.max(maximum, other.threat.policy.attackRange + policy.placement.threatReachMargin)
+        : maximum,
+    policy.placement.occupantClearance,
+  );
+  const rests = roots
+    .filter((rest) => replacementRest(world, rest))
     .map((rest) => ({ rest, distance: distance3D(death.position, worldPosition(rest)) }))
     .sort((a, b) => a.distance - b.distance || a.rest.id.localeCompare(b.rest.id));
   // Rare replacement-body work, not a tick scan. Test nearest candidates lazily once no
   // in-range rest is usable; a larger world does not build every camp's spawn geometry.
   let choices = rests
     .filter((entry) => entry.distance <= policy.radius)
-    .map((entry) => ({ ...entry, points: spawnCandidates(world, entity, entry.rest) }))
+    .map((entry) => ({
+      ...entry,
+      points: spawnCandidates(world, entity, entry.rest, exclusionDistance),
+    }))
     .filter((entry) => entry.points.length);
   if (!choices.length) {
     for (const entry of rests) {
-      const points = spawnCandidates(world, entity, entry.rest);
+      const points = spawnCandidates(world, entity, entry.rest, exclusionDistance);
       if (points.length) {
         choices = [{ ...entry, points }];
         break;
@@ -310,7 +336,11 @@ export function scarTreatmentProblem(
     !policy.scars.some((scar) => scar.id === scarId)
   )
     return 'That scar no longer needs treatment.';
-  if (rest?.kind !== policy.restKind || !canReachEntity(world, actor, rest, treatment.reach))
+  if (
+    !rest ||
+    !replacementRest(world, rest) ||
+    !canReachEntity(world, actor, rest, treatment.reach)
+  )
     return 'Stay beside a rest spot to treat this scar.';
   if (
     ![...directChildIds(world, actor.id)].some((id) => {
@@ -351,14 +381,55 @@ export function completeScarTreatment(
 }
 
 export function validateReincarnationPolicy(policy: ReincarnationPolicy | null): void {
-  if (!policy) return;
+  if (policy === null) return;
+  if (
+    !hasRecordFields(policy, [
+      'implementation',
+      'qualifyingController',
+      'restKind',
+      'radius',
+      'retainedTypeFraction',
+      'spawnOffset',
+      'placement',
+      'fillAttributes',
+      'scars',
+      'treatment',
+      'arrivalText',
+      'arrivalNarration',
+      'continueLabel',
+      'deathText',
+      'retainedLabel',
+      'lostLabel',
+      'treatmentLabel',
+      'treatmentText',
+    ]) ||
+    !hasRecordFields(policy.placement, [
+      'samples',
+      'neighborMargin',
+      'occupantClearance',
+      'threatReachMargin',
+    ]) ||
+    !Array.isArray(policy.scars)
+  )
+    throw new Error('Invalid installed reincarnation policy.');
   const treatment = policy.treatment;
   if (
+    policy.implementation !== 'rest-replacement' ||
+    policy.qualifyingController !== 'player' ||
     !['campfire', 'resource', 'item-pile'].includes(policy.restKind) ||
     !Number.isFinite(policy.retainedTypeFraction) ||
     policy.retainedTypeFraction < 0 ||
     policy.retainedTypeFraction > 1 ||
     ![policy.radius, policy.spawnOffset].every((value) => Number.isFinite(value) && value > 0) ||
+    !policy.placement ||
+    !Number.isSafeInteger(policy.placement.samples) ||
+    policy.placement.samples < 1 ||
+    policy.placement.samples > 64 ||
+    ![
+      policy.placement.neighborMargin,
+      policy.placement.occupantClearance,
+      policy.placement.threatReachMargin,
+    ].every((value) => Number.isFinite(value) && value >= 0) ||
     (treatment === null
       ? policy.scars.length > 0
       : !treatment ||
@@ -417,7 +488,7 @@ export function validateReincarnation(world: WorldState): void {
     if (
       death &&
       (!policy ||
-        actor.controller !== 'player' ||
+        actor.controller !== policy.qualifyingController ||
         actor.alive ||
         actor.action ||
         entity.remains ||

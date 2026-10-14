@@ -118,6 +118,7 @@ export function continuityView(
 function notepadView(world: WorldState, actorId: string, doc: KnowledgeDocument) {
   return {
     subjectId: doc.subjectId,
+    origin: doc.origin,
     label: doc.subjectId ? observerDescription(world, actorId, doc.subjectId) : 'General knowledge',
     text: doc.text,
     revision: doc.revision,

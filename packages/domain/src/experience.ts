@@ -6,7 +6,6 @@ import {
   type AppraisalChange,
   type AppraisalBindings,
 } from './appraisals.js';
-import { migrateKnowledge } from './knowledge-migration.js';
 import {
   editKnowledge,
   knowledgeDocument,
@@ -613,7 +612,6 @@ export function migrateCognition(world: WorldState): void {
       evidenceIds: mind.documents.flatMap((d) => d.evidence.map((e) => e.id)),
     };
   }
-  migrateKnowledge(world);
 }
 /** One projection for recall and derived speech indexing; never consult the raw world event. */
 export function awarenessMemory(entry: Awareness): MemoryRecord {

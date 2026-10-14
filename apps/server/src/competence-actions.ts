@@ -4,6 +4,8 @@ import {
   practiceDefinition,
   toolPracticeDefinition,
   handlingAccuracy,
+  practiceText,
+  describePractice,
   feedbackWaiting,
   ammoFor,
   observerName,
@@ -46,7 +48,12 @@ export function competenceOptions(
         options.push({
           id: `practice:${target.id}:${tool?.id ?? 'missing'}`,
           label: definition.practice.practiceLabel,
-          description: `${definition.practice.practiceLabel} at ${targetName}.${item ? ` Tool: ${item.name}.` : ' Select a compatible tool and ammunition first.'} ${definition.practice.windupSeconds} game seconds of preparation after approach; one real projectile is consumed only on release. ${accuracy && accuracy.competence !== undefined ? `Known target chance: ${accuracy.accuracy * 100}%. ` : ''}${definition.practice.scope} No automatic next shot.`,
+          description: describePractice(
+            definition.practice,
+            targetName,
+            item?.name,
+            accuracy && accuracy.competence !== undefined ? accuracy.accuracy : undefined,
+          ),
           command: {
             type: 'practice-shot',
             targetId: target.id,
@@ -61,6 +68,14 @@ export function competenceOptions(
   const episode = coachingFor(world, actorId);
   if (episode && [episode.learnerId, episode.coachId].includes(target.id)) {
     const definition = practiceDefinition(world, episode.pin.id)!;
+    const profile = definition.practice!;
+    const text = (key: Parameters<typeof practiceText>[1]) =>
+      practiceText(profile, key, {
+        target: targetName,
+        skill: definition.name.toLowerCase(),
+        feedbackSeconds: profile.feedbackSeconds,
+        guidance: profile.guidance,
+      });
     const command = (operation: NonNullable<CommandInput['coachingOperation']>): CommandInput => ({
       type: 'coaching',
       targetId: target.id,
@@ -72,14 +87,14 @@ export function competenceOptions(
       options.push(
         {
           id: `coaching-accept:${episode.id}`,
-          label: `Agree to observe ${targetName}`,
-          description: `Choose to observe ${targetName}'s next eligible release for ${definition.name.toLowerCase()} coaching. Speaking agreement alone does not start observation; choose this action if willing. This promises no future shot or feedback and does not transfer a recipe. I can decline or later withdraw.`,
+          label: text('acceptLabel'),
+          description: text('acceptDescription'),
           command: command('accept'),
         },
         {
           id: `coaching-decline:${episode.id}`,
-          label: `Decline coaching ${targetName}`,
-          description: `Decline ${targetName}'s request. They keep their independent practice route; nothing is taught or transferred.`,
+          label: text('declineLabel'),
+          description: text('declineDescription'),
           command: command('decline'),
         },
       );
@@ -88,22 +103,28 @@ export function competenceOptions(
       options.push({
         id: `coaching-feedback:${episode.id}:${actorId}`,
         label: definition.practice!.coachingLabel,
-        description: `Choose ${definition.practice!.feedbackSeconds} game seconds of guided feedback with ${targetName} about the shot actually observed in this episode. Speaking advice alone does not complete feedback; both must choose this activity and remain able to communicate. ${definition.practice!.guidance} A completed episode helps once; it grants no recipe or personality trait.`,
+        description: text('feedbackDescription'),
         command: command('feedback'),
       });
     options.push({
       id: `coaching-withdraw:${episode.id}:${actorId}`,
-      label: 'Withdraw from this coaching episode',
-      description:
-        'End this unfinished episode now. Actual released shots remain; incomplete feedback earns no coaching benefit.',
+      label: profile.presentation.withdrawLabel,
+      description: profile.presentation.withdrawDescription,
       command: command('withdraw'),
     });
   } else if (!episode) {
-    for (const progress of practiceStatus(world, actor))
+    for (const progress of practiceStatus(world, actor)) {
+      const profile = practiceDefinition(world, progress.id)!.practice!;
       options.push({
         id: `coaching-request:${progress.id}:${target.id}`,
-        label: `Ask ${targetName} for ${progress.name.toLowerCase()} coaching`,
-        description: `Ask ${targetName} to observe one actual release and, if both later choose, give guided feedback. They may decline or lack the applicable competence. ${progress.scope} Completed help does not stack or disclose a private recipe.`,
+        label: practiceText(profile, 'requestLabel', {
+          target: targetName,
+          skill: progress.name.toLowerCase(),
+        }),
+        description: practiceText(profile, 'requestDescription', {
+          target: targetName,
+          scope: profile.scope,
+        }),
         command: {
           type: 'coaching',
           coachingOperation: 'request',
@@ -111,15 +132,13 @@ export function competenceOptions(
           attributeId: progress.id,
         },
       });
+    }
   }
   return options;
 }
 export function competenceContext(world: WorldState, actor: Entity): string {
   return practiceStatus(world, actor)
-    .map(
-      (p) =>
-        `${p.name}: ${p.value === 1 ? 'practiced' : 'beginner'}, ${p.releases}/${p.independentRequired} real releases retained, completed coaching ${p.coached ? 'yes' : 'no'}. ${p.scope} ${p.effect}`,
-    )
+    .map((p) => `${p.name}: ${p.rankLabel}. ${p.progressText}. ${p.scope} ${p.effect}`)
     .join('\n');
 }
 export function waitingForFeedback(world: WorldState, actor: Entity): boolean {

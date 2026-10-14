@@ -144,6 +144,7 @@ export type ActionType =
   | 'assemble';
 export interface Action {
   competencePin?: import('./world-modules.js').DefinitionPin;
+  rangedPolicyPin?: import('./world-modules.js').DefinitionPin;
   coachingEpisodeId?: string;
   assemblyPhase?: import('./assembly-types.js').AssemblyPhase;
   assemblyCorner?: number;
@@ -435,6 +436,7 @@ export interface WorldState {
   storyPolicy?: import('./story-selection.js').StoryPolicy;
   storyPolicyRevision?: number;
   socialPolicy?: { conversationInactivitySeconds: number; notableThreshold: number };
+  constructionProfile?: import('./assembly-types.js').ConstructionProfile;
   appraisals?: Record<string, Record<string, import('./appraisals.js').Appraisal>>;
   appraisalProcesses?: Record<string, import('./appraisals.js').AppraisalProcess>;
   familyTree?: import('./worlds/base/family.js').FamilyTree;

@@ -320,7 +320,7 @@ export interface WorldCreationPreview {
   title: string;
   activity: string;
   payoff: string;
-  harsh: boolean;
+  notices: string[];
   entries: Array<{
     id: string;
     label: string;

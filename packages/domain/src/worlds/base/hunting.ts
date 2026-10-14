@@ -1,6 +1,31 @@
 import { namePhrase, type Named } from '@open-legend/language';
 import { seesEntity } from '../../perception.js';
 import type { WorldState } from '../../types.js';
+import type { RangedPolicy } from '../../ranged-policy.js';
+import { BASE_ACTION_DEFAULTS } from './actions.js';
+
+export const BASE_RANGED_POLICY: RangedPolicy = {
+  id: 'base:ranged-actions',
+  version: 1,
+  implementation: 'finite-shot',
+  targetRule: 'living-animal',
+  conditionAdjustment: 'danger-or-return',
+  conditionAccuracyFactor: 0.85,
+  windupSeconds: BASE_ACTION_DEFAULTS.shotSeconds,
+  approachBuffer:
+    BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond * BASE_ACTION_DEFAULTS.shotSeconds + 0.25,
+  minimumApproachRange: 0.5,
+  invalidTargetText: 'Choose a living animal.',
+  unavailableText: 'the target or ranged tool is no longer available.',
+  targetLabel: 'a living animal',
+  actionLabel: 'Hunt',
+  activityLabel: 'Hunting',
+  description:
+    'Approach a living animal and attempt one shot with your equipped ranged tool. Each attempt consumes ammunition and can miss. A killed animal leaves harvestable remains.',
+  scope:
+    'A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.',
+  accuracyExplanation: 'Animal conditions still affect the final chance.',
+};
 
 /** Bundled-world intent and eligible methods, not a hunger-to-action policy.
  * docs/worlds/base/survival.md#embodied-survival-and-authored-start

@@ -1,6 +1,6 @@
 import { WILDERNESS_NEEDS } from './needs.js';
 import { PERCEPTION_RULES } from './senses.js';
-import { scarFactor } from '../../reincarnation.js';
+import { scarFactor } from '../../scar-effects.js';
 
 // Bundled balance values consumed by the existing finite native adapters.
 // docs/worlds/base/survival.md
@@ -48,14 +48,6 @@ export const BASE_FAMILY_FACTS = {
   unitPerCommand: ['eat'],
   unpausableWhileWorking: ['strike', 'hunt', 'practice-shot', 'coaching'],
 } as const;
-
-/** Wind-up safety margin shared by ranged admission and the offered description. */
-export function rangedApproachRange(range: number): number {
-  return Math.max(
-    0.5,
-    range - BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond * BASE_ACTION_DEFAULTS.shotSeconds - 0.25,
-  );
-}
 
 /** Native locomotion and deadline planning use the same authored speed. */
 export function nativeMovementSpeed(

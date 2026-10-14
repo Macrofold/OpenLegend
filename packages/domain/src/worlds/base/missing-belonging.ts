@@ -134,6 +134,7 @@ export function installMissingBelonging(world: WorldState): void {
   world.actorKnowledge ??= {};
   world.actorKnowledge[MARA_ID] = {
     general: {
+      origin: 'authored-starting',
       subjectId: null,
       text: MARA_STARTING_UNDERSTANDING,
       revision: 1,
@@ -142,6 +143,7 @@ export function installMissingBelonging(world: WorldState): void {
   };
   world.actorKnowledge[TAVIN_ID] = {
     general: {
+      origin: 'authored-starting',
       subjectId: null,
       text: TAVIN_STARTING_UNDERSTANDING,
       revision: 1,

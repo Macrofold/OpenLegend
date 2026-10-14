@@ -2,7 +2,6 @@ import {
   canWalkSegment,
   distance3D,
   SPATIAL_LIMITS,
-  type NavigationRequest,
   type NavigationResult,
   type SurfacePoint,
 } from '@open-legend/spatial';
@@ -16,12 +15,7 @@ import type { Entity, WorldState } from '../../types.js';
 import { BASE_OPENING_PROFILE, type BaseInitialWorldCandidate } from './initial-opening.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 
-export interface BaseOpeningReadiness {
-  activity: string;
-  payoff: string;
-  findings: Array<{ id: string; status: 'ready' | 'blocked' | 'incomplete'; message: string }>;
-  navigation: Array<{ id: string; request: NavigationRequest }>;
-}
+import type { OpeningReadiness } from '../../world-creation.js';
 
 /** These are read-only checks on one prepared opening, not actions or future success.
  * Server-native route results must remain bound to this exact candidate/request.
@@ -30,19 +24,20 @@ export function checkBaseOpeningReadiness(
   candidate: BaseInitialWorldCandidate,
   world: WorldState,
   completedRoutes: ReadonlyMap<string, NavigationResult> = new Map(),
-): BaseOpeningReadiness {
+): OpeningReadiness {
   const profile = BASE_OPENING_PROFILE.openings.find(
     (opening) => opening.id === candidate.opening,
   )!;
-  const result: BaseOpeningReadiness = {
+  const result: OpeningReadiness = {
     activity: profile.activity,
     payoff: profile.payoff,
+    notices: [],
     findings: [],
     navigation: [],
   };
   const finding = (
     id: string,
-    status: BaseOpeningReadiness['findings'][number]['status'],
+    status: OpeningReadiness['findings'][number]['status'],
     message: string,
   ) => result.findings.push({ id, status, message });
   const player = world.entities[candidate.player.id];
@@ -302,12 +297,20 @@ export function checkBaseOpeningReadiness(
       ? { status: 'ready' as const, quantity: 1 }
       : sourceQuantity('berries', 1);
   if (candidate.harsh && food.status !== 'ready') result.navigation.splice(foodNavigationStart);
+  if (candidate.harsh && food.status === 'blocked')
+    result.notices.push(
+      'This opening has no currently accessible starting food. Deliberate scarcity is permitted; no emergency supplies were added.',
+    );
+  else if (candidate.harsh && food.status === 'incomplete')
+    result.notices.push(
+      'Deliberate scarcity is permitted, but access to starting food has not yet been established.',
+    );
   finding(
     'starting-food',
     candidate.harsh ? 'ready' : food.status,
     food.status === 'ready'
       ? 'Finite known food is carried or available through an admitted reachable gathering opportunity; readiness does not establish balance or long-term survival.'
-      : candidate.harsh
+      : candidate.harsh && food.status === 'blocked'
         ? 'The creator deliberately selected food scarcity. No emergency supplies were added.'
         : food.status === 'incomplete'
           ? 'The required route to starting food is incomplete.'

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import {
   isSafeRecordId,
-  validateBaseOpeningCandidate,
-  type BaseInitialWorldCandidate,
+  selectedCreationProfileForCandidate,
+  type WorldCreationCandidate,
 } from '@open-legend/domain';
 import { capabilitySchema } from './authority.js';
 
@@ -102,12 +102,11 @@ export const creationDestinationSchema = z
   });
 export type CreationDestinationConfig = z.infer<typeof creationDestinationSchema>;
 
-const candidateSchema = z.unknown().transform((value, context): BaseInitialWorldCandidate => {
+const candidateSchema = z.unknown().transform((value, context): WorldCreationCandidate => {
   try {
     if (Buffer.byteLength(JSON.stringify(value) ?? '') > 24000)
       throw new Error('Candidate exceeds the existing authoring UTF-8 byte allowance.');
-    validateBaseOpeningCandidate(value);
-    return value;
+    return selectedCreationProfileForCandidate(value).candidate;
   } catch (error) {
     context.addIssue({
       code: 'custom',

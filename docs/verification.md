@@ -1,5 +1,7 @@
 # Verification
 
+- [World and engine boundaries](verification/world-engine-boundaries.md) — all 13 selected-owner fixes, capability omission, contrasting native definitions, PostgreSQL continuation and truthful player presentation.
+
 This index links recorded checks and measurements by topic. Each report retains its own revision, workload, results and limitations; a passing result for one workload does not establish current release acceptance. The [maintainer index](maintainers/README.md) links the owners of remaining work.
 
 Add detailed evidence to the relevant report under `docs/verification/`, following the [documentation policy](../.agents/rules/documentation.md#verification-reports). Keep this page for navigation and the shared playtest protocol.

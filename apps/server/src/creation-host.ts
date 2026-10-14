@@ -53,7 +53,8 @@ export function creationOperatingConfiguration(config: AppConfig) {
     authenticationMode: config.authentication.mode,
     monthlyActorAiBudgetUsd: config.budgetUsd,
     simulationSecondsPerRealSecond: config.baseRatio,
-    conversationInactivitySeconds: config.conversationInactivitySeconds,
+    conversationInactivitySeconds:
+      config.conversationInactivitySeconds ?? 'Use the world’s authored setting',
     playerCapacity: config.capacity.players,
     departureGraceMs: config.exitGraceMs,
     creatorToolsEnabled: config.godMode,
@@ -94,7 +95,7 @@ export function creationOperatingSettings(values: Record<string, string | number
     authenticationMode: 'Sign-in mode',
     monthlyActorAiBudgetUsd: 'Monthly AI spending limit per character (USD)',
     simulationSecondsPerRealSecond: 'World seconds per real second',
-    conversationInactivitySeconds: 'Conversation ends after inactivity (world seconds)',
+    conversationInactivitySeconds: 'Operator override: conversation inactivity (world seconds)',
     playerCapacity: 'Maximum simultaneous players',
     departureGraceMs: 'Departure grace (milliseconds)',
     creatorToolsEnabled: 'Creator tools enabled',

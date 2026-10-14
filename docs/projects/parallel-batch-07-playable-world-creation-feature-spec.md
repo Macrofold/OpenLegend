@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                          | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-13   |
+| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-14   |
 
 ## Purpose and selected scope
 

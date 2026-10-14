@@ -17,6 +17,8 @@
 
 **SH01 selected delivery:** actual assembly/back attachments, protected installed/lowered material, approved physical origins, current operational grants and phase SQL fences are implemented. Current-format native/SQL restoration and paused revocation pass. The broad failure-injection/lost-acknowledgement matrix in the last checkbox remains a shared qualification gap; see the report for exactly exercised cases.
 
+The October 14 boundary correction moves initial state, homogeneous equivalence and containment meaning into the installed material family's inventory rules. Wet splits/equal-state merges, changed-state refusal, a contrasting cord-containment rule and PostgreSQL restoration passed [focused evidence](../verification/world-engine-boundaries.md#ranged-rules-materials-replacement-life-and-practice). Unqualified cloth/fiber bag containment remains refused; broader SH01 failure injection and contained exposure remain open.
+
 ## SH02 — One flat bay through ordinary build, use, alter and reclaim
 
 **Owners:** INV-6.4, SW03/04/07/08/10/11/15, PO04/06/07 and BW07. **Dependencies:** SH01. **Sources:** [technical §3–§5](../projects/editable-shelters-tech-design.md#3-pure-evaluation-admission-and-ordinary-work), [world geometry/work](../worlds/base/editable-shelters.md#qualified-geometry-for-px05).
@@ -33,6 +35,10 @@
 **SH02 selected delivery:** ordinary preview/build/resume/stop/rest/invite/dismantle, real whole-part clearance and navigation revision fencing pass. Interrupted tying survives cold restart; ordinary browser departure follows existing cancellation. Pointer/keyboard, no-drag controls, narrow/short windows, duplicate labels, doubled text and focus return were exercised. The remaining composite checkboxes retain destination/failure-injection and wider UI cases not established by this controlled journey.
 
 - [x] Requalify flat attachment contact against exact joints/tip bands, unobstructed exterior binding stances, all four root headings and current-format interruption/restore after the October 7 contract correction. Preserve completed flat evidence.
+
+**October 14 selected-world correction:** the current opening pins its construction family and suggested place explicitly, scopes material choices to that family and separately installs the optional finite shower cue. Another family’s insertion order or possessions cannot change those controls, and creator permission alone does not install weather. [Boundary evidence](../verification/world-engine-boundaries.md#creation-startup-construction-and-opening-presentation) records actual native/SQL/browser coverage; broader SH qualification remains unchanged.
+
+**October 14 requested-review correction:** the actual construction projection preserves total material quantity and separately derives free units through the existing reservation owner. Defaults use free units, and refreshed selected facts invalidate an earlier review without discarding the draft. Actual desktop/narrow controls refused to reuse a successful review after its selected cloth became unusable; a still-eligible six-unit cord lot with four units reserved showed two free units and supplied only those two to a fresh preview. Placement is explicitly the last checked result; native Start still checks current geometry and authority. [Focused review evidence](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) leaves the broader SH02 failure/UI matrix and SH06 scale qualification open.
 
 ## SH03 — Non-punitive vertical-rain and moisture proof
 

@@ -1,3 +1,12 @@
+import {
+  invocationFields,
+  commandEntityFields,
+  nativeBindingKind,
+  nativeOutputBinding,
+  activityRoleKinds,
+  validActivityBinding,
+  exactFields,
+} from './native-command-contracts.js';
 import { activityCommandFields, isCookingInputField } from './food-preparation.js';
 import { person, personalText } from './narration.js';
 import type { Command, Outcome, WorldState } from './types.js';
@@ -6,19 +15,22 @@ import { appendMemory, canonicalJson } from './events.js';
 
 import { isActivityCommand } from './agency.js';
 import {
+  nativeCommandSupported,
   installedActivityHost,
   activityCommandSupported,
   activitySpendCeiling,
+  trustedActivityHost,
 } from './activity-hosts.js';
 import { validateChosenActivityControl } from './activity-execution.js';
 import { hasRecordFields } from './records.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { cloneValue } from './draft.js';
+import { activityManifest } from './world-modules.js';
 
 /** Admission bounds, not promises about how much an actor remembers. Historical
  * records can live in the repository after leaving the resident working set.
- * docs/projects/action-experience-tech-design.md#four-records-one-execution-owner
+ * docs/projects/completed/action-experience-tech-design.md#four-records-one-execution-owner
  */
 export const ACTIVITY_LIMITS = {
   nodes: 64,
@@ -448,21 +460,9 @@ export function beginActivity(
   const existing = entries.find((entry) => entry.commandId === command.id);
   if (existing) return existing;
   const objects: ActivityOccurrence['objects'] = {};
+  const entityFields = new Set(commandEntityFields(command));
   for (const [field, value] of Object.entries(activityCommandFields(command))) {
-    if (
-      (![
-        'targetId',
-        'itemId',
-        'weaponItemId',
-        'ammoItemId',
-        'heatId',
-        'sourceId',
-        'destinationId',
-      ].includes(field) &&
-        !isCookingInputField(field)) ||
-      typeof value !== 'string'
-    )
-      continue;
+    if (!entityFields.has(field) || typeof value !== 'string') continue;
     const entity = world.entities[value];
     if (!entity) continue;
     objects[value] = {
@@ -736,7 +736,7 @@ export function endActivity(
     entry.resultMemoryId ??= appendMemory(world, actorId, {
       kind: 'episode',
       source: 'internal',
-      importance: 6,
+      importance: world.cognitionPolicy.recording.actionResultImportance,
       activityId: entry.id,
       summary: {
         parts: [
@@ -811,87 +811,7 @@ export function activityCompletionProblem(
 }
 /** Executable fields are closed even when a save or a model supplies extra JSON.
  * This describes existing native commands, never installs a new executor. */
-const invocationFields: Partial<
-  Record<Command['type'], { required: string[]; optional?: string[] }>
-> = {
-  assemble: {
-    required: [
-      'operation',
-      'familyId',
-      'arrangementId',
-      'requestId',
-      'editId',
-      'expectedRevision',
-      'destination',
-      'heading',
-      'bay',
-      'slot',
-      'itemId',
-    ],
-    optional: ['rootId', 'binding1', 'binding2', 'binding3', 'binding4', 'destinationId'],
-  },
-  pickup: { required: ['targetId'], optional: ['itemId', 'quantity'] },
-  drop: { required: ['itemId', 'quantity'] },
-  move: { required: ['destination'] },
-  // Requested activities may end a follow at an absolute deadline; learning refuses to
-  // generalize one (activity-learning.ts), since a past deadline is not reusable.
-  follow: { required: ['targetId'], optional: ['distance', 'relation', 'onLost', 'until'] },
-  gather: { required: ['targetId'], optional: ['itemId'] },
-  harvest: { required: ['targetId'] },
-  prepare: { required: ['preparation'] },
-  craft: { required: ['recipeId'] },
-  replenish: { required: ['targetId', 'attributeId'] },
-  equip: { required: ['itemId'] },
-  guard: { required: ['itemId'], optional: ['targetId', 'facing', 'autoEquip'] },
-  eat: { required: ['itemId'] },
-  'inspect-inventory': {
-    required: [],
-    optional: ['containerId', 'after', 'expectedRevision', 'expectedScope'],
-  },
-  strike: { required: ['targetId', 'definitionId'], optional: ['weaponItemId', 'autoEquip'] },
-  hunt: { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId', 'autoEquip'] },
-  'practice-shot': { required: ['targetId'], optional: ['weaponItemId', 'ammoItemId'] },
-  coaching: { required: ['targetId', 'attributeId', 'operation'], optional: ['episodeId'] },
-  'treat-scar': { required: ['targetId', 'scarId'] },
-  cook: { required: ['preparationId', 'preparationVersion', 'preparationDigest', 'heatId'] },
-  fish: { required: ['targetId', 'itemId'] },
-  'tend-fire': {
-    required: ['targetId', 'operation'],
-    optional: [
-      'itemId',
-      'definitionId',
-      'definitionVersion',
-      'definitionDigest',
-      'minimumHeld',
-      'onlyWhenLow',
-    ],
-  },
-  'transfer-stock': {
-    required: [
-      'sourceId',
-      'destinationId',
-      'definitionId',
-      'definitionVersion',
-      'definitionDigest',
-      'quantity',
-      'minimumHeld',
-    ],
-  },
-  'status-effect': {
-    required: ['targetId', 'definitionId', 'operation'],
-    optional: ['facingHeading', 'restingPlaceId', 'restingBay'],
-  },
-  say: { required: ['text'], optional: ['targetId', 'intendedRecipientId', 'volume'] },
-};
-function exactFields(value: object, fields: string[]): void {
-  if (
-    !value ||
-    typeof value !== 'object' ||
-    Array.isArray(value) ||
-    Object.keys(value).some((key) => !fields.includes(key))
-  )
-    throw new Error('Unsupported activity field.');
-}
+
 export function validateActivityNode(root: ActivityNode): void {
   let count = 0,
     expanded = 0;
@@ -996,8 +916,7 @@ export function validateActivityNode(root: ActivityNode): void {
           } else if ('output' in arg) {
             exactFields(arg, ['output', 'port', 'quantity']);
             if (
-              (!['itemId', 'weaponItemId', 'ammoItemId'].includes(field) &&
-                !isCookingInputField(field)) ||
+              !nativeOutputBinding(field) ||
               !keys.has(arg.output) ||
               !ports.get(arg.output)?.has(arg.port) ||
               !isSafeRecordId(arg.port) ||
@@ -1006,21 +925,7 @@ export function validateActivityNode(root: ActivityNode): void {
             )
               throw new Error('Invalid activity output reference.');
           } else {
-            if (
-              [
-                'targetId',
-                'intendedRecipientId',
-                'itemId',
-                'weaponItemId',
-                'ammoItemId',
-                'heatId',
-                'sourceId',
-                'destinationId',
-                'destination',
-                'text',
-              ].includes(field) ||
-              isCookingInputField(field)
-            )
+            if (nativeBindingKind(field) !== undefined)
               throw new Error('Personal activity values must use private bindings.');
             exactFields(arg, ['literal']);
             if (
@@ -1076,12 +981,13 @@ export function validateActivityNode(root: ActivityNode): void {
   walk(root, 0, 1);
 }
 
-/** A current executable root must resolve its exact installed observation support.
- * Archived non-executable methods may retain historical definitions as evidence. */
-function validateInstalledActivityConditions(
+/** Current work needs exact installed support; finished work retains trusted
+ * observation meaning and binding integrity without authorizing another attempt. */
+export function validateInstalledActivityConditions(
   world: WorldState,
   root: ActivityNode,
   bindings?: Record<string, ActivityBinding>,
+  requireInstalled = true,
 ): void {
   if (root.kind === 'invoke') {
     if (
@@ -1089,27 +995,34 @@ function validateInstalledActivityConditions(
       Object.values(root.args).some((arg) => 'role' in arg && !Object.hasOwn(bindings, arg.role))
     )
       throw new Error('Missing saved activity binding.');
-    if (root.command === 'transfer-stock' && !activityCommandSupported(world, root.command))
-      throw new Error('Missing installed stock-transfer support.');
+    if (requireInstalled && !nativeCommandSupported(world, root.command))
+      throw new Error('Missing installed native action support.');
     return;
   }
   if (root.kind === 'sequence') {
-    root.children.forEach((child) => validateInstalledActivityConditions(world, child, bindings));
+    root.children.forEach((child) =>
+      validateInstalledActivityConditions(world, child, bindings, requireInstalled),
+    );
     return;
   }
   const condition = root.kind === 'branch' ? root.when : root.until;
   if (
     condition.test === 'registered' &&
     (!isDefinitionPin(condition.definition) ||
-      !installedActivityHost(world, condition.definition)?.evaluateCondition ||
+      !(
+        requireInstalled
+          ? installedActivityHost(world, condition.definition)
+          : trustedActivityHost(condition.definition)
+      )?.evaluateCondition ||
       (bindings && typeof bindings[condition.role] !== 'string'))
   )
     throw new Error('Missing installed activity observation support or binding.');
   if (root.kind === 'branch') {
-    validateInstalledActivityConditions(world, root.yes, bindings);
-    if (root.no) validateInstalledActivityConditions(world, root.no, bindings);
+    validateInstalledActivityConditions(world, root.yes, bindings, requireInstalled);
+    if (root.no) validateInstalledActivityConditions(world, root.no, bindings, requireInstalled);
   }
-  if (root.kind === 'repeat') validateInstalledActivityConditions(world, root.body, bindings);
+  if (root.kind === 'repeat')
+    validateInstalledActivityConditions(world, root.body, bindings, requireInstalled);
 }
 
 function validateStockResolution(entry: ActivityOccurrence): void {
@@ -1212,11 +1125,12 @@ export function validateActionExperience(world: WorldState): void {
     );
   if (Object.keys(state.methods).length > ACTIVITY_LIMITS.definitions)
     throw new Error('Too many retained activity methods.');
+  const manifest = activityManifest(world);
   const signatures = new Set<string>();
   for (const [id, method] of Object.entries(state.methods)) {
     exactFields(method, ['executable', 'id', 'signature', 'manifest', 'name', 'root', 'roles']);
     validateActivityNode(method.root);
-    if (method.executable && method.manifest === canonicalJson(world.moduleManifest))
+    if (method.executable && method.manifest === manifest)
       validateInstalledActivityConditions(world, method.root);
     if (
       id !== method.id ||
@@ -1256,23 +1170,11 @@ export function validateActionExperience(world: WorldState): void {
         !Array.isArray(rule.commandFields) ||
         !rule.commandFields.length ||
         rule.commandFields.length > 8 ||
-        rule.commandFields.some(
-          (field) =>
-            ![
-              'targetId',
-              'intendedRecipientId',
-              'itemId',
-              'weaponItemId',
-              'ammoItemId',
-              'heatId',
-              'sourceId',
-              'destinationId',
-              'destination',
-              'text',
-            ].includes(field) && !isCookingInputField(field),
-        ) ||
-        (rule.kind === 'place' && rule.commandFields.some((field) => field !== 'destination')) ||
-        (rule.kind === 'text' && rule.commandFields.some((field) => field !== 'text')) ||
+        rule.commandFields.some((field) => nativeBindingKind(field) === undefined) ||
+        (rule.kind === 'place' &&
+          rule.commandFields.some((field) => nativeBindingKind(field) !== 'place')) ||
+        (rule.kind === 'text' &&
+          rule.commandFields.some((field) => nativeBindingKind(field) !== 'text')) ||
         (rule.kind === 'self' &&
           (rule.commandFields.some((field) => !['sourceId', 'destinationId'].includes(field)) ||
             rule.definitionId !== undefined ||
@@ -1281,7 +1183,7 @@ export function validateActionExperience(world: WorldState): void {
             rule.gatheredDefinition !== undefined ||
             rule.targetHost !== undefined)) ||
         (rule.kind === 'object' &&
-          rule.commandFields.some((field) => ['text', 'destination'].includes(field))) ||
+          rule.commandFields.some((field) => nativeBindingKind(field) !== 'object')) ||
         (rule.definitionId !== undefined &&
           (!isSafeRecordId(rule.definitionId) ||
             !Number.isSafeInteger(rule.definitionVersion) ||
@@ -1548,7 +1450,7 @@ export function validateActionExperience(world: WorldState): void {
       entity.actor!.agency.plan?.activity === activity
         ? entity.actor!.agency.plan!
         : entity.actor!.agency.suspended!;
-    validateExecution(world, entity.id, activity, plan);
+    validateExecution(world, entity.id, activity, plan, manifest);
   }
 }
 
@@ -1558,6 +1460,7 @@ function validateExecution(
   actorId: string,
   execution: import('./activity-execution.js').ActivityExecution,
   plan: import('./agency.js').ActorPlan,
+  manifest: string,
 ): void {
   const state = world.actionExperience,
     simTime = world.simTime;
@@ -1607,18 +1510,12 @@ function validateExecution(
       )
         throw new Error('Invalid saved requested activity.');
       validateActivityNode(execution.request.root);
+      const roles = activityRoleKinds(execution.request.root);
       if (
-        Object.keys(execution.bindings).length > ACTIVITY_LIMITS.nodes ||
-        Object.entries(execution.bindings).some(
-          ([role, value]) =>
-            !isSafeRecordId(role) ||
-            !(
-              isSafeRecordId(value) ||
-              (typeof value === 'object' &&
-                value !== null &&
-                [value.x, value.y, value.z].every(Number.isFinite) &&
-                isSafeRecordId(value.surfaceId))
-            ),
+        Object.keys(execution.bindings).length !== roles.size ||
+        [...roles].some(
+          ([role, kind]) =>
+            !isSafeRecordId(role) || !validActivityBinding(kind, execution.bindings[role]),
         )
       )
         throw new Error('Invalid saved requested activity bindings.');
@@ -1640,11 +1537,24 @@ function validateExecution(
     )
       throw new Error('Invalid saved activity execution.');
     if (method) validateActivityBindings(method, execution.bindings);
-    validateInstalledActivityConditions(world, root, execution.bindings);
+    // Finished work records what happened; resumable work still needs every current
+    // installation. Exact trusted observation and receipt meaning remains validated.
+    const requireInstalled =
+      plan.status !== 'completed' && plan.status !== 'cancelled' && execution.terminal !== true;
+    if (method && requireInstalled && method.manifest !== manifest)
+      throw new Error('Saved resumable activity requires its current exact world definitions.');
+    validateInstalledActivityConditions(world, root, execution.bindings, requireInstalled);
     if (execution.control !== undefined) {
       if (!execution.request || execution.methodId !== undefined)
         throw new Error('A chosen watch cannot be a learned activity control.');
-      validateChosenActivityControl(world, root, execution.bindings, execution.control);
+      validateChosenActivityControl(
+        world,
+        root,
+        execution.bindings,
+        execution.control,
+        false,
+        requireInstalled,
+      );
       const attemptPrefix = `${plan.id}:step:`,
         attemptParts =
           typeof execution.lastAttemptId === 'string'
@@ -1674,7 +1584,9 @@ function validateExecution(
         if (step.actionId !== undefined) retainedAttempts++;
         const spent = step.outcome?.spent;
         const ceiling =
-          'itemFromStep' in step.command ? undefined : activitySpendCeiling(world, step.command);
+          'itemFromStep' in step.command
+            ? undefined
+            : activitySpendCeiling(world, step.command, requireInstalled);
         if (spent === undefined) {
           if (step.status === 'completed' && step.outcome?.ok)
             throw new Error('A completed counted action needs its spending receipt.');
@@ -1798,15 +1710,6 @@ export function validateActivityBindings(
     throw new Error('Invalid activity bindings.');
   for (const [role, rule] of Object.entries(method.roles)) {
     const value = bindings[role];
-    if (
-      rule.kind === 'place'
-        ? !value ||
-          typeof value !== 'object' ||
-          !isSafeRecordId(value.surfaceId) ||
-          ![value.x, value.y, value.z].every(Number.isFinite)
-        : typeof value !== 'string' ||
-          (rule.kind === 'text' ? !value.trim() || value.length > 1500 : !isSafeRecordId(value))
-    )
-      throw new Error('Invalid activity binding.');
+    if (!validActivityBinding(rule.kind, value)) throw new Error('Invalid activity binding.');
   }
 }

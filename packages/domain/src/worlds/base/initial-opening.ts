@@ -6,12 +6,16 @@ import { initializeIdentity } from '../../identity.js';
 import { migrateCognition } from '../../experience.js';
 import { initializePerception } from '../../kernel.js';
 import { reconcileConditions } from '../../conditions.js';
-import { bodyProfile, worldPlacement, starterSpatialLayout } from '../../spatial-state.js';
+import {
+  bodyProfile,
+  worldPlacement,
+  starterSpatialLayout,
+  spatialMap,
+} from '../../spatial-state.js';
 import { isWalkable } from '../../spatial.js';
 import { definitionPin, validateWorldModules, type DefinitionPin } from '../../world-modules.js';
 import { nativeActor } from '../../living.js';
 import type { WorldCreationAccounts } from '../../invention-attribution.js';
-import type { ConstructionPermission } from '../../assembly-types.js';
 import type { CharacterTrait, Entity, RecipeCandidate, WorldState } from '../../types.js';
 import { createActor, createFreshBaseWorld } from './world.js';
 import { NATIVE_ITEMS } from './items.js';
@@ -21,6 +25,9 @@ import { RIVER_LINE_METHOD } from './river-fishing.js';
 import { STARTER_EXTENT, starterGroundAt } from './landscape.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { reserveEntityId } from '../../data.js';
+import { baseConstructionProfile } from './canopy-scene.js';
+import type { InitialWorldPreparation, OpeningEditorField } from '../../world-creation.js';
+import { resolveSupport, surfaceContains, surfaceHeight } from '@open-legend/spatial';
 
 /** This profile describes authored starting circumstances, not universal world rules.
  * docs/worlds/base/playable-openings.md
@@ -147,32 +154,11 @@ export interface BaseInitialWorldCandidate {
   stock: BaseOpeningStock[];
   knowledge: BaseOpeningKnowledge[];
 }
-export interface BaseInitialWorldPreparation {
-  world: WorldState;
-  accountRoles: Array<{
-    accountId: string;
-    actorId: string | null;
-    role: 'creator' | 'player';
-  }>;
-  constructionSeeds: ConstructionPermission[];
-}
-
-export interface BaseOpeningEditorField {
-  path: string[];
-  label: string;
-  kind: 'text' | 'number' | 'choice' | 'boolean';
-  unit?: string;
-  minimum?: number;
-  maximum?: number;
-  step?: number;
-  choices?: Array<{ value: string; label: string }>;
-}
-
 /** Authored field meanings belong to the profile; the shared editor owns presentation. */
 export function baseOpeningEditorFields(
   candidate: BaseInitialWorldCandidate,
-): BaseOpeningEditorField[] {
-  const result: BaseOpeningEditorField[] = [
+): OpeningEditorField[] {
+  const result: OpeningEditorField[] = [
     { path: ['title'], label: 'Opening name', kind: 'text' },
     { path: ['premise'], label: 'What matters in this opening', kind: 'text' },
     { path: ['harsh'], label: 'Deliberately harsh starting conditions', kind: 'boolean' },
@@ -657,7 +643,7 @@ export function prepareBaseInitialWorldState(world: WorldState): void {
 export function buildBaseInitialWorld(
   candidate: BaseInitialWorldCandidate,
   accounts: WorldCreationAccounts,
-): BaseInitialWorldPreparation {
+): InitialWorldPreparation {
   validateBaseOpeningCandidate(candidate);
   const world = createFreshBaseWorld(candidate.seed, accounts, {
     worldId: candidate.worldId,
@@ -665,6 +651,22 @@ export function buildBaseInitialWorld(
   });
   world.rngState = candidate.rngState;
   world.places = {};
+  const near = { x: candidate.player.position.x + 3, z: candidate.player.position.z + 3 };
+  const surface = world.map.spatial!.surfaces.find(
+    (entry) => entry.material === 'ground' && surfaceContains(entry, near),
+  );
+  // A suggested place must not make an otherwise valid edge/shore opening fail.
+  // The actual building preview still checks its whole footprint and work stances.
+  const suggested = (surface &&
+    resolveSupport(
+      spatialMap(world),
+      {
+        ...near,
+        y: surfaceHeight(surface, near.x, near.z),
+      },
+      surface.id,
+    )) || { ...candidate.player.position, surfaceId: candidate.player.supportSurfaceId };
+  world.constructionProfile = baseConstructionProfile(suggested);
   const people = [candidate.player, ...(candidate.resident ? [candidate.resident] : [])];
   for (const person of people) {
     reserveEntityId(world, person.id);

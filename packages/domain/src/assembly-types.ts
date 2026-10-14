@@ -1,6 +1,22 @@
 import type { SpatialBlocker, SurfacePoint, WorldPoint } from '@open-legend/spatial';
 import type { DefinitionPin } from './world-modules.js';
 
+/** Authored selection for the current opening, distinct from construction grants. */
+export interface ConstructionProfile {
+  family: DefinitionPin;
+  suggested: SurfacePoint;
+  shower?: {
+    site: { minX: number; maxX: number; minZ: number; maxZ: number };
+    seconds: number;
+    intensity: number;
+    startText: string;
+    resultText: string;
+    actionLabel: string;
+    remainingText: string;
+    endedText: string;
+  };
+}
+
 /** Trusted finite computation family; the installed world supplies materials and policy. */
 export interface AssemblyFamily {
   id: string;
@@ -34,6 +50,9 @@ export interface AssemblyFamily {
   conditionAttribute: string;
   usableCondition: string;
   moistureAttribute: string;
+  /** The selected material law admits initialization, homogeneous copying and custody.
+   * Inventory never derives these rules from a material's construction role. */
+  inventory: Record<AssemblyMaterial['role'], MaterialInventoryRule>;
   wettingSeconds: number;
   dryingSeconds: number;
   moistureLabels: {
@@ -49,6 +68,12 @@ export interface AssemblyFamily {
     fiber: { width: number; length: number; height: number };
     worn: { width: number; length: number };
   };
+}
+export interface MaterialInventoryRule {
+  initialAttributes: string[];
+  stateAttributes: string[];
+  homogeneous: boolean;
+  bagRefusal: string | null;
 }
 export interface AssemblyArrangement {
   id: string;

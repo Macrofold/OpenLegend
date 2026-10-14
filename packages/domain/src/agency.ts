@@ -8,7 +8,11 @@ import {
 import { activitySpendCeiling } from './activity-hosts.js';
 import { person, type Narration } from './narration.js';
 import { itemFor } from './objects.js';
-import { BASE_FAMILY_FACTS } from './worlds/base/actions.js';
+import {
+  activityHostForCommand,
+  nativeActionMeaning,
+  nativeCommandSupported,
+} from './activity-hosts.js';
 import {
   activityFrontier,
   reconcileActivityControl,
@@ -51,26 +55,12 @@ import { appendMemory, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import type { ActorComponent, Command, Outcome, WorldState } from './types.js';
 
-/** Families whose completed step records a single item a plain later step may use: the world
- * declares its own; picking up is the engine's. Validation and prompt text read this list. */
-export const ITEM_OUTPUT_FAMILIES: readonly string[] = [
-  ...BASE_FAMILY_FACTS.singleItemReceipt,
-  'pickup',
-];
-/** Families whose outputs a later step may use through a named output port. */
-const PORT_OUTPUT_FAMILIES: readonly string[] = [...BASE_FAMILY_FACTS.itemOutputs, 'pickup'];
 /** The item kind a producing step yields when that is known before it runs, from the step's
  * own target or the world's installed preparation definition. */
 export function producedItemDefinition(world: WorldState, command: Command): string | undefined {
-  if (command.type === 'gather') return world.entities[command.targetId]?.resource?.definitionId;
-  if (command.type === 'cook') {
-    const outputs = preparationDefinition(world, command)?.outputs;
-    return outputs?.length === 1 ? outputs[0]!.definitionId : undefined;
-  }
-  if (command.type === 'fish') return world.entities[command.targetId]?.resource?.definitionId;
   if (command.type === 'pickup' && command.itemId)
     return itemFor(world, command.itemId)?.definitionId;
-  return undefined;
+  return activityHostForCommand(world, command.type)?.outputDefinition?.(world, command);
 }
 export const AGENCY_LIMITS = {
   goals: 8,
@@ -436,6 +426,12 @@ export function arrangePlan(
     );
   if (!commands.length || commands.length > AGENCY_LIMITS.steps)
     return outcome(false, 'plan-limit', 'A frontier needs one to eight steps.');
+  if (commands.some((command) => !nativeCommandSupported(world, command.type)))
+    return outcome(
+      false,
+      'unsupported-capability',
+      'This world does not install a requested action.',
+    );
   if (commands.some((command) => !isPlannedCommand(command)))
     return outcome(false, 'invalid-plan', 'Only native physical work can be queued.');
   if (mode === 'enqueue' && current?.activity?.control && !current.activity.terminal)
@@ -542,8 +538,7 @@ export function pauseRefusal(action: ActorComponent['action']): string | null {
   if (action.type === 'status-effect') return 'This state cannot be paused.';
   if (
     action.strikePhase ||
-    ((BASE_FAMILY_FACTS.unpausableWhileWorking as readonly string[]).includes(action.type) &&
-      action.stage === 'working')
+    (nativeActionMeaning(action.type)?.unpausableWhileWorking && action.stage === 'working')
   )
     return 'An attack already under way cannot be paused; let it finish or replace it.';
   if (action.stage === 'working' && action.consumed.length)
@@ -1083,6 +1078,16 @@ export function validateAgency(world: WorldState): void {
           plan.steps.filter((step) => step.status === 'running').length > 1)
       )
         throw new Error('Invalid saved step identities or concurrent work.');
+      if (
+        plan &&
+        ['active', 'blocked'].includes(plan.status) &&
+        plan.steps.some(
+          (step) =>
+            ['queued', 'running', 'blocked'].includes(step.status) &&
+            !nativeCommandSupported(world, step.command.type),
+        )
+      )
+        throw new Error('Saved pending work requires its installed action support.');
       if (plan && !validOutputReferences(plan.steps.map((step) => step.command)))
         throw new Error('Invalid saved plan output references.');
     }
@@ -1396,7 +1401,12 @@ function validOutputReferences(commands: PlannedCommand[]): boolean {
         !producer ||
         producer.actorId !== command.actorId ||
         // A plain reference needs a single receipt; a named port may read any output.
-        !(command.outputPort ? PORT_OUTPUT_FAMILIES : ITEM_OUTPUT_FAMILIES).includes(producer.type)
+        !(
+          producer.type === 'pickup' ||
+          (command.outputPort
+            ? nativeActionMeaning(producer.type)?.itemOutputs
+            : nativeActionMeaning(producer.type)?.singleItemReceipt)
+        )
       )
         return false;
     }

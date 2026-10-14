@@ -106,6 +106,7 @@ and automated CI are separate gates; the measured flat-map copy cost is retained
 - [x] Implement strict split/merge/individualize operations with safe quantities, exact definition/unit/state/provenance compatibility and explicit individual status.
 - [x] Preserve whole unmerged identities, create deterministic split IDs, and retire merged/consumed sources with scoped lineage. No automatic actionable successor alias.
 - [x] Move all definition-only merge bypasses to the same validator; reject incompatible active references, containers, equipment and reservations unless the owning operation supports rebinding.
+- [x] Qualify selected material state and bag ownership: validate every present declared value while permitting absent optional values; preserve base wet-material refusal and admit selected dry storage without contained exposure work. Current PostgreSQL reopening and actual optional-moisture drying pass the [October 14 full review](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026). Wider material/lifecycle and capacity qualification remains open.
 
 **Dependencies:** PO02; P1 claim envelope. **Exit:** totals remain conserved across compatible operations; unique state and retained references survive, while stale mutable references reject honestly.
 

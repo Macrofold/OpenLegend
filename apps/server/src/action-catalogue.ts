@@ -1,3 +1,11 @@
+import { nativeCommandKind } from './native-command-kind.js';
+import {
+  nativeCommandSupported,
+  installedActionMeaning,
+  installedActionMeanings,
+  rangedTargetAllowed,
+  rangedPolicy,
+} from '@open-legend/domain';
 import {
   isEquipped,
   guardChoiceLabel,
@@ -139,7 +147,8 @@ export function actionCatalogue(
     targetId?: string,
     provided?: { availability: { ok: boolean; message: string }; description: string },
   ) => {
-    if (actionIds.has(id)) return;
+    if (actionIds.has(id) || !nativeCommandSupported(world, nativeCommandKind(command.type)))
+      return;
     // Ground exposes destination movement only. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
     if (context.itemId) {
@@ -210,7 +219,7 @@ export function actionCatalogue(
       selected.id,
     );
   const missing = (
-    family: keyof typeof ACTION_DESCRIPTIONS,
+    family: CommandInput['type'] | import('@open-legend/domain').Command['type'] | 'talk',
     label: string,
     category: string,
     reason: string,
@@ -218,6 +227,7 @@ export function actionCatalogue(
     targetId?: string,
     itemId?: string,
   ) => {
+    if (family !== 'talk' && !nativeCommandSupported(world, nativeCommandKind(family))) return;
     const personalFamily = [
       'cancel',
       'status-effect',
@@ -241,7 +251,12 @@ export function actionCatalogue(
       id,
       label,
       category,
-      description: ACTION_DESCRIPTIONS[family],
+      description:
+        family === 'talk'
+          ? ACTION_DESCRIPTIONS[family]!
+          : (installedActionMeaning(world, nativeCommandKind(family))?.description ??
+            ACTION_DESCRIPTIONS[family] ??
+            'Choose a supported action.'),
       keywords: [],
       ...(targetId ? { targetId } : {}),
       enabled: false,
@@ -303,7 +318,7 @@ export function actionCatalogue(
   for (const key of Object.keys(NATIVE_PREPARATIONS) as Array<keyof typeof NATIVE_PREPARATIONS>) {
     add(
       `prepare-${key}`,
-      key === 'fiber' ? 'Clean fibers' : 'Twist cord',
+      NATIVE_PREPARATIONS[key].label,
       'Create',
       { type: 'prepare', preparation: key },
       ['prepare', 'craft', key, 'binding'],
@@ -391,11 +406,11 @@ export function actionCatalogue(
         [world.itemDefinitions[target.resource.definitionId]!.name, 'collect'],
         target.id,
       );
-    if (target.animal && target.actor?.alive) {
+    if (rangedTargetAllowed(world, target)) {
       if (!launchers.length)
         add(
           `hunt-${target.id}`,
-          `Hunt ${target.name}`,
+          `${rangedPolicy(world)!.actionLabel} ${target.name}`,
           'Hunt',
           { type: 'hunt', autoEquip: true, targetId: target.id },
           ['shoot', 'attack', 'ranged'],
@@ -404,7 +419,7 @@ export function actionCatalogue(
       for (const item of launchers)
         add(
           `hunt-${target.id}:${item.id}`,
-          nativeHuntCatalogueLabel(target.name, world.itemDefinitions[item.definitionId]!.name),
+          `${rangedPolicy(world)!.actionLabel} ${target.name} with ${world.itemDefinitions[item.definitionId]!.name}`,
           'Hunt',
           {
             type: 'hunt',
@@ -648,7 +663,7 @@ export function actionCatalogue(
 
   // Missing prerequisites must not erase an entire supported action family.
   const family = (
-    prefix: keyof typeof ACTION_DESCRIPTIONS,
+    prefix: CommandInput['type'] | import('@open-legend/domain').Command['type'] | 'talk',
     label: string,
     category: string,
     reason: string,
@@ -656,32 +671,20 @@ export function actionCatalogue(
     if (!actions.some((action) => action.id.startsWith(`${prefix}-`)))
       missing(prefix, label, category, reason);
   };
-  family('gather', 'Gather resources', 'Gather', 'Move within sight of a resource.');
-  family('hunt', 'Hunt an animal', 'Hunt', 'Move within sight of a living animal.');
-  family('harvest', 'Harvest remains', 'Gather', 'Find animal remains to harvest.');
   family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
   const consumption = bodyPolicy(world)?.consumption;
   if (consumption) family('eat', consumption.label, 'Body', consumption.unavailableText);
-  family(
-    'cook',
-    BASE_FOOD_ACTION_WORDING.cookingLabel,
-    'Create',
-    BASE_FOOD_ACTION_WORDING.cookingRequiredText,
-  );
-  family(
-    'fish',
-    BASE_FOOD_ACTION_WORDING.fishingLabel,
-    'Gather',
-    BASE_FOOD_ACTION_WORDING.fishingRequiredText,
-  );
-  family(
-    'tend-fire',
-    'Tend a campfire',
-    'Survival',
-    'Select a campfire to light, fuel or put out.',
-  );
-  family('craft', 'Craft a known recipe', 'Create', 'Invent or learn a recipe first.');
-  family('teach', 'Teach a technique', 'Social', 'Learn a recipe and find a nearby listener.');
+  for (const [command, meaning] of installedActionMeanings(world)) {
+    const fallback = meaning.fallback;
+    if (!fallback) continue;
+    const policy = command === 'hunt' ? rangedPolicy(world) : null;
+    family(
+      command === 'compose' ? 'activity-request' : command,
+      policy ? `${policy.actionLabel} ${policy.targetLabel}` : fallback.label,
+      fallback.category,
+      policy?.invalidTargetText ?? fallback.reason,
+    );
+  }
   family('talk', 'Talk to someone', 'Social', 'Move within sight of a living person.');
   return { revision: service.version, actions };
 }

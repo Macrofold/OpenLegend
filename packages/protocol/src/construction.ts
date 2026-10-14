@@ -38,46 +38,55 @@ export interface AssemblyView {
   }[];
   shapes: ConstructionShape[];
 }
-export interface ConstructionView {
-  ok: boolean;
-  revision: number;
-  authorized: boolean;
-  canCueShower: boolean;
-  family: {
-    id: string;
-    name: string;
-    description: string;
-    help: string;
-    useHelp: string;
-    replacementHelp: string;
-    planLabels: Record<ConstructionPlan['operation'], string>;
-    bay: { width: number; length: number; postSection: number };
-    defaultArrangementId: string;
-    arrangements: {
-      id: string;
-      name: string;
-      description: string;
-      rowHeights: [number, number];
-      maximumBays: number;
-    }[];
-    cover: { width: number; length: number; thickness: number };
-    maximumBays: number;
-    invitationText: string;
-    postSeconds: number;
-    coverSeconds: number;
-    showerSeconds: number;
-  };
-  suggested: SurfacePoint;
-  materials: {
-    id: string;
-    name: string;
-    role: 'post' | 'cover' | 'binding' | 'fiber';
-    quantity: number;
-    eligible: boolean;
-    postHeight?: number;
-    reason?: string;
-    condition?: string;
-  }[];
-  lowered: { id: string; rootId: string; name: string }[];
-  weather?: { endsAt: number; startsAt: number };
-}
+export type ConstructionView =
+  | {
+      ok: false;
+      revision: number;
+      authorized: false;
+      canCueShower: false;
+      message: string;
+    }
+  | {
+      ok: true;
+      revision: number;
+      authorized: boolean;
+      canCueShower: boolean;
+      family: {
+        id: string;
+        name: string;
+        description: string;
+        help: string;
+        useHelp: string;
+        replacementHelp: string;
+        planLabels: Record<ConstructionPlan['operation'], string>;
+        bay: { width: number; length: number; postSection: number };
+        defaultArrangementId: string;
+        arrangements: {
+          id: string;
+          name: string;
+          description: string;
+          rowHeights: [number, number];
+          maximumBays: number;
+        }[];
+        cover: { width: number; length: number; thickness: number };
+        maximumBays: number;
+        invitationText: string;
+        postSeconds: number;
+        coverSeconds: number;
+      };
+      suggested: SurfacePoint;
+      shower?: { actionLabel: string; remainingText: string; endedText: string };
+      materials: {
+        id: string;
+        name: string;
+        role: 'post' | 'cover' | 'binding' | 'fiber';
+        quantity: number;
+        availableQuantity: number;
+        eligible: boolean;
+        postHeight?: number;
+        reason?: string;
+        condition?: string;
+      }[];
+      lowered: { id: string; rootId: string; name: string }[];
+      weather?: { endsAt: number; startsAt: number };
+    };

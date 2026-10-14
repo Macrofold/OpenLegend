@@ -25,6 +25,7 @@ import { finishWorld, cloneValue, appendEvents, readOnlyDraftView } from './draf
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
+import { selectedSocialPolicy } from './social-policy.js';
 import type {
   Entity,
   MemoryRecord,
@@ -164,7 +165,7 @@ export function acquireExposure(
   observer: Entity,
   targetId: string,
   exposure: import('./places.js').EncounterExposure,
-  importance = 6,
+  importance = world.cognitionPolicy.recording.exposureImportance,
 ): WorldEvent {
   const locationSuffix =
     exposure.kind === 'inventory-item' && exposure.observedLocation
@@ -469,7 +470,7 @@ function recordEvent(
   }
   learnSpeechIntroduction(world, event);
   // Finalize optional native metadata before handing an immutable record to persistence.
-  if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
+  if (audience.length || importance >= selectedSocialPolicy(world).notableThreshold)
     appendEvents(world, [cloneValue(event)]);
   // Control notices are not occurrences characters can appraise, promise on or fulfil.
   if (scope !== 'system') {

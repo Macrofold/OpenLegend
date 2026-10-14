@@ -3,13 +3,8 @@ import {
   recipeFamily,
   selectedRecipeCandidateSchema,
   observeActor,
-  BASE_OPENING_PROFILE,
-  BASE_OPENING_RESOURCES,
-  BASE_OPENING_STOCK_DEFINITIONS,
-  BASE_OPENING_METHODS,
-  baseOpeningEditorFields,
-  createBaseOpeningCandidate,
-  validateBaseOpeningCandidate,
+  selectedCreationProfileForWorld,
+  selectedCreationProfileForCandidate,
   type WorldState,
 } from '@open-legend/domain';
 import type { RelationshipRef, WorldAgentRequirement } from '@open-legend/protocol';
@@ -122,12 +117,7 @@ function durableMembership(value: object | undefined) {
 // These pins survive restart. Process-local dependency tokens cannot identify saved facts.
 export function contextMembership(world: WorldState, profile?: AuthoringProfile) {
   if (profile === 'world-opening')
-    return fingerprint([
-      BASE_OPENING_PROFILE,
-      BASE_OPENING_RESOURCES,
-      BASE_OPENING_STOCK_DEFINITIONS,
-      BASE_OPENING_METHODS,
-    ]);
+    return fingerprint(selectedCreationProfileForWorld(world).metadata);
   return fingerprint(
     [
       world.itemDefinitions,
@@ -173,13 +163,14 @@ export function buildAuthoringPacket(
       throw new Error(
         'The application has not allocated this session’s prospective opening identities.',
       );
-    const candidate = selected?.payload ?? createBaseOpeningCandidate(identities);
+    const selectedProfile = selectedCreationProfileForWorld(world);
+    const candidate = selected?.payload ?? selectedProfile.create(identities);
     // Retained JSON is unknown at this context boundary. Reuse the profile owner
     // before walking its fields; no source-world actor is consulted.
-    validateBaseOpeningCandidate(candidate);
+    const validated = selectedCreationProfileForCandidate(candidate);
     facts.guide = authoringGuide(world, profile);
     if (!selected) facts.prospective_opening = candidate;
-    facts.editable_fields = baseOpeningEditorFields(candidate);
+    facts.editable_fields = validated.profile.editor(validated.candidate).fields;
     facts.opening_identity = identities;
     facts.authoring_scope =
       'Only fresh authored setup in this prospective opening. Target selection, operating/account admission, exact human review and Start happen in the native creation surface after the draft is saved.';

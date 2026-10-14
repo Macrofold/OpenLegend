@@ -35,6 +35,7 @@ import { definitionPin, validateAttributeValue } from './world-modules.js';
 import { chargeWork } from './work-budget.js';
 import type { AssemblyFamily } from './assembly-types.js';
 import type { WorldState } from './types.js';
+import { validateConstructionProfile } from './construction-scene.js';
 
 /** A saved roof is validated, never repaired/collapsed as a side effect of loading it. */
 export function validateAssemblies(world: WorldState): void {
@@ -154,6 +155,36 @@ export function validateAssemblies(world: WorldState): void {
       moisture.schema.max !== 1
     )
       throw new Error('Missing exact material state definitions.');
+    if (
+      !family.inventory ||
+      !hasRecordFields(family.inventory, ['post', 'cover', 'binding', 'fiber']) ||
+      Object.entries(family.inventory).some(
+        ([role, rule]) =>
+          !hasRecordFields(rule, [
+            'initialAttributes',
+            'stateAttributes',
+            'homogeneous',
+            'bagRefusal',
+          ]) ||
+          !Array.isArray(rule.initialAttributes) ||
+          !Array.isArray(rule.stateAttributes) ||
+          new Set(rule.stateAttributes).size !== rule.stateAttributes.length ||
+          new Set(rule.initialAttributes).size !== rule.initialAttributes.length ||
+          rule.initialAttributes.some((id) => !rule.stateAttributes.includes(id)) ||
+          rule.stateAttributes.some(
+            (id) => !world.moduleManifest.definitions.some((definition) => definition.id === id),
+          ) ||
+          typeof rule.homogeneous !== 'boolean' ||
+          !(
+            rule.bagRefusal === null ||
+            (typeof rule.bagRefusal === 'string' && rule.bagRefusal.trim().length > 0)
+          ) ||
+          (rule.bagRefusal === null &&
+            rule.stateAttributes.includes(family.moistureAttribute) &&
+            ['cover', 'fiber'].includes(role)),
+      )
+    )
+      throw new Error('Invalid installed material inventory rule.');
     if (family.arrangements.some((a) => assemblySpanProblem(family, a.id)))
       throw new Error('Unsupported in-plane span, overhang or lower-edge clearance.');
     const forms = [
@@ -221,10 +252,16 @@ export function validateAssemblies(world: WorldState): void {
     if (descriptor && !family) throw new Error('Material references a missing assembly family.');
     if (family && entity.item) {
       if (
-        ['post', 'cover'].includes(descriptor!.role) &&
+        !family.inventory[descriptor!.role].homogeneous &&
         (entity.item.quantity !== 1 || entity.item.individuality !== 'individual')
       )
-        throw new Error('A post or covering needs one actual individual identity.');
+        throw new Error('This material needs one actual individual identity.');
+      if (
+        entity.placement?.mode === 'contained' &&
+        world.entities[entity.placement.parentEntityId]?.container &&
+        family.inventory[descriptor!.role].bagRefusal
+      )
+        throw new Error('This material has no admitted rule for bag containment.');
       const origins = entity.item.materialOriginIds;
       if (
         !origins?.length ||
@@ -234,13 +271,13 @@ export function validateAssemblies(world: WorldState): void {
         new Set(origins).size !== origins.length
       )
         throw new Error('Invalid physical material provenance.');
-      const expected = [
-        family.conditionAttribute,
-        ...(['cover', 'fiber'].includes(descriptor!.role) ? [family.moistureAttribute] : []),
-      ];
-      for (const id of expected) {
-        const state = entity.attributes?.[id],
-          definition = world.moduleManifest.definitions.find((d) => d.id === id)!;
+      const inventory = family.inventory[descriptor!.role];
+      for (const id of inventory.stateAttributes) {
+        const state = entity.attributes?.[id];
+        // Optional material state may be absent; a present value still reaches
+        // equivalence/copying and passive consumers and must have its admitted shape.
+        if (state === undefined && !inventory.initialAttributes.includes(id)) continue;
+        const definition = world.moduleManifest.definitions.find((d) => d.id === id)!;
         if (
           !state ||
           !hasRecordFields(state, ['value', 'revision']) ||
@@ -250,12 +287,6 @@ export function validateAssemblies(world: WorldState): void {
           throw new Error('Missing current material state.');
         validateAttributeValue(definition, state.value);
       }
-      if (
-        ['cover', 'fiber'].includes(descriptor!.role) &&
-        entity.placement?.mode === 'contained' &&
-        world.entities[entity.placement.parentEntityId]?.container
-      )
-        throw new Error('Unsupported nested material exposure.');
     }
     const claim = entity.item?.assemblyClaim;
     if (claim) {
@@ -564,4 +595,5 @@ export function validateAssemblies(world: WorldState): void {
       rain.intensity > 1)
   )
     throw new Error('Invalid finite weather process.');
+  validateConstructionProfile(world);
 }

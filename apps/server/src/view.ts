@@ -1,3 +1,11 @@
+import {
+  replacementRest,
+  rangedTargetAllowed,
+  rangedPolicy,
+  practiceDefinition,
+  nativeCommandSupported,
+} from '@open-legend/domain';
+import { nativeCommandKind } from './native-command-kind.js';
 import { outingViews } from './outing-view.js';
 
 import { recipeDetailsView } from './recipe-view.js';
@@ -5,6 +13,7 @@ import { equippedItem, guardWorkLabel, BASE_GUARD_TEXT } from '@open-legend/doma
 import { competenceOptions, waitingForFeedback } from './competence-actions.js';
 import {
   ownPractice,
+  coachingFor,
   occurrenceFor,
   renderActivity,
   type PracticeView,
@@ -61,6 +70,7 @@ import { projectAttributes, attributeDefinition, readAttribute } from '@open-leg
 import { canSpeak } from '@open-legend/domain';
 import type {
   ActionOption,
+  CommandInput,
   EntityView,
   GamePatch,
   GameView,
@@ -285,25 +295,36 @@ export async function projectView(
     actor.alive &&
     !actor.incapacitated &&
     service.currentScope(scope, 'play', true);
+  const coaching = coachingFor(world, scope.actorId);
   const action = (
     id: string,
     label: string,
     command: ActionOption['command'],
     possible = true,
     reason?: string,
-  ): ActionOption => ({
-    id,
-    label,
-    command,
-    enabled: active && possible,
-    ...(!active
-      ? {
-          reason: paused ? 'Resume the world to act.' : 'You cannot act in your current condition.',
-        }
-      : !possible && reason
-        ? { reason }
-        : {}),
-  });
+  ): ActionOption => {
+    // Consent-ending rows carry the server's complete current preview. They require
+    // control, while declining physical work requires no live body or running clock.
+    const consentEnding =
+      command.type === 'coaching' &&
+      (command.coachingOperation === 'withdraw' || command.coachingOperation === 'decline');
+    const canChoose = active || (consentEnding && service.currentScope(scope, 'play', true));
+    return {
+      id,
+      label,
+      command,
+      enabled: canChoose && possible,
+      ...(!canChoose
+        ? {
+            reason: paused
+              ? 'Resume the world to act.'
+              : 'You cannot act in your current condition.',
+          }
+        : !possible && reason
+          ? { reason }
+          : {}),
+    };
+  };
   const equipment =
     equippedItem(world, scope.actorId, 'ranged') ??
     equippedItem(world, scope.actorId, 'melee') ??
@@ -367,12 +388,15 @@ export async function projectView(
           entity.actor ? player.inventoryRevision : undefined,
           // Starting/stopping work can bind a promised tool without changing its lot.
           entity.actor ? actor.action : undefined,
+          // Agreement and observation can change without either person's action changing.
+          entity.actor ? coaching : undefined,
           // Manual action choices depend on physical form, not unrelated body conditions.
           entity.actor ? actor.body?.plan : undefined,
           entity.actor ? service.timelineId : undefined,
           world.itemDefinitions,
           active,
           paused,
+          pauseReason,
           launcher,
           player.inventoryRevision,
           (actor.combatReadyAt ?? 0) > world.simTime,
@@ -495,23 +519,24 @@ export async function projectView(
               ),
             );
           }
-          if (entity.animal && entity.actor?.alive)
+          if (rangedTargetAllowed(world, entity)) {
+            const command: CommandInput = {
+              type: 'hunt',
+              targetId: entity.id,
+              itemId: equipment?.id,
+              ammunitionId: ammunition?.id,
+            };
+            const preview = service.previewCommand(command, scope.actorId);
             actions.push(
               action(
                 `hunt-${entity.id}`,
-                'Hunt',
-                {
-                  type: 'hunt',
-                  targetId: entity.id,
-                  itemId: equipment?.id,
-                  ammunitionId: ammunition?.id,
-                },
-                !!launcher && !!ammunition,
-                !launcher
-                  ? 'Invent, craft and equip a launcher first.'
-                  : `Carry compatible ${launcher.ammunitionKind} ammunition.`,
+                rangedPolicy(world)!.actionLabel,
+                command,
+                preview.ok,
+                preview.message,
               ),
             );
+          }
           for (const option of competenceOptions(
             world,
             scope.actorId,
@@ -591,6 +616,9 @@ export async function projectView(
                     : entity.resource || entity.kind === 'resource'
                       ? 'resource'
                       : 'station';
+          const installedActions = actions.filter((option) =>
+            nativeCommandSupported(world, nativeCommandKind(option.command.type)),
+          );
           return {
             id: entity.id,
             ...(entity.assembly
@@ -674,9 +702,15 @@ export async function projectView(
                         replenish: 'Replenishing',
                         gather: 'Gathering',
                         'status-effect': 'Active state',
-                        hunt: 'Hunting',
-                        'practice-shot': 'Practicing a shot',
-                        coaching: 'Giving/receiving guided feedback',
+                        hunt: rangedPolicy(world)?.activityLabel,
+                        'practice-shot': practiceDefinition(
+                          world,
+                          entity.actor.action.competencePin?.id ?? '',
+                        )?.practice?.presentation.practiceActivityLabel,
+                        coaching: practiceDefinition(
+                          world,
+                          entity.actor.action.competencePin?.id ?? '',
+                        )?.practice?.presentation.coachingActivityLabel,
                         strike: 'Striking',
                         harvest: 'Harvesting',
                         cook: 'Cooking',
@@ -747,14 +781,14 @@ export async function projectView(
                           ),
                           entity,
                           JSON.stringify([privateDraftScopeKey(scope), service.timelineId]),
-                          actions,
+                          installedActions,
                         ),
                       }
                     : {}),
                 }
               : {}),
-            actions,
-            equippedAction: equippedTargetAction(world, entity, equipment, actions),
+            actions: installedActions,
+            equippedAction: equippedTargetAction(world, entity, equipment, installedActions),
           };
         },
       ),
@@ -900,7 +934,7 @@ export async function projectView(
   if (reincarnation && scarTreatment && actor.alive) {
     const rest = observation.visibleEntities.find(
       (entity) =>
-        entity.kind === reincarnation.restKind &&
+        replacementRest(world, entity) &&
         Math.hypot(
           worldPosition(entity).x - worldPosition(player).x,
           worldPosition(entity).y - worldPosition(player).y,

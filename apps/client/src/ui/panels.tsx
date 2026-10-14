@@ -235,24 +235,23 @@ export function Character({
           {view.player.practice.map((progress) => (
             <div key={progress.id}>
               <Tag>
-                {progress.name}: {progress.value === 1 ? 'Practiced' : 'Beginner'}
+                {progress.name}: {progress.rankLabel}
               </Tag>
-              <p>
-                {progress.releases}/{progress.independentRequired} real releases · Completed
-                coaching: {progress.coached ? 'yes' : 'no'}
-              </p>
-              {progress.starting && (
-                <p className="ol-caption">Practiced starting competence was explicitly authored.</p>
-              )}
+              <p>{progress.progressText}</p>
+              {progress.starting && <p className="ol-caption">{progress.authoredStartingText}</p>}
               <p className="ol-caption">
                 {progress.scope} {progress.effect}
               </p>
               <details>
-                <summary>Supporting releases ({progress.evidence.length})</summary>
+                <summary>
+                  {progress.evidenceHeading} ({progress.evidence.length})
+                </summary>
                 <ul>
                   {progress.evidence.map((evidence, index) => (
                     <li key={evidence.occurrenceId}>
-                      Release {index + 1}: {evidence.description}
+                      {progress.evidenceItemTemplate
+                        .replaceAll('{number}', String(index + 1))
+                        .replaceAll('{description}', evidence.description)}
                     </li>
                   ))}
                 </ul>

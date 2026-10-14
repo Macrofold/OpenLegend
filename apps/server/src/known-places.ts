@@ -184,7 +184,7 @@ export async function inspectKnownPlace(
   return {
     ok: true,
     place,
-    moveDescription: ACTION_DESCRIPTIONS.move,
+    moveDescription: ACTION_DESCRIPTIONS.move!,
     move: {
       id: 'move-to-known-place',
       label: 'Move to last-known location',

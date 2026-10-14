@@ -54,6 +54,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       knowledgePolicy: one('config_knowledge'),
       itemHandling: one('config_item_handling'),
       assemblyFamilies: map('config_assembly_families'),
+      constructionProfile: one('config_construction_profile'),
       finiteRain: one('sim_finite_rain'),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),

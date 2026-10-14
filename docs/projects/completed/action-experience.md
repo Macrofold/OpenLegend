@@ -1,14 +1,18 @@
 # Action records and learned activities — project
 
-**Status: implementation and accepted initial qualification complete September 28, 2026.** Mike requested a durable design for nested action descriptions, observed effects, connected experience, reflection-time learning and shared method reuse. This package supersedes the informal proposals in the embodied-survival discussion; the [current behavior owner](../action-experience.md) describes the delivered contracts, and the [evidence report](../verification/action-experience.md) records their qualification.
+| Status    | Current progress                                                                                             | Last updated         |
+| --------- | ------------------------------------------------------------------------------------------------------------ | -------------------- |
+| Completed | Accepted initial implementation and qualification are complete; the October 14 branch alignment is recorded. | 2026-10-14T08:15:16Z |
+
+**Status: implementation and accepted initial qualification complete September 28, 2026.** Mike requested a durable design for nested action descriptions, observed effects, connected experience, reflection-time learning and shared method reuse. This package supersedes the informal proposals in the embodied-survival discussion; the [current behavior owner](../../action-experience.md) describes the delivered contracts, and the [evidence report](../../verification/action-experience.md) records their qualification.
 
 ## Maintained records
 
 - Behavior and scenarios: [feature specification](action-experience-feature-spec.md).
 - Structure, algorithms and ownership: [technical design](action-experience-tech-design.md).
-- Implementation, dependencies and exit evidence: [AE01–AE10](../maintainers/action-experience.md).
-- Current operating envelopes and unsupported scope: [AEL01–AEL08](../limits/action-experience.md).
-- Existing authorities: [action capabilities](../action-capabilities.md), [agency](../agent-agency.md), [memory](../memory-architecture.md) and [knowledge](../knowledge.md).
+- Implementation, dependencies and exit evidence: [AE01–AE10](../../maintainers/action-experience.md).
+- Current operating envelopes and unsupported scope: [AEL01–AEL08](../../limits/action-experience.md).
+- Existing authorities: [action capabilities](../../action-capabilities.md), [agency](../../agent-agency.md), [memory](../../memory-architecture.md) and [knowledge](../../knowledge.md).
 
 ## Original problem and direction
 
@@ -40,7 +44,7 @@ The implementation-readiness review covers this entire package and its linked AC
 4. **Chosen method execution:** existing AC/AG composition, current remaining-work context, guarded continuation and interruptible repetition.
 5. **Qualification:** independent reproduction, privacy, interrupted recovery, different worlds and measured large traces.
 
-The [tracker](../maintainers/action-experience.md) owns detailed work, dependencies and acceptance. Slices are not permission to stop midway through later authorized scope. The first slice must remain useful without prematurely installing learning or full activity execution.
+The [tracker](../../maintainers/action-experience.md) owns detailed work, dependencies and acceptance. Slices are not permission to stop midway through later authorized scope. The first slice must remain useful without prematurely installing learning or full activity execution.
 
 ## Implementation entry and enablement gates
 
@@ -51,7 +55,7 @@ The [tracker](../maintainers/action-experience.md) owns detailed work, dependenc
 | Before enabling learned-method use         | Verify actor-scoped evidence, atomic retain, duplicate suppression, invalidation/revocation, current privacy overlays after restore and native continuation through actual outputs    | AE06–AE10                                     |
 | Before claiming behavioral completion      | Run the integrated AXE cases through downstream callers and budgeted model trials; fixtures establish mechanics, not model comprehension or reliable behavior                         | AE10                                          |
 
-The initial contract uses exact compatible structural matching, evidence-backed tentative retention and eligible idle learning. Approximate semantic matching, automatic numerical confidence promotion/decay, and learning during an ongoing native wait are later policy extensions, not hidden prerequisites or enabled defaults. [D67](../../archive/05-project/open-decisions.md#d67--action-records-and-learned-activities) tracks those future choices. [AEL](../limits/action-experience.md) now records selected budgets; the verification report is the source for measured runtime results.
+The initial contract uses exact compatible structural matching, evidence-backed tentative retention and eligible idle learning. Approximate semantic matching, automatic numerical confidence promotion/decay, and learning during an ongoing native wait are later policy extensions, not hidden prerequisites or enabled defaults. [D67](../../../archive/05-project/open-decisions.md#d67--action-records-and-learned-activities) tracks those future choices. [AEL](../../limits/action-experience.md) now records selected budgets; the verification report is the source for measured runtime results.
 
 ## Decisions to carry forward
 
@@ -80,6 +84,6 @@ Spending remains one $10 task ceiling including prior provider-reported estimate
 
 ## Delivered outcome
 
-All AE01–AE10 initial slices are implemented under the existing owners. [Current behavior](../action-experience.md) describes the final contracts, [AEL](../limits/action-experience.md) records concrete bounds, and [verification](../verification/action-experience.md) maps every AXE acceptance scenario to its actual evidence and limits. The final valid-terrain automatic trial completed hunting, harvesting, cooking and eating using 86 Jev calls, zero generation and $0.023492490 reported cost. Total implementation trials cost $0.077365764; cumulative task reported cost is $0.203312004 plus the separate $0.25 uncertain hold. This demonstrates the complete controlled scenario, not guaranteed behavior or optimal calls per meal.
+All AE01–AE10 initial slices are implemented under the existing owners. [Current behavior](../../action-experience.md) describes the final contracts, [AEL](../../limits/action-experience.md) records concrete bounds, and [verification](../../verification/action-experience.md) maps every AXE acceptance scenario to its actual evidence and limits. The final valid-terrain automatic trial completed hunting, harvesting, cooking and eating using 86 Jev calls, zero generation and $0.023492490 reported cost. Total implementation trials cost $0.077365764; cumulative task reported cost is $0.203312004 plus the separate $0.25 uncertain hold. This demonstrates the complete controlled scenario, not guaranteed behavior or optimal calls per meal.
 
 The working branch remained `main`; the initial remote/ref was `origin/main` from `https://github.com/Macrofold/OpenLegend.git` at `c5455cf8`. No branch/history mutation or real-save reset was needed. Generality is bounded by the supported native families and private evidence, not by a canned survival sequence.

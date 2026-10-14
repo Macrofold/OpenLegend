@@ -58,6 +58,7 @@ const common = {
 const requests: ActivityRequestDescriptor[] = [
   {
     id: 'base:camp-supply-method',
+    requires: ['gather', 'move', 'transfer-stock', 'tend-fire'],
     label: 'Gather, return, pack and fuel',
     description:
       'Gather once from your selected source, return to this container’s current position, pack an exact quantity and add one fuel unit. Later steps can fail when yield, access or stock changes.',
@@ -70,6 +71,7 @@ const requests: ActivityRequestDescriptor[] = [
   },
   {
     id: 'base:fire-watch',
+    requires: ['transfer-stock', 'tend-fire'],
     label: 'Watch this fire for one session',
     description:
       'Stay here and attend to this burning fire until your stopping time. Use only your chosen supply. It does not gather, follow a moved cache, relight a fire, or teach a conditional method.',

@@ -2,10 +2,10 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { opendir } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
-  buildBaseInitialWorld,
+  selectedCreationProfileForCandidate,
   freezeWorld,
-  type BaseInitialWorldCandidate,
-  type BaseInitialWorldPreparation,
+  type WorldCreationCandidate,
+  type InitialWorldPreparation,
   type ConstructionPermission,
 } from '@open-legend/domain';
 import { accountBindingSchema, type AccountBinding } from './authority.js';
@@ -220,9 +220,9 @@ export interface CreationTargetOptions {
   /** Changes to the destination's private installation/funding settings also fence review. */
   privateConfigurationDigest?: string;
   prepare: (
-    initial: BaseInitialWorldPreparation,
+    initial: InitialWorldPreparation,
     binding: AccountBinding,
-    candidate: BaseInitialWorldCandidate,
+    candidate: WorldCreationCandidate,
   ) => CreationStartupPreparation | Promise<CreationStartupPreparation>;
   now?: () => number;
 }
@@ -360,11 +360,13 @@ export class CreationTarget {
         'The opening does not match its exact reviewed candidate.',
       );
     const mapping = this.mapping(request);
+    const { profile, candidate } = selectedCreationProfileForCandidate(request.candidate);
+    const controlledActorId = profile.controlledActor(candidate);
     const binding = accountBindingSchema.parse({
       ...mapping.account,
-      actorId: request.candidate.player.id,
+      actorId: controlledActorId,
     });
-    const initial = buildBaseInitialWorld(request.candidate, {
+    const initial = profile.build(candidate, {
       creatorAccountIds: [mapping.account.accountId],
       playerAccountId: mapping.account.accountId,
     });
@@ -386,7 +388,7 @@ export class CreationTarget {
       prepared.authorityBindings.length !== 1 ||
       digest(prepared.authorityBindings[0]) !== digest(binding) ||
       prepared.authorityOwners.size !== 1 ||
-      prepared.authorityOwners.get(request.candidate.player.id) !== mapping.account.accountId ||
+      prepared.authorityOwners.get(controlledActorId) !== mapping.account.accountId ||
       digest(prepared.constructionSeeds) !== nativeSeedDigest
     )
       throw new CreationTargetError(

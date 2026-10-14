@@ -1,4 +1,8 @@
 import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js';
+import { BASE_SOCIAL_POLICY } from './social.js';
+import { baseConstructionProfile } from './canopy-scene.js';
+import { BASE_KNOWLEDGE_POLICY } from './knowledge.js';
+import { BASE_RANGED_POLICY } from './hunting.js';
 import {
   STARTER_EXTENT,
   starterTiles,
@@ -175,9 +179,14 @@ export function createFreshBaseWorld(
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
       activityHostPins(),
+      BASE_RANGED_POLICY,
     ),
     cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
     storyPolicy: defaultStoryPolicy(),
+    socialPolicy: structuredClone(BASE_SOCIAL_POLICY),
+    knowledgePolicy: structuredClone(BASE_KNOWLEDGE_POLICY),
+    actorKnowledge: {},
+    observerIdentities: {},
     visibleObjects: {},
     places: structuredClone(BASE_PLACES),
     visiblePlaces: {},
@@ -199,6 +208,7 @@ export function createFreshBaseWorld(
     entities: {},
     objectState: { revision: 0 },
     assemblyFamilies: { [BASE_CANOPY.id]: structuredClone(BASE_CANOPY) },
+    constructionProfile: baseConstructionProfile(BASE_CANOPY_SCENE.suggested),
     assemblyGeometryRevision: 0,
     itemDefinitions: structuredClone(NATIVE_ITEMS),
     foodPreparations: structuredClone(BASE_FOOD_PREPARATIONS),
@@ -493,17 +503,16 @@ export function createWorld(
     addItem(world, id, 'wood', 2);
     addItem(world, id, 'stone', 6);
   }
-  world.memories[NPC_ID]!.push({
-    id: nextId(world, 'memory'),
-    actorId: NPC_ID,
-    kind: 'belief',
-    source: 'observed',
-    summary:
-      'I arrived here with basic gathering, cord-making, cooking and survival knowledge. I have no village, only a small camp and a few possessions.',
-    at: 0,
-    entityIds: ['campfire'],
-    importance: 8,
-  });
+  // Authored background is required starting understanding, never a witnessed event.
+  world.actorKnowledge![NPC_ID] = {
+    general: {
+      origin: 'authored-starting',
+      subjectId: null,
+      revision: 1,
+      evidenceIds: [],
+      text: 'I arrived here with basic gathering, cord-making, cooking and survival knowledge. I have no village, only a small camp and a few possessions.',
+    },
+  };
   installRiverReaches(world);
   const riverMethod = installRecipe(world, RIVER_LINE_METHOD, {
     source: 'authored-world',

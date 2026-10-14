@@ -43,7 +43,7 @@ export interface AgentSession {
   profile?: AuthoringProfile;
   initialPurpose?: 'conversation' | 'invention' | 'creation';
   /** Application-owned opening identities survive every revision and provider retry. */
-  openingIdentities?: import('@open-legend/domain').BaseOpeningIdentities;
+  openingIdentities?: import('@open-legend/domain').WorldOpeningIdentities;
   selectedDraft?: { id: string; revision: number };
   toolCalls?: number;
   packetRef?: string;

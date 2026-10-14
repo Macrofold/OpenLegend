@@ -1,65 +1,31 @@
-import { BASE_CANOPY, BASE_CANOPY_SCENE } from './canopies.js';
-import { draftWorld } from '../../draft.js';
+import type { SurfacePoint } from '@open-legend/spatial';
+import type { ConstructionProfile } from '../../assembly-types.js';
 import { definitionPin } from '../../world-modules.js';
-import { emit, finish, outcome, canonicalJson } from '../../events.js';
-import type { Transition, WorldState } from '../../types.js';
-/** Explicit creator-controlled comparison cue. It neither repeats nor changes body/fire laws. */
-export function beginCanopyShower(original: WorldState, id: string): Transition {
-  const digest = canonicalJson({ type: 'canopy-shower', id }),
-    prior = original.commandReceipts[id];
-  if (prior)
-    return {
-      world: original,
-      events: [],
-      outcome:
-        prior.digest === digest
-          ? prior.outcome
-          : outcome(false, 'idempotency-conflict', 'This request identity was already used.'),
-    };
-  if (original.finiteRain && original.finiteRain.endsAt > original.simTime)
-    return {
-      world: original,
-      events: [],
-      outcome: outcome(false, 'rain-active', 'The finite shower is already running.'),
-    };
-  const world = draftWorld(original),
-    events: Transition['events'] = [];
-  const family = world.assemblyFamilies?.[BASE_CANOPY.id];
-  if (!family)
-    return {
-      world: original,
-      events: [],
-      outcome: outcome(
-        false,
-        'scene-unavailable',
-        'This authored comparison scene is unavailable.',
-      ),
-    };
-  world.finiteRain = {
-    family: definitionPin(family),
-    minX: BASE_CANOPY_SCENE.site.minX,
-    maxX: BASE_CANOPY_SCENE.site.maxX,
-    minZ: BASE_CANOPY_SCENE.site.minZ,
-    maxZ: BASE_CANOPY_SCENE.site.maxZ,
-    startsAt: world.simTime,
-    endsAt: world.simTime + BASE_CANOPY_SCENE.rainSeconds,
-    intensity: 1,
+import { BASE_CANOPY, BASE_CANOPY_SCENE } from './canopies.js';
+
+/** The opening selects the construction family, location and optional comparison cue.
+ * Permission to invoke the cue remains with the application. */
+export function baseConstructionProfile(suggested: SurfacePoint): ConstructionProfile {
+  return {
+    family: definitionPin(BASE_CANOPY),
+    suggested: { ...suggested },
+    shower: {
+      site: {
+        minX: suggested.x + BASE_CANOPY_SCENE.site.minX - BASE_CANOPY_SCENE.suggested.x,
+        maxX: suggested.x + BASE_CANOPY_SCENE.site.maxX - BASE_CANOPY_SCENE.suggested.x,
+        minZ: suggested.z + BASE_CANOPY_SCENE.site.minZ - BASE_CANOPY_SCENE.suggested.z,
+        maxZ: suggested.z + BASE_CANOPY_SCENE.site.maxZ - BASE_CANOPY_SCENE.suggested.z,
+      },
+      seconds: BASE_CANOPY_SCENE.rainSeconds,
+      intensity: 1,
+      startText:
+        'A brief shower starts over the building place. It will end after {minutes} game minutes.',
+      resultText:
+        'The {minutes}-minute shower started. Covered material stays protected; exposed eligible material becomes wet.',
+      actionLabel: 'Run a {minutes}-minute shower',
+      remainingText:
+        'The shower has {minutes} game minutes remaining. Drying continues during ordinary world time.',
+      endedText: 'The shower ended. Drying continues during ordinary world time.',
+    },
   };
-  emit(
-    world,
-    events,
-    'weather-cue',
-    'A brief shower starts over the building place. It will end after twenty game minutes.',
-    undefined,
-    undefined,
-    { endsAt: world.finiteRain.endsAt },
-    'system',
-  );
-  const result = outcome(
-    true,
-    'shower-started',
-    'The twenty-minute shower started. Covered material stays protected; exposed eligible material becomes wet.',
-  );
-  world.commandReceipts[id] = { digest, outcome: result };
-  return finish(world, events, result);
 }

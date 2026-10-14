@@ -2,13 +2,43 @@ import { inventionPermission } from './invention-policy.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { finish, outcome } from './events.js';
 import type { Transition, WorldState } from './types.js';
+/** Authored reasons and judgments, consumed only after the server has selected
+ * permitted evidence and mechanically offered choices. Prose grants no authority.
+ * docs/engine-and-world-boundaries.md#8-minds-agency-and-behavior */
+export interface ActionGuidance {
+  reasons: string;
+  consideration: string;
+  selection: string;
+  criteria: { true: string; false: string };
+}
 export interface CognitionPolicy {
+  actionGuidance: ActionGuidance;
+  recording: { actionResultImportance: number; exposureImportance: number };
   dream: { statusEffectId: string; afterSeconds: number } | null;
   version: 1;
   revision: number;
   maxImmediateLevel: 2 | 3 | 4;
   significantEventTypes: string[];
   reflection: boolean;
+}
+function validAuthoredJudgments(policy: CognitionPolicy): boolean {
+  const guidance = policy.actionGuidance;
+  const recording = policy.recording;
+  const text = (value: unknown) =>
+    typeof value === 'string' && value.trim().length > 0 && value.length <= 2000;
+  const score = (value: unknown) =>
+    typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 10;
+  return (
+    !!guidance &&
+    Object.keys(guidance).sort().join(',') === 'consideration,criteria,reasons,selection' &&
+    [guidance.reasons, guidance.consideration, guidance.selection].every(text) &&
+    !!guidance.criteria &&
+    Object.keys(guidance.criteria).sort().join(',') === 'false,true' &&
+    [guidance.criteria.true, guidance.criteria.false].every(text) &&
+    !!recording &&
+    Object.keys(recording).sort().join(',') === 'actionResultImportance,exposureImportance' &&
+    [recording.actionResultImportance, recording.exposureImportance].every(score)
+  );
 }
 export function admitCognitionPolicy(
   input: WorldState,
@@ -24,7 +54,8 @@ export function admitCognitionPolicy(
   const p = proposed as CognitionPolicy;
   if (
     Object.keys(p).sort().join(',') !==
-      'dream,maxImmediateLevel,reflection,revision,significantEventTypes,version' ||
+      'actionGuidance,dream,maxImmediateLevel,recording,reflection,revision,significantEventTypes,version' ||
+    !validAuthoredJudgments(p) ||
     (p.dream !== null &&
       (!p.dream ||
         Object.keys(p.dream).sort().join() !== 'afterSeconds,statusEffectId' ||
@@ -79,7 +110,8 @@ export function validateCognitionPolicy(
   const p = policy as CognitionPolicy;
   if (
     Object.keys(p).sort().join(',') !==
-      'dream,maxImmediateLevel,reflection,revision,significantEventTypes,version' ||
+      'actionGuidance,dream,maxImmediateLevel,recording,reflection,revision,significantEventTypes,version' ||
+    !validAuthoredJudgments(p) ||
     p.version !== 1 ||
     !Number.isSafeInteger(p.revision) ||
     p.revision < 1 ||

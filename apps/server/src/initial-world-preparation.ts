@@ -1,5 +1,7 @@
 import {
-  BASE_SOCIAL_POLICY,
+  selectedSocialPolicy,
+  validateSocialPolicy,
+  selectedCreationProfileForCandidate,
   defaultStoryPolicy,
   freezeWorld,
   hasMemory,
@@ -11,8 +13,8 @@ import {
   reconcileConstructionAuthority,
   updateWorld,
   validateStoryPolicy,
-  type BaseInitialWorldCandidate,
-  type BaseInitialWorldPreparation,
+  type WorldCreationCandidate,
+  type InitialWorldPreparation,
   type ConstructionPermission,
 } from '@open-legend/domain';
 import type { AccountBinding } from './authority.js';
@@ -42,10 +44,10 @@ export function prepareWorldForStartup(
     migrateCognition(world);
     // Explicit authored traits, including an empty list, remain unchanged.
     initializeActorTraits(world);
-    world.socialPolicy = {
-      conversationInactivitySeconds: config.conversationInactivitySeconds,
-      notableThreshold: BASE_SOCIAL_POLICY.notableThreshold,
-    };
+    validateSocialPolicy(world);
+    world.socialPolicy = { ...selectedSocialPolicy(world) };
+    if (config.conversationInactivitySeconds !== undefined)
+      world.socialPolicy.conversationInactivitySeconds = config.conversationInactivitySeconds;
     for (const [actorId, accountId] of actorOwners) {
       const actor = world.entities[actorId]?.actor;
       if (!actor) continue;
@@ -67,12 +69,13 @@ export function prepareWorldForStartup(
  * The callback receives compact authored circumstances, never the source's saved world.
  */
 export async function prepareCreatedWorld(
-  initial: BaseInitialWorldPreparation,
+  initial: InitialWorldPreparation,
   binding: AccountBinding,
   config: AppConfig,
-  candidate: BaseInitialWorldCandidate,
+  candidate: WorldCreationCandidate,
 ): Promise<CreationStartupPreparation> {
-  if (!binding.actorId || binding.actorId !== candidate.player.id)
+  const selected = selectedCreationProfileForCandidate(candidate);
+  if (!binding.actorId || binding.actorId !== selected.profile.controlledActor(selected.candidate))
     throw new Error('The prepared account must control the selected starting person.');
   const authorityOwners = new Map([[binding.actorId, binding.accountId]]);
   const savedWorld = prepareWorldForStartup(
