@@ -1,5 +1,6 @@
 import { WORLD_AGENT_TABLES } from './world-agent-store.js';
 import { AUTHORITY_TABLES } from './authority.js';
+import { CREATION_TARGET_TABLES } from './creation-target-contracts.js';
 import { constants } from 'node:fs';
 import { copyFile, mkdir, open, readFile, rename, rm, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -33,6 +34,7 @@ export const OPERATION_TABLES = [
   'attempt_budgets',
   ...WORLD_AGENT_TABLES,
   ...AUTHORITY_TABLES,
+  ...CREATION_TARGET_TABLES,
 ];
 // Import/restore consume this same catalog so new external owners cannot silently
 // disappear between backup publication and installation.

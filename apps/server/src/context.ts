@@ -324,11 +324,13 @@ export interface CandidateAction {
 }
 export function npcCandidates(
   service: WorldService,
-  actorId = service.defaultResidentEntityId,
-  observed = decisionObservation(service.world, actorId),
+  actorId = service.availableDefaultResidentEntityId,
+  observed = actorId ? decisionObservation(service.world, actorId) : undefined,
 ): CandidateAction[] {
   const actor = observed?.actor.actor;
-  if (!observed || !actor?.alive || actor.incapacitated || service.paused) return [];
+  // Explicit player-action callers share these native suggestions. Only implicit
+  // resident selection may be absent; never substitute the controlled person.
+  if (!actorId || !observed || !actor?.alive || actor.incapacitated || service.paused) return [];
   const definitions = new Map(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );

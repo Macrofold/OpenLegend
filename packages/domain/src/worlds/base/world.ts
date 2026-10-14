@@ -49,12 +49,34 @@ import { livingBody, nativeActor, hasMemory } from '../../living.js';
 import traitBank from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
 import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../types.js';
+import type { ConstructionPermission } from '../../assembly-types.js';
+import { itemsForOwner } from '../../objects.js';
+import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 
 export const PLAYER_ID = 'entity-0001';
 export const NPC_ID = 'entity-0002';
 const MERCENARY_ID = 'peacock-mercenary';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
 export { NATIVE_ITEMS, NATIVE_PREPARATIONS } from './items.js';
+
+/** Only the ordinary authored camp requests this starting material-use permission.
+ * The creation profile returns its own explicit seeds separately.
+ */
+export function baseWorldInitialConstructionSeeds(world: WorldState): ConstructionPermission[] {
+  if (!world.entities[BASE_CANOPY_SCENE.builderId]?.actor) return [];
+  return [
+    {
+      id: 'intro-canopy-builder',
+      worldId: world.id,
+      actorId: BASE_CANOPY_SCENE.builderId,
+      revision: 1,
+      revoked: false,
+      site: structuredClone(BASE_CANOPY_SCENE.site),
+      operations: ['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered'],
+      materialIds: itemsForOwner(world, BASE_CANOPY_SCENE.builderId).map((item) => item.id),
+    },
+  ];
+}
 export function createActor(
   world: WorldState,
   controller: 'player' | 'npc',
@@ -111,13 +133,13 @@ export function createActor(
   return actor;
 }
 
-/** A primitive camp and generic material families; there is deliberately no seeded sling or bow recipe. */
-export function createWorld(
-  seed = 73,
-  accounts: WorldCreationAccounts = {
-    creatorAccountIds: ['local-player'],
-    playerAccountId: 'local-player',
-  },
+/** Shared authored definitions and empty fresh state; callers supply the selected population.
+ * docs/worlds/base/playable-openings.md#fresh-construction
+ */
+export function createFreshBaseWorld(
+  seed: number,
+  accounts: WorldCreationAccounts,
+  identity: { worldId: string; playerId: string },
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
@@ -129,7 +151,7 @@ export function createWorld(
     statusEffectPolicy: structuredClone(DEFAULT_STATUS_EFFECT_POLICY),
     authorship: {
       creatorAccountIds: [...accounts.creatorAccountIds],
-      playerAccountIds: { [PLAYER_ID]: accounts.playerAccountId },
+      playerAccountIds: { [identity.playerId]: accounts.playerAccountId },
     },
     inventionPolicy: initialInventionPolicy(),
     moduleManifest: createModuleManifest(
@@ -144,7 +166,7 @@ export function createWorld(
     visibleObjects: {},
     places: structuredClone(BASE_PLACES),
     visiblePlaces: {},
-    id: `wilderness-${normalizedSeed}`,
+    id: identity.worldId,
     seed: normalizedSeed,
     rngState: normalizedSeed || 0x6d2b79f5,
     sequence: 0,
@@ -167,8 +189,8 @@ export function createWorld(
     foodPreparations: structuredClone(BASE_FOOD_PREPARATIONS),
     castDefinitions: structuredClone(BASE_CAST_DEFINITIONS),
     recipes: {},
-    memories: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
-    knowledge: { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] },
+    memories: {},
+    knowledge: {},
     events: [],
     commandReceipts: {},
     declarationReceipts: {},
@@ -182,6 +204,24 @@ export function createWorld(
     world.map.tiles,
     world.map.spatial!,
   );
+  return world;
+}
+
+/** A primitive camp and generic material families; there is deliberately no seeded sling or bow recipe. */
+export function createWorld(
+  seed = 73,
+  accounts: WorldCreationAccounts = {
+    creatorAccountIds: ['local-player'],
+    playerAccountId: 'local-player',
+  },
+): WorldState {
+  const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
+  const world = createFreshBaseWorld(normalizedSeed, accounts, {
+    worldId: `wilderness-${normalizedSeed}`,
+    playerId: PLAYER_ID,
+  });
+  world.memories = { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] };
+  world.knowledge = { [PLAYER_ID]: [], [NPC_ID]: [], [MERCENARY_ID]: [] };
   const entities: Entity[] = [
     {
       id: SLING_TARGET.id,
@@ -241,7 +281,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 5, z: 11 }, 'terrain'),
-      resource: { definitionId: 'raw_fiber', quantity: 48, workSeconds: 36 },
+      resource: {
+        definitionId: 'raw_fiber',
+        quantity: 48,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.raw_fiber,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -250,7 +294,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 19, z: 12 }, 'terrain'),
-      resource: { definitionId: 'raw_fiber', quantity: 30, workSeconds: 36 },
+      resource: {
+        definitionId: 'raw_fiber',
+        quantity: 30,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.raw_fiber,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -259,7 +307,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 8, z: 8 }, 'terrain'),
-      resource: { definitionId: 'wood', quantity: 36, workSeconds: 42 },
+      resource: {
+        definitionId: 'wood',
+        quantity: 36,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.wood,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -268,7 +320,11 @@ export function createWorld(
       nameForm: 'plural',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 5, z: 15 }, 'terrain'),
-      resource: { definitionId: 'stone', quantity: 60, workSeconds: 24 },
+      resource: {
+        definitionId: 'stone',
+        quantity: 60,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.stone,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -276,7 +332,11 @@ export function createWorld(
       name: 'Berry bush',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 8, z: 13 }, 'terrain'),
-      resource: { definitionId: 'berries', quantity: 0, workSeconds: 30 },
+      resource: {
+        definitionId: 'berries',
+        quantity: 0,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.berries,
+      },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -284,7 +344,11 @@ export function createWorld(
       name: 'Berry thicket',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 19, z: 15 }, 'terrain'),
-      resource: { definitionId: 'berries', quantity: 0, workSeconds: 30 },
+      resource: {
+        definitionId: 'berries',
+        quantity: 0,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.berries,
+      },
     },
     {
       spatial: { bodyProfileId: 'hare', heading: 0 },
@@ -362,7 +426,11 @@ export function createWorld(
       placement: worldPlacement({ x: 20, y: 3, z: 5.5 }, 'lookout-deck'),
       spatial: { bodyProfileId: 'object', heading: 0 },
       appearance: 'crate-mesh',
-      resource: { definitionId: 'wood', quantity: 24, workSeconds: 42 },
+      resource: {
+        definitionId: 'wood',
+        quantity: 24,
+        workSeconds: BASE_RESOURCE_GATHERING_SECONDS.wood,
+      },
     },
     {
       id: 'bird-1',

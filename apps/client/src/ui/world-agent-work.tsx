@@ -9,13 +9,19 @@ import type {
   WorldAgentSessionView,
   WorldAgentValidation,
   WorldAgentWorkResult,
+  WorldCreationTargetView,
 } from '@open-legend/protocol';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { Button, EmptyState, Icon, Tag } from '../design-system/components';
 import { post, privateDraftScope } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { WorldAgentPreparationDetails } from './world-agent-work-details';
-import { WorldAgentRecipeEditor, hasRetainedRecipeEdit } from './world-agent-recipe-editor';
+import { WorldAgentDraftEditor, hasRetainedDraftEdit } from './world-agent-draft-editor';
+import { WorldCreationPreviewView } from './world-creation-preview';
+import { WorldCreationTargets } from './world-creation-targets';
+import { worldAgentKindLabel as kindLabel } from './world-agent-labels';
+import { authoringKey } from './world-agent-identity';
+import { holdActionFocus } from './action-focus';
 import './world-agent-work.css';
 
 export interface WorldAgentWorkViewProps {
@@ -27,16 +33,8 @@ export interface WorldAgentWorkViewProps {
   visible: boolean;
   onRefresh(): void;
   onOpenReview(planId: string): void;
+  requestedSelection?: { id: string; revision: number };
 }
-const kindLabel: Record<WorldAgentDraftView['kind'], string> = {
-  recipe: 'Recipe',
-  attribute: 'Characteristic definition',
-  'attribute-bindings': 'Character characteristics',
-  'attribute-values': 'Character characteristic values',
-  'status-effect-policy': 'Status rules',
-  'cognition-policy': 'Rules for character thought',
-  action: 'Action definition',
-};
 const errorText = (error: unknown) =>
   error instanceof Error
     ? error.message
@@ -59,10 +57,10 @@ const displayValue = (value: unknown, present: boolean) =>
 export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const { worldId, sessionId, accessScope, session, connected, visible, onRefresh, onOpenReview } =
     props;
-  const scope = `${worldId}:${accessScope}:${sessionId}`;
+  const scope = authoringKey('work', worldId, accessScope, sessionId);
   // Local recovery survives a new connection; requests still use the full access scope.
-  const storageScope = `${worldId}:${privateDraftScope()}:${sessionId}`;
-  const key = `open-legend:authoring:${storageScope}:work-selection`;
+  const audience = privateDraftScope();
+  const key = authoringKey('work-selection', worldId, audience, sessionId);
   const [selected, setSelected] = useState(() =>
     readLocal<{ id: string; revision: number } | null>(key, null, selectionValid),
   );
@@ -80,7 +78,16 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [reload, setReload] = useState(0);
-  const identity = `${scope}:${selected?.id}:${selected?.revision}`;
+  const [targetId, setTargetId] = useState('');
+  const [eligibleTarget, setEligibleTarget] = useState<WorldCreationTargetView>();
+  const identity = authoringKey(
+    'draft-read',
+    worldId,
+    accessScope,
+    sessionId,
+    selected?.id ?? null,
+    selected?.revision ?? null,
+  );
   const identityRef = useRef(identity);
   identityRef.current = identity;
   const loadSequence = useRef(0);
@@ -95,6 +102,26 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const mutationReason = !connected
     ? 'Reconnect before changing saved work.'
     : session.workspaceMutationReason;
+  const opening =
+    exact?.id === selected?.id &&
+    exact?.revision === selected?.revision &&
+    exact?.kind === 'world-opening';
+  const targetKey = authoringKey(
+    'creation-target',
+    worldId,
+    audience,
+    sessionId,
+    selected?.id ?? null,
+    selected?.revision ?? null,
+  );
+
+  useEffect(() => {
+    setTargetId(readLocal(targetKey, '', (value): value is string => typeof value === 'string'));
+    setEligibleTarget(undefined);
+  }, [targetKey]);
+  useEffect(() => {
+    if (props.requestedSelection) select(props.requestedSelection);
+  }, [props.requestedSelection]);
 
   useEffect(() => {
     return () => {
@@ -142,10 +169,18 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
         setExact(result);
         setValidation(result.validation);
         if (
-          result.kind === 'recipe' &&
-          hasRetainedRecipeEdit(
+          !!result.editor &&
+          hasRetainedDraftEdit(
             result,
-            `open-legend:authoring:${storageScope}:${result.id}:${result.revision}:recipe-edit`,
+            authoringKey(
+              'draft-edit',
+              worldId,
+              audience,
+              sessionId,
+              result.id,
+              result.revision,
+              result.kind,
+            ),
           )
         ) {
           setEditorOpen(true);
@@ -218,15 +253,10 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
     if (working.current) return;
     working.current = true;
     const sequence = ++workSequence.current;
-    const opener =
-      document.activeElement instanceof HTMLButtonElement &&
-      workspace.current?.contains(document.activeElement)
-        ? document.activeElement
-        : null;
-    const holdingFocus = opener ? (detailHeading.current ?? workspace.current) : null;
-    // Disabled buttons lose focus. Keep keyboard position inside this task while
-    // waiting, and restore it only if the player has not moved elsewhere.
-    holdingFocus?.focus({ preventScroll: true });
+    const restoreFocus = holdActionFocus(
+      workspace.current,
+      detailHeading.current ?? workspace.current,
+    );
     setBusy(true);
     setError('');
     setNotice('');
@@ -238,18 +268,8 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
     } finally {
       working.current = false;
       setBusy(false);
-      if (opener)
-        requestAnimationFrame(() => {
-          if (
-            workSequence.current === sequence &&
-            identityRef.current === requestIdentity &&
-            document.activeElement === holdingFocus &&
-            workspace.current?.getClientRects().length &&
-            opener.isConnected &&
-            !opener.disabled
-          )
-            opener.focus();
-        });
+      if (workSequence.current === sequence && identityRef.current === requestIdentity)
+        restoreFocus();
     }
   }
   async function loadMore() {
@@ -335,9 +355,19 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
     });
   }
   const prepareKey = selected
-    ? `open-legend:authoring:${storageScope}:${selected.id}:${selected.revision}:prepare-operation`
+    ? authoringKey(
+        'prepare-operation',
+        worldId,
+        audience,
+        sessionId,
+        selected.id,
+        selected.revision,
+        opening ? targetId : null,
+      )
     : '';
-  const prepareBody = selected ? { draftId: selected.id, revision: selected.revision } : null;
+  const prepareBody = selected
+    ? { draftId: selected.id, revision: selected.revision, ...(opening ? { targetId } : {}) }
+    : null;
   const prepareSerialized = JSON.stringify(prepareBody);
   const retainedPrepare = readLocal<{ body: string; id: string } | null>(
     prepareKey,
@@ -352,8 +382,20 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   );
   const canRetryPrepare = retainedPrepare?.body === prepareSerialized;
   async function prepare(retry = false) {
-    if (!selected || !connected || (retry ? !canRetryPrepare : !!mutationReason)) return;
-    const body = { draftId: selected.id, revision: selected.revision };
+    // Guard before retaining an ID: a second press must not replace the first
+    // request's recovery identity while that request is still pending.
+    if (
+      working.current ||
+      !selected ||
+      !connected ||
+      (retry ? !canRetryPrepare : !!mutationReason || (opening && eligibleTarget?.id !== targetId))
+    )
+      return;
+    const body = {
+      draftId: selected.id,
+      revision: selected.revision,
+      ...(opening ? { targetId } : {}),
+    };
     const serialized = JSON.stringify(body);
     const operationId =
       canRetryPrepare && retainedPrepare ? retainedPrepare.id : crypto.randomUUID();
@@ -391,7 +433,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
       ref={workspace}
       tabIndex={-1}
       className="ol-agent-work"
-      aria-label="Saved invention work"
+      aria-label="Saved proposals"
       hidden={!visible}
       data-detail={!!selected}
     >
@@ -521,6 +563,9 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                     preparationRevision={selectedExact.revision}
                     validation={validation}
                   />
+                  {selectedExact.openingPreview && (
+                    <WorldCreationPreviewView preview={selectedExact.openingPreview} />
+                  )}
                   <div className="ol-agent-tools">
                     <Button
                       size="sm"
@@ -530,18 +575,18 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                     >
                       History
                     </Button>
-                    {selectedExact.kind === 'recipe' && !historical && (
+                    {!!selectedExact.editor && !historical && (
                       <Button
                         size="sm"
                         variant="quiet"
                         disabled={busy}
                         onPress={() => setEditorOpen(true)}
                       >
-                        Edit recipe
+                        Edit {selectedExact.kind === 'world-opening' ? 'opening' : 'recipe'}
                       </Button>
                     )}
                   </div>
-                  {selectedExact.kind !== 'recipe' && (
+                  {!selectedExact.editor && (
                     <p className="ol-caption">
                       This kind can be revised in Conversation. Exact inspection, native checks and
                       review are available here.
@@ -612,10 +657,10 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                                 <th scope="row">
                                   {(() => {
                                     const field =
-                                      comparison.after.recipeEditor?.fields.find(
+                                      comparison.after.editor?.fields.find(
                                         (field) => field.path.join('.') === change.field,
                                       ) ??
-                                      comparison.before.recipeEditor?.fields.find(
+                                      comparison.before.editor?.fields.find(
                                         (field) => field.path.join('.') === change.field,
                                       );
                                     return field
@@ -649,16 +694,22 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                   )}
                   {editorOpen && !dirty && (
                     <Button size="sm" variant="quiet" onPress={() => setEditorOpen(false)}>
-                      Close recipe editor
+                      Close editor
                     </Button>
                   )}
                   {editorOpen && (
-                    <WorldAgentRecipeEditor
-                      key={`${scope}:${selectedExact.id}:${selectedExact.revision}`}
+                    <WorldAgentDraftEditor
+                      key={authoringKey(
+                        'editor-component',
+                        worldId,
+                        accessScope,
+                        sessionId,
+                        selectedExact.id,
+                        selectedExact.revision,
+                      )}
                       draft={selectedExact}
                       worldId={worldId}
                       sessionId={sessionId}
-                      accessScope={accessScope}
                       connected={connected}
                       mutationReason={mutationReason}
                       onDirty={setDirty}
@@ -718,6 +769,19 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                     </section>
                   )}
                   <div className="ol-agent-work-actions">
+                    {opening && !historical && (
+                      <WorldCreationTargets
+                        key={targetKey}
+                        sessionId={sessionId}
+                        connected={connected}
+                        selectedId={targetId}
+                        onSelect={(id) => {
+                          setTargetId(id);
+                          writeLocal(targetKey, id);
+                        }}
+                        onEligible={setEligibleTarget}
+                      />
+                    )}
                     {error && <p role="alert">{error}</p>}
                     {notice && <p role="status">{notice}</p>}
                     {mutationReason && <p role="status">{mutationReason}</p>}
@@ -739,7 +803,12 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                         size="sm"
                         variant="primary"
                         disabled={
-                          busy || dirty || !!mutationReason || !!historical || canRetryPrepare
+                          busy ||
+                          dirty ||
+                          !!mutationReason ||
+                          !!historical ||
+                          canRetryPrepare ||
+                          (opening && eligibleTarget?.id !== targetId)
                         }
                         onPress={() => void prepare()}
                       >
@@ -774,8 +843,8 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
           }}
         >
           <Modal className="ol-modal">
-            <Dialog className="ol-person-dialog" aria-label="Unsaved recipe changes">
-              <h2>Keep this recipe edit?</h2>
+            <Dialog className="ol-person-dialog" aria-label="Unsaved draft changes">
+              <h2>Keep this draft edit?</h2>
               <p>Your unfinished changes have not been saved as a revision.</p>
               <Button variant="primary" onPress={() => setSwitchTo(undefined)}>
                 Keep editing
@@ -783,10 +852,19 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
               <Button
                 variant="quiet"
                 onPress={() => {
-                  writeLocal(
-                    `open-legend:authoring:${storageScope}:${selected?.id}:${selected?.revision}:recipe-edit`,
-                    null,
-                  );
+                  if (exact)
+                    writeLocal(
+                      authoringKey(
+                        'draft-edit',
+                        worldId,
+                        audience,
+                        sessionId,
+                        selected?.id ?? null,
+                        selected?.revision ?? null,
+                        exact.kind,
+                      ),
+                      null,
+                    );
                   select(switchTo.id ? switchTo : null, true);
                   setSwitchTo(undefined);
                 }}

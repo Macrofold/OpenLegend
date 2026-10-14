@@ -55,7 +55,6 @@ import {
   type HistoryEditSelection,
   type PreparedHistoryEdit,
 } from './history-edit.js';
-import { reconcileConditions, initializePerception } from '@open-legend/domain';
 import { scopedInventionErrors } from './invention-context.js';
 import { advanceWorldSlices, appendedRecordCount } from '@open-legend/domain';
 import { setContainerAccess, type ContainerAccessRequest } from '@open-legend/domain';
@@ -124,7 +123,6 @@ import {
   controlledEntityId,
   defaultStoryPolicy,
   defaultResidentEntityId,
-  validateStoryPolicy,
   editStoryMechanism,
   type StoryPolicy,
 } from '@open-legend/domain';
@@ -140,16 +138,14 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   createWorld,
+  baseWorldInitialConstructionSeeds,
   updateWorld,
   appendedEventCount,
-  initializeActorTraits,
   freezeWorld,
-  migrateCognition,
   forgetExperience,
   correctExperience,
   experiences,
   EXPERIENCE_LIMITS,
-  mindFor,
   executeCommand,
   admitDeclaration,
   experienceEntry,
@@ -182,6 +178,9 @@ import type {
 } from '@open-legend/protocol';
 import type { AppConfig } from './config.js';
 import { digest, type SavedWorld, type GameRepository, type PreparedCommit } from './store.js';
+import type { CreationActivationReceipt } from './creation-target-contracts.js';
+import { prepareWorldForStartup } from './initial-world-preparation.js';
+import { validateCurrentWorldState } from './upgrade-world.js';
 
 const id = z
   .string()
@@ -716,6 +715,7 @@ export class WorldService {
     readonly store: GameRepository,
     readonly config: AppConfig,
     private readonly now = Date.now,
+    private readonly startup: { createdActivation?: CreationActivationReceipt } = {},
   ) {
     this.ready = this.initialize();
   }
@@ -723,9 +723,16 @@ export class WorldService {
     const { store, config } = this;
     await initializeCollisionRuntime();
     await store.ready;
-    this.currentProfile = await store.getProfile('local-player');
     const existing = await store.load(true);
+    const createdActivation = this.startup.createdActivation;
+    if (createdActivation && (!existing || existing.state.world.id !== createdActivation.worldId))
+      throw new Error(
+        'The committed created world is unavailable. Existing data was not replaced.',
+      );
     if (existing) validateWorldModules(existing.state.world);
+    this.currentProfile = await store.getProfile(
+      createdActivation?.controlAccountId ?? 'local-player',
+    );
     this.pauseWhenHidden = this.currentProfile.preferences.pauseWhenHidden;
     const creationAccounts = {
       creatorAccountIds: [this.currentProfile.id],
@@ -742,8 +749,9 @@ export class WorldService {
       manuallyPaused: false,
     };
     if (!store.authority) throw new Error('Current authority repository is required.');
-    const bindings =
-      config.authentication.mode === 'local'
+    const bindings = createdActivation
+      ? []
+      : config.authentication.mode === 'local'
         ? [
             {
               issuer: 'https://local.openlegend.invalid',
@@ -779,70 +787,54 @@ export class WorldService {
     this.persistedEvents = this.saved.world.events;
     this.viewRevision = this.persistedRevision;
     if (existing) await store.authority.refreshConstruction(this.saved.world.id);
-    this.saved = {
-      ...this.saved,
-      world: updateWorld(this.saved.world, (world) => {
-        world.storyPolicy ??= defaultStoryPolicy();
-        validateStoryPolicy(world.storyPolicy);
-        world.minds ??= {};
-        for (const entity of Object.values(world.entities))
-          if (hasMemory(entity)) world.minds[entity.id] ??= mindFor(world, entity.id);
-        migrateCognition(world);
-        initializeActorTraits(world);
-        world.socialPolicy = {
-          conversationInactivitySeconds: config.conversationInactivitySeconds,
-          notableThreshold: 8,
+    if (createdActivation) {
+      // This world was fully prepared and reviewed before its first transaction. A host
+      // retry must not replay observations, traits, grants or starting-scene effects.
+      // docs/projects/parallel-batch-07-playable-world-creation-tech-design.md
+      validateCurrentWorldState(this.saved.world);
+      if (!this.saved.world.paused)
+        this.saved = {
+          ...this.saved,
+          world: updateWorld(this.saved.world, (world) => {
+            world.paused = true;
+          }),
         };
-        for (const [actorId, accountId] of actorOwners) {
-          const actor = world.entities[actorId]?.actor;
-          if (!actor) continue;
-          actor.controller = 'player';
-          world.authorship.playerAccountIds[actorId] = accountId;
-        }
-        if (!existing) {
-          initializePerception(world, []);
-          for (const entity of Object.values(world.entities))
-            reconcileConditions(world, entity, []);
-        }
-        world.paused = true;
-        reconcileConstructionAuthority(world, store.authority!.constructionPermissions(world.id));
-      }),
-    };
-    this.saved = updateMilestones(this.saved, this.saved.world.events);
+    } else {
+      this.saved = prepareWorldForStartup(
+        this.saved,
+        config,
+        actorOwners,
+        store.authority.constructionPermissions(this.saved.world.id),
+        !existing,
+      );
+      this.saved = updateMilestones(this.saved, this.saved.world.events);
+    }
     // Startup initialization can add actor state, so use the ordinary diff once.
     const startupHistory = this.saved.world;
-    if (store.history) this.saved = { ...this.saved, world: retainHotEvents(startupHistory) };
+    if (store.history) {
+      const retained = retainHotEvents(startupHistory);
+      if (retained !== startupHistory) this.saved = { ...this.saved, world: retained };
+    }
     const startupAllocation = this.hostWork.reserve(this.saved.world);
     try {
-      this.persistedRevision = await store.commit(
-        this.persistedRevision,
-        this.saved,
-        undefined,
-        undefined,
-        {
-          after: startupHistory,
-          authorityBindings: bindings,
-          authorityOwners: actorOwners,
-          ...(!existing
-            ? {
-                constructionSeeds: [
-                  {
-                    id: 'intro-canopy-builder',
-                    worldId: this.saved.world.id,
-                    actorId: BASE_CANOPY_SCENE.builderId,
-                    revision: 1,
-                    revoked: false,
-                    site: BASE_CANOPY_SCENE.site,
-                    operations: ['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered'],
-                    materialIds: inventoryFor(this.saved.world, BASE_CANOPY_SCENE.builderId).map(
-                      (item) => item.id,
-                    ),
-                  } satisfies ConstructionPermission,
-                ],
-              }
-            : {}),
-        },
-      );
+      if (!createdActivation || this.saved !== existing?.state)
+        this.persistedRevision = await store.commit(
+          this.persistedRevision,
+          this.saved,
+          undefined,
+          undefined,
+          {
+            after: startupHistory,
+            ...(!createdActivation
+              ? { authorityBindings: bindings, authorityOwners: actorOwners }
+              : {}),
+            ...(!existing
+              ? {
+                  constructionSeeds: baseWorldInitialConstructionSeeds(this.saved.world),
+                }
+              : {}),
+          },
+        );
       startupAllocation.commit();
     } catch (error) {
       startupAllocation.rollback();
@@ -881,7 +873,9 @@ export class WorldService {
       ]),
     );
     // Restart has no verified live transports. Existing deadlines are retained, never extended.
-    await this.reconcileParticipation(true);
+    // Before the first entry, absence is not a fictional physical departure. Later
+    // restarts retain the ordinary saved-work and participation recovery behavior.
+    if (!createdActivation || existing?.revision !== 1) await this.reconcileParticipation(true);
   }
 
   get controlledEntityId(): string {
@@ -890,6 +884,13 @@ export class WorldService {
   }
   get defaultResidentEntityId(): string {
     return defaultResidentEntityId(this.world);
+  }
+  get availableDefaultResidentEntityId(): string | undefined {
+    const id = this.world.identity?.defaultResidentEntityId;
+    const entity = id ? this.world.entities[id] : undefined;
+    return entity?.actor?.controller === 'npc' && entity.actor.alive && !entity.retirement
+      ? entity.id
+      : undefined;
   }
 
   get world(): WorldState {
@@ -5019,14 +5020,32 @@ export class WorldService {
   }
 
   async setGoal(requestId: string, text: string): Promise<ApiResult> {
-    return await this.transition((world) =>
-      executeCommand(world, {
+    await this.ready;
+    if (!this.availableDefaultResidentEntityId)
+      return {
+        ok: false,
+        code: 'resident-unavailable',
+        message: 'This world has no default resident.',
+      };
+    return await this.transition((world) => {
+      const actorId = this.availableDefaultResidentEntityId;
+      if (!actorId)
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'resident-unavailable',
+            message: 'This world has no default resident.',
+          },
+        };
+      return executeCommand(world, {
         id: requestId,
-        actorId: this.defaultResidentEntityId,
+        actorId,
         type: 'goal',
         text,
-      }),
-    );
+      });
+    });
   }
 
   async admit(

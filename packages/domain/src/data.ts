@@ -38,6 +38,29 @@ export function nextId(world: WorldState, prefix: string): string {
     throw new Error('World identity sequence is exhausted or invalid.');
   return `${prefix}-${world.nextId++}`;
 }
+/** Fresh authored objects may already use a number from the world's shared sequence.
+ * Entity producers reserve their actual dictionary key without scanning history or
+ * imposing entity-namespace checks on unrelated event, memory or work identities.
+ * docs/identity-and-references.md#contract
+ */
+export function nextEntityId(world: WorldState, prefix: string): string {
+  let id = nextId(world, prefix);
+  while (Object.hasOwn(world.entities, id)) id = nextId(world, prefix);
+  return id;
+}
+/** Reserve a supplied entity's canonical native-looking number before it can become
+ * cold history. Active dictionary membership alone cannot protect an omitted key.
+ * This changes only the saved sequence, never the supplied ID or RNG.
+ * docs/identity-and-references.md#contract
+ */
+export function reserveEntityId(world: WorldState, id: string): void {
+  const suffix = /^.+-(0|[1-9]\d*)$/.exec(id)?.[1];
+  if (suffix === undefined) return;
+  const number = Number(suffix);
+  // Larger/noncanonical numbers cannot be emitted by the existing safe allocator.
+  if (Number.isSafeInteger(number) && number < Number.MAX_SAFE_INTEGER && world.nextId <= number)
+    world.nextId = number + 1;
+}
 export function addItem(
   world: WorldState,
   ownerId: string,

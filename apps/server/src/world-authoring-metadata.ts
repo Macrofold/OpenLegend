@@ -5,6 +5,11 @@ import {
   installedRecipeFamilies,
   bodyPolicy,
   RESERVOIR_CONSUMER_GUIDE,
+  BASE_OPENING_PROFILE,
+  BASE_OPENING_IDENTITY_KEYS,
+  BASE_OPENING_RESOURCES,
+  BASE_OPENING_STOCK_DEFINITIONS,
+  BASE_OPENING_METHODS,
   type WorldState,
 } from '@open-legend/domain';
 import { declarationSchema } from './ai-schemas.js';
@@ -23,6 +28,29 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
     coverage: 'Native supported family only; use ol_validate for authoritative findings.',
   };
   switch (kind) {
+    case 'world-opening':
+      return {
+        ...common,
+        profile: BASE_OPENING_PROFILE,
+        resources: BASE_OPENING_RESOURCES,
+        stockDefinitions: BASE_OPENING_STOCK_DEFINITIONS,
+        learnedMethods: BASE_OPENING_METHODS,
+        identityKeys: BASE_OPENING_IDENTITY_KEYS,
+        payloadEncoding:
+          'Use proposal.kind="world-opening" and proposal.candidate containing the complete prospective opening serialized as bounded JSON text.',
+        approval:
+          'Saving retains a proposed new opening. The authenticated human selects a permitted prepared target, reviews the exact opening and target, and starts through the native creation controls.',
+        coverage:
+          'The supported initial profile only. Native preparation separately checks actual geometry, supplies, methods and activity readiness; it cannot guarantee an invented tool, a successful attempt or another person’s choice.',
+        notes: [
+          'Use the session-owned prospective template or current_work. Preserve allocated identities, exact definition/profile pins, seed, RNG state and every unchanged selected part. Names never allocate or resolve identities.',
+          'The application supplies fresh identities; none come from the source world. Source people, memories, inventories, active work, receipts, control leases, credentials and account grants are not opening content.',
+          'A supplied reference is a starting proposal, not a requirement to add people or emergency resources. Preserve explicitly chosen solitude or harshness and retain unsupported essential requirements as blockers rather than substituting another premise.',
+          'Describe authored history and dispositions without prescribing later decisions. Current placement, stock and fullness belong in their actual fields. Initial goals are visibly authored scenario intentions, not proof of autonomous motivation.',
+          'Starting knowledge installs no physical stock. Initial stock is an explicit finite endowment, not an invented historical event or receipt.',
+          'Submit or revise the retained opening and finish. Saving does not change the source world, prepare a source-world Apply plan, authorize a target, start a host or grant character control.',
+        ],
+      };
     case 'recipe':
       return {
         ...common,

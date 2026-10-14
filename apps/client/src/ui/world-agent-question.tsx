@@ -14,8 +14,9 @@ import {
   TextField,
 } from 'react-aria-components';
 import { Button } from '../design-system/components';
-import { post } from '../api';
+import { post, privateDraftScope } from '../api';
 import { readLocal, writeLocal } from './storage';
+import { authoringKey } from './world-agent-identity';
 
 type Answers = WorldAgentQuestionAnswer['answers'];
 type Pending = {
@@ -50,10 +51,20 @@ export function WorldAgentQuestionCard({
 }) {
   // The server must authorize this session/question before rendering the card.
   // Connection IDs change on reload; using them here would lose unsent answers.
-  const key = `open-legend:authoring:question:${worldId}:${sessionId}:${question.digest}`;
+  const audience = privateDraftScope();
+  const recordKey = (record: string) =>
+    authoringKey(
+      'question-record',
+      worldId,
+      audience,
+      sessionId,
+      question.turnId,
+      question.digest,
+      record,
+    );
   const [answers, setAnswers] = useState<Answers>(() =>
     readLocal(
-      `${key}:draft`,
+      recordKey('draft'),
       question.answer?.answers ?? [],
       (v): v is Answers =>
         Array.isArray(v) &&
@@ -73,7 +84,7 @@ export function WorldAgentQuestionCard({
   );
   const [pending, setPending] = useState<Pending | null>(() =>
     readLocal(
-      `${key}:pending`,
+      recordKey('pending'),
       null,
       (v): v is Pending =>
         !!v &&
@@ -108,7 +119,7 @@ export function WorldAgentQuestionCard({
   function update(answer: Answers[number]) {
     const next = [...answers.filter((a) => a.questionId !== answer.questionId), answer];
     setAnswers(next);
-    writeLocal(`${key}:draft`, next);
+    writeLocal(recordKey('draft'), next);
   }
   async function act(work: () => Promise<void>) {
     if (working.current) return;
@@ -133,7 +144,7 @@ export function WorldAgentQuestionCard({
         continueIfReady: canContinue,
         ...(question.answer ? { supersedes: question.answer.id } : {}),
       };
-      writeLocal(`${key}:pending`, value);
+      writeLocal(recordKey('pending'), value);
       setPending(value);
       const reply = await post<WorldAgentReply>('/api/world-agent/session/question-answer', {
         worldId,
@@ -144,12 +155,12 @@ export function WorldAgentQuestionCard({
       });
       if (!reply.ok) {
         if (['authoring-request', 'invalid-input'].includes(reply.code)) {
-          writeLocal(`${key}:pending`, null);
+          writeLocal(recordKey('pending'), null);
           setPending(null);
         }
         throw new Error(reply.message);
       }
-      writeLocal(`${key}:pending`, null);
+      writeLocal(recordKey('pending'), null);
       setPending(null);
       setEditing(false);
     });
@@ -280,7 +291,7 @@ export function WorldAgentQuestionCard({
           variant="quiet"
           disabled={busy || !connected}
           onPress={() => {
-            writeLocal(`${key}:pending`, null);
+            writeLocal(recordKey('pending'), null);
             setPending(null);
             setAnswers(answers.length ? answers : question.answer!.answers);
             setEditingAnswerId(question.answer!.id);

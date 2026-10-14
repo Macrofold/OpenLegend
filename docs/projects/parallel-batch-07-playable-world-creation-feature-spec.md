@@ -1,8 +1,8 @@
 # Batch 07 — Create a world and play its opening
 
-| Status      | Current progress                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The complete creation assignment is defined; implementation and first-play acceptance have not started. | 2026-10-11   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-13   |
 
 ## Purpose and selected scope
 

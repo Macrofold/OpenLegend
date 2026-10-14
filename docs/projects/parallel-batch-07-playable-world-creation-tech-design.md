@@ -1,8 +1,8 @@
 # Batch 07 — Technical design for playable world creation
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | One independently completable creation assignment has concrete assembly, authority and recovery contracts; runtime work remains open. | 2026-10-11   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Live language-authored creation and entry now pass; generated-tool play and final acceptance remain open. | 2026-10-13   |
 
 ## Baseline and independent completion
 

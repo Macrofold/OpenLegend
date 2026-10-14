@@ -20,6 +20,9 @@ import {
   markPartialAppraisals,
   completeContributionHistory,
   markPartialContributions,
+  markPartialObjectHistory,
+  completeObjectHistory,
+  isSafeRecordId,
   type Appraisal,
   type Entity,
   type ItemInstance,
@@ -97,6 +100,62 @@ export class WorldRecords {
     // Only explicit terminal independent instances leave the current working set;
     // singleton cooldowns remain present. Complete capture validates cold rows too.
     return `(${json('contribution')} IS NULL OR ${json('active')} IS NULL OR CAST(${json('active')} AS TEXT) NOT IN ('false','0'))`;
+  }
+  private currentEntityPredicate(table: string): string {
+    if (table === 'sim_entities')
+      return ' AND NOT EXISTS (SELECT 1 FROM sim_object_retirements retired WHERE retired.world_id=t.world_id AND retired.parent_id=t.id)';
+    const parents: string[] = [];
+    let parent = RECORD_PARENTS.get(table);
+    while (parent && parent !== 'sim_entities') {
+      parents.push(parent);
+      parent = RECORD_PARENTS.get(parent);
+    }
+    if (!parent) return '';
+    // A consumed material may retain attributes as cold history. Every owned component
+    // follows its entity's residency, rather than leaving children without a loaded parent.
+    // docs/projects/persistent-objects-tech-design.md#2-identity-and-canonical-representation
+    const joins = parents
+      .map((table, index) => {
+        const previous = index ? `owner${index - 1}` : 't';
+        return ` JOIN ${table} owner${index} ON owner${index}.world_id=${previous}.world_id AND owner${index}.id=${previous}.parent_id`;
+      })
+      .join('');
+    const owner = parents.length ? `owner${parents.length - 1}` : 't';
+    return ` AND NOT EXISTS (SELECT 1 FROM sim_object_retirements retired${joins} WHERE retired.world_id=t.world_id AND retired.parent_id=${owner}.parent_id)`;
+  }
+  private async validateHistoricalMaterialOrigins(state: SavedWorld): Promise<void> {
+    const absent = new Set<string>();
+    for (const entity of Object.values(state.world.entities)) {
+      for (const origins of [
+        entity.item?.materialOriginIds,
+        entity.actor?.action?.materialOriginIds,
+      ]) {
+        if (origins === undefined) continue;
+        if (!Array.isArray(origins)) throw new Error('Invalid physical material provenance.');
+        for (const origin of origins) {
+          if (!isSafeRecordId(origin)) throw new Error('Invalid physical material provenance.');
+          if (!Object.hasOwn(state.world.entities, origin)) absent.add(origin);
+        }
+      }
+    }
+    // Only missing historical identities need SQL. Keep the lookup in this same read
+    // snapshot and select existence through the owning (world, entity) unique index.
+    // A partial working set cannot excuse a missing canonical source record.
+    // docs/save-and-load.md#continuation-and-identity
+    const ids = [...absent];
+    for (let offset = 0; offset < ids.length; offset += 256) {
+      const missing = await this.db
+        .prepare(
+          `SELECT source.value AS id FROM jsonb_array_elements_text(?::jsonb) source
+           WHERE NOT EXISTS (SELECT 1 FROM sim_entities entity
+             JOIN sim_object_retirements retirement
+               ON retirement.world_id=entity.world_id AND retirement.parent_id=entity.id
+             WHERE entity.world_id=? AND entity.entity_id=source.value) LIMIT 1`,
+        )
+        .get(JSON.stringify(ids.slice(offset, offset + 256)), state.world.id);
+      if (missing)
+        throw new Error('Physical material provenance references a missing source identity.');
+    }
   }
   async initialize() {
     await this.db.exec(`CREATE TABLE IF NOT EXISTS world_head (
@@ -468,7 +527,7 @@ export class WorldRecords {
       }
       const eventId = "(t.payload::jsonb ->> 'id')";
       const partial = active && HISTORY_TABLES.has(table);
-      const objectPredicate = !active
+      const currentPredicate = !active
         ? ''
         : table === 'sim_status_effects'
           ? ` AND ${this.currentContributionsPredicate('t.')}`
@@ -476,9 +535,12 @@ export class WorldRecords {
             ? ` AND (t.payload::jsonb ->> 'state'='active' OR t.payload::jsonb ->> 'state' IS NULL)`
             : ['sim_object_lineage', 'sim_object_retirements'].includes(table)
               ? ' AND 1=0'
-              : ['sim_entities', 'sim_entity_geometry', 'sim_declared_owners'].includes(table)
-                ? ` AND NOT EXISTS (SELECT 1 FROM sim_object_retirements retired WHERE retired.world_id=t.world_id AND retired.parent_id=t.${table === 'sim_entities' ? 'id' : 'parent_id'})`
-                : '';
+              : '';
+      const objectPredicate =
+        currentPredicate +
+        (active && !['sim_object_lineage', 'sim_object_retirements'].includes(table)
+          ? this.currentEntityPredicate(table)
+          : '');
       let rows: JsonRecord[] = [];
       if (partial && table === 'activity_occurrences') {
         rows = await this.db
@@ -559,6 +621,8 @@ export class WorldRecords {
       WORLD_RECORD_SCHEMA,
     );
     if (active) {
+      await this.validateHistoricalMaterialOrigins(state);
+      markPartialObjectHistory(state.world.entities);
       const missing = await this.db
         .prepare(
           `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
@@ -691,6 +755,9 @@ export class WorldRecords {
       // not need unrelated physical history. Never infer completeness from a hot map.
       if (!actorIds) state = await this.withObjectHistory(state);
       const entities = { ...state.world.entities };
+      // One person's evidence does not materialize omitted physical identities.
+      // Preserve trusted residency on this owned copy; raw/full reconstruction stays strict.
+      if (!completeObjectHistory(state.world.entities)) markPartialObjectHistory(entities);
       for (const actorId of actorIds ?? Object.keys(entities)) {
         const entity = entities[actorId];
         if (!entity || completeContributionHistory(entity.statusEffects)) continue;

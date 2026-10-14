@@ -4,6 +4,8 @@ Character authorship follows [evolving history and disposition](../../projects/c
 
 This page owns the bundled world's current social rules and their visible limits. It does not prescribe universal kinship, emotion or obligation laws for the engine. General ownership and privacy remain in [Architecture](../../architecture.md#actor-means-any-living-being), [knowledge](../../knowledge.md) and the [boundary principles](../../engine-and-world-boundaries.md#design-principles-for-every-feature).
 
+The [bundled startup policy](../../../packages/domain/src/worlds/base/social.ts) owns the saved notability tuning retained by ordinary fresh preparation. That field currently has no native consumer and grants no social behavior. Conversation timeout remains an application configuration value. Fresh-opening extraction preserves the existing saved shape rather than adding a second social law or removing unrelated state.
+
 ## Understanding another person
 
 An actor's directional relationship description is its subject knowledge document. **My thoughts and relationships** displays that understanding and edits the same text through Knowledge notepads. One person's revision does not revise the other's view, establish kinship, cancel an obligation or grant possession access. Known/remembered subjects do not automatically become currently visible or targetable. Human-private content stays private even from an in-game creator.

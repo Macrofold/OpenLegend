@@ -3,7 +3,7 @@ import { captureExposureCache } from './encounter-cache.js';
 import { captureAppraisalIndex } from './appraisal-index.js';
 import { captureWorkAllocations } from './work-budget.js';
 import { captureAppraisalResidency } from './appraisal-residency.js';
-import { captureObjectIndex } from './objects.js';
+import { captureObjectIndex, completeObjectHistory, markPartialObjectHistory } from './objects.js';
 import {
   captureSemanticChanges,
   captureSensoryChanges,
@@ -367,7 +367,12 @@ function freezeData(value: unknown): void {
 }
 export function draftWorld(world: WorldState): WorldState {
   sealAppends(world);
-  const result = drafts.createDraft(isDraft(world) ? current(world) : world);
+  const base = isDraft(world) ? current(world) : world;
+  // A compound command may copy an already modified entity dictionary. Carry its
+  // trusted residency metadata through that snapshot, never through serialized JSON.
+  // docs/save-and-load.md#continuation-and-identity
+  if (!completeObjectHistory(world.entities)) markPartialObjectHistory(base.entities);
+  const result = drafts.createDraft(base);
   inheritSensoryChanges(result, world);
   return result;
 }

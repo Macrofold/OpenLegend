@@ -320,9 +320,9 @@ export class GameSaves {
       await this.worker?.close();
     }
   }
-  async initialize() {
+  async initialize(cleanInterruptedStages = true) {
     await this.worker?.ready;
-    await this.files.cleanInterruptedStages();
+    if (cleanInterruptedStages) await this.files.cleanInterruptedStages();
     await this.db.exec(`CREATE TABLE IF NOT EXISTS game_saves (
       id TEXT PRIMARY KEY, world_id TEXT NOT NULL, label TEXT NOT NULL,
       created_at TEXT NOT NULL, sim_time REAL NOT NULL, format TEXT NOT NULL,

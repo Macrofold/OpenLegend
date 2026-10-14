@@ -30,6 +30,7 @@ import {
 } from './assemblies.js';
 import { isSafeRecordId, hasRecordFields } from './records.js';
 import { sameDefinitionPin } from './state-owners.js';
+import { completeObjectHistory } from './objects.js';
 import { definitionPin, validateAttributeValue } from './world-modules.js';
 import { chargeWork } from './work-budget.js';
 import type { AssemblyFamily } from './assembly-types.js';
@@ -211,6 +212,7 @@ export function validateAssemblies(world: WorldState): void {
       throw new Error('Invalid current physical material definition.');
   }
   const panels: Array<ReturnType<typeof assemblyShapes>['panels'][number]> = [];
+  const completeOrigins = completeObjectHistory(world.entities);
   for (const entity of Object.values(world.entities)) {
     const component = entity.assembly;
     const descriptor =
@@ -226,7 +228,9 @@ export function validateAssemblies(world: WorldState): void {
       const origins = entity.item.materialOriginIds;
       if (
         !origins?.length ||
-        !origins.every((origin) => isSafeRecordId(origin) && !!world.entities[origin]) ||
+        !origins.every(
+          (origin) => isSafeRecordId(origin) && (!completeOrigins || !!world.entities[origin]),
+        ) ||
         new Set(origins).size !== origins.length
       )
         throw new Error('Invalid physical material provenance.');
@@ -280,7 +284,7 @@ export function validateAssemblies(world: WorldState): void {
         !action.materialOriginIds.length ||
         new Set(action.materialOriginIds).size !== action.materialOriginIds.length ||
         !action.materialOriginIds.every(
-          (origin) => isSafeRecordId(origin) && !!world.entities[origin],
+          (origin) => isSafeRecordId(origin) && (!completeOrigins || !!world.entities[origin]),
         ))
     )
       throw new Error('Invalid saved material-production provenance.');

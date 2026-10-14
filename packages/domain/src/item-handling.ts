@@ -22,7 +22,7 @@ import {
   type SurfacePoint,
   type BodyProfileId,
 } from '@open-legend/spatial';
-import { addItem, nextId } from './data.js';
+import { addItem, nextEntityId } from './data.js';
 import { availableResource, itemDefinitionPin, itemHasReservations } from './resource-claims.js';
 import { draftWorld, finishWorld, changedEntityIds } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
@@ -66,7 +66,7 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
       ) < 0.01,
   );
   if (existing) return existing;
-  const id = nextId(world, 'pile');
+  const id = nextEntityId(world, 'pile');
   const pile: Entity = {
     id,
     name: 'Items on the ground',

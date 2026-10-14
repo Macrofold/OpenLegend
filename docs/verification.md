@@ -25,6 +25,8 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Characters, cognition and creation
 
+- [Playable world creation](verification/playable-world-creation.md): connected fresh-host activation, exact authority/receipt recovery, native manufacture/save/reopen, browser entry, bounded maximum openings and the remaining live model-service blocker.
+
 - [Useful place and inspected-item discoveries](verification/useful-discoveries.md): private observed facts, introduction fallback, Known places, correction/forgetting, unavailable destinations and current-format reload.
 
 - [Voluntary outings](verification/voluntary-outings.md): exact consent, independent travel, interruption/privacy, PostgreSQL restart, browser departure/leave and bounded live acceptance/refusal/arrival choices with complete cost.

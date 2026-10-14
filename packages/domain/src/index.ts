@@ -1,4 +1,8 @@
 export * from './types.js';
+export * from './worlds/base/initial-opening.js';
+export * from './worlds/base/opening-readiness.js';
+export { BASE_SOCIAL_POLICY } from './worlds/base/social.js';
+export { baseWorldInitialConstructionSeeds } from './worlds/base/world.js';
 export * from './recipe-records.js';
 export * from './food-preparation.js';
 export * from './finite-casts.js';
@@ -208,6 +212,8 @@ export {
   equipLot,
   retireItem,
   retiredObjectIds,
+  markPartialObjectHistory,
+  completeObjectHistory,
   setItemQuantity,
   validateObjects,
 } from './objects.js';

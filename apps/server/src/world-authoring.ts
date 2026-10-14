@@ -1,4 +1,5 @@
 import type { RequestScope } from './authority.js';
+import { ACCESS_CAPABILITY_TEXT } from '@open-legend/protocol';
 import { AuthoringRequestError } from './world-authoring-contracts.js';
 import { WORLD_READ_TOOLS } from './world-tools.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
@@ -22,7 +23,31 @@ import type {
   WorldAgentDraftPreviewView,
   WorldAgentValidation,
   WorldAgentPlanView,
+  WorldCreationPlanView,
+  WorldCreationOperationView,
+  WorldCreationTargetView,
 } from '@open-legend/protocol';
+import {
+  BASE_OPENING_IDENTITY_KEYS,
+  BASE_OPENING_PROFILE,
+  createBaseOpeningCandidate,
+  validateBaseOpeningCandidate,
+} from '@open-legend/domain';
+import { countMetric } from './performance.js';
+import { creationOperatingSettings } from './creation-host.js';
+import { reconcileWorldCreationReceipts } from './world-creation-recovery.js';
+import type { WorldCreationReceiptCursor } from './world-agent-store.js';
+import { WorldCreationClient, CreationTransportError } from './world-creation-client.js';
+import type {
+  CreationActivationRequest,
+  CreationActivationResult,
+} from './creation-target-contracts.js';
+import {
+  openingEditor,
+  openingPreview,
+  openingValidation,
+  settleOpeningReadiness,
+} from './world-opening-authoring.js';
 import {
   WorldAgentStore,
   publicProgress,
@@ -48,6 +73,7 @@ import {
   CONTEXT_WORK,
   prepareAuthoring,
   authoringEvidenceDependencies,
+  record,
 } from './world-authoring-analysis.js';
 import {
   authoringGuide,
@@ -119,6 +145,11 @@ export interface ChangePlan {
   preparation?: WorldAgentPreparation;
   status: 'pending' | 'approved' | 'rejected' | 'applied';
   result?: ApiResult;
+  creation?: WorldCreationPlanView;
+}
+interface OpeningOperation {
+  request: CreationActivationRequest | null;
+  view: WorldCreationOperationView;
 }
 export interface AuthoringResult {
   status:
@@ -138,8 +169,9 @@ export interface AuthoringResult {
   cost: 'no-paid-work';
 }
 export const contextHash = (value: string) => createHash('sha256').update(value).digest('hex');
-export const sessionBudgetId = (session: AgentSession) =>
-  `world-agent:${session.worldId}:${session.id}`;
+export const sessionBudgetId = (session: Pick<AgentSession, 'worldId' | 'id'>) =>
+  JSON.stringify(['world-agent', session.worldId, session.id]);
+const draftRevisionKey = (id: string, revision: number) => JSON.stringify([id, revision]);
 const result = (
   status: AuthoringResult['status'],
   message?: string,
@@ -163,7 +195,12 @@ const workResult = <T>(
 });
 const draftSummary = (d: AuthoringDraft): WorldAgentDraftRevisionView => {
   const payload = d.payload && typeof d.payload === 'object' ? d.payload : {};
-  const name = 'name' in payload && typeof payload.name === 'string' ? payload.name : undefined;
+  const name =
+    d.kind === 'world-opening' && 'title' in payload && typeof payload.title === 'string'
+      ? payload.title
+      : 'name' in payload && typeof payload.name === 'string'
+        ? payload.name
+        : undefined;
   return {
     id: d.id,
     revision: d.revision,
@@ -184,11 +221,14 @@ export class WorldAuthoringService {
   private tails = new Map<string, Promise<unknown>>();
   private progressListeners = new Map<string, Set<() => void>>();
   private queued = 0;
+  private readonly creationClient: WorldCreationClient;
   constructor(
     readonly records: WorldAgentStore,
     private service: WorldService,
     private available: () => boolean = () => true,
-  ) {}
+  ) {
+    this.creationClient = new WorldCreationClient(service.config.creation);
+  }
   private serial<T>(id: string, fn: () => Promise<T>): Promise<T> {
     if (this.queued >= 32)
       return Promise.reject(
@@ -209,6 +249,612 @@ export class WorldAuthoringService {
         this.queued--;
         if (this.tails.get(id) === work) this.tails.delete(id);
       });
+  }
+  private allocateOpeningIdentities(session: AgentSession) {
+    if (session.openingIdentities) return;
+    const keys = [
+      ...BASE_OPENING_IDENTITY_KEYS,
+      ...Array.from(
+        { length: BASE_OPENING_PROFILE.limits.scene },
+        (_, index) => `scene-slot-${index}`,
+      ),
+      ...Array.from(
+        { length: BASE_OPENING_PROFILE.limits.stock },
+        (_, index) => `stock-slot-${index}`,
+      ),
+    ];
+    session.openingIdentities = {
+      worldId: randomUUID(),
+      playerId: randomUUID(),
+      residentId: randomUUID(),
+      objects: Object.fromEntries(keys.map((key) => [key, randomUUID()])),
+    };
+  }
+  private assertOpeningCandidate(session: AgentSession, payload: unknown) {
+    const value = record(payload);
+    const identities = session.openingIdentities;
+    if (!identities)
+      throw new AuthoringRequestError('Choose a supported opening in a creation session first.');
+    const expected = createBaseOpeningCandidate(identities);
+    const allowed = new Set([
+      identities.playerId,
+      identities.residentId,
+      ...Object.values(identities.objects),
+    ]);
+    if (
+      value.worldId !== identities.worldId ||
+      record(value.player).id !== identities.playerId ||
+      (value.resident !== null && record(value.resident).id !== identities.residentId) ||
+      value.seed !== expected.seed ||
+      value.rngState !== expected.rngState ||
+      !Array.isArray(value.scene) ||
+      !Array.isArray(value.stock) ||
+      [...value.scene, ...value.stock].some((object) => !allowed.has(record(object).id as string))
+    )
+      throw new AuthoringRequestError(
+        'Preserve the application-assigned opening identities and random results. Revise the authored circumstances, not another world’s identifiers.',
+      );
+  }
+
+  openingChoices(scope = this.service.localScope) {
+    this.service.assertScope(scope, 'create');
+    this.service.assertScope(scope, 'inspect');
+    return workResult(
+      'ok',
+      undefined,
+      BASE_OPENING_PROFILE.openings.map(({ id, label, description }) => ({
+        id,
+        label,
+        description,
+      })),
+    );
+  }
+
+  creationTargets(sessionId: string, scope = this.service.localScope) {
+    return this.localWork<WorldCreationTargetView[]>(sessionId, scope, async (session) =>
+      workResult('ok', undefined, this.creationClient.targets(session.principal)),
+    );
+  }
+
+  localOpeningCreate(
+    sessionId: string,
+    args: { operationId: string; openingId: string },
+    scope = this.service.localScope,
+  ) {
+    return this.localMutation<WorldAgentExactDraftView>(
+      sessionId,
+      'human-opening-create',
+      args,
+      scope,
+      async (session) => {
+        const choice = BASE_OPENING_PROFILE.openings.find(
+          (opening) => opening.id === args.openingId,
+        );
+        if (!choice || !session.openingIdentities)
+          throw new AuthoringRequestError(
+            'Select a supported prepared opening in a creation session.',
+          );
+        const payload = createBaseOpeningCandidate(session.openingIdentities, choice.id);
+        const response = await this.dispatch(
+          {
+            name: 'ol_draft_create',
+            arguments: {
+              operationId: args.operationId,
+              kind: 'world-opening',
+              intent: choice.description,
+              payloadJson: JSON.stringify(payload),
+            },
+          },
+          session,
+          true,
+        );
+        if (response.status !== 'ok') return response;
+        const selected = session.selectedDraft;
+        if (!selected) throw new AuthoringRequestError('The opening draft could not be confirmed.');
+        return result(
+          'ok',
+          'Prepared opening retained without paid generation. Nothing has started.',
+          await this.exactDraft(session, selected.id, selected.revision, scope),
+        );
+      },
+    );
+  }
+
+  private creationError(error: unknown): AuthoringRequestError {
+    if (error instanceof AuthoringRequestError) return error;
+    if (error instanceof CreationTransportError)
+      return new AuthoringRequestError(
+        error.message,
+        error.code === 'forbidden'
+          ? 'forbidden'
+          : error.code.startsWith('stale')
+            ? 'stale'
+            : error.code === 'unavailable'
+              ? 'unavailable'
+              : 'blocked',
+      );
+    return new AuthoringRequestError(
+      'The prepared host could not confirm this operation. The original draft and any committed receipt remain retained.',
+      'unavailable',
+    );
+  }
+
+  private async assertNoEarlierCreation(
+    session: AgentSession,
+    worldId: string,
+    allowedOperationId?: string,
+  ) {
+    const previous = await this.records.blockingCreationOperation(session.id, worldId);
+    if (previous && previous.operationId !== allowedOperationId)
+      throw new AuthoringRequestError(
+        'This opening already has an admitted Start. Check its original result before preparing another destination or operation.',
+        'blocked',
+      );
+  }
+
+  private async prepareOpeningPlan(
+    sessionId: string,
+    args: { draftId: string; revision: number; operationId: string; targetId: string },
+    scope: RequestScope,
+  ): Promise<WorldAgentWorkResult<WorldAgentPlanView>> {
+    return this.localWork(sessionId, scope, async () =>
+      this.serial(sessionId, async () => {
+        try {
+          const retainedSession = await this.ownedSession(sessionId, scope);
+          const previous = await this.retainedOperation(retainedSession, 'opening-prepare', args);
+          if (previous)
+            return workResult(
+              previous.status,
+              previous.message,
+              previous.data as WorldAgentPlanView | undefined,
+            );
+          const session = await this.requireSession(sessionId, scope);
+          this.assertHumanWritable(session);
+          const draft = await this.draft(session, args.draftId, args.revision, true);
+          if (draft.kind !== 'world-opening')
+            throw new AuthoringRequestError('The selected draft is not a fresh opening.');
+          this.assertOpeningCandidate(session, draft.payload);
+          const opening = await settleOpeningReadiness(this.service, draft.payload, scope);
+          const prepared = prepareAuthoring(
+            this.service,
+            this.service.world,
+            draft,
+            scope,
+            session.timeline,
+            await this.draftRequirements(session, draft),
+            opening,
+          );
+          if (prepared.preparation.next !== 'ready_for_review')
+            return workResult(
+              prepared.preparation.next,
+              'Resolve the retained required findings before reviewing Start.',
+            );
+          validateBaseOpeningCandidate(draft.payload);
+          const openingCandidate = draft.payload;
+          await this.assertNoEarlierCreation(session, openingCandidate.worldId);
+          // This remote wait holds no source database transaction or world mutation lane.
+          const checked = await this.creationClient.check(
+            args.targetId,
+            session.principal,
+            draft.payload,
+          );
+          if (checked.status !== 'ready' || !checked.compiledWorldDigest)
+            throw new AuthoringRequestError(checked.message, 'blocked');
+          const compiledWorldDigest = checked.compiledWorldDigest;
+          return await this.records.db.transaction(async () => {
+            const current = await this.requireSession(sessionId, scope);
+            this.assertHumanWritable(current);
+            const latest = await this.draft(current, draft.id, draft.revision, true);
+            if (latest.digest !== draft.digest)
+              throw new AuthoringRequestError(
+                'The opening changed while its destination was checked.',
+                'stale',
+              );
+            await this.assertNoEarlierCreation(current, openingCandidate.worldId);
+            if ((await this.records.count(sessionId, 'plan')) >= 512)
+              return workResult('capacity', 'This session reached its retained review limit.');
+            const creation: WorldCreationPlanView = {
+              target: {
+                id: checked.targetId,
+                generation: checked.targetGeneration,
+                profileDigest: checked.targetProfileDigest,
+                label: checked.label,
+                entryUrl: checked.entryUrl,
+                operatingProfile: checked.profile.description,
+                controlAccountId: checked.controlAccountId,
+                controlCapabilities: checked.controlCapabilities.map(
+                  (capability) => ACCESS_CAPABILITY_TEXT[capability],
+                ),
+                operatingSettings: creationOperatingSettings(checked.operatingConfiguration),
+                status: 'available',
+              },
+              operationId: randomUUID(),
+              candidateDigest: fingerprint(draft.payload),
+              worldDigest: compiledWorldDigest,
+              worldId: openingCandidate.worldId,
+              expiresAt: current.expiresAt,
+            };
+            const plan: ChangePlan = {
+              id: randomUUID(),
+              draftId: draft.id,
+              revision: draft.revision,
+              digest: fingerprint({
+                draft: draft.digest,
+                creation,
+                evidence: prepared.preparation.evidence,
+                sessionId,
+                timeline: current.timeline,
+              }),
+              impact: prepared.impact,
+              validation: prepared.validation,
+              preparation: prepared.preparation,
+              creation,
+              status: 'pending',
+            };
+            await this.records.put(sessionId, 'plan', plan.id, plan);
+            const response = result(
+              'ok',
+              'Review the exact opening and prepared target. Nothing has started.',
+              plan,
+            );
+            await this.records.put(sessionId, 'operation', args.operationId, {
+              fingerprint: fingerprint({ name: 'opening-prepare', args }),
+              response,
+            });
+            await this.assertOperationalWritable(current, true);
+            return workResult('ok', response.message, plan);
+          });
+        } catch (error) {
+          throw this.creationError(error);
+        }
+      }),
+    );
+  }
+
+  private createdView(
+    plan: ChangePlan,
+    response: CreationActivationResult,
+    request: CreationActivationRequest,
+  ): WorldCreationOperationView {
+    const expected = plan.creation;
+    const receipt = response.receipt;
+    if (
+      !expected ||
+      !receipt ||
+      receipt.sourceInstallationId !== request.sourceInstallationId ||
+      receipt.creatorAccountId !== request.creatorAccountId ||
+      receipt.approvalId !== plan.id ||
+      receipt.targetProfileDigest !== expected.target.profileDigest ||
+      receipt.controlAccountId !== expected.target.controlAccountId ||
+      receipt.creatorAccountIdAtDestination !== expected.target.controlAccountId ||
+      receipt.entryUrl !== expected.target.entryUrl ||
+      receipt.operationId !== expected.operationId ||
+      receipt.targetId !== expected.target.id ||
+      receipt.targetGeneration !== expected.target.generation ||
+      receipt.candidateDigest !== expected.candidateDigest ||
+      receipt.compiledWorldDigest !== expected.worldDigest ||
+      receipt.worldId !== expected.worldId
+    )
+      throw new AuthoringRequestError(
+        'The destination receipt does not match the original reviewed Start.',
+        'unavailable',
+      );
+    return {
+      operationId: receipt.operationId,
+      planId: plan.id,
+      targetId: receipt.targetId,
+      status: response.host.status === 'ready' ? 'ready' : 'host-unavailable',
+      message: response.host.message,
+      worldId: receipt.worldId,
+      entryUrl: receipt.entryUrl,
+      committedAt: receipt.committedAt,
+    };
+  }
+
+  async startCreation(
+    sessionId: string,
+    planId: string,
+    scope = this.service.localScope,
+  ): Promise<WorldAgentWorkResult<WorldCreationOperationView>> {
+    return this.localWork(sessionId, scope, async () =>
+      this.serial(sessionId, async () => {
+        try {
+          const session = await this.requireSession(sessionId, scope);
+          this.assertHumanWritable(session);
+          const { plan, draft } = await this.review(sessionId, planId, scope);
+          if (!plan.creation || draft.kind !== 'world-opening')
+            throw new AuthoringRequestError('This plan does not start a fresh world.');
+          const prior = await this.records.get<OpeningOperation>(
+            sessionId,
+            'creation-operation',
+            plan.creation.operationId,
+          );
+          if (prior) return workResult('ok', undefined, prior.view);
+          if (plan.status !== 'approved' || plan.creation.expiresAt <= Date.now())
+            throw new AuthoringRequestError(
+              'Current exact human approval is required before Start.',
+            );
+          await this.draft(session, draft.id, draft.revision, true);
+          this.assertOpeningCandidate(session, draft.payload);
+          const opening = await settleOpeningReadiness(this.service, draft.payload, scope);
+          const prepared = prepareAuthoring(
+            this.service,
+            this.service.world,
+            draft,
+            scope,
+            session.timeline,
+            await this.draftRequirements(session, draft),
+            opening,
+          );
+          if (
+            prepared.preparation.next !== 'ready_for_review' ||
+            prepared.impact.token !== plan.impact.token ||
+            prepared.preparation.evidence.dependencies !== plan.preparation?.evidence.dependencies
+          )
+            throw new AuthoringRequestError(
+              'The reviewed opening or authority changed. Prepare a new review.',
+              'stale',
+            );
+          validateBaseOpeningCandidate(draft.payload);
+          const installationId = this.service.config.creation.installationId;
+          if (!installationId)
+            throw new AuthoringRequestError(
+              'This source installation has no configured creation target.',
+              'unavailable',
+            );
+          await this.assertNoEarlierCreation(session, draft.payload.worldId);
+          const request: CreationActivationRequest = {
+            sourceInstallationId: installationId,
+            creatorAccountId: session.principal,
+            targetId: plan.creation.target.id,
+            operationId: plan.creation.operationId,
+            approvalId: plan.id,
+            targetGeneration: plan.creation.target.generation,
+            targetProfileDigest: plan.creation.target.profileDigest,
+            candidateDigest: plan.creation.candidateDigest,
+            compiledWorldDigest: plan.creation.worldDigest,
+            expiresAt: plan.creation.expiresAt,
+            candidate: draft.payload,
+          };
+          const operation: OpeningOperation = {
+            request,
+            view: {
+              operationId: request.operationId,
+              planId,
+              targetId: request.targetId,
+              status: 'dispatching',
+              message:
+                'The exact reviewed Start is being dispatched. Resolve this original operation before any new Start.',
+            },
+          };
+          await this.records.db.transaction(async () => {
+            const current = await this.requireSession(sessionId, scope);
+            this.assertHumanWritable(current);
+            await this.draft(current, draft.id, draft.revision, true);
+            await this.assertOperationalWritable(current, true);
+            this.creationClient.target(request.targetId, current.principal);
+            await this.assertNoEarlierCreation(current, request.candidate.worldId);
+            await this.records.put(sessionId, 'creation-operation', request.operationId, operation);
+            await this.assertOperationalWritable(current, true);
+          });
+          // The retained admission authorizes only this dispatch. Never hold a source
+          // writer over destination work or repeat an activation after uncertainty.
+          let dispatched = false;
+          try {
+            // The database admission was asynchronous. Recheck the current local
+            // grant before this exact remote dispatch, then let its receipt settle.
+            this.service.assertScope(scope, 'create');
+            this.service.assertScope(scope, 'inspect');
+            dispatched = true;
+            const receipt = await this.creationClient.activate(session.principal, request);
+            operation.view = this.createdView(plan, receipt, request);
+            plan.status = 'applied';
+            plan.result = { ok: true, code: 'world-created', message: operation.view.message };
+          } catch (error) {
+            const definite =
+              !dispatched ||
+              (error instanceof CreationTransportError &&
+                [
+                  'forbidden',
+                  'blocked',
+                  'invalid-input',
+                  'occupied',
+                  'stale-target',
+                  'invalid-candidate',
+                  'expired',
+                  'conflict',
+                ].includes(error.code));
+            operation.view = {
+              ...operation.view,
+              status: definite ? 'refused' : 'uncertain',
+              message:
+                error instanceof Error
+                  ? error.message
+                  : 'Start outcome is unconfirmed; resolve its original receipt.',
+            };
+          }
+          await this.records.db.transaction(async () => {
+            await this.records.put(sessionId, 'creation-operation', request.operationId, operation);
+            await this.records.put(sessionId, 'plan', plan.id, plan);
+          });
+          return workResult('ok', undefined, operation.view);
+        } catch (error) {
+          throw this.creationError(error);
+        }
+      }),
+    );
+  }
+
+  /** Native startup reconciliation preserves admitted facts after grant revocation.
+   * Disclosure remains fenced by ownedSession/localWork; no paid or activation retry.
+   */
+  async reconcileCreationReceipts(signal: AbortSignal) {
+    const worldId = this.service.world.id;
+    let after: WorldCreationReceiptCursor | undefined;
+    do {
+      const page = await reconcileWorldCreationReceipts(
+        this.records,
+        this.creationClient,
+        worldId,
+        (sessionId, planId, operationId, response) =>
+          this.serial(sessionId, () =>
+            this.records.db.transaction(async () => {
+              if (signal.aborted || this.service.world.id !== worldId) return;
+              const session = await this.records.session(sessionId);
+              const plan = await this.records.get<ChangePlan>(sessionId, 'plan', planId);
+              const operation = await this.records.get<OpeningOperation>(
+                sessionId,
+                'creation-operation',
+                operationId,
+              );
+              if (
+                !session ||
+                session.worldId !== worldId ||
+                !plan?.creation ||
+                !operation?.request ||
+                operation.request.operationId !== operationId ||
+                operation.request.approvalId !== planId ||
+                operation.view.status === 'cancelled' ||
+                operation.view.status === 'refused'
+              )
+                return;
+              if (response.receipt) {
+                operation.view = this.createdView(plan, response, operation.request);
+                plan.status = 'applied';
+                plan.result = { ok: true, code: 'world-created', message: operation.view.message };
+                await this.records.put(sessionId, 'plan', planId, plan);
+              } else if (!operation.view.committedAt) {
+                operation.view = {
+                  ...operation.view,
+                  status: 'uncertain',
+                  message:
+                    'The original Start still has no confirmed receipt. Resolve it before any new Start.',
+                };
+              }
+              await this.records.put(sessionId, 'creation-operation', operationId, operation);
+            }),
+          ),
+        signal,
+        after,
+      );
+      if (page.failed) {
+        countMetric('creation.recovery.failed', page.failed);
+        console.warn(
+          `Creation receipt recovery left ${page.failed} original Starts unresolved; no activation was retried.`,
+        );
+      }
+      if (signal.aborted || !page.hasMore || !page.next || this.service.world.id !== worldId) break;
+      after = page.next;
+    } while (!signal.aborted);
+  }
+
+  async cancelCreation(
+    sessionId: string,
+    planId: string,
+    scope = this.service.localScope,
+  ): Promise<WorldAgentWorkResult<WorldCreationOperationView>> {
+    return this.localWork(sessionId, scope, async () =>
+      this.serial(sessionId, () =>
+        this.records.db.transaction(async () => {
+          const session = await this.requireSession(sessionId, scope);
+          this.assertHumanWritable(session);
+          const { plan } = await this.review(sessionId, planId, scope);
+          if (!plan.creation)
+            throw new AuthoringRequestError('This review is not a fresh-world Start.');
+          const previous = await this.records.get<OpeningOperation>(
+            sessionId,
+            'creation-operation',
+            plan.creation.operationId,
+          );
+          if (previous) return workResult('ok', undefined, previous.view);
+          if (plan.status !== 'pending' && plan.status !== 'approved')
+            throw new AuthoringRequestError('This review has already ended.');
+          await this.assertOperationalWritable(session, true);
+          const view: WorldCreationOperationView = {
+            operationId: plan.creation.operationId,
+            planId,
+            targetId: plan.creation.target.id,
+            status: 'cancelled',
+            message: 'This Start was withdrawn before dispatch. No destination request was made.',
+          };
+          plan.status = 'rejected';
+          await this.records.put(sessionId, 'plan', plan.id, plan);
+          await this.records.put(sessionId, 'creation-operation', view.operationId, {
+            request: null,
+            view,
+          } satisfies OpeningOperation);
+          await this.assertOperationalWritable(session, true);
+          return workResult('ok', undefined, view);
+        }),
+      ),
+    );
+  }
+
+  async recoverCreation(
+    sessionId: string,
+    planId: string,
+    scope = this.service.localScope,
+  ): Promise<WorldAgentWorkResult<WorldCreationOperationView>> {
+    return this.localWork(sessionId, scope, async () =>
+      this.serial(sessionId, async () => {
+        try {
+          const { plan } = await this.review(sessionId, planId, scope);
+          if (!plan.creation)
+            throw new AuthoringRequestError('This review is not a fresh-world Start.');
+          const operation = await this.records.get<OpeningOperation>(
+            sessionId,
+            'creation-operation',
+            plan.creation.operationId,
+          );
+          if (!operation)
+            return workResult('ok', undefined, {
+              operationId: plan.creation.operationId,
+              planId,
+              targetId: plan.creation.target.id,
+              status: 'prepared',
+              message: 'This exact reviewed Start has not been dispatched.',
+            });
+          if (
+            !operation.request ||
+            operation.view.status === 'cancelled' ||
+            operation.view.status === 'refused'
+          )
+            return workResult('ok', undefined, operation.view);
+          const originalRequest = operation.request;
+          const receipt = await this.creationClient.receipt(originalRequest);
+          if (receipt.receipt) {
+            operation.view = this.createdView(plan, receipt, originalRequest);
+            plan.status = 'applied';
+            plan.result = { ok: true, code: 'world-created', message: operation.view.message };
+            await this.records.db.transaction(async () => {
+              await this.records.put(
+                sessionId,
+                'creation-operation',
+                originalRequest.operationId,
+                operation,
+              );
+              await this.records.put(sessionId, 'plan', plan.id, plan);
+            });
+          } else {
+            operation.view = {
+              ...operation.view,
+              status: 'uncertain',
+              message:
+                'No committed receipt is confirmed yet. This does not authorize redispatch or retargeting the original Start.',
+            };
+            await this.records.put(
+              sessionId,
+              'creation-operation',
+              operation.request.operationId,
+              operation,
+            );
+          }
+          return workResult('ok', undefined, operation.view);
+        } catch (error) {
+          throw this.creationError(error);
+        }
+      }),
+    );
   }
   /** Notifications contain no payload: subscribers must reauthorize the retained snapshot. */
   watchProgress(id: string, notify: () => void) {
@@ -409,7 +1055,9 @@ export class WorldAuthoringService {
   }
   private policy() {
     const c = this.service.config;
-    return `owner-review-v2:${fingerprint([c.macrofoldUrl, c.macrofoldHarness, c.macrofoldModel, c.macrofoldWorldConnectionId, Object.keys(WORLD_AUTHORING_TOOLS), Object.keys(WORLD_READ_TOOLS)])}`;
+    // A changed durable key format must fence old live dispatch, rather than make
+    // its retained spending appear to belong to a newly empty session allowance.
+    return `owner-review-v2:${fingerprint([c.macrofoldUrl, c.macrofoldHarness, c.macrofoldModel, c.macrofoldWorldConnectionId, Object.keys(WORLD_AUTHORING_TOOLS), Object.keys(WORLD_READ_TOOLS), sessionBudgetId({ worldId: 'world', id: 'session' }), draftRevisionKey('draft', 1)])}`;
   }
   private permitted(s: AgentSession, scope = s.authority) {
     return (
@@ -531,8 +1179,16 @@ export class WorldAuthoringService {
             policy: this.policy(),
             actorId: scope.actorId,
             initialPurpose: purpose ?? 'conversation',
-            profile: purpose === 'invention' ? 'recipe' : 'discovery',
+            profile:
+              purpose === 'invention'
+                ? 'recipe'
+                : purpose === 'creation'
+                  ? 'world-opening'
+                  : 'discovery',
           };
+        }
+        if (purpose === 'creation' && !s.openingIdentities) {
+          this.allocateOpeningIdentities(s);
         }
         const contextHandle = randomBytes(32).toString('base64url');
         s.authority = scope;
@@ -630,7 +1286,9 @@ export class WorldAuthoringService {
       this.records.workRevision(id),
     ]);
     const shownPlans = plans.slice(0, 20);
-    const planReferences = new Map(shownPlans.map((p) => [`${p.draftId}:${p.revision}`, p]));
+    const planReferences = new Map(
+      shownPlans.map((p) => [draftRevisionKey(p.draftId, p.revision), p]),
+    );
     const planDrafts = await Promise.all(
       [...planReferences.values()].map((p) => this.draft(s, p.draftId, p.revision)),
     );
@@ -640,6 +1298,7 @@ export class WorldAuthoringService {
     for (const d of [...drafts, ...planDrafts]) this.assertDraftTarget(d.kind, d.payload, scope);
     return {
       sessionId: id,
+      ...(current.initialPurpose ? { purpose: current.initialPurpose } : {}),
       workRevision,
       available: this.permitted(current, scope),
       closed: current.closed,
@@ -755,7 +1414,7 @@ export class WorldAuthoringService {
     const binding = question.binding;
     return (
       binding.generation === this.service.timelineId &&
-      binding.membership === contextMembership(this.service.world) &&
+      binding.membership === contextMembership(this.service.world, s.profile) &&
       fingerprint(binding.selected ?? null) === fingerprint(s.selectedDraft ?? null) &&
       binding.pins.every(
         (pin) =>
@@ -1011,7 +1670,7 @@ export class WorldAuthoringService {
           ? await this.records.get<AuthoringDraft>(
               s.id,
               'revision',
-              `${s.selectedDraft.id}:${s.selectedDraft.revision}`,
+              draftRevisionKey(s.selectedDraft.id, s.selectedDraft.revision),
             )
           : undefined;
         const profile = s.pendingProfile?.kind ?? selected?.kind ?? s.profile ?? 'discovery';
@@ -1415,8 +2074,22 @@ export class WorldAuthoringService {
       // Choices are current inventor knowledge, not retained receipt authority. Project
       // after the last access wait, including when returning an older edit receipt.
       const editor = projectRecipeEditor(this.service, scope.actorId, data.payload);
-      if (editor) Object.assign(data, { recipeEditor: editor });
-      else if ('recipeEditor' in data) delete data.recipeEditor;
+      if (editor) Object.assign(data, { editor });
+      else if ('editor' in data) delete data.editor;
+    }
+    if ('kind' in data && data.kind === 'world-opening' && 'payload' in data) {
+      try {
+        Object.assign(data, { editor: openingEditor(this.service, data.payload, scope) });
+      } catch {
+        // A retained unsupported declaration remains inspectable with its native
+        // findings; unavailable structured presentation never discards the draft.
+        if ('editor' in data) delete data.editor;
+      }
+      try {
+        Object.assign(data, { openingPreview: openingPreview(this.service, data.payload, scope) });
+      } catch {
+        if ('openingPreview' in data) delete data.openingPreview;
+      }
     }
     if ('before' in data) this.assertWorkspaceDisclosure(data.before, scope);
     if ('after' in data) this.assertWorkspaceDisclosure(data.after, scope);
@@ -1573,9 +2246,15 @@ export class WorldAuthoringService {
       scope,
       async (s) => {
         const old = await this.draft(s, args.draftId, args.expectedRevision, true);
-        if (old.kind !== 'recipe')
-          throw new AuthoringRequestError('Direct preview is available for recipes only.');
+        if (old.kind !== 'recipe' && old.kind !== 'world-opening')
+          throw new AuthoringRequestError('This kind has no supported direct editor preview.');
         const payload = decodeAuthoringPayload(old.kind, JSON.stringify(args.candidate));
+        let opening: Awaited<ReturnType<typeof settleOpeningReadiness>> | undefined;
+        if (old.kind === 'world-opening') {
+          this.assertOpeningCandidate(s, payload);
+          opening = await this.inspectOpeningReadiness(payload, scope);
+          await this.draft(s, old.id, old.revision, true);
+        }
         const candidate: AuthoringDraft = {
           ...old,
           payload,
@@ -1594,13 +2273,20 @@ export class WorldAuthoringService {
             scope,
             s.timeline,
             requirements,
+            opening,
           );
           return {
             revision: old.revision,
             candidateDigest: fingerprint(payload),
             validation,
             preparation,
-            facts: projectRecipeEditor(this.service, scope.actorId, payload)?.facts ?? [],
+            facts:
+              old.kind === 'world-opening'
+                ? openingEditor(this.service, payload, scope).facts
+                : (projectRecipeEditor(this.service, scope.actorId, payload)?.facts ?? []),
+            ...(old.kind === 'world-opening'
+              ? { openingPreview: openingPreview(this.service, payload, scope, opening) }
+              : {}),
           };
         };
         return workResult('ok');
@@ -1626,9 +2312,9 @@ export class WorldAuthoringService {
       scope,
       async (s) => {
         const old = await this.draft(s, args.draftId, args.expectedRevision, true);
-        if (old.kind !== 'recipe')
+        if (old.kind !== 'recipe' && old.kind !== 'world-opening')
           throw new AuthoringRequestError(
-            'Direct editing is available for recipes only; revise other kinds in the conversation.',
+            'This kind has no supported direct editor; revise it in the conversation.',
           );
         const response = await this.dispatch(
           {
@@ -1660,6 +2346,7 @@ export class WorldAuthoringService {
     scope = this.service.localScope,
   ) {
     let target: AuthoringDraft | undefined;
+    let opening: Awaited<ReturnType<typeof settleOpeningReadiness>> | undefined;
     return this.localWork<WorldAgentValidation>(
       sessionId,
       scope,
@@ -1667,6 +2354,8 @@ export class WorldAuthoringService {
         const d = await this.draft(s, args.draftId, args.revision);
         target = d;
         this.assertDraftTarget(d.kind, d.payload, scope);
+        if (d.kind === 'world-opening')
+          opening = await this.inspectOpeningReadiness(d.payload, scope);
         return workResult('ok');
       },
       () => {
@@ -1674,15 +2363,40 @@ export class WorldAuthoringService {
         this.assertDraftTarget(target.kind, target.payload, scope);
         // Check uses the same final synchronous world read as Preview. A storage
         // wait must not return passed findings for a value that changed meanwhile.
-        return validateAuthoring(this.service, target, scope);
+        return target.kind === 'world-opening'
+          ? openingValidation(this.service, target.payload, scope, opening)
+          : validateAuthoring(this.service, target, scope);
       },
     );
   }
-  localDraftPrepare(
+  private async inspectOpeningReadiness(payload: unknown, scope: RequestScope) {
+    try {
+      return await settleOpeningReadiness(this.service, payload, scope);
+    } catch {
+      // Invalid editable layouts still receive the owning validator's findings.
+      // A failed preparation must never conceal current access revocation.
+      this.service.assertScope(scope, 'create');
+      this.service.assertScope(scope, 'inspect');
+      return undefined;
+    }
+  }
+  async localDraftPrepare(
     sessionId: string,
-    args: { draftId: string; revision: number; operationId: string },
+    args: { draftId: string; revision: number; operationId: string; targetId?: string },
     scope = this.service.localScope,
   ) {
+    const session = await this.ownedSession(sessionId, scope);
+    // Select the owner from the requested historical revision. The original
+    // operation receipt must resolve before a newer draft blocks a new mutation.
+    const draft = await this.draft(session, args.draftId, args.revision);
+    if (draft.kind === 'world-opening') {
+      if (!args.targetId)
+        return workResult<WorldAgentPlanView>(
+          'blocked',
+          'Choose a configured prepared target before exact Start review.',
+        );
+      return this.prepareOpeningPlan(sessionId, { ...args, targetId: args.targetId }, scope);
+    }
     return this.localMutation<WorldAgentPlanView>(
       sessionId,
       'human-draft-prepare',
@@ -1759,7 +2473,11 @@ export class WorldAuthoringService {
     });
   }
   private async draft(s: AgentSession, id: string, revision: number, current = false) {
-    const d = await this.records.get<AuthoringDraft>(s.id, 'revision', `${id}:${revision}`);
+    const d = await this.records.get<AuthoringDraft>(
+      s.id,
+      'revision',
+      draftRevisionKey(id, revision),
+    );
     const latest = current ? await this.records.get<AuthoringDraft>(s.id, 'draft', id) : undefined;
     if (!d) throw new AuthoringRequestError('Draft is unavailable.', 'unavailable');
     if (current && latest?.revision !== revision)
@@ -1773,7 +2491,13 @@ export class WorldAuthoringService {
     const d = await this.draft(s, p.draftId, p.revision);
     await this.ownedSession(sessionId, scope);
     this.assertDraftTarget(d.kind, d.payload, scope);
-    return { plan: p, draft: d };
+    return {
+      plan: p,
+      draft: d,
+      ...(d.kind === 'world-opening'
+        ? { openingPreview: openingPreview(this.service, d.payload, scope) }
+        : {}),
+    };
   }
   async decide(
     sessionId: string,
@@ -1782,8 +2506,22 @@ export class WorldAuthoringService {
     decision: 'approve' | 'reject',
     scope = this.service.localScope,
   ) {
-    return this.serial(sessionId, () =>
-      this.records.db.transaction(async () => {
+    return this.serial(sessionId, async () => {
+      const reviewed = await this.review(sessionId, planId, scope);
+      let opening: Awaited<ReturnType<typeof settleOpeningReadiness>> | undefined;
+      if (
+        decision === 'approve' &&
+        reviewed.plan.status === 'pending' &&
+        reviewed.plan.digest === digest &&
+        reviewed.draft.kind === 'world-opening'
+      ) {
+        const current = await this.requireSession(sessionId, scope);
+        this.assertHumanWritable(current);
+        await this.draft(current, reviewed.draft.id, reviewed.draft.revision, true);
+        // Native navigation may await its worker; the source SQL writer stays free.
+        opening = await settleOpeningReadiness(this.service, reviewed.draft.payload, scope);
+      }
+      return this.records.db.transaction(async () => {
         const { plan, draft } = await this.review(sessionId, planId, scope);
         if (plan.digest !== digest)
           throw new AuthoringRequestError('Review content changed. Refresh the exact plan.');
@@ -1801,7 +2539,10 @@ export class WorldAuthoringService {
         await this.draft(current, draft.id, draft.revision, true);
         await this.assertOperationalWritable(current, true);
         if (decision === 'approve') {
-          const validation = validateAuthoring(this.service, draft, scope);
+          const validation =
+            draft.kind === 'world-opening'
+              ? openingValidation(this.service, draft.payload, scope, opening)
+              : validateAuthoring(this.service, draft, scope);
           if (
             !validation.ok ||
             authoringImpact(this.service.world, draft).token !== plan.impact.token ||
@@ -1820,8 +2561,8 @@ export class WorldAuthoringService {
         await this.assertOperationalWritable(current, true);
         this.assertDraftTarget(draft.kind, draft.payload, scope);
         return plan;
-      }),
-    );
+      });
+    });
   }
   async readContext(handle: string): Promise<RequestScope | undefined> {
     const session = await this.records.byContext(contextHash(handle));
@@ -1892,7 +2633,10 @@ export class WorldAuthoringService {
             scope: s.authority,
           });
         if (!this.permitted(s, scope)) return result('forbidden', 'Inspection scope changed.');
-        if (contextMembership(readWorld) !== contextMembership(this.service.world))
+        if (
+          contextMembership(readWorld, s.profile) !==
+          contextMembership(this.service.world, s.profile)
+        )
           return result(
             'stale',
             'Definitions changed during inspection. Read current facts before submitting.',
@@ -2052,6 +2796,7 @@ export class WorldAuthoringService {
             'blocked',
             'Request a different supported profile only when the current human task needs it.',
           );
+        if (a.kind === 'world-opening') this.allocateOpeningIdentities(s);
         s.pendingProfile = { kind: a.kind, reason: a.reason, turnId: s.activeTurn };
         await this.records.saveSession(s);
         return result(
@@ -2063,6 +2808,7 @@ export class WorldAuthoringService {
       }
       case 'ol_authoring_submit':
       case 'ol_status_policy_submit':
+      case 'ol_world_opening_submit':
       case 'ol_cognition_policy_submit':
       case 'ol_attribute_submit':
       case 'ol_attribute_bindings_submit':
@@ -2129,6 +2875,7 @@ export class WorldAuthoringService {
         if (Buffer.byteLength(JSON.stringify(payload)) > 24000)
           return result('capacity', 'Candidate exceeds the authoring byte limit.');
         this.assertDraftTarget(kind, payload, s.authority);
+        if (kind === 'world-opening') this.assertOpeningCandidate(s, payload);
         const requirements = structuredClone(packet.requirements);
         for (const [i, requirement] of (a.requirements ?? []).entries()) {
           const source = packet.requirements.find(
@@ -2207,12 +2954,12 @@ export class WorldAuthoringService {
           requirements,
         );
         d.preparation = preparation;
-        await this.records.put(s.id, 'revision', `${d.id}:${d.revision}`, d);
+        await this.records.put(s.id, 'revision', draftRevisionKey(d.id, d.revision), d);
         await this.records.put(s.id, 'draft', d.id, d);
         s.selectedDraft = { id: d.id, revision: d.revision };
         s.requirements = requirements;
         let plan: ChangePlan | undefined;
-        if (preparation.next === 'ready_for_review') {
+        if (preparation.next === 'ready_for_review' && kind !== 'world-opening') {
           plan = {
             id: randomUUID(),
             draftId: d.id,
@@ -2265,6 +3012,7 @@ export class WorldAuthoringService {
         if (a.baseRecipeId && a.kind !== 'recipe')
           return result('invalid', 'Only a recipe uses baseRecipeId.');
         const payload = decodeAuthoringPayload(a.kind, a.payloadJson);
+        if (a.kind === 'world-opening') this.assertOpeningCandidate(s, payload);
         this.assertDraftTarget(a.kind, payload, s.authority);
         const d: AuthoringDraft = {
           id: randomUUID(),
@@ -2289,7 +3037,7 @@ export class WorldAuthoringService {
           s.timeline,
           requirements,
         ).preparation;
-        await this.records.put(s.id, 'revision', `${d.id}:1`, d);
+        await this.records.put(s.id, 'revision', draftRevisionKey(d.id, 1), d);
         await this.records.put(s.id, 'draft', d.id, d);
         s.selectedDraft = { id: d.id, revision: d.revision };
         await this.records.saveSession(s);
@@ -2300,6 +3048,7 @@ export class WorldAuthoringService {
         if (old.revision >= 256)
           return result('capacity', 'This draft reached its retained revision limit.');
         const payload = decodeAuthoringPayload(old.kind, a.payloadJson);
+        if (old.kind === 'world-opening') this.assertOpeningCandidate(s, payload);
         this.assertDraftTarget(old.kind, payload, s.authority);
         const d: AuthoringDraft = {
           ...old,
@@ -2321,7 +3070,7 @@ export class WorldAuthoringService {
           s.timeline,
           requirements,
         ).preparation;
-        await this.records.put(s.id, 'revision', `${d.id}:${d.revision}`, d);
+        await this.records.put(s.id, 'revision', draftRevisionKey(d.id, d.revision), d);
         await this.records.put(s.id, 'draft', d.id, d);
         s.selectedDraft = { id: d.id, revision: d.revision };
         await this.records.saveSession(s);
@@ -2356,6 +3105,12 @@ export class WorldAuthoringService {
           ),
         );
       case 'ol_change_prepare': {
+        const selected = await this.draft(s, a.draftId, a.revision, true);
+        if (selected.kind === 'world-opening')
+          return result(
+            'blocked',
+            'Choose a configured prepared target in the human workspace before exact Start review. This cannot replace the source world.',
+          );
         if ((await this.records.count(s.id, 'plan')) >= 512)
           return result('capacity', 'This session reached its review-plan limit.');
         const d = await this.draft(s, a.draftId, a.revision, true);
@@ -2408,6 +3163,11 @@ export class WorldAuthoringService {
         );
       case 'ol_change_apply': {
         const { plan, draft } = await this.review(s.id, a.planId, s.authority);
+        if (draft.kind === 'world-opening')
+          return result(
+            'blocked',
+            'Use the exact reviewed Start operation for its prepared empty target. A fresh opening cannot be applied to the source world.',
+          );
         if (plan.status === 'applied') return result('ok', plan.result?.message, plan);
         if (plan.status !== 'approved')
           return result('needs_approval', 'This exact plan is not approved.', plan);

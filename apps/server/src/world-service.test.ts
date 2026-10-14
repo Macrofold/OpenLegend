@@ -295,8 +295,15 @@ describe('world presence, time and durable commands', () => {
     const restored = await setup(path, clock);
     await activate(restored.service);
     expect(restored.service.world.simTime).toBe(previous.simTime);
-    // Starting departure interrupts human work, including a restored rest attempt.
-    expect(restored.service.world.entities[PLAYER_ID]!.actor!.action).toBeNull();
+    // Clearing transports while paused is not a physical departure. The player has
+    // returned with verified control, so the exact saved rest continues after resume.
+    // docs/save-and-load.md#continuation-and-identity
+    const restoredAction = restored.service.world.entities[PLAYER_ID]!.actor!.action;
+    expect(restoredAction).toEqual(previous.entities[PLAYER_ID]!.actor!.action);
+    expect(restoredAction).toMatchObject({
+      type: 'status-effect',
+      definitionId: 'wilderness:restorative-rest',
+    });
     expect(restored.service.speed).toBe(3);
     expect(restored.service.pauseReason).toBe('manual');
     await restored.service.control({ paused: false });
@@ -305,8 +312,15 @@ describe('world presence, time and durable commands', () => {
     ).toBe('duplicate');
     expect(quantityOf(restored.service.world, PLAYER_ID, 'berries')).toBe(2);
     expect(restored.service.world.simTime).toBe(previous.simTime);
+    const energyBefore =
+      restored.service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:energy']!.value;
+    if (typeof energyBefore !== 'number') throw new Error('Sleeping requires numeric energy.');
     await run(restored.service, clock, 0.25);
     expect(restored.service.world.simTime).toBe(previous.simTime + 45);
+    expect(
+      restored.service.world.entities[PLAYER_ID]!.actor!.attributes!['wilderness:energy']!.value,
+    ).toBeGreaterThan(energyBefore);
+    expect(restored.service.world.entities[PLAYER_ID]!.actor!.action?.id).toBe(restoredAction!.id);
   });
   it('pauses on ambiguous persistence completion and recovers its committed receipt', async () => {
     const { service, store, clock } = await setup();

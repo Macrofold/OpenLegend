@@ -6,11 +6,16 @@ const EDITOR_BODY_BYTES = 1_048_576;
 const BODY_TIMEOUT_MS = 10_000;
 
 /** JSON escaping can make the transport larger than the validated candidate. Only the
- * exact authoring route gets its MCP-sized envelope; ordinary mutations keep their limit.
+ * authoring and structured draft editing get the shared bounded envelope; ordinary mutations keep their limit.
  * docs/world-agent-mcp.md#local-transport-parity
  */
 export function httpBodyLimit(pathname: string): number {
-  if (pathname === '/api/world-agent/authoring') return AUTHORING_BODY_BYTES;
+  if (
+    pathname === '/api/world-agent/authoring' ||
+    pathname === '/api/world-agent/session/draft-save' ||
+    pathname === '/api/world-agent/session/draft-preview'
+  )
+    return AUTHORING_BODY_BYTES;
   return pathname.startsWith('/api/god/editor/') ? EDITOR_BODY_BYTES : DEFAULT_BODY_BYTES;
 }
 

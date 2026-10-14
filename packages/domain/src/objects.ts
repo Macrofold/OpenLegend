@@ -3,7 +3,7 @@ import { chargeWork, WorkBudgetError } from './work-budget.js';
 import { contributionSourceBound } from './status-capabilities.js';
 import { isDraft, original } from 'immer';
 import { recordSemanticChange } from './dependencies.js';
-import { nextId } from './data.js';
+import { nextEntityId, nextId, reserveEntityId } from './data.js';
 import { canonicalJson } from './events.js';
 import { getOwn, isSafeRecordId, hasRecordFields } from './records.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
@@ -84,6 +84,17 @@ interface IndexedObjects {
 }
 const indexes = new WeakMap<object, IndexedObjects>();
 const retiredIndexes = new WeakMap<WorldState['entities'], readonly string[]>();
+const partialObjectHistory = new WeakSet<WorldState['entities']>();
+/** Trusted residency metadata, never a saved assertion or additional provenance owner.
+ * Full JSON/canonical reconstruction remains strict about historical origin existence.
+ * docs/save-and-load.md#continuation-and-identity
+ */
+export function markPartialObjectHistory(records: WorldState['entities']): void {
+  partialObjectHistory.add(records);
+}
+export function completeObjectHistory(records: WorldState['entities']): boolean {
+  return !partialObjectHistory.has(isDraft(records) ? original(records)! : records);
+}
 /** Residency metadata follows exact writes, so partial consumption does not scan or
  * copy every live object merely to evict its newly committed history record. */
 export function retiredObjectIds(world: WorldState): readonly string[] {
@@ -144,6 +155,7 @@ export function captureObjectIndex(
   const base = original(draft)!,
     priorRetired = retiredIndexes.get(base.entities);
   return (committed, changed) => {
+    if (!completeObjectHistory(base.entities)) markPartialObjectHistory(committed.entities);
     if (index)
       indexes.set(committed.objectState, {
         children: index.children,
@@ -535,7 +547,7 @@ export function createItemLot(
   parentId: string,
   definitionId: string,
   quantity: number,
-  id = nextId(world, 'item'),
+  id = nextEntityId(world, 'item'),
 ): string {
   const definition = getOwn(world.itemDefinitions, definitionId),
     parent = getOwn(world.entities, parentId);
@@ -566,6 +578,7 @@ export function createItemLot(
   )
     throw new Error('This destination exceeds the admitted nesting depth.');
   const pin = definitionPin(definition);
+  reserveEntityId(world, id);
   const lot: ItemLot = {
     definitionPin: pin,
     ...(definition.assemblyMaterial ? { materialOriginIds: [id] } : {}),
@@ -790,7 +803,7 @@ function splitHomogeneousLot(
   cause: string,
 ): string {
   const { entity, lot, parentId } = splitAdmission(world, id, quantity);
-  const resultId = nextId(world, 'item');
+  const resultId = nextEntityId(world, 'item');
   // Split preserves units; its one lineage row is published after the new identity exists.
   changeItemQuantities(world, [{ id, quantity: lot.quantity - quantity }], cause, 'split');
   createItemLot(world, parentId, lot.definitionPin.id, quantity, resultId);

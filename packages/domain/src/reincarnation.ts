@@ -2,7 +2,7 @@ import { equippedItems } from './equipment.js';
 import { canStand, distance3D, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { validNameTemplate } from '@open-legend/language';
-import { nextId, nextRandom } from './data.js';
+import { nextEntityId, nextRandom } from './data.js';
 import { seedAgency, cancelPlan, discardSuspended } from './agency.js';
 import { leaveConversation } from './conversations.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -88,7 +88,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   actor.action = null;
   for (const item of equippedItems(world, entity.id)) unequipLot(world, entity.id, item.id);
   delete actor.combatReadyAt;
-  const corpseId = nextId(world, 'body');
+  const corpseId = nextEntityId(world, 'body');
   const body = actor.body!;
   const corpse: Entity = {
     id: corpseId,

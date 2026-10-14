@@ -76,7 +76,7 @@ import {
   worldPosition,
 } from './spatial-state.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
-import { nextId } from './data.js';
+import { nextEntityId } from './data.js';
 import { chargeWork } from './work-budget.js';
 import { emit, outcome } from './events.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -802,7 +802,7 @@ export function assemblyGroundDestination(
   site: SurfacePoint,
   family: AssemblyFamily,
 ): string {
-  const id = nextId(world, 'pile');
+  const id = nextEntityId(world, 'pile');
   world.entities[id] = {
     id,
     kind: 'item-pile',
@@ -826,7 +826,7 @@ function commitAssemblyParts(
   const family = assemblyFamily(world, phase.familyId)!;
   let root = assemblyRoot(world, phase);
   if (!root) {
-    const id = nextId(world, 'assembly');
+    const id = nextEntityId(world, 'assembly');
     root = {
       id,
       name: family.name,

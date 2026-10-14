@@ -65,6 +65,8 @@ Give polling and refresh after a write one bounded read owner per scope. Schedul
 
 Local busy/disabled presentation is not idempotency or concurrency control. Consequential writes retain request identity, expected revisions and the authoritative mutation path. Do not optimistically announce completed saves, trades or installation. Reversible local preferences may preview optimistically when rollback is meaningful.
 
+For consequential writes retaining a recovery identity, synchronously reject duplicate activation before allocating, replacing or persisting that identity. Preserve the original identity through an unavailable acknowledgement; verify rapid repeated input followed by recovery of that same operation. The server still owns current admission and idempotency. [Batch 07's Prepare review](../verification/playable-world-creation.md#october-13-requested-complete-change-review) exposed this ordering failure even with one server request.
+
 Review all meaningful shared-component variants: empty/disabled selection, local/remote filtering, descriptions, load-more, portal hosts and form nesting. Preserve SelectField's remote-search/privacy support. Source-code patterns from another company are evidence of tradeoffs, not permission to copy their feature flags, compatibility shims or unrelated dependencies. [S01](research.md#s01) [S04](research.md#s04)
 
 ## CSS must express layout, not repair accidents

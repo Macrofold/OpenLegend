@@ -312,7 +312,18 @@ export const attributeDeclarationSchema = z.union([
   z.object({ definition: attributeDefinition }).strict(),
   z.object({ removeId: text(120) }).strict(),
 ]);
+// The world-owned builder validates the complete opening after decoding. Transport
+// text keeps that contract out of the generic authoring schema catalogue.
+export const worldOpeningCandidateText = z
+  .string()
+  .min(2)
+  .max(24000)
+  .refine(
+    (value) => Buffer.byteLength(value, 'utf8') <= 24000,
+    'Opening exceeds the candidate byte limit.',
+  );
 export const typedAuthoringPayload = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('world-opening'), candidate: worldOpeningCandidateText }).strict(),
   z.object({ kind: z.literal('status-effect-policy'), candidate: statusPolicySchema }).strict(),
   z.object({ kind: z.literal('cognition-policy'), candidate: cognitionPolicySchema }).strict(),
   z.object({ kind: z.literal('attribute'), candidate: attributeDeclarationSchema }).strict(),
@@ -322,6 +333,7 @@ export const typedAuthoringPayload = z.discriminatedUnion('kind', [
 ]);
 
 export const authoringCandidateSchemas = {
+  'world-opening': worldOpeningCandidateText,
   'status-effect-policy': statusPolicySchema,
   'cognition-policy': cognitionPolicySchema,
   attribute: attributeDeclarationSchema,

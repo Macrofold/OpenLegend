@@ -14,6 +14,8 @@ import { WorldAgentQuestionCard } from './world-agent-question';
 import { WorldAgentReview } from './world-agent-review';
 import { WorldAgentWorkView } from './world-agent-work';
 import { UsageRemaining } from './usage-remaining';
+import { WorldCreationSelector } from './world-creation';
+import { authoringKey } from './world-agent-identity';
 
 type Pending = { id: string; text: string };
 type Page<T> = { ok: boolean; message?: string; data: T };
@@ -39,6 +41,7 @@ export function WorldAgentSession({
   connected,
   seed,
   purpose,
+  nativeCreation,
   onCreated,
 }: {
   worldId: string;
@@ -47,27 +50,36 @@ export function WorldAgentSession({
   visible: boolean;
   connected: boolean;
   seed?: { id: string; text: string } | null;
-  purpose?: 'invention';
+  purpose?: 'invention' | 'creation';
+  nativeCreation?: boolean;
   onCreated(): void;
 }) {
-  const key = `open-legend:authoring:${worldId}:${accessScope}:${sessionId}`;
+  const key = authoringKey('session', worldId, accessScope, sessionId);
+  const recordKey = (record: string) =>
+    authoringKey('session-record', worldId, accessScope, sessionId, record);
   const [initialPurpose] = useState(
     () =>
       purpose ??
-      readLocal<'invention' | null>(
-        `${key}:purpose`,
+      readLocal<'invention' | 'creation' | null>(
+        recordKey('purpose'),
         null,
-        (v): v is 'invention' => v === 'invention',
+        (v): v is 'invention' | 'creation' => v === 'invention' || v === 'creation',
       ),
   );
+  const [initialNativeCreation] = useState(
+    () =>
+      nativeCreation ??
+      readLocal(recordKey('native-creation'), false, (v): v is boolean => typeof v === 'boolean'),
+  );
   useEffect(() => {
-    writeLocal(`${key}:purpose`, initialPurpose);
-  }, [key, initialPurpose]);
+    writeLocal(recordKey('purpose'), initialPurpose);
+    writeLocal(recordKey('native-creation'), initialNativeCreation);
+  }, [key, initialPurpose, initialNativeCreation]);
   const [text, setText] = useState(() =>
-    readLocal(`${key}:draft`, '', (v): v is string => typeof v === 'string'),
+    readLocal(recordKey('draft'), '', (v): v is string => typeof v === 'string'),
   );
   const [pending, setPending] = useState(() =>
-    readLocal<Pending | null>(`${key}:pending`, null, pendingValue),
+    readLocal<Pending | null>(recordKey('pending'), null, pendingValue),
   );
   const pendingRef = useRef(pending);
   const [status, setStatus] = useState<WorldAgentSessionStatus>();
@@ -76,6 +88,7 @@ export function WorldAgentSession({
   const [view, setView] = useState<'conversation' | 'work'>('conversation');
   const [seenWork, setSeenWork] = useState<string>();
   const [review, setReview] = useState<string>();
+  const [requestedSelection, setRequestedSelection] = useState<{ id: string; revision: number }>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   const [subscriptionRevision, setSubscriptionRevision] = useState(0);
@@ -85,7 +98,9 @@ export function WorldAgentSession({
   const refreshAgain = useRef(false),
     statusRef = useRef(status);
   const input = useRef<HTMLTextAreaElement>(null);
-  const lastSeed = useRef(readLocal(`${key}:seed`, '', (v): v is string => typeof v === 'string'));
+  const lastSeed = useRef(
+    readLocal(recordKey('seed'), '', (v): v is string => typeof v === 'string'),
+  );
   const historyInitialized = useRef(false);
   const prefix = { worldId, sessionId };
   useEffect(() => {
@@ -95,18 +110,18 @@ export function WorldAgentSession({
     };
   }, []);
   useEffect(() => {
-    writeLocal(`${key}:draft`, text);
+    writeLocal(recordKey('draft'), text);
   }, [key, text]);
   useEffect(() => {
     if (seed && lastSeed.current !== seed.id) {
       lastSeed.current = seed.id;
-      writeLocal(`${key}:seed`, seed.id);
+      writeLocal(recordKey('seed'), seed.id);
       setText((previous) => (previous ? `${previous}\n${seed.text}` : seed.text));
     }
   }, [seed]);
   function retainPending(value: Pending | null) {
     pendingRef.current = value;
-    writeLocal(`${key}:pending`, value);
+    writeLocal(recordKey('pending'), value);
     if (alive.current) setPending(value);
   }
   function mergeTurns(values: WorldAgentTurnView[]) {
@@ -295,6 +310,10 @@ export function WorldAgentSession({
     }
   }
   const session = status?.data;
+  const sessionPurpose = session?.purpose ?? initialPurpose;
+  const nativeOpeningSession = session
+    ? session.purpose === 'creation' && session.budget.limitUsd === 0
+    : initialNativeCreation;
   const workRevision = session?.workRevision;
   const newWork = workRevision !== undefined && seenWork !== undefined && seenWork !== workRevision;
   useEffect(() => {
@@ -304,7 +323,7 @@ export function WorldAgentSession({
     await perform(async () => {
       const reply = await post<{ ok: boolean; message?: string }>('/api/world-agent/session/open', {
         ...prefix,
-        budgetUsd: status?.availability.sessionAllowanceUsd ?? 0,
+        budgetUsd: initialNativeCreation ? 0 : (status?.availability.sessionAllowanceUsd ?? 0),
         ...(initialPurpose ? { purpose: initialPurpose } : {}),
       });
       if (!reply.ok) throw new Error(reply.message ?? 'Session could not be created.');
@@ -464,17 +483,53 @@ export function WorldAgentSession({
   ]);
   return (
     <>
-      {!session && status && (
+      {sessionPurpose === 'creation' && status && (nativeOpeningSession || session) && (
+        <WorldCreationSelector
+          worldId={worldId}
+          sessionId={sessionId}
+          connected={connected}
+          visible={visible && view === 'conversation'}
+          mutationReason={
+            session && !session.available
+              ? 'This retained conversation is read-only.'
+              : session?.workspaceMutationReason
+          }
+          ensureSession={async () => {
+            if (statusRef.current?.data) {
+              if (!statusRef.current.data.available)
+                throw new Error('This retained conversation is read-only.');
+              return;
+            }
+            const reply = await post<{ ok: boolean; message?: string }>(
+              '/api/world-agent/session/open',
+              { ...prefix, purpose: 'creation', budgetUsd: 0 },
+            );
+            if (!reply.ok)
+              throw new Error(reply.message ?? 'The creation workspace could not be opened.');
+            onCreated();
+          }}
+          onSelected={(draft) => {
+            setRequestedSelection({ id: draft.id, revision: draft.revision });
+            setView('work');
+            void refresh();
+          }}
+        />
+      )}
+      {!session && status && !nativeOpeningSession && (
         <EmptyState
           title={
-            initialPurpose === 'invention'
+            sessionPurpose === 'invention'
               ? 'Create an invention'
-              : 'One conversation to investigate and create'
+              : sessionPurpose === 'creation'
+                ? 'Describe a world'
+                : 'One conversation to investigate and create'
           }
         >
           <p>
-            The agent can inspect this world's mechanics and prepare changes. Live changes require
-            your review. Starting a conversation does not use your allowance.
+            {sessionPurpose === 'creation'
+              ? 'Describe the opening you want. This funded conversation can prepare a supported new world; it cannot replace the current one.'
+              : "The agent can inspect this world's mechanics and prepare changes. Live changes require your review."}{' '}
+            Starting a conversation does not use your allowance.
           </p>
           <details>
             <summary>Owner spending controls</summary>
@@ -484,12 +539,20 @@ export function WorldAgentSession({
               managed and billed separately by the world owner.
             </p>
           </details>
-          <Button busy={busy} disabled={!connected} onPress={() => void open()}>
-            Start conversation
+          <Button
+            busy={busy}
+            disabled={
+              !connected || (sessionPurpose === 'creation' && !status.availability.configured)
+            }
+            onPress={() => void open()}
+          >
+            {sessionPurpose === 'creation'
+              ? 'Start funded creation conversation'
+              : 'Start conversation'}
           </Button>
         </EmptyState>
       )}
-      {status && !status.availability.configured && (
+      {status && !status.availability.configured && !nativeOpeningSession && (
         <p role="status" className="ol-caption">
           {status.availability.reason}
         </p>
@@ -498,13 +561,15 @@ export function WorldAgentSession({
         <>
           <div className="ol-agent-tools">
             <Tag>World-owner agent</Tag>
-            <UsageRemaining
-              label="Conversation allowance"
-              limit={session.budget.limitUsd}
-              spent={session.budget.spentUsd}
-              reserved={session.budget.reservedUsd}
-              available={connected}
-            />
+            {!nativeOpeningSession && (
+              <UsageRemaining
+                label="Conversation allowance"
+                limit={session.budget.limitUsd}
+                spent={session.budget.spentUsd}
+                reserved={session.budget.reservedUsd}
+                available={connected}
+              />
+            )}
             <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
               Refresh
             </Button>
@@ -564,12 +629,14 @@ export function WorldAgentSession({
               visible={visible && view === 'conversation'}
               ariaLabel="World Agent conversation"
               liveAnnouncements="off"
-              contentRevision={turns
-                .map(
-                  (turn) =>
-                    `${turn.id}:${turn.revision ?? 0}:${turn.progress?.revision ?? 0}:${turn.response?.code ?? ''}`,
-                )
-                .join('|')}
+              contentRevision={JSON.stringify(
+                turns.map((turn) => [
+                  turn.id,
+                  turn.revision ?? 0,
+                  turn.progress?.revision ?? 0,
+                  turn.response?.code ?? null,
+                ]),
+              )}
               newMessageLabel="New reply text"
               preserveReading
               before={
@@ -622,7 +689,11 @@ export function WorldAgentSession({
             <ConversationComposer
               inputRef={input}
               ariaLabel="Message to World Agent"
-              placeholder="Investigate, design, or ask for a change…"
+              placeholder={
+                sessionPurpose === 'creation'
+                  ? 'Describe the world and first activity you want…'
+                  : 'Investigate, design, or ask for a change…'
+              }
               maxLength={2000}
               value={text}
               onChange={setText}
@@ -639,6 +710,13 @@ export function WorldAgentSession({
                 !text.trim()
               }
             />
+            {nativeOpeningSession && (
+              <p className="ol-caption">
+                This prepared-opening workspace has no generation allowance. To describe a custom
+                opening in conversation, choose Describe a world and explicitly start a funded
+                conversation.
+              </p>
+            )}
             <p className="ol-caption">
               Approval and Apply use no model call. Native work and physics stay authoritative.
               Image generation and general new physics are not enabled yet.
@@ -653,13 +731,14 @@ export function WorldAgentSession({
             visible={visible && view === 'work'}
             onRefresh={() => void refresh()}
             onOpenReview={setReview}
+            requestedSelection={requestedSelection}
           />
         </>
       )}
       {error && <p role="alert">{error}</p>}
       {review && (
         <WorldAgentReview
-          key={`${key}:${review}`}
+          key={authoringKey('review-component', worldId, accessScope, sessionId, review)}
           worldId={worldId}
           sessionId={sessionId}
           planId={review}

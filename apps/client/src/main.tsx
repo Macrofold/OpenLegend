@@ -31,6 +31,7 @@ import {
   AccessError,
   SignInRequiredError,
   CharacterlessError,
+  WorldCreationHostError,
   clearAccess,
   acceptAccess,
   eventsUrl,
@@ -396,6 +397,14 @@ function App({
           if (e instanceof CharacterlessError) {
             clearAccess();
             onCharacterless();
+            return;
+          }
+          if (e instanceof WorldCreationHostError) {
+            setView(null);
+            streamView = undefined;
+            stop?.();
+            stop = undefined;
+            setEntryStatus({ kind: 'creation-host', host: e.host });
             return;
           }
           if (e instanceof AccessError) {

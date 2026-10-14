@@ -1238,6 +1238,16 @@ export type AccessCapability =
   | 'save'
   | 'manage-access';
 
+/** Public descriptions shared by account management and exact destination review. */
+export const ACCESS_CAPABILITY_TEXT: Record<AccessCapability, string> = {
+  play: 'Play a character',
+  spectate: 'Watch the world overview',
+  create: 'Creator tools and maintenance',
+  inspect: 'Inspect characters and diagnostics',
+  save: 'Save and load the world',
+  'manage-access': 'Invite people and manage access',
+};
+
 /** Real-world instants are UTC epoch milliseconds; `timeZone` is the creator's IANA display zone. */
 export interface MaintenanceWindowView {
   id: string;
