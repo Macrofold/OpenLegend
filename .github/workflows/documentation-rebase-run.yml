@@ -5,7 +5,9 @@ on:
     paths:
       - .github/workflows/documentation-rebase-run.yml
       - .github/rebase-helper.py
+      - .github/rebase-additional.py
       - .github/rebase-resolutions.json
+      - .github/rebase-hunks-*.json
 permissions:
   contents: read
 jobs:
@@ -20,7 +22,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Replay original individual commits in the isolated checkout
-        run: python3 .github/rebase-helper.py
+        run: python3 .github/rebase-additional.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
