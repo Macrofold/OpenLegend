@@ -8,11 +8,11 @@ Songs of Syx is especially valuable as a study of **how the player's responsibil
 
 ## R01 — Identity, scope, versions, and player promise
 
-Songs of Syx is Gamatron AB's single-player, low-fantasy city-builder with a regional strategy layer and real-time mass battles. The player directs a settlement rather than moving a conventional RPG protagonist. Steam identifies Windows, macOS, and Linux versions and dates Early Access to September 21, 2020. The central promise is continuity from a small village to a city-state and empire. [P01][P02]
+Songs of Syx is Gamatron AB's single-player, low-fantasy city-builder with a regional strategy layer and real-time mass battles. The player directs a settlement rather than moving a conventional RPG protagonist. Steam identifies Windows, macOS, and Linux versions and dates Early Access to September 21, 2020. The central promise is continuity from a small village to a city-state and empire. [P01], [P02]
 
 ### Version boundary
 
-The baseline here is **V71**, not the older demo or the V66 game described by some enthusiastic reviews. The official itch page listed paid downloads at **0.71.72** on the research date. The game remained in Early Access. A March 19, 2026 developer announcement *targeted*, rather than guaranteed, 1.0 before the end of 2026. [P03][P06]
+The baseline here is **V71**, not the older demo or the V66 game described by some enthusiastic reviews. The official itch page listed paid downloads at **0.71.72** on the research date. The game remained in Early Access. A March 19, 2026 developer announcement *targeted*, rather than guaranteed, 1.0 before the end of 2026. [P03], [P06]
 
 | Release or source | What it establishes | What not to import from it |
 | --- | --- | --- |
@@ -21,49 +21,49 @@ The baseline here is **V71**, not the older demo or the V66 game described by so
 | Paid itch download, October 13, 2026 | A concrete 0.71.72 build listing. | An assertion that every storefront or optional branch is identical. |
 | Developer FAQ, last edited July 9, 2023 | Historical design intent and development constraints. | Its outdated feature-roadmap and discount statements. |
 
-[P03][P04][P05][P07]
+[P03], [P04], [P05], [P07]
 
 The itch page still exposed **0.51.42 demo downloads** alongside the much newer paid build. Do not assume the Steam demo uses that same build, or repeat the website's general “a few versions behind” positioning as a verified rule for every distribution. A demo is useful for discovering the interaction style; it is not reliable evidence of all current mechanics. [P03]
 
 **First session:** choose a site and starting population, establish food and shelter, designate work, then learn why a desired building or service is not operating. **Established play:** balance districts and industries, choose which needs to satisfy, maintain research and institutions, negotiate with other states, and decide whether territorial expansion is worth its commitments. The 2020 developer interview explicitly describes the intended shift from individual-scale beginnings toward demographic and empire decisions. [P08]
 
-The capital is the detailed settlement; regions are a different management representation, not a promise of many simultaneously detailed player cities. Campaign settings and objectives provide different goals, while quick battles isolate military play. This is not native cooperative play, a campaign about controlling an adventuring party, or an open-ended first-person survival game. [W01][W02][P04]
+The capital is the detailed settlement; regions are a different management representation, not a promise of many simultaneously detailed player cities. Campaign settings and objectives provide different goals, while quick battles isolate military play. This is not native cooperative play, a campaign about controlling an adventuring party, or an open-ended first-person survival game. [W01], [W02], [P04]
 
 ## R02 — What the player actually does
 
 ### Plan a place; inhabitants perform the work
 
-The core inputs are designations, room plans, employment and access settings, priorities, and inspection. The player paints spaces and places functional furniture, then must supply materials and available workers. A blueprint is an instruction, not an instant finished structure. The useful distinction is between *wanting* a bakery, actually constructing it, staffing it, and arranging the inputs that let it bake. Historical official tutorials document this separation; current player guides show that it remains central to diagnosing stalled production. [P09][M01]
+The core inputs are designations, room plans, employment and access settings, priorities, and inspection. The player paints spaces and places functional furniture, then must supply materials and available workers. A blueprint is an instruction, not an instant finished structure. The useful distinction is between *wanting* a bakery, actually constructing it, staffing it, and arranging the inputs that let it bake. Historical official tutorials document this separation; current player guides show that it remains central to diagnosing stalled production. [P09], [M01]
 
-Terrain is a strategic commitment. Fertility, water, climate, forests, minerals, room to expand, and neighboring states influence whether the settlement should farm, fish, manufacture, or trade. Roads and proximity change the amount of useful work performed between journeys. The map is not merely a backdrop behind a global production menu. [W03][W04][W05][M02]
+Terrain is a strategic commitment. Fertility, water, climate, forests, minerals, room to expand, and neighboring states influence whether the settlement should farm, fish, manufacture, or trade. Roads and proximity change the amount of useful work performed between journeys. The map is not merely a backdrop behind a global production menu. [W03], [W04], [W05], [M02]
 
 ### Build and maintain districts
 
-Room size, working furniture, supporting furniture, access, enclosure, and materials affect what a room can do. Housing and services belong near the people who use them; industrial space must connect to inputs, output storage, and labor. Walls are not just decoration: insulation and enclosure have mechanical consequences. Finished buildings also create maintenance obligations, making expansion a recurring commitment rather than a one-time construction bill. [W06][M01][V02]
+Room size, working furniture, supporting furniture, access, enclosure, and materials affect what a room can do. Housing and services belong near the people who use them; industrial space must connect to inputs, output storage, and labor. Walls are not just decoration: insulation and enclosure have mechanical consequences. Finished buildings also create maintenance obligations, making expansion a recurring commitment rather than a one-time construction bill. [W06], [M01], [V02]
 
-The settlement contains much more than factories: homes, food distribution, restaurants, bathing and sanitation, healthcare, education, religion, entertainment, burial facilities, law enforcement, roads, and decoration. These compete with direct production for workers, goods, and space. The player can ration access rather than treating every service as universally available. [P01][M02][W07]
+The settlement contains much more than factories: homes, food distribution, restaurants, bathing and sanitation, healthcare, education, religion, entertainment, burial facilities, law enforcement, roads, and decoration. These compete with direct production for workers, goods, and space. The player can ration access rather than treating every service as universally available. [P01], [M02], [W07]
 
 ### Grow, harvest, process, and distribute food
 
-Farming requires suitable land, initial resources, workers, and attention to seasonal output. Grain is not immediately edible: a grain economy needs processing. Fruit and vegetables offer different routes; mushrooms favor different conditions; orchards introduce a longer establishment horizon than simply placing another field. Irrigation connects agriculture to pumps, canals, and freshwater. Hunting, fisheries, and pastures offer alternatives with different geographical and labor requirements. [W03][W04][W08][W09]
+Farming requires suitable land, initial resources, workers, and attention to seasonal output. Grain is not immediately edible: a grain economy needs processing. Fruit and vegetables offer different routes; mushrooms favor different conditions; orchards introduce a longer establishment horizon than simply placing another field. Irrigation connects agriculture to pumps, canals, and freshwater. Hunting, fisheries, and pastures offer alternatives with different geographical and labor requirements. [W03], [W04], [W08], [W09]
 
-A harvest is a stock arriving at a particular time, while people consume food continuously. That distinction creates decisions about reserve capacity, spoilage, imports, and how much labor can safely leave agriculture. It also explains why a promising annual production estimate need not mean that the city can survive its next shortage. This is an implication of the documented production and storage systems, not a reproduced game run. [W03][W10]
+A harvest is a stock arriving at a particular time, while people consume food continuously. That distinction creates decisions about reserve capacity, spoilage, imports, and how much labor can safely leave agriculture. It also explains why a promising annual production estimate need not mean that the city can survive its next shortage. This is an implication of the documented production and storage systems, not a reproduced game run. [W03], [W10]
 
 ### Move goods, not just numbers
 
-Warehouses hold assigned resources; haulers stage goods; loading and unloading facilities support larger transfers; trade depots exchange goods outside the city; army supply facilities serve military consumption. Ordinary production commonly depends on workers fetching inputs. Where something is stored therefore matters alongside how much exists. Storage configuration, employment, pickup behavior, and reserves can create shortages even when the city-wide total appears adequate. [W10][M01]
+Warehouses hold assigned resources; haulers stage goods; loading and unloading facilities support larger transfers; trade depots exchange goods outside the city; army supply facilities serve military consumption. Ordinary production commonly depends on workers fetching inputs. Where something is stored therefore matters alongside how much exists. Storage configuration, employment, pickup behavior, and reserves can create shortages even when the city-wide total appears adequate. [W10], [M01]
 
-Avoid copying exact transport multipliers from an arbitrary guide. The inspected logistics guide and current wiki differ on hauler decay protection, while the guide's ordinary carrying-capacity description conflicts with the V71 announcement. The sound principle is to diagnose the actual route and its current settings; the disputed numbers are not certified here. [M01][W10][P05]
+Avoid copying exact transport multipliers from an arbitrary guide. The inspected logistics guide and current wiki differ on hauler decay protection, while the guide's ordinary carrying-capacity description conflicts with the V71 announcement. The sound principle is to diagnose the actual route and its current settings; the disputed numbers are not certified here. [M01], [W10], [P05]
 
 ### Sustain knowledge and administration
 
-Research is an employed activity, not exclusively a permanent experience bar earned by a hero. Current references distinguish **Innovation**, **Knowledge**, and **Admin**. Laboratories and libraries serve different research roles, and their staffed output and optional material consumption matter. Clay and leather are relevant research inputs rather than merely construction goods. Disrupting the workforce that sustains research can therefore affect the supported technical economy. [W11][W12][W13][W14]
+Research is an employed activity, not exclusively a permanent experience bar earned by a hero. Current references distinguish **Innovation**, **Knowledge**, and **Admin**. Laboratories and libraries serve different research roles, and their staffed output and optional material consumption matter. Clay and leather are relevant research inputs rather than merely construction goods. Disrupting the workforce that sustains research can therefore affect the supported technical economy. [W11], [W12], [W13], [W14]
 
-V70 added non-resource operating options for laboratories and libraries. Treat strategies that assume research must always consume scarce inputs as version-dependent. The research system has also been a public iteration problem: the developer sought feedback on how to retain meaningful choices without turning progress into confusing overhead. The August 2025 discussion is evidence of that debate, not proof that every proposed redesign shipped. [P04][P10]
+V70 added non-resource operating options for laboratories and libraries. Treat strategies that assume research must always consume scarce inputs as version-dependent. The research system has also been a public iteration problem: the developer sought feedback on how to retain meaningful choices without turning progress into confusing overhead. The August 2025 discussion is evidence of that debate, not proof that every proposed redesign shipped. [P04], [P10]
 
 ### Manage health and social pressure
 
-Food is only one kind of provision. Climate protection, illness, accidents, medical care, mental breakdowns, death, and burial create different demands. Asylums illustrate the distinction between a person being alive and being available to work: their patients require care and supplies, rather than functioning as ordinary employees. Rations also have uses outside a soldier's inventory. [W05][W15][W16]
+Food is only one kind of provision. Climate protection, illness, accidents, medical care, mental breakdowns, death, and burial create different demands. Asylums illustrate the distinction between a person being alive and being available to work: their patients require care and supplies, rather than functioning as ordinary employees. Rations also have uses outside a soldier's inventory. [W05], [W15], [W16]
 
 Services are costly because they use capacity that could have produced goods. This gives a ruler a real allocation problem, but also risks becoming repetitive upkeep. Whether a particular shortage is an interesting choice or simply poorly explained friction is a reception question, not settled by the existence of a simulation. See R12.
 
@@ -75,7 +75,7 @@ V71 separates happiness from loyalty more explicitly. The player selects punishm
 
 ### Negotiate and govern outside the capital
 
-The world layer contains other states, trade relationships, armies, and regions that can become part of the player's wider economy. Diplomatic decisions can change access and exposure rather than merely supplying flavor text. Nobles may boost particular work or serve as governors, making elite appointments a use of scarce organizational capacity. Regional production can support the capital without requiring the player to reproduce every basic industry there. [W17][M02][V01]
+The world layer contains other states, trade relationships, armies, and regions that can become part of the player's wider economy. Diplomatic decisions can change access and exposure rather than merely supplying flavor text. Nobles may boost particular work or serve as governors, making elite appointments a use of scarce organizational capacity. Regional production can support the capital without requiring the player to reproduce every basic industry there. [W17], [M02], [V01]
 
 The contemporary guides do not justify a universal “always conquer first” strategy. A useful strategic test is whether additional territory reduces a real shortage enough to compensate for military and political commitments. That is a comparison to make within a run, not a claim that every map has the same efficient opening.
 
@@ -83,7 +83,7 @@ The contemporary guides do not justify a universal “always conquer first” st
 
 The player organizes divisions, sets training and equipment, musters forces, and commands formations in battle. Owning equipment is not identical to having soldiers ready to fight: a developer response to a June 2026 demo question explicitly explains the need to muster and collect it, while acknowledging poor discoverability. [P11]
 
-V70 added mounted troops and spears, with battlefield roles tied to mass, frontal formation defense, maneuver, and morale. Quick battles provide a separate way to experiment. These additions do not turn the game into direct swordplay: the player is commanding formations, not timing an avatar's parries. Campaign armies also require continuing supplies. [P04][W10]
+V70 added mounted troops and spears, with battlefield roles tied to mass, frontal formation defense, maneuver, and morale. Quick battles provide a separate way to experiment. These additions do not turn the game into direct swordplay: the player is commanding formations, not timing an avatar's parries. Campaign armies also require continuing supplies. [P04], [W10]
 
 Military investment competes with civilian labor and production. Losing trained soldiers can matter beyond the battle result; conversely, a force that deters disaster may justify resources it never “earns back” in captured goods. R05 develops that relationship without pretending to have benchmarked the battle AI.
 
@@ -104,9 +104,9 @@ The ordinary species are not cosmetic reskins. Their fictional preferences, capa
 | Cantors | Rare haven-associated inhabitants rather than a normal starting mass population. | Historical player stories are not current recruitment formulas. |
 | Argonosh | Another rare haven-linked group, with a particularly martial religious association. | Availability and requirements should be checked in the run. |
 
-[W18][W19][W20][W21][W22][W23][W24][W25][W26]
+[W18], [W19], [W20], [W21], [W22], [W23], [W24], [W25], [W26]
 
-Species is only one division. Citizens, slaves, children, nobles, prisoners, and soldiers occupy different relationships to work and institutions. The player is governing a population with dependencies, not equipping a fixed squad of RPG companions. [P05][W17]
+Species is only one division. Citizens, slaves, children, nobles, prisoners, and soldiers occupy different relationships to work and institutions. The player is governing a population with dependencies, not equipping a fixed squad of RPG companions. [P05], [W17]
 
 ### Resource families and named chains
 
@@ -119,27 +119,27 @@ Species is only one division. Citizens, slaves, children, nobles, prisoners, and
 | Military goods | Bows, spears, shields, warhammers, armor, livestock used for cavalry, rations. | Combat preparation draws on the same wider industrial economy. |
 | Medical and care supplies | Rations and, where enabled, hospital improvements using fabric and opiates. | A resource's value is not confined to its most obvious consumer. |
 
-[W03][W08][W10][W13][W14][W16][W27][W28][P04][P05]
+[W03], [W08], [W10], [W13], [W14], [W16], [W27], [W28], [P04], [P05]
 
 The crafting reference gives several useful compositions: carpenters turn resources into both furniture and military items; bow production combines wood and leather; machinery draws on furniture and metal; paper uses wood; jewelry draws on metal and gems; clothing and armor can compete for textile or leather inputs. A city can therefore become constrained by an upstream good even when the final workshop is well staffed. [W27]
 
-Metal is refined from ore with coal. Bread adds processing and fuel to grain. Rations connect preserved provisions to expeditionary or institutional consumption. **Shedeh** is a fruit-based drink, while other drinks follow different production routes. These examples are enough to study interdependence without copying an exhaustive recipe database or asserting that every recipe's quantity is stable across updates. [W08][W16][W28][W29]
+Metal is refined from ore with coal. Bread adds processing and fuel to grain. Rations connect preserved provisions to expeditionary or institutional consumption. **Shedeh** is a fruit-based drink, while other drinks follow different production routes. These examples are enough to study interdependence without copying an exhaustive recipe database or asserting that every recipe's quantity is stable across updates. [W08], [W16], [W28], [W29]
 
 ### Storage, loss, and modification
 
-Goods occupy an operating economy: they are collected, stored, transported, consumed, exported, or lost through decay and disruption. Equipment allocation and room upgrades alter capability; technology and appointments alter the value of a worker or input. The significant customization is usually production and institutional configuration, not finding a randomized legendary weapon for the ruler. [W10][M01][W11][W17]
+Goods occupy an operating economy: they are collected, stored, transported, consumed, exported, or lost through decay and disruption. Equipment allocation and room upgrades alter capability; technology and appointments alter the value of a worker or input. The significant customization is usually production and institutional configuration, not finding a randomized legendary weapon for the ruler. [W10], [M01], [W11], [W17]
 
 ### Categories that are genuinely different or absent
 
-There is no conventional player-avatar class build, spell hotbar, stealth-infiltration loop, companion romance tree, or party loot division established by the researched vanilla material. Magic is present in the low-fantasy setting and religious framing, not thereby a demonstrated player spell-casting system. Entertainment services are city institutions rather than proof that the player personally performs minigames. Mod-added monarch control must not be silently imported into the base game. [P01][P07][W02][X02]
+There is no conventional player-avatar class build, spell hotbar, stealth-infiltration loop, companion romance tree, or party loot division established by the researched vanilla material. Magic is present in the low-fantasy setting and religious framing, not thereby a demonstrated player spell-casting system. Entertainment services are city institutions rather than proof that the player personally performs minigames. Mod-added monarch control must not be silently imported into the base game. [P01], [P07], [W02], [X02]
 
 ## R04 — Progression, economy, time, and recovery
 
 ### Several kinds of progress coexist
 
-**Material progress** means buildings, stock, and productive capacity. **Institutional progress** means supported technology, services, and administrative arrangements. **Political progress** means a stronger place among neighboring powers. **Player progress** also means understanding why a district works. The game can grant more capacity while making its use more demanding; that is different from a simple power curve where every unlocked building makes earlier concerns disappear. [W11][W17][M02]
+**Material progress** means buildings, stock, and productive capacity. **Institutional progress** means supported technology, services, and administrative arrangements. **Political progress** means a stronger place among neighboring powers. **Player progress** also means understanding why a district works. The game can grant more capacity while making its use more demanding; that is different from a simple power curve where every unlocked building makes earlier concerns disappear. [W11], [W17], [M02]
 
-Titles are persistent unlockable modifiers selected when starting a game, with up to five active according to the current reference. V70 made their effects develop through species-specific accomplishments. The title list includes different kinds of goals—production, provision, liberation, wealth, and conquest—rather than defining success only as killing enemies. Exact thresholds and scenario eligibility are version-sensitive; the title reference is the lookup owner, not this dossier. [W02][P04]
+Titles are persistent unlockable modifiers selected when starting a game, with up to five active according to the current reference. V70 made their effects develop through species-specific accomplishments. The title list includes different kinds of goals—production, provision, liberation, wealth, and conquest—rather than defining success only as killing enemies. Exact thresholds and scenario eligibility are version-sensitive; the title reference is the lookup owner, not this dossier. [W02], [P04]
 
 ### Early, middle, and late decisions
 
@@ -151,9 +151,9 @@ Titles are persistent unlockable modifiers selected when starting a game, with u
 | Regional power | Which commitments are worth defending or administering? | Expansion adds obligations as well as resources. |
 | Mature run | Is the next goal grandeur, prosperity, conquest, a title, or a different settlement? | The game supplies systems and objectives, but the player still chooses what is worth pursuing. |
 
-This is a synthesis of the documented systems and the differently staged play accounts, not a mandatory progression script. [M02][V01][V03][V04]
+This is a synthesis of the documented systems and the differently staged play accounts, not a mandatory progression script. [M02], [V01], [V03], [V04]
 
-The calendar matters because demand continues while harvests, training, construction, childhood, and other processes take time. Reserves buy time to respond, but retaining everything indefinitely is not free where goods decay. This makes the timing of an expansion important independently of its eventual productivity. [W03][W10]
+The calendar matters because demand continues while harvests, training, construction, childhood, and other processes take time. Reserves buy time to respond, but retaining everything indefinitely is not free where goods decay. This makes the timing of an expansion important independently of its eventual productivity. [W03], [W10]
 
 ### Trade is a substitute for self-sufficiency, not a magic surplus button
 
@@ -163,7 +163,7 @@ A bakery can be part of a farming economy or an importing economy. Those are dif
 
 ### Failure is systemic, and restart is not the only response
 
-Hunger, service failures, disorder, disease, military loss, and broken production can reinforce one another. A city may retain its buildings while losing the labor or legitimacy that made them useful. Player reports disagree about how satisfying those recoveries are; some experience them as consequential management, others as exhausting maintenance. [V05][S02][S03]
+Hunger, service failures, disorder, disease, military loss, and broken production can reinforce one another. A city may retain its buildings while losing the labor or legitimacy that made them useful. Player reports disagree about how satisfying those recoveries are; some experience them as consequential management, others as exhausting maintenance. [V05], [S02], [S03]
 
 V70's resettlement option explicitly offers continuity through moving to another site while carrying resources and levels. This differs from either invulnerability or an entirely erased campaign. Research here establishes the offered mechanic, not which exact assets survive every later patch or whether every failed run remains recoverable. [P04]
 
@@ -173,31 +173,31 @@ The following seven cases are **constructed illustrations from documented rules*
 
 ### 1. A rich city with a hungry district
 
-**Intention:** feed a new mining neighborhood. **Conditions:** the capital owns enough food, but its reserve is stored far away. **Actions:** inspect the neighborhood's food access, worker travel, local storage allocation, and fetching configuration; stage a reserve nearer its consumers. **Interaction:** city-wide abundance does not remove the time needed to transport and distribute goods. **Likely result:** better access without necessarily expanding food production. **Next decision:** determine whether the new transfer route consumes more labor than the district can justify. **Counterexample:** extra storage cannot fix genuinely inadequate production or an empty source. [M01][W10]
+**Intention:** feed a new mining neighborhood. **Conditions:** the capital owns enough food, but its reserve is stored far away. **Actions:** inspect the neighborhood's food access, worker travel, local storage allocation, and fetching configuration; stage a reserve nearer its consumers. **Interaction:** city-wide abundance does not remove the time needed to transport and distribute goods. **Likely result:** better access without necessarily expanding food production. **Next decision:** determine whether the new transfer route consumes more labor than the district can justify. **Counterexample:** extra storage cannot fix genuinely inadequate production or an empty source. [M01], [W10]
 
 ### 2. A productive harvest that does not yet make a stable food economy
 
-**Intention:** grow a grain-fed town. **Conditions:** fertile land makes large farms attractive, but grain needs processing and demand continues outside harvest time. **Actions:** plan baking, fuel supply, and reserve capacity alongside the fields. **Interaction:** land productivity becomes useful nourishment only through the rest of the chain. **Likely result:** the bottleneck may shift from farming to processing or transport. **Next decision:** import a missing input or expand the constrained link. **Counterexample:** painting more farmland is ineffective when workers or processing capacity are already limiting output. [W03][W08][W10]
+**Intention:** grow a grain-fed town. **Conditions:** fertile land makes large farms attractive, but grain needs processing and demand continues outside harvest time. **Actions:** plan baking, fuel supply, and reserve capacity alongside the fields. **Interaction:** land productivity becomes useful nourishment only through the rest of the chain. **Likely result:** the bottleneck may shift from farming to processing or transport. **Next decision:** import a missing input or expand the constrained link. **Counterexample:** painting more farmland is ineffective when workers or processing capacity are already limiting output. [W03], [W08], [W10]
 
 ### 3. A mixed population changes what “better housing” means
 
-**Intention:** improve resident satisfaction. **Conditions:** groups differ in preferred surroundings, foods, occupations, and relations. **Actions:** inspect the dissatisfied group's actual needs before applying the same ornament or service everywhere. **Interaction:** a district is simultaneously housing, a commute, a social environment, and access to amenities. **Likely result:** a targeted improvement can outperform indiscriminate expansion. **Next decision:** balance specialization with the duplication and travel it creates. **Counterexample:** segregation is not automatically an interesting or desirable design lesson for another game; the authored species rules create that incentive, not a universal law of societies. [W18][W21][W22][W07][W30]
+**Intention:** improve resident satisfaction. **Conditions:** groups differ in preferred surroundings, foods, occupations, and relations. **Actions:** inspect the dissatisfied group's actual needs before applying the same ornament or service everywhere. **Interaction:** a district is simultaneously housing, a commute, a social environment, and access to amenities. **Likely result:** a targeted improvement can outperform indiscriminate expansion. **Next decision:** balance specialization with the duplication and travel it creates. **Counterexample:** segregation is not automatically an interesting or desirable design lesson for another game; the authored species rules create that incentive, not a universal law of societies. [W18], [W21], [W22], [W07], [W30]
 
 ### 4. More industrial output consumes the research economy's inputs
 
-**Intention:** increase profitable manufacture. **Conditions:** leather or another intermediate good also supports institutions. **Actions:** inspect competing consumption before allocating more workers or boosting production. **Interaction:** a downstream expansion can deprive another activity of its enabling input. **Likely result:** the city may become materially busier without becoming more capable overall. **Next decision:** import, increase upstream supply, change operating modes, or accept slower growth. **Counterexample:** older mandatory-input advice should not override the non-resource research options introduced in V70. [W13][W14][W27][P04]
+**Intention:** increase profitable manufacture. **Conditions:** leather or another intermediate good also supports institutions. **Actions:** inspect competing consumption before allocating more workers or boosting production. **Interaction:** a downstream expansion can deprive another activity of its enabling input. **Likely result:** the city may become materially busier without becoming more capable overall. **Next decision:** import, increase upstream supply, change operating modes, or accept slower growth. **Counterexample:** older mandatory-input advice should not override the non-resource research options introduced in V70. [W13], [W14], [W27], [P04]
 
 ### 5. A ruler buys obedience at a civilian cost
 
-**Intention:** contain unrest without building every desired amenity. **Conditions:** V71 law and loyalty interact with provision and trained enforcement. **Actions:** choose laws, assign equipped guards, and inspect actual happiness and loyalty responses. **Interaction:** enforcement consumes resources and can alter satisfaction as well as compliance. **Likely result:** a workable compromise may exist, but the promotional fantasy does not establish a zero-welfare exploit. **Next decision:** decide whether provision, enforcement, or reduced expansion is the better use of labor. **Counterexample:** Burner's V71.44 analysis specifically disputes a simple independence between happiness and obedience. [P05][M03]
+**Intention:** contain unrest without building every desired amenity. **Conditions:** V71 law and loyalty interact with provision and trained enforcement. **Actions:** choose laws, assign equipped guards, and inspect actual happiness and loyalty responses. **Interaction:** enforcement consumes resources and can alter satisfaction as well as compliance. **Likely result:** a workable compromise may exist, but the promotional fantasy does not establish a zero-welfare exploit. **Next decision:** decide whether provision, enforcement, or reduced expansion is the better use of labor. **Counterexample:** Burner's V71.44 analysis specifically disputes a simple independence between happiness and obedience. [P05], [M03]
 
 ### 6. An army wins the battle but leaves the capital exposed
 
-**Intention:** gain regional resources. **Conditions:** troops require training, gear, supplies, and workers who also matter to the city. **Actions:** prepare equipment and reserves, muster, and commit the force. **Interaction:** battlefield success and economic resilience are different measurements. **Possible result:** new territory is valuable, yet replacing losses or meeting commitments strains production. **Next decision:** consolidate, negotiate, or expand again. **Counterexample:** a large headcount is not proof of readiness, and an impressive battle screenshot establishes neither tactical AI quality nor a particular computer's performance. [P11][P04][W10][M02]
+**Intention:** gain regional resources. **Conditions:** troops require training, gear, supplies, and workers who also matter to the city. **Actions:** prepare equipment and reserves, muster, and commit the force. **Interaction:** battlefield success and economic resilience are different measurements. **Possible result:** new territory is valuable, yet replacing losses or meeting commitments strains production. **Next decision:** consolidate, negotiate, or expand again. **Counterexample:** a large headcount is not proof of readiness, and an impressive battle screenshot establishes neither tactical AI quality nor a particular computer's performance. [P11], [P04], [W10], [M02]
 
 ### 7. Failure becomes migration rather than an erased history
 
-**Intention:** continue after the current city becomes untenable. **Conditions:** the run supports the V70 resettlement mechanic. **Actions:** choose a new location and use retained resources and levels to rebuild. **Interaction:** prior achievement changes the new opening even though the old site is abandoned. **Likely result:** continuity without keeping every previous advantage. **Next decision:** correct the original strategic mistake or deliberately attempt a different settlement. **Counterexample:** this is not evidence of multiple native, independently simulated player capitals or of a universal save-conversion guarantee. [P04][W01]
+**Intention:** continue after the current city becomes untenable. **Conditions:** the run supports the V70 resettlement mechanic. **Actions:** choose a new location and use retained resources and levels to rebuild. **Interaction:** prior achievement changes the new opening even though the old site is abandoned. **Likely result:** continuity without keeping every previous advantage. **Next decision:** correct the original strategic mistake or deliberately attempt a different settlement. **Counterexample:** this is not evidence of multiple native, independently simulated player capitals or of a universal save-conversion guarantee. [P04], [W01]
 
 ### 8. Actual reported play: rare inhabitants become a protected elite
 
@@ -207,9 +207,9 @@ Jonathan Bolding's 2021 PC Gamer account describes acquiring rare blue Cantors a
 
 ### Autonomous people, not demonstrated language-model characters
 
-Residents carry out work and use services within the player's arrangements. Individual inspection and population summaries offer two ways to understand the city. The researched material supports ordinary game simulation; it does **not** establish that vanilla inhabitants converse through LLMs, invent arbitrary goals, or possess OpenLegend-style generated conversational memories. [P01][P07]
+Residents carry out work and use services within the player's arrangements. Individual inspection and population summaries offer two ways to understand the city. The researched material supports ordinary game simulation; it does **not** establish that vanilla inhabitants converse through LLMs, invent arbitrary goals, or possess OpenLegend-style generated conversational memories. [P01], [P07]
 
-V71 gives most species natural children and family relationships, with parents temporarily caring for infants rather than working. Genealogy is inspectable; schools and higher education have distinct roles. Dondorians and Garthimi remain important reproductive exceptions. Those facts make “another inhabitant” potentially part of a household and dependency chain, not just instant labor. The existence of ancestry records does not establish a full romance simulation, inheritance drama, or generated biographical narrative. [P05][W20][W23]
+V71 gives most species natural children and family relationships, with parents temporarily caring for infants rather than working. Genealogy is inspectable; schools and higher education have distinct roles. Dondorians and Garthimi remain important reproductive exceptions. Those facts make “another inhabitant” potentially part of a household and dependency chain, not just instant labor. The existence of ancestry records does not establish a full romance simulation, inheritance drama, or generated biographical narrative. [P05], [W20], [W23]
 
 ### Faith, identity, and institutional consequences
 
@@ -219,7 +219,7 @@ Nobles, governors, soldiers, and ordinary workers also connect personal roles to
 
 ### Single-player base; social creation around it
 
-The native game is single-player. Its social layer includes shared city designs, screenshots, guides, discussions, translations, and mods rather than a verified native shared-city session. These forms of participation let players exchange strategies and display settlements without requiring synchronized multiplayer. [P02][P07]
+The native game is single-player. Its social layer includes shared city designs, screenshots, guides, discussions, translations, and mods rather than a verified native shared-city session. These forms of participation let players exchange strategies and display settlements without requiring synchronized multiplayer. [P02], [P07]
 
 Two current mod-author examples establish the importance of keeping the boundary explicit:
 
@@ -232,17 +232,17 @@ Neither mod's feature list authorizes assuming its internal implementation, reli
 
 ### Visual language and readable scale
 
-The inspected official screenshots use small figures, tile-based architecture, overhead city views, strong building footprints, patterned paving, and lighting to distinguish inhabited spaces. The ornate plaza image makes the settlement legible as a composed place rather than only a spreadsheet. The wide city image emphasizes the contrast between dense construction and productive land. These are **image observations**, not measurements of pathfinding, crowd behavior, or frame rate. [A01][A02]
+The inspected official screenshots use small figures, tile-based architecture, overhead city views, strong building footprints, patterned paving, and lighting to distinguish inhabited spaces. The ornate plaza image makes the settlement legible as a composed place rather than only a spreadsheet. The wide city image emphasizes the contrast between dense construction and productive land. These are **image observations**, not measurements of pathfinding, crowd behavior, or frame rate. [A01], [A02]
 
 The visual tradeoff is important: an individual is much less expressive at metropolitan scale than a full-screen RPG character, but buildings, streets, and flows become more readable. Close inspection and overlays must carry information that a small sprite cannot communicate by itself. This is analysis of the presentation, not a claim that pixel graphics inherently guarantee performance.
 
-Aesthetics are also mechanically relevant: decoration and species preferences make different environments valuable to different inhabitants. An attractive district can therefore be part of the operating city rather than a purely cosmetic endgame. The risk is that the player optimizes hidden radius effects or checklists instead of designing a place that feels coherent. [W07][W18]
+Aesthetics are also mechanically relevant: decoration and species preferences make different environments valuable to different inhabitants. An attractive district can therefore be part of the operating city rather than a purely cosmetic endgame. The risk is that the player optimizes hidden radius effects or checklists instead of designing a place that feels coherent. [W07], [W18]
 
 ### Interface and controls
 
 The interaction style is strongly mouse-and-keyboard, with painting, room configuration, nested information panels, overlays, and pause/speed control. Useful diagnostic information includes resource supply, employment, room operation, and fulfillment. The inspected community screenshot explicitly exposes overlays for such matters as noise, workload, moisture, path use, homelessness, and maintenance. It establishes that the interface offers these lenses, not that every label belongs to the exact current build. [A03]
 
-Player testimony disagrees productively about that interface. The Spieler praises visual and spatial feedback but finds onboarding thin; Clay initially struggled to understand room construction; deMangler values being able to inspect why systems behave as they do. These are compatible observations: powerful diagnostics can still be hard to discover. [V02][V05][S01]
+Player testimony disagrees productively about that interface. The Spieler praises visual and spatial feedback but finds onboarding thin; Clay initially struggled to understand room construction; deMangler values being able to inspect why systems behave as they do. These are compatible observations: powerful diagnostics can still be hard to discover. [V02], [V05], [S01]
 
 Accessibility should not be inferred from an attractive screenshot. This pass did not test text scaling, color discrimination, keyboard-only operation, screen readers, controller use, or Steam Deck ergonomics. A dense interface and high information load remain relevant suitability concerns, not audited accessibility failures.
 
@@ -256,11 +256,11 @@ Not all sound contributes positively for every audience. The current negative St
 
 The game is set in Syx, a low-fantasy world with multiple peoples, deities, political powers, and traces of earlier ages. In the 2020 interview Jake described a world following the fall of earlier divine and mortal civilizations. That establishes setting intent; it does not prove that every proposed mystery or later story goal is a delivered questline. [P08]
 
-The strongest narrative evidence in the researched play accounts is **emergent history**: a city's dependence on an industry, migration into a difficult location, protection of rare residents, wars, shortages, or the social arrangement that grew from earlier expedient choices. A conventional authored quest chain is not needed for these sequences to be memorable. Conversely, the existence of simulated events does not ensure that the player understands or cares about them. [V01][V03][V04]
+The strongest narrative evidence in the researched play accounts is **emergent history**: a city's dependence on an industry, migration into a difficult location, protection of rare residents, wars, shortages, or the social arrangement that grew from earlier expedient choices. A conventional authored quest chain is not needed for these sequences to be memorable. Conversely, the existence of simulated events does not ensure that the player understands or cares about them. [V01], [V03], [V04]
 
-Religion, architecture, and names supply authored framing; the player's allocation decisions supply much of the causal sequence. V71's inspectable family records add a literal continuity mechanism, but this should not be embellished into a claim that the game generates richly dramatized personal stories for every citizen. [W26][P05]
+Religion, architecture, and names supply authored framing; the player's allocation decisions supply much of the causal sequence. V71's inspectable family records add a literal continuity mechanism, but this should not be embellished into a claim that the game generates richly dramatized personal stories for every citizen. [W26], [P05]
 
-The official Bob trailers are a separate presentation layer: a recurring unfortunate peasant gives updates a human-sized promotional story. Their titles and descriptions were inspected, but the videos were not watched. Trailer narrative must not be counted as a playable mission. [P04][P05]
+The official Bob trailers are a separate presentation layer: a recurring unfortunate peasant gives updates a human-sized promotional story. Their titles and descriptions were inspected, but the videos were not watched. Trailer narrative must not be counted as a playable mission. [P04], [P05]
 
 **Spoiler boundary:** this dossier discusses premise and systemic outcomes, not a hidden ending or a walkthrough of authored revelations. No claim of an exhaustive quest/event catalogue is made; the event reference is a lookup route for named choices and their versioned outcomes. [W31]
 
@@ -268,35 +268,35 @@ The official Bob trailers are a separate presentation layer: a recurring unfortu
 
 ### Solo-led is not the same as made without collaborators
 
-The developer and publisher are **Gamatron AB**, with Jake the publicly identified lead developer. Steam describes a one-person studio and development since 2015; the earlier interview describes a long preceding personal effort. Those accounts establish a sustained, solo-led project, not a precise reconstructed employment history. [P02][P08]
+The developer and publisher are **Gamatron AB**, with Jake the publicly identified lead developer. Steam describes a one-person studio and development since 2015; the earlier interview describes a long preceding personal effort. Those accounts establish a sustained, solo-led project, not a precise reconstructed employment history. [P02], [P08]
 
-The project nonetheless includes distinct contributions: Jasinka's composition, community feedback and translations, mod makers, and later marketing collaboration. Calling the product simply “all made by one person” would erase documented work. The composer explains that the score grew alongside the game rather than being a single last-minute asset purchase. [P12][P07]
+The project nonetheless includes distinct contributions: Jasinka's composition, community feedback and translations, mod makers, and later marketing collaboration. Calling the product simply “all made by one person” would erase documented work. The composer explains that the score grew alongside the game rather than being a single last-minute asset purchase. [P12], [P07]
 
 ### Technical facts versus inference
 
-The official itch listing identifies **LWJGL**. The developer's FAQ discusses data and code modding. That supports a custom, extensible game implementation; it does not establish an open-source license for the game, a particular entity-storage layout, a multithreading strategy, or a reproducible performance result. [P03][P07]
+The official itch listing identifies **LWJGL**. The developer's FAQ discusses data and code modding. That supports a custom, extensible game implementation; it does not establish an open-source license for the game, a particular entity-storage layout, a multithreading strategy, or a reproducible performance result. [P03], [P07]
 
 Visible autonomy likewise does not reveal the scheduler, pathfinding algorithm, or internal AI model. Screenshots with many people and promotional population claims are not substitutes for a workload, machine specification, simulation speed, and measured latency. This dossier deliberately makes no claim that OpenLegend could obtain equivalent scale by copying an uninspected architecture.
 
 ### Development sequence and meaningful reversals
 
-The 2020 Kickstarter, September 2020 Early Access release, ongoing large updates, and 2026 1.0 target show a prolonged development cycle. The 2023 FAQ is useful historical evidence, but V70 and V71 demonstrate that several former plans became shipped systems and that earlier answers went stale. [P13][P02][P06][P07]
+The 2020 Kickstarter, September 2020 Early Access release, ongoing large updates, and 2026 1.0 target show a prolonged development cycle. The 2023 FAQ is useful historical evidence, but V70 and V71 demonstrate that several former plans became shipped systems and that earlier answers went stale. [P13], [P02], [P06], [P07]
 
 The V69 account is unusually useful evidence of iteration: Jake said attempts in V67–V68 to increase challenge had also increased frustration, and described loosening balance to allow more freedom while retaining long-term learning. This is an attributed design tradeoff, not proof that the eventual balance succeeded for every player. [P14]
 
 The research-rework discussion similarly exposes disagreement over the difference between a meaningful support economy and repetitive staffing overhead. Developer comments, player proposals, and delivered release notes must remain separate. A suggestion in a feedback thread is not a roadmap commitment. [P10]
 
-Major releases can break saves and mods, with older branches offered so players can finish existing runs. That creates both freedom to revise systems and continuity costs for players and creators. It is Songs of Syx's development practice, not a recommendation to change OpenLegend's current compatibility policy. [P05][P07]
+Major releases can break saves and mods, with older branches offered so players can finish existing runs. That creates both freedom to revise systems and continuity costs for players and creators. It is Songs of Syx's development practice, not a recommendation to change OpenLegend's current compatibility policy. [P05], [P07]
 
 ## R10 — Distribution, marketing, community, and sharing
 
-The distribution model combines a paid game, an unusually substantial free demo, multiple storefronts, update announcements, and a community that teaches the game. The developer's own pages link Steam, GOG, and itch; the current itch offer includes DRM-free downloads and a Steam key. Demo build differences matter when evaluating what a prospective player actually experiences. [P01][P03]
+The distribution model combines a paid game, an unusually substantial free demo, multiple storefronts, update announcements, and a community that teaches the game. The developer's own pages link Steam, GOG, and itch; the current itch offer includes DRM-free downloads and a Steam key. Demo build differences matter when evaluating what a prospective player actually experiences. [P01], [P03]
 
-Two documented later campaigns show a shift beyond an evergreen demo. V70 paired a free weekend for the full current game with a discount; the announcement introduced marketing partner Sterling. The March 2026 post describes Spring Sale and Medieval Fest participation and an intended future price increase. Those are recorded campaigns, not measured attribution for sales growth. [P04][P06]
+Two documented later campaigns show a shift beyond an evergreen demo. V70 paired a free weekend for the full current game with a discount; the announcement introduced marketing partner Sterling. The March 2026 post describes Spring Sale and Medieval Fest participation and an intended future price increase. Those are recorded campaigns, not measured attribution for sales growth. [P04], [P06]
 
-The products players can share are concrete: a metropolitan screenshot, a striking room layout, an optimization guide, a mod, or an account of an unexpected social outcome. A city can communicate ambition at a glance while a detailed guide gives a new player enough confidence to try. **Inference:** this pairing can make a difficult simulation more discoverable than a feature list alone. No conversion funnel or channel-share data was available to test that explanation. [A01][A02][M01][V01]
+The products players can share are concrete: a metropolitan screenshot, a striking room layout, an optimization guide, a mod, or an account of an unexpected social outcome. A city can communicate ambition at a glance while a detailed guide gives a new player enough confidence to try. **Inference:** this pairing can make a difficult simulation more discoverable than a feature list alone. No conversion funnel or channel-share data was available to test that explanation. [A01], [A02], [M01], [V01]
 
-Fae's account explicitly describes trying the demo and buying the game immediately. That is one useful observed conversion story, not an estimate of the demo's average effect. Community support also carries a cost: if current instructions lag behind redesigns, the same network that enables discovery can distribute obsolete advice. [V03][V02]
+Fae's account explicitly describes trying the demo and buying the game immediately. That is one useful observed conversion story, not an estimate of the demo's average effect. Community support also carries a cost: if current instructions lag behind redesigns, the same network that enables discovery can distribute obsolete advice. [V03], [V02]
 
 The demo, guides, soundtrack, and Workshop are different participation routes. Their existence does not establish a paid mod marketplace, creator revenue-sharing program, or an ongoing subscription business. None was verified here.
 
@@ -309,11 +309,11 @@ The demo, guides, soundtrack, and Workshop are different participation routes. T
 | Current itch offer | October 13, 2026: **US$25 minimum**, including the listed downloads and Steam key. | Other stores, regional prices, discounts, and tax treatment can differ. |
 | Steam English reception | Capture showed **94% positive among 6,493 English reviews**; the recent panel showed **87% of 150 reviews** over 30 days. | Not all-language review totals, purchasers, retention, or concurrency. |
 
-[P13][P15][P03][P02]
+[P13], [P15], [P03], [P02]
 
 The 2020 sales interview supports an early distribution observation: Steam dominated that reported snapshot. It does not justify projecting the same shares six years later. No verified current lifetime unit total, revenue, profit, staffing budget, retention curve, or customer-acquisition cost was recovered. Third-party estimates based on reviews multiplied by a guessed sales ratio were not substituted for disclosures. [P15]
 
-The business is a paid, continuously developed game rather than a verified service subscription. A 1.0 target is a delivery milestone, not evidence that development or support obligations end then. Whether a long Early Access cycle creates durable trust or fatigue depends on the actual updates and the audience; R12 supplies specific testimony rather than a fabricated universal answer. [P06][S01][S02]
+The business is a paid, continuously developed game rather than a verified service subscription. A 1.0 target is a delivery milestone, not evidence that development or support obligations end then. Whether a long Early Access cycle creates durable trust or fatigue depends on the actual updates and the audience; R12 supplies specific testimony rather than a fabricated universal answer. [P06], [S01], [S02]
 
 ## R12 — Written criticism and player feedback
 
@@ -337,7 +337,7 @@ This is a qualitative sample, not a random survey or proof of prevalence. Curren
 
 ### Steam top/helpful sample and contrasting current negative account
 
-The all-time top-rated/helpful English surface was accessible. Attempts to retrieve a clean negative-only helpful listing did not succeed; the negative account below was read on the game's community hub instead. Its placement is therefore **not** represented as “the top negative review.” [S01][S03]
+The all-time top-rated/helpful English surface was accessible. Attempts to retrieve a clean negative-only helpful listing did not succeed; the negative account below was read on the game's community hub instead. Its placement is therefore **not** represented as “the top negative review.” [S01], [S03]
 
 | Author and captured metadata | What the account contributes | Boundary |
 | --- | --- | --- |
@@ -345,11 +345,11 @@ The all-time top-rated/helpful English surface was accessible. Attempts to retri
 | **wizard** — Recommended; 107.5 displayed hours; 303 helpful votes; December 5, 2025 | Praises breadth while criticizing military and institutional upkeep, difficult late-game obligations, and behavior perceived as inconsistent. Wants refinement rather than merely more systems. | Reported experience around V70's release; not independently reproduced defects in V71. |
 | **Lix** — Not Recommended; 65.0 displayed hours; 11 helpful votes; October 8, 2026 | Objects to progression friction, commuting/housing and logistics pressure, decay, sound effects, and battle behavior. Provides a recent counterweight to the enthusiastic historical material. | Community-hub sample; subjective reactions and alleged defects remain attributed, not verified. |
 
-[S01][S02][S03]
+[S01], [S02], [S03]
 
 ### Synthesis without manufactured consensus
 
-The most useful agreement is that the game's appeal lies in connected systems and the city becoming more than its starting village. The strongest disagreement is whether the effort required to keep those systems running produces satisfying responsibility or distracting upkeep. A player who enjoys diagnosis may value the same detailed economy that another experiences as arbitrary friction. [V02][V03][S01][S02][S03]
+The most useful agreement is that the game's appeal lies in connected systems and the city becoming more than its starting village. The strongest disagreement is whether the effort required to keep those systems running produces satisfying responsibility or distracting upkeep. A player who enjoys diagnosis may value the same detailed economy that another experiences as arbitrary friction. [V02], [V03], [S01], [S02], [S03]
 
 Keep several complaint types separate: **onboarding** is not necessarily missing mechanics; **balance preference** is not a reproducible defect; **a current bug allegation** is not proof of its cause; **old advice becoming wrong** is a maintenance problem; **dislike of a tone or sound** is a real suitability issue without being universal. That separation makes reception more useful for OpenLegend than averaging opinions into a vague “deep but complex” verdict.
 
