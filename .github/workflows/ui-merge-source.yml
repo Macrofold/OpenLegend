@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 121a8b0f3d9a90985313c06f54878ae46a65c7b3
+          ref: 705efb2bd102ba151123659b129372aea62b6a79
           fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@v4
@@ -27,8 +27,8 @@ jobs:
         run: |
           set -euo pipefail
           base=741e8cf7e0e3f4ab7b1eea47d32d33e5f483eda6
-          branch=121a8b0f3d9a90985313c06f54878ae46a65c7b3
-          main=74e081a2ddc39a18da1ffe3357ffc298a4f14dce
+          branch=705efb2bd102ba151123659b129372aea62b6a79
+          main=1700f3b23a39acfdd14f3a6ab34c8ce330847bc3
           out="$RUNNER_TEMP/openlegend-merge-source"
           mkdir -p "$out"
           test "$(git merge-base "$branch" "$main")" = "$base"
