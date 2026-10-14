@@ -81,7 +81,7 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 - Character creation/editing, backstories, personality/disposition, character behavior or changes to their cognition/context: read [Character authorship and changing personality](docs/projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality); for implementation or architecture work also read its [technical design](docs/projects/compelling-characters-tech-design.md). Apply the shared evidence/perspective boundaries to new producers and consumers.
 - Character decisions, Jev/TypeSafe, LLMs, prompts, cognition context, embeddings or provider behavior: [AI](.agents/skills/openlegend-ai/SKILL.md)
 - PlayCanvas, camera, picking, scene assets or render lifecycle: [PlayCanvas](.agents/skills/openlegend-playcanvas/SKILL.md)
-- Development startup, base selection or any rebase/merge, with or without conflicts: [Rebase](.agents/skills/openlegend-rebase/SKILL.md)
+- Development startup, base selection or any rebase/merge, with or without conflicts: [Rebase](.agents/skills/openlegend-rebase/SKILL.md). For the `merge-branch` command or an explicitly requested squash-merge-and-push operation, also read [Merge branch](.agents/skills/merge-branch/SKILL.md).
 - Instructions, skills, adapters or their checker: [Guidance maintenance](.agents/skills/openlegend-guidance/SKILL.md)
 
 These routes select context, not additional authorization. Open matching files when native discovery is unavailable; follow conditional links only when relevant. Reuse loaded, current context. The optional [system guide](.agents/README.md) owns compatibility details.

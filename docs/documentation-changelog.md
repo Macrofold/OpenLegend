@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 14, 2026 — Reusable squash-merge-and-push command
+
+The [merge-branch workflow](../.agents/skills/merge-branch/SKILL.md) selects the newer committed local/origin source by ancestry after a fresh origin check, integrates it as one new destination commit, records the exact source branch and tip, and publishes the destination to origin. Diverged source histories require a choice; uncertain conflicts retain the existing all-work stop. The command preserves unrelated edits, existing destination history and baseline qualification gaps. Its commit summaries reuse the commit skill's grouping, word limits, ASCII and net-change rules.
+
+The project skill is the single maintained procedure, with thin project/global skill or slash-command entrypoints. The personal global entries reference this checkout rather than carrying a second workflow copy; their availability therefore depends on that file remaining accessible. Other repositories apply their own instructions. Command creation alone does not execute a merge or publish existing commits; actual invocations include the push.
+
 ## October 14, 2026 — Integrate completed world reassessment and richer proposed casts
 
 Integrated the [29-world reassessment](../archive/02-research/worldbuilding/reassessment-progress.md) from `codex/world-idea-repertoires` at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e`, including revised dossiers, six comparative essays, the rebuilt comparison matrix, D&D edition/adjudication/SRD and planes/lived-magic studies, and explicit remaining source-access and audiovisual evidence priorities. Research completion retains its recorded limits; it does not establish implemented gameplay or exhaustive external-source verification.

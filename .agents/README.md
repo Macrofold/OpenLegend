@@ -15,6 +15,7 @@ Use these canonical owners rather than restating their workflows:
 - [Root](../AGENTS.md): planning, general task policy, startup trigger, completion and handoff.
 - [Prioritization](skills/openlegend-prioritize/SKILL.md): choosing future work by the experience it enables or protects; loaded for selection/reprioritization, not ordinary execution.
 - [Rebase](skills/openlegend-rebase/SKILL.md): base selection, refresh/reconciliation, worktree/history protections and conflict stops.
+- [Merge branch](skills/merge-branch/SKILL.md): explicitly requested newest-source squash integration, source provenance, conflict reporting and destination publication.
 - [Review](skills/openlegend-review/SKILL.md): routine/full review behavior, fixes and finding reports.
 - [Documentation](rules/documentation.md): tracker maintenance, current contracts, acceptance state and decision history.
 
@@ -23,7 +24,7 @@ Use these canonical owners rather than restating their workflows:
 - **Codex:** Native `AGENTS.md` and `.agents/skills/`; explicitly read applicable instructions outside the startup root-to-working-directory chain. Existing sessions may need restarting after instruction changes.
 - **OpenCode:** Native `AGENTS.md` and `.agents/skills/`; explicit topic links remain the fallback, not automatic imports.
 - **Cursor:** Native `AGENTS.md` and `.agents/skills/`; no duplicate `.mdc` tree or always-on skill mode is needed.
-- **Claude Code:** `CLAUDE.md` imports only `AGENTS.md`. The root then directs explicit reads of applicable nested instructions and canonical topic files. No duplicate `.claude/skills/` bodies or native slash-menu entries are installed.
+- **Claude Code:** `CLAUDE.md` imports only `AGENTS.md`. The root then directs explicit reads of applicable nested instructions and canonical topic files. No duplicate `.claude/skills/` bodies are installed. The `merge-branch` slash command is a thin adapter to the canonical skill.
 - **Other agents:** Start with “Read AGENTS.md and applicable path/topic guidance before this task.” Plain Markdown is the fallback when native discovery is absent.
 
 Loading varies by version and settings. Claude's native AGENTS fallback can be suppressed by CLAUDE files; our import deliberately retains explicit nested/topic reads. Adding `@` imports for every topic would preload them, not make them conditional. Native skill menus and successful task routing are different capabilities. [Sources](references/research.md) and [remaining validation](../docs/maintainers/agent-guidance.md) distinguish documented behavior from observed dispatch. Global/private settings and override files can change loading outside this checker's view. Reported sizes assume the canonical files; they are not an effective-policy resolver. No adapter changes tool permissions.
@@ -42,4 +43,4 @@ Expected routing: code work first applies the [root performance read requirement
 
 A physical attachment or reach feature loads the spatial behavior/design checks even if implemented in domain/server files. A new repeated material process, collection query, cache or polling loop loads performance during planning, without requiring an already measured slowdown. Prose-only references still do not activate those workflows. The root routes and applicable package reminders own these required reads; [CG05](../docs/maintainers/agent-guidance.md#cg05--read-only-routing-cases) retains observed dispatch qualification.
 
-No generated wrapper copies, skill installers, permission changes or model settings are included. Review and pin vendor skills only when they add missing context; whole collections are not prerequisites to contributing.
+The project `merge-branch` skill owns one reusable procedure. Its project slash entry and Mike's personal global skill/slash entries reference that body; the global entries need this checkout's canonical file to remain available. Other repositories use their own task guidance while executing the generic procedure. No copied workflow bodies, skill installers, permission changes or model settings are included. Review and pin vendor skills only when they add missing context; whole collections are not prerequisites to contributing.
