@@ -1,0 +1,22 @@
+{
+  "resolutions": {
+    "011c4aaa3390ebc0a8b24b873c22074754e0c0ce:docs/limits/narration.md:b7845d57c316d81fffd476364d985d269d964b35:708196b339a1e126e213219c2dd509dd4a74793f:44c3b2b63c5165e81b5e94aca799f9b41b56cc24": {
+      "before_sha256": "9b95205310dc2470c47cfc55dcd70dc7ab76e98916cd9fcd1d38136ad6f53b61",
+      "after_sha256": "a12a4f980b7497904c3a3d22780e3c9611eab00a1583f150cc5810cb2a3798f0",
+      "blocks": [{"sha256": "c51c5506758ba6ae22261ceee57a57bffd9d95e1a8acafc6a56d902bda553a0c", "parts": [1]}],
+      "replacements": [
+        ["../projects/conversation-compaction-tech-design.md", "../projects/completed/conversation-compaction-tech-design.md"],
+        ["Values below were source-checked on October 3, 2026 against `b50ec6c`; this does not rerun the historical runtime evidence or prove optimal tuning.", "The original LA inventory was source-checked on October 3, 2026 against `b50ec6c`; later additions and proposed profiles retain their own stated dates and scope. That historical check neither requalifies later source nor proves optimal tuning."]
+      ]
+    },
+    "011c4aaa3390ebc0a8b24b873c22074754e0c0ce:docs/maintainers/needs-design.md:1b456930b9b34782b3612a04702a269ae1e72374:451156c42f90de6e2a070599fc1af1c4eac257a9:9744e0c5149de7215eaa790e79115577d1f51941": {
+      "before_sha256": "7268e24c29ef2c3ef3192f8b6cbddc16795e01b22fef12b24ac0823787d7a0a7",
+      "after_sha256": "ba426c1d0fcf725bd46548642d2bf98656f067014b320192ce9d9d939fc31e85",
+      "blocks": [{"sha256": "ba829956a81a580bc6cbf441fcc7e7db16d5d08cddc545ad00980eadd41f8290", "parts": [1]}],
+      "replacements": [
+        ["../projects/conversation-compaction-tech-design.md", "../projects/completed/conversation-compaction-tech-design.md"],
+        ["../projects/conversation-compaction-feature-spec.md", "../projects/completed/conversation-compaction-feature-spec.md"]
+      ]
+    }
+  }
+}
