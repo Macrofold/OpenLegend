@@ -1,0 +1,54 @@
+name: UI completion source inspection
+on:
+  push:
+    branches: [docs/game-ui-research-redesign]
+    paths: [.github/workflows/ui-completion-source-read-20261014.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    if: github.repository == 'Macrofold/OpenLegend'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          show-progress: false
+      - name: Read exact owners for the remaining composed journeys
+        run: |
+          python3 - <<'PY'
+          import os, struct
+          from pathlib import Path
+          full = [
+            'tests/fixtures/database.ts',
+            '.github/scripts/ui-native-worlds.ts',
+            'apps/client/src/ui/known-places.tsx',
+            'apps/client/src/ui/outing-status.tsx',
+            'packages/domain/src/worlds/reservoir-demo/activity.ts',
+          ]
+          for name in full:
+            text = Path(name).read_text()
+            print('FULL_OWNER=' + name + '\n' + text, flush=True)
+          patterns = {
+            'apps/server/src/world-service.ts': ['createReservoirDemo', 'config.world', 'worldPreset', 'preset', 'constructor('],
+            'apps/client/src/design-system/base.css': ['.ol-panel {', '.ol-panel-body {', '.ol-sheet {'],
+            'apps/client/src/ui/inventory.tsx': ['Trade', 'trade', 'onTrade'],
+          }
+          for name, terms in patterns.items():
+            lines = Path(name).read_text().splitlines()
+            selected = set()
+            for i, line in enumerate(lines):
+              if any(term in line for term in terms):
+                selected.update(range(max(0, i - 8), min(len(lines), i + 24)))
+            print('SELECTED_OWNER=' + name, flush=True)
+            print('\n'.join(str(i + 1) + ': ' + lines[i] for i in sorted(selected)), flush=True)
+          for file in Path('apps/client/src/ui').glob('*trade*'):
+            print('TRADE_OWNER=' + str(file) + '\n' + file.read_text(), flush=True)
+          for file in Path('docs/ui-ux/runtime/completion-20261014').glob('*.png'):
+            data = file.read_bytes()
+            assert data[:8] == b'\x89PNG\r\n\x1a\n'
+            print('ORIGINAL_IMAGE_SIZE=' + str(file) + ' ' + str(struct.unpack('>II', data[16:24])), flush=True)
+          print('Read-only detached checkout ' + os.getcwd() + '. No gameplay, commits or references changed.', flush=True)
+          PY

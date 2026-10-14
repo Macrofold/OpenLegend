@@ -1,0 +1,13 @@
+# October 14 completion captures
+
+These are original game screenshots, not design proposals. The [qualification report](../../../verification/game-interaction-redesign.md) and [completion plan](../../../projects/game-interaction-redesign-completion.md) own status and remaining work.
+
+The source was production candidate tree `73302e83be053306d56bde760ddc850de38b8381`, prepared from `1030b10f67d7058608ff509edf521e090df57349` and published in `0f5a7258db06c47b598ccbfb13e9cb3d3d88aa1e`. [Run 38647110754](https://github.com/Macrofold/OpenLegend/actions/runs/38647110754/job/116136583915) exercised the real App, native server and disposable PostgreSQL in Chromium, with providers disabled. Each request reached its native owner before its successful HTTP acknowledgement was deliberately lost. Recovery read the original result rather than resubmitting the operation. Each of the three browser journeys passed its original sixty-second deadline and the screenshots retained their ten-second allowance. The captures themselves were saved before original-result recovery completed.
+
+| Image | Recorded scenario | Original Git blob |
+| --- | --- | --- |
+| [Action recovery](action-recovery.png) | Original Replace request retained separately from edited words after current work ends and the page reloads | `2b90bcd2a15f832ac1812255ea5ccb02cfc525d3` |
+| [Checkpoint creation](checkpoint-create-recovery.png) | Exact uncertain create retained after reload and at 390 × 844; checking creates no second checkpoint | `9ee906daca26c1117d1cf7a020eaba7cf6802ae1` |
+| [Checkpoint loading](checkpoint-load-recovery.png) | Original load retained across its acknowledged native timeline replacement and reload; checking preserves the generated protection checkpoint | `ff56c2398e2adb31b9fa286734068344593aa21a` |
+
+Artifact `11933530423` is 2,171,953 bytes, SHA-256 `e687453fb91da7192921d07519c3dccec4db1a66e72c08b27b6c07e18f360f94`. It retains the exact probe, logs, affected diff and metadata. These three files preserve the original PNG bytes beyond the temporary artifact's retention period. No pixel-review pass is claimed by saving them. The results do not establish live-provider interpretation quality, actual operating-system input composition, assistive-device use or uncoached usability. Additional and cumulative task provider/Jev cost: **$0**.
