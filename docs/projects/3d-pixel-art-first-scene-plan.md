@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The first candidate was rejected for its ordinary-3D environment; pixel finish and moving-camera stability are being revised. | 2026-10-15   |
+| In progress | Surface-art and stability trials are implemented; final edge, cost and memory qualification and creator approval remain open. | 2026-10-15   |
 
 ## Purpose and authorization
 
@@ -49,6 +49,16 @@ Estimate 700–1,300 changed runtime/experiment logic lines, depending on whethe
 Cost grows with rendered pixel area, extra color/depth passes, lights/shadow redraws and visible source meshes. Shared static artwork/geometry and original clips remain prepared once. Character target allocation may change only when its actual required coverage changes; reuse rounded allocation where appropriate. Camera mapping, projection, viewport, material mode, geometry and visibility are distinct dependencies. Sampling changes must not repaint artwork, regenerate meshes or dispatch providers. Measure the full compositor, shadow and actor workload rather than a low-resolution buffer in isolation. All experiments remain native/offline with additional/cumulative provider cost $0 and reserved/uncertain commitments $0 under the shared $10 ceiling.
 
 The finite completion gate is an integrated pixel-art revision with matched moving evidence, explicit remaining stability boundaries, tested supported camera/interaction/lifecycle behavior, synchronized documentation and clean local commits. If none of the tried techniques meets the critical stability requirement, report that failure honestly and leave visual completion open rather than adopt a visibly defective fallback.
+
+## Delivered revision trials and provisional selection
+
+The [revision evidence](../verification/starting-scene-pixel-stability.md) records implemented object-attached surface painting, a full-detail mercenary control without preliminary 96-row reduction, common final grids and an alternative that preserves existing sprite/character detail separately from solid scenery. Paired captures retain the same tall-person size; the higher-detail control costs more capture pixels rather than enlarging the man. Existing sprites, original artwork and earlier controls remain preserved. The [changed standalone texel trial](../verification/texel-splatting.md#static-stability-revisit--october-15-2026) rejects fixed capture for newly revealed holes; a separate raster surface-grid alternative passes finite ground/ramp interiors and still tests, with resolution/MSAA and animation limits explicit. No backend migration is selected.
+
+The provisional review default adds painted surface artwork, four-sample edge coverage, trilinear character-map minification and the repaired fixed directional-sun sampling pattern. It retains the 96-row mercenary image, full scene resolution and shared subject composition: no coarse common grid or HDR scenery-preservation mask is enabled by default. Full-detail capture, common/anchored grids and separate subject detail remain developer comparisons. This replaces the first candidate's plain surface finish without claiming that the art is accepted or every character/animal is now a model.
+
+The initial shadow switch missed the active sun shader, so its identical screen/fixed comparisons cannot support a benefit. The repaired branch now visibly changes sun shading; three corrected moving profiles completed with zero browser errors and byte-identical frozen still pairs. Application selection in both projections, DPR/resize, supported nearby read-through/Off, pause, replacement and teardown checks pass. The detailed report preserves the unsupported-preference fixture failure and limitations. These observations do not close the critical moving-artifact gate.
+
+The current 600-frame production checks at 1×/8× report median frame intervals of 28.4/26.6 ms and p95 of 59.4/56.7 ms, so no smoothness claim is made. Final edge/AA and cost comparisons remain pending. An analytic one-display-pixel filtering alternative for surface-texel boundaries is being implemented against the sharp-edge control; it has no selected result yet. Cleanup for a confirmed multisample depth-target retention issue is implemented but requires a fresh memory probe. Keep this stage In progress until those relevant checks and documentation are reconciled; creator approval, zero-shimmer claims and wider pipeline/device qualification remain ungranted.
 
 ## Maintained records
 

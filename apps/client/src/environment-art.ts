@@ -107,7 +107,7 @@ export function prepareEnvironmentSurface(
 ): void {
   texture.mipmaps = true;
   texture.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
-  texture.magFilter = pc.FILTER_NEAREST;
+  texture.magFilter = pc.FILTER_LINEAR;
   texture.addressU = texture.addressV = pc.ADDRESS_REPEAT;
   const declarations = material.shaderChunks.glsl.get('litUserDeclarationVS') ?? '';
   const end = material.shaderChunks.glsl.get('litUserMainEndVS') ?? '';
@@ -138,17 +138,42 @@ export function prepareEnvironmentSurface(
       `
       uniform sampler2D ol_environmentTile;
       uniform float ol_surfaceEnabled;
+      uniform float ol_surfaceEdges;
       varying vec3 ol_environmentPosition;
       varying vec3 ol_environmentNormal;
+      vec4 ol_environmentSample(vec2 uv) {
+        // Keep the continuous footprint for mip selection even where adjusted
+        // coordinates leave cell interiors flat. Only magnification needs the
+        // one-display-pixel transition; minification uses the prepared mips.
+        vec2 dx = dFdx(uv), dy = dFdy(uv);
+        vec2 size = vec2(${texture.width.toFixed(1)});
+        vec2 texelDx = dx * size, texelDy = dy * size;
+        float footprint = max(length(texelDx),length(texelDy));
+        vec2 sampleUV = uv;
+        if (footprint < 1.0) {
+          vec2 pixel = uv * size - .5;
+          vec2 cell = floor(pixel), fraction = fract(pixel);
+          // Diagonal footprints can exceed one cell per axis: cap the ramp to
+          // avoid a seam at cell centers, then meet ordinary mip UVs smoothly.
+          vec2 width = clamp(abs(texelDx) + abs(texelDy),vec2(.0001),vec2(1.0));
+          vec2 coverage = ol_surfaceEdges > .5
+            ? clamp((fraction - .5) / width + .5,0.0,1.0)
+            : step(vec2(.5),fraction);
+          sampleUV = (cell + .5 + coverage) / size;
+          if (ol_surfaceEdges > .5)
+            sampleUV = mix(sampleUV,uv,smoothstep(.75,1.0,footprint));
+        }
+        return textureGrad(ol_environmentTile,sampleUV,dx,dy);
+      }
       void getAlbedo() {
         ol_environmentSourceAlbedo();
         if (ol_surfaceEnabled < .5) return;
         vec3 p = ol_environmentPosition * ${(density / texture.width).toFixed(3)};
         vec3 weights = pow(abs(normalize(ol_environmentNormal)),vec3(10.0));
         weights /= max(dot(weights,vec3(1.0)),.0001);
-        vec4 x = texture2D(ol_environmentTile,p.zy);
-        vec4 y = texture2D(ol_environmentTile,p.xz);
-        vec4 z = texture2D(ol_environmentTile,p.xy);
+        vec4 x = ol_environmentSample(p.zy);
+        vec4 y = ol_environmentSample(p.xz);
+        vec4 z = ol_environmentSample(p.xy);
         float bark = ${kind === 'foliage' ? 'step(dAlbedo.g * .98,dAlbedo.r)' : '0.0'};
         float field = dot(vec3(mix(x.r,x.g,bark),mix(y.r,y.g,bark),mix(z.r,z.g,bark)),weights);
         // Continuous derivatives select the prepared mip chain. At subpixel

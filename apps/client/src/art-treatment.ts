@@ -8,6 +8,7 @@ export interface ArtTreatment {
   sampling: '40' | '60' | '80' | '96' | 'native' | 'screen';
   sceneGrid: 'full' | 'half' | 'third' | 'pixels2' | 'pixels3' | 'anchored2' | 'anchored3';
   surfaceArt: 'plain' | 'painted';
+  surfaceEdges: 'sharp' | 'filtered';
   coverage: 'none' | 'msaa4';
   subjectDetail: 'shared' | 'preserve';
   shadowSampling: 'screen' | 'fixed';
@@ -29,6 +30,7 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   sampling: '96',
   sceneGrid: 'full',
   surfaceArt: 'plain',
+  surfaceEdges: 'sharp',
   coverage: 'none',
   subjectDetail: 'shared',
   shadowSampling: 'screen',
@@ -54,6 +56,7 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   motion: 'held12',
   prop: 'generated',
   surfaceArt: 'painted',
+  surfaceEdges: 'filtered',
   coverage: 'msaa4',
   characterFiltering: 'mip',
   shadowSampling: 'fixed',
@@ -73,6 +76,9 @@ export class ArtMaterials {
     this.settings[2] = 0.055;
     this.device.scope.resolve('ol_artStyle').setValue(this.settings);
     this.device.scope.resolve('ol_surfaceEnabled').setValue(style.surfaceArt === 'painted' ? 1 : 0);
+    this.device.scope
+      .resolve('ol_surfaceEdges')
+      .setValue(style.surfaceEdges === 'filtered' ? 1 : 0);
     this.device.scope
       .resolve('ol_fixedShadowPattern')
       .setValue(style.shadowSampling === 'fixed' ? 1 : 0);
@@ -199,6 +205,7 @@ export function mountArtControls(
     sampling: ['40', '60', '80', '96', 'native', 'screen'],
     sceneGrid: ['full', 'half', 'third', 'pixels2', 'pixels3', 'anchored2', 'anchored3'],
     surfaceArt: ['plain', 'painted'],
+    surfaceEdges: ['sharp', 'filtered'],
     coverage: ['none', 'msaa4'],
     subjectDetail: ['shared', 'preserve'],
     shadowSampling: ['screen', 'fixed'],
@@ -220,6 +227,7 @@ export function mountArtControls(
     sampling: 'Character detail',
     sceneGrid: 'Scene sampling',
     surfaceArt: 'Environment surface art',
+    surfaceEdges: 'Painted pixel edges',
     coverage: 'Silhouette coverage',
     subjectDetail: 'People and small-object detail',
     shadowSampling: 'Soft-shadow sample pattern',
