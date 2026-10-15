@@ -1,6 +1,6 @@
 # Item and building workflows — follow-on delivery
 
-**Status: design prepared; implementation not started. Reviewed October 14, 2026.** Mike requested a design and task breakdown for the additions beyond existing inventory, recipe and shelter delivery. A later implementation go-ahead is still required. The source baseline is published main `57a2977e22bab3f7293caa4a176c9ef4ba800751`.
+**Status: design prepared; implementation not started. Reviewed October 15, 2026.** Mike requested a design and task breakdown for the additions beyond existing inventory, recipe and shelter delivery. A later implementation go-ahead is still required. The source baseline is published main `57a2977e22bab3f7293caa4a176c9ef4ba800751`.
 
 [Feature specification](../projects/item-and-building-workflows-feature-spec.md) · [Technical design](../projects/item-and-building-workflows-tech-design.md) · [Limits](../limits/item-and-building-workflows.md) · [UI follow-through](ui-ux.md) · [Maintainer index](README.md)
 
@@ -50,8 +50,10 @@ This is the sole detailed implementation tracker for this follow-on. Parent need
 
 **Parent:** ND13. **Owners:** ordinary recipe details/inventions and task-specific list presentation. **Dependencies:** IWB03.
 
+The existing shared recipe detail now says **Makes**, replacing the misleading prospective **Actual output** label in the [imported-interface review](../verification/ui-implementation-review.md). This correction is delivered outside IWB; it does not implement crafting lists or the completed-product follow-through below.
+
 - [ ] Preserve Craft once; add list preparation, stable pending rows, batch-count language, shared-resource review, named reorder/remove and separate active/pending/completed displays.
-- [ ] Use Makes/Expected result before manufacture and Produced only for a committed outcome. Review all callers of the shared recipe component, including creator views, without changing their permissions.
+- [ ] Preserve Makes/Expected result before manufacture and add Produced only for a committed outcome. Qualify the new output follow-through alongside existing ordinary and creator recipe callers without changing their permissions.
 - [ ] Link the real completed product to Inspect, ordinary Equip and explicit Choose storage. A refused storage move keeps the product and reports the separate failure; no hidden buffer or repeat Craft.
 - [ ] Exercise an ordinary known tool/material chain, a materially different supported output shape, changed availability, blank count drafts, stopped work and a full destination using real native outcomes.
 

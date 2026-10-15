@@ -1,5 +1,30 @@
 # Documentation changelog
 
+## October 15, 2026 — Repair imported interface continuity and private reads
+
+The [imported-interface review](verification/ui-implementation-review.md) repairs
+existing task guarantees without starting the proposed item/building follow-on.
+Inventory and Construction now verify that the exact original command is retained
+before sending; unreadable storage, uncertain results and failed matching cleanup
+keep another command blocked. Construction preserves the same character's draft
+through renewed control while refreshing facts and checked previews. Creator
+revision Save, supplied-opening selection, Prepare and question answers retain their own exact
+operation identities, while newer edits survive late Save readback and refused
+pages stay errors. These repairs replace optional retention and stale local
+completion assumptions; native execution, approval and spending owners are
+unchanged.
+
+Private action-history reads now reject older SQL results after committed evidence
+correction, and Character/Mind clear the affected read without erasing unrelated
+drafts. The [architecture](architecture.md#react-presentation-and-character-traits)
+links the existing recovery and private-retrieval contracts. Shared recipe detail
+now says **Makes** before manufacture, correcting the earlier **Actual output**
+label independently of the still-unstarted [IWB follow-on](maintainers/item-and-building-workflows.md).
+Its actual-product follow-through, finite crafting list and compound equip/stow
+requirements remain proposed. Native, controlled-component and full-App evidence
+retain their separate limits; this entry does not close human-input acceptance or
+required final-head checks.
+
 ## October 15, 2026 — Protect exact interface request recovery
 
 The [UI completion continuation](projects/game-interaction-redesign-completion.md)

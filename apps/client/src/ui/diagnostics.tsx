@@ -396,9 +396,17 @@ export function Mind({
   evidenceEpoch?: string;
   onDirtyChange?(dirty: boolean): void;
 }) {
-  const [mind, setMind] = useState<GodMindView | null>(null),
+  const snapshotKey = JSON.stringify([actorId, owned, readScope, evidenceEpoch]);
+  const [snapshot, setSnapshot] = useState<{ key: string; value: GodMindView } | null>(null),
     [error, setError] = useState(''),
     [authoring, setAuthoring] = useState(false);
+  const mind = snapshot?.value ?? null;
+  const currentSnapshot = snapshot?.key === snapshotKey;
+  const latestSnapshotKey = useRef(snapshotKey);
+  latestSnapshotKey.current = snapshotKey;
+  function setMind(value: GodMindView) {
+    if (latestSnapshotKey.current === snapshotKey) setSnapshot({ key: snapshotKey, value });
+  }
   const [knowledgeDirty, setKnowledgeDirty] = useState(false);
   const [refreshRevision, setRefreshRevision] = useState(0);
   useEffect(() => onDirtyChange?.(knowledgeDirty), [knowledgeDirty, onDirtyChange]);
@@ -423,13 +431,16 @@ export function Mind({
     setAuthoring(true);
     void post<{ ok: boolean; message?: string; mind?: GodMindView }>('/api/god/appraisal', request)
       .then((result) => {
+        if (latestSnapshotKey.current !== snapshotKey) return;
         setError(result.ok ? '' : (result.message ?? 'Unable to author feeling.'));
         if (result.ok && result.mind) {
           pending.current = null;
           setMind(result.mind);
         }
       })
-      .catch((error) => setError(String(error)))
+      .catch((error) => {
+        if (latestSnapshotKey.current === snapshotKey) setError(String(error));
+      })
       .finally(() => setAuthoring(false));
   };
   useEffect(() => {
@@ -440,7 +451,7 @@ export function Mind({
       { actorId },
     )
       .then((result) => {
-        if (active) {
+        if (active && latestSnapshotKey.current === snapshotKey) {
           // A refused refresh must not unmount this person's unsaved notes.
           if (result.ok && result.mind) {
             setMind(result.mind);
@@ -449,12 +460,12 @@ export function Mind({
         }
       })
       .catch((loadError) => {
-        if (active) setError(String(loadError));
+        if (active && latestSnapshotKey.current === snapshotKey) setError(String(loadError));
       });
     return () => {
       active = false;
     };
-  }, [actorId, owned, visible, refreshRevision, readScope]);
+  }, [actorId, owned, visible, refreshRevision, readScope, evidenceEpoch]);
   return (
     <div>
       {error && <p role="alert">{error}</p>}
@@ -462,7 +473,7 @@ export function Mind({
         <>
           <header className="ol-creator-context">
             <Tag>{owned ? 'Private to your character' : 'God mode · Private inspection'}</Tag>
-            <h3>{mind.name}’s private mind</h3>
+            <h3>{currentSnapshot ? `${mind.name}’s private mind` : 'Private mind'}</h3>
             <p className="ol-caption">
               {owned
                 ? 'Read your character’s beliefs, feelings and remembered experiences.'
@@ -477,120 +488,132 @@ export function Mind({
               Refresh private mind
             </Button>
           </header>
-          <Section title="About me">
-            <p className="ol-prose">{mind.acceptedText}</p>
-          </Section>
-          {mind.documents.map((document) => (
-            <details key={document.id}>
-              <summary>{document.title}</summary>
-              <p className="ol-prose">{document.text}</p>
-            </details>
-          ))}
-          <Section title="Feelings">
-            {mind.continuity?.appraisals.length ? (
-              mind.continuity.appraisals.map((feeling) => (
-                <div key={feeling.id}>
-                  <p>
-                    {feeling.label}
-                    {feeling.subject ? ` · ${feeling.subject}` : ''}
-                    {feeling.value !== null ? ` · ${Number(feeling.value.toFixed(3))}` : ''}
-                  </p>
-                  <p className="ol-caption">
-                    {feeling.lifetime === 'persistent'
-                      ? 'Persists until resolved'
-                      : feeling.lifetime.replaceAll('-', ' ')}{' '}
-                    · {feeling.coverage}
-                  </p>
-                  {mind.continuity?.authoring && (
-                    <Button
-                      disabled={authoring}
-                      onPress={() =>
-                        author({
-                          kind: 'resolve',
-                          id: feeling.id,
-                          expectedRevision: feeling.revision,
-                        })
-                      }
-                    >
-                      Resolve {feeling.label}
-                    </Button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="ol-meta">No current feelings on this page.</p>
-            )}
-          </Section>
-          {mind.continuity?.authoring && (
-            <AuthoredFeeling key={mind.actorId} mind={mind} busy={authoring} send={author} />
+          {!currentSnapshot && (
+            <p role="status">
+              Private information changed. Its earlier snapshot is hidden until a current read
+              succeeds. Refresh private mind to try again.
+            </p>
           )}
-          <Section title="My understanding of people">
-            {mind.notepads
-              ?.filter((doc) => doc.subjectId && doc.text)
-              .map((doc) => (
-                <details key={doc.subjectId}>
-                  <summary>{doc.label}</summary>
-                  <p className="ol-prose">{doc.text}</p>
-                  <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
-                </details>
-              ))}
-          </Section>
-          {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
-          <KnowledgeEditor
-            key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
-            mind={mind}
-            onSaved={setMind}
-            owned={owned}
-            visible={visible}
-            readScope={readScope}
-            onDirtyChange={setKnowledgeDirty}
-          />
-          {mind.continuity?.cursor && (
-            <Button
-              disabled={knowledgeDirty}
-              onPress={() => {
-                const cursor = mind.continuity!.cursor!;
-                void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
-                  owned ? '/api/mind' : '/api/god/mind',
-                  { actorId, cursor },
-                )
-                  .then((result) => {
-                    if (result.ok && result.mind) setMind(result.mind);
-                    else setError(result.message ?? 'Unable to load page.');
-                  })
-                  .catch((error) => setError(String(error)));
-              }}
-            >
-              More feelings and notes
-            </Button>
-          )}
-          <ActivityHistory
-            key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
-            actorId={mind.actorId}
-            owned={owned}
-          />
-          {!owned && (
-            <Section title="Memory and thought history">
-              <MemoryHistory
-                key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}`}
-                actorId={mind.actorId}
-                owned={false}
-                visible={visible}
-              />
+          {/* Retain the editor and its draft while hiding obsolete read-only evidence. */}
+          <div hidden={!currentSnapshot}>
+            <Section title="About me">
+              <p className="ol-prose">{mind.acceptedText}</p>
             </Section>
-          )}
-          <InlineJson
-            title="Memories, experiences and commitments"
-            value={{
-              records: mind.records,
-              experiences: mind.experiences,
-              commitments: mind.commitments,
-            }}
-          />
-          <InlineJson
-            title="Thoughts and active states"
-            value={{ thoughts: mind.thoughts, statusEffects: mind.statusEffects }}
-          />
+            {mind.documents.map((document) => (
+              <details key={document.id}>
+                <summary>{document.title}</summary>
+                <p className="ol-prose">{document.text}</p>
+              </details>
+            ))}
+            <Section title="Feelings">
+              {mind.continuity?.appraisals.length ? (
+                mind.continuity.appraisals.map((feeling) => (
+                  <div key={feeling.id}>
+                    <p>
+                      {feeling.label}
+                      {feeling.subject ? ` · ${feeling.subject}` : ''}
+                      {feeling.value !== null ? ` · ${Number(feeling.value.toFixed(3))}` : ''}
+                    </p>
+                    <p className="ol-caption">
+                      {feeling.lifetime === 'persistent'
+                        ? 'Persists until resolved'
+                        : feeling.lifetime.replaceAll('-', ' ')}{' '}
+                      · {feeling.coverage}
+                    </p>
+                    {mind.continuity?.authoring && (
+                      <Button
+                        disabled={authoring}
+                        onPress={() =>
+                          author({
+                            kind: 'resolve',
+                            id: feeling.id,
+                            expectedRevision: feeling.revision,
+                          })
+                        }
+                      >
+                        Resolve {feeling.label}
+                      </Button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="ol-meta">No current feelings on this page.</p>
+              )}
+            </Section>
+            {mind.continuity?.authoring && (
+              <AuthoredFeeling key={mind.actorId} mind={mind} busy={authoring} send={author} />
+            )}
+            <Section title="My understanding of people">
+              {mind.notepads
+                ?.filter((doc) => doc.subjectId && doc.text)
+                .map((doc) => (
+                  <details key={doc.subjectId}>
+                    <summary>{doc.label}</summary>
+                    <p className="ol-prose">{doc.text}</p>
+                    <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
+                  </details>
+                ))}
+            </Section>
+            {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
+            <KnowledgeEditor
+              key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+              mind={mind}
+              onSaved={setMind}
+              owned={owned}
+              visible={visible && currentSnapshot}
+              readScope={readScope}
+              onDirtyChange={setKnowledgeDirty}
+            />
+            {mind.continuity?.cursor && (
+              <Button
+                disabled={knowledgeDirty}
+                onPress={() => {
+                  const cursor = mind.continuity!.cursor!;
+                  void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
+                    owned ? '/api/mind' : '/api/god/mind',
+                    { actorId, cursor },
+                  )
+                    .then((result) => {
+                      if (latestSnapshotKey.current !== snapshotKey) return;
+                      if (result.ok && result.mind) setMind(result.mind);
+                      else setError(result.message ?? 'Unable to load page.');
+                    })
+                    .catch((error) => {
+                      if (latestSnapshotKey.current === snapshotKey) setError(String(error));
+                    });
+                }}
+              >
+                More feelings and notes
+              </Button>
+            )}
+            <ActivityHistory
+              key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
+              actorId={mind.actorId}
+              owned={owned}
+            />
+            {!owned && (
+              <Section title="Memory and thought history">
+                <MemoryHistory
+                  key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
+                  actorId={mind.actorId}
+                  owned={false}
+                  visible={visible}
+                />
+              </Section>
+            )}
+            <InlineJson
+              title="Memories, experiences and commitments"
+              value={{
+                records: mind.records,
+                experiences: mind.experiences,
+                commitments: mind.commitments,
+              }}
+            />
+            <InlineJson
+              title="Thoughts and active states"
+              value={{ thoughts: mind.thoughts, statusEffects: mind.statusEffects }}
+            />
+          </div>
         </>
       ) : (
         !error && <p>Loading mind…</p>

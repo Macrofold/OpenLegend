@@ -49,7 +49,7 @@ not used for edits or runtime verification.
    evidence and limitations. Keep real OS input-method, assistive-device and
    uncoached-user acceptance open until performed.
 
-The initial 100–300-line repair estimate is now approximately 600–850 production
+The initial 100–300-line repair estimate is now approximately 1,000–1,350 production
 logic lines after the concrete findings below; the review itself covers substantially
 more source. Risk is medium
 because shared dismissal/focus, asynchronous private reads and consequential-write
@@ -64,6 +64,13 @@ focus ownership; exact edited-draft completion; construction draft retention and
 fresh read/preview fencing; forgotten action-history display and awaited server
 read fencing; refused creator-page reads; future-narration tab/save/close continuity;
 Operations logout cleanup and single-flight refresh; and prospective recipe wording.
+The read-only relationship/evidence child also expires with current access and
+evidence revision, independently of the retained same-owner writing workspace.
+Both private Mind history readers and the fetched private snapshot expire after
+corrected/forgotten evidence, preserving the mounted note editor. Reuse
+the existing spaced creator confirmation for retained-draft switch warnings.
+Current authored spawn options supply their own icons; malformed retained question
+answers cannot be consumed as valid answer objects.
 The storage review also finds that Inventory did not verify an original request
 before overwriting or verify its retained bytes before sending. Strengthen that
 existing owner, then reuse it with a distinct construction task slot for the real
@@ -72,10 +79,20 @@ the original receipt after a lost acknowledgement, including after earlier work
 ends. This closes the existing shared recovery contract; it adds no manufacturing
 list or compound stow behavior. Keep native receipt/admission owners unchanged,
 include changed-owner cleanup, and verify failed storage and no duplicate dispatch.
-The same review includes native creator Save, opening selection and Prepare:
+The same review includes native creator Save, opening selection, Prepare and
+question answers, plus the relationship-inspection removal preparation callers:
 optional local-draft storage cannot substitute for mandatory verified retention of
 an original consequential request. Check parent discard/navigation callers as well
 as the leaf editor, preserving later fields while reconciling an earlier original.
+A final measured shared-controls finding expands verification: changing the offered
+UI scale from 100% to 130% enlarges a HUD button from 40 to 52 pixels, but portaled
+dialog controls and popup text remain unchanged. Propagate the same selected scale
+through existing shared control owners, preserving anchor width/placement, modal
+viewport bounds, ordinary keyboard dismissal/focus and narrow controls. Inspect
+SelectField, Pullout and the actual dialog callers; account for already-physical
+anchor measurements to avoid double scaling. Keep theme/defaults and native game
+behavior unchanged. This cross-caller repair requires both before/after rendered
+measurements and focused existing browser coverage, not only CSS inspection.
 The new Speak/Act bar joins the existing measured caption exclusions; no frame-level
 HUD measurements, new timing policy or extra native speech evidence is introduced.
 

@@ -926,38 +926,43 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
           }}
         >
           <Modal className="ol-modal">
-            <Dialog className="ol-person-dialog" aria-label="Unsaved draft changes">
-              <h2>Keep this draft edit?</h2>
+            <Dialog
+              className="ol-person-dialog ol-creator-confirm"
+              aria-label="Unsaved draft changes"
+            >
+              <h3 className="ol-heading">Keep this draft edit?</h3>
               <p>Your unfinished changes have not been saved as a revision.</p>
               {error && <p role="alert">{error}</p>}
-              <Button variant="primary" onPress={() => setSwitchTo(undefined)}>
-                Keep editing
-              </Button>
-              <Button
-                variant="quiet"
-                onPress={() => {
-                  try {
-                    if (exact)
-                      discardRetainedDraftEdit(
-                        authoringKey(
-                          'draft-edit',
-                          worldId,
-                          audience,
-                          sessionId,
-                          selected?.id ?? null,
-                          selected?.revision ?? null,
-                          exact.kind,
-                        ),
-                      );
-                    select(switchTo.id ? switchTo : null, true);
-                    setSwitchTo(undefined);
-                  } catch (failure) {
-                    setError(errorText(failure));
-                  }
-                }}
-              >
-                Discard changes and continue
-              </Button>
+              <div className="ol-creator-window-tools">
+                <Button variant="primary" onPress={() => setSwitchTo(undefined)}>
+                  Keep editing
+                </Button>
+                <Button
+                  variant="quiet"
+                  onPress={() => {
+                    try {
+                      if (exact)
+                        discardRetainedDraftEdit(
+                          authoringKey(
+                            'draft-edit',
+                            worldId,
+                            audience,
+                            sessionId,
+                            selected?.id ?? null,
+                            selected?.revision ?? null,
+                            exact.kind,
+                          ),
+                        );
+                      select(switchTo.id ? switchTo : null, true);
+                      setSwitchTo(undefined);
+                    } catch (failure) {
+                      setError(errorText(failure));
+                    }
+                  }}
+                >
+                  Discard changes and continue
+                </Button>
+              </div>
             </Dialog>
           </Modal>
         </ModalOverlay>

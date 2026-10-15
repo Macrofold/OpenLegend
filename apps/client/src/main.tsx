@@ -1566,6 +1566,7 @@ function App({
           <WorldAgent
             actorId={view.player.id}
             accessScope={view.access?.privateDraftScope ?? view.player.id}
+            inspectionScope={JSON.stringify([view.access?.scope, view.historyEpoch])}
             budget={view.ai.budget}
             godMode={view.godMode}
             saveTimeline={view.saveTimeline}

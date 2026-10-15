@@ -8,9 +8,8 @@ repairs, and completion of missing accepted UI. The review starts at
 `docs/game-ui-research-redesign`, including the substantial redesign already
 integrated into main. The refreshed PR base is `Macrofold/OpenLegend`
 `origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor.
-Local checkpoint `1985e18c7` records the first repairs; later repairs and their
-focused observations are still in progress. Required CI on the final source has
-not yet run.
+Local checkpoints `1985e18c7` and `5ef9c4007` preserve the review repairs.
+Final integration and required CI are in progress.
 
 The [completion plan](../projects/game-interaction-redesign-completion.md#complete-imported-interface-review--october-15)
 owns execution, and [UIUX](../maintainers/ui-ux.md) retains broader acceptance.
@@ -50,7 +49,9 @@ simulation implementation or a claim of all-platform usability.
   browser retention before sending. Restored storage can reread an unreadable
   original. Matching cleanup must succeed before another command is admitted.
 - Forgotten/corrected action history clears from Character and Mind without erasing
-  unrelated drafts. Its awaited server read uses the existing private-evidence fence
+  unrelated drafts. Creator relationship/evidence inspection expires independently
+  of its same-owner writing workspace, and both Mind history readers expire after
+  correction or forgetting. Its awaited server read uses the existing private-evidence fence
   so an older SQL result cannot disclose revoked text after correction.
 - Refused creator history pages show errors instead of being adopted as successful
   pages and crashing. Future-narration edits survive tab changes, blank input and
@@ -60,7 +61,9 @@ simulation implementation or a claim of all-platform usability.
 - Operations uses the shared logout cleanup/broadcast owner and one in-flight
   refresh. Slow reads cannot accumulate behind the five-second cadence. Recipe
   details say **Makes** before manufacture. Generic invention help no longer asserts
-  wilderness content as a universal rule. Handbook single-item equipment and
+  wilderness content as a universal rule. Creation icons now come from the selected
+  world’s existing catalogue instead of a duplicate wilderness-ID map in the client.
+  Handbook single-item equipment and
   unavailable-action-toggle claims are reconciled with accepted current behavior.
 
 ## Focused observations completed
@@ -105,7 +108,9 @@ provider/Jev cost: $0.**
   by the separately run Operations output, so only its recorded result is retained.
 - **Operations:** passes in 10.1 seconds after actual Game entry establishes its local
   login. Controlled slow reads remain single-flight. Actual logout clears private
-  markers, broadcasts once and invalidates the prior native session.
+  markers, broadcasts once and invalidates the prior native session. Only the mode
+  presentation exposing the OIDC logout button is controlled; genuine identity-provider
+  sign-in is not qualified.
 - **Native authoring retention:** the actual-App case passes in 38.5 seconds under
   the original sixty-second total, five-second assertions and ten-second capture.
   Blocked writes prevent both opening-selection and native revision-Save dispatch.
@@ -113,16 +118,69 @@ provider/Jev cost: $0.**
   identity/body. Reload sends no Save, and newer text survives original recovery.
   The inspected desktop image is a reading sample, not full workspace qualification.
 
+- **Creator parent/caller recovery:** the evolving actual-App case passes in 31.3
+  seconds. A successful original-record write followed by failed readback sends no
+  Save. Discovering that original preserves later visible fields; parent Discard
+  refuses to erase it. Explicit retry creates one native revision and keeps later
+  text. Prepare blocked writes send nothing; failed cleanup and explicit retry keep
+  the same identity/body. The permitted-host projection and named blocked Prepare
+  result are controlled: no actual host preparation/activation is qualified. The
+  painted confirmation revealed missing shared spacing. After reusing the existing
+  creator confirmation layout, the actual-App variation passes in 34.2 seconds,
+  including reachable controls at 390×480; desktop/narrow captures are inspected.
+- **Construction continuity/recovery:** the strengthened observation passes in
+  11.8 seconds. Actual Construction/retained-command modules use native HTTP and
+  PostgreSQL reads, previews, control renewal, Start and receipt inspection inside
+  a product-styled Panel. Draft choices survive renewal, Hide and disconnect;
+  old reads/previews cannot restore controls or ghosts. One native Start commits,
+  then native cancellation ends work. Its retained original still blocks another
+  Start; an unreadable-storage reload recovers the exact receipt without changing
+  the world. A fresh native review then enables another deliberate Start without
+  dispatching it. Four captures are inspected. Delivery/read timing and changed
+  private owner are controlled; this is not a complete App/account-permission case.
+- **Private creator inspection:** actual WorldAgent/WorldInspection modules with a
+  native GameView and controlled read transport, availability and stream remove
+  visible old evidence when its revision changes. A held old read cannot restore
+  evidence after renewed access. The selected workspace and an unrelated typed
+  conversation draft survive. Two inspection reads, no mutation/provider requests
+  and no browser errors; the retained-draft capture is inspected.
+- **Question card:** the actual module ignores malformed pending answer elements,
+  preserves a valid unsent draft and valid original retry, and displays an accepted
+  answer without write controls. Controlled browser records/question projections
+  make no API/provider requests or browser errors. The corrected product-styled
+  capture is inspected; the earlier fixture omitted layout CSS and its white-page
+  image is not visual qualification. Mandatory answer-retention follow-through
+  passes its evolved storage observation: blocked writes send nothing; failed
+  readback preserves original A and later draft C; two explicit retries keep the
+  same answer ID/body/continuation flag. Failed cleanup cannot discard A, a newer
+  accepted answer B remains shown, and explicit correction restores C. Replies and
+  projections are controlled; no native continuation or provider execution is inferred.
+- **Private Mind snapshot/history:** actual Mind, MemoryHistory and KnowledgeEditor
+  consume native ownership with controlled private-read payloads. Loaded and held
+  old memory pages/raw summaries disappear after evidence/access changes. A refused
+  current read keeps the old body hidden; explicit Refresh restores a fresh read.
+  The same note-editor DOM node and its exact unsaved text survive throughout,
+  including while hidden. Six Mind and six memory reads, no mutations/providers
+  or browser errors; the current capture is inspected.
+- **Authored creation icons:** actual permitted native projection carries all ten
+  current catalogue icons, a contrasting supplied icon and an omitted optional
+  value without changing the saved world. Actual ActionPicker then displays that
+  supplied contrasting icon and its existing generic fallback when omitted; both
+  labels/icons are inspected. No creation command or provider call is sent.
+
 ## Failures and evidence limits
 
 The sandboxed browser launch fails before UI execution; the approved outside-sandbox
 launch works. Initial native setup used plain PostgreSQL without `vector` and failed
 before assertions; only that task-owned container was replaced with the CI pgvector
 image. Temporary page-routing/JSX/ESM setup failures, the first Operations attempt
-without a login cookie, a later Inventory-popup setup mistake and the Construction
-picker failures remain failed invocations. Assertions and capture deadlines are not
-weakened. Construction's pointer/popup cause and final recovery observation are
-still being investigated; keyboard completion alone cannot qualify that pointer path.
+without a login cookie, a later Inventory-popup setup mistake and an ambiguous
+private-inspection button selector remain failed invocations. Construction’s earlier
+fixture attempts also remain failed: automatic scrolling to an off-screen picker
+caused the UI library’s close-on-scroll behavior, and missing native presence kept
+the world paused. The final pointer observation selects an already-visible field
+and establishes native presence. No shared picker repair is inferred from that
+fixture behavior. Assertions and capture deadlines are not weakened.
 
 No generated logs, traces, screenshots or temporary qualification tools are committed.
 Focused working-tree results are not final-head CI. The original redesign's real OS
