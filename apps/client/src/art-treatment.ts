@@ -53,6 +53,10 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   atmosphere: 'restrained',
   motion: 'held12',
   prop: 'generated',
+  surfaceArt: 'painted',
+  coverage: 'msaa4',
+  characterFiltering: 'mip',
+  shadowSampling: 'fixed',
 });
 
 /** Extend the same StandardMaterial programs used by ordinary/reveal/shadow
@@ -77,19 +81,19 @@ export class ArtMaterials {
     if (this.prepared.has(material) || !material.useLighting) return;
     this.prepared.add(material);
     const chunks = pc.ShaderChunks.get(this.device);
-    // PCSS rotates its sample pattern using display coordinates. As a surface
-    // moves across the screen that changes its shadow even with fixed light.
-    // Compare a constant pattern; retain the original as an explicit control.
-    material.shaderChunks.glsl.set(
-      'shadowPCSSPS',
-      'uniform float ol_fixedShadowPattern;\n' +
-        chunks
-          .get('shadowPCSSPS')!
-          .replaceAll(
-            'noise( gl_FragCoord.xy )',
-            '(ol_fixedShadowPattern > .5 ? 0.0 : noise( gl_FragCoord.xy ))',
-          ),
-    );
+    // Directional and local PCSS use different chunks/seeds. Both otherwise
+    // rotate their sample pattern as a surface crosses display coordinates.
+    const shadowUniform =
+      '#ifndef OL_FIXED_SHADOW_PATTERN\n#define OL_FIXED_SHADOW_PATTERN\nuniform float ol_fixedShadowPattern;\n#endif\n';
+    for (const [chunk, seed] of [
+      ['shadowPCSSPS', 'noise( gl_FragCoord.xy )'],
+      ['shadowSoftPS', 'fractSinRand(gl_FragCoord.xy)'],
+    ] as const)
+      material.shaderChunks.glsl.set(
+        chunk,
+        shadowUniform +
+          chunks.get(chunk)!.replaceAll(seed, `(ol_fixedShadowPattern > .5 ? 0.0 : ${seed})`),
+      );
     const diffuse = material.shaderChunks.glsl.get('diffusePS') ?? chunks.get('diffusePS')!;
     if (role === 1) {
       const declarations = material.shaderChunks.glsl.get('litUserDeclarationVS') ?? '';

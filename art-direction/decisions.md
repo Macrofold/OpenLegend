@@ -74,11 +74,21 @@ The sequence is character baseline → art comparisons in the existing starting 
 
 ## Implemented candidate awaiting creator review — October 15, 2026
 
+**Historical first candidate, subsequently rejected by Mike for its ordinary-3D environment.** Its technical observations remain valid for their recorded source. The current revision is described below; the original pending-review wording does not imply acceptance.
+
 Mike subsequently requested implementation of V3D01.1–V3D01.12 on the finalized mercenary baseline. The [combined experiment record](../docs/verification/starting-scene-pixel-art.md) now documents actual material/light/sampling/outline/motion/vegetation/effects trials, standalone texel splatting, the authored/generated pair, representative native play and physical-device measurements. The original starting-world content and active playtesting progress are preserved.
 
 The provisional candidate uses the original shaped character with conforming facial details, modest tallness, fixed 96-row character pixels, restrained material regions, softened lighting, held walking poses and continuous cloth. Grouped vegetation, quiet ground, smooth optional wind and an attributed generated chest share the scene treatment. Whole-scene downsampling, permanent internal outlines, a separate effects image and texel-splatting integration were rejected or deferred for the recorded visual/cost reasons. These are implementation choices offered for review, **not new explicit art choices or approval by Mike**. Camera sampling can still change pixel clusters; this does not claim permanent 3D cells. Water remains at the existing treatment; strong bokeh, complex reflections and specialized many-light rendering were not justified for this scene.
 
 Mike’s final moving-scene review remains open. Only his actual feedback can accept this candidate or change the adopted art direction. General arbitrary-asset publication, imported-character production rights, broader rig/equipment families and wider population/device qualification remain with their existing owners. No paid provider request was made: additional and cumulative cost $0, reserved or uncertain commitments $0.
+
+## Pixel-surface revision offered for review — October 15, 2026
+
+Mike authorized further trials after rejecting the environment's normal low-poly appearance and made shimmer/unusual artifacts critical failures. Different object treatments and another texel-splatting investigation are permitted. The [revision report](../docs/verification/starting-scene-pixel-stability.md) records the actual alternatives; the [plan](../docs/projects/3d-pixel-art-first-scene-plan.md#authorized-pixel-finish-and-stability-revision--october-15-2026) retains the agreed scope.
+
+The next implementation candidate keeps the original 96-row mercenary and full scene resolution. Deliberate fixed-scale leaf/bark/stone/ground clusters, four-sample antialiasing, mipmapped character textures and fixed soft-shadow sampling replace the first environment's plain colored facets. Common coarse grids, full-detail character capture and separately preserved fine subjects remain explicit comparisons. The default uses the ordinary shared scene target because coarse environment reduction softened useful detail and the extra subject-mask format has no purpose when reduction is disabled. This recommendation preserves simpler sprite people/animals and existing gameplay; it does not establish a newly approved character or environment art style.
+
+The shorter leaf repeat is visibly stronger than the rejected weak tile, but round crown lobes, conifer tiers, repeating plates, yellow-green noon color and sampled character detail remain limitations for review. Identical still captures and immutable surface data do not prove stable moving edges. Current-profile frame/resource measurements and the critical moving-art/shimmer gate must be judged from the new evidence, separately from the first candidate's historical timings. Fixed captures/splats remain rejected or deferred for the recorded disocclusion, coverage, thin-surface, animation and cost limits. Mike has given no creator acceptance of this revision. Additional/cumulative provider and Jev cost remains $0, with $0 reserved or uncertain commitments.
 
 ## Decision entry format
 
