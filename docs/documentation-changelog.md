@@ -1,5 +1,30 @@
 # Documentation changelog
 
+## October 15, 2026 — Retain imported-interface lessons and reconcile the specification
+
+[CG30](maintainers/agent-guidance.md) adds the demonstrated rendering, asynchronous
+completion, recovery-cleanup and editor-save-scope lessons to their existing UI
+owners. Root/UI read triggers now explicitly cover planning/review and client
+request/storage helpers; selected-world examples include world-authored icons.
+Existing performance, world boundaries, privacy and draft-lifetime guidance remains
+the owner rather than gaining a duplicate checklist or skill. Four installed-agent
+read-only trials reached the sampled required chapters while a prose correction
+avoided implementation chapters; their context-efficiency and platform limits remain
+recorded under CG05.
+
+The [feature specification](projects/game-interaction-redesign-feature-spec.md)
+records its reconciliation against delivered source `3501d19c8` at
+**2026-10-15 09:14:58 UTC**: current Settings destinations, known blocked-action
+discovery, supported immediate fuel amount, conditional protected-item marking and
+named native qualification. Human-input/device/uncoached acceptance remains open.
+The technical design records consultation at that datetime without rewriting its
+architecture or inventing the original implementation-use time.
+
+Two existing statements were consolidated: editor tabs now share a draft only
+within their actual Save scope, and recovery guidance links the root development-save
+policy instead of incorrectly restating its reset permissions. The protected root
+policy is byte-for-byte unchanged. No runtime or gameplay behavior changes.
+
 ## October 15, 2026 — Repair imported interface continuity and private reads
 
 The [imported-interface review](verification/ui-implementation-review.md) repairs

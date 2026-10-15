@@ -90,7 +90,7 @@ Use persistent labels, not placeholder-only names. Keep units, quantities and co
 
 Check required constraints on submit, with earlier feedback after interaction when useful. Do not label untouched fields invalid immediately. On failure retain drafts, associate the specific error, reveal the affected section and bring the error into view without jumping on each edit. Long forms may need an error summary linked to their fields. Server validation remains authoritative. [F05](research.md#f05)
 
-Use one comprehensible save model: **Save** commits; **Discard changes** discards; **Hide** preserves where the owner says so. Owner-editor tabs share one draft until Save. Neither selecting a row nor leaving a field should silently change that contract.
+Use one comprehensible save model: **Save** commits; **Discard changes** discards; **Hide** preserves where the owner says so. Tabs within one save scope share its draft; separately saved sections name their own scope. Carry their unsaved-draft and pending-write Close guards through loading, failure and reload screens. Optional reads remain dismissible. Neither selecting a row nor leaving a field should silently change that contract. [OL03](research.md#ol03)
 
 ## Accordions, tabs and plain sections
 

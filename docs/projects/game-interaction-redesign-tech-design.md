@@ -4,6 +4,8 @@
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Imported-interface and follow-up correctness/performance repairs are verified; human input/device/player acceptance remains open. | 2026-10-15   |
 
+**Used for this reconciliation:** 2026-10-15 09:14:58 UTC, technical design as stored at source 3501d19c80e4cd5734e0c0f36e44fd56a0407eeb. This records current use; the original implementation-use time was not recorded.
+
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
 ## Requested review and current-main integration — October 8, 2026 UTC
