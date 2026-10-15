@@ -1,8 +1,8 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated UI repairs pass focused component checks; current full-game browser and human/device acceptance remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Integrated UI repairs have native/component evidence; ordinary browser gates and human/device acceptance remain open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -28,6 +28,7 @@ Review and repair four connected groups: shared controls and world-input ownersh
 2. Bind creator detail focus to the initiating interaction, and refused-message draft restoration to the unchanged edit revision. Give the JSON viewer one Escape/focus owner; derive remembered-place update notices from the loaded/current revision instead of allowing delayed reads to clear them.
 3. Reuse a shared keyboard-input boundary where the current main/quick-action listeners share meaning, preserve distinct Escape behavior and prevent composition cancellation from dismissing a combobox. Verify actual event paths; the old shortcut warning is not evidence that the current imported guards are absent.
 4. Review final code/design consistency and reconcile the UIUX tracker, existing evidence report and affected specifications. Run changed-file formatting, TypeScript, production build and relevant existing native/browser checks with inspected fixtures. Exercise ordinary and held/refused/stale cases through the actual affected components, then visually inspect representative desktop, narrow, short and enlarged layouts. Keep generated observations outside Git. Real OS input-method, assistive-device and uncoached-player acceptance remain distinct and must not be claimed from synthetic checks.
+5. The native 1280×720 compact creator session reproduces a clipped message field/Send control: its footer receives 28 pixels for 110 pixels of content. Repair the existing dock/grid allocation so an ordinary composer remains fully reachable without expanding the workspace. Preserve bounded long-result/error reading and the already-fitting narrow/short/enlarged adaptations; compare native geometry and visuals before and after. This adds a small CSS repair, not a new layout framework or native behavior.
 
 Cost grows with visible inventories/options, retained pages and active readers; these fixes add local request/revision/focus bookkeeping rather than polling, full-history reads or new caches. Reuse exact retained commands and existing permitted projections. Selection, private ownership, timeline, read/control scope, request attempt and explicit edits invalidate the corresponding local work. Measure verification through real callers, checking command counts, retained originals, focus/draft continuity, visible errors and layout; no new provider requests or paid model quality trial is needed.
 

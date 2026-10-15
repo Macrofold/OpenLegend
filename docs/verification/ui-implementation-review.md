@@ -572,7 +572,7 @@ The bounded native startup diagnostic subsequently completes at **62.339 seconds
 including 40.594 seconds of schema preparation and 16.165 seconds for the initial
 world commit. This establishes the pre-navigation cause on the existing local
 PostgreSQL instance, not a UI performance measurement. Its database is removed.
-An isolated task-owned PostgreSQL 14.17/pgvector 0.8.6 cluster on loopback port57039
+An isolated task-owned PostgreSQL 14.17/pgvector 0.8.6 cluster on loopback port 57039
 uses `fsync=off` and `synchronous_commit=off` solely for disposable fixtures;
 production/user configuration and durability remain unchanged. Native visual-server
 startup there takes 3.896 seconds.
@@ -594,3 +594,42 @@ A final source pass also removes the duplicate confirmed-result paragraph/live
 announcement in the creator review, retaining the first outcome message, and
 corrects the handbook's current “seven authoring kinds” claim to “all supported
 authoring kinds.” Historical seven-kind evidence retains its original scope.
+
+The matching Playwright Chromium **145.0.7632.6** is then installed from the pinned
+Playwright download, without changing dependencies or the lockfile. Actions and
+Camera still fail their original five-second renderer-ready check. This does not
+establish that newer installed Chrome caused the preceding failures. No additional
+unchanged journey is repeated after the shared startup boundary fails again.
+
+### Native in-app inspection
+
+The native production build and latest starting world are inspected through the
+Codex in-app browser, using a task-owned local account on IPv6 loopback and a
+disposable database. The distinct cookie host avoids replacing an existing game
+sign-in; no real credentials, user save, provider key or paid inference is used.
+
+- The actual scene renders. Inventory opens, native Knife inspection supplies known
+  details, and explicit Equip completes with **Equipped Knife**, a named Equipped
+  entry and the retained Knife card. The pending action prevents another possession
+  change while its outcome is being read. This is an actual native write, unlike the
+  controlled receipt fixtures. No request-count or artificial-loss claim is inferred
+  from this ordinary acknowledged path.
+- A free local creator conversation opens without submitting a model message. The
+  missing-connector explanation is visible and Send is disabled. At 1280×720 and
+  100% UI scale, the compact panel originally gives its footer 28 client pixels for
+  110 pixels of content, clipping the input/Send. The repaired shared dock/grid
+  allocation gives a 480-pixel panel at y88 and a 111-pixel footer at y444; client
+  and scroll heights are both 110. Its 37-pixel input and 40-pixel Send control are
+  fully inside the panel. Expanded reading preserves an unsent test draft, and the
+  draft is then cleared without sending. Long status/recovery reading keeps its
+  bounded overflow owner. [CV02](../limits/interface.md#cv02--creator-conversation-reading-space)
+  owns the chosen presentation tuning and reassessment trigger.
+- The same creator remains readable at 390×844 with 130% UI scale after the repair;
+  its composer, disabled reason and Close stay visible. The earlier 100% narrow and
+  1024×600/130% observations retain their scope. These are native browser views,
+  not real on-screen-keyboard or assistive-device qualification.
+
+Screenshots and temporary fixture data remain outside Git. Successful native
+interaction/visual observations do not retroactively pass the failed ordinary
+Playwright runs, establish renderer startup latency or close current CI and wider
+input/player acceptance. Additional/cumulative task Jev/provider cost remains **$0**.

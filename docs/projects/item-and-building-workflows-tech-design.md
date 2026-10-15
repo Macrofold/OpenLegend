@@ -1,7 +1,7 @@
 # Item and building workflows — technical design
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Not started | Mike deferred this follow-on during the imported UI review; its design and IWB01–IWB07 remain tracked for later selection. | 2026-10-15   |
 
 Counterpart: [feature specification](item-and-building-workflows-feature-spec.md). Parent needs: [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) for usable item/manufacturing controls and [ND07](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes) for supported shelter refinement. This is an additive delivery project, not a replacement for the implemented PW04/PW11, native activity or SH foundations.

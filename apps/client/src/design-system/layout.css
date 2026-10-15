@@ -1550,6 +1550,14 @@ body,
   transform: scale(0.72);
   transform-origin: top left;
 }
+.ol-hud[data-narrow='true'] .ol-wordmark {
+  /* Reserve the Game/help controls' column without clipping the full heading. */
+  max-inline-size: calc(100% - 2 * var(--hud-inset) - 3 * var(--control-sm));
+  font-size: clamp(var(--text-item-title-size), calc(7vw / var(--ui-scale)), 22px);
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  white-space: normal;
+}
 .ol-hud[data-narrow='true'] .ol-clock-position {
   top: calc(var(--status-bottom) + var(--space-3));
   left: var(--space-3);
@@ -2975,9 +2983,19 @@ body,
   color: inherit;
 }
 .ol-hud:not([data-narrow='true']) .ol-dock-right {
-  bottom: max(
+  --dock-right-clearance: max(
     var(--dock-bottom),
     calc(var(--space-6) + 3 * var(--control-md) + 4 * var(--space-1) + var(--space-2))
+  );
+  bottom: var(--dock-right-clearance);
+}
+/* Keep the compact creator's ordinary message field and Send visible. Reuse the
+ * camera's actual clearance, moving upward only when the default dock is too short. */
+.ol-hud:not([data-narrow='true'])
+  .ol-dock-right:has(.ol-panel-slot:not([hidden]) > #agentPanel:not([data-workspace])) {
+  top: min(
+    var(--dock-top),
+    max(var(--hud-inset), calc(100% - var(--dock-right-clearance) - 480px))
   );
 }
 .ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera {
@@ -3240,7 +3258,7 @@ body,
 }
 
 .ol-hud:not([data-narrow='true']):has(.ol-camera-more[aria-expanded='true']) .ol-dock-right {
-  bottom: max(
+  --dock-right-clearance: max(
     var(--dock-bottom),
     calc(var(--space-6) + 4 * var(--control-md) + 6 * var(--space-1) + var(--space-2))
   );
