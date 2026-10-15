@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import math
+import subprocess
 import sys
 
 import bpy
@@ -438,7 +439,13 @@ def main():
         bpy.ops.wm.save_as_mainfile(filepath=str(args.workspace / f'mercenary-{name}.blend'))
         metadata['variants'].append({'name': name, 'body': body_path.name, 'cape': cape_path.name, 'face': face_path.name, 'palette': PALETTES[name], 'sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in (body_path, cape_path, face_path)}})
     evaluated.to_mesh_clear()
-    (OUTPUT / 'provenance.json').write_text(json.dumps(metadata, indent=2) + '\n')
+    # Hash the exact retained formatted bytes, as the environment recipe does.
+    subprocess.run(['pnpm', 'exec', 'prettier', '--write', *[str(OUTPUT / variant['face']) for variant in metadata['variants']]], cwd=ROOT, check=True)
+    for variant in metadata['variants']:
+        variant['sha256'][variant['face']] = hashlib.sha256((OUTPUT / variant['face']).read_bytes()).hexdigest()
+    provenance = OUTPUT / 'provenance.json'
+    provenance.write_text(json.dumps(metadata, indent=2) + '\n')
+    subprocess.run(['pnpm', 'exec', 'prettier', '--write', str(provenance)], cwd=ROOT, check=True)
     print(json.dumps({'output': str(OUTPUT), 'workspace': str(args.workspace), 'coveredAtlasPixels': int(covered.sum()), 'variants': list(NAMES)}))
 
 

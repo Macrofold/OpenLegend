@@ -4,14 +4,8 @@
   "blender": "5.2.2 LTS",
   "authoringScript": "scripts/prepare-mercenary-variants.py",
   "geometry": "Original body vertices, UVs, rig, animations and cape geometry unchanged. Runtime cloth continues to use existing authored contact/clearance.",
-  "bodyMapSize": [
-    1024,
-    1024
-  ],
-  "capeMapSize": [
-    1024,
-    1536
-  ],
+  "bodyMapSize": [1024, 1024],
+  "capeMapSize": [1024, 1536],
   "variants": [
     {
       "name": "faithful",
@@ -19,46 +13,13 @@
       "cape": "cape-faithful.png",
       "face": "face-faithful.json",
       "palette": {
-        "skin": [
-          "#8d5d43",
-          "#b77c57",
-          "#d59b70",
-          "#e0af83"
-        ],
-        "hair": [
-          "#242a2b",
-          "#343b3d",
-          "#535554"
-        ],
-        "mail": [
-          "#414b4f",
-          "#536066",
-          "#6c7a7b",
-          "#929b96"
-        ],
-        "leather": [
-          "#3e3027",
-          "#594330",
-          "#755338",
-          "#926b46"
-        ],
-        "wrap": [
-          "#736654",
-          "#a3957c",
-          "#c2b59b",
-          "#d4c6ac"
-        ],
-        "cape": [
-          "#602b25",
-          "#77392d",
-          "#914735"
-        ],
-        "gold": [
-          "#77502b",
-          "#b17d3d",
-          "#d2a459",
-          "#e0be78"
-        ],
+        "skin": ["#8d5d43", "#b77c57", "#d59b70", "#e0af83"],
+        "hair": ["#242a2b", "#343b3d", "#535554"],
+        "mail": ["#414b4f", "#536066", "#6c7a7b", "#929b96"],
+        "leather": ["#3e3027", "#594330", "#755338", "#926b46"],
+        "wrap": ["#736654", "#a3957c", "#c2b59b", "#d4c6ac"],
+        "cape": ["#602b25", "#77392d", "#914735"],
+        "gold": ["#77502b", "#b17d3d", "#d2a459", "#e0be78"],
         "ivory": "#b8b49c",
         "iris": "#626a58",
         "charcoal": "#262b2b",
@@ -70,7 +31,7 @@
       "sha256": {
         "body-faithful.png": "a95711317fb7d583798c17109746f292077013824645da95b14223c546c9e232",
         "cape-faithful.png": "f7b64f0a3f0587a12ec42c3879aacb899b705902219cd0e5b55c5bddc7145929",
-        "face-faithful.json": "9dc272ba1820100adef54ce46cf44d515260b8addbaeb8ecc2190ac06e399925"
+        "face-faithful.json": "8aa842b6a150b5897d023ca447d2337235e6acb18415ff7e8dd72d51c68f7739"
       }
     },
     {
@@ -79,46 +40,13 @@
       "cape": "cape-painted.png",
       "face": "face-painted.json",
       "palette": {
-        "skin": [
-          "#986b52",
-          "#bd8966",
-          "#d6a47a",
-          "#e0b88c"
-        ],
-        "hair": [
-          "#26343a",
-          "#3b4548",
-          "#5e6260"
-        ],
-        "mail": [
-          "#33434a",
-          "#4b626a",
-          "#6b8083",
-          "#99a49c"
-        ],
-        "leather": [
-          "#44392e",
-          "#64503a",
-          "#856447",
-          "#ab8255"
-        ],
-        "wrap": [
-          "#7a705c",
-          "#a99d81",
-          "#c7b998",
-          "#dfcfaa"
-        ],
-        "cape": [
-          "#612f2c",
-          "#824235",
-          "#a0553e"
-        ],
-        "gold": [
-          "#795632",
-          "#af8443",
-          "#d5af64",
-          "#edcc83"
-        ],
+        "skin": ["#986b52", "#bd8966", "#d6a47a", "#e0b88c"],
+        "hair": ["#26343a", "#3b4548", "#5e6260"],
+        "mail": ["#33434a", "#4b626a", "#6b8083", "#99a49c"],
+        "leather": ["#44392e", "#64503a", "#856447", "#ab8255"],
+        "wrap": ["#7a705c", "#a99d81", "#c7b998", "#dfcfaa"],
+        "cape": ["#612f2c", "#824235", "#a0553e"],
+        "gold": ["#795632", "#af8443", "#d5af64", "#edcc83"],
         "ivory": "#d0c5a8",
         "iris": "#536b60",
         "charcoal": "#253036",
@@ -130,7 +58,7 @@
       "sha256": {
         "body-painted.png": "02c18d9a66f29e2ae5284661e87647feb1fb5f74d28cbd612ea5e759d70be948",
         "cape-painted.png": "a55c345f1fc8a41b236d062eac6ac8c9e1a691935cf46b4ff565fafd64ffcdb6",
-        "face-painted.json": "eb1dbc4b18be0c3d0240213836281fed18241611a94cf6622a9964d3ab46f694"
+        "face-painted.json": "03e8e885ed82a98dfca76fb96a5a021ff4896d424832b0911ca2681e1a562cd6"
       }
     },
     {
@@ -139,46 +67,13 @@
       "cape": "cape-graphic.png",
       "face": "face-graphic.json",
       "palette": {
-        "skin": [
-          "#8c6550",
-          "#b98968",
-          "#d5a881",
-          "#e6bf91"
-        ],
-        "hair": [
-          "#26343a",
-          "#3e4b4e",
-          "#63706c"
-        ],
-        "mail": [
-          "#35464c",
-          "#52676b",
-          "#7e9190",
-          "#abb4a7"
-        ],
-        "leather": [
-          "#3b3830",
-          "#5d503e",
-          "#837052",
-          "#b29a6d"
-        ],
-        "wrap": [
-          "#706c59",
-          "#a09a7e",
-          "#c6bea0",
-          "#e0d7b6"
-        ],
-        "cape": [
-          "#592c2b",
-          "#783c33",
-          "#9c503d"
-        ],
-        "gold": [
-          "#795631",
-          "#b58e4c",
-          "#dbb66e",
-          "#edcf8d"
-        ],
+        "skin": ["#8c6550", "#b98968", "#d5a881", "#e6bf91"],
+        "hair": ["#26343a", "#3e4b4e", "#63706c"],
+        "mail": ["#35464c", "#52676b", "#7e9190", "#abb4a7"],
+        "leather": ["#3b3830", "#5d503e", "#837052", "#b29a6d"],
+        "wrap": ["#706c59", "#a09a7e", "#c6bea0", "#e0d7b6"],
+        "cape": ["#592c2b", "#783c33", "#9c503d"],
+        "gold": ["#795631", "#b58e4c", "#dbb66e", "#edcf8d"],
         "ivory": "#d7cdb2",
         "iris": "#718170",
         "charcoal": "#263238",
@@ -190,7 +85,7 @@
       "sha256": {
         "body-graphic.png": "adef1aaa353e3de5addf121122e2b5fa3a861fe0e4a81a07a1b5890a6878e06b",
         "cape-graphic.png": "ec16b874c2223971fc7891df15ef094f14f9a7d6507d155dd4dfa09f012f0c11",
-        "face-graphic.json": "51f481887bde4718087e92bbf5a73ab696d2dd7f8558c1a584339cd1f566cda7"
+        "face-graphic.json": "07a4c03926c1ed2b8fac1697a3a90198aa802be03d0210fb82ea4aa3c167424c"
       }
     }
   ]
