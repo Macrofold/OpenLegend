@@ -32,6 +32,20 @@ const geometryText = await readFile(resolve(geometryPath), 'utf8');
 const geometry = JSON.parse(geometryText);
 if (!Array.isArray(geometry.meshes) || !geometry.camera)
   throw new Error('Missing exported starting-scene geometry/camera.');
+const vertexCount = geometry.meshes.reduce((sum, mesh) => sum + mesh.positions.length / 3, 0);
+if (!vertexCount || vertexCount > 65535) throw new Error('E07 requires 1–65535 static vertices.');
+for (const mesh of geometry.meshes) {
+  if (
+    mesh.positions.length % 3 ||
+    mesh.normals.length !== mesh.positions.length ||
+    ![...mesh.positions, ...mesh.normals].every(Number.isFinite) ||
+    mesh.indices.length % 3 ||
+    !mesh.indices.every(
+      (index) => Number.isInteger(index) && index >= 0 && index < mesh.positions.length / 3,
+    )
+  )
+    throw new Error(`Invalid static triangle geometry: ${mesh.name}`);
+}
 await writeFile(join(work, 'geometry.json'), geometryText);
 // Change only sample density in a temporary source copy; preserve the MIT notice.
 const upstreamHashes = {};
@@ -108,21 +122,24 @@ try {
     }),
   };
   const runs = [];
+  let visualTime = 0;
   for (const [path, at] of Object.entries(paths))
     for (const mode of ['direct', 'splat']) {
-      await page.evaluate(
-        async (options) => {
-          for (let i = 0; i < 5; i++) await window.e07.frame(options);
-        },
-        { ...at(0), mode, time: 0 },
-      );
+      // Preserve monotonically increasing probe time and settle the preceding
+      // path's cell transition before taking measurements of a new path.
+      for (let i = 0; i < 36; i++)
+        await page.evaluate((options) => window.e07.frame(options), {
+          ...at(0),
+          mode,
+          time: (visualTime += 1 / 60),
+        });
       const samples = [];
       for (let i = 0; i < 60; i++) {
         samples.push(
           await page.evaluate((options) => window.e07.frame(options), {
             ...at(i / 59),
             mode,
-            time: i / 60,
+            time: (visualTime += 1 / 60),
           }),
         );
         await page.evaluate(() => new Promise(requestAnimationFrame));

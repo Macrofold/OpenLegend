@@ -1,5 +1,6 @@
 // Standalone E07 adapter. The pinned MIT renderer is fetched by run.mjs, never
 // imported into the application or used to create a second playable world.
+// Initialization follows Dylan Ebert's MIT demo; see UPSTREAM-LICENSE.
 import { uploadTriangles } from '/upstream/src/bvh.ts';
 import { createLBVH, dispatchLBVH } from '/upstream/src/lbvh.ts';
 import { computeVertexAABB } from '/upstream/src/lighting.ts';
@@ -10,7 +11,7 @@ import { createSky, sampleGradient, uploadSky, uploadSkyScene } from '/upstream/
 
 const geometry = await (await fetch('/geometry.json')).json();
 const adapter = await navigator.gpu?.requestAdapter();
-if (!adapter) throw new Error('E07 requires a hardware WebGPU adapter.');
+if (!adapter) throw new Error('E07 requires a WebGPU adapter.');
 const timestamps = adapter.features.has('timestamp-query');
 const gpu = await adapter.requestDevice({
   requiredFeatures: timestamps ? ['timestamp-query'] : [],
