@@ -19,7 +19,9 @@ const sources: Record<PaintedArt, readonly [string, string]> = {
 /** Finite offline artwork, shared by the existing mercenary owner. Loading a
  * comparison never changes geometry, rig, scale or the active game. */
 export class MercenaryVariants {
-  private readonly assets = new Set<pc.Asset>();
+  private readonly textures = new Set<pc.Texture>();
+  private readonly images = new Set<ImageBitmap>();
+  private readonly downloads = new Set<AbortController>();
   private readonly paints = new Map<PaintedArt, Paint>();
   private readonly pending = new Map<PaintedArt, Promise<void>>();
   private readonly failed = new Set<PaintedArt>();
@@ -53,36 +55,45 @@ export class MercenaryVariants {
       });
     this.pending.set(art, pending);
   }
-  private load(url: string): Promise<pc.Texture> {
-    return new Promise((resolve, reject) => {
-      this.app.assets.loadFromUrl(url, 'texture', (error, asset) => {
-        if (this.disposed) {
-          asset?.unload();
-          if (asset) this.app.assets.remove(asset);
-          reject(new Error('Mercenary artwork owner was destroyed.'));
-          return;
-        }
-        if (error || !(asset?.resource instanceof pc.Texture)) {
-          asset?.unload();
-          if (asset) this.app.assets.remove(asset);
-          reject(new Error('Mercenary artwork did not load.'));
-          return;
-        }
-        this.assets.add(asset);
-        const texture = asset.resource;
-        texture.flipY = false;
-        texture.addressU = texture.addressV = pc.ADDRESS_CLAMP_TO_EDGE;
-        this.filterTexture(texture);
-        resolve(texture);
+  private async load(url: string): Promise<pc.Texture> {
+    const download = new AbortController();
+    this.downloads.add(download);
+    try {
+      const response = await fetch(url, { signal: download.signal });
+      if (!response.ok) throw new Error('Mercenary artwork did not load.');
+      const bitmap = await createImageBitmap(await response.blob(), {
+        imageOrientation: 'none',
+        premultiplyAlpha: 'none',
+        colorSpaceConversion: 'none',
       });
-    });
+      if (this.disposed) {
+        bitmap.close();
+        throw new Error('Mercenary artwork owner was destroyed.');
+      }
+      const texture = new pc.Texture(this.app.graphicsDevice, {
+        name: url.split('/').at(-1),
+        width: bitmap.width,
+        height: bitmap.height,
+        format: pc.PIXELFORMAT_SRGBA8,
+        flipY: false,
+        addressU: pc.ADDRESS_CLAMP_TO_EDGE,
+        addressV: pc.ADDRESS_CLAMP_TO_EDGE,
+      });
+      this.filterTexture(texture);
+      // The pinned runtime accepts ImageBitmap, but its declaration still lists
+      // only DOM image/video/canvas sources.
+      texture.setSource(bitmap as unknown as HTMLImageElement);
+      this.images.add(bitmap);
+      this.textures.add(texture);
+      return texture;
+    } finally {
+      this.downloads.delete(download);
+    }
   }
   setFiltering(filtering: ArtTreatment['characterFiltering']): void {
     if (this.filtering === filtering) return;
     this.filtering = filtering;
-    for (const asset of this.assets) {
-      if (asset.resource instanceof pc.Texture) this.filterTexture(asset.resource);
-    }
+    for (const texture of this.textures) this.filterTexture(texture);
   }
   private filterTexture(texture: pc.Texture): void {
     // Source artwork was authored for mipmapped minification; retain that
@@ -109,10 +120,11 @@ export class MercenaryVariants {
   destroy(): void {
     this.disposed = true;
     this.paints.clear();
-    for (const asset of this.assets) {
-      asset.unload();
-      this.app.assets.remove(asset);
-    }
-    this.assets.clear();
+    for (const download of this.downloads) download.abort();
+    this.downloads.clear();
+    for (const texture of this.textures) texture.destroy();
+    this.textures.clear();
+    for (const image of this.images) image.close();
+    this.images.clear();
   }
 }

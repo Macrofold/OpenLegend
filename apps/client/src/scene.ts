@@ -2629,6 +2629,8 @@ export class WildernessScene implements WorldRenderer {
     this.landscapeOcclusion.length = 0;
     if (this.destroyed) return;
     this.destroyed = true;
+    this.suspended = true;
+    this.app.autoRender = false;
     this.canvas.dataset.ready = 'false';
     this.resizeObserver?.disconnect();
     this.canvas.removeEventListener('pointerdown', this.pointerDown);
@@ -2656,7 +2658,7 @@ export class WildernessScene implements WorldRenderer {
     this.presentation?.destroy();
     this.generatedProps?.destroy();
     this.mercenary?.destroy();
-    this.libraryAnimals?.destroy();
+    const animalParsing = this.libraryAnimals?.destroy();
     this.landscape?.destroy();
     this.libraryScenery?.destroy();
     for (const { mesh } of this.reliefMeshes.values()) {
@@ -2674,7 +2676,8 @@ export class WildernessScene implements WorldRenderer {
     for (const buffer of this.landscapeBuffers) buffer.destroy();
     this.landscapeBuffers = [];
     this.setConstructionPreview(null);
-    this.app.destroy();
+    if (animalParsing) void animalParsing.then(() => this.app.destroy());
+    else this.app.destroy();
   }
 }
 
