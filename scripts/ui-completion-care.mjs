@@ -2,6 +2,7 @@
 // Usage: AI_BUDGET_USD=0 OPENLEGEND_TEST_DATABASE_URL=<loopback admin URL> \
 //   node --import tsx scripts/ui-completion-care.mjs /tmp/openlegend-ui-care-evidence
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -12,7 +13,7 @@ import { pathToFileURL } from 'node:url';
 const root = process.cwd();
 const expectedSource = {
   'apps/client/src/ui/camp-activity.css':
-    '046caa58a4951675f0c72df29e503a6738df817418a1339799a53cfd3f9b6a38',
+    '6df069a1a6b312ab60f6d7d5ea1dd714eb008668e38db318e8138cd918d56422',
   'apps/client/src/design-system/layout.css':
     '621f558c3efabdd95355bfb7d36df238031e8880afa1f08124793a1d40c4fec3',
   'apps/server/src/http.ts': 'a9d1250b85eca350e29ae63468a164adb394808fb27f9141c28fbbd589ecb7cf',
@@ -43,10 +44,13 @@ const expectedSource = {
 const output = resolve(process.argv[2] ?? '/tmp/openlegend-ui-care-evidence');
 await mkdir(dirname(output), { recursive: true });
 await mkdir(output); // A new invocation cannot overwrite an earlier observation.
+const runtimeSource =
+  process.env.GITHUB_SHA ??
+  execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', timeout: 5000 }).trim();
 const report = {
   startedAt: new Date().toISOString(),
-  checkout: process.env.GITHUB_SHA ?? 'a367c4d1b641d73f5431ff48071076faac571394',
-  runtimeSource: 'a367c4d1b641d73f5431ff48071076faac571394',
+  checkout: runtimeSource,
+  runtimeSource,
   scope:
     'Completed native fire-care presentation at desktop, narrow and short sizes. One real short terminal result is followed by explicitly supplied longer display text on the same completed plan; native lifecycle qualification is reused and no work is restarted.',
   limits: {
@@ -486,36 +490,86 @@ try {
     await task.focus();
     await page.keyboard.press('Tab');
     await expect(prepare).toBeFocused();
-    await expect(prepare).toBeInViewport();
-    const geometry = await taskPanel.evaluate((panel) => {
-      const task = panel.querySelector('.ol-camp-activities');
-      const body = panel.querySelector('.ol-panel-body');
-      const header = panel.querySelector('.ol-panel-head');
-      const box = (node) => {
-        const r = node.getBoundingClientRect();
-        return {
-          x: r.x,
-          y: r.y,
-          width: r.width,
-          height: r.height,
-          bottom: r.bottom,
-          right: r.right,
+    await expect(prepare).toBeInViewport({ ratio: 1 });
+    const measure = () =>
+      taskPanel.evaluate((panel) => {
+        const task = panel.querySelector('.ol-camp-activities');
+        const body = panel.querySelector('.ol-panel-body');
+        const header = panel.querySelector('.ol-panel-head');
+        const button = panel.querySelector(
+          '.ol-camp-activities[data-completed="true"] > button.ol-btn',
+        );
+        const box = (node) => {
+          const r = node.getBoundingClientRect();
+          return {
+            x: r.x,
+            y: r.y,
+            width: r.width,
+            height: r.height,
+            bottom: r.bottom,
+            right: r.right,
+          };
         };
-      };
-      return {
-        panel: box(panel),
-        task: box(task),
-        body: box(body),
-        header: box(header),
-        bodyClientHeight: body.clientHeight,
-        bodyScrollHeight: body.scrollHeight,
-        bodyScrollTop: body.scrollTop,
-        horizontalOverflow: body.scrollWidth - body.clientWidth,
-        activeText: document.activeElement?.textContent,
-        taskText: task.innerText,
-        bottomSpace: body.getBoundingClientRect().bottom - task.getBoundingClientRect().bottom,
-      };
-    });
+        const buttonBox = box(button),
+          bodyBox = box(body);
+        const style = getComputedStyle(button);
+        const outlineWidth = Number.parseFloat(style.outlineWidth);
+        const outlineOffset = Number.parseFloat(style.outlineOffset);
+        const outlineExtent = Math.max(0, outlineWidth + outlineOffset);
+        const ringX = (outlineExtent * buttonBox.width) / button.offsetWidth;
+        const ringY = (outlineExtent * buttonBox.height) / button.offsetHeight;
+        const bodyScaleX = bodyBox.width / body.offsetWidth;
+        const bodyScaleY = bodyBox.height / body.offsetHeight;
+        const clipLeft = bodyBox.x + body.clientLeft * bodyScaleX;
+        const clipTop = bodyBox.y + body.clientTop * bodyScaleY;
+        return {
+          panel: box(panel),
+          task: box(task),
+          body: bodyBox,
+          header: box(header),
+          button: buttonBox,
+          outline: { style: style.outlineStyle, width: outlineWidth, offset: outlineOffset },
+          focusRing: {
+            left: buttonBox.x - ringX,
+            top: buttonBox.y - ringY,
+            right: buttonBox.right + ringX,
+            bottom: buttonBox.bottom + ringY,
+          },
+          bodyClip: {
+            left: clipLeft,
+            top: clipTop,
+            right: clipLeft + body.clientWidth * bodyScaleX,
+            bottom: clipTop + body.clientHeight * bodyScaleY,
+          },
+          bodyClientHeight: body.clientHeight,
+          bodyScrollHeight: body.scrollHeight,
+          bodyScrollTop: body.scrollTop,
+          horizontalOverflow: body.scrollWidth - body.clientWidth,
+          activeText: document.activeElement?.textContent,
+          taskText: task.innerText,
+          bottomSpace: body.getBoundingClientRect().bottom - task.getBoundingClientRect().bottom,
+        };
+      });
+    let geometry;
+    await expect
+      .poll(
+        async () => {
+          geometry = await measure();
+          report.focusInProgress = { label: kind, viewport, geometry };
+          const { focusRing, bodyClip, outline } = geometry;
+          return (
+            outline.style !== 'none' &&
+            outline.width > 0 &&
+            focusRing.left >= bodyClip.left - 1 &&
+            focusRing.top >= bodyClip.top - 1 &&
+            focusRing.right <= bodyClip.right + 1 &&
+            focusRing.bottom <= bodyClip.bottom + 1
+          );
+        },
+        { message: 'The entire keyboard focus outline must fit inside the task scroll body.' },
+      )
+      .toBe(true);
+    delete report.focusInProgress;
     assert.ok(geometry.panel.x >= -1 && geometry.panel.right <= viewport.width + 1);
     assert.ok(geometry.panel.y >= -1 && geometry.panel.bottom <= viewport.height + 1);
     assert.ok(geometry.horizontalOverflow <= 1, 'No horizontal reading overflow.');

@@ -34,6 +34,8 @@ const preparedSourceSha256 = {
   'apps/client/src/main.tsx': 'fe9761baa102d82aaf54f8a505f24d9739e41a17ca8f02fb24cc91145c55bf44',
   'apps/client/src/ui/camp-activity.tsx':
     '6938d36c405fa393c8275e6bfb170e40b3f09a2b8322e6c83c315a4e3585cecf',
+  'apps/client/src/ui/camp-activity.css':
+    '6df069a1a6b312ab60f6d7d5ea1dd714eb008668e38db318e8138cd918d56422',
   'apps/client/src/ui/activity-object-field.tsx':
     'f3d04b26b7f2665e282bb9834550bb923e9d2f608a7696c90cfed2cd2530a3f8',
   'apps/client/src/ui/inventory.tsx':
@@ -96,6 +98,9 @@ const hashFile = async (path) =>
 const errorMessage = (error) => (error instanceof Error ? error.message : String(error));
 const closeNumber = (actual, expected, label) =>
   assert.ok(Math.abs(actual - expected) < 1e-6, `${label}: ${actual} versus ${expected}`);
+const installedIcons = JSON.parse(
+  await readFile('apps/client/src/design-system/icons/icons.json', 'utf8'),
+);
 
 export async function runAlternateWorldStage({ browser, outputDirectory }) {
   const output = join(outputDirectory, 'alternate-world');
@@ -409,10 +414,31 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
         const own = inventoryPanel.locator('[data-side="belongings"]');
         await expect(own.locator('[data-item-id]')).toHaveCount(inventory.items.length);
         for (const item of inventory.items) {
-          await expect(own.locator('[data-item-id="' + item.id + '"]')).toBeVisible();
-          assert.ok(item.icon, 'Native inventory projection supplies its installed item icon');
+          const cell = own.locator('[data-item-id="' + item.id + '"]');
+          const authoredIcon = game.service.world.itemDefinitions[item.definitionId].icon;
+          assert.equal(
+            item.icon,
+            authoredIcon,
+            'Native projection preserves the exact optional authored icon',
+          );
+          await expect(cell).toBeVisible();
+          await expect(cell.locator('.ol-inventory-cell-name')).toHaveText(item.name);
+          await expect(cell.locator('.ol-icon-wrap')).toBeVisible();
+          if (authoredIcon) {
+            assert.ok(
+              Object.hasOwn(installedIcons, authoredIcon),
+              'The supplied authored item icon is installed',
+            );
+            await expect(cell.locator('svg.ol-icon')).toBeVisible();
+            await expect(cell.locator('.ol-sigil')).toHaveCount(0);
+          } else {
+            // Shelter pieces legitimately omit icons. The shared production Icon
+            // uses their initial as a visible sigil rather than inventing an icon.
+            await expect(cell.locator('svg.ol-icon')).toHaveCount(0);
+            await expect(cell.locator('.ol-sigil')).toBeVisible();
+            await expect(cell.locator('.ol-sigil')).toHaveText(item.name.charAt(0).toUpperCase());
+          }
         }
-        await expect(own.locator('[data-item-id] svg.ol-icon').first()).toBeVisible();
         if (captureName) {
           await page.screenshot({ path: join(output, captureName), timeout: 10000 });
           report.captures.push({
@@ -826,7 +852,9 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
           assert.deepEqual(retainedOriginal.action.command, oldPending.request.command);
           await page.getByRole('button', { name: 'Game', exact: true }).click();
           await expect(page.locator('.ol-game-menu')).toBeVisible();
+          const loggedOutDocument = page.waitForEvent('domcontentloaded', { timeout: 20_000 });
           await page.getByRole('button', { name: 'Log Out', exact: true }).click();
+          await loggedOutDocument;
           await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
           await page.getByRole('link', { name: 'Sign in', exact: true }).click();
           await enterGame(page);
