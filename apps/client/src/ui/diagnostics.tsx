@@ -74,18 +74,28 @@ function KnowledgeEditor({
   owned = false,
   visible,
   readScope,
+  readCurrent,
   onDirtyChange,
 }: {
   owned?: boolean;
   visible: boolean;
   readScope?: string;
+  readCurrent: boolean;
   mind: GodMindView;
   onSaved: (mind: GodMindView) => void;
   onDirtyChange(dirty: boolean): void;
 }) {
   const [subject, setSubject] = useState<MindSubject | null>(null);
   // A subject's notes may lie on another notes page; load them by exact subject instead.
-  const [details, setDetails] = useState<SubjectDetails | null | undefined>(null);
+  const subjectReadKey = JSON.stringify([mind.actorId, owned, subject?.id, readScope]);
+  const [subjectRead, setSubjectRead] = useState<{ key: string; details: SubjectDetails | null }>();
+  const details = subject
+    ? subjectRead?.key === subjectReadKey
+      ? subjectRead.details
+      : undefined
+    : null;
+  const latestSubjectRead = useRef(subjectReadKey);
+  latestSubjectRead.current = subjectReadKey;
   const [reload, setReload] = useState(0);
   const general = mind.notepads?.find((doc) => doc.subjectId === null);
   const document = subject ? details?.notepad : general;
@@ -103,7 +113,6 @@ function KnowledgeEditor({
   const [failed, setFailed] = useState(false);
   // The details refresh after a save; editing waits for the saved revisions.
   const [refreshing, setRefreshing] = useState(false);
-  const loadedFor = useRef('');
   const dirty = text !== base.text || name !== base.name;
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
@@ -115,42 +124,38 @@ function KnowledgeEditor({
     if (!visible) return;
     setFailed(false);
     if (!subject) {
-      loadedFor.current = '';
       setRefreshing(false);
-      return setDetails(null);
+      return;
     }
-    const key = JSON.stringify([mind.actorId, owned, subject.id]);
     // A refresh after saving keeps the saved text on screen until the fresh copy arrives.
-    if (loadedFor.current !== key) setDetails(undefined);
     let active = true;
     void post<MindSubjectPage | { ok: false; message?: string }>(subjectPath(owned), {
       actorId: mind.actorId,
       subjectId: subject.id,
     })
       .then((result) => {
-        if (!active) return;
+        if (!active || latestSubjectRead.current !== subjectReadKey) return;
         if (!result.ok) throw new Error(result.message ?? 'These notes are unavailable.');
-        loadedFor.current = key;
         setRefreshing(false);
-        setDetails(result.selected ?? null);
+        setSubjectRead({ key: subjectReadKey, details: result.selected ?? null });
         if (result.selected) setSubject(result.selected.subject);
         else setMessage('This person is no longer available for notes.');
       })
       .catch((error) => {
-        if (!active) return;
-        loadedFor.current = '';
+        if (!active || latestSubjectRead.current !== subjectReadKey) return;
         setRefreshing(false);
-        setDetails(null);
+        setSubjectRead({ key: subjectReadKey, details: null });
         setFailed(true);
         setMessage(error instanceof Error ? error.message : String(error));
       });
     return () => {
       active = false;
     };
-  }, [subject?.id, mind.actorId, owned, reload, visible, readScope]);
+  }, [subjectReadKey, reload, visible]);
   useEffect(() => {
     // A refreshed page cannot silently rebase an unsaved edit onto newer authority.
-    if (dirtyRef.current || (subject && details === undefined)) return;
+    // A confirmed Save can become clean after its fresh snapshot already arrived.
+    if (!readCurrent || dirtyRef.current || (subject && details === undefined)) return;
     const next = {
       text: document?.text ?? '',
       name: identity?.givenName ?? '',
@@ -160,13 +165,21 @@ function KnowledgeEditor({
     setBase(next);
     setText(next.text);
     setName(next.name);
-  }, [subject?.id, document?.revision, identity?.revision, details === undefined]);
+  }, [
+    subject?.id,
+    document?.revision,
+    identity?.revision,
+    details === undefined,
+    dirty,
+    readCurrent,
+  ]);
   const loading = (!!subject && details === undefined) || refreshing;
   const unavailable = !!subject && details === null;
   const limit =
     document?.maxCharacters ?? mind.knowledgeLimits?.[subject ? 'subject' : 'general'] ?? 0;
   const characters = Array.from(text).length;
   const sourceChanged =
+    readCurrent &&
     dirty &&
     !loading &&
     !unavailable &&
@@ -174,10 +187,14 @@ function KnowledgeEditor({
       base.nameRevision !== (identity?.revision ?? 0));
   return (
     <Section title="Knowledge notepads">
-      <div className="ol-knowledge-editor">
+      <div className="ol-knowledge-editor" hidden={!readCurrent && !dirty}>
         <p className="ol-caption">
-          {owned ? 'Your character’s understanding' : `${mind.name}’s understanding`}. Editing these
-          notes does not change the subject or establish an objective world fact.
+          {readCurrent
+            ? owned
+              ? 'Your character’s understanding'
+              : `${mind.name}’s understanding`
+            : 'Your retained local note edit'}
+          . Editing these notes does not change the subject or establish an objective world fact.
         </p>
         <SubjectPicker
           actorId={mind.actorId}
@@ -188,7 +205,7 @@ function KnowledgeEditor({
           onSelect={(next) => {
             if (!dirty && !saving) setSubject(next);
           }}
-          disabled={saving || dirty}
+          disabled={saving || dirty || !readCurrent}
         />
         {dirty && (
           <p role="status" className="ol-caption">
@@ -257,16 +274,27 @@ function KnowledgeEditor({
           />
         </label>
         <p>
-          {characters.toLocaleString()} / {limit.toLocaleString()} characters.{' '}
-          {characters > limit
-            ? 'Rewrite or shorten before saving.'
-            : subject
-              ? 'This is your understanding of this person; it does not change their view of you.'
-              : 'Record current understanding; rewrite when space is needed.'}
+          {characters.toLocaleString()}
+          {readCurrent
+            ? ` / ${limit.toLocaleString()} characters.`
+            : ' characters in your draft.'}{' '}
+          {!readCurrent
+            ? 'Current note limits are unavailable until private information is refreshed.'
+            : characters > limit
+              ? 'Rewrite or shorten before saving.'
+              : subject
+                ? 'This is your understanding of this person; it does not change their view of you.'
+                : 'Record current understanding; rewrite when space is needed.'}
         </p>
         <Button
           disabled={
-            saving || loading || unavailable || !dirty || sourceChanged || characters > limit
+            !readCurrent ||
+            saving ||
+            loading ||
+            unavailable ||
+            !dirty ||
+            sourceChanged ||
+            characters > limit
           }
           onPress={() => {
             setSaving(true);
@@ -305,16 +333,17 @@ function KnowledgeEditor({
         {dirty && (
           <Button
             variant="quiet"
-            disabled={saving || loading}
+            disabled={saving || (readCurrent && loading)}
             onPress={() => {
-              const next = unavailable
-                ? base
-                : {
-                    text: document?.text ?? '',
-                    name: identity?.givenName ?? '',
-                    revision: document?.revision ?? 0,
-                    nameRevision: identity?.revision ?? 0,
-                  };
+              const next =
+                unavailable || !readCurrent
+                  ? base
+                  : {
+                      text: document?.text ?? '',
+                      name: identity?.givenName ?? '',
+                      revision: document?.revision ?? 0,
+                      nameRevision: identity?.revision ?? 0,
+                    };
               setBase(next);
               setText(next.text);
               setName(next.name);
@@ -386,19 +415,29 @@ export function Mind({
   owned = false,
   visible = true,
   readScope,
+  evidenceEpoch,
   onDirtyChange,
 }: {
   actorId: string;
   owned?: boolean;
   visible?: boolean;
   readScope?: string;
+  evidenceEpoch?: string;
   onDirtyChange?(dirty: boolean): void;
 }) {
-  const [mind, setMind] = useState<GodMindView | null>(null),
+  const [refreshRevision, setRefreshRevision] = useState(0);
+  const snapshotKey = JSON.stringify([actorId, owned, readScope, evidenceEpoch, refreshRevision]);
+  const [snapshot, setSnapshot] = useState<{ key: string; value: GodMindView } | null>(null),
     [error, setError] = useState(''),
     [authoring, setAuthoring] = useState(false);
+  const mind = snapshot?.value ?? null;
+  const currentSnapshot = snapshot?.key === snapshotKey;
+  const latestSnapshotKey = useRef(snapshotKey);
+  latestSnapshotKey.current = snapshotKey;
+  function setMind(value: GodMindView) {
+    if (latestSnapshotKey.current === snapshotKey) setSnapshot({ key: snapshotKey, value });
+  }
   const [knowledgeDirty, setKnowledgeDirty] = useState(false);
-  const [refreshRevision, setRefreshRevision] = useState(0);
   useEffect(() => onDirtyChange?.(knowledgeDirty), [knowledgeDirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   const pending = useRef<{ body: string; request: AuthoredAppraisalRequest } | null>(null);
@@ -421,13 +460,16 @@ export function Mind({
     setAuthoring(true);
     void post<{ ok: boolean; message?: string; mind?: GodMindView }>('/api/god/appraisal', request)
       .then((result) => {
+        if (latestSnapshotKey.current !== snapshotKey) return;
         setError(result.ok ? '' : (result.message ?? 'Unable to author feeling.'));
         if (result.ok && result.mind) {
           pending.current = null;
           setMind(result.mind);
         }
       })
-      .catch((error) => setError(String(error)))
+      .catch((error) => {
+        if (latestSnapshotKey.current === snapshotKey) setError(String(error));
+      })
       .finally(() => setAuthoring(false));
   };
   useEffect(() => {
@@ -438,7 +480,7 @@ export function Mind({
       { actorId },
     )
       .then((result) => {
-        if (active) {
+        if (active && latestSnapshotKey.current === snapshotKey) {
           // A refused refresh must not unmount this person's unsaved notes.
           if (result.ok && result.mind) {
             setMind(result.mind);
@@ -447,12 +489,12 @@ export function Mind({
         }
       })
       .catch((loadError) => {
-        if (active) setError(String(loadError));
+        if (active && latestSnapshotKey.current === snapshotKey) setError(String(loadError));
       });
     return () => {
       active = false;
     };
-  }, [actorId, owned, visible, refreshRevision, readScope]);
+  }, [actorId, owned, visible, refreshRevision, readScope, evidenceEpoch]);
   return (
     <div>
       {error && <p role="alert">{error}</p>}
@@ -460,7 +502,7 @@ export function Mind({
         <>
           <header className="ol-creator-context">
             <Tag>{owned ? 'Private to your character' : 'God mode · Private inspection'}</Tag>
-            <h3>{mind.name}’s private mind</h3>
+            <h3>{currentSnapshot ? `${mind.name}’s private mind` : 'Private mind'}</h3>
             <p className="ol-caption">
               {owned
                 ? 'Read your character’s beliefs, feelings and remembered experiences.'
@@ -475,120 +517,135 @@ export function Mind({
               Refresh private mind
             </Button>
           </header>
-          <Section title="About me">
-            <p className="ol-prose">{mind.acceptedText}</p>
-          </Section>
-          {mind.documents.map((document) => (
-            <details key={document.id}>
-              <summary>{document.title}</summary>
-              <p className="ol-prose">{document.text}</p>
-            </details>
-          ))}
-          <Section title="Feelings">
-            {mind.continuity?.appraisals.length ? (
-              mind.continuity.appraisals.map((feeling) => (
-                <div key={feeling.id}>
-                  <p>
-                    {feeling.label}
-                    {feeling.subject ? ` · ${feeling.subject}` : ''}
-                    {feeling.value !== null ? ` · ${Number(feeling.value.toFixed(3))}` : ''}
-                  </p>
-                  <p className="ol-caption">
-                    {feeling.lifetime === 'persistent'
-                      ? 'Persists until resolved'
-                      : feeling.lifetime.replaceAll('-', ' ')}{' '}
-                    · {feeling.coverage}
-                  </p>
-                  {mind.continuity?.authoring && (
-                    <Button
-                      disabled={authoring}
-                      onPress={() =>
-                        author({
-                          kind: 'resolve',
-                          id: feeling.id,
-                          expectedRevision: feeling.revision,
-                        })
-                      }
-                    >
-                      Resolve {feeling.label}
-                    </Button>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="ol-meta">No current feelings on this page.</p>
-            )}
-          </Section>
-          {mind.continuity?.authoring && (
-            <AuthoredFeeling key={mind.actorId} mind={mind} busy={authoring} send={author} />
+          {!currentSnapshot && (
+            <p role="status">
+              Private information changed. Its earlier snapshot is hidden until a current read
+              succeeds. Refresh private mind to try again.
+            </p>
           )}
-          <Section title="My understanding of people">
-            {mind.notepads
-              ?.filter((doc) => doc.subjectId && doc.text)
-              .map((doc) => (
-                <details key={doc.subjectId}>
-                  <summary>{doc.label}</summary>
-                  <p className="ol-prose">{doc.text}</p>
-                  <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
-                </details>
-              ))}
-          </Section>
+          {/* Retain the editor and its draft while hiding obsolete read-only evidence. */}
+          <div hidden={!currentSnapshot}>
+            <Section title="About me">
+              <p className="ol-prose">{mind.acceptedText}</p>
+            </Section>
+            {mind.documents.map((document) => (
+              <details key={document.id}>
+                <summary>{document.title}</summary>
+                <p className="ol-prose">{document.text}</p>
+              </details>
+            ))}
+            <Section title="Feelings">
+              {mind.continuity?.appraisals.length ? (
+                mind.continuity.appraisals.map((feeling) => (
+                  <div key={feeling.id}>
+                    <p>
+                      {feeling.label}
+                      {feeling.subject ? ` · ${feeling.subject}` : ''}
+                      {feeling.value !== null ? ` · ${Number(feeling.value.toFixed(3))}` : ''}
+                    </p>
+                    <p className="ol-caption">
+                      {feeling.lifetime === 'persistent'
+                        ? 'Persists until resolved'
+                        : feeling.lifetime.replaceAll('-', ' ')}{' '}
+                      · {feeling.coverage}
+                    </p>
+                    {mind.continuity?.authoring && (
+                      <Button
+                        disabled={authoring}
+                        onPress={() =>
+                          author({
+                            kind: 'resolve',
+                            id: feeling.id,
+                            expectedRevision: feeling.revision,
+                          })
+                        }
+                      >
+                        Resolve {feeling.label}
+                      </Button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="ol-meta">No current feelings on this page.</p>
+              )}
+            </Section>
+            {mind.continuity?.authoring && (
+              <AuthoredFeeling key={mind.actorId} mind={mind} busy={authoring} send={author} />
+            )}
+            <Section title="My understanding of people">
+              {mind.notepads
+                ?.filter((doc) => doc.subjectId && doc.text)
+                .map((doc) => (
+                  <details key={doc.subjectId}>
+                    <summary>{doc.label}</summary>
+                    <p className="ol-prose">{doc.text}</p>
+                    <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
+                  </details>
+                ))}
+            </Section>
+          </div>
           {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
           <KnowledgeEditor
             key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
             mind={mind}
             onSaved={setMind}
             owned={owned}
-            visible={visible}
-            readScope={readScope}
+            visible={visible && currentSnapshot}
+            readScope={snapshotKey}
+            readCurrent={currentSnapshot}
             onDirtyChange={setKnowledgeDirty}
           />
-          {mind.continuity?.cursor && (
-            <Button
-              disabled={knowledgeDirty}
-              onPress={() => {
-                const cursor = mind.continuity!.cursor!;
-                void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
-                  owned ? '/api/mind' : '/api/god/mind',
-                  { actorId, cursor },
-                )
-                  .then((result) => {
-                    if (result.ok && result.mind) setMind(result.mind);
-                    else setError(result.message ?? 'Unable to load page.');
-                  })
-                  .catch((error) => setError(String(error)));
+          <div hidden={!currentSnapshot}>
+            {mind.continuity?.cursor && (
+              <Button
+                disabled={knowledgeDirty}
+                onPress={() => {
+                  const cursor = mind.continuity!.cursor!;
+                  void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
+                    owned ? '/api/mind' : '/api/god/mind',
+                    { actorId, cursor },
+                  )
+                    .then((result) => {
+                      if (latestSnapshotKey.current !== snapshotKey) return;
+                      if (result.ok && result.mind) setMind(result.mind);
+                      else setError(result.message ?? 'Unable to load page.');
+                    })
+                    .catch((error) => {
+                      if (latestSnapshotKey.current === snapshotKey) setError(String(error));
+                    });
+                }}
+              >
+                More feelings and notes
+              </Button>
+            )}
+            <ActivityHistory
+              key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
+              actorId={mind.actorId}
+              owned={owned}
+            />
+            {!owned && (
+              <Section title="Memory and thought history">
+                <MemoryHistory
+                  key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
+                  actorId={mind.actorId}
+                  owned={false}
+                  visible={visible}
+                />
+              </Section>
+            )}
+            <InlineJson
+              title="Memories, experiences and commitments"
+              value={{
+                records: mind.records,
+                experiences: mind.experiences,
+                commitments: mind.commitments,
               }}
-            >
-              More feelings and notes
-            </Button>
-          )}
-          <ActivityHistory
-            key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}`}
-            actorId={mind.actorId}
-            owned={owned}
-          />
-          {!owned && (
-            <Section title="Memory and thought history">
-              <MemoryHistory
-                key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}`}
-                actorId={mind.actorId}
-                owned={false}
-                visible={visible}
-              />
-            </Section>
-          )}
-          <InlineJson
-            title="Memories, experiences and commitments"
-            value={{
-              records: mind.records,
-              experiences: mind.experiences,
-              commitments: mind.commitments,
-            }}
-          />
-          <InlineJson
-            title="Thoughts and active states"
-            value={{ thoughts: mind.thoughts, statusEffects: mind.statusEffects }}
-          />
+            />
+            <InlineJson
+              title="Thoughts and active states"
+              value={{ thoughts: mind.thoughts, statusEffects: mind.statusEffects }}
+            />
+          </div>
         </>
       ) : (
         !error && <p>Loading mind…</p>
@@ -602,7 +659,7 @@ export type DiagnosticSelection = IntelligenceCall & {
   knownCostUsd: number;
   costIncomplete: boolean;
   actorKind?: string;
-  actorSpecies?: string;
+  actorIcon?: string;
   responseSummary?: string;
   responseParts?: { label: string; text: string }[];
   errorSummary?: string;
@@ -624,8 +681,10 @@ function Preview({
     <TooltipTrigger delay={250} closeDelay={150}>
       <Focusable>{children}</Focusable>
       <Tooltip className="ol-root ol-inspection-tooltip" placement="start" offset={8}>
-        <strong>{title}</strong>
-        <div>{value}</div>
+        <div className="ol-portal-content">
+          <strong>{title}</strong>
+          <div>{value}</div>
+        </div>
       </Tooltip>
     </TooltipTrigger>
   );
@@ -1208,14 +1267,14 @@ function LmResponse({ value }: { value: JsonObject }) {
   return (
     <div className="ol-lm-components">
       {operations.map((operation, index) => {
-        const kinds = ['talk', 'act', 'think', 'goal', 'plan'].filter(
+        const kinds = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name'].filter(
           (kind) => operation?.[kind] != null,
         );
         if (!operation || kinds.length !== 1 || !object(operation[kinds[0]!]))
           return <p key={index}>Malformed operation {index + 1}; inspect the raw record.</p>;
         const kind = kinds[0]!;
         const part = object(operation[kind])!;
-        const target = part['targetEntityId'] ?? part['addresseeEntityId'];
+        const target = part['targetEntityId'] ?? part['addresseeEntityId'] ?? part['subjectId'];
         const description =
           kind === 'act'
             ? part['kind'] === 'known'
@@ -1227,7 +1286,13 @@ function LmResponse({ value }: { value: JsonObject }) {
               ? `${humanize(String(part['operation']))}: ${String(part['objective'] ?? part['goalId'] ?? '')}`
               : kind === 'plan'
                 ? `${humanize(String(part['mode']))} plan; expected revision ${String(part['expectedRevision'])}`
-                : valueText(part['text']);
+                : kind === 'name'
+                  ? typeof part['givenName'] === 'string' && !part['givenName'].trim()
+                    ? 'Blank proposed name.'
+                    : (valueText(part['givenName']) ?? 'Name unavailable; inspect raw record.')
+                  : kind === 'note' && part['text'] === ''
+                    ? 'Clear this knowledge note.'
+                    : valueText(part['text']);
         return (
           <section className="ol-diagnostic-card" key={index}>
             <span className="ol-eyebrow">
@@ -1238,11 +1303,21 @@ function LmResponse({ value }: { value: JsonObject }) {
                   ? 'private thought'
                   : kind === 'act'
                     ? 'action'
-                    : kind}{' '}
+                    : kind === 'note'
+                      ? 'knowledge edit'
+                      : kind === 'name'
+                        ? 'remembered name'
+                        : kind}{' '}
               · {String(operation['localId'] ?? index + 1)}
             </span>
             <p className="ol-prose">{description ?? 'Details unavailable; inspect raw record.'}</p>
             {target != null && <p className="ol-caption">Target: {String(target)}</p>}
+            {kind === 'note' && part['subjectId'] === null && (
+              <p className="ol-caption">Subject: General knowledge</p>
+            )}
+            {(kind === 'note' || kind === 'name') && (
+              <p className="ol-caption">Expected revision: {String(part['expectedRevision'])}</p>
+            )}
             {Array.isArray(part['aboutEntityIds']) && part['aboutEntityIds'].length > 0 && (
               <p className="ol-caption">About: {part['aboutEntityIds'].map(String).join(', ')}</p>
             )}
@@ -2046,7 +2121,7 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
   }, [onClose]);
   return createPortal(
     <aside className="ol-root ol-json-pullout" style={placement} aria-label={`${raw.title} JSON`}>
-      <header>
+      <header className="ol-portal-content">
         <div>
           <span className="ol-eyebrow">Raw JSON</span>
           <h2>{raw.title}</h2>
@@ -2065,8 +2140,8 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
           <IconButton icon="ui.close" label="Close JSON panel" onPress={onClose} />
         </div>
       </header>
-      {copied && <p className="ol-caption">Copied to clipboard.</p>}
-      <pre>{JSON.stringify(raw.value, null, 2)}</pre>
+      {copied && <p className="ol-caption ol-portal-content">Copied to clipboard.</p>}
+      <pre className="ol-portal-content">{JSON.stringify(raw.value, null, 2)}</pre>
     </aside>,
     document.body,
   );
@@ -2243,7 +2318,9 @@ function TraceDetail({
     } | null>(null),
     [error, setError] = useState(''),
     [remote, setRemote] = useState<Record<string, unknown>>({});
+  const generation = useRef(0);
   async function load() {
+    const id = ++generation.current;
     setError('');
     try {
       const result = await post<{
@@ -2251,15 +2328,20 @@ function TraceDetail({
         message?: string;
         details: NonNullable<typeof detail>;
       }>('/api/god/trigger', { id: row.id });
+      if (id !== generation.current) return;
       if (!result.ok) throw new Error(result.message ?? 'Inspection unavailable.');
       setDetail(result.details);
     } catch (loadError) {
+      if (id !== generation.current) return;
       setDetail(null);
       setError(String(loadError));
     }
   }
   useEffect(() => {
     if (visible) void load();
+    return () => {
+      generation.current++;
+    };
   }, [row.id, visible]);
   const calls = detail
     ? detail.children.length
@@ -2396,17 +2478,12 @@ function triggerIcon(type: string): string {
 function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
   const type = row.triggerType ?? row.kind;
   const actorIcon =
-    row.actorKind === 'animal'
-      ? row.actorSpecies === 'deer'
-        ? 'creature.deer'
-        : row.actorSpecies === 'hare'
-          ? 'creature.hare'
-          : 'creature.animal'
-      : row.actorKind === 'world'
-        ? 'ui.world'
-        : row.actorKind === 'person'
-          ? 'ui.character'
-          : 'ui.inview';
+    row.actorIcon ??
+    (row.actorKind === 'world'
+      ? 'ui.world'
+      : row.actorKind === 'actor'
+        ? 'ui.character'
+        : 'ui.inview');
   return (
     <Preview
       title={`${row.actorName ?? 'World agent'} · recorded request`}
@@ -2474,14 +2551,30 @@ export function Diagnostics({
     [error, setError] = useState(''),
     [filters, setFilters] = useState<Record<string, string>>({}),
     [draftFilters, setDraftFilters] = useState<Record<string, string>>({}),
-    [raw, setRaw] = useState<RawView | null>(null);
+    [raw, setRaw] = useState<{ key: string; value: RawView } | null>(null);
   const generation = useRef(0),
     panel = useRef<HTMLDivElement>(null),
     newest = useRef<string | undefined>(undefined);
-  newest.current = rows[0]?.id;
-  async function refresh() {
+  const readKey = JSON.stringify([worldId, readScope, offset, filters]);
+  const currentReadKey = useRef(readKey);
+  currentReadKey.current = readKey;
+  const active = useRef(visible && !selection);
+  active.current = visible && !selection;
+  const [rowsKey, setRowsKey] = useState(readKey);
+  const currentRows = rowsKey === readKey ? rows : [];
+  const currentLoading = loading || rowsKey !== readKey;
+  const rawKey = JSON.stringify([worldId, readScope, selection?.id]);
+  const currentRaw = raw?.key === rawKey ? raw.value : null;
+  const showRaw = (value: RawView) => setRaw({ key: rawKey, value });
+  newest.current = currentRows[0]?.id;
+  const readAbort = useRef<AbortController | null>(null);
+  async function read(mode: 'peek' | 'follow' | 'refresh') {
+    if (!active.current) return;
+    const peek = mode === 'peek';
     const id = ++generation.current;
-    setLoading(true);
+    const controller = new AbortController();
+    readAbort.current = controller;
+    if (!peek) setLoading(true);
     try {
       const result = await post<{
         ok: boolean;
@@ -2489,66 +2582,109 @@ export function Diagnostics({
         worldId?: string;
         roots?: Row[];
         hasMore?: boolean;
-      }>('/api/god/triggers', {
-        offset,
-        ...Object.fromEntries(
-          Object.entries(filters)
-            .filter(([, value]) => value)
-            .map(([key, value]) => [
-              key,
-              key === 'from' || key === 'to' ? new Date(value).toISOString() : value,
-            ]),
-        ),
-      });
-      if (id !== generation.current) return;
+      }>(
+        '/api/god/triggers',
+        {
+          offset: peek ? 0 : offset,
+          ...(peek
+            ? { peek: true }
+            : Object.fromEntries(
+                Object.entries(filters)
+                  .filter(([, value]) => value)
+                  .map(([key, value]) => [
+                    key,
+                    key === 'from' || key === 'to' ? new Date(value).toISOString() : value,
+                  ]),
+              )),
+        },
+        controller.signal,
+      );
+      if (id !== generation.current || currentReadKey.current !== readKey || !active.current)
+        return;
+      if (peek && !result.ok) {
+        setRows([]);
+        return;
+      }
       if (!result.ok || result.worldId !== worldId)
         throw new Error(result.message ?? 'Diagnostics unavailable.');
+      // A reader can focus a row while an automatic reply is pending. Preserve
+      // that page until they deliberately refresh it, just as at poll admission.
+      if (peek || (mode === 'follow' && panel.current?.contains(document.activeElement))) {
+        if (result.roots?.[0]?.id && result.roots[0].id !== newest.current) setNewActivity(true);
+        return;
+      }
       setRows(result.roots ?? []);
+      setRowsKey(readKey);
       setMore(!!result.hasMore);
       setError('');
       setNewActivity(false);
     } catch (refreshError) {
-      if (id === generation.current) {
+      if (
+        id === generation.current &&
+        currentReadKey.current === readKey &&
+        active.current &&
+        !peek
+      ) {
         setRows([]);
+        setRowsKey(readKey);
+        setMore(false);
         setError(String(refreshError));
       }
     } finally {
-      if (id === generation.current) setLoading(false);
+      if (readAbort.current === controller) readAbort.current = null;
+      if (id === generation.current && !peek) setLoading(false);
     }
   }
+  const currentRead = useRef(read);
+  currentRead.current = read;
+  const inFlight = useRef<Promise<void> | null>(null);
+  const refreshPending = useRef(false);
+  function refresh(mode: 'peek' | 'follow' | 'refresh' = 'refresh'): Promise<void> {
+    if (inFlight.current) {
+      if (mode === 'refresh') refreshPending.current = true;
+      return inFlight.current;
+    }
+    // One reader owns list refreshes and cheap activity checks. Keep at most one
+    // explicit refresh pending, using the latest page and permission on completion.
+    const request = (async () => {
+      do {
+        refreshPending.current = false;
+        await currentRead.current(mode);
+        mode = 'refresh';
+      } while (refreshPending.current && active.current);
+    })().finally(() => {
+      if (inFlight.current === request) inFlight.current = null;
+    });
+    inFlight.current = request;
+    return request;
+  }
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || selection) return;
     void refresh();
     return () => {
       generation.current++;
+      refreshPending.current = false;
+      readAbort.current?.abort();
     };
-  }, [offset, worldId, filters, visible, readScope]);
+  }, [offset, worldId, filters, visible, readScope, selection]);
   useEffect(() => {
     if (selection || !visible) return;
-    let active = true;
-    const id = setInterval(async () => {
-      if (follow && offset === 0 && !panel.current?.contains(document.activeElement)) {
-        await refresh();
-        return;
-      }
-      try {
-        const result = await post<{ ok: boolean; roots?: Row[] }>('/api/god/triggers', {
-          offset: 0,
-          peek: true,
-        });
-        if (!active) return;
-        if (!result.ok) {
-          setRows([]);
-          return;
-        }
-        if (result.roots?.[0]?.id && result.roots[0].id !== newest.current) setNewActivity(true);
-      } catch {
-        /* Explicit Refresh exposes errors without replacing a reader's open row. */
-      }
-    }, 3000);
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(async () => {
+        await refresh(
+          follow && offset === 0 && !panel.current?.contains(document.activeElement)
+            ? 'follow'
+            : 'peek',
+        );
+        if (!stopped) schedule();
+      }, 3000);
+    };
+    schedule();
     return () => {
-      active = false;
-      clearInterval(id);
+      stopped = true;
+      clearTimeout(timer);
     };
   }, [follow, offset, filters, worldId, selection, visible, readScope]);
   useEffect(() => setRaw(null), [worldId, selection?.id, readScope]);
@@ -2558,10 +2694,10 @@ export function Diagnostics({
         <TraceDetail
           key={`${selection.id}:${readScope}`}
           row={selection}
-          showJson={setRaw}
+          showJson={showRaw}
           visible={visible}
         />
-        {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
+        {currentRaw && visible && <RawJsonPanel raw={currentRaw} onClose={() => setRaw(null)} />}
       </div>
     );
   return (
@@ -2576,7 +2712,11 @@ export function Diagnostics({
         <Button size="sm" disabled={!offset} onPress={() => setOffset(Math.max(0, offset - 25))}>
           Newer
         </Button>
-        <Button size="sm" disabled={!more} onPress={() => setOffset(offset + 25)}>
+        <Button
+          size="sm"
+          disabled={rowsKey !== readKey || !more}
+          onPress={() => setOffset(offset + 25)}
+        >
           Older
         </Button>
       </div>
@@ -2657,21 +2797,21 @@ export function Diagnostics({
         never reruns inference.
       </p>
       {error && <p role="alert">{error}</p>}
-      {rows.map((row) => (
+      {currentRows.map((row) => (
         <TraceRow key={row.id} row={row} onSelect={onSelect} />
       ))}
-      {!!rows.length && (
+      {!!currentRows.length && (
         <p className="ol-caption">
-          Records {offset + 1}–{offset + rows.length} on this retained history page.
+          Records {offset + 1}–{offset + currentRows.length} on this retained history page.
         </p>
       )}
-      {loading && (
+      {currentLoading && (
         <p role="status" className="ol-caption">
           Loading triggers…
         </p>
       )}
-      {!rows.length && !error && !loading && <p>No matching retained triggers.</p>}
-      {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
+      {!currentRows.length && !error && !currentLoading && <p>No matching retained triggers.</p>}
+      {currentRaw && visible && <RawJsonPanel raw={currentRaw} onClose={() => setRaw(null)} />}
     </div>
   );
 }

@@ -80,7 +80,7 @@ Inspect the rendered control and computed styles. Either deliberately qualify na
 
 ## Disabled controls and reachable explanations
 
-A native disabled HTML control is normally absent from keyboard focus. Therefore “show the reason on focus” is not a complete design. Put an important reason inline or provide a separately reachable explanation near the action. Supplementary tooltip content cannot be the only way to discover a blocking condition. Preserve the current unavailable-actions disclosure policy; once that section is opened, its reasons still need a usable route. [S02](research.md#s02) [S11](research.md#s11)
+A native disabled HTML control is normally absent from keyboard focus. Therefore “show the reason on focus” is not a complete design. Put an important reason inline or provide a separately reachable explanation near the action. Supplementary tooltip content cannot be the only way to discover a blocking condition. Preserve the current [unavailable-action disclosure policy](world-interaction.md#actions-explain-the-commitment): known blocked choices in All actions and explicit browsers retain reachable explanations without a Show unavailable toggle. [S02](research.md#s02) [S11](research.md#s11)
 
 Where discoverability genuinely requires focus on an unavailable action, an appropriate `aria-disabled` pattern may retain focus. It must also suppress activation in every relevant handler and preserve server enforcement: the attribute alone changes neither behavior nor focus order. `pointer-events: none` alone does not prevent keyboard activation. Do not make every disabled action a Tab stop, and do not disable a container indiscriminately when its children still need interaction.
 
@@ -90,7 +90,7 @@ Use persistent labels, not placeholder-only names. Keep units, quantities and co
 
 Check required constraints on submit, with earlier feedback after interaction when useful. Do not label untouched fields invalid immediately. On failure retain drafts, associate the specific error, reveal the affected section and bring the error into view without jumping on each edit. Long forms may need an error summary linked to their fields. Server validation remains authoritative. [F05](research.md#f05)
 
-Use one comprehensible save model: **Save** commits; **Discard changes** discards; **Hide** preserves where the owner says so. Owner-editor tabs share one draft until Save. Neither selecting a row nor leaving a field should silently change that contract.
+Use one comprehensible save model: **Save** commits; **Discard changes** discards; **Hide** preserves where the owner says so. Tabs within one save scope share its draft; separately saved sections name their own scope. Carry their unsaved-draft and pending-write Close guards through loading, failure and reload screens. Optional reads remain dismissible. Neither selecting a row nor leaving a field should silently change that contract. [OL03](research.md#ol03)
 
 ## Accordions, tabs and plain sections
 

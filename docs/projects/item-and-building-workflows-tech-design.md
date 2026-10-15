@@ -1,8 +1,8 @@
 # Item and building workflows — technical design
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The follow-on contracts and staged delivery are designed; no new runtime behavior has been implemented or verified. | 2026-10-14   |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | Follow-on contracts remain unimplemented; the existing shared recipe wording is corrected separately in the imported UI review. | 2026-10-15   |
 
 Counterpart: [feature specification](item-and-building-workflows-feature-spec.md). Parent needs: [ND13](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) for usable item/manufacturing controls and [ND07](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes) for supported shelter refinement. This is an additive delivery project, not a replacement for the implemented PW04/PW11, native activity or SH foundations.
 
@@ -24,7 +24,7 @@ This design changes no recipe, body, packing, loss or building policy by itself.
 
 **Item task and destination presentation:** `apps/client/src/ui/inventory.tsx`, `inventory-controls.tsx`, `inventory-destinations.tsx` and the [inventory handbook](../ui-ux/inventory.md). Reuse exact selection, quantity text, scoped readers and destination controls. Add connected return paths and compound equip/stow review without duplicating the inventory store.
 
-**Recipe details and ordinary craft entry:** `apps/client/src/ui/recipe-details.tsx`, `inventions.tsx` and PW11 ordinary recipe inspection. Distinguish expected from produced output and add a finite list entry point. Creator Work editing/Approve/Apply is not this queue.
+**Recipe details and ordinary craft entry:** `apps/client/src/ui/recipe-details.tsx`, `inventions.tsx` and PW11 ordinary recipe inspection. The existing shared detail now says **Makes** for expected output; the follow-on adds actual produced-output presentation and a finite list entry point. Creator Work editing/Approve/Apply is not this queue.
 
 **Inventory/current action facts:** `apps/server/src/inventory-view.ts`, `action-catalogue.ts` and existing API/command dispatch. Extend permitted task facts and shared native preparation; maintain ordinary inventory, contextual and NPC callers when shared facts change.
 
@@ -96,7 +96,7 @@ The owning craft publishes outputs at its existing native destination and record
 
 Initial output handling has **no automatic Move/Equip leaf and no output escrow**. The player deliberately chooses an ordinary next task. An output can be made successfully and later become unavailable or fail to fit a selected bag; maintain the crafting result while showing the separate move result. Where a recipe itself has a native destination/capacity rule, that rule still governs its own start/completion. The new UI cannot weaken it or create a buffer to avoid the failure.
 
-The expected-result wording correction applies wherever the shared recipe details are reused. Test both ordinary recipes and creator inspection without changing creator approvals or leaking private recipe provenance.
+The shared recipe's **Makes** wording is already corrected by the [imported-interface review](../verification/ui-implementation-review.md), independently of IWB delivery. Preserve it across reused recipe details. Qualify the new produced-output presentation with ordinary recipes and creator inspection without changing creator approvals or leaking private recipe provenance.
 
 ## 5. Compound equip-and-stow at the custody owner
 

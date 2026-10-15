@@ -4,6 +4,7 @@ import { post } from '../api';
 import {
   retainTradeInventoryReceipt,
   prepareTradeInventoryReceiptResolution,
+  refreshTradeInventoryRecovery,
 } from '../trade-drafts';
 import type { CommandDispatcher } from '../command-request';
 import {
@@ -13,9 +14,15 @@ import {
 } from '../inventory-command-record';
 
 type PendingState = { request?: PendingCommand; status: 'sending' | 'unknown' | 'checking' };
+const sameRequest = (left: PendingCommand, right: PendingCommand) =>
+  left.commandId === right.commandId &&
+  left.commandEpoch === right.commandEpoch &&
+  left.label === right.label &&
+  left.tradeScope === right.tradeScope &&
+  JSON.stringify(left.command) === JSON.stringify(right.command);
 
-/** Keep uncertain custody changes across permitted reconnects. A missing receipt does
- * not justify a fresh gesture: it cannot prove that the earlier move did not happen. */
+/** Keep uncertain gameplay commands across permitted reconnects. A missing receipt
+ * cannot prove that the earlier action did not happen or justify repeating it. */
 export function useInventoryCommand({
   worldId,
   actorId,
@@ -24,6 +31,7 @@ export function useInventoryCommand({
   recoveryScope,
   epoch,
   connected,
+  task,
   command,
   onResolved,
 }: {
@@ -34,16 +42,19 @@ export function useInventoryCommand({
   recoveryScope?: string;
   epoch?: string;
   connected: boolean;
+  task?: 'construction';
   command: CommandDispatcher;
   onResolved(result: ApiResult): void;
 }) {
-  const storageKey = inventoryCommandStorageKey(recoveryScope, worldId, actorId, timeline);
+  const storageKey = inventoryCommandStorageKey(recoveryScope, worldId, actorId, timeline, task);
+  const taskName = task ?? 'inventory';
   const [pending, setPending] = useState<PendingState | undefined>(() =>
     storageKey ? restore(storageKey) : undefined,
   );
   const [message, setMessage] = useState('');
   const guard = useRef(!!pending);
   const activeCommandId = useRef(pending?.request?.commandId);
+  const definiteResult = useRef<{ commandId: string; message: string } | undefined>(undefined);
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -53,35 +64,40 @@ export function useInventoryCommand({
   }, []);
 
   useLayoutEffect(() => {
+    if (storageKey) refreshTradeInventoryRecovery(storageKey);
     const request = pending?.request;
     if (request?.tradeScope) retainTradeInventoryReceipt(request.tradeScope, request.commandId);
-  }, [pending?.request?.commandId]);
+  }, [storageKey]);
 
-  function finish(result: ApiResult, commandId: string, tradeScope?: string) {
+  function finish(result: ApiResult, request: PendingCommand, recovered = false) {
+    const { commandId, tradeScope } = request;
     if (!storageKey || !alive.current || activeCommandId.current !== commandId) return;
+    definiteResult.current = { commandId, message: result.message };
     // If storage becomes unavailable, retain the guard. The native result remains
     // recoverable, and a remount cannot accidentally repeat the unresolved request.
     const saved = restore(storageKey);
     if (saved && !saved.request)
-      throw new Error('The retained inventory request could not be read.');
-    if (saved?.request && saved.request.commandId !== commandId)
+      throw new Error(`The retained ${taskName} request could not be read.`);
+    if (saved?.request && !sameRequest(saved.request, request))
       throw new Error(
-        'The retained inventory request changed. Its original result must be checked.',
+        `The retained ${taskName} request changed. Its original result must be checked.`,
       );
     // A response from a former component can arrive after reconnect recovered that
     // command and the current component started another one. It cannot erase the latter.
     const releaseTrade = tradeScope
-      ? prepareTradeInventoryReceiptResolution(tradeScope, commandId)
+      ? prepareTradeInventoryReceiptResolution(tradeScope, commandId, recovered)
       : undefined;
     if (saved?.request?.commandId === commandId) {
       sessionStorage.removeItem(storageKey);
       if (sessionStorage.getItem(storageKey) !== null)
         throw new Error(
-          'The retained Inventory request could not be cleared. Check its result again.',
+          `The retained ${taskName} request could not be cleared. Check its result again.`,
         );
     }
     releaseTrade?.();
+    refreshTradeInventoryRecovery(storageKey);
     activeCommandId.current = undefined;
+    definiteResult.current = undefined;
     guard.current = false;
     if (alive.current) {
       setPending(undefined);
@@ -90,23 +106,45 @@ export function useInventoryCommand({
     }
   }
 
+  function recoveryMessage(reason: string, commandId: string) {
+    const known = definiteResult.current;
+    return known?.commandId === commandId
+      ? `${known.message} The original result is known, but its browser recovery record still needs to be cleared. ${reason}`
+      : reason;
+  }
+
   async function dispatch(action: ActionOption, tradeScope?: string): Promise<ApiResult> {
     if (guard.current || !connected || !epoch || !action.enabled)
       return {
         ok: false,
         code: guard.current ? 'unconfirmed' : 'unavailable',
         message: guard.current
-          ? 'Resolve the retained inventory request before acting again.'
+          ? `Resolve the retained ${taskName} request before acting again.`
           : 'Reconnect with current character control before acting. Nothing was sent.',
       };
     if (!storageKey) {
-      setMessage('Refresh character access before changing possessions.');
+      const message = `Refresh character access before ${task ? 'starting construction' : 'changing possessions'}.`;
+      setMessage(message);
       return {
         ok: false,
         code: 'unavailable',
-        message: 'Refresh character access before changing possessions. Nothing was sent.',
+        message: `${message} Nothing was sent.`,
       };
     }
+    const previous = restore(storageKey);
+    if (previous) {
+      guard.current = true;
+      activeCommandId.current = previous.request?.commandId;
+      setPending(previous);
+      refreshTradeInventoryRecovery(storageKey);
+      setMessage(`The original ${taskName} request must be read and resolved before acting again.`);
+      return {
+        ok: false,
+        code: 'unconfirmed',
+        message: `The original ${taskName} request must be read and resolved. Nothing was sent.`,
+      };
+    }
+    guard.current = true;
     const request: PendingCommand = {
       commandId: crypto.randomUUID(),
       commandEpoch: epoch,
@@ -115,17 +153,27 @@ export function useInventoryCommand({
       ...(tradeScope ? { tradeScope } : {}),
     };
     try {
-      sessionStorage.setItem(storageKey, JSON.stringify(request));
+      const serialized = JSON.stringify(request);
+      sessionStorage.setItem(storageKey, serialized);
+      if (sessionStorage.getItem(storageKey) !== serialized)
+        throw new Error(`The exact ${taskName} request was not retained.`);
     } catch {
-      setMessage('This browser could not retain the request. Nothing was sent.');
+      const saved = restore(storageKey);
+      guard.current = !!saved;
+      activeCommandId.current = saved?.request?.commandId;
+      setPending(saved);
+      refreshTradeInventoryRecovery(storageKey);
+      const message = saved
+        ? `This browser could not retain the new request. No new request was sent. The earlier ${taskName} request still needs recovery.`
+        : 'This browser could not retain the new request. No new request was sent.';
+      setMessage(message);
       return {
         ok: false,
         code: 'unavailable',
-        message: 'This browser could not retain the request. Nothing was sent.',
+        message,
       };
     }
     if (tradeScope) retainTradeInventoryReceipt(tradeScope, request.commandId);
-    guard.current = true;
     activeCommandId.current = request.commandId;
     setPending({ request, status: 'sending' });
     setMessage('');
@@ -137,20 +185,24 @@ export function useInventoryCommand({
     try {
       const result = await command(action, request);
       if (!['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code)) {
-        finish(result, request.commandId, request.tradeScope);
+        finish(result, request);
         return result;
       }
       outcome = result;
       if (alive.current && activeCommandId.current === request.commandId)
         setMessage(result.message);
     } catch (error: unknown) {
+      refreshTradeInventoryRecovery(storageKey);
+      const message = recoveryMessage(
+        error instanceof Error ? error.message : 'The outcome is unknown.',
+        request.commandId,
+      );
       outcome = {
         ok: false,
         code: 'unconfirmed',
-        message: error instanceof Error ? error.message : 'The outcome is unknown.',
+        message,
       };
-      if (alive.current && activeCommandId.current === request.commandId)
-        setMessage(error instanceof Error ? error.message : 'The outcome is unknown.');
+      if (alive.current && activeCommandId.current === request.commandId) setMessage(message);
     }
     if (alive.current && activeCommandId.current === request.commandId)
       setPending({ request, status: 'unknown' });
@@ -158,8 +210,24 @@ export function useInventoryCommand({
   }
 
   async function check() {
-    const request = pending?.request;
-    if (!request || !connected || pending.status !== 'unknown') return;
+    if (!connected || pending?.status !== 'unknown') return;
+    let request = pending.request;
+    if (!request) {
+      const saved = storageKey ? restore(storageKey) : { status: 'unknown' as const };
+      guard.current = !!saved;
+      activeCommandId.current = saved?.request?.commandId;
+      setPending(saved);
+      if (storageKey) refreshTradeInventoryRecovery(storageKey);
+      request = saved?.request;
+      if (!request) {
+        setMessage(
+          saved
+            ? `The original ${taskName} request still cannot be read. Restore browser storage and read it again.`
+            : 'Browser storage is readable and no original request is retained. No new request was sent.',
+        );
+        return;
+      }
+    }
     setPending({ request, status: 'checking' });
     try {
       const receipt = await post<CommandReceiptResult>('/api/command/receipt', {
@@ -169,14 +237,25 @@ export function useInventoryCommand({
       });
       if (!alive.current || activeCommandId.current !== request.commandId) return;
       if (receipt.scope !== scope) {
-        setMessage('Character access changed. Reconnect before checking the result.');
+        setMessage(
+          recoveryMessage(
+            'Character access changed. Reconnect before checking the result.',
+            request.commandId,
+          ),
+        );
       } else if (receipt.status === 'resolved') {
-        finish(receipt.result, request.commandId, request.tradeScope);
+        finish(receipt.result, request, true);
         return;
-      } else setMessage(receipt.message);
+      } else setMessage(recoveryMessage(receipt.message, request.commandId));
     } catch (error: unknown) {
+      if (storageKey) refreshTradeInventoryRecovery(storageKey);
       if (alive.current && activeCommandId.current === request.commandId)
-        setMessage(error instanceof Error ? error.message : 'The result is still unknown.');
+        setMessage(
+          recoveryMessage(
+            error instanceof Error ? error.message : 'The result is still unknown.',
+            request.commandId,
+          ),
+        );
     }
     if (alive.current && activeCommandId.current === request.commandId)
       setPending({ request, status: 'unknown' });

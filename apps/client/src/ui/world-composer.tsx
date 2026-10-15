@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Label, Slider, SliderOutput, SliderThumb, SliderTrack } from 'react-aria-components';
 import type { ApiResult, GameView, SpeechVolume } from '@open-legend/protocol';
 import { post } from '../api';
@@ -36,6 +36,8 @@ const volumes: SpeechVolume[] = ['whisper', 'normal', 'shout'];
 type Attempt = {
   id: string;
   text: string;
+  draftText: string;
+  revision: string;
   volume: SpeechVolume;
   scope: string;
   key: string;
@@ -58,7 +60,7 @@ export function WorldComposer({
   close(): void;
   setup(): void;
 }) {
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [drafts, setDrafts] = useState<Record<string, { text: string; revision: string }>>({});
   const [sending, setSending] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uncertain, setUncertain] = useState<Attempt | null>(null);
@@ -70,6 +72,7 @@ export function WorldComposer({
   );
   const input = useRef<HTMLTextAreaElement>(null),
     locked = useRef(false);
+  const surface = useRef<HTMLElement>(null);
   const scope = JSON.stringify([
     view.worldId,
     view.saveTimeline,
@@ -80,7 +83,7 @@ export function WorldComposer({
   const currentScope = useRef(scope);
   currentScope.current = scope;
   const key = JSON.stringify([intent?.mode, intent?.targetId]);
-  const text = drafts[key] ?? '';
+  const text = drafts[key]?.text ?? '';
   const error = errors[key] ?? '';
   function setError(message: string, errorKey = key) {
     setErrors((current) => ({ ...current, [errorKey]: message }));
@@ -113,7 +116,12 @@ export function WorldComposer({
   const waitingForAct = intent?.mode === 'act' && pendingJob;
   useEffect(() => {
     if (visible && intent && !uncertain) input.current?.focus();
-  }, [visible, key, uncertain]);
+  }, [visible, key]);
+  useLayoutEffect(() => {
+    // A result check may replace its button. Return only the focus it still owns;
+    // a player who moved into another task keeps that newer focus.
+    if (!uncertain && visible && document.activeElement === surface.current) input.current?.focus();
+  }, [uncertain, visible]);
   useEffect(() => {
     if (!submitted) return;
     if (submitted.attempt.scope !== scope) {
@@ -123,9 +131,15 @@ export function WorldComposer({
     if (!job || ['queued', 'judging', 'generating'].includes(job.status)) return;
     if (job.status !== 'completed') {
       setDrafts((current) =>
-        current[submitted.attempt.key]
+        current[submitted.attempt.key]?.revision !== submitted.attempt.revision
           ? current
-          : { ...current, [submitted.attempt.key]: submitted.attempt.text },
+          : {
+              ...current,
+              [submitted.attempt.key]: {
+                text: submitted.attempt.draftText,
+                revision: submitted.attempt.revision,
+              },
+            },
       );
       setError(job.message, submitted.attempt.key);
     }
@@ -137,14 +151,21 @@ export function WorldComposer({
       (!reconcile && (blocked || !text.trim() || !intent || waitingForAct || uncertain))
     )
       return;
-    const attempt = reconcile ?? {
-      id: crypto.randomUUID(),
-      text: text.trim(),
-      volume,
-      scope,
-      key,
-      intent: intent!,
-    };
+    let attempt = reconcile;
+    if (!attempt) {
+      const draft = drafts[key];
+      if (!draft || !intent) return;
+      attempt = {
+        id: crypto.randomUUID(),
+        text: draft.text.trim(),
+        draftText: draft.text,
+        revision: draft.revision,
+        volume,
+        scope,
+        key,
+        intent,
+      };
+    }
     if (attempt.scope !== scope) {
       setError('Control changed. Check World Events before repeating this request.');
       return;
@@ -152,6 +173,8 @@ export function WorldComposer({
     locked.current = true;
     setSending(true);
     setError('');
+    if (reconcile) surface.current?.focus({ preventScroll: true });
+    else input.current?.focus();
     try {
       const result = await post<ApiResult>(
         attempt.intent.mode === 'speak' ? '/api/command' : '/api/expression',
@@ -172,16 +195,19 @@ export function WorldComposer({
         setError('Control changed. Check World Events before repeating this request.');
         return;
       }
+      if (['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code)) {
+        setUncertain(attempt);
+        setError(result.message);
+        return;
+      }
       setUncertain(null);
       if (!result.ok) {
         setError(result.message);
         return;
       }
       setDrafts((current) => {
-        if (current[attempt.key]?.trim() !== attempt.text) return current;
-        const next = { ...current };
-        delete next[attempt.key];
-        return next;
+        if (current[attempt.key]?.revision !== attempt.revision) return current;
+        return { ...current, [attempt.key]: { text: '', revision: attempt.revision } };
       });
       if (result.jobId) setSubmitted({ jobId: result.jobId, attempt });
     } catch (reason) {
@@ -197,11 +223,12 @@ export function WorldComposer({
     } finally {
       locked.current = false;
       setSending(false);
-      input.current?.focus();
     }
   }
   return (
     <section
+      ref={surface}
+      tabIndex={-1}
       className="ol-world-composer ol-card"
       hidden={!visible || !intent}
       role="region"
@@ -256,7 +283,12 @@ export function WorldComposer({
           placeholder={intent?.mode === 'speak' ? 'Say something…' : 'Do a jig…'}
           maxLength={intent?.mode === 'speak' ? 1500 : 500}
           value={text}
-          onChange={(value) => setDrafts((current) => ({ ...current, [key]: value }))}
+          onChange={(value) =>
+            setDrafts((current) => ({
+              ...current,
+              [key]: { text: value, revision: crypto.randomUUID() },
+            }))
+          }
           onSubmit={() => send()}
           inputDisabled={!!uncertain}
           disabled={!!blocked || !text.trim() || sending || waitingForAct || !!uncertain}

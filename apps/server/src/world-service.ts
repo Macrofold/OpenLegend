@@ -2019,9 +2019,12 @@ export class WorldService {
   async inspectActivities(actorId: string, after = -1, scope = this.localScope, methodAfter = 0) {
     this.assertScope(scope, scope.actorId === actorId ? 'play' : 'inspect');
     if (!this.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
+    const stillPrivate = this.privateReadFence(actorId, () =>
+      this.mayInspectPrivate(actorId, scope),
+    );
     const result = await this.activityHistoryForActor(actorId, after, methodAfter);
     this.assertScope(scope, scope.actorId === actorId ? 'play' : 'inspect');
-    if (!this.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
+    if (!stillPrivate()) throw new Error('Private action history changed during inspection.');
     return result;
   }
 

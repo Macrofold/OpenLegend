@@ -450,6 +450,21 @@ The original shelter controls allowed overlapping reads. The repair used one can
 
 Actual native Apply succeeded while a separate HTTP detail read was deliberately failed. Both Work and inspection entrypoints retained the successful receipt and refreshed the selected source, removing obsolete controls. Reinstalling the same IDs used fresh labels/versions; releasing an older generated inspection reply after Apply did not restore removed controls. This supports adopting the acknowledged result and notifying affected read owners before follow-up detail, through [the existing React procedure](react.md#effects-asynchronous-work-and-mutations). It does not qualify natural-language generation, broad accessibility, player enjoyment or larger-world responsiveness.
 
+### OL03
+
+**Imported-interface review, October 15, 2026; executable source `3501d19c8`.**
+The [implementation review](../verification/ui-implementation-review.md#follow-up-correctness-and-performance-review)
+reproduced stale helper side effects, obsolete waits interfering with receipt
+recovery, confirmed results hidden by cleanup failure, and editor reload screens
+losing separate Close guards. Actual barter components read the original command
+once on first use, then added zero reads during five unrelated redraws, a second
+caller and quantity edits after the snapshot repair. Held-response observations
+exercise recovery before the old promise returns and focus entering a list during
+automatic refresh. These controlled component/API observations support the narrow
+[React](react.md#effects-asynchronous-work-and-mutations), [recovery](system-feedback.md#load-and-recovery)
+and [save-scope](controls.md#forms-and-validation) guidance; they establish neither
+backend cancellation/population capacity nor human/device acceptance.
+
 ## Synthesis and evidence limits
 
 The shared lesson is to make the object, scope, next action and consequential state legible, preserve working context and remove repetitive management with no gameplay purpose. Composite controls, focus and transaction integrity need explicit behavior contracts, not visual intuition alone. The handbook's quantitative ranges in [UXL01–05](../limits/ui-ux.md) remain Open Legend proposals; attributed WCAG thresholds retain their qualifications. No cited company endorses our particular values.

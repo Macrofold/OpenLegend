@@ -6,7 +6,7 @@ import type {
 } from '@open-legend/protocol';
 import { Button } from '../design-system/components';
 import { getScoped, post, privateDraftScope } from '../api';
-import { readLocal, writeLocal } from './storage';
+import { readLocal } from './storage';
 import { holdActionFocus } from './action-focus';
 import { authoringKey } from './world-agent-identity';
 import './world-creation.css';
@@ -20,6 +20,29 @@ const retainedSelection = (value: unknown): value is Selection | null =>
     typeof value.openingId === 'string' &&
     'operationId' in value &&
     typeof value.operationId === 'string');
+function readSelection(key: string): Selection | null {
+  const raw = localStorage.getItem(key);
+  if (raw === null) return null;
+  const value: unknown = JSON.parse(raw);
+  if (!retainedSelection(value))
+    throw new Error('The original selection could not be read. Restore storage and reload.');
+  return value;
+}
+const sameSelection = (a: Selection, b: Selection) =>
+  a.openingId === b.openingId && a.operationId === b.operationId;
+function writeSelection(key: string, selection: Selection, clear = false) {
+  const current = readSelection(key);
+  if (current && !sameSelection(current, selection))
+    throw new Error(
+      'Another opening selection remains unresolved. Reload and check its original result.',
+    );
+  const text = JSON.stringify(clear ? null : selection);
+  localStorage.setItem(key, text);
+  if (localStorage.getItem(key) !== text)
+    throw new Error(
+      'The exact opening selection could not be retained or cleared. Restore storage and check its original result.',
+    );
+}
 
 /** Choosing a supplied opening retains a draft through the current authoring owner. */
 export function WorldCreationSelector({
@@ -91,16 +114,24 @@ export function WorldCreationSelector({
   }, [visible, connected, reload]);
   async function select(openingId: string, retry = false) {
     if (working.current || !connected || mutationReason || (!retry && retained)) return;
-    const selection = retry ? retained : { openingId, operationId: crypto.randomUUID() };
-    if (!selection) return;
     working.current = true;
     const restoreFocus = holdActionFocus(section.current);
     setBusy(true);
     setError('');
-    writeLocal(key, selection);
-    setRetained(selection);
+    let dispatched = false;
+    let acknowledged = '';
     try {
+      const stored = readSelection(key);
+      if (stored && (!retry || !retained || !sameSelection(stored, retained))) {
+        setRetained(stored);
+        throw new Error('Check the original opening selection before preparing another one.');
+      }
+      const selection = retry ? retained : { openingId, operationId: crypto.randomUUID() };
+      if (!selection) return;
+      writeSelection(key, selection);
+      setRetained(selection);
       await ensureSession();
+      dispatched = true;
       const result = await post<WorldAgentWorkResult<WorldAgentExactDraftView>>(
         '/api/world-agent/creation/draft',
         { worldId, sessionId, ...selection },
@@ -108,18 +139,20 @@ export function WorldCreationSelector({
       if (!alive.current) return;
       if (!result.ok || !result.data) {
         if (result.status !== 'unavailable') {
-          writeLocal(key, null);
+          acknowledged = result.message ?? 'The original opening selection was refused.';
+          writeSelection(key, selection, true);
           setRetained(null);
         }
         throw new Error(result.message ?? 'The opening could not be retained.');
       }
-      writeLocal(key, null);
+      acknowledged = `The original selection prepared saved revision ${result.data.revision}.`;
+      writeSelection(key, selection, true);
       setRetained(null);
       onSelected(result.data);
     } catch (failure) {
       if (alive.current)
         setError(
-          failure instanceof Error ? failure.message : 'The original selection needs confirmation.',
+          `${acknowledged ? `${acknowledged} ` : ''}${failure instanceof Error ? failure.message : 'The original selection needs confirmation.'}${dispatched ? '' : ' No opening selection request was sent.'}`,
         );
     } finally {
       working.current = false;

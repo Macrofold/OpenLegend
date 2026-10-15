@@ -396,12 +396,8 @@ export function Composer({
             <Tag>Invention</Tag>
             <h3 className="ol-heading">Make something possible</h3>
             <p>
-              Describe a tool and the materials you want to use. An admitted recipe appears in
-              Crafting; making it still takes materials and work.
-            </p>
-            <p className="ol-meta">
-              The current wilderness supports ranged launchers and arrow ammunition. Conjuring
-              objects is not available.
+              Describe what you want to make and the materials you want to use. A supported,
+              admitted recipe appears in Crafting; making it still takes materials and work.
             </p>
             {view.ai.jobs
               .filter((j) => j.kind === 'invention' && j.status === 'failed')

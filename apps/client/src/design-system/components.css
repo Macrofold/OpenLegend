@@ -68,6 +68,11 @@
 .ol-hud {
   zoom: var(--ui-scale);
 }
+/* Portals retain unscaled positioning coordinates. Enlarge their reading and
+   controls once inside that boundary, including nested dialog popups. */
+.ol-portal-content {
+  zoom: var(--ui-scale);
+}
 .ol-root,
 .ol-root * {
   box-sizing: border-box;
@@ -527,7 +532,7 @@
 .ol-select-list {
   display: grid;
   gap: 2px;
-  max-height: min(318px, calc(var(--available-height, 330px) - 12px));
+  max-height: min(318px, calc((var(--available-height, 330px) - 12px) / var(--ui-scale)));
   overflow-y: auto;
   outline: none;
 }

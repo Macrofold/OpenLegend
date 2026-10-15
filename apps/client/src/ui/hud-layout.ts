@@ -11,7 +11,7 @@ export function observeHudLayout(
 ): () => void {
   const obstacles = [
     ...root.querySelectorAll<HTMLElement>(
-      '.ol-survival, .ol-clock-position, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking',
+      '.ol-survival, .ol-clock-position, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-qa, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking, .ol-world-composer',
     ),
   ];
   const controls = root.querySelector<HTMLElement>('.ol-world-controls');

@@ -25,6 +25,51 @@ type Pending = {
   supersedes?: string;
   continueIfReady: boolean;
 };
+const answersValue = (value: unknown): value is Answers =>
+  Array.isArray(value) &&
+  value.length <= 3 &&
+  value.every(
+    (answer) =>
+      answer &&
+      typeof answer === 'object' &&
+      typeof answer.questionId === 'string' &&
+      (answer.kind === 'text'
+        ? typeof answer.text === 'string'
+        : answer.kind === 'options' &&
+          Array.isArray(answer.optionIds) &&
+          answer.optionIds.every((id: unknown) => typeof id === 'string')),
+  );
+const pendingValue = (value: unknown): value is Pending =>
+  !!value &&
+  typeof value === 'object' &&
+  'answerId' in value &&
+  typeof value.answerId === 'string' &&
+  'answers' in value &&
+  answersValue(value.answers) &&
+  (!('supersedes' in value) || typeof value.supersedes === 'string') &&
+  'continueIfReady' in value &&
+  typeof value.continueIfReady === 'boolean';
+function readPending(key: string): Pending | null {
+  const text = localStorage.getItem(key);
+  if (text === null) return null;
+  const value: unknown = JSON.parse(text);
+  if (value === null) return null;
+  if (!pendingValue(value))
+    throw new Error('The original answer record is unreadable. Restore storage before sending.');
+  return value;
+}
+const samePending = (a: Pending, b: Pending) => JSON.stringify(a) === JSON.stringify(b);
+function writePending(key: string, value: Pending, clear = false) {
+  const current = readPending(key);
+  if (current && !samePending(current, value))
+    throw new Error('A different original answer remains retained. Check its saved result first.');
+  const text = JSON.stringify(clear ? null : value);
+  localStorage.setItem(key, text);
+  if (localStorage.getItem(key) !== text)
+    throw new Error(
+      'This browser could not retain or clear the original answer record. Restore storage and check its saved result.',
+    );
+}
 const message = (error: unknown) =>
   error instanceof Error ? error.message : 'The answer could not be confirmed.';
 
@@ -63,40 +108,13 @@ export function WorldAgentQuestionCard({
       record,
     );
   const [answers, setAnswers] = useState<Answers>(() =>
-    readLocal(
-      recordKey('draft'),
-      question.answer?.answers ?? [],
-      (v): v is Answers =>
-        Array.isArray(v) &&
-        v.length <= 3 &&
-        v.every(
-          (a) =>
-            a &&
-            typeof a === 'object' &&
-            typeof a.questionId === 'string' &&
-            (a.kind === 'text'
-              ? typeof a.text === 'string'
-              : a.kind === 'options' &&
-                Array.isArray(a.optionIds) &&
-                a.optionIds.every((id: unknown) => typeof id === 'string')),
-        ),
-    ),
+    readLocal(recordKey('draft'), question.answer?.answers ?? [], answersValue),
   );
   const [pending, setPending] = useState<Pending | null>(() =>
-    readLocal(
-      recordKey('pending'),
-      null,
-      (v): v is Pending =>
-        !!v &&
-        typeof v === 'object' &&
-        'answerId' in v &&
-        typeof v.answerId === 'string' &&
-        'answers' in v &&
-        Array.isArray(v.answers) &&
-        'continueIfReady' in v &&
-        typeof v.continueIfReady === 'boolean',
-    ),
+    readLocal(recordKey('pending'), null, pendingValue),
   );
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
   const [editingRequested, setEditing] = useState(!question.answer);
   const [editingAnswerId, setEditingAnswerId] = useState(question.answer?.id);
   // A winning answer from another tab is shown as accepted, never overwritten by our draft.
@@ -104,14 +122,28 @@ export function WorldAgentQuestionCard({
   const working = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   // A different accepted successor resolves a race. Keep our draft for an explicit
   // correction; only an unchanged predecessor leaves the send outcome uncertain.
-  const unconfirmed =
-    pending &&
-    pending.answerId !== question.answer?.id &&
-    (!question.answer || pending.supersedes === question.answer.id)
-      ? pending
-      : null;
+  const needsConfirmation = (value: Pending) =>
+    value.answerId !== question.answer?.id &&
+    (!question.answer || value.supersedes === question.answer.id);
+  const unconfirmed = pending && needsConfirmation(pending) ? pending : null;
+  function rememberPending(value: Pending | null) {
+    pendingRef.current = value;
+    setPending(value);
+  }
+  function settleConfirmedAnswer() {
+    const stored = readPending(recordKey('pending'));
+    const original = pendingRef.current ?? stored;
+    if (!original) return;
+    if (needsConfirmation(original))
+      throw new Error(
+        'Check the original answer before changing it. Your later draft remains here.',
+      );
+    writePending(recordKey('pending'), original, true);
+    rememberPending(null);
+  }
   const complete = question.questions.every((q) => {
     const value = answers.find((a) => a.questionId === q.id);
     return value?.kind === 'text' ? !!value.text.trim() : !!value?.optionIds.length;
@@ -126,6 +158,7 @@ export function WorldAgentQuestionCard({
     working.current = true;
     setBusy(true);
     setError('');
+    setNotice('');
     try {
       await work();
     } catch (error) {
@@ -138,31 +171,49 @@ export function WorldAgentQuestionCard({
   }
   async function send(saved?: Pending) {
     await act(async () => {
-      const value = saved ?? {
-        answerId: crypto.randomUUID(),
-        answers,
-        continueIfReady: canContinue,
-        ...(question.answer ? { supersedes: question.answer.id } : {}),
-      };
-      writeLocal(recordKey('pending'), value);
-      setPending(value);
-      const reply = await post<WorldAgentReply>('/api/world-agent/session/question-answer', {
-        worldId,
-        sessionId,
-        questionTurnId: question.turnId,
-        digest: question.digest,
-        ...value,
-      });
-      if (!reply.ok) {
-        if (['authoring-request', 'invalid-input'].includes(reply.code)) {
-          writeLocal(recordKey('pending'), null);
-          setPending(null);
+      let dispatched = false;
+      try {
+        // Check before allocating an identity: optional draft persistence cannot
+        // replace an unresolved answer that may already have continued paid work.
+        const stored = readPending(recordKey('pending'));
+        if (!saved && (pendingRef.current || stored)) {
+          if (!pendingRef.current && stored) rememberPending(stored);
+          throw new Error(
+            'Check the original answer before sending another one. Your later draft remains here.',
+          );
         }
-        throw new Error(reply.message);
+        const value = saved ?? {
+          answerId: crypto.randomUUID(),
+          answers,
+          continueIfReady: canContinue,
+          ...(question.answer ? { supersedes: question.answer.id } : {}),
+        };
+        writePending(recordKey('pending'), value);
+        rememberPending(value);
+        dispatched = true;
+        const reply = await post<WorldAgentReply>('/api/world-agent/session/question-answer', {
+          worldId,
+          sessionId,
+          questionTurnId: question.turnId,
+          digest: question.digest,
+          ...value,
+        });
+        if (!reply.ok) {
+          if (['authoring-request', 'invalid-input'].includes(reply.code)) {
+            setNotice(reply.message);
+            writePending(recordKey('pending'), value, true);
+            rememberPending(null);
+          }
+          throw new Error(reply.message);
+        }
+        // An acknowledged native answer stays known even if browser cleanup fails.
+        setNotice(reply.message);
+        setEditing(false);
+        writePending(recordKey('pending'), value, true);
+        rememberPending(null);
+      } catch (failure) {
+        throw new Error(`${message(failure)}${dispatched ? '' : ' No answer request was sent.'}`);
       }
-      writeLocal(recordKey('pending'), null);
-      setPending(null);
-      setEditing(false);
     });
   }
   async function resume() {
@@ -291,11 +342,15 @@ export function WorldAgentQuestionCard({
           variant="quiet"
           disabled={busy || !connected}
           onPress={() => {
-            writeLocal(recordKey('pending'), null);
-            setPending(null);
-            setAnswers(answers.length ? answers : question.answer!.answers);
-            setEditingAnswerId(question.answer!.id);
-            setEditing(true);
+            try {
+              settleConfirmedAnswer();
+              setAnswers(answers.length ? answers : question.answer!.answers);
+              setEditingAnswerId(question.answer!.id);
+              setEditing(true);
+              setError('');
+            } catch (failure) {
+              setError(message(failure));
+            }
           }}
         >
           Change my answer
@@ -306,13 +361,27 @@ export function WorldAgentQuestionCard({
           Continue
         </Button>
       )}
-      {unconfirmed && (
+      {pending && (
         <div role="status">
-          <p>Checking whether your answer was saved. Your choices are retained.</p>
-          <Button disabled={busy || !connected} onPress={() => void send(unconfirmed)}>
-            Resend the same answer
-          </Button>
-          <Button variant="quiet" onPress={onChanged}>
+          <p>
+            {unconfirmed
+              ? 'Checking whether your answer was saved. Your choices are retained.'
+              : 'The current saved answer is shown. Check saved answer before changing it.'}
+          </p>
+          {unconfirmed && (
+            <Button disabled={busy || !connected} onPress={() => void send(unconfirmed)}>
+              Resend the same answer
+            </Button>
+          )}
+          <Button
+            variant="quiet"
+            disabled={busy}
+            onPress={() =>
+              void act(async () => {
+                if (!unconfirmed) settleConfirmedAnswer();
+              })
+            }
+          >
             Check saved answer
           </Button>
         </div>
@@ -326,6 +395,7 @@ export function WorldAgentQuestionCard({
         Your answer guides the design. You will review any proposed world change separately.
       </p>
       {error && <p role="alert">{error}</p>}
+      {notice && <p role="status">{notice}</p>}
     </section>
   );
 }

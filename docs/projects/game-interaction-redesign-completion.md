@@ -1,8 +1,8 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Action/checkpoint reload recovery and the selected UI journeys pass; full visual, device and player qualification remains open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Imported-interface and follow-up correctness/performance repairs are verified; human input/device/player acceptance remains open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -10,7 +10,7 @@ On October 14, Mike explicitly requested completing the UI implementation and ru
 
 **Latest scope instruction:** Mike subsequently directed that the hunting failure be recorded as a maintainer bug and that this continuation test only the UI. The [projectile-progress bug](../maintainers/projectile-progress-bug.md) owns that separate investigation. Do not resume combat, projectile, cognition or native simulation debugging from the broader historical plan below. Existing automatic repository CI remains a merge gate; excluding a repair from this task does not turn a failing check green.
 
-The [UI-only verification report](../verification/ui-completion-2026-10-14.md) records the exact passing action/checkpoint recovery, ordinary browser, Journal and inventory observations, earlier fixture failures and remaining evidence boundaries. The original reload-recovery code is now implemented and verified in those scenarios; the broader privacy/storage/identity matrix is not automatically closed by that result.
+The [UI-only verification report](../verification/ui-completion-2026-10-14.md) records the exact passing action/checkpoint recovery, ordinary browser, Journal and inventory observations, earlier fixture failures and remaining evidence boundaries. The named action/checkpoint, creation and owner-message storage/recovery boundaries are implemented and qualified at their recorded sources, reusing unchanged native authority owners. This does not claim an exhaustive permission matrix or close the subsystem owners' broader work.
 
 This is the execution plan for the remaining agreed scope, not a replacement feature specification. The [feature specification](game-interaction-redesign-feature-spec.md), [technical design](game-interaction-redesign-tech-design.md), [UI/UX tracker](../maintainers/ui-ux.md) and [verification report](../verification/game-interaction-redesign.md) retain their requirements, decisions and evidence. Do not count implementation readiness and completion of the research/design deliverable as the same thing.
 
@@ -18,17 +18,220 @@ The completion work started on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/g
 
 ## Implementation plan
 
+### Follow-up implementation review — October 15
+
+Mike requested another thorough review of the published implementation at
+`1dbfbfe63886cc246254b310264f701392153e94`, including correctness, simplification,
+expansion, scaling and world/engine ownership. The refreshed PR target remains
+`Macrofold/OpenLegend` `origin/main` at
+`362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor; no reconciliation
+or checkout change is needed. Keep the existing accepted scope and outstanding
+human/device requirements. The separate proposed item/building work remains outside
+this review until its scope question is answered.
+
+Cross-review the complete affected implementation and its callers in three groups:
+creator/editor/request retention; player item/construction/conversation/shared
+controls; and private history/diagnostics/native projections. Check documentation
+and the complete final diff centrally. Repair demonstrated issues through existing
+owners, removing duplication only where it has a clear shared responsibility.
+Initial additional repair estimate is 0–200 production logic lines, with medium
+risk from request loss and private-read races; reassess before wider changes.
+
+Performance review must distinguish explicit command/recovery work from recurring
+rendering and polling. Cost grows with visible readers, inventory/equipment size,
+history pages and overlapping refreshes. Share existing permitted projections,
+exact-ID lookups and immutable preparation; avoid per-row repeated scans and new
+global caches. Reuse expires with the actual access, timeline, evidence, selection
+and authored-definition dependencies. Verify changed complete callers and request
+counts with focused existing checks or a finite missing scenario, then run static
+integration and required CI on published source. Do not infer population capacity
+from small fixtures or repeat unchanged qualification. Record each concrete finding,
+repair and any justified remaining gap in the existing review report and tracker.
+
+Confirmed follow-up repairs now include preserving Future narration's Close guard
+through acknowledged event-save reloads; retaining unresolved Speak/Act originals
+after an uncertain retry; removing browser-storage reads from barter snapshot
+rendering while retaining original-request checks at recovery and dispatch; and
+finishing FRL02's operator-read fencing/scheduling through the existing API and
+Diagnostics owners. Review also confirms that a known Inventory/Construction
+result must remain visible when browser cleanup fails, and that renewed control
+must retain the current task's in-memory fields when optional draft storage fails.
+The additional repair estimate is now approximately 260–350 production logic lines,
+with the same medium risk and unchanged native contracts. Keep task drafts under
+their existing private owner while refreshing authority-scoped choices and fencing
+old read/write presentation. Verify held responses and real caller composition,
+not only isolated helper results.
+The shared barter continuation also needs to release its old sending guard after
+explicit receipt recovery, without letting that obsolete promise later change a
+new offer. Reuse the existing shared draft owner with a local attempt identity;
+ordinary acknowledgements retain their normal reviewed-term updates. Private note
+editing must adopt a current saved revision after becoming clean without rebasing
+an unsaved draft. These are additional composed-caller correctness repairs, not
+new trade or knowledge behavior.
+
+**Follow-up outcome:** all demonstrated in-scope findings are repaired through the
+existing task, editor, request and diagnostic owners. Focused existing transport/
+editor checks and controlled actual-component continuations cover the ordinary,
+failure and delayed-result cases; [the review report](../verification/ui-implementation-review.md#follow-up-correctness-and-performance-review)
+retains exact counts, reproduced failures and native/evidence limits. FRL02 is
+implemented. The published head's required [PR checks](https://github.com/Macrofold/OpenLegend/pull/27/checks)
+remain the integration gate; earlier green heads do not waive it. Human/device
+acceptance and the separate proposed item/building scope question remain unchanged.
+
+### Complete imported-interface review — October 15
+
+Mike requested an in-depth review of the imported interface and designs, with
+repairs and completion of missing accepted UI. Review the entire current interface,
+including the redesign already integrated into main, rather than only the small
+remaining PR diff. The refreshed PR target is `Macrofold/OpenLegend`
+`origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4`; it is already an
+ancestor of the review's starting source `99cb310fbe7ac597a417664551991f074995b888`.
+All edits stay in `/Users/mzw/.codex/worktrees/0f80/OpenLegend` on
+`docs/game-ui-research-redesign`. The main checkout and its development save are
+not used for edits or runtime verification.
+
+1. Compare the accepted feature/design, current handbook, coverage map and UIUX
+   tracker with each current surface. Separate missing implementation, demonstrated
+   bugs, proposed additions and unmet human/device evidence. Compare Mike's named
+   main-checkout tracker without replacing either checkout's independent changes.
+2. Review player item/action/activity/record screens; entry/settings/checkpoint and
+   creator/operations screens; conversation/world/camera and shared controls in
+   parallel. Trace complete request and return paths, cancellation, stale reads,
+   permission changes, focus/input ownership and long/narrow/short content.
+3. Repair confirmed issues at their existing owners. Preserve native authority,
+   original-operation recovery, current-world content and accepted design decisions.
+   Reconcile any contradictory handbook wording with the actual accepted contract.
+4. Exercise each changed task through suitable existing focused checks and actual
+   rendered interaction, including a relevant failure. Reuse unchanged native and
+   browser evidence; do not recreate the removed qualification suite. Inspect the
+   complete final diff and affected callers, then run required CI on published source.
+5. Update the current behavior, UIUX work and verification report with actual scope,
+   evidence and limitations. Keep real OS input-method, assistive-device and
+   uncoached-user acceptance open until performed.
+
+The initial 100–300-line repair estimate is now approximately 1,000–1,350 production
+logic lines after the concrete findings below; the review itself covers substantially
+more source. Risk is medium
+because shared dismissal/focus, asynchronous private reads and consequential-write
+recovery can affect several screens. Any wider native contract change requires a
+revised estimate and plan before implementation. The separately designed IWB
+follow-on adds crafting-list and compound equipment behavior, not just presentation;
+its inclusion is awaiting Mike's scope clarification while independent review and
+repairs continue.
+
+Confirmed repairs cover complete equipment-conflict visibility; trade and Speak/Act
+focus ownership; exact edited-draft completion; construction draft retention and
+fresh read/preview fencing; forgotten action-history display and awaited server
+read fencing; refused creator-page reads; future-narration tab/save/close continuity;
+Operations logout cleanup and single-flight refresh; and prospective recipe wording.
+The read-only relationship/evidence child also expires with current access and
+evidence revision, independently of the retained same-owner writing workspace.
+Both private Mind history readers and the fetched private snapshot expire after
+corrected/forgotten evidence, preserving the mounted note editor. Reuse
+the existing spaced creator confirmation for retained-draft switch warnings.
+Current authored spawn options and private diagnostic actors supply their own
+icons, removing the remaining client species-to-icon and native human-species
+classification. Current note/name proposal cards must follow the admitted schema
+and keep proposals distinct from effects; diagnostic detail refreshes reject older
+results after a newer read or dismissal. Reuse the existing authored Entity icon through the permitted
+diagnostic projection, with generic fallbacks; no new world or storage law.
+Malformed retained question
+answers cannot be consumed as valid answer objects.
+The storage review also finds that Inventory did not verify an original request
+before overwriting or verify its retained bytes before sending. Strengthen that
+existing owner, then reuse it with a distinct construction task slot for the real
+second caller. Construction must retain its exact Start/Stop request and check only
+the original receipt after a lost acknowledgement, including after earlier work
+ends. This closes the existing shared recovery contract; it adds no manufacturing
+list or compound stow behavior. Keep native receipt/admission owners unchanged,
+include changed-owner cleanup, and verify failed storage and no duplicate dispatch.
+The same review includes native creator Save, opening selection, Prepare and
+question answers, plus the relationship-inspection removal preparation callers:
+optional local-draft storage cannot substitute for mandatory verified retention of
+an original consequential request. Check parent discard/navigation callers as well
+as the leaf editor, preserving later fields while reconciling an earlier original.
+A final measured shared-controls finding expands verification: changing the offered
+UI scale from 100% to 130% enlarges a HUD button from 40 to 52 pixels, but portaled
+dialog controls and popup text remain unchanged. Propagate the same selected scale
+through existing shared control owners, preserving anchor width/placement, modal
+viewport bounds, ordinary keyboard dismissal/focus and narrow controls. Inspect
+SelectField, Pullout and the actual dialog callers; account for already-physical
+anchor measurements to avoid double scaling. Keep theme/defaults and native game
+behavior unchanged. This cross-caller repair requires both before/after rendered
+measurements and focused existing browser coverage, not only CSS inspection.
+The new Speak/Act bar joins the existing measured caption exclusions; no frame-level
+HUD measurements, new timing policy or extra native speech evidence is introduced.
+
+Cost grows with mounted/visible readers, list/history pages, repeated projection
+updates and optional preview requests. Reuse current permitted projections and
+single-flight readers; do not add a global workflow store or broad cache. Retained
+facts invalidate on their actual owner, timeline, authority, selection and evidence
+dependencies; local draft identity remains separate from read validity. Measure the
+changed complete caller, including request counts and rendered behavior where
+relevant, rather than infer responsiveness or privacy from component structure.
+Verification starts without providers and with `AI_BUDGET_USD=0` in disposable
+worlds/databases. Completion requires resolution of every actionable in-scope review
+finding, implementation of the agreed missing UI, current documentation and passing
+required checks; source review alone does not qualify the remaining human gates.
+
+**Review outcome:** all demonstrated imported-interface findings are repaired and
+focused observations plus required Code/Spatial/interface checks pass at executable
+source `38a8adcf6`. The [review report](../verification/ui-implementation-review.md)
+retains complete coverage, failures, the unchanged native-time-test retry and
+cleanup. UIUX18 retains broader human/input/device qualification. Inclusion of the
+separate proposed item/building follow-on remains a scope question; the current
+review did not silently implement its new native behaviors.
+
 ### Current continuation — October 14
 
 Mike requested finishing the branch after the UI-only handoff. The checkout at
 `/Users/mzw/.codex/worktrees/0f80/OpenLegend` now uses
 `docs/game-ui-research-redesign`; it previously had detached HEAD at
-`4f16dc98c989b9954c2d00ba89e3c584824c7ca1`. The main checkout is unchanged.
+`4f16dc98c989b9954c2d00ba89e3c584824c7ca1`. This continuation does not change the main checkout.
 The PR target was refreshed from `https://github.com/Macrofold/OpenLegend.git`:
 `origin/main` at `0c12398e32e7c9578e18de07bbe79d39b4827208`. Merge
 `542644797` preserves published history and combines the newer privacy,
 current-format storage and authored terrain contracts with this branch's paired
 inventory, scoped drafts and exact original-request recovery.
+
+**October 15 target refresh:** the PR target advanced to
+`https://github.com/Macrofold/OpenLegend.git` `origin/main` at
+`062724cdd0312753c40b99b407cf4652ac3ab26a`. It contains the UI implementation
+through `7da4449fb` as squash `b2c8e2eee`, then newer focus-pause feedback and
+player action controls. Preserve those additions and this branch's later editor,
+completed-task and qualification changes without rewriting published history.
+A comparison against the already integrated UI source makes the conflict intent
+unambiguous: keep both independent changelog additions and each later change at
+its owner. No standard starting-world initializer or saved development world is
+replaced; base/solo content is identical across this reconciliation, while the
+integrated current need/health rules retain their own authored definitions.
+The existing untracked environment file is byte-identical to main's new tracked
+file and is preserved unchanged. Static/build checks and the fourteen focused
+transport/draft checks cover reconciliation; no browser run is part of the merge.
+A subsequent documentation-only target refresh uses the same repository/ref at
+`362d3b0a20e92fc38a672730104b957b1c7c1be4`, retaining its independent research
+framing and design-needs additions. It changes no tested runtime owner.
+The separate final UI continuation adapts its obsolete unavailable-action toggle
+expectation to main's accepted always-visible known blocked actions, then reuses
+unchanged native ownership/settlement evidence.
+
+**Verified source checkpoint — October 15:** documentation source `5926cf6478325b0764dcae271b95952de93653b9` passes [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38692034687), [push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38692030647) and [Spatial/interface attempt 2](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/attempts/2). Attempt 1 fails only Actions at the unchanged sixty-second total; its 28 native checks, spatial browser case and other five ordinary UI cases pass, including Time in 47.7 seconds. The single unchanged-source rerun passes without a code, fixture or configuration change; Actions takes 35.6 seconds. The first failure, unproved browser reload interval and earlier cleaned-source/selected zoom passes remain at their exact revisions; no performance repair is inferred. [Diagnosis and rerun](../verification/ui-completion-2026-10-14.md#documentation-head-actions-deadline).
+
+**Earlier cleaned source — October 15:** the published source `d3c52639279ef8547fc7dc32126b3526665f6a99` removes all thirteen temporary verification files. [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38691148982), [push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38691143590) and [Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38691148985) all pass; Code reports 392 tests in 43 files plus all static/build gates. The affected diff and canonical documentation have been reviewed. [Cleaned-source evidence](../verification/ui-completion-2026-10-14.md#cleaned-source-and-required-checks) preserves the individual browser/native qualifications and their limitations. Real OS input-method, assistive-device and uncoached player/creator/operator acceptance remain open.
+
+**Earlier checkpoint — October 15:** branch source `b77639184dc6fa291771562dff04c2a554af074d` includes `Macrofold/OpenLegend` `origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4` through merge `ef301fae202f14fe528d1e986712566e965ab2a1`. [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38689010811) and [Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38689010883) pass unchanged deadlines. The invitation passes in 56.0 seconds, with all five focused-control images inspected; the supported alternate recharge/storage/changed-login/touch continuation passes at `b26ecb7cb` and its unchanged owners are reused. Current task retention guards, completed-task focus padding and editor viewport constraints retain their recorded qualification. The narrow Character correction keeps one vertical reader without changing the retained draft or native consent owner. No provider or excluded hunting repair is added.
+
+The selected Journal native browser-zoom/reflow observation now passes at `c98de4a07e5bd4b39bee5724c675ac64e76bb91d`: [run 38690319197](https://github.com/Macrofold/OpenLegend/actions/runs/38690319197) completes in 56.1 seconds under the original sixty-second total, five-second assertions and ten-second captures. All three inspected images show the retained place at normal size, native 200% zoom and measured 320-CSS-pixel reflow, with reachable complete focus, no overlays or horizontal overflow, unchanged native world and no gameplay commands or provider requests. The earlier `b77639184` capture timeout and `526368719` five-second layout failure remain in the evidence; one measured resize-to-HUD change is not a performance repair. The cleaned-source review, temporary-tooling removal and required checks pass at `d3c526392`; all required checks also pass at `5926cf647` after its unchanged-source second Spatial/interface attempt. The first Actions timeout remains recorded. Real OS input-method, assistive-device and uncoached player/creator/operator observations remain open. The original implementation sequence below is retained with its source-specific evidence.
+
+<a id="current-required-check-investigation"></a>
+
+## Closed required-check investigation
+
+1. The original trace and actual [Actions browser case](../../tests/browser/actions.spec.ts) place the aggregate timeout at the ground right-click after reload; no individual five-second assertion fails. The reload takes 35.31 seconds although the document GET returns in 8.86 ms. This locates an unexplained browser document-commit interval; source review establishes no safe production or fixture correction. [Exact diagnosis](../verification/ui-completion-2026-10-14.md#documentation-head-actions-deadline) retains the trace and image limits.
+2. The original sixty-second total, five-second assertions, existing action/capture defaults, screenshots and acceptance assertions remain unchanged. This ordinary case does not set the temporary zoom observation's separate ten-second capture bound. No code, fixture or configuration change is made.
+3. The single [second attempt](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/attempts/2) passes on the identical published source `5926cf6478325b0764dcae271b95952de93653b9`, closing the current required-check gate alongside the passing Code checks. The first failure and earlier `d3c526392`/`c98de4a07` passes remain evidence; the pass proves no performance repair. No provider work or excluded hunting repair occurs.
+
+The original completion sequence is retained below with its source-specific evidence.
 
 Finish in this order:
 
@@ -96,6 +299,88 @@ an uncertain task as a consent-ending prerequisite. Qualify losing the real Send
 acknowledgement, explicit Withdraw, and then reading that original Send result
 without another invitation or movement, within the existing composed outing case.
 
+The existing enlarged-reading requirement also needs evidence beyond component UI
+scale. Prepare one selected-place Journal observation in a disposable headed
+Chromium window under Linux Xvfb. Native window-directed keyboard focus and
+Ctrl-plus should reach 200% browser zoom; require unchanged physical window
+bounds, doubled device-pixel ratio, approximately halved CSS viewport width and
+unchanged visual-viewport scale before counting it. Retain the same real place,
+Hide/reopen and keyboard reach without Move or a new command. This is one bounded
+browser-zoom sample, not whole-interface text/input or human acceptance. Do not
+edit user profiles/preferences or substitute CSS/font injection or pinch emulation.
+The handbook also requires a separate 320-CSS-pixel reflow observation. Extend
+that same native zoom scenario by resizing only its owned browser window to a
+measured 320-CSS-pixel reading width while keeping 200% browser zoom and the
+existing application scale. Retain the same place, Hide/reopen and keyboard
+controls; check complete focus and no horizontal document overflow. Keep the
+same sixty-second case and existing local assertions/capture limits. Earlier
+320px/130% application-scale observations remain valid for their different sample.
+
+The six completed-task images expose a partly clipped Prepare another task focus
+outline on the long desktop/short results, despite the probe's partial-visibility
+pass. Add the existing small scroll-margin token only to that completed task's
+direct button, then require the whole button and computed outline inside the
+actual scrolling clip after the same Task→Tab route. Reuse all native completion
+evidence; rerun this one presentation observation because the pixels demonstrate
+a new in-scope defect. This adds fewer than ten CSS lines, no shared Panel change,
+new size limit or focus event handler, and keeps all original execution bounds.
+
+The current required God editor check exposes a separate real responsive failure:
+the dialog width shrinks, but its old desktop left coordinate remains beyond the
+original five-second fit deadline. Add editor-only CSS constraints to its painted
+left/top, keeping the existing physical edge margin, maximum size and preferred
+desktop coordinates. Center, drag start and resize correction must read actual
+computed coordinates so a clamped window cannot jump. Estimated change: 12–20
+logic lines and about six CSS lines, with scaled dragging as the main risk.
+Verify desktop drag/Center and shrink/grow at normal and 130% application scale,
+plus the unchanged required narrow-fit case. No new size policy, polling or shared
+panel mechanism is needed. The failed trace establishes delayed fit, not permanent
+overflow or a graphics performance cause.
+
+The final acceptance audit identifies two concrete remaining private-ownership
+observations beyond the passing storage/timeline cases: checking an original action
+under a different legitimately permitted account/character, and clearing a selected
+Journal place while an older permitted inspection is still waiting. Cover both in
+one finite actual-App/server/PostgreSQL scenario. Keep one real original action and
+remembered observation, change ownership through the existing native account/grant
+owner, receive that account's actual fresh view, and verify old draft/request/place
+details disappear and stay absent after the old inspection is released. Attempt
+only a read of the exact original action under the new permitted identity and
+require no original job/result disclosure or mutation. Reuse the existing
+zero-provider action fixture, native authority and private cleanup owners; do not
+fabricate a granted client view or add production policy. Keep the original
+sixty-second case and local action/assertion/capture bounds. This adds temporary
+verification only; injected Storage tests alone do not establish these composed
+browser boundaries.
+
+The a5e825563 invitation journey passes functionally, but inspected short images
+show a bottom-edge control and an older notice crossing later consent controls.
+The existing partial-viewport assertion cannot qualify complete visible focus.
+During the already required post-main invitation recheck, require the entire
+focused control/outline inside its panel clip and unobscured by visible notices,
+within the same five-second assertion and sixty-second total. This is verification
+of a concrete image finding, not an additional account or gameplay matrix. Any
+failed geometry must identify its actual owner before production repair.
+
+The stronger b26ecb7cb consent check demonstrates a real Character layout defect:
+its separate tab-page scroller can shrink below one complete button in a short
+narrow window while the identity and tabs consume the remaining height. Use the
+existing outer Character scroller as the single vertical owner in narrow layouts;
+let sections/pages take their natural height. This is roughly eight scoped CSS
+lines, with no shared Panel change, new minimum size, event handler or native
+consent change. Identity/tabs may scroll with the narrow content; desktop and the
+selected section/draft remain intact. Extend the existing focus measurement to
+intersect all intervening clips and identify actual hit targets, and qualify the
+same Decline/Accept/Leave controls within the unchanged limits.
+
+Required Code CI also exposes a stale upstream HTTP catalogue expectation: a
+campfire-specific read still expects ground/self destination evasion, although
+main's accepted catalogue and its focused tests exclude that row for object
+selection. Remove only that obsolete expected entry, keeping the exact remaining
+catalogue/order, read-only world/jobs and input/preferences/authority assertions.
+This affects zero production logic lines. Run the single existing HTTP case and
+final required CI; do not change combat, simulation or action admission.
+
 ### Original action recovery — UIUX12
 
 Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.
@@ -147,15 +432,17 @@ All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture i
 
 ## Completion criteria
 
-- [ ] Original action and checkpoint requests recover through reload and same-page changes without replacement admission or duplicate effects; meaningful storage, identity, privacy and stale-result cases pass.
-- [ ] Completed-task presentation and the already specified composed game journeys are implemented and verified through their actual owners and rendered interface.
-- [ ] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence.
-- [ ] In-scope defects and required final Code/Spatial failures are resolved without weakening acceptance; the affected diff and canonical documentation are reviewed and committed.
+- [x] Original action and checkpoint requests recover through reload and same-page changes without replacement admission or duplicate effects; the named storage, identity, privacy and stale-result cases pass at their recorded sources.
+- [x] Completed-task presentation and the already specified composed game journeys are implemented and verified through their actual owners and rendered interface. The selected native Journal zoom/reflow observation passes at `c98de4a07`; full human-use acceptance remains separate.
+- [x] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence; the b26ecb7cb two-preset continuation passes.
+- [x] In-scope defects and required final Code/Spatial failures are resolved without weakening acceptance; the affected diff and canonical documentation are reviewed and committed. Published source `5926cf647` passes both Code checks and unchanged-source Spatial/interface attempt 2; attempt 1's timeout remains recorded.
 - [ ] Remaining keyboard/non-drag, text/viewport, real operating-system input-method, assistive-device and uncoached-player requirements are accurately qualified. Automated browser or synthetic composition results cannot be reported as human/device evidence.
+
+Required Code and Spatial/interface checks pass at cleaned source `d3c526392`, and the selected Journal zoom/reflow case passes at `c98de4a07`. Published source `5926cf647` passes both Code checks and the unchanged-source second Spatial/interface attempt, closing the current required-check/review criterion. Its first Actions timeout remains recorded, and cleanup is complete. Real input/device/uncoached acceptance remains unperformed.
 
 These are the full feature's acceptance criteria, not authorization to restart the excluded native repairs during the UI-only continuation. Source-specific progress lives in the linked verification report; a passed subset cannot close a compound criterion whose other cases remain unverified.
 
-There is no unresolved product decision blocking the implementation work described above. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
+There is no unresolved product decision blocking the delivered interface repairs. The separately proposed native item/building follow-on still awaits the scope answer recorded in the current review plan. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
 
 ## Integrated recovery continuation — October 14
 

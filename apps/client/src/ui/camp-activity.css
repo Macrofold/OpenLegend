@@ -179,3 +179,7 @@
 .ol-camp-activities[data-completed='true'] {
   flex: 0 1 auto;
 }
+.ol-camp-activities[data-completed='true'] > button.ol-btn {
+  /* Keyboard scrolling must retain the focus outline beyond the button's border. */
+  scroll-margin-block: var(--space-2);
+}
