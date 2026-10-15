@@ -107,6 +107,9 @@ export interface JobRecord extends AiJobView {
     volume?: import('@open-legend/domain').SpeechVolume;
     text: string;
     action?: {
+      /** Description-only player expression; never enter mechanical interpretation. */
+      expression?: true;
+      expressionLife?: number;
       mode: 'enqueue' | 'replace' | 'interrupt';
       targetId?: string;
       slots?: import('@open-legend/domain').IntentSlots;

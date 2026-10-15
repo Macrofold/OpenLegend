@@ -4,5 +4,6 @@ import { expect, type Page } from '@playwright/test';
 export async function enterGame(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
   await expect(page.locator('.ol-entry')).toBeHidden();
+  await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
 }

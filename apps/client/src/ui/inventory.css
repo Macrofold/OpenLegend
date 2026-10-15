@@ -132,7 +132,6 @@
   min-block-size: 0;
   min-inline-size: 0;
   padding: 4px;
-  scrollbar-width: thin;
   overscroll-behavior: contain;
   scroll-padding-block: 8px;
 }

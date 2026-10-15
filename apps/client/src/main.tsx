@@ -1,3 +1,4 @@
+import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { AimControls } from './ui/aim-controls';
 import { Construction } from './ui/construction';
 import { namePhrase } from '@open-legend/language';
@@ -16,6 +17,7 @@ import { Narrator } from './ui/history';
 import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
 import { createRoot } from 'react-dom/client';
+import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { ClockOffsetContext, clockParts } from './ui/event-time';
 import {
   useCallback,
@@ -32,7 +34,6 @@ import type {
   EntityView,
   GamePatch,
   GameView,
-  PlayerProfile,
 } from '@open-legend/protocol';
 import {
   AccessError,
@@ -60,6 +61,7 @@ import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
 import { captionScope } from './speech-captions';
 import { CameraControls } from './ui/camera-controls';
 import { FpsCounter } from './ui/fps-counter';
+import { AiConnectionNotice, EvasionCooldown } from './ui/hud-status';
 import type { CameraState } from './world-camera';
 import {
   Button,
@@ -158,6 +160,7 @@ function App({
     [sceneError, setSceneError] = useState(''),
     [sceneCreated, setSceneCreated] = useState(false),
     [notice, setNotice] = useState('');
+  const [worldIntent, setWorldIntent] = useState<(WorldIntent & { owner: string }) | null>(null);
   const [itemCreation, setItemCreation] = useState<{
     target: ItemCreationTarget;
     definitionId?: string;
@@ -317,6 +320,8 @@ function App({
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling;
   const creation = useCreationRequest(view, connected);
+  const showEntry = !view || (tabPaused && !tab.blocked && entryStatus.kind !== 'loading');
+  const showFocusPause = !!view && tabPaused && !tab.blocked && !showEntry;
   const accept = useCallback(
     (next: GameView, reset = false) => {
       const previous = latest.current;
@@ -374,13 +379,19 @@ function App({
     },
     [resetApplication, acceptView],
   );
+  const presenceScope = !tabPaused && view?.access?.controlling ? view.access.scope : undefined;
+  useEffect(() => {
+    if (!presenceScope) return;
+    // Report verified control before the scene effect can begin cold graphics work.
+    // docs/world-presentation.md#camera-and-settings
+    return startPresence(presenceScope);
+  }, [presenceScope]);
   useEffect(() => {
     let streamView: GameView | undefined;
     let bootstrapVersion = 0;
     let active = true,
       source: EventSource | undefined,
-      timer: ReturnType<typeof setTimeout> | undefined,
-      stop: (() => void) | undefined;
+      timer: ReturnType<typeof setTimeout> | undefined;
     const schedule = (delay: number) => {
       if (!active || isPaused()) return;
       source?.close();
@@ -472,10 +483,7 @@ function App({
           });
           return;
         }
-        if (initial.access?.controlling) {
-          stop ??= startPresence();
-          connectEvents();
-        }
+        if (initial.access?.controlling) connectEvents();
       } catch (e) {
         if (active && attempt === bootstrapVersion) {
           setConnected(false);
@@ -496,8 +504,6 @@ function App({
           if (e instanceof WorldCreationHostError) {
             setView(null);
             streamView = undefined;
-            stop?.();
-            stop = undefined;
             setEntryStatus({ kind: 'creation-host', host: e.host });
             return;
           }
@@ -509,8 +515,6 @@ function App({
             }
             setView(null);
             streamView = undefined;
-            stop?.();
-            stop = undefined;
           }
           if (e instanceof AccessError) {
             setEntryStatus({
@@ -547,7 +551,6 @@ function App({
     return () => {
       active = false;
       source?.close();
-      stop?.();
       clearTimeout(timer);
       window.removeEventListener('focus', focus);
       window.removeEventListener('pagehide', hide);
@@ -1244,9 +1247,6 @@ function App({
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
   });
-  function preference(profile: PlayerProfile) {
-    setView((v) => (v && profile.revision >= v.profile.revision ? { ...v, profile } : v));
-  }
   async function pause() {
     if (!view || !connected || pausePending || view.clock.pauseReason === 'maintenance') return;
     setPausePending(true);
@@ -1436,6 +1436,7 @@ function App({
                 const bounds = opener.getBoundingClientRect();
                 setPicker({
                   context: { itemId: item.id },
+                  browse: true,
                   item: { id: item.id, name: item.name },
                   point: { x: bounds.right, y: bounds.top },
                   entity: null,
@@ -1732,6 +1733,15 @@ function App({
             setShadowQuality={setShadowQuality}
             performance={performance}
             setPerformance={setPerformance}
+            browseActions={(opener) => {
+              const bounds = opener.getBoundingClientRect();
+              setPicker({
+                context: { catalogue: true },
+                point: { x: bounds.right, y: bounds.top },
+                entity: null,
+                opener,
+              });
+            }}
           />
         );
     }
@@ -1744,6 +1754,7 @@ function App({
         tabIndex={view ? 0 : -1}
         aria-hidden={!view}
         aria-label={view?.presentation.worldName ?? 'World'}
+        inert={tabPaused}
       />
       <div
         ref={hud}
@@ -1755,8 +1766,9 @@ function App({
         data-tight={width / scale < 360}
         data-picking={choosingActionSubject}
         style={{ '--ui-scale': scale } as CSSProperties}
+        inert={tabPaused && !showEntry}
       >
-        {(!view || (tabPaused && !tab.blocked)) && (
+        {showEntry && (
           <EntryScreen
             status={entryStatus}
             onRetry={() => {
@@ -1770,9 +1782,9 @@ function App({
           />
         )}
         {view && (
-          // A blur can pause before a competing tab is known. Keep drafts mounted
-          // through that connecting screen, just as through the Resume dialog.
-          <div className="ol-play-workspace" hidden={tabPaused && !tab.blocked} inert={tabPaused}>
+          // Keep the last game view and drafts visible through ordinary focus loss.
+          // Actual entry/return failures retain their separate retry screen.
+          <div className="ol-play-workspace" hidden={showEntry} inert={tabPaused}>
             <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
             <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
               <div className="ol-survival-top">
@@ -1795,14 +1807,7 @@ function App({
                 <span className="ol-meta">{view.presentation.locationName}</span>
               </div>
               <Condition {...view.player} />
-              {view.player.evasion && (
-                <p className="ol-caption">
-                  {view.player.evasion.label}:{' '}
-                  {view.player.evasion.readyIn > 0
-                    ? `ready in ${Math.ceil(view.player.evasion.readyIn)} game seconds`
-                    : 'ready'}
-                </p>
-              )}
+              <EvasionCooldown evasion={view.player.evasion} />
 
               <p className="ol-caption ol-player-state">
                 {view.player.participation === 'inactive'
@@ -2116,18 +2121,31 @@ function App({
                   openItemCreation({ definitionId, target: { position } });
                   setPicker(null);
                 }}
-                key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.saveTimeline}:${picker.point.x}:${picker.point.y}:${picker.entity?.id}:${picker.context.itemId}`}
+                key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.saveTimeline}:${picker.point.x}:${picker.point.y}:${picker.entity?.id}:${picker.context.itemId}:${picker.context.catalogue === true}:${picker.browse === true}`}
                 picker={picker}
                 view={view}
                 connected={connected}
                 close={closePicker}
                 run={run}
                 invent={invent}
-                describeAction={describeAction}
                 inspect={inspect}
                 openContainer={openContainer}
                 openActivity={openActivity}
-                preference={preference}
+                compose={(mode) => {
+                  const targetId = picker.context.itemId ?? picker.context.targetId;
+                  setWorldIntent({
+                    mode,
+                    owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+                    ...(mode === 'act' && targetId && targetId !== view.player.id
+                      ? {
+                          targetId,
+                          label: picker.item?.name ?? picker.entity?.name,
+                          possession: !!picker.context.itemId,
+                        }
+                      : {}),
+                  });
+                  setPicker(null);
+                }}
                 revive={(target) => void revive(target)}
                 enableCognition={(target) => void enableCognition(target)}
                 spawn={(type, position) => void spawn(type, position)}
@@ -2140,6 +2158,28 @@ function App({
                 }}
               />
             )}
+            <WorldComposer
+              key={JSON.stringify([
+                view.worldId,
+                view.saveTimeline,
+                view.player.id,
+                view.player.life,
+              ])}
+              view={view}
+              connected={connected}
+              intent={
+                worldIntent?.owner ===
+                JSON.stringify([view.worldId, view.saveTimeline, view.player.id])
+                  ? worldIntent
+                  : null
+              }
+              visible={!tabPaused && !picker}
+              close={() => {
+                setWorldIntent(null);
+                canvas.current?.focus();
+              }}
+              setup={() => show('ai')}
+            />
             {!tabPaused &&
               view.godMode &&
               itemCreation &&
@@ -2314,7 +2354,26 @@ function App({
           logout={() => void tab.logout()}
         />
       )}
-      {view?.player.death && <DeathNotice view={view} command={command} />}
+      {view?.player.death && (
+        <div className="ol-play-workspace" inert={tabPaused}>
+          <DeathNotice view={view} command={command} />
+        </div>
+      )}
+      {showFocusPause && (
+        <ModalOverlay
+          className="ol-root ol-focus-pause"
+          data-theme={theme}
+          style={{ '--ui-scale': scale } as CSSProperties}
+          isOpen
+          isKeyboardDismissDisabled
+        >
+          <Modal>
+            <Dialog className="ol-focus-pause-message" aria-label="Game is paused.">
+              Game is paused.
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
+      )}
       {lethalReview && !tabPaused && (
         <LethalAttackDialog
           review={lethalReview.review}

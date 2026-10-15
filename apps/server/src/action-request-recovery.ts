@@ -10,6 +10,7 @@ export type PlayerActionRequest = {
   mode: 'enqueue' | 'replace' | 'interrupt';
   targetId?: string;
   slots?: IntentSlots | null;
+  expression?: true;
 };
 
 /** Submission and inspection must name the same account, actor, timeline and exact intent.
@@ -31,6 +32,8 @@ export function playerActionIdentity(
       mode: request.mode,
       targetId: request.targetId,
       slots: request.slots ?? null,
+      // Describing a gesture cannot reuse a mechanical action with the same text.
+      ...(request.expression ? { expression: true } : {}),
     }),
   };
 }

@@ -1,8 +1,8 @@
 # Explicit tab resume — technical design
 
-| Status    | Current progress                                                                                                  | Last updated |
-| --------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Tab control and later draft/resource continuity are implemented, with focused native/browser acceptance complete. | 2026-10-14   |
+| Status    | Current progress                                                                                                 | Last updated |
+| --------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Quiet focus-pause display, keyboard isolation, recovery and existing tab controls passed focused browser checks. | 2026-10-14   |
 
 ## Plan, owners and risk
 
@@ -32,6 +32,8 @@ Preserve generation fencing for delayed pause, command and heartbeat requests. C
 The completed October 3 tab-entry behavior remains the accepted contract. Foundation hardening preserves inventory navigation, search, unfinished quantities and camera/scene resources when the same player resumes, while refreshing private reads and clearing transient captions/hover. Failed or obsolete reads cannot restore private details; actual account, character or timeline replacement clears private work. The complete final-build browser journey now passes, including real geometry replacement and scene disposal/reload. [Inventory continuity](../../ui-ux/inventory.md#organize-around-player-tasks-not-container-internals) and [world presentation](../../world-presentation.md#camera-and-settings) own the current behavior; [FR10](../../maintainers/foundation-review-todos.md#fr10--preserve-same-character-work-and-camera-on-resume) and the [new browser evidence](../../verification/foundation-hardening.md#resume-and-private-draft-browser-acceptance--october-14) record this separate acceptance.
 
 Initial 3D construction now waits until the tab enters play, keeping cold graphics preparation out of control acquisition. A newly opened competing tab shows the permitted interface and Resume dialog before preparing its 3D background; an existing paused tab preserves its scene and receives current invalidation. Caption/perception preferences apply when that first scene is created. This changes presentation timing, not who may control the character or the authored departure rule.
+
+The later focus-pause display correction keeps the last world and open panels visible beneath a slight tint and small **Game is paused.** text while their controls remain unavailable. Existing entry status distinguishes an actual failed return from ordinary focus loss, preserving its error and retry action. Automatic sole-tab return, control release, character departure and the competing-tab dialog remain unchanged. No additional periodic work or stored record is introduced. The existing React Aria modal boundary isolates retained dialog controls and restores focus without a visible card or buttons. [Focused browser verification](../../verification/multiplayer-entry-maintenance.md#focus-pause-presentation--october-14-2026) records the display and recovery checks; earlier entry and continuity acceptance remains separately recorded below.
 
 ## Maintained records
 

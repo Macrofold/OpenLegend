@@ -1,3 +1,4 @@
+import { WorldIntentIcon, type WorldIntent } from './world-composer';
 import { namePhrase } from '@open-legend/language';
 import { godCharacterAvailability } from './god-character-actions';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -8,21 +9,21 @@ import type {
   CatalogueAction,
   EntityView,
   GameView,
-  PlayerProfile,
 } from '@open-legend/protocol';
-import { filterActions, retainActionOrder } from '../action-browser';
+import { actionSections, filterActions, retainActionOrder } from '../action-browser';
 import { post } from '../api';
 import { playerEntity } from '../entity-view';
 import { Icon, IconButton, symbol } from '../design-system/components';
 import { ActionChoice } from './action-choice';
 import { spawnIcons } from './god-tools';
-import { PulloutPicker } from './pullout';
+import { Pullout, PulloutPicker } from './pullout';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
 export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
   entity: EntityView | null;
   item?: { id: string; name: string };
+  browse?: boolean;
   opener?: HTMLElement;
 };
 // A display window, not a discovery cutoff: search still visits every choice.
@@ -37,8 +38,7 @@ export function ActionPicker({
   inspect,
   openContainer,
   openActivity,
-  describeAction,
-  preference,
+  compose,
   revive,
   enableCognition,
   spawn,
@@ -54,8 +54,7 @@ export function ActionPicker({
   inspect(entity: EntityView): void;
   openContainer(entity: EntityView): void;
   openActivity(entry: ActivityEntry): void;
-  describeAction?(subject: EntityView | null): void;
-  preference(profile: PlayerProfile): void;
+  compose(mode: WorldIntent['mode']): void;
   revive(entity: EntityView): void;
   enableCognition(entity: EntityView): void;
   spawn(type: string, position: { x: number; y: number; z: number; surfaceId: string }): void;
@@ -66,30 +65,29 @@ export function ActionPicker({
   createPerson(position: { x: number; y: number; z: number; surfaceId: string }): void;
 }) {
   const [query, setQuery] = useState(''),
-    [visibleCount, setVisibleCount] = useState(CHOICE_WINDOW),
-    [full, setFull] = useState(false),
     [result, setResult] = useState<{
       key: string;
       scopeKey: string;
       inventoryRevision: number;
       actions: CatalogueAction[];
+      categories: string[];
     }>(),
     [error, setError] = useState(''),
-    [preferenceError, setPreferenceError] = useState(''),
-    [refreshing, setRefreshing] = useState(false),
-    [saving, setSaving] = useState(false),
-    [showUnavailable, setShowUnavailable] = useState(
-      view.profile.preferences.showUnavailableActions,
-    );
+    [refreshing, setRefreshing] = useState(false);
   const [openPullout, setOpenPullout] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string[]>([]);
   const [taskMatches, setTaskMatches] = useState(0);
+  const [sectionDisplay, setSectionDisplay] = useState({
+    scopeKey: '',
+    counts: new Map<string | null, number>(),
+  });
   const menu = useRef<HTMLDivElement>(null),
     input = useRef<HTMLInputElement>(null),
     refreshRequest = useRef(0),
     readController = useRef<AbortController | null>(null);
   const [position, setPosition] = useState(picker.point);
-  const context = full ? { catalogue: true } : picker.context;
+  const context = picker.context;
+  const full = context.catalogue === true;
+  const browsing = full || picker.browse === true;
   const scopeKey = JSON.stringify([
     view.worldId,
     view.player.id,
@@ -116,11 +114,13 @@ export function ActionPicker({
   const checking = refreshing || (!!result && result.key !== key);
   // Pause changes availability, so those rows stay mounted for focus. Possession
   // or authority changes hide old details before another read can publish them.
+  const catalogueCurrent =
+    result?.scopeKey === scopeKey &&
+    result.inventoryRevision === view.player.inventoryRevision &&
+    !lostTarget;
   const actions = useMemo(
     () =>
-      result?.scopeKey === scopeKey &&
-      result.inventoryRevision === view.player.inventoryRevision &&
-      !lostTarget
+      catalogueCurrent && result
         ? result.actions.filter(
             (action) =>
               !action.targetId ||
@@ -128,7 +128,7 @@ export function ActionPicker({
               visibleTargets.has(action.targetId),
           )
         : [],
-    [result, scopeKey, view.player.inventoryRevision, view.player.id, lostTarget, visibleTargets],
+    [result, catalogueCurrent, view.player.id, visibleTargets],
   );
   const hadFocus = useRef(false);
   const refresh = useCallback(async () => {
@@ -146,20 +146,26 @@ export function ActionPicker({
       );
       if (request !== refreshRequest.current) return;
       if (!result.ok) throw new Error(result.message);
-      setResult((previous) => ({
-        key,
-        scopeKey,
-        inventoryRevision: view.player.inventoryRevision,
-        actions: retainActionOrder(
+      setResult((previous) => {
+        const actions = retainActionOrder(
           previous?.scopeKey === scopeKey ? previous.actions : [],
           result.catalogue.actions,
-        ),
-      }));
+        );
+        return {
+          key,
+          scopeKey,
+          inventoryRevision: view.player.inventoryRevision,
+          actions,
+          categories: result.catalogue.categories,
+        };
+      });
       setError('');
     } catch (reason) {
       if (request === refreshRequest.current) {
         setResult(undefined);
-        setError(`Actions could not be checked. Refresh to try again. ${String(reason)}`);
+        setError(
+          `Actions could not be checked. Close and reopen this menu to try again. ${String(reason)}`,
+        );
       }
     } finally {
       if (request === refreshRequest.current) setRefreshing(false);
@@ -180,22 +186,121 @@ export function ActionPicker({
   useLayoutEffect(() => {
     if (hadFocus.current && document.activeElement === document.body) input.current?.focus();
   }, [result, key, lostTarget, actions.length]);
+  // Walking uses primary click. Known blocked choices remain inspectable.
+  const contextualActions = useMemo(
+    () =>
+      actions.filter(
+        (action) =>
+          action.id !== 'move' &&
+          !(action.intent.kind === 'command' && action.intent.command.type === 'move'),
+      ),
+    [actions],
+  );
   const matches = useMemo(
-    () => filterActions(actions, query, showUnavailable),
-    [actions, query, showUnavailable],
+    () => filterActions(contextualActions, query, true),
+    [contextualActions, query],
   );
-  const isPickUpAll = (action: CatalogueAction) =>
-    action.intent.kind === 'command' &&
-    action.intent.command.type === 'pickup' &&
-    !action.intent.command.itemId;
-  const pickups = matches
-    .filter((action) => action.category === 'Pick Up')
-    .sort((a, b) => Number(isPickUpAll(b)) - Number(isPickUpAll(a)));
-  const listedMatches = matches.filter(
-    (a) => full || a.category !== 'Pick Up' || pickups.length <= 1,
-  );
-  const visibleMatches = listedMatches.slice(0, visibleCount);
+  const categories = useMemo(() => {
+    if (!catalogueCurrent || !result) return [];
+    // Removing walking or a disappeared target must also remove categories left
+    // empty by that omission. Genuinely empty permitted categories remain gray.
+    const omitted = new Set(result.actions.map((action) => action.category));
+    for (const action of contextualActions) omitted.delete(action.category);
+    return result.categories.filter((category) => !omitted.has(category));
+  }, [result, catalogueCurrent, contextualActions]);
+  const sections = useMemo(() => actionSections(matches, categories), [matches, categories]);
+  const searching = !!query.trim();
+  const display = sectionDisplay.scopeKey === scopeKey ? sectionDisplay : undefined;
+  const searchCount = display?.counts.get(null) ?? CHOICE_WINDOW;
+  const visibleMatches = searching ? matches.slice(0, searchCount) : [];
+  function changeQuery(value: string) {
+    setQuery(value);
+    setOpenPullout(null);
+    setSectionDisplay({ scopeKey, counts: new Map() });
+  }
+  function showMore(
+    category: string | null,
+    visible: CatalogueAction[],
+    choices: CatalogueAction[],
+    container: Element | null,
+  ) {
+    const next = choices[visible.length];
+    setSectionDisplay((current) => ({
+      scopeKey,
+      counts: new Map(current.scopeKey === scopeKey ? current.counts : []).set(
+        category,
+        visible.length + CHOICE_WINDOW,
+      ),
+    }));
+    requestAnimationFrame(() => {
+      if (next)
+        container
+          ?.querySelector<HTMLButtonElement>(`[data-catalogue-action="${CSS.escape(next.id)}"]`)
+          ?.focus();
+    });
+  }
+  function revealOnScroll(
+    category: string | null,
+    visibleCount: number,
+    total: number,
+    container: HTMLElement,
+  ) {
+    if (
+      visibleCount >= total ||
+      container.scrollHeight - container.scrollTop - container.clientHeight > 80
+    )
+      return;
+    setSectionDisplay((current) => {
+      const previous =
+        current.scopeKey === scopeKey
+          ? (current.counts.get(category) ?? CHOICE_WINDOW)
+          : CHOICE_WINDOW;
+      // Multiple scroll events before rendering must reveal only one new window.
+      if (previous > visibleCount) return current;
+      return {
+        scopeKey,
+        counts: new Map(current.scopeKey === scopeKey ? current.counts : []).set(
+          category,
+          Math.min(total, visibleCount + CHOICE_WINDOW),
+        ),
+      };
+    });
+  }
+  function actionRow(action: CatalogueAction) {
+    return (
+      <ActionChoice
+        key={action.id}
+        action={
+          connected && !checking
+            ? action
+            : {
+                ...action,
+                enabled: false,
+                reason: connected ? 'Checking current choices…' : 'Reconnect to the world.',
+              }
+        }
+        run={run}
+        hideTarget={!full && !!context.targetId}
+        icon={
+          action.icon ??
+          symbol(
+            action.intent.kind === 'command'
+              ? action.intent.command.type
+              : action.intent.kind === 'compose'
+                ? 'talk'
+                : 'ui.lock',
+          )
+        }
+        badge={
+          action.intent.kind === 'command' && action.intent.command.type === 'gather'
+            ? 'action.gather'
+            : undefined
+        }
+      />
+    );
+  }
   const canInvent =
+    browsing &&
     !view.inventionPolicy.playerLocked &&
     connected &&
     !error &&
@@ -209,6 +314,7 @@ export function ActionPicker({
     !full &&
     !!subject &&
     !!picker.entity &&
+    picker.entity.id !== view.player.id &&
     (!query || 'look closer description inspect'.includes(query.toLowerCase()));
   const showOpen =
     !full &&
@@ -225,6 +331,24 @@ export function ActionPicker({
     !!subject &&
     godCharacterAvailability(subject).enableCognition &&
     (!query || 'grant cognition speech'.includes(query.toLowerCase()));
+  const self = !full && context.targetId === view.player.id;
+  const showSpeak = self && (!query || 'speak say whisper shout'.includes(query.toLowerCase()));
+  const showAct = !full && !lostTarget && (!query || 'act action'.includes(query.toLowerCase()));
+  // Quick suggestions contain executable choices; All actions retains known blockers.
+  const suggested = useMemo(() => {
+    const limit = Math.max(
+      0,
+      5 - Number(showSpeak) - Number(showAct) - Number(showInspect) - Number(showOpen),
+    );
+    if (full || searching || !limit) return [];
+    const choices: CatalogueAction[] = [];
+    for (const action of matches) {
+      if (!action.enabled) continue;
+      choices.push(action);
+      if (choices.length === limit) break;
+    }
+    return choices;
+  }, [matches, full, searching, showSpeak, showAct, showInspect, showOpen]);
   const showRevive =
     !full &&
     !lostTarget &&
@@ -261,26 +385,6 @@ export function ActionPicker({
       window.removeEventListener('resize', place);
     };
   }, [picker, matches.length, error]);
-  async function toggle() {
-    const previous = showUnavailable;
-    const next = !previous;
-    setShowUnavailable(next);
-    setSaving(true);
-    setPreferenceError('');
-    try {
-      const result = await post<{ ok: boolean; message?: string; profile: PlayerProfile }>(
-        '/api/profile/preferences',
-        { showUnavailableActions: next },
-      );
-      if (!result.ok) throw new Error(result.message);
-      preference(result.profile);
-    } catch (e) {
-      setShowUnavailable(previous);
-      setPreferenceError(`The unavailable-action preference could not be saved. ${String(e)}`);
-    } finally {
-      setSaving(false);
-    }
-  }
   return (
     <div
       ref={menu}
@@ -291,7 +395,11 @@ export function ActionPicker({
         hadFocus.current = true;
       }}
       onBlurCapture={(event) => {
-        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget))
+        if (
+          event.relatedTarget instanceof Element &&
+          !event.currentTarget.contains(event.relatedTarget) &&
+          !event.relatedTarget.closest('.ol-pullout-popover')
+        )
           hadFocus.current = false;
       }}
       aria-label={`Actions for ${full ? 'all known choices' : (picker.item?.name ?? (subject ? namePhrase(subject, 'definite') : picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName))}`}
@@ -321,9 +429,7 @@ export function ActionPicker({
         if (e.key === 'Enter' && e.target === input.current) {
           e.preventDefault();
           if (!connected || checking || error || lostTarget || result?.key !== key) return;
-          const first =
-            visibleMatches.find((a) => a.enabled) ??
-            (pickups.length > 1 && !full ? pickups.find((a) => a.enabled) : undefined);
+          const first = visibleMatches.find((a) => a.enabled);
           if (first) run(first);
           else if (canInvent) invent(query.trim());
         }
@@ -336,20 +442,17 @@ export function ActionPicker({
         />
         <strong id="contextTitle">
           {full
-            ? 'All known actions'
+            ? 'Action browser'
             : (picker.item?.name ??
               subject?.name ??
               picker.entity?.name ??
               view.presentation.locationName)}
         </strong>
-        <IconButton
-          icon="ui.refresh"
-          label="Refresh actions"
-          disabled={checking}
-          onPress={() => void refresh()}
-        />
         <IconButton icon="ui.close" label="Close action picker" onPress={close} />
       </div>
+      {full && (
+        <p className="ol-meta">Known actions involving what you can currently see or carry.</p>
+      )}
       <div className="ol-search">
         <Icon name="ui.search" size={16} />
         <input
@@ -357,12 +460,9 @@ export function ActionPicker({
           ref={input}
           id="actionSearch"
           aria-label="Find an action"
-          placeholder="Search actions or invent something…"
+          placeholder={browsing ? 'Search actions or invent something…' : 'Search actions…'}
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setVisibleCount(CHOICE_WINDOW);
-          }}
+          onChange={(e) => changeQuery(e.target.value)}
           maxLength={1000}
         />
         {canInvent && (
@@ -380,24 +480,34 @@ export function ActionPicker({
             icon="ui.close"
             label="Clear search"
             onPress={() => {
-              setQuery('');
-              setVisibleCount(CHOICE_WINDOW);
+              changeQuery('');
               input.current?.focus();
             }}
           />
         )}
       </div>
-      {actions.some((a) => !a.enabled) && (
-        <AriaButton
-          className="ol-menu-toggle"
-          aria-pressed={showUnavailable}
-          isDisabled={saving || !connected}
-          onPress={() => void toggle()}
-        >
-          {showUnavailable ? 'Hide Unavailable Actions' : 'Show Unavailable Actions'}
-        </AriaButton>
-      )}
-      <div className="ol-menu-scroll" aria-busy={checking}>
+      <div
+        className="ol-menu-scroll"
+        aria-busy={checking}
+        onScroll={
+          searching
+            ? (event) =>
+                revealOnScroll(null, visibleMatches.length, matches.length, event.currentTarget)
+            : undefined
+        }
+      >
+        {showSpeak && (
+          <AriaButton data-picker-row className="ol-item" onPress={() => compose('speak')}>
+            <WorldIntentIcon mode="speak" />
+            <span>Speak</span>
+          </AriaButton>
+        )}
+        {showAct && (
+          <AriaButton data-picker-row className="ol-item" onPress={() => compose('act')}>
+            <WorldIntentIcon mode="act" />
+            <span>Act</span>
+          </AriaButton>
+        )}
         {(checking || (!result && !error)) && (
           <p role="status" className="ol-meta">
             {result ? 'Checking current choices…' : 'Loading actions…'}
@@ -443,79 +553,81 @@ export function ActionPicker({
             <small className="ol-item-hint">Inspect</small>
           </AriaButton>
         )}
-        {!full && pickups.length > 1 && (
-          <PulloutPicker
-            label="Pick Up"
-            isOpen={openPullout === 'pickup'}
-            onOpenChange={(open) => setOpenPullout(open ? 'pickup' : null)}
-            icon="ui.inventory"
-            placeholder="Search items…"
-            options={pickups.map((a) => ({
-              id: a.id,
-              label: a.label,
-              disabled: !a.enabled || !connected || checking,
-              description: a.enabled ? a.description : a.reason,
-            }))}
-            onSelect={(id) => {
-              const action = matches.find((a) => a.id === id);
-              if (action?.enabled && connected && !checking) run(action);
-            }}
-          />
-        )}
-        {visibleMatches.map((a) => (
-          <ActionChoice
-            key={a.id}
-            action={
-              connected && !checking
-                ? a
-                : {
-                    ...a,
-                    enabled: false,
-                    reason: connected ? 'Checking current choices…' : 'Reconnect to the world.',
-                  }
-            }
-            run={run}
-            expanded={expanded.includes(a.id)}
-            expand={(open) =>
-              setExpanded((current) =>
-                open ? [...new Set([...current, a.id])] : current.filter((id) => id !== a.id),
-              )
-            }
-            icon={
-              a.icon ??
-              symbol(
-                a.intent.kind === 'command'
-                  ? a.intent.command.type
-                  : a.intent.kind === 'compose'
-                    ? 'talk'
-                    : 'ui.lock',
-              )
-            }
-            badge={
-              a.intent.kind === 'command' && a.intent.command.type === 'gather'
-                ? 'action.gather'
-                : undefined
-            }
-          />
-        ))}
-        {visibleMatches.length < listedMatches.length && (
-          <AriaButton
-            className="ol-menu-toggle"
-            onPress={() => {
-              const next = listedMatches[visibleMatches.length];
-              setVisibleCount((current) => current + CHOICE_WINDOW);
-              requestAnimationFrame(() => {
-                if (next)
-                  menu.current
-                    ?.querySelector<HTMLButtonElement>(
-                      `[data-catalogue-action="${CSS.escape(next.id)}"]`,
-                    )
-                    ?.focus();
-              });
-            }}
-          >
-            Show more choices ({visibleMatches.length} of {listedMatches.length} shown)
-          </AriaButton>
+        {searching ? (
+          <>
+            {visibleMatches.map(actionRow)}
+            {visibleMatches.length < matches.length && (
+              <AriaButton
+                data-picker-row
+                className="ol-menu-toggle"
+                onPress={() => showMore(null, visibleMatches, matches, menu.current)}
+              >
+                Show more choices ({visibleMatches.length} of {matches.length} shown)
+              </AriaButton>
+            )}
+          </>
+        ) : (
+          <>
+            {suggested.map(actionRow)}
+            {!!sections.length && <p className="ol-menu-section-label">All actions</p>}
+            {sections.map((section) => {
+              const key = `category:${section.category}`;
+              const count = display?.counts.get(section.category) ?? CHOICE_WINDOW;
+              const open =
+                !!section.actions.length && display?.scopeKey === scopeKey && openPullout === key;
+              const visible = open ? section.actions.slice(0, count) : [];
+              return (
+                <Pullout
+                  key={section.category}
+                  label={section.category}
+                  icon="ui.more"
+                  badge={String(section.actions.length)}
+                  muted={!section.actions.some((action) => action.enabled)}
+                  disabled={!section.actions.length}
+                  isOpen={open}
+                  onOpenChange={(open) => {
+                    if (open && !display) setSectionDisplay({ scopeKey, counts: new Map() });
+                    setOpenPullout((current) => (open ? key : current === key ? null : current));
+                  }}
+                >
+                  <div className="ol-pullout-head">
+                    <strong>{section.category}</strong>
+                    <span className="ol-caption">{section.actions.length} choices</span>
+                  </div>
+                  <div
+                    className="ol-action-category"
+                    data-action-section={section.category}
+                    onScroll={(event) =>
+                      revealOnScroll(
+                        section.category,
+                        visible.length,
+                        section.actions.length,
+                        event.currentTarget,
+                      )
+                    }
+                  >
+                    {visible.map(actionRow)}
+                    {visible.length < section.actions.length && (
+                      <AriaButton
+                        data-picker-row
+                        className="ol-menu-toggle"
+                        onPress={(event) =>
+                          showMore(
+                            section.category,
+                            visible,
+                            section.actions,
+                            event.target.parentElement,
+                          )
+                        }
+                      >
+                        Show more choices ({visible.length} of {section.actions.length} shown)
+                      </AriaButton>
+                    )}
+                  </div>
+                </Pullout>
+              );
+            })}
+          </>
         )}
         {(showRevive || showCognition || showAdd) && !lostTarget && (
           <div className="ol-picker-creator" role="group" aria-label="God mode">
@@ -585,11 +697,6 @@ export function ActionPicker({
             {error}
           </p>
         )}
-        {preferenceError && (
-          <p role="status" className="ol-meta">
-            {preferenceError}
-          </p>
-        )}
         {!error &&
           !checking &&
           !lostTarget &&
@@ -597,42 +704,26 @@ export function ActionPicker({
           !matches.length &&
           (full || !taskMatches) &&
           !showOpen &&
-          !showInspect &&
           !showCognition &&
+          !showInspect &&
+          !showSpeak &&
+          !showAct &&
           !showRevive &&
           !showAdd && (
             <p role="status" className="ol-meta">
-              {query
-                ? view.inventionPolicy.playerLocked
-                  ? 'No matching actions. Player invention is locked.'
-                  : canInvent
-                    ? 'No matching actions. Enter opens an editable invention idea; only Send submits it.'
-                    : 'No matching actions. Clear the search or show unavailable actions.'
-                : actions.length
-                  ? 'Available actions are hidden. Show unavailable actions to see why.'
-                  : 'No permitted actions in this scope. Browse all known actions or describe an action from Character.'}
+              {!browsing
+                ? query
+                  ? 'No matching known actions.'
+                  : 'No known actions here.'
+                : query
+                  ? view.inventionPolicy.playerLocked
+                    ? 'No matching actions. Player invention is locked.'
+                    : canInvent
+                      ? 'No matching actions. Enter opens an editable invention idea; only Send submits it.'
+                      : 'No matching known actions.'
+                  : 'No known actions in the current view.'}
             </p>
           )}
-      </div>
-      <div className="ol-picker-footer">
-        <AriaButton
-          className="ol-menu-toggle"
-          onPress={() => {
-            setFull(!full);
-            setVisibleCount(CHOICE_WINDOW);
-          }}
-        >
-          {full ? 'Back to selected subject' : 'Browse all known actions'}
-        </AriaButton>
-        {describeAction && (full || !picker.context.itemId) && (
-          <AriaButton
-            className="ol-menu-toggle"
-            isDisabled={!connected || lostTarget}
-            onPress={() => describeAction(full ? null : (subject ?? picker.entity))}
-          >
-            Describe an action
-          </AriaButton>
-        )}
       </div>
     </div>
   );

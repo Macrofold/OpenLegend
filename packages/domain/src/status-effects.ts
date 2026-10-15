@@ -19,11 +19,17 @@ import { draftWorld, cloneValue } from './draft.js';
 import { emit, finish, outcome, canonicalJson, contentLabel } from './events.js';
 import { finishPlanAction } from './agency.js';
 import { nextId } from './data.js';
-import { attributeDefinition, readAttribute, setAttribute } from './world-modules.js';
-import { setBodyHealth } from './body-state.js';
-import { reconcileBody } from './living.js';
+import {
+  attributeDefinition,
+  attributeRange,
+  attributeThreshold,
+  readAttribute,
+  setAttribute,
+} from './world-modules.js';
+import { commitHealthChange } from './living.js';
 import { validateBodyPolicy } from './body-policy.js';
 import { validateStatusEffectPolicy } from './status-effect-validation.js';
+import { TIME_EPSILON } from './simulation-time.js';
 import type { Entity, WorldState, WorldEvent, Transition } from './types.js';
 
 export type EntityReference = '$subject' | '$source' | '$actionTarget';
@@ -37,7 +43,15 @@ export type Comparison =
 export type StatusCondition =
   | { all: StatusCondition[] }
   | { any: StatusCondition[] }
-  | { compare: { target: EntityReference; attribute: string; operator: Comparison; value: number } }
+  | {
+      compare: {
+        target: EntityReference;
+        attribute: string;
+        operator: Comparison;
+        value: number;
+        unit?: 'fractionOfRange';
+      };
+    }
   | {
       field: {
         target: EntityReference;
@@ -54,7 +68,26 @@ export type StatusOperation =
       changeRate: { target: EntityReference; attribute: string; amount: number; per: 'gameSecond' };
       when?: StatusCondition;
     }
+  | {
+      changeEvery: {
+        target: EntityReference;
+        attribute: string;
+        amount: number;
+        everyGameSeconds: number;
+        unit: 'attribute' | 'fractionOfRange';
+      };
+      when?: StatusCondition;
+    }
   | { restrictCapabilities: { target: '$subject'; capabilities: Capability[] } };
+
+/** Numeric operations share applicability, target dependencies and condition ownership. */
+export function statusNumericChange(operation: StatusOperation) {
+  return 'changeRate' in operation
+    ? operation.changeRate
+    : 'changeEvery' in operation
+      ? operation.changeEvery
+      : undefined;
+}
 export interface StatusPresentation {
   pose?: 'horizontal';
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
@@ -141,6 +174,17 @@ export function readEntityAttribute(
   if (!entity || !definition) return undefined;
   return entity.actor ? readAttribute(entity.actor, definition) : entity.attributes?.[id]?.value;
 }
+export function statusComparisonValue(
+  world: WorldState,
+  bindings: EffectBindings,
+  comparison: Extract<StatusCondition, { compare: unknown }>['compare'],
+): number {
+  if (comparison.unit !== 'fractionOfRange') return comparison.value;
+  const target = resolve(comparison.target, bindings),
+    definition = attributeDefinition(world, comparison.attribute);
+  if (!target || !definition || definition.schema.kind !== 'number') return comparison.value;
+  return attributeThreshold(target.actor, definition, comparison.value, comparison.unit);
+}
 function compare(
   a: number | string | boolean | undefined,
   operator: Comparison,
@@ -187,9 +231,13 @@ function prepareCondition(condition: StatusCondition): {
   } else if ('compare' in condition) {
     const c = condition.compare;
     immutable &&= Object.isFrozen(c);
-    const { target, attribute, operator, value } = c;
+    const { target, attribute, operator } = c;
     matches = (world, bindings) =>
-      compare(readEntityAttribute(world, resolve(target, bindings), attribute), operator, value);
+      compare(
+        readEntityAttribute(world, resolve(target, bindings), attribute),
+        operator,
+        statusComparisonValue(world, bindings, c),
+      );
   } else if ('hasAttribute' in condition) {
     const c = condition.hasAttribute;
     immutable &&= Object.isFrozen(c);
@@ -281,15 +329,14 @@ export function canActivateStatusEffect(
     matchesStatusCondition(world, bindings, definition.requires) &&
     (!definition.activationCondition ||
       matchesStatusCondition(world, bindings, definition.activationCondition)) &&
-    definition.whileActive.every(
-      (op) =>
-        !('changeRate' in op) ||
-        typeof readEntityAttribute(
-          world,
-          resolve(op.changeRate.target, bindings),
-          op.changeRate.attribute,
-        ) === 'number',
-    )
+    definition.whileActive.every((op) => {
+      const change = statusNumericChange(op);
+      return (
+        !change ||
+        typeof readEntityAttribute(world, resolve(change.target, bindings), change.attribute) ===
+          'number'
+      );
+    })
   );
 }
 export function statusTransitionEvent(
@@ -445,13 +492,14 @@ function applyRate(
   attributeId: string,
   amount: number,
   events: WorldEvent[],
+  feedback: { silent?: boolean; cause?: string } = { silent: true },
 ): void {
   const d = attributeDefinition(world, attributeId)!,
     prior = readEntityAttribute(world, entity, attributeId);
   if (d.schema.kind !== 'number' || typeof prior !== 'number') return;
   const value = Math.max(d.schema.min, Math.min(d.schema.max, prior + amount));
   if (value === prior) return;
-  setAttribute(world, entity, d, value, events);
+  setAttribute(world, entity, d, value, events, 'now', feedback);
   reconcileConditions(world, entity, events);
 }
 /** A conservative participation check, not a condition evaluator. Native rate operations
@@ -480,11 +528,12 @@ export function mayAdvanceStatusEffects(world: WorldState, entity: Entity): bool
       (definition.enabled &&
         !!definition.automaticActivation &&
         (!definition.occupiesAction || !!entity.actor) &&
-        definition.whileActive.every(
-          (operation) =>
-            !('changeRate' in operation) ||
-            typeof readEntityAttribute(world, entity, operation.changeRate.attribute) === 'number',
-        )),
+        definition.whileActive.every((operation) => {
+          const change = statusNumericChange(operation);
+          return (
+            !change || typeof readEntityAttribute(world, entity, change.attribute) === 'number'
+          );
+        })),
   );
   if (reusable) statusEligibility.set(entity, { definitions, manifest, eligible });
   return eligible;
@@ -510,15 +559,14 @@ export function reconcileStatusEffects(
     let bindings = effectBindings(world, entity, state);
     if (
       state?.active &&
-      d.whileActive.some(
-        (op) =>
-          'changeRate' in op &&
-          typeof readEntityAttribute(
-            world,
-            resolve(op.changeRate.target, bindings),
-            op.changeRate.attribute,
-          ) !== 'number',
-      )
+      d.whileActive.some((op) => {
+        const change = statusNumericChange(op);
+        return (
+          !!change &&
+          typeof readEntityAttribute(world, resolve(change.target, bindings), change.attribute) !==
+            'number'
+        );
+      })
     ) {
       deactivateStatusEffect(world, entity, d, events, 'target-unavailable');
       continue;
@@ -551,6 +599,19 @@ export interface StatusRateInterval {
   episode: string;
   definition: StatusEffectDefinition;
   rates: Array<{ targetId: string; attribute: string; rate: number }>;
+  periodic: Array<{
+    targetId: string;
+    attribute: string;
+    amount: number;
+    everyGameSeconds: number;
+    unit: 'attribute' | 'fractionOfRange';
+  }>;
+}
+
+/** Cadence is measured by the saved episode, independent of publication and motion slices.
+ * Use the same progress tolerance as the native interval owner at exact endpoints. */
+export function periodicChangeCount(elapsed: number, every: number): number {
+  return Math.floor((elapsed + TIME_EPSILON) / every);
 }
 /** Conditions use one starting state, including cross-target rate predicates. */
 export function prepareStatusRates(world: WorldState, entity: Entity): StatusRateInterval[] {
@@ -561,18 +622,23 @@ export function prepareStatusRates(world: WorldState, entity: Entity): StatusRat
     if (!state?.active) continue;
     const bindings = effectBindings(world, entity, state);
     const rates: StatusRateInterval['rates'] = [];
+    const periodic: StatusRateInterval['periodic'] = [];
     for (const op of definition.whileActive) {
-      if (!('changeRate' in op) || (op.when && !matchesStatusCondition(world, bindings, op.when)))
+      const change = statusNumericChange(op);
+      if (!change || ('when' in op && op.when && !matchesStatusCondition(world, bindings, op.when)))
         continue;
-      const target = resolve(op.changeRate.target, bindings);
-      if (target && typeof readEntityAttribute(world, target, op.changeRate.attribute) === 'number')
+      const target = resolve(change.target, bindings);
+      if (!target || typeof readEntityAttribute(world, target, change.attribute) !== 'number')
+        continue;
+      if ('changeRate' in op)
         rates.push({
           targetId: target.id,
-          attribute: op.changeRate.attribute,
+          attribute: change.attribute,
           rate: op.changeRate.amount,
         });
+      else if ('changeEvery' in op) periodic.push({ ...op.changeEvery, targetId: target.id });
     }
-    result.push({ entityId: entity.id, episode: state.episode, definition, rates });
+    result.push({ entityId: entity.id, episode: state.episode, definition, rates, periodic });
   }
   return result;
 }
@@ -592,7 +658,7 @@ export function crossStatusReferences(
         if (state.actionTargetId !== id) referenced.add(state.actionTargetId);
       }
   for (const interval of status)
-    for (const { targetId } of interval.rates)
+    for (const { targetId } of [...interval.rates, ...interval.periodic])
       if (targetId !== interval.entityId) referenced.add(targetId);
   return referenced;
 }
@@ -614,6 +680,8 @@ export interface BodyRateInterval {
   attribute: string;
   amount: number;
   causes: string[];
+  /** Separate actual occurrences share the existing body-before-action phase. */
+  periodicChanges?: Array<{ amount: number; cause: string }>;
 }
 export function applyBodyRate(
   world: WorldState,
@@ -634,28 +702,21 @@ export function applyBodyRate(
     return;
   const prior = readAttribute(actor, definition);
   if (typeof prior !== 'number') return;
-  const value = Math.max(
-    definition.schema.min,
-    Math.min(definition.schema.max, prior + rate.amount),
-  );
-  if (value === prior) return;
-  setBodyHealth(
-    actor,
-    Math.max(
-      0,
-      Math.min(
-        actor.body.maxHealth,
-        actor.health +
-          rate.amount * (actor.body.maxHealth / (definition.schema.max - definition.schema.min)),
-      ),
-    ),
-  );
-  reconcileBody(
-    world,
-    target,
-    events,
-    rate.causes.length === 1 ? rate.causes[0]! : 'combined-status-rates',
-  );
+  const range = attributeRange(actor, definition);
+  const value = Math.max(range.min, Math.min(range.max, prior + rate.amount));
+  if (value !== prior) {
+    commitHealthChange(
+      world,
+      target,
+      rate.amount * (actor.body.maxHealth / (range.max - range.min)),
+      rate.causes.length === 1 ? rate.causes[0]! : 'combined-status-rates',
+      events,
+    );
+  }
+  for (const change of rate.periodicChanges ?? []) {
+    if (!actor.alive || actor.incapacitated) break;
+    commitHealthChange(world, target, change.amount, change.cause, events);
+  }
 }
 export function integrateStatusRates(
   world: WorldState,
@@ -724,12 +785,23 @@ export function integrateStatusRates(
       .filter(([, flow]) => flow.drained || flow.signs.size > 1 || flow.causes !== undefined)
       .map(([key]) => key),
   );
+  const due: Array<{
+    interval: StatusRateInterval;
+    change: StatusRateInterval['periodic'][number];
+    count: number;
+  }> = [];
   // Finish captured accounting before health can end any source/target episode.
   for (const interval of active) {
     const entity = world.entities[interval.entityId]!;
     const state = entity.statusEffects![interval.definition.id]!;
     chargeStatusWork(world, entity, interval.definition, state);
     chargeWork({ effects: interval.definition.whileActive.length });
+    for (const change of interval.periodic) {
+      const count =
+        periodicChangeCount(state.elapsedSeconds + seconds, change.everyGameSeconds) -
+        periodicChangeCount(state.elapsedSeconds, change.everyGameSeconds);
+      if (count > 0) due.push({ interval, change, count });
+    }
     state.elapsedSeconds += seconds;
   }
   for (const interval of active) {
@@ -755,6 +827,37 @@ export function integrateStatusRates(
         causes: [...flow.causes!].sort(),
       });
     } else applyRate(world, target, flow.attribute, flow.rate * seconds, events);
+  }
+  const healthByTarget = new Map(health.map((rate) => [rate.targetId, rate]));
+  for (const { interval, change, count } of due) {
+    const target = world.entities[change.targetId],
+      definition = attributeDefinition(world, change.attribute);
+    if (!target || !definition || definition.schema.kind !== 'number') continue;
+    const bounds = target.actor ? attributeRange(target.actor, definition) : definition.schema;
+    const range = bounds.max - bounds.min;
+    const amount = change.amount * (change.unit === 'fractionOfRange' ? range : 1);
+    const cause = interval.definition.lifecycleCause ?? interval.definition.id;
+    if (definition.implementation === 'native-health-v1' && target.actor?.body) {
+      let rate = healthByTarget.get(target.id);
+      if (!rate) {
+        rate = { targetId: target.id, attribute: change.attribute, amount: 0, causes: [] };
+        healthByTarget.set(target.id, rate);
+        health.push(rate);
+      }
+      const rawAmount =
+        change.unit === 'fractionOfRange'
+          ? change.amount * target.actor.body.maxHealth
+          : (amount * target.actor.body.maxHealth) / range;
+      for (let occurrence = 0; occurrence < count; occurrence++) {
+        chargeWork({ effects: 1 });
+        (rate.periodicChanges ??= []).push({ amount: rawAmount, cause });
+      }
+    } else {
+      for (let occurrence = 0; occurrence < count; occurrence++) {
+        chargeWork({ effects: 1 });
+        applyRate(world, target, change.attribute, amount, events, { cause });
+      }
+    }
   }
   // The kernel applies body rates in its existing ordered body/action phase. Captured
   // accounting above cannot recreate a live invocation after another body's death.

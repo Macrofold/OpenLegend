@@ -44,8 +44,12 @@ it('uses the same identity and ordering for heartbeats, hiding and explicit Resu
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
   });
-  const { setWorldPaused, startPresence } = await import('./api.js');
-  const stop = startPresence();
+  const { acceptAccess, setWorldPaused, startPresence } = await import('./api.js');
+  const initial = publicView();
+  if (!initial.access) throw new Error('Missing fixture access');
+  acceptAccess(initial);
+  const stop = startPresence(initial.access.scope);
+  acceptAccess({ ...initial, access: { ...initial.access, scope: 'scope:2' } });
   page.visibilityState = 'hidden';
   events.get('visibilitychange')!();
   await setWorldPaused(false);
@@ -53,9 +57,12 @@ it('uses the same identity and ordering for heartbeats, hiding and explicit Resu
   const hidden = JSON.parse(await (beacons.mock.calls[0]![1] as Blob).text());
   const resumed = JSON.parse(send.mock.calls[1]![1].body);
   expect(heartbeat).toMatchObject({ visible: true, sequence: 1 });
+  expect(send.mock.calls[0]![1].headers['X-OL-Scope']).toBe('scope:1');
+  expect(beacons.mock.calls[0]![0]).toContain('scope=scope:1');
   expect(hidden).toEqual({ clientId: heartbeat.clientId, visible: false, sequence: 2 });
   expect(resumed).toEqual({ paused: false, clientId: heartbeat.clientId, presenceSequence: 3 });
   stop();
+  expect(beacons.mock.calls.at(-1)![0]).toContain('scope=scope:1');
 });
 
 it('reports lost window focus immediately and does not let a visible-tab heartbeat override it', async () => {
@@ -79,7 +86,7 @@ it('reports lost window focus immediately and does not let a visible-tab heartbe
       heartbeat = callback;
     },
   });
-  const stop = (await import('./api.js')).startPresence();
+  const stop = (await import('./api.js')).startPresence('scope:1');
   events.get('blur')!();
   expect(JSON.parse(await (beacons.mock.calls[0]![1] as Blob).text())).toMatchObject({
     visible: false,

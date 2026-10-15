@@ -381,14 +381,16 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
   return result;
 }
 /** Report foreground attention independently of the server's saved pause policy.
- * The open event stream proves connection even if background heartbeats stop. */
-export function startPresence(): () => void {
+ * The open event stream proves connection even if background heartbeats stop.
+ * Capture accepted control so cleanup cannot withdraw a successor's presence.
+ * docs/world-presentation.md#camera-and-settings */
+export function startPresence(scope: string): () => void {
   let focused = document.hasFocus();
   const send = (visible: boolean, beacon = false): void => {
     const body = { clientId: tabClientId(), visible, sequence: ++presenceSequence };
     if (beacon) {
       const queued = navigator.sendBeacon(
-        `/api/presence?client=${tabClientId()}&scope=${viewScope}`,
+        `/api/presence?client=${tabClientId()}&scope=${scope}`,
         new Blob([JSON.stringify(body)], { type: 'application/json' }),
       );
       if (queued) return;
@@ -399,7 +401,7 @@ export function startPresence(): () => void {
       headers: {
         'Content-Type': 'application/json',
         'X-OL-Client': tabClientId(),
-        'X-OL-Scope': viewScope,
+        'X-OL-Scope': scope,
       },
       body: JSON.stringify(body),
       keepalive: true,

@@ -34,7 +34,7 @@ export function Actions({
   return (
     <div className="ol-actions">
       {actions.map((a) => (
-        <div key={a.id}>
+        <div key={a.id} title={a.detail}>
           <Button size="sm" disabled={!a.enabled || !connected} onPress={() => command(a)}>
             {a.label}
           </Button>
@@ -44,12 +44,6 @@ export function Actions({
             </p>
           ))}
           {!a.enabled && a.reason && <p className="ol-caption">{a.reason}</p>}
-          {a.detail && (
-            <details>
-              <summary>Stats and details</summary>
-              <p className="ol-caption">{a.detail}</p>
-            </details>
-          )}
         </div>
       ))}
     </div>

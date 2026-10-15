@@ -6,11 +6,18 @@ import {
   localHour,
   readEntityAttribute,
   matchesStatusCondition,
+  periodicChangeCount,
+  statusComparisonValue,
   type EffectBindings,
   type StatusCondition,
   type StatusRateInterval,
 } from './status-effects.js';
-import { attributeDefinition, readAttribute } from './world-modules.js';
+import {
+  attributeDefinition,
+  attributeRange,
+  attributeThreshold,
+  readAttribute,
+} from './world-modules.js';
 import type { WorldState } from './types.js';
 
 /** Numeric progress guard, not a biological tick. docs/simulation-time.md#native-interval-contract */
@@ -96,15 +103,18 @@ function conditionTransition(
   const value = readEntityAttribute(world, target, c.attribute);
   if (!target || typeof value !== 'number') return { matches, afterSeconds: Infinity };
   const rate = rates.get(target.id)?.get(c.attribute) ?? 0;
-  const schema = attributeDefinition(world, c.attribute)?.schema;
+  const definition = attributeDefinition(world, c.attribute);
+  const schema =
+    definition?.schema.kind === 'number'
+      ? target.actor
+        ? attributeRange(target.actor, definition)
+        : definition.schema
+      : undefined;
+  const threshold = statusComparisonValue(world, bindings, c);
   // A saturated outward rate cannot change a predicate, including equality.
-  if (
-    !rate ||
-    (schema?.kind === 'number' &&
-      ((value <= schema.min && rate < 0) || (value >= schema.max && rate > 0)))
-  )
+  if (!rate || (schema && ((value <= schema.min && rate < 0) || (value >= schema.max && rate > 0))))
     return { matches, afterSeconds: Infinity };
-  if (value === c.value) {
+  if (value === threshold) {
     const after =
       c.operator === 'equal'
         ? false
@@ -123,7 +133,7 @@ function conditionTransition(
           : Math.max(TIME_EPSILON, (2 * Math.abs(value) * Number.EPSILON) / Math.abs(rate)),
     };
   }
-  return { matches, afterSeconds: untilThreshold(value, rate, c.value) };
+  return { matches, afterSeconds: untilThreshold(value, rate, threshold) };
 }
 export function statusBoundary(
   world: WorldState,
@@ -188,10 +198,20 @@ export function statusBoundary(
         continue;
       }
       const bindings = effectBindings(world, entity, state);
+      for (const operation of d.whileActive) {
+        if (!('changeEvery' in operation)) continue;
+        if (operation.when && !matchesStatusCondition(world, bindings, operation.when)) continue;
+        const every = operation.changeEvery.everyGameSeconds;
+        const after =
+          (periodicChangeCount(state.elapsedSeconds, every) + 1) * every - state.elapsedSeconds;
+        const dueAt = world.simTime + after;
+        result = Math.min(result, after);
+        at(dueAt);
+      }
       const conditions = [
         d.requires,
         d.automaticDeactivation,
-        ...d.whileActive.map((op) => ('changeRate' in op ? op.when : undefined)),
+        ...d.whileActive.map((op) => ('when' in op ? op.when : undefined)),
       ];
       for (const condition of conditions)
         if (condition)
@@ -225,16 +245,16 @@ export function attributeBoundary(world: WorldState, rates: AttributeRates): num
         : entity.attributes?.[d.id]?.value;
       const rate = values.get(d.id) ?? 0;
       if (typeof value !== 'number' || !rate) continue;
-      const thresholds = [d.schema.min, d.schema.max];
+      const range = attributeRange(entity.actor, d);
+      const thresholds = [range.min, range.max];
       if (d.concern) {
-        thresholds.push(d.concern.below);
+        const below = attributeThreshold(entity.actor, d, d.concern.below, d.concern.unit);
+        thresholds.push(below);
         if (d.concern.mode === 'latched')
-          thresholds.push(Math.min(d.schema.max, d.concern.below + d.concern.recoveryMargin!));
+          thresholds.push(Math.min(range.max, below + d.concern.recoveryMargin!));
       }
       for (const t of thresholds)
-        if (
-          !(value === t && ((t === d.schema.min && rate < 0) || (t === d.schema.max && rate > 0)))
-        )
+        if (!(value === t && ((t === range.min && rate < 0) || (t === range.max && rate > 0))))
           result = Math.min(result, untilThreshold(value, rate, t));
     }
   }

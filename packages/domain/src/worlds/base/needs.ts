@@ -12,8 +12,6 @@ function rate(id: string): number {
 }
 export const WILDERNESS_NEEDS = {
   fullnessPerSecond: rate('wilderness:metabolism'),
-  starvationDamagePerSecond: rate('wilderness:starvation'),
-  exhaustionDamagePerSecond: rate('wilderness:exhaustion'),
 } as const;
 export const WILDERNESS_NEEDS_GUIDE =
-  'Base defaults: metabolism lowers applicable nourishment during sleep as well as waking; starvation and awake exhaustion change bodily health quietly. All active rates come from the current saved status definitions, in attribute units per game second. These defaults do not override creator edits.';
+  'Base defaults: metabolism lowers applicable nourishment during sleep as well as waking; starvation and awake exhaustion damage bodily health at the cadence in the current saved status definitions. Each hit is a fraction of maximum health, rounded to whole points with a minimum of one. These defaults do not override creator edits.';

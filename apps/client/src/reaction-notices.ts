@@ -11,16 +11,27 @@ const GESTURES: [RegExp, string][] = [
   [/\bslaps\b/, 'Slaps'],
 ];
 
-/** Overhead wording for an accepted, viewer-perceived gesture. Built only from the verb and
- * this viewer's own labels (the player, or the target's projected name), never from the
+/** Descriptive expression text is already viewer-permitted. Native gesture wording uses
+ * this viewer's own labels (the player, or the target's projected name), never the
  * event text's target name, which can be a name this viewer has not learned.
  * docs/ui-design-brief.md#future-character-reactions */
 export function reactionNotice(
   view: GameView,
   event: PublicEvent,
-): { text: string; actor: string } | null {
+): { text: string; actor?: string } | null {
   if (event.type !== 'expression' || !event.actorId) return null;
-  const actor = view.entities.find((entity) => entity.id === event.actorId);
+  const actor =
+    event.actorId === view.player.id
+      ? view.player
+      : view.entities.find((entity) => entity.id === event.actorId);
+  // The server has already captured this viewer's permitted wording at occurrence time.
+  if (actor && event.descriptive)
+    return {
+      text:
+        event.actorId === view.player.id
+          ? event.text.replace(/^(?:I|You) /, () => `${actor.name} `)
+          : event.text,
+    };
   const gesture = GESTURES.find(([pattern]) => pattern.test(event.text))?.[1];
   if (!actor || !gesture) return null;
   const target = !event.targetId

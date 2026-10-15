@@ -50,7 +50,7 @@ export function statusDefinitionConditions(
   }
   for (let index = 0; index < definition.whileActive.length; index++) {
     const operation = definition.whileActive[index]!;
-    if ('changeRate' in operation && operation.when)
+    if ('when' in operation && operation.when)
       conditions.push({ condition: operation.when, sourcePath: `whileActive[${index}].when` });
   }
   return conditions;

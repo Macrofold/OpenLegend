@@ -20,6 +20,7 @@ import { goalTexts, replaceGoals } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   attributeDefinition,
+  rawHealthValue,
   readAttribute,
   setAttribute,
   validateAttributeValue,
@@ -27,7 +28,7 @@ import {
   HOST_IMPLEMENTATIONS,
 } from './world-modules.js';
 import { bodyPolicy } from './body-policy.js';
-import { canSpeak, hasMemory, reconcileBody } from './living.js';
+import { canSpeak, hasMemory, reconcileBody, recordHealthChange } from './living.js';
 import { draftWorld } from './draft.js';
 import { addItem, TRAIT_BANK } from './data.js';
 import { setBodyHealth } from './body-state.js';
@@ -197,7 +198,7 @@ export function reviveActor(
   delete actor.combatReadyAt;
   actor.alive = true;
   actor.incapacitated = false;
-  setBodyHealth(actor, actor.body!.maxHealth);
+  setBodyHealth(world, actor, actor.body!.maxHealth);
   const events: WorldEvent[] = [];
   for (const id of bodyPolicy(world)!.revival.fillToMaximum) {
     const definition = attributeDefinition(world, id)!;
@@ -206,7 +207,9 @@ export function reviveActor(
       typeof readAttribute(actor, definition) === 'number' &&
       definition.implementation !== 'native-health-v1'
     )
-      setAttribute(world, entity, definition, definition.schema.max, events);
+      setAttribute(world, entity, definition, definition.schema.max, events, 'now', {
+        cause: 'creator revival',
+      });
   }
   actor.action = null;
   actor.planGeneration++;
@@ -307,9 +310,12 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
         typeof readAttribute(current.actor!, definition) !== 'number'
       )
         return true;
-      return (
-        !Number.isFinite(value) || value < definition.schema.min || value > definition.schema.max
-      );
+      try {
+        validateAttributeValue(definition, value, current.actor);
+        return false;
+      } catch {
+        return true;
+      }
     }) ||
     !traits
   )
@@ -424,6 +430,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
 
   const world = draftWorld(original);
   const entity = world.entities[draft.actorId]!;
+  const healthBefore = entity.actor!.health;
   const events: WorldEvent[] = [];
   const goals = draft.person.goals.map((goal) => goal.trim());
   const identityChanged =
@@ -472,12 +479,8 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
         );
       }
       if (definition.implementation === 'native-health-v1' && definition.schema.kind === 'number')
-        setBodyHealth(
-          entity.actor!,
-          (value - definition.schema.min) *
-            (entity.actor!.body!.maxHealth / (definition.schema.max - definition.schema.min)),
-        );
-      else setAttribute(world, entity, definition, value, events);
+        setBodyHealth(world, entity.actor!, rawHealthValue(entity.actor!, definition, value));
+      else setAttribute(world, entity, definition, value, events, 'now', { cause: 'creator edit' });
     }
   }
   if (inventoryChanged && inventory) {
@@ -506,7 +509,10 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       if (quantity > 0) addItem(world, draft.actorId, definitionId, quantity);
   }
   // Creator health edits share the native body owner: death, incapacity and revisions.
-  if (healthChanged) reconcileBody(world, entity, events, 'creator-edit');
+  if (healthChanged) {
+    reconcileBody(world, entity, events, 'creator-edit');
+    recordHealthChange(world, entity, healthBefore, 'creator-edit', events);
+  }
   reconcileConditions(world, entity, events);
   migrateCognition(world);
   const invalidated = new Set<string>();

@@ -328,11 +328,12 @@
       "interruptOn": [],
       "whileActive": [
         {
-          "changeRate": {
+          "changeEvery": {
             "target": "$subject",
             "attribute": "wilderness:health",
-            "amount": -0.009,
-            "per": "gameSecond"
+            "amount": -0.03,
+            "everyGameSeconds": 300,
+            "unit": "fractionOfRange"
           }
         }
       ]
@@ -397,11 +398,12 @@
       "interruptOn": [],
       "whileActive": [
         {
-          "changeRate": {
+          "changeEvery": {
             "target": "$subject",
             "attribute": "wilderness:health",
-            "amount": -0.003,
-            "per": "gameSecond"
+            "amount": -0.01,
+            "everyGameSeconds": 300,
+            "unit": "fractionOfRange"
           }
         }
       ]

@@ -769,17 +769,6 @@ export function canUseInventory(service: WorldService, scope: RequestScope): boo
   );
 }
 
-/** Explicit permitted-child projection shared by the compact HUD and paginated browser. */
-export function inventoryItemView(
-  service: WorldService,
-  scope: RequestScope,
-  item: ItemInstance,
-): InventoryItemView {
-  return projectInventoryItem(service, scope, item, (command) =>
-    service.previewCommand(command, scope.actorId),
-  );
-}
-
 /** Split lots can offer the same native preparation. Reuse its admission result
  * only within this synchronous batch, with the same world and controlling actor. */
 export function inventoryItemsView(
@@ -797,15 +786,17 @@ export function inventoryItemsView(
     }
     return result;
   };
-  return items.map((item) => projectInventoryItem(service, scope, item, preview));
+  return items.map((item) => inventoryItemView(service, scope, item, preview));
 }
 
-function projectInventoryItem(
+/** Shared item choices; list menus need no comparison, packing or detailed method prose. */
+export function inventoryItemChoices(
   service: WorldService,
   scope: RequestScope,
   item: ItemInstance,
-  preview: (command: ActionOption['command']) => ReturnType<WorldService['previewCommand']>,
-): InventoryItemView {
+  preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
+    service.previewCommand(command, scope.actorId),
+) {
   const world = service.world,
     player = world.entities[scope.actorId]!,
     actor = player.actor!;
@@ -835,22 +826,13 @@ function projectInventoryItem(
 
   const definition = world.itemDefinitions[item.definitionId]!;
   const actions: ActionOption[] = [];
-  let recipeRecord: InventoryItemView['recipeRecord'];
+  let recordRead: ReturnType<typeof readRecipeRecord> | undefined;
   if (
     definition.recipeRecord &&
     currentInventoryInspection(world, player.id)?.itemIds.includes(item.id)
   ) {
-    const read = readRecipeRecord(world, player.id, item.id);
+    const read = (recordRead = readRecipeRecord(world, player.id, item.id));
     if ('recipe' in read) {
-      const known = world.knowledge[player.id]?.some(
-        (knowledge) => knowledge.recipeId === read.recipe.id,
-      );
-      recipeRecord = {
-        method: recipeDetailsView(world, read.recipe, (id) => quantityOf(world, player.id, id)),
-        message: known
-          ? 'This exact method is already known. Reading again grants no items or additional knowledge.'
-          : 'This record discloses one exact method. Choose Learn this method to retain it; manufacture still requires real materials and work.',
-      };
       const command = {
         type: 'learn-record' as const,
         itemId: item.id,
@@ -858,17 +840,17 @@ function projectInventoryItem(
         placementRevision: item.placementRevision!,
         recordPin: definitionPin(definition),
       };
-      const preview = service.previewCommand(command, player.id);
+      const availability = preview(command);
       actions.push(
         action(
           `learn-record-${item.id}`,
           'Learn this method',
           command,
-          preview.ok,
-          preview.ok ? undefined : preview.message,
+          availability.ok,
+          availability.ok ? undefined : availability.message,
         ),
       );
-    } else recipeRecord = { message: read.message };
+    }
   }
   const workReason = inventoryWorkReason(world, player.id, item.id);
   if (definition.portable === true && accessiblePossession(world, player.id, item.id)) {
@@ -878,7 +860,7 @@ function projectInventoryItem(
   }
   if (definition.equipment && accessiblePossession(world, player.id, item.id)) {
     const command: CommandInput = { type: 'equip', itemId: item.id };
-    const availability = service.previewCommand(command, scope.actorId);
+    const availability = preview(command);
     actions.push(
       action(`equip-${item.id}`, 'Equip', command, availability.ok, availability.message),
     );
@@ -942,6 +924,43 @@ function projectInventoryItem(
         'Finish current work first.',
       ),
     );
+  return {
+    actions: actions.filter((option) =>
+      nativeCommandSupported(world, nativeCommandKind(option.command.type)),
+    ),
+    recordRead,
+  };
+}
+
+/** Explicit permitted-child projection shared by the compact HUD and paginated browser. */
+export function inventoryItemView(
+  service: WorldService,
+  scope: RequestScope,
+  item: ItemInstance,
+  preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
+    service.previewCommand(command, scope.actorId),
+): InventoryItemView {
+  const world = service.world,
+    player = world.entities[scope.actorId]!,
+    actor = player.actor!,
+    definition = world.itemDefinitions[item.definitionId]!;
+  const { actions, recordRead } = inventoryItemChoices(service, scope, item, preview);
+  let recipeRecord: InventoryItemView['recipeRecord'];
+  if (recordRead) {
+    if ('recipe' in recordRead) {
+      const known = world.knowledge[player.id]?.some(
+        (knowledge) => knowledge.recipeId === recordRead.recipe.id,
+      );
+      recipeRecord = {
+        method: recipeDetailsView(world, recordRead.recipe, (id) =>
+          quantityOf(world, player.id, id),
+        ),
+        message: known
+          ? 'This exact method is already known. Reading again grants no items or additional knowledge.'
+          : 'This record discloses one exact method. Choose Learn this method to retain it; manufacture still requires real materials and work.',
+      };
+    } else recipeRecord = { message: recordRead.message };
+  }
   const declaration = world.entities[item.id]!.declaredOwner;
   const characteristics = itemCharacteristics(world, definition).map(({ key: id, ...fact }) => ({
     id,
@@ -1036,8 +1055,6 @@ function projectInventoryItem(
     ),
     equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
-    actions: actions.filter((option) =>
-      nativeCommandSupported(world, nativeCommandKind(option.command.type)),
-    ),
+    actions,
   };
 }

@@ -6,6 +6,8 @@ import type { EventDisclosurePolicy } from '../../event-observation.js';
  * Participant/private producers still own deliberate grants (for example barter terms).
  */
 const fields: Record<string, readonly string[]> = {
+  expression: ['mechanical', 'descriptive'],
+  'attribute-changed': ['attributeId', 'definitionVersion', 'before', 'after', 'unit'],
   gathered: ['definitionId', 'quantity'],
   ate: ['definitionId'],
   crafted: ['recipeId'],

@@ -1374,11 +1374,18 @@ async function initializeGameServer(
           '/api/control',
           '/api/conversation',
           '/api/commitment',
+          '/api/expression',
           '/api/chat',
           '/api/chat/retry',
           '/api/invent',
           '/api/world-agent/messages',
         ].includes(url.pathname);
+        if (url.pathname === '/api/actions') {
+          // A synchronous menu read needs current durable permission, not a wait
+          // for unrelated saves or commands. All guards below run after this
+          // await; catalogue construction and disclosure have no further await.
+          await store.authority.assertFence({ scope, capability: required, controlling, now });
+        }
         const held = operations.maintenanceBlock(url.pathname, scope);
         if (held) return send(response, 409, { ok: false, code: 'maintenance', message: held });
         service.assertScope(scope, required, controlling);
@@ -3218,6 +3225,21 @@ async function initializeGameServer(
                 ),
               );
             }
+            case '/api/expression': {
+              const value = z
+                .object({
+                  requestId: requestIdSchema,
+                  text: z.string().trim().min(1).max(500),
+                  targetId: requestIdSchema.optional(),
+                })
+                .strict()
+                .parse(body);
+              return send(
+                response,
+                202,
+                await director.submitExpression(value.requestId, value.text, value.targetId, scope),
+              );
+            }
             case '/api/chat':
             case '/api/invent': {
               const value = interaction.parse(body);
@@ -3252,12 +3274,14 @@ async function initializeGameServer(
         // Autosave settings and failure acknowledgment are short writes without a service entry
         // point, so they run fenced in the lane and are ordered after any revocation.
         return [
+          '/api/actions',
           '/api/saves/list',
           '/api/saves/receipt',
           '/api/saves/load',
           '/api/saves/create',
           '/api/saves/delete',
           '/api/world-agent/messages',
+          '/api/expression',
           '/api/chat',
           '/api/chat/retry',
           '/api/invent',

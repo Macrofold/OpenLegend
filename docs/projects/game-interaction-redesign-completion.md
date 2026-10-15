@@ -30,6 +30,24 @@ The PR target was refreshed from `https://github.com/Macrofold/OpenLegend.git`:
 current-format storage and authored terrain contracts with this branch's paired
 inventory, scoped drafts and exact original-request recovery.
 
+**October 15 target refresh:** the PR target advanced to
+`https://github.com/Macrofold/OpenLegend.git` `origin/main` at
+`062724cdd0312753c40b99b407cf4652ac3ab26a`. It contains the UI implementation
+through `7da4449fb` as squash `b2c8e2eee`, then newer focus-pause feedback and
+player action controls. Preserve those additions and this branch's later editor,
+completed-task and qualification changes without rewriting published history.
+A comparison against the already integrated UI source makes the conflict intent
+unambiguous: keep both independent changelog additions and each later change at
+its owner. No standard starting-world initializer or saved development world is
+replaced; base/solo content is identical across this reconciliation, while the
+integrated current need/health rules retain their own authored definitions.
+The existing untracked environment file is byte-identical to main's new tracked
+file and is preserved unchanged. Static/build checks and the fourteen focused
+transport/draft checks cover reconciliation; no browser run is part of the merge.
+The separate final UI continuation adapts its obsolete unavailable-action toggle
+expectation to main's accepted always-visible known blocked actions, then reuses
+unchanged native ownership/settlement evidence.
+
 Finish in this order:
 
 1. Inspect the existing captures and distinguish visible content from controls

@@ -774,6 +774,8 @@ export class WildernessScene implements WorldRenderer {
       Math.max(1, Math.round(rect.width)),
       Math.max(1, Math.round(rect.height)),
     );
+    // Resizing clears the canvas even while focus loss suspends automatic rendering.
+    this.app.renderNextFrame = true;
   }
   private texture(source: HTMLCanvasElement): pc.Texture {
     const texture = new pc.Texture(this.app.graphicsDevice, {

@@ -49,6 +49,29 @@ export function retainActionOrder(previous: CatalogueAction[], next: CatalogueAc
   ];
 }
 
+/** Supplied category labels organize exact choices without inventing a second taxonomy. */
+export function actionSections(actions: CatalogueAction[], categories: string[]) {
+  const sections = new Map<string, { all: CatalogueAction[]; individual: CatalogueAction[] }>();
+  for (const action of actions) {
+    let section = sections.get(action.category);
+    if (!section) {
+      section = { all: [], individual: [] };
+      sections.set(action.category, section);
+    }
+    const takeAll =
+      action.intent.kind === 'command' &&
+      action.intent.command.type === 'pickup' &&
+      !action.intent.command.itemId;
+    (takeAll ? section.all : section.individual).push(action);
+  }
+  for (const category of categories)
+    if (!sections.has(category)) sections.set(category, { all: [], individual: [] });
+  return [...sections].map(([category, section]) => ({
+    category,
+    actions: section.all.length ? [...section.all, ...section.individual] : section.individual,
+  }));
+}
+
 export function actionCommitment(action: CatalogueAction): string | undefined {
   if (!action.enabled) return action.reason ?? 'Unavailable right now.';
   const facts = action.facts ?? [];

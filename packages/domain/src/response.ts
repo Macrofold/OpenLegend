@@ -1,3 +1,4 @@
+import { accessiblePossession } from './object-access.js';
 import { subjectNarration, presentVerb, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
@@ -1100,4 +1101,82 @@ export function commitActorResponse(
   for (const oldId of Object.keys(receipts).slice(0, -RESPONSE_RECEIPT_LIMIT))
     delete receipts[oldId];
   return finish(world, events, overall);
+}
+
+/** Player-authored fiction has one event, never an executable command. Participants stay
+ * structured so a witness cannot learn a target's hidden name from generated prose.
+ * docs/narration-and-conversations.md#player-speak-and-descriptive-act */
+export function recordPlayerExpression(
+  input: WorldState,
+  id: string,
+  actorId: string,
+  predicate: string,
+  targetId?: string,
+): Transition {
+  const digest = canonicalJson({ actorId, predicate, targetId });
+  const previous = input.responseReceipts?.[id];
+  if (previous)
+    return {
+      world: input,
+      events: [],
+      outcome:
+        previous.digest === digest
+          ? previous.outcome
+          : outcome(false, 'idempotency-conflict', 'This expression identity was already used.'),
+    };
+  const source = input.entities[actorId];
+  const target = targetId ? input.entities[targetId] : undefined;
+  const reject = (code: string, message: string): Transition => ({
+    world: input,
+    events: [],
+    outcome: outcome(false, code, message),
+  });
+  if (
+    !activelyParticipates(source) ||
+    !source?.actor?.alive ||
+    source.actor.incapacitated ||
+    capabilityBlocked(input, source, 'actions')
+  )
+    return reject('actor-unavailable', 'Your character cannot act now.');
+  if (
+    targetId &&
+    (!target ||
+      targetId === actorId ||
+      (!seesEntity(input, source, target) && !accessiblePossession(input, actorId, targetId)))
+  )
+    return reject('target', 'The selected object is no longer available.');
+  if (
+    !predicate.trim() ||
+    predicate.length > 240 ||
+    (targetId ? !predicate.includes('{target}') : predicate.includes('{target}'))
+  )
+    return reject(
+      'invalid-expression',
+      'The action description did not match its selected target.',
+    );
+  const world = draftWorld(input),
+    events: import('./types.js').WorldEvent[] = [];
+  const parts = predicate
+    .split('{target}')
+    .flatMap((part, index) => (index && target ? [person(target, 'object'), part] : [part]));
+  emit(
+    world,
+    events,
+    'expression',
+    subjectNarration(source, parts),
+    world.entities[actorId],
+    targetId,
+    {
+      mechanical: false,
+      descriptive: true,
+      responseId: id,
+      semanticTrigger: true,
+    },
+  );
+  const result = outcome(true, 'expressed', 'Expression shown. No mechanical effects.');
+  const receipts = (world.responseReceipts ??= {});
+  receipts[id] = { digest, components: { action: result }, outcome: result };
+  for (const oldId of Object.keys(receipts).slice(0, -RESPONSE_RECEIPT_LIMIT))
+    delete receipts[oldId];
+  return finish(world, events, result);
 }

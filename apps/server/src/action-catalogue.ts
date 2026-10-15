@@ -35,7 +35,7 @@ import {
   BASE_FOOD_ACTION_WORDING,
 } from '@open-legend/domain';
 import { itemFor, custodian } from '@open-legend/domain';
-import { inventoryItemView } from './inventory-view.js';
+import { inventoryItemChoices } from './inventory-view.js';
 import type { RequestScope } from './authority.js';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
@@ -82,13 +82,27 @@ export function actionCatalogue(
   const observation = service.observe(scope.actorId, { includeMemories: false })!;
   const descriptions = actionDescriptions(observation, service.world);
   const actions: CatalogueAction[] = [];
+  const unavailableCategories = new Set<string>();
+  // All calls below share this unchanged synchronous world/control read. Reuse
+  // each prepared choice's unchanged command object only here. Equivalent commands
+  // created separately are checked separately; executing still checks afresh.
+  // docs/action-capabilities.md#action-availability-and-temporary-execution
+  const previews = new Map<CommandInput, ReturnType<WorldService['previewCommand']>>();
+  const preview = (command: CommandInput) => {
+    let result = previews.get(command);
+    if (!result) {
+      result = service.previewCommand(command, scope.actorId);
+      previews.set(command, result);
+    }
+    return result;
+  };
   const possessionAvailability = (option: ActionOption) =>
     option.enabled
-      ? service.previewCommand(option.command, scope.actorId)
+      ? preview(option.command)
       : { ok: false, message: option.reason ?? controlUnavailable.message };
   if (selectedItem) {
     const item = selectedItem;
-    const projected = inventoryItemView(service, scope, item),
+    const projected = inventoryItemChoices(service, scope, item, preview),
       options = [...projected.actions];
     if (context.destinationId) {
       const destination = service.world.entities[context.destinationId];
@@ -103,9 +117,7 @@ export function actionCatalogue(
         placementRevision: item.placementRevision,
         targetRevision: destination.inventoryRevision ?? 0,
       };
-      const result = controlling
-        ? service.previewCommand(command, scope.actorId)
-        : controlUnavailable;
+      const result = controlling ? preview(command) : controlUnavailable;
       options.push({
         id: `transfer-${item.id}-${destination.id}`,
         label: `Move to ${destination.name}`,
@@ -124,7 +136,7 @@ export function actionCatalogue(
           category: 'Possessions',
           description: descriptions.describe(option.command),
           facts: descriptions.facts(option.command),
-          keywords: [projected.name],
+          keywords: [service.world.itemDefinitions[item.definitionId]!.name],
           enabled: availability.ok,
           ...(!availability.ok ? { reason: availability.message } : {}),
           intent: { kind: 'command', command: option.command },
@@ -134,7 +146,6 @@ export function actionCatalogue(
   }
   const world = service.world;
   const itemUses = selectedItem ? [selectedItem] : observation.inventory;
-  const castTools = fishingTools(world, itemUses);
   const targets = observation.visibleEntities.filter((entity) => entity.id !== scope.actorId);
   const selected =
     context.targetId === scope.actorId
@@ -143,6 +154,10 @@ export function actionCatalogue(
   if (context.targetId && !selected)
     throw new ActionCatalogueUnavailable('That target is no longer in view.');
   const actionTargets = context.catalogue || context.itemId ? targets : selected ? [selected] : [];
+  const personal = !!context.catalogue || selected?.id === scope.actorId;
+  const sites = selected ? [selected] : context.catalogue || context.itemId ? targets : [];
+  const fires = sites.filter((entity) => entity.heat);
+  const fishingSources = sites.filter((entity) => entity.resource?.cast);
   const actionIds = new Set(actions.map((action) => action.id));
   const add = (
     id: string,
@@ -177,9 +192,7 @@ export function actionCatalogue(
       !(selected.id === scope.actorId && !targetId)
     )
       return;
-    const result = controlling
-      ? (provided?.availability ?? service.previewCommand(command, scope.actorId))
-      : controlUnavailable;
+    const result = controlling ? (provided?.availability ?? preview(command)) : controlUnavailable;
     actionIds.add(id);
     actions.push({
       id,
@@ -195,7 +208,7 @@ export function actionCatalogue(
       intent: { kind: 'command', command },
     });
   };
-  for (const shield of itemUses.filter(
+  for (const shield of (personal || context.itemId || actionTargets.length ? itemUses : []).filter(
     (item) => world.itemDefinitions[item.definitionId]?.contactDefense,
   )) {
     const definition = world.itemDefinitions[shield.definitionId]!;
@@ -231,16 +244,14 @@ export function actionCatalogue(
       ['follow', 'accompany'],
       selected.id,
     );
-  const missing = (
+  const includeUnavailableCategory = (
     family: CommandInput['type'] | import('@open-legend/domain').Command['type'] | 'talk',
-    label: string,
     category: string,
-    reason: string,
-    id: string = family,
     targetId?: string,
     itemId?: string,
   ) => {
-    if (family !== 'talk' && !nativeCommandSupported(world, nativeCommandKind(family))) return;
+    if (family !== 'talk' && !nativeCommandSupported(world, nativeCommandKind(family)))
+      return false;
     const personalFamily = [
       'cancel',
       'status-effect',
@@ -251,15 +262,29 @@ export function actionCatalogue(
       'craft',
     ].includes(family);
     if (context.itemId) {
-      if (itemId !== context.itemId) return;
-    } else if (!context.catalogue && !selected) return;
+      if (itemId !== context.itemId) return false;
+    } else if (!context.catalogue && !selected) return false;
     if (
       !context.itemId &&
       !context.catalogue &&
       targetId !== selected?.id &&
       !(selected?.id === scope.actorId && !targetId && personalFamily)
     )
-      return;
+      return false;
+    unavailableCategories.add(category);
+    return true;
+  };
+  // These are concrete known uses with missing inputs, not generic family placeholders.
+  const missing = (
+    family: CommandInput['type'] | import('@open-legend/domain').Command['type'] | 'talk',
+    label: string,
+    category: string,
+    reason: string,
+    id: string,
+    targetId?: string,
+    itemId?: string,
+  ) => {
+    if (!includeUnavailableCategory(family, category, targetId, itemId)) return;
     actions.push({
       id,
       label,
@@ -282,7 +307,7 @@ export function actionCatalogue(
       ? { ...worldPosition(selected), surfaceId: worldSupport(selected)! }
       : undefined
     : context.position;
-  if (position && bodyPolicy(world)?.evasion)
+  if (position && (!selected || selected.id === scope.actorId) && bodyPolicy(world)?.evasion)
     add(
       'evade:point',
       `${bodyPolicy(world)!.evasion!.label} here`,
@@ -310,7 +335,6 @@ export function actionCatalogue(
       ['move', 'go', 'travel'],
       selected?.id,
     );
-  else missing('move', 'Walk', 'Movement', 'Right-click a destination in the world.');
   for (const target of context.catalogue
     ? [observation.actor, ...targets]
     : selected
@@ -338,16 +362,18 @@ export function actionCatalogue(
       projectiles.set(kind, ammoFor(world, scope.actorId, kind)?.id);
   }
   if (
-    self.action ||
-    self.agency.suspended ||
-    self.agency.plan?.status === 'active' ||
-    self.agency.plan?.status === 'blocked'
+    personal &&
+    (self.action ||
+      self.agency.suspended ||
+      self.agency.plan?.status === 'active' ||
+      self.agency.plan?.status === 'blocked')
   )
-    add('cancel', 'Stop all work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
-  else missing('cancel', 'Stop all work', 'Movement', 'No work to stop.');
+    add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
+  else includeUnavailableCategory('cancel', 'Movement');
   const recovery = bodyPolicy(world)?.recovery;
-  if (recovery) add('recover', recovery.label, 'Body', { type: 'recover' }, ['recovery']);
-  for (const { key, label } of nativePreparationOptions(world)) {
+  if (personal && recovery)
+    add('recover', recovery.label, 'Body', { type: 'recover' }, ['recovery']);
+  for (const { key, label } of personal ? nativePreparationOptions(world) : []) {
     add(`prepare-${key}`, label, 'Create', { type: 'prepare', preparation: key }, [
       'prepare',
       'craft',
@@ -377,9 +403,7 @@ export function actionCatalogue(
       );
     for (const option of context.itemId
       ? []
-      : pickupActions(world, observation.actor, target, (command) =>
-          service.previewCommand(command, scope.actorId),
-        ))
+      : pickupActions(world, observation.actor, target, preview))
       add(
         option.id,
         option.label,
@@ -493,7 +517,7 @@ export function actionCatalogue(
         ['butcher', 'meat', 'remains'],
         target.id,
       );
-    if (!context.itemId && canSpeak(target) && target.actor?.alive) {
+    if (!context.itemId && target.id !== scope.actorId && canSpeak(target) && target.actor?.alive) {
       // Opening a composer is read-only, including while paused or AI is unconfigured.
       actions.push({
         id: `talk-${target.id}`,
@@ -517,19 +541,18 @@ export function actionCatalogue(
     }
   }
 
-  const fires = (selected ? [selected] : targets).filter((entity) => entity.heat);
-  for (const item of itemUses) {
+  for (const item of personal || context.itemId ? itemUses : []) {
     const definition = world.itemDefinitions[item.definitionId]!;
     if (context.catalogue) {
-      const projected = inventoryItemView(service, scope, item);
+      const projected = inventoryItemChoices(service, scope, item, preview);
       for (const option of projected.actions)
         if (!actionIds.has(option.id))
           add(
             option.id,
-            `${option.label} · ${projected.name}`,
+            `${option.label} · ${definition.name}`,
             'Possessions',
             option.command,
-            [projected.name],
+            [definition.name],
             undefined,
             {
               availability: possessionAvailability(option),
@@ -537,7 +560,7 @@ export function actionCatalogue(
             },
           );
     }
-    if (definition.equipment)
+    if (definition.equipment && (context.catalogue || context.itemId))
       add(
         `equip-${item.id}`,
         `Equip ${definition.name}`,
@@ -598,10 +621,10 @@ export function actionCatalogue(
         },
       });
     }
-    for (const choice of outingActions(world, scope.actorId))
+    for (const choice of personal ? outingActions(world, scope.actorId) : [])
       add(choice.id, choice.label, 'Social', choice.command, ['outing', 'travel'], undefined, {
         description: choice.description,
-        availability: service.previewCommand(choice.command, scope.actorId),
+        availability: preview(choice.command),
       });
   }
   const preparations =
@@ -632,7 +655,8 @@ export function actionCatalogue(
       );
       if (actionIds.has(option.id)) offeredPreparations.add(option.definition.id);
     }
-  for (const source of (selected ? [selected] : targets).filter((entity) => entity.resource?.cast))
+  const castTools = fishingSources.length ? fishingTools(world, itemUses) : new Map();
+  for (const source of fishingSources)
     for (const option of fishingOptions(world, castTools, source))
       add(
         option.id,
@@ -673,7 +697,7 @@ export function actionCatalogue(
         ['offer', 'give', 'share'],
         target.id,
         {
-          availability: service.previewCommand(option.command, scope.actorId),
+          availability: preview(option.command),
           description: option.description,
         },
       );
@@ -683,7 +707,9 @@ export function actionCatalogue(
       : [])
       add(option.id, option.label, 'Survival', option.command, ['fire'], target.id);
   }
-  for (const { recipe, command, item } of inspectedRecipeRecords(world, scope.actorId))
+  for (const { recipe, command, item } of context.catalogue || context.itemId || selected
+    ? inspectedRecipeRecords(world, scope.actorId)
+    : [])
     add(
       `learn-record-${item.id}`,
       `Learn ${recipe.name}`,
@@ -692,7 +718,7 @@ export function actionCatalogue(
       ['read', 'learn', recipe.name],
       item.ownerId,
     );
-  for (const recipe of observation.knownRecipes)
+  for (const recipe of personal ? observation.knownRecipes : [])
     add(
       `craft-${recipe.id}`,
       `Craft ${recipe.name}`,
@@ -722,39 +748,20 @@ export function actionCatalogue(
       selected.id,
     );
   if (selected?.kind === 'npc' && selected.actor?.alive && !observation.knownRecipes.length)
-    missing(
-      'teach',
-      `Teach ${selected.name} a technique`,
-      'Social',
-      'Learn a recipe first.',
-      'teach',
-      selected.id,
-    );
+    includeUnavailableCategory('teach', 'Social', selected.id);
 
-  // Missing prerequisites must not erase an entire supported action family.
-  const family = (
-    prefix: CommandInput['type'] | import('@open-legend/domain').Command['type'] | 'talk',
-    label: string,
-    category: string,
-    reason: string,
-  ) => {
-    if (!actions.some((action) => action.id.startsWith(`${prefix}-`)))
-      missing(prefix, label, category, reason);
-  };
-  family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
-  const consumption = bodyPolicy(world)?.consumption;
-  if (consumption) family('eat', consumption.label, 'Body', consumption.unavailableText);
+  // Keep permitted categories visible without inventing an action to fill them.
+  includeUnavailableCategory('equip', 'Equipment');
+  if (bodyPolicy(world)?.consumption) includeUnavailableCategory('eat', 'Body');
   for (const [command, meaning] of installedActionMeanings(world)) {
-    const fallback = meaning.fallback;
-    if (!fallback) continue;
-    const policy = command === 'hunt' ? rangedPolicy(world) : null;
-    family(
-      command === 'compose' ? 'activity-request' : command,
-      policy ? `${policy.actionLabel} ${policy.targetLabel}` : fallback.label,
-      fallback.category,
-      policy?.invalidTargetText ?? fallback.reason,
-    );
+    if (meaning.fallback) includeUnavailableCategory(command, meaning.fallback.category);
   }
-  family('talk', 'Talk to someone', 'Social', 'Move within sight of a living person.');
-  return { revision: service.version, actions };
+  includeUnavailableCategory('talk', 'Social');
+  return {
+    revision: service.version,
+    actions,
+    categories: [
+      ...new Set([...actions.map((action) => action.category), ...unavailableCategories]),
+    ],
+  };
 }

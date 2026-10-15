@@ -234,6 +234,8 @@ The standalone movement/strike/gather/hunt/harvest/pickup/meter-refill/follow pr
 
 Exit: publication/input budgets pass; no history reads for unrelated movement or hidden panels, no leaked scope, broken patch baseline or lost reliable outcome. Server confirmation must remain measurable separately from immediate marker feedback.
 
+The [October 14 first-opening action-menu follow-on](../projects/completed/action-menu-responsiveness-plan.md) prunes unrelated choice preparation and separates possession actions from unused inventory detail text, with request-local exact command-object preview reuse. Action reads retain durable permission and post-await guards while reading the published world outside the mutation queue. Category sections bound initial browser rows and keep complete search. [Measured evidence](../verification/command-frame-spikes.md#first-opening-action-menus-and-sections--october-14-2026) records native output equivalence, artificial held-write timing and production browser behavior separately; this does not qualify older-world tails, general SQL batching, physical-device or sustained-load acceptance.
+
 ## PF06 — Optional diagnostics and bounded buffers
 
 Dependencies: PF00; use PF04 only when its contention gate is met.

@@ -8,6 +8,8 @@ import {
 } from './state-contributions.js';
 import { attributeDefinition, validateAttributeValue } from './world-modules.js';
 import { visitStatusCondition } from './status-condition-references.js';
+import { TIME_EPSILON } from './simulation-time.js';
+import { periodicChangeCount } from './status-effects.js';
 import type {
   StatusEffectPolicy,
   StatusEffectDefinition,
@@ -77,10 +79,11 @@ export function validateStatusCondition(
       validateStatusCondition(world, child, undefined, depth + 1, budget);
   } else if ('compare' in value) {
     const c = value.compare;
-    object(c, ['target', 'attribute', 'operator', 'value']);
+    object(c, ['target', 'attribute', 'operator', 'value'], ['unit']);
     reference(c.target);
     attribute(world, c.attribute, false);
     number(c.value);
+    if (c.unit !== undefined && c.unit !== 'fractionOfRange') fail('comparison unit.');
     if (
       !['equal', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThanOrEqual'].includes(
         c.operator,
@@ -212,16 +215,38 @@ export function validateStatusEffectPolicy(
     if (!Array.isArray(d.whileActive) || !d.whileActive.length || d.whileActive.length > 32)
       fail('operation budget.');
     for (const op of d.whileActive) {
-      object(op, [], ['changeRate', 'when', 'restrictCapabilities']);
-      if ('changeRate' in op && !('restrictCapabilities' in op)) {
-        const c = op.changeRate;
-        object(c, ['target', 'attribute', 'amount', 'per']);
+      object(op, [], ['changeRate', 'changeEvery', 'when', 'restrictCapabilities']);
+      if (!('restrictCapabilities' in op) && 'changeRate' in op !== 'changeEvery' in op) {
+        const periodic = 'changeEvery' in op;
+        const c = periodic ? op.changeEvery : op.changeRate;
+        object(
+          c,
+          periodic
+            ? ['target', 'attribute', 'amount', 'everyGameSeconds', 'unit']
+            : ['target', 'attribute', 'amount', 'per'],
+        );
         reference(c.target);
         attribute(world, c.attribute, true);
         number(c.amount, -1000000, 1000000);
-        if (c.per !== 'gameSecond') fail('rate unit.');
+        if (periodic) {
+          number(c.everyGameSeconds, TIME_EPSILON * 2);
+          if (!['attribute', 'fractionOfRange'].includes(c.unit)) fail('periodic unit.');
+        } else {
+          if (c.per !== 'gameSecond') fail('rate unit.');
+          const definition = attributeDefinition(world, c.attribute);
+          if (
+            definition?.implementation === 'native-health-v1' &&
+            definition.nativeHealth?.precision === 'whole-points'
+          )
+            fail('whole-point health requires periodic changes, not a continuous rate.');
+        }
         if (op.when !== undefined) validateStatusCondition(world, op.when, ids);
-      } else if ('restrictCapabilities' in op && !('changeRate' in op) && !('when' in op)) {
+      } else if (
+        'restrictCapabilities' in op &&
+        !('changeRate' in op) &&
+        !('changeEvery' in op) &&
+        !('when' in op)
+      ) {
         const c = op.restrictCapabilities;
         object(c, ['target', 'capabilities']);
         if (
@@ -317,6 +342,19 @@ export function validateStatusEffects(world: WorldState): void {
         fail('invalid saved instance.');
       number(state.elapsedSeconds, 0);
       number(state.automaticAfter, 0);
+      if (state.active)
+        for (const operation of d.whileActive) {
+          if (!('changeEvery' in operation)) continue;
+          const every = operation.changeEvery.everyGameSeconds;
+          const completed = periodicChangeCount(state.elapsedSeconds, every);
+          const next = (completed + 1) * every;
+          if (
+            !Number.isSafeInteger(completed) ||
+            !Number.isFinite(next) ||
+            !(next > state.elapsedSeconds)
+          )
+            fail('periodic progress cannot represent its next deadline.');
+        }
       if (
         state.active &&
         d.occupiesAction &&
