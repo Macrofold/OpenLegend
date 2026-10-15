@@ -2551,7 +2551,7 @@ export function Diagnostics({
     [error, setError] = useState(''),
     [filters, setFilters] = useState<Record<string, string>>({}),
     [draftFilters, setDraftFilters] = useState<Record<string, string>>({}),
-    [raw, setRaw] = useState<RawView | null>(null);
+    [raw, setRaw] = useState<{ key: string; value: RawView } | null>(null);
   const generation = useRef(0),
     panel = useRef<HTMLDivElement>(null),
     newest = useRef<string | undefined>(undefined);
@@ -2562,10 +2562,15 @@ export function Diagnostics({
   active.current = visible && !selection;
   const [rowsKey, setRowsKey] = useState(readKey);
   const currentRows = rowsKey === readKey ? rows : [];
+  const currentLoading = loading || rowsKey !== readKey;
+  const rawKey = JSON.stringify([worldId, readScope, selection?.id]);
+  const currentRaw = raw?.key === rawKey ? raw.value : null;
+  const showRaw = (value: RawView) => setRaw({ key: rawKey, value });
   newest.current = currentRows[0]?.id;
   const readAbort = useRef<AbortController | null>(null);
-  async function read(peek: boolean) {
+  async function read(mode: 'peek' | 'follow' | 'refresh') {
     if (!active.current) return;
+    const peek = mode === 'peek';
     const id = ++generation.current;
     const controller = new AbortController();
     readAbort.current = controller;
@@ -2602,7 +2607,9 @@ export function Diagnostics({
       }
       if (!result.ok || result.worldId !== worldId)
         throw new Error(result.message ?? 'Diagnostics unavailable.');
-      if (peek) {
+      // A reader can focus a row while an automatic reply is pending. Preserve
+      // that page until they deliberately refresh it, just as at poll admission.
+      if (peek || (mode === 'follow' && panel.current?.contains(document.activeElement))) {
         if (result.roots?.[0]?.id && result.roots[0].id !== newest.current) setNewActivity(true);
         return;
       }
@@ -2619,6 +2626,8 @@ export function Diagnostics({
         !peek
       ) {
         setRows([]);
+        setRowsKey(readKey);
+        setMore(false);
         setError(String(refreshError));
       }
     } finally {
@@ -2630,9 +2639,9 @@ export function Diagnostics({
   currentRead.current = read;
   const inFlight = useRef<Promise<void> | null>(null);
   const refreshPending = useRef(false);
-  function refresh(peek = false): Promise<void> {
+  function refresh(mode: 'peek' | 'follow' | 'refresh' = 'refresh'): Promise<void> {
     if (inFlight.current) {
-      if (!peek) refreshPending.current = true;
+      if (mode === 'refresh') refreshPending.current = true;
       return inFlight.current;
     }
     // One reader owns list refreshes and cheap activity checks. Keep at most one
@@ -2640,8 +2649,8 @@ export function Diagnostics({
     const request = (async () => {
       do {
         refreshPending.current = false;
-        await currentRead.current(peek);
-        peek = false;
+        await currentRead.current(mode);
+        mode = 'refresh';
       } while (refreshPending.current && active.current);
     })().finally(() => {
       if (inFlight.current === request) inFlight.current = null;
@@ -2665,7 +2674,9 @@ export function Diagnostics({
     const schedule = () => {
       timer = setTimeout(async () => {
         await refresh(
-          !(follow && offset === 0 && !panel.current?.contains(document.activeElement)),
+          follow && offset === 0 && !panel.current?.contains(document.activeElement)
+            ? 'follow'
+            : 'peek',
         );
         if (!stopped) schedule();
       }, 3000);
@@ -2683,10 +2694,10 @@ export function Diagnostics({
         <TraceDetail
           key={`${selection.id}:${readScope}`}
           row={selection}
-          showJson={setRaw}
+          showJson={showRaw}
           visible={visible}
         />
-        {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
+        {currentRaw && visible && <RawJsonPanel raw={currentRaw} onClose={() => setRaw(null)} />}
       </div>
     );
   return (
@@ -2794,13 +2805,13 @@ export function Diagnostics({
           Records {offset + 1}–{offset + currentRows.length} on this retained history page.
         </p>
       )}
-      {loading && (
+      {currentLoading && (
         <p role="status" className="ol-caption">
           Loading triggers…
         </p>
       )}
-      {!currentRows.length && !error && !loading && <p>No matching retained triggers.</p>}
-      {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
+      {!currentRows.length && !error && !currentLoading && <p>No matching retained triggers.</p>}
+      {currentRaw && visible && <RawJsonPanel raw={currentRaw} onClose={() => setRaw(null)} />}
     </div>
   );
 }

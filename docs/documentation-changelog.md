@@ -14,6 +14,17 @@ pages stay errors. These repairs replace optional retention and stale local
 completion assumptions; native execution, approval and spending owners are
 unchanged.
 
+The follow-up review preserves narration Close protection through optional reloads,
+keeps known native results visible after failed browser cleanup, and prevents an
+obsolete barter reply from changing a newer send. Task writing survives renewed
+control even when optional storage fails; private-note editing adopts an acknowledged
+saved revision without rebasing unsaved text. Barter rendering reuses its prepared
+original-request guard, while [FRL02](maintainers/performance.md#future-improvements-from-the-foundation-review)
+now bounds Operations/Diagnostics reads and rejects obsolete access before shared
+cleanup. These are repairs to existing guarantees, without new world rules,
+persisted schemas or authority. The [review report](verification/ui-implementation-review.md#follow-up-correctness-and-performance-review)
+separates controlled client evidence from native effects and larger-world capacity.
+
 Private action-history reads now reject older SQL results after committed evidence
 correction, and Character/Mind clear the affected read without erasing unrelated
 drafts. The [architecture](architecture.md#react-presentation-and-character-traits)

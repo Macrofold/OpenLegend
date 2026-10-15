@@ -1,8 +1,8 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Imported-interface source review and repairs are verified; human input/device/player acceptance remains open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Imported-interface and follow-up correctness/performance repairs are verified; human input/device/player acceptance remains open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -68,6 +68,15 @@ ordinary acknowledgements retain their normal reviewed-term updates. Private not
 editing must adopt a current saved revision after becoming clean without rebasing
 an unsaved draft. These are additional composed-caller correctness repairs, not
 new trade or knowledge behavior.
+
+**Follow-up outcome:** all demonstrated in-scope findings are repaired through the
+existing task, editor, request and diagnostic owners. Focused existing transport/
+editor checks and controlled actual-component continuations cover the ordinary,
+failure and delayed-result cases; [the review report](../verification/ui-implementation-review.md#follow-up-correctness-and-performance-review)
+retains exact counts, reproduced failures and native/evidence limits. FRL02 is
+implemented. The published head's required [PR checks](https://github.com/Macrofold/OpenLegend/pull/27/checks)
+remain the integration gate; earlier green heads do not waive it. Human/device
+acceptance and the separate proposed item/building scope question remain unchanged.
 
 ### Complete imported-interface review — October 15
 

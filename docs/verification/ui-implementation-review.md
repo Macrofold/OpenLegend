@@ -241,12 +241,29 @@ Confirmed additional defects and repairs:
   React rendering and typing. The existing shared store prepares the guard on first
   use or changed ownership, receives command-owner notifications, and rereads before
   explicit dispatch. This preserves recovery when Inventory has never mounted.
+- A definite Inventory/Construction acknowledgement stays visible when browser
+  cleanup fails or a later receipt check is unavailable. The exact original still
+  blocks another command; recovery wording no longer calls a known result unknown.
+  Explicit receipt recovery also releases the obsolete barter sending attempt;
+  its later promise cannot alter a newer offer, pending flag, message or focus.
+  Ordinary acknowledgements retain their normal counteroffer review updates.
+- Private note editing adopts the current saved revision after an acknowledged
+  Save becomes clean, even when its fresh snapshot arrived before that acknowledgement.
+  Dirty edits are still preserved against independent newer saved revisions, and
+  obsolete private reads cannot refresh the editor's baseline.
+- The current task keeps its in-memory writing and chosen handling of current work
+  through same-owner control renewal, even when optional draft writes fail. Fresh
+  authority-scoped choices, previews and status remain separate from that draft;
+  older acknowledgements cannot clear its original request or newer writing.
 - Operations rejects an obsolete reply before pruning checkpoint recovery records
   or changing shared access. Diagnostics shares one in-flight list/activity read
   with one coalesced explicit refresh and schedules its next poll after completion.
   Changed page, filters, access, selection, Hide and unmount abort obsolete client
   reads. Old list rows/counts disappear immediately when their read identity changes;
   a definite refused activity read still withdraws the old page.
+  Open raw JSON is likewise stamped with its world/access/trace identity and hidden
+  before passive cleanup. Automatic Follow rechecks row focus after the wait;
+  explicit Refresh remains the deliberate route to adopt new records.
 
 The existing creator recovery helpers remain local because the general retained
 request helper has different storage, size, identity and cleanup contracts. Reusing
@@ -272,6 +289,36 @@ failed cleanup retains the original and matching receipt inspection releases it.
 Changed recovery ownership blocks correctly, and Speak preserves one exact ID/body
 through unresolved replies. The narrow capture is inspected. These are controlled
 component/request observations, not additional native effects or provider evidence.
+An evolved cleanup observation also retains the definite result text after refused
+cleanup and a later unavailable receipt read while both connected trade views stay
+blocked.
+The final actual ItemTrade → command-owner continuation holds send A across remount,
+recovers its exact receipt, starts B and then releases A with an unconfirmed reply.
+B remains pending with its own retained identity and later input keeps focus until
+B's own result. Ordinary counteroffer terms still advance from revision 7 to 8.
+There are three controlled dispatches and one read-only receipt, with no native
+effects or providers. The first continuation attempt wrongly compared local display
+metadata with the smaller native receipt body; that fixture failure is retained,
+and the corrected comparison keeps the exact ID, epoch and command assertions.
+
+The private-note race is first reproduced: a held acknowledgement arrives after
+the saved revision 2 snapshot, and the next edit is falsely blocked as revision 1.
+The corrected actual Mind/editor variant uses three current reads and one controlled
+Save. The next edit becomes available after acknowledgement; an independent saved
+revision 3 then preserves that unsaved edit and correctly blocks its Save as based
+on revision 2. Both final captures are inspected. No native note mutation or provider
+call is qualified by this controlled acknowledgement.
+
+The current-task variant deliberately fails optional draft writes and renews control
+without changing the private owner. The same task DOM, typed amount and handling of
+current work survive while old choices/preview withdraw. The strengthened continuation
+keeps the original dispatcher promise held, starts receipt A, renews control and
+starts receipt B for the same original ID. Releasing the obsolete command and A
+cannot clear B's busy guard or original request; only B's current-scope result clears
+it. Later fields survive and a changed private owner resets the draft. One controlled
+dispatch and two read-only receipt checks produce no native effects/providers/errors;
+the capture is inspected. The earlier narrower pass released the old acknowledgement
+before recovery and did not establish this held-promise guarantee.
 
 Diagnostics' finite controlled-HTTP observation makes **11 requests**, holding one
 for 6.6 seconds across two nominal poll intervals. At most one browser fetch is
@@ -283,6 +330,17 @@ already-aborted interception callback as active until its delayed failure event;
 the final report separately records browser-fetch maximum 1 and retained callback
 maximum 2. This establishes client cancellation, not PostgreSQL/backend work
 cancellation or remote endpoint latency/capacity.
+The later raw-data/loading variant makes 12 list reads and two exact detail reads:
+a held fresh page displays Loading instead of false empty, and the first layout
+commit after access changes contains no old raw JSON, before passive cleanup. A fresh
+exact trace can reopen. The first Follow-focus variation reproduces an additional
+race: a delayed automatic full reply inserts a new row after the reader focuses the
+old row. The corrected three-request variation retains the same row DOM, focus and
+page, announces new activity, then adopts it on explicit Refresh. Its inline notice
+moves the row by 32 pixels in the bare component fixture; this is not equal-pixel
+reading-position evidence. That fixture also crops a supplementary hover preview at
+the far right, so it does not qualify tooltip fit in the production side Panel.
+Both final captures are inspected, and all owned handles are closed.
 
 Recurring storage parsing and overlapping optional requests are removed without
 adding polling, a global cache or background queues. Native equipment comparison
@@ -296,6 +354,11 @@ measurements. These focused observations establish no general scale capacity.
 No provider requests are made: additional and cumulative game-provider/Jev cost
 remain **$0**. Temporary observation code and generated output stay outside the
 repository; owned browser/server handles are closed.
+
+The integrated follow-up passes local TypeScript, the production build
+(`index-bhEQh4hA.js`), affected-file pinned formatting, whitespace, local Markdown
+links, guidance and generated-configuration checks. The existing large-bundle
+advisory remains; these checks establish no bundle-size or native capacity repair.
 
 Required automatic CI is unchanged. The [PR's current checks](https://github.com/Macrofold/OpenLegend/pull/27/checks)
 track the published follow-up source; the final handoff identifies that head and
@@ -340,8 +403,9 @@ checks and seven browser journeys without a rerun; Time takes 48.1 seconds under
 its unchanged sixty-second total. The unchanged [push Code attempt 2](https://github.com/Macrofold/OpenLegend/actions/runs/38703770196/attempts/2)
 passes all 392 tests and the complete gate; the earlier timed case takes 13,129 ms
 under its unchanged 15,000 ms limit. The complete executable source has every
-required check green. No further executable change follows; the final evidence
-commit updates documentation only and retains ordinary automatic CI.
+required check green at that initial-review checkpoint. Its final evidence commit
+updates documentation only and retains ordinary automatic CI; the subsequent
+follow-up above has its own required published-head checks.
 
 ## Failures and evidence limits
 
