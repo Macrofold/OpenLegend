@@ -1,7 +1,7 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                           | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Imported-interface review repairs and focused verification are in progress; human acceptance remains open. | 2026-10-15   |
 
 ## Scope and authority
@@ -49,7 +49,7 @@ not used for edits or runtime verification.
    evidence and limitations. Keep real OS input-method, assistive-device and
    uncoached-user acceptance open until performed.
 
-The initial 100–300-line repair estimate is now approximately 400–600 production
+The initial 100–300-line repair estimate is now approximately 600–850 production
 logic lines after the concrete findings below; the review itself covers substantially
 more source. Risk is medium
 because shared dismissal/focus, asynchronous private reads and consequential-write
@@ -72,6 +72,12 @@ the original receipt after a lost acknowledgement, including after earlier work
 ends. This closes the existing shared recovery contract; it adds no manufacturing
 list or compound stow behavior. Keep native receipt/admission owners unchanged,
 include changed-owner cleanup, and verify failed storage and no duplicate dispatch.
+The same review includes native creator Save, opening selection and Prepare:
+optional local-draft storage cannot substitute for mandatory verified retention of
+an original consequential request. Check parent discard/navigation callers as well
+as the leaf editor, preserving later fields while reconciling an earlier original.
+The new Speak/Act bar joins the existing measured caption exclusions; no frame-level
+HUD measurements, new timing policy or extra native speech evidence is introduced.
 
 Cost grows with mounted/visible readers, list/history pages, repeated projection
 updates and optional preview requests. Reuse current permitted projections and

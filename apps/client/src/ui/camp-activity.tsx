@@ -249,7 +249,10 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       return true;
     }
   });
-  const [mode, setMode] = useState<WorkMode>('enqueue');
+  const mode: WorkMode =
+    draft[':workMode'] === 'replace' || draft[':workMode'] === 'interrupt'
+      ? draft[':workMode']
+      : 'enqueue';
   const [editing, setEditing] = useState<'supply' | 'amount' | 'stop' | null>(null);
   const [choices, setChoices] = useState<ActivityRequestsView>();
   const [status, setStatus] = useState<{ value: StatusView; revision: number }>();
@@ -772,7 +775,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           size="sm"
           variant={mode === 'enqueue' ? 'secondary' : 'quiet'}
           disabled={disabled}
-          onPress={() => setMode('enqueue')}
+          onPress={() => change(':workMode', 'enqueue')}
         >
           {modeLabels?.enqueue ?? 'After current work'}
         </Button>
@@ -780,7 +783,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           size="sm"
           variant={mode === 'replace' ? 'secondary' : 'quiet'}
           disabled={disabled}
-          onPress={() => setMode('replace')}
+          onPress={() => change(':workMode', 'replace')}
         >
           {modeLabels?.replace ?? 'Prepare replacement'}
         </Button>
@@ -788,7 +791,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           size="sm"
           variant={mode === 'interrupt' ? 'secondary' : 'quiet'}
           disabled={disabled}
-          onPress={() => setMode('interrupt')}
+          onPress={() => change(':workMode', 'interrupt')}
         >
           {modeLabels?.interrupt ?? 'Pause and resume current work'}
         </Button>

@@ -336,14 +336,13 @@ export function Construction({
                 ? 'Checking the original result'
                 : 'Outcome not confirmed'}
           </p>
-          {operations.pending.request ? (
-            <Button
-              disabled={!connected || operations.pending.status !== 'unknown'}
-              onPress={() => void operations.check()}
-            >
-              Check result
-            </Button>
-          ) : (
+          <Button
+            disabled={!connected || operations.pending.status !== 'unknown'}
+            onPress={() => void operations.check()}
+          >
+            {operations.pending.request ? 'Check result' : 'Read retained request'}
+          </Button>
+          {!operations.pending.request && (
             <p>The original action could not be read. New construction actions remain blocked.</p>
           )}
         </div>

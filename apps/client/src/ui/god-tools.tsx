@@ -26,19 +26,6 @@ import { memoryEditorChanges, worldEventEditorChanges } from './editor-changes';
 
 type TraitOption = { id: string; name: string; description: string };
 
-export const spawnIcons: Record<string, string> = {
-  person: 'ui.character',
-  'banked-campfire': 'action.fire',
-  'berry-bush': 'resource.berry',
-  'berry-thicket': 'resource.berry',
-  deer: 'creature.deer',
-  'dry-grass-fibers': 'resource.fiber',
-  'fallen-branches': 'resource.branch',
-  hare: 'creature.hare',
-  'river-reeds': 'resource.reed',
-  'river-stones': 'resource.stone',
-};
-
 type PersonCreationDraft = {
   name: string;
   personality: string;

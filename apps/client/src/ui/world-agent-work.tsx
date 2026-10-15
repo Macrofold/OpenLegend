@@ -16,7 +16,11 @@ import { Button, EmptyState, Icon, Tag } from '../design-system/components';
 import { post, privateDraftScope } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { WorldAgentPreparationDetails } from './world-agent-work-details';
-import { WorldAgentDraftEditor, hasRetainedDraftEdit } from './world-agent-draft-editor';
+import {
+  WorldAgentDraftEditor,
+  hasRetainedDraftEdit,
+  discardRetainedDraftEdit,
+} from './world-agent-draft-editor';
 import { WorldCreationPreviewView } from './world-creation-preview';
 import { WorldCreationTargets } from './world-creation-targets';
 import { worldAgentKindLabel as kindLabel } from './world-agent-labels';
@@ -50,6 +54,42 @@ const selectionValid = (value: unknown): value is { id: string; revision: number
   value.revision > 0;
 const displayValue = (value: unknown, present: boolean) =>
   !present ? 'Not present' : typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+type PrepareOperation = { body: string; id: string };
+function readPrepare(key: string): PrepareOperation | null {
+  const text = localStorage.getItem(key);
+  if (text === null) return null;
+  const value: unknown = JSON.parse(text);
+  if (value === null) return null;
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !('body' in value) ||
+    typeof value.body !== 'string' ||
+    !('id' in value) ||
+    typeof value.id !== 'string'
+  )
+    throw new Error(
+      'The retained Prepare request is unreadable. Restore storage and refresh this exact revision.',
+    );
+  return { body: value.body, id: value.id };
+}
+const samePrepare = (a: PrepareOperation, b: PrepareOperation) =>
+  a.body === b.body && a.id === b.id;
+function writePrepare(key: string, operation: PrepareOperation, clear = false) {
+  // A native review needs its original request identity after a lost reply;
+  // optional reading-position storage cannot own consequential preparation.
+  const current = readPrepare(key);
+  if (current && !samePrepare(current, operation))
+    throw new Error(
+      'A different Prepare request remains retained. Check its original result before continuing.',
+    );
+  const text = JSON.stringify(clear ? null : operation);
+  localStorage.setItem(key, text);
+  if (localStorage.getItem(key) !== text)
+    throw new Error(
+      'This browser could not retain or clear the exact Prepare request. Restore storage and retry the original Prepare.',
+    );
+}
 
 /** Human inspection shares the session/draft owner. Local state never grants permission.
  * docs/projects/parallel-batch-01-playable-week/invention-workspace.md#human-read-and-edit-contract
@@ -80,6 +120,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const [reload, setReload] = useState(0);
   const [targetId, setTargetId] = useState('');
   const [eligibleTarget, setEligibleTarget] = useState<WorldCreationTargetView>();
+  const [knownPrepare, setKnownPrepare] = useState<{ key: string; operation: PrepareOperation }>();
   const identity = authoringKey(
     'draft-read',
     worldId,
@@ -369,17 +410,17 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
     ? { draftId: selected.id, revision: selected.revision, ...(opening ? { targetId } : {}) }
     : null;
   const prepareSerialized = JSON.stringify(prepareBody);
-  const retainedPrepare = readLocal<{ body: string; id: string } | null>(
-    prepareKey,
-    null,
-    (value): value is { body: string; id: string } =>
-      !!value &&
-      typeof value === 'object' &&
-      'body' in value &&
-      typeof value.body === 'string' &&
-      'id' in value &&
-      typeof value.id === 'string',
-  );
+  let storedPrepare: PrepareOperation | null = null;
+  let prepareUnreadable = false;
+  try {
+    if (prepareKey) storedPrepare = readPrepare(prepareKey);
+  } catch {
+    prepareUnreadable = true;
+  }
+  // Unavailable rereads or failed cleanup must not erase the known original.
+  const retainedPrepare = knownPrepare?.key === prepareKey ? knownPrepare.operation : storedPrepare;
+  const prepareConflict =
+    !!storedPrepare && !!retainedPrepare && !samePrepare(storedPrepare, retainedPrepare);
   const canRetryPrepare = retainedPrepare?.body === prepareSerialized;
   async function prepare(retry = false) {
     // Guard before retaining an ID: a second press must not replace the first
@@ -396,27 +437,49 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
       revision: selected.revision,
       ...(opening ? { targetId } : {}),
     };
-    const serialized = JSON.stringify(body);
-    const operationId =
-      canRetryPrepare && retainedPrepare ? retainedPrepare.id : crypto.randomUUID();
-    writeLocal(prepareKey, { body: serialized, id: operationId });
     await perform(async (requestIdentity) => {
-      const response = await post<WorldAgentWorkResult<WorldAgentPlanView>>(
-        '/api/world-agent/session/draft-prepare',
-        { worldId, sessionId, ...body, operationId },
-      );
-      if (identityRef.current !== requestIdentity) return;
-      if (!response.ok || !response.data) {
-        if (response.status !== 'unavailable') writeLocal(prepareKey, null);
-        throw new Error(response.message ?? 'This exact review was not prepared.');
-      }
-      if (response.data.draftId !== body.draftId || response.data.revision !== body.revision)
-        throw new Error(
-          'The returned review is for a different exact revision. Retry this request.',
+      let dispatched = false;
+      try {
+        const current = readPrepare(prepareKey);
+        if (
+          (current && (!retry || !retainedPrepare || !samePrepare(current, retainedPrepare))) ||
+          (retry && !retainedPrepare)
+        )
+          throw new Error('Check the original Prepare request before preparing another review.');
+        const operation =
+          retry && retainedPrepare
+            ? retainedPrepare
+            : { body: JSON.stringify(body), id: crypto.randomUUID() };
+        writePrepare(prepareKey, operation);
+        setKnownPrepare({ key: prepareKey, operation });
+        dispatched = true;
+        const response = await post<WorldAgentWorkResult<WorldAgentPlanView>>(
+          '/api/world-agent/session/draft-prepare',
+          { worldId, sessionId, ...body, operationId: operation.id },
         );
-      writeLocal(prepareKey, null);
-      onRefresh();
-      onOpenReview(response.data.id);
+        if (identityRef.current !== requestIdentity) return;
+        if (!response.ok || !response.data) {
+          if (response.status !== 'unavailable') {
+            setNotice(response.message ?? 'The original Prepare was refused.');
+            writePrepare(prepareKey, operation, true);
+            setKnownPrepare(undefined);
+          }
+          throw new Error(response.message ?? 'This exact review was not prepared.');
+        }
+        if (response.data.draftId !== body.draftId || response.data.revision !== body.revision)
+          throw new Error(
+            'The returned review is for a different exact revision. Retry this request.',
+          );
+        setNotice('The exact review was prepared.');
+        writePrepare(prepareKey, operation, true);
+        setKnownPrepare(undefined);
+        onRefresh();
+        onOpenReview(response.data.id);
+      } catch (failure) {
+        throw new Error(
+          `${errorText(failure)}${dispatched ? '' : ' No Prepare request was sent.'}`,
+        );
+      }
     });
   }
   const selectedExact =
@@ -794,6 +857,12 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                     {error && <p role="alert">{error}</p>}
                     {notice && <p role="status">{notice}</p>}
                     {mutationReason && <p role="status">{mutationReason}</p>}
+                    {(prepareUnreadable || prepareConflict) && (
+                      <p role="status">
+                        The original Prepare record cannot be safely read. Restore storage and
+                        refresh this exact revision before preparing another review.
+                      </p>
+                    )}
                     {dirty && (
                       <p role="status">
                         Save or discard your local edit before checking or preparing this saved
@@ -817,6 +886,9 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
                           !!mutationReason ||
                           !!historical ||
                           canRetryPrepare ||
+                          prepareUnreadable ||
+                          prepareConflict ||
+                          !!retainedPrepare ||
                           (opening && eligibleTarget?.id !== targetId)
                         }
                         onPress={() => void prepare()}
@@ -857,27 +929,31 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
             <Dialog className="ol-person-dialog" aria-label="Unsaved draft changes">
               <h2>Keep this draft edit?</h2>
               <p>Your unfinished changes have not been saved as a revision.</p>
+              {error && <p role="alert">{error}</p>}
               <Button variant="primary" onPress={() => setSwitchTo(undefined)}>
                 Keep editing
               </Button>
               <Button
                 variant="quiet"
                 onPress={() => {
-                  if (exact)
-                    writeLocal(
-                      authoringKey(
-                        'draft-edit',
-                        worldId,
-                        audience,
-                        sessionId,
-                        selected?.id ?? null,
-                        selected?.revision ?? null,
-                        exact.kind,
-                      ),
-                      null,
-                    );
-                  select(switchTo.id ? switchTo : null, true);
-                  setSwitchTo(undefined);
+                  try {
+                    if (exact)
+                      discardRetainedDraftEdit(
+                        authoringKey(
+                          'draft-edit',
+                          worldId,
+                          audience,
+                          sessionId,
+                          selected?.id ?? null,
+                          selected?.revision ?? null,
+                          exact.kind,
+                        ),
+                      );
+                    select(switchTo.id ? switchTo : null, true);
+                    setSwitchTo(undefined);
+                  } catch (failure) {
+                    setError(errorText(failure));
+                  }
                 }}
               >
                 Discard changes and continue

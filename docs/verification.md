@@ -1,5 +1,7 @@
 # Verification
 
+- [Imported interface implementation review](verification/ui-implementation-review.md) — full source/design audit, equipment consequences, draft/focus/privacy repairs, original-request retention and scoped browser/native evidence.
+
 - [Speak, descriptive Act and contextual menus](verification/speak-and-act.md) — scoped HTTP/PostgreSQL fixtures, speech volumes, expression-only effects, stale/replay guards and bottom-bar browser interactions.
 
 - [World and engine boundaries](verification/world-engine-boundaries.md) — all 13 selected-owner fixes, capability omission, contrasting native definitions, PostgreSQL continuation and truthful player presentation.

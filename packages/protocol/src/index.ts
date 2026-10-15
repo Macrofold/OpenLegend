@@ -736,7 +736,12 @@ export interface GameView {
   godTools?: {
     familyLabel: string;
     traits: Array<{ id: string; name: string; description: string }>;
-    spawnOptions: Array<{ id: string; label: string; category: 'Actors' | 'Environment' }>;
+    spawnOptions: Array<{
+      id: string;
+      label: string;
+      category: 'Actors' | 'Environment';
+      icon?: string;
+    }>;
     itemOptions: Array<{ id: string; label: string; icon?: string; description: string }>;
   };
   schemaVersion: 2;

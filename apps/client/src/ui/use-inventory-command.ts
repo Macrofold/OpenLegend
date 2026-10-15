@@ -20,8 +20,8 @@ const sameRequest = (left: PendingCommand, right: PendingCommand) =>
   left.tradeScope === right.tradeScope &&
   JSON.stringify(left.command) === JSON.stringify(right.command);
 
-/** Keep uncertain custody changes across permitted reconnects. A missing receipt does
- * not justify a fresh gesture: it cannot prove that the earlier move did not happen. */
+/** Keep uncertain gameplay commands across permitted reconnects. A missing receipt
+ * cannot prove that the earlier action did not happen or justify repeating it. */
 export function useInventoryCommand({
   worldId,
   actorId,

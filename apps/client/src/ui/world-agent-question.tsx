@@ -25,6 +25,20 @@ type Pending = {
   supersedes?: string;
   continueIfReady: boolean;
 };
+const answersValue = (value: unknown): value is Answers =>
+  Array.isArray(value) &&
+  value.length <= 3 &&
+  value.every(
+    (answer) =>
+      answer &&
+      typeof answer === 'object' &&
+      typeof answer.questionId === 'string' &&
+      (answer.kind === 'text'
+        ? typeof answer.text === 'string'
+        : answer.kind === 'options' &&
+          Array.isArray(answer.optionIds) &&
+          answer.optionIds.every((id: unknown) => typeof id === 'string')),
+  );
 const message = (error: unknown) =>
   error instanceof Error ? error.message : 'The answer could not be confirmed.';
 
@@ -63,24 +77,7 @@ export function WorldAgentQuestionCard({
       record,
     );
   const [answers, setAnswers] = useState<Answers>(() =>
-    readLocal(
-      recordKey('draft'),
-      question.answer?.answers ?? [],
-      (v): v is Answers =>
-        Array.isArray(v) &&
-        v.length <= 3 &&
-        v.every(
-          (a) =>
-            a &&
-            typeof a === 'object' &&
-            typeof a.questionId === 'string' &&
-            (a.kind === 'text'
-              ? typeof a.text === 'string'
-              : a.kind === 'options' &&
-                Array.isArray(a.optionIds) &&
-                a.optionIds.every((id: unknown) => typeof id === 'string')),
-        ),
-    ),
+    readLocal(recordKey('draft'), question.answer?.answers ?? [], answersValue),
   );
   const [pending, setPending] = useState<Pending | null>(() =>
     readLocal(
@@ -92,7 +89,8 @@ export function WorldAgentQuestionCard({
         'answerId' in v &&
         typeof v.answerId === 'string' &&
         'answers' in v &&
-        Array.isArray(v.answers) &&
+        answersValue(v.answers) &&
+        (!('supersedes' in v) || typeof v.supersedes === 'string') &&
         'continueIfReady' in v &&
         typeof v.continueIfReady === 'boolean',
     ),

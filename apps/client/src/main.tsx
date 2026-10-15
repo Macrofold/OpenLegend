@@ -2290,8 +2290,8 @@ function App({
         </div>
         {targeting && (
           <div className="ol-targeting-hint" role="status">
-            Use {view?.player.inventory.find((item) => item.equipped)?.name}: click a highlighted
-            target.
+            {hover?.entity.equippedAction?.label ??
+              'Choose a highlighted target for an equipped-item action.'}
             <Button size="sm" onPress={() => setTargeting(false)}>
               Cancel · Esc
             </Button>

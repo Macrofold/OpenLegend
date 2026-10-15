@@ -7,7 +7,7 @@ import type {
 } from '@open-legend/protocol';
 import { Button } from '../design-system/components';
 import { post, privateDraftScope } from '../api';
-import { readLocal, writeLocal } from './storage';
+import { readLocal } from './storage';
 import { WorldAgentPreparationDetails } from './world-agent-work-details';
 import { WorldCreationPreviewView } from './world-creation-preview';
 import { authoringKey } from './world-agent-identity';
@@ -32,6 +32,43 @@ function localEdit(value: unknown): value is LocalEdit {
         typeof value.operation.body === 'string' &&
         typeof value.operation.id === 'string'))
   );
+}
+function readEdit(key: string): LocalEdit | null {
+  const raw = localStorage.getItem(key);
+  if (raw === null) return null;
+  const value: unknown = JSON.parse(raw);
+  if (value === null) return null;
+  if (!localEdit(value))
+    throw new Error('The retained edit is unreadable. Restore it before saving.');
+  return value;
+}
+function sameOperation(a: LocalEdit['operation'], b: LocalEdit['operation']) {
+  return !!a && !!b && a.id === b.id && a.body === b.body;
+}
+/** Optional drafts must not erase an unresolved native Save. Dispatch and cleanup
+ * use the same owner with mandatory readback, without imposing a new content cap. */
+function writeEdit(
+  key: string,
+  edit: LocalEdit | null,
+  settled?: LocalEdit['operation'],
+  verify = true,
+) {
+  const current = readEdit(key);
+  if (current?.operation && !sameOperation(current.operation, settled ?? edit?.operation))
+    throw new Error('An earlier Save remains unresolved. Reload and check that original Save.');
+  const text = JSON.stringify(edit);
+  localStorage.setItem(key, text);
+  if (verify && localStorage.getItem(key) !== text)
+    throw new Error(
+      'This browser could not retain the exact Save record. Restore storage and check the original Save before continuing.',
+    );
+}
+export function discardRetainedDraftEdit(key: string): void {
+  if (readEdit(key)?.operation)
+    throw new Error(
+      'The original Save needs confirmation. Keep editing and retry that Save before discarding.',
+    );
+  writeEdit(key, null);
 }
 function valueAt(candidate: unknown, path: string[]): unknown {
   let value = candidate;
@@ -210,7 +247,13 @@ export function WorldAgentDraftEditor({
   const facts = previewCurrent ? (preview.data.facts ?? []) : (metadata?.facts ?? []);
   useEffect(() => {
     onDirty(dirty);
-    writeLocal(key, dirty ? edit : null);
+    try {
+      // Optional typing persistence needs the conflict guard, not dispatch readback.
+      writeEdit(key, dirty ? edit : null, undefined, false);
+    } catch {
+      // Unsent drafts remain optional; the dispatch boundary refuses unavailable
+      // storage and never overwrites a different unresolved operation.
+    }
   }, [dirty, edit, key]);
   useEffect(() => {
     alive.current = true;
@@ -241,13 +284,20 @@ export function WorldAgentDraftEditor({
     submittedBody: string,
   ) {
     if (!alive.current || candidateIdentity.current !== submittedSignature) return;
+    const settle = (keepDraft: boolean) => {
+      const { operation, ...retained } = editRef.current;
+      if (!operation || operation.body !== submittedBody)
+        throw new Error('The original Save identity changed. Its result must be checked.');
+      writeEdit(key, keepDraft ? retained : null, operation);
+      editRef.current = retained;
+      setEdit(retained);
+    };
     if (!response.ok || !response.data) {
       // An acknowledged refusal is final for this identity; an unavailable outcome
       // remains retained so a lost acknowledgement can reconcile the original request.
       if (response.status !== 'unavailable') {
-        const { operation: _operation, ...retained } = editRef.current;
-        editRef.current = retained;
-        setEdit(retained);
+        setNotice(response.message ?? 'The original Save was refused. Your fields remain here.');
+        settle(true);
       }
       if (response.status === 'stale') {
         const history = await post<WorldAgentWorkResult<{ latestRevision: number }>>(
@@ -276,17 +326,16 @@ export function WorldAgentDraftEditor({
       throw new Error(
         'The retained Save returned a different draft. Your local fields remain here.',
       );
+    setNotice(`The original Save created revision ${response.data.revision}.`);
     if (submittedBody !== JSON.stringify(saveBody())) {
-      const { operation: _operation, ...retained } = editRef.current;
-      editRef.current = retained;
-      setEdit(retained);
+      settle(true);
       setNewer(response.data);
       setNotice(
         `The original Save created revision ${response.data.revision}. Your later local changes remain above; inspect and reapply them deliberately.`,
       );
       return;
     }
-    writeLocal(key, null);
+    settle(false);
     onDirty(false);
     onSaved(response.data);
   }
@@ -316,7 +365,10 @@ export function WorldAgentDraftEditor({
     setError('');
     setNotice('');
     const submittedSignature = signature;
+    let dispatched = false;
     try {
+      writeEdit(key, editRef.current);
+      dispatched = true;
       const response = await post<WorldAgentWorkResult<WorldAgentExactDraftView>>(
         '/api/world-agent/session/draft-save',
         { ...body, operationId: operation.id },
@@ -325,7 +377,7 @@ export function WorldAgentDraftEditor({
     } catch (failure) {
       if (alive.current && candidateIdentity.current === submittedSignature)
         setError(
-          failure instanceof Error ? failure.message : 'The original Save remains unconfirmed.',
+          `${failure instanceof Error ? failure.message : 'The original Save remains unconfirmed.'}${dispatched ? '' : ' No Save request was sent.'}`,
         );
     } finally {
       working.current = false;
@@ -350,6 +402,7 @@ export function WorldAgentDraftEditor({
     setError('');
     setNotice('');
     const submittedSignature = signature;
+    let dispatched = false;
     const body = {
       worldId,
       sessionId,
@@ -373,6 +426,15 @@ export function WorldAgentDraftEditor({
           );
         setPreview({ signature: submittedSignature, data: response.data });
       } else {
+        const stored = readEdit(key);
+        if (stored?.operation && !sameOperation(stored.operation, editRef.current.operation)) {
+          const retained = { ...editRef.current, operation: stored.operation };
+          editRef.current = retained;
+          setEdit(retained);
+          throw new Error(
+            'An earlier Save remains unresolved. Check the original Save before saving these changes.',
+          );
+        }
         const operationBody = JSON.stringify(body);
         const operationId =
           editRef.current.operation?.body === operationBody
@@ -382,9 +444,10 @@ export function WorldAgentDraftEditor({
           ...editRef.current,
           operation: { body: operationBody, id: operationId },
         };
+        writeEdit(key, retained);
         editRef.current = retained;
         setEdit(retained);
-        writeLocal(key, retained);
+        dispatched = true;
         const response = await post<WorldAgentWorkResult<WorldAgentExactDraftView>>(
           '/api/world-agent/session/draft-save',
           { ...body, operationId },
@@ -394,9 +457,7 @@ export function WorldAgentDraftEditor({
     } catch (failure) {
       if (alive.current && candidateIdentity.current === submittedSignature)
         setError(
-          failure instanceof Error
-            ? failure.message
-            : 'Outcome could not be confirmed. Retry the same edit to recover its retained result.',
+          `${failure instanceof Error ? failure.message : 'Outcome could not be confirmed. Retry the same edit to recover its retained result.'}${kind === 'save' && !dispatched ? ' No Save request was sent.' : ''}`,
         );
     } finally {
       working.current = false;
@@ -476,10 +537,14 @@ export function WorldAgentDraftEditor({
         <Button
           size="sm"
           variant="quiet"
-          disabled={pending === 'save'}
+          disabled={pending === 'save' || !!edit.operation}
           onPress={() => {
             change(initial);
-            writeLocal(key, null);
+            try {
+              writeEdit(key, null);
+            } catch {
+              /* Keep any unresolved native Save. */
+            }
           }}
         >
           Discard local changes
@@ -706,9 +771,17 @@ export function WorldAgentDraftEditor({
                 newer.revision,
                 newer.kind,
               );
-              writeLocal(nextKey, reapplied);
-              writeLocal(key, null);
-              onRebased(newer);
+              try {
+                writeEdit(nextKey, reapplied);
+                writeEdit(key, null);
+                onRebased(newer);
+              } catch (failure) {
+                setError(
+                  failure instanceof Error
+                    ? failure.message
+                    : 'The reapplied fields could not be retained. Your original edit remains here.',
+                );
+              }
             }}
           >
             Reapply my fields to revision {newer.revision}
@@ -758,11 +831,15 @@ export function WorldAgentDraftEditor({
           <Button
             size="sm"
             variant="quiet"
-            disabled={pending === 'save'}
+            disabled={pending === 'save' || !!edit.operation}
             onPress={() => {
               setPreview(undefined);
               change(initial);
-              writeLocal(key, null);
+              try {
+                writeEdit(key, null);
+              } catch {
+                /* Keep any unresolved native Save. */
+              }
             }}
           >
             Discard local changes

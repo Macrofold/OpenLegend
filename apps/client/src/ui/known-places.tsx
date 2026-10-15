@@ -49,8 +49,11 @@ export function KnownPlaces({
   const pageAbort = useRef<AbortController | undefined>(undefined);
   const detailAbort = useRef<AbortController | undefined>(undefined);
   const detailHeading = useRef<HTMLHeadingElement>(null);
+  const inspectionFocus = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    if (visible && inspection) detailHeading.current?.focus();
+    // A completed inspection must not interrupt a newer search or another task.
+    if (visible && inspection && document.activeElement === inspectionFocus.current)
+      detailHeading.current?.focus();
   }, [inspection?.place.sourceId]);
 
   async function load(more = false) {
@@ -121,6 +124,7 @@ export function KnownPlaces({
     const abort = new AbortController();
     detailAbort.current = abort;
     const id = ++detailRequest.current;
+    inspectionFocus.current?.focus({ preventScroll: true });
     setInspection(undefined);
     setError('');
     setMessage('Loading the remembered observation…');
@@ -223,7 +227,7 @@ export function KnownPlaces({
       >
         {newer ? 'New or updated observations — refresh' : 'Refresh known places'}
       </Button>
-      <p className="ol-meta" role="status">
+      <p ref={inspectionFocus} tabIndex={-1} className="ol-meta" role="status">
         {busy ? 'Loading known places…' : message}
       </p>
       {error && <p role="alert">{error}</p>}
