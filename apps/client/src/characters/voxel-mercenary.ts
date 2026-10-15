@@ -17,7 +17,7 @@ function isContainer(value: unknown): value is pc.ContainerResource {
 }
 
 /** Scene-owned immutable art. The earlier sampled model remains in mercenary.ts.
- * docs/projects/mercenary-voxel-iteration.md */
+ * docs/projects/completed/mercenary-voxel-iteration.md */
 export class VoxelMercenaryModels {
   private asset?: pc.Asset;
   private pending?: Promise<pc.ContainerResource>;

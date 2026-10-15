@@ -20,6 +20,7 @@ from pathlib import Path
 import sys
 
 import bpy
+import numpy as np
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
@@ -168,7 +169,7 @@ def body_paint(point, owner):
         return "wrapShade" if (iy + iz // 3) % 7 == 0 else "wrapLight" if z > 0.025 else "wrap"
     if owner.endswith("Thigh") and y < 0.68:
         return "trouserLight" if z > 0.01 else "trouser"
-    # Geometry and the original material regions locate mail, padded panels,
+    # Anatomical regions locate the original outfit's mail, padded panels,
     # belts and pouches. Color and detail are new restrained fixed-cell paint.
     pouch = owner == "torso" and -0.26 < x < -0.16 and 1.05 < y < 1.28 and z > 0.10
     if pouch:
@@ -194,7 +195,7 @@ def fill_body(reference):
     low = [math.floor(v / CELL) for v in reference.low]
     high = [math.ceil(v / CELL) for v in reference.high]
     direction = Vector((0, 0, -1))
-    columns, odd, odd_locations = 0, 0, []
+    columns, odd, odd_locations, added, removed = 0, 0, [], 0, 0
     for x in range(low[0], high[0]):
         for y in range(low[1], high[1]):
             origin = Vector(((x + 0.5) * CELL, (y + 0.5) * CELL, reference.high[2] + CELL))
@@ -212,19 +213,191 @@ def fill_body(reference):
             if len(hits) % 2:
                 odd += 1
                 odd_locations.append([x, y])
-            for front, back in zip(hits[0::2], hits[1::2]):
-                for z in range(math.floor(back / CELL), math.ceil(front / CELL)):
-                    key = (x, y, z)
-                    point = center(key)
-                    nearest, normal, face, distance = reference.tree.find_nearest(point)
-                    owner, uv = reference.sample(nearest, face)
-                    cells[owner][key] = body_paint(point, owner)
+            occupied = {z for front, back in zip(hits[0::2], hits[1::2])
+                        for z in range(math.floor(back / CELL), math.ceil(front / CELL))}
+            if len(hits) % 2:
+                # A source scan crossing a triangle edge/open seam can be odd.
+                # Resolve only those columns against the same anatomical mesh
+                # from an independent axis; never dilate finger/skirt openings.
+                corrected = set()
+                for z in range(low[2], high[2]):
+                    query = center((x, y, z))
+                    start = Vector((reference.high[0] + CELL, query.y, query.z))
+                    crossings, previous = 0, None
+                    for _ in range(40):
+                        hit, _, _, _ = reference.tree.ray_cast(start, Vector((-1, 0, 0)))
+                        if hit is None or hit.x < query.x:
+                            break
+                        if previous is None or abs(previous - hit.x) > CELL * 0.02:
+                            crossings += 1
+                        previous, start.x = hit.x, hit.x - CELL * 0.002
+                    if crossings % 2:
+                        corrected.add(z)
+                added += len(corrected - occupied)
+                removed += len(occupied - corrected)
+                occupied = corrected
+            for z in occupied:
+                key = (x, y, z)
+                point = center(key)
+                nearest, normal, face, distance = reference.tree.find_nearest(point)
+                owner, uv = reference.sample(nearest, face)
+                cells[owner][key] = body_paint(point, owner)
     print("BODY", json.dumps({"cells": sum(map(len, cells.values())), "columns": columns, "oddColumns": odd}), flush=True)
     return cells, {"sampledColumns": columns, "oddIntersectionColumns": odd,
-                   "oddColumnCellsXY": odd_locations}
+                   "oddColumnCellsXY": odd_locations, "orthogonalMeshChecks": odd,
+                   "correctedCellsAdded": added, "correctedCellsRemoved": removed}
 
 
-def cape_reference(scale, floor):
+def part_contract(bones):
+    pivots = {
+        "torso": bones["Hips"], "head": bones["neck"],
+        "leftUpperArm": bones["LeftArm"], "leftForearm": bones["LeftForeArm"],
+        "rightUpperArm": bones["RightArm"], "rightForearm": bones["RightForeArm"],
+        "leftThigh": bones["LeftUpLeg"], "leftShin": bones["LeftLeg"],
+        "rightThigh": bones["RightUpLeg"], "rightShin": bones["RightLeg"], "cape": bones["cape_root"],
+    }
+    parents = {name: None for name in NAMES}
+    for name in ["head", "leftUpperArm", "rightUpperArm", "cape"]:
+        parents[name] = "torso"
+    for side in ("left", "right"):
+        parents[side + "Forearm"] = side + "UpperArm"
+        parents[side + "Shin"] = side + "Thigh"
+    return pivots, parents
+
+
+def clean_fragments(cells):
+    removed = {}
+    for name, part in cells.items():
+        if not part:
+            continue
+        remaining, components = set(part), []
+        while remaining:
+            pending, component = [remaining.pop()], set()
+            while pending:
+                point = pending.pop()
+                component.add(point)
+                for direction, _ in FACES:
+                    other = tuple(point[i] + direction[i] for i in range(3))
+                    if other in remaining:
+                        remaining.remove(other)
+                        pending.append(other)
+            components.append(component)
+        largest = max(components, key=len)
+        tiny = set(part) - largest
+        # These are source-edge/partition crumbs, not an authored separate part.
+        # A larger detached component needs investigation, not silent deletion.
+        assert len(tiny) < 100, f"Disconnected substantial {name} component"
+        for point in tiny:
+            del part[point]
+        removed[name] = len(tiny)
+    return removed
+
+
+class GaitEnvelope:
+    """Offline conservative fit for this asset's complete bounded rigid gait."""
+    def __init__(self, cells, pivots, parents):
+        self.low = np.array((-80, -16, -96), dtype=np.int64)
+        shape = (160, 208, 192)
+        self.min_z = np.full(shape[:2], np.inf)
+        self.max_z = np.full(shape[:2], -np.inf)
+        self.max_y = np.full((shape[0], shape[2]), -np.inf)
+        self.min_x = np.full(shape[1:], np.inf)
+        self.max_x = np.full(shape[1:], -np.inf)
+        points = {name: (np.array(list(part), dtype=np.float64) + 0.5) * CELL
+                  for name, part in cells.items() if part}
+        for frame in range(360):
+            swing = math.sin(frame * math.tau / 360)
+            angles = {"leftThigh": swing * 18, "rightThigh": -swing * 18,
+                      "leftShin": max(0, -swing) * 12, "rightShin": max(0, swing) * 12,
+                      "leftUpperArm": -swing * 12, "rightUpperArm": swing * 12,
+                      "leftForearm": -abs(swing) * 5, "rightForearm": -abs(swing) * 5}
+            lifts = {}
+            for side in ("left", "right"):
+                thigh, shin = side + "Thigh", side + "Shin"
+                a = math.radians(angles[thigh])
+                total = a + math.radians(angles[shin])
+                knee = pivots[shin] - pivots[thigh]
+                sole_y = min(p[1] for p in cells[shin]) * CELL - pivots[shin].y
+                min_z = min(p[2] for p in cells[shin]) * CELL - pivots[shin].z
+                max_z = (max(p[2] for p in cells[shin]) + 1) * CELL - pivots[shin].z
+                sole_z = max_z if math.sin(total) > 0 else min_z
+                knee_y = math.cos(a) * knee.y - math.sin(a) * knee.z
+                sole = math.cos(total) * sole_y - math.sin(total) * sole_z
+                lifts[thigh] = max(0, -pivots[thigh].y - knee_y - sole)
+            for name, original in points.items():
+                if name not in angles and frame != 0:
+                    continue
+                angle = math.radians(angles.get(name, 0))
+                pivot = np.array(pivots[name], dtype=np.float64)
+                parent = parents[name]
+                if parent in angles:
+                    parent_angle = math.radians(angles[parent])
+                    c, s = math.cos(parent_angle), math.sin(parent_angle)
+                    delta = pivots[name] - pivots[parent]
+                    pivot[1] = pivots[parent].y + delta.y * c - delta.z * s + lifts.get(parent, 0)
+                    pivot[2] = pivots[parent].z + delta.y * s + delta.z * c
+                    angle += parent_angle
+                else:
+                    pivot[1] += lifts.get(name, 0)
+                c, s = math.cos(angle), math.sin(angle)
+                relative = original - np.array(pivots[name])
+                transformed = original.copy()
+                transformed[:, 1] = pivot[1] + relative[:, 1] * c - relative[:, 2] * s
+                transformed[:, 2] = pivot[2] + relative[:, 1] * s + relative[:, 2] * c
+                extent = CELL * 0.5 * (abs(c) + abs(s))
+                self.include(transformed, extent)
+        self.moved, self.max_shift = 0, 0.0
+
+    def include(self, points, extent):
+        indices = np.floor(points / CELL).astype(np.int64) - self.low
+        x = indices[:, 0]
+        for offset_y in (-1, 0, 1):
+            y = indices[:, 1] + offset_y
+            world_y = (y + self.low[1]) * CELL
+            valid_y = (world_y < points[:, 1] + extent) & (world_y + CELL > points[:, 1] - extent)
+            np.minimum.at(self.min_z, (x[valid_y], y[valid_y]), points[valid_y, 2] - extent)
+            np.maximum.at(self.max_z, (x[valid_y], y[valid_y]), points[valid_y, 2] + extent)
+            for offset_z in (-1, 0, 1):
+                z = indices[:, 2] + offset_z
+                world_z = (z + self.low[2]) * CELL
+                valid_z = (world_z < points[:, 2] + extent) & (world_z + CELL > points[:, 2] - extent)
+                if offset_y == 0:
+                    np.maximum.at(self.max_y, (x[valid_z], z[valid_z]), points[valid_z, 1] + extent)
+                valid = valid_y & valid_z
+                np.minimum.at(self.min_x, (y[valid], z[valid]), points[valid, 0] - CELL * 0.5)
+                np.maximum.at(self.max_x, (y[valid], z[valid]), points[valid, 0] + CELL * 0.5)
+
+    @staticmethod
+    def nearby(field, a, b, minimum):
+        region = field[max(0, a - 1):a + 2, max(0, b - 1):b + 2]
+        return float(np.min(region) if minimum else np.max(region))
+
+    def fit(self, original):
+        point = original.copy()
+        x, y, z = np.floor(np.array(point) / CELL).astype(np.int64) - self.low
+        allowance = CELL * 2.0
+        front = self.nearby(self.max_z, x, y, False)
+        back = self.nearby(self.min_z, x, y, True)
+        right = self.nearby(self.max_x, y, z, False)
+        left = self.nearby(self.min_x, y, z, True)
+        top = self.nearby(self.max_y, x, z, False)
+        candidates = [(max(0, front + allowance - point.z), Vector((0, 0, 1))),
+                      (max(0, point.z - back + allowance), Vector((0, 0, -1)))]
+        if point.x > 0.18:
+            candidates.append((max(0, right + allowance - point.x), Vector((1, 0, 0))))
+        elif point.x < -0.18:
+            candidates.append((max(0, point.x - left + allowance), Vector((-1, 0, 0))))
+        if point.y > 1.65:
+            candidates.append((max(0, top + allowance - point.y), Vector((0, 1, 0))))
+        distance, direction = min(candidates, key=lambda candidate: candidate[0])
+        if math.isfinite(distance) and distance > 0:
+            point += direction * distance
+            self.moved += 1
+            self.max_shift = max(self.max_shift, distance)
+        return point
+
+
+def cape_reference(scale, floor, envelope):
     data = json.loads(CAPE_SOURCE.read_text())
     vertices, triangles, uvs, tags = [], [], [], []
     for patch in data["patches"]:
@@ -240,7 +413,31 @@ def cape_reference(scale, floor):
                     triangles.append(tuple(start + i for i in tri))
                     uvs.append([tuple(texcoords[2 * i:2 * i + 2]) for i in tri])
                     tags.append(patch["name"])
-    return Reference(vertices, triangles, uvs, tags=tags)
+    refined_vertices, refined_triangles, refined_uvs, refined_tags = [], [], [], []
+    fitted = {}
+    for triangle, coordinates, tag in zip(triangles, uvs, tags):
+        pieces = [(tuple(vertices[i] for i in triangle), tuple(Vector(uv) for uv in coordinates))]
+        # Refine the existing source surface, not its silhouette, before the
+        # local fit. Shared positions use exactly one fitted result at seams.
+        for _ in range(2):
+            next_pieces = []
+            for (a, b, c), (ua, ub, uc) in pieces:
+                ab, ac, bc = (a + b) * 0.5, (a + c) * 0.5, (b + c) * 0.5
+                uab, uac, ubc = (ua + ub) * 0.5, (ua + uc) * 0.5, (ub + uc) * 0.5
+                next_pieces.extend([((a, ab, ac), (ua, uab, uac)), ((ab, b, bc), (uab, ub, ubc)),
+                                    ((ac, bc, c), (uac, ubc, uc)), ((ab, bc, ac), (uab, ubc, uac))])
+            pieces = next_pieces
+        for points, coordinates in pieces:
+            start = len(refined_vertices)
+            for point in points:
+                key = tuple(round(v, 5) for v in point)
+                if key not in fitted:
+                    fitted[key] = envelope.fit(point)
+                refined_vertices.append(fitted[key])
+            refined_triangles.append((start, start + 1, start + 2))
+            refined_uvs.append(coordinates)
+            refined_tags.append(tag)
+    return Reference(refined_vertices, refined_triangles, refined_uvs, tags=refined_tags)
 
 
 def embroidery_mask():
@@ -359,14 +556,21 @@ def face_details(cells):
 
 def brooch(cells, scale):
     # Preserve the actual small round shoulder clasp rather than a square block.
-    body = cells["torso"]
+    garment = cells["cape"]
+    columns = defaultdict(list)
+    for x, y, z in garment:
+        columns[(x, y)].append(z)
     c = Vector((-0.12 * scale, 1.52 * scale, 0.078 * scale))
     for x in range(math.floor((c.x - 0.05) / CELL), math.ceil((c.x + 0.05) / CELL)):
         for y in range(math.floor((c.y - 0.05) / CELL), math.ceil((c.y + 0.05) / CELL)):
             distance = math.hypot((x + 0.5) * CELL - c.x, (y + 0.5) * CELL - c.y)
+            if (x, y) not in columns:
+                continue
+            z = max(columns[(x, y)])
             if 0.029 <= distance <= 0.047:
-                for z in range(math.floor(c.z / CELL), math.ceil((c.z + 0.021) / CELL)):
-                    body[(x, y, z)] = "bronzeLight" if x * CELL < c.x else "bronze"
+                garment[(x, y, z + 1)] = "bronzeLight" if x * CELL < c.x else "bronze"
+            elif distance < 0.029:
+                garment[(x, y, z)] = "leatherShade"
 
 
 def rgba(name):
@@ -484,12 +688,14 @@ def main():
     bpy.data.orphans_purge(do_recursive=True)
     reference, bones, scale, floor = import_body()
     cells, fill_metrics = fill_body(reference)
-    cells["cape"] = fill_cape(cape_reference(scale, floor))
+    pivots, parents = part_contract(bones)
+    fragment_metrics = clean_fragments(cells)
+    envelope = GaitEnvelope(cells, pivots, parents)
+    cells["cape"] = fill_cape(cape_reference(scale, floor, envelope))
     face_details(cells)
     brooch(cells, scale)
-    for name in NAMES[:-1]:
-        for key in cells["cape"]:
-            cells[name].pop(key, None)
+    final_fragments = clean_fragments(cells)
+    fragment_metrics = {name: fragment_metrics.get(name, 0) + count for name, count in final_fragments.items()}
     # Delete imported render objects, preserving only the read geometry scaffold
     # in provenance. No source textures, armature, animations or lights ship.
     bpy.ops.object.select_all(action="SELECT")
@@ -497,22 +703,10 @@ def main():
     bpy.data.orphans_purge(do_recursive=True)
     root = bpy.data.objects.new("MercenarySculpted", None)
     bpy.context.collection.objects.link(root)
-    pivots = {
-        "torso": bones["Hips"], "head": bones["neck"],
-        "leftUpperArm": bones["LeftArm"], "leftForearm": bones["LeftForeArm"],
-        "rightUpperArm": bones["RightArm"], "rightForearm": bones["RightForeArm"],
-        "leftThigh": bones["LeftUpLeg"], "leftShin": bones["LeftLeg"],
-        "rightThigh": bones["RightUpLeg"], "rightShin": bones["RightLeg"], "cape": bones["cape_root"],
-    }
-    parents = {name: None for name in NAMES}
-    for name in ["head", "leftUpperArm", "rightUpperArm", "cape"]:
-        parents[name] = "torso"
-    for side in ("left", "right"):
-        parents[side + "Forearm"] = side + "UpperArm"
-        parents[side + "Shin"] = side + "Thigh"
     if args.cell_record:
         args.cell_record.parent.mkdir(parents=True, exist_ok=True)
         args.cell_record.write_text(json.dumps({"cellSizeMetres": CELL, "solidFilling": fill_metrics,
+            "removedFragmentCells": fragment_metrics,
             "parts": {name: {"parent": parents[name], "pivotMetresYUp": list(pivots[name]),
                               "cells": [list(key) + [color] for key, color in sorted(cells[name].items())]}
                       for name in NAMES}}))
@@ -545,7 +739,11 @@ def main():
         "heightMetres": bounds["max"][1] - bounds["min"][1],
         "parts": stats, "cells": sum(len(c) for c in cells.values()),
         "triangles": sum(p["triangles"] for p in stats), "materials": 1, "textures": 0, "skins": 0, "clips": 0,
-        "palette": PALETTE, "solidFilling": fill_metrics, "costUSD": 0,
+        "palette": PALETTE, "solidFilling": fill_metrics, "removedFragmentCells": fragment_metrics,
+        "garmentFit": {"preparation": "Conservative offline360-phase rigid-body swept envelope; no resting body carve",
+                       "gaitDegrees": {"thigh": 18, "knee": 12, "upperArm": 12, "elbow": 5},
+                       "clothAllowanceMetres": 2 * CELL, "movedSurfaceVertices": envelope.moved,
+                       "maximumLocalSurfaceOffsetMetres": envelope.max_shift}, "costUSD": 0,
         "sourceSha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                          for p in (Path(__file__), BODY_SOURCE, CAPE_SOURCE)},
         "sha256": {name: hashlib.sha256((ASSETS / name).read_bytes()).hexdigest()
