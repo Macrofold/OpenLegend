@@ -83,7 +83,8 @@ export function renderNarration(
   return text;
 }
 /** World-authored templates retain their vocabulary; only grammatical participant tokens
- * are interpreted. Item/name text is inserted literally, never parsed as another template. */
+ * are interpreted. Entity bindings use observer identity; named values are inserted literally,
+ * even when they carry definition IDs, and are never parsed as another template. */
 export function narrationTemplate(
   template: string,
   bindings: Record<string, Entity | Named | undefined>,

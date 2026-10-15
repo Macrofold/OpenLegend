@@ -1,3 +1,4 @@
+import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -252,6 +253,7 @@ async function harness(
   await enterLocalWorld(service);
   await service.setConnection('fixture-browser', true);
   await service.setPresence('fixture-browser', true);
+  await useNearCampSight(service);
   await service.control({ paused: false });
   const calls = { judges: [] as JudgeRequest[], generations: [] as GenerateRequest[] };
   const client: AiClient = {
@@ -624,6 +626,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
         'native',
         'level1',
       ]);
+      expect(offeredRoutes.some((key) => /^request_\d+$/.test(key))).toBe(true);
       expect(decisionJudges(h.calls.judges)).toHaveLength(1);
       expect(h.calls.generations).toHaveLength(0);
       await h.service.tick(0.1);

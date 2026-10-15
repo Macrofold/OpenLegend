@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1020" viewBox="0 0 1400 1020" role="img" aria-labelledby="title desc">
+<title id="title">Settings, session and save recovery — Design proposal — not runtime evidence</title>
+<desc id="desc">04 · Local preferences stay separate from changes that replace the saved world. Original Open Legend proposal. All values and names are illustrative. This is a static diagram.</desc>
+<rect x="0" y="0" width="1400" height="1020" rx="0" fill="#0b1916" stroke="none" stroke-width="1"/>
+<text x="32" y="35" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">OPEN LEGEND  /  Design proposal — not runtime evidence</text>
+<text x="32" y="81" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="32" font-weight="700">Settings, session and save recovery</text>
+<text x="32" y="116" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="400">04 · Local preferences stay separate from changes that replace the saved world.</text>
+<rect x="28" y="146" width="1344" height="668" rx="8" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<rect x="52" y="171" width="1294" height="616" rx="8" fill="#142820" stroke="#385348" stroke-width="1"/>
+<text x="76" y="210" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="28" font-weight="700">Game &amp; settings</text>
+<rect x="1100" y="184" width="222" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1114" y="210.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Return to the world</text>
+<rect x="76" y="256" width="252" height="38" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="89" y="281" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Appearance &amp; reading</text>
+<rect x="76" y="309" width="252" height="38" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="89" y="334" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Controls &amp; camera</text>
+<rect x="76" y="362" width="252" height="38" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="89" y="387" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Session</text>
+<rect x="76" y="415" width="252" height="38" rx="5" fill="#142820" stroke="#d1b675" stroke-width="1"/>
+<text x="89" y="440" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="700">Saved worlds</text>
+<rect x="76" y="468" width="252" height="38" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="89" y="493" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Help &amp; credits</text>
+<line x1="352" y1="249" x2="352" y2="760" stroke="#385348" stroke-width="1"/>
+<text x="76" y="574" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="700">Current session</text>
+<text x="76" y="604" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Mike · The first clearing</text>
+<text x="76" y="630" fill="#7ca68d" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">This tab has control</text>
+<rect x="76" y="663" width="252" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="90" y="689.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Log Out</text>
+<text x="76" y="747" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="400">World operations</text>
+<text x="379" y="265" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="24" font-weight="700">Saved worlds</text>
+<text x="379" y="294" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Checkpoints for The first clearing</text>
+<text x="379" y="334" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">New checkpoint name</text>
+<rect x="379" y="347" width="394" height="41" rx="8" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="393" y="374" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">Before crossing the river</text>
+<rect x="787" y="347" width="165" height="40" rx="5" fill="#314035" stroke="#d1b675" stroke-width="1"/>
+<text x="801" y="373.0" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="700">Save checkpoint</text>
+<rect x="379" y="408" width="573" height="160" rx="8" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="399" y="439" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="19" font-weight="700">River camp</text>
+<rect x="803" y="419" width="127" height="27" rx="13" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="814" y="438" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="400">Selected save</text>
+<text x="399" y="469" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Manual · Day 1, 08:00</text>
+<text x="399" y="494" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Saved Oct 4, 2026 · 09:40 UTC</text>
+<text x="399" y="540" fill="#7ca68d" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Compatible with this world</text>
+<text x="399" y="605" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="400">Before last load</text>
+<text x="399" y="633" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Recovery checkpoint · Day 1, 07:30</text>
+<rect x="978" y="252" width="344" height="391" rx="8" fill="#142820" stroke="#d1b675" stroke-width="1"/>
+<text x="1000" y="287" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="22" font-weight="700">Load “River camp”?</text>
+<text x="1000" y="325" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">This replaces the current</text>
+<text x="1000" y="348" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">world and starts it paused.</text>
+<text x="1000" y="397" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">A “Before last load”</text>
+<text x="1000" y="420" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">checkpoint is written first.</text>
+<text x="1000" y="443" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">If it cannot be saved,</text>
+<text x="1000" y="466" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="400">loading is refused.</text>
+<line x1="1000" y1="498" x2="1300" y2="498" stroke="#385348" stroke-width="1"/>
+<rect x="1000" y="519" width="300" height="40" rx="5" fill="#314035" stroke="#d1b675" stroke-width="1"/>
+<text x="1014" y="545.0" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="700">Load and start paused</text>
+<rect x="1000" y="571" width="300" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1014" y="597.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Keep current world</text>
+<line x1="379" y1="683" x2="1322" y2="683" stroke="#385348" stroke-width="1"/>
+<text x="379" y="715" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="16" font-weight="700">Automatic checkpoints</text>
+<text x="379" y="742" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Last confirmed: Day 1, 07:50 · No write pending</text>
+<rect x="1081" y="710" width="241" height="40" rx="5" fill="#10221c" stroke="#385348" stroke-width="1"/>
+<text x="1095" y="736.0" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="15" font-weight="400">Checkpoint settings…</text>
+<text x="32" y="848" fill="#d1b675" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="700">DESIGN NOTES  /  Outside the proposed game interface</text>
+<text x="32" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">Separate reversible preferences</text>
+<text x="32" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Appearance, scale, reduced motion and caption</text>
+<text x="32" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">reading settings keep their existing</text>
+<text x="32" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">local/profile owners. A load never resets them.</text>
+<text x="482" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">Recovery is a deliberate decision</text>
+<text x="482" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Load explains replacement and protection.</text>
+<text x="482" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Deletion has a separate confirmation; an</text>
+<text x="482" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">unknown result cannot become a second blind</text>
+<text x="482" y="972" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">load.</text>
+<text x="932" y="881" fill="#eee9d7" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="17" font-weight="700">Session and failure states stay exact</text>
+<text x="932" y="909" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Another active tab uses Game Paused / Resume</text>
+<text x="932" y="930" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">Here / Log Out. Durable save failures remain</text>
+<text x="932" y="951" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">visible until acknowledged; they are not</text>
+<text x="932" y="972" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="400">success.</text>
+<text x="32" y="998" fill="#a9bca9" text-anchor="start" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="400">Static proposal • Illustrative content • Native permissions, world rules and saved results remain authoritative</text>
+</svg>

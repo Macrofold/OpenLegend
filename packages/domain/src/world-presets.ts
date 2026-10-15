@@ -1,3 +1,6 @@
+import { CANOPY_ATTRIBUTES, BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
+import { SLING_HANDLING } from './worlds/base/practical-competence.js';
+import { directChildIds, unequipLot } from './objects.js';
 import { baseSpatial } from './worlds/base/spatial-definitions.js';
 import { worldPlacement } from './spatial-state.js';
 import type { WorldCreationAccounts } from './invention-attribution.js';
@@ -15,6 +18,8 @@ import { DEFAULT_SENSES as BASE_SENSES } from './perception.js';
 import type { BodyPolicy } from './body-policy.js';
 import { livingBody } from './living.js';
 import type { WorldState } from './types.js';
+import { activityHostPin } from './activity-hosts.js';
+import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 
 /** Reviewed native demonstration data, not a generated invention or electrical solver. */
 export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
@@ -56,6 +61,11 @@ export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
 export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
   const world = createWorld(seed, accounts);
   world.id = `reservoir-demo-${seed}`;
+  world.presentation = {
+    worldName: 'Clockwork inhabitants',
+    locationName: 'The clockwork camp',
+    timeLabel: 'Time in this world',
+  };
   const integrity: AttributeDefinition = {
     id: 'clockwork:integrity',
     version: 1,
@@ -93,10 +103,13 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     },
   };
   world.moduleManifest = createModuleManifest(
-    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES],
+    // This preset reuses the camp's actual shelter materials and practice target.
+    // Their rules remain authored dependencies; human food/energy meters do not.
+    [integrity, ...RESERVOIR_DEMO_ATTRIBUTES, ...CANOPY_ATTRIBUTES, SLING_HANDLING],
     BASE_SENSES,
     policy,
     world.moduleManifest.recipeFamilies,
+    [activityHostPin(RESERVOIR_ACTIVITY_HOST), activityHostPin(BASE_CANOPY_ACTIVITY_HOST)],
   );
   world.statusEffectPolicy = { revision: 1, clockOffsetHours: 0, namedTimes: {}, definitions: [] };
   world.cognitionPolicy = { ...world.cognitionPolicy, dream: null };
@@ -110,6 +123,10 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     if (actor.action?.type === 'status-effect') actor.action = null;
     initializeAttributes(actor, RESERVOIR_DEMO_ATTRIBUTES);
     if (actor.controller !== 'native') {
+      // Fresh constructs have no wearing ports. Keep inherited equipment as the
+      // same carried belongings through the ordinary placement/revision owner.
+      for (const id of directChildIds(world, entity.id))
+        if (world.entities[id]?.placement?.mode === 'attached') unequipLot(world, entity.id, id);
       actor.species = 'construct';
       actor.body = livingBody('construct');
       actor.agency = seedAgency(['Stay charged and explore the clearing.']);
@@ -120,6 +137,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     }
   }
   world.entities['charge-bank'] = {
+    icon: 'meter.energy',
     spatial: baseSpatial('object'),
     id: 'charge-bank',
     name: 'Charged capacitor',
@@ -141,6 +159,7 @@ export function createTouchDemo(seed = 73, accounts?: WorldCreationAccounts): Wo
     [...DEFAULT_SENSES, COARSE_TOUCH],
     manifest.bodyPolicy,
     manifest.recipeFamilies,
+    manifest.activityHosts,
   );
   const resident = world.entities[defaultResidentEntityId(world)]!;
   resident.actor!.senses = [COARSE_TOUCH.id];

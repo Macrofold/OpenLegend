@@ -98,9 +98,11 @@ function publicView(): import('@open-legend/protocol').GameView {
     revision: 1,
     worldId: 'world:a',
     saveTimeline: 'timeline:1',
+    presentation: { worldName: 'Fixture world', locationName: 'Fixture place', timeLabel: 'Time' },
     access: {
       scope: 'scope:1',
       privateDraftScope: 'owner:1',
+      commandRecoveryScope: 'recovery:1',
       accountId: 'account:1',
       actorId: 'person:1',
       controlGeneration: 1,
@@ -160,6 +162,7 @@ function publicView(): import('@open-legend/protocol').GameView {
       practice: [],
       suggestedActionIds: [],
       action: null,
+      hasWork: false,
       inventory: [],
       inventoryRevision: 1,
       canUseInventory: true,
@@ -259,29 +262,34 @@ it('retains entity removal/order and refuses an update for a different audience 
   ).toBeNull();
 });
 
-it('clears obsolete/current private drafts on logout or ownership replacement, but preserves ordinary Resume', async () => {
+it('clears private drafts on logout or ownership replacement, but preserves ordinary Resume', async () => {
   const data: Record<string, string> = {};
   const storage = {
     getItem: (key: string) => data[key] ?? null,
     setItem: (key: string, value: string) => {
       data[key] = value;
+      Object.defineProperty(storage, key, { value, enumerable: true, configurable: true });
     },
     removeItem: (key: string) => {
       delete data[key];
+      Reflect.deleteProperty(storage, key);
     },
   };
   vi.stubGlobal('localStorage', storage);
   vi.stubGlobal('sessionStorage', storage);
   vi.stubGlobal('window', { sessionStorage: storage });
   const { acceptAccess, clearAccess } = await import('./api.js');
-  const { readDraft, saveDraft } = await import('./draft.js');
+  const { composerDraftKey, composerDraftScope, emptyDraft, readDraft, saveDraft } = await import(
+    './draft.js'
+  );
   const view = publicView();
   acceptAccess(view);
-  const draft = { text: 'Unfinished private text', mode: 'invention' as const };
-  saveDraft(draft);
+  const draft = { text: 'Unfinished private text', revision: 'edit-1' };
+  const key = composerDraftKey(composerDraftScope(view), 'invention', null);
+  saveDraft(key, draft);
   const resumed = { ...view, access: { ...view.access!, scope: 'scope:2', controlGeneration: 2 } };
   acceptAccess(resumed);
-  expect(readDraft()).toEqual(draft);
+  expect(readDraft(key)).toEqual(draft);
   for (const replace of [
     () => clearAccess(),
     () =>
@@ -296,12 +304,9 @@ it('clears obsolete/current private drafts on logout or ownership replacement, b
       }),
     () => acceptAccess({ ...view, historyEpoch: 'new:1', saveTimeline: 'timeline:2' }),
   ]) {
-    storage.setItem('open-legend:composer-draft:v1', 'Obsolete private text');
-    saveDraft(draft);
-    storage.setItem('open-legend:composer-draft:v1', 'Obsolete private text');
+    saveDraft(key, draft);
     replace();
-    expect(readDraft()).toEqual({ text: '', mode: 'chat' });
-    expect(storage.getItem('open-legend:composer-draft:v1')).toBeNull();
-    expect(storage.getItem('open-legend:composer-draft:v2')).toBeNull();
+    expect(readDraft(key)).toEqual(emptyDraft());
+    expect(storage.getItem(key!)).toBeNull();
   }
 });

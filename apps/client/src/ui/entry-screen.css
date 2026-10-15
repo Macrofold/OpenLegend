@@ -21,9 +21,9 @@
   display: grid;
   gap: var(--space-2);
 }
-.ol-entry-card p,
-.ol-entry-card h1,
-.ol-entry-card h2 {
+.ol-entry .ol-entry-card p,
+.ol-entry .ol-entry-card h1,
+.ol-entry .ol-entry-card h2 {
   margin: 0;
 }
 .ol-entry-eyebrow {

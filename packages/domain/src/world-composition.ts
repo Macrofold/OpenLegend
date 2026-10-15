@@ -1,3 +1,4 @@
+import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 import { BASE_EVENT_DISCLOSURE } from './worlds/base/event-disclosure.js';
 import {
   nativeActivityView as baseActivityView,
@@ -28,6 +29,7 @@ let activityHosts: readonly ActivityHostDescriptor[] | undefined;
 export function trustedActivityHosts(): readonly ActivityHostDescriptor[] {
   return (activityHosts ??= [
     STOCK_ACTIVITY_HOST,
+    RESERVOIR_ACTIVITY_HOST,
     ...BASE_NATIVE_ACTIVITY_HOSTS,
     BASE_FIRE_ACTIVITY_HOST,
     BASE_CAMP_ACTIVITY_HOST,

@@ -40,6 +40,11 @@ export function MaintenanceNotice({ maintenance }: { maintenance?: MaintenanceWi
       aria-label="World maintenance"
     >
       <strong>{maintenanceHeadline(maintenance, now)}</strong>
+      {maintenance.status === 'active' && (
+        <span className="ol-caption">
+          Play is paused. A creator must mark the world ready before it resumes.
+        </span>
+      )}
       {/* Narrow HUDs collapse these details so the card does not cover the side rails. */}
       <div className="ol-maintenance-details" data-expanded={expanded || undefined}>
         {!terminal && (

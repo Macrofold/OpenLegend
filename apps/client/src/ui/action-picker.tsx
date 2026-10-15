@@ -12,10 +12,12 @@ import type {
 } from '@open-legend/protocol';
 import { filterActions, retainActionOrder } from '../action-browser';
 import { post } from '../api';
+import { playerEntity } from '../entity-view';
 import { Icon, IconButton, symbol } from '../design-system/components';
 import { ActionChoice } from './action-choice';
 import { spawnIcons } from './god-tools';
 import { PulloutPicker } from './pullout';
+import { ActivityEntries, type ActivityEntry } from './camp-activity';
 export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
@@ -32,8 +34,10 @@ export function ActionPicker({
   close,
   run,
   invent,
-  requestAction,
   inspect,
+  openContainer,
+  openActivity,
+  describeAction,
   preference,
   revive,
   enableCognition,
@@ -47,8 +51,10 @@ export function ActionPicker({
   close(): void;
   run(action: CatalogueAction): void;
   invent(text: string): void;
-  requestAction(): void;
   inspect(entity: EntityView): void;
+  openContainer(entity: EntityView): void;
+  openActivity(entry: ActivityEntry): void;
+  describeAction?(subject: EntityView | null): void;
   preference(profile: PlayerProfile): void;
   revive(entity: EntityView): void;
   enableCognition(entity: EntityView): void;
@@ -77,6 +83,7 @@ export function ActionPicker({
     );
   const [openPullout, setOpenPullout] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [taskMatches, setTaskMatches] = useState(0);
   const menu = useRef<HTMLDivElement>(null),
     input = useRef<HTMLInputElement>(null),
     refreshRequest = useRef(0),
@@ -103,7 +110,7 @@ export function ActionPicker({
   const visibleTargets = useMemo(() => new Set(visibleIds), [visibleIdentity]);
   const subject =
     picker.context.targetId === view.player.id
-      ? view.player
+      ? playerEntity(view)
       : entities.get(picker.context.targetId ?? '');
   const lostTarget = !full && !!picker.context.targetId && !subject;
   const checking = refreshing || (!!result && result.key !== key);
@@ -196,18 +203,34 @@ export function ActionPicker({
     !lostTarget &&
     result?.key === key &&
     !!query.trim() &&
+    (full || !taskMatches) &&
     !matches.some((a) => a.enabled);
   const showInspect =
     !full &&
     !!subject &&
     !!picker.entity &&
     (!query || 'look closer description inspect'.includes(query.toLowerCase()));
+  const showOpen =
+    !full &&
+    !lostTarget &&
+    !!subject?.storage &&
+    (!query ||
+      `open storage inventory ${subject.name}`
+        .toLocaleLowerCase()
+        .includes(query.toLocaleLowerCase()));
+  const showCognition =
+    !full &&
+    !lostTarget &&
+    view.godMode &&
+    !!subject &&
+    godCharacterAvailability(subject).enableCognition &&
+    (!query || 'grant cognition speech'.includes(query.toLowerCase()));
   const showRevive =
     !full &&
     !lostTarget &&
     view.godMode &&
-    !!picker.entity &&
-    godCharacterAvailability(picker.entity).revive &&
+    !!subject &&
+    godCharacterAvailability(subject).revive &&
     (!query || 'revive god mode'.includes(query.toLowerCase()));
   const creationPosition =
     picker.entity?.kind === 'item-pile' && picker.entity.supportSurfaceId
@@ -271,13 +294,14 @@ export function ActionPicker({
         if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget))
           hadFocus.current = false;
       }}
-      aria-label={`Actions for ${full ? 'all known choices' : picker.item ? picker.item.name : picker.entity ? namePhrase(picker.entity, 'definite') : 'the clearing'}`}
+      aria-label={`Actions for ${full ? 'all known choices' : (picker.item?.name ?? (subject ? namePhrase(subject, 'definite') : picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName))}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
+        if (e.defaultPrevented || e.nativeEvent.isComposing || e.repeat) return;
         // Portaled pullouts own their keyboard navigation; React events still bubble here.
         if (!e.currentTarget.contains(e.target as Node)) return;
-        if (e.nativeEvent.isComposing) return;
         if (e.key === 'Escape') {
+          e.preventDefault();
           e.stopPropagation();
           close();
           return;
@@ -306,13 +330,17 @@ export function ActionPicker({
       }}
     >
       <div className="ol-picker-head">
-        <Icon name={symbol(picker.entity?.subtype ?? 'ui.inview')} />
+        <Icon
+          name={subject?.icon ?? picker.entity?.icon ?? 'ui.inview'}
+          fallbackLabel={picker.item?.name ?? subject?.name ?? picker.entity?.name}
+        />
         <strong id="contextTitle">
           {full
             ? 'All known actions'
             : (picker.item?.name ??
               subject?.name ??
-              (lostTarget ? 'Target no longer in view' : 'The clearing'))}
+              picker.entity?.name ??
+              view.presentation.locationName)}
         </strong>
         <IconButton
           icon="ui.refresh"
@@ -377,73 +405,39 @@ export function ActionPicker({
         )}
         {lostTarget && (
           <p role="status" className="ol-meta">
-            That target is no longer in view. Choose a currently perceived target or browse all
-            known actions.
+            {picker.entity?.name ?? 'That target'} is no longer in view. Choose a currently
+            perceived target or browse all known actions.
           </p>
         )}
-        {!full &&
-          !lostTarget &&
-          view.godMode &&
-          !!picker.entity &&
-          godCharacterAvailability(picker.entity).enableCognition &&
-          (!query || 'grant cognition speech'.includes(query.toLowerCase())) && (
-            <AriaButton
-              data-picker-row
-              className="ol-item ol-god-action"
-              onPress={() => enableCognition(picker.entity!)}
-            >
-              <Icon name="ui.star" />
-              <span>Grant cognition and speech</span>
-              <small>God mode</small>
-            </AriaButton>
-          )}
-        {showRevive && (
+        {showOpen && subject && (
           <AriaButton
             data-picker-row
-            className="ol-item ol-god-action"
-            onPress={() => revive(picker.entity!)}
+            className="ol-item"
+            isDisabled={!connected}
+            onPress={() => openContainer(subject)}
           >
-            <Icon name="ui.star" />
-            <span>Revive</span>
-            <small className="ol-item-hint">God mode</small>
+            <Icon name="ui.inventory" />
+            <span>Open {subject.name}</span>
           </AriaButton>
         )}
-        {showAdd && (
-          <PulloutPicker
-            label="Add something"
-            isOpen={openPullout === 'add'}
-            onOpenChange={(open) => setOpenPullout(open ? 'add' : null)}
-            icon="ui.plus"
-            badge="God mode"
-            placeholder="Search objects…"
-            options={[]}
-            groups={[
-              {
-                label: 'Items',
-                icon: 'ui.inventory',
-                options: (view.godTools?.itemOptions ?? []).map((option) => ({
-                  ...option,
-                  id: `item:${option.id}`,
-                  icon: symbol(option.id),
-                })),
-              },
-              ...(['Actors', 'Environment'] as const).map((category) => ({
-                label: category,
-                icon: category === 'Actors' ? 'ui.character' : 'ui.world',
-                options: (view.godTools?.spawnOptions ?? [])
-                  .filter((option) => option.category === category)
-                  .map((option) => ({ ...option, icon: spawnIcons[option.id] ?? 'ui.plus' })),
-              })),
-            ]}
-            onSelect={(type) => {
-              if (type.startsWith('item:')) createItem(type.slice(5), creationPosition!);
-              else if (type === 'person') createPerson(creationPosition!);
-              else spawn(type, creationPosition!);
-            }}
+        {!full && subject && !lostTarget && (
+          <ActivityEntries
+            view={view}
+            targetId={subject.id}
+            connected={connected}
+            onOpen={openActivity}
+            query={query}
+            presentation="menu"
+            onMatchCount={setTaskMatches}
+            excludeFamilies={actions.flatMap((action) =>
+              action.targetId === subject.id && action.intent.kind === 'activity'
+                ? [action.intent.family]
+                : [],
+            )}
           />
         )}
         {showInspect && (
-          <AriaButton data-picker-row className="ol-item" onPress={() => inspect(picker.entity!)}>
+          <AriaButton data-picker-row className="ol-item" onPress={() => inspect(subject!)}>
             <Icon name="ui.inview" />
             <span>Look closer</span>
             <small className="ol-item-hint">Inspect</small>
@@ -487,15 +481,16 @@ export function ActionPicker({
                 open ? [...new Set([...current, a.id])] : current.filter((id) => id !== a.id),
               )
             }
-            icon={symbol(
-              a.intent.kind === 'command'
-                ? a.intent.command.type === 'gather'
-                  ? (entities.get(a.targetId ?? '')?.subtype ?? 'resource.reed')
-                  : a.intent.command.type
-                : a.intent.kind === 'compose'
-                  ? 'talk'
-                  : 'ui.lock',
-            )}
+            icon={
+              a.icon ??
+              symbol(
+                a.intent.kind === 'command'
+                  ? a.intent.command.type
+                  : a.intent.kind === 'compose'
+                    ? 'talk'
+                    : 'ui.lock',
+              )
+            }
             badge={
               a.intent.kind === 'command' && a.intent.command.type === 'gather'
                 ? 'action.gather'
@@ -522,6 +517,69 @@ export function ActionPicker({
             Show more choices ({visibleMatches.length} of {listedMatches.length} shown)
           </AriaButton>
         )}
+        {(showRevive || showCognition || showAdd) && !lostTarget && (
+          <div className="ol-picker-creator" role="group" aria-label="God mode">
+            <p className="ol-eyebrow">God mode</p>
+            {showCognition && (
+              <AriaButton
+                data-picker-row
+                className="ol-item ol-god-action"
+                isDisabled={!connected}
+                onPress={() => enableCognition(subject!)}
+              >
+                <Icon name="ui.star" />
+                <span>Grant cognition and speech</span>
+                <small>God mode</small>
+              </AriaButton>
+            )}
+            {showRevive && (
+              <AriaButton
+                data-picker-row
+                className="ol-item ol-god-action"
+                isDisabled={!connected}
+                onPress={() => revive(subject!)}
+              >
+                <Icon name="ui.star" />
+                <span>Revive</span>
+                <small className="ol-item-hint">God mode</small>
+              </AriaButton>
+            )}
+            {showAdd && (
+              <PulloutPicker
+                label="Add something"
+                isOpen={openPullout === 'add'}
+                onOpenChange={(open) => setOpenPullout(open ? 'add' : null)}
+                icon="ui.plus"
+                badge="God mode"
+                placeholder="Search objects…"
+                options={[]}
+                groups={[
+                  {
+                    label: 'Items',
+                    icon: 'ui.inventory',
+                    options: (view.godTools?.itemOptions ?? []).map((option) => ({
+                      ...option,
+                      id: `item:${option.id}`,
+                      icon: symbol(option.icon ?? 'ui.inventory'),
+                    })),
+                  },
+                  ...(['Actors', 'Environment'] as const).map((category) => ({
+                    label: category,
+                    icon: category === 'Actors' ? 'ui.character' : 'ui.world',
+                    options: (view.godTools?.spawnOptions ?? [])
+                      .filter((option) => option.category === category)
+                      .map((option) => ({ ...option, icon: spawnIcons[option.id] ?? 'ui.plus' })),
+                  })),
+                ]}
+                onSelect={(type) => {
+                  if (type.startsWith('item:')) createItem(type.slice(5), creationPosition!);
+                  else if (type === 'person') createPerson(creationPosition!);
+                  else spawn(type, creationPosition!);
+                }}
+              />
+            )}
+          </div>
+        )}
         {error && (
           <p role="status" className="ol-meta">
             {error}
@@ -537,6 +595,10 @@ export function ActionPicker({
           !lostTarget &&
           result?.key === key &&
           !matches.length &&
+          (full || !taskMatches) &&
+          !showOpen &&
+          !showInspect &&
+          !showCognition &&
           !showRevive &&
           !showAdd && (
             <p role="status" className="ol-meta">
@@ -548,7 +610,7 @@ export function ActionPicker({
                     : 'No matching actions. Clear the search or show unavailable actions.'
                 : actions.length
                   ? 'Available actions are hidden. Show unavailable actions to see why.'
-                  : 'No permitted actions in this scope. Browse all known actions or make a freeform request.'}
+                  : 'No permitted actions in this scope. Browse all known actions or describe an action from Character.'}
             </p>
           )}
       </div>
@@ -562,9 +624,15 @@ export function ActionPicker({
         >
           {full ? 'Back to selected subject' : 'Browse all known actions'}
         </AriaButton>
-        <AriaButton className="ol-menu-toggle" onPress={() => requestAction()}>
-          Make a freeform request
-        </AriaButton>
+        {describeAction && (full || !picker.context.itemId) && (
+          <AriaButton
+            className="ol-menu-toggle"
+            isDisabled={!connected || lostTarget}
+            onPress={() => describeAction(full ? null : (subject ?? picker.entity))}
+          >
+            Describe an action
+          </AriaButton>
+        )}
       </div>
     </div>
   );

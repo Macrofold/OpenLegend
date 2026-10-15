@@ -66,10 +66,17 @@ test('scoped React action search, contextual facts and saved unavailable prefere
     await expect(gather).toHaveCount(0);
     await page.keyboard.press('Escape');
     await page.locator('#world').click({ button: 'right', position: { x: 900, y: 700 } });
-    await expect(page.locator('#contextTitle')).toHaveText('The clearing');
+    await expect(page.locator('#contextTitle')).toHaveText(
+      game.service.world.presentation!.locationName,
+    );
     await expect(menu.getByRole('button', { name: /Walk here/ })).toHaveCount(0); // paused and unavailable hidden
     await menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true }).click();
-    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(1);
+    // Ground-target evasion is an authored action alongside walking.
+    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(2);
+    await expect(menu.locator('[data-catalogue-action="evade:point"]')).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await expect(menu.getByRole('button', { name: /Walk here/ })).toBeVisible();
     expect(errors).toEqual([]);
     expect(paid).toEqual([]);

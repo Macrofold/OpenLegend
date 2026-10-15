@@ -1,3 +1,4 @@
+import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
@@ -244,6 +245,8 @@ const KNOWN_HEADINGS = new Set([
   'Private intent controls',
   'Private intentions and native work',
   'Native navigation',
+  'Optional installed activity requests',
+  'Container I chose to inspect',
   'Current time',
   'Actions I chose to inspect',
   'Activities I chose to inspect',
@@ -531,6 +534,7 @@ async function harness(
   await enterLocalWorld(service);
   await service.setConnection('fixture-browser', true);
   await service.setPresence('fixture-browser', true);
+  await useNearCampSight(service);
   await service.control({ paused: false });
   const state = {
     script: options.script ?? {},
@@ -1077,7 +1081,7 @@ describe(
       });
     });
 
-    it('hazard: another actor strikes Ada; combined routing and a level-3 payload', async () => {
+    it('hazard: another actor strikes Ada; attention, combined routing and a level-3 payload', async () => {
       const h = await harness({ script: { route: { level3: 0.9 } } });
       const health = h.service.world.entities[NPC_ID]!.actor!.health;
       const struck = await h.service.command('fixture-punch', {
@@ -1113,6 +1117,8 @@ describe(
       expect(generation).toMatchObject({ execution: 'complex', reasoningEffort: 'low' });
       const ledger = await h.accounting(job.id, 3);
       expect(ledger.level(generation!.requestId)).toBe(3);
+      expect(ledger.summary.groups).toEqual({ level1: dispatched.judges.length, level3: 1 });
+      expect(ledger.summary.requests).toBe(dispatched.judges.length + 1);
       const parts = sections(String(generation!.context));
       expect(section(parts, 'Trigger').body).toMatch(/punched/);
       report('hazard', {
@@ -1338,6 +1344,7 @@ describe(
           };
         });
         expect(target.aboutMe()).toBe(text);
+        const before = await target.store.usage(target.config.budgetUsd, NPC_ID);
         const job = await target.chat(`quota-${world}-${count}`, 'Hello, Ada.');
         const dispatched = target.jobCalls(job.id);
         expect(dispatched.generations.length).toBeLessThanOrEqual(1);
@@ -1366,6 +1373,8 @@ describe(
         const accounting = requests.length
           ? (await target.accounting(job.id, generation ? 2 : undefined)).summary
           : null;
+        const after = await target.store.usage(target.config.budgetUsd, NPC_ID);
+        const nativeReceipt = target.service.world.responseReceipts?.[job.id];
         return {
           world,
           files: count,
@@ -1375,6 +1384,25 @@ describe(
           message: job.message,
           failure,
           requestsSent: requests.length,
+          judgmentsSent: dispatched.judges.length,
+          generationsSent: dispatched.generations.length,
+          accountingStages: stage('Decision accounting').length,
+          usageChange: {
+            spentUsd: after.budget.spentUsd - before.budget.spentUsd,
+            reservedUsd: after.budget.reservedUsd - before.budget.reservedUsd,
+            jevCalls: after.usage.jevCalls - before.usage.jevCalls,
+            llmCalls: after.usage.llmCalls - before.usage.llmCalls,
+          },
+          hasNativeReceipt: nativeReceipt !== undefined,
+          nativeReplyAccepted: nativeReceipt?.components['reply']?.ok ?? null,
+          nativeSpeech: target.service.world.events
+            .filter(
+              (event) =>
+                event.type === 'speech' &&
+                event.actorId === NPC_ID &&
+                event.data?.['responseId'] === job.id,
+            )
+            .map((event) => event.data?.['text']),
           routeHasCompleteSnapshot:
             typeof route?.state === 'string' ? route.state.includes(text) : null,
           generationInputBytes: generation
@@ -1398,19 +1426,54 @@ describe(
       // confounds the result.
       const fresh = await harness({ script: { route: { level2: 0.9 } }, reply });
       probes.push(await probe(fresh, 'fresh', 9.5, [...files.slice(0, 9), half]));
-      // A small accepted snapshot supplies the positive control independently of growing
-      // authored starting context; the near-quota probes still enforce complete-or-refused.
-      probes.push(await probe(fresh, 'fresh', 1, files.slice(0, 1)));
-      expect(probes.find((entry) => entry['files'] === 1)).toMatchObject({
-        status: 'completed',
-        routeHasCompleteSnapshot: true,
-      });
+      // The large snapshots must refuse before dispatch. A small accepted snapshot supplies
+      // a positive control independently of growing authored starting context.
+      const sixFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
+      probes.push(await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6)));
+      const control = await harness({ script: { route: { level2: 0.9 } }, reply });
+      const positive = await probe(control, 'fresh-control', 1, files.slice(0, 1));
       report('inner-world-quota', {
         ...quota,
         fileBytes: fileBytes[0],
         level2InputLimit: levelLimits(h.config)[2].inputSize,
         level1InputLimit: levelLimits(h.config)[1].inputSize,
-        probes,
+        probes: [...probes, positive],
+      });
+      const exceeded =
+        'Complete accepted inner world and required context exceed the input budget.';
+      for (const oversized of probes)
+        expect(oversized).toMatchObject({
+          status: 'failed',
+          disposition: 'context-exceeded',
+          message: exceeded,
+          failure: [exceeded],
+          requestsSent: 0,
+          judgmentsSent: 0,
+          generationsSent: 0,
+          accountingStages: 0,
+          usageChange: { spentUsd: 0, reservedUsd: 0, jevCalls: 0, llmCalls: 0 },
+          hasNativeReceipt: false,
+          nativeReplyAccepted: null,
+          nativeSpeech: [],
+          routeHasCompleteSnapshot: null,
+          generationInputBytes: null,
+          accounting: null,
+        });
+      // Preserve positive full-snapshot, request-limit and accounting coverage, including
+      // the actual native reply; an arbitrary refusal cannot satisfy this control.
+      expect(positive).toMatchObject({
+        files: 1,
+        status: 'completed',
+        disposition: 'responded',
+        failure: [],
+        generationsSent: 1,
+        accountingStages: 1,
+        hasNativeReceipt: true,
+        nativeReplyAccepted: true,
+        nativeSpeech: ['Hello.'],
+        routeHasCompleteSnapshot: true,
+        generationInputBytes: expect.any(Number),
+        accounting: expect.any(Object),
       });
     }, 300_000);
   },

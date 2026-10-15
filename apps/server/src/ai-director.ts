@@ -1,3 +1,4 @@
+import { playerActionIdentity } from './action-request-recovery.js';
 import { namePhrase } from '@open-legend/language';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import {
@@ -326,7 +327,13 @@ export class AiDirector {
     return this.admission(() =>
       this.service.authorized(authority, 'play', true, async () => {
         this.service.assertScope(authority, 'play', true);
-        id = `human:${digest({ account: authority.accountId, world: authority.worldId, id })}`;
+        const identity = playerActionIdentity(
+          this.service.world.id,
+          this.service.timelineId,
+          authority,
+          { requestId: id, text, mode, targetId, slots },
+        );
+        id = identity.id;
         const actorId = authority.actorId;
         const actor = this.service.world.entities[actorId]?.actor;
         if (
@@ -346,16 +353,7 @@ export class AiDirector {
             message:
               'A chosen detail is not valid here, such as a stopping time this world does not name.',
           };
-        const fingerprint = digest({
-          kind: 'action',
-          world: this.service.world.id,
-          timeline: this.service.timelineId,
-          actorId,
-          text,
-          mode,
-          targetId,
-          slots,
-        });
+        const fingerprint = identity.fingerprint;
         const previous = await this.service.store.getJob(id);
         if (previous)
           return previous.kind === 'action' && previous.fingerprint === fingerprint
@@ -379,6 +377,7 @@ export class AiDirector {
           };
         if (
           targetId &&
+          targetId !== actorId &&
           !this.service.observe(actorId)?.visibleEntities.some((e) => e.id === targetId)
         )
           return {

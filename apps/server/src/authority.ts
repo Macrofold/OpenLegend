@@ -212,6 +212,24 @@ export const privateDraftScopeKey = (scope: RequestScope) => {
   } = scope;
   return hash(JSON.stringify(privateScope));
 };
+/** Receipt recovery survives reconnect and control replacement, but retains every private
+ * access boundary. These fields identify retained requests; they grant no request authority. */
+export const commandRecoveryFields = (scope: RequestScope) => {
+  const {
+    connectionId: _connectionId,
+    controlGeneration: _controlGeneration,
+    ...privateScope
+  } = scope;
+  return privateScope;
+};
+export const commandRecoveryScopeKey = (scope: RequestScope) =>
+  hash(JSON.stringify(commandRecoveryFields(scope)));
+/** Only checkpoint outcome descriptions cross their own load's timeline change.
+ * Every live read still requires the complete current scope and save capability. */
+export const checkpointRecoveryScopeKey = (scope: RequestScope) => {
+  const { timelineId: _timelineId, ...privateScope } = commandRecoveryFields(scope);
+  return hash(JSON.stringify(privateScope));
+};
 const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
 
 /** Current authority is deliberately outside WorldRecords and every gameplay save.

@@ -11,12 +11,14 @@ export function ItemTrade({
   command,
   selected,
   initialQuantity,
+  inventoryRequestKey,
 }: {
   trade: ItemTradeView;
   connected: boolean;
   command(action: ActionOption): Promise<ApiResult>;
   selected?: TradeLotView;
   initialQuantity?: string;
+  inventoryRequestKey?: string;
 }) {
   const labels = trade.labels;
   // The server scopes this key to account, character and save timeline, independent
@@ -26,13 +28,15 @@ export function ItemTrade({
     draft,
     reviewed,
     uncertain,
+    inventoryReceipt,
+    inventoryReadBlocked,
     pending,
     setDraft,
     setReviewed,
     setUncertain,
     setPending,
     start,
-  } = useTradeDraft(draftKey, trade.offers);
+  } = useTradeDraft(draftKey, trade.offers, { key: inventoryRequestKey, scope: trade.scope });
   const [message, setMessage] = useState('');
   useEffect(() => {
     if (
@@ -71,7 +75,7 @@ export function ItemTrade({
           }
         : value,
     );
-    setUncertain(false);
+    if (!inventoryReceipt && !inventoryReadBlocked) setUncertain(false);
   }
   const giveQuantity = draft && exactQuantity(draft.giveQuantity, draft.give?.quantity);
   const receiveQuantity =
@@ -90,7 +94,8 @@ export function ItemTrade({
     try {
       const result = await command(action);
       if (alive.current) setMessage(result.message);
-      if (result.code === 'unconfirmed') setUncertain(true);
+      if (['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code))
+        setUncertain(true);
       if (
         result.ok &&
         action.command.handoverOperation === 'counter' &&
@@ -217,6 +222,8 @@ export function ItemTrade({
                       disabled={
                         !connected ||
                         pending ||
+                        !!inventoryReceipt ||
+                        inventoryReadBlocked ||
                         uncertain ||
                         !action.enabled ||
                         (changed && action.command.handoverOperation === 'accept')
@@ -230,7 +237,9 @@ export function ItemTrade({
                 ))}
                 <Button
                   variant="quiet"
-                  disabled={!connected || pending || uncertain}
+                  disabled={
+                    !connected || pending || !!inventoryReceipt || inventoryReadBlocked || uncertain
+                  }
                   onPress={() => begin(offer)}
                 >
                   {labels.counter}
@@ -241,7 +250,9 @@ export function ItemTrade({
         })}
         <Button
           variant="quiet"
-          disabled={!connected || pending || uncertain}
+          disabled={
+            !connected || pending || !!inventoryReceipt || inventoryReadBlocked || uncertain
+          }
           onPress={() => {
             if (draft) setDraft((value) => (value ? { ...value, prior: undefined } : value));
             else begin();
@@ -249,6 +260,17 @@ export function ItemTrade({
         >
           {labels.newOffer}
         </Button>
+        {selected && (
+          <Button
+            variant="quiet"
+            disabled={
+              !connected || pending || !!inventoryReceipt || inventoryReadBlocked || uncertain
+            }
+            onPress={() => begin()}
+          >
+            Use {initialQuantity ?? selected.quantity} × {selected.label} in a new offer
+          </Button>
+        )}
         {draft && (
           <div className="ol-trade-draft">
             <p className="ol-caption">{labels.selectionHint}</p>
@@ -363,7 +385,15 @@ export function ItemTrade({
                 </Button>
               }
               <Button
-                disabled={!connected || pending || uncertain || !valid || stale}
+                disabled={
+                  !connected ||
+                  pending ||
+                  !!inventoryReceipt ||
+                  inventoryReadBlocked ||
+                  uncertain ||
+                  !valid ||
+                  stale
+                }
                 busy={pending}
                 onPress={submit}
               >
@@ -371,6 +401,13 @@ export function ItemTrade({
               </Button>
             </div>
           </div>
+        )}
+        {(inventoryReceipt || inventoryReadBlocked) && (
+          <p role="status">
+            {inventoryReadBlocked
+              ? 'The original Inventory request could not be read. Restore browser storage and open Inventory to recover it before trading again.'
+              : 'An Inventory trade request needs its original receipt checked. Open Inventory and check the original result before trading again.'}
+          </p>
         )}
         {message && <p role="status">{message}</p>}
         {uncertain && (

@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type ComponentProps,
   type CSSProperties,
   type ReactNode,
 } from 'react';
@@ -21,6 +22,7 @@ import { EventTime } from './event-time';
 import { SubjectPicker, subjectPath } from './subject-picker';
 import { MemoryHistory } from './memory-history';
 import { Button, Icon, IconButton, Section, Tag } from '../design-system/components';
+import './creator-workspaces.css';
 
 type JsonObject = Record<string, unknown>;
 
@@ -70,10 +72,16 @@ function KnowledgeEditor({
   mind,
   onSaved,
   owned = false,
+  visible,
+  readScope,
+  onDirtyChange,
 }: {
   owned?: boolean;
+  visible: boolean;
+  readScope?: string;
   mind: GodMindView;
   onSaved: (mind: GodMindView) => void;
+  onDirtyChange(dirty: boolean): void;
 }) {
   const [subject, setSubject] = useState<MindSubject | null>(null);
   // A subject's notes may lie on another notes page; load them by exact subject instead.
@@ -84,15 +92,27 @@ function KnowledgeEditor({
   const identity = subject ? details?.identity : undefined;
   const [text, setText] = useState(document?.text ?? '');
   const [name, setName] = useState(identity?.givenName ?? '');
+  const [base, setBase] = useState(() => ({
+    text: document?.text ?? '',
+    name: identity?.givenName ?? '',
+    revision: document?.revision ?? 0,
+    nameRevision: identity?.revision ?? 0,
+  }));
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   // The details refresh after a save; editing waits for the saved revisions.
   const [refreshing, setRefreshing] = useState(false);
   const loadedFor = useRef('');
+  const dirty = text !== base.text || name !== base.name;
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  useEffect(() => onDirtyChange(dirty || saving), [dirty, saving, onDirtyChange]);
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
   // Only a different person or character clears the status; a refresh after saving keeps it.
   useEffect(() => setMessage(''), [subject?.id, mind.actorId, owned]);
   useEffect(() => {
+    if (!visible) return;
     setFailed(false);
     if (!subject) {
       loadedFor.current = '';
@@ -127,100 +147,185 @@ function KnowledgeEditor({
     return () => {
       active = false;
     };
-  }, [subject?.id, mind.actorId, owned, reload]);
+  }, [subject?.id, mind.actorId, owned, reload, visible, readScope]);
   useEffect(() => {
-    setText(document?.text ?? '');
-    setName(identity?.givenName ?? '');
+    // A refreshed page cannot silently rebase an unsaved edit onto newer authority.
+    if (dirtyRef.current || (subject && details === undefined)) return;
+    const next = {
+      text: document?.text ?? '',
+      name: identity?.givenName ?? '',
+      revision: document?.revision ?? 0,
+      nameRevision: identity?.revision ?? 0,
+    };
+    setBase(next);
+    setText(next.text);
+    setName(next.name);
   }, [subject?.id, document?.revision, identity?.revision, details === undefined]);
   const loading = (!!subject && details === undefined) || refreshing;
   const unavailable = !!subject && details === null;
   const limit =
     document?.maxCharacters ?? mind.knowledgeLimits?.[subject ? 'subject' : 'general'] ?? 0;
   const characters = Array.from(text).length;
+  const sourceChanged =
+    dirty &&
+    !loading &&
+    !unavailable &&
+    (base.revision !== (document?.revision ?? 0) ||
+      base.nameRevision !== (identity?.revision ?? 0));
   return (
     <Section title="Knowledge notepads">
-      <SubjectPicker
-        actorId={mind.actorId}
-        owned={owned}
-        label="Person or general knowledge"
-        none="General knowledge"
-        value={subject}
-        onSelect={setSubject}
-        disabled={saving}
-      />
-      {loading && <p role="status">Loading notes…</p>}
-      {failed && (
-        <Button
-          size="sm"
-          onPress={() => {
-            setMessage('');
-            setReload((value) => value + 1);
+      <div className="ol-knowledge-editor">
+        <p className="ol-caption">
+          {owned ? 'Your character’s understanding' : `${mind.name}’s understanding`}. Editing these
+          notes does not change the subject or establish an objective world fact.
+        </p>
+        <SubjectPicker
+          actorId={mind.actorId}
+          owned={owned}
+          label="Person or general knowledge"
+          none="General knowledge"
+          value={subject}
+          onSelect={(next) => {
+            if (!dirty && !saving) setSubject(next);
           }}
-        >
-          Retry loading notes
-        </Button>
-      )}
-      {subject && !unavailable && (
+          disabled={saving || dirty}
+        />
+        {dirty && (
+          <p role="status" className="ol-caption">
+            Unsaved notes. Save or discard before choosing another subject or page.
+          </p>
+        )}
+        {sourceChanged && (
+          <p role="status">
+            Newer saved notes are available. Your edit is still based on revision {base.revision};
+            discard it to load the newer copy, or keep it for comparison.
+          </p>
+        )}
+        {sourceChanged && (
+          <details>
+            <summary>Compare with saved revision {document?.revision ?? 0}</summary>
+            <p className="ol-prose">{document?.text || 'No saved note text.'}</p>
+            {subject && <p>Saved known name: {identity?.givenName || 'Not named'}</p>}
+            <Button
+              variant="quiet"
+              disabled={saving || loading}
+              onPress={() => {
+                setBase({
+                  text: document?.text ?? '',
+                  name: identity?.givenName ?? '',
+                  revision: document?.revision ?? 0,
+                  nameRevision: identity?.revision ?? 0,
+                });
+                setMessage(
+                  'Your edit now starts from the displayed saved revision. Save remains separate.',
+                );
+              }}
+            >
+              Reapply my edit to this revision
+            </Button>
+          </details>
+        )}
+        {loading && <p role="status">Loading notes…</p>}
+        {failed && (
+          <Button
+            size="sm"
+            onPress={() => {
+              setMessage('');
+              setReload((value) => value + 1);
+            }}
+          >
+            Retry loading notes
+          </Button>
+        )}
+        {subject && !unavailable && (
+          <label>
+            Given name known by this observer
+            <input
+              disabled={saving || loading}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+        )}
         <label>
-          Given name known by this observer
-          <input
-            disabled={saving || loading}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+          Editable knowledge
+          <textarea
+            rows={8}
+            disabled={saving || loading || unavailable}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
           />
         </label>
-      )}
-      <label>
-        Editable knowledge
-        <textarea
-          rows={8}
-          disabled={saving || loading || unavailable}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-        />
-      </label>
-      <p>
-        {characters.toLocaleString()} / {limit.toLocaleString()} characters.{' '}
-        {characters > limit
-          ? 'Rewrite or shorten before saving.'
-          : subject
-            ? 'This is your understanding of this person; it does not change their view of you.'
-            : 'Record current understanding; rewrite when space is needed.'}
-      </p>
-      <Button
-        disabled={saving || loading || unavailable || characters > limit}
-        onPress={() => {
-          setSaving(true);
-          setMessage('');
-          void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
-            owned ? '/api/knowledge' : '/api/god/knowledge',
-            {
-              actorId: mind.actorId,
-              worldId: mind.worldId,
-              generation: mind.generation,
-              subjectId: subject?.id ?? null,
-              expectedRevision: document?.revision ?? 0,
-              text,
-              ...(subject && name.trim() && name !== identity?.givenName
-                ? { givenName: name, nameRevision: identity?.revision ?? 0 }
-                : {}),
-            },
-          )
-            .then((result) => {
-              setMessage(result.message ?? '');
-              if (result.ok && result.mind) onSaved(result.mind);
-              if (result.ok && subject) {
-                setRefreshing(true);
-                setReload((value) => value + 1);
-              }
-            })
-            .catch((error) => setMessage(String(error)))
-            .finally(() => setSaving(false));
-        }}
-      >
-        Save knowledge
-      </Button>
-      {message && <p role="status">{message}</p>}
+        <p>
+          {characters.toLocaleString()} / {limit.toLocaleString()} characters.{' '}
+          {characters > limit
+            ? 'Rewrite or shorten before saving.'
+            : subject
+              ? 'This is your understanding of this person; it does not change their view of you.'
+              : 'Record current understanding; rewrite when space is needed.'}
+        </p>
+        <Button
+          disabled={
+            saving || loading || unavailable || !dirty || sourceChanged || characters > limit
+          }
+          onPress={() => {
+            setSaving(true);
+            setMessage('');
+            void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
+              owned ? '/api/knowledge' : '/api/god/knowledge',
+              {
+                actorId: mind.actorId,
+                worldId: mind.worldId,
+                generation: mind.generation,
+                subjectId: subject?.id ?? null,
+                expectedRevision: base.revision,
+                text,
+                ...(subject && name !== base.name
+                  ? { givenName: name, nameRevision: base.nameRevision }
+                  : {}),
+              },
+            )
+              .then((result) => {
+                setMessage(result.message ?? '');
+                if (result.ok) {
+                  setBase((previous) => ({ ...previous, text, name }));
+                }
+                if (result.ok && result.mind) onSaved(result.mind);
+                if (result.ok && subject) {
+                  setRefreshing(true);
+                  setReload((value) => value + 1);
+                }
+              })
+              .catch((error) => setMessage(String(error)))
+              .finally(() => setSaving(false));
+          }}
+        >
+          Save knowledge
+        </Button>
+        {dirty && (
+          <Button
+            variant="quiet"
+            disabled={saving || loading}
+            onPress={() => {
+              const next = unavailable
+                ? base
+                : {
+                    text: document?.text ?? '',
+                    name: identity?.givenName ?? '',
+                    revision: document?.revision ?? 0,
+                    nameRevision: identity?.revision ?? 0,
+                  };
+              setBase(next);
+              setText(next.text);
+              setName(next.name);
+              setMessage('Local edits discarded.');
+            }}
+          >
+            {sourceChanged ? 'Discard edit and load saved notes' : 'Discard note edits'}
+          </Button>
+        )}
+        {message && <p role="status">{message}</p>}
+      </div>
     </Section>
   );
 }
@@ -276,10 +381,26 @@ function AuthoredFeeling({
   );
 }
 
-export function Mind({ actorId, owned = false }: { actorId: string; owned?: boolean }) {
+export function Mind({
+  actorId,
+  owned = false,
+  visible = true,
+  readScope,
+  onDirtyChange,
+}: {
+  actorId: string;
+  owned?: boolean;
+  visible?: boolean;
+  readScope?: string;
+  onDirtyChange?(dirty: boolean): void;
+}) {
   const [mind, setMind] = useState<GodMindView | null>(null),
     [error, setError] = useState(''),
     [authoring, setAuthoring] = useState(false);
+  const [knowledgeDirty, setKnowledgeDirty] = useState(false);
+  const [refreshRevision, setRefreshRevision] = useState(0);
+  useEffect(() => onDirtyChange?.(knowledgeDirty), [knowledgeDirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   const pending = useRef<{ body: string; request: AuthoredAppraisalRequest } | null>(null);
   const author = (change: AuthoredAppraisalRequest['change']) => {
     const epoch = mind?.continuity?.authoring?.epoch;
@@ -310,6 +431,7 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
       .finally(() => setAuthoring(false));
   };
   useEffect(() => {
+    if (!visible) return;
     let active = true;
     void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
       owned ? '/api/mind' : '/api/god/mind',
@@ -317,8 +439,11 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
     )
       .then((result) => {
         if (active) {
-          setMind(result.ok ? (result.mind ?? null) : null);
-          setError(result.ok ? '' : (result.message ?? 'Inspection unavailable.'));
+          // A refused refresh must not unmount this person's unsaved notes.
+          if (result.ok && result.mind) {
+            setMind(result.mind);
+            setError('');
+          } else setError(result.message ?? 'Inspection unavailable.');
         }
       })
       .catch((loadError) => {
@@ -327,13 +452,29 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
     return () => {
       active = false;
     };
-  }, [actorId, owned]);
+  }, [actorId, owned, visible, refreshRevision, readScope]);
   return (
     <div>
       {error && <p role="alert">{error}</p>}
       {mind ? (
         <>
-          <Tag>{owned ? 'Private to your character' : 'Private god inspection'}</Tag>
+          <header className="ol-creator-context">
+            <Tag>{owned ? 'Private to your character' : 'God mode · Private inspection'}</Tag>
+            <h3>{mind.name}’s private mind</h3>
+            <p className="ol-caption">
+              {owned
+                ? 'Read your character’s beliefs, feelings and remembered experiences.'
+                : 'You are inspecting this person as a creator. This does not reveal these facts to your character.'}
+            </p>
+            <Button
+              size="sm"
+              variant="quiet"
+              disabled={authoring}
+              onPress={() => setRefreshRevision((value) => value + 1)}
+            >
+              Refresh private mind
+            </Button>
+          </header>
           <Section title="About me">
             <p className="ol-prose">{mind.acceptedText}</p>
           </Section>
@@ -398,9 +539,13 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
             mind={mind}
             onSaved={setMind}
             owned={owned}
+            visible={visible}
+            readScope={readScope}
+            onDirtyChange={setKnowledgeDirty}
           />
           {mind.continuity?.cursor && (
             <Button
+              disabled={knowledgeDirty}
               onPress={() => {
                 const cursor = mind.continuity!.cursor!;
                 void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
@@ -418,16 +563,17 @@ export function Mind({ actorId, owned = false }: { actorId: string; owned?: bool
             </Button>
           )}
           <ActivityHistory
-            key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+            key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}`}
             actorId={mind.actorId}
             owned={owned}
           />
           {!owned && (
             <Section title="Memory and thought history">
               <MemoryHistory
-                key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+                key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}`}
                 actorId={mind.actorId}
                 owned={false}
+                visible={visible}
               />
             </Section>
           )}
@@ -464,7 +610,7 @@ export type DiagnosticSelection = IntelligenceCall & {
 type Row = DiagnosticSelection;
 type RawView = { title: string; value: unknown };
 
-/** Rich previews share the accessible tooltip primitives and escape panel clipping. */
+/** The existing row or disclosure owns focus; a preview adds no nested tab stop. */
 function Preview({
   title,
   value,
@@ -472,15 +618,11 @@ function Preview({
 }: {
   title: string;
   value: ReactNode;
-  children: ReactNode;
+  children: ComponentProps<typeof Focusable>['children'];
 }) {
   return (
     <TooltipTrigger delay={250} closeDelay={150}>
-      <Focusable>
-        <span tabIndex={0} className="ol-inspection-preview">
-          {children}
-        </span>
-      </Focusable>
+      <Focusable>{children}</Focusable>
       <Tooltip className="ol-root ol-inspection-tooltip" placement="start" offset={8}>
         <strong>{title}</strong>
         <div>{value}</div>
@@ -1971,30 +2113,27 @@ function Stage({
   return (
     <section className="ol-diagnostic-stage">
       <details>
-        <summary>
-          <StatusIcon status={outcomeKind(failure ? 'failed' : call.status, call.disposition)} />
-          <span className="ol-stage-heading">
-            <strong>{stageTitle(call)}</strong>
-            <span className="ol-stage-peek">
-              <Preview title="Input" value={<StructuredValue value={call.input} />}>
-                <span className="ol-truncate">Input · {stageInput(call)}</span>
-              </Preview>
+        <Preview
+          title={stageTitle(call)}
+          value={
+            <>
+              <h4>Input</h4>
+              <StructuredValue value={call.input} />
+              <h4>Output</h4>
+              <p>{stageResult(call)}</p>
+              <StructuredValue value={path(call.output, 'value') ?? call.output} />
+            </>
+          }
+        >
+          <summary>
+            <StatusIcon status={outcomeKind(failure ? 'failed' : call.status, call.disposition)} />
+            <span className="ol-stage-heading">
+              <strong>{stageTitle(call)}</strong>
+              <span className="ol-stage-peek ol-truncate">Input · {stageInput(call)}</span>
+              <span className="ol-stage-peek ol-truncate">Output · {stageResult(call)}</span>
             </span>
-            <span className="ol-stage-peek">
-              <Preview
-                title="Output"
-                value={
-                  <>
-                    <p>{stageResult(call)}</p>
-                    <StructuredValue value={path(call.output, 'value') ?? call.output} />
-                  </>
-                }
-              >
-                <span className="ol-truncate">Output · {stageResult(call)}</span>
-              </Preview>
-            </span>
-          </span>
-        </summary>
+          </summary>
+        </Preview>
         <details className="ol-stage-technical">
           <summary>Timing, usage and stage ID</summary>
           <StageMetrics call={call} />
@@ -2087,7 +2226,15 @@ function Stage({
   );
 }
 
-function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void }) {
+function TraceDetail({
+  row,
+  showJson,
+  visible,
+}: {
+  row: Row;
+  showJson(raw: RawView): void;
+  visible: boolean;
+}) {
   const [detail, setDetail] = useState<{
       root: IntelligenceCall;
       children: IntelligenceCall[];
@@ -2111,7 +2258,9 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
       setError(String(loadError));
     }
   }
-  useEffect(() => void load(), [row.id]);
+  useEffect(() => {
+    if (visible) void load();
+  }, [row.id, visible]);
   const calls = detail
     ? detail.children.length
       ? detail.children
@@ -2177,8 +2326,9 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
             )}
             <Labeled label="Child stages">{detail.children.length}</Labeled>
             <Labeled label="Recorded cost">
-              ${row.knownCostUsd.toFixed(6)}
-              {row.costIncomplete ? ' + unreported usage' : ''}
+              {row.costIncomplete && row.knownCostUsd === 0
+                ? 'Unknown · usage unreported'
+                : `$${row.knownCostUsd.toFixed(6)}${row.costIncomplete ? ' + unreported usage' : ''}`}
             </Labeled>
             <Labeled label="Route">
               {levelLabel(detail.root.route) ?? detail.root.route ?? 'No route recorded'}
@@ -2258,52 +2408,47 @@ function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
           ? 'ui.character'
           : 'ui.inview';
   return (
-    <button type="button" className="ol-trace-row" onClick={() => onSelect(row)}>
-      <Icon name={actorIcon} label={row.actorKind ?? 'Actor'} size={24} />
-      <span className="ol-trace-copy">
-        <span className="ol-trace-heading">
-          <strong>{row.actorName ?? 'World agent'}</strong>
-          {levelLabel(row.route) && <Tag>{levelLabel(row.route)}</Tag>}
-        </span>
-        <span className="ol-trace-type">
-          <Icon name={triggerIcon(type)} size={14} />
-          <span>{type}</span>
-        </span>
-        <Preview
-          title="Trigger"
-          value={
-            <dl className="ol-preview-facts">
-              <Labeled label="Type">{type}</Labeled>
-              <Labeled label="Trigger">{row.trigger ?? row.kind}</Labeled>
-            </dl>
-          }
-        >
-          <span className="ol-truncate">{row.trigger ?? row.kind}</span>
-        </Preview>
-        <span className="ol-trace-bottom">
-          {row.responseParts?.some((part) => part.label === 'Speech') && (
-            <Icon name="action.talk" size={14} />
-          )}
-          <Preview
-            title={row.errorSummary ? 'Failure' : 'Proposed response'}
-            value={
-              <>
-                {row.errorSummary && <p className="ol-diagnostic-error">{row.errorSummary}</p>}
-                <ResponsePreview row={row} />
-              </>
-            }
-          >
+    <Preview
+      title={`${row.actorName ?? 'World agent'} · recorded request`}
+      value={
+        <>
+          <dl className="ol-preview-facts">
+            <Labeled label="Type">{type}</Labeled>
+            <Labeled label="Trigger">{row.trigger ?? row.kind}</Labeled>
+          </dl>
+          <h4>{row.errorSummary ? 'Failure' : 'Proposed response'}</h4>
+          {row.errorSummary && <p className="ol-diagnostic-error">{row.errorSummary}</p>}
+          <ResponsePreview row={row} />
+        </>
+      }
+    >
+      <button type="button" className="ol-trace-row" onClick={() => onSelect(row)}>
+        <Icon name={actorIcon} label={row.actorKind ?? 'Actor'} size={24} />
+        <span className="ol-trace-copy">
+          <span className="ol-trace-heading">
+            <strong>{row.actorName ?? 'World agent'}</strong>
+            {levelLabel(row.route) && <Tag>{levelLabel(row.route)}</Tag>}
+          </span>
+          <span className="ol-trace-type">
+            <Icon name={triggerIcon(type)} size={14} />
+            <span>{type}</span>
+          </span>
+          <span className="ol-inspection-preview ol-truncate">{row.trigger ?? row.kind}</span>
+          <span className="ol-trace-bottom">
+            {row.responseParts?.some((part) => part.label === 'Speech') && (
+              <Icon name="action.talk" size={14} />
+            )}
             <span
-              className={`ol-truncate ${row.errorSummary ? 'ol-diagnostic-error' : 'ol-trace-response'}`}
+              className={`ol-inspection-preview ol-truncate ${row.errorSummary ? 'ol-diagnostic-error' : 'ol-trace-response'}`}
             >
               {row.errorSummary ?? row.responseSummary ?? row.disposition ?? 'No response recorded'}
             </span>
-          </Preview>
-          <time dateTime={row.startedAt}>{new Date(row.startedAt).toLocaleTimeString()}</time>
+            <time dateTime={row.startedAt}>{new Date(row.startedAt).toLocaleTimeString()}</time>
+          </span>
         </span>
-      </span>
-      <StatusIcon status={outcomeKind(row.status, row.disposition)} />
-    </button>
+        <StatusIcon status={outcomeKind(row.status, row.disposition)} />
+      </button>
+    </Preview>
   );
 }
 
@@ -2311,10 +2456,14 @@ export function Diagnostics({
   worldId,
   selection,
   onSelect,
+  visible = true,
+  readScope,
 }: {
   worldId: string;
   selection: DiagnosticSelection | null;
   onSelect(row: DiagnosticSelection): void;
+  visible?: boolean;
+  readScope?: string;
 }) {
   const [rows, setRows] = useState<Row[]>([]),
     [loading, setLoading] = useState(true),
@@ -2324,6 +2473,7 @@ export function Diagnostics({
     [newActivity, setNewActivity] = useState(false),
     [error, setError] = useState(''),
     [filters, setFilters] = useState<Record<string, string>>({}),
+    [draftFilters, setDraftFilters] = useState<Record<string, string>>({}),
     [raw, setRaw] = useState<RawView | null>(null);
   const generation = useRef(0),
     panel = useRef<HTMLDivElement>(null),
@@ -2367,13 +2517,14 @@ export function Diagnostics({
     }
   }
   useEffect(() => {
+    if (!visible) return;
     void refresh();
     return () => {
       generation.current++;
     };
-  }, [offset, worldId, filters]);
+  }, [offset, worldId, filters, visible, readScope]);
   useEffect(() => {
-    if (selection) return;
+    if (selection || !visible) return;
     let active = true;
     const id = setInterval(async () => {
       if (follow && offset === 0 && !panel.current?.contains(document.activeElement)) {
@@ -2399,13 +2550,18 @@ export function Diagnostics({
       active = false;
       clearInterval(id);
     };
-  }, [follow, offset, filters, worldId, selection]);
-  useEffect(() => setRaw(null), [worldId, selection?.id]);
+  }, [follow, offset, filters, worldId, selection, visible, readScope]);
+  useEffect(() => setRaw(null), [worldId, selection?.id, readScope]);
   if (selection)
     return (
       <div ref={panel}>
-        <TraceDetail key={selection.id} row={selection} showJson={setRaw} />
-        {raw && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
+        <TraceDetail
+          key={`${selection.id}:${readScope}`}
+          row={selection}
+          showJson={setRaw}
+          visible={visible}
+        />
+        {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
       </div>
     );
   return (
@@ -2414,8 +2570,8 @@ export function Diagnostics({
         <Button size="sm" onPress={() => void refresh()}>
           Refresh
         </Button>
-        <Button size="sm" onPress={() => setFollow(!follow)}>
-          Follow: {follow ? 'on' : 'off'}
+        <Button size="sm" variant="quiet" aria-pressed={follow} onPress={() => setFollow(!follow)}>
+          {follow ? 'Following new records' : 'Follow new records'}
         </Button>
         <Button size="sm" disabled={!offset} onPress={() => setOffset(Math.max(0, offset - 25))}>
           Newer
@@ -2424,6 +2580,11 @@ export function Diagnostics({
           Older
         </Button>
       </div>
+      <p className="ol-caption ol-diagnostic-context">
+        {follow
+          ? 'Newest records refresh while you are not interacting with the list.'
+          : 'Reading stays on this page. New records wait for you to open them.'}
+      </p>
       {newActivity && (
         <Button
           size="sm"
@@ -2436,23 +2597,60 @@ export function Diagnostics({
         </Button>
       )}
       <details>
-        <summary>Filter triggers</summary>
-        <div className="ol-filter-grid">
-          {['search', 'actor', 'route', 'outcome', 'stage', 'from', 'to'].map((name) => (
-            <label key={name}>
-              {name}
-              <input
-                aria-label={name}
-                type={name === 'from' || name === 'to' ? 'datetime-local' : 'search'}
-                value={filters[name] ?? ''}
-                onChange={(event) => {
-                  setOffset(0);
-                  setFilters({ ...filters, [name]: event.target.value });
-                }}
-              />
-            </label>
-          ))}
-        </div>
+        <summary>
+          Filter records{Object.values(filters).some(Boolean) ? ' · filters applied' : ''}
+        </summary>
+        <form
+          className="ol-diagnostic-filters"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setOffset(0);
+            setFilters({ ...draftFilters });
+          }}
+        >
+          <div className="ol-filter-grid">
+            {(
+              [
+                ['search', 'Search text'],
+                ['actor', 'Character'],
+                ['route', 'Route'],
+                ['outcome', 'Outcome'],
+                ['stage', 'Stage'],
+                ['from', 'From local time'],
+                ['to', 'To local time'],
+              ] as const
+            ).map(([name, label]) => (
+              <label key={name}>
+                {label}
+                <input
+                  aria-label={label}
+                  type={name === 'from' || name === 'to' ? 'datetime-local' : 'search'}
+                  value={draftFilters[name] ?? ''}
+                  onChange={(event) => {
+                    setDraftFilters({ ...draftFilters, [name]: event.target.value });
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+          <div className="ol-actions">
+            <Button type="submit" size="sm">
+              Apply filters
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="quiet"
+              onPress={() => {
+                setDraftFilters({});
+                setFilters({});
+                setOffset(0);
+              }}
+            >
+              Clear filters
+            </Button>
+          </div>
+        </form>
       </details>
       <p className="ol-caption">
         Recorded triggers and stages. Costs are estimates; missing usage stays unknown. Inspection
@@ -2462,13 +2660,18 @@ export function Diagnostics({
       {rows.map((row) => (
         <TraceRow key={row.id} row={row} onSelect={onSelect} />
       ))}
+      {!!rows.length && (
+        <p className="ol-caption">
+          Records {offset + 1}–{offset + rows.length} on this retained history page.
+        </p>
+      )}
       {loading && (
         <p role="status" className="ol-caption">
           Loading triggers…
         </p>
       )}
       {!rows.length && !error && !loading && <p>No matching retained triggers.</p>}
-      {raw && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
+      {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
     </div>
   );
 }

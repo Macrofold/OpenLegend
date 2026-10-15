@@ -6,7 +6,8 @@ on:
     paths:
       - 'packages/**'
       - 'apps/**'
-      - 'tests/browser/spatial-world.spec.ts'
+      - 'tests/browser/**'
+      - 'tests/fixtures/**'
       - 'playwright.config.ts'
       - 'tsconfig*.json'
       - 'pnpm-lock.yaml'
@@ -48,10 +49,24 @@ jobs:
       - run: pnpm run build
       # This focused gate supplements, not replaces, the repository's full check.
       - run: pnpm exec vitest run packages/spatial/src/spatial.test.ts packages/domain/src/spatial-world.test.ts apps/client/src/world-camera.test.ts apps/server/src/spatial-http.test.ts
-      - run: pnpm exec playwright install --with-deps chromium
+      - id: playwright_install
+        run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec playwright test tests/browser/spatial-world.spec.ts
         env:
           AI_BUDGET_USD: '0'
+      # Preserve the original spatial evidence and failure while exercising the
+      # existing interface journeys against their own disposable databases.
+      - name: Check player and creator interfaces
+        if: ${{ !cancelled() && steps.playwright_install.outcome == 'success' }}
+        run: |
+          pnpm exec playwright test \
+            tests/browser/actions.spec.ts \
+            tests/browser/camera.spec.ts \
+            tests/browser/conversation-ui.spec.ts \
+            tests/browser/design-system.spec.ts \
+            tests/browser/god-editor.spec.ts \
+            tests/browser/time.spec.ts \
+            --output test-results/interface
       - uses: actions/upload-artifact@v4
         if: always()
         with:

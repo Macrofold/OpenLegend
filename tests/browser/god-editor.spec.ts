@@ -20,6 +20,7 @@ test('a discarded person draft can refresh immediately and stays readable at nar
     await page.goto(`http://127.0.0.1:${address.port}`);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true', { timeout: 20_000 });
     await page.getByRole('button', { name: 'Character', exact: true }).click();
+    await page.getByText('God mode · Character controls', { exact: true }).click();
     await page.getByRole('button', { name: 'Edit Person', exact: true }).click();
     const editor = page.getByRole('dialog', { name: /^Edit / });
     await expect(editor).toBeVisible();
@@ -35,11 +36,13 @@ test('a discarded person draft can refresh immediately and stays readable at nar
     await expect(editor).not.toContainText('Save or discard your changes before refreshing.');
     await expect(editor).toContainText('Queried');
     await page.setViewportSize({ width: 390, height: 844 });
-    const bounds = await editor.boundingBox();
-    expect(bounds).not.toBeNull();
-    expect(bounds!.x).toBeGreaterThanOrEqual(0);
-    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
-    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
+    await expect(async () => {
+      const bounds = await editor.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
+      expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
+    }).toPass({ timeout: 5_000 });
     await expect(editor.locator('.ol-editor-tab .ol-icon-wrap').first()).toBeVisible();
     await page.screenshot({ path: info.outputPath('god-editor-narrow.png') });
     expect(errors).toEqual([]);

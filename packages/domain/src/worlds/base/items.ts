@@ -56,6 +56,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     cooked: true,
   },
   knife: {
+    icon: 'resource.flint',
     mechanismFields: { story_importance: { story_importance: 7 } },
     equipment: BASE_KNIFE_EQUIPMENT,
     id: 'knife',
@@ -97,6 +98,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     mechanismFields: { story_importance: { story_importance: 8 } },
   },
   woven_bag: {
+    icon: 'ui.inventory',
     id: 'woven_bag',
     version: 1,
     portable: true,
@@ -122,6 +124,8 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     container: { capacity: 24, maximumDepth: 16 },
   },
   raw_fiber: {
+    icon: 'resource.reed',
+    gatherLabel: 'Gather reed fibers',
     id: 'raw_fiber',
     version: 1,
     portable: true,
@@ -132,6 +136,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['fiber'],
   },
   prepared_fiber: {
+    icon: 'resource.fiber',
     assemblyMaterial: { familyId: BASE_CANOPY.id, role: 'fiber' },
     id: 'prepared_fiber',
     version: 1,
@@ -143,6 +148,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['fiber', 'flexible', 'pouch'],
   },
   cord: {
+    icon: 'resource.cord',
     assemblyMaterial: { familyId: BASE_CANOPY.id, role: 'binding' },
     id: 'cord',
     version: 1,
@@ -154,6 +160,8 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: [...BASE_CORDAGE_RULE.properties],
   },
   wood: {
+    icon: 'resource.branch',
+    gatherLabel: 'Gather branches',
     id: 'wood',
     version: 1,
     portable: true,
@@ -163,6 +171,8 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['rigid', 'flexible', 'shaft', 'fuel'],
   },
   stone: {
+    icon: 'resource.pebble',
+    gatherLabel: 'Gather stones',
     id: 'stone',
     version: 1,
     portable: true,
@@ -190,6 +200,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['rigid', 'point'],
   },
   stone_tool: {
+    icon: 'resource.flint',
     id: 'stone_tool',
     version: 1,
     portable: true,
@@ -199,6 +210,8 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     properties: ['rigid', 'point'],
   },
   berries: {
+    icon: 'resource.berry',
+    gatherLabel: 'Gather berries',
     id: 'berries',
     version: 1,
     portable: true,
@@ -210,6 +223,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     nutrition: 18,
   },
   raw_meat: {
+    icon: 'resource.meat',
     id: 'raw_meat',
     version: 1,
     portable: true,
@@ -221,6 +235,7 @@ export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
     cooked: false,
   },
   cooked_meat: {
+    icon: 'resource.meat',
     id: 'cooked_meat',
     version: 1,
     portable: true,

@@ -1,3 +1,4 @@
+import { recoverPlayerAction } from './action-request-recovery.js';
 import { constructionPlanSchema } from './construction.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
@@ -87,7 +88,12 @@ import { WorldService, commandInputSchema, requestIdSchema } from './world-servi
 import { projectPatch, projectView } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
-import { containerPage, inventoryDestinationPage, objectHistoryPage } from './inventory-view.js';
+import {
+  containerPage,
+  inventoryAccess,
+  inventoryDestinationPage,
+  objectHistoryPage,
+} from './inventory-view.js';
 import { activityRequests, activityStatus, activityChoicePage } from './activity-requests.js';
 
 const clientId = z
@@ -518,8 +524,19 @@ async function initializeGameServer(
   const invalidateStream = (stream: ServerResponse) => {
     // No private payload accompanies revocation. A blocked connection is disconnected;
     // data already handed to the transport cannot be recalled.
-    if (streams.get(stream)?.blocked) stream.destroy();
-    else stream.end('event: access-changed\ndata: {}\n\n');
+    const state = streams.get(stream);
+    if (state?.blocked) stream.destroy();
+    else {
+      // A load changes the timeline, not current account/grant ownership. Prove
+      // that distinction with the existing authority owner before permitting a
+      // client to retain only its read-only checkpoint outcome description.
+      // docs/save-and-load.md#continuation-and-identity
+      const timelineOnly =
+        state &&
+        state.scope.timelineId !== service.timelineId &&
+        service.currentScope({ ...state.scope, timelineId: service.timelineId }, 'save');
+      stream.end(`event: ${timelineOnly ? 'timeline-changed' : 'access-changed'}\ndata: {}\n\n`);
+    }
   };
   const currentView = (scope: RequestScope): Promise<GameView> => {
     const pending = projectionLane.run(async () => {
@@ -1386,6 +1403,20 @@ async function initializeGameServer(
           });
         const dispatch = async () => {
           switch (url.pathname) {
+            case '/api/action-attempt/receipt': {
+              const value = z
+                .object({
+                  requestId: requestIdSchema,
+                  timeline: requestIdSchema,
+                  text: z.string().trim().min(1).max(500),
+                  targetId: requestIdSchema.optional(),
+                  mode: z.enum(['enqueue', 'replace', 'interrupt']),
+                  slots: intentSlotsSchema.optional(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, await recoverPlayerAction(service, scope, value));
+            }
             case '/api/action-attempt': {
               const value = z
                 .object({
@@ -1468,6 +1499,86 @@ async function initializeGameServer(
                   ? 'Checkpoint failure acknowledged.'
                   : 'That failure was already acknowledged or replaced by a newer one.',
                 autosaves: await autosaves.status(),
+              });
+            }
+            case '/api/saves/receipt': {
+              const value = z
+                .discriminatedUnion('operation', [
+                  z
+                    .object({
+                      operation: z.literal('create'),
+                      requestId: z.string().uuid(),
+                      label: z.string().trim().min(1).max(80),
+                      timeline: requestIdSchema,
+                    })
+                    .strict(),
+                  z
+                    .object({
+                      operation: z.literal('load'),
+                      requestId: z.string().uuid(),
+                      saveId: requestIdSchema,
+                      label: z.string().min(1).max(80),
+                      timeline: requestIdSchema,
+                    })
+                    .strict(),
+                ])
+                .parse(body);
+              service.assertScope(scope, 'save');
+              if (value.operation === 'create') {
+                if (!store.saves) throw new GameSaveError('Checkpoints are unavailable.');
+                const status = await store.saves.creationResult(
+                  service.world.id,
+                  value.requestId,
+                  value.label,
+                );
+                service.assertScope(scope, 'save');
+                const message =
+                  status === 'resolved'
+                    ? 'The original checkpoint was created.'
+                    : status === 'pending'
+                      ? 'The original checkpoint is still being created. Nothing was resubmitted.'
+                      : 'The original checkpoint has no confirmed published result. Nothing was resubmitted.';
+                return send(response, 200, {
+                  ok: true,
+                  scope: scopeKey(scope),
+                  status,
+                  message,
+                  ...(status === 'resolved'
+                    ? { result: { ok: true, code: 'saved', message } }
+                    : {}),
+                });
+              }
+              const prior = (await store.getIntegration(`load-request:${value.requestId}`)) as
+                | { saveId: string }
+                | undefined;
+              service.assertScope(scope, 'save');
+              if (prior && prior.saveId !== value.saveId)
+                return send(response, 409, {
+                  ok: false,
+                  code: 'idempotency-conflict',
+                  message: 'The saved checkpoint does not match the original load request.',
+                });
+              if (!prior)
+                return send(response, 200, {
+                  ok: true,
+                  scope: scopeKey(scope),
+                  status: 'unknown',
+                  message:
+                    'The original load has no confirmed installation record. Nothing was loaded again.',
+                });
+              const message = service.storageError
+                ? `The original load was installed, but saving still needs attention: ${service.storageError}`
+                : 'The original load was installed. No checkpoint was loaded again and its protection was not replaced.';
+              return send(response, 200, {
+                ok: true,
+                scope: scopeKey(scope),
+                status: 'resolved',
+                message,
+                result: {
+                  ok: !service.storageError,
+                  code: service.storageError ? 'storage' : 'loaded',
+                  message,
+                },
               });
             }
             case '/api/saves/create': {
@@ -1556,9 +1667,10 @@ async function initializeGameServer(
                 catalogue: actionCatalogue(service, context, scope),
               });
             }
-            case '/api/activity-requests':
-              z.object({}).strict().parse(body);
-              return send(response, 200, activityRequests(service, scope));
+            case '/api/activity-requests': {
+              const value = z.object({ targetId: requestIdSchema.optional() }).strict().parse(body);
+              return send(response, 200, activityRequests(service, scope, value.targetId));
+            }
             case '/api/activity-choices': {
               const value = z
                 .object({
@@ -1624,6 +1736,13 @@ async function initializeGameServer(
                 .parse(body);
               return send(response, 200, containerPage(service, scope, value));
             }
+            case '/api/inventory/access': {
+              const value = z
+                .object({ containerId: requestIdSchema, approach: z.boolean().optional() })
+                .strict()
+                .parse(body);
+              return send(response, 200, inventoryAccess(service, scope, value));
+            }
             case '/api/inventory/destinations': {
               const value = z
                 .object({
@@ -1684,6 +1803,19 @@ async function initializeGameServer(
                     value.commandEpoch,
                     scope,
                   ),
+                ),
+              );
+            }
+            case '/api/command/receipt': {
+              const value = command.required({ commandEpoch: true }).parse(body);
+              return send(
+                response,
+                200,
+                await service.commandReceipt(
+                  value.commandId,
+                  value.command,
+                  value.commandEpoch,
+                  scope,
                 ),
               );
             }
@@ -1901,27 +2033,37 @@ async function initializeGameServer(
             case '/api/god/spawn': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
-              const value = z.object({ type: godSpawnType, position }).strict().parse(body);
-              return send(response, 200, await service.spawn(value));
+              const value = z
+                .object({ id: requestIdSchema, type: godSpawnType, position })
+                .strict()
+                .parse(body);
+              return send(response, 200, await service.spawn(value, scope));
             }
             case '/api/god/person': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
-              const value = godPerson.extend({ position }).strict().parse(body);
+              const value = godPerson
+                .extend({ id: requestIdSchema, position })
+                .strict()
+                .parse(body);
               return send(
                 response,
                 200,
-                await service.spawn({
-                  type: 'person',
-                  position: value.position,
-                  person: {
-                    name: value.name,
-                    personality: value.personality,
-                    backstory: value.backstory,
-                    traitIds: value.traitIds,
-                    initialGoals: value.initialGoals,
+                await service.spawn(
+                  {
+                    id: value.id,
+                    type: 'person',
+                    position: value.position,
+                    person: {
+                      name: value.name,
+                      personality: value.personality,
+                      backstory: value.backstory,
+                      traitIds: value.traitIds,
+                      initialGoals: value.initialGoals,
+                    },
                   },
-                }),
+                  scope,
+                ),
               );
             }
             case '/api/god/editor/attributes': {
@@ -3111,6 +3253,7 @@ async function initializeGameServer(
         // point, so they run fenced in the lane and are ordered after any revocation.
         return [
           '/api/saves/list',
+          '/api/saves/receipt',
           '/api/saves/load',
           '/api/saves/create',
           '/api/saves/delete',

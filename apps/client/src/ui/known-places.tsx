@@ -21,10 +21,12 @@ const reference = (place: KnownPlaceView) => ({
 /** Last-known evidence remains separate from live object inspection and admitted movement. */
 export function KnownPlaces({
   revision,
+  visible,
   focus,
   command,
 }: {
   revision: string;
+  visible: boolean;
   focus(point: WorldPoint): void;
   command(action: ActionOption): Promise<ApiResult>;
 }) {
@@ -41,21 +43,34 @@ export function KnownPlaces({
     detailRequest = useRef(0),
     searchInput = useRef<HTMLInputElement>(null);
   const baseline = useRef(revision);
+  const active = useRef(visible);
+  active.current = visible;
+  const loadedQuery = useRef<string | undefined>(undefined);
+  const pageAbort = useRef<AbortController | undefined>(undefined);
+  const detailAbort = useRef<AbortController | undefined>(undefined);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    if (inspection) detailHeading.current?.focus();
+    if (visible && inspection) detailHeading.current?.focus();
   }, [inspection?.place.sourceId]);
 
   async function load(more = false) {
+    if (!active.current) return;
+    pageAbort.current?.abort();
+    const abort = new AbortController();
+    pageAbort.current = abort;
     const id = ++request.current;
     setBusy(true);
     setError('');
     try {
-      const result = await post<Result<KnownPlacesPage>>('/api/known-places', {
-        query,
-        ...(more && page?.next ? { cursor: page.next } : {}),
-      });
-      if (id !== request.current) return;
+      const result = await post<Result<KnownPlacesPage>>(
+        '/api/known-places',
+        {
+          query,
+          ...(more && page?.next ? { cursor: page.next } : {}),
+        },
+        abort.signal,
+      );
+      if (id !== request.current || !active.current) return;
       if (!result.ok) throw new Error(result.message ?? 'Known places are unavailable.');
       setPage(result);
       setEntries((old) =>
@@ -76,22 +91,35 @@ export function KnownPlaces({
     }
   }
   useEffect(() => {
-    setPage(undefined);
-    setEntries([]);
-    setInspection(undefined);
-    setMessage('');
-    detailRequest.current++;
-    void load();
+    if (visible) {
+      if (loadedQuery.current !== query) {
+        loadedQuery.current = query;
+        setPage(undefined);
+        setEntries([]);
+        setInspection(undefined);
+        setMessage('');
+        void load();
+      } else if (!page) void load();
+    } else {
+      setBusy(false);
+      if (!inspection) setMessage('');
+    }
     return () => {
       request.current++;
       detailRequest.current++;
+      pageAbort.current?.abort();
+      detailAbort.current?.abort();
     };
-  }, [query]);
+  }, [query, visible]);
   useEffect(() => {
     if (baseline.current !== revision) setNewer(true);
   }, [revision]);
 
   async function inspect(place: KnownPlaceView) {
+    if (!active.current) return;
+    detailAbort.current?.abort();
+    const abort = new AbortController();
+    detailAbort.current = abort;
     const id = ++detailRequest.current;
     setInspection(undefined);
     setError('');
@@ -100,8 +128,9 @@ export function KnownPlaces({
       const result = await post<Result<KnownPlaceInspection>>(
         '/api/known-places/inspect',
         reference(place),
+        abort.signal,
       );
-      if (id !== detailRequest.current) return;
+      if (id !== detailRequest.current || !active.current) return;
       if (!result.ok) throw new Error(result.message ?? 'This observation is unavailable.');
       setInspection(result);
       setMessage('');
@@ -113,6 +142,7 @@ export function KnownPlaces({
     }
   }
   async function move(selected: KnownPlaceInspection) {
+    if (!active.current) return;
     const id = ++detailRequest.current;
     // The pending button becomes disabled; keep keyboard focus in the remembered
     // place rather than handing its key events back to the world.
@@ -121,7 +151,7 @@ export function KnownPlaces({
     setError('');
     try {
       const result = await command(selected.move);
-      if (id !== detailRequest.current) return;
+      if (id !== detailRequest.current || !active.current) return;
       setMessage(
         result.ok
           ? 'Movement requested. Your current activity shows progress or a route failure.'

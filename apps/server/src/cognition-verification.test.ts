@@ -1,3 +1,4 @@
+import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import {
   closeTestDatabases,
   testRepository,
@@ -297,6 +298,7 @@ async function harness(
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);
+  await useNearCampSight(service);
   // These fixtures measure Ada's decisions, with other residents outside their scope.
   await editWorld(service, (world) => {
     for (const entity of Object.values(world.entities))

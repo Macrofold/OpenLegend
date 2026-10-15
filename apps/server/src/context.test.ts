@@ -6,10 +6,10 @@ import {
   advanceWorld,
   executeCommand,
   inventoryFor,
+  navigationBlocked,
   quantityOf,
   type DeclarationDraft,
 } from '@open-legend/domain';
-import { domainCommand } from './cognition.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import {
   buildContext,
@@ -20,6 +20,7 @@ import {
 } from './context.js';
 import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
+import { domainCommand } from './cognition.js';
 
 const stores: SqlGameRepository[] = [];
 async function setup(): Promise<WorldService> {
@@ -46,6 +47,8 @@ function select(
   return candidate!;
 }
 async function perform(service: WorldService, candidate: CandidateAction): Promise<void> {
+  // These are the NPC's own candidates, so use its native command binder rather
+  // than the human command endpoint that requires a lethal-attack confirmation.
   const result = await service.transition((world) =>
     executeCommand(
       world,
@@ -112,15 +115,35 @@ describe('actor-scoped native decision candidates', () => {
       ),
     );
     await service.transition((world) => advanceWorld(world, 18));
-    // Releasing the prepared shot is distinct from its current native flight reaching a body.
+    expect(
+      service.world.events.some(
+        (event) =>
+          event.type === 'shot-released' && event.actorId === NPC_ID && event.targetId === 'hare-1',
+      ),
+    ).toBe(true);
+    // Releasing the shot does not resolve its flight or guarantee an impact.
+    expect(service.world.entities['hare-1']!.actor!.alive).toBe(true);
     const flight = Object.values(service.world.projectiles ?? {}).find(
       (projectile) => projectile.sourceId === NPC_ID && projectile.targetId === 'hare-1',
     );
     expect(flight).toBeDefined();
-    await service.transition((world) =>
+    const before = service.world.simTime;
+    const result = await service.transition((world) =>
       advanceWorld(world, flight!.remainingRange / flight!.speed),
     );
-    expect(service.world.entities['hare-1']!.actor!.alive).toBe(false);
+    const evidence = JSON.stringify({
+      result,
+      before,
+      after: service.world.simTime,
+      navigationBlocked: navigationBlocked(service.world),
+      projectiles: service.world.projectiles,
+    });
+    expect(result.ok, evidence).toBe(true);
+    expect(service.world.simTime, evidence).toBeGreaterThan(before);
+    expect(
+      service.world.entities['hare-1']!.actor!.alive,
+      JSON.stringify(service.world.events.slice(-10)),
+    ).toBe(false);
     await perform(
       service,
       select(service, 'harvest', (action) => action.command?.targetId === 'hare-1'),
@@ -148,6 +171,7 @@ describe('actor-scoped native decision candidates', () => {
     expect(new Set(npcCandidates(service).map((action) => action.id)).size).toBe(
       npcCandidates(service).length,
     );
+    // Spending this method's inputs cannot prohibit unrelated starter recipes.
     expect(
       npcCandidates(service).some(
         (action) => action.command?.type === 'craft' && action.command.recipeId === recipe.id,

@@ -406,6 +406,11 @@ export function WorldAgentReview({
                   ? review.draft.intent
                   : 'Review exact change'}
             </h2>
+            {review && (
+              <p className="ol-caption">
+                Revision {review.draft.revision} · {review.plan.status}
+              </p>
+            )}
           </div>
           <div className="ol-agent-work-review-body">
             {!review && !error && <p role="status">Loading exact review…</p>}
@@ -500,6 +505,7 @@ export function WorldAgentReview({
                   {review.draft.kind === 'recipe' &&
                     ' Installing a recipe does not create an item. Crafting is separate.'}
                 </p>
+                {review.plan.result && <p role="status">{review.plan.result.message}</p>}
                 {review.plan.removal && review.plan.status === 'rejected' && (
                   <p role="status">
                     Removal cancelled. This saved review cannot apply a world change.
@@ -511,6 +517,13 @@ export function WorldAgentReview({
                       Applying this change requires a running world. Approval does not resume it.
                     </p>
                   )}
+                {review.draft.title && (
+                  <details>
+                    <summary>Original purpose</summary>
+                    <p>{review.draft.intent}</p>
+                  </details>
+                )}
+
                 <details>
                   <summary>Exact candidate</summary>
                   <pre className="ol-agent-json">
@@ -566,6 +579,17 @@ export function WorldAgentReview({
             )}
           </div>
           <div className="ol-agent-work-review-footer">
+            {review && review.plan.status !== 'applied' && (
+              <p className="ol-caption ol-creator-save-status">
+                {review.plan.creation
+                  ? review.plan.status === 'approved'
+                    ? 'This exact opening and host are approved. Start creates the world.'
+                    : 'Approval records your decision. Starting this world remains separate.'
+                  : review.plan.status === 'approved'
+                    ? 'Approved for this exact revision. Apply makes the change.'
+                    : 'Approval records your decision. Apply remains a separate action.'}
+              </p>
+            )}
             {mutationReason && <p role="status">{mutationReason}</p>}
             {!canApply && !mutationReason && (
               <p role="status">This session is currently read-only.</p>

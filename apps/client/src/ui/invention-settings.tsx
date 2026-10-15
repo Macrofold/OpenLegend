@@ -1,101 +1,170 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ApiResult, GameView } from '@open-legend/protocol';
 import { post } from '../api';
 import { Button, Section } from '../design-system/components';
+import './lifecycle.css';
+
+type PolicyDraft = {
+  generation: string;
+  base: GameView['inventionPolicy'];
+  playerLocked: boolean;
+  agentLocked: boolean;
+};
 
 export function InventionSettings({ view }: { view: GameView }) {
-  const [editing, setEditing] = useState<{
-    generation: string;
-    revision: number;
-    playerLocked: boolean;
-    agentLocked: boolean;
-  }>();
+  const [editing, setEditing] = useState<PolicyDraft>();
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  useEffect(() => {
-    if (!view.godMode) return;
-    let active = true;
-    setEditing(undefined);
-    void post<ApiResult & { generation: string; policy: GameView['inventionPolicy'] }>(
-      '/api/god/invention-policy',
-      {},
-    )
-      .then((result) => {
-        if (active && result.ok)
-          setEditing({
-            generation: result.generation,
-            revision: result.policy.revision,
-            playerLocked: result.policy.playerLocked,
-            agentLocked: result.policy.agentLocked,
-          });
-      })
-      .catch((error) => {
-        if (active) setMessage(String(error));
+  const [failed, setFailed] = useState(false);
+  const latest = useRef(0);
+  const fields = useRef<HTMLDivElement>(null);
+  const load = useCallback(async () => {
+    const request = ++latest.current;
+    setLoading(true);
+    setFailed(false);
+    try {
+      const result = await post<
+        ApiResult & { generation: string; policy: GameView['inventionPolicy'] }
+      >('/api/god/invention-policy', {});
+      if (request !== latest.current) return;
+      if (!result.ok) throw new Error(result.message || 'Could not read invention permissions.');
+      setEditing({
+        generation: result.generation,
+        base: result.policy,
+        playerLocked: result.policy.playerLocked,
+        agentLocked: result.policy.agentLocked,
       });
+    } catch (error) {
+      if (request === latest.current) {
+        setMessage(
+          error instanceof Error ? error.message : 'Could not read invention permissions.',
+        );
+        setFailed(true);
+      }
+    } finally {
+      if (request === latest.current) setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    setEditing(undefined);
+    setMessage('');
+    if (view.godMode) void load();
     return () => {
-      active = false;
+      latest.current++;
     };
-  }, [view.godMode, view.worldId, view.saveTimeline, view.inventionPolicy.revision]);
+  }, [load, view.godMode, view.worldId, view.saveTimeline]);
+  const stale = !!editing && editing.base.revision !== view.inventionPolicy.revision;
+  const dirty =
+    !!editing &&
+    (editing.playerLocked !== editing.base.playerLocked ||
+      editing.agentLocked !== editing.base.agentLocked);
   async function save() {
-    if (!editing || busy) return;
+    if (!editing || busy || stale) return;
     setBusy(true);
+    setMessage('');
+    setFailed(false);
     try {
       const result = await post('/api/god/invention-policy/save', {
         expectedGeneration: editing.generation,
-        expectedRevision: editing.revision,
+        expectedRevision: editing.base.revision,
         playerLocked: editing.playerLocked,
         agentLocked: editing.agentLocked,
       });
-      setMessage(result.message);
+      if (!result.ok) throw new Error(result.message || 'Could not save invention permissions.');
+      setMessage(result.message || 'Invention permissions saved for this world.');
+      await load();
     } catch (error) {
-      setMessage(String(error));
+      setMessage(error instanceof Error ? error.message : 'Could not save invention permissions.');
+      setFailed(true);
     } finally {
       setBusy(false);
     }
   }
   return (
     <Section title="Invention permissions">
-      <p>Existing actions, crafts and learning remain available when invention is locked.</p>
-      <label>
-        <input
-          type="checkbox"
-          checked={editing?.playerLocked ?? view.inventionPolicy.playerLocked}
-          disabled={!view.godMode || !editing || busy}
-          onChange={(event) =>
-            setEditing(editing ? { ...editing, playerLocked: event.target.checked } : undefined)
-          }
-        />{' '}
-        Player invention lock
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={editing?.agentLocked ?? view.inventionPolicy.agentLocked}
-          disabled={!view.godMode || !editing || busy}
-          onChange={(event) =>
-            setEditing(editing ? { ...editing, agentLocked: event.target.checked } : undefined)
-          }
-        />{' '}
-        Agent invention lock
-      </label>
-      <p className="ol-caption">
-        Unlocked agents may propose supported techniques privately. Construction remains a separate
-        decision.
+      <p className="ol-setting-scope">Whole world · creator permission required · explicit Save</p>
+      <p>
+        These permissions govern proposing new techniques. Existing actions, crafts and learning
+        stay available.
       </p>
-      {view.godMode && (
-        <Button
-          onPress={() => void save()}
-          isDisabled={
-            !editing ||
-            busy ||
-            (editing.playerLocked === view.inventionPolicy.playerLocked &&
-              editing.agentLocked === view.inventionPolicy.agentLocked)
-          }
-        >
-          Save invention settings
-        </Button>
+      <div className="ol-setting-group" ref={fields}>
+        <label>
+          <input
+            type="checkbox"
+            checked={editing?.playerLocked ?? view.inventionPolicy.playerLocked}
+            disabled={!view.godMode || !editing || busy || loading || stale}
+            onChange={(event) =>
+              setEditing(editing ? { ...editing, playerLocked: event.target.checked } : undefined)
+            }
+          />{' '}
+          Lock player invention
+        </label>
+        <p className="ol-caption">Applies to players proposing new techniques in this world.</p>
+        <label>
+          <input
+            type="checkbox"
+            checked={editing?.agentLocked ?? view.inventionPolicy.agentLocked}
+            disabled={!view.godMode || !editing || busy || loading || stale}
+            onChange={(event) =>
+              setEditing(editing ? { ...editing, agentLocked: event.target.checked } : undefined)
+            }
+          />{' '}
+          Lock autonomous character invention
+        </label>
+        <p className="ol-caption">
+          Unlocked characters may propose supported techniques privately. Constructing something
+          remains a separate decision.
+        </p>
+      </div>
+      {!view.godMode && (
+        <p className="ol-muted">You can read these world permissions. A creator can change them.</p>
       )}
-      {message && <p role="status">{message}</p>}
+      {loading && <p role="status">Reading the current world permissions…</p>}
+      {stale && (
+        <p role="status">
+          The world permissions changed while this panel was open.{' '}
+          {dirty ? 'Your draft is still shown.' : 'The earlier values are still shown.'} Reload the
+          current permissions before editing or saving.
+        </p>
+      )}
+      {view.godMode && (
+        <div className="ol-lifecycle-actions">
+          <Button
+            variant="primary"
+            busy={busy}
+            isDisabled={!editing || loading || stale || !dirty}
+            onPress={() => void save()}
+          >
+            Save world permissions
+          </Button>
+          {(stale || failed || dirty) && (
+            <Button
+              variant="quiet"
+              isDisabled={busy || loading}
+              onPress={(event) => {
+                const trigger = event.target;
+                setMessage('');
+                void load().then(() => {
+                  requestAnimationFrame(() => {
+                    if (
+                      !trigger.isConnected &&
+                      document.activeElement === document.body &&
+                      fields.current?.getClientRects().length
+                    )
+                      fields.current
+                        .querySelector<HTMLInputElement>('input:not(:disabled)')
+                        ?.focus();
+                  });
+                });
+              }}
+            >
+              {dirty ? 'Discard draft and reload' : 'Reload current permissions'}
+            </Button>
+          )}
+        </div>
+      )}
+      {message && <p role={failed ? 'alert' : 'status'}>{message}</p>}
     </Section>
   );
 }

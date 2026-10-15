@@ -2516,6 +2516,11 @@ function executeCommandNative(
         break;
       }
       case 'cancel': {
+        if (
+          command.expectedActionId !== undefined &&
+          component.action?.id !== command.expectedActionId
+        )
+          return reject('stale-action', 'That action has ended or been replaced.');
         interruptStatusEffects(world, actor, events, 'voluntary');
         if (component.action?.type === 'status-effect')
           return reject('cannot-interrupt', 'This state does not allow voluntary interruption.');
@@ -2807,6 +2812,16 @@ function executeCommandNative(
     }
     if (action.guard) actor.spatial.heading = action.guard.facing;
     if (action.type === 'coaching') registerFeedback(world, actor, action);
+    result = { ...result, actionId: action.id };
+    if (experience && action.stage === 'approaching')
+      experience.view.children = [
+        {
+          name: 'Move into reach',
+          facts: experience.view.facts.filter(
+            (fact) => fact.name === 'distance' || fact.name === 'approach',
+          ),
+        },
+      ];
     component.planGeneration++;
     emit(
       world,

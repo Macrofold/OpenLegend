@@ -327,6 +327,23 @@ export class GameSaves {
       checksum TEXT NOT NULL, payload TEXT NOT NULL
     )`);
   }
+  /** Inspect only the original capture. Existing publication verification also finishes
+   * directory synchronization after an ambiguous acknowledgement; it never captures again.
+   * No catalogue/history scan, new save identity, load or recovery rotation is performed. */
+  async creationResult(
+    worldId: string,
+    id: string,
+    label: string,
+  ): Promise<'pending' | 'unknown' | 'resolved'> {
+    if (this.active?.id === id || this.claim?.id === id || this.waiting?.id === id)
+      return 'pending';
+    const prior = await this.files.metadata(id);
+    if (!prior) return 'unknown';
+    if (prior.worldId !== worldId || prior.label !== label || (prior.kind ?? 'manual') !== 'manual')
+      throw new GameSaveError('The saved checkpoint does not match the original creation request.');
+    await this.files.confirmPublished(prior);
+    return 'resolved';
+  }
   async list(
     worldId: string,
     options?: { limit: number; before?: SavePosition },

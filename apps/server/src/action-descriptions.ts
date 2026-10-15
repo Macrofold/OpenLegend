@@ -8,7 +8,6 @@ import {
   equippedItem,
   guardDescription,
   equipmentChangeDescription,
-  BASE_GUARD_TEXT,
 } from '@open-legend/domain';
 import { castDefinition, preparationDefinition } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
@@ -27,10 +26,11 @@ import {
 } from '@open-legend/domain';
 import { domainCommand } from './cognition.js';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
-import { BASE_DEATH_COMMAND_DESCRIPTIONS, BASE_FOOD_ACTION_WORDING } from '@open-legend/domain';
+import { BASE_DEATH_COMMAND_DESCRIPTIONS } from '@open-legend/domain';
 import { consumptionDescription } from './body-services.js';
 import {
   BASE_FIRE_CARE,
+  BASE_ACTION_DESCRIPTIONS,
   fireFuelDescription,
   gatheringYield,
   NATIVE_ITEMS,

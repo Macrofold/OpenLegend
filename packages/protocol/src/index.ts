@@ -1,3 +1,8 @@
+export type {
+  RequestRecoveryResult,
+  CheckpointRequest,
+  CheckpointContext,
+} from './request-recovery.js';
 import type { ConstructionPlan, AssemblyView } from './construction.js';
 export * from './construction.js';
 import type { Named } from '@open-legend/language';
@@ -5,6 +10,7 @@ import type { Named } from '@open-legend/language';
 import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
 import type { InventoryCharacteristic } from './inventory.js';
 export type {
+  InventoryAccessView,
   InventoryCharacteristic,
   InventoryTransferSource,
   InventoryDestinationRequest,
@@ -120,6 +126,8 @@ export interface CommandInput {
   lethalReviewId?: string;
   quantity?: number;
   expectedRevision?: number;
+  /** A scoped Stop must not cancel work that replaced the selected action. */
+  expectedActionId?: string;
   placementRevision?: number;
   /** The reviewed contents of a container item, independent of its placement. */
   expectedContentsRevision?: number;
@@ -131,6 +139,36 @@ export interface CommandInput {
   inputs?: Record<string, string>;
 }
 
+/** Transport mirror of the installed world's trusted semantic presentation. */
+export type ActivityRequestPresentation = {
+  target: string;
+  workMode: string;
+} & (
+  | { kind: 'replenish-session' }
+  | { kind: 'outing-invitation'; destination: string }
+  | {
+      kind: 'resource-care';
+      supply: string;
+      stop: string;
+      budget: string;
+      material: string;
+      reserve: string;
+    }
+  | {
+      kind: 'gather-store-use';
+      source: string;
+      destination: string;
+      quantity: string;
+      material: string;
+      reserve: string;
+    }
+);
+export interface ActivityEntry {
+  familyId: string;
+  targetId: string;
+  label: string;
+  description: string;
+}
 export interface OutingView {
   id: string;
   revision: number;
@@ -149,12 +187,15 @@ export interface ActivityRequestsView {
   ok: boolean;
   scope: string;
   simTime: number;
+  /** Applicable tasks for the exact permitted target supplied to this read. */
+  entries: ActivityEntry[];
   requests: {
     purposeLabel?: string;
     submitLabel?: string;
     id: string;
     label: string;
     description: string;
+    presentation?: ActivityRequestPresentation;
     fields: Record<
       string,
       {
@@ -180,6 +221,8 @@ export interface ActivityRequestsView {
     status: string;
     reason?: string;
     spent?: number;
+    maximumSpent?: number;
+    spendingUnit?: string;
     attempts?: number;
     interrupted?: boolean;
     deadline?: number;
@@ -225,6 +268,9 @@ export interface ActivityChoicePage {
 export interface ActionOption {
   id: string;
   label: string;
+  icon?: string;
+  /** Same supported action family across currently perceived targets. */
+  shortcut?: { id: string; label: string; icon?: string };
   command: CommandInput;
   enabled: boolean;
   reason?: string;
@@ -237,6 +283,7 @@ export interface ActionOption {
 export interface CatalogueAction {
   id: string;
   label: string;
+  icon?: string;
   category: string;
   /** Situation-aware plain text, projected by the server from permitted facts. */
   description: string;
@@ -298,6 +345,9 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView extends Named {
+  icon?: string;
+  /** Native root placement is public; contents revision requires current contents access. */
+  storage?: { containerId: string; placementRevision: number; revision?: number };
   trade?: ItemTradeView;
   bodySize?: { width: number; height: number };
   assembly?: AssemblyView;
@@ -342,6 +392,7 @@ export interface EntityView extends Named {
 }
 
 export interface InventoryItemView extends Named {
+  icon?: string;
   materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   revision: number;
   placementRevision: number;
@@ -640,10 +691,13 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  checkpoint?: import('./request-recovery.js').CheckpointContext;
   access?: {
     scope: string;
     /** Native private-draft namespace; not a request token or permission. */
     privateDraftScope: string;
+    /** Retained command identity across reconnect/control changes; never request authority. */
+    commandRecoveryScope: string;
     accountId: string;
     actorId: string;
     controlGeneration: number;
@@ -669,12 +723,14 @@ export interface GameView {
     familyLabel: string;
     traits: Array<{ id: string; name: string; description: string }>;
     spawnOptions: Array<{ id: string; label: string; category: 'Actors' | 'Environment' }>;
-    itemOptions: Array<{ id: string; label: string; description: string }>;
+    itemOptions: Array<{ id: string; label: string; icon?: string; description: string }>;
   };
   schemaVersion: 2;
   revision: number;
   worldId: string;
   profile: PlayerProfile;
+  /** Public authored location/clock wording; application control names stay in the client. */
+  presentation: { worldName: string; locationName: string; timeLabel: string };
   /** Native sight range/body anchors; presentation bands add no gameplay tier or range. */
   vision: { radius: number; enabled: boolean; eyeHeight: number; targetHeights: number[] };
   hearing: {
@@ -736,6 +792,8 @@ export interface GameView {
     /** Configured applicable suggestions in authoritative presentation order. */
     suggestedActionIds: string[];
     alive: boolean;
+    /** Public work presence, including queued or paused work, independent of action availability. */
+    hasWork: boolean;
     action: {
       id: string;
       showStatus: boolean;
@@ -831,9 +889,13 @@ export interface ApiResult {
   message: string;
   jobId?: string;
   itemId?: string;
+  /** The exact entity created by this result, even if it has since moved. */
+  entityId?: string;
   recipeId?: string;
   goalId?: string;
   planId?: string;
+  /** The exact native action admitted by this command, independently of request identity. */
+  actionId?: string;
   lethalReview?: {
     id: string;
     title: string;
@@ -848,6 +910,16 @@ export interface ApiResult {
     cancelLabel: string;
   };
 }
+
+/** Looking up a command never repeats it. An absent or expired receipt proves no outcome. */
+export type CommandReceiptResult =
+  | { ok: true; scope: string; status: 'resolved'; result: ApiResult }
+  | {
+      ok: false;
+      scope: string;
+      status: 'unknown' | 'expired' | 'unavailable';
+      message: string;
+    };
 
 export interface GodPersonFields {
   inventory?: Array<{ definitionId: string; quantity: number }>;
@@ -1380,6 +1452,7 @@ export interface InviteView {
 }
 
 export interface OperationsView {
+  checkpoint?: import('./request-recovery.js').CheckpointContext;
   ok: true;
   worldId: string;
   accountId: string;

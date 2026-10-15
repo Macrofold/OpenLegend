@@ -53,7 +53,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     const settings = page.getByRole('button', { name: 'Time settings', exact: true });
     await settings.click();
     await expect(page.locator('.ol-time-settings .ol-caption')).toHaveText(
-      '1×: one real second is one game minute. Manual pause always wins. P pauses or resumes; Shift + ] speeds up; Shift + [ slows down.',
+      '1×: one real second is 60 game seconds. Manual pause always wins. P pauses or resumes; Shift + ] speeds up; Shift + [ slows down.',
     );
     await expect.poll(() => game.service.paused).toBe(false);
     await game.service.tick(1);
@@ -82,6 +82,8 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await page.screenshot({ path: info.outputPath('time-settings-narrow.png') });
     await page.setViewportSize({ width: 1440, height: 960 });
 
+    const actorId = game.service.controlledEntityId;
+    const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
     await focus(false);
     await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
     await expect.poll(() => game.service.present).toBe(false);
@@ -91,15 +93,18 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       .poll(() => game.service.world.exitExposures?.[game.service.controlledEntityId])
       .toBeGreaterThan(departureStartedAt + gameSecondsPerRealSecond);
     const departureDeadline = game.service.world.exitExposures?.[game.service.controlledEntityId];
+    expect(departureDeadline).toBe(departureStartedAt + exposure);
     clock.now += 60_000;
     expect(game.service.world.simTime).toBe(departureStartedAt);
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(departureStartedAt + gameSecondsPerRealSecond);
+    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('exiting');
     expect(game.service.world.exitExposures?.[game.service.controlledEntityId]).toBe(
       departureDeadline,
     );
     expect(game.service.paused).toBe(false);
     await finishDeparture();
+    expect(game.service.pauseReason).toBe('away');
     expect(game.service.paused).toBe(true);
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(departureDeadline);
@@ -108,6 +113,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
     await enterGame(page);
     await expect.poll(() => game.service.paused).toBe(false);
+    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('active');
     const resumedAt = game.service.world.simTime;
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(resumedAt + gameSecondsPerRealSecond);
@@ -154,7 +160,12 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await other.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await enterGame(other);
-      await other.close();
+      // Ordinary close runs pagehide/release. Default Playwright close skips unload;
+      // abrupt loss and its heartbeat expiry are exercised separately below.
+      await Promise.all([
+        other.waitForEvent('close', { timeout: 5000 }),
+        other.close({ runBeforeUnload: true }),
+      ]);
       await focus(true);
       await enterGame(page); // The selected page is gone; one surviving tab needs no Resume.
       const logoutTab = await page.context().newPage();
@@ -193,16 +204,25 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     }
     expect(errors).toEqual([]);
     expect(await game.service.store.recentJobs()).toEqual([]);
+    const beforeClose = game.service.world.simTime;
     await page.close();
     clock.now += 12_001;
+    // This fixture has no timer: reconcile native disconnect/heartbeat expiry,
+    // then spend the authored exposure before expecting the absent-world pause.
+    await game.service.tick(0);
     await expect
-      .poll(
-        () =>
-          game.service.world.entities[game.service.controlledEntityId]?.actor?.participation?.phase,
-      )
-      .toBe('exiting');
+      .poll(() => game.service.world.exitExposures?.[actorId])
+      .toBe(beforeClose + exposure);
+    expect(game.service.present).toBe(false);
+    expect(game.service.paused).toBe(false);
+    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('exiting');
     await finishDeparture();
-    expect(game.service.pauseReason).toBe('away');
+    expect(game.service.world.simTime).toBe(beforeClose + exposure);
+    expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('inactive');
+    expect(game.service.world.exitExposures?.[actorId]).toBeUndefined();
+    await expect.poll(() => game.service.pauseReason).toBe('away');
+    await game.service.tick(1);
+    expect(game.service.world.simTime).toBe(beforeClose + exposure);
   } finally {
     await page.close();
     await game.close();

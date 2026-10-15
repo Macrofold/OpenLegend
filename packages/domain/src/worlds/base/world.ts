@@ -1,3 +1,4 @@
+import { BASE_NATIVE_ACTIVITY_HOSTS } from './native-activities.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { BASE_TERRAIN } from './spatial-definitions.js';
 import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js';
@@ -49,7 +50,12 @@ import { DEFAULT_COGNITION_POLICY } from './cognition.js';
 import { initializeAttributes, createModuleManifest } from '../../world-modules.js';
 import { SLING_TARGET, SLING_HANDLING } from './practical-competence.js';
 import { setStartingPractice } from '../../practical-competence.js';
-import { activityHostPins } from '../../activity-hosts.js';
+import { activityHostPin, STOCK_ACTIVITY_HOST } from '../../activity-hosts.js';
+import { BASE_FIRE_ACTIVITY_HOST } from './fire-activity.js';
+import { BASE_CAMP_ACTIVITY_HOST } from './camp-activity.js';
+import { BASE_OUTING_HOST } from './outing.js';
+import { BASE_CANOPY_ACTIVITY_HOST } from './canopies.js';
+import { BASE_WORLD_PRESENTATION } from './presentation.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
 import { BASE_PLACES } from './places.js';
@@ -168,6 +174,7 @@ export function createFreshBaseWorld(
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
+    presentation: { ...BASE_WORLD_PRESENTATION },
     perceptionFeatures: {},
     schemaVersion: 10,
     actionExperience: emptyActionExperience(),
@@ -184,7 +191,14 @@ export function createFreshBaseWorld(
       DEFAULT_SENSES,
       BASE_BODY_POLICY,
       BASE_RECIPE_FAMILIES.map((family) => definitionPin(family.definition)),
-      activityHostPins(),
+      [
+        STOCK_ACTIVITY_HOST,
+        ...BASE_NATIVE_ACTIVITY_HOSTS,
+        BASE_FIRE_ACTIVITY_HOST,
+        BASE_CAMP_ACTIVITY_HOST,
+        BASE_OUTING_HOST,
+        BASE_CANOPY_ACTIVITY_HOST,
+      ].map(activityHostPin),
       BASE_RANGED_POLICY,
     ),
     cognitionPolicy: structuredClone(DEFAULT_COGNITION_POLICY),
@@ -499,6 +513,18 @@ export function createWorld(
     },
   ];
   for (const entity of entities) {
+    // These are authored base-world appearances; shared UI never recognizes these identities.
+    entity.icon = entity.resource
+      ? world.itemDefinitions[entity.resource.definitionId]?.icon
+      : entity.kind === 'campfire'
+        ? 'action.fire'
+        : entity.actor?.species === 'hare'
+          ? 'creature.hare'
+          : entity.actor?.species === 'deer'
+            ? 'creature.deer'
+            : entity.actor?.species === 'human'
+              ? 'person.wayfarer'
+              : undefined;
     // Prospective primary identities must not erase fixed authored starting content.
     if (world.entities[entity.id])
       throw new Error('A starting person identity collides with an authored scene object.');

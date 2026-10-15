@@ -36,7 +36,7 @@ export function ActionChoice({
             if (action.enabled) run(action);
           }}
         >
-          <Icon name={icon} badge={badge} />
+          <Icon name={icon} badge={badge} fallbackLabel={action.label} />
           <span>
             {action.label}
             {!!identity?.length && (

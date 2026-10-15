@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "game": "Minecraft",
+  "research_date": "2026-10-03",
+  "last_reviewed": "2026-10-04",
+  "image_count": 8,
+  "scope": "Historical interface reference, not a claim that all screenshots represent one current release. See per-image platform/version and game dossier. Expanded study of exploration HUD, status, map use, contextual world controls, chat focus and settings.",
+  "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license.",
+  "images": [
+    {
+      "id": "MC01",
+      "platform": "Bedrock; Nintendo-style controller glyphs visible",
+      "version": "Unknown capture build; official 2023 guide",
+      "source_date": "2023-06-05",
+      "source_page": "https://www.minecraft.net/en-us/article/how-craft",
+      "direct_image_url": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/craft_inventory.jpg",
+      "caption": "Creative/category inventory with Nature catalog, equipment, personal crafting and carried cells.",
+      "observed_controls": [
+        "Nature and other category tabs",
+        "Search tab",
+        "2x2 crafting inputs and output",
+        "Take",
+        "Exit",
+        "Take Half",
+        "Quick Move",
+        "Shoulder-button category navigation"
+      ],
+      "strengths": [
+        "Stable carried grid and hotbar alongside item operations.",
+        "Contextual controller hints expose a route without dragging."
+      ],
+      "weaknesses": [
+        "Creative catalog and owned items use similar cells despite different ownership semantics.",
+        "Pictographic category tabs require learning."
+      ],
+      "application": [
+        "Keep owned goods distinct from recipe or merchant catalogs.",
+        "Provide visible transfer actions and platform-correct bindings."
+      ],
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      },
+      "game": "Minecraft",
+      "local_path": "docs/ui-ux/screenshots/minecraft/01-personal-inventory.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 207314,
+      "sha256": "b23d00991bdf110a1bdcad789e1d1721e51ce10a56cb73d97da131c27da17517",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "MC02",
+      "platform": "Bedrock; Nintendo-style controller glyphs visible",
+      "version": "Unknown capture build; official 2023 guide",
+      "source_date": "2023-06-05",
+      "source_page": "https://www.minecraft.net/en-us/article/how-craft",
+      "direct_image_url": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/craft_recipebook.jpg",
+      "caption": "Construction recipe book with unavailable red entries, craftable filter and crafting preview.",
+      "observed_controls": [
+        "Construction category",
+        "Show Craftable filter",
+        "Exit",
+        "Crafting preview and red output cell"
+      ],
+      "strengths": [
+        "Recipe selection and availability filtering are colocated.",
+        "Inventory retains the same location across task states."
+      ],
+      "weaknesses": [
+        "Color conveys unavailability without a visible shortfall sentence.",
+        "Missing ingredients require icon recognition."
+      ],
+      "application": [
+        "Explain missing material or station beside the recipe.",
+        "Use station and carried supplies as defaults rather than mandatory form fields."
+      ],
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      },
+      "game": "Minecraft",
+      "local_path": "docs/ui-ux/screenshots/minecraft/02-recipe-book.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 163688,
+      "sha256": "0ac112883eaec8dbff1c7e20dcf9c6381d7173a0990d1ec3854fd249f5f37982",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "MC03",
+      "platform": "Bedrock; Nintendo-style controller glyphs visible",
+      "version": "Unknown capture build; official 2023 guide",
+      "source_date": "2023-06-05",
+      "source_page": "https://www.minecraft.net/en-us/article/how-craft",
+      "direct_image_url": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/craft_tablerecipe.jpg",
+      "caption": "Four planks occupy the personal crafting grid and produce a crafting table.",
+      "observed_controls": [
+        "2x2 input grid",
+        "Result slot after arrow",
+        "Clear Recipe",
+        "Exit",
+        "Carried materials and hotbar"
+      ],
+      "strengths": [
+        "Input-to-output relation is spatial and inspectable.",
+        "Clearing affects the local recipe, not a broad activity setup."
+      ],
+      "weaknesses": [
+        "Spatial arrangements are a learned game mechanic.",
+        "The output icon alone does not explain consumption across input devices."
+      ],
+      "application": [
+        "Present ingredients, result and one craft action together.",
+        "Do not import arrangement puzzles unless placement is an intended mechanic."
+      ],
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      },
+      "game": "Minecraft",
+      "local_path": "docs/ui-ux/screenshots/minecraft/03-table-recipe.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 100693,
+      "sha256": "6a66e9a96b486b57f67687aebbd0964b4883434b66969282d854902f92e088fb",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "MC04",
+      "platform": "Desktop Java-style interface",
+      "version": "Exact capture build unknown; 2024-era article",
+      "source_date": "2024-04 (asset date)",
+      "source_page": "https://www.sportskeeda.com/minecraft/features-mojang-needs-improve-minecraft-1-21-update",
+      "direct_image_url": "https://staticg.sportskeeda.com/editor/2024/04/b907d-17131387389662-1920.jpg?w=1200",
+      "caption": "Large Chest grid of 54 cells above carried inventory and hotbar.",
+      "observed_controls": [
+        "Large Chest heading",
+        "6x9 chest grid",
+        "Inventory heading and 3x9 carried grid",
+        "Separated hotbar",
+        "No destination selector visible"
+      ],
+      "strengths": [
+        "Opened object and carried goods are continuously visible.",
+        "Pane headings and position establish transfer direction."
+      ],
+      "weaknesses": [
+        "No visible sort or take-all action in this frame.",
+        "Fast transfer bindings are not discoverable from the screenshot."
+      ],
+      "application": [
+        "Open world chest directly into named chest plus carried inventory.",
+        "Offer fast transfer and an explicit Move action; explain capacity/access failures locally."
+      ],
+      "dimensions": {
+        "width": 1200,
+        "height": 675
+      },
+      "game": "Minecraft",
+      "local_path": "docs/ui-ux/screenshots/minecraft/04-large-chest.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 54968,
+      "sha256": "33ce631ee306e2dfa2d429e7cafec66dafa1c1100d583fabcaf3aee3fe3e18ee",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "MC05",
+      "platform": "Desktop Java-style interface",
+      "version": "Historical tutorial frame; capture build/date unknown",
+      "source_date": null,
+      "source_page": "https://therokuchannel.roku.com/details/32de5d18117f5eb39bd7e97abbbbd5ce/minecraft-tutorials-survive-and-thrive/season-1",
+      "direct_image_url": "https://images.sr.roku.com/idType/roku/context/trc/id/c323011bcc725dd8893dbbad74b28fb9/rokuFeed/assets/21bc31b353575d349a0a44959b42b06c.jpg",
+      "caption": "Furnace input, fuel, flame and output above player inventory; cursor holds coal.",
+      "observed_controls": [
+        "Furnace title",
+        "Input and fuel slots",
+        "Flame indicator",
+        "Process arrow and output",
+        "Carried inventory and hotbar"
+      ],
+      "strengths": [
+        "The interface expresses a bounded process tied to the opened station.",
+        "Inventory remains available for supplies."
+      ],
+      "weaknesses": [
+        "Blank slots rely on learned meaning.",
+        "No explicit missing-fuel, invalid-input or stalled-state explanation in this frame."
+      ],
+      "application": [
+        "Show station-specific valid inputs and progress states.",
+        "Explain blocked processing at the station rather than asking for generic activity arguments."
+      ],
+      "dimensions": {
+        "width": 1920,
+        "height": 1080
+      },
+      "game": "Minecraft",
+      "local_path": "docs/ui-ux/screenshots/minecraft/05-furnace.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 57135,
+      "sha256": "67c255b83666f6b1def2732e20ca695dc0053380059cabdbf0e94d9b6a59457e",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "MC06",
+      "platform": "Desktop Java-style villager trading interface",
+      "version": "Exact build unknown; 2021-era article",
+      "source_date": "2021-06 (asset date)",
+      "source_page": "https://www.sportskeeda.com/minecraft/emerald-ore-minecraft-all-need-know",
+      "direct_image_url": "https://staticg.sportskeeda.com/editor/2021/06/56efa-16250039289350-800.jpg",
+      "caption": "Farmer trade offers beside payment/result cells and carried inventory.",
+      "observed_controls": [
+        "Trades list",
+        "Farmer - Novice heading and progress bar",
+        "Two payment cells and result cell",
+        "Emerald hover label",
+        "Player inventory"
+      ],
+      "strengths": [
+        "Offer, payment and result appear together.",
+        "Actor context is already established before transaction choice."
+      ],
+      "weaknesses": [
+        "Small crop and currency icons need recognition.",
+        "Profession is more prominent than personal identity."
+      ],
+      "application": [
+        "Open contextual shops from the actual merchant.",
+        "Show item facts, exact price and output quantity before purchase."
+      ],
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      },
+      "game": "Minecraft",
+      "local_path": "docs/ui-ux/screenshots/minecraft/06-villager-trade.jpg",
+      "access_date": "2026-10-03",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-03",
+      "inspection_method": "Individually opened with tools.view_image; dossier distinguishes direct observation from sourced interaction claims and design inference.",
+      "byte_count": 25272,
+      "sha256": "e5779edefa8836dce401147001f25fb37974e4bd813e3e0605daa059c29b9fd2",
+      "alterations": "None; original downloaded bytes preserved, including any crop provided by the publisher.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "MC07",
+      "game": "Minecraft",
+      "platform": "Desktop-style keyboard/mouse HUD; OS and exact edition not stated by source",
+      "version": "Exact build unknown; official 2023 guide capture",
+      "source_date": "2023-09-22",
+      "source_page": "https://www.minecraft.net/en-us/article/health-minecraft",
+      "direct_image_url": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/Health_bubbles_FINAL2.jpg",
+      "caption": "Underwater survival HUD and an empty selected hotbar cell",
+      "observed_controls": [
+        "Central crosshair; nine bottom hotbar cells with selected outline and counts",
+        "Hearts left and hunger right above the hotbar; oxygen bubbles above hunger"
+      ],
+      "strengths": [
+        "Urgent situational resource appears beside stable survival information",
+        "Most of the view remains available for looking and moving"
+      ],
+      "weaknesses": [
+        "Small repeated icons need explanation and sufficient scale",
+        "The static frame cannot demonstrate warning timing or depletion"
+      ],
+      "application": [
+        "Keep character condition and selected action in stable positions",
+        "Show relevant temporary hazards beside status with a name and usable remaining amount"
+      ],
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      },
+      "local_path": "docs/ui-ux/screenshots/minecraft/07-underwater-hud.jpg",
+      "access_date": "2026-10-04",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image; visible observations separated from source-documented interactions.",
+      "byte_count": 96965,
+      "sha256": "fe5ca1773b4947eb3eb4f5f17301c60f2d46d1ba0a7db5a5c821ff652e762806",
+      "alterations": "None; original downloaded bytes preserved.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    },
+    {
+      "id": "MC08",
+      "game": "Minecraft",
+      "platform": "Desktop-style keyboard/mouse HUD; OS and exact edition not stated by source",
+      "version": "Exact build unknown; official 2023 guide capture",
+      "source_date": "2023-09-22",
+      "source_page": "https://www.minecraft.net/en-us/article/exploring-minecraft",
+      "direct_image_url": "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/screenshots/exploration-map.jpg",
+      "caption": "A held map preserves the surrounding first-person world",
+      "observed_controls": [
+        "Map dominates center; player marker near lower edge",
+        "Selected map remains visibly outlined in bottom hotbar; no travel or confirmation button"
+      ],
+      "strengths": [
+        "Spatial reference stays connected to the visible landscape",
+        "Selected tool and displayed information have a visible relationship"
+      ],
+      "weaknesses": [
+        "Large map occludes the forward view",
+        "Small terrain colors and unlabeled marker demand interpretation"
+      ],
+      "application": [
+        "Let players inspect known geography without initiating movement",
+        "Distinguish a navigation reference from an executable travel destination"
+      ],
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      },
+      "local_path": "docs/ui-ux/screenshots/minecraft/08-held-map.jpg",
+      "access_date": "2026-10-04",
+      "visually_inspected": true,
+      "visual_inspection_date": "2026-10-04",
+      "inspection_method": "Individually opened saved original with tools.view_image; visible observations separated from source-documented interactions.",
+      "byte_count": 332641,
+      "sha256": "3795e459b0ca81bb17e15aaca1f2f68df3d827000a1eeff9845a594c83502a1f",
+      "alterations": "None; original downloaded bytes preserved.",
+      "rights": "Third-party game UI screenshots retained for internal reference, criticism and research. Original rights remain with creators. Not Open Legend production art and not relicensed by the repository code license."
+    }
+  ]
+}

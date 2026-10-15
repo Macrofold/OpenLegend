@@ -850,6 +850,12 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  if (
+    world.presentation !== undefined &&
+    (!hasRecordFields(world.presentation, ['worldName', 'locationName', 'timeLabel']) ||
+      Object.values(world.presentation).some((value) => typeof value !== 'string' || !value.trim()))
+  )
+    throw new Error('Invalid world presentation.');
   for (const entries of Object.values(world.experience?.awareness ?? {}))
     for (const entry of entries) validateEventEvidence(entry);
   validateSocialPolicy(world);
@@ -894,6 +900,11 @@ export function validateWorldModules(world: WorldState): void {
   validateFoodPreparations(world);
   validateFiniteCasts(world);
   for (const definition of Object.values(world.itemDefinitions)) {
+    if (
+      (definition.icon !== undefined && typeof definition.icon !== 'string') ||
+      (definition.gatherLabel !== undefined && typeof definition.gatherLabel !== 'string')
+    )
+      throw new Error('Invalid item presentation.');
     if (!validName(definition)) throw new Error('Invalid canonical item name or name grammar.');
     if (definition.melee && !validMelee(definition.melee))
       throw new Error('Invalid melee definition.');
@@ -942,6 +953,8 @@ export function validateWorldModules(world: WorldState): void {
   validateNativeStrikes(world);
   validateTerritorialThreats(world);
   for (const e of Object.values(world.entities)) {
+    if (e.icon !== undefined && typeof e.icon !== 'string')
+      throw new Error('Invalid entity presentation.');
     if (!validName(e)) throw new Error('Invalid canonical entity name or name grammar.');
     if (
       e.actor &&

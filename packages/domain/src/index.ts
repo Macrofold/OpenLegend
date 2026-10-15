@@ -41,6 +41,13 @@ export {
   nativeActivityViews,
   nativeHuntCatalogueLabel,
 } from './worlds/base/action-views.js';
+export {
+  BASE_ACTION_DESCRIPTIONS,
+  nativeActionIcon,
+  nativeGatherShortcut,
+  nativePreparationOptions,
+  nativeInventoryActions,
+} from './worlds/base/presentation.js';
 export * from './item-handling.js';
 export { BASE_ITEM_HANDLING } from './worlds/base/item-handling.js';
 export {

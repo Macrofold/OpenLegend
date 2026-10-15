@@ -191,7 +191,9 @@ it('includes learned recipes beyond an AI retrieval limit while excluding anothe
       (action) => action.intent.kind === 'command' && action.intent.command.type === 'craft',
     ),
   ).toHaveLength(existingCrafts.length + 30);
-  expect(catalogue.actions.some((action) => action.label === 'Craft Wooden shield')).toBe(true);
+  for (const name of ['Wooden shield', 'Woven gathering container', 'River line']) {
+    expect(catalogue.actions.some((action) => action.label === `Craft ${name}`)).toBe(true);
+  }
   expect(JSON.stringify(catalogue)).not.toContain('Private fixture sling');
   expect(catalogue.actions.some((action) => action.label === 'Craft Fixture sling 29')).toBe(true);
   const craft = catalogue.actions.find((action) => action.label === 'Craft Fixture sling 29')!;

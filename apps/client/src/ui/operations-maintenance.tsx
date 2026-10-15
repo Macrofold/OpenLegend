@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MaintenanceWindowView } from '@open-legend/protocol';
 import { post } from '../api';
 import { Button, Section, Tag } from '../design-system/components';
@@ -34,7 +34,16 @@ export function MaintenanceSection({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [ambiguous, setAmbiguous] = useState<Field[]>([]);
+  const previousRevision = useRef<string | undefined>(undefined);
+  const [changed, setChanged] = useState(false);
+  useEffect(() => {
+    const revision = current ? `${current.id}:${current.revision}` : '';
+    if (previousRevision.current !== undefined && previousRevision.current !== revision)
+      setChanged(true);
+    previousRevision.current = revision;
+  }, [current?.id, current?.revision]);
   async function run(path: string, body: unknown): Promise<void> {
+    if (busy) return;
     setBusy(true);
     setMessage('');
     try {
@@ -60,6 +69,15 @@ export function MaintenanceSection({
   return (
     <>
       <Section title="Maintenance">
+        <p className="ol-setting-scope">
+          Whole world · creator permission required · real dates and times
+        </p>
+        {changed && (
+          <p role="status">
+            The maintenance announcement changed. Review the current schedule below; any earlier
+            schedule editor has been replaced with the updated announcement.
+          </p>
+        )}
         {current && shown && revision ? (
           <>
             <p>
@@ -74,6 +92,16 @@ export function MaintenanceSection({
               </p>
             )}
             {current.message && <p className="ol-muted">{current.message}</p>}
+            <p className="ol-caption">
+              Announcement {current.revision} · updated{' '}
+              {formatInstant(current.updatedAt, current.timeZone)}
+            </p>
+            {current.status === 'scheduled' && (
+              <p className="ol-caption">
+                At the scheduled start, play pauses for this world. The estimated end will not
+                resume it automatically.
+              </p>
+            )}
             <div className="ol-operations-row">
               {current.status === 'scheduled' && (
                 <>
@@ -108,24 +136,37 @@ export function MaintenanceSection({
                 Resuming continues from the paused moment; no time is caught up.
               </p>
             )}
-            <WindowForm
-              key={`${current.id}:${current.revision}`}
-              mode={current.status === 'active' ? 'extend' : 'reschedule'}
-              window={current}
-              busy={busy}
-              ambiguous={ambiguous}
-              onSubmit={(value) => void run('/api/maintenance/update', { ...revision, ...value })}
-            />
+            <details className="ol-maintenance-editor" key={`${current.id}:${current.revision}`}>
+              <summary>
+                {current.status === 'active'
+                  ? 'Extend the estimated end'
+                  : 'Change the announced schedule'}
+              </summary>
+              <WindowForm
+                key={`${current.id}:${current.revision}`}
+                mode={current.status === 'active' ? 'extend' : 'reschedule'}
+                window={current}
+                busy={busy}
+                ambiguous={ambiguous}
+                onSubmit={(value) => void run('/api/maintenance/update', { ...revision, ...value })}
+              />
+            </details>
           </>
         ) : (
-          <WindowForm
-            mode="schedule"
-            busy={busy}
-            ambiguous={ambiguous}
-            onSubmit={(value) =>
-              void run('/api/maintenance/schedule', { id: crypto.randomUUID(), ...value })
-            }
-          />
+          <>
+            <p>
+              Announce a pause for maintenance. Players see the schedule and message; only Mark
+              ready and resume ends active maintenance.
+            </p>
+            <WindowForm
+              mode="schedule"
+              busy={busy}
+              ambiguous={ambiguous}
+              onSubmit={(value) =>
+                void run('/api/maintenance/schedule', { id: crypto.randomUUID(), ...value })
+              }
+            />
+          </>
         )}
         {message && <p role="status">{message}</p>}
       </Section>
@@ -136,6 +177,7 @@ export function MaintenanceSection({
               <li key={window.id}>
                 <div className="ol-operations-row">
                   <Tag>{window.status}</Tag>
+                  <span className="ol-caption">Announcement {window.revision}</span>
                   <span className="ol-caption">
                     {window.status === 'completed' ? 'Finished' : 'Cancelled'}{' '}
                     {formatInstant(window.completedAt ?? window.updatedAt, window.timeZone)}
@@ -224,6 +266,7 @@ function WindowForm({
       className="ol-operations-form"
       onSubmit={(event) => {
         event.preventDefault();
+        if (busy) return;
         onSubmit({
           timeZone,
           ...(withStart ? { start: local('start', start) } : {}),
@@ -242,6 +285,10 @@ function WindowForm({
           ))}
         </select>
       </label>
+      <p className="ol-caption">
+        The dates and times below use this time zone. Changing the zone keeps the entered clock
+        times. Your local zone is {browserZone()}.
+      </p>
       {mode === 'schedule' && (
         <label>
           <input
@@ -258,6 +305,10 @@ function WindowForm({
         Message to players (optional)
         <textarea value={text} maxLength={280} onChange={(event) => setText(event.target.value)} />
       </label>
+      <p className="ol-caption">
+        The end is an estimate for players. Maintenance continues until a creator explicitly marks
+        the world ready.
+      </p>
       <Button type="submit" variant={mode === 'schedule' ? 'primary' : 'secondary'} busy={busy}>
         {mode === 'schedule'
           ? startNow

@@ -5,8 +5,9 @@ import type {
   WorldAgentTurnCursor,
   WorldAgentProgressSnapshot,
 } from '@open-legend/protocol';
-import { useEffect, useRef, useState } from 'react';
-import { Button, EmptyState, Tag } from '../design-system/components';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { Button, EmptyState, IconButton, Tag, TextTooltip } from '../design-system/components';
 import { post, worldAgentProgressUrl } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { ConversationComposer, ConversationMessage, ConversationThread } from './conversation';
@@ -29,6 +30,18 @@ const pendingValue = (v: unknown): v is Pending | null =>
     typeof v.id === 'string' &&
     'text' in v &&
     typeof v.text === 'string');
+type PendingRead = { value: Pending | null; unreadable: boolean };
+function readPending(key: string): PendingRead {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(key) ?? 'null');
+    if (!pendingValue(value)) throw new Error('Invalid pending request.');
+    return { value, unreadable: false };
+  } catch {
+    return { value: null, unreadable: true };
+  }
+}
+const samePending = (a: Pending | null, b: Pending | null) =>
+  a === b || (!!a && !!b && a.id === b.id && a.text === b.text);
 
 /** The session ID and request receipt, not the browser transcript, own continuation.
  * Reopening/subscribing must never dispatch inference. docs/world-agent-runtime.md#durable-turn-delivery
@@ -43,6 +56,9 @@ export function WorldAgentSession({
   purpose,
   nativeCreation,
   onCreated,
+  controls,
+  navigationOpen = false,
+  closeNavigation,
   onStatusPolicyChanged,
 }: {
   worldId: string;
@@ -54,6 +70,9 @@ export function WorldAgentSession({
   purpose?: 'invention' | 'creation';
   nativeCreation?: boolean;
   onCreated(): void;
+  controls?: ReactNode;
+  navigationOpen?: boolean;
+  closeNavigation?(): void;
   onStatusPolicyChanged(): void;
 }) {
   const key = authoringKey('session', worldId, accessScope, sessionId);
@@ -80,14 +99,25 @@ export function WorldAgentSession({
   const [text, setText] = useState(() =>
     readLocal(recordKey('draft'), '', (v): v is string => typeof v === 'string'),
   );
-  const [pending, setPending] = useState(() =>
-    readLocal<Pending | null>(recordKey('pending'), null, pendingValue),
-  );
+  const [initialPending] = useState(() => readPending(recordKey('pending')));
+  const [pending, setPending] = useState(initialPending.value);
   const pendingRef = useRef(pending);
+  const [pendingUnreadable, setPendingUnreadable] = useState(initialPending.unreadable);
+  const pendingUnreadableRef = useRef(pendingUnreadable);
   const [status, setStatus] = useState<WorldAgentSessionStatus>();
   const [turns, setTurns] = useState<WorldAgentTurnView[]>([]);
   const [before, setBefore] = useState<WorldAgentTurnCursor | null>(null);
   const [view, setView] = useState<'conversation' | 'work'>('conversation');
+  const viewOptions = useRef<HTMLDivElement>(null);
+  const [newMessageTarget, setNewMessageTarget] = useState<HTMLSpanElement | null>(null);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const detailsId = useId();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const readingVisible = visible && !detailsOpen && !navigationOpen;
+  const closeDetails = () => {
+    if (detailsRef.current) detailsRef.current.open = false;
+    closeNavigation?.();
+  };
   const [seenWork, setSeenWork] = useState<string>();
   const [review, setReview] = useState<string>();
   const [requestedSelection, setRequestedSelection] = useState<{ id: string; revision: number }>();
@@ -121,10 +151,44 @@ export function WorldAgentSession({
       setText((previous) => (previous ? `${previous}\n${seed.text}` : seed.text));
     }
   }, [seed]);
-  function retainPending(value: Pending | null) {
+  function pendingAccess(unreadable: boolean) {
+    pendingUnreadableRef.current = unreadable;
+    if (alive.current) setPendingUnreadable(unreadable);
+  }
+  function adoptPending(value: Pending | null) {
     pendingRef.current = value;
-    writeLocal(recordKey('pending'), value);
     if (alive.current) setPending(value);
+  }
+  function inspectPending() {
+    const stored = readPending(recordKey('pending'));
+    const changed =
+      !!pendingRef.current && !!stored.value && !samePending(pendingRef.current, stored.value);
+    pendingAccess(stored.unreadable || changed);
+    if (!stored.unreadable && !changed && !pendingRef.current) adoptPending(stored.value);
+    return stored;
+  }
+  function retainPending(value: Pending | null) {
+    const stored = inspectPending();
+    if (pendingUnreadableRef.current)
+      throw new Error('The original request could not be read safely. Nothing new was sent.');
+    if (stored.value && !samePending(stored.value, value ?? pendingRef.current)) {
+      pendingAccess(true);
+      throw new Error('Another request remains unresolved. Check its saved result first.');
+    }
+    // Unlike optional draft text, this identity must survive a lost acknowledgement.
+    // docs/world-agent-runtime.md#durable-turn-delivery
+    writeLocal(recordKey('pending'), value);
+    const confirmed = readPending(recordKey('pending'));
+    if (confirmed.unreadable || !samePending(confirmed.value, value)) {
+      pendingAccess(true);
+      throw new Error(
+        value
+          ? 'This browser could not retain the exact request. Nothing new was sent.'
+          : 'The saved result is known, but this browser could not clear its recovery record. Check the saved result again after restoring storage.',
+      );
+    }
+    pendingAccess(false);
+    adoptPending(value);
   }
   function mergeTurns(values: WorldAgentTurnView[]) {
     setTurns((previous) => {
@@ -161,6 +225,7 @@ export function WorldAgentSession({
     }
     refreshing.current = true;
     try {
+      inspectPending();
       const response = await post<WorldAgentSessionStatus & { ok: boolean; message?: string }>(
         '/api/world-agent/session/status',
         prefix,
@@ -341,6 +406,8 @@ export function WorldAgentSession({
       current.data.activeTurn ||
       current.data.question ||
       current.data.budget.availableUsd <= 0 ||
+      pendingUnreadableRef.current ||
+      (existing && !samePending(existing, pendingRef.current)) ||
       (!existing && pendingRef.current) ||
       (!existing && !text.trim())
     )
@@ -484,85 +551,11 @@ export function WorldAgentSession({
       : []),
   ]);
   return (
-    <>
-      {sessionPurpose === 'creation' && status && (nativeOpeningSession || session) && (
-        <WorldCreationSelector
-          worldId={worldId}
-          sessionId={sessionId}
-          connected={connected}
-          visible={visible && view === 'conversation'}
-          mutationReason={
-            session && !session.available
-              ? 'This retained conversation is read-only.'
-              : session?.workspaceMutationReason
-          }
-          ensureSession={async () => {
-            if (statusRef.current?.data) {
-              if (!statusRef.current.data.available)
-                throw new Error('This retained conversation is read-only.');
-              return;
-            }
-            const reply = await post<{ ok: boolean; message?: string }>(
-              '/api/world-agent/session/open',
-              { ...prefix, purpose: 'creation', budgetUsd: 0 },
-            );
-            if (!reply.ok)
-              throw new Error(reply.message ?? 'The creation workspace could not be opened.');
-            onCreated();
-          }}
-          onSelected={(draft) => {
-            setRequestedSelection({ id: draft.id, revision: draft.revision });
-            setView('work');
-            void refresh();
-          }}
-        />
-      )}
-      {!session && status && !nativeOpeningSession && (
-        <EmptyState
-          title={
-            sessionPurpose === 'invention'
-              ? 'Create an invention'
-              : sessionPurpose === 'creation'
-                ? 'Describe a world'
-                : 'One conversation to investigate and create'
-          }
-        >
-          <p>
-            {sessionPurpose === 'creation'
-              ? 'Describe the opening you want. This funded conversation can prepare a supported new world; it cannot replace the current one.'
-              : "The agent can inspect this world's mechanics and prepare changes. Live changes require your review."}{' '}
-            Starting a conversation does not use your allowance.
-          </p>
-          <details>
-            <summary>Owner spending controls</summary>
-            <p>
-              This conversation can use up to ${status.availability.sessionAllowanceUsd.toFixed(2)}{' '}
-              in Run charges, within the character’s monthly allocation. Shared Worker capacity is
-              managed and billed separately by the world owner.
-            </p>
-          </details>
-          <Button
-            busy={busy}
-            disabled={
-              !connected || (sessionPurpose === 'creation' && !status.availability.configured)
-            }
-            onPress={() => void open()}
-          >
-            {sessionPurpose === 'creation'
-              ? 'Start funded creation conversation'
-              : 'Start conversation'}
-          </Button>
-        </EmptyState>
-      )}
-      {status && !status.availability.configured && !nativeOpeningSession && (
-        <p role="status" className="ol-caption">
-          {status.availability.reason}
-        </p>
-      )}
+    <div className="ol-world-agent-session">
       {session && (
-        <>
-          <div className="ol-agent-tools">
-            <Tag>World-owner agent</Tag>
+        <header className="ol-world-agent-header">
+          <div className="ol-world-agent-identity">
+            <Tag tone="highlight">God mode</Tag>
             {!nativeOpeningSession && (
               <UsageRemaining
                 label="Conversation allowance"
@@ -572,43 +565,51 @@ export function WorldAgentSession({
                 available={connected}
               />
             )}
-            <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
-              Refresh
-            </Button>
-            {(!!session.activeTurn || !!session.question) && (
-              <Button size="sm" disabled={busy} onPress={() => void cancel()}>
-                Stop this request
-              </Button>
-            )}
           </div>
-          {!session.closed && (
-            <Button size="sm" variant="quiet" disabled={busy} onPress={() => void closeSession()}>
-              End session (history retained)
-            </Button>
-          )}
-          <details>
-            <summary>Owner spending details</summary>
-            <p>
-              ${session.budget.spentUsd.toFixed(3)} used · ${session.budget.reservedUsd.toFixed(3)}{' '}
-              reserved · ${session.budget.limitUsd.toFixed(2)} Run cap. Shared Worker capacity is
-              billed separately.
-            </p>
-            {session.budget.uncertainUsd > 0 && (
-              <p>${session.budget.uncertainUsd.toFixed(3)} is unconfirmed and remains counted.</p>
-            )}
+          <details
+            ref={detailsRef}
+            className="ol-world-agent-controls"
+            onToggle={(event) => {
+              setDetailsOpen(event.currentTarget.open);
+              if (event.currentTarget.open) closeNavigation?.();
+            }}
+          >
+            <summary aria-label="Session details and owner spending" aria-controls={detailsId}>
+              <span className="ol-world-agent-detail-label">
+                Session details and owner spending
+              </span>
+              <span className="ol-world-agent-detail-label-short" aria-hidden="true">
+                Session &amp; spending
+              </span>
+            </summary>
           </details>
-          {!session.available && (
-            <p role="status">
-              This session is closed, expired, or belongs to an earlier world/configuration. Its
-              history remains readable; start a new session to act.
-            </p>
-          )}
-          <div className="ol-agent-tools" role="group" aria-label="World Agent views">
+        </header>
+      )}
+      {session && (
+        <div className="ol-creator-views" role="group" aria-label="World Agent views">
+          <div
+            ref={viewOptions}
+            className="ol-world-agent-view-options"
+            onFocusCapture={(event) => {
+              const button = event.target;
+              if (!(button instanceof HTMLButtonElement)) return;
+              const strip = event.currentTarget;
+              // Browser focus can leave a partly visible control clipped in this strip.
+              if (
+                button.offsetLeft < strip.scrollLeft ||
+                button.offsetLeft + button.offsetWidth > strip.scrollLeft + strip.clientWidth
+              )
+                strip.scrollLeft = button.offsetLeft;
+            }}
+          >
             <Button
               size="sm"
               variant="quiet"
               aria-pressed={view === 'conversation'}
-              onPress={() => setView('conversation')}
+              onPress={() => {
+                closeDetails();
+                setView('conversation');
+              }}
             >
               Conversation
             </Button>
@@ -617,6 +618,7 @@ export function WorldAgentSession({
               variant="quiet"
               aria-pressed={view === 'work'}
               onPress={() => {
+                closeDetails();
                 setSeenWork(workRevision);
                 setView('work');
               }}
@@ -624,121 +626,299 @@ export function WorldAgentSession({
               Work{newWork && <span> · New work</span>}
             </Button>
           </div>
-          <div hidden={view !== 'conversation'}>
-            <ConversationThread
-              conversationKey={key}
-              items={entries}
-              visible={visible && view === 'conversation'}
-              ariaLabel="World Agent conversation"
-              liveAnnouncements="off"
-              contentRevision={JSON.stringify(
-                turns.map((turn) => [
-                  turn.id,
-                  turn.revision ?? 0,
-                  turn.progress?.revision ?? 0,
-                  turn.response?.code ?? null,
-                ]),
-              )}
-              newMessageLabel="New reply text"
-              preserveReading
-              before={
-                before && (
-                  <Button size="sm" variant="quiet" disabled={busy} onPress={() => void older()}>
-                    Earlier messages
-                  </Button>
-                )
-              }
-              empty={
-                <EmptyState title="What might this world become?">
-                  Describe an invention, investigate its relationships, or ask the agent to propose
-                  a change.
-                </EmptyState>
-              }
-            />
-            <p role="status" aria-live="polite" className="ol-caption">
-              {session.question
-                ? 'Waiting for your choice.'
-                : session.activeTurn
-                  ? turns.find((turn) => turn.id === session.activeTurn)?.progress?.stage ===
-                    'replying'
-                    ? 'Writing a reply.'
-                    : 'Investigating your request.'
-                  : turns.at(-1)?.progress?.completeness === 'complete'
-                    ? 'Reply complete.'
-                    : ''}
-            </p>
-            {pending && (
-              <div className="ol-notice" role="status">
-                <p>Checking acknowledgement for: {pending.text}</p>
-                <p>No replacement run is started automatically.</p>
-                <Button
-                  size="sm"
-                  disabled={
-                    busy ||
-                    !!session.activeTurn ||
-                    !session.available ||
-                    !status.availability.configured
-                  }
-                  onPress={() => void send(pending)}
-                >
-                  Resubmit the same request
-                </Button>
-                <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
-                  Check saved result
-                </Button>
-              </div>
-            )}
-            <ConversationComposer
-              inputRef={input}
-              ariaLabel="Message to World Agent"
-              placeholder={
-                sessionPurpose === 'creation'
-                  ? 'Describe the world and first activity you want…'
-                  : 'Investigate, design, or ask for a change…'
-              }
-              maxLength={2000}
-              value={text}
-              onChange={setText}
-              onSubmit={() => send()}
-              disabled={
-                !connected ||
-                busy ||
-                !!session.activeTurn ||
-                !!session.question ||
-                !!pending ||
-                !session.available ||
-                !status.availability.configured ||
-                session.budget.availableUsd <= 0 ||
-                !text.trim()
-              }
-            />
-            {nativeOpeningSession && (
-              <p className="ol-caption">
-                This prepared-opening workspace has no generation allowance. To describe a custom
-                opening in conversation, choose Describe a world and explicitly start a funded
-                conversation.
-              </p>
-            )}
-            <p className="ol-caption">
-              Approval and Apply use no model call. Native work and physics stay authoritative.
-              Image generation and general new physics are not enabled yet.
-            </p>
-          </div>
-          <WorldAgentWorkView
-            worldId={worldId}
-            sessionId={sessionId}
-            accessScope={accessScope}
-            session={session}
-            connected={connected}
-            visible={visible && view === 'work'}
-            onRefresh={() => void refresh()}
-            onOpenReview={setReview}
-            requestedSelection={requestedSelection}
-          />
-        </>
+          <span className="ol-world-agent-new-message" ref={setNewMessageTarget} />
+        </div>
       )}
-      {error && <p role="alert">{error}</p>}
-      {review && (
+      <div className="ol-world-agent-reading">
+        <div hidden={view !== 'conversation' || detailsOpen || navigationOpen}>
+          {sessionPurpose === 'creation' && status && (nativeOpeningSession || session) && (
+            <WorldCreationSelector
+              worldId={worldId}
+              sessionId={sessionId}
+              connected={connected}
+              visible={readingVisible && view === 'conversation'}
+              mutationReason={
+                session && !session.available
+                  ? 'This retained conversation is read-only.'
+                  : session?.workspaceMutationReason
+              }
+              ensureSession={async () => {
+                if (statusRef.current?.data) {
+                  if (!statusRef.current.data.available)
+                    throw new Error('This retained conversation is read-only.');
+                  return;
+                }
+                const reply = await post<{ ok: boolean; message?: string }>(
+                  '/api/world-agent/session/open',
+                  { ...prefix, purpose: 'creation', budgetUsd: 0 },
+                );
+                if (!reply.ok)
+                  throw new Error(reply.message ?? 'The creation workspace could not be opened.');
+                onCreated();
+              }}
+              onSelected={(draft) => {
+                setRequestedSelection({ id: draft.id, revision: draft.revision });
+                setView('work');
+                void refresh();
+              }}
+            />
+          )}
+        </div>
+        {!session && controls}
+        {!session && status && !nativeOpeningSession && (
+          <EmptyState
+            title={
+              sessionPurpose === 'invention'
+                ? 'Create an invention'
+                : sessionPurpose === 'creation'
+                  ? 'Describe a world'
+                  : 'One conversation to investigate and create'
+            }
+          >
+            <p>
+              {sessionPurpose === 'creation'
+                ? 'Describe the opening you want. This funded conversation can prepare a supported new world; it cannot replace the current one.'
+                : "The agent can inspect this world's mechanics and prepare changes. Live changes require your review."}{' '}
+              Starting a conversation does not use your allowance.
+            </p>
+            <details>
+              <summary>Owner spending controls</summary>
+              <p>
+                This conversation can use up to $
+                {status.availability.sessionAllowanceUsd.toFixed(2)} in Run charges, within the
+                character’s monthly allocation. Shared Worker capacity is managed and billed
+                separately by the world owner.
+              </p>
+            </details>
+            <Button busy={busy} disabled={!connected} onPress={() => void open()}>
+              Start conversation
+            </Button>
+          </EmptyState>
+        )}
+        {!session && status && !nativeOpeningSession && !status.availability.configured && (
+          <p role="status" className="ol-caption">
+            {status.availability.reason}
+          </p>
+        )}
+        {session && (
+          <>
+            <div
+              hidden={view !== 'conversation' || detailsOpen || navigationOpen}
+              className="ol-world-agent-conversation"
+            >
+              <ConversationThread
+                conversationKey={key}
+                items={entries}
+                visible={readingVisible && view === 'conversation'}
+                ariaLabel="World Agent conversation"
+                liveAnnouncements="off"
+                contentRevision={JSON.stringify(
+                  turns.map((turn) => [
+                    turn.id,
+                    turn.revision ?? 0,
+                    turn.progress?.revision ?? 0,
+                    turn.response?.code ?? '',
+                  ]),
+                )}
+                newMessageLabel="New reply text"
+                renderNewMessageControl={(jumpToLatest, label) =>
+                  newMessageTarget &&
+                  createPortal(
+                    <TextTooltip text={label}>
+                      <IconButton
+                        icon="ui.next"
+                        label={label}
+                        onPress={() => {
+                          jumpToLatest();
+                          viewOptions.current
+                            ?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+                            ?.focus({ preventScroll: true });
+                        }}
+                      />
+                    </TextTooltip>,
+                    newMessageTarget,
+                  )
+                }
+                preserveReading
+                before={
+                  before && (
+                    <Button size="sm" variant="quiet" disabled={busy} onPress={() => void older()}>
+                      Earlier messages
+                    </Button>
+                  )
+                }
+                empty={
+                  <EmptyState title="What might this world become?">
+                    Describe an invention, investigate its relationships, or ask the agent to
+                    propose a change.
+                  </EmptyState>
+                }
+              />
+            </div>
+            <WorldAgentWorkView
+              worldId={worldId}
+              sessionId={sessionId}
+              accessScope={accessScope}
+              session={session}
+              connected={connected}
+              visible={readingVisible && view === 'work'}
+              onRefresh={() => void refresh()}
+              onOpenReview={setReview}
+              requestedSelection={requestedSelection}
+            />
+            <div id={detailsId} className="ol-world-agent-context" hidden={!detailsOpen}>
+              {controls}
+              <p className="ol-caption">
+                A proposed change stays in Work until you review and apply it.
+              </p>
+              <p className="ol-caption">
+                Session {sessionId}. Closing the workspace keeps this conversation and its saved
+                work.
+              </p>
+              <p>
+                ${session.budget.spentUsd.toFixed(3)} used · $
+                {session.budget.reservedUsd.toFixed(3)} reserved · $
+                {session.budget.limitUsd.toFixed(2)} Run cap. Shared Worker capacity is billed
+                separately.
+              </p>
+              {session.budget.uncertainUsd > 0 && (
+                <p>${session.budget.uncertainUsd.toFixed(3)} is unconfirmed and remains counted.</p>
+              )}
+              <div className="ol-agent-tools">
+                <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+                  Refresh this session
+                </Button>
+                {!session.closed && (
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    disabled={busy}
+                    onPress={() => void closeSession()}
+                  >
+                    End session · keep history
+                  </Button>
+                )}
+              </div>
+              {!session.available && (
+                <p role="status">
+                  This session is closed, expired, or belongs to an earlier world/configuration. Its
+                  history remains readable; start a new session to act.
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+      <div className="ol-world-agent-footer">
+        {session && (
+          <>
+            {(!!session.activeTurn || !!session.question) && (
+              <Button size="sm" disabled={busy} onPress={() => void cancel()}>
+                Stop this request
+              </Button>
+            )}
+            <div hidden={view !== 'conversation'} className="ol-world-agent-compose">
+              <p role="status" aria-live="polite" className="ol-caption">
+                {session.question
+                  ? 'Waiting for your choice.'
+                  : session.activeTurn
+                    ? turns.find((turn) => turn.id === session.activeTurn)?.progress?.stage ===
+                      'replying'
+                      ? 'Writing a reply.'
+                      : 'Investigating your request.'
+                    : turns.at(-1)?.progress?.completeness === 'complete'
+                      ? 'Reply complete.'
+                      : ''}
+              </p>
+              {pending && (
+                <div className="ol-notice" role="status">
+                  <p>Checking acknowledgement for: {pending.text}</p>
+                  <p>No replacement run is started automatically.</p>
+                  <Button
+                    size="sm"
+                    disabled={
+                      !connected ||
+                      busy ||
+                      pendingUnreadable ||
+                      !!session.activeTurn ||
+                      !session.available ||
+                      !status.availability.configured
+                    }
+                    onPress={() => void send(pending)}
+                  >
+                    Resubmit the same request
+                  </Button>
+                  <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+                    Check saved result
+                  </Button>
+                </div>
+              )}
+              {pendingUnreadable && (
+                <div className="ol-notice" role="alert">
+                  <p>
+                    This browser could not read or update the original request’s recovery record.
+                    Restore browser storage access, then check the saved result. Another request
+                    will stay blocked until it can be checked.
+                  </p>
+                  {!pending && (
+                    <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+                      Check saved result
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {nativeOpeningSession && (
+                <p className="ol-caption">
+                  This prepared-opening workspace has no generation allowance. To describe a custom
+                  opening in conversation, choose Describe a world and explicitly start a funded
+                  conversation.
+                </p>
+              )}
+              <ConversationComposer
+                inputRef={input}
+                ariaLabel="Message to World Agent"
+                placeholder={
+                  sessionPurpose === 'creation'
+                    ? 'Describe a new world opening…'
+                    : 'Investigate, design, or ask for a change…'
+                }
+                maxLength={2000}
+                value={text}
+                onChange={setText}
+                onSubmit={() => send()}
+                disabled={
+                  !connected ||
+                  busy ||
+                  !!session.activeTurn ||
+                  !!session.question ||
+                  !!pending ||
+                  pendingUnreadable ||
+                  !session.available ||
+                  !status.availability.configured ||
+                  session.budget.availableUsd <= 0 ||
+                  !text.trim()
+                }
+              />
+            </div>
+            <p className="ol-caption" role="status">
+              {!connected
+                ? 'Reconnect to send a request. Your draft is kept.'
+                : !session.available
+                  ? 'This history is read only. Start a new conversation to make another request.'
+                  : session.question
+                    ? 'Answer the current question before sending a different request.'
+                    : !status.availability.configured
+                      ? status.availability.reason
+                      : session.budget.availableUsd <= 0
+                        ? 'This conversation has no remaining allowance for a new request.'
+                        : ''}
+            </p>
+          </>
+        )}
+        {error && <p role="alert">{error}</p>}
+      </div>
+      {review && visible && (
         <WorldAgentReview
           key={authoringKey('review-component', worldId, accessScope, sessionId, review)}
           worldId={worldId}
@@ -755,6 +935,6 @@ export function WorldAgentSession({
           onStatusPolicyChanged={onStatusPolicyChanged}
         />
       )}
-    </>
+    </div>
   );
 }

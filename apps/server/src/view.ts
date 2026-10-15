@@ -43,15 +43,23 @@ import {
 import { learnedActivityCandidates } from './activity-context.js';
 import { projectWork } from './work-view.js';
 import { projectActivityStatus } from './activity-requests.js';
-import { canUseInventory, inventoryItemView } from './inventory-view.js';
+import { canUseInventory, inventoryItemsView, inventoryStorageHint } from './inventory-view.js';
 import {
   itemFor,
   itemsForOwner,
   namedClockTimes,
   typedRequestVocabulary,
+  nativeActionIcon,
+  nativeGatherShortcut,
 } from '@open-legend/domain';
 import { worldPosition, worldSupport } from '@open-legend/domain';
-import { privateDraftScopeKey, scopeKey, type RequestScope } from './authority.js';
+import {
+  commandRecoveryScopeKey,
+  checkpointRecoveryScopeKey,
+  privateDraftScopeKey,
+  scopeKey,
+  type RequestScope,
+} from './authority.js';
 import { observerDescription, observerName, fireFuelDescription } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions, itemTradeView, tradeOwnLots } from './handover-actions.js';
@@ -321,6 +329,7 @@ export async function projectView(
     return {
       id,
       label,
+      icon: nativeActionIcon(command.type),
       command,
       enabled: canChoose && possible,
       ...(!canChoose
@@ -361,6 +370,9 @@ export async function projectView(
     'inventory',
     [
       observation.inventory,
+      // Native item actions also depend on other objects, such as a visible lit fire.
+      world.entities,
+      world.map,
       world.resourceReservations,
       world.itemDefinitions,
       world.recipes,
@@ -379,7 +391,7 @@ export async function projectView(
       active,
       paused,
     ],
-    () => observation.inventory.slice(0, 60).map((item) => inventoryItemView(service, scope, item)),
+    () => inventoryItemsView(service, scope, observation.inventory.slice(0, 60)),
   );
   const entities: EntityView[] = observation.visibleEntities
     .filter((entity) => entity.id !== scope.actorId)
@@ -565,15 +577,16 @@ export async function projectView(
             }
           }
           if (entity.resource && !entity.resource.cast)
-            actions.push(
-              action(
+            actions.push({
+              ...action(
                 `gather-${entity.id}`,
                 'Gather',
                 { type: 'gather', targetId: entity.id },
                 entity.resource.quantity > 0,
                 'This source is depleted.',
               ),
-            );
+              shortcut: nativeGatherShortcut(world, entity.resource.definitionId),
+            });
           for (const option of fishingOptions(world, castTools, entity)) {
             const preview = service.previewCommand(option.command, scope.actorId);
             actions.push(
@@ -699,6 +712,10 @@ export async function projectView(
                 }
               : {}),
             ...display,
+            icon: entity.resource
+              ? world.itemDefinitions[entity.resource.definitionId]?.icon
+              : entity.icon,
+            storage: inventoryStorageHint(service, scope, entity.id),
             ...(entity.kind === 'item-pile' || entity.remains
               ? { contents: pileContents.get(entity.id) ?? [] }
               : {}),
@@ -769,7 +786,9 @@ export async function projectView(
                           move: 'Walking',
                           evade: bodyPolicy(world)?.evasion?.label,
                           follow: 'Following',
-                          replenish: 'Replenishing',
+                          replenish:
+                            attributeDefinition(world, entity.actor.action.attributeId ?? '')
+                              ?.reservoir?.actionLabel ?? 'Working',
                           gather: 'Gathering',
                           'status-effect': 'Active state',
                           hunt: rangedPolicy(world)?.activityLabel,
@@ -798,7 +817,7 @@ export async function projectView(
                           ? entity.animal.danger > 0
                             ? 'Fleeing'
                             : 'Foraging'
-                          : 'Watching the clearing'))
+                          : 'Watching the surroundings'))
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
@@ -963,6 +982,11 @@ export async function projectView(
           ? 'degraded'
           : 'live'
         : 'unconfigured';
+  const hasWork =
+    !!actor.action ||
+    !!actor.agency.suspended ||
+    actor.agency.plan?.status === 'active' ||
+    actor.agency.plan?.status === 'blocked';
   const playerActions = [
     ...learnedActivityCandidates(service, player.id).map((option) => {
       const preview = service.previewCommand(option.command!, player.id);
@@ -973,16 +997,7 @@ export async function projectView(
       return action(option.id, option.label, option.command, preview.ok, preview.message);
     }),
     // Queued, waiting, stopped and paused work can be stopped too, not only a running action.
-    action(
-      'cancel',
-      'Stop current work',
-      { type: 'cancel' },
-      !!actor.action ||
-        !!actor.agency.suspended ||
-        actor.agency.plan?.status === 'active' ||
-        actor.agency.plan?.status === 'blocked',
-      'No work to stop.',
-    ),
+    action('cancel', 'Stop all work', { type: 'cancel' }, hasWork, 'No work to stop.'),
   ];
   if (canRecoverAtCamp(world, player))
     playerActions.push({
@@ -1071,7 +1086,8 @@ export async function projectView(
         : 'Working',
     move: 'Walking',
     follow: 'Following',
-    replenish: 'Replenishing',
+    replenish:
+      attributeDefinition(world, work?.attributeId ?? '')?.reservoir?.actionLabel ?? 'Working',
     'status-effect':
       world.statusEffectPolicy.definitions.find((d) => d.id === work?.definitionId)?.label ??
       'Active state',
@@ -1100,9 +1116,17 @@ export async function projectView(
   const guide = perceptionGuide(world, player);
   return {
     schemaVersion: 2,
+    checkpoint: service.mayManageSaves(scope)
+      ? {
+          scope: scopeKey(scope),
+          recoveryScope: checkpointRecoveryScopeKey(scope),
+          timeline: service.timelineId,
+        }
+      : undefined,
     access: {
       scope: scopeKey(scope),
       privateDraftScope: privateDraftScopeKey(scope),
+      commandRecoveryScope: commandRecoveryScopeKey(scope),
       canManageSaves: service.mayManageSaves(scope),
       accountId: scope.accountId,
       actorId: scope.actorId,
@@ -1132,6 +1156,12 @@ export async function projectView(
     ),
     revision,
     worldId: world.id,
+    // An authored heading is optional content, not a prerequisite for a valid saved world.
+    presentation: world.presentation ?? {
+      worldName: 'World',
+      locationName: 'Current location',
+      timeLabel: 'World time',
+    },
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
     godMode: service.config.godMode && service.currentScope(scope, 'create'),
@@ -1151,6 +1181,7 @@ export async function projectView(
                 .map((definition) => ({
                   id: definition.id,
                   label: definition.name,
+                  ...(definition.icon ? { icon: definition.icon } : {}),
                   description: definition.description,
                 }))
                 .sort((a, b) => a.label.localeCompare(b.label)),
@@ -1193,6 +1224,7 @@ export async function projectView(
       actionAnimation: actionAnimation(world, player),
       suggestedActionIds,
       alive: actor.alive,
+      hasWork,
       life: actor.physicalLife ?? 0,
       death:
         actor.pendingDeath && reincarnation
@@ -1337,7 +1369,7 @@ export async function projectView(
         ),
         [],
       ),
-      history: `Your life in this clearing began on Day 1. You have lived here for ${Math.floor(world.simTime / 86400)} full days.`,
+      history: `Your time in this world began on Day 1. You have been here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,
       inventoryRevision: player.inventoryRevision ?? 0,
       canUseInventory: canUseInventory(service, scope),

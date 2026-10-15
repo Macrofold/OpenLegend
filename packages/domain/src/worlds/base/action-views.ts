@@ -16,6 +16,7 @@ import { BASE_ACTION_DEFAULTS } from './actions.js';
 import { rangedPolicy, rangedApproachRange, shotPreparationSeconds } from '../../ranged-policy.js';
 import { NATIVE_PREPARATIONS } from './items.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
+import { attributeDefinition } from '../../world-modules.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
 import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
 import { evasionDescription } from './combat-views.js';
@@ -135,7 +136,14 @@ function activityView(
     )?.practice?.practiceLabel;
   if (command.type === 'coaching')
     names.coaching = practiceDefinition(world, command.attributeId)?.practice?.coachingLabel;
-  const view: ActivityView = { name: command.purpose ?? names[command.type] ?? 'Act', facts: [] };
+  const reservoir =
+    command.type === 'replenish'
+      ? attributeDefinition(world, command.attributeId)?.reservoir
+      : undefined;
+  const view: ActivityView = {
+    name: command.purpose ?? reservoir?.actionLabel ?? names[command.type] ?? 'Act',
+    facts: [],
+  };
   if (command.type === 'treat-scar') {
     const treatment = reincarnationPolicy(world)?.treatment;
     if (treatment)

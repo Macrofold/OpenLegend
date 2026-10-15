@@ -42,7 +42,7 @@ import { statusEffectActions } from './status-effect-actions.js';
 import { ammoFor, availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
-import { NATIVE_PREPARATIONS } from '@open-legend/domain';
+import { nativePreparationOptions, nativeActionIcon } from '@open-legend/domain';
 import { bodyPolicy } from '@open-legend/domain';
 import { fireCareOptions } from './fire-actions.js';
 import { handoverOptions } from './handover-actions.js';
@@ -120,6 +120,7 @@ export function actionCatalogue(
         return {
           id: option.id,
           label: option.label,
+          icon: option.icon ?? nativeActionIcon(option.command.type),
           category: 'Possessions',
           description: descriptions.describe(option.command),
           facts: descriptions.facts(option.command),
@@ -183,6 +184,7 @@ export function actionCatalogue(
     actions.push({
       id,
       label,
+      icon: nativeActionIcon(command.type),
       category,
       description: provided?.description ?? descriptions.describe(command),
       facts: descriptions.facts(command),
@@ -341,18 +343,17 @@ export function actionCatalogue(
     self.agency.plan?.status === 'active' ||
     self.agency.plan?.status === 'blocked'
   )
-    add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
-  else missing('cancel', 'Stop current work', 'Movement', 'No work to stop.');
+    add('cancel', 'Stop all work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
+  else missing('cancel', 'Stop all work', 'Movement', 'No work to stop.');
   const recovery = bodyPolicy(world)?.recovery;
   if (recovery) add('recover', recovery.label, 'Body', { type: 'recover' }, ['recovery']);
-  for (const key of Object.keys(NATIVE_PREPARATIONS) as Array<keyof typeof NATIVE_PREPARATIONS>) {
-    add(
-      `prepare-${key}`,
-      NATIVE_PREPARATIONS[key].label,
-      'Create',
-      { type: 'prepare', preparation: key },
-      ['prepare', 'craft', key, 'binding'],
-    );
+  for (const { key, label } of nativePreparationOptions(world)) {
+    add(`prepare-${key}`, label, 'Create', { type: 'prepare', preparation: key }, [
+      'prepare',
+      'craft',
+      key,
+      'binding',
+    ]);
   }
 
   for (const target of actionTargets) {

@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import type { Entity, WorldState } from '@open-legend/domain';
 import type { OperationsView, WorldOverview } from '@open-legend/protocol';
-import { AuthorityError, scopeKey, type Capability, type RequestScope } from './authority.js';
+import {
+  AuthorityError,
+  scopeKey,
+  checkpointRecoveryScopeKey,
+  type Capability,
+  type RequestScope,
+} from './authority.js';
 import type { AppConfig } from './config.js';
 import {
   InviteError,
@@ -29,6 +35,7 @@ const CHARACTERLESS_ROUTES = new Set([
   'POST /api/access/binding',
   'POST /api/access/construction',
   'POST /api/saves/list',
+  'POST /api/saves/receipt',
   'POST /api/saves/create',
   'POST /api/saves/delete',
   'POST /api/saves/load',
@@ -148,6 +155,13 @@ export class OperationsRoutes {
       ...(scope.actorId ? { actorId: scope.actorId } : {}),
       scope: scopeKey(scope),
       generation: this.service.generation,
+      checkpoint: this.service.mayManageSaves(scope)
+        ? {
+            scope: scopeKey(scope),
+            recoveryScope: checkpointRecoveryScopeKey(scope),
+            timeline: this.service.timelineId,
+          }
+        : undefined,
       mode: this.config.authentication.mode,
       clock: {
         ...calendarFields(world),

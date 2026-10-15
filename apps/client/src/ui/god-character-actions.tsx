@@ -46,6 +46,15 @@ export function GodCharacterActions({
   };
   return (
     <Section title="God mode">
+      <p className="ol-caption">
+        Creator tools for {entity.name}. Direct changes here are separate from your character’s
+        actions and knowledge.
+      </p>
+      {!connected && (
+        <p className="ol-caption" role="status">
+          Reconnect to use these creator tools.
+        </p>
+      )}
       <div className="ol-actions">
         {available.revive && (
           <Button

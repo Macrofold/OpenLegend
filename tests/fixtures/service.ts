@@ -1,3 +1,4 @@
+import { definitionPin, validateModuleManifest } from '../../packages/domain/src/world-modules.js';
 import type { WorldState } from '../../packages/domain/src/index.js';
 import type { WorldService } from '../../apps/server/src/world-service.js';
 
@@ -26,4 +27,23 @@ export async function editWorld<T>(
   });
   if (!result.ok) throw new Error(result.message);
   return value;
+}
+
+/** A deliberately small native scene for routing/accounting fixtures, not
+ * a production sight limit. Expanded-world optional attention has its own
+ * coverage; these scenarios retain exact single-request assertions. */
+export async function useNearCampSight(service: WorldService): Promise<void> {
+  await editWorld(service, (world) => {
+    const manifest = world.moduleManifest;
+    const senses = manifest.senses.map((sense) =>
+      sense.implementation === 'vision-geometry-v1' ? { ...sense, radius: 14 } : sense,
+    );
+    world.moduleManifest = {
+      ...manifest,
+      revision: manifest.revision + 1,
+      senses,
+      sensePins: senses.map(definitionPin),
+    };
+    validateModuleManifest(world.moduleManifest);
+  });
 }

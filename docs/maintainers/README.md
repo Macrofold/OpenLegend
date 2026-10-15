@@ -82,7 +82,7 @@ DG30 uses [creator funding and contributor governance](creator-fund-and-contribu
 
 ## Presentation and navigation delivery
 
-[UI/UX standards and qualification](ui-ux.md) tracks the research-backed [interaction-design handbook](../ui-ux/README.md), selective frontend guidance, reported control regressions and unrun qualification. Existing subsystem trackers retain runtime implementation ownership; the handbook does not authorize a redesign.
+[UI/UX standards and qualification](ui-ux.md) tracks the research-backed [interaction-design handbook](../ui-ux/README.md), selective frontend guidance, reported control regressions and unrun qualification. The original October 3 request covered the entire interface; the first inventory/activity/chat delivery was too narrow. Its [expanded research/design](ui-ux.md#uiux07) now accounts for [58 audited surface groups and two later integrated death/attack groups](../ui-ux/interface-coverage.md), 98 digital game screenshots and nine original proposals, with whole-interface J01–J48 in the existing project pair. UIUX08–UIUX11 retain the earlier runtime slice and open gameplay acceptance; UIUX12–UIUX18 cover the broader design's implementation and qualification. [Actual checks and limits](../verification/game-interaction-redesign.md) remain distinct from research delivery; native subsystem/release owners are unchanged.
 
 [SW17–SW19](spatial-world.md) own the current Recast/capsule and visual delivery. [World presentation](../world-presentation.md) is the canonical visual specification. [TODO SR16–SR20](TODO.md#recast-and-presentation-regression-todos) contains the requested deferred automation; [verification](../verification/recast-integration.md) records executed application/stress observations only.
 
