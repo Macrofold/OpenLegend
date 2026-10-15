@@ -5,60 +5,61 @@ import { random } from './art';
 export type EnvironmentSurface = 'foliage' | 'bark' | 'stone' | 'ground';
 
 /** Original stepped material clusters, not sampled lighting or per-pixel noise.
- * A tile spans eight metres for foliage/ground and four for bark/stone. */
+ * Leaf/bark plates repeat over two metres, with quiet ground over eight. */
 export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 64;
+  canvas.width = canvas.height = kind === 'foliage' || kind === 'bark' ? 32 : 64;
+  const size = canvas.width;
   const ctx = canvas.getContext('2d')!;
   const paint = (surface: EnvironmentSurface): void => {
-    ctx.fillStyle = '#888888';
-    ctx.fillRect(0, 0, 64, 64);
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(0, 0, size, size);
     // A small authored arrangement repeats at matching edges. Each mark is a
     // connected cluster several texels wide, leaving the surrounding field quiet.
-    for (const dx of [-64, 0, 64])
-      for (const dy of [-64, 0, 64]) {
+    for (const dx of [-size, 0, size])
+      for (const dy of [-size, 0, size]) {
         if (surface === 'foliage') {
           for (const [x, y, w] of [
-            [2, 3, 15],
-            [26, 0, 18],
-            [48, 10, 14],
-            [12, 23, 17],
-            [35, 28, 20],
-            [-3, 43, 16],
-            [21, 48, 18],
-            [47, 53, 15],
+            [1, 1, 7],
+            [13, -2, 8],
+            [24, 5, 7],
+            [6, 12, 8],
+            [18, 16, 9],
+            [-2, 23, 7],
+            [11, 26, 8],
+            [26, 29, 7],
           ] as const) {
             const px = x + dx,
               py = y + dy,
               width = w;
-            ctx.fillStyle = '#5f5f5f';
-            ctx.fillRect(px + 3, py + 7, width - 2, 4);
-            ctx.fillRect(px + 7, py + 11, width - 9, 2);
-            ctx.fillStyle = '#a4a4a4';
-            ctx.fillRect(px + 2, py + 3, width - 4, 5);
-            ctx.fillRect(px, py + 5, width, 2);
-            ctx.fillStyle = '#bdbdbd';
-            ctx.fillRect(px + 4, py + 2, width - 8, 3);
-            ctx.fillRect(px + 2, py + 4, 5, 2);
+            ctx.fillStyle = '#404040';
+            ctx.fillRect(px + 1, py + 4, width - 1, 3);
+            ctx.fillRect(px + 3, py + 7, width - 4, 1);
+            ctx.fillStyle = '#a8a8a8';
+            ctx.fillRect(px + 1, py + 2, width - 2, 3);
+            ctx.fillRect(px, py + 3, width, 1);
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillRect(px + 2, py + 1, width - 4, 2);
+            ctx.fillRect(px + 1, py + 2, 2, 1);
           }
         } else if (surface === 'bark') {
           for (const [x, y, h] of [
-            [4, -6, 23],
-            [20, 15, 28],
-            [38, 1, 25],
-            [52, 39, 30],
-            [5, 37, 19],
-            [35, 49, 25],
+            [2, -3, 12],
+            [10, 8, 14],
+            [19, 1, 13],
+            [26, 20, 15],
+            [3, 19, 10],
+            [17, 25, 13],
           ] as const) {
             const px = x + dx,
               py = y + dy,
               height = h;
-            ctx.fillStyle = '#686868';
-            ctx.fillRect(px + 6, py + 3, 2, height - 4);
-            ctx.fillRect(px + 4, py + height - 3, 3, 3);
-            ctx.fillStyle = '#a7a7a7';
-            ctx.fillRect(px, py + 2, 4, height - 5);
-            ctx.fillRect(px + 2, py, 3, height - 8);
+            ctx.fillStyle = '#484848';
+            ctx.fillRect(px + 3, py + 2, 2, height - 2);
+            ctx.fillRect(px + 2, py + height - 1, 2, 2);
+            ctx.fillStyle = '#cccccc';
+            ctx.fillRect(px, py + 1, 2, height - 3);
+            ctx.fillRect(px + 1, py, 2, height - 5);
           }
         } else {
           for (const [x, y, w, h] of [
@@ -84,9 +85,9 @@ export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasEleme
   };
   paint(kind);
   if (kind === 'foliage') {
-    const leaves = ctx.getImageData(0, 0, 64, 64);
+    const leaves = ctx.getImageData(0, 0, size, size);
     paint('bark');
-    const bark = ctx.getImageData(0, 0, 64, 64);
+    const bark = ctx.getImageData(0, 0, size, size);
     // One tiny shared tile holds leaves in red and bark in green. The geometry's
     // existing authored brown/white trunks choose bark, retaining family colors.
     for (let i = 0; i < leaves.data.length; i += 4) leaves.data[i + 1] = bark.data[i]!;
@@ -130,7 +131,7 @@ export function prepareEnvironmentSurface(
   );
   const diffuse =
     material.shaderChunks.glsl.get('diffusePS') ?? pc.ShaderChunks.get(device).get('diffusePS')!;
-  const density = kind === 'bark' || kind === 'stone' ? 16 : 8;
+  const density = kind === 'ground' ? 8 : 16;
   material.shaderChunks.glsl.set(
     'diffusePS',
     diffuse.replace('void getAlbedo()', 'void ol_environmentSourceAlbedo()') +
@@ -142,8 +143,8 @@ export function prepareEnvironmentSurface(
       void getAlbedo() {
         ol_environmentSourceAlbedo();
         if (ol_surfaceEnabled < .5) return;
-        vec3 p = ol_environmentPosition * ${(density / 64).toFixed(3)};
-        vec3 weights = pow(abs(normalize(ol_environmentNormal)),vec3(6.0));
+        vec3 p = ol_environmentPosition * ${(density / texture.width).toFixed(3)};
+        vec3 weights = pow(abs(normalize(ol_environmentNormal)),vec3(10.0));
         weights /= max(dot(weights,vec3(1.0)),.0001);
         vec4 x = texture2D(ol_environmentTile,p.zy);
         vec4 y = texture2D(ol_environmentTile,p.xz);
@@ -152,9 +153,10 @@ export function prepareEnvironmentSurface(
         float field = dot(vec3(mix(x.r,x.g,bark),mix(y.r,y.g,bark),mix(z.r,z.g,bark)),weights);
         // Continuous derivatives select the prepared mip chain. At subpixel
         // coverage, taper contrast rather than flashing isolated bright cells.
-        float footprint = max(length(dFdx(p)),length(dFdy(p))) * 64.0;
+        float footprint = max(length(dFdx(p)),length(dFdy(p))) * ${texture.width.toFixed(1)};
         float contrast = 1.0 - smoothstep(.75,1.75,footprint);
-        dAlbedo *= mix(1.0,mix(.68,1.30,field),contrast);
+        vec3 pigment = ${kind === 'foliage' ? 'mix(mix(vec3(.44,.57,.54),vec3(1.45,1.42,1.02),field),vec3(mix(.52,1.52,field)),bark)' : 'vec3(mix(.52,1.52,field))'};
+        dAlbedo *= mix(vec3(1.0),pigment,contrast);
       }`,
   );
   material.setParameter('ol_environmentTile', texture);
