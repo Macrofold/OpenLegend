@@ -90,6 +90,10 @@ The next implementation candidate keeps the original 96-row mercenary and full s
 
 The shorter leaf repeat is visibly stronger than the rejected weak tile, but round crown lobes, conifer tiers, repeating plates, yellow-green noon color and sampled character detail remain limitations for review. Identical still captures and immutable surface data do not prove stable moving edges. Current-profile frame/resource measurements and the critical moving-art/shimmer gate must be judged from the new evidence, separately from the first candidate's historical timings. Fixed captures/splats remain rejected or deferred for the recorded disocclusion, coverage, thin-surface, animation and cost limits. Mike has given no creator acceptance of this revision. Additional/cumulative provider and Jev cost remains $0, with $0 reserved or uncertain commitments.
 
+## Asset variants and free-library starting points — October 15, 2026
+
+Mike authorized continued implementation with a **$25 total task budget**, replacing the earlier $10 ceiling. When revising a specific asset, prepare a few actual alternatives and show them for feedback while continuing independent work; silence does not establish a preferred version. Search and download solid free asset-library sources, including environment and hare/animal art, as starting points for a coherent demo in the existing world. Evaluate every result against the agreed [creative brief](final-board/creative-brief.md) and [renderer/art research](research/3d-pixel-worlds/realtime-pixel-rendering.md). Library geometry is a starting asset, not a reversal to an ordinary low-poly finish. Preserve original artwork and clear license/provenance for retained downloads. [Implementation plan](../docs/projects/3d-pixel-art-first-scene-plan.md#library-assets-and-authored-variants--authorized-october-15-2026), [V3D01.14](../docs/maintainers/3d-pixel-art.md#v3d0114--licensed-library-sources-and-multiple-authored-choices).
+
 ## Decision entry format
 
 Date · decision · relevant reference IDs · user rationale · open implications.

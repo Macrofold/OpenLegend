@@ -14,10 +14,13 @@ export interface ArtTreatment {
   shadowSampling: 'screen' | 'fixed';
   filtering: 'source' | 'nearest' | 'mip';
   characterFiltering: 'source' | 'nearest' | 'mip';
+  mercenaryArt: 'original' | 'faithful' | 'painted' | 'graphic';
+  hareArt: 'sprite' | 'field' | 'russet' | 'winter';
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
   cloth: 'flowing' | 'settled';
-  environment: 'baseline' | 'grouped';
+  environment: 'baseline' | 'grouped' | 'kenney' | 'quaternius';
+  groundPalette: 'meadow' | 'woodland';
   vegetation: 'still' | 'smooth' | 'held';
   atmosphere: 'baseline' | 'restrained';
   effects: 'direct' | 'buffer';
@@ -36,10 +39,13 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   shadowSampling: 'screen',
   filtering: 'source',
   characterFiltering: 'source',
+  mercenaryArt: 'original',
+  hareArt: 'sprite',
   edges: 'none',
   motion: 'smooth',
   cloth: 'flowing',
   environment: 'baseline',
+  groundPalette: 'meadow',
   vegetation: 'still',
   atmosphere: 'baseline',
   effects: 'direct',
@@ -51,6 +57,7 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   materials: 'regions',
   lighting: 'soft',
   environment: 'grouped',
+  groundPalette: 'woodland',
   vegetation: 'smooth',
   atmosphere: 'restrained',
   motion: 'held12',
@@ -211,10 +218,13 @@ export function mountArtControls(
     shadowSampling: ['screen', 'fixed'],
     filtering: ['source', 'nearest', 'mip'],
     characterFiltering: ['source', 'nearest', 'mip'],
+    mercenaryArt: ['original', 'faithful', 'painted', 'graphic'],
+    hareArt: ['sprite', 'field', 'russet', 'winter'],
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
     cloth: ['flowing', 'settled'],
-    environment: ['baseline', 'grouped'],
+    environment: ['baseline', 'grouped', 'kenney', 'quaternius'],
+    groundPalette: ['meadow', 'woodland'],
     vegetation: ['still', 'smooth', 'held'],
     atmosphere: ['baseline', 'restrained'],
     effects: ['direct', 'buffer'],
@@ -233,10 +243,13 @@ export function mountArtControls(
     shadowSampling: 'Soft-shadow sample pattern',
     filtering: 'Texture filtering',
     characterFiltering: 'Character texture filtering',
+    mercenaryArt: 'Mercenary artwork',
+    hareArt: 'Hare artwork',
     edges: 'Character edges',
     motion: 'Walking poses',
     cloth: 'Cape movement',
     environment: 'Environment shapes',
+    groundPalette: 'Ground palette',
     vegetation: 'Grass movement',
     atmosphere: 'Color and bloom',
     effects: 'Effects drawing',

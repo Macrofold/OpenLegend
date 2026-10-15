@@ -166,6 +166,15 @@ V3D01.1–V3D01.11 are **Completed investigations, scoped implementation and tec
 - [x] Run matched slow pan/orbit/zoom/still/light-isolation footage and a materially changed texel-splatting alternative. Record actual visual failures and supported stability boundaries; no unmeasured artifact-free claim or backend migration.
 - [ ] Integrate the best supported result, verify scoped application/lifecycle behavior and complete-frame cost, reconcile current owners/limits/evidence and commit. Creator visual approval remains V3D01.12 and cannot be inferred from technical passes. **Trial/check portions delivered:** the provisional painted/full-scene/fixed-96 profile, filtered cell boundaries, corrected fixed-sun switch and owned target cleanup are implemented. Application, size/format/teardown, static/build/link checks and actual device costs are recorded in the [revision report](../verification/starting-scene-pixel-stability.md). The no-shimmer/art-quality bar, grainy mercenary detail and measured slow-frame tails are unresolved; this criterion remains unchecked and local-main readiness is not claimed. Earlier source assets and every rejected alternative are preserved.
 
+### V3D01.14 — Licensed library sources and multiple authored choices
+
+**Owner:** existing character/environment/animal presentation and offline preparation. **Depends on:** the agreed creative brief and preserved V3D01.13 candidates. Mike authorized this [continuation](../projects/3d-pixel-art-first-scene-plan.md#library-assets-and-authored-variants--authorized-october-15-2026), a $25 total task ceiling and multiple reviewable asset variants without pausing independent work for feedback.
+
+- [ ] Download and inspect a small useful set of free environment/animal source assets, including a hare/rabbit candidate. Retain official license/source evidence and provenance for each retained source; explain fit and limitations against the agreed references.
+- [ ] Prepare at least three faithful mercenary art variants and meaningful alternatives for changed library assets; preserve the originals, compare the same normal/close lighting and cameras, and show Mike the actual alternatives while continuing independent work.
+- [ ] Integrate a coherent provisional set into the existing starting scene without changing its content, world layout, physical rules or active progress. Reuse current visibility, picking, shared preparation and resource owners.
+- [ ] Verify changed assets and actual scene behavior through supported motion/cameras, fallback/late loads, resize, pause/reduced motion, replacement and teardown; measure current cost, review the complete diff, reconcile owners and commit. Record remaining art/stability/performance failures rather than inferring acceptance from successful checks.
+
 ## V3D02 — Immutable appearance and artifact foundation
 
 **Owners:** protocol, server appearance/storage, client asset intake. **Depends on:** V3D01 for the target profile; technical fixture work can precede final style approval.

@@ -2,6 +2,7 @@ import * as pc from 'playcanvas';
 import { ShadowMaterial } from '../shadow-material';
 import { ArtMaterials, type ArtTreatment } from '../art-treatment';
 import { personStencil, setVisibilityStencil } from '../visibility-stencil';
+import { MercenaryVariants, type MercenaryArt } from './mercenary-variants';
 
 /** Shared source artwork lit by the world, then sampled by the character image. */
 export class MercenaryMaterials {
@@ -16,10 +17,19 @@ export class MercenaryMaterials {
     }
   >();
   private filtering: ArtTreatment['characterFiltering'] = 'source';
+  private readonly variants: MercenaryVariants;
+  private wantedArt: MercenaryArt = 'original';
   constructor(
+    app: pc.Application,
     private readonly sun: pc.Light,
     private readonly art: ArtMaterials,
-  ) {}
+    private readonly artChanged: (art: MercenaryArt) => void,
+  ) {
+    this.variants = new MercenaryVariants(app, () => {
+      for (const [source, material] of this.prepared) this.applyPaint(source, material);
+      this.artChanged(this.variants.current);
+    });
+  }
 
   prepare(source: pc.StandardMaterial): pc.StandardMaterial {
     const existing = this.prepared.get(source);
@@ -62,13 +72,34 @@ export class MercenaryMaterials {
     );
     material.update();
     this.prepared.set(source, material);
+    this.applyPaint(source, material);
     return material;
   }
 
+  private applyPaint(source: pc.StandardMaterial, material: pc.StandardMaterial): void {
+    const body = source.name === 'Mercenary · pixel-painted material atlas';
+    const cape = source.name.includes('Madder');
+    if (!body && !cape) return;
+    const paint = this.variants.paint;
+    material.diffuseMap = paint ? (body ? paint.body : paint.cape) : source.diffuseMap;
+    // The new offline designs already describe mail, leather, wraps and fabric.
+    // Repainting them with the older height zones would erase their differences.
+    material.setParameter('ol_artRole', paint ? 0 : body ? 1 : 2);
+    material.update();
+  }
+
   setArtTreatment(style: Readonly<ArtTreatment>): void {
-    if (style.characterFiltering === this.filtering) return;
-    this.filtering = style.characterFiltering;
-    for (const texture of this.textures) this.filterTexture(texture);
+    if (style.characterFiltering !== this.filtering) {
+      this.filtering = style.characterFiltering;
+      for (const texture of this.textures) this.filterTexture(texture);
+    }
+    if (style.mercenaryArt !== this.wantedArt) {
+      this.wantedArt = style.mercenaryArt;
+      this.variants.set(style.mercenaryArt);
+    }
+  }
+  diagnostics() {
+    return this.variants.diagnostics();
   }
   private filterTexture(texture: pc.Texture): void {
     const source = this.originalSampling.get(texture);
@@ -88,5 +119,6 @@ export class MercenaryMaterials {
     this.textures.clear();
     for (const material of this.prepared.values()) material.destroy();
     this.prepared.clear();
+    this.variants.destroy();
   }
 }

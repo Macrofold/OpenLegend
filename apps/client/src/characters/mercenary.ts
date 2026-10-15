@@ -44,7 +44,9 @@ export class MercenaryModels {
     sun: pc.Light,
     art: ArtMaterials,
   ) {
-    this.materials = new MercenaryMaterials(sun, art);
+    this.materials = new MercenaryMaterials(app, sun, art, (variant) =>
+      this.faces.setVariant(variant),
+    );
     this.faces = new MercenaryFaceResources(app, this.materials);
   }
   create(parent: pc.Entity): MercenaryActor {
@@ -288,6 +290,7 @@ export class MercenaryActor {
       displayScale,
       height: this.height,
       width: this.width,
+      artwork: this.materials.diagnostics(),
       animation: this.node?.anim?.baseLayer?.activeState,
       motion: this.motion?.diagnostics(),
       settling: this.settling,
@@ -299,6 +302,7 @@ export class MercenaryActor {
     this.pixels = undefined;
     this.cloth?.destroy();
     this.cloth = undefined;
+    if (this.node) this.faces.detach(this.node);
     this.node?.destroy();
     this.node = undefined;
     this.motion = undefined;

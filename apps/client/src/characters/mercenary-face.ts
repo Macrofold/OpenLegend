@@ -1,44 +1,74 @@
 import * as pc from 'playcanvas';
 import face from './mercenary-assets/mercenary-face.json';
+import faithful from './mercenary-assets/variants/face-faithful.json';
+import painted from './mercenary-assets/variants/face-painted.json';
+import graphic from './mercenary-assets/variants/face-graphic.json';
 import type { MercenaryMaterials } from './mercenary-materials';
+import type { MercenaryArt } from './mercenary-variants';
 
-const palette: Record<string, string> = {
+const originalPalette: Record<string, string> = {
   ivory: '#c0b69b',
   iris: '#56645d',
   charcoal: '#1e2528',
   lip: '#563c32',
 };
+interface FaceArt {
+  palette: Record<string, string>;
+  regions: { name: string; positions: number[]; normals: number[]; indices: number[] }[];
+}
+const designs: Record<MercenaryArt, FaceArt> = {
+  original: { ...face, palette: originalPalette },
+  faithful,
+  painted,
+  graphic,
+};
 
-/** Sparse shaped details follow the original curved face, not the camera.
- * The source nose, beard, scars and hair remain the identity and silhouette.
- * Geometry/material preparation is shared once by the scene's pilot owner. */
+/** Shaped features follow the original curved face. One vertex-colored mesh
+ * combines each design's regions; switching its shared mesh also updates the
+ * existing capture/shadow participants without replacing their instances. */
 export class MercenaryFaceResources {
   private readonly heads = new WeakMap<pc.Entity, pc.GraphNode>();
-  private readonly parts: {
-    mesh: pc.Mesh;
-    material: pc.StandardMaterial;
-    source: pc.StandardMaterial;
-  }[] = [];
+  private readonly attached = new Map<pc.Entity, pc.MeshInstance>();
+  private readonly meshes = new Map<MercenaryArt, pc.Mesh>();
+  private readonly source = new pc.StandardMaterial();
+  private readonly material: pc.StandardMaterial;
+  private variant: MercenaryArt = 'original';
   constructor(app: pc.Application, materials: MercenaryMaterials) {
-    for (const region of face.regions) {
-      const color = palette[region.name];
-      if (!color) throw new Error('Unsupported authored facial region');
+    this.source.name = 'Mercenary shaped facial artwork';
+    this.source.diffuse.set(1, 1, 1);
+    this.source.diffuseVertexColor = true;
+    this.source.useMetalness = true;
+    this.source.metalness = 0;
+    this.source.gloss = 0;
+    this.material = materials.prepare(this.source);
+    for (const [name, design] of Object.entries(designs)) {
+      const positions: number[] = [],
+        normals: number[] = [],
+        colors: number[] = [],
+        indices: number[] = [];
+      for (const region of design.regions) {
+        const offset = positions.length / 3;
+        const color = new pc.Color().fromString(design.palette[region.name]!).linear();
+        positions.push(...region.positions);
+        normals.push(...region.normals);
+        for (let i = 0; i < region.positions.length / 3; i++)
+          colors.push(color.r, color.g, color.b, 1);
+        for (const index of region.indices) indices.push(offset + index);
+      }
       const mesh = new pc.Mesh(app.graphicsDevice);
-      mesh.setPositions(region.positions);
-      mesh.setNormals(region.normals);
-      mesh.setIndices(region.indices);
+      mesh.setPositions(positions);
+      mesh.setNormals(normals);
+      mesh.setColors(colors);
+      mesh.setIndices(indices);
       mesh.update();
-      // The scene retains a reference even when its last actor is replaced.
+      // The shared scene owner retains each design across actor replacements.
       mesh.incRefCount();
-      const source = new pc.StandardMaterial();
-      source.name = 'Mercenary face · ' + region.name;
-      source.diffuse = new pc.Color().fromString(color).linear();
-      source.useMetalness = true;
-      source.metalness = 0;
-      source.gloss = 0;
-      const material = materials.prepare(source);
-      this.parts.push({ mesh, material, source });
+      this.meshes.set(name as MercenaryArt, mesh);
     }
+  }
+  setVariant(variant: MercenaryArt): void {
+    this.variant = variant;
+    for (const instance of this.attached.values()) instance.mesh = this.meshes.get(variant)!;
   }
   attach(root: pc.Entity): void {
     const head = root.findByName('Head');
@@ -46,24 +76,29 @@ export class MercenaryFaceResources {
     this.heads.set(root, head);
     const node = new pc.Entity('Mercenary shaped facial details');
     head.addChild(node);
+    const instance = new pc.MeshInstance(this.meshes.get(this.variant)!, this.material, node);
     node.addComponent('render', {
-      meshInstances: this.parts.map((part) => new pc.MeshInstance(part.mesh, part.material, node)),
+      meshInstances: [instance],
       castShadows: true,
       receiveShadows: true,
     });
+    this.attached.set(root, instance);
+  }
+  detach(root: pc.Entity): void {
+    this.attached.delete(root);
+    this.heads.delete(root);
   }
   preparePose(root: pc.Entity): void {
-    // A small art-only proportion adjustment gives the realistic source head
-    // enough room for distinct eyes in the same coarse full-figure image.
-    const head = this.heads.get(root);
-    head?.setLocalScale(1.08, 1.08, 1.08);
+    // Preserve the existing modest face proportion under coarse figure sampling.
+    this.heads.get(root)?.setLocalScale(1.08, 1.08, 1.08);
   }
   destroy(): void {
-    for (const part of this.parts) {
-      part.mesh.decRefCount();
-      part.mesh.destroy();
-      part.source.destroy();
+    this.attached.clear();
+    for (const mesh of this.meshes.values()) {
+      mesh.decRefCount();
+      if (mesh.refCount === 0) mesh.destroy();
     }
-    this.parts.length = 0;
+    this.meshes.clear();
+    this.source.destroy();
   }
 }

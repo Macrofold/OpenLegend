@@ -1,0 +1,200 @@
+{
+  "license": "CC0-1.0",
+  "sources": {
+    "nature": {
+      "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+      "page": "https://kenney.nl/assets/nature-kit",
+      "archive": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+      "license": "License.txt",
+      "bytes": 10537521,
+      "licenseSha256": "cb96b75e3560ac78d7a53ce6f083f4cdb5c53faea6141b62d63458dcfe1e4b9d"
+    },
+    "survival": {
+      "sha256": "c3586341b5932c87eb43d75d915434f47daed168b17ed36a03e8ca9977c7443e",
+      "page": "https://kenney.nl/assets/survival-kit",
+      "archive": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+      "license": "License.txt",
+      "bytes": 1948174,
+      "licenseSha256": "62c8356876481204fa4d40dc59183dfed777adf987d7f2a1390fffe8a699f3ff"
+    },
+    "quaternius": {
+      "sha256": "298f6732b872e4cf7b30e6e7abf9641c7f6dc6b326df37ac089533ed7e3d58c9",
+      "page": "https://quaternius.com/packs/stylizednaturemegakit.html",
+      "archive": "https://quaternius.itch.io/stylized-nature-megakit/file/11055123",
+      "archiveRequestMethod": "POST from the official free download page; resolves a temporary CDN URL",
+      "downloadPage": "https://quaternius.itch.io/stylized-nature-megakit",
+      "license": "License_Standard.txt",
+      "bytes": 104088529,
+      "licenseSha256": "120710e542c3ebaf83856c4eb55b4a1e680593b39302eba7fdc5d942dfe78c58"
+    }
+  },
+  "models": [
+    {
+      "variant": "kenney",
+      "appearance": "tree-broadleaf",
+      "source": "nature",
+      "path": "Models/GLTF format/tree_detailed.glb",
+      "sha256": "c041daf2f0fb1d49e4325227cbcd58667adbe51e9b55e8c1f0a94b74cc521b3b",
+      "sourceBounds": {
+        "min": [-0.43248260021209717, -0.05, -0.3721359670162201],
+        "max": [0.4146324396133423, 1.2824170112609863, 0.3894665241241455]
+      },
+      "triangles": 402,
+      "parts": 3
+    },
+    {
+      "variant": "kenney",
+      "appearance": "tree-conifer",
+      "source": "survival",
+      "path": "Models/GLB format/tree.glb",
+      "sha256": "7f8c2381a747882fc4fb534dcf803002f2cc925aa400f1328b24bd5576c3dca0",
+      "sourceBounds": {
+        "min": [-0.28127700090408325, 0.0, -0.26311829686164856],
+        "max": [0.2715809941291809, 1.4109718799591064, 0.26311829686164856]
+      },
+      "triangles": 226,
+      "parts": 1
+    },
+    {
+      "variant": "kenney",
+      "appearance": "tree-birch",
+      "source": "nature",
+      "path": "Models/GLTF format/tree_thin.glb",
+      "sha256": "f0f1f6861fe0446963d3be216cc628324f538bb0841bc9a8e14140313f64e2f3",
+      "sourceBounds": {
+        "min": [-0.2574497163295746, -0.05, -0.25147387385368347],
+        "max": [0.422986775636673, 1.4402979135513305, 0.3650486469268799]
+      },
+      "triangles": 228,
+      "parts": 2
+    },
+    {
+      "variant": "kenney",
+      "appearance": "woodland-shrub",
+      "source": "nature",
+      "path": "Models/GLTF format/plant_bushDetailed.glb",
+      "sha256": "2e0487020d68ccf664435db9d829c78ae00e6d2785ee3ec10b9f89cc70a10406",
+      "sourceBounds": {
+        "min": [-0.30127185583114624, -0.05, -0.30127185583114624],
+        "max": [0.30127185583114624, 0.3104109287261963, 0.30127185583114624]
+      },
+      "triangles": 104,
+      "parts": 1
+    },
+    {
+      "variant": "quaternius",
+      "appearance": "tree-broadleaf",
+      "source": "quaternius",
+      "path": "glTF/CommonTree_5.gltf",
+      "sha256": "fb7061f2bf9fe850870b056431f8f66cd8fdeb443c90695c5efbcf1fe6876d53",
+      "sourceBounds": {
+        "min": [-1.912354588508606, -0.24277201294898987, -2.162447929382324],
+        "max": [1.7588107585906982, 6.763467788696289, 2.057202100753784]
+      },
+      "triangles": 3182,
+      "parts": 2
+    },
+    {
+      "variant": "quaternius",
+      "appearance": "tree-conifer",
+      "source": "quaternius",
+      "path": "glTF/Pine_5.gltf",
+      "sha256": "bb060ce1420af32dc996241078d36e4c991577397474aa64f4c691362c482cfa",
+      "sourceBounds": {
+        "min": [-2.987706422805786, -0.23508861660957336, -3.7784042358398438],
+        "max": [3.432434320449829, 8.48871898651123, 2.4435970783233643]
+      },
+      "triangles": 1646,
+      "parts": 2
+    },
+    {
+      "variant": "quaternius",
+      "appearance": "tree-birch",
+      "source": "quaternius",
+      "path": "glTF/CommonTree_3.gltf",
+      "sha256": "17c6537aa8042bb7255fbb501bf7aeb2b6db87c16766f794f9c37be3ce70c976",
+      "sourceBounds": {
+        "min": [-1.9864652156829834, -0.24277201294898987, -2.0609655380249023],
+        "max": [2.076380968093872, 9.182417869567871, 2.1801114082336426]
+      },
+      "triangles": 3505,
+      "parts": 2
+    },
+    {
+      "variant": "quaternius",
+      "appearance": "woodland-shrub",
+      "source": "quaternius",
+      "path": "glTF/Bush_Common.gltf",
+      "sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90",
+      "sourceBounds": {
+        "min": [-0.9234761595726013, -0.234694704413414, -0.9743891954421997],
+        "max": [0.9913685917854309, 1.3470909595489502, 0.9907516837120056]
+      },
+      "triangles": 900,
+      "parts": 1
+    }
+  ],
+  "textures": [
+    {
+      "material": "kenney-c06d52ac5430",
+      "sourceSha256": "6ca023be9f12e8c2358fcf94320c8a894b4c05a3dd0bad1f5c268312053caca1",
+      "sourceDimensions": [512, 512],
+      "preparedDimensions": [128, 128],
+      "sourceCoverage": 1.0,
+      "preparedCoverageError": 0.0
+    },
+    {
+      "material": "quaternius-a91b021941a9",
+      "sourceSha256": "f36e94fdd73255347325b998e02a0b2575fdf714b0315bfe5e8ff34bc8e13603",
+      "sourceDimensions": [2048, 2048],
+      "preparedDimensions": [128, 128],
+      "sourceCoverage": 1.0,
+      "preparedCoverageError": 0.0
+    },
+    {
+      "material": "quaternius-6113e9a79d2f",
+      "sourceSha256": "998612bdf0b76a22f5f54d65cd7a457815d2842d89653fa4348a4ebb42933ad3",
+      "sourceDimensions": [1024, 1024],
+      "preparedDimensions": [128, 128],
+      "sourceCoverage": 0.23732662200927734,
+      "preparedCoverageError": 0.00010013580322265625
+    },
+    {
+      "material": "quaternius-99ca8375cb63",
+      "sourceSha256": "86f7ff7a214f5424de48d269568f36a15485e61c80677e426c7be9f45181eef9",
+      "sourceDimensions": [2048, 2048],
+      "preparedDimensions": [128, 128],
+      "sourceCoverage": 0.29322004318237305,
+      "preparedCoverageError": 5.3882598876953125e-5
+    },
+    {
+      "material": "quaternius-0f792ea75783",
+      "sourceSha256": "f36e94fdd73255347325b998e02a0b2575fdf714b0315bfe5e8ff34bc8e13603",
+      "sourceDimensions": [2048, 2048],
+      "preparedDimensions": [128, 128],
+      "sourceCoverage": 1.0,
+      "preparedCoverageError": 0.0
+    },
+    {
+      "material": "quaternius-79e4e02429f3",
+      "sourceSha256": "0e459b56b14c0e81b1b7cf3d1e8c6f0bb71790eb6c46bb02a76a922d8df646ea",
+      "sourceDimensions": [1024, 1024],
+      "preparedDimensions": [128, 128],
+      "sourceCoverage": 0.2929973602294922,
+      "preparedCoverageError": 2.86102294921875e-5
+    }
+  ],
+  "modifications": [
+    "Preserve source triangle topology, UVs and authored normals.",
+    "Bake node translations; fit unchanged caller-owned envelopes.",
+    "Prepare at most 128-square shared textures; filter alpha separately and measure cutoff coverage.",
+    "Keep source RGB and optional authored leaf/bark/birch RGB separate with identical alpha.",
+    "Omit source normal maps and metallic response for this controlled art comparison.",
+    "CommonTree_3 supplies slender birch structure; pale painted bark is a named approximation."
+  ],
+  "output": {
+    "path": "scenery.json",
+    "bytes": 6904143,
+    "sha256": "c5e3236f2df5d36309daa2d99c0ca88b6d7f0ee4e8ccfb9b0398a6942466ae28"
+  }
+}

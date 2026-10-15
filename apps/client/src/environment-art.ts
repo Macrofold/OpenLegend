@@ -194,15 +194,21 @@ export function groupedGroundArt(
   seed: number,
   earth = false,
   pixelSurface = false,
+  palette: 'meadow' | 'woodland' = 'meadow',
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = earth ? 128 : 512;
   const ctx = canvas.getContext('2d')!;
   const size = canvas.width;
   const rng = random(seed);
-  const colors = earth
-    ? ['#a99c79', '#afa17d', '#a59874', '#b2a580']
-    : ['#77815b', '#7e855e', '#6e7954', '#838963'];
+  const colors =
+    palette === 'woodland'
+      ? earth
+        ? ['#8e8270', '#968975', '#897c69', '#9c8e79']
+        : ['#46634f', '#4c6a54', '#405c4a', '#536f58']
+      : earth
+        ? ['#a99c79', '#afa17d', '#a59874', '#b2a580']
+        : ['#77815b', '#7e855e', '#6e7954', '#838963'];
   ctx.fillStyle = colors[0]!;
   ctx.fillRect(0, 0, size, size);
   const grid = pixelSurface ? 8 : 1;
@@ -505,6 +511,14 @@ interface OccludingInstance {
   bounds: { min: pc.Vec3; max: pc.Vec3 };
 }
 
+export interface SceneryAlpha {
+  uvs: readonly number[];
+  width: number;
+  height: number;
+  rgba: readonly number[];
+  cutoff: number;
+}
+
 /** Pointer occlusion follows the actual decorative crowns without giving them
  * native collision or sight authority. Shared local triangles and transforms
  * are prepared once; bounds reject irrelevant instances before triangle work. */
@@ -517,6 +531,7 @@ export class SceneryCameraOcclusion {
     private readonly indices: readonly number[],
     private readonly instances: readonly OccludingInstance[],
     private readonly bounds: { min: pc.Vec3; max: pc.Vec3 },
+    private readonly alpha?: SceneryAlpha,
   ) {}
 
   hit(from: pc.Vec3, to: pc.Vec3): number | null {
@@ -558,11 +573,54 @@ export class SceneryCameraOcclusion {
         const v = (this.direction.x * qx + this.direction.y * qy + this.direction.z * qz) * inv;
         if (v < 0 || u + v > 1) continue;
         const fraction = (e2x * qx + e2y * qy + e2z * qz) * inv;
-        if (fraction >= 0 && fraction <= 1 && fraction < nearest) nearest = fraction;
+        if (fraction < 0 || fraction > 1 || fraction >= nearest) continue;
+        if (this.alpha) {
+          const alpha = this.alpha;
+          const ai = this.indices[i]! * 2,
+            bi = this.indices[i + 1]! * 2,
+            ci = this.indices[i + 2]! * 2;
+          const x = alpha.uvs[ai]! * (1 - u - v) + alpha.uvs[bi]! * u + alpha.uvs[ci]! * v;
+          const y =
+            alpha.uvs[ai + 1]! * (1 - u - v) + alpha.uvs[bi + 1]! * u + alpha.uvs[ci + 1]! * v;
+          // Prepared glTF UVs and image rows both start at the top. Match the
+          // repeating source map; transparent leaf holes must remain clickable.
+          const col = Math.min(alpha.width - 1, Math.floor((((x % 1) + 1) % 1) * alpha.width));
+          const row = Math.min(alpha.height - 1, Math.floor((((y % 1) + 1) % 1) * alpha.height));
+          if (alpha.rgba[(row * alpha.width + col) * 4 + 3]! / 255 < alpha.cutoff) continue;
+        }
+        nearest = fraction;
       }
     }
     return nearest === Infinity ? null : nearest;
   }
+}
+
+/** Imported and procedural scenery both stretch to the world's authored width
+ * and height. Correct the engine's uniform-scale instancing normal assumption. */
+export function prepareSceneryNormals(
+  material: pc.StandardMaterial,
+  device: pc.GraphicsDevice,
+): void {
+  // instanced normal transform assumes uniform scale; divide out each squared
+  // axis length so stretched crowns still receive light on the correct face.
+  const normal = pc.ShaderChunks.get(device).get('normalCoreVS')!;
+  material.shaderChunks.glsl.set(
+    'normalCoreVS',
+    normal
+      .replace(
+        '#elif defined(INSTANCING)',
+        `#elif defined(INSTANCING)
+       mat3 ol_sceneryNormalMatrix(mat4 m) {
+         return mat3(m[0].xyz / dot(m[0].xyz,m[0].xyz),
+                     m[1].xyz / dot(m[1].xyz,m[1].xyz),
+                     m[2].xyz / dot(m[2].xyz,m[2].xyz));
+       }`,
+      )
+      .replace(
+        /(#elif defined\(INSTANCING\)[\s\S]*?mat3 getNormalMatrix\(mat4 modelMatrix\)\s*\{)[\s\S]*?(\n\s*\})/,
+        '$1\n        return ol_sceneryNormalMatrix(modelMatrix);$2',
+      ),
+  );
 }
 
 /** A replacement appearance for existing decorative instances only. Dimensions,
@@ -586,27 +644,7 @@ export function createGroupedScenery(
   material.diffuseVertexColor = true;
   material.diffuse.set(1, 1, 1);
   material.specular.set(0.015, 0.015, 0.015);
-  // Trees keep their authored width/height proportions. The engine's default
-  // instanced normal transform assumes uniform scale; divide out each squared
-  // axis length so stretched crowns still receive light on the correct face.
-  const normal = pc.ShaderChunks.get(device).get('normalCoreVS')!;
-  material.shaderChunks.glsl.set(
-    'normalCoreVS',
-    normal
-      .replace(
-        '#elif defined(INSTANCING)',
-        `#elif defined(INSTANCING)
-       mat3 ol_sceneryNormalMatrix(mat4 m) {
-         return mat3(m[0].xyz / dot(m[0].xyz,m[0].xyz),
-                     m[1].xyz / dot(m[1].xyz,m[1].xyz),
-                     m[2].xyz / dot(m[2].xyz,m[2].xyz));
-       }`,
-      )
-      .replace(
-        /(#elif defined\(INSTANCING\)[\s\S]*?mat3 getNormalMatrix\(mat4 modelMatrix\)\s*\{)[\s\S]*?(\n\s*\})/,
-        '$1\n        return ol_sceneryNormalMatrix(modelMatrix);$2',
-      ),
-  );
+  prepareSceneryNormals(material, device);
   material.update();
   const transforms = new Float32Array(instances.length * 16);
   const matrix = new pc.Mat4();
