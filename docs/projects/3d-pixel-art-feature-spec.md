@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Existing-scene implementation, investigations and scoped qualification are delivered; creator review and the broader pipeline remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The first scene’s visual result was rejected; pixel finish and critical camera stability are being revised, with broader pipeline work still open. | 2026-10-15   |
 
 **October 14 reference update:** [Confirmed art preferences](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) emphasize Garbage Country environments, The Last Night/REPLACED finish, and richer characters than EthrA. The [research collection](../../art-direction/research/3d-pixel-worlds/README.md) explains the evidence. The [realtime follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) adds t3ssel8r’s strongly endorsed character and makes designed pixel shading on animated geometry the proposed first comparison. Mike has now agreed to this artistic direction and the focused first-scene plan. Painted-material and articulated-sprite alternatives remain available; V3D01 still owns acceptance of actual moving artwork and production settings.
 

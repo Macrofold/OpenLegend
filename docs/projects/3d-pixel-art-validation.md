@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Existing-scene implementation, investigations and scoped qualification are delivered; creator review and the broader pipeline remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The first candidate’s scoped checks remain historical; new pixel-finish and camera-stability comparisons are underway after creator rejection. | 2026-10-15   |
 
 **October 14 reference update:** The [research comparison proposal](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-a-successful-comparison-must-show) makes surface attachment, face readability, garment coverage and restrained effects explicit review concerns. The 34-image library is external reference media, not OpenLegend qualification evidence. The moving comparison and creator acceptance below remain required.
 

@@ -4,6 +4,8 @@
 
 - [Existing starting-scene art revision](verification/starting-scene-pixel-art.md): combined E01–E08 decisions, original scene preservation and integrated device evidence; [character](verification/starting-scene-character.md), [environment](verification/starting-scene-environment.md), [native routes](verification/starting-scene-gameplay.md), [generated prop](verification/generated-prop-coherence.md) and [standalone texel splatting](verification/texel-splatting.md) retain scoped results. Creator review remains open.
 
+[Starting-scene pixel finish and camera stability](verification/starting-scene-pixel-stability.md) records the newly authorized revision after rejection of the first candidate, including single final sampling, object-attached surface artwork and critical moving-artifact comparisons.
+
 This index links recorded checks and measurements by topic. Each report retains its own revision, workload, results and limitations; a passing result for one workload does not establish current release acceptance. The [maintainer index](maintainers/README.md) links the owners of remaining work.
 
 Add detailed evidence to the relevant report under `docs/verification/`, following the [documentation policy](../.agents/rules/documentation.md#verification-reports). Keep this page for navigation and the shared playtest protocol.

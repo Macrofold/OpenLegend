@@ -65,9 +65,14 @@ export class ScenePixels {
         if (ol_preserveSubjects < .5) return .25 * (a+b+c+d);
         vec4 weights = 1.0 - clamp(vec4(a.a,b.a,c.a,d.a),0.0,1.0);
         float total = dot(weights,vec4(1.0));
-        vec3 color = (a.rgb*weights.x+b.rgb*weights.y+c.rgb*weights.z+d.rgb*weights.w)
-          / max(total,.0001);
-        return vec4(color,1.0-total*.25);
+        // Retain color numerator and scenery coverage through interpolation.
+        // Normalizing an empty cell to black before interpolation creates halos.
+        return .25 * vec4(a.rgb*weights.x+b.rgb*weights.y+c.rgb*weights.z+d.rgb*weights.w,total);
+      }
+      vec4 ol_reconstructScene(vec4 value, vec4 original) {
+        if (ol_preserveSubjects < .5) return value;
+        vec3 color = value.rgb / max(value.a,.0001);
+        return vec4(mix(color,original.rgb,smoothstep(0.0,.25,1.0-value.a)),original.a);
       }
       vec4 ol_sampleScene(vec2 uv) {
         if (ol_sceneGrid.x < 1.01) return texture2DLod(sceneTexture, uv, 0.0);
@@ -79,8 +84,7 @@ export class ScenePixels {
         vec2 center = (cell + .5) * ol_sceneGrid.x + ol_sceneGrid.yz;
         if (ol_sceneGrid.w < .5) {
           vec4 value = ol_gridCell(center);
-          return ol_preserveSubjects > .5
-            ? mix(value,original,smoothstep(0.0,.25,value.a)) : value;
+          return ol_reconstructScene(value,original);
         }
         // At a moving cell boundary integrate one display pixel's coverage.
         // The flat cell interiors stay sharp; fractional translation does not
@@ -92,8 +96,7 @@ export class ScenePixels {
                        ol_gridCell(nearCenter + vec2(ol_sceneGrid.x,0.0)), blend.x),
                    mix(ol_gridCell(nearCenter + vec2(0.0,ol_sceneGrid.x)),
                        ol_gridCell(nearCenter + vec2(ol_sceneGrid.x)), blend.x), blend.y);
-        return ol_preserveSubjects > .5
-          ? mix(value,original,smoothstep(0.0,.25,value.a)) : value;
+        return ol_reconstructScene(value,original);
       }
     `,
     );

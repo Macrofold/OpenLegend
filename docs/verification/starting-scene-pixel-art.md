@@ -1,6 +1,6 @@
 # Existing starting-scene art revision
 
-Verified October 15, 2026. Implementation and the finite investigations are delivered; Mike’s final art review remains pending. This report owns the combined E01–E08 findings and actual device envelope for V3D01.1–V3D01.12, not the general generated-appearance pipeline.
+Verified October 15, 2026. Historical first-candidate evidence: Mike subsequently rejected its normal-3D environment and authorized the [pixel-finish/stability revision](starting-scene-pixel-stability.md). The scoped checks below describe that earlier version, not current artistic acceptance. This report owns the combined E01–E08 findings and actual device envelope for V3D01.1–V3D01.12, not the general generated-appearance pipeline.
 
 ## Scope and evidence baseline
 

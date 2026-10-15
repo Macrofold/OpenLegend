@@ -10,7 +10,9 @@ export interface ArtTreatment {
   surfaceArt: 'plain' | 'painted';
   coverage: 'none' | 'msaa4';
   subjectDetail: 'shared' | 'preserve';
+  shadowSampling: 'screen' | 'fixed';
   filtering: 'source' | 'nearest' | 'mip';
+  characterFiltering: 'source' | 'nearest' | 'mip';
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
   cloth: 'flowing' | 'settled';
@@ -29,7 +31,9 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   surfaceArt: 'plain',
   coverage: 'none',
   subjectDetail: 'shared',
+  shadowSampling: 'screen',
   filtering: 'source',
+  characterFiltering: 'source',
   edges: 'none',
   motion: 'smooth',
   cloth: 'flowing',
@@ -65,11 +69,27 @@ export class ArtMaterials {
     this.settings[2] = 0.055;
     this.device.scope.resolve('ol_artStyle').setValue(this.settings);
     this.device.scope.resolve('ol_surfaceEnabled').setValue(style.surfaceArt === 'painted' ? 1 : 0);
+    this.device.scope
+      .resolve('ol_fixedShadowPattern')
+      .setValue(style.shadowSampling === 'fixed' ? 1 : 0);
   }
   prepare(material: pc.StandardMaterial, role = 0): void {
     if (this.prepared.has(material) || !material.useLighting) return;
     this.prepared.add(material);
     const chunks = pc.ShaderChunks.get(this.device);
+    // PCSS rotates its sample pattern using display coordinates. As a surface
+    // moves across the screen that changes its shadow even with fixed light.
+    // Compare a constant pattern; retain the original as an explicit control.
+    material.shaderChunks.glsl.set(
+      'shadowPCSSPS',
+      'uniform float ol_fixedShadowPattern;\n' +
+        chunks
+          .get('shadowPCSSPS')!
+          .replaceAll(
+            'noise( gl_FragCoord.xy )',
+            '(ol_fixedShadowPattern > .5 ? 0.0 : noise( gl_FragCoord.xy ))',
+          ),
+    );
     const diffuse = material.shaderChunks.glsl.get('diffusePS') ?? chunks.get('diffusePS')!;
     if (role === 1) {
       const declarations = material.shaderChunks.glsl.get('litUserDeclarationVS') ?? '';
@@ -177,7 +197,9 @@ export function mountArtControls(
     surfaceArt: ['plain', 'painted'],
     coverage: ['none', 'msaa4'],
     subjectDetail: ['shared', 'preserve'],
+    shadowSampling: ['screen', 'fixed'],
     filtering: ['source', 'nearest', 'mip'],
+    characterFiltering: ['source', 'nearest', 'mip'],
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
     cloth: ['flowing', 'settled'],
@@ -196,7 +218,9 @@ export function mountArtControls(
     surfaceArt: 'Environment surface art',
     coverage: 'Silhouette coverage',
     subjectDetail: 'People and small-object detail',
+    shadowSampling: 'Soft-shadow sample pattern',
     filtering: 'Texture filtering',
+    characterFiltering: 'Character texture filtering',
     edges: 'Character edges',
     motion: 'Walking poses',
     cloth: 'Cape movement',

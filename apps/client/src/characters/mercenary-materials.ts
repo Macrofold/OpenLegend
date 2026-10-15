@@ -15,7 +15,7 @@ export class MercenaryMaterials {
       mipmaps: boolean;
     }
   >();
-  private filtering: ArtTreatment['filtering'] = 'source';
+  private filtering: ArtTreatment['characterFiltering'] = 'source';
   constructor(
     private readonly sun: pc.Light,
     private readonly art: ArtMaterials,
@@ -66,8 +66,8 @@ export class MercenaryMaterials {
   }
 
   setArtTreatment(style: Readonly<ArtTreatment>): void {
-    if (style.filtering === this.filtering) return;
-    this.filtering = style.filtering;
+    if (style.characterFiltering === this.filtering) return;
+    this.filtering = style.characterFiltering;
     for (const texture of this.textures) this.filterTexture(texture);
   }
   private filterTexture(texture: pc.Texture): void {
