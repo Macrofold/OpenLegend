@@ -4,7 +4,7 @@ This report continues [whole-interface verification](game-interaction-redesign.m
 
 **October 14 result: thirteen distinct selected UI scenarios have passing evidence across the source-specific runs below.** This was not one thirteen-test run or a statement that every whole-feature acceptance criterion had passed. Production UI was unchanged during that original narrower testing pass. The October 15 continuation below records later fixes, integration, source-specific passes/failures and current remaining acceptance.
 
-**October 15 current result:** the named recovery and composed-interface observations now have passing source-specific evidence, including short invitation controls, both supported alternate presets and real browser zoom/reflow. The cleaned source at `d3c526392` passes required Code and Spatial/interface CI after all thirteen temporary qualification files are removed. Real OS input methods, applicable assistive devices and uncoached player/creator/operator acceptance remain unperformed; the project is not declared complete.
+**October 15 current result:** the named recovery and composed-interface observations now have passing source-specific evidence, including short invitation controls, both supported alternate presets and real browser zoom/reflow. The cleaned source at `d3c526392` passes required Code and Spatial/interface CI after all thirteen temporary qualification files are removed. The later documentation-only head `5926cf647` passes Code but fails the Actions browser journey's sixty-second total; its unchanged failed job is being rerun once after trace inspection. Real OS input methods, applicable assistive devices and uncoached player/creator/operator acceptance remain unperformed; the project is not declared complete.
 
 ## Scope correction
 
@@ -716,13 +716,55 @@ Project status remains **In progress** for the real input/device/uncoached
 requirements below, and PR #27 remains draft and unmerged. Additional and
 cumulative task provider/Jev cost: **$0**.
 
+## Documentation-head Actions deadline
+
+Documentation-only source `5926cf6478325b0764dcae271b95952de93653b9` passes
+[PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38692034687) and
+[push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38692030647).
+Its first [Spatial/interface attempt](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/attempts/1)
+**fails** only the existing Actions journey's unchanged sixty-second aggregate.
+All 28 native tests, the spatial browser journey and the five following ordinary
+UI cases pass; God editor takes 22.5 seconds and Time takes 47.7 seconds. The
+passing cleanup source does not waive this later failed gate.
+
+The original trace's last in-budget assertion confirms gathering remains disabled
+after reload at about 59.73 seconds; Escape completes around 59.78 seconds. The
+next ground right-click is in progress when the total expires. Later Walk/Evade,
+empty error/provider and other assertions finish around 61.19 seconds; their late
+success does not satisfy the test deadline. There is no failed individual
+five-second predicate in this trace.
+
+The required action-menu screenshot takes about 9.59 seconds; its font-readiness
+part takes about 1.3 ms. The subsequent actual reload takes 35.31 seconds. Its
+document GET returns 200 in 8.86 ms, followed by about 34.8 seconds before the
+new document commits and its assets begin. No screencast frame is recorded
+between trace times 24.714 and 59.675 seconds. This identifies a browser-side
+commit interval, not a slow document response or a demonstrated server,
+graphics-teardown, scheduling or observation-cost cause. Native page-hide paths
+queue nonblocking release/presence and close the stream; source inspection finds
+no awaited thirty-five-second step. The actual two scene startups and four menu
+openings serve distinct retained-pause and contextual-choice assertions, and local
+search does not submit another catalogue read. No safe production or fixture
+correction follows from the present evidence.
+
+The captured action-menu PNG was inspected: River reeds, the exact search,
+disabled gathering choice, complete keyboard outline and Resume the world to act
+explanation are readable. It does not qualify the later reloaded state.
+[Artifact 11953235211](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/artifacts/11953235211)
+retains 21,123,682 bytes of the failed trace and ordinary captures. The
+application, packages, permanent tests and Playwright configuration are byte-for-byte
+unchanged from the passing `d3c526392` source. One unchanged failed-job rerun is
+pending under the same assertions and deadlines; no automatic provider retry,
+new scenario or source change is introduced. Additional and cumulative task
+provider/Jev cost: **$0**.
+
 ## Reused evidence and remaining experience scope
 
 The final source/acceptance audit compares the integrated owners and their actual
 recorded scenarios. The selected invitation full-focus, browser zoom/reflow and
 alternate-world continuations, cleaned-source required CI and evidence/tooling
-cleanup now pass. It identifies no further independently executable in-scope
-task while real participant/device evidence is unavailable. This is an overlap
+cleanup pass. The later Actions deadline failure reopens the current required
+check; it is the only newly identified independent qualification task. This is an overlap
 review, not a claim that every historical journey was rerun at the latest source.
 
 | Journey scope                        | Evidence reused and its limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -758,8 +800,8 @@ Native enlarged-browser/320-CSS-pixel qualification passes at `c98de4a07` with
 all three images inspected; earlier capture and late-layout failures remain
 recorded. Temporary tools are removed, ordinary CI/test entry points have no
 dependency on them, and local TypeScript and affected-diff/documentation review
-pass. No further independent implementation or qualification task was identified
-by the current audit.
+pass. The later documentation-head Actions deadline is under investigation;
+current required CI must pass without dropping assertions or increasing limits.
 
 Real operating-system input-method behavior, applicable physical assistive
 devices and uncoached player/creator/operator observations have not been performed
