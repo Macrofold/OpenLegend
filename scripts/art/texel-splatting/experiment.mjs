@@ -161,6 +161,8 @@ const bounds = computeVertexAABB(vertexData, 6);
 const emptyBounds = { min: [1000, 1000, 1000], max: [1001, 1001, 1001] };
 const config = {
   device,
+  vertexData,
+  indexData,
   vertexBuffer: emptyVertex,
   indexBuffer: emptyIndex,
   indexCount: 0,

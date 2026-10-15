@@ -12,6 +12,36 @@ import { SKY_STRUCT_WGSL } from '/upstream/src/sky.ts';
 
 export function createSurfaceGrid(config, layout, group, width, height) {
   const { device } = config;
+  // Per-face coefficients cannot live on shared corners spanning other faces.
+  // Expand only this bounded static comparison once, retaining real positions.
+  const data = [];
+  for (let i = 0; i < config.indexData.length; i += 3) {
+    const points = [0, 1, 2].map((j) =>
+      Array.from(
+        config.vertexData.subarray(config.indexData[i + j] * 6, config.indexData[i + j] * 6 + 3),
+      ),
+    );
+    const a = points[1].map((v, j) => v - points[0][j]);
+    const b = points[2].map((v, j) => v - points[0][j]);
+    const n = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const length = Math.hypot(...n);
+    if (length < 1e-10) continue;
+    for (let j = 0; j < 3; j++) n[j] /= length;
+    const sourceNormal = config.vertexData.subarray(
+      config.indexData[i] * 6 + 3,
+      config.indexData[i] * 6 + 6,
+    );
+    if (n.reduce((s, v, j) => s + v * sourceNormal[j], 0) < 0)
+      for (let j = 0; j < 3; j++) n[j] *= -1;
+    const d = n.reduce((s, v, j) => s + v * points[0][j], 0);
+    for (const point of points) data.push(...point, ...n, d);
+  }
+  const vertices = new Float32Array(data);
+  const buffer = device.createBuffer({
+    size: vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(buffer, 0, vertices);
   const module = device.createShaderModule({
     code: `
 ${UNIFORMS_WGSL}
@@ -28,18 +58,18 @@ ${OKLAB_WGSL}
 ${PATH_WGSL}
 ${STONE_COLOR_WGSL}
 ${LIGHTING_WGSL}
-struct V { @builtin(position) pos: vec4f, @location(0) world: vec3f, @location(1) normal: vec3f }
-@vertex fn vs(@location(0) p: vec3f, @location(1) n: vec3f)->V {
- var v:V; v.pos=u.viewProj*vec4f(p,1); v.world=p; v.normal=n; return v;
+struct V { @builtin(position) pos: vec4f, @location(0) world: vec3f, @location(1) @interpolate(flat) plane: vec4f }
+@vertex fn vs(@location(0) p: vec3f, @location(1) plane: vec4f)->V {
+ var v:V; v.pos=u.viewProj*vec4f(p,1); v.world=p; v.plane=plane; return v;
 }
 @fragment fn fs(v:V)->@location(0) vec4f {
- let n=normalize(v.normal); let a=abs(n); let cell=.12;
+ let n=v.plane.xyz; let a=abs(n); let cell=.12;
  var axis=2u; if(a.x>=a.y && a.x>=a.z){axis=0u;} else if(a.y>=a.z){axis=1u;}
  // Project the world lattice onto the original face plane, retaining that
  // plane's actual offset. Geometry/depth never moves to a sample center.
  var center=(floor(v.world/cell)+.5)*cell;
- center[axis]=v.world[axis];
- center[axis]-=dot(n,center-v.world)/n[axis];
+ center[axis]=0.;
+ center[axis]=(v.plane.w-dot(n,center))/n[axis];
  let color=stoneColor(center);
  let lit=computeLighting(center,n,color,u.sunDir,u.shadowFade,u.sunColor,u.ambient,0.,0u);
  return vec4f(posterize(lit),1);
@@ -52,10 +82,10 @@ struct V { @builtin(position) pos: vec4f, @location(0) world: vec3f, @location(1
       entryPoint: 'vs',
       buffers: [
         {
-          arrayStride: 24,
+          arrayStride: 28,
           attributes: [
             { shaderLocation: 0, offset: 0, format: 'float32x3' },
-            { shaderLocation: 1, offset: 12, format: 'float32x3' },
+            { shaderLocation: 1, offset: 12, format: 'float32x4' },
           ],
         },
       ],
@@ -102,12 +132,12 @@ struct V { @builtin(position) pos: vec4f, @location(0) world: vec3f, @location(1
       });
       pass.setPipeline(pipeline);
       pass.setBindGroup(0, group);
-      pass.setVertexBuffer(0, config.stoneVertexBuffer);
-      pass.setIndexBuffer(config.stoneIndexBuffer, 'uint16');
-      pass.drawIndexed(config.stoneIndexCount);
+      pass.setVertexBuffer(0, buffer);
+      pass.draw(vertices.length / 7);
       pass.end();
     },
     destroy() {
+      buffer.destroy();
       color.destroy();
       depth.destroy();
     },
