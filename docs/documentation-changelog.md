@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 15, 2026 — Correct mercenary size and surface density
+
+Mike reports that the restored model looks twice as large as the other people and its texture resolution is too high. [MER11](maintainers/art/mercenary.md#size-and-surface-pixel-correction) replaces the former 1.6/2.96 m display enlargement with fixed 1.1/2.035 m tall-adult proportions. Upright geometry naturally foreshortens beside camera-facing people; compensating at one steep angle had made him oversized at lower views.
+
+Original geometry, colors, Idle/Walk and the separate moving cape remain. Faithful shared 192×192 body / 192×288 cape diffuse copies replace full-resolution paint, preserving aspect ratio and using nearest magnification with mip filtering. This revises MER10’s no-downsampling choice while retaining removal of destructive palette replacement and the extra character color image. The pixels belong to fixed surface textures; camera movement never recreates them. Prepared maps have explicit scene ownership; full source textures remain loaded, so reduced displayed detail is not a source-memory reduction. [Current behavior](world-presentation.md#animated-character-pixels), [A3D18](limits/3d-pixel-art.md#a3d18--restored-original-animated-mercenary) and the [plan](projects/completed/mercenary-size-and-density.md) retain current verification status and unchanged broader gates. No native mechanics, startup behavior, dependency or provider spending changed.
+
 ## October 15, 2026 — Agreed first playable pixel-art scene and experiment plan
 
 Mike agreed to renderer-driven dimensional pixel art as the leading character route, clear organic wilderness forms and purposeful cinematic lighting, then requested design revisions and tracked experiments. The [existing feature/technical pair](projects/3d-pixel-art-feature-spec.md) now separates that agreed artistic direction from unselected sampling, shading, outline, animation and device settings. The [first-scene plan](projects/3d-pixel-art-first-scene-plan.md) sequences a reviewed character baseline, playable camp, shared rendering treatment, motion/vegetation/effects, an authored/generated asset pair and measured moving creator review.

@@ -77,9 +77,9 @@ export class MercenaryModels {
   }
 }
 
-// The pitched game camera foreshortens upright geometry beside camera-facing people.
-// Choose one fixed art scale; zoom/orbit never change anatomy or the source artwork.
-const displayScale = 1.6;
+// Tall-adult world proportions. Upright geometry foreshortens at steep camera
+// pitch; compensating for that made the body oversized at lower angles.
+const displayScale = 1.1;
 
 export class MercenaryActor {
   private node?: pc.Entity;
