@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                                       | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Representative Blender studies are underway with delegated art choices; earlier variants and unresolved visual gates remain preserved. | 2026-10-15   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Representative Blender study delivered with thirty retained alternatives and working selections; broader gameplay art gates remain open. | 2026-10-15   |
 
 ## Purpose and authorization
 
@@ -101,9 +101,11 @@ Estimated impact is approximately **2,000–3,000 executable authoring/viewer li
 
 Completion is a useful, reviewable representative pixel-art set with multiple retained options, explained working recommendations, editable Blender assets, actual moving inspection and integrated study access. It does not require guessing Mike's final artistic feedback or solving every older mercenary/crowd/renderer gap. Any asset that still reads as plain low-poly, loses its face or pops through clothing must be revised or explicitly left unselected; successful export alone is insufficient.
 
+**Delivered October 15:** all six study steps are complete for thirty alternatives across ten families, with actual render-driven revisions, editable sources, an integrated production inspection page, retained moving/scale comparisons and scoped verification. [Study evidence and limits](../verification/representative-art-study.md) own the measured result. This completes V3D01.15; earlier mercenary, animated-art and wider-device acceptance remains open.
+
 ## Maintained records
 
-- Work, dependencies, decisions and unchecked completion: [V3D01.1–V3D01.14](../maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks).
+- Work, dependencies, decisions and unchecked completion: [V3D01.1–V3D01.15](../maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks).
 - Product/art intent: [feature specification](3d-pixel-art-feature-spec.md#1-recommendation) and [creative brief](../../art-direction/final-board/creative-brief.md).
 - Mechanisms and ownership: [technical design](3d-pixel-art-tech-design.md#8-pixel-rendering-profile) and [current world presentation](../world-presentation.md).
 - Experiment procedures and acceptance: [qualification](3d-pixel-art-validation.md#first-scene-technique-experiments). Keep results in the relevant [verification report](../verification.md), linked from the task when it runs.

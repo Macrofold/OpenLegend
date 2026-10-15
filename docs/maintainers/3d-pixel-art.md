@@ -181,10 +181,12 @@ V3D01.1–V3D01.11 are **Completed investigations, scoped implementation and tec
 
 **Owner:** offline nature/people/objects authors and existing client/developer presentation. **Depends on:** preserved V3D01.14 sources and [authorized study plan](../projects/3d-pixel-art-first-scene-plan.md#representative-blender-asset-study--authorized-october-15-2026). Mike delegates working selections, preserving alternatives and the $25 shared spending ceiling.
 
-- [ ] Author meaningful fixed-pixel Blender alternatives for rocks, trees, berry bushes, chests, people, armor and swords/weapons, with actual repertoire links, clear faces, coherent scale and source rights.
-- [ ] Retain editable sources, reproducible preparation, GLBs/textures and provenance; inspect and revise actual early renders before selecting defaults against the agreed references.
-- [ ] Deliver a usable finite 3D inspection page with comparison and composed views, camera/light controls and existing developer entry; preserve all earlier assets and native world state.
-- [ ] Complete moving/scale/coverage, controls/failure/lifetime, reduced-motion/narrow-view and complete-renderer checks; review the affected diff, synchronize current owners/evidence/limits and commit. Final creator feedback and broader game release qualification remain distinct.
+- [x] Author meaningful fixed-pixel Blender alternatives for rocks, trees, berry bushes, chests, people, armor and swords/weapons, with actual repertoire links, clear faces, coherent scale and source rights.
+- [x] Retain editable sources, reproducible preparation, GLBs/textures and provenance; inspect and revise actual early renders before selecting defaults against the agreed references.
+- [x] Deliver a usable finite 3D inspection page with comparison and composed views, camera/light controls and existing developer entry; preserve all earlier assets and native world state.
+- [x] Complete moving/scale/coverage, controls/failure/lifetime, reduced-motion/narrow-view and complete-renderer checks; review the affected diff, synchronize current owners/evidence/limits and commit. Final creator feedback and broader game release qualification remain distinct.
+
+**Evidence:** [Representative study delivery and limits](../verification/representative-art-study.md). These checks close this finite study, not the preceding critical gameplay/mercenary acceptance gates.
 
 ## V3D02 — Immutable appearance and artifact foundation
 

@@ -93,6 +93,7 @@ export class ArtStudy {
   private zoom = 1;
   private span = 5;
   private detailSpan = 1;
+  private readonly extent = new pc.Vec3(0, 3, 0);
   private tallest = 2;
   private center = new pc.Vec3(0, 1.2, 0);
   private turning = false;
@@ -117,8 +118,8 @@ export class ArtStudy {
     this.camera.addComponent('camera', {
       projection: pc.PROJECTION_ORTHOGRAPHIC,
       clearColor: new pc.Color(0.68, 0.72, 0.64),
-      nearClip: 0.01,
-      farClip: 100,
+      nearClip: 0.1,
+      farClip: 500,
     });
     this.app.root.addChild(this.camera);
     this.sun = new pc.Entity('Shared study daylight', this.app);
@@ -145,7 +146,7 @@ export class ArtStudy {
       material: this.stageMaterial,
       castShadows: false,
     });
-    floor.setLocalScale(70, 1, 70);
+    floor.setLocalScale(1000, 1, 1000);
     floor.setLocalPosition(0, -0.008, 0);
     this.app.root.addChild(floor);
     this.observer = new ResizeObserver(() => this.resize());
@@ -201,7 +202,7 @@ export class ArtStudy {
         drag = this.dragging;
       if (!drag || drag.id !== e.pointerId) return;
       this.yaw -= (e.clientX - drag.x) * 0.008;
-      this.pitch = pc.math.clamp(this.pitch + (e.clientY - drag.y) * 0.006, -0.05, 1.2);
+      this.pitch = pc.math.clamp(this.pitch + (e.clientY - drag.y) * 0.006, 0.12, 1.2);
       drag.x = e.clientX;
       drag.y = e.clientY;
       this.placeCamera();
@@ -226,7 +227,7 @@ export class ArtStudy {
       if (e.key === 'ArrowLeft') this.yaw -= 0.12;
       if (e.key === 'ArrowRight') this.yaw += 0.12;
       if (e.key === 'ArrowUp') this.pitch = Math.min(1.2, this.pitch + 0.1);
-      if (e.key === 'ArrowDown') this.pitch = Math.max(-0.05, this.pitch - 0.1);
+      if (e.key === 'ArrowDown') this.pitch = Math.max(0.12, this.pitch - 0.1);
       if (e.key === '+' || e.key === '=') this.adjustZoom(0.8);
       if (e.key === '-') this.adjustZoom(1.25);
       this.placeCamera();
@@ -350,14 +351,17 @@ export class ArtStudy {
         label.textContent = composition
           ? asset.label
           : `${String.fromCharCode(65 + index)} · ${asset.variant}${asset.recommended ? ' · selected' : ''}`;
+        label.dataset.full = label.textContent;
+        label.dataset.short = composition
+          ? asset.label
+          : `${String.fromCharCode(65 + index)}${asset.recommended ? ' ✓' : ''}`;
         element('labels').append(label);
         this.anchors.push({ node, label, height });
       });
       this.center.set((minX + maxX) / 2, maxY * 0.45, (minZ + maxZ) / 2);
       this.tallest = maxY;
-      const aspect = this.canvas.clientWidth / Math.max(1, this.canvas.clientHeight);
-      this.span = Math.max(maxY * 0.7, (maxX - minX) / (aspect * 1.55), (maxZ - minZ) * 0.5, 0.55);
-      this.detailSpan = Math.max(this.span * 0.32, (maxX - minX) / (aspect * 1.95));
+      this.extent.set(maxX - minX, maxY, maxZ - minZ);
+      this.fit();
       this.zoom = 1;
       this.placeCamera();
       this.cards(selected);
@@ -416,7 +420,18 @@ export class ArtStudy {
       Math.max(1, Math.round(rect.width)),
       Math.max(1, Math.round(rect.height)),
     );
+    this.fit();
     this.placeCamera();
+  }
+  private fit(): void {
+    const aspect = this.canvas.clientWidth / Math.max(1, this.canvas.clientHeight);
+    this.span = Math.max(
+      this.extent.y * 0.7,
+      this.extent.x / (aspect * 1.55),
+      this.extent.z * 0.5,
+      0.55,
+    );
+    this.detailSpan = Math.max(this.span * 0.32, this.extent.x / (aspect * 1.95));
   }
   private adjustZoom(scale: number): void {
     this.zoom = pc.math.clamp(this.zoom * scale, 0.15, 6);
@@ -436,7 +451,13 @@ export class ArtStudy {
         : pc.PROJECTION_ORTHOGRAPHIC;
     camera.fov = 50;
     camera.orthoHeight = height;
-    const distance = Math.max(0.2, height / Math.tan(25 * pc.math.DEG_TO_RAD));
+    // Lower orthographic rays must start above the ground, including shallow
+    // views; otherwise the foreground falls behind the camera's near plane.
+    const distance =
+      camera.projection === pc.PROJECTION_ORTHOGRAPHIC
+        ? height / Math.sin(this.pitch) + 2
+        : Math.max(0.4, height / Math.tan(25 * pc.math.DEG_TO_RAD));
+    this.sun.light!.shadowDistance = distance + Math.max(10, this.span * 2);
     const h = Math.cos(this.pitch) * distance;
     this.camera.setPosition(
       target.x + Math.sin(this.yaw) * h,
@@ -447,6 +468,8 @@ export class ArtStudy {
   }
   private labels(): void {
     for (const { node, label, height } of this.anchors) {
+      label.textContent =
+        label.dataset[element<HTMLSelectElement>('framing').value === 'game' ? 'short' : 'full']!;
       const p = node.getPosition().clone();
       p.y += height + 0.08;
       const at = this.camera.camera!.worldToScreen(p);

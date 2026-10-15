@@ -16,6 +16,10 @@ Local camera preferences persist separately from player-owned visibility prefere
 
 The canvas renders at one pixel per CSS pixel: a 1920×1080 viewport produces a 1920×1080 framebuffer in both shadow settings. The earlier implicit 0.8 scale is removed. Device pixel ratio remains capped at one, avoiding an unrequested Retina supersampling workload. CSS still owns layout and input coordinates. [VP01](limits/interface.md#vp01) owns this graphics budget.
 
+## Representative Blender asset inspection
+
+The separate `/art-study.html` developer page compares thirty original Blender alternatives across ten representative subjects. It displays fixed painted textures on shaped static meshes at full canvas resolution, with shared lighting, actual metre scale, comparison/composed views, free camera controls and downloadable GLB/editable sources. It does not use the mercenary image capture or whole-scene reduction. Working recommendations are selected autonomously under Mike's October 15 instruction; every alternative remains available. This finite visual study changes no native world content or active progress and does not replace the current game defaults. [Sources and use](../art-direction/assets/representative-study/README.md), [art decisions](../art-direction/decisions.md#representative-blender-study--selected-direction), [evidence and limits](verification/representative-art-study.md).
+
 ## Local read-through
 
 Eligibility is the controlled player plus **currently character-visible** entities within the configured three-dimensional neighborhood, excluding stale remembered entities. Radius selects the protected target, not potential occluders: a tree outside the radius may hide a target inside it. Same XZ on another floor is not sufficient; body visibility still gates the result. The local neighborhood appears circular in plan, not a screen-wide X-ray mode. Changing radius never extends perception, interaction range or server disclosure. Targets outside the viewport are not brought onto the screen.

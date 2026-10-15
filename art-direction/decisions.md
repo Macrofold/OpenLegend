@@ -98,6 +98,10 @@ Mike authorized continued implementation with a **$25 total task budget**, repla
 
 Mike explicitly asked Codex to choose the strongest working versions while he is away, preserve every alternative and continue building a representative 3D pixel-art set in Blender. Rocks, trees, berry bushes, chests, people, armor and swords/weapons should support later feedback about common art principles. Working selections may proceed without waiting for preference replies; this supersedes the previous requirement to leave every provisional choice unanswered. It does not imply Mike has seen or accepted a particular result. Keep the agreed references, clear faces, authored fixed pixel detail and critical stability concerns. [Plan](../docs/projects/3d-pixel-art-first-scene-plan.md#representative-blender-asset-study--authorized-october-15-2026), [V3D01.15](../docs/maintainers/3d-pixel-art.md#v3d0115--representative-blender-pixel-art-study).
 
+## Representative Blender study — selected direction
+
+The completed thirty-option study selects natural rock/broadleaf/berry bush, open conifer, crafted chest/sword/Mara/Tavin and quiet round shield/armor. The selection favors shaped silhouettes, readable eyes, broad quiet material fields and a few deliberate stepped paint clusters. Small constructed details belong where they explain the object, such as a latch, blade fuller or coat patch. Geometry supplies cloth coverage and solid foliage; no camera-dependent repainting or whole-frame reduction disguises the source. [Actual comparisons, revisions and limits](../docs/verification/representative-art-study.md) retain the evidence. The study is a working proposal, not Mike's final art approval or a replacement for the animated mercenary; all alternatives and older models remain available.
+
 ## Decision entry format
 
 Date · decision · relevant reference IDs · user rationale · open implications.

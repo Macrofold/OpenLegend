@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 15, 2026 — Deliver the representative Blender pixel-art study
+
+Mike delegated working selections while away. Thirty original Blender alternatives now cover ten representative subjects, with editable sources, fixed pixel atlases, exact provenance and a production/development inspection page linked from existing art controls. Actual draft review revised foliage, wool, faces, UV coverage and chest lid overlaps. Working selections favor quiet organic groups and deliberate material detail; every alternative and older model remains preserved. Native world content, gameplay, saves and current game defaults are unchanged.
+
+[Study evidence](verification/representative-art-study.md), [current presentation](world-presentation.md#representative-blender-asset-inspection), [A3D19's finite study envelope](limits/3d-pixel-art.md#representative-blender-study-envelope), [sources/use](../art-direction/assets/representative-study/README.md) and [V3D01.15](maintainers/3d-pixel-art.md#v3d0115--representative-blender-pixel-art-study) distinguish delivered checks from final human style approval, old mercenary limitations and animated/device qualification. The selected ten-asset frame measures 45 draws and 18,820 model triangles; this is not a whole-game benchmark. Additional/cumulative external provider/Jev/purchase cost is $0; reserved/uncertain commitments $0 of $25. No paid provider was needed.
+
 ## October 15, 2026 — Add licensed library sources and authored art alternatives
 
 Mike authorized a $25 total task ceiling, useful paid tools and several visible choices for each changed character/asset without waiting for optional feedback. Actual free Quaternius/Kenney environment packs and the CC0 CDmir/TinyWorlds rabbit were downloaded and inspected. Literal licenses, exact provenance, selected prepared data, the unchanged rabbit source and reproducible recipes are retained. Three mercenary artwork choices and three shaped/painted hares join original controls in the existing scene; no authored world records, native rules, dimensions or active progress change. The unresolved mercenary source rights do not inherit the new assets' CC0 licenses.
