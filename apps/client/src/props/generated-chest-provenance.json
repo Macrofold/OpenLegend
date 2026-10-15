@@ -1,0 +1,65 @@
+{
+  "title": "Generated supply chest \u2014 E08",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Production Gothic reward chest created with Meshy; runtime processing by Samfa12/Codex.",
+  "modifications": "OpenLegend closes the original generated lid, shares identical source vertices, groups existing paint into two material regions and fits the unchanged native crate envelope.",
+  "source": {
+    "repository": "https://github.com/Samfa12-tech/The-Horde-RT-demo",
+    "revision": "d7e6d4018042c8b068f300aa5dbc9e1495daa448",
+    "licenseEvidence": "https://github.com/Samfa12-tech/The-Horde-RT-demo/blob/d7e6d4018042c8b068f300aa5dbc9e1495daa448/ASSET_LICENSES.md",
+    "metadata": "https://github.com/Samfa12-tech/The-Horde-RT-demo/blob/d7e6d4018042c8b068f300aa5dbc9e1495daa448/assets/models/props/meshy/production-gothic-chest-2026-08-27/METADATA.md",
+    "url": "https://media.githubusercontent.com/media/Samfa12-tech/The-Horde-RT-demo/d7e6d4018042c8b068f300aa5dbc9e1495daa448/assets/models/props/meshy/production-gothic-chest-2026-08-27/chest-meshy-remesh-7k.glb",
+    "sha256": "eb70e139f5f776dc7204b9fff498bf9cdc7c75f275d65053d73a597b6908c5ab",
+    "bytes": 21246952,
+    "triangles": 6912,
+    "vertices": 12203,
+    "generation": {
+      "provider": "Meshy",
+      "date": "2026-08-27",
+      "preview": "01a03f69-2b15-7c6b-b17f-de4741cdafba",
+      "refine": "01a03f6c-ba91-7f43-a42a-10d2f09f9f09",
+      "remesh": "01a03f74-72ac-7e62-8b58-cd906ddc758a",
+      "reportedHistoricalCredits": 40,
+      "historicalUsdCost": null,
+      "historicalLatencySeconds": null,
+      "sourceReview": "Upstream accepted preview and neutral PBR, but rejected this remesh for its fine ornament fidelity. OpenLegend tests its broad shape at coarse gameplay sampling; it does not adopt the separately hand-reauthored runtime chest as evidence of generated geometry.",
+      "accountPlanCaveat": "Upstream did not independently prove the active Meshy plan and explicitly distributed this asset using the conservative Free-plan CC BY 4.0 route."
+    }
+  },
+  "runtime": {
+    "file": "generated-chest.glb",
+    "sha256": "f48c364f3deb88e85e043a26801bc0754dc547ece8b47ee535bf962237c86fb2",
+    "bytes": 454308,
+    "triangles": 6912,
+    "vertices": 12816,
+    "materials": 2,
+    "textures": 0,
+    "normalMaps": 0,
+    "animations": 0,
+    "lidTrianglesRigidlyRotated": 3909,
+    "regions": [
+      {
+        "name": "Oak boards",
+        "triangles": 3492,
+        "linearColor": [0.2, 0.105, 0.045]
+      },
+      {
+        "name": "Forged iron",
+        "triangles": 3420,
+        "linearColor": [0.035, 0.045, 0.05]
+      }
+    ],
+    "bounds": {
+      "min": [-0.5, 0, -0.5],
+      "max": [0.5, 1, 0.5]
+    },
+    "targetEnvelopeMeters": [1, 0.8, 0.8],
+    "preparation": "scripts/prepare-generated-chest.py",
+    "blenderVersion": "5.2.2 LTS",
+    "renderTreatment": "Ordinary StandardMaterial colors prepared by the same ArtMaterials and ShadowMaterial owners as the authored scene. No prop-specific shader."
+  },
+  "newProviderCalls": 0,
+  "newProviderCostUsd": 0,
+  "reviewStatus": "Prepared source candidate; creator visual acceptance remains separate."
+}
