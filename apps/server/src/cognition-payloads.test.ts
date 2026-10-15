@@ -1073,7 +1073,7 @@ describe(
       });
     });
 
-    it('hazard: another actor strikes Ada; combined routing and a level-3 payload', async () => {
+    it('hazard: another actor strikes Ada; attention, combined routing and a level-3 payload', async () => {
       const h = await harness({ script: { route: { level3: 0.9 } } });
       const health = h.service.world.entities[NPC_ID]!.actor!.health;
       const struck = await h.service.command('fixture-punch', {
@@ -1096,8 +1096,11 @@ describe(
       const job = await h.thought();
       expect(job.status).toBe('completed');
       const dispatched = h.jobCalls(job.id);
-      expect(dispatched.judges.map((request) => request.requestId)).toEqual([`${job.id}${ROUTE}`]);
-      const route = dispatched.judges[0]!;
+      expect(dispatched.judges.map((request) => request.requestId)).toEqual([
+        `${job.id}:attempt:0:attention:0`,
+        `${job.id}${ROUTE}`,
+      ]);
+      const route = dispatched.judges[1]!;
       const decisionContext = (route.state as { decisionContext: Record<string, unknown> })
         .decisionContext;
       expect(String(decisionContext['stimulus'])).toMatch(/punched/);
@@ -1107,6 +1110,8 @@ describe(
       expect(generation).toMatchObject({ execution: 'complex', reasoningEffort: 'low' });
       const ledger = await h.accounting(job.id, 3);
       expect(ledger.level(generation!.requestId)).toBe(3);
+      expect(ledger.summary.groups).toEqual({ level1: 2, level3: 1 });
+      expect(ledger.summary.requests).toBe(3);
       const parts = sections(String(generation!.context));
       expect(section(parts, 'Trigger').body).toMatch(/punched/);
       report('hazard', {
@@ -1414,11 +1419,12 @@ describe(
       // confounds the result.
       const fresh = await harness({ script: { route: { level2: 0.9 } }, reply });
       probes.push(await probe(fresh, 'fresh', 9.5, [...files.slice(0, 9), half]));
-      // The native preflight with no retained greetings already needs 106,533 bytes for
-      // eight files against a 100,000-byte limit; six files need 90,591. These lower-history
-      // measurements select the control, while this fresh real orchestration verifies it.
+      // The current required context also rejects the former six-file control. Retain that
+      // measured boundary explicitly; a separate smaller snapshot must actually complete.
+      const sixFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
+      probes.push(await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6)));
       const control = await harness({ script: { route: { level2: 0.9 } }, reply });
-      const positive = await probe(control, 'fresh-control', 6, files.slice(0, 6));
+      const positive = await probe(control, 'fresh-control', 4, files.slice(0, 4));
       report('inner-world-quota', {
         ...quota,
         fileBytes: fileBytes[0],
@@ -1449,7 +1455,7 @@ describe(
       // Preserve positive full-snapshot, request-limit and accounting coverage, including
       // the actual native reply; an arbitrary refusal cannot satisfy this control.
       expect(positive).toMatchObject({
-        files: 6,
+        files: 4,
         status: 'completed',
         disposition: 'responded',
         failure: [],
