@@ -2,7 +2,7 @@ game_key,FUN,CREATE,ECON,CRAFT,LOOT,GEAR,GROWTH,COMBAT,MAGIC,EXPLORE,TRAVEL,SURV
 hades-ii,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 among-us,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 animal-crossing-new-horizons,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
-roblox,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
+roblox,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 grow-a-garden,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 steal-a-brainrot,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 fortnite,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
@@ -119,9 +119,9 @@ deus-ex-2000,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U
 prey-2017,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 dishonored-2,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 starsector,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
-battle-brothers,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
+battle-brothers,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 cataclysm-dark-days-ahead,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
-rain-world,X,X,U,X,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
+rain-world,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 persona-5-royal,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 xcom-2,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 crusader-kings-iii,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
@@ -150,7 +150,7 @@ abiotic-factor,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U
 songs-of-syx,X,X,U,U,U,U,U,U,U,U,U,U,U,U,U,U,I,U,U,U,U,U,U,U,U,U,U,U,X,X,U,U,U,U,U
 streets-of-rogue,X,X,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,X,X,W,W,W,W,W
 nethack,X,X,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,X,X,W,W,W,W,W
-spelunky-2,X,X,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,X,X,W,W,W,W,W
+spelunky-2,X,X,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,X,X,W,W,W,W,W
 the-binding-of-isaac-rebirth,X,X,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,X,X,W,W,W,W,W
 cogmind,X,X,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,X,X,W,W,W,W,W
 dungeon-crawl-stone-soup,X,X,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,X,X,W,W,W,W,W
