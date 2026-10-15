@@ -8,7 +8,7 @@ Open `/art-study.html` on the development/game host, or run the standalone clien
 pnpm exec vite --config apps/client/vite.config.ts --host 127.0.0.1 --port 5174
 ```
 
-Then visit `http://127.0.0.1:5174/art-study.html`. The study needs no database, world save, Meshy account or paid provider. The game’s developer art panel also links to it. Compare three choices or the working selection, orbit with a drag or arrow keys, zoom with the wheel/buttons, and switch lighting, projection and whole-body/detail/game-distance framing. Turntable motion is opt-in and respects reduced motion. Each asset card downloads the GLB and its editable Blender source.
+Then visit `http://127.0.0.1:5174/art-study.html`. The study needs no database, world save, Meshy account or paid provider. The game’s developer art panel also links to it. Compare three choices or the working selection, orbit with a drag or arrow keys, zoom with the wheel/buttons, and switch lighting, projection and whole-body/detail/closer-scale/game-camera framing. Game camera uses the ordinary game defaults; Closer scale preserves the enlarged art comparison. The selected people remain close-view proposals: their faces are not reliably readable at the current default game scale. Static views render on demand; turntable motion is opt-in and respects reduced motion. Each asset card downloads the GLB and its editable Blender source.
 
 ## Reproduce
 

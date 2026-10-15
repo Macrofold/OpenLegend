@@ -103,10 +103,6 @@ export class ArtStudy {
     element('labels-toggle').setAttribute('aria-pressed', String(!element('labels').hidden));
     this.models = new BundledModels(this.app);
     this.art = new ArtMaterials(this.app.graphicsDevice);
-    this.art.update({
-      ...candidateArt,
-      lighting: element<HTMLSelectElement>('shading').value === 'smooth' ? 'smooth' : 'soft',
-    });
     this.app.scene.ambientLight = new pc.Color(0.48, 0.51, 0.45);
     this.camera = new pc.Entity('Study inspection camera', this.app);
     this.camera.addComponent('camera', {
@@ -151,13 +147,7 @@ export class ArtStudy {
     on(element('framing'), 'change', () => this.applyFraming());
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
-    on(element('shading'), 'change', () => {
-      this.art.update({
-        ...candidateArt,
-        lighting: element<HTMLSelectElement>('shading').value === 'smooth' ? 'smooth' : 'soft',
-      });
-      this.invalidate();
-    });
+    on(element('shading'), 'change', () => this.shading());
     for (const [id, yaw] of [
       ['front', 0],
       ['quarter', 0.55],
@@ -246,11 +236,24 @@ export class ArtStudy {
         this.labelsDirty = false;
       }
     });
+    this.resize();
+    this.restoreControls();
+    this.app.start();
+  }
+  /** History can restore native select values after the module initialized. */
+  restoreControls(): void {
+    if (this.disposed) return;
+    this.shading();
     this.light();
     this.applyFraming();
-    this.resize();
-    this.app.start();
     void this.show();
+  }
+  private shading(): void {
+    this.art.update({
+      ...candidateArt,
+      lighting: element<HTMLSelectElement>('shading').value === 'smooth' ? 'smooth' : 'soft',
+    });
+    this.invalidate();
   }
   private prepare(node: pc.Entity): void {
     for (const component of node.findComponents('render')) {
@@ -511,9 +514,12 @@ export class ArtStudy {
     this.invalidate();
   }
   private labels(): void {
-    const compact = ['game', 'closer'].includes(element<HTMLSelectElement>('framing').value);
+    const framing = element<HTMLSelectElement>('framing').value;
+    const compact = ['game', 'closer'].includes(framing);
     for (const { node, label, height } of this.anchors) {
-      label.textContent = label.dataset[compact ? 'short' : 'full']!;
+      const text = label.dataset[compact ? 'short' : 'full']!;
+      label.textContent = framing === 'game' && this.displayed.length === 3 ? text[0]! : text;
+      label.classList.toggle('compact', framing === 'game');
       const p = node.getPosition().clone();
       p.y += height + 0.08;
       const at = this.camera.camera!.worldToScreen(p);
@@ -586,7 +592,8 @@ let study = new ArtStudy(element<HTMLCanvasElement>('study-canvas'));
 // Local diagnostic hook for this developer inspection page.
 Object.assign(window, { artStudy: study });
 window.addEventListener('pageshow', (event) => {
-  if (!event.persisted) return;
-  study = new ArtStudy(element<HTMLCanvasElement>('study-canvas'));
-  Object.assign(window, { artStudy: study });
+  if (event.persisted) {
+    study = new ArtStudy(element<HTMLCanvasElement>('study-canvas'));
+    Object.assign(window, { artStudy: study });
+  } else study.restoreControls();
 });

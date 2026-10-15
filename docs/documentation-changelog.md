@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 15, 2026 — Review and correct the Blender study
+
+The requested full review corrected orientation/perspective clipping, continuous idle rendering, fifteen inward-facing character parts, browser shortcut/history-control handling and shared failed-load/deferred-destruction behavior. Named labels/staging moved into study asset data; whole-design camera work visits only installed bounds. Static views now redraw after meaningful changes, with actual idle render elimination measured separately from active turntable cost. Exact shapes, paint, sizes, alternatives, native world rules and saves remain preserved.
+
+The former “Game distance” control used a closer camera than ordinary play. Game camera now reuses the actual game defaults and retains the old view as Closer scale. This exposes inadequate normal-play facial detail in the human studies; their close-view selections do not establish gameplay art acceptance. [Review evidence](verification/representative-art-study.md#requested-complete-review--october-15-2026), [current presentation](world-presentation.md#representative-blender-asset-inspection), [finite limits](limits/3d-pixel-art.md#representative-blender-study-envelope) and [V3D01.15](maintainers/3d-pixel-art.md#v3d0115--representative-blender-pixel-art-study) retain implemented corrections, actual checks and the open adoption requirement. No paid calls or purchases: additional/cumulative external cost, reservations and uncertainty remain $0 of $25.
+
 ## October 15, 2026 — Deliver the representative Blender pixel-art study
 
 Mike delegated working selections while away. Thirty original Blender alternatives now cover ten representative subjects, with editable sources, fixed pixel atlases, exact provenance and a production/development inspection page linked from existing art controls. Actual draft review revised foliage, wool, faces, UV coverage and chest lid overlaps. Working selections favor quiet organic groups and deliberate material detail; every alternative and older model remains preserved. Native world content, gameplay, saves and current game defaults are unchanged.

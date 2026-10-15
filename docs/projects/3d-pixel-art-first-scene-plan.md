@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Representative study review fixes are being verified; corrected game-camera scale exposes an open human-face readability gate. | 2026-10-15   |
+| Status      | Current progress                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Representative study review fixes are verified and delivered; default-game human-face readability remains an open art-adoption gate. | 2026-10-15   |
 
 ## Purpose and authorization
 
@@ -115,6 +115,8 @@ Scope is the finite study viewer, its three authoring recipes/catalogs, producti
 4. Reconcile this plan, V3D01.15, current presentation/limits and the focused verification report with implemented fixes, measured limits and substantive unimplemented findings; commit progress at least every 15 minutes and all completed work before handoff.
 
 Performance answers: work grows with selected/catalog assets, material/triangle counts, viewport pixels and actual camera/turntable changes; no cost should grow with simulation population or history. Reuse immutable catalog grouping, shared parsed models/materials and offline artwork; avoid repeated whole-catalog/frame work and rendering unchanged views where the engine supports it. Invalidate framing/labels/rendering on actual selection, camera, viewport, light/material or model-load changes; destroyed/superseded owners cannot publish. Measure changed complete rendering/load behavior under matched finite inputs, distinguishing cold export/load from warm camera work and idle work. No paid calls are planned; shared external spend/reservations remain $0 of $25.
+
+**Review delivered:** camera/depth fitting, true game-camera scale, on-demand drawing, browser shortcuts/history restoration, outward source winding and shared load/destruction defects are corrected and verified through the actual browser/export/game callers. The [review evidence](../verification/representative-art-study.md#requested-complete-review--october-15-2026) records measurements and the newly exposed default-game facial-readability adoption gate.
 
 Completion requires reproduced issues fixed, all selected checks passing, final affected-diff review and truthful documentation/commit. Existing accurate animation, gameplay art, device/crowd and general asset-pipeline gaps remain with their current trackers; this review does not waive them.
 
