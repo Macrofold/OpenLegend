@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The follow-on and its acceptance remain unstarted; the existing shared recipe wording is corrected separately in the UI review. | 2026-10-15   |
+| Not started | Mike deferred this follow-on during the imported UI review; its design and IWB01–IWB07 remain tracked for later selection. | 2026-10-15   |
 
 **Design scope selected by Mike:** turn the inventory, crafting, equipment and construction learnings into a concrete OpenLegend follow-on with implementation tasks. This document proposes the additions; it does not authorize runtime implementation or change current world rules. Parent design needs remain [ND13 — usable action controls](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND07 — usable buildings](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes). Neither broader entry is closed by this selected slice.
 

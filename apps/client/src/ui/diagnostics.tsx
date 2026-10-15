@@ -26,6 +26,14 @@ import './creator-workspaces.css';
 
 type JsonObject = Record<string, unknown>;
 
+// Whole-percent rounding can put a displayed rating on the wrong side of its threshold.
+const probabilityFormat = new Intl.NumberFormat('en-US', {
+  style: 'percent',
+  maximumSignificantDigits: 21,
+  useGrouping: false,
+});
+const percent = (value: number) => probabilityFormat.format(value);
+
 function object(value: unknown): JsonObject | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as JsonObject)
@@ -800,9 +808,7 @@ function stageResult(call: IntelligenceCall): string {
     );
     if (rated.length && (choices.length || actionRatings)) {
       const best = Math.max(...rated.map(([, answer]) => Number(path(answer, 'noul') ?? 0)));
-      return [...choices, `${rated.length} actions rated · best ${Math.round(best * 100)}%`].join(
-        ' · ',
-      );
+      return [...choices, `${rated.length} actions rated · best ${percent(best)}`].join(' · ');
     }
     if (rated.length) {
       const yes = rated.filter(([, answer]) => answerBucket(answer) === 'yes').length;
@@ -1014,7 +1020,7 @@ function answerLabel(answer: unknown): string {
   if (!data) return 'No recorded decision';
   if (typeof data['choice'] === 'string') return data['choice'];
   if (typeof data['score'] === 'number') return String(data['score']);
-  if (typeof data['noul'] === 'number') return `${Math.round(data['noul'] * 100)}% yes`;
+  if (typeof data['noul'] === 'number') return `${percent(data['noul'])} yes`;
   return 'No recorded decision';
 }
 
@@ -1076,12 +1082,11 @@ function jevScores(answer: JsonObject | undefined, options: string[]): string {
     const keys = [...new Set([...options, ...Object.keys(probabilities)])];
     return keys
       .filter((key) => typeof probabilities[key] === 'number')
-      .map((key) => `${key} ${Math.round(Number(probabilities[key]) * 100)}%`)
+      .map((key) => `${key} ${percent(Number(probabilities[key]))}`)
       .join(' · ');
   }
   if (typeof answer?.['noul'] === 'number') {
-    const yes = Math.round(answer['noul'] * 100);
-    return `yes ${yes}% · no ${100 - yes}%`;
+    return `yes ${percent(answer['noul'])}`;
   }
   return '';
 }
@@ -1176,9 +1181,9 @@ function JevSummary({
             <p className="ol-prose">{group.text}</p>
             {selecting(group.question) ? (
               <p className="ol-caption">
-                Level-1 selection: selectable ≥ {Math.round(selectAt * 100)}%; uncertain{' '}
-                {Math.round(uncertainAt * 100)}–{Math.round(selectAt * 100)}%; no fit below{' '}
-                {Math.round(uncertainAt * 100)}%. Exact probabilities remain visible.
+                Level-1 selection: selectable ≥ {percent(selectAt)}; uncertain{' '}
+                {percent(uncertainAt)}–{percent(selectAt)}; no fit below {percent(uncertainAt)}.
+                Exact probabilities remain visible.
               </p>
             ) : (
               group.question?.['type'] === 'noul' && (
@@ -1833,7 +1838,6 @@ function RoutingResult({ call }: { call: IntelligenceCall }) {
   );
 }
 
-const percent = (value: number) => `${Math.round(value * 100)}%`;
 const usd = (value: unknown) =>
   typeof value === 'number' ? `$${value.toFixed(6)}` : 'Not reported';
 /** Per-decision totals by level, including preparation and grounding requests. Unpriced or
@@ -2090,6 +2094,21 @@ function StageReadable({
 function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
   const [copied, setCopied] = useState(false),
     [placement, setPlacement] = useState<CSSProperties>({});
+  const panel = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const opener = document.activeElement;
+    const element = panel.current;
+    element?.focus({ preventScroll: true });
+    return () => {
+      if (
+        opener instanceof HTMLElement &&
+        opener.isConnected &&
+        opener.getClientRects().length &&
+        (element?.contains(document.activeElement) || document.activeElement === document.body)
+      )
+        opener.focus({ preventScroll: true });
+    };
+  }, []);
   useEffect(() => setCopied(false), [raw]);
   useLayoutEffect(() => {
     function place() {
@@ -2115,12 +2134,33 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
     return () => removeEventListener('resize', place);
   }, []);
   useEffect(() => {
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    addEventListener('keydown', close);
-    return () => removeEventListener('keydown', close);
+    const close = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        document.querySelector(
+          '[aria-modal="true"], [role="listbox"], [role="menu"], [role="tooltip"], .ol-select-popover, .ol-pullout-popover',
+        )
+      )
+        return;
+      // This child closes before the App's window listener can close its parent panel.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      onClose();
+    };
+    addEventListener('keydown', close, true);
+    return () => removeEventListener('keydown', close, true);
   }, [onClose]);
   return createPortal(
-    <aside className="ol-root ol-json-pullout" style={placement} aria-label={`${raw.title} JSON`}>
+    <aside
+      ref={panel}
+      role="dialog"
+      tabIndex={-1}
+      className="ol-root ol-json-pullout"
+      style={placement}
+      aria-label={`${raw.title} JSON`}
+    >
       <header className="ol-portal-content">
         <div>
           <span className="ol-eyebrow">Raw JSON</span>

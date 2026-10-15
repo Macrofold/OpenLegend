@@ -18,6 +18,19 @@ The completion work started on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/g
 
 ## Implementation plan
 
+### Integrated UI review and completion — October 15
+
+Mike requested an in-depth review of the imported UI code and designs and completion of settled missing UI work on local `main` at `cbb5976a21b9554ddf04113f6207c376666e14e7` in `Macrofold/OpenLegend` (`origin/main` matches). Edits use `/Users/mzw/Documents/ChatGPT/OpenLegend`; no branch or checkout switch is needed. Mike explicitly excluded the separate item/building proposal; retain it as deferred work under its own tracker. Existing native mechanics and authority are unchanged.
+
+Review and repair four connected groups: shared controls and world-input ownership; Inventory/Activity/Construction; Conversation/creator editors; and entry/settings/checkpoints/readers/Operations/Diagnostics. Reuse current implemented designs and prior scoped evidence rather than rebuilding delivered features. Initial repair estimate is 200–450 production logic/markup lines, excluding tests, with medium risk from exact-request recovery, stale reads, private drafts and focus ownership. Complete source coverage and record any further demonstrated defect before expanding repairs.
+
+1. Preserve exact inventory requests through connection/control renewal, release obsolete local waits and reject superseded completions. Retain unavailable original Activity outcomes and add an explicit retry for failed initial task reads. Keep incomplete construction numeric text editable and refuse invalid values before preview or execution.
+2. Bind creator detail focus to the initiating interaction, and refused-message draft restoration to the unchanged edit revision. Give the JSON viewer one Escape/focus owner; derive remembered-place update notices from the loaded/current revision instead of allowing delayed reads to clear them.
+3. Reuse a shared keyboard-input boundary where the current main/quick-action listeners share meaning, preserve distinct Escape behavior and prevent composition cancellation from dismissing a combobox. Verify actual event paths; the old shortcut warning is not evidence that the current imported guards are absent.
+4. Review final code/design consistency and reconcile the UIUX tracker, existing evidence report and affected specifications. Run changed-file formatting, TypeScript, production build and relevant existing native/browser checks with inspected fixtures. Exercise ordinary and held/refused/stale cases through the actual affected components, then visually inspect representative desktop, narrow, short and enlarged layouts. Keep generated observations outside Git. Real OS input-method, assistive-device and uncoached-player acceptance remain distinct and must not be claimed from synthetic checks.
+
+Cost grows with visible inventories/options, retained pages and active readers; these fixes add local request/revision/focus bookkeeping rather than polling, full-history reads or new caches. Reuse exact retained commands and existing permitted projections. Selection, private ownership, timeline, read/control scope, request attempt and explicit edits invalidate the corresponding local work. Measure verification through real callers, checking command counts, retained originals, focus/draft continuity, visible errors and layout; no new provider requests or paid model quality trial is needed.
+
 ### Follow-up implementation review — October 15
 
 Mike requested another thorough review of the published implementation at

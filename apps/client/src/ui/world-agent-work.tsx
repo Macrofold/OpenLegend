@@ -138,8 +138,10 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   const workspace = useRef<HTMLElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null);
+  const switchDialog = useRef<HTMLDivElement>(null);
   const listPosition = useRef(0);
   const returnRow = useRef<string | null>(null);
+  const selectionFocus = useRef<Element | null>(null);
   const mutationReason = !connected
     ? 'Reconnect before changing saved work.'
     : session.workspaceMutationReason;
@@ -248,7 +250,21 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   }, [identity, visible, reload]);
   useEffect(() => {
     if (!visible) return;
-    if (selected) detailHeading.current?.focus();
+    if (selected && !exact) return;
+    const owner = selectionFocus.current;
+    selectionFocus.current = null;
+    // A delayed draft read must not take focus from a newer field or task.
+    // Hidden/removed openers can leave focus on body during pane changes.
+    if (
+      !owner ||
+      (document.activeElement !== owner &&
+        !(
+          document.activeElement === document.body &&
+          (!owner.isConnected || !owner.getClientRects().length)
+        ))
+    )
+      return;
+    if (selected) detailHeading.current?.focus({ preventScroll: true });
     else if (list.current) {
       list.current.scrollTop = listPosition.current;
       const row = [...list.current.querySelectorAll<HTMLButtonElement>('.ol-agent-work-row')].find(
@@ -278,6 +294,12 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
       setSwitchTo(value);
       return;
     }
+    const owner = document.activeElement;
+    selectionFocus.current =
+      owner === document.body ||
+      (owner && (workspace.current?.contains(owner) || switchDialog.current?.contains(owner)))
+        ? owner
+        : null;
     if (list.current?.getClientRects().length) listPosition.current = list.current.scrollTop;
     if (!value) returnRow.current = selected?.id ?? null;
     setSelected(value);
@@ -927,6 +949,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
         >
           <Modal className="ol-modal">
             <Dialog
+              ref={switchDialog}
               className="ol-person-dialog ol-creator-confirm"
               aria-label="Unsaved draft changes"
             >

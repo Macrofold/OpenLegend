@@ -13,6 +13,7 @@ import {
   symbol,
 } from '../design-system/components';
 import { useLocal } from './storage';
+import { uiOwnsShortcut } from './keyboard';
 import './character-actions.css';
 
 /** Group only genuine, permitted native actions using the installed world's own
@@ -191,21 +192,13 @@ export function QuickActions({
     const key = (event: KeyboardEvent) => {
       if (
         gate ||
-        event.defaultPrevented ||
-        event.isComposing ||
+        uiOwnsShortcut(event) ||
         event.repeat ||
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
         editing !== null ||
-        review ||
-        document.querySelector(
-          '[aria-modal="true"], #contextMenu, [role="listbox"], [role="menu"]',
-        ) ||
-        (event.target instanceof Element &&
-          event.target.closest(
-            'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"], [role="dialog"]',
-          ))
+        review
       )
         return;
       const index = Number(event.key) - 1;

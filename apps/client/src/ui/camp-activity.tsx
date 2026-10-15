@@ -613,8 +613,10 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         pending.current !== request.commandId
       )
         return result;
-      if (result.code === 'unconfirmed')
-        setError('Delivery is uncertain. Check this exact request before starting other work.');
+      if (['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code))
+        setError(
+          `${result.message} Check this exact request before starting other work; its outcome remains unconfirmed.`,
+        );
       else acceptReceipt(result, request.commandId, action.command);
       await refreshStatus();
       if (
@@ -1036,7 +1038,20 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           changes nothing.
         </p>
       ) : !choices ? (
-        <p role="status">Reading this object's tasks…</p>
+        error ? (
+          <Button
+            variant="quiet"
+            disabled={disabled}
+            onPress={() => {
+              setError('');
+              setRefresh((value) => value + 1);
+            }}
+          >
+            Retry reading tasks
+          </Button>
+        ) : (
+          <p role="status">Reading this object's tasks…</p>
+        )
       ) : !presentation || !bound ? (
         <p role="status">
           This task is not currently available for the selected object. Select a permitted object or

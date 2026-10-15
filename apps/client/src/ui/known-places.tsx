@@ -38,11 +38,11 @@ export function KnownPlaces({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [message, setMessage] = useState('');
-  const [newer, setNewer] = useState(false);
+  const [loadedRevision, setLoadedRevision] = useState(revision);
+  const newer = loadedRevision !== revision;
   const request = useRef(0),
     detailRequest = useRef(0),
     searchInput = useRef<HTMLInputElement>(null);
-  const baseline = useRef(revision);
   const active = useRef(visible);
   active.current = visible;
   const loadedQuery = useRef<string | undefined>(undefined);
@@ -84,8 +84,8 @@ export function KnownPlaces({
             ]
           : result.entries,
       );
-      setNewer(false);
-      baseline.current = revision;
+      // The revision belongs to this read, not to a newer publication received while it waited.
+      setLoadedRevision(revision);
     } catch (failure) {
       if (id === request.current)
         setError(failure instanceof Error ? failure.message : String(failure));
@@ -114,9 +114,6 @@ export function KnownPlaces({
       detailAbort.current?.abort();
     };
   }, [query, visible]);
-  useEffect(() => {
-    if (baseline.current !== revision) setNewer(true);
-  }, [revision]);
 
   async function inspect(place: KnownPlaceView) {
     if (!active.current) return;

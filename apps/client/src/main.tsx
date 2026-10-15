@@ -1,5 +1,6 @@
 import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { AimControls } from './ui/aim-controls';
+import { uiOwnsShortcut } from './ui/keyboard';
 import { Construction } from './ui/construction';
 import { namePhrase } from '@open-legend/language';
 import { FamilyEditor } from './ui/family-editor';
@@ -1194,10 +1195,7 @@ function App({
       }
       if (choosingActionSubject) return;
       if (
-        (e.target instanceof Element &&
-          e.target.closest(
-            'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"], [role="dialog"], [role="listbox"], [role="menu"]',
-          )) ||
+        uiOwnsShortcut(e) ||
         e.metaKey ||
         e.ctrlKey ||
         e.altKey

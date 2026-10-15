@@ -54,6 +54,13 @@ export function useInventoryCommand({
   const [message, setMessage] = useState('');
   const guard = useRef(!!pending);
   const activeCommandId = useRef(pending?.request?.commandId);
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
+  const access = JSON.stringify([storageKey, scope, connected]);
+  const currentAccess = useRef(access);
+  currentAccess.current = access;
+  const previousAccess = useRef({ access, storageKey });
+  const attempt = useRef(0);
   const definiteResult = useRef<{ commandId: string; message: string } | undefined>(undefined);
   const alive = useRef(true);
   useEffect(() => {
@@ -64,14 +71,40 @@ export function useInventoryCommand({
   }, []);
 
   useLayoutEffect(() => {
+    if (previousAccess.current.access === access) return;
+    attempt.current++;
+    // A renewed connection may check the original receipt without waiting for a
+    // request on the abandoned connection. Retention still blocks a new command.
+    const retained = storageKey ? restore(storageKey) : undefined;
+    const original =
+      retained ??
+      (previousAccess.current.storageKey === storageKey ? pendingRef.current : undefined);
+    previousAccess.current = { access, storageKey };
+    guard.current = !!original;
+    activeCommandId.current = original?.request?.commandId;
+    if (definiteResult.current?.commandId !== activeCommandId.current)
+      definiteResult.current = undefined;
+    setPending(original ? { ...original, status: 'unknown' } : undefined);
+  }, [access, storageKey]);
+
+  useLayoutEffect(() => {
     if (storageKey) refreshTradeInventoryRecovery(storageKey);
     const request = pending?.request;
     if (request?.tradeScope) retainTradeInventoryReceipt(request.tradeScope, request.commandId);
   }, [storageKey]);
 
-  function finish(result: ApiResult, request: PendingCommand, recovered = false) {
+  function isCurrent(ticket: number, commandId: string) {
+    return (
+      alive.current &&
+      currentAccess.current === access &&
+      attempt.current === ticket &&
+      activeCommandId.current === commandId
+    );
+  }
+
+  function finish(result: ApiResult, request: PendingCommand, ticket: number, recovered = false) {
     const { commandId, tradeScope } = request;
-    if (!storageKey || !alive.current || activeCommandId.current !== commandId) return;
+    if (!storageKey || !isCurrent(ticket, commandId)) return;
     definiteResult.current = { commandId, message: result.message };
     // If storage becomes unavailable, retain the guard. The native result remains
     // recoverable, and a remount cannot accidentally repeat the unresolved request.
@@ -114,7 +147,13 @@ export function useInventoryCommand({
   }
 
   async function dispatch(action: ActionOption, tradeScope?: string): Promise<ApiResult> {
-    if (guard.current || !connected || !epoch || !action.enabled)
+    if (
+      guard.current ||
+      !connected ||
+      !epoch ||
+      !action.enabled ||
+      currentAccess.current !== access
+    )
       return {
         ok: false,
         code: guard.current ? 'unconfirmed' : 'unavailable',
@@ -175,6 +214,7 @@ export function useInventoryCommand({
     }
     if (tradeScope) retainTradeInventoryReceipt(tradeScope, request.commandId);
     activeCommandId.current = request.commandId;
+    const ticket = ++attempt.current;
     setPending({ request, status: 'sending' });
     setMessage('');
     let outcome: ApiResult = {
@@ -184,14 +224,15 @@ export function useInventoryCommand({
     };
     try {
       const result = await command(action, request);
+      if (!isCurrent(ticket, request.commandId)) return outcome;
       if (!['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code)) {
-        finish(result, request);
+        finish(result, request, ticket);
         return result;
       }
       outcome = result;
-      if (alive.current && activeCommandId.current === request.commandId)
-        setMessage(result.message);
+      setMessage(result.message);
     } catch (error: unknown) {
+      if (!isCurrent(ticket, request.commandId)) return outcome;
       refreshTradeInventoryRecovery(storageKey);
       const message = recoveryMessage(
         error instanceof Error ? error.message : 'The outcome is unknown.',
@@ -202,15 +243,15 @@ export function useInventoryCommand({
         code: 'unconfirmed',
         message,
       };
-      if (alive.current && activeCommandId.current === request.commandId) setMessage(message);
+      setMessage(message);
     }
-    if (alive.current && activeCommandId.current === request.commandId)
-      setPending({ request, status: 'unknown' });
+    if (isCurrent(ticket, request.commandId)) setPending({ request, status: 'unknown' });
     return outcome;
   }
 
   async function check() {
-    if (!connected || pending?.status !== 'unknown') return;
+    if (!connected || pending?.status !== 'unknown' || currentAccess.current !== access) return;
+    const ticket = ++attempt.current;
     let request = pending.request;
     if (!request) {
       const saved = storageKey ? restore(storageKey) : { status: 'unknown' as const };
@@ -235,7 +276,7 @@ export function useInventoryCommand({
         commandEpoch: request.commandEpoch,
         command: request.command,
       });
-      if (!alive.current || activeCommandId.current !== request.commandId) return;
+      if (!isCurrent(ticket, request.commandId)) return;
       if (receipt.scope !== scope) {
         setMessage(
           recoveryMessage(
@@ -244,21 +285,20 @@ export function useInventoryCommand({
           ),
         );
       } else if (receipt.status === 'resolved') {
-        finish(receipt.result, request, true);
+        finish(receipt.result, request, ticket, true);
         return;
       } else setMessage(recoveryMessage(receipt.message, request.commandId));
     } catch (error: unknown) {
+      if (!isCurrent(ticket, request.commandId)) return;
       if (storageKey) refreshTradeInventoryRecovery(storageKey);
-      if (alive.current && activeCommandId.current === request.commandId)
-        setMessage(
-          recoveryMessage(
-            error instanceof Error ? error.message : 'The result is still unknown.',
-            request.commandId,
-          ),
-        );
+      setMessage(
+        recoveryMessage(
+          error instanceof Error ? error.message : 'The result is still unknown.',
+          request.commandId,
+        ),
+      );
     }
-    if (alive.current && activeCommandId.current === request.commandId)
-      setPending({ request, status: 'unknown' });
+    if (isCurrent(ticket, request.commandId)) setPending({ request, status: 'unknown' });
   }
 
   return { pending, message, dispatch, check, setMessage };

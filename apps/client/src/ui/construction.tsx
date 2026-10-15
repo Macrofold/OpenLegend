@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type {
   ActionOption,
   ApiResult,
@@ -57,6 +57,7 @@ export function Construction({
     [postIds, setPostIds] = useState<string[]>([]),
     [bindingIds, setBindingIds] = useState<string[]>([]);
   const [site, setSite] = useState<ConstructionPlan['site']>(),
+    [coordinates, setCoordinates] = useState<{ x?: string; z?: string }>({}),
     [heading, setHeading] = useState<0 | 1 | 2 | 3>(0),
     [keepCovered, setKeepCovered] = useState(true),
     [review, setReview] = useState<{
@@ -65,6 +66,16 @@ export function Construction({
       plan: ConstructionPlan;
       key: string;
     }>();
+  const coordinateHint = useId();
+  const coordinate = (axis: 'x' | 'z') => {
+    const text = coordinates[axis];
+    if (text === undefined) return site?.[axis];
+    const value = Number(text);
+    return text.trim() && Number.isFinite(value) ? value : undefined;
+  };
+  const x = coordinate('x'),
+    z = coordinate('z');
+  const validSite = site && x !== undefined && z !== undefined ? { ...site, x, z } : undefined;
   const roots = view.entities.filter(
       (entity) => !!data && entity.assembly?.familyId === data.family.id,
     ),
@@ -175,15 +186,16 @@ export function Construction({
     usedPosts.add(selected);
   }
   const installing = ['build', 'extend', 'replace', 'resume'].includes(operation);
+  const selectedSite = root?.assembly?.site ?? validSite;
   const plan = useMemo<ConstructionPlan | undefined>(
     () =>
-      !data || !site || (rootId && !root)
+      !data || !selectedSite || (rootId && !root)
         ? undefined
         : {
             familyId: data.family.id,
             arrangementId: arrangement?.id ?? '',
             operation,
-            site: root?.assembly?.site ?? site,
+            site: selectedSite,
             orientation: root?.assembly
               ? (Math.round(root.assembly.heading / (Math.PI / 2)) as 0 | 1 | 2 | 3)
               : heading,
@@ -205,6 +217,8 @@ export function Construction({
     [
       data,
       site,
+      x,
+      z,
       operation,
       rootId,
       root,
@@ -496,22 +510,40 @@ export function Construction({
                         <label>
                           Ground X
                           <input
-                            type="number"
-                            step="0.25"
-                            value={site?.x ?? 0}
-                            onChange={(e) => setSite({ ...site!, x: e.target.valueAsNumber })}
+                            type="text"
+                            inputMode="decimal"
+                            value={coordinates.x ?? String(site?.x ?? '')}
+                            aria-invalid={
+                              (coordinates.x !== undefined && x === undefined) || undefined
+                            }
+                            aria-describedby={coordinateHint}
+                            onChange={(e) =>
+                              setCoordinates((old) => ({ ...old, x: e.target.value }))
+                            }
                           />
                         </label>
                         <label>
                           Ground Z
                           <input
-                            type="number"
-                            step="0.25"
-                            value={site?.z ?? 0}
-                            onChange={(e) => setSite({ ...site!, z: e.target.valueAsNumber })}
+                            type="text"
+                            inputMode="decimal"
+                            value={coordinates.z ?? String(site?.z ?? '')}
+                            aria-invalid={
+                              (coordinates.z !== undefined && z === undefined) || undefined
+                            }
+                            aria-describedby={coordinateHint}
+                            onChange={(e) =>
+                              setCoordinates((old) => ({ ...old, z: e.target.value }))
+                            }
                           />
                         </label>
                       </div>
+                      <p id={coordinateHint} className="ol-caption">
+                        {(coordinates.x !== undefined && x === undefined) ||
+                        (coordinates.z !== undefined && z === undefined)
+                          ? 'Enter a complete number for each ground coordinate before reviewing placement. Your entered coordinates are kept.'
+                          : 'Ground coordinates set the new structure’s position. Reviewing does not start work.'}
+                      </p>
                       <SelectField
                         label="Orientation"
                         value={String(heading)}

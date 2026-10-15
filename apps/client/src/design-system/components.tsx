@@ -165,7 +165,7 @@ function SelectInputGroup({
       onKeyDownCapture={(event) => {
         // Escape closes one picker without reverting its controlled query. Reverting
         // starts another remote search and can reopen the popup over its parent dialog.
-        if (event.key === 'Escape' && state?.isOpen) {
+        if (event.key === 'Escape' && !event.nativeEvent.isComposing && state?.isOpen) {
           event.preventDefault();
           event.stopPropagation();
           state.close();
@@ -537,7 +537,13 @@ export function Panel({
     };
   }, [draggable, hidden, workspace?.expanded, workspace?.width]);
   const startDrag = (event: PointerEvent<HTMLElement>) => {
-    if (!draggable || (event.target as HTMLElement).closest('button, a, [role="button"]')) return;
+    if (
+      !draggable ||
+      event.button !== 0 ||
+      !event.isPrimary ||
+      (event.target as HTMLElement).closest('button, a, [role="button"]')
+    )
+      return;
     const panel = event.currentTarget.closest<HTMLElement>('.ol-panel');
     if (!panel) return;
     const bounds = panel.getBoundingClientRect();
@@ -594,6 +600,7 @@ export function Panel({
         onPointerMove={moveDrag}
         onPointerUp={() => (drag.current = undefined)}
         onPointerCancel={() => (drag.current = undefined)}
+        onLostPointerCapture={() => (drag.current = undefined)}
       >
         <div>
           {onBack && (

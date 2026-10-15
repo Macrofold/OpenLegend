@@ -2,6 +2,8 @@
 
 **Status: design prepared; implementation not started. Reviewed October 15, 2026.** Mike requested a design and task breakdown for the additions beyond existing inventory, recipe and shelter delivery. A later implementation go-ahead is still required. The source baseline is published main `57a2977e22bab3f7293caa4a176c9ef4ba800751`.
 
+**October 15 scope clarification:** Mike explicitly deferred this follow-on while asking to finish and review the existing imported UI. IWB01–IWB07 remain tracked here for later selection; the current UI assignment does not authorize crafting-list or compound equip/stow behavior. Existing UI correctness repairs and accepted interface completion stay with [UIUX](ui-ux.md).
+
 [Feature specification](../projects/item-and-building-workflows-feature-spec.md) · [Technical design](../projects/item-and-building-workflows-tech-design.md) · [Limits](../limits/item-and-building-workflows.md) · [UI follow-through](ui-ux.md) · [Maintainer index](README.md)
 
 This is the sole detailed implementation tracker for this follow-on. Parent needs remain [ND13](needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND07](needs-design.md#nd07--editable-buildings-that-become-usable-homes); no new competing design register or replacement of completed PW04/PW11/SH work is created. Their incomplete broader acceptance stays in those owners. The quoted Rust capture gap remains a research limit, not an OpenLegend feature or test failure.

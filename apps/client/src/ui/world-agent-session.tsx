@@ -99,6 +99,7 @@ export function WorldAgentSession({
   const [text, setText] = useState(() =>
     readLocal(recordKey('draft'), '', (v): v is string => typeof v === 'string'),
   );
+  const textRevision = useRef(0);
   const [initialPending] = useState(() => readPending(recordKey('pending')));
   const [pending, setPending] = useState(initialPending.value);
   const pendingRef = useRef(pending);
@@ -148,6 +149,7 @@ export function WorldAgentSession({
     if (seed && lastSeed.current !== seed.id) {
       lastSeed.current = seed.id;
       writeLocal(recordKey('seed'), seed.id);
+      textRevision.current++;
       setText((previous) => (previous ? `${previous}\n${seed.text}` : seed.text));
     }
   }, [seed]);
@@ -414,6 +416,7 @@ export function WorldAgentSession({
       return;
     await perform(async () => {
       const request = existing ?? { id: crypto.randomUUID(), text: text.trim() };
+      const submittedRevision = textRevision.current;
       // Persist the identity before dispatch. A lost acknowledgement never creates a new paid ID.
       retainPending(request);
       if (!existing) setText((previous) => (previous.trim() === request.text ? '' : previous));
@@ -427,7 +430,10 @@ export function WorldAgentSession({
       if (!reply.ok) {
         if (!existing && ['busy', 'authoring-request', 'invalid-input'].includes(reply.code)) {
           retainPending(null);
-          if (alive.current) setText((previous) => previous || request.text);
+          // A deliberately blank later draft is still a new edit. A refused
+          // request can restore only the draft that its dispatch cleared.
+          if (alive.current && textRevision.current === submittedRevision)
+            setText((previous) => previous || request.text);
         }
         throw new Error(reply.message);
       }
@@ -885,7 +891,10 @@ export function WorldAgentSession({
                 }
                 maxLength={2000}
                 value={text}
-                onChange={setText}
+                onChange={(value) => {
+                  textRevision.current++;
+                  setText(value);
+                }}
                 onSubmit={() => send()}
                 disabled={
                   !connected ||
