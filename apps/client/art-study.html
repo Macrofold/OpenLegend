@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Legend · 3D pixel-art study</title>
+  </head>
+  <body>
+    <main class="study">
+      <header class="study-header">
+        <div>
+          <p class="eyebrow">Open Legend · Blender asset study</p>
+          <h1>One woodland, many small stories</h1>
+          <p>
+            Shaped 3D forms with fixed painted pixels. Compare materials, faces and silhouettes from
+            every side.
+          </p>
+        </div>
+        <a href="/">Return to game</a>
+      </header>
+      <section class="study-controls" aria-label="Study controls">
+        <label
+          >Subject
+          <select id="subject">
+            <option value="composition">Selected assets together</option>
+          </select></label
+        >
+        <label
+          >Versions
+          <select id="versions">
+            <option value="compare">Compare all three</option>
+            <option value="selected">Working choice</option>
+          </select></label
+        >
+        <label
+          >Light
+          <select id="light">
+            <option value="day">Daylight</option>
+            <option value="warm">Warm evening</option>
+            <option value="overcast">Overcast</option>
+          </select></label
+        >
+        <label
+          >Shading
+          <select id="shading">
+            <option value="soft">Soft light bands</option>
+            <option value="smooth">Natural light</option>
+          </select></label
+        >
+        <label
+          >Framing
+          <select id="framing">
+            <option value="close">Inspect the design</option>
+            <option value="game">Game distance</option>
+          </select></label
+        >
+        <button id="front" type="button">Front</button
+        ><button id="quarter" type="button">Three-quarter</button
+        ><button id="back" type="button">Back</button>
+        <button id="zoom-in" type="button" aria-label="Zoom in">Zoom in</button
+        ><button id="zoom-out" type="button" aria-label="Zoom out">Zoom out</button>
+        <button id="turn" type="button" aria-pressed="false">Turntable</button>
+      </section>
+      <section class="study-stage" aria-label="Interactive 3D comparison">
+        <canvas
+          id="study-canvas"
+          tabindex="0"
+          aria-label="3D asset inspection. Drag to orbit; arrow keys rotate; plus and minus zoom."
+        ></canvas>
+        <p id="status" role="status">Loading the study…</p>
+        <div id="labels" aria-hidden="true"></div>
+        <p class="stage-help">
+          Drag to orbit · arrows rotate · + / − zoom · turntable starts only when requested
+        </p>
+      </section>
+      <section id="asset-cards" class="study-cards" aria-label="Asset choices"></section>
+      <footer>
+        <p>
+          Working selections are the current art recommendation. All alternatives remain available.
+          People and equipment are visual studies, not new gameplay abilities.
+        </p>
+        <p>
+          Compare the quiet masses of Garbage Country, t3ssel8r’s readable people, and the
+          purposeful material detail of The Last Night / REPLACED. A close portrait alone does not
+          prove a face reads at game distance.
+        </p>
+      </footer>
+    </main>
+    <script type="module" src="/src/art-study.ts"></script>
+  </body>
+</html>

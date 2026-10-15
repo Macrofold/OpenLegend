@@ -1,0 +1,205 @@
+@import './design-system/tokens/tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #15231f;
+  color: #e8e5d6;
+  font: 15px/1.5 var(--font-ui, system-ui, sans-serif);
+}
+a {
+  color: #d5bd7b;
+  text-underline-offset: 3px;
+}
+.study {
+  max-width: 1800px;
+  margin: auto;
+  padding: 24px;
+}
+.study-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+h1 {
+  font: 500 clamp(26px, 3vw, 42px) / 1.1 var(--font-display, Georgia, serif);
+  margin: 6px 0 12px;
+}
+p {
+  margin: 0;
+}
+.eyebrow {
+  color: #b0bca8;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.study-controls {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: #20342c;
+  border: 1px solid #49604b;
+  border-radius: 8px 8px 0 0;
+}
+.study-controls label {
+  display: grid;
+  gap: 4px;
+  color: #d2d7c7;
+  font-size: 12px;
+}
+select,
+button {
+  font: inherit;
+  min-height: 36px;
+  border: 1px solid #61715a;
+  border-radius: 4px;
+  color: #eee9d7;
+  background: #2b4235;
+  padding: 6px 10px;
+}
+button {
+  cursor: pointer;
+}
+button:hover,
+button[aria-pressed='true'] {
+  background: #485738;
+}
+:focus-visible {
+  outline: 3px solid #d4c18a;
+  outline-offset: 3px;
+}
+.study-stage {
+  position: relative;
+  height: min(68vh, 850px);
+  min-height: 360px;
+  background: #c0c3ac;
+  overflow: hidden;
+}
+#study-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+#study-canvas:active {
+  cursor: grabbing;
+}
+#status {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  max-width: min(75%, 600px);
+  padding: 6px 10px;
+  background: #15231fe8;
+  border-radius: 4px;
+  font-size: 13px;
+  pointer-events: none;
+}
+#status:empty {
+  display: none;
+}
+#labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.study-label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  color: #f5f0dd;
+  background: #20342ce8;
+  padding: 4px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.stage-help {
+  position: absolute;
+  bottom: 10px;
+  left: 14px;
+  right: 14px;
+  text-align: center;
+  color: #fff7df;
+  text-shadow: 0 1px 3px #15231f;
+  font-size: 12px;
+  pointer-events: none;
+}
+.study-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.study-card {
+  padding: 16px;
+  border: 1px solid #49604b;
+  border-radius: 6px;
+  background: #20342c;
+}
+.study-card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+.study-card p {
+  margin-top: 8px;
+  color: #c3cdbb;
+}
+.study-card .recommendation {
+  color: #e2c982;
+}
+.study-card small {
+  display: block;
+  margin-top: 8px;
+  color: #b1bea9;
+}
+footer {
+  max-width: 1000px;
+  padding: 24px 0;
+  color: #aebda9;
+  font-size: 13px;
+}
+footer p + p {
+  margin-top: 8px;
+}
+@media (max-width: 650px) {
+  .study {
+    padding: 12px;
+  }
+  .study-header {
+    display: block;
+  }
+  .study-header > a {
+    display: inline-block;
+    margin-top: 12px;
+  }
+  .study-controls {
+    gap: 8px;
+    padding: 10px;
+  }
+  .study-controls label {
+    flex: 1 1 140px;
+  }
+  .study-controls select {
+    width: 100%;
+  }
+  .study-stage {
+    height: 52vh;
+    min-height: 300px;
+  }
+  .study-label {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+  }
+}

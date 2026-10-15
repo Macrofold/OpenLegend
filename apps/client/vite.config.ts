@@ -6,5 +6,10 @@ const workspace = fileURLToPath(new URL('../..', import.meta.url));
 export default defineConfig({
   root,
   server: { fs: { allow: [workspace] } },
-  build: { outDir: `${workspace}/dist/client`, emptyOutDir: true, target: 'es2022' },
+  build: {
+    outDir: `${workspace}/dist/client`,
+    emptyOutDir: true,
+    target: 'es2022',
+    rolldownOptions: { input: { game: `${root}index.html`, study: `${root}art-study.html` } },
+  },
 });

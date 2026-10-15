@@ -94,6 +94,10 @@ The shorter leaf repeat is visibly stronger than the rejected weak tile, but rou
 
 Mike authorized continued implementation with a **$25 total task budget**, replacing the earlier $10 ceiling. When revising a specific asset, prepare a few actual alternatives and show them for feedback while continuing independent work; silence does not establish a preferred version. Search and download solid free asset-library sources, including environment and hare/animal art, as starting points for a coherent demo in the existing world. Evaluate every result against the agreed [creative brief](final-board/creative-brief.md) and [renderer/art research](research/3d-pixel-worlds/realtime-pixel-rendering.md). Library geometry is a starting asset, not a reversal to an ordinary low-poly finish. Preserve original artwork and clear license/provenance for retained downloads. [Implementation plan](../docs/projects/3d-pixel-art-first-scene-plan.md#library-assets-and-authored-variants--authorized-october-15-2026), [V3D01.14](../docs/maintainers/3d-pixel-art.md#v3d0114--licensed-library-sources-and-multiple-authored-choices).
 
+## Autonomous representative Blender study — October 15, 2026
+
+Mike explicitly asked Codex to choose the strongest working versions while he is away, preserve every alternative and continue building a representative 3D pixel-art set in Blender. Rocks, trees, berry bushes, chests, people, armor and swords/weapons should support later feedback about common art principles. Working selections may proceed without waiting for preference replies; this supersedes the previous requirement to leave every provisional choice unanswered. It does not imply Mike has seen or accepted a particular result. Keep the agreed references, clear faces, authored fixed pixel detail and critical stability concerns. [Plan](../docs/projects/3d-pixel-art-first-scene-plan.md#representative-blender-asset-study--authorized-october-15-2026), [V3D01.15](../docs/maintainers/3d-pixel-art.md#v3d0115--representative-blender-pixel-art-study).
+
 ## Decision entry format
 
 Date · decision · relevant reference IDs · user rationale · open implications.

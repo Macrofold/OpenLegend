@@ -78,3 +78,24 @@ export class BundledModels {
     return undefined;
   }
 }
+
+/** Stop an inspection/game renderer now; only local model-parser cleanup may
+ * outlive it. The pinned engine otherwise clears a same-canvas successor entry. */
+export function destroyModelApplication(
+  app: pc.Application,
+  parsing: readonly (Promise<void> | undefined)[],
+): void {
+  app.autoRender = false;
+  pc.AppBase.cancelTick(app);
+  const finish = () => {
+    const id = app.graphicsDevice.canvas.id;
+    const replacement = pc.AppBase.getApplication(id);
+    app.destroy();
+    // PlayCanvas 2.22.2 unregisters this canvas unconditionally on destruction.
+    if (replacement && replacement !== app)
+      Object.assign(pc.AppBase._applications, { [id]: replacement });
+  };
+  const pending = parsing.filter((item): item is Promise<void> => item !== undefined);
+  if (pending.length) void Promise.all(pending).then(finish);
+  else finish();
+}

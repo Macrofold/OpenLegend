@@ -310,6 +310,11 @@ export function mountArtControls(
     refresh();
   };
   panel.append(fixture);
+  const study = document.createElement('a');
+  study.href = '/art-study.html';
+  study.textContent = 'Open the Blender pixel-art study';
+  study.style.cssText = 'display:block;margin-top:12px;color:inherit';
+  panel.append(study);
   document.body.append(panel);
   refresh();
   return () => panel.remove();

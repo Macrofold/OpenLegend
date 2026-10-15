@@ -1,3 +1,4 @@
+import { destroyModelApplication } from './bundled-models';
 import type { ConstructionShape } from '@open-legend/protocol';
 import { itemPileArt } from './art';
 import {
@@ -2677,20 +2678,7 @@ export class WildernessScene implements WorldRenderer {
     for (const buffer of this.landscapeBuffers) buffer.destroy();
     this.landscapeBuffers = [];
     this.setConstructionPreview(null);
-    const parsing = [propParsing, mercenaryParsing, animalParsing].filter(
-      (pending): pending is Promise<void> => pending !== undefined,
-    );
-    const destroyApp = () => {
-      const id = this.canvas.id;
-      const replacement = pc.AppBase.getApplication(id);
-      this.app.destroy();
-      // PlayCanvas 2.22.2 clears this canvas entry unconditionally. An old
-      // parser finishing must not unregister a replacement on the same canvas.
-      if (replacement && replacement !== this.app)
-        Object.assign(pc.AppBase._applications, { [id]: replacement });
-    };
-    if (parsing.length) void Promise.all(parsing).then(destroyApp);
-    else destroyApp();
+    destroyModelApplication(this.app, [propParsing, mercenaryParsing, animalParsing]);
   }
 }
 
