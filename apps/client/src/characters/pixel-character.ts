@@ -41,7 +41,7 @@ export class PixelCharacter {
   private readonly color: pc.Texture;
   private readonly depth: pc.Texture;
   private readonly target: pc.RenderTarget;
-  private sampling: ArtTreatment['sampling'] = '96';
+  private sampling?: ArtTreatment['sampling'];
   private readonly edgeSettings = new Float32Array(3);
   private readonly quad: pc.Mesh;
   private readonly node = new pc.GraphNode('Character pixel composite');
@@ -275,7 +275,7 @@ export class PixelCharacter {
   private prepareProjection(capture = false): void {
     const camera = this.worldCamera.camera!;
     if (this.neutralPoints.length === 0) {
-      // Only pass preparation runs after the engine updates CPU skin matrices.
+      // Labels must not trigger a full first-use mesh preparation.
       if (!capture) return;
       this.captureNeutralBounds();
     }
@@ -378,13 +378,17 @@ export class PixelCharacter {
     return this.inverseViewProjection.transformPoint(point).mulScalar(1 / w);
   }
 
+  prepareNeutralPose(): void {
+    if (this.neutralPoints.length === 0) this.captureNeutralBounds();
+  }
+
   private captureNeutralBounds(): void {
     const started = performance.now();
     this.inverseRoot.copy(this.bodyRoot.getWorldTransform()).invert();
     const points: number[] = [];
     const weighted = new pc.Vec3();
-    // Evaluate the complete clothed figure once, after CPU skin updates and
-    // cloth settling. Body-only bounds miss the cape's extent in steep views;
+    // Evaluate the complete clothed figure once after cloth settling. Body-only
+    // bounds miss the cape's extent in steep views;
     // bone boxes instead overestimate the silhouette and make him too short.
     for (const instance of this.casters) {
       const skin = instance.skinInstance;
@@ -397,6 +401,16 @@ export class PixelCharacter {
         instance.mesh.getVertexStream(pc.SEMANTIC_BLENDINDICES, indices);
       }
       const worldTransform = instance.node.getWorldTransform();
+      // Match SkinInstance's bone-world × inverse-bind evaluation without
+      // changing its render-frame cache. This also works before first drawing,
+      // while a moving actor's replacement is still holding its neutral pose.
+      const inverseMesh = skin ? worldTransform.clone().invert() : undefined;
+      const matrices = skin?.skin.inverseBindPose.map((bind, index) => {
+        const bone = skin.bones[index];
+        if (!bone || !inverseMesh) return undefined;
+        const matrix = new pc.Mat4().mulAffine2(inverseMesh, bone.getWorldTransform());
+        return matrix.mulAffine2(matrix, bind);
+      });
       for (let vertex = 0; vertex < count; vertex++) {
         this.point.set(
           positions[vertex * 3]!,
@@ -409,7 +423,7 @@ export class PixelCharacter {
             const offset = vertex * 4 + influence;
             const weight = weights[offset]!;
             if (weight === 0) continue;
-            const matrix: pc.Mat4 | undefined = skin.matrices[indices[offset]!];
+            const matrix = matrices?.[indices[offset]!];
             if (matrix) {
               matrix.transformPoint(this.point, this.localPoint);
               weighted.x += this.localPoint.x * weight;

@@ -2,6 +2,7 @@ import * as pc from 'playcanvas';
 import mercenaryUrl from './mercenary-assets/mercenary.glb?url';
 import motionUrl from './mercenary-assets/mercenary-motion.glb?url';
 import { MercenaryMotion } from './mercenary-motion';
+import { MercenaryFaceResources } from './mercenary-face';
 import { ArtMaterials, type ArtTreatment, baselineArt } from '../art-treatment';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
@@ -35,6 +36,7 @@ export class MercenaryModels {
   private pending?: Promise<LoadedModel>;
   private disposed = false;
   private readonly materials: MercenaryMaterials;
+  private readonly faces: MercenaryFaceResources;
   constructor(
     private readonly app: pc.Application,
     private readonly presentation: WorldPresentation,
@@ -43,6 +45,7 @@ export class MercenaryModels {
     art: ArtMaterials,
   ) {
     this.materials = new MercenaryMaterials(sun, art);
+    this.faces = new MercenaryFaceResources(app, this.materials);
   }
   create(parent: pc.Entity): MercenaryActor {
     return new MercenaryActor(
@@ -50,6 +53,7 @@ export class MercenaryModels {
       parent,
       this.presentation,
       this.materials,
+      this.faces,
       this.load(),
       this.camera,
     );
@@ -86,6 +90,7 @@ export class MercenaryModels {
   }
   destroy(): void {
     this.disposed = true;
+    this.faces.destroy();
     this.materials.destroy();
     for (const asset of this.assets) {
       asset.unload();
@@ -121,6 +126,7 @@ export class MercenaryActor {
     private readonly parent: pc.Entity,
     private readonly presentation: WorldPresentation,
     private readonly materials: MercenaryMaterials,
+    private readonly faces: MercenaryFaceResources,
     loading: Promise<LoadedModel>,
     private readonly camera: pc.Entity,
   ) {
@@ -137,14 +143,6 @@ export class MercenaryActor {
       });
   }
   private install({ resource, tracks }: LoadedModel): void {
-    /* prepared clips include original and deliberately exported holds. */
-    const originalTracks = resource.animations
-      .map((a) => a.resource)
-      .filter((r): r is pc.AnimTrack => r instanceof pc.AnimTrack);
-    const idle = originalTracks.find((r) => r.name === 'Idle');
-    const walk = originalTracks.find((r) => r.name === 'Walk');
-    if (!(idle instanceof pc.AnimTrack) || !(walk instanceof pc.AnimTrack))
-      throw new Error('Mercenary idle/walk clips missing');
     const node = (this.node = resource.instantiateRenderEntity({
       castShadows: true,
       receiveShadows: true,
@@ -164,6 +162,8 @@ export class MercenaryActor {
     if (!anim) throw new Error('Mercenary animation component missing');
     node.enabled = true;
     this.motion = new MercenaryMotion(anim, tracks);
+    this.faces.attach(node);
+    this.faces.preparePose(node);
     this.cloth = new CapeCloth(this.app, node, displayScale);
     const components = [
       ...renders(node).filter((r) => r.enabled),
@@ -188,8 +188,7 @@ export class MercenaryActor {
     this.wanted = visible;
     this.visible = visible && this.state === 'ready' && !this.resetCloth && this.settling === 0;
     // Disabling a skinned RenderComponent destroys its cached skin. Keep the rig
-    // alive while settling/falling back; hide its geometry and stop its animation.
-
+    // alive while settling/falling back; hide its geometry and skip pose updates.
     this.cloth?.setVisible(this.visible);
     for (const mesh of this.meshes) {
       mesh.visible = this.visible;
@@ -219,8 +218,9 @@ export class MercenaryActor {
         : pc.math.lerpAngle(this.yaw, target, 1 - Math.exp(-Math.min(dt, 0.1) * 12));
     node.setLocalEulerAngles(0, this.yaw, 0);
     const foot = this.parent.getPosition();
-    this.motion?.update(dt, moving, paused, art.motion, art.actionFixture);
     if (this.resetCloth || foot.distance(this.previousFoot) > 1.5) {
+      this.motion?.rest();
+      this.faces.preparePose(node);
       this.cloth.reset();
       this.settling = 60;
       this.resetCloth = false;
@@ -228,14 +228,18 @@ export class MercenaryActor {
     }
     this.previousFoot.copy(foot);
     if (this.settling > 0) {
-      // Settle under the current pose even while paused, without a 60-step first-use hitch.
+      // Keep the neutral pose during preparation, including a load while walking.
+      // Settle without a 60-step first-use hitch.
       // Keep the existing sprite until the prepared model can replace it atomically.
       for (let i = 0; i < Math.min(3, this.settling); i++) this.cloth.step(1 / 60);
       this.settling = Math.max(0, this.settling - 3);
       this.cloth.publish();
       if (this.settling > 0) return;
+      this.pixels?.prepareNeutralPose();
       this.setVisible(this.wanted);
     }
+    this.motion?.update(dt, moving, paused, art.motion, art.actionFixture);
+    this.faces.preparePose(node);
     this.cloth.update(dt, !paused, art.cloth);
     this.pixels?.setTreatment(art.sampling, art.edges);
     const targetStrength = selected ? 0 : reveal;

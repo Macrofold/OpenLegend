@@ -46,6 +46,14 @@ export class MercenaryMotion {
     anim.baseLayer.play('Idle');
     anim.update(0);
   }
+  rest(): void {
+    if (this.clip !== 'Idle') {
+      this.anim.baseLayer?.play('Idle');
+      this.clip = 'Idle';
+    }
+    this.fixture = false;
+    this.anim.update(0);
+  }
   update(
     dt: number,
     moving: boolean,

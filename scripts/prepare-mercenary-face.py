@@ -27,7 +27,9 @@ mesh = evaluated.to_mesh()
 mesh.calc_loop_triangles()
 vertices = [obj.matrix_world @ vertex.co for vertex in mesh.vertices]
 surface = BVHTree.FromPolygons(vertices, [list(t.vertices) for t in mesh.loop_triangles], all_triangles=True)
-head_inverse = (rig.matrix_world @ rig.pose.bones["Head"].matrix).inverted()
+head_world = rig.matrix_world @ rig.pose.bones["Head"].matrix
+head_inverse = head_world.inverted()
+face_normal = (head_world.to_3x3().transposed() @ Vector((0, -1, 0))).normalized()
 regions = {}
 
 
@@ -35,18 +37,19 @@ def patch(region, polygon, offset):
     area = sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(polygon, polygon[1:] + polygon[:1]))
     if area < 0:
         polygon = list(reversed(polygon))
-    target = regions.setdefault(region, {"positions": [], "indices": []})
+    target = regions.setdefault(region, {"positions": [], "normals": [], "indices": []})
     start = len(target["positions"]) // 3
     center = tuple(sum(point[axis] for point in polygon) / len(polygon) for axis in range(2))
     for x, z in [center] + polygon:
-        location, normal, _, _ = surface.ray_cast(Vector((x, -1, z)), Vector((0, 1, 0)), 2)
+        location, _, _, _ = surface.ray_cast(Vector((x, -1, z)), Vector((0, 1, 0)), 2)
         if location is None:
             raise RuntimeError("Facial detail does not meet the authored head")
-        # Offset along the viewing-facing surface normal; the tiny gap avoids
-        # fighting the original face while the points keep its curved shape.
-        location += normal * offset
+        # Offset toward the authored face front; the tiny gap avoids fighting
+        # its surface while consistent normals avoid raised, faceted eyebrows.
+        location.y -= offset
         local = head_inverse @ location
         target["positions"].extend(round(value, 7) for value in local)
+        target["normals"].extend(round(value, 7) for value in face_normal)
     for i in range(len(polygon)):
         target["indices"].extend([start, start + i + 1, start + (i + 1) % len(polygon) + 1])
 
@@ -69,8 +72,9 @@ for sign in (-1, 1):
                        (x+.017,1.736), (x+.009,1.740), (x-.010,1.740)], .0033)
     outer = x + sign * .019
     inner = x - sign * .015
-    patch("charcoal", [(outer,1.752), (outer-sign*.004,1.757),
-                       (inner,1.750), (inner,1.744), (outer-sign*.003,1.749)], .0018)
+    brow_z = 1.746 if sign < 0 else 1.743
+    patch("charcoal", [(outer,brow_z+.004), (outer-sign*.004,brow_z+.007),
+                       (inner,brow_z+.002), (inner,brow_z-.002), (outer-sign*.003,brow_z+.002)], .0018)
 
 # A short muted lip crease remains inside the original moustache; the source
 # nose and beard retain their shaped geometry and individual silhouette.

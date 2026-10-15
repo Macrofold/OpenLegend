@@ -25,14 +25,14 @@ export class MercenaryFaceResources {
       if (!color) throw new Error('Unsupported authored facial region');
       const mesh = new pc.Mesh(app.graphicsDevice);
       mesh.setPositions(region.positions);
-      mesh.setNormals(pc.calculateNormals(region.positions, region.indices));
+      mesh.setNormals(region.normals);
       mesh.setIndices(region.indices);
       mesh.update();
       // The scene retains a reference even when its last actor is replaced.
       mesh.incRefCount();
       const source = new pc.StandardMaterial();
       source.name = 'Mercenary face · ' + region.name;
-      source.diffuse = new pc.Color().fromString(color);
+      source.diffuse = new pc.Color().fromString(color).linear();
       source.useMetalness = true;
       source.metalness = 0;
       source.gloss = 0;
