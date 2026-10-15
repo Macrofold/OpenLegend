@@ -4,12 +4,12 @@ on:
     branches: [docs/game-ui-research-redesign]
     paths: [.github/workflows/ui-completion.yml]
 permissions:
-  contents: write
+  contents: read
 jobs:
   qualify:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -39,73 +39,88 @@ jobs:
         run: |
           pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
           pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Run required code and ordinary browser checks without changing deadlines
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Check the interface and its existing recovery scenarios
         run: |
           python3 - <<'PY'
-          import json, os, subprocess, urllib.request
+          import json, os, shutil, subprocess
           from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-required'
+          report = Path(os.environ['RUNNER_TEMP']) / 'ui-final'
           report.mkdir()
           results = {}
-          def run(label, args):
+          probe = Path('tests/browser/ui-finish-recovery.spec.ts')
+          def run(label, args, extra=None):
+              env = dict(os.environ, **(extra or {}))
               with (report / (label + '.log')).open('w') as output:
-                  results[label] = subprocess.run(args, stdout=output, stderr=subprocess.STDOUT).returncode
+                  results[label] = subprocess.run(args, env=env, stdout=output, stderr=subprocess.STDOUT).returncode
               print(label + ': ' + str(results[label]), flush=True)
-              print('\n'.join((report / (label + '.log')).read_text().splitlines()[-100 if results[label] else -5:]), flush=True)
-          # Code stopped on these exact formatting differences, before any tests.
-          # Preserve logic and pinned tooling; do not treat formatting as a game failure.
-          run('format-correction', ['pnpm', 'exec', 'prettier', '--write', '.github/workflows/ui-completion.yml', 'docs/maintainers/ui-ux.md', 'packages/spatial/src/coverage.ts'])
-          for label, args in [
-              ('guidance', ['pnpm', 'guidance:check']),
-              ('configuration', ['pnpm', 'config:check']),
-              ('format', ['pnpm', 'format:check']),
-              ('types', ['pnpm', 'typecheck']),
-              ('build', ['pnpm', 'build']),
-              ('tests', ['pnpm', 'exec', 'vitest', 'run', '--reporter=json', '--outputFile=' + str(report / 'tests.json')]),
-              ('browser', ['pnpm', 'exec', 'playwright', 'test', '--reporter=line']),
-          ]:
-              run(label, args)
-          if (report / 'tests.json').exists():
-              data = json.loads((report / 'tests.json').read_text())
-              failures = []
-              for suite in data['testResults']:
-                  for test in suite['assertionResults']:
-                      if test['status'] == 'failed':
-                          failures.append({'file': str(Path(suite['name']).relative_to(Path.cwd())), 'name': test['fullName'], 'errors': test.get('failureMessages', [])})
-              summary = {'total': data['numTotalTests'], 'passed': data['numPassedTests'], 'failed': data['numFailedTests'], 'failures': failures}
-              (report / 'test-summary.json').write_text(json.dumps(summary, indent=2))
-              print('TEST_SUMMARY=' + json.dumps(summary, indent=2), flush=True)
-          def git(*args): return subprocess.check_output(['git', *args])
-          paths = git('diff', '--name-only').decode().splitlines()
-          allowed = {'.github/workflows/ui-completion.yml', 'docs/maintainers/ui-ux.md', 'packages/spatial/src/coverage.ts'}
-          assert set(paths) <= allowed, paths
-          assert not git('ls-files', '--others', '--exclude-standard').decode().strip()
-          git('diff', '--check')
-          patch = git('diff')
-          (report / 'format.patch').write_bytes(patch)
-          print('FORMAT_DIFF=' + patch.decode(), flush=True)
-          tree = git('rev-parse', 'HEAD^{tree}').decode().strip()
-          if paths:
-              payload = {'base_tree': tree, 'tree': [{'path': path, 'type': 'blob', 'mode': '100644', 'content': Path(path).read_text()} for path in paths]}
-              request = urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/trees', method='POST', data=json.dumps(payload).encode(), headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'})
-              with urllib.request.urlopen(request, timeout=120) as response: tree = json.load(response)['sha']
-              git('add', '--', *paths)
-              assert git('write-tree').decode().strip() == tree
-          metadata = {'parent': os.environ['GITHUB_SHA'], 'tree': tree, 'checks': results, 'changed_paths': paths}
-          (report / 'metadata.json').write_text(json.dumps(metadata, indent=2))
-          print('REQUIRED_CHECKS=' + json.dumps(metadata, indent=2), flush=True)
-          print('Detached checkout ' + os.getcwd() + '; no commits or branch references changed by this runner.', flush=True)
-          if any(results.values()): raise SystemExit(1)
+              print('\n'.join((report / (label + '.log')).read_text().splitlines()[-100 if results[label] else -12:]), flush=True)
+          try:
+              # Reuse the existing three recovery scenarios and the previously
+              # reviewed fixture corrections. No production source is patched.
+              text = Path('.github/scripts/ui-recovery-browser.ts').read_text()
+              replacements = [
+                  ("    await panel.getByRole('radio', { name: 'Replace current work', exact: true }).check();", "    await panel.getByText('Replace current work', { exact: true }).click();\n    await expect(panel.getByRole('radio', { name: 'Replace current work', exact: true })).toBeChecked();"),
+                  ("    await page.setViewportSize({ width: 390, height: 844 });", "    await page.setViewportSize({ width: 390, height: 844 });\n    await expect(panel).toBeVisible();\n    await expect(page.locator('.ol-game-menu')).toBeHidden();"),
+                  ("    const timeline = game.service.timelineId;\n    let submissions = 0;", "    const timeline = game.service.timelineId;\n    const protectedTime = game.service.world.simTime;\n    let protectedId: string | undefined;\n    const originalCommit = store.commit.bind(store);\n    store.commit = async (...args) => {\n      const revision = await originalCommit(...args);\n      if (args[4]?.restore) protectedId = args[4].restore.recoveryId;\n      return revision;\n    };\n    let submissions = 0;"),
+                  ("    const protection = await store.db.prepare(\"SELECT payload, checksum FROM game_saves WHERE id='before-load'\").get();", "    expect(protectedId).toBeTruthy();\n    const protection = await store.saves!.read(game.service.world.id, protectedId!);\n    expect(protection.state.world.simTime).toBe(protectedTime);"),
+                  ("    expect(await store.db.prepare(\"SELECT payload, checksum FROM game_saves WHERE id='before-load'\").get()).toEqual(protection);", "    expect(await store.saves!.read(game.service.world.id, protectedId!)).toEqual(protection);"),
+              ]
+              for before, after in replacements:
+                  assert text.count(before) == 1, before
+                  text = text.replace(before, after, 1)
+              assert not probe.exists()
+              probe.write_text(text)
+              shutil.copyfile(probe, report / 'recovery-scenario.ts')
+              run('types', ['pnpm', 'typecheck'])
+              run('ui-format', ['pnpm', 'exec', 'prettier', '--check',
+                  'apps/client/src/ui/camp-activity.css',
+                  'apps/client/src/ui/action-attempts.tsx',
+                  'apps/client/src/ui/game-saves.tsx',
+                  'apps/client/src/main.tsx', 'apps/client/src/api.ts'])
+              run('build', ['pnpm', 'build'])
+              if results['build'] == 0:
+                  files = ['actions.spec.ts', 'camera.spec.ts', 'conversation-ui.spec.ts',
+                      'design-system.spec.ts', 'god-editor.spec.ts', 'time.spec.ts']
+                  run('ui-browser', ['pnpm', 'exec', 'playwright', 'test',
+                      *['tests/browser/' + name for name in files], str(probe),
+                      '--reporter=line,json'],
+                      {'PLAYWRIGHT_JSON_OUTPUT_NAME': str(report / 'browser.json')})
+              if (report / 'browser.json').exists():
+                  data = json.loads((report / 'browser.json').read_text())
+                  summary = {'stats': data.get('stats'), 'cases': []}
+                  def collect(suites):
+                      for suite in suites:
+                          for spec in suite.get('specs', []):
+                              for test in spec.get('tests', []):
+                                  summary['cases'].append({'file': spec.get('file'),
+                                      'title': spec['title'], 'status': test['status'],
+                                      'results': [{'status': result['status'],
+                                          'duration': result.get('duration'),
+                                          'errors': result.get('errors', [])}
+                                          for result in test.get('results', [])]})
+                          collect(suite.get('suites', []))
+                  collect(data.get('suites', []))
+                  (report / 'summary.json').write_text(json.dumps(summary, indent=2))
+                  print('UI_RESULTS=' + json.dumps(summary, indent=2), flush=True)
+          finally:
+              probe.unlink(missing_ok=True)
+              if Path('test-results').exists():
+                  shutil.copytree('test-results', report / 'test-results', dirs_exist_ok=True)
+              unchanged = subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip()
+              assert not unchanged, unchanged
+              metadata = {'commit': os.environ['GITHUB_SHA'], 'checks': results,
+                  'production_source_changed': False, 'probe_removed': not probe.exists(),
+                  'provider_spend_usd': 0, 'checkout': str(Path.cwd())}
+              (report / 'metadata.json').write_text(json.dumps(metadata, indent=2))
+              print('UI_CHECKPOINT=' + json.dumps(metadata), flush=True)
+          if not results or any(results.values()):
+              raise SystemExit(1)
           PY
-      - name: Preserve results and original failure traces
+      - name: Preserve UI evidence only
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-required
-          path: |
-            ${{ runner.temp }}/ui-required/
-            test-results/
+          name: ui-final
+          path: ${{ runner.temp }}/ui-final/
           retention-days: 3
           if-no-files-found: error
