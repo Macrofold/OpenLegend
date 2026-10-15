@@ -54,7 +54,7 @@ y + k1 * y' + k2 * y'' = x + k3 * x'
 
 Here `x` is the target, `y` is the displayed value, and primes denote change over time. These equations describe a model, not a complete safe integrator. [The Orange Duck's spring reference](https://theorangeduck.com/page/spring-roll-call) provides independently useful analytical damped-spring formulations and rotational considerations. Keep parameterization and solver assumptions together when comparing implementations.
 
-Large frame gaps, teleports and scene replacement need deliberate reset/advance behavior. A capped number of integration steps or an appropriate analytical update can avoid an unbounded catch-up loop. A fixed timestep alone does not prove stability for every parameter. When using quaternions for orientation, equivalent opposite signs must be reconciled before interpolation, and outputs kept normalized. Clamp or reset secondary offsets when the asset or attachment changes.
+Large frame gaps, teleports and scene replacement need deliberate reset/advance behavior. A capped number of integration steps or an appropriate analytical update can avoid an unbounded catch-up loop. A fixed timestep alone does not prove stability for every parameter. When using quaternions for orientation, equivalent opposite signs must be reconciled before interpolation, and outputs kept normalized; the creator gives this advice in a [public follow-up comment](https://www.reddit.com/r/Unity3D/comments/w001nq/i_feature_creeped_the_heck_out_of_t3ssel8rs/). Clamp or reset secondary offsets when the asset or attachment changes.
 
 ### Numerical caution from the public follow-up
 

@@ -37,6 +37,12 @@ The follow-up adds [realtime rendering and lighting](realtime-pixel-rendering.md
 
 The realtime follow-up reviewed five additional attachments, the inline scene transcript, public creator descriptions, tool documentation and pinned texel-splatting/grass source. All ten newly supplied video links are indexed. The outline attachment was identified as Robin Seibold’s tutorial, distinct from Eduardo Schildt’s showcase. The follow-up inspected the current client and installed engine at repository commit `631835866`; the existing application creation path uses WebGL, and the pinned engine supports glTF held-key interpolation. Neither finding establishes an integrated pixel renderer or animation pipeline. No video playback, paid package inspection or runtime benchmark is claimed.
 
+### Follow-up delivery checks
+
+Reviewed the complete task-owned document changes and reconciled the earlier recommendation across the creative brief, decision log, project design, production guidance and existing trackers. All ten new video URLs are present; five attachment copies match their supplied files byte for byte; the inline scene transcript is retained separately. Local file/heading links across the 22 affected Markdown documents passed inspection, as did the pinned formatter and whitespace checks. The spring-equation counterexample is an analytical check, not game-performance evidence. No game test, shader benchmark or live generation was run for this documentation-only task.
+
+Research edits stayed in `/Users/mzw/.codex/worktrees/415f/OpenLegend`. The shared branch changed from `codex/mercenary-voxel-art` to `codex/mercenary-original-refinement` during concurrent mercenary work; this side task performed no checkout/branch operation. Its checkpoint `2e5315035` contains only research documentation and transcript additions. Concurrent model/runtime edits are outside this research delivery.
+
 ### Original reference-library delivery
 
 The sources were reviewed on October 14, 2026. Direct creator explanations, official media and supplied transcripts are distinguished from visual observations and our proposals. The local code inspection used checkout `/Users/mzw/.codex/worktrees/415f/OpenLegend`, branch `codex/mercenary-voxel-art`, commit `26f622ec70bd96506e2b1e396691156e7cf41f2a`; this identifies the inspected snapshot, not a new integration base. No checkout or branch was changed.
