@@ -1,10 +1,10 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                                                           | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | DG18 separates useful exact conversation and shared reading from conditional gist/crowd work; adoption, technical design and runtime delivery remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Exact shared activity, independent participation and truthful progress now have a technical proposal; conditional sensory policy and runtime qualification remain open. | 2026-10-15   |
 
-**Status: proposed detailed behavior, expanded October 6, 2026.** This extends the accepted PS04 direction. Existing hearing evidence and caption behavior remain authoritative until an explicitly scoped new policy is approved and delivered. Technical design, voice-media delivery and implementation are outside this product-only assignment.
+**Status: proposed detailed behavior, expanded October 15, 2026.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) now defines the exact attended slice and its existing execution owners. Existing hearing evidence and caption behavior remain authoritative until an explicitly scoped new policy is approved and delivered. Conditional gist, aggregate vocal activity and timed speech below remain separately selected proposals; voice-media delivery and runtime implementation are outside this design assignment.
 
 ## 1. Purpose and recommended experience
 
@@ -551,6 +551,48 @@ Qualify and finish the selected exact attended encounter first. For the small sh
 
 The [character flows](compelling-characters-feature-spec.md#complete-behavioral-flows), existing AS-J01–14 and current hearing/conversation acceptance remain applicable. These new journeys are proposed evaluation, not completed tests. Compare the experience and complete cost against the simpler exact gathering. If abstraction makes people interchangeable or their responses bland, retain exact interaction where it adds value and reduce optional sources. If more bodies only add noise, keep the smaller gathering. The game gains value from another enjoyable encounter, not from reaching a population number.
 
+## 18. Research refinement — independent shared activity that people can understand
+
+This chapter resolves the [intelligent-simulation shared-activity design follow-up](../maintainers/needs-design.md#independent-shared-activity-and-readable-intentions) through DG06/DG18 and existing PS04/CE owners. It adds no social-practice language, collective mind or compulsory daily schedule. [NPC-L008–L009](../../archive/02-research/game-inspiration/synthesis/characters-companions-and-relationships.md#npc-l008--shared-activity-should-offer-context-not-dictate-consent) motivate the comparison; research does not establish that the proposed encounter is enjoyable or economical.
+
+### 18.1 A complete small encounter
+
+The first selected family is an **ordinary exact encounter around a real object or experience**, following the existing [gathering profile](../worlds/base/social-gatherings.md#first-attended-selection). A hypothetical complete journey starts when the player brings a container they really made and talks about its use. Ada can be curious, unconvinced, otherwise occupied or uninterested. The Mercenary can independently join when the ordinary conversation rules support it. Nobody receives an assigned opinion, a friendship increase or a task for attending.
+
+If someone proposes walking to a known place to try the object, the existing invitation names the actual destination and purpose. The recipient independently accepts or declines its current terms. Acceptance authorizes the supported trip, not every subsequent demonstration, item transfer or request. A demonstration uses an actual supported action; lending an item uses an actual directed offer and acceptance. The player can stop after the conversation, after the walk or after a real attempt. A failed demonstration, polite disagreement or companion choosing to leave can still be a successful social episode.
+
+This is composition of existing capabilities, not a promise that natural-language requests can create arbitrary joint work. A broader activity requiring synchronized labor, divided outputs, negotiated duties or a binding loan needs its own admitted mechanic before it becomes available. The engine must explain what is unsupported rather than silently converting discussion into such an agreement.
+
+### 18.2 Each person knows and chooses separately
+
+Keep five things distinct: what was proposed, what each person actually accepted, what each person currently intends, what actually happened and what each observer learned. Two people can hear the same request and interpret its importance differently. A late arrival may see the object but know neither the earlier promise nor the maker's reason. Someone who missed the acceptance cannot learn it merely by opening a shared reading view.
+
+Each participant supplies their own decision using their own permitted evidence. Shared preparation can include the same public object facts or already disclosed terms; it excludes undisclosed goals, memories, private reasons and another person's unsaid reply. A joint summary is a reading aid over completed permitted contributions. It never decides on behalf of everyone or predicts the eventual agreement.
+
+Refusal and withdrawal remain meaningful choices. An NPC declining an invitation is different from a decision that could not run because the provider was unavailable. Silence can remain ambiguous to another character; the service must not label technical failure as a deliberate social refusal. A human's agreement always requires their actual input. The player may overhear a request without joining, and a bystander may notice physical consequences without learning its participants' reasons.
+
+### 18.3 Make action legible without narrating a private mind
+
+Show people walking, preparing, working, stopping and leaving through their real bodies and admitted activity. A displayed action progress indicator describes the current native task and actual elapsed work; it is not a percentage of social agreement, trust or the person's whole intention. Unknown duration remains unknown. A gathering with no finite work has no decorative progress bar.
+
+Distinguish a person's stated purpose from observed progress. **“Ada said she wants to try the container”** is testimony. **“Ada is walking toward the riverside”** requires current permitted observation of that action. **“Ada trusts the maker now”** is unavailable unless Ada communicates her view or another supported evidence source establishes it; a fluent generated explanation is not proof of why she acted.
+
+Keep ordinary expression optional. A person can explain, joke, hesitate or say nothing when their choice supports it; no model call is required after every step to announce motivation. The player should understand enough to choose whether to join, wait, speak, offer something or leave from a concise header, the readable exchange and actual activity. Optional detail must not hide an impending resource use or replacement of current work.
+
+### 18.4 Attention connects to a continuing personal life
+
+Attention preserves the current conversation or chosen activity while allowing personally relevant evidence to enter through existing perception, action results, memory and fair reaction intake. A promise's changed support, an intelligible quiet invitation or an unexpected refusal can matter without producing physical danger. The [continuing-life design](continuing-lives-tech-design.md) owns the person's decision to continue, revise, defer or stop; this project supplies the exact social participation and observer-facing facts.
+
+Do not turn this into a new fixed reconsideration interval or “important people only” filter. No new maximum of noticed people is selected. Existing valid evidence must survive even when optional interpretation is deferred. Unfamiliar meaning and contrary evidence cannot be eliminated solely because no registered predicate matches the current purpose. Qualification must distinguish not detecting a source, hearing it but not yet reconsidering, deliberately declining, and unavailable cognition.
+
+### 18.5 Lifecycle, failure and completion
+
+A participant leaving a conversation does not by itself cancel a separately accepted walk or physical task. A withdrawn outing or replaced task does affect its own exact work. Death, inability, genuine departure, changed destination and loss of current control use their existing owners. Already completed movement, material consumption, injury and item transfer remain real; cancellation does not refund them.
+
+Save/reopen preserves accepted terms, each person's actual partial work and permitted heard history at one coherent boundary. It does not replay a greeting, reaccept an invitation, manufacture a reply or restore an abandoned provider call. When a person returns later, they see current people and objects and can consult their own record or ask an actual question; they do not receive a secret transcript of their absence.
+
+Completion for this slice requires an understandable exact encounter with independent acceptance/refusal, real physical consequences where selected, and truthful interruption/recovery. It does not require crowded scenes, automatic social rewards, gist, timed speech, an authorial director or unattended service. Existing AS-J15–16/19 and relevant interruption/return cases remain the acceptance owner; the [technical counterpart](attention-and-scenes-tech-design.md#8-verification-and-completion) makes their required observations explicit.
+
 ## Maintained records
 
 - Product scope and order: [five-specification package](five-product-feature-specs.md).
@@ -559,4 +601,5 @@ The [character flows](compelling-characters-feature-spec.md#complete-behavioral-
 - Proposed authored profile: [Something worth showing](../worlds/base/social-gatherings.md), the single owner of selected attendance, initial matters, gist/vocal restrictions and the later busy-camp workload.
 - Limits: [product scalability, especially PS-L28–33](../limits/product-scalability.md) and [hearing and speech](../limits/hearing-and-speech.md). New scope restrictions are proposed; existing captions and acoustic limits remain current until separately changed.
 - Related work: [continuing NPC lives](continuing-lives-feature-spec.md) supplies unattended consumers and the funded-service boundary; ND15 retains future audio-media presentation; ND37 retains reporting and control policy.
-- Technical design is intentionally deferred. This document does not implement crowd capacity, change current speech evidence, close PS04 or approve a new time policy.
+- Technical counterpart: [attention and scenes](attention-and-scenes-tech-design.md) resolves the exact shared-activity slice; conditional gist, aggregate crowd sound and timed speech retain their policy gates. This document does not implement crowd capacity, change current speech evidence, close PS04 or approve a new time policy.
+- Research refinement tracking: [intelligent-simulation design coverage](../maintainers/intelligent-simulation.md), with existing DG06/DG18, PS04 and CE implementation owners; shared [constraints](../limits/intelligent-simulation.md) supplement the existing feature inventories.

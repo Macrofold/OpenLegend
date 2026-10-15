@@ -1,13 +1,14 @@
 # Product scalability — technical design and staged plan
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Product direction and staged technical proposals are documented; runtime delivery and measured capacity remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Native execution and admission contracts are specified; the selected fidelity questions and runtime qualification remain open. | 2026-10-15   |
 
 **Status: proposed implementation design supporting accepted product direction, October 2, 2026. The October 2 design task delivered documentation only. No runtime work, new service, database migration, paid experiment, or deployment is authorized by this document.**
 
 ## Maintained records
 
+- Research refinement: [Design/integration map](../maintainers/intelligent-simulation.md), [constraint map](../limits/intelligent-simulation.md) and [design completion plan](intelligent-simulation-design-plan.md).
 - Canonical strategic behavior: [product scalability](../product-scalability/README.md).
 - Player-facing specification: [feature specification](product-scalability-feature-spec.md).
 - Delivery: [product-scalability tracker](../maintainers/product-scalability.md).
@@ -133,3 +134,92 @@ Compare equivalent boundary histories where exactness is promised. Where approxi
 ## 10. Unresolved implementation choices
 
 Do not freeze attention counts, cell sizes, preparation radii, encounter deadlines, grace periods, world capacities, model SKUs, prices, or rollout dates in this design. Select them from meaningful experiments and record the decision in the [limits owner](../limits/product-scalability.md). Policy choices about protected outcomes, human absentee behavior, clock assignments, domain imports, and campaign participation must be resolved before the affected stage is activated. None authorizes weakening existing authority or durability to make a benchmark pass.
+
+## 11. Research refinement: one authoritative world under efficient execution
+
+**Design continuation, October 15, 2026.** This section specifies the common execution/admission boundary for IS06–IS08 in the [integration map](../maintainers/intelligent-simulation.md). It refines this existing pair rather than defining a second simulation. The first fidelity and prospective gist policies await the developer answers in the [design plan](intelligent-simulation-design-plan.md); no dependent approximate family, harm rule or new service promise is selected by these independent contracts. [Constraint map](../limits/intelligent-simulation.md) records that distinction. Earlier broad PS03–PS07 targets remain proposals with their own decisions.
+
+### 11.1 Current code and reusable responsibilities
+
+| Owner                                                                                       | Current responsibility to preserve                                                                            | Refinement and caller boundary                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/domain/src/kernel.ts` — `advanceWorldSlices`                                      | Deterministic bounded native advance with coherent publication points and explicit unadvanced time            | Remains the sole time/effect path. Alternate preparation may provide a narrower proved boundary; no independent actor/region writes past this committed prefix.                  |
+| `packages/domain/src/simulation-time.ts`, current action/status/movement owners             | Rates, thresholds and meaningful native deadlines from installed state                                        | A family owns validity and stopping facts; the coordinator combines their earliest relevant boundaries, not a world-wide library of survival rules.                              |
+| `packages/domain/src/work-budget.ts`, `native-work.ts`                                      | Actual native demand, interval/invocation work and release                                                    | Use existing finite work categories and group limits; do not classify an activity as free because it has no model call.                                                          |
+| `apps/server/src/world-service.ts`, `host-work.ts`                                          | One world mutation/publication owner, admitted live/candidate capacity, rollback of reservation before commit | Off-lane preparation returns read-only proposals. Candidate liability remains reserved through SQL; only the commit owner publishes actual effects.                              |
+| `apps/server/src/actor-work.ts`, `ai-director.ts`                                           | Actor-private coalesced opportunities, fairness, current decision admission and cancellation                  | Preserve separate native CPU, decision opportunity and external-spending admission. Do not add a second scene/region queue or paid gate per physical slice.                      |
+| `apps/server/src/work-lane.ts`, `postgres.ts`, command/response receipt owners              | Bounded queued requests, ordered transactions, exact outcome recovery                                         | Queue expiration precedes execution; uncertain committed results recover by identity. A save/decision retry is never inferred from a transport failure.                          |
+| `world-composition.ts`, exact installed definitions and world-owned trusted implementations | Finite supported family meaning and selection                                                                 | A family may opt into an implemented equivalent/approximate evaluator only under its selected policy and dependencies. World text never installs code or grants host privileges. |
+
+No new package, background actor store, region replica, database, broker or worker pool is required for this scope. `HostWork` currently coordinates allocations within one process; distribution requires its own qualified admission/ownership contract and is not obtained by adding worker threads.
+
+### 11.2 Prepared work is not authoritative future state
+
+The coordinator handles three questions independently: which exact native work can safely advance; which person has an opportunity to reconsider; and which optional presentation detail to prepare. A useful answer to one never authorizes the others.
+
+A family's interval preparation is an immutable derived value tied to the same exact actor/action invocation, physical life, installed definition pins and committed input snapshot. It contains only the calculation needed to establish its validity bound, required inputs and earliest meaningful stop. This is a conceptual contract implemented at current family helpers; do not add a universal serialized “activity certificate” object when the existing sampling/deadline owners already supply the answer.
+
+For any genuinely new evaluator, its owning design must specify:
+
+- Exact reads and writes, units, clock and complete dependencies; shared stock, route/body/geometry, current conditions, observed audiences and exact consent/grants where consumed.
+- Maximum eligible interval and the earliest completion, depletion, contact, arrival, threshold, observer or policy boundary. Unknown cannot certify an infinite interval.
+- Whether its output is equivalent, explicitly approximate or unsupported under the installed rule. An average estimate cannot enter an exact effect slot.
+- Deterministic resource and randomness handling, participant ordering, partial-progress representation, actual outcome recording and the explicit stop/refusal path.
+- Interaction with another admitted family. Independent proofs may be composed only when shared resources and cross-effects are covered; two individually valid outputs do not each own the same remaining stock.
+
+Select conservative eligible work before preparing bodies, paths or histories. Deduplicate calculations at their existing owner; do not infer cognitive irrelevance from spatial distance. Every actual observer and affecting participant remains part of the causal boundary even if no human is looking.
+
+### 11.3 One complete operation
+
+1. Read current committed world and exact invocation through the existing mutation/intention owner; select only installed supported families. Existing current authority and knowledge checks retain their owners.
+2. Share immutable target-independent definition/geometry preparation, then calculate participant-specific dependencies only for eligible work. Required route preparation retains the existing technical hold and stays outside mutation; no artificial hunger accrues while that hold applies.
+3. Reserve the complete native and external liabilities before dispatch. A native allowance cannot spend money; an account allowance cannot exceed CPU admission or buy fictional permission. Retain the operation's exact prepared data through awaited reads rather than retrieving a replaceable recent cache again.
+4. At publication, recheck current authority, definition/body/life, exact resource/consent and relevant evidence dependencies. An unrelated distant edit need not invalidate a local result when the owning dependency contract proves independence; incomplete coverage conservatively rechecks.
+5. Advance only the earliest permitted prefix through ordinary native effects. Reconcile simultaneous boundaries using current deterministic ordering; continuous swept movement and native safety tests remain responsible for actual contact, reach and support. Never commit a future stock transfer and later “correct” it after a human has used it.
+6. Record actual occurrences and each observer's permitted evidence once through existing owners; preserve partial failure and remainder. Commit coherently through normal persistence, acknowledge only the captured intake reasons, then publish permitted views. New evidence arriving during work remains pending.
+
+A refusal or deferred result says what is unavailable without inventing fictional indifference or a successful outcome. A family's missing exact representation cannot be repaired by generated narrative.
+
+### 11.4 Mid-activity interaction, cancellation and recovery
+
+| Situation                                                               | Required result                                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Another person approaches or an actual observer gains relevant evidence | End the prepared interval before its dependency no longer holds; materialize the same current people and partial work. Do not invent a separate meeting location or history.                                                                                                  |
+| Material is taken or exact consent changes during preparation           | Revalidate the same operation; refuse/suspend through its existing owner when actual terms no longer hold. Earlier committed debits/outcomes remain.                                                                                                                          |
+| Actor stops, dies, departs or begins different work                     | End only the affected activity/relationship under its installed lifecycle. A released independent effect retains its own owner; cancellation does not erase an in-flight projectile or paid charge.                                                                           |
+| Capacity is unavailable before optional work is admitted                | Explicitly defer/refuse new work. Preserve admitted obligations and current exact physical effects under existing holds; do not solve overload by discarding audience evidence.                                                                                               |
+| A queued request expires or a provider reply becomes stale              | Retain distinct expired/stale/cancelled/failed outcomes and actual accounting. No automatic paid catch-up or replay.                                                                                                                                                          |
+| Server stops or gameplay is restored                                    | Save canonical action cursor, partial quantity, pending native remainder, definition pins, selected terms and RNG through their current records. Rebuild derived indexes/preparation; fence callbacks with current generation and preserve external reservations/uncertainty. |
+| A new world definition is installed/removed                             | Same validation and supported live-change owner decides whether resumable work remains valid. Historical finished facts remain interpretable without creating fresh execution rights.                                                                                         |
+
+No new schema is mandated by caching an interval. If a selected family genuinely requires additional durable progress, add it to its existing record/catalogue owner and current-format validation. Follow the root no-legacy policy; this design does not authorize migrations or silent reinterpretation. Account/session authority, money and private forgetting remain outside gameplay rewind.
+
+### 11.5 Separate engine capability, authored law and operating service
+
+The engine enforces identity, one committed outcome, exact protected rights, supported type/definition relationships and bounded calculation. A world selects which family exists, its rates, observation/disclosure, accepted fictional risk and whether a proved alternate evaluator is permitted. The server chooses measured operating batch/concurrency under those contracts and reserves real money/capacity. The interface describes current committed state and technical waiting; it has no authority to choose a simpler fictional law.
+
+A contrasting hypothetical maintenance machine can retain charge, part wear, chosen work and a touch-only sensor instead of hunger, anatomy and speech. The same typed work/dependency/admission mechanisms apply without installing human social urgency or a universal “seek food” branch. This is a design contrast, not claimed implemented gameplay. Conversely, a base-world camp may use human-like activities while keeping their content and vocabulary under its authored package.
+
+An invented method inherits only the guarantees its actual installed dependencies compose. A new spell described as “instant travel” has no equivalent physical interval evaluator merely because walking does. Its unsupported or costlier route remains explicit through existing authoring/admission, without automatic engine invention or a special named-spell exception.
+
+### 11.6 Growth, bounded work and measurement
+
+**Growth:** active invocations and observers, supported family combinations, movement/geometry density, shared resource contention, queued/in-flight replies and retained exact evidence. Per-actor finite work does not bound the number of actors, interactions or wakeups. A future connected scene can cause real work proportional to its legitimate audience.
+
+**Shared preparation:** reuse current immutable definitions, existing spatial candidates and exact request-owned scope/body facts. Cold rebuilds and concentrated changes are measured separately; no cache of current consent, private interpretation or native authority. Unknown invalidation coverage recomputes through current owners.
+
+**Invalidation:** body/life, exact action instance/cursor, resource/custody, installed definitions, geometry/support/motion, applicable clock boundary, observer eligibility, consent/grants, evidence correction and restore generation. Do not key a timed display only to an unchanged entity object, or a current permission only to a route cache.
+
+**Measurement:** use existing PF tooling through actual server/native entrypoints. Compare equal authored input and admitted subsequent commands, save/reopen and enter/leave cycles; preserve exact output/order/RNG where equivalence is claimed. Count selected/visited candidates, actual SQL and bytes, interval preparation/rebuilds, queue wait, retained heap/RSS, cold/warm/burst/tail latency and all model work. Record active versus retained people and real versus simulated duration. Do not infer a community capacity from one interval or one successful known method.
+
+Before increasing population or approximating outcomes, attribute redundant preparation, local allocation, geometry and publication work. A dependency index or distributed process is chosen only if its complete-path benefit exceeds maintenance/serialization/recovery costs. No new numeric limits are derived from research headlines; existing inventories remain controlling, with [IS constraints](../limits/intelligent-simulation.md) covering this refinement.
+
+### 11.7 Integration stages and future acceptance
+
+1. Inventory existing exact family bounds and current dependencies; link observed bottlenecks and existing delivery/evidence instead of relabeling them as missing architecture.
+2. Implement only the smallest selected gap at its owning family/query/helper. First compare against ordinary detailed execution with fixed subsequent inputs and a materially different supported definition; unsupported/conflicting definitions refuse before effects.
+3. Qualify actual preparation → wait → admission → native progress → persistence → scoped disclosure, including source change during waits, partial work, simultaneous resource contention, approach/observer entry, cancellation/death and restore. Do not require a blanket new test suite; use the repository's existing verification policy.
+4. Compare a meaningful complete episode and later encounter through the [evaluation pair](intelligent-simulation-evaluation-feature-spec.md), including useful independent action, allowed alternatives and explicit service failure. A fast native helper does not qualify character agency or a human return experience.
+5. Expand to the separately selected family or service only after its actual policy answers, full liability and evidence exist. Current multiplayer protection, clocks, unattended terms and coarse social proposals retain their own gates.
+
+Design completion requires current owners/callers, precise independent contracts, selected policy boundaries, failures, bounds and this delivery breakdown to agree across the pairs. Implementation and measured acceptance remain IS06–IS09/PS/PF work, never consequences of a documentation checkbox.

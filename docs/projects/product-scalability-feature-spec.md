@@ -1,13 +1,14 @@
 # Product scalability — feature specification
 
-| Status      | Current progress                                                                                  | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Product and behavior proposals are documented; technical design and runtime delivery remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Native execution and admission contracts are specified; the selected fidelity questions and runtime qualification remain open. | 2026-10-15   |
 
 **Status: accepted strategic direction, proposed detailed product requirements, October 2, 2026. Documentation only; runtime delivery and capacity remain unqualified.**
 
 ## Maintained records
 
+- Research refinement: [Design/integration map](../maintainers/intelligent-simulation.md), [constraint map](../limits/intelligent-simulation.md) and [design completion plan](intelligent-simulation-design-plan.md).
 - Canonical principles and behavioral detail: [product-scalability suite](../product-scalability/README.md).
 - Implementation interfaces and sequence: [technical design](product-scalability-tech-design.md).
 - Single focused work tracker: [product scalability](../maintainers/product-scalability.md).
@@ -128,3 +129,32 @@ Measure actual player experience, model consistency, perspective errors, transit
 ## 7. Release gates
 
 Ship only the stages whose behavior, unsupported cases, and capacity envelope have been qualified. Reconcile current memory, perception, time, logout, and durability contracts before introducing changed semantics. This documentation task is not implementation evidence or a request to change gameplay. A later explicit instruction to implement follows the [root task-authorization policy](../../AGENTS.md#task-scope-and-authorization). The [tracker](../maintainers/product-scalability.md) owns the precise staged work and acceptance state.
+
+## 8. Intelligence/simulation research refinement — October 15, 2026
+
+The [research follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) is now mapped to concrete integration contracts in [technical design §11](product-scalability-tech-design.md#11-research-refinement-one-authoritative-world-under-efficient-execution). This consumes the existing PS project; it does not replace its larger target or claim background lives have shipped. The first fidelity and background-speech selections are awaiting Mike's answers in the [design plan](intelligent-simulation-design-plan.md), before dependent behavior is completed.
+
+### The experience this extension must protect
+
+A returning player meets the same particular person and actual consequences: a useful object made, work still unfinished, a changed plan or a freely chosen refusal. Leaving the camera, changing detail, waiting for a model or reopening storage cannot secretly reroll the result, create stock, overwrite consent or produce exact eyewitness memories for unrepresented events. If something is technically unavailable, the game describes the unavailable interaction honestly; it does not portray that as a character choosing not to care.
+
+The native interval and cognition decision are separate. A character may be carrying out an already chosen valid method while inference is busy, but that continuation grants no new goal, risky material substitution or agreement. Other people's actions and actual new evidence can require reconsideration. Existing human pause, departure, protection and clock rules remain unchanged unless their own selected extension is approved.
+
+### Complete boundary journeys
+
+| Journey                                | Required ordinary outcome                                                                                                                                                                            | Meaningful failure                                                                                                                                                           |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chosen making, interruption and return | The person retains actual partial work and costs, receives an eligible change and can resume or revise the chosen purpose. The player sees actual work and later effects.                            | A missing material, changed permission or unknown condition blocks that continuation; no imagined substitute or fabricated completion.                                       |
+| Shared resource during preparation     | Two people independently propose use of the same stock. Current admission produces one coherent set of actual effects and the other person's available result.                                       | Stale output cannot consume already spent stock or recreate an earlier successful proposal.                                                                                  |
+| Approach and change of detail          | The current person, placement and supported work become available through actual geometry and scoped evidence, including another NPC observer.                                                       | A required representation/route cannot be prepared: retain the existing valid source situation and ordinary hold/refusal policy rather than inventing arrival or protection. |
+| New sense or installed world rule      | The selected rule supplies the actual dependencies, visible terms and supported effects, through the same actions and private evidence owners.                                                       | Missing or unsupported native computation is explicit. A freeform definition cannot certify reachability, safe skipping or unseen knowledge.                                 |
+| Provider delay and resource limits     | Already admitted native work can continue where valid. Current decision intake preserves waiting reasons and spending uncertainty; the player can distinguish technical delay from a chosen refusal. | Exhausted capacity/funding admits no new liability or automatic retry and does not silently discard real effects or recipients.                                              |
+| Save, reopen and later inquiry         | Canonical progress, original deadlines, actual RNG and source-scoped outcomes reopen coherently; rebuildable preparation does not become a second save.                                              | Invalid required references refuse the candidate. A restored private account cannot bypass current forgetting, access revocation or real spending.                           |
+
+These are design acceptance journeys, not newly observed runtime results. Exact invariants, personal/social quality, understandable presentation and operating cost are evaluated separately through [the evaluation feature](intelligent-simulation-evaluation-feature-spec.md).
+
+### Scope and authority
+
+Use the current single authoritative world, bounded native interval, work lanes, fairness and ledger before proposing a distributed runtime or a thread per person. Remove measured repeated computation before changing the fictional fidelity. Worlds own supported laws, senses, detail policies and content; runtime owners enforce valid references, exact admission, protected rights and bounded work. Neither a lower-detail mode nor a model answer owns physical effects directly.
+
+This design adds no price, unattended service offer, new calendar assignment, dangerous-logout policy, arbitrary crowd/population capacity or new body law. Existing wider PS decisions retain their owners; their unsettled status does not block a complete attended personal episode with today's mechanisms. [IS06–IS09](../maintainers/intelligent-simulation.md) track the integrated refinement and [the shared constraints](../limits/intelligent-simulation.md) link inherited allowances and unresolved policy.

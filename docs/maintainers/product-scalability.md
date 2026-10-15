@@ -1,6 +1,6 @@
 # Product scalability delivery tracker
 
-**Status: documentation foundation only, October 2, 2026. All runtime work below is proposed and unqualified.** This is the single tracker for integrating the cross-cutting product direction; existing subsystem trackers retain their own implementation detail and evidence.
+**Status: documentation foundation and selected technical refinements, October 15, 2026. All runtime work below is proposed and unqualified.** This is the single tracker for integrating the cross-cutting product direction; existing subsystem trackers retain their own implementation detail and evidence.
 
 ## Maintained records
 
@@ -9,9 +9,11 @@
 - [Limits and open choices](../limits/product-scalability.md).
 - Secondary [alternatives and changed decisions](../product-scalability/alternatives.md).
 
+**October 15 research refinement:** [technical §11](../projects/product-scalability-tech-design.md#11-research-refinement-one-authoritative-world-under-efficient-execution) grounds truthful advancement, concurrent preparation and protected service in current native/time/commit owners. [Continuing-life](../projects/continuing-lives-tech-design.md) and [exact shared-activity](../projects/attention-and-scenes-tech-design.md) counterparts serve PS02/PS04; [evaluation](../projects/intelligent-simulation-evaluation-tech-design.md) serves PS06/PS08. The [coverage map](intelligent-simulation.md) distinguishes prepared design from unresolved fidelity/speech/psychology choices. Current pause, control, spending and runtime acceptance remain unchanged; no new population or unattended offer is selected.
+
 ## Scope and authorization
 
-The current task writes and integrates documentation on `docs/product-scalability` from main commit `8005f7c7245cfecec128652efe3ef07926604e0a`. It changes zero production logic and authorizes no runtime implementation, paid-model work, save conversion, or deployment. Population examples are design workloads, not delivered capacity.
+The original October 2 task wrote and integrated documentation on `docs/product-scalability` from main commit `8005f7c7245cfecec128652efe3ef07926604e0a`. The October 15 [design plan](../projects/intelligent-simulation-design-plan.md) records the newer inspected base and current authorized scope. Both tasks change zero production logic and authorize no runtime implementation, paid-model work, save conversion, or deployment. Population examples are design workloads, not delivered capacity.
 
 Do not create parallel task queues in every linked topic. Update the relevant existing agency, perception, hearing, conversation, time, participation, performance, and data trackers when implementation of that owner is actually scheduled. This tracker records the cross-owner dependency and product acceptance only.
 

@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Intelligent individuals and efficient simulation
+
+[The research-to-design map](intelligent-simulation.md) connects all nine new refinements to four feature/technical pairs and existing character, agency, social, performance and scalability owners. It distinguishes prepared exact-play contracts from the three unanswered product choices; implementation and behavioral/capacity evidence remain open. This is coordination and design coverage, not another runtime backlog or a new priority ranking.
+
 ## October 14 foundation review
 
 [Review and evidence](../verification/foundation-review.md) assesses the integrated code, with explicit source/probe limits. [Immediate work](foundation-review-todos.md) owns thirteen prioritized recommendations; future improvements live in their subsystem maintainers. [Foundational tests](foundational-tests.md) records the first ten stable tests and the deliberately narrow next slices. The [implementation follow-up](../verification/foundation-hardening.md) records delivered fixes, verification and the feature-document currency audit.
