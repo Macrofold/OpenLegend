@@ -75,6 +75,19 @@ failure, exact source and supplied-fixture limit. No provider execution or live
 credentials are permitted. Inspect the resulting images and reconcile the tracker;
 an unavailable participant or device still leaves the corresponding human gate open.
 
+The alternate-world review identified the same consequential boundary in the
+existing Current task owner: unreadable session recovery was treated as no request,
+and a fresh Start could overwrite the unknown original with a new command identity.
+Keep the current stored shape and native command/receipt owners, reuse the existing
+retained-request reader where its contract fits, verify storage before dispatch and
+matching cleanup before releasing the guard, and retain a known original for
+read-only result checks. Qualify refusal after the earlier work has actually ended,
+so an ordinary busy-work refusal cannot hide a missing recovery constraint. This
+adds roughly 80–110 task-owner logic lines; combined production changes are now
+about 200 lines. The existing durable plan remains appropriate because original
+effects, storage failure and stale results cross the client/native boundary; no
+server schema, paid retry or new general recovery framework is introduced.
+
 ### Original action recovery — UIUX12
 
 Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.

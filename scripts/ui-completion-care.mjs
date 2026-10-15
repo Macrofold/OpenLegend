@@ -475,7 +475,7 @@ try {
     for (const readable of [
       heading,
       task.getByText(expectedReason, { exact: true }),
-      task.locator('.ol-task-status > p').filter({ hasText: 'Chosen stopping time' }),
+      task.locator('.ol-task-status > p').filter({ hasText: /^Chosen stopping time Day / }),
       acknowledgement,
     ]) {
       await readable.scrollIntoViewIfNeeded();

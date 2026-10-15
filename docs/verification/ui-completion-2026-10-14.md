@@ -156,6 +156,58 @@ All provider execution remains disabled or intercepted fixture behavior.
 Additional provider/Jev cost: **$0**. Cumulative task provider/Jev cost: **$0**.
 Fixture accounting values in native test logs are not real provider charges.
 
+### Finite storage and denied-container observations
+
+At `7e161aaebbf20cd5197d8be0b712df46521a3636`, the
+[finite Linux observation run](https://github.com/Macrofold/OpenLegend/actions/runs/38680389344/job/116243352552)
+passes the owner-storage and denied-container observations. Its overall result is
+**failed** because the completed-task case stops on an ambiguous test selector:
+both the completion reason and the actual deadline contain “chosen stopping time.”
+That failure precedes its six requested images; it establishes no new presentation
+defect. The correction selects the deadline precisely and keeps the assertions and
+all existing budgets.
+
+The owner-storage case passes in **18.1 seconds** under its 60-second limit. The
+actual App and native owner session use supplied retained turn records and
+intercepted message submissions, with native provider allowance zero. Failed
+pending-record writes preserve the exact draft and send zero messages. Restored
+storage allows one original submission whose acknowledgement is deliberately
+lost; unreadable pending storage across reload blocks another send. Restoring
+reads and checking the saved result recovers that same request ID and preserves
+the newer unsent draft, with the submission count still one. A separately explicit
+second message retains the existing pending/failure presentation checks. This is
+client recovery against controlled turn records, not live inference or new proof
+of native turn persistence. The inspected image shows the warning and retained
+newer draft over a rendered world. Check saved result is partly below the captured
+message region; the later actual click succeeds, so this image alone does not
+qualify every initial reading position.
+
+The denied-container case uses one real local account and a stationary woven bag
+containing a stone. It establishes initial contents access, then withdraws that
+access through the existing native access owner as fixture intervention. The
+authenticated exact-bag inventory read returns HTTP 400 without items; the
+selected bag stays retained, with zero private item rows and no old detail popup.
+The single original `.ol-inventory-workspace` capture succeeds in **6,213 ms**
+under its unchanged **10,000 ms** allowance, with default animation. The inspected
+image shows Container, Search Container, the readable unavailable reason, Refresh
+and Close container; the player's separate belongings remain visible. Custody is
+unchanged and every owned resource closes successfully. This closes the missing
+external-container image, reusing the earlier two-account conservation/receipt
+evidence; it does not qualify an administrative permission-editing interface or
+prove that JavaScript consumed a formerly permitted late response.
+
+Local failed attempts remain distinct: output 01 stops at initial graphics
+readiness, output 02 uses prepared fibers that current authored rules refuse
+inside a bag, and output 03 stops before dispatching an ordinary In view click.
+The Linux fixture uses a permitted stone. Its passing capture does not diagnose
+the older capture-stability failure or demonstrate a performance repair.
+
+[Artifact 11948295150](https://github.com/Macrofold/OpenLegend/actions/runs/38680389344/artifacts/11948295150)
+retains the reports, traces and two inspected images (28,848,374 bytes). The denied
+image SHA-256 is
+`88d4204b771245c8cc4392d5238dd890cb91b8b427fb04e84960974a3cf31839`.
+Additional and cumulative task provider/Jev cost: **$0**.
+
 ## Remaining whole-feature qualification
 
 The original action and checkpoint reload-recovery implementation is no longer missing: the three specific interrupted-request journeys above pass. This does not close every compound UIUX12/UIUX14 requirement. Wider storage/identity/revocation combinations, complete native barter/outing continuation, completed-task rendered-result review and the alternate-world interface qualification retain their earlier explicit tracking and evidence limits.
