@@ -8,7 +8,7 @@ The Batch 06 [idle-help restoration correction](../verification/rivals-and-conte
 
 This is the sole implementation tracker for gameplay save/load capabilities. The [save/load design](../save-and-load.md) owns behavior and acceptance principles. [Architecture](../architecture.md) owns implemented facts; [Verification](../verification.md) owns evidence. Phase exit gates remain open until their required evidence is recorded; the initial delivery below is not full qualification. Existing persistence and backup scripts are reusable foundations, not proof that these capabilities are complete.
 
-Tasks deliberately avoid enumerating object types, fields or physical layouts. Subsystem owners maintain their own serialization, validation and migration details as they evolve. Completing the framework does not automatically establish coverage for subsequently added state.
+Tasks deliberately avoid enumerating object types, fields or physical layouts. Subsystem owners maintain their current serialization, validation and supported live-definition-change details as they evolve; the root policy prohibits development-format compatibility work. Completing the framework does not automatically establish coverage for subsequently added state.
 
 Coordinate module dependency capture and load validation with [EWF07](extensible-world-foundation.md#ewf07--module-lifecycle-and-current-format-save-integration); module fixtures do not complete this tracker’s broader acceptance.
 
@@ -27,7 +27,7 @@ SL02/SL03/SL08 and the supported local SL09 slice are implemented and exercised.
 
 Rebased integration preserves manual save grants and server-owned whole-world autosaves. Ordinary players have no save controls and their list/create/delete/load requests are denied. [Integration evidence](../verification/checkpoints-and-recovery.md#checkpoint-integration-with-foundations) records creator-absent autosaves, binding preservation and exact authority backup/import. Its preceding-layout conversion and dual-adapter observations are historical; current runtime is PostgreSQL-only and supports only streamed current-format packages.
 
-Acceptance is scoped to the current local mechanisms and named native workloads. The 256 MiB ceiling itself, every future process/plan family, naturally aged long sessions, hosted storage/power loss, live providers, CI suites and first-release population SLOs are not qualified. Existing SL00/SL01/SL04/SL05/SL07 checklists retain broader owner-integration/release evidence; this delivery does not silently close them. [Extension guidance](../extending.md#persistence-and-migrations) and DF02 define current-state owner integration under the root development policy.
+Acceptance is scoped to the current local mechanisms and named native workloads. The 256 MiB ceiling itself, every future process/plan family, naturally aged long sessions, hosted storage/power loss, live providers, CI suites and first-release population SLOs are not qualified. Existing SL00/SL01/SL04/SL05/SL07 checklists retain broader owner-integration/release evidence; this delivery does not silently close them. [Extension guidance](../extending.md#persistence-and-migrations) and DF02 define current owner integration; historical branch and format conversions are not remaining merge or migration requirements.
 
 ## Delivery boundaries and sequence
 
@@ -51,7 +51,7 @@ Exit: an integration path demonstrated with the current persistence boundary and
 
 Dependencies: SL00.
 
-- [ ] Implement a versioned logical package boundary carrying save identity, captured revision, compatibility information and required dependency references; keep its physical encoding replaceable.
+- [ ] Qualify the implemented logical package boundary carrying save identity, captured revision, compatibility information and required dependency references; keep its physical encoding replaceable.
 - [ ] Validate completeness, integrity, resource limits and supported interpretation before exposing a candidate to restoration. Keep private state private and exclude credentials.
 - [ ] Resolve required content versions explicitly; report missing or incompatible dependencies without silently substituting current content.
 
@@ -81,8 +81,8 @@ Exit: process interruption, storage exhaustion and concurrent completion leave o
 
 Dependencies: SL01–SL03; SL05 and current-format validation are required before exposing load.
 
-- [ ] Prepare an isolated candidate, reconstruct references and validate invariants through subsystem-owned restore paths without replaying creation side effects.
-- [ ] Quiesce admission, preserve a recoverable pre-load point and install through one recoverable authority transition. Fail safely if preparation or installation cannot complete.
+- [ ] Qualify isolated candidate preparation, reference reconstruction and invariant validation through subsystem-owned restore paths without replaying creation side effects.
+- [ ] Qualify admission quiescence, preservation of the pre-load recovery point and installation through one recoverable authority transition. Fail safely if preparation or installation cannot complete.
 - [ ] Rebuild derived state, discard abandoned-future projections, issue fresh client baselines and reopen paused. Keep load operation identity outside the rewindable world so request retries cannot rewind twice.
 
 Exit: interrupted installation recovers a complete old or new world; invalid candidates leave active state intact; a lost-response retry returns the original outcome even after later progress.
@@ -109,11 +109,11 @@ Exit: future compatibility work is qualified only against a newly authorized sup
 
 Dependencies: SL03–SL05 and current-format validation; future migration support is not a prerequisite.
 
-- [ ] Expose authorized manual save, save listing and load operations through the application boundary, with React controls using the current design system.
+- [ ] Qualify the delivered authorized manual save, save listing and load operations through the application boundary, with React controls using the current design system.
 - [ ] Show real creation time, simulated time, compatibility and truthful pending/success/failure feedback. Make replacement of the active timeline clear before destructive load or save deletion.
 - [ ] Verify the complete player flow: save, advance the world, load, inspect the restored state and explicitly resume. Handle repeated submissions, disconnects and failure feedback.
 
-Exit: a player can retain and restore the currently supported personal world without shell scripts; success is reported only after durable completion. Usable-release acceptance also requires SL09.
+Exit: a currently authorized save-grant holder can retain and restore the supported personal world without shell scripts; success is reported only after durable completion. Usable-release acceptance also requires SL09.
 
 ## SL08 — Rolling autosaves and retention
 
