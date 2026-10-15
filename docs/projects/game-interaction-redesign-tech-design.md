@@ -4,7 +4,7 @@
 | ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | UI repairs and requested code reviews are complete; browser/CI gates and human/device acceptance remain open. | 2026-10-15   |
 
-**Used for this reconciliation:** 2026-10-15 09:14:58 UTC, technical design as stored at source 3501d19c80e4cd5734e0c0f36e44fd56a0407eeb. This records current use; the original implementation-use time was not recorded.
+**Used for this reconciliation:** 2026-10-15 23:33:47 UTC, technical design consulted against implementation source 81fbce78b413c6b290b51b64100384215d4a0047. This records use for the current review; the original implementation-use time was not recorded. The architecture is not rewritten: [current repair evidence and open browser/CI gates](../verification/ui-implementation-review.md#current-verification-and-readiness) qualify the delivered source separately from the historical results below.
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 

@@ -16,9 +16,10 @@ The replacement inventory, contextual activities and scoped conversation paths a
 
 This is a navigation index, not a second task list. The linked UIUX sections own each checkbox, evidence boundary and exit; native subsystem owners retain their mechanics and release criteria.
 
-| Remaining work                                                                                     | Kind                       | Canonical task owner                                              |
-| -------------------------------------------------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------- |
-| Broader text/viewport and non-drag combinations, real OS IME, assistive devices and uncoached play | Input/player qualification | [UIUX18](#uiux18), J47–J48; [UIUX11](#uiux11) for integrated play |
+| Remaining work                                                                                     | Kind                        | Canonical task owner                                              |
+| -------------------------------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------- |
+| Current ordinary-browser failures and required CI for the additional local UI repairs              | Implementation verification | [UIUX18](#uiux18)                                                 |
+| Broader text/viewport and non-drag combinations, real OS IME, assistive devices and uncoached play | Input/player qualification  | [UIUX18](#uiux18), J47–J48; [UIUX11](#uiux11) for integrated play |
 
 Concrete application: [PW04 inventory](parallel-batch-01-playable-week.md#pw04--inventory-for-exact-camp-tasks), [PW05 streamed authoring](parallel-batch-01-playable-week.md#pw05--streamed-world-agent-replies), [PW11 invention workspace](parallel-batch-01-playable-week.md#pw11--inspectable-and-editable-invention-workspace) and PW07 generic meter/editor UI, with a shared [feature specification](../projects/parallel-batch-01-playable-week-feature-spec.md) and [technical design](../projects/parallel-batch-01-playable-week-tech-design.md), select a camp-supply task and owner-chat journey for the next engineering week. [Engineer 4's report](../verification/parallel-batch-01-playable-week-engineer-4.md) distinguishes implemented client/native fixes, native/PostgreSQL checks and partial actual browser observations from the unfinished final matrix. UIUX02–UIUX05 stay open; Engineer 1 retains PW06 closure, and existing subsystem release gates remain separate.
 
