@@ -4,7 +4,7 @@ This report continues [whole-interface verification](game-interaction-redesign.m
 
 **October 14 result: thirteen distinct selected UI scenarios have passing evidence across the source-specific runs below.** This was not one thirteen-test run or a statement that every whole-feature acceptance criterion had passed. Production UI was unchanged during that original narrower testing pass. The October 15 continuation below records later fixes, integration, source-specific passes/failures and current remaining acceptance.
 
-**October 15 current result:** the named recovery and composed-interface observations now have passing source-specific evidence, including short invitation controls, both supported alternate presets and real browser zoom/reflow. The cleaned source at `d3c526392` passes required Code and Spatial/interface CI after all thirteen temporary qualification files are removed. The later documentation-only head `5926cf647` passes Code but fails the Actions browser journey's sixty-second total; its unchanged failed job is being rerun once after trace inspection. Real OS input methods, applicable assistive devices and uncoached player/creator/operator acceptance remain unperformed; the project is not declared complete.
+**October 15 current result:** the named recovery and composed-interface observations now have passing source-specific evidence, including short invitation controls, both supported alternate presets and real browser zoom/reflow. Cleaned source `d3c526392` passes required Code and Spatial/interface CI after all thirteen temporary qualification files are removed. Documentation-only source `5926cf647` also passes both required workflows after one unchanged Spatial/interface rerun: its first Actions timeout and unproved browser reload interval remain recorded below. Real OS input methods, applicable assistive devices and uncoached player/creator/operator acceptance remain unperformed; the project is not declared complete.
 
 ## Scope correction
 
@@ -753,18 +753,28 @@ explanation are readable. It does not qualify the later reloaded state.
 [Artifact 11953235211](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/artifacts/11953235211)
 retains 21,123,682 bytes of the failed trace and ordinary captures. The
 application, packages, permanent tests and Playwright configuration are byte-for-byte
-unchanged from the passing `d3c526392` source. One unchanged failed-job rerun is
-pending under the same assertions and deadlines; no automatic provider retry,
-new scenario or source change is introduced. Additional and cumulative task
-provider/Jev cost: **$0**.
+unchanged from the passing `d3c526392` source.
+
+The single unchanged [second attempt](https://github.com/Macrofold/OpenLegend/actions/runs/38692034677/attempts/2)
+**passes** all 28 native checks, the spatial browser journey and all six ordinary
+interface journeys. Actions takes **35.6 seconds**, God editor 14.7 seconds and
+Time **31.2 seconds** under its unchanged sixty-second total. The original
+assertions, capture and fixture behavior remain intact. Together with the already
+passing Code jobs, this makes the required checks green at the exact published
+`5926cf647` source. It qualifies that run without erasing the first failed
+attempt or establishing why its browser commit took longer. No code or fixture
+change, automatic provider retry or new scenario is introduced. Additional and
+cumulative task provider/Jev cost: **$0**.
 
 ## Reused evidence and remaining experience scope
 
 The final source/acceptance audit compares the integrated owners and their actual
 recorded scenarios. The selected invitation full-focus, browser zoom/reflow and
 alternate-world continuations, cleaned-source required CI and evidence/tooling
-cleanup pass. The later Actions deadline failure reopens the current required
-check; it is the only newly identified independent qualification task. This is an overlap
+cleanup pass. The later Actions deadline failure retains its exact trace; the
+single unchanged rerun passes the original gate without a performance claim. No
+further independently executable in-scope task is identified while real
+participant/device evidence is unavailable. This is an overlap
 review, not a claim that every historical journey was rerun at the latest source.
 
 | Journey scope                        | Evidence reused and its limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -800,8 +810,10 @@ Native enlarged-browser/320-CSS-pixel qualification passes at `c98de4a07` with
 all three images inspected; earlier capture and late-layout failures remain
 recorded. Temporary tools are removed, ordinary CI/test entry points have no
 dependency on them, and local TypeScript and affected-diff/documentation review
-pass. The later documentation-head Actions deadline is under investigation;
-current required CI must pass without dropping assertions or increasing limits.
+pass. The later documentation source `5926cf647` also passes both required
+workflows after its unchanged Spatial/interface rerun. Its earlier sixty-second
+Actions failure and unproved browser commit delay remain explicit limits; no
+general responsiveness repair is claimed.
 
 Real operating-system input-method behavior, applicable physical assistive
 devices and uncoached player/creator/operator observations have not been performed
