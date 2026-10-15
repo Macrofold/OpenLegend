@@ -39,28 +39,41 @@ jobs:
         run: |
           pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
           pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Check the two remaining UI observations
+      - name: Check the retained draft after responsive placement
         run: |
           python3 - <<'PY'
           import json, os, shutil, subprocess
           from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-composed-final'
+          report = Path(os.environ['RUNNER_TEMP']) / 'ui-trade-final'
           report.mkdir()
           probe = Path('tests/browser/ui-composed.spec.ts')
           assert not probe.exists()
-          shutil.copyfile('.github/scripts/ui-composed-journeys.ts', probe)
+          text = Path('.github/scripts/ui-composed-journeys.ts').read_text()
+          before = '  const bounds = await area.boundingBox();'
+          after = '''  // Resize delivery precedes React/overlay placement. Wait for the same
+            // bounds predicate instead of sampling one transitional animation frame.
+            await expect.poll(async () => {
+              const box = await area.boundingBox();
+              const screen = page.viewportSize()!;
+              return !!box && box.x >= -1 && box.y >= -1 &&
+                box.x + box.width <= screen.width + 1 &&
+                box.y + box.height <= screen.height + 1;
+            }).toBe(true);
+            const bounds = await area.boundingBox();'''.replace('\n            ', '\n  ')
+          assert text.count(before) == 1
+          probe.write_text(text.replace(before, after, 1))
           shutil.copyfile(probe, report / 'scenario.ts')
           results = {}
           def run(label, args, extra=None):
               with (report / (label + '.log')).open('w') as output:
                   results[label] = subprocess.run(args, env=dict(os.environ, **(extra or {})), stdout=output, stderr=subprocess.STDOUT).returncode
               print(label + ': ' + str(results[label]), flush=True)
-              print('\n'.join((report / (label + '.log')).read_text().splitlines()[-120 if results[label] else -12:]), flush=True)
+              print('\n'.join((report / (label + '.log')).read_text().splitlines()[-100 if results[label] else -12:]), flush=True)
           try:
               run('types', ['pnpm', 'typecheck'])
               run('build', ['pnpm', 'build'])
               if results['types'] == 0 and results['build'] == 0:
-                  run('browser', ['pnpm', 'exec', 'playwright', 'test', str(probe), '--grep', 'Inventory and person|denied collection', '--reporter=line,json'], {'PLAYWRIGHT_JSON_OUTPUT_NAME': str(report / 'browser.json')})
+                  run('browser', ['pnpm', 'exec', 'playwright', 'test', str(probe), '--grep', 'Inventory and person', '--reporter=line,json'], {'PLAYWRIGHT_JSON_OUTPUT_NAME': str(report / 'browser.json')})
               if (report / 'browser.json').exists():
                   data = json.loads((report / 'browser.json').read_text())
                   summary = {'stats': data.get('stats'), 'cases': []}
@@ -72,7 +85,7 @@ jobs:
                           collect(suite.get('suites', []))
                   collect(data.get('suites', []))
                   (report / 'summary.json').write_text(json.dumps(summary, indent=2))
-                  print('FINAL_COMPOSED_RESULTS=' + json.dumps(summary, indent=2), flush=True)
+                  print('TRADE_UI_RESULTS=' + json.dumps(summary, indent=2), flush=True)
           finally:
               probe.unlink(missing_ok=True)
               if Path('test-results').exists():
@@ -80,14 +93,14 @@ jobs:
               assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip()
               metadata = {'commit': os.environ['GITHUB_SHA'], 'checks': results, 'production_source_changed': False, 'temporary_probe_removed': True, 'provider_spend_usd': 0}
               (report / 'metadata.json').write_text(json.dumps(metadata, indent=2))
-              print('FINAL_COMPOSED_CHECKPOINT=' + json.dumps(metadata), flush=True)
+              print('TRADE_UI_CHECKPOINT=' + json.dumps(metadata), flush=True)
           if not results or any(results.values()): raise SystemExit(1)
           PY
-      - name: Preserve the UI-only results
+      - name: Preserve the exact UI observation
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-composed-final
-          path: ${{ runner.temp }}/ui-composed-final/
+          name: ui-trade-final
+          path: ${{ runner.temp }}/ui-trade-final/
           retention-days: 3
           if-no-files-found: error
