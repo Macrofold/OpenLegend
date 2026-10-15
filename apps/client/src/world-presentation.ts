@@ -1,5 +1,6 @@
 import * as pc from 'playcanvas';
 import type { ArtTreatment } from './art-treatment';
+import { PixelEffects } from './pixel-effects';
 import type { GameView } from '@open-legend/protocol';
 import { sunlightAtHour } from './sunlight';
 import type { ShadowQuality } from './world-renderer';
@@ -72,6 +73,7 @@ export function lightSprite(material: pc.StandardMaterial, device: pc.GraphicsDe
 
 export interface RevealBinding {
   sourceMesh?: pc.MeshInstance;
+  sourceMaterials?: pc.StandardMaterial[];
   meshes: pc.MeshInstance[];
   strength: number;
   frame: pc.StandardMaterial;
@@ -106,6 +108,8 @@ export class WorldPresentation {
   private readonly sunRotation = new pc.Quat();
   private shadowQuality?: ShadowQuality;
   private readonly frame: pc.CameraFrame;
+  private effects?: PixelEffects;
+  private readonly effectSources = new Set<pc.RenderComponent>();
   private readonly hiddenMeshes = new WeakSet<pc.MeshInstance>();
   constructor(
     private app: pc.Application,
@@ -147,11 +151,41 @@ export class WorldPresentation {
   }
   setArtTreatment(style: Readonly<ArtTreatment>): void {
     const restrained = style.atmosphere === 'restrained';
+    this.frame.rendering.renderTargetScale =
+      style.sceneGrid === 'half' ? 0.5 : style.sceneGrid === 'third' ? 1 / 3 : 1;
     this.frame.bloom.intensity = restrained ? 0.045 : 0.025;
     this.frame.grading.saturation = restrained ? 1.02 : 1.05;
     this.frame.grading.contrast = restrained ? 1.08 : 1;
     this.frame.grading.brightness = restrained ? 1.025 : 1;
     this.frame.update();
+    // Compare a shared scene grid through the existing compositor. Captions
+    // remain at display resolution and the camera/picking mapping stays intact.
+    const pass = this.camera.camera!.renderPasses.find(
+      (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
+    );
+    if (pass) {
+      pass.sceneTexture.minFilter = pc.FILTER_NEAREST;
+      pass.sceneTexture.magFilter = pc.FILTER_NEAREST;
+    }
+    if (style.effects === 'buffer' && !this.effects) {
+      this.effects = new PixelEffects(this.app, this.camera, this.protectionLayer);
+      for (const source of this.effectSources) this.effects.add(source);
+      this.effects.setBuffered(true);
+    } else if (style.effects === 'direct' && this.effects) {
+      this.effects.destroy();
+      this.effects = undefined;
+    }
+  }
+  addEffect(source: pc.RenderComponent): void {
+    this.effectSources.add(source);
+    this.effects?.add(source);
+  }
+  removeEffect(source: pc.RenderComponent): void {
+    this.effects?.remove(source);
+    this.effectSources.delete(source);
+  }
+  effectsDiagnostics() {
+    return this.effects?.diagnostics() ?? { buffered: false, sources: this.effectSources.size };
   }
   setShadowQuality(quality: ShadowQuality): boolean {
     if (this.shadowQuality === quality) return false;
@@ -251,10 +285,15 @@ export class WorldPresentation {
       );
       this.spriteRevealMesh.incRefCount();
     }
-    const meshes = sourceMeshes.map((mi) => {
+    const sourceMaterials = billboard
+      ? undefined
+      : sourceMeshes.map((mi) =>
+          mi.material instanceof pc.StandardMaterial ? mi.material : material,
+        );
+    const meshes = sourceMeshes.map((mi, index) => {
       const copy = new pc.MeshInstance(
         billboard ? this.spriteRevealMesh! : mi.mesh,
-        this.revealMaterial(material),
+        this.revealMaterial(sourceMaterials?.[index] ?? material),
         mi.node,
       );
       copy.castShadow = false;
@@ -268,8 +307,12 @@ export class WorldPresentation {
     const layer = character ? this.characterLayer : this.layer;
     layer.addMeshInstances(meshes, true);
     const protection = character
-      ? meshes.map((mesh) => {
-          const copy = new pc.MeshInstance(mesh.mesh, this.protectionMaterial(material), mesh.node);
+      ? meshes.map((mesh, index) => {
+          const copy = new pc.MeshInstance(
+            mesh.mesh,
+            this.protectionMaterial(sourceMaterials?.[index] ?? material),
+            mesh.node,
+          );
           copy.visible = false;
           copy.castShadow = copy.receiveShadow = false;
           copy.skinInstance = mesh.skinInstance;
@@ -283,6 +326,7 @@ export class WorldPresentation {
       layer,
       protection,
       sourceMesh: sourceMeshes[0],
+      sourceMaterials,
       strength: 0,
       frame: material,
       lastStrength: 0,
@@ -315,8 +359,12 @@ export class WorldPresentation {
     // once hidden, but always process revocation of a previously visible target immediately.
     const target = authorized && !selected ? strength : 0;
     if (selected && authorized && !binding.foreground) {
-      binding.foreground = binding.meshes.map((mesh) => {
-        const copy = new pc.MeshInstance(mesh.mesh, this.foregroundMaterial(source), mesh.node);
+      binding.foreground = binding.meshes.map((mesh, index) => {
+        const copy = new pc.MeshInstance(
+          mesh.mesh,
+          this.foregroundMaterial(binding.sourceMaterials?.[index] ?? source),
+          mesh.node,
+        );
         copy.castShadow = copy.receiveShadow = false;
         copy.skinInstance = mesh.skinInstance;
         copy.morphInstance = mesh.morphInstance;
@@ -328,7 +376,8 @@ export class WorldPresentation {
     }
     for (const mesh of binding.foreground ?? []) {
       mesh.visible = authorized && selected;
-      if (source !== binding.frame) mesh.material = this.foregroundMaterial(source);
+      if (!binding.sourceMaterials && source !== binding.frame)
+        mesh.material = this.foregroundMaterial(source);
     }
     if (target === 0 && binding.strength === 0 && !selected) return;
     binding.strength = authorized
@@ -350,13 +399,15 @@ export class WorldPresentation {
     binding.spriteSize[1] = height;
     for (const mi of binding.meshes) {
       mi.visible = !selected && binding.strength > 0.01;
-      if (source !== binding.frame) mi.material = this.revealMaterial(source);
+      if (!binding.sourceMaterials && source !== binding.frame)
+        mi.material = this.revealMaterial(source);
       if (binding.lastStrength !== binding.strength)
         mi.setParameter('ol_revealStrength', binding.strength);
     }
     for (const mesh of binding.protection ?? []) {
       mesh.visible = !selected && binding.strength > 0.01;
-      if (source !== binding.frame) mesh.material = this.protectionMaterial(source);
+      if (!binding.sourceMaterials && source !== binding.frame)
+        mesh.material = this.protectionMaterial(source);
       if (binding.lastStrength !== binding.strength)
         mesh.setParameter('ol_revealStrength', binding.strength);
     }
@@ -455,6 +506,8 @@ export class WorldPresentation {
     }
   }
   destroy(): void {
+    this.effects?.destroy();
+    this.effectSources.clear();
     this.frame.destroy();
     this.app.scene.layers.remove(this.layer);
     this.app.scene.layers.remove(this.characterLayer);

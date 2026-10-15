@@ -6,6 +6,7 @@ export interface ArtTreatment {
   materials: 'original' | 'regions';
   lighting: 'smooth' | 'hard' | 'soft';
   sampling: '40' | '60' | '80' | '96' | 'native';
+  sceneGrid: 'full' | 'half' | 'third';
   filtering: 'nearest' | 'mip';
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
@@ -14,12 +15,14 @@ export interface ArtTreatment {
   vegetation: 'still' | 'smooth' | 'held';
   atmosphere: 'baseline' | 'restrained';
   effects: 'direct' | 'buffer';
+  prop: 'authored' | 'generated';
   actionFixture: boolean;
 }
 export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   materials: 'original',
   lighting: 'smooth',
   sampling: '96',
+  sceneGrid: 'full',
   filtering: 'nearest',
   edges: 'none',
   motion: 'smooth',
@@ -28,6 +31,7 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   vegetation: 'still',
   atmosphere: 'baseline',
   effects: 'direct',
+  prop: 'authored',
   actionFixture: false,
 });
 export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
@@ -37,6 +41,7 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   environment: 'grouped',
   vegetation: 'smooth',
   atmosphere: 'restrained',
+  motion: 'held12',
 });
 
 /** Extend the same StandardMaterial programs used by ordinary/reveal/shadow
@@ -160,6 +165,7 @@ export function mountArtControls(
     materials: ['original', 'regions'],
     lighting: ['smooth', 'hard', 'soft'],
     sampling: ['40', '60', '80', '96', 'native'],
+    sceneGrid: ['full', 'half', 'third'],
     filtering: ['nearest', 'mip'],
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
@@ -168,6 +174,7 @@ export function mountArtControls(
     vegetation: ['still', 'smooth', 'held'],
     atmosphere: ['baseline', 'restrained'],
     effects: ['direct', 'buffer'],
+    prop: ['authored', 'generated'],
   };
   const controls = new Map<keyof ArtTreatment, HTMLSelectElement>();
   const refresh = () => {

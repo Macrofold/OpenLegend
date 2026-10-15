@@ -302,7 +302,12 @@ export function createGroupedScenery(
   seed: number,
   instances: readonly SceneryInstance[],
   material: pc.StandardMaterial,
-): { mesh: pc.Mesh; instance: pc.MeshInstance; buffer: pc.VertexBuffer } | null {
+): {
+  mesh: pc.Mesh;
+  instance: pc.MeshInstance;
+  buffer: pc.VertexBuffer;
+  bounds: pc.BoundingBox;
+} | null {
   if (!['tree-conifer', 'tree-birch', 'tree-broadleaf', 'woodland-shrub'].includes(appearance))
     return null;
   const mesh = sceneryMesh(device, appearance, seed);
@@ -364,5 +369,5 @@ export function createGroupedScenery(
   instance.setInstancing(buffer, true);
   instance.castShadow = instances[0]?.castShadows ?? false;
   instance.receiveShadow = true;
-  return { mesh, instance, buffer };
+  return { mesh, instance, buffer, bounds };
 }
