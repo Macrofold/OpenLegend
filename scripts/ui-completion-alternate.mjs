@@ -340,6 +340,10 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
         const nearby = page.locator('#nearbyPanel');
         if (!(await nearby.isVisible()))
           await page.getByRole('button', { name: 'In view', exact: true }).click();
+        // Hiding the task retains the already inspected object. Return through
+        // the real detail's Back control before selecting this exact list row.
+        const back = nearby.getByRole('button', { name: 'Back to In view', exact: true });
+        if (await back.isVisible()) await back.click();
         await nearby
           .locator('[data-entity="' + sourceId + '"]')
           .getByRole('button')

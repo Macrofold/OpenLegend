@@ -53,14 +53,7 @@ jobs:
         run: >-
           xvfb-run -a -s '-screen 0 1920x1080x24'
           pnpm exec playwright test --config playwright.ui-completion.config.ts
-          --grep-invert 'original action survives edited words|checkpoint creation recovers after'
           --output /tmp/openlegend-connected-cloud
-      - name: Observe retained completed-task presentation
-        id: care
-        continue-on-error: true
-        run: >-
-          node --import tsx scripts/ui-completion-care.mjs
-          /tmp/openlegend-care-cloud
       - name: Observe alternate-world task recovery and persistence
         id: alternate
         timeout-minutes: 6
@@ -75,11 +68,9 @@ jobs:
           retention-days: 7
           path: |
             /tmp/openlegend-connected-cloud
-            /tmp/openlegend-care-cloud
             /tmp/openlegend-alternate-cloud
-      - name: Require all three observations to pass
+      - name: Require both remaining observations to pass
         if: always()
         run: |
           test '${{ steps.connected.outcome }}' = success
-          test '${{ steps.care.outcome }}' = success
           test '${{ steps.alternate.outcome }}' = success

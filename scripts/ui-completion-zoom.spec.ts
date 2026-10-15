@@ -61,7 +61,6 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
   let browser: Browser | undefined;
   let context: BrowserContext | undefined;
   let page: Page | undefined;
-  let tracing = false;
   const posts: string[] = [];
   const commands: string[] = [];
   const providers: string[] = [];
@@ -76,10 +75,10 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     checkout: process.env['GITHUB_SHA'] ?? 'unrecorded-checkout',
     limits: { testMs: 60000, assertionMs: 5000, actionMs: 10000, captureMs: 10000, x11Ms: 5000 },
     scope:
-      'One native Journal place at real Chromium 200% browser zoom, retained through Hide/reopen, with keyboard focus and no gameplay command.',
+      'One native Journal place at real Chromium 200% browser zoom and measured 320-CSS-pixel reflow, retained through Hide/reopen with keyboard focus and no gameplay command.',
     limitations: [
       'X11 XTEST key input on an isolated Linux virtual display is not physical keyboard, native IME, assistive-device or uncoached-player evidence.',
-      'One normal authored opening and one selected place at one physical window size; not all screens or 320-CSS-pixel reflow.',
+      'One normal authored opening and one selected place at two owned window widths, including measured 320-CSS-pixel reflow; not all screens or tasks.',
       'No CSS/font injection, mobile/device emulation, page-scale emulation, application-scale change or direct browser preference edits.',
       'Chromium uses only its own disposable automation profile; no user browser, profile or settings are opened.',
     ],
@@ -93,6 +92,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     cleanup,
     providerCostUsd: 0,
     cumulativeTaskProviderCostUsd: 0,
+    traceOwner: 'Playwright runner automatic retain-on-failure tracing',
   };
   async function x11(...args: string[]) {
     const result = await runFile('xdotool', args, { timeout: 5000, maxBuffer: 65536 });
@@ -131,8 +131,6 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     });
     browser = await chromium.connect(server.wsEndpoint());
     context = await browser.newContext({ viewport: null });
-    await context.tracing.start({ screenshots: false, snapshots: true, sources: true });
-    tracing = true;
     page = await context.newPage();
     page.setDefaultTimeout(10000);
     page.setDefaultNavigationTimeout(20000);
@@ -233,7 +231,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       });
       const native = await cdp.send('Browser.getWindowForTarget');
       const xGeometry = await x11('getwindowgeometry', '--shell', ownedWindow);
-      return { dom, bounds: native.bounds, xGeometry };
+      return { dom, windowId: native.windowId, bounds: native.bounds, xGeometry };
     }
     const baseline = await metrics();
     expect(baseline.dom.appScale).toBe('1');
@@ -276,17 +274,97 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
 
     async function reachable(control: Locator) {
       await expect(control).toBeFocused();
-      await expect(control).toBeInViewport();
-      const [buttonBounds, bodyBounds] = await Promise.all([
-        control.boundingBox(),
-        journal.locator('.ol-panel-body').boundingBox(),
-      ]);
-      expect(buttonBounds).not.toBeNull();
-      expect(bodyBounds).not.toBeNull();
-      expect(buttonBounds!.y).toBeGreaterThanOrEqual(bodyBounds!.y - 1);
-      expect(buttonBounds!.y + buttonBounds!.height).toBeLessThanOrEqual(
-        bodyBounds!.y + bodyBounds!.height + 1,
-      );
+      await expect(control).toBeInViewport({ ratio: 1 });
+      const measure = () =>
+        control.evaluate((button) => {
+          if (!(button instanceof HTMLButtonElement))
+            throw new Error('Expected the exact Journal button.');
+          const body = button.closest<HTMLElement>('.ol-panel-body')!;
+          const buttonRect = button.getBoundingClientRect(),
+            bodyRect = body.getBoundingClientRect();
+          const style = getComputedStyle(button);
+          const width = Number.parseFloat(style.outlineWidth),
+            offset = Number.parseFloat(style.outlineOffset);
+          const extent = Math.max(0, width + offset);
+          const ringX = (extent * buttonRect.width) / button.offsetWidth;
+          const ringY = (extent * buttonRect.height) / button.offsetHeight;
+          const bodyX = bodyRect.width / body.offsetWidth,
+            bodyY = bodyRect.height / body.offsetHeight;
+          const left = bodyRect.left + body.clientLeft * bodyX,
+            top = bodyRect.top + body.clientTop * bodyY;
+          const ring = {
+            left: buttonRect.left - ringX,
+            top: buttonRect.top - ringY,
+            right: buttonRect.right + ringX,
+            bottom: buttonRect.bottom + ringY,
+          };
+          // Camera hints are visible overlays even when they ignore pointer hits.
+          const overlappingHints = [...document.querySelectorAll<HTMLElement>('[role="tooltip"]')]
+            .filter((hint) => {
+              const rect = hint.getBoundingClientRect(),
+                style = getComputedStyle(hint);
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                Number(style.opacity) > 0 &&
+                rect.width > 0 &&
+                rect.height > 0 &&
+                rect.left < ring.right &&
+                rect.right > ring.left &&
+                rect.top < ring.bottom &&
+                rect.bottom > ring.top
+              );
+            })
+            .map((hint) => hint.textContent);
+          const inset = Math.min(2, buttonRect.width / 4, buttonRect.height / 4);
+          const points = [
+            [buttonRect.left + buttonRect.width / 2, buttonRect.top + buttonRect.height / 2],
+            [buttonRect.left + inset, buttonRect.top + buttonRect.height / 2],
+            [buttonRect.right - inset, buttonRect.top + buttonRect.height / 2],
+            [buttonRect.left + buttonRect.width / 2, buttonRect.top + inset],
+            [buttonRect.left + buttonRect.width / 2, buttonRect.bottom - inset],
+          ] as const;
+          return {
+            control: button.textContent,
+            button: {
+              left: buttonRect.left,
+              top: buttonRect.top,
+              right: buttonRect.right,
+              bottom: buttonRect.bottom,
+            },
+            outline: { width, offset, style: style.outlineStyle },
+            ring,
+            overlappingHints,
+            visibleHitPoints: points.every(([x, y]) =>
+              button.contains(document.elementFromPoint(x, y)),
+            ),
+            clip: {
+              left,
+              top,
+              right: left + body.clientWidth * bodyX,
+              bottom: top + body.clientHeight * bodyY,
+            },
+          };
+        });
+      await expect
+        .poll(async () => {
+          const geometry = await measure();
+          const { ring, clip, outline, overlappingHints, visibleHitPoints } = geometry;
+          report.focusInProgress = geometry;
+          return (
+            outline.width > 0 &&
+            outline.style !== 'none' &&
+            overlappingHints.length === 0 &&
+            visibleHitPoints &&
+            ring.left >= clip.left - 1 &&
+            ring.top >= clip.top - 1 &&
+            ring.right <= clip.right + 1 &&
+            ring.bottom <= clip.bottom + 1
+          );
+        })
+        .toBe(true);
+      delete report.focusInProgress;
+      return measure();
     }
     await heading.focus();
     await page.keyboard.press('Tab');
@@ -303,6 +381,84 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height + 1);
     await page.screenshot({
       path: info.outputPath('journal-browser-zoom-200-keyboard.png'),
+      timeout: 10000,
+    });
+
+    // Keep the measured native 200% zoom. Only this owned browser window is
+    // resized; no viewport/device/page-scale emulation supplies the 320px phase.
+    if (typeof enlarged.bounds.width !== 'number')
+      throw new Error('Native browser width is unavailable.');
+    const reflowWidth = Math.round(enlarged.bounds.width + (320 - enlarged.dom.innerWidth) * 2);
+    await cdp.send('Browser.setWindowBounds', {
+      windowId: enlarged.windowId,
+      bounds: { width: reflowWidth },
+    });
+    await expect
+      .poll(() => page!.evaluate(() => Math.abs(innerWidth - 320)))
+      .toBeLessThanOrEqual(1);
+    await expect(page.locator('.ol-hud')).toHaveAttribute('data-tight', 'true');
+    const reflow = await metrics();
+    expect(reflow.windowId).toBe(enlarged.windowId);
+    expect(reflow.bounds.width).toBe(reflowWidth);
+    expect(reflow.bounds.height).toBe(enlarged.bounds.height);
+    expect(Math.abs(reflow.dom.innerWidth - 320)).toBeLessThanOrEqual(1);
+    expect(reflow.dom.dpr).toBe(enlarged.dom.dpr);
+    expect(reflow.dom.visualScale).toBe(1);
+    for (const key of ['appScale', 'fontSize', 'bodyTextToken', 'cssZoom'] as const)
+      expect(reflow.dom[key]).toBe(baseline.dom[key]);
+    await expect(heading).toHaveText(selected.place.label);
+    await expect(detail).toHaveText(retainedText, { useInnerText: true });
+    await journal.getByRole('button', { name: 'Hide Journal panel', exact: true }).click();
+    await expect(journal).toBeHidden();
+    await page.getByRole('button', { name: 'Journal', exact: true }).click();
+    await expect(heading).toHaveText(selected.place.label);
+    await expect(detail).toHaveText(retainedText, { useInnerText: true });
+    expect(inspections).toHaveLength(1);
+    await heading.focus();
+    await page.keyboard.press('Tab');
+    const narrowFocus = await reachable(focus);
+    await page.keyboard.press('Tab');
+    const narrowMove = await reachable(move);
+    const reflowGeometry = () =>
+      journal.evaluate((panel) => {
+        const rect = panel.getBoundingClientRect();
+        return {
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: innerWidth,
+          height: innerHeight,
+          documentWidth: document.documentElement.scrollWidth,
+          bodyWidth: document.body.scrollWidth,
+        };
+      });
+    await expect
+      .poll(async () => {
+        const geometry = await reflowGeometry();
+        report.reflowInProgress = geometry;
+        return (
+          geometry.left >= -1 &&
+          geometry.top >= -1 &&
+          geometry.right <= geometry.width + 1 &&
+          geometry.bottom <= geometry.height + 1 &&
+          geometry.documentWidth <= geometry.width + 1 &&
+          geometry.bodyWidth <= geometry.width + 1
+        );
+      })
+      .toBe(true);
+    delete report.reflowInProgress;
+    report.reflow320 = {
+      metrics: reflow,
+      requestedNativeWidth: reflowWidth,
+      focus: narrowFocus,
+      move: narrowMove,
+      geometry: await reflowGeometry(),
+      selectedPlaceId: selected.place.id,
+      inspectionRequests: inspections.length,
+    };
+    await page.screenshot({
+      path: info.outputPath('journal-browser-zoom-200-reflow-320.png'),
       timeout: 10000,
     });
     expect(digest(game.service.world)).toBe(initialDigest);
@@ -337,13 +493,6 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     throw error;
   } finally {
     for (const [owner, close] of [
-      [
-        'trace',
-        async () => {
-          if (tracing)
-            await context!.tracing.stop({ path: info.outputPath('browser-zoom-trace.zip') });
-        },
-      ],
       [
         'page',
         async () => {

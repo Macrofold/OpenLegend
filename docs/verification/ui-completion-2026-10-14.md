@@ -266,6 +266,68 @@ contains 120,919,664 bytes of original traces, reports and captures. Owned clean
 passes for the completed-task run and the failed alternate stage. Additional
 provider/Jev cost is **$0**; cumulative task provider/Jev cost is **$0**.
 
+## Selected continuation at 72214abab
+
+The [third finite run](https://github.com/Macrofold/OpenLegend/actions/runs/38684091407/job/116254879881)
+at `72214ababce1d29471644ea55e1518229b0e9ea5` is **failed**. It reuses the two
+unchanged passing recovery cases above. Of its six selected connected cases,
+**three pass and three fail** under their unchanged sixty-second totals:
+
+| Selected case                       | Actual result and remaining limit                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Creation with failed local markers  | Pass, 52.7 s. One real Woven bag creation and its identical native retry retain one output; failed marker writes, reads and cleanup preserve the original session request. Logout and a fresh session clear the old private request. The inspected image shows the exact original creation, unavailable-read warning and deliberate Retry original creation control.                                                                              |
+| Retained Journal place              | Pass, 29.4 s. The actual observation survives section changes, Hide/reopen and narrow/short adaptation. Focus leaves the character still; keyboard Move submits one exact current remembered-place command. A held native inspection is superseded by an empty search; Chromium cancels its delivery and old detail remains absent. This qualifies cancellation, not JavaScript consuming obsolete response data or a new HTTP privacy-race test. |
+| Combined action and checkpoint load | Pass, 52.7 s. One action submission/read, one checkpoint creation and one load preserve the exact load result and protection checkpoint. The old action/draft clear after the timeline changes, failed cleanup retains the load guard, and a fresh session clears private recovery. The inspected image shows the restored paused world; the command and recovery assertions supply the invisible request evidence.                               |
+| Reciprocal barter                   | Fails at 28.2 s because the fixture expects zero browser commands after deliberately inspecting an Inventory item. The recorded command is that exact `inspect-inventory`, with no exchange effect. Shared fiber identity and quantity survive the entry switch; later native revision/refusal/settlement checks are not reached.                                                                                                                 |
+| Companion invitation                | Fails at 35.1 s after one actual invitation is recorded. The fixture expects a disabled Send button although the interface has replaced preparation with the sent invitation. Withdrawal, recovery and incoming decisions are not reached.                                                                                                                                                                                                        |
+| Native browser zoom                 | Fails at 1.9 s before entering the application: the probe starts tracing when Playwright already owns an active trace. No zoom or enlarged-layout result is established.                                                                                                                                                                                                                                                                          |
+
+The two Journal images were inspected. The narrow image retains the exact place
+and reading text, but Move lies partly below that initial reading edge and the
+hearing notice crosses its bottom. The short image shows keyboard-focused Move
+fully inside the panel. These pixels do not establish fully unobscured focus in
+every narrow reading position; the separate enlarged-browser observation retains
+its whole-control/focus-outline checks.
+
+The completed-task observation **passes in 69,424 ms** within its unchanged
+120-second work / 150-second hard limits. Its stronger check requires the entire
+button and its computed focus outline inside the actual scroll clip after ordinary
+Task-to-Tab navigation. All **six new images were inspected**: short native wording
+and supplied long display wording at 1440×960, 390×844 and 390×420. The formerly
+clipped lower outline is now visible, with four pixels inside the long desktop and
+short reading edge. The short desktop card retains its 337-pixel height and
+16-pixel content padding; long content scrolls without an empty fixed-height task
+area. One Start uses one branch and completes at native time 60; reading,
+Hide/reopen, deliberate preparation and time 61 add no work or debit. The long
+wording remains an explicit presentation fixture. Black backgrounds in the tall
+narrow images do not qualify graphics startup. Recorded cleanup closes every
+owned resource and drops the disposable databases. This closes the specific
+completed-task presentation requirement, without expanding native lifecycle or
+human-input claims.
+
+The alternate-world observation fails at 32 seconds on its second attempt to open
+the exact recharge source. One real Start and its native receipt have succeeded;
+the retained In view detail correctly hides the source list, which the helper
+incorrectly searches without first using Back. Inventory membership and each
+item's authored optional icon or visible letter fallback pass. Its Inventory image
+is retained; later after-work recovery and reopen checks remain unexecuted.
+
+Ordinary [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38684096852)
+and push Code pass. [Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38684096801)
+is **failed**: 28 native checks, the spatial browser case and five ordinary UI
+cases pass, while the God editor remains wider than its 390-pixel viewport during
+the original five-second fit check. Time passes in **50.5 seconds** under its
+unchanged sixty-second total. The editor failure is under investigation; the
+previous green run does not waive this current gate.
+
+[Artifact 11948884590](https://github.com/Macrofold/OpenLegend/actions/runs/38684091407/artifacts/11948884590)
+retains 67,013,627 bytes of reports, traces and captures. Current task and its CSS
+match the report's exact source hashes. Reuse the three newly passing connected
+cases and completed-task result; rerun only the corrected barter, invitation,
+zoom and alternate cases unless a relevant behavior owner changes. No production
+authentication, simulation or deadline change follows from these fixture failures.
+Additional and cumulative task provider/Jev cost: **$0**.
+
 ## Remaining whole-feature qualification
 
 The October 15 source review also found a Current task recovery defect: failed
@@ -273,10 +335,10 @@ session-storage reads appeared to mean no original request, and failed cleanup
 released a confirmed request. The task now distinguishes unreadable storage,
 verifies exact retention before dispatch and keeps the original guard through
 failed cleanup. TypeScript, production build and changed-file formatting pass.
-Its focused alternate-world recovery cases were not reached before the icon
-fixture failed; static checks do not establish the after-earlier-work-ended
-recovery guarantee.
+The alternate-world check has reached one native Start, but its focused recovery
+cases after the earlier work has ended remain unexecuted. Static checks do not
+establish that guarantee.
 
-The original action and checkpoint reload-recovery implementation is no longer missing: the three specific interrupted-request journeys above pass. This does not close every compound UIUX12/UIUX14 requirement. Wider storage/identity/revocation combinations, complete native barter/outing continuation, completed-task rendered-result review and the alternate-world interface qualification retain their earlier explicit tracking and evidence limits.
+The original action and checkpoint reload-recovery implementation is no longer missing: the three specific interrupted-request journeys above pass. This does not close every compound UIUX12/UIUX14 requirement. Wider storage/identity/revocation combinations, complete native barter/outing continuation and the alternate-world interface qualification retain their earlier explicit tracking and evidence limits. Completed-task rendered-result review now passes at the exact source above.
 
-Real operating-system input-method behavior, physical assistive devices and uncoached-player observation have not been performed here. Scripted keyboard tests and automated Chromium interaction cannot substitute for that evidence. The twelve-image inspection resolves the earlier pixel-inspection blocker for that historical subset only. Current required CI is green at the exact source above; it does not establish entire-feature completion or replace the remaining specific interface and human observations. The unrelated hunting repair remains excluded at Mike's direction rather than being restarted under UI acceptance.
+Real operating-system input-method behavior, physical assistive devices and uncoached-player observation have not been performed here. Scripted keyboard tests and automated Chromium interaction cannot substitute for that evidence. The twelve-image inspection resolves the earlier pixel-inspection blocker for that historical subset only. Current Code is green, but the latest Spatial/interface gate fails its God editor fit case. Earlier green results do not establish current merge readiness, entire-feature completion or the remaining specific interface and human observations. The unrelated hunting repair remains excluded at Mike's direction rather than being restarted under UI acceptance.

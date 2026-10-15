@@ -216,11 +216,34 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
       trade.getByRole('textbox', { name: labels.receiveQuantity, exact: true }),
     ).toHaveValue('1');
 
+    const inspections: Envelope[] = [];
     async function inventoryDraft(expectedQuantity: number) {
       const inventory = await openPanel(page, 'inventory', 'Inventory');
       const contents = inventory.locator('.ol-inventory-collection[data-side="belongings"]');
       await contents.getByRole('textbox', { name: /^Search / }).fill(fiberName);
+      const expectedRevision = game.service.world.entities[actorId]!.inventoryRevision;
+      const inspected = page.waitForResponse(
+        (response) =>
+          new URL(response.url()).pathname === '/api/command' &&
+          response.request().postDataJSON()?.command?.type === 'inspect-inventory',
+      );
       await contents.locator(`[data-item-id="${fiber!.id}"]`).click();
+      const inspectedResponse = await inspected;
+      expect((await inspectedResponse.json()) as ApiResult).toMatchObject({ ok: true });
+      const inspection = inspectedResponse.request().postDataJSON() as Envelope;
+      expect(inspection.command).toEqual({
+        type: 'inspect-inventory',
+        itemId: fiber!.id,
+        containerId: actorId,
+        expectedRevision,
+      });
+      expect(inspection.commandEpoch).toBe(view.commandEpoch);
+      expect(inspection.commandId).toMatch(/^[0-9a-f-]{36}$/);
+      inspections.push(inspection);
+      expect(new Set(inspections.map((request) => request.commandId)).size).toBe(
+        inspections.length,
+      );
+      expect(observation.browserCommands).toEqual(inspections);
       const detail = page.locator('.ol-inventory-detail');
       await expect(detail).toContainText(`${expectedQuantity} units`);
       const recipientRead = page.waitForResponse(
@@ -263,7 +286,8 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
     await person(page, companionId);
     await expect(trade.locator('.ol-trade-draft select').first()).toHaveValue(fiber!.id);
     await expect(amount).toHaveValue('3');
-    expect(observation.browserCommands).toEqual([]);
+    // Inspection records what the player saw; preparation must issue nothing else.
+    expect(observation.browserCommands).toEqual(inspections);
     expect(holdings(game, [actorId, companionId])).toEqual(starting);
 
     // A real native quantity change supplies a smaller current maximum. Reviewing
@@ -358,7 +382,8 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
     await expect(trade.getByRole('button', { name: labels.review, exact: true })).toBeEnabled();
     expect((await draft(page, key)).draft).toEqual(beforeDisconnect.draft);
     await expect(accept).toBeDisabled();
-    expect(observation.browserCommands).toHaveLength(1);
+    expect(observation.browserCommands.slice(0, 2)).toEqual(inspections);
+    expect(observation.browserCommands).toHaveLength(3);
     const currentTerms = (await read()).entities
       .find((entity) => entity.id === companionId)!
       .trade!.offers.find((item) => item.id === prior.id)!;
@@ -448,9 +473,12 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
     expect((await reply(page, decline, 'decline')).ok).toBe(true);
     expect((await draft(page, key)).draft).toEqual(retained);
     expect(holdings(game, [actorId, companionId])).toEqual(unchanged);
-    expect(observation.browserCommands.map((request) => request.command.handoverOperation)).toEqual(
-      ['counter', 'accept', 'decline'],
-    );
+    expect(observation.browserCommands.slice(0, 2)).toEqual(inspections);
+    expect(
+      observation.browserCommands.map(
+        (request) => request.command.handoverOperation ?? request.command.type,
+      ),
+    ).toEqual(['inspect-inventory', 'inspect-inventory', 'counter', 'accept', 'decline']);
     observation.readings.push({
       initialQuantity: 3,
       refreshedMaximum: 2,
@@ -563,8 +591,9 @@ test('invitation description search and composed consent controls retain exact p
       action: { command: original.command },
     });
     expect((await read()).player.outings).toHaveLength(1);
-    await expect(send).toBeDisabled();
-    await expect(task.locator('.ol-task-submit')).toHaveAttribute('data-unresolved', 'true');
+    // The committed pending agreement removes a new invitation from offered tasks.
+    // Recovery still names its exact original request; Withdraw is separate consent.
+    await expect(send).toHaveCount(0);
     expect(holdings(game, [actorId, companionId])).toEqual(before);
     const withdraw = task.getByRole('button', { name: /^Withdraw invitation to / });
     await expect(withdraw).toBeEnabled();
@@ -577,7 +606,12 @@ test('invitation description search and composed consent controls retain exact p
       originalBytes,
     );
     await expect(recovery).toContainText('Awaiting the exact result of ');
+    // Reread this same task after the agreement ends. Its earlier eligibility
+    // refusal must not mask the still-retained original request's send guard.
+    await openPanel(page, 'character', 'Character');
+    await openPanel(page, 'activity', 'Current task');
     await expect(send).toBeDisabled();
+    await expect(task.locator('.ol-task-submit')).toHaveAttribute('data-unresolved', 'true');
     expect(holdings(game, [actorId, companionId])).toEqual(before);
     expect(observation.browserCommands).toHaveLength(2);
     const receiptRequest = page.waitForRequest(

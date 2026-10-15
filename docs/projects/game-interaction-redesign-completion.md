@@ -105,6 +105,13 @@ unchanged visual-viewport scale before counting it. Retain the same real place,
 Hide/reopen and keyboard reach without Move or a new command. This is one bounded
 browser-zoom sample, not whole-interface text/input or human acceptance. Do not
 edit user profiles/preferences or substitute CSS/font injection or pinch emulation.
+The handbook also requires a separate 320-CSS-pixel reflow observation. Extend
+that same native zoom scenario by resizing only its owned browser window to a
+measured 320-CSS-pixel reading width while keeping 200% browser zoom and the
+existing application scale. Retain the same place, Hide/reopen and keyboard
+controls; check complete focus and no horizontal document overflow. Keep the
+same sixty-second case and existing local assertions/capture limits. Earlier
+320px/130% application-scale observations remain valid for their different sample.
 
 The six completed-task images expose a partly clipped Prepare another task focus
 outline on the long desktop/short results, despite the probe's partial-visibility
@@ -114,6 +121,18 @@ actual scrolling clip after the same Task→Tab route. Reuse all native completi
 evidence; rerun this one presentation observation because the pixels demonstrate
 a new in-scope defect. This adds fewer than ten CSS lines, no shared Panel change,
 new size limit or focus event handler, and keeps all original execution bounds.
+
+The current required God editor check exposes a separate real responsive failure:
+the dialog width shrinks, but its old desktop left coordinate remains beyond the
+original five-second fit deadline. Add editor-only CSS constraints to its painted
+left/top, keeping the existing physical edge margin, maximum size and preferred
+desktop coordinates. Center, drag start and resize correction must read actual
+computed coordinates so a clamped window cannot jump. Estimated change: 12–20
+logic lines and about six CSS lines, with scaled dragging as the main risk.
+Verify desktop drag/Center and shrink/grow at normal and 130% application scale,
+plus the unchanged required narrow-fit case. No new size policy, polling or shared
+panel mechanism is needed. The failed trace establishes delayed fit, not permanent
+overflow or a graphics performance cause.
 
 ### Original action recovery — UIUX12
 
