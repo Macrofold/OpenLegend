@@ -644,14 +644,80 @@ These selected captures qualify visible layout, not all input/font/viewport
 combinations. Temporary unsent test text is cleared, and the fixture's UI scale is
 returned to 100% before cleanup.
 
+### Requested complete-change review — October 15
+
+Mike subsequently requested another thorough correctness, architecture,
+simplification, performance and engine/world-boundary review. It covers all five
+local commits through `7df9b6a78f6ece6e6cff5ae37218184bf6dc7b26`, their callers and
+the resulting repairs. Refresh confirms the same repository's `origin/main` at
+`cbb5976a21b9554ddf04113f6207c376666e14e7`; the checkout remains on local `main`.
+Independent passes inspect request recovery/construction, shared input/readers,
+and creator/focus/layout. The full affected source and documentation diff is
+reviewed together; unchanged native and layout evidence above retains its scope.
+
+- An open JSON viewer's capture listener could close it before a focused shortcut
+  dialog handled Escape. It now defers to a different dialog containing the key
+  event's target, preserving existing modal/picker priority and focus return.
+- A delayed command acknowledgement or failure could still create a global notice
+  after character/control access changed, despite the Inventory reader rejecting
+  it locally. The shared command caller now fences its notifications and lethal
+  review prompt by the original complete access scope, while returning the result
+  to its original caller for receipt handling.
+- Appending another remembered-place page could incorrectly clear the update
+  notice while earlier pages remained stale. Only a replacement refresh now
+  advances the list's loaded revision. Incoming IDs use a set, preserving the
+  existing replacement/order behavior with linear page merging rather than
+  comparing every retained row against every incoming row.
+- The creator's remembered seed was read synchronously from browser storage on
+  every render, although only its initial value was used. Lazy mount
+  initialization preserves the existing mutable last-seen seed and keyed session
+  ownership. This removes that repeated read; no measured input-latency improvement
+  is claimed.
+
+One focused actual-component fixture reproduces the original Escape defect and
+then passes nine scenarios: JSON-only dismissal/focus return, shortcut exclusion,
+both existing shortcut dialogs, picker-before-dialog dismissal, actual React Aria
+modal priority, JSON dismissal afterward, append preserving the remembered-place
+update notice, and a full refresh clearing it. Three intercepted list reads, zero
+action submissions and zero browser errors are observed. Two intermediate fixture
+interaction assumptions are corrected to use the actual accessible picker;
+production assertions and deadlines are unchanged. Owned browsers/hosts close and
+temporary host files are removed. This is controlled component evidence, not a
+native renderer, backend load or human-input qualification.
+
+A separate finite observation passes six checks through actual QuickActions → App
+→ the unchanged API module: an available command, ordinary current-access success,
+an old success released after access renewal, a fresh success, an old network
+failure released after another renewal, and another fresh action. There are five
+deliberate command requests, no replay and no page errors. The changed document
+title confirms that App has adopted the new access before the old request is
+released; delivery and two animation frames settle before checking notifications.
+The tab adapter, stream, graphics and native-derived synthetic game view are
+controlled. This verifies notification ordering, not native admission, renderer
+startup, permission completeness or latency. Temporary browser launch, JSX loader,
+synthetic conversation shape and ambiguous shortcut-selector failures are corrected
+in the fixture without production changes; its owned browser and Vite host close.
+The captured notification image is inspected, with raw output kept outside Git.
+
+No additional correctness repair is identified in the exact-request retention,
+Activity, coordinate parsing, creator draft/focus or responsive layout paths.
+These changes add no world rule, gameplay authority, polling process, retained
+cache, provider call or growing-world query. Page merging still copies/renders its
+loaded list; this is not large-collection capacity evidence. The separate retained
+Prepare read remains deliberately fresh during rendering and final admission;
+[FRL05](../maintainers/ui-ux.md#future-improvements-from-the-foundation-review)
+tracks replacing that render-time read only with a complete shared refresh owner.
+The item/building proposal and the existing input/device/player and browser/CI
+gaps remain with their original owners.
+
 ### Current verification and readiness
 
 On the final executable source, full TypeScript and production build pass. The
 build retains its existing PlayCanvas worker-externalization and large-bundle
-warnings; no performance improvement is claimed. Changed-file pinned formatting
-passes for all 26 changed files. Guidance and whitespace checks pass; guidance
-retains its existing advisory size warnings. All 546 local path references in the
-10 changed Markdown files resolve, including the newly linked report headings.
+warnings; no renderer-startup or population-performance improvement is claimed. Changed-file pinned formatting
+passes for all changed files. Guidance and whitespace checks pass; guidance
+retains its existing advisory size warnings. Local path references in the changed
+Markdown files resolve, including the newly linked report headings.
 The native/component evidence above verifies the named repairs. No additional
 unimplemented settled UI feature is identified by the final source pass.
 

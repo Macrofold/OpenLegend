@@ -76,16 +76,15 @@ export function KnownPlaces({
       if (id !== request.current || !active.current) return;
       if (!result.ok) throw new Error(result.message ?? 'Known places are unavailable.');
       setPage(result);
-      setEntries((old) =>
-        more
-          ? [
-              ...old.filter((place) => !result.entries.some((next) => next.id === place.id)),
-              ...result.entries,
-            ]
-          : result.entries,
-      );
+      setEntries((old) => {
+        if (!more) return result.entries;
+        const incomingIds = new Set(result.entries.map((place) => place.id));
+        return [...old.filter((place) => !incomingIds.has(place.id)), ...result.entries];
+      });
       // The revision belongs to this read, not to a newer publication received while it waited.
-      setLoadedRevision(revision);
+      // Appending does not refresh older pages that remain in the list.
+      // docs/ui-ux/react.md#effects-asynchronous-work-and-mutations
+      if (!more) setLoadedRevision(revision);
     } catch (failure) {
       if (id === request.current)
         setError(failure instanceof Error ? failure.message : String(failure));

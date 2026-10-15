@@ -1,8 +1,8 @@
 # Open Legend: whole-interface redesign
 
-| Status      | Current progress                                                                                                      | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated UI repairs have native/component evidence; ordinary browser gates and human/device acceptance remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                              | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | UI repairs and requested code reviews are complete; browser/CI gates and human/device acceptance remain open. | 2026-10-15   |
 
 **Reconciled with delivered source:** 2026-10-15 09:14:58 UTC, source 3501d19c80e4cd5734e0c0f36e44fd56a0407eeb. This dates this specification review, not the original approval or implementation.
 

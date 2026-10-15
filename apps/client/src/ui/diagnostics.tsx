@@ -2136,6 +2136,9 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
   }, []);
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
+      // A different non-modal task keeps its own dismissal when the player has
+      // moved focus there; capture must not close this viewer underneath it.
+      // docs/ui-ux/controls.md#overlay-ownership-prevents-overlap-bugs
       if (
         event.key !== 'Escape' ||
         event.defaultPrevented ||
@@ -2143,7 +2146,10 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
         modalOwnsInput() ||
         document.querySelector(
           '[role="listbox"], [role="menu"], [role="tooltip"], .ol-select-popover, .ol-pullout-popover',
-        )
+        ) ||
+        (event.target instanceof Element &&
+          event.target.closest('[role="dialog"]') &&
+          !panel.current?.contains(event.target))
       )
         return;
       // This child closes before the App's window listener can close its parent panel.

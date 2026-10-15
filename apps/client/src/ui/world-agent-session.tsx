@@ -131,9 +131,10 @@ export function WorldAgentSession({
   const refreshAgain = useRef(false),
     statusRef = useRef(status);
   const input = useRef<HTMLTextAreaElement>(null);
-  const lastSeed = useRef(
+  const [initialSeed] = useState(() =>
     readLocal(recordKey('seed'), '', (v): v is string => typeof v === 'string'),
   );
+  const lastSeed = useRef(initialSeed);
   const historyInitialized = useRef(false);
   const prefix = { worldId, sessionId };
   useEffect(() => {

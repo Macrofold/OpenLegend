@@ -753,11 +753,14 @@ function App({
         commandEpoch: request?.commandEpoch ?? view?.commandEpoch,
         command: action.command,
       });
+      // The original caller may still recover its receipt, but a later character
+      // or control session must not receive that action's notification or prompt.
+      // docs/ui-ux/react.md#effects-asynchronous-work-and-mutations
+      if (latest.current?.access?.scope !== requestedScope) return r;
       if (
         r.lethalReview &&
         !latest.current?.player.death &&
-        latest.current?.player.life === requestedLife &&
-        latest.current?.access?.scope === requestedScope
+        latest.current?.player.life === requestedLife
       ) {
         setLethalReview({ review: r.lethalReview, action });
         return r;
@@ -774,7 +777,8 @@ function App({
       if (!r.ok || (r.code !== 'accepted' && !localReceipt)) notify(r.message);
       return r;
     } catch (e) {
-      notify(`${String(e)} Check the journal before repeating this action.`);
+      if (latest.current?.access?.scope === requestedScope)
+        notify(`${String(e)} Check the journal before repeating this action.`);
       return {
         ok: false,
         code: 'unconfirmed',

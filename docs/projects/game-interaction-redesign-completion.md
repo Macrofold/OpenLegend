@@ -1,8 +1,8 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                                      | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated UI repairs have native/component evidence; ordinary browser gates and human/device acceptance remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                              | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | UI repairs and requested code reviews are complete; browser/CI gates and human/device acceptance remain open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -31,6 +31,10 @@ Review and repair four connected groups: shared controls and world-input ownersh
 5. The native 1280×720 compact creator session reproduces a clipped message field/Send control: its footer receives 28 pixels for 110 pixels of content. Repair the existing dock/grid allocation so an ordinary composer remains fully reachable without expanding the workspace. Preserve bounded long-result/error reading and the already-fitting narrow/short/enlarged adaptations; compare native geometry and visuals before and after. This adds a small CSS repair, not a new layout framework or native behavior.
 
 Cost grows with visible inventories/options, retained pages and active readers; these fixes add local request/revision/focus bookkeeping rather than polling, full-history reads or new caches. Reuse exact retained commands and existing permitted projections. Selection, private ownership, timeline, read/control scope, request attempt and explicit edits invalidate the corresponding local work. Measure verification through real callers, checking command counts, retained originals, focus/draft continuity, visible errors and layout; no new provider requests or paid model quality trial is needed.
+
+Mike's subsequent review request covers the complete five-commit change through `7df9b6a78f6ece6e6cff5ae37218184bf6dc7b26`. The refreshed `origin/main` remains `cbb5976a21b9554ddf04113f6207c376666e14e7`; continue in the same checkout on local `main`, preserving those local commits. Review request recovery, shared input/readers and creator/layout owners independently, then inspect their complete combined diff. The initial additional repairs are estimated at 15–60 production logic lines: give an active sibling dialog priority over the JSON viewer's Escape listener, reject obsolete command notifications at their shared parent, and avoid rereading an unchanged remembered creator seed from browser storage on each keystroke. The complete caller pass additionally finds that appending remembered-place pages must preserve the earlier pages' update notice, and can merge incoming identities without a nested scan. Scope remains UI-only; do not implement the deferred item/building proposal or alter native authority, rules or saved formats.
+
+Most repairs are constant local event-driven or mount-time work; remembered-place merging grows with the loaded entries plus the incoming page, without scanning unrequested history. Reuse the current access scope, existing dialog semantics and component-local seed owner; no cache, background process or new query is needed. Access changes invalidate action feedback, the focused dialog owns Escape, and mounting a different creator conversation owns seed initialization. Verify newly changed behavior through the actual callers using focused controlled cases; reuse unchanged native/layout/recovery evidence. Finish with affected-diff review, pinned formatting, TypeScript/build as applicable and synchronized tracker/evidence updates. Existing unresolved ordinary browser gates and required CI remain explicit; this review neither waives them nor authorizes publication.
 
 ### Follow-up implementation review — October 15
 
