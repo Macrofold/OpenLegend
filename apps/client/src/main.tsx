@@ -1478,7 +1478,7 @@ function App({
         return (
           <>
             <Construction
-              key={`${view.access?.scope}:${view.saveTimeline}:${view.player.id}`}
+              key={taskScope(view)}
               view={view}
               connected={connected}
               visible={open.includes('crafting') && (!narrow || open.at(-1) === 'crafting')}
@@ -1659,6 +1659,7 @@ function App({
               visible={visible}
               onDirtyChange={setMindDirty}
               readScope={view.access?.scope}
+              evidenceEpoch={view.historyEpoch}
             />
           </>
         ) : null;

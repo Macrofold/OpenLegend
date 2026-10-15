@@ -411,7 +411,8 @@ export interface InventoryItemView extends Named {
   packingLoad?: number;
   recipeRecord?: { method?: RecipeDetailsView; message: string };
   characteristics?: InventoryCharacteristic[];
-  comparison?: Named & { id: string; characteristics: InventoryCharacteristic[] };
+  /** Every currently equipped item this candidate would put away. */
+  equipmentConflicts?: Array<Named & { id: string; characteristics: InventoryCharacteristic[] }>;
   category: 'material' | 'food' | 'equipment' | 'ammunition';
   description: string;
   equipped: boolean;

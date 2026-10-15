@@ -650,11 +650,13 @@ export function PersonEditor({
     const requestGeneration = generation.current;
     setLoading(true);
     try {
-      const next = await post<GodPersonEditorView>('/api/god/editor/person', {
+      const next = await post<GodPersonEditorView | ApiResult>('/api/god/editor/person', {
         actorId,
         before: loaded.before,
       });
       if (requestGeneration !== generation.current) return;
+      if (!next.ok || !('memories' in next))
+        throw new Error(next.message ?? 'Person memories could not be read.');
       setLoaded((current) =>
         current
           ? {
@@ -1048,47 +1050,102 @@ export function PersonEditor({
   );
 }
 
-function StoryMechanismEditor() {
+/** The window owns this separately saved draft, including while another tab is shown. */
+function useStoryMechanismEditor() {
   const [draft, setDraft] = useState('');
+  const [baseline, setBaseline] = useState<string>();
   const [fields, setFields] = useState('[]');
   const [revision, setRevision] = useState(0);
   const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<'read' | 'save' | null>(null);
+  const busy = pending !== null;
+  const working = useRef(false);
+  const edits = useRef(0);
+  const lifetime = useRef(0);
+  useEffect(
+    () => () => {
+      lifetime.current++;
+    },
+    [],
+  );
+  const dirty = baseline !== undefined && (draft !== baseline || fields.trim() !== '[]');
+  function discard() {
+    edits.current++;
+    setDraft(baseline ?? '');
+    setFields('[]');
+    setMessage('');
+  }
+  async function read(expectedEdit: number, owner: number) {
+    const result = await post<ApiResult | { ok: true; policy: unknown; revision: number }>(
+      '/api/god/editor/story',
+      {},
+    );
+    if (owner !== lifetime.current) return;
+    if (!result.ok || !('policy' in result))
+      throw new Error(result.message ?? 'Story mechanism could not be read.');
+    if (expectedEdit !== edits.current) return;
+    const saved = JSON.stringify(result.policy, null, 2);
+    setDraft(saved);
+    setBaseline(saved);
+    setFields('[]');
+    setRevision(result.revision);
+  }
   async function load() {
-    setBusy(true);
+    if (working.current) return;
+    working.current = true;
+    setPending('read');
+    setMessage('');
+    const owner = lifetime.current;
     try {
-      const result = await post<{ ok: boolean; policy: unknown; revision: number }>(
-        '/api/god/editor/story',
-        {},
-      );
-      setDraft(JSON.stringify(result.policy, null, 2));
-      setRevision(result.revision);
+      await read(edits.current, owner);
     } catch (error) {
-      setMessage(String(error));
+      if (owner === lifetime.current) setMessage(String(error));
     } finally {
-      setBusy(false);
+      working.current = false;
+      if (owner === lifetime.current) setPending(null);
     }
   }
   async function save() {
-    setBusy(true);
+    if (working.current || baseline === undefined) return;
+    working.current = true;
+    setPending('save');
+    setMessage('');
+    const submitted = { draft, fields, revision, edit: edits.current };
+    const owner = lifetime.current;
     try {
       const result = await post<ApiResult>('/api/god/editor/story/save', {
-        revision,
-        policy: JSON.parse(draft),
-        changes: JSON.parse(fields),
+        revision: submitted.revision,
+        policy: JSON.parse(submitted.draft),
+        changes: JSON.parse(submitted.fields),
       });
+      if (owner !== lifetime.current) return;
+      setPending('read'); // The write is acknowledged; optional readback must not lock Close.
       setMessage(result.message);
       if (result.ok) {
-        setFields('[]');
-        await load();
+        setBaseline(submitted.draft);
+        // The native operation increments exactly once. Keep that expected revision;
+        // an intervening edit by someone else must still be refused on the next Save.
+        setRevision(submitted.revision + 1);
+        if (submitted.edit === edits.current) {
+          setFields('[]');
+          try {
+            await read(submitted.edit, owner);
+          } catch (error) {
+            if (owner === lifetime.current)
+              setMessage(
+                `Story mechanism saved. Its latest values could not refresh: ${String(error)}`,
+              );
+          }
+        } else setMessage('Story mechanism saved. Your later unsaved changes are still shown.');
       }
     } catch (error) {
-      setMessage(String(error));
+      if (owner === lifetime.current) setMessage(String(error));
     } finally {
-      setBusy(false);
+      working.current = false;
+      if (owner === lifetime.current) setPending(null);
     }
   }
-  return (
+  const content = (
     <section>
       <h3>Future narration</h3>
       <p>
@@ -1096,9 +1153,9 @@ function StoryMechanismEditor() {
         they do not rewrite recorded events.
       </p>
       <Button onPress={() => void load()} disabled={busy}>
-        Load story mechanism
+        {dirty ? 'Discard narration draft and reload' : 'Load story mechanism'}
       </Button>
-      {draft && (
+      {baseline !== undefined && (
         <>
           <label>
             Mechanism configuration JSON
@@ -1106,7 +1163,10 @@ function StoryMechanismEditor() {
               aria-label="Story mechanism configuration"
               value={draft}
               rows={20}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => {
+                edits.current++;
+                setDraft(event.target.value);
+              }}
             />
           </label>
           <label>
@@ -1115,7 +1175,10 @@ function StoryMechanismEditor() {
               aria-label="Story entity field changes"
               value={fields}
               rows={6}
-              onChange={(event) => setFields(event.target.value)}
+              onChange={(event) => {
+                edits.current++;
+                setFields(event.target.value);
+              }}
             />
           </label>
           <p>
@@ -1130,9 +1193,11 @@ function StoryMechanismEditor() {
       {message && <p role="status">{message}</p>}
     </section>
   );
+  return { content, dirty, writing: pending === 'save', discard };
 }
 
 export function WorldEventsEditor({ close }: { close(): void }) {
+  const story = useStoryMechanismEditor();
   const drafts = useRef(new Map<string, string>());
   const generation = useRef(0);
   const [loading, setLoading] = useState(false);
@@ -1150,10 +1215,15 @@ export function WorldEventsEditor({ close }: { close(): void }) {
     const requestGeneration = generation.current;
     setLoading(true);
     try {
-      const next = await post<GodWorldEventsEditorView>('/api/god/editor/world-events', {
-        before: loaded.before,
-      });
+      const next = await post<GodWorldEventsEditorView | ApiResult>(
+        '/api/god/editor/world-events',
+        {
+          before: loaded.before,
+        },
+      );
       if (requestGeneration !== generation.current) return;
+      if (!next.ok || !('events' in next))
+        throw new Error(next.message ?? 'World events could not be read.');
       setLoaded((current) =>
         current
           ? {
@@ -1180,8 +1250,13 @@ export function WorldEventsEditor({ close }: { close(): void }) {
     const requestGeneration = ++generation.current;
     setLoading(true);
     try {
-      const result = await post<GodWorldEventsEditorView>('/api/god/editor/world-events', {});
+      const result = await post<GodWorldEventsEditorView | ApiResult>(
+        '/api/god/editor/world-events',
+        {},
+      );
       if (requestGeneration !== generation.current) return false;
+      if (!result.ok || !('events' in result))
+        throw new Error(result.message ?? 'World events could not be read.');
       setNeedsReload(false);
       setLoaded(result);
       setEvents(result.events);
@@ -1273,6 +1348,17 @@ export function WorldEventsEditor({ close }: { close(): void }) {
       dirty={dirty}
       saving={saving || loading}
       error={error}
+      closeGuard={
+        story.dirty || story.writing
+          ? {
+              reason: story.writing
+                ? 'Future narration is saving. Wait for its result before closing.'
+                : 'Future narration has unsaved changes and uses its own Save story mechanism action. Keep editing to save it there, or discard all unsaved changes before closing.',
+              pending: story.writing,
+              discard: story.discard,
+            }
+          : undefined
+      }
       onSave={save}
       onDiscard={() => {
         generation.current++;
@@ -1374,7 +1460,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
           id: 'story',
           label: 'Future narration',
           icon: 'ui.inview',
-          content: <StoryMechanismEditor />,
+          content: story.content,
         },
       ]}
     />

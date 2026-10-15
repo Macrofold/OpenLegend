@@ -80,7 +80,7 @@ Inspect the rendered control and computed styles. Either deliberately qualify na
 
 ## Disabled controls and reachable explanations
 
-A native disabled HTML control is normally absent from keyboard focus. Therefore “show the reason on focus” is not a complete design. Put an important reason inline or provide a separately reachable explanation near the action. Supplementary tooltip content cannot be the only way to discover a blocking condition. Preserve the current unavailable-actions disclosure policy; once that section is opened, its reasons still need a usable route. [S02](research.md#s02) [S11](research.md#s11)
+A native disabled HTML control is normally absent from keyboard focus. Therefore “show the reason on focus” is not a complete design. Put an important reason inline or provide a separately reachable explanation near the action. Supplementary tooltip content cannot be the only way to discover a blocking condition. Preserve the current [unavailable-action disclosure policy](world-interaction.md#actions-explain-the-commitment): known blocked choices in All actions and explicit browsers retain reachable explanations without a Show unavailable toggle. [S02](research.md#s02) [S11](research.md#s11)
 
 Where discoverability genuinely requires focus on an unavailable action, an appropriate `aria-disabled` pattern may retain focus. It must also suppress activation in every relevant handler and preserve server enforcement: the attribute alone changes neither behavior nor focus order. `pointer-events: none` alone does not prevent keyboard activation. Do not make every disabled action a Tab stop, and do not disable a container indiscriminately when its children still need interaction.
 

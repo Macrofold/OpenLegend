@@ -220,7 +220,7 @@ function InventoryWorkspace({
       item.equipped,
       item.container?.revision,
       item.characteristics,
-      item.comparison,
+      item.equipmentConflicts,
       item.recipeRecord,
       item.materialCondition,
     ]),
@@ -1053,6 +1053,16 @@ function InventoryWorkspace({
                   </>
                 ) : (
                   <>
+                    {!!item.equipmentConflicts?.length && (
+                      <section aria-label="Equipment put away when equipping">
+                        <p>Equipping this item puts away these currently equipped items:</p>
+                        <ul>
+                          {item.equipmentConflicts.map((equipped) => (
+                            <li key={equipped.id}>{equipped.name}</li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
                     <div className="ol-inventory-item-actions">
                       {target && target.id !== selectedContainer.id && target.id !== item.id && (
                         <>
@@ -1222,47 +1232,48 @@ function InventoryWorkspace({
                         ))}
                       </dl>
                     </details>
-                    {item.comparison && (
-                      <details>
-                        <summary>
-                          Compare with {namePhrase(item.comparison, 'definite')} (equipped)
-                        </summary>
-                        <table className="ol-inventory-comparison">
-                          <caption>
-                            Compared with {namePhrase(item.comparison, 'definite')} (equipped)
-                          </caption>
-                          <thead>
-                            <tr>
-                              <th>Characteristic</th>
-                              <th>{item.name}</th>
-                              <th>{item.comparison.name}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {item.characteristics?.flatMap((fact) => {
-                              const other = item.comparison?.characteristics.find(
-                                (entry) => entry.id === fact.id && entry.unit === fact.unit,
-                              );
-                              return other
-                                ? [
-                                    <tr key={fact.id}>
-                                      <th>
-                                        {fact.label} {fact.unit}
-                                      </th>
-                                      <td>{fact.value ?? 'Unknown'}</td>
-                                      <td>{other.value ?? 'Unknown'}</td>
-                                    </tr>,
-                                  ]
-                                : [];
-                            })}
-                          </tbody>
-                        </table>
-                        <p className="ol-caption">
-                          Only matching meanings and units are compared. Unknown facts stay unknown;
-                          there is no total equipment score.
-                        </p>
-                      </details>
-                    )}
+                    {item.equipmentConflicts?.map((equipped) => {
+                      const matching = item.characteristics?.flatMap((fact) => {
+                        const other = equipped.characteristics.find(
+                          (entry) => entry.id === fact.id && entry.unit === fact.unit,
+                        );
+                        return other ? [{ fact, other }] : [];
+                      });
+                      return matching?.length ? (
+                        <details key={equipped.id}>
+                          <summary>
+                            Compare with {namePhrase(equipped, 'definite')} (equipped)
+                          </summary>
+                          <table className="ol-inventory-comparison">
+                            <caption>
+                              Compared with {namePhrase(equipped, 'definite')} (equipped)
+                            </caption>
+                            <thead>
+                              <tr>
+                                <th>Characteristic</th>
+                                <th>{item.name}</th>
+                                <th>{equipped.name}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {matching.map(({ fact, other }) => (
+                                <tr key={fact.id}>
+                                  <th>
+                                    {fact.label} {fact.unit}
+                                  </th>
+                                  <td>{fact.value ?? 'Unknown'}</td>
+                                  <td>{other.value ?? 'Unknown'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          <p className="ol-caption">
+                            Only matching meanings and units are compared. Unknown facts stay
+                            unknown; there is no total equipment score.
+                          </p>
+                        </details>
+                      ) : null;
+                    })}
                     {!item.individual && !item.container && !item.equipped && (
                       <MergeTargets
                         key={item.id}
@@ -1361,14 +1372,14 @@ function InventoryWorkspace({
             </p>
             {operations.pending.status === 'unknown' && (
               <Button
-                disabled={!connected || !operations.pending.request}
+                disabled={!connected}
                 onPress={() => {
                   if (actionFocus.current)
                     actionInput.current = captureCollectionFocus(actionFocus.current.side);
                   void operations.check();
                 }}
               >
-                Check result
+                {operations.pending.request ? 'Check result' : 'Read retained request'}
               </Button>
             )}
             <p className="ol-caption">

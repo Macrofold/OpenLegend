@@ -90,7 +90,8 @@ export function ItemTrade({
   async function send(action: ActionOption) {
     if (!connected || !action.enabled || !start()) return;
     setMessage('');
-    workspace.current?.focus({ preventScroll: true });
+    const focusOwner = workspace.current;
+    focusOwner?.focus({ preventScroll: true });
     try {
       const result = await command(action);
       if (alive.current) setMessage(result.message);
@@ -118,9 +119,16 @@ export function ItemTrade({
     } finally {
       setPending(false);
       if (alive.current) {
-        requestAnimationFrame(() =>
-          workspace.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus(),
-        );
+        requestAnimationFrame(() => {
+          // A later input in another task owns focus while this receipt is pending.
+          if (
+            alive.current &&
+            focusOwner?.isConnected &&
+            focusOwner.getClientRects().length &&
+            document.activeElement === focusOwner
+          )
+            focusOwner.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+        });
       }
     }
   }

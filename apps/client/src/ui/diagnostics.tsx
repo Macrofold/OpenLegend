@@ -386,12 +386,14 @@ export function Mind({
   owned = false,
   visible = true,
   readScope,
+  evidenceEpoch,
   onDirtyChange,
 }: {
   actorId: string;
   owned?: boolean;
   visible?: boolean;
   readScope?: string;
+  evidenceEpoch?: string;
   onDirtyChange?(dirty: boolean): void;
 }) {
   const [mind, setMind] = useState<GodMindView | null>(null),
@@ -563,7 +565,7 @@ export function Mind({
             </Button>
           )}
           <ActivityHistory
-            key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}`}
+            key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
             actorId={mind.actorId}
             owned={owned}
           />

@@ -19,6 +19,7 @@ export function EditorPanel({
   saving,
   error,
   saveReason,
+  closeGuard,
   scope,
   saveLabel = 'Save',
   onSave,
@@ -31,6 +32,8 @@ export function EditorPanel({
   saving: boolean;
   error?: string;
   saveReason?: string;
+  /** A separately saved section can guard Close without changing this Save action's scope. */
+  closeGuard?: { reason: string; pending: boolean; discard(): void };
   scope?: string;
   saveLabel?: string;
   onSave(): Promise<boolean>;
@@ -94,7 +97,7 @@ export function EditorPanel({
     });
   };
   const requestClose = () => {
-    if (!saving) dirty ? setConfirmClose(true) : onClose();
+    if (!saving && !closeGuard?.pending) dirty || closeGuard ? setConfirmClose(true) : onClose();
   };
   const startDrag = (event: PointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest('button')) return;
@@ -175,7 +178,7 @@ export function EditorPanel({
           <IconButton
             icon="ui.close"
             label={`Close ${title}`}
-            disabled={saving}
+            disabled={saving || closeGuard?.pending}
             onPress={requestClose}
           />
         </div>
@@ -212,6 +215,8 @@ export function EditorPanel({
             'Saving changes…'
           ) : dirty ? (
             'Unsaved changes'
+          ) : closeGuard ? (
+            closeGuard.reason
           ) : (
             'No unsaved changes'
           )}
@@ -249,8 +254,8 @@ export function EditorPanel({
             >
               <h3 className="ol-heading">Keep the changes to {title.replace(/^Edit /, '')}?</h3>
               <p>
-                Your edits have not been saved. Keep editing, discard this draft, or save before
-                closing.
+                {closeGuard?.reason ??
+                  'Your edits have not been saved. Keep editing, discard this draft, or save before closing.'}
               </p>
               <div className="ol-creator-window-tools">
                 <Button variant="quiet" disabled={saving} onPress={() => setConfirmClose(false)}>
@@ -258,9 +263,10 @@ export function EditorPanel({
                 </Button>
                 <Button
                   variant="secondary"
-                  disabled={saving}
+                  disabled={saving || closeGuard?.pending}
                   onPress={() => {
                     onDiscard?.();
+                    closeGuard?.discard();
                     onClose();
                   }}
                 >
@@ -269,7 +275,7 @@ export function EditorPanel({
                 <Button
                   variant="primary"
                   busy={saving}
-                  disabled={saving || !!saveReason}
+                  disabled={saving || !!saveReason || !!closeGuard}
                   onPress={() => void onSave().then((saved) => saved && onClose())}
                 >
                   Save and Close

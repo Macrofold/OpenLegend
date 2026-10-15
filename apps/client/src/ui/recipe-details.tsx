@@ -21,7 +21,7 @@ export function RecipeDetails({ recipe }: { recipe: RecipeDetailsView }) {
         </dd>
         <dt>Work</dt>
         <dd>{recipe.workSeconds} game seconds</dd>
-        <dt>Actual output</dt>
+        <dt>Makes</dt>
         <dd>
           <strong>{recipe.output.name}</strong>
           {recipe.output.description && <p>{recipe.output.description}</p>}

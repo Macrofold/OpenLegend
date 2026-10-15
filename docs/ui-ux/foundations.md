@@ -97,7 +97,7 @@ Use **More** for infrequent actions on the same object; use **Advanced** for exp
 
 Do not make a player's essential action hover-only or right-click-only. A context menu is an accelerator with another discoverable route. Do not alphabetize the principal task sequence merely because the backing collection is alphabetical. Use search for long catalogues, not as the only way to discover a small set of basic actions.
 
-Follow current product rules for unavailable actions: the action picker has an explicit unavailable-actions control. Do not override that globally with every disabled action always visible. Once requested, reasons need a reachable explanation and possible remedy; a native disabled control cannot rely on a focus-only tooltip. Never hide a failed submitted operation behind that filter. [Disabled controls](controls.md#disabled-controls-and-reachable-explanations)
+Follow the current [ordinary action-discovery contract](world-interaction.md#actions-explain-the-commitment): contextual quick choices contain available actions, while All actions and the explicit browsers include permitted known unavailable choices without a visibility toggle. Unknown actions remain hidden. Blocking reasons need a reachable explanation and possible remedy; a native disabled control cannot rely on a focus-only tooltip. Never hide a failed submitted operation behind action filtering. [Disabled controls](controls.md#disabled-controls-and-reachable-explanations)
 
 ## Evaluate clarity, not empty space
 

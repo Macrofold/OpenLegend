@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                    | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Implementation, cleanup and required checks pass; real input/device/player acceptance remains open. | 2026-10-15   |
+| In progress | Imported-interface review repairs and focused verification are in progress; human acceptance remains open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -17,6 +17,73 @@ This is the execution plan for the remaining agreed scope, not a replacement fea
 The completion work started on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/game-ui-research-redesign`, at `18aa2920747ee0e8bb489f7c568ee60a6e6df193`. Its integrated GitHub `refs/heads/main` was then `1cf678802d62652d8dd466776d4b95a9d0d19166`; that reference was checked at the time. The later integrated base is recorded below. Preserve published history. This authorization does not request merging PR #27 into main or modifying unrelated branches.
 
 ## Implementation plan
+
+### Complete imported-interface review — October 15
+
+Mike requested an in-depth review of the imported interface and designs, with
+repairs and completion of missing accepted UI. Review the entire current interface,
+including the redesign already integrated into main, rather than only the small
+remaining PR diff. The refreshed PR target is `Macrofold/OpenLegend`
+`origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4`; it is already an
+ancestor of the review's starting source `99cb310fbe7ac597a417664551991f074995b888`.
+All edits stay in `/Users/mzw/.codex/worktrees/0f80/OpenLegend` on
+`docs/game-ui-research-redesign`. The main checkout and its development save are
+not used for edits or runtime verification.
+
+1. Compare the accepted feature/design, current handbook, coverage map and UIUX
+   tracker with each current surface. Separate missing implementation, demonstrated
+   bugs, proposed additions and unmet human/device evidence. Compare Mike's named
+   main-checkout tracker without replacing either checkout's independent changes.
+2. Review player item/action/activity/record screens; entry/settings/checkpoint and
+   creator/operations screens; conversation/world/camera and shared controls in
+   parallel. Trace complete request and return paths, cancellation, stale reads,
+   permission changes, focus/input ownership and long/narrow/short content.
+3. Repair confirmed issues at their existing owners. Preserve native authority,
+   original-operation recovery, current-world content and accepted design decisions.
+   Reconcile any contradictory handbook wording with the actual accepted contract.
+4. Exercise each changed task through suitable existing focused checks and actual
+   rendered interaction, including a relevant failure. Reuse unchanged native and
+   browser evidence; do not recreate the removed qualification suite. Inspect the
+   complete final diff and affected callers, then run required CI on published source.
+5. Update the current behavior, UIUX work and verification report with actual scope,
+   evidence and limitations. Keep real OS input-method, assistive-device and
+   uncoached-user acceptance open until performed.
+
+The initial 100–300-line repair estimate is now approximately 400–600 production
+logic lines after the concrete findings below; the review itself covers substantially
+more source. Risk is medium
+because shared dismissal/focus, asynchronous private reads and consequential-write
+recovery can affect several screens. Any wider native contract change requires a
+revised estimate and plan before implementation. The separately designed IWB
+follow-on adds crafting-list and compound equipment behavior, not just presentation;
+its inclusion is awaiting Mike's scope clarification while independent review and
+repairs continue.
+
+Confirmed repairs cover complete equipment-conflict visibility; trade and Speak/Act
+focus ownership; exact edited-draft completion; construction draft retention and
+fresh read/preview fencing; forgotten action-history display and awaited server
+read fencing; refused creator-page reads; future-narration tab/save/close continuity;
+Operations logout cleanup and single-flight refresh; and prospective recipe wording.
+The storage review also finds that Inventory did not verify an original request
+before overwriting or verify its retained bytes before sending. Strengthen that
+existing owner, then reuse it with a distinct construction task slot for the real
+second caller. Construction must retain its exact Start/Stop request and check only
+the original receipt after a lost acknowledgement, including after earlier work
+ends. This closes the existing shared recovery contract; it adds no manufacturing
+list or compound stow behavior. Keep native receipt/admission owners unchanged,
+include changed-owner cleanup, and verify failed storage and no duplicate dispatch.
+
+Cost grows with mounted/visible readers, list/history pages, repeated projection
+updates and optional preview requests. Reuse current permitted projections and
+single-flight readers; do not add a global workflow store or broad cache. Retained
+facts invalidate on their actual owner, timeline, authority, selection and evidence
+dependencies; local draft identity remains separate from read validity. Measure the
+changed complete caller, including request counts and rendered behavior where
+relevant, rather than infer responsiveness or privacy from component structure.
+Verification starts without providers and with `AI_BUDGET_USD=0` in disposable
+worlds/databases. Completion requires resolution of every actionable in-scope review
+finding, implementation of the agreed missing UI, current documentation and passing
+required checks; source review alone does not qualify the remaining human gates.
 
 ### Current continuation — October 14
 
