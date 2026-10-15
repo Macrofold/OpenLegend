@@ -1,16 +1,20 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Mike explicitly authorized completing the implementation; recovery, integration fixes and final game qualification are being completed on the existing UI branch. | 2026-10-14   |
+| Status | Current progress | Last updated |
+| --- | --- | --- |
+| In progress | Action/checkpoint reload recovery and the selected UI journeys pass; full visual, device and player qualification remains open. | 2026-10-14 |
 
 ## Scope and authority
 
 On October 14, Mike explicitly requested completing the UI implementation and running the game to verify it. This follows clarification that the earlier assignment was comprehensive UI/UX research and design. Earlier wording that inferred implementation permission from “continue” does not substitute for this explicit authorization.
 
+**Latest scope instruction:** Mike subsequently directed that the hunting failure be recorded as a maintainer bug and that this continuation test only the UI. The [projectile-progress bug](../maintainers/projectile-progress-bug.md) owns that separate investigation. Do not resume combat, projectile, cognition or native simulation debugging from the broader historical plan below. Existing automatic repository CI remains a merge gate; excluding a repair from this task does not turn a failing check green.
+
+The [UI-only verification report](../verification/ui-completion-2026-10-14.md) records the exact passing action/checkpoint recovery, ordinary browser, Journal and inventory observations, earlier fixture failures and remaining evidence boundaries. The original reload-recovery code is now implemented and verified in those scenarios; the broader privacy/storage/identity matrix is not automatically closed by that result.
+
 This is the execution plan for the remaining agreed scope, not a replacement feature specification. The [feature specification](game-interaction-redesign-feature-spec.md), [technical design](game-interaction-redesign-tech-design.md), [UI/UX tracker](../maintainers/ui-ux.md) and [verification report](../verification/game-interaction-redesign.md) retain their requirements, decisions and evidence. Do not count implementation readiness and completion of the research/design deliverable as the same thing.
 
-Continue on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/game-ui-research-redesign`, starting at `18aa2920747ee0e8bb489f7c568ee60a6e6df193`. Its integrated GitHub `refs/heads/main` is `1cf678802d62652d8dd466776d4b95a9d0d19166`; the current main reference was checked and is unchanged. Preserve published history. This authorization does not request merging PR #27 into main or modifying unrelated branches.
+The completion work started on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/game-ui-research-redesign`, at `18aa2920747ee0e8bb489f7c568ee60a6e6df193`. Its integrated GitHub `refs/heads/main` was then `1cf678802d62652d8dd466776d4b95a9d0d19166`; that reference was checked at the time. The later integrated base is recorded below. Preserve published history. This authorization does not request merging PR #27 into main or modifying unrelated branches.
 
 ## Implementation plan
 
@@ -70,6 +74,8 @@ All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture i
 - [ ] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence.
 - [ ] In-scope defects and required final Code/Spatial failures are resolved without weakening acceptance; the affected diff and canonical documentation are reviewed and committed.
 - [ ] Remaining keyboard/non-drag, text/viewport, real operating-system input-method, assistive-device and uncoached-player requirements are accurately qualified. Automated browser or synthetic composition results cannot be reported as human/device evidence.
+
+These are the full feature's acceptance criteria, not authorization to restart the excluded native repairs during the UI-only continuation. Source-specific progress lives in the linked verification report; a passed subset cannot close a compound criterion whose other cases remain unverified.
 
 There is no unresolved product decision blocking the implementation work described above. Physical assistive-device and uncoached-player observations require suitable real participants/devices; their absence must remain explicit rather than silently waived or used to stop independently executable implementation work.
 
