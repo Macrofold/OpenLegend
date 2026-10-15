@@ -195,6 +195,7 @@ export function mountArtControls(
   };
   const refresh = () => {
     for (const [key, select] of controls) select.value = String(current()[key]);
+    fixture.setAttribute('aria-pressed', String(current().actionFixture));
   };
   for (const [key, values] of Object.entries(fields)) {
     const label = document.createElement('label');
@@ -229,7 +230,7 @@ export function mountArtControls(
   fixture.setAttribute('aria-pressed', String(current().actionFixture));
   fixture.onclick = () => {
     apply({ ...current(), actionFixture: !current().actionFixture });
-    fixture.setAttribute('aria-pressed', String(current().actionFixture));
+    refresh();
   };
   panel.append(fixture);
   document.body.append(panel);
