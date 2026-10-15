@@ -1,8 +1,8 @@
 # Whole-interface implementation completion
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | Action/checkpoint reload recovery and the selected UI journeys pass; full visual, device and player qualification remains open. | 2026-10-14 |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Action/checkpoint reload recovery and the selected UI journeys pass; full visual, device and player qualification remains open. | 2026-10-14   |
 
 ## Scope and authority
 
