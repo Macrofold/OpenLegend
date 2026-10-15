@@ -69,7 +69,13 @@ evidence revision, independently of the retained same-owner writing workspace.
 Both private Mind history readers and the fetched private snapshot expire after
 corrected/forgotten evidence, preserving the mounted note editor. Reuse
 the existing spaced creator confirmation for retained-draft switch warnings.
-Current authored spawn options supply their own icons; malformed retained question
+Current authored spawn options and private diagnostic actors supply their own
+icons, removing the remaining client species-to-icon and native human-species
+classification. Current note/name proposal cards must follow the admitted schema
+and keep proposals distinct from effects; diagnostic detail refreshes reject older
+results after a newer read or dismissal. Reuse the existing authored Entity icon through the permitted
+diagnostic projection, with generic fallbacks; no new world or storage law.
+Malformed retained question
 answers cannot be consumed as valid answer objects.
 The storage review also finds that Inventory did not verify an original request
 before overwriting or verify its retained bytes before sending. Strengthen that

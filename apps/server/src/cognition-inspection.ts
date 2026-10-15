@@ -24,9 +24,7 @@ export function diagnosticTriggerText(text: string): string {
 function presentation(call: IntelligenceCall, world?: WorldState) {
   const entity = call.actorId ? world?.entities[call.actorId] : undefined;
   const actorKind = entity?.actor
-    ? entity.actor.species === 'human' || !entity.actor.species
-      ? 'person'
-      : 'animal'
+    ? 'actor'
     : entity
       ? 'object'
       : call.actorId
@@ -36,7 +34,7 @@ function presentation(call: IntelligenceCall, world?: WorldState) {
     ...call,
     trigger: diagnosticTriggerText(call.trigger ?? call.kind),
     actorKind,
-    actorSpecies: entity?.actor?.species,
+    actorIcon: entity?.icon,
   };
 }
 

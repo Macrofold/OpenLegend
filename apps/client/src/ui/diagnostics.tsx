@@ -651,7 +651,7 @@ export type DiagnosticSelection = IntelligenceCall & {
   knownCostUsd: number;
   costIncomplete: boolean;
   actorKind?: string;
-  actorSpecies?: string;
+  actorIcon?: string;
   responseSummary?: string;
   responseParts?: { label: string; text: string }[];
   errorSummary?: string;
@@ -1259,14 +1259,14 @@ function LmResponse({ value }: { value: JsonObject }) {
   return (
     <div className="ol-lm-components">
       {operations.map((operation, index) => {
-        const kinds = ['talk', 'act', 'think', 'goal', 'plan'].filter(
+        const kinds = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name'].filter(
           (kind) => operation?.[kind] != null,
         );
         if (!operation || kinds.length !== 1 || !object(operation[kinds[0]!]))
           return <p key={index}>Malformed operation {index + 1}; inspect the raw record.</p>;
         const kind = kinds[0]!;
         const part = object(operation[kind])!;
-        const target = part['targetEntityId'] ?? part['addresseeEntityId'];
+        const target = part['targetEntityId'] ?? part['addresseeEntityId'] ?? part['subjectId'];
         const description =
           kind === 'act'
             ? part['kind'] === 'known'
@@ -1278,7 +1278,13 @@ function LmResponse({ value }: { value: JsonObject }) {
               ? `${humanize(String(part['operation']))}: ${String(part['objective'] ?? part['goalId'] ?? '')}`
               : kind === 'plan'
                 ? `${humanize(String(part['mode']))} plan; expected revision ${String(part['expectedRevision'])}`
-                : valueText(part['text']);
+                : kind === 'name'
+                  ? typeof part['givenName'] === 'string' && !part['givenName'].trim()
+                    ? 'Blank proposed name.'
+                    : (valueText(part['givenName']) ?? 'Name unavailable; inspect raw record.')
+                  : kind === 'note' && part['text'] === ''
+                    ? 'Clear this knowledge note.'
+                    : valueText(part['text']);
         return (
           <section className="ol-diagnostic-card" key={index}>
             <span className="ol-eyebrow">
@@ -1289,11 +1295,21 @@ function LmResponse({ value }: { value: JsonObject }) {
                   ? 'private thought'
                   : kind === 'act'
                     ? 'action'
-                    : kind}{' '}
+                    : kind === 'note'
+                      ? 'knowledge edit'
+                      : kind === 'name'
+                        ? 'remembered name'
+                        : kind}{' '}
               · {String(operation['localId'] ?? index + 1)}
             </span>
             <p className="ol-prose">{description ?? 'Details unavailable; inspect raw record.'}</p>
             {target != null && <p className="ol-caption">Target: {String(target)}</p>}
+            {kind === 'note' && part['subjectId'] === null && (
+              <p className="ol-caption">Subject: General knowledge</p>
+            )}
+            {(kind === 'note' || kind === 'name') && (
+              <p className="ol-caption">Expected revision: {String(part['expectedRevision'])}</p>
+            )}
             {Array.isArray(part['aboutEntityIds']) && part['aboutEntityIds'].length > 0 && (
               <p className="ol-caption">About: {part['aboutEntityIds'].map(String).join(', ')}</p>
             )}
@@ -2294,7 +2310,9 @@ function TraceDetail({
     } | null>(null),
     [error, setError] = useState(''),
     [remote, setRemote] = useState<Record<string, unknown>>({});
+  const generation = useRef(0);
   async function load() {
+    const id = ++generation.current;
     setError('');
     try {
       const result = await post<{
@@ -2302,15 +2320,20 @@ function TraceDetail({
         message?: string;
         details: NonNullable<typeof detail>;
       }>('/api/god/trigger', { id: row.id });
+      if (id !== generation.current) return;
       if (!result.ok) throw new Error(result.message ?? 'Inspection unavailable.');
       setDetail(result.details);
     } catch (loadError) {
+      if (id !== generation.current) return;
       setDetail(null);
       setError(String(loadError));
     }
   }
   useEffect(() => {
     if (visible) void load();
+    return () => {
+      generation.current++;
+    };
   }, [row.id, visible]);
   const calls = detail
     ? detail.children.length
@@ -2447,17 +2470,12 @@ function triggerIcon(type: string): string {
 function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
   const type = row.triggerType ?? row.kind;
   const actorIcon =
-    row.actorKind === 'animal'
-      ? row.actorSpecies === 'deer'
-        ? 'creature.deer'
-        : row.actorSpecies === 'hare'
-          ? 'creature.hare'
-          : 'creature.animal'
-      : row.actorKind === 'world'
-        ? 'ui.world'
-        : row.actorKind === 'person'
-          ? 'ui.character'
-          : 'ui.inview';
+    row.actorIcon ??
+    (row.actorKind === 'world'
+      ? 'ui.world'
+      : row.actorKind === 'actor'
+        ? 'ui.character'
+        : 'ui.inview');
   return (
     <Preview
       title={`${row.actorName ?? 'World agent'} · recorded request`}

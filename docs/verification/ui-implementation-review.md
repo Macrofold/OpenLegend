@@ -9,7 +9,9 @@ repairs, and completion of missing accepted UI. The review starts at
 integrated into main. The refreshed PR base is `Macrofold/OpenLegend`
 `origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor.
 Local checkpoints `1985e18c7`, `5ef9c4007` and `2f8654468` preserve the review repairs.
-Final integration and required CI are in progress.
+The first integrated source is `9d7081b0924322ab5587dd85cc0a0687e29a314f`.
+Final shared static/build checks pass there. Required CI is in progress; the last
+diagnostic icon projection finding is being integrated before final-head results.
 
 The [completion plan](../projects/game-interaction-redesign-completion.md#complete-imported-interface-review--october-15)
 owns execution, and [UIUX](../maintainers/ui-ux.md) retains broader acceptance.
@@ -67,6 +69,10 @@ simulation implementation or a claim of all-platform usability.
   details say **Makes** before manufacture. Generic invention help no longer asserts
   wilderness content as a universal rule. Creation icons now come from the selected
   world’s existing catalogue instead of a duplicate wilderness-ID map in the client.
+  Diagnostic actor rows likewise take their authored icon through the permitted
+  projection, replacing a deer/hare client map and native human-species classification. Current knowledge-note and remembered-name proposals are rendered
+  as proposals rather than malformed operations; detail refreshes cannot adopt
+  older running-stage results after a newer completion or dismissal.
   Handbook single-item equipment and
   unavailable-action-toggle claims are reconciled with accepted current behavior.
 
@@ -193,6 +199,18 @@ provider/Jev cost: $0.**
   button grows from 32 to 41.59 pixels while the physical 976×776 window is unchanged.
   At 390×480 its bounds are 366×456, Close stays reachable and the JSON scrolls.
   The capture is inspected. No API/provider request or browser error occurs.
+- **Diagnostics current presentation and read order:** the actual detail/row
+  components display an authored contrasting icon and a generic fallback when
+  omitted. Current knowledge-note and remembered-name operations remain visibly
+  Proposed with their expected revisions. Source review separately confirms that
+  empty note wording describes clearing and blank-name wording does not invent
+  supported name clearing. A held older
+  running read cannot replace a newer completed read, and dismissal rejects its
+  pending read before reopening fresh detail. Desktop and 390×650 captures are
+  inspected. The actual list/detail projection over an authored starting world
+  passes in 77.1 ms with a read-only controlled diagnostic adapter. This is no
+  database/HTTP/provider or scaling benchmark. No provider call or browser error
+  occurs. Its first duplicate-text selector failure remains recorded.
 - **Authored creation icons:** actual permitted native projection carries all ten
   current catalogue icons, a contrasting supplied icon and an omitted optional
   value without changing the saved world. Actual ActionPicker then displays that
