@@ -2232,7 +2232,10 @@ export class WildernessScene implements WorldRenderer {
     this.publishHover(null, { x: 0, y: 0 });
     this.outline?.update([], 0, true);
   };
-  private screenRay(x: number, y: number): { from: pc.Vec3; to: pc.Vec3 } {
+  private screenRay(
+    x: number,
+    y: number,
+  ): { from: pc.Vec3; to: pc.Vec3; screenX: number; screenY: number } {
     const camera = this.camera.camera!;
     // Camera commands can arrive before the engine refreshes its cached view.
     // Use the current transform so picking agrees with the character image now.
@@ -2251,6 +2254,8 @@ export class WildernessScene implements WorldRenderer {
     return {
       from: endpoint(-1),
       to: endpoint(1),
+      screenX: x,
+      screenY: y,
     };
   }
   private cardHit(
@@ -2292,12 +2297,35 @@ export class WildernessScene implements WorldRenderer {
     return fraction >= 0 && fraction <= 1 ? { point, fraction } : null;
   }
   private readonly alphaMasks = new WeakMap<pc.Texture, ImageData>();
-  private cameraObstruction(ray: { from: pc.Vec3; to: pc.Vec3 }): number {
+  private cameraObstruction(ray: {
+    from: pc.Vec3;
+    to: pc.Vec3;
+    screenX?: number;
+    screenY?: number;
+  }): number {
     if (!this.view) return 0;
     let obstruction =
       rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
+    // One neighboring framebuffer pixel supplies the opacity-map footprint.
+    // Retain the originating pointer coordinates rather than project through a
+    // potentially stale engine view cache immediately after a camera command.
+    const screen =
+      ray.screenX === undefined || ray.screenY === undefined
+        ? this.camera.camera!.worldToScreen(ray.from)
+        : { x: ray.screenX, y: ray.screenY };
+    const device = this.app.graphicsDevice;
+    const scale =
+      this.artSettings.sceneGrid === 'half'
+        ? 0.5
+        : this.artSettings.sceneGrid === 'third'
+          ? 1 / 3
+          : 1;
+    const differentials = {
+      x: this.screenRay(screen.x + device.clientRect.width / (device.width * scale), screen.y),
+      y: this.screenRay(screen.x, screen.y + device.clientRect.height / (device.height * scale)),
+    };
     for (const shape of this.landscapeOcclusion) {
-      const hit = shape.hit(ray.from, ray.to);
+      const hit = shape.hit(ray.from, ray.to, differentials);
       if (hit !== null) obstruction = Math.min(obstruction, hit);
     }
     // Decorative canopies obstruct the camera but never grant or remove bodily perception.

@@ -189,12 +189,13 @@
     "Bake node translations; fit unchanged caller-owned envelopes.",
     "Prepare at most 128-square shared textures; filter alpha separately and measure cutoff coverage.",
     "Keep source RGB and optional authored leaf/bark/birch RGB separate with identical alpha.",
+    "Clamp negligible exporter vertex-color overshoot to 0..1 and retain six decimal places.",
     "Omit source normal maps and metallic response for this controlled art comparison.",
     "CommonTree_3 supplies slender birch structure; pale painted bark is a named approximation."
   ],
   "output": {
     "path": "scenery.json",
-    "bytes": 6904143,
-    "sha256": "c5e3236f2df5d36309daa2d99c0ca88b6d7f0ee4e8ccfb9b0398a6942466ae28"
+    "bytes": 5924136,
+    "sha256": "ee4c5a399cd87eb5eb47789e3a81d1d7ab126a7e0eab73e7161cafab6b5416a7"
   }
 }

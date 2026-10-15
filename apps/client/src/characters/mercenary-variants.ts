@@ -23,6 +23,7 @@ export class MercenaryVariants {
   private readonly paints = new Map<PaintedArt, Paint>();
   private readonly pending = new Map<PaintedArt, Promise<void>>();
   private readonly failed = new Set<PaintedArt>();
+  private filtering: ArtTreatment['characterFiltering'] = 'source';
   private disposed = false;
   private wanted: MercenaryArt = 'original';
   private active: MercenaryArt = 'original';
@@ -61,20 +62,35 @@ export class MercenaryVariants {
           reject(new Error('Mercenary artwork owner was destroyed.'));
           return;
         }
-        if (asset) this.assets.add(asset);
         if (error || !(asset?.resource instanceof pc.Texture)) {
+          asset?.unload();
+          if (asset) this.app.assets.remove(asset);
           reject(new Error('Mercenary artwork did not load.'));
           return;
         }
+        this.assets.add(asset);
         const texture = asset.resource;
         texture.flipY = false;
         texture.addressU = texture.addressV = pc.ADDRESS_CLAMP_TO_EDGE;
-        texture.magFilter = pc.FILTER_NEAREST;
-        texture.mipmaps = true;
-        texture.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
+        this.filterTexture(texture);
         resolve(texture);
       });
     });
+  }
+  setFiltering(filtering: ArtTreatment['characterFiltering']): void {
+    if (this.filtering === filtering) return;
+    this.filtering = filtering;
+    for (const asset of this.assets) {
+      if (asset.resource instanceof pc.Texture) this.filterTexture(asset.resource);
+    }
+  }
+  private filterTexture(texture: pc.Texture): void {
+    // Source artwork was authored for mipmapped minification; retain that
+    // sampling as its source policy and compare a deliberately sharper control.
+    texture.magFilter = pc.FILTER_NEAREST;
+    texture.mipmaps = this.filtering !== 'nearest';
+    texture.minFilter =
+      this.filtering === 'nearest' ? pc.FILTER_NEAREST : pc.FILTER_LINEAR_MIPMAP_LINEAR;
   }
   get current(): MercenaryArt {
     return this.active;

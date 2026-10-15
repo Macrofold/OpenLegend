@@ -519,6 +519,83 @@ export interface SceneryAlpha {
   cutoff: number;
 }
 
+export interface SceneryRayDifferentials {
+  x: { from: pc.Vec3; to: pc.Vec3 };
+  y: { from: pc.Vec3; to: pc.Vec3 };
+}
+interface AlphaMip {
+  width: number;
+  height: number;
+  values: Float32Array;
+}
+const alphaMipCache = new WeakMap<readonly number[], readonly AlphaMip[]>();
+function alphaMips(alpha: SceneryAlpha): readonly AlphaMip[] {
+  const cached = alphaMipCache.get(alpha.rgba);
+  if (cached) return cached;
+  let width = alpha.width,
+    height = alpha.height;
+  let values = Float32Array.from(
+    { length: width * height },
+    (_, i) => alpha.rgba[i * 4 + 3]! / 255,
+  );
+  const mips: AlphaMip[] = [{ width, height, values }];
+  while (width > 1 || height > 1) {
+    const nextWidth = Math.max(1, width >> 1),
+      nextHeight = Math.max(1, height >> 1);
+    const next = new Float32Array(nextWidth * nextHeight);
+    for (let y = 0; y < nextHeight; y++)
+      for (let x = 0; x < nextWidth; x++) {
+        const left = x * 2,
+          right = Math.min(left + 1, width - 1),
+          top = y * 2,
+          bottom = Math.min(top + 1, height - 1);
+        next[y * nextWidth + x] =
+          Math.round(
+            ((values[top * width + left]! +
+              values[top * width + right]! +
+              values[bottom * width + left]! +
+              values[bottom * width + right]!) *
+              255) /
+              4,
+          ) / 255;
+      }
+    width = nextWidth;
+    height = nextHeight;
+    values = next;
+    mips.push({ width, height, values });
+  }
+  alphaMipCache.set(alpha.rgba, mips);
+  return mips;
+}
+function alphaTexel(mip: AlphaMip, x: number, y: number): number {
+  const col = ((x % mip.width) + mip.width) % mip.width,
+    row = ((y % mip.height) + mip.height) % mip.height;
+  return mip.values[row * mip.width + col]!;
+}
+function filteredAlpha(mip: AlphaMip, u: number, v: number): number {
+  const x = u * mip.width - 0.5,
+    y = v * mip.height - 0.5,
+    col = Math.floor(x),
+    row = Math.floor(y),
+    fx = x - col,
+    fy = y - row;
+  const top = alphaTexel(mip, col, row) * (1 - fx) + alphaTexel(mip, col + 1, row) * fx,
+    bottom = alphaTexel(mip, col, row + 1) * (1 - fx) + alphaTexel(mip, col + 1, row + 1) * fx;
+  return top * (1 - fy) + bottom * fy;
+}
+function sampledAlpha(mips: readonly AlphaMip[], u: number, v: number, footprint: number): number {
+  const first = mips[0]!;
+  if (footprint <= 1)
+    return alphaTexel(first, Math.floor(u * first.width), Math.floor(v * first.height));
+  const lod = Math.min(mips.length - 1, Math.log2(footprint)),
+    level = Math.floor(lod),
+    blend = lod - level;
+  return (
+    filteredAlpha(mips[level]!, u, v) * (1 - blend) +
+    filteredAlpha(mips[Math.min(level + 1, mips.length - 1)]!, u, v) * blend
+  );
+}
+
 /** Pointer occlusion follows the actual decorative crowns without giving them
  * native collision or sight authority. Shared local triangles and transforms
  * are prepared once; bounds reject irrelevant instances before triangle work. */
@@ -526,15 +603,20 @@ export class SceneryCameraOcclusion {
   private readonly from = new pc.Vec3();
   private readonly to = new pc.Vec3();
   private readonly direction = new pc.Vec3();
+  private readonly offsetFrom = [new pc.Vec3(), new pc.Vec3()];
+  private readonly offsetDirection = [new pc.Vec3(), new pc.Vec3()];
+  private readonly mips?: readonly AlphaMip[];
   constructor(
     private readonly positions: readonly number[],
     private readonly indices: readonly number[],
     private readonly instances: readonly OccludingInstance[],
     private readonly bounds: { min: pc.Vec3; max: pc.Vec3 },
     private readonly alpha?: SceneryAlpha,
-  ) {}
+  ) {
+    if (alpha) this.mips = alphaMips(alpha);
+  }
 
-  hit(from: pc.Vec3, to: pc.Vec3): number | null {
+  hit(from: pc.Vec3, to: pc.Vec3, differentials?: SceneryRayDifferentials): number | null {
     if (intersectBox(from, to, this.bounds) === null) return null;
     let nearest = Infinity;
     for (const instance of this.instances) {
@@ -543,6 +625,13 @@ export class SceneryCameraOcclusion {
       instance.inverse.transformPoint(from, this.from);
       instance.inverse.transformPoint(to, this.to);
       this.direction.sub2(this.to, this.from);
+      if (this.alpha && differentials)
+        for (let axis = 0; axis < 2; axis++) {
+          const ray = axis === 0 ? differentials.x : differentials.y;
+          instance.inverse.transformPoint(ray.from, this.offsetFrom[axis]!);
+          instance.inverse.transformPoint(ray.to, this.offsetDirection[axis]!);
+          this.offsetDirection[axis]!.sub(this.offsetFrom[axis]!);
+        }
       for (let i = 0; i < this.indices.length; i += 3) {
         const a = this.indices[i]! * 3;
         const b = this.indices[i + 1]! * 3;
@@ -582,11 +671,43 @@ export class SceneryCameraOcclusion {
           const x = alpha.uvs[ai]! * (1 - u - v) + alpha.uvs[bi]! * u + alpha.uvs[ci]! * v;
           const y =
             alpha.uvs[ai + 1]! * (1 - u - v) + alpha.uvs[bi + 1]! * u + alpha.uvs[ci + 1]! * v;
-          // Prepared glTF UVs and image rows both start at the top. Match the
-          // repeating source map; transparent leaf holes must remain clickable.
-          const col = Math.min(alpha.width - 1, Math.floor((((x % 1) + 1) % 1) * alpha.width));
-          const row = Math.min(alpha.height - 1, Math.floor((((y % 1) + 1) % 1) * alpha.height));
-          if (alpha.rgba[(row * alpha.width + col) * 4 + 3]! / 255 < alpha.cutoff) continue;
+          let footprint = 0;
+          if (differentials)
+            for (let axis = 0; axis < 2; axis++) {
+              const origin = this.offsetFrom[axis]!,
+                direction = this.offsetDirection[axis]!;
+              const dx = direction.y * e2z - direction.z * e2y,
+                dy = direction.z * e2x - direction.x * e2z,
+                dz = direction.x * e2y - direction.y * e2x;
+              const det = e1x * dx + e1y * dy + e1z * dz;
+              if (Math.abs(det) < 1e-12) {
+                footprint = Infinity;
+                break;
+              }
+              const ox = origin.x - ax,
+                oy = origin.y - ay,
+                oz = origin.z - az;
+              // Neighboring rays meet the triangle's plane, including outside
+              // its edges: this estimates texture derivatives, not another hit.
+              const bu = (ox * dx + oy * dy + oz * dz) / det;
+              const bv =
+                (direction.x * (oy * e1z - oz * e1y) +
+                  direction.y * (oz * e1x - ox * e1z) +
+                  direction.z * (ox * e1y - oy * e1x)) /
+                det;
+              const du =
+                alpha.uvs[ai]! * (1 - bu - bv) + alpha.uvs[bi]! * bu + alpha.uvs[ci]! * bv - x;
+              const dv =
+                alpha.uvs[ai + 1]! * (1 - bu - bv) +
+                alpha.uvs[bi + 1]! * bu +
+                alpha.uvs[ci + 1]! * bv -
+                y;
+              footprint = Math.max(footprint, Math.hypot(du * alpha.width, dv * alpha.height));
+            }
+          // Match nearest magnification and trilinear minification in the same
+          // top-origin repeating UVs. GPU mip rounding and finite one-pixel ray
+          // differences can still disagree exactly at a cutoff boundary.
+          if (sampledAlpha(this.mips!, x, y, footprint) < alpha.cutoff) continue;
         }
         nearest = fraction;
       }

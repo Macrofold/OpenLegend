@@ -17,32 +17,18 @@
     {
       "variant": "field",
       "sourceNeutralBounds": [
-        [
-          -3.5606586933135986,
-          -7.27663516998291,
-          -0.0009779909159988165
-        ],
-        [
-          3.5606586933135986,
-          7.210177421569824,
-          15.434926986694336
-        ]
+        [-3.5606586933135986, -7.27663516998291, -0.0009779909159988165],
+        [3.5606586933135986, 7.210177421569824, 15.434926986694336]
       ],
-      "scale": 0.029152809676706463,
+      "scale": 0.02917753226319676,
       "heightMetres": 0.45,
-      "texture": [
-        64,
-        64
-      ],
-      "runtimeBytes": 250472,
-      "runtimeSha256": "534456d75b7529c40809cb57207084c97e1bda7fad87fea871c7a2caee629131",
+      "texture": [64, 64],
+      "runtimeBytes": 250560,
+      "runtimeSha256": "754b9d73f0822af57106e85b21969b11819faa672b5f84d94cbc28de1bfa449b",
       "triangles": 1532,
       "runtimeVertices": 1002,
       "joints": 37,
-      "materials": [
-        "field authored coat",
-        "Warm dark eyes"
-      ],
+      "materials": ["field authored coat", "Warm dark eyes"],
       "animations": [
         {
           "name": "Idle",
@@ -57,32 +43,18 @@
     {
       "variant": "russet",
       "sourceNeutralBounds": [
-        [
-          -3.9405694007873535,
-          -7.27663516998291,
-          -0.0010250622872263193
-        ],
-        [
-          3.947054386138916,
-          7.210177421569824,
-          14.867359161376953
-        ]
+        [-3.9405694007873535, -7.27663516998291, -0.0010250622872263193],
+        [3.947054386138916, 7.210177421569824, 14.867359161376953]
       ],
-      "scale": 0.03026556169323297,
+      "scale": 0.030777168629742207,
       "heightMetres": 0.45,
-      "texture": [
-        64,
-        64
-      ],
-      "runtimeBytes": 251100,
-      "runtimeSha256": "2fbd78f64780be147ec1b6ec91f565b8c3810ec863968477ec12702e5089a000",
+      "texture": [64, 64],
+      "runtimeBytes": 251116,
+      "runtimeSha256": "e2b7bc50247ef2ee39ae6a184a013e18250cf5066d1e145fc8b8be88a00a947a",
       "triangles": 1532,
       "runtimeVertices": 1002,
       "joints": 37,
-      "materials": [
-        "russet authored coat",
-        "Warm dark eyes"
-      ],
+      "materials": ["russet authored coat", "Warm dark eyes"],
       "animations": [
         {
           "name": "Idle",
@@ -97,32 +69,18 @@
     {
       "variant": "winter",
       "sourceNeutralBounds": [
-        [
-          -4.212223529815674,
-          -7.27663516998291,
-          -0.0010674213990569115
-        ],
-        [
-          4.212224006652832,
-          7.210177421569824,
-          14.17613697052002
-        ]
+        [-4.212223529815674, -7.27663516998291, -0.0010674213990569115],
+        [4.212224006652832, 7.210177421569824, 14.17613697052002]
       ],
-      "scale": 0.03174109560390463,
+      "scale": 0.031785944964459925,
       "heightMetres": 0.45,
-      "texture": [
-        64,
-        64
-      ],
+      "texture": [64, 64],
       "runtimeBytes": 250772,
-      "runtimeSha256": "394cc2afdbd4f5dc336287af6c8fb010affb261e01f999bc35574f47b2e39f60",
+      "runtimeSha256": "57fa452c338a06d4eaf64207b512dc0ef9b9dd8d1ed48ea3907a47be91c96df8",
       "triangles": 1532,
       "runtimeVertices": 1002,
       "joints": 37,
-      "materials": [
-        "winter authored coat",
-        "Warm dark eyes"
-      ],
+      "materials": ["winter authored coat", "Warm dark eyes"],
       "animations": [
         {
           "name": "Idle",
@@ -136,5 +94,6 @@
     }
   ],
   "providerCostUSD": 0,
-  "assetPurchaseUSD": 0
+  "assetPurchaseUSD": 0,
+  "colorPreparation": "Authored sRGB byte-image colors remain sRGB in PNG; only constant eye material factors are converted to linear."
 }

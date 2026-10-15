@@ -92,6 +92,7 @@ export class MercenaryMaterials {
     if (style.characterFiltering !== this.filtering) {
       this.filtering = style.characterFiltering;
       for (const texture of this.textures) this.filterTexture(texture);
+      this.variants.setFiltering(style.characterFiltering);
     }
     if (style.mercenaryArt !== this.wantedArt) {
       this.wantedArt = style.mercenaryArt;

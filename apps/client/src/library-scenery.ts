@@ -98,7 +98,7 @@ export class LibraryScenery {
     const entry = art.materials[id]!;
     const material = new ShadowMaterial(this.sun);
     material.name = 'Library scenery · ' + id;
-    material.diffuse.set(entry.baseColor[0]!, entry.baseColor[1]!, entry.baseColor[2]!);
+    material.diffuse.set(entry.baseColor[0]!, entry.baseColor[1]!, entry.baseColor[2]!).gamma();
     material.diffuseVertexColor = true;
     material.opacity = entry.baseColor[3] ?? 1;
     material.alphaTest = entry.alphaCutoff ?? 0;
