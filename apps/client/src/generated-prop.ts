@@ -26,6 +26,7 @@ export class GeneratedPropResources {
     private readonly app: pc.Application,
     private readonly art: ArtMaterials,
     private readonly sun?: pc.Light,
+    private readonly prepareSurface?: (material: pc.StandardMaterial) => void,
   ) {}
 
   create(
@@ -78,6 +79,7 @@ export class GeneratedPropResources {
     const material = new ShadowMaterial(this.sun).copy(source);
     setVisibilityStencil(material, ordinaryStencil);
     this.art.prepare(material);
+    this.prepareSurface?.(material);
     material.update();
     this.prepared.set(source, material);
     return material;

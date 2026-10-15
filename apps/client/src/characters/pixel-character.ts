@@ -25,6 +25,9 @@ class CharacterPass extends pc.RenderPass {
 
 const imageWidth = 64;
 const imageHeight = 112;
+// The screen mode is an intermediate image, not its own visible pixel grid.
+// Extra samples support linear reconstruction before the shared scene grid.
+const screenCaptureScale = 2;
 // Ordinary people occupy 86 of their 96 artwork rows. Retain their pixel size
 // while giving this tall adult 10% more visible height.
 const visibleRows = 86 * 1.1;
@@ -42,7 +45,9 @@ export class PixelCharacter {
   private readonly depth: pc.Texture;
   private readonly target: pc.RenderTarget;
   private sampling?: ArtTreatment['sampling'];
-  private readonly edgeSettings = new Float32Array(3);
+  private readonly edgeSettings = new Float32Array(4);
+  private readonly screenCoverage = new Float64Array(2);
+  private targetResizes = 0;
   private readonly quad: pc.Mesh;
   private readonly node = new pc.GraphNode('Character pixel composite');
   private readonly material: pc.ShaderMaterial;
@@ -72,7 +77,7 @@ export class PixelCharacter {
   private readonly mappedProjection = new pc.Mat4();
   private readonly mappedRoot = new pc.Mat4();
   private readonly mappedFoot = new pc.Vec3();
-  private readonly mappedViewport = new Float64Array(6);
+  private readonly mappedViewport = new Float64Array(8);
   private mappingReady = false;
   private readonly neutralPoints: pc.Vec3[] = [];
   private neutralVertices = 0;
@@ -156,12 +161,15 @@ export class PixelCharacter {
         uniform sampler2D characterDepth;
         uniform float characterOpacity;
         uniform float characterOutline;
-        uniform vec3 characterEdges;
+        uniform vec4 characterEdges;
         varying vec2 characterUV;
         void main(void) {
           vec4 color = texture2D(characterColor, characterUV);
           float depth = texture2D(characterDepth, characterUV).r;
           if (color.a < .5 || depth >= 1.0) discard;
+          // Screen-mode filtering mixes surface color with the transparent
+          // black clear. Recover its color before ordinary/reveal composition.
+          if (characterEdges.w > .5) color.rgb /= color.a;
           if (characterEdges.z > .5) {
             float edge = 0.0;
             for (int axis = 0; axis < 4; axis++) {
@@ -183,7 +191,7 @@ export class PixelCharacter {
     this.material.setParameter('characterDepth', this.depth);
     this.material.setParameter('characterOpacity', 1);
     this.material.setParameter('characterOutline', 0);
-    this.edgeSettings.set([1 / imageWidth, 1 / imageHeight, 0]);
+    this.edgeSettings.set([1 / imageWidth, 1 / imageHeight, 0, 0]);
     this.material.setParameter('characterEdges', this.edgeSettings);
     this.revealMaterial = this.material.clone();
     this.revealMaterial.depthFunc = pc.FUNC_GREATER;
@@ -222,10 +230,14 @@ export class PixelCharacter {
   }
   setTreatment(sampling: ArtTreatment['sampling'], edges: ArtTreatment['edges']): void {
     if (this.sampling !== sampling) {
-      const rows = sampling === 'native' ? 378 : Number(sampling);
-      const height = Math.round((rows * imageHeight) / visibleRows);
-      const width = Math.round((height * imageWidth) / imageHeight);
-      this.target.resize(width, height);
+      if (sampling !== 'screen') {
+        const rows = sampling === 'native' ? 378 : Number(sampling);
+        const height = Math.round((rows * imageHeight) / visibleRows);
+        const width = Math.round((height * imageWidth) / imageHeight);
+        this.resizeTarget(width, height);
+      }
+      this.color.minFilter = this.color.magFilter =
+        sampling === 'screen' ? pc.FILTER_LINEAR : pc.FILTER_NEAREST;
       this.sampling = sampling;
       this.mappingReady = false;
     }
@@ -233,7 +245,41 @@ export class PixelCharacter {
       1 / this.color.width,
       1 / this.color.height,
       edges === 'none' ? 0 : edges === 'silhouette' ? 1 : 2,
+      sampling === 'screen' ? 1 : 0,
     ]);
+  }
+  private resizeTarget(width: number, height: number): void {
+    if (this.color.width === width && this.color.height === height) return;
+    this.target.resize(width, height);
+    this.targetResizes++;
+    this.edgeSettings[0] = 1 / width;
+    this.edgeSettings[1] = 1 / height;
+  }
+  private resizeForScreen(): void {
+    const device = this.app.graphicsDevice;
+    // Capture at least one source sample per displayed framebuffer pixel before
+    // the common scene reduction. Allocation size never sets the body mapping.
+    const width = Math.ceil(Math.abs(this.rect[2]!) * device.width);
+    const height = Math.ceil(Math.abs(this.rect[3]!) * device.height);
+    this.screenCoverage[0] = width;
+    this.screenCoverage[1] = height;
+    const nextWidth = Math.min(
+      device.maxTextureSize,
+      Math.max(16, Math.ceil((width * screenCaptureScale) / 16) * 16),
+    );
+    const nextHeight = Math.min(
+      device.maxTextureSize,
+      Math.max(16, Math.ceil((height * screenCaptureScale) / 16) * 16),
+    );
+    // Grow before losing detail; shrink only after a substantial zoom/viewport
+    // change. Small camera motion must not reallocate both textures every frame.
+    if (
+      nextWidth > this.color.width ||
+      nextHeight > this.color.height ||
+      nextWidth < this.color.width / 2 ||
+      nextHeight < this.color.height / 2
+    )
+      this.resizeTarget(nextWidth, nextHeight);
   }
   setVisible(value: boolean): void {
     this.pass.enabled = value;
@@ -282,7 +328,8 @@ export class PixelCharacter {
     const transform = this.bodyRoot.getWorldTransform();
     const cameraTransform = this.worldCamera.getWorldTransform();
     const projection = camera.projectionMatrix;
-    const viewport = this.app.graphicsDevice.clientRect;
+    const device = this.app.graphicsDevice;
+    const viewport = device.clientRect;
     const cameraRect = camera.rect;
     if (
       this.mappingReady &&
@@ -295,7 +342,9 @@ export class PixelCharacter {
       this.mappedViewport[2] === cameraRect.x &&
       this.mappedViewport[3] === cameraRect.y &&
       this.mappedViewport[4] === cameraRect.z &&
-      this.mappedViewport[5] === cameraRect.w
+      this.mappedViewport[5] === cameraRect.w &&
+      this.mappedViewport[6] === device.width &&
+      this.mappedViewport[7] === device.height
     )
       return;
     // Labels can run after the camera moves but before the engine's prerender
@@ -322,7 +371,11 @@ export class PixelCharacter {
     this.project(this.top, this.screenTop);
     const visibleHeight = Math.abs(this.screenTop.y - this.screen.y);
     const height = (visibleHeight * imageHeight) / visibleRows;
-    const width = (height * this.color.width) / this.color.height;
+    // Screen capture rounding must not widen/narrow the body as allocation
+    // changes. Historical fixed-row modes retain their existing aspect ratios.
+    const aspect =
+      this.sampling === 'screen' ? imageWidth / imageHeight : this.color.width / this.color.height;
+    const width = height * aspect;
     const sourceHeight = ((maxY - minY) * imageHeight) / visibleRows;
     const sourceCenterY = (minY + maxY) / 2;
     const centerY = this.screen.y + ((sourceCenterY - this.screen.y) * height) / sourceHeight;
@@ -334,6 +387,7 @@ export class PixelCharacter {
     this.rect[2] = this.sourceRect[2] = width / viewport.width;
     this.rect[3] = height / viewport.height;
     this.sourceRect[3] = sourceHeight / viewport.height;
+    if (this.sampling === 'screen') this.resizeForScreen();
     this.crop.setIdentity();
     const m = this.crop.data;
     m[0] = 1 / this.sourceRect[2]!;
@@ -351,6 +405,8 @@ export class PixelCharacter {
     this.mappedViewport[3] = cameraRect.y;
     this.mappedViewport[4] = cameraRect.z;
     this.mappedViewport[5] = cameraRect.w;
+    this.mappedViewport[6] = device.width;
+    this.mappedViewport[7] = device.height;
     this.mappingReady = true;
   }
 
@@ -530,6 +586,9 @@ export class PixelCharacter {
     return {
       resolution: [this.color.width, this.color.height],
       sampling: this.sampling,
+      screenCoverage: this.sampling === 'screen' ? [...this.screenCoverage] : undefined,
+      captureScale: this.sampling === 'screen' ? screenCaptureScale : undefined,
+      targetResizes: this.targetResizes,
       visibleRows,
       worldPixelSize,
       sourceRect: [...this.sourceRect],

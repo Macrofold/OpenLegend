@@ -1,6 +1,7 @@
 import * as pc from 'playcanvas';
 import type { ArtTreatment } from './art-treatment';
 import { PixelEffects } from './pixel-effects';
+import { ScenePixels } from './scene-pixels';
 import type { GameView } from '@open-legend/protocol';
 import { sunlightAtHour } from './sunlight';
 import type { ShadowQuality } from './world-renderer';
@@ -108,6 +109,8 @@ export class WorldPresentation {
   private readonly sunRotation = new pc.Quat();
   private shadowQuality?: ShadowQuality;
   private readonly frame: pc.CameraFrame;
+  private readonly pixels: ScenePixels;
+  private readonly updatePixels = (): void => this.pixels.update();
   private effects?: PixelEffects;
   private readonly effectSources = new Set<pc.RenderComponent>();
   private readonly hiddenMeshes = new WeakSet<pc.MeshInstance>();
@@ -148,11 +151,19 @@ export class WorldPresentation {
     this.frame.grading.enabled = true;
     this.frame.grading.saturation = 1.05;
     this.frame.update();
+    this.pixels = new ScenePixels(app.graphicsDevice, camera.camera!);
+    app.on('prerender', this.updatePixels);
   }
   setArtTreatment(style: Readonly<ArtTreatment>): void {
     const restrained = style.atmosphere === 'restrained';
     this.frame.rendering.renderTargetScale =
       style.sceneGrid === 'half' ? 0.5 : style.sceneGrid === 'third' ? 1 / 3 : 1;
+    this.frame.rendering.samples = style.coverage === 'msaa4' ? 4 : 1;
+    this.pixels.setTreatment(style.sceneGrid, style.subjectDetail);
+    this.frame.rendering.renderFormats =
+      style.subjectDetail === 'preserve'
+        ? [pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F]
+        : [pc.PIXELFORMAT_111110F, pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
     this.frame.bloom.intensity = restrained ? 0.045 : 0.025;
     this.frame.grading.saturation = restrained ? 1.02 : 1.05;
     this.frame.grading.contrast = restrained ? 1.08 : 1;
@@ -164,8 +175,12 @@ export class WorldPresentation {
       (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
     );
     if (pass) {
-      pass.sceneTexture.minFilter = pc.FILTER_NEAREST;
-      pass.sceneTexture.magFilter = pc.FILTER_NEAREST;
+      const sourceFilter =
+        style.sceneGrid.startsWith('pixels') || style.sceneGrid.startsWith('anchored')
+          ? pc.FILTER_LINEAR
+          : pc.FILTER_NEAREST;
+      pass.sceneTexture.minFilter = sourceFilter;
+      pass.sceneTexture.magFilter = sourceFilter;
     }
     if (style.effects === 'buffer' && !this.effects) {
       this.effects = new PixelEffects(this.app, this.camera, this.protectionLayer);
@@ -186,6 +201,9 @@ export class WorldPresentation {
   }
   effectsDiagnostics() {
     return this.effects?.diagnostics() ?? { buffered: false, sources: this.effectSources.size };
+  }
+  pixelDiagnostics() {
+    return this.pixels.diagnostics();
   }
   setShadowQuality(quality: ShadowQuality): boolean {
     if (this.shadowQuality === quality) return false;
@@ -506,6 +524,8 @@ export class WorldPresentation {
     }
   }
   destroy(): void {
+    this.app.off('prerender', this.updatePixels);
+    this.pixels.destroy();
     this.effects?.destroy();
     this.effectSources.clear();
     this.frame.destroy();

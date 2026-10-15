@@ -74,9 +74,13 @@ import {
   groupedGroundArt,
   groupedGrassArt,
   createGroupedScenery,
+  environmentSurfaceArt,
+  prepareEnvironmentSurface,
+  type EnvironmentSurface,
   type SceneryCameraOcclusion,
 } from './environment-art';
 import { VegetationMotion, type VegetationContributor } from './vegetation-motion';
+import { markPixelEnvironment } from './scene-pixels';
 import { GeneratedPropResources, type GeneratedPropActor } from './generated-prop';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { PerceptionOverlay } from './perception-overlay';
@@ -222,6 +226,7 @@ export class WildernessScene implements WorldRenderer {
   private readonly vegetation = new VegetationMotion();
   private readonly landscapeOcclusion: SceneryCameraOcclusion[] = [];
   private readonly vegetationBodies: VegetationContributor[] = [];
+  private readonly environmentTiles = new Map<EnvironmentSurface, pc.Texture>();
   private hoverPoint: { x: number; y: number } | null = null;
   private animations: Array<{ y: number; entity: pc.Entity; x: number; z: number; phase: number }> =
     [];
@@ -285,6 +290,7 @@ export class WildernessScene implements WorldRenderer {
         this.app,
         this.artMaterials,
         sun.light!.light,
+        (material) => this.prepareSurface(material, 'bark'),
       );
       this.outline = new HoverOutline(this.app, this.camera);
       this.mercenary = new MercenaryModels(
@@ -337,13 +343,16 @@ export class WildernessScene implements WorldRenderer {
 
   /** Developer comparison changes no DTO, world identity, actions or saved state. */
   setArtTreatment(style: ArtTreatment): void {
-    const rebuild = style.environment !== this.artSettings.environment;
+    const rebuild =
+      style.environment !== this.artSettings.environment ||
+      style.surfaceArt !== this.artSettings.surfaceArt;
     const replaceProp = style.prop !== this.artSettings.prop;
     this.artSettings = { ...style };
     this.artMaterials.update(style);
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
     for (const texture of this.textures) {
+      if ([...this.environmentTiles.values()].includes(texture)) continue;
       texture.mipmaps = style.filtering === 'mip';
       texture.minFilter =
         style.filtering === 'mip' ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST;
@@ -369,6 +378,7 @@ export class WildernessScene implements WorldRenderer {
       settings: { ...this.artSettings },
       vegetation: this.vegetation.diagnostics(),
       effects: this.presentation.effectsDiagnostics(),
+      pixels: this.presentation.pixelDiagnostics(),
       entities: this.actors.size,
       scenery: this.view?.map.spatial.scenery?.length,
       materials: this.materials.length,
@@ -844,6 +854,15 @@ export class WildernessScene implements WorldRenderer {
     texture.setSource(source);
     this.textures.push(texture);
     return texture;
+  }
+  private prepareSurface(material: pc.StandardMaterial, kind: EnvironmentSurface): void {
+    let texture = this.environmentTiles.get(kind);
+    if (!texture) {
+      texture = this.texture(environmentSurfaceArt(kind));
+      this.environmentTiles.set(kind, texture);
+    }
+    prepareEnvironmentSurface(material, this.app.graphicsDevice, kind, texture);
+    markPixelEnvironment(material, this.app.graphicsDevice);
   }
   private material(
     color: string,
@@ -1480,8 +1499,11 @@ export class WildernessScene implements WorldRenderer {
     const ctx = source.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
     const grouped = this.artSettings.environment === 'grouped';
-    const groundTexture = grouped ? groupedGroundArt(map.seed) : groundArt(map.seed);
-    const earthTexture = grouped ? groupedGroundArt(map.seed, true) : earthArt(map.seed);
+    const painted = this.artSettings.surfaceArt === 'painted';
+    const groundTexture = grouped
+      ? groupedGroundArt(map.seed, false, painted)
+      : groundArt(map.seed);
+    const earthTexture = grouped ? groupedGroundArt(map.seed, true, painted) : earthArt(map.seed);
     for (let z = 0; z < map.height; z++)
       for (let x = 0; x < map.width; x++) {
         const terrain = map.terrain[map.tiles[z]![x]!]!.presentation;
@@ -1529,6 +1551,7 @@ export class WildernessScene implements WorldRenderer {
         }
       }
     const ground = this.material('#ffffff', source);
+    this.prepareSurface(ground, 'ground');
     const mesh = groundMesh(this.app.graphicsDevice, map.spatial.surfaces, map.width, map.height);
     if (mesh) {
       this.geometryMeshes.push(mesh);
@@ -1545,6 +1568,7 @@ export class WildernessScene implements WorldRenderer {
     earth.diffuseMap!.addressU = pc.ADDRESS_REPEAT;
     earth.diffuseMap!.addressV = pc.ADDRESS_REPEAT;
     earth.diffuseMapTiling.set(map.width / 16, map.height / 16);
+    this.prepareSurface(earth, 'ground');
     earth.update();
     const surroundMesh = surroundingGroundMesh(
       this.app.graphicsDevice,
@@ -1564,6 +1588,8 @@ export class WildernessScene implements WorldRenderer {
     }
     const stone = this.material('#7b8178'),
       timber = this.material('#715438');
+    this.prepareSurface(stone, 'stone');
+    this.prepareSurface(timber, 'bark');
     setVisibilityStencil(stone, sceneryStencil);
     setVisibilityStencil(timber, sceneryStencil);
     for (const blocker of spatialBlockers(map)) {
@@ -1585,6 +1611,8 @@ export class WildernessScene implements WorldRenderer {
     }
     const deckMaterial = this.material('#b48b57'),
       rampMaterial = this.material('#8b8e7a');
+    this.prepareSurface(deckMaterial, 'bark');
+    this.prepareSurface(rampMaterial, 'stone');
     setVisibilityStencil(deckMaterial, sceneryStencil);
     setVisibilityStencil(rampMaterial, sceneryStencil);
     for (const surface of map.spatial.surfaces) {
@@ -1638,6 +1666,7 @@ export class WildernessScene implements WorldRenderer {
           material,
         );
         if (shape) {
+          this.prepareSurface(material, 'foliage');
           if (shape.occlusion) this.landscapeOcclusion.push(shape.occlusion);
           this.geometryMeshes.push(shape.mesh);
           this.landscapeBuffers.push(shape.buffer);

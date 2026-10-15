@@ -5,8 +5,11 @@ import * as pc from 'playcanvas';
 export interface ArtTreatment {
   materials: 'original' | 'regions';
   lighting: 'smooth' | 'hard' | 'soft';
-  sampling: '40' | '60' | '80' | '96' | 'native';
-  sceneGrid: 'full' | 'half' | 'third';
+  sampling: '40' | '60' | '80' | '96' | 'native' | 'screen';
+  sceneGrid: 'full' | 'half' | 'third' | 'pixels2' | 'pixels3' | 'anchored2' | 'anchored3';
+  surfaceArt: 'plain' | 'painted';
+  coverage: 'none' | 'msaa4';
+  subjectDetail: 'shared' | 'preserve';
   filtering: 'source' | 'nearest' | 'mip';
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
@@ -23,6 +26,9 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   lighting: 'smooth',
   sampling: '96',
   sceneGrid: 'full',
+  surfaceArt: 'plain',
+  coverage: 'none',
+  subjectDetail: 'shared',
   filtering: 'source',
   edges: 'none',
   motion: 'smooth',
@@ -58,6 +64,7 @@ export class ArtMaterials {
     this.settings[1] = style.lighting === 'smooth' ? 0 : style.lighting === 'hard' ? 1 : 2;
     this.settings[2] = 0.055;
     this.device.scope.resolve('ol_artStyle').setValue(this.settings);
+    this.device.scope.resolve('ol_surfaceEnabled').setValue(style.surfaceArt === 'painted' ? 1 : 0);
   }
   prepare(material: pc.StandardMaterial, role = 0): void {
     if (this.prepared.has(material) || !material.useLighting) return;
@@ -165,8 +172,11 @@ export function mountArtControls(
   const fields: { [K in keyof ArtTreatment]?: readonly ArtTreatment[K][] } = {
     materials: ['original', 'regions'],
     lighting: ['smooth', 'hard', 'soft'],
-    sampling: ['40', '60', '80', '96', 'native'],
-    sceneGrid: ['full', 'half', 'third'],
+    sampling: ['40', '60', '80', '96', 'native', 'screen'],
+    sceneGrid: ['full', 'half', 'third', 'pixels2', 'pixels3', 'anchored2', 'anchored3'],
+    surfaceArt: ['plain', 'painted'],
+    coverage: ['none', 'msaa4'],
+    subjectDetail: ['shared', 'preserve'],
     filtering: ['source', 'nearest', 'mip'],
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
@@ -183,6 +193,9 @@ export function mountArtControls(
     lighting: 'Light transitions',
     sampling: 'Character detail',
     sceneGrid: 'Scene sampling',
+    surfaceArt: 'Environment surface art',
+    coverage: 'Silhouette coverage',
+    subjectDetail: 'People and small-object detail',
     filtering: 'Texture filtering',
     edges: 'Character edges',
     motion: 'Walking poses',
@@ -205,7 +218,20 @@ export function mountArtControls(
     for (const value of values) {
       const option = document.createElement('option');
       option.value = String(value);
-      option.textContent = value === 'native' ? '378 rows (detail control)' : String(value);
+      option.textContent =
+        value === 'native'
+          ? '378 rows (detail control)'
+          : value === 'screen'
+            ? 'Full displayed detail (before scene sampling)'
+            : value === 'pixels2'
+              ? 'Single final grid: 2 display pixels'
+              : value === 'pixels3'
+                ? 'Single final grid: 3 display pixels'
+                : value === 'anchored2'
+                  ? 'World-anchored grid: 5 cm (orthographic)'
+                  : value === 'anchored3'
+                    ? 'World-anchored grid: 7.5 cm (orthographic)'
+                    : String(value);
       select.append(option);
     }
     select.onchange = () => apply({ ...current(), [key]: select.value });
