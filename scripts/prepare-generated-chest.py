@@ -65,7 +65,7 @@ def prepare(source, output):
     extent = maximum - minimum
     center = (minimum + maximum) / 2
     # Unit width/depth and bottom-anchored unit height. The existing renderer
-    # supplies the unchanged crate envelope (1 x .8 x .8 metres).
+    # supplies each unchanged crate envelope (resource height .8 m, item pile .55 m).
     normalized = [((p.x - center.x) / extent.x, (p.y - center.y) / extent.y, (p.z - minimum.z) / extent.z) for p in vertices]
     normalized_normals = [Vector((n.x * extent.x, n.y * extent.y, n.z * extent.z)).normalized() for n in normals]
     data = bpy.data.meshes.new("Generated chest · closed source triangles")

@@ -54,12 +54,13 @@
       "min": [-0.5, 0, -0.5],
       "max": [0.5, 1, 0.5]
     },
-    "targetEnvelopeMeters": [1, 0.8, 0.8],
     "preparation": "scripts/prepare-generated-chest.py",
     "blenderVersion": "5.2.2 LTS",
-    "renderTreatment": "Ordinary StandardMaterial colors prepared by the same ArtMaterials and ShadowMaterial owners as the authored scene. No prop-specific shader."
+    "renderTreatment": "Ordinary StandardMaterial colors prepared by the same ArtMaterials and ShadowMaterial owners as the authored scene. No prop-specific shader.",
+    "referenceEnvelopeMeters": [1, 0.8, 0.8],
+    "fitPolicy": "The caller preserves each existing crate appearance envelope: 1 x 0.8 x 0.8 metres for resources and 1 x 0.55 x 0.8 metres for item piles in the verified starting scene."
   },
   "newProviderCalls": 0,
   "newProviderCostUsd": 0,
-  "reviewStatus": "Prepared source candidate; creator visual acceptance remains separate."
+  "reviewStatus": "Prepared and application-verified comparison candidate; creator visual acceptance remains separate."
 }
