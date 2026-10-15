@@ -313,7 +313,8 @@ function App({
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.reduceMotion = String(reduce);
-  }, [theme, reduce]);
+    document.documentElement.style.setProperty('--ui-scale', String(scale));
+  }, [theme, reduce, scale]);
   useEffect(() => {
     document.title = view ? `Open Legend · ${view.presentation.worldName}` : 'Open Legend';
   }, [view?.presentation.worldName]);

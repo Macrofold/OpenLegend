@@ -8,7 +8,7 @@ Inventory and Construction now verify that the exact original command is retaine
 before sending; unreadable storage, uncertain results and failed matching cleanup
 keep another command blocked. Construction preserves the same character's draft
 through renewed control while refreshing facts and checked previews. Creator
-revision Save, supplied-opening selection, Prepare and question answers retain their own exact
+revision Save, supplied-opening selection, Prepare, question answers and removal-review preparation/revision retain their own exact
 operation identities, while newer edits survive late Save readback and refused
 pages stay errors. These repairs replace optional retention and stale local
 completion assumptions; native execution, approval and spending owners are
@@ -24,6 +24,12 @@ Its actual-product follow-through, finite crafting list and compound equip/stow
 requirements remain proposed. Native, controlled-component and full-App evidence
 retain their separate limits; this entry does not close human-input acceptance or
 required final-head checks.
+
+Dialog controls, popup/explanation text and the raw-data panel now follow the
+selected game UI scale. Their outer positioning stays in physical viewport
+coordinates, with scaled content bounded to the available space. Shared control
+disabling now reaches the actual subject combobox; stale private-read failures
+keep local-note Discard reachable. Default preferences and browser zoom are unchanged.
 
 ## October 15, 2026 — Protect exact interface request recovery
 

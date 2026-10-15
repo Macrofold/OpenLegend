@@ -74,18 +74,28 @@ function KnowledgeEditor({
   owned = false,
   visible,
   readScope,
+  readCurrent,
   onDirtyChange,
 }: {
   owned?: boolean;
   visible: boolean;
   readScope?: string;
+  readCurrent: boolean;
   mind: GodMindView;
   onSaved: (mind: GodMindView) => void;
   onDirtyChange(dirty: boolean): void;
 }) {
   const [subject, setSubject] = useState<MindSubject | null>(null);
   // A subject's notes may lie on another notes page; load them by exact subject instead.
-  const [details, setDetails] = useState<SubjectDetails | null | undefined>(null);
+  const subjectReadKey = JSON.stringify([mind.actorId, owned, subject?.id, readScope]);
+  const [subjectRead, setSubjectRead] = useState<{ key: string; details: SubjectDetails | null }>();
+  const details = subject
+    ? subjectRead?.key === subjectReadKey
+      ? subjectRead.details
+      : undefined
+    : null;
+  const latestSubjectRead = useRef(subjectReadKey);
+  latestSubjectRead.current = subjectReadKey;
   const [reload, setReload] = useState(0);
   const general = mind.notepads?.find((doc) => doc.subjectId === null);
   const document = subject ? details?.notepad : general;
@@ -103,7 +113,6 @@ function KnowledgeEditor({
   const [failed, setFailed] = useState(false);
   // The details refresh after a save; editing waits for the saved revisions.
   const [refreshing, setRefreshing] = useState(false);
-  const loadedFor = useRef('');
   const dirty = text !== base.text || name !== base.name;
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
@@ -115,39 +124,34 @@ function KnowledgeEditor({
     if (!visible) return;
     setFailed(false);
     if (!subject) {
-      loadedFor.current = '';
       setRefreshing(false);
-      return setDetails(null);
+      return;
     }
-    const key = JSON.stringify([mind.actorId, owned, subject.id]);
     // A refresh after saving keeps the saved text on screen until the fresh copy arrives.
-    if (loadedFor.current !== key) setDetails(undefined);
     let active = true;
     void post<MindSubjectPage | { ok: false; message?: string }>(subjectPath(owned), {
       actorId: mind.actorId,
       subjectId: subject.id,
     })
       .then((result) => {
-        if (!active) return;
+        if (!active || latestSubjectRead.current !== subjectReadKey) return;
         if (!result.ok) throw new Error(result.message ?? 'These notes are unavailable.');
-        loadedFor.current = key;
         setRefreshing(false);
-        setDetails(result.selected ?? null);
+        setSubjectRead({ key: subjectReadKey, details: result.selected ?? null });
         if (result.selected) setSubject(result.selected.subject);
         else setMessage('This person is no longer available for notes.');
       })
       .catch((error) => {
-        if (!active) return;
-        loadedFor.current = '';
+        if (!active || latestSubjectRead.current !== subjectReadKey) return;
         setRefreshing(false);
-        setDetails(null);
+        setSubjectRead({ key: subjectReadKey, details: null });
         setFailed(true);
         setMessage(error instanceof Error ? error.message : String(error));
       });
     return () => {
       active = false;
     };
-  }, [subject?.id, mind.actorId, owned, reload, visible, readScope]);
+  }, [subjectReadKey, reload, visible]);
   useEffect(() => {
     // A refreshed page cannot silently rebase an unsaved edit onto newer authority.
     if (dirtyRef.current || (subject && details === undefined)) return;
@@ -167,6 +171,7 @@ function KnowledgeEditor({
     document?.maxCharacters ?? mind.knowledgeLimits?.[subject ? 'subject' : 'general'] ?? 0;
   const characters = Array.from(text).length;
   const sourceChanged =
+    readCurrent &&
     dirty &&
     !loading &&
     !unavailable &&
@@ -174,10 +179,14 @@ function KnowledgeEditor({
       base.nameRevision !== (identity?.revision ?? 0));
   return (
     <Section title="Knowledge notepads">
-      <div className="ol-knowledge-editor">
+      <div className="ol-knowledge-editor" hidden={!readCurrent && !dirty}>
         <p className="ol-caption">
-          {owned ? 'Your character’s understanding' : `${mind.name}’s understanding`}. Editing these
-          notes does not change the subject or establish an objective world fact.
+          {readCurrent
+            ? owned
+              ? 'Your character’s understanding'
+              : `${mind.name}’s understanding`
+            : 'Your retained local note edit'}
+          . Editing these notes does not change the subject or establish an objective world fact.
         </p>
         <SubjectPicker
           actorId={mind.actorId}
@@ -188,7 +197,7 @@ function KnowledgeEditor({
           onSelect={(next) => {
             if (!dirty && !saving) setSubject(next);
           }}
-          disabled={saving || dirty}
+          disabled={saving || dirty || !readCurrent}
         />
         {dirty && (
           <p role="status" className="ol-caption">
@@ -257,16 +266,27 @@ function KnowledgeEditor({
           />
         </label>
         <p>
-          {characters.toLocaleString()} / {limit.toLocaleString()} characters.{' '}
-          {characters > limit
-            ? 'Rewrite or shorten before saving.'
-            : subject
-              ? 'This is your understanding of this person; it does not change their view of you.'
-              : 'Record current understanding; rewrite when space is needed.'}
+          {characters.toLocaleString()}
+          {readCurrent
+            ? ` / ${limit.toLocaleString()} characters.`
+            : ' characters in your draft.'}{' '}
+          {!readCurrent
+            ? 'Current note limits are unavailable until private information is refreshed.'
+            : characters > limit
+              ? 'Rewrite or shorten before saving.'
+              : subject
+                ? 'This is your understanding of this person; it does not change their view of you.'
+                : 'Record current understanding; rewrite when space is needed.'}
         </p>
         <Button
           disabled={
-            saving || loading || unavailable || !dirty || sourceChanged || characters > limit
+            !readCurrent ||
+            saving ||
+            loading ||
+            unavailable ||
+            !dirty ||
+            sourceChanged ||
+            characters > limit
           }
           onPress={() => {
             setSaving(true);
@@ -305,16 +325,17 @@ function KnowledgeEditor({
         {dirty && (
           <Button
             variant="quiet"
-            disabled={saving || loading}
+            disabled={saving || (readCurrent && loading)}
             onPress={() => {
-              const next = unavailable
-                ? base
-                : {
-                    text: document?.text ?? '',
-                    name: identity?.givenName ?? '',
-                    revision: document?.revision ?? 0,
-                    nameRevision: identity?.revision ?? 0,
-                  };
+              const next =
+                unavailable || !readCurrent
+                  ? base
+                  : {
+                      text: document?.text ?? '',
+                      name: identity?.givenName ?? '',
+                      revision: document?.revision ?? 0,
+                      nameRevision: identity?.revision ?? 0,
+                    };
               setBase(next);
               setText(next.text);
               setName(next.name);
@@ -396,7 +417,8 @@ export function Mind({
   evidenceEpoch?: string;
   onDirtyChange?(dirty: boolean): void;
 }) {
-  const snapshotKey = JSON.stringify([actorId, owned, readScope, evidenceEpoch]);
+  const [refreshRevision, setRefreshRevision] = useState(0);
+  const snapshotKey = JSON.stringify([actorId, owned, readScope, evidenceEpoch, refreshRevision]);
   const [snapshot, setSnapshot] = useState<{ key: string; value: GodMindView } | null>(null),
     [error, setError] = useState(''),
     [authoring, setAuthoring] = useState(false);
@@ -408,7 +430,6 @@ export function Mind({
     if (latestSnapshotKey.current === snapshotKey) setSnapshot({ key: snapshotKey, value });
   }
   const [knowledgeDirty, setKnowledgeDirty] = useState(false);
-  const [refreshRevision, setRefreshRevision] = useState(0);
   useEffect(() => onDirtyChange?.(knowledgeDirty), [knowledgeDirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   const pending = useRef<{ body: string; request: AuthoredAppraisalRequest } | null>(null);
@@ -554,16 +575,19 @@ export function Mind({
                   </details>
                 ))}
             </Section>
-            {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
-            <KnowledgeEditor
-              key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
-              mind={mind}
-              onSaved={setMind}
-              owned={owned}
-              visible={visible && currentSnapshot}
-              readScope={readScope}
-              onDirtyChange={setKnowledgeDirty}
-            />
+          </div>
+          {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
+          <KnowledgeEditor
+            key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+            mind={mind}
+            onSaved={setMind}
+            owned={owned}
+            visible={visible && currentSnapshot}
+            readScope={snapshotKey}
+            readCurrent={currentSnapshot}
+            onDirtyChange={setKnowledgeDirty}
+          />
+          <div hidden={!currentSnapshot}>
             {mind.continuity?.cursor && (
               <Button
                 disabled={knowledgeDirty}
@@ -649,8 +673,10 @@ function Preview({
     <TooltipTrigger delay={250} closeDelay={150}>
       <Focusable>{children}</Focusable>
       <Tooltip className="ol-root ol-inspection-tooltip" placement="start" offset={8}>
-        <strong>{title}</strong>
-        <div>{value}</div>
+        <div className="ol-portal-content">
+          <strong>{title}</strong>
+          <div>{value}</div>
+        </div>
       </Tooltip>
     </TooltipTrigger>
   );
@@ -2071,7 +2097,7 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
   }, [onClose]);
   return createPortal(
     <aside className="ol-root ol-json-pullout" style={placement} aria-label={`${raw.title} JSON`}>
-      <header>
+      <header className="ol-portal-content">
         <div>
           <span className="ol-eyebrow">Raw JSON</span>
           <h2>{raw.title}</h2>
@@ -2090,8 +2116,8 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
           <IconButton icon="ui.close" label="Close JSON panel" onPress={onClose} />
         </div>
       </header>
-      {copied && <p className="ol-caption">Copied to clipboard.</p>}
-      <pre>{JSON.stringify(raw.value, null, 2)}</pre>
+      {copied && <p className="ol-caption ol-portal-content">Copied to clipboard.</p>}
+      <pre className="ol-portal-content">{JSON.stringify(raw.value, null, 2)}</pre>
     </aside>,
     document.body,
   );

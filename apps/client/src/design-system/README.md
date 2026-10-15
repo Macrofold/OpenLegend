@@ -81,6 +81,8 @@ CSS handles the modest panel transitions; reduced motion disables transitions an
 
 ## Shared scrolling
 
+The device's UI scale also applies to portaled dialogs, menus and explanations. The App publishes the setting on the document so those surfaces share it with the HUD. Modal content scales inside an unscaled viewport scrim; `.ol-portal-content` scales popup reading and controls inside React Aria's unscaled positioning boundary. Keep physical anchor measurements and viewport bounds in that outer coordinate system, and divide bounds used inside scaled content by the scale. Nested HUD editors already inherit HUD enlargement and must not scale a second time. Browser zoom remains a separate setting and qualification.
+
 The base rules in `components.css` own scrollbar appearance for every `.ol-root` surface and its descendants, including portaled menus, lists, panels, editors and text areas. Scrollbars use a thin muted thumb and transparent track, with rounded thumbs where the browser supports styling. Containers own their dimensions and overflow; they do not repeat scrollbar appearance rules or need an extra React wrapper. Native wheel, keyboard, touch and thumb dragging remain available. Intentional hidden-scrollbar tab strips retain their local rule, and forced-color mode uses system scrollbar colors.
 
 ## Owner editor components

@@ -880,6 +880,7 @@ function InventoryWorkspace({
       >
         <div
           ref={detail}
+          className="ol-portal-content"
           onKeyDownCapture={(event) => {
             if (event.key === 'Escape' && amountDraft && !event.nativeEvent.isComposing) {
               event.preventDefault();

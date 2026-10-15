@@ -1,5 +1,5 @@
 .ol-modal.ol-tab-resume {
-  width: min(460px, calc(100vw - var(--space-6)));
+  width: min(460px, calc((100dvw - var(--space-6)) / var(--ui-scale)));
 }
 .ol-tab-resume .ol-modal-head h2 {
   margin: 0;

@@ -2,7 +2,10 @@
 .ol-lethal-review .ol-person-dialog {
   display: flex;
   flex-direction: column;
-  max-height: min(92dvh, calc(100dvh - var(--space-6)));
+  max-height: min(
+    calc(92dvh / var(--ui-scale)),
+    calc((100dvh - 2 * var(--space-6)) / var(--ui-scale))
+  );
 }
 .ol-lethal-review .ol-person-form {
   overflow: auto;
