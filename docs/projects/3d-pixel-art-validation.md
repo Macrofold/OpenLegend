@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                        | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The first-scene direction and experiment plan are agreed; implementation, moving-scene acceptance and the broader pipeline remain open. | 2026-10-15   |
+| In progress | The existing starting-scene art revision is planned; technique experiments, moving-art acceptance and the broader pipeline remain open. | 2026-10-15   |
 
 **October 14 reference update:** The [research comparison proposal](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-a-successful-comparison-must-show) makes surface attachment, face readability, garment coverage and restrained effects explicit review concerns. The 34-image library is external reference media, not OpenLegend qualification evidence. The moving comparison and creator acceptance below remain required.
 
@@ -22,9 +22,9 @@ The preserved [MER09 mercenary sculpture](../maintainers/art/mercenary.md#reject
 
 ## 1. First experiment: the same camp, genuinely compared
 
-Build a selectable in-application comparison using the same admitted fixture state and camera/light settings. Compare the current sprite/proxy approach, a hybrid with dimensional objects and a sprite character, and a deliberately styled 3D character/object approach. These are temporary developer comparison presets, not a permanent user-facing engine-switch feature. The first pass prioritizes the agreed renderer-driven route and reuses existing sprite/proxy/painted controls; a newly polished articulated-sprite pipeline is not a prerequisite for evaluating it. That retained option must be assessed explicitly if the model route fails or another family benefits from it.
+Run selectable visual treatments on the existing starting scene used for gameplay and playtesting, with the same current-world snapshot and camera/light settings. Retain its existing characters, objects, terrain, encounters, resources and supported activities; this is not a new art-only opening or initializer. Compare the current sprite/proxy approach, a hybrid with dimensional objects and a sprite character, and a deliberately styled 3D character/object approach. These are temporary developer comparison presets, not a permanent user-facing engine-switch feature. The first pass prioritizes the agreed renderer-driven route and reuses existing sprite/proxy/painted controls; a newly polished articulated-sprite pipeline is not a prerequisite for evaluating it. That retained option must be assessed explicitly if the model route fails or another family benefits from it.
 
-The scene includes one recognizable person, backpack, axe or other supported held tool, tree, boulder, a small shelter, campfire, uneven terrain and a raised surface/underpass. A water edge is useful for reflection/readability but not a prerequisite for implementing a new water shader. Add a few distinct people and objects after the single-subject review so the scene does not hide crowd or material-variation problems.
+Inventory the existing scene and reuse its people, held equipment, trees, rocks, shelter/occlusion, fire and terrain where present. These are visual coverage cases, not requirements to build another camp or duplicate content. Reuse varied existing subjects for the multi-character review. Add a demonstration object or small decorative patch only when a selected test has no suitable subject, and record the addition. Use existing water if available; water work is conditional. Baseline/candidate switches change appearance and rendering, not the loaded scenario.
 
 Use authored or properly licensed native fixtures first. A generated concept image is not a runtime render. Capture actual gameplay footage and screenshots from the application, with the exact asset/style versions and settings. Label grayboxes, authored fixtures, provider-generated artifacts, and missing mechanics clearly.
 
@@ -49,7 +49,7 @@ Use repeatable scene snapshots, camera paths, poses and light conditions. Record
 
 Every experiment records the preferred variant or rejection, supporting footage/measurements, unresolved cases and resulting next task. A rejected technique is a valid experiment outcome; its implementation is not required for camp acceptance. Available physical hardware is named explicitly; missing lower-end qualification stays open. Keep fixed source artwork versus changing screen sample counts distinguishable in zoom footage.
 
-The integrated review includes several distinct moving subjects, the accepted effects together, ordinary selection/read-through and occlusion, failed/delayed asset loads, pause/resize and repeated scene replacement. Apply the relevant existing Q scenarios and performance protocol below; do not invent a second blanket test suite. Mike reviews normal-distance motion and the useful close view against the art rubric. Only the actual accepted workload/settings can be reported as qualified.
+The integrated review first confirms that the original scene inventory and representative playtest routes still work, with any demonstration additions explicitly identified. It includes several distinct moving subjects, the accepted effects together, ordinary selection/read-through and occlusion, failed/delayed asset loads, pause/resize and repeated scene replacement. Apply the relevant existing Q scenarios and performance protocol below; do not invent a second blanket test suite. Mike reviews normal-distance motion and the useful close view against the art rubric. Only the actual accepted workload/settings can be reported as qualified.
 
 ## 2. Review motion, scale, and interaction
 

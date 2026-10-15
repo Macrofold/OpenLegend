@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## October 15, 2026 — Restyle the existing starting scene
+
+Mike clarified that the art work must use the existing starting scene already shared by other playtesting. The [art plan](projects/3d-pixel-art-first-scene-plan.md), design pair, qualification and [V3D01.2](maintainers/3d-pixel-art.md#v3d012--existing-starting-scene-and-matched-art-controls) now explicitly preserve that scene's integrated content, layout and initialization. Comparisons switch appearance/render settings on the same world; only justified missing demonstration subjects are added. This corrects the earlier wording implying a new camp/scene, while retaining the technique experiments and stable task IDs. No runtime scene, world or saved progress changed in this documentation correction.
+
 ## October 15, 2026 — Correct mercenary size and surface density
 
 Mike reports that the restored model looks twice as large as the other people and its texture resolution is too high. [MER11](maintainers/art/mercenary.md#size-and-surface-pixel-correction) replaces the former 1.6/2.96 m display enlargement with fixed 1.1/2.035 m tall-adult proportions. Upright geometry naturally foreshortens beside camera-facing people; compensating at one steep angle had made him oversized at lower views.

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                        | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The first-scene direction and experiment plan are agreed; implementation, moving-scene acceptance and the broader pipeline remain open. | 2026-10-15   |
+| In progress | The existing starting-scene art revision is planned; technique experiments, moving-art acceptance and the broader pipeline remain open. | 2026-10-15   |
 
 **October 14 production research:** The [generative-art assessment](../../art-direction/research/3d-pixel-worlds/generative-pipeline.md) explains how concepts, draft models, controlled material regions, rigs, targeted surface artwork and a shared realtime pixel renderer can support the new references. The renderer can supply consistent pixel shading without requiring every lit view to be painted; export and animation still require review. It is an authoring supplement to this pipeline, not a second work/publication system or evidence of provider quality. The saved reference images are not automatically licensed generation inputs.
 

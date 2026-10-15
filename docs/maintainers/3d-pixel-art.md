@@ -18,7 +18,7 @@ Use these task IDs for appearance-specific deliverables and link evidence back t
 
 Start with V3D01's visual comparison. V3D02/V3D03 establish manifests and safe replacement; V3D04 adds useful rigid families. V3D05/V3D06 establish qualified actors, equipment and state composition. V3D07 adds durable image generation; V3D08 adds validated model production. V3D09 joins the existing workshop/invention flow. V3D10 expands portable reuse. V3D11 runs with each slice; V3D12 decides the release scope from evidence.
 
-The agreed next visual delivery is the [first playable art scene](../projects/3d-pixel-art-first-scene-plan.md), tracked as V3D01.1–V3D01.12 below. Establish the baseline and scene, compare lighting/sampling/outlines, then motion/vegetation/effects, followed by authored/generated coherence and integrated review. V3D01.9's standalone texel-splatting investigation does not block the ordinary renderer candidate. The early animation/prop experiments can use trusted fixtures without waiting for the general V3D02–V3D08 infrastructure; they do not qualify that infrastructure. This document request delivers the plan/tasks, not their runtime implementation.
+The agreed next visual delivery is the [starting-scene art revision](../projects/3d-pixel-art-first-scene-plan.md), tracked as V3D01.1–V3D01.12 below. Record the existing starting scene as the baseline, preserve its wider playtesting content, and compare lighting/sampling/outlines, then motion/vegetation/effects, followed by authored/generated coherence and integrated review. V3D01.9's standalone texel-splatting investigation does not block the ordinary renderer candidate. The early animation/prop experiments can use trusted fixtures without waiting for the general V3D02–V3D08 infrastructure; they do not qualify that infrastructure. This document request delivers the plan/tasks, not their runtime implementation.
 
 The character art experiment in V3D01 must happen early even though rigid objects are the first simpler production path. A direct authored/procedural model does not depend on 2D generation. V3D08 depends on V3D07 only for the 2D-first production route and shared job infrastructure it actually uses; do not make every model pass through an image provider.
 
@@ -53,12 +53,12 @@ All child tasks are **Not started**. The [feature specification](../projects/3d-
 - [ ] Review scale, intentional face features, original identity and representative Idle/Walk garment coverage at normal and close views, daylight and firelight. Record permitted asset uses/source rights and any substitute needed for production or provider input; preserve prior art revisions.
 - [ ] Fix or isolate demonstrated baseline art/fit defects before judging a new pixel treatment. Record the baseline version, footage and unresolved poses/terrain cases. **Exit:** a usable comparison subject, with creator art acceptance still distinct from technical validity.
 
-#### V3D01.2 — Playable camp and matched comparison controls
+#### V3D01.2 — Existing starting scene and matched art controls
 
 **Owner:** existing client scene/developer tooling and art direction. **Depends on:** V3D01.1 for the reviewed subject; existing WorldRenderer/SW18, without new provider services.
 
-- [ ] Assemble the small admitted camp with character, supported held-tool/backpack view, shelter/occlusion, fire, tree, rocks, grass area and uneven/raised ground. Author coherent organic scenery forms, restrained material regions and quiet areas under the creative brief, identifying any remaining grayboxes. Preserve native movement, turn, selection and inspection; label staged/unsupported actions and temporary art fixtures.
-- [ ] Supply repeatable scene/camera/light cases and developer treatment controls, retaining existing sprite/proxy/painted controls with comparable scale/detail intent. A separate polished 2D-rig pipeline is not a prerequisite; preserve it as an explicitly evaluated alternative. **Exit:** a real application comparison that can reproduce one-variable changes and release its resources on exit.
+- [ ] Inventory the existing starting scene and map the visual cases to its current people, equipment, shelter/occlusion, fire, vegetation, rocks and terrain. Restyle those assets/materials under the creative brief while preserving layout, characters, objects, encounters, resources, native interactions and wider playtest routes. Reuse the existing initializer and entry into play; no new art-only world/map/opening. Add only a justified missing demonstration object or small decorative patch, and identify it explicitly.
+- [ ] Supply repeatable snapshots/camera/light cases and developer controls that switch visual treatment on the same starting world without replacing its scenario or resetting active playtesting progress, retaining existing sprite/proxy/painted controls with comparable scale/detail intent. A separate polished 2D-rig pipeline is not a prerequisite; preserve it as an explicitly evaluated alternative. **Exit:** a repeatable art comparison in the existing scene, with existing playtest content preserved and only justified additions; temporary resources release on exit.
 
 #### V3D01.3 — Realtime material and lighting comparison
 
@@ -104,7 +104,7 @@ All child tasks are **Not started**. The [feature specification](../projects/3d-
 
 #### V3D01.9 — Standalone perspective texel-splatting investigation
 
-**Owner:** rendering research. **Depends on:** V3D01.2 comparison geometry/path; runs beside the ordinary-renderer work. **Procedure:** E07.
+**Owner:** rendering research. **Depends on:** V3D01.2 existing-scene comparison geometry/path; runs beside the ordinary-renderer work without a separate playable world. **Procedure:** E07.
 
 - [ ] Run the public technique separately with permitted static assets and matched camera paths. Inspect capture boundaries, disocclusion, thin geometry, zoom, lighting, sample memory and complete capture/shade/draw cost on named hardware.
 - [ ] Report integrate, revise or defer, including WebGPU/device requirements and open animated-geometry limitations. **Exit:** a decision with concrete evidence; application integration/backend changes require a scoped design update and cannot be inferred from a static pass. Rejection does not block first-scene acceptance.
@@ -120,7 +120,7 @@ All child tasks are **Not started**. The [feature specification](../projects/3d-
 
 **Owner:** client presentation and performance/accessibility. **Depends on:** selected V3D01.3–V3D01.8 outcomes and V3D01.10 for the production pair; V3D01.9 is not a blocker.
 
-- [ ] Add several distinct moving people/props and inspect the accepted effects together. Run applicable existing Q scenarios for selection/reveal, load failure/staleness, resize, pause, replacement and teardown; preserve supported camera and non-canvas/reduced-motion access.
+- [ ] Reuse several distinct moving people/props from the starting scene, adding a demonstration subject only where coverage is missing, and inspect the accepted effects together. Verify the scene inventory and representative pre-existing playtest routes remain intact. Run applicable existing Q scenarios for selection/reveal, load failure/staleness, resize, pause, replacement and teardown; preserve supported camera and non-canvas/reduced-motion access.
 - [ ] Record physical device/backend, viewport, workload, frame-time tails, CPU/GPU attribution where available, draws, cold/warm memory/loading and correction effort. **Exit:** a measured first-scene envelope and explicit missing-device/scale evidence. Link into V3D11; it retains full lower-end, population and accelerated-simulation qualification.
 
 #### V3D01.12 — Creator review and adopted style profile
