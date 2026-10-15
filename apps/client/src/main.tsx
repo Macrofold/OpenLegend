@@ -1,6 +1,6 @@
 import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { AimControls } from './ui/aim-controls';
-import { uiOwnsShortcut } from './ui/keyboard';
+import { modalOwnsInput, uiOwnsShortcut } from './ui/keyboard';
 import { Construction } from './ui/construction';
 import { namePhrase } from '@open-legend/language';
 import { FamilyEditor } from './ui/family-editor';
@@ -1172,13 +1172,7 @@ function App({
   }, [timeSettings]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (
-        e.defaultPrevented ||
-        e.isComposing ||
-        isPaused() ||
-        document.querySelector('[aria-modal="true"]')
-      )
-        return;
+      if (e.defaultPrevented || e.isComposing || isPaused() || modalOwnsInput()) return;
       if (e.key === 'Escape') {
         if (choosingActionSubject) {
           e.preventDefault();
@@ -1194,13 +1188,7 @@ function App({
         return;
       }
       if (choosingActionSubject) return;
-      if (
-        uiOwnsShortcut(e) ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.altKey
-      )
-        return;
+      if (uiOwnsShortcut(e) || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key.toLowerCase() === 't') {
         if (!view || picker || !connected || e.repeat) return;
         e.preventDefault();

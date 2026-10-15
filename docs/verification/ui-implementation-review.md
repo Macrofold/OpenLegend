@@ -16,10 +16,10 @@ passes local static/build checks and every required CI gate below.
 
 The [completion plan](../projects/game-interaction-redesign-completion.md#complete-imported-interface-review--october-15)
 owns execution, and [UIUX](../maintainers/ui-ux.md) retains broader acceptance.
-The separate item/building follow-on requires clarification because crafting-list
-and compound equipment additions change native behavior as well as presentation.
-This review does not treat their older design-only status as either implementation
-or a waiver. The current recipe wording defect is repaired independently.
+The separate item/building follow-on originally required clarification because
+crafting-list and compound equipment additions change native behavior as well as
+presentation. Mike subsequently explicitly deferred it; its own maintainer tracker
+retains that work. The current recipe wording defect is repaired independently.
 
 Mike's subsequent correctness, structure, performance and world-boundary review
 starts at published `1dbfbfe63886cc246254b310264f701392153e94`. Its refreshed base
@@ -444,3 +444,114 @@ input-method, assistive-device and uncoached-player/creator/operator requirement
 remain open; controlled composition, native correctness, screenshots and a library
 choice cannot establish them. The [prior continuation](ui-completion-2026-10-14.md)
 retains its exact earlier evidence and failures.
+
+## Integrated main review and completion
+
+The subsequent requested review starts from local `main` and matching `origin/main`
+at `cbb5976a21b9554ddf04113f6207c376666e14e7`, repository
+`https://github.com/Macrofold/OpenLegend.git`, in
+`/Users/mzw/Documents/ChatGPT/OpenLegend`. No branch/worktree switch, save
+replacement or integration of excluded branches occurred. Mike explicitly deferred
+the separate [item/building proposal](../maintainers/item-and-building-workflows.md).
+The [current plan](../projects/game-interaction-redesign-completion.md#integrated-ui-review-and-completion--october-15)
+owns this scope. Checkpoint `e2e50f135` preserves the initial repairs; it is not a
+claim that final verification was already complete.
+
+### Additional source findings and repairs
+
+The review covers shared controls/HUD/input/camera callers; Inventory and its
+collection, quantity, equipment, trade and receipt readers; contextual Activity and
+Construction; Conversation/composer/history; creator chat/work/draft review,
+Person/World Events/Family/creation; entry/resume/time/settings/checkpoints; Journal,
+places/promises/memory/action readers; and Operations/private Diagnostics. The
+settled designs have no further missing major screen identified by this review.
+Broader human/device acceptance and the excluded item/building work remain separate.
+
+- Inventory and Construction now release the local wait when connection/control
+  access changes, retaining the original request. Checking its receipt does not
+  repeat the action. An abandoned send/check cannot settle a later attempt or clear
+  a newer request. Known results still retain their cleanup guard if browser
+  storage cannot be cleared.
+- Contextual Activity retains expired/conflicting requests whose outcome is still
+  unknown rather than allowing another start. A failed initial task read has a
+  named retry instead of showing permanent loading. Construction keeps blank and
+  partial coordinate text and blocks invalid new-placement previews; operations on
+  an existing structure still use its authoritative position.
+- A creator Work read moves focus only while the initiating interaction still owns
+  it. Refused owner messages restore only an unchanged submitted draft; later
+  deliberate blank text is preserved. Existing exact-message recovery is unchanged.
+- The JSON child viewer receives focus, scopes shortcuts, closes alone on Escape
+  and returns focus without taking it from a newer task. A higher modal takes
+  priority. The modal check is shared with the main and quick-action listeners and
+  recognizes actual UI-library overlay markup. The old tracker warning about
+  completely absent Quick actions input guards was inaccurate and is corrected;
+  current duplicated guards are consolidated rather than described as absent.
+- Composition cancellation no longer invokes the combobox's explicit dismissal
+  handler. Panel dragging starts only with a primary left pointer and ends when
+  capture is lost. Ordinary world input and native admission keep their owners.
+- A delayed Known places read cannot erase the notice that newer world information
+  is available. Refresh failure preserves earlier places. Diagnostics displays
+  recorded rating precision rather than rounding a score across its selection
+  threshold; filtering still uses the original numeric values. No complementary
+  probability is invented from a recorded action rating.
+
+These are local UI lifecycle/input repairs, not new world rules, provider behavior,
+authority, persistence formats or gameplay automation. They add no polling, broad
+history reads, framework or cache. Request access/attempt identity, explicit draft
+edits and accepted read revision are the relevant invalidation boundaries.
+
+### Focused component observations
+
+Actual production modules were mounted in finite temporary Vite/Chrome hosts;
+held/refused API replies and the parent Escape listener were controlled fixtures.
+These observations qualify those component paths, not native effects or whole-App
+permission admission. Installed Chrome was used; sandboxed launches aborted before
+page load, while the automatically approved outside-sandbox launches worked.
+
+- **15 Inventory/Activity/Construction assertions pass:** abandoned send and renewed
+  control, exact receipt without replay, later independent send protected from the
+  old reply, disconnect/reconnect recovery, failed task read and retry, retained
+  expired/conflicting originals, editable blank/partial coordinates and numeric
+  preview after completion. There were two original receipt reads and no replay.
+- **Eight creator scenarios pass:** delayed Work reply respects another field,
+  ordinary/narrow heading and Back focus, newer blank/nonblank message drafts,
+  unchanged refused-draft restoration, unsent seeded text, and original-message
+  receipt recovery without a second submission. No page runtime errors occurred.
+- **11 reader/Diagnostics assertions pass:** JSON focus, shortcut exclusion,
+  child-only Escape, opener and pointer-Close restoration, actual modal priority,
+  delayed places revision, successful and failed refresh, and recorded scores
+  `49.96%`, `69.996%` and `70.004%` with unchanged threshold classification.
+  Three intercepted local reads and no page runtime errors occurred. All three
+  1440×960 component captures were visually inspected for readable, nonoverlapping
+  content.
+
+Temporary host setup errors (JSX transformation, module routing/imports, missing
+fixture fields and a driver viewport API typo) stopped earlier invocations before
+some assertions. They are not delivered-code failures or passes. The first actual
+modal-priority assertion did find a production defect: the JSON capture listener
+recognized only `aria-modal` and dismissed the lower viewer beneath a higher modal.
+The shared overlay-aware fix passes the corrected full observation. Deadlines and
+assertions were not relaxed. Completed component hosts/browsers were closed; raw
+output, captures and temporary harnesses stay outside Git.
+
+No provider calls are needed or made. **Additional Jev/provider cost: $0;
+cumulative task Jev/provider cost: $0.** Real OS input-method composition,
+assistive devices, wider combinations and uncoached play remain with UIUX18.
+
+### Native-browser startup investigation
+
+The explicitly selected existing Actions, Camera, Conversation, Design system,
+Person editor and Time browser files use their unchanged assertions/deadlines,
+production build, installed Chrome and disposable PostgreSQL databases via
+`OPENLEGEND_TEST_DATABASE_URL=postgresql://mzw@127.0.0.1/postgres`. No application
+`.env` or real game save is used. PostgreSQL is Homebrew 14.17 with pgvector 0.8.6.
+
+The initial run does not qualify these journeys: Actions and Camera each reach
+60 seconds during server setup, before `page.goto`, with blank-page captures and
+no page network requests. Teardown reports the repository's failed-connection
+state. The PostgreSQL service still accepts connections; that cleanup error alone
+does not establish a service outage or a UI defect. After the second identical
+pre-navigation failure, the task-owned runner was interrupted: Conversation was
+interrupted during the same setup, and the remaining three files did not run.
+A bounded startup diagnosis is needed before repeating their setup. No test limit,
+fixture assertion or native behavior has been changed to conceal the failure.

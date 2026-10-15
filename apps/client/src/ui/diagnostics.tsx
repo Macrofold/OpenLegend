@@ -20,6 +20,7 @@ import type {
 import { post } from '../api';
 import { EventTime } from './event-time';
 import { SubjectPicker, subjectPath } from './subject-picker';
+import { modalOwnsInput } from './keyboard';
 import { MemoryHistory } from './memory-history';
 import { Button, Icon, IconButton, Section, Tag } from '../design-system/components';
 import './creator-workspaces.css';
@@ -2139,8 +2140,9 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
         event.key !== 'Escape' ||
         event.defaultPrevented ||
         event.isComposing ||
+        modalOwnsInput() ||
         document.querySelector(
-          '[aria-modal="true"], [role="listbox"], [role="menu"], [role="tooltip"], .ol-select-popover, .ol-pullout-popover',
+          '[role="listbox"], [role="menu"], [role="tooltip"], .ol-select-popover, .ol-pullout-popover',
         )
       )
         return;
