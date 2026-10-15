@@ -39,20 +39,18 @@ jobs:
         run: |
           pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
           pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Check the retained draft after responsive placement
+      - name: Check the invitation through the existing UI and server
         run: |
           python3 - <<'PY'
           import json, os, shutil, subprocess
           from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-trade-final'
+          report = Path(os.environ['RUNNER_TEMP']) / 'ui-invitation'
           report.mkdir()
           probe = Path('tests/browser/ui-composed.spec.ts')
           assert not probe.exists()
           text = Path('.github/scripts/ui-composed-journeys.ts').read_text()
           before = '  const bounds = await area.boundingBox();'
-          after = '''  // Resize delivery precedes React/overlay placement. Wait for the same
-            // bounds predicate instead of sampling one transitional animation frame.
-            await expect.poll(async () => {
+          after = '''  await expect.poll(async () => {
               const box = await area.boundingBox();
               const screen = page.viewportSize()!;
               return !!box && box.x >= -1 && box.y >= -1 &&
@@ -61,7 +59,69 @@ jobs:
             }).toBe(true);
             const bounds = await area.boundingBox();'''.replace('\n            ', '\n  ')
           assert text.count(before) == 1
-          probe.write_text(text.replace(before, after, 1))
+          text = text.replace(before, after, 1)
+          text += '''
+          test('companion invitation preserves choices and sending starts no travel', async ({ page }, info) => {
+            await play(page, async (game, view) => {
+              const companionId = 'mara';
+              const companion = view().entities.find(entity => entity.id === companionId)!;
+              expect(companion).toBeDefined();
+              const positions = () => [game.service.controlledEntityId, companionId].map(id => ({ ...worldPosition(game.service.world.entities[id]!) }));
+              const before = positions();
+              const commands: { command?: { type?: string } }[] = [];
+              page.on('request', request => { if (new URL(request.url()).pathname === '/api/command') commands.push(request.postDataJSON()); });
+              const reading = page.waitForResponse(response => new URL(response.url()).pathname === '/api/activity-requests' && response.request().postDataJSON()?.targetId === companionId);
+              const nearby = await person(page, companionId);
+              const choices = await (await reading).json() as { entries: { familyId: string; label: string; description: string }[] };
+              const entry = choices.entries.find(choice => /outing|travel/i.test(choice.familyId + ' ' + choice.label));
+              expect(entry, JSON.stringify(choices.entries)).toBeDefined();
+              await nearby.locator('.ol-task-entries').getByRole('button').filter({ hasText: entry!.label }).click();
+              const task = page.locator('#activityPanel');
+              await expect(task.locator('.ol-task-bound-target')).toContainText(companion.name);
+              await expect(task).toContainText('Sending an invitation moves nobody.');
+              const destination = task.locator('.ol-camp-object').getByRole('button').first();
+              await destination.click();
+              const picker = page.locator('.ol-activity-picker-overlay');
+              const first = picker.locator('.ol-camp-results').getByRole('button').first();
+              await expect(first).toBeVisible();
+              const selected = (await first.innerText()).replace(/^Choose /, '');
+              await first.click();
+              await expect(picker).toBeHidden();
+              await expect(destination).toContainText(selected);
+              await destination.click();
+              await picker.locator('input').press('Escape');
+              await expect(picker).toBeHidden();
+              await expect(task).toBeVisible();
+              await expect(destination).toBeFocused();
+              await expect(destination).toContainText(selected);
+              const purpose = task.locator('.ol-task-overview details');
+              await purpose.locator('summary').click();
+              await purpose.locator('input').fill('Walk together to the selected place.');
+              await page.setViewportSize({ width: 390, height: 844 });
+              await expect(purpose.locator('input')).toHaveValue('Walk together to the selected place.');
+              await expect(task.locator('.ol-task-bound-target')).toContainText(companion.name);
+              await expect(destination).toContainText(selected);
+              await fit(page, '#activityPanel', info, 'companion-invitation-narrow');
+              expect(commands).toEqual([]);
+              expect(positions()).toEqual(before);
+              const reply = page.waitForResponse(response => new URL(response.url()).pathname === '/api/command' && response.request().postDataJSON()?.command?.type === 'activity-request');
+              const submit = task.locator('.ol-task-submit').getByRole('button').first();
+              await expect(submit).toBeEnabled();
+              await submit.click();
+              const response = await reply;
+              const result = await response.json();
+              const request = response.request().postDataJSON();
+              expect(result.ok, JSON.stringify(result)).toBe(true);
+              expect(Object.values(request.command.activityArguments)).toContain(companionId);
+              expect(request.command.purpose).toBe('Walk together to the selected place.');
+              await expect(task).toContainText(result.message);
+              expect(positions()).toEqual(before);
+              expect(commands).toHaveLength(1);
+              await fit(page, '#activityPanel', info, 'companion-invitation-sent');
+            });
+          });
+          '''
+          probe.write_text(text)
           shutil.copyfile(probe, report / 'scenario.ts')
           results = {}
           def run(label, args, extra=None):
@@ -73,19 +133,10 @@ jobs:
               run('types', ['pnpm', 'typecheck'])
               run('build', ['pnpm', 'build'])
               if results['types'] == 0 and results['build'] == 0:
-                  run('browser', ['pnpm', 'exec', 'playwright', 'test', str(probe), '--grep', 'Inventory and person', '--reporter=line,json'], {'PLAYWRIGHT_JSON_OUTPUT_NAME': str(report / 'browser.json')})
+                  run('browser', ['pnpm', 'exec', 'playwright', 'test', str(probe), '--grep', 'companion invitation preserves', '--reporter=line,json'], {'PLAYWRIGHT_JSON_OUTPUT_NAME': str(report / 'browser.json')})
               if (report / 'browser.json').exists():
                   data = json.loads((report / 'browser.json').read_text())
-                  summary = {'stats': data.get('stats'), 'cases': []}
-                  def collect(suites):
-                      for suite in suites:
-                          for spec in suite.get('specs', []):
-                              for test in spec.get('tests', []):
-                                  summary['cases'].append({'title': spec['title'], 'status': test['status'], 'results': [{'status': result['status'], 'duration': result.get('duration'), 'errors': result.get('errors', [])} for result in test.get('results', [])]})
-                          collect(suite.get('suites', []))
-                  collect(data.get('suites', []))
-                  (report / 'summary.json').write_text(json.dumps(summary, indent=2))
-                  print('TRADE_UI_RESULTS=' + json.dumps(summary, indent=2), flush=True)
+                  print('INVITATION_UI_RESULTS=' + json.dumps(data.get('stats')), flush=True)
           finally:
               probe.unlink(missing_ok=True)
               if Path('test-results').exists():
@@ -93,14 +144,14 @@ jobs:
               assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip()
               metadata = {'commit': os.environ['GITHUB_SHA'], 'checks': results, 'production_source_changed': False, 'temporary_probe_removed': True, 'provider_spend_usd': 0}
               (report / 'metadata.json').write_text(json.dumps(metadata, indent=2))
-              print('TRADE_UI_CHECKPOINT=' + json.dumps(metadata), flush=True)
+              print('INVITATION_UI_CHECKPOINT=' + json.dumps(metadata), flush=True)
           if not results or any(results.values()): raise SystemExit(1)
           PY
-      - name: Preserve the exact UI observation
+      - name: Preserve the exact invitation observation
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-trade-final
-          path: ${{ runner.temp }}/ui-trade-final/
+          name: ui-invitation
+          path: ${{ runner.temp }}/ui-invitation/
           retention-days: 3
           if-no-files-found: error
