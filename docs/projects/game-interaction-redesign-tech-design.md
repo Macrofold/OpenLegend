@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                  | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Imported-interface and follow-up correctness/performance repairs are verified; human input/device/player acceptance remains open. | 2026-10-15   |
+| In progress | Integrated UI repairs pass focused component checks; current full-game browser and human/device acceptance remain open. | 2026-10-15   |
 
 **Used for this reconciliation:** 2026-10-15 09:14:58 UTC, technical design as stored at source 3501d19c80e4cd5734e0c0f36e44fd56a0407eeb. This records current use; the original implementation-use time was not recorded.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                  | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Imported-interface and follow-up correctness/performance repairs are verified; human input/device/player acceptance remains open. | 2026-10-15   |
+| In progress | Integrated UI repairs pass focused component checks; current full-game browser and human/device acceptance remain open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -39,8 +39,9 @@ expansion, scaling and world/engine ownership. The refreshed PR target remains
 `Macrofold/OpenLegend` `origin/main` at
 `362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor; no reconciliation
 or checkout change is needed. Keep the existing accepted scope and outstanding
-human/device requirements. The separate proposed item/building work remains outside
-this review until its scope question is answered.
+human/device requirements. At that review's start, the separate proposed
+item/building work awaited scope clarification; Mike has since explicitly deferred
+it, as recorded in the integrated review above and its own maintainer tracker.
 
 Cross-review the complete affected implementation and its callers in three groups:
 creator/editor/request retention; player item/construction/conversation/shared

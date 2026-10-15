@@ -544,7 +544,6 @@ export function WorldAgentReview({
                     )}
                   </pre>
                 </details>
-                {review.plan.result && <p role="status">{review.plan.result.message}</p>}
                 {creationOutcome && (
                   <section
                     className="ol-world-creation"

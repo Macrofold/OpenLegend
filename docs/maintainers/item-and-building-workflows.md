@@ -18,6 +18,8 @@ This is the sole detailed implementation tracker for this follow-on. Parent need
 
 **Parent:** ND13 and ND07. **Owners:** existing inventory/action projections, private-draft/read scopes, family fact descriptors and UI controls. **Dependencies:** the current integrated PW04/PW11/SH foundations, not completion of their unrelated broad programs.
 
+The [integrated UI review](../verification/ui-implementation-review.md#integrated-main-review-and-completion) repairs existing Inventory/Construction receipt recovery, editable coordinate drafts and creator focus continuity. Reuse those owners; those repairs do not deliver the additional task facts, compound equipment or manufacturing-list scope below.
+
 - [ ] Add only missing native task facts: exact selected subject/source/destination, total versus currently usable quantity, expected consequences, permitted blocker and relevant freshness. Reuse existing quantity, compatibility, permission and geometry preparation.
 - [ ] Preserve task intent through nested inspection, return navigation, panel adaptation and same-character control renewal while invalidating stale or revoked read facts separately. Apply the current foundation scope distinctions; do not duplicate their repairs.
 - [ ] Separate draft, checking, checked, stale/failed, accepted work, completed outcome and unconfirmed write. Keep names stable under refresh and provide accessible non-hover explanations and non-drag controls.

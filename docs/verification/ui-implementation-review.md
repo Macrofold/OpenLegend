@@ -538,6 +538,18 @@ No provider calls are needed or made. **Additional Jev/provider cost: $0;
 cumulative task Jev/provider cost: $0.** Real OS input-method composition,
 assistive devices, wider combinations and uncoached play remain with UIUX18.
 
+The additional shared-control observation passes ordinary Escape without resetting
+query text, composition cancellation leaving the picker open, secondary-pointer
+refusal, primary dragging and capture-loss cleanup. The actual enabled QuickActions
+consumer dispatches from body focus, blocks native and semantic text fields,
+editable ancestors, dialog controls, open lists/menus, composing and already-handled
+events, then dispatches again after returning to world input. Exactly two fixture
+command callbacks, zero Talk callbacks and zero page errors occur; no native command
+or provider request is executed. Correct App shell motion/theme/scale and foreground
+settings are required in that component host; earlier missing settings and attempts
+to reopen an already-focused focus-triggered picker are fixture errors, not new UI
+bugs. This does not establish real OS composition or every integrated input origin.
+
 ### Native-browser startup investigation
 
 The explicitly selected existing Actions, Camera, Conversation, Design system,
@@ -555,3 +567,30 @@ pre-navigation failure, the task-owned runner was interrupted: Conversation was
 interrupted during the same setup, and the remaining three files did not run.
 A bounded startup diagnosis is needed before repeating their setup. No test limit,
 fixture assertion or native behavior has been changed to conceal the failure.
+
+The bounded native startup diagnostic subsequently completes at **62.339 seconds**,
+including 40.594 seconds of schema preparation and 16.165 seconds for the initial
+world commit. This establishes the pre-navigation cause on the existing local
+PostgreSQL instance, not a UI performance measurement. Its database is removed.
+An isolated task-owned PostgreSQL 14.17/pgvector 0.8.6 cluster on loopback port57039
+uses `fsync=off` and `synchronous_commit=off` solely for disposable fixtures;
+production/user configuration and durability remain unchanged. Native visual-server
+startup there takes 3.896 seconds.
+
+The same six browser files against that cluster reach the UI but all fail: Actions
+at the ordinary unfocused-page pause; Camera, Conversation and Design system at
+five-second renderer readiness; Person editor at its twenty-second renderer
+readiness; and Time at its five-second narrow-layout attribute after settings and
+reload. These are not passes or a demonstrated common product cause. The existing
+entry helper now explicitly brings its intended page forward, preserving all
+assertions/deadlines and real focus/pause behavior. Other component browsers are
+stopped before the next native attempt. An isolated visible-Chrome Actions run
+passes entry after that change but still fails the unchanged five-second renderer
+check. No renderer or native simulation change is justified from those timeouts
+alone. Native actual-browser inspection and current required CI remain separate
+from the passing component checks.
+
+A final source pass also removes the duplicate confirmed-result paragraph/live
+announcement in the creator review, retaining the first outcome message, and
+corrects the handbook's current “seven authoring kinds” claim to “all supported
+authoring kinds.” Historical seven-kind evidence retains its original scope.
