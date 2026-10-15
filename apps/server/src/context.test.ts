@@ -6,6 +6,7 @@ import {
   advanceWorld,
   executeCommand,
   inventoryFor,
+  navigationBlocked,
   quantityOf,
   type DeclarationDraft,
 } from '@open-legend/domain';
@@ -122,7 +123,17 @@ describe('actor-scoped native decision candidates', () => {
     // Releasing the shot does not resolve its flight or guarantee an impact.
     expect(service.world.entities['hare-1']!.actor!.alive).toBe(true);
     for (let step = 0; step < 20 && service.world.entities['hare-1']!.actor!.alive; step++) {
-      await service.transition((world) => advanceWorld(world, 0.1));
+      const before = service.world.simTime;
+      const result = await service.transition((world) => advanceWorld(world, 0.1));
+      const evidence = JSON.stringify({
+        result,
+        before,
+        after: service.world.simTime,
+        navigationBlocked: navigationBlocked(service.world),
+        projectiles: service.world.projectiles,
+      });
+      expect(result.ok, evidence).toBe(true);
+      expect(service.world.simTime, evidence).toBeGreaterThan(before);
     }
     expect(
       service.world.entities['hare-1']!.actor!.alive,
