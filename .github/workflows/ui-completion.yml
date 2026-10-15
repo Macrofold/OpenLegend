@@ -9,149 +9,62 @@ jobs:
   qualify:
     if: github.repository == 'Macrofold/OpenLegend'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: openlegend
-          POSTGRES_PASSWORD: fixture
-          POSTGRES_DB: postgres
-        ports: [5432:5432]
-        options: >-
-          --health-cmd "pg_isready -U openlegend -d postgres"
-          --health-interval 5s --health-timeout 5s --health-retries 10
+    timeout-minutes: 5
     env:
       AI_BUDGET_USD: '0'
-      OPENLEGEND_TEST_DATABASE_URL: postgresql://openlegend:fixture@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
           show-progress: false
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
-      - name: Install pinned dependencies and Chromium
-        run: |
-          pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
-          pnpm exec playwright install --with-deps chromium > "$RUNNER_TEMP/browser-install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/browser-install.log"; exit 1; }
-      - name: Check the invitation through the existing UI and server
+      - name: Install pinned checking tools
+        run: pnpm install --frozen-lockfile > "$RUNNER_TEMP/install.log" 2>&1 || { tail -60 "$RUNNER_TEMP/install.log"; exit 1; }
+      - name: Check documentation and exact cleanup boundaries
         run: |
           python3 - <<'PY'
-          import json, os, shutil, subprocess
+          import hashlib, json, os, re, subprocess
           from pathlib import Path
-          report = Path(os.environ['RUNNER_TEMP']) / 'ui-invitation'
-          report.mkdir()
-          probe = Path('tests/browser/ui-composed.spec.ts')
-          assert not probe.exists()
-          text = Path('.github/scripts/ui-composed-journeys.ts').read_text()
-          before = '  const bounds = await area.boundingBox();'
-          after = '''  await expect.poll(async () => {
-              const box = await area.boundingBox();
-              const screen = page.viewportSize()!;
-              return !!box && box.x >= -1 && box.y >= -1 &&
-                box.x + box.width <= screen.width + 1 &&
-                box.y + box.height <= screen.height + 1;
-            }).toBe(true);
-            const bounds = await area.boundingBox();'''.replace('\n            ', '\n  ')
-          assert text.count(before) == 1
-          text = text.replace(before, after, 1)
-          text += '''
-          test('companion invitation preserves choices and sending starts no travel', async ({ page }, info) => {
-            await play(page, async (game, view) => {
-              const companionId = 'mara';
-              const companion = view().entities.find(entity => entity.id === companionId)!;
-              expect(companion).toBeDefined();
-              const positions = () => [game.service.controlledEntityId, companionId].map(id => ({ ...worldPosition(game.service.world.entities[id]!) }));
-              const before = positions();
-              const commands: { command?: { type?: string } }[] = [];
-              page.on('request', request => { if (new URL(request.url()).pathname === '/api/command') commands.push(request.postDataJSON()); });
-              const reading = page.waitForResponse(response => new URL(response.url()).pathname === '/api/activity-requests' && response.request().postDataJSON()?.targetId === companionId);
-              const nearby = await person(page, companionId);
-              const choices = await (await reading).json() as { entries: { familyId: string; label: string; description: string }[] };
-              const entry = choices.entries.find(choice => /outing|travel/i.test(choice.familyId + ' ' + choice.label));
-              expect(entry, JSON.stringify(choices.entries)).toBeDefined();
-              await nearby.locator('.ol-task-entries').getByRole('button').filter({ hasText: entry!.label }).click();
-              const task = page.locator('#activityPanel');
-              await expect(task.locator('.ol-task-bound-target')).toContainText(companion.name);
-              await expect(task).toContainText('Sending an invitation moves nobody.');
-              const destination = task.locator('.ol-camp-object').getByRole('button').first();
-              await destination.click();
-              const picker = page.locator('.ol-activity-picker-overlay');
-              const first = picker.locator('.ol-camp-results').getByRole('button').first();
-              await expect(first).toBeVisible();
-              const selected = (await first.innerText()).replace(/^Choose /, '');
-              await first.click();
-              await expect(picker).toBeHidden();
-              await expect(destination).toContainText(selected);
-              await destination.click();
-              await picker.locator('input').press('Escape');
-              await expect(picker).toBeHidden();
-              await expect(task).toBeVisible();
-              await expect(destination).toBeFocused();
-              await expect(destination).toContainText(selected);
-              const purpose = task.locator('.ol-task-overview details');
-              await purpose.locator('summary').click();
-              await purpose.locator('input').fill('Walk together to the selected place.');
-              await page.setViewportSize({ width: 390, height: 844 });
-              await expect(purpose.locator('input')).toHaveValue('Walk together to the selected place.');
-              await expect(task.locator('.ol-task-bound-target')).toContainText(companion.name);
-              await expect(destination).toContainText(selected);
-              await fit(page, '#activityPanel', info, 'companion-invitation-narrow');
-              expect(commands).toEqual([]);
-              expect(positions()).toEqual(before);
-              const reply = page.waitForResponse(response => new URL(response.url()).pathname === '/api/command' && response.request().postDataJSON()?.command?.type === 'activity-request');
-              const submit = task.locator('.ol-task-submit').getByRole('button').first();
-              await expect(submit).toBeEnabled();
-              await submit.click();
-              const response = await reply;
-              const result = await response.json();
-              const request = response.request().postDataJSON();
-              expect(result.ok, JSON.stringify(result)).toBe(true);
-              expect(Object.values(request.command.activityArguments)).toContain(companionId);
-              expect(request.command.purpose).toBe('Walk together to the selected place.');
-              await expect(task).toContainText(result.message);
-              expect(positions()).toEqual(before);
-              expect(commands).toHaveLength(1);
-              await fit(page, '#activityPanel', info, 'companion-invitation-sent');
-            });
-          });
-          '''
-          probe.write_text(text)
-          shutil.copyfile(probe, report / 'scenario.ts')
-          results = {}
-          def run(label, args, extra=None):
-              with (report / (label + '.log')).open('w') as output:
-                  results[label] = subprocess.run(args, env=dict(os.environ, **(extra or {})), stdout=output, stderr=subprocess.STDOUT).returncode
-              print(label + ': ' + str(results[label]), flush=True)
-              print('\n'.join((report / (label + '.log')).read_text().splitlines()[-100 if results[label] else -12:]), flush=True)
-          try:
-              run('types', ['pnpm', 'typecheck'])
-              run('build', ['pnpm', 'build'])
-              if results['types'] == 0 and results['build'] == 0:
-                  run('browser', ['pnpm', 'exec', 'playwright', 'test', str(probe), '--grep', 'companion invitation preserves', '--reporter=line,json'], {'PLAYWRIGHT_JSON_OUTPUT_NAME': str(report / 'browser.json')})
-              if (report / 'browser.json').exists():
-                  data = json.loads((report / 'browser.json').read_text())
-                  print('INVITATION_UI_RESULTS=' + json.dumps(data.get('stats')), flush=True)
-          finally:
-              probe.unlink(missing_ok=True)
-              if Path('test-results').exists():
-                  shutil.copytree('test-results', report / 'test-results', dirs_exist_ok=True)
-              assert not subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip()
-              metadata = {'commit': os.environ['GITHUB_SHA'], 'checks': results, 'production_source_changed': False, 'temporary_probe_removed': True, 'provider_spend_usd': 0}
-              (report / 'metadata.json').write_text(json.dumps(metadata, indent=2))
-              print('INVITATION_UI_CHECKPOINT=' + json.dumps(metadata), flush=True)
-          if not results or any(results.values()): raise SystemExit(1)
+          paths = ['docs/maintainers/projectile-progress-bug.md', 'docs/projects/game-interaction-redesign-completion.md', 'docs/verification/ui-completion-2026-10-14.md']
+          temporary = ['.github/scripts/ui-finish.py', '.github/scripts/ui-native-worlds.ts', '.github/scripts/ui-recovery-browser.ts', '.github/scripts/ui-refine.py', '.github/scripts/ui-verify.py', '.github/scripts/ui-composed-journeys.ts', '.github/workflows/ui-completion.yml']
+          baseline = 'c7d456fce76e14a277e33736df21c9fefbff56a3'
+          changed = subprocess.check_output(['git', 'diff', '--name-only', baseline, 'HEAD'], text=True).splitlines()
+          allowed = set(paths + temporary + ['.github/workflows/ui-completion-source-read-20261014.yml'])
+          assert set(changed) <= allowed, changed
+          assert not subprocess.check_output(['git', 'diff', baseline, 'HEAD', '--', 'apps', 'packages', 'tests', '.github/workflows/check.yml', '.github/workflows/spatial-check.yml'])
+          for path in temporary:
+              assert Path(path).is_file(), path
+          assert not Path('.github/workflows/ui-completion-source-read-20261014.yml').exists()
+          print('UI_ONLY_DIFF=' + json.dumps(changed), flush=True)
+          print('TEMPORARY_CLEANUP=' + json.dumps(temporary), flush=True)
+          # Check local file references in the three changed documents. Existing
+          # cross-document anchors retain their original contracts.
+          for path in paths:
+              for link in re.findall(r'\]\(([^)]+)\)', Path(path).read_text()):
+                  if '://' in link or link.startswith('#'):
+                      continue
+                  target = Path(path).parent / link.split('#', 1)[0]
+                  assert target.is_file(), (path, link)
+          checks = {}
+          for label, command in [('guidance', ['pnpm', 'guidance:check']), ('configuration', ['pnpm', 'config:check'])]:
+              result = subprocess.run(command, text=True, capture_output=True)
+              checks[label] = result.returncode
+              print(label.upper() + '=' + str(result.returncode) + '\n' + result.stdout + result.stderr, flush=True)
+          # A formatting-only preview is not a Git publication. The connector
+          # applies any required text change; the runner never updates a ref.
+          subprocess.run(['pnpm', 'exec', 'prettier', '--write', *paths], check=True)
+          subprocess.run(['pnpm', 'exec', 'prettier', '--check', *paths], check=True)
+          patch = subprocess.check_output(['git', 'diff', '--unified=2', '--', *paths], text=True)
+          print('DOC_FORMAT_DIFF_BEGIN\n' + patch + 'DOC_FORMAT_DIFF_END', flush=True)
+          print('DOC_BLOBS=' + json.dumps({path: hashlib.sha1(('blob ' + str(len(Path(path).read_bytes())) + '\0').encode() + Path(path).read_bytes()).hexdigest() for path in paths}), flush=True)
+          subprocess.run(['git', 'diff', '--check'], check=True)
+          print('DOC_CHECKS=' + json.dumps(checks), flush=True)
+          print('No gameplay or provider checks were run; no commits or branch references were changed.', flush=True)
+          assert all(value == 0 for value in checks.values()), checks
           PY
-      - name: Preserve the exact invitation observation
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-invitation
-          path: ${{ runner.temp }}/ui-invitation/
-          retention-days: 3
-          if-no-files-found: error
