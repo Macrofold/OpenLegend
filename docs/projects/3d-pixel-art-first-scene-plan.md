@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                           | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The art revision and experiments are planned for the existing starting scene; the new visual treatment is not implemented. | 2026-10-15   |
+| In progress | Implementation is authorized on the finalized MER12 baseline; matched art experiments and integrated qualification are underway. | 2026-10-15   |
 
 ## Purpose and authorization
 
@@ -10,7 +10,26 @@ Restyle the existing starting scene already used for gameplay and playtesting: r
 
 Mike agreed to the direction and requested these document revisions and tracked implementation/experiment tasks. This request delivers the design and task breakdown; runtime work, purchases, provider calls and graphics-backend migration are not performed by the documentation task. Technique trials below are planned work, not completed evidence or selected production settings.
 
-The documentation snapshot is `/Users/mzw/.codex/worktrees/415f/OpenLegend`, `codex/mercenary-original-refinement` at `ab0de7555`. It identifies inspected work, not a new integration base. Future implementation must select its development base through the normal workflow and confirm required assets and behavior are available there. No branch/history change is needed for this documentation update in the shared checkout.
+The documentation snapshot was `/Users/mzw/.codex/worktrees/415f/OpenLegend`, `codex/mercenary-original-refinement` at `ab0de7555`. Mike subsequently explicitly authorized V3D01.1–V3D01.12 implementation through integration, experiments and final review, preserving the existing playable scene and progress. The earlier planning-only statements describe those earlier document tasks.
+
+## Authorized implementation — October 15, 2026
+
+The selected supplied base is local `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931`, containing finalized/committed MER12 evidence and plan commit `3810138d0`. The repository is `https://github.com/Macrofold/OpenLegend.git`; this explicit local base takes precedence over the remote default and is not an instruction to incorporate unrelated local-main work. Created/switched `codex/mercenary-original-refinement → codex/starting-scene-pixel-art` in the same `/Users/mzw/.codex/worktrees/415f/OpenLegend` checkout; no worktree switch, main-checkout edit, push or merge.
+
+Estimated 1,000–1,800 runtime/tool logic lines plus bounded asset preparation, subject to revision after each experiment. This is moderate-to-high rendering, art and resource-ownership risk across several existing owners; no gameplay contract, initialization, save or public-protocol changes are planned. Execute the full delivery sequence above with these coordinated owners:
+
+1. Root records the actual current scene inventory and public-view baseline, supplies finite developer comparison controls on the same scene, captures normal/close/day/firelight/camera paths, and owns integrated verification. Preserve the original sprite, painted model and MER12 as explicit controls. No active save is replaced.
+2. Root extends existing material/presentation owners for controlled source regions, softened light bands and material highlights, sampling/filter alternatives and restrained depth/alpha edges. Reuse CameraFrame grading/bloom, current depth/reveal layers and shadows. Compare every adopted/rejected variant on identical conditions; do not equate generic pixelation with a designed finish.
+3. Character-motion owner exports/imports explicit smooth/held clips and a labeled visual sharp-action fixture, preserves source assets, and compares bounded secondary motion. Travel/camera/interface continue independently; tool/cloth/color/depth/shadows share evaluated poses. Root integrates the narrow presentation-only controls.
+4. Environment owner reshapes existing landscape artwork/instancing into coherent masses and quiet ground with world-anchored wind and selected nearby contributors. Root integrates through the current landscape owner. Compare existing and new vegetation plus relevant atmosphere/water conditions; conditional effects may be rejected from actual evidence.
+5. Root compares existing fire/effects with a depth-aware separate image only where useful, labels staged smears, and verifies pause/interruption/resize/teardown. No visual cue becomes a native action outcome.
+6. Standalone experiment owner runs the public texel-splatting technique with permitted static existing-scene geometry and matched camera/light paths, measuring capture/shade/draw/memory and failure boundaries on available hardware. Record integrate/revise/defer independently of the ordinary renderer, without a backend migration.
+7. Root establishes a reviewed authored character plus rights-cleared generated rigid prop under the same treatment. Existing rights/provenance and available provider tools must establish permitted use; lack of access remains an explicit dependency, never relabeled procedural content as a provider-generated success. Shared provider ceiling is $10 across the task; current spending/reservation is $0, with no call authorized beyond a credible bounded cost.
+8. Integrate selected treatments, exercise several distinct existing moving subjects and representative ordinary gameplay routes, check content/layout invariance and applicable Q scenarios, measure complete frames/resources on named hardware, review the complete diff, run focused existing/static/build/format/link checks, fix in-scope issues, and commit. Prepare normal-gameplay footage and useful close views for Mike. Creator approval remains pending until he gives it.
+
+Cost grows with visible rigs/geometry/materials, target pixels, lights, transparent overlap and vegetation×selected nearby contributors. Load/export/material preparation is shared or first-use work; per-actor pose/cloth is separate. Camera changes update matrices/targets/drawing, never regenerate art or request providers. Geometry, material, pose, viewport and visibility have separate invalidation/removal paths. Keep comparison settings client/developer-only with an explicit owner and cleanup. Measure baseline and contributions both isolated and together, including cold preparation, frame tails, draws and retained resources. Existing low-end/crowd/native-speed gates remain distinct from this measured first-scene envelope.
+
+Completion requires working integrated changes, actual E01–E08 decisions (or explicit unrun/access blockers), preserved existing playtest content/routes, applicable lifecycle/interaction checks, reproducible source/runtime preparation, synchronized decisions/limits/evidence and local commits. A screenshot, shader demo, completed subsection or pending provider request does not complete this assignment.
 
 ## Maintained records
 

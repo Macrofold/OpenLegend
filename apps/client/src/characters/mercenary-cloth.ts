@@ -65,6 +65,9 @@ export class CapeCloth {
   private time = 0;
   private steps = 0;
   private elapsed = 0;
+  private motion: 'flowing' | 'settled' = 'flowing';
+  private frameGapResets = 0;
+  private lastUpdate = performance.now();
   enabled = true;
   constructor(
     app: pc.Application,
@@ -234,6 +237,7 @@ export class CapeCloth {
   }
   reset() {
     this.time = 0;
+    this.lastUpdate = performance.now();
     const m = this.bone.getWorldTransform();
     for (let i = 0; i < this.p.length; i++) {
       m.transformPoint(at(this.rest, i), at(this.p, i));
@@ -383,25 +387,42 @@ export class CapeCloth {
     // Initial settling also calls step directly, before the normal update path.
     this.previousAttachment.copy(matrix);
   }
-  update(dt: number, playing: boolean) {
+  private carryWithAttachment(attachment: pc.Mat4): void {
+    if (attachment.equals(this.previousAttachment)) return;
+    this.attachmentInverse.copy(this.previousAttachment).invert();
+    this.attachmentDelta.mul2(attachment, this.attachmentInverse);
+    for (let i = 0; i < this.p.length; i++) {
+      this.attachmentDelta.transformPoint(at(this.p, i), at(this.p, i));
+      this.attachmentDelta.transformPoint(at(this.previous, i), at(this.previous, i));
+    }
+    this.publish();
+    this.previousAttachment.copy(attachment);
+  }
+  update(dt: number, playing: boolean, motion: 'flowing' | 'settled' = 'flowing') {
     if (!this.enabled) return;
+    const start = performance.now();
+    // PlayCanvas caps dt before this owner sees it; the monotonic presentation
+    // clock detects a real suspended-tab gap without advancing world time.
+    const frameGap = dt > 0.25 || start - this.lastUpdate > 250;
+    this.lastUpdate = start;
     const attachment = this.bone.getWorldTransform();
-    if (!playing) {
-      // Pause freezes the settled folds, but an edited position or heading must
-      // carry the whole cape with its attachment instead of leaving it behind.
-      if (!attachment.equals(this.previousAttachment)) {
-        this.attachmentInverse.copy(this.previousAttachment).invert();
-        this.attachmentDelta.mul2(attachment, this.attachmentInverse);
-        for (let i = 0; i < this.p.length; i++) {
-          this.attachmentDelta.transformPoint(at(this.p, i), at(this.p, i));
-          this.attachmentDelta.transformPoint(at(this.previous, i), at(this.previous, i));
-        }
-        this.publish();
-      }
+    if (motion !== this.motion || frameGap) {
+      // Resume from the current folds without stale velocity after a tab gap or
+      // a comparison switch. Carry both histories before restarting the solver.
+      this.carryWithAttachment(attachment);
+      for (let i = 0; i < this.p.length; i++) at(this.previous, i).copy(at(this.p, i));
+      this.time = 0;
+      if (frameGap) this.frameGapResets++;
+      this.motion = motion;
+    }
+    if (!playing || motion === 'settled') {
+      // The comparison holds settled folds relative to the shoulder attachment;
+      // ordinary pause follows edited travel/heading without advancing fabric.
+      this.carryWithAttachment(attachment);
       this.previousAttachment.copy(attachment);
+      this.elapsed = 0;
       return;
     }
-    const start = performance.now();
     this.time += Math.min(dt, 0.05);
     let count = 0;
     while (this.time >= 1 / 60 && count++ < 3) {
@@ -436,6 +457,8 @@ export class CapeCloth {
       steps: this.steps,
       finite: this.p.every((p) => Number.isFinite(p.x + p.y + p.z)),
       lastStepMs: this.elapsed,
+      motion: this.motion,
+      frameGapResets: this.frameGapResets,
     };
   }
   destroy() {

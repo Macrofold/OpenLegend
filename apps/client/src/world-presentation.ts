@@ -1,4 +1,5 @@
 import * as pc from 'playcanvas';
+import type { ArtTreatment } from './art-treatment';
 import type { GameView } from '@open-legend/protocol';
 import { sunlightAtHour } from './sunlight';
 import type { ShadowQuality } from './world-renderer';
@@ -142,6 +143,14 @@ export class WorldPresentation {
     this.frame.bloom.blurLevel = 3;
     this.frame.grading.enabled = true;
     this.frame.grading.saturation = 1.05;
+    this.frame.update();
+  }
+  setArtTreatment(style: Readonly<ArtTreatment>): void {
+    const restrained = style.atmosphere === 'restrained';
+    this.frame.bloom.intensity = restrained ? 0.045 : 0.025;
+    this.frame.grading.saturation = restrained ? 1.02 : 1.05;
+    this.frame.grading.contrast = restrained ? 1.08 : 1;
+    this.frame.grading.brightness = restrained ? 1.025 : 1;
     this.frame.update();
   }
   setShadowQuality(quality: ShadowQuality): boolean {

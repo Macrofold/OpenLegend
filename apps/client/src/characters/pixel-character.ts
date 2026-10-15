@@ -1,4 +1,5 @@
 import * as pc from 'playcanvas';
+import type { ArtTreatment } from '../art-treatment';
 import {
   personStencil,
   characterReadThroughStencil,
@@ -40,6 +41,8 @@ export class PixelCharacter {
   private readonly color: pc.Texture;
   private readonly depth: pc.Texture;
   private readonly target: pc.RenderTarget;
+  private sampling: ArtTreatment['sampling'] = '96';
+  private readonly edgeSettings = new Float32Array(3);
   private readonly quad: pc.Mesh;
   private readonly node = new pc.GraphNode('Character pixel composite');
   private readonly material: pc.ShaderMaterial;
@@ -153,11 +156,21 @@ export class PixelCharacter {
         uniform sampler2D characterDepth;
         uniform float characterOpacity;
         uniform float characterOutline;
+        uniform vec3 characterEdges;
         varying vec2 characterUV;
         void main(void) {
           vec4 color = texture2D(characterColor, characterUV);
           float depth = texture2D(characterDepth, characterUV).r;
           if (color.a < .5 || depth >= 1.0) discard;
+          if (characterEdges.z > .5) {
+            float edge = 0.0;
+            for (int axis = 0; axis < 4; axis++) {
+              vec2 offset = axis == 0 ? vec2(characterEdges.x,0.0) : axis == 1 ? vec2(-characterEdges.x,0.0) : axis == 2 ? vec2(0.0,characterEdges.y) : vec2(0.0,-characterEdges.y);
+              float nearby = texture2D(characterDepth,characterUV+offset).r;
+              edge = max(edge, nearby >= 1.0 ? 1.0 : characterEdges.z > 1.5 ? smoothstep(.0003,.0015,abs(nearby-depth)) : 0.0);
+            }
+            color.rgb *= 1.0 - edge*.38;
+          }
           gl_FragDepth = depth;
           gl_FragColor = characterOutline > .5 ? vec4(1.0) : vec4(color.rgb, color.a * characterOpacity);
         }`,
@@ -170,6 +183,8 @@ export class PixelCharacter {
     this.material.setParameter('characterDepth', this.depth);
     this.material.setParameter('characterOpacity', 1);
     this.material.setParameter('characterOutline', 0);
+    this.edgeSettings.set([1 / imageWidth, 1 / imageHeight, 0]);
+    this.material.setParameter('characterEdges', this.edgeSettings);
     this.revealMaterial = this.material.clone();
     this.revealMaterial.depthFunc = pc.FUNC_GREATER;
     this.revealMaterial.depthWrite = false;
@@ -204,6 +219,21 @@ export class PixelCharacter {
     this.app.systems.light?.on('add', this.addLight, this);
     this.app.systems.light?.on('beforeremove', this.removeLight, this);
     this.setVisible(false);
+  }
+  setTreatment(sampling: ArtTreatment['sampling'], edges: ArtTreatment['edges']): void {
+    if (this.sampling !== sampling) {
+      const rows = sampling === 'native' ? 378 : Number(sampling);
+      const height = Math.round((rows * imageHeight) / visibleRows);
+      const width = Math.round((height * imageWidth) / imageHeight);
+      this.target.resize(width, height);
+      this.sampling = sampling;
+      this.mappingReady = false;
+    }
+    this.edgeSettings.set([
+      1 / this.color.width,
+      1 / this.color.height,
+      edges === 'none' ? 0 : edges === 'silhouette' ? 1 : 2,
+    ]);
   }
   setVisible(value: boolean): void {
     this.pass.enabled = value;
@@ -292,7 +322,7 @@ export class PixelCharacter {
     this.project(this.top, this.screenTop);
     const visibleHeight = Math.abs(this.screenTop.y - this.screen.y);
     const height = (visibleHeight * imageHeight) / visibleRows;
-    const width = (height * imageWidth) / imageHeight;
+    const width = (height * this.color.width) / this.color.height;
     const sourceHeight = ((maxY - minY) * imageHeight) / visibleRows;
     const sourceCenterY = (minY + maxY) / 2;
     const centerY = this.screen.y + ((sourceCenterY - this.screen.y) * height) / sourceHeight;
@@ -484,7 +514,8 @@ export class PixelCharacter {
 
   diagnostics() {
     return {
-      resolution: [imageWidth, imageHeight],
+      resolution: [this.color.width, this.color.height],
+      sampling: this.sampling,
       visibleRows,
       worldPixelSize,
       sourceRect: [...this.sourceRect],

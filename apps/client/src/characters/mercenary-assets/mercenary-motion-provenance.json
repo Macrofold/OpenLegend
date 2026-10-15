@@ -1,0 +1,45 @@
+{
+  "artifact": "mercenary-motion.glb",
+  "source": "mercenary.glb",
+  "sourceSha256": "cfd519287b4ebcc6233ffd269ea10cc455780f3f52c5c4e789f2db245f444ab6",
+  "runtimeSha256": "4535feed7092a81ed121607d293459df68567276cc8a4f5857b130e43def2f82",
+  "authoringScript": "scripts/prepare-mercenary-motion.py",
+  "authoringTool": "Blender 5.2.2 LTS, d13f752e3b9c",
+  "created": "2026-10-15",
+  "purpose": "Offline smooth/held pose comparison on the existing bundled pilot; sharp gestures are explicitly developer-only visual fixtures.",
+  "rights": "Original character rights remain unresolved; no external upload or redistribution clearance is asserted. Newly authored script and gesture contributions follow repository AGPL-3.0-only policy.",
+  "externalGeneration": false,
+  "additionalProviderCostUsd": 0,
+  "runtimeBytes": 148660,
+  "clips": [
+    {
+      "name": "WalkHeld8",
+      "source": "Walk",
+      "interpolation": "STEP",
+      "frameSpacingAt24Fps": 3
+    },
+    {
+      "name": "WalkHeld12",
+      "source": "Walk",
+      "interpolation": "STEP",
+      "frameSpacingAt24Fps": 2
+    },
+    {
+      "name": "SharpFixtureSmooth",
+      "source": "Authored planted, empty-handed anticipation/strike/recovery around Idle pose",
+      "interpolation": "LINEAR",
+      "keyFrames": [1, 7, 10, 12, 19, 25]
+    },
+    {
+      "name": "SharpFixtureHeld",
+      "source": "SharpFixtureSmooth",
+      "interpolation": "STEP",
+      "keyFrames": [1, 7, 10, 12, 19, 25]
+    }
+  ],
+  "scopeLimits": [
+    "No gameplay action, weapon, root travel or outcome is introduced.",
+    "No arbitrary rig, outfit, terrain-contact or generated-animation qualification.",
+    "The actual imported playback and garment coverage require browser qualification."
+  ]
+}

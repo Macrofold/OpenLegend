@@ -1,5 +1,8 @@
 import * as pc from 'playcanvas';
 import mercenaryUrl from './mercenary-assets/mercenary.glb?url';
+import motionUrl from './mercenary-assets/mercenary-motion.glb?url';
+import { MercenaryMotion } from './mercenary-motion';
+import { ArtMaterials, type ArtTreatment, baselineArt } from '../art-treatment';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
 import { WorldPresentation } from '../world-presentation';
@@ -8,6 +11,7 @@ import { CapeCloth } from './mercenary-cloth';
 import { MercenaryMaterials } from './mercenary-materials';
 
 type Container = pc.ContainerResource & { animations: pc.Asset[] };
+type LoadedModel = { resource: Container; tracks: pc.AnimTrack[] };
 function container(value: unknown): value is Container {
   return (
     typeof value === 'object' &&
@@ -27,8 +31,8 @@ function renders(root: pc.Entity): pc.RenderComponent[] {
 /** One trusted bundled pilot. No generated URL intake, appearance authority, or world writes.
  * docs/projects/completed/mercenary-scene-pilot.md */
 export class MercenaryModels {
-  private asset?: pc.Asset;
-  private pending?: Promise<Container>;
+  private readonly assets: pc.Asset[] = [];
+  private pending?: Promise<LoadedModel>;
   private disposed = false;
   private readonly materials: MercenaryMaterials;
   constructor(
@@ -36,8 +40,9 @@ export class MercenaryModels {
     private readonly presentation: WorldPresentation,
     private readonly camera: pc.Entity,
     sun: pc.Light,
+    art: ArtMaterials,
   ) {
-    this.materials = new MercenaryMaterials(sun);
+    this.materials = new MercenaryMaterials(sun, art);
   }
   create(parent: pc.Entity): MercenaryActor {
     return new MercenaryActor(
@@ -49,30 +54,44 @@ export class MercenaryModels {
       this.camera,
     );
   }
-  private load(): Promise<Container> {
-    return (this.pending ??= new Promise((resolve, reject) => {
-      this.app.assets.loadFromUrl(mercenaryUrl, 'container', (error, asset) => {
+  private load(): Promise<LoadedModel> {
+    return (this.pending ??= Promise.all([
+      this.loadAsset(mercenaryUrl),
+      this.loadAsset(motionUrl),
+    ]).then(([resource, motion]) => ({
+      resource,
+      tracks: [...resource.animations, ...motion.animations]
+        .map((a) => a.resource)
+        .filter((track): track is pc.AnimTrack => track instanceof pc.AnimTrack),
+    })));
+  }
+  private loadAsset(url: string): Promise<Container> {
+    return new Promise((resolve, reject) =>
+      this.app.assets.loadFromUrl(url, 'container', (error, asset) => {
         if (this.disposed) {
           asset?.unload();
           if (asset) this.app.assets.remove(asset);
           reject(new Error('Mercenary renderer disposed'));
           return;
         }
-        if (asset) this.asset = asset;
+        if (asset) this.assets.push(asset);
         const resource: unknown = asset?.resource;
         if (error || !container(resource)) {
           reject(new Error('Mercenary model unavailable'));
           return;
         }
         resolve(resource);
-      });
-    }));
+      }),
+    );
   }
   destroy(): void {
     this.disposed = true;
     this.materials.destroy();
-    this.asset?.unload();
-    if (this.asset) this.app.assets.remove(this.asset);
+    for (const asset of this.assets) {
+      asset.unload();
+      this.app.assets.remove(asset);
+    }
+    this.assets.length = 0;
   }
 }
 
@@ -88,7 +107,7 @@ export class MercenaryActor {
   private meshes: pc.MeshInstance[] = [];
   private disposed = false;
   private wanted = false;
-  private wasMoving = false;
+  private motion?: MercenaryMotion;
   private resetCloth = true;
   private settling = 0;
   private yaw?: number;
@@ -102,7 +121,7 @@ export class MercenaryActor {
     private readonly parent: pc.Entity,
     private readonly presentation: WorldPresentation,
     private readonly materials: MercenaryMaterials,
-    loading: Promise<Container>,
+    loading: Promise<LoadedModel>,
     private readonly camera: pc.Entity,
   ) {
     void loading
@@ -117,12 +136,13 @@ export class MercenaryActor {
         console.warn('Mercenary preview keeps the sprite fallback:', error);
       });
   }
-  private install(resource: Container): void {
-    const tracks = resource.animations
+  private install({ resource, tracks }: LoadedModel): void {
+    /* prepared clips include original and deliberately exported holds. */
+    const originalTracks = resource.animations
       .map((a) => a.resource)
       .filter((r): r is pc.AnimTrack => r instanceof pc.AnimTrack);
-    const idle = tracks.find((r) => r.name === 'Idle');
-    const walk = tracks.find((r) => r.name === 'Walk');
+    const idle = originalTracks.find((r) => r.name === 'Idle');
+    const walk = originalTracks.find((r) => r.name === 'Walk');
     if (!(idle instanceof pc.AnimTrack) || !(walk instanceof pc.AnimTrack))
       throw new Error('Mercenary idle/walk clips missing');
     const node = (this.node = resource.instantiateRenderEntity({
@@ -142,25 +162,8 @@ export class MercenaryActor {
     node.addComponent('anim', { activate: true });
     const anim = node.anim;
     if (!anim) throw new Error('Mercenary animation component missing');
-    anim.loadStateGraph({
-      layers: [
-        {
-          name: 'Body',
-          states: [{ name: 'START' }, { name: 'Idle', loop: true }, { name: 'Walk', loop: true }],
-          transitions: [{ from: 'START', to: 'Idle' }],
-        },
-      ],
-      parameters: {},
-    });
-    anim.assignAnimation('Idle', idle);
-    anim.assignAnimation('Walk', walk);
-    const layer = anim.baseLayer;
-    if (!layer) throw new Error('Mercenary animation layer missing');
-    layer.play('Idle');
-    anim.speed = 0;
-    // Force the first supported pose before attaching skin-relative fabric.
     node.enabled = true;
-    layer.update(0);
+    this.motion = new MercenaryMotion(anim, tracks);
     this.cloth = new CapeCloth(this.app, node, displayScale);
     const components = [
       ...renders(node).filter((r) => r.enabled),
@@ -186,7 +189,7 @@ export class MercenaryActor {
     this.visible = visible && this.state === 'ready' && !this.resetCloth && this.settling === 0;
     // Disabling a skinned RenderComponent destroys its cached skin. Keep the rig
     // alive while settling/falling back; hide its geometry and stop its animation.
-    if (this.node?.anim && !this.visible) this.node.anim.speed = 0;
+
     this.cloth?.setVisible(this.visible);
     for (const mesh of this.meshes) {
       mesh.visible = this.visible;
@@ -204,6 +207,7 @@ export class MercenaryActor {
     paused: boolean,
     reveal: number,
     selected: boolean,
+    art: Readonly<ArtTreatment> = baselineArt,
   ): void {
     const node = this.node,
       anim = node?.anim;
@@ -215,6 +219,7 @@ export class MercenaryActor {
         : pc.math.lerpAngle(this.yaw, target, 1 - Math.exp(-Math.min(dt, 0.1) * 12));
     node.setLocalEulerAngles(0, this.yaw, 0);
     const foot = this.parent.getPosition();
+    this.motion?.update(dt, moving, paused, art.motion, art.actionFixture);
     if (this.resetCloth || foot.distance(this.previousFoot) > 1.5) {
       this.cloth.reset();
       this.settling = 60;
@@ -231,12 +236,8 @@ export class MercenaryActor {
       if (this.settling > 0) return;
       this.setVisible(this.wanted);
     }
-    if (moving !== this.wasMoving) {
-      anim.baseLayer?.transition(moving ? 'Walk' : 'Idle', 0.12);
-      this.wasMoving = moving;
-    }
-    anim.speed = paused ? 0 : 1;
-    this.cloth.update(dt, !paused);
+    this.cloth.update(dt, !paused, art.cloth);
+    this.pixels?.setTreatment(art.sampling, art.edges);
     const targetStrength = selected ? 0 : reveal;
     this.strength += (targetStrength - this.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12));
     if (Math.abs(this.strength - targetStrength) < 0.001) this.strength = targetStrength;
@@ -281,6 +282,7 @@ export class MercenaryActor {
       height: this.height,
       width: this.width,
       animation: this.node?.anim?.baseLayer?.activeState,
+      motion: this.motion?.diagnostics(),
       settling: this.settling,
       cloth: this.cloth?.diagnostics(),
     };
@@ -292,6 +294,7 @@ export class MercenaryActor {
     this.cloth = undefined;
     this.node?.destroy();
     this.node = undefined;
+    this.motion = undefined;
     this.meshes.length = 0;
     this.visible = false;
   }

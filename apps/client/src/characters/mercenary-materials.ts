@@ -1,11 +1,15 @@
 import * as pc from 'playcanvas';
 import { ShadowMaterial } from '../shadow-material';
+import { ArtMaterials } from '../art-treatment';
 import { personStencil, setVisibilityStencil } from '../visibility-stencil';
 
 /** Shared source artwork lit by the world, then sampled by the character image. */
 export class MercenaryMaterials {
   private readonly prepared = new Map<pc.StandardMaterial, ShadowMaterial>();
-  constructor(private readonly sun: pc.Light) {}
+  constructor(
+    private readonly sun: pc.Light,
+    private readonly art: ArtMaterials,
+  ) {}
 
   prepare(source: pc.StandardMaterial): pc.StandardMaterial {
     const existing = this.prepared.get(source);
@@ -26,6 +30,14 @@ export class MercenaryMaterials {
       material.twoSidedLighting = true;
     }
     setVisibilityStencil(material, personStencil);
+    this.art.prepare(
+      material,
+      source.name.includes('Madder') || source.name.includes('lining')
+        ? 2
+        : source.name.includes('Mercenary')
+          ? 1
+          : 0,
+    );
     material.update();
     this.prepared.set(source, material);
     return material;
