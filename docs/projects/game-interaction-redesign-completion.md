@@ -18,6 +18,51 @@ The completion work started on `Macrofold/OpenLegend`, GitHub `refs/heads/docs/g
 
 ## Implementation plan
 
+### Current continuation — October 14
+
+Mike requested finishing the branch after the UI-only handoff. The checkout at
+`/Users/mzw/.codex/worktrees/0f80/OpenLegend` now uses
+`docs/game-ui-research-redesign`; it previously had detached HEAD at
+`4f16dc98c989b9954c2d00ba89e3c584824c7ca1`. The main checkout is unchanged.
+The PR target was refreshed from `https://github.com/Macrofold/OpenLegend.git`:
+`origin/main` at `0c12398e32e7c9578e18de07bbe79d39b4827208`. Merge
+`542644797` preserves published history and combines the newer privacy,
+current-format storage and authored terrain contracts with this branch's paired
+inventory, scoped drafts and exact original-request recovery.
+
+Finish in this order:
+
+1. Inspect the existing captures and distinguish visible content from controls
+   outside their captured reading position. Retain all earlier failures and limits.
+2. Exercise the remaining connected UI tasks and recovery boundaries with the
+   real application, disposable PostgreSQL and providers disabled. Reuse valid
+   native subsystem evidence; do not restart the excluded hunting investigation.
+3. Verify completed-task reading, short/narrow layouts, enlarged text and keyboard
+   alternatives. Qualify the supported alternate-world interface through the
+   existing installed definitions.
+4. Fix demonstrated in-scope defects, review the full affected diff, reconcile the
+   owning tracker/evidence/project status, and run the final required checks.
+   The recovery review found that the owner conversation used an optional storage
+   write before a paid send. Verify exact retention before dispatch, distinguish
+   unreadable recovery from no request, and verify matching cleanup before another
+   send. This uses the existing session/request owner and adds no paid retry.
+5. Obtain actual OS input-method, assistive-device and uncoached-player evidence
+   from suitable participants/devices. These remain required human observations;
+   scripted interaction cannot close them.
+
+After reconciliation, the initial estimate is fewer than 200 additional production
+logic lines, excluding tests and documentation; reassess if a demonstrated defect
+widens the work. Existing private-read and native mutation owners remain
+authoritative. Cost grows with the visible collections and retained task details;
+reuse current scoped reads, invalidate them on their actual access/content changes,
+and measure through the connected screens. Do not add recurring polling, retained
+world copies or another recovery executor.
+
+Reconciliation passed TypeScript, production build, generated configuration,
+guidance, affected formatting and 14 focused draft/transport tests. These are
+static/fixture results, not browser or whole-feature acceptance. New UI verification
+starts only after that merge; no browser environment ran during reconciliation.
+
 ### Original action recovery — UIUX12
 
 Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.
@@ -63,7 +108,7 @@ The consequential risks are duplicate paid interpretation, repeated world rewind
 - **Invalidation:** bind action results to original identity/body and current private owner/world/timeline; bind load-result inspection to its original durable operation while separately checking current save authority. Ignore obsolete component/query completions. Failure to read or clear browser storage never means a request did not happen.
 - **Measurement:** run pinned formatting, configuration/guidance checks, TypeScript and the production build; exercise relevant existing native/HTTP checks and finite missing recovery scenarios with disposable PostgreSQL. Run the actual production App/server/browser journeys, record exact source and failed stages, and inspect captured UI. Required CI remains required. No broad new benchmark suite is needed for these exact-ID, explicit-gesture paths.
 
-The session's local execution tools are currently failing before commands run. Use the existing GitHub Actions execution path for disposable native/server/PostgreSQL/browser verification; do not describe it as Mike's local checkout. Any temporary runner-only observation/packaging files must be removed from the final feature tree. Keep generated logs, traces and screenshots in the execution artifacts rather than adding them to canonical source by default.
+During the earlier October 14 pass, local execution failed before commands ran, so its verification used disposable GitHub Actions checkouts. The current continuation can run local commands and uses its own disposable PostgreSQL container and worlds; Mike's saved development world is not used. Browser launch requires execution outside the command sandbox. Any temporary observation/packaging files stay outside the final feature tree. Keep generated logs, traces and screenshots outside canonical source by default.
 
 All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture interpretation or supplied recipient decisions cannot establish live model quality. No paid call has been made in this completion pass; the shared authorized task cap remains governed by repository verification policy.
 

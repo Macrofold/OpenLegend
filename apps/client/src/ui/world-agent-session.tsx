@@ -30,6 +30,18 @@ const pendingValue = (v: unknown): v is Pending | null =>
     typeof v.id === 'string' &&
     'text' in v &&
     typeof v.text === 'string');
+type PendingRead = { value: Pending | null; unreadable: boolean };
+function readPending(key: string): PendingRead {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(key) ?? 'null');
+    if (!pendingValue(value)) throw new Error('Invalid pending request.');
+    return { value, unreadable: false };
+  } catch {
+    return { value: null, unreadable: true };
+  }
+}
+const samePending = (a: Pending | null, b: Pending | null) =>
+  a === b || (!!a && !!b && a.id === b.id && a.text === b.text);
 
 /** The session ID and request receipt, not the browser transcript, own continuation.
  * Reopening/subscribing must never dispatch inference. docs/world-agent-runtime.md#durable-turn-delivery
@@ -87,10 +99,11 @@ export function WorldAgentSession({
   const [text, setText] = useState(() =>
     readLocal(recordKey('draft'), '', (v): v is string => typeof v === 'string'),
   );
-  const [pending, setPending] = useState(() =>
-    readLocal<Pending | null>(recordKey('pending'), null, pendingValue),
-  );
+  const [initialPending] = useState(() => readPending(recordKey('pending')));
+  const [pending, setPending] = useState(initialPending.value);
   const pendingRef = useRef(pending);
+  const [pendingUnreadable, setPendingUnreadable] = useState(initialPending.unreadable);
+  const pendingUnreadableRef = useRef(pendingUnreadable);
   const [status, setStatus] = useState<WorldAgentSessionStatus>();
   const [turns, setTurns] = useState<WorldAgentTurnView[]>([]);
   const [before, setBefore] = useState<WorldAgentTurnCursor | null>(null);
@@ -138,10 +151,44 @@ export function WorldAgentSession({
       setText((previous) => (previous ? `${previous}\n${seed.text}` : seed.text));
     }
   }, [seed]);
-  function retainPending(value: Pending | null) {
+  function pendingAccess(unreadable: boolean) {
+    pendingUnreadableRef.current = unreadable;
+    if (alive.current) setPendingUnreadable(unreadable);
+  }
+  function adoptPending(value: Pending | null) {
     pendingRef.current = value;
-    writeLocal(recordKey('pending'), value);
     if (alive.current) setPending(value);
+  }
+  function inspectPending() {
+    const stored = readPending(recordKey('pending'));
+    const changed =
+      !!pendingRef.current && !!stored.value && !samePending(pendingRef.current, stored.value);
+    pendingAccess(stored.unreadable || changed);
+    if (!stored.unreadable && !changed && !pendingRef.current) adoptPending(stored.value);
+    return stored;
+  }
+  function retainPending(value: Pending | null) {
+    const stored = inspectPending();
+    if (pendingUnreadableRef.current)
+      throw new Error('The original request could not be read safely. Nothing new was sent.');
+    if (stored.value && !samePending(stored.value, value ?? pendingRef.current)) {
+      pendingAccess(true);
+      throw new Error('Another request remains unresolved. Check its saved result first.');
+    }
+    // Unlike optional draft text, this identity must survive a lost acknowledgement.
+    // docs/world-agent-runtime.md#durable-turn-delivery
+    writeLocal(recordKey('pending'), value);
+    const confirmed = readPending(recordKey('pending'));
+    if (confirmed.unreadable || !samePending(confirmed.value, value)) {
+      pendingAccess(true);
+      throw new Error(
+        value
+          ? 'This browser could not retain the exact request. Nothing new was sent.'
+          : 'The saved result is known, but this browser could not clear its recovery record. Check the saved result again after restoring storage.',
+      );
+    }
+    pendingAccess(false);
+    adoptPending(value);
   }
   function mergeTurns(values: WorldAgentTurnView[]) {
     setTurns((previous) => {
@@ -178,6 +225,7 @@ export function WorldAgentSession({
     }
     refreshing.current = true;
     try {
+      inspectPending();
       const response = await post<WorldAgentSessionStatus & { ok: boolean; message?: string }>(
         '/api/world-agent/session/status',
         prefix,
@@ -358,6 +406,7 @@ export function WorldAgentSession({
       current.data.activeTurn ||
       current.data.question ||
       current.data.budget.availableUsd <= 0 ||
+      pendingUnreadableRef.current ||
       (!existing && pendingRef.current) ||
       (!existing && !text.trim())
     )
@@ -787,7 +836,9 @@ export function WorldAgentSession({
                   <Button
                     size="sm"
                     disabled={
+                      !connected ||
                       busy ||
+                      pendingUnreadable ||
                       !!session.activeTurn ||
                       !session.available ||
                       !status.availability.configured
@@ -799,6 +850,20 @@ export function WorldAgentSession({
                   <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
                     Check saved result
                   </Button>
+                </div>
+              )}
+              {pendingUnreadable && (
+                <div className="ol-notice" role="alert">
+                  <p>
+                    This browser could not read or update the original request’s recovery record.
+                    Restore browser storage access, then check the saved result. Another request
+                    will stay blocked until it can be checked.
+                  </p>
+                  {!pending && (
+                    <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+                      Check saved result
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -827,6 +892,7 @@ export function WorldAgentSession({
                   !!session.activeTurn ||
                   !!session.question ||
                   !!pending ||
+                  pendingUnreadable ||
                   !session.available ||
                   !status.availability.configured ||
                   session.budget.availableUsd <= 0 ||

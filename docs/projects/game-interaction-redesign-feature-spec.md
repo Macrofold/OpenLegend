@@ -1,8 +1,8 @@
 # Open Legend: whole-interface redesign
 
-| Status      | Current progress                                                                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Whole-interface research, design and the implementation candidate are in place; complete gameplay and real-input/player qualification remain open. | 2026-10-07   |
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Whole-interface implementation and reload recovery are delivered; final connected, device and player qualification remains open. | 2026-10-14   |
 
 [Technical design](game-interaction-redesign-tech-design.md) · [Game interface atlas](../ui-ux/games/README.md) · [Current-interface diagnosis](../ui-ux/current-interface-audit.md)
 
