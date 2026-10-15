@@ -71,6 +71,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
       .toBeCloseTo(3);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await page.getByRole('button', { name: 'Center on player', exact: true }).click();
+    await page.getByRole('button', { name: 'Camera options', exact: true }).click();
     await page.getByRole('button', { name: 'Rotate right', exact: true }).click();
     await expect(canvas).toHaveAttribute('data-camera-yaw', String(Math.PI / 4));
     await page.getByRole('button', { name: 'Perspective view', exact: true }).click();

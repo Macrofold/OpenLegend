@@ -149,24 +149,54 @@ async function keyboardControl(control: Locator) {
         throw new Error('Expected the exact reply button.');
       const body = button.closest<HTMLElement>('.ol-panel-body');
       if (!body) throw new Error('The reply button has no panel scrolling area.');
-      const rect = button.getBoundingClientRect(),
-        bodyRect = body.getBoundingClientRect();
+      const rect = button.getBoundingClientRect();
       const style = getComputedStyle(button);
       const width = Number.parseFloat(style.outlineWidth),
         offset = Number.parseFloat(style.outlineOffset);
       const extent = Math.max(0, width + offset);
       const ringX = (extent * rect.width) / button.offsetWidth,
         ringY = (extent * rect.height) / button.offsetHeight;
-      const bodyX = bodyRect.width / body.offsetWidth,
-        bodyY = bodyRect.height / body.offsetHeight;
-      const left = bodyRect.left + body.clientLeft * bodyX,
-        top = bodyRect.top + body.clientTop * bodyY;
       const ring = {
         left: rect.left - ringX,
         top: rect.top - ringY,
         right: rect.right + ringX,
         bottom: rect.bottom + ringY,
       };
+      const clip = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+      const ancestors = [];
+      for (let ancestor = button.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        const box = ancestor.getBoundingClientRect(),
+          css = getComputedStyle(ancestor);
+        const scaleX = ancestor.offsetWidth ? box.width / ancestor.offsetWidth : 1,
+          scaleY = ancestor.offsetHeight ? box.height / ancestor.offsetHeight : 1;
+        const left = box.left + ancestor.clientLeft * scaleX,
+          top = box.top + ancestor.clientTop * scaleY;
+        const bounds = {
+          left,
+          top,
+          right: left + ancestor.clientWidth * scaleX,
+          bottom: top + ancestor.clientHeight * scaleY,
+        };
+        const clipsX = /^(auto|scroll|hidden|clip|overlay)$/.test(css.overflowX),
+          clipsY = /^(auto|scroll|hidden|clip|overlay)$/.test(css.overflowY);
+        ancestors.push({
+          tag: ancestor.tagName,
+          id: ancestor.id,
+          className: ancestor.className,
+          overflowX: css.overflowX,
+          overflowY: css.overflowY,
+          scrollTop: ancestor.scrollTop,
+          bounds,
+        });
+        if (clipsX) {
+          clip.left = Math.max(clip.left, bounds.left);
+          clip.right = Math.min(clip.right, bounds.right);
+        }
+        if (clipsY) {
+          clip.top = Math.max(clip.top, bounds.top);
+          clip.bottom = Math.min(clip.bottom, bounds.bottom);
+        }
+      }
       const overlaps = [
         ...document.querySelectorAll<HTMLElement>('#toast,[role="tooltip"],.ol-caption-gap'),
       ]
@@ -205,18 +235,23 @@ async function keyboardControl(control: Locator) {
         control: button.textContent,
         outline: { width, offset, style: style.outlineStyle },
         ring,
+        ancestors,
         overlaps,
-        hitPoints: points.map(([x, y]) => ({
-          x,
-          y,
-          visible: button.contains(document.elementFromPoint(x, y)),
-        })),
-        clip: {
-          left: Math.max(0, left),
-          top: Math.max(0, top),
-          right: Math.min(innerWidth, left + body.clientWidth * bodyX),
-          bottom: Math.min(innerHeight, top + body.clientHeight * bodyY),
-        },
+        hitPoints: points.map(([x, y]) => {
+          const hit = document.elementFromPoint(x, y);
+          return {
+            x,
+            y,
+            visible: button.contains(hit),
+            hit: hit && {
+              tag: hit.tagName,
+              id: hit.id,
+              className: hit.getAttribute('class'),
+              text: hit.textContent?.slice(0, 160),
+            },
+          };
+        }),
+        clip,
       };
     });
   let geometry: Awaited<ReturnType<typeof measure>> | undefined;

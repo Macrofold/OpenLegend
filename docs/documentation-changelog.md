@@ -17,7 +17,7 @@ The [source-specific evidence](verification/ui-completion-2026-10-14.md#selected
 records real creation and action/checkpoint recovery, the retained Journal place,
 and six inspected completed-task results. A small completed-button scroll margin
 keeps its keyboard focus outline inside the reading area. The shared direct editor also constrains its displayed position during viewport reflow while retaining desktop position, draft and the existing drag/Center choices; scaled interaction verification remains separate. Controlled owner turn
-records and supplied long display wording retain their stated limits. Historical
+records and supplied long display wording retain their stated limits. Narrow Character sheets now use their existing outer scroller for identity, tabs and content because a separate tab-page scroller could become shorter than a complete consent button. The tradeoff is scrolling those headings with the narrow content; selected drafts and desktop layout remain intact. Historical
 failures, current required-check failures and real input/device/player criteria
 remain explicit; these selected passes do not establish whole-project completion.
 

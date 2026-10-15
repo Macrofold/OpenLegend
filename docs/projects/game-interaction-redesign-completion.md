@@ -180,6 +180,25 @@ within the same five-second assertion and sixty-second total. This is verificati
 of a concrete image finding, not an additional account or gameplay matrix. Any
 failed geometry must identify its actual owner before production repair.
 
+The stronger b26ecb7cb consent check demonstrates a real Character layout defect:
+its separate tab-page scroller can shrink below one complete button in a short
+narrow window while the identity and tabs consume the remaining height. Use the
+existing outer Character scroller as the single vertical owner in narrow layouts;
+let sections/pages take their natural height. This is roughly eight scoped CSS
+lines, with no shared Panel change, new minimum size, event handler or native
+consent change. Identity/tabs may scroll with the narrow content; desktop and the
+selected section/draft remain intact. Extend the existing focus measurement to
+intersect all intervening clips and identify actual hit targets, and qualify the
+same Decline/Accept/Leave controls within the unchanged limits.
+
+Required Code CI also exposes a stale upstream HTTP catalogue expectation: a
+campfire-specific read still expects ground/self destination evasion, although
+main's accepted catalogue and its focused tests exclude that row for object
+selection. Remove only that obsolete expected entry, keeping the exact remaining
+catalogue/order, read-only world/jobs and input/preferences/authority assertions.
+This affects zero production logic lines. Run the single existing HTTP case and
+final required CI; do not change combat, simulation or action admission.
+
 ### Original action recovery — UIUX12
 
 Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.
@@ -231,9 +250,9 @@ All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture i
 
 ## Completion criteria
 
-- [ ] Original action and checkpoint requests recover through reload and same-page changes without replacement admission or duplicate effects; meaningful storage, identity, privacy and stale-result cases pass.
+- [x] Original action and checkpoint requests recover through reload and same-page changes without replacement admission or duplicate effects; the named storage, identity, privacy and stale-result cases pass at their recorded sources.
 - [ ] Completed-task presentation and the already specified composed game journeys are implemented and verified through their actual owners and rendered interface.
-- [ ] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence.
+- [x] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence; the b26ecb7cb two-preset continuation passes.
 - [ ] In-scope defects and required final Code/Spatial failures are resolved without weakening acceptance; the affected diff and canonical documentation are reviewed and committed.
 - [ ] Remaining keyboard/non-drag, text/viewport, real operating-system input-method, assistive-device and uncoached-player requirements are accurately qualified. Automated browser or synthetic composition results cannot be reported as human/device evidence.
 

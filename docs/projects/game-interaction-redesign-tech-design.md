@@ -474,6 +474,15 @@ draft ownership or save behavior. The original narrow-fit deadline remains a
 required check; separate normal/130% drag-and-center qualification is recorded
 with its actual result in the completion report.
 
+In narrow Character sheets, identity, section tabs and the selected content use
+the existing outer Character scrolling area together. The previous independent
+tab-page scroll area could shrink below a complete consent button in a short
+window, clipping its label and keyboard outline. Natural section/page height
+removes that nested clipping; identity/tabs may scroll away, while the mounted
+selection, draft and focused-intention ownership remain unchanged. Desktop keeps
+its existing separate page reader. This is a scoped layout correction, not a new
+minimum size, scroll event handler or consent rule.
+
 ### State, focus and responsive ownership
 
 Each connected workflow should own its task identity, draft and read lifecycle. Derive the selected display from the current permitted response; retain the intended selection/draft separately when a page is unavailable. Distinguish intentional navigation from a temporary filter miss, stale page or disconnected state. Reuse the inventory design's existing exact-endpoint and quantity contracts instead of restating or extending them here.

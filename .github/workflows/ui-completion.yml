@@ -55,13 +55,6 @@ jobs:
           pnpm exec playwright test --config playwright.ui-completion.config.ts
           --grep 'invitation description search|native Chromium 200%'
           --output /tmp/openlegend-connected-cloud
-      - name: Observe alternate-world task recovery and persistence
-        id: alternate
-        timeout-minutes: 6
-        continue-on-error: true
-        run: >-
-          node --import tsx scripts/ui-completion-alternate.mjs
-          /tmp/openlegend-alternate-cloud
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -69,9 +62,7 @@ jobs:
           retention-days: 7
           path: |
             /tmp/openlegend-connected-cloud
-            /tmp/openlegend-alternate-cloud
-      - name: Require both remaining observations to pass
+      - name: Require the remaining connected observations to pass
         if: always()
         run: |
           test '${{ steps.connected.outcome }}' = success
-          test '${{ steps.alternate.outcome }}' = success

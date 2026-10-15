@@ -436,13 +436,47 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     await page.keyboard.press('Enter'); // The actual camera-only control must not move the actor.
     await page.keyboard.press('Tab');
     await reachable(move);
-    const bounds = await journal.boundingBox();
-    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
-    expect(bounds).not.toBeNull();
-    expect(bounds!.x).toBeGreaterThanOrEqual(-1);
-    expect(bounds!.y).toBeGreaterThanOrEqual(-1);
-    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width + 1);
-    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height + 1);
+    const enlargedPanelGeometry = () =>
+      journal.evaluate((panel) => {
+        const rect = panel.getBoundingClientRect();
+        const style = getComputedStyle(panel);
+        return {
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: innerWidth,
+          height: innerHeight,
+          opacity: style.opacity,
+          transform: style.transform,
+          animationName: style.animationName,
+          animationDuration: style.animationDuration,
+          animationPlayState: style.animationPlayState,
+          animations: panel.getAnimations().map((animation) => ({
+            playState: animation.playState,
+            currentTime: typeof animation.currentTime === 'number' ? animation.currentTime : null,
+            progress: animation.effect?.getComputedTiming().progress,
+          })),
+        };
+      });
+    // Reopening starts the ordinary 200ms panel animation. Require the same
+    // complete viewport fit after it settles, within the existing assertion bound.
+    await expect
+      .poll(async () => {
+        const geometry = await enlargedPanelGeometry();
+        report.enlargedPanelInProgress = geometry;
+        return (
+          geometry.opacity === '1' &&
+          geometry.left >= -1 &&
+          geometry.top >= -1 &&
+          geometry.right <= geometry.width + 1 &&
+          geometry.bottom <= geometry.height + 1
+        );
+      })
+      .toBe(true);
+    report.enlargedPanel = await enlargedPanelGeometry();
+    delete report.enlargedPanelInProgress;
+    await reachable(move); // Recheck the complete focus ring and overlays at the settled position.
     await capture('journal-browser-zoom-200-keyboard.png', enlarged.dom);
 
     // Keep the measured native 200% zoom. Only this owned browser window is

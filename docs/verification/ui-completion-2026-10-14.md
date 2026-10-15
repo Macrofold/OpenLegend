@@ -476,6 +476,109 @@ toggle needs adaptation to main's accepted known-blocked-action behavior. Final
 required Code/Spatial and the remaining zoom/alternate/invitation observations
 still need their actual results.
 
+## Selected continuation at b26ecb7cb
+
+The [sixth finite run](https://github.com/Macrofold/OpenLegend/actions/runs/38687826343)
+at `b26ecb7cb9f38625b213af702bdc11d3c06504cd` is **failed overall**, with a
+passing alternate-world continuation and two failed connected checks. Subsequent
+merge `ef301fae202f14fe528d1e986712566e965ab2a1` adds only main's research
+documents from `362d3b0a20e92fc38a672730104b957b1c7c1be4`; its runtime is identical.
+
+**Both supported alternate presets pass in 78,378 ms**, under the unchanged
+300-second work / 345-second hard bounds. Seven actual browser commands cover
+clockwork Start, lost Stop acknowledgement, a deliberate later Start/Stop, a later
+Start whose acknowledgement is withheld for changed-login recovery, and touch-world
+Start/Stop. Native partial recharge raises the player's Charge from 48 to about
+59.88 after six seconds, with finite source consumption recorded across the actual
+actors; the observation never attributes the full source decrease to the player.
+Stopping leaves about 59.86 Charge at native time seven. Exact contents/meters,
+world/timeline and the four clockwork/two touch receipts survive reopening each
+same database without replay. Four shutdowns save cleanly at their recorded
+revisions, and outer cleanup drops the owned disposable databases.
+
+Clockwork recovery specifically runs after the earlier work has ended. Unreadable
+session storage and failed matching cleanup block a new Start; checking the exact
+original Stop repeats no command, and restored cleanup permits a distinct deliberate
+Start. A genuine native logout followed by the restarted server's separate local
+login clears the former private record, returns the old receipt as unavailable and
+replays no command. This is a changed local session, not external identity-provider
+UI or an exhaustive grant matrix.
+
+All **five alternate-world images were inspected**. Inventory uses actual authored
+icons or the visible initial fallback. The current-work views show Charge/Integrity
+and the finite supply without human Food/Energy assumptions; Stop all work is
+readable and reachable. The clockwork cancelled-result image retains its original
+Stop and known-result/failed-cleanup explanation. The tall touch image shows the
+ongoing task and deliberate preparation; it is not a completed-task density sample.
+The touch preset's resident has only contact touch and cannot see the source while
+the normally sighted player can. That native perception observation is separate
+from player input and does not qualify an assistive device or literal touch screen.
+
+The invitation case fails at 28.2 seconds in the strengthened short incoming Decline
+check: the full computed control/outline fits and has no measured toast/tooltip
+overlap, but not every button hit point belongs to that button. Source and pixels identify a separate Character tab-page clipping area that can
+shrink below the complete 38-pixel button. The observed button is y308.5–346.5;
+its middle hit points pass while top/bottom fail. The original attachment did not
+record the inner clip or hit-element name, so its calculated 23.5-pixel inner
+height is not reported as a runtime measurement. The scoped correction uses the
+existing outer Character scroller in narrow layouts; stronger ancestor/hit
+diagnostics and actual qualification remain pending. Its original-request recovery and new main search
+prelude run before this failure; later incoming/Leave pictures are unexecuted.
+The earlier functional pass remains scoped and does not waive this stronger focus
+finding.
+
+Zoom fails at 24.9 seconds after native 200% zoom and reachable-control checks,
+when a direct panel measurement reads x = -12 against the unchanged -1 allowance.
+Only its baseline image is captured in this run; no current enlarged/320 pass is
+claimed. The partial JSON correctly records failure and complete owned cleanup.
+Determine whether this measures the ordinary entrance animation or a persistent
+layout defect before changing implementation or the observation. All original
+geometry/assertion/capture/aggregate limits remain controlling.
+
+At `ef301fae2`, [Code CI](https://github.com/Macrofold/OpenLegend/actions/runs/38687994892)
+fails one of 392 tests: the unchanged upstream HTTP campfire-catalogue fixture
+still expects the ground/self evasive-step row that main deliberately removed
+from object-specific catalogues. The exact remaining five rows, no world/job
+mutation and strict request/preference checks stay required; only that stale
+expected row is corrected. Production catalogue behavior is unchanged.
+[Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38687994856)
+fails its 120-second spatial browser case while waiting for Rotate right behind
+main's new Camera options disclosure. All 28 native checks and all six ordinary UI
+journeys pass, including the corrected God editor in 16.9 seconds and Time in
+36.7 seconds under its unchanged sixty-second total. The new camera entry must be
+used without dropping rotation/projection/level/lock/picking assertions. These
+failures remain open until the corrected current checks actually pass.
+
+[Artifact 11950354522](https://github.com/Macrofold/OpenLegend/actions/runs/38687826343/artifacts/11950354522)
+retains 68,035,338 bytes of reports, images and failure traces. Reuse the now-complete
+alternate continuation; run only the two remaining connected observations unless
+a changed owner invalidates earlier evidence. Additional and cumulative task
+provider/Jev cost: **$0**.
+
+## Reused evidence and remaining experience scope
+
+The final source/acceptance audit compares the integrated owners and their actual
+recorded scenarios. It finds no additional independently executable task beyond
+the selected invitation full-focus, browser zoom/reflow and alternate-world
+continuation, final required CI and evidence/tooling cleanup. This is an overlap
+review, not a claim that every historical journey was rerun at the latest source.
+
+| Journey scope                        | Evidence reused and its limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| J01–J16 everyday connections         | The native paired Inventory/two-account conservation, denied-container image, [ten-command camp](game-interaction-redesign.md#completed-native-camp-connection), [seven-command approach/care/crafting](game-interaction-redesign.md#native-approach-recovery-longer-care-and-physical-crafting), barter and outing owners cover their specific real effects and receipts. The camp sends no speech/chat and generates no reply; it retains recipient/draft and reads unavailable-AI feedback. It is not an uncoached complete J16 session. |
+| J13/J25–J27 speech and reading       | [Native speech/search/paging/Talk history](player-clarity-ui.md#c11e02--older-history-and-bounded-search) and [actual captions/hearing](hearing-main-integration.md#manual-runtime-verification) retain event-time audience and permitted-word meanings. Current controlled Conversation checks cover draft/retry presentation; Journal has actual selection, exact Move, cancellation and changed-owner observations. No live generated reply is newly qualified.                                                                          |
+| J17–J18/J28–J35 entry and operations | Current required Time, exact checkpoint/protection recovery, [native owner Operations return](game-interaction-redesign.md#native-owner-return-at-a4e02cc--october-6-2026) and [native invitation/revocation/maintenance](multiplayer-entry-maintenance.md#invite-enrollment-and-revocation) retain distinct browser and administrative-write scope. Reading does not acquire control before Return.                                                                                                                                        |
+| J36–J45 creation and inspection      | [Existing typed-question acceptance](game-interaction-redesign.md#reused-typed-question-acceptance), native Preview/Save/Approve/Apply recovery, item/person/environment recovery, person save, definition/source navigation and the scaled editor observation cover their recorded native or controlled boundaries. No new provider quality or exhaustive long-history claim follows.                                                                                                                                                      |
+| J46 portability                      | The b26ecb7cb recharge/storage/return/touch continuation passes its concrete current interface requirements. Earlier native persistence and alternate-definition evidence retains its scope; arbitrary-world and real-device behavior is not inferred.                                                                                                                                                                                                                                                                                      |
+| J47–J48 input and experience         | Existing keyboard, non-drag, enlarged-reading and viewport observations qualify only their actual tasks. Real OS composition, applicable assistive devices and uncoached player/creator/operator sessions remain unperformed. Synthetic input, virtual-display XTEST and agent-driven native scenarios cannot supply those observations.                                                                                                                                                                                                    |
+
+The remaining human experience gate asks for hesitation, wrong targets,
+unintended movement, lost drafts, backtracking and recovery without coaching.
+It cannot be completed by relabeling controlled scenarios or screenshot count as
+participant evidence. Broader feature owners retain their own explicitly scoped
+qualifications; this UI continuation does not reopen their unchanged implementation
+or manufacture an exhaustive identity/permission/layout matrix.
+
 ## Remaining whole-feature qualification
 
 The October 15 source review also found a Current task recovery defect: failed
