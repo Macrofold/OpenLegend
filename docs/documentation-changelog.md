@@ -1,5 +1,26 @@
 # Documentation changelog
 
+## October 15, 2026 — Protect exact interface request recovery
+
+The [UI completion continuation](projects/game-interaction-redesign-completion.md)
+integrates the current foundation with the redesigned Inventory and retained
+reading/drafts. Owner conversation and Current task now verify exact browser
+retention before dispatch; unreadable storage or failed matching cleanup keeps a
+new request blocked while preserving editable text and original-result reading.
+This replaces the previous treatment of unreadable task storage as no request and
+optional owner-message retention before a potentially paid send. Existing native
+receipts, authority and spending remain responsible for actual execution; there is
+no automatic retry or new task-size allowance. Ending exact companion consent
+remains independently available through its native owner.
+
+The [source-specific evidence](verification/ui-completion-2026-10-14.md#selected-continuation-at-72214abab)
+records real creation and action/checkpoint recovery, the retained Journal place,
+and six inspected completed-task results. A small completed-button scroll margin
+keeps its keyboard focus outline inside the reading area. The shared direct editor also constrains its displayed position during viewport reflow while retaining desktop position, draft and the existing drag/Center choices; scaled interaction verification remains separate. Controlled owner turn
+records and supplied long display wording retain their stated limits. Historical
+failures, current required-check failures and real input/device/player criteria
+remain explicit; these selected passes do not establish whole-project completion.
+
 ## October 14, 2026 — Complete foundation hardening and browser acceptance
 
 All [immediate foundation tasks](maintainers/foundation-review-todos.md) are complete, with the [plan](projects/completed/foundation-hardening-plan.md) moved to completed projects. Actual browser review found that remembered multipart objects could remain opaque; the renderer now applies remembered visibility to every appearance part while preserving each material's alpha, with no per-frame scene traversal. Initial 3D construction waits until a tab is selected so optional graphics do not delay control acquisition; existing paused scenes retain the player's camera. This changes a newly opened competing tab's background timing, not its permissions or world behavior. [Current presentation](world-presentation.md) owns those behaviors.

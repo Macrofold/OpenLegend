@@ -366,20 +366,30 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
       'open-legend:action-draft:trade:' +
       view.entities.find((entity) => entity.id === companionId)!.trade!.scope;
     const beforeDisconnect = await draft(page, key);
+    const review = trade.getByRole('button', { name: labels.review, exact: true });
+    await expect(review).toBeEnabled();
+    // The native stream error deliberately schedules a fresh state read after six
+    // seconds. Observe that real reconnect before the ordinary five-second UI check.
+    const reconnected = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/api/state' && response.ok(),
+      { timeout: 10_000 },
+    );
     const address = game.server.address();
     if (!address || typeof address === 'string') throw new Error('Missing listener');
     game.server.closeAllConnections();
     await new Promise<void>((resolve) => game.server.close(() => resolve()));
     try {
-      await expect(trade.getByRole('button', { name: labels.review, exact: true })).toBeDisabled();
+      await expect(page.locator('#connection')).toContainText('Connection interrupted.');
+      await expect(review).toBeDisabled();
       const disconnected = await draft(page, key);
       expect(disconnected.draft).toEqual(beforeDisconnect.draft);
       expect(disconnected.reviewed).toEqual(beforeDisconnect.reviewed);
     } finally {
       await new Promise<void>((resolve) => game.server.listen(address.port, '127.0.0.1', resolve));
     }
+    await reconnected;
     await enterGame(page);
-    await expect(trade.getByRole('button', { name: labels.review, exact: true })).toBeEnabled();
+    await expect(review).toBeEnabled();
     expect((await draft(page, key)).draft).toEqual(beforeDisconnect.draft);
     await expect(accept).toBeDisabled();
     expect(observation.browserCommands.slice(0, 2)).toEqual(inspections);
@@ -633,6 +643,7 @@ test('invitation description search and composed consent controls retain exact p
     expect((await read()).player.outings).toEqual([]);
     await task.getByRole('button', { name: 'Prepare another task', exact: true }).click();
     await expect(send).toBeEnabled();
+    await task.locator('.ol-task-overview details summary').click();
     await expect(purpose).toHaveValue(intendedPurpose);
     expect(observation.browserCommands).toHaveLength(2);
     observation.readings.push({

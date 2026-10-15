@@ -62,6 +62,16 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
   let context: BrowserContext | undefined;
   let page: Page | undefined;
   const posts: string[] = [];
+  type ObservationPhase = 'entry' | 'reading' | 'cleanup';
+  let phase: ObservationPhase = 'entry';
+  const postBodies: Array<{ path: string; body: unknown; phase: ObservationPhase }> = [];
+  const captures: Array<{
+    name: string;
+    width: number;
+    height: number;
+    expectedWidth: number;
+    expectedHeight: number;
+  }> = [];
   const commands: string[] = [];
   const providers: string[] = [];
   const errors: string[] = [];
@@ -83,6 +93,8 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       'Chromium uses only its own disposable automation profile; no user browser, profile or settings are opened.',
     ],
     posts,
+    postBodies,
+    captures,
     commands,
     providers,
     errors,
@@ -141,6 +153,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
         outsideRequests.push(url.origin + url.pathname);
       if (request.method() !== 'POST') return;
       posts.push(url.pathname);
+      postBodies.push({ path: url.pathname, body: request.postDataJSON(), phase });
       if (
         /^\/api\/(?:command$|action-attempt$|saves\/(?:create|load|delete)$|god\/)/.test(
           url.pathname,
@@ -189,6 +202,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       ...worldPosition(game.service.world.entities[game.service.controlledEntityId]!),
     };
     report.selected = selected.place;
+    phase = 'reading';
 
     const pid = server.process().pid;
     expect(pid).toBeDefined();
@@ -212,6 +226,47 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     await x11('key', '--clearmodifiers', 'ctrl+0');
 
     const cdp = await context.newCDPSession(page);
+    async function capture(
+      name: string,
+      viewport: { innerWidth: number; innerHeight: number; dpr: number },
+    ) {
+      report.captureInProgress = name;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          (async () => {
+            // Native page zoom changes DPR after context creation. Omit Playwright's
+            // cached viewport clip and capture the actual view without rescaling it.
+            const screenshot = await cdp.send('Page.captureScreenshot', {
+              format: 'png',
+              fromSurface: false,
+              captureBeyondViewport: false,
+            });
+            const png = Buffer.from(screenshot.data, 'base64');
+            const width = png.readUInt32BE(16),
+              height = png.readUInt32BE(20);
+            const expectedWidth = Math.round(viewport.innerWidth * viewport.dpr),
+              expectedHeight = Math.round(viewport.innerHeight * viewport.dpr);
+            await writeFile(info.outputPath(name), png);
+            captures.push({ name, width, height, expectedWidth, expectedHeight });
+            expect(Math.abs(width - expectedWidth)).toBeLessThanOrEqual(2);
+            expect(Math.abs(height - expectedHeight)).toBeLessThanOrEqual(2);
+          })(),
+          new Promise<never>((_, reject) => {
+            timeout = setTimeout(
+              () =>
+                reject(
+                  new Error(`Native pixel capture exceeded the original 10-second bound: ${name}`),
+                ),
+              10000,
+            );
+          }),
+        ]);
+        delete report.captureInProgress;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
     async function metrics() {
       const dom = await page!.evaluate(() => {
         const hud = document.querySelector<HTMLElement>('.ol-hud')!;
@@ -236,10 +291,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     const baseline = await metrics();
     expect(baseline.dom.appScale).toBe('1');
     expect(baseline.dom.visualScale).toBe(1);
-    await page.screenshot({
-      path: info.outputPath('journal-browser-zoom-100.png'),
-      timeout: 10000,
-    });
+    await capture('journal-browser-zoom-100.png', baseline.dom);
     await x11(
       'key',
       '--clearmodifiers',
@@ -379,10 +431,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     expect(bounds!.y).toBeGreaterThanOrEqual(-1);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width + 1);
     expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height + 1);
-    await page.screenshot({
-      path: info.outputPath('journal-browser-zoom-200-keyboard.png'),
-      timeout: 10000,
-    });
+    await capture('journal-browser-zoom-200-keyboard.png', enlarged.dom);
 
     // Keep the measured native 200% zoom. Only this owned browser window is
     // resized; no viewport/device/page-scale emulation supplies the 320px phase.
@@ -457,10 +506,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       selectedPlaceId: selected.place.id,
       inspectionRequests: inspections.length,
     };
-    await page.screenshot({
-      path: info.outputPath('journal-browser-zoom-200-reflow-320.png'),
-      timeout: 10000,
-    });
+    await capture('journal-browser-zoom-200-reflow-320.png', reflow.dom);
     expect(digest(game.service.world)).toBe(initialDigest);
     expect(worldPosition(game.service.world.entities[game.service.controlledEntityId]!)).toEqual(
       initialPosition,
@@ -471,13 +517,28 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       posts.filter(
         (path) =>
           ![
-            '/api/control',
             '/api/presence',
+            '/api/embodiment',
+            '/api/commitments',
             '/api/known-places',
             '/api/known-places/inspect',
           ].includes(path),
       ),
     ).toEqual([]);
+    // Entry acquires a native controlling lease; it is not a read. Reading and
+    // browser zoom must not acquire, replace or release control again.
+    const ownership = postBodies.filter(({ path }) => path === '/api/embodiment');
+    expect(ownership).toHaveLength(1);
+    expect(ownership[0]!.phase).toBe('entry');
+    expect(ownership[0]!.body).toEqual({
+      id: expect.any(String),
+      operation: 'acquire',
+      expectedGeneration: 0,
+    });
+    for (const request of postBodies.filter(({ path }) => path === '/api/commitments'))
+      expect(request.body).toEqual({});
+    for (const request of postBodies.filter(({ path }) => path === '/api/known-places'))
+      expect(request.body).toEqual({ query: '' });
     expect(errors).toEqual([]);
     expect(outsideRequests).toEqual([]);
     const usage = await store.usage(0);
@@ -492,6 +553,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     report.failure = error instanceof Error ? (error.stack ?? error.message) : String(error);
     throw error;
   } finally {
+    phase = 'cleanup';
     for (const [owner, close] of [
       [
         'page',

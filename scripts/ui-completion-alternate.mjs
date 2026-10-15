@@ -30,7 +30,7 @@ const [
 // Filled from the actual checkout during preparation, before any runtime is authorized.
 const preparedSourceSha256 = {
   'apps/client/src/design-system/layout.css':
-    '621f558c3efabdd95355bfb7d36df238031e8880afa1f08124793a1d40c4fec3',
+    '4252708accf07af796f68da68a3483a3585aa9a73cad1e44aab356bdffa07619',
   'apps/client/src/main.tsx': 'fe9761baa102d82aaf54f8a505f24d9739e41a17ca8f02fb24cc91145c55bf44',
   'apps/client/src/ui/camp-activity.tsx':
     '6938d36c405fa393c8275e6bfb170e40b3f09a2b8322e6c83c315a4e3585cecf',
@@ -108,7 +108,8 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
   const report = {
     stage: 'alternate-world',
     startedAt: new Date().toISOString(),
-    productionBase: '5afc190268370b6c95223433429a17555e28824d',
+    originalPreparationBase: '5afc190268370b6c95223433429a17555e28824d',
+    runtimeSource: process.env.GITHUB_SHA ?? 'unrecorded-local-checkout',
     checkout: process.env.GITHUB_SHA ?? 'unrecorded-local-checkout',
     headRef: process.env.GITHUB_HEAD_REF ?? '',
     node: process.version,
@@ -581,7 +582,7 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
 
         await openTask();
         const nearby = page.locator('#nearbyPanel');
-        const task = page.locator('#activityPanel');
+        let task = page.locator('#activityPanel');
         await expect(task).toContainText(source.name);
         await expect(task.locator('input, select, [role="combobox"]')).toHaveCount(0);
         await expect(task.getByRole('button', { name: 'Start task', exact: true })).toBeEnabled();
@@ -790,6 +791,8 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
         await shutdownHost('before reopen');
 
         await startHost(true);
+        // The restart creates a different Page; locators retain their original Page.
+        task = page.locator('#activityPanel');
         assert.deepEqual(
           savedContents(),
           retained,

@@ -328,6 +328,69 @@ zoom and alternate cases unless a relevant behavior owner changes. No production
 authentication, simulation or deadline change follows from these fixture failures.
 Additional and cumulative task provider/Jev cost: **$0**.
 
+## Selected continuation at d23efc05c
+
+The [fourth finite run](https://github.com/Macrofold/OpenLegend/actions/runs/38685376344/job/116258895210)
+at `d23efc05c70fdac6495cafff3887bb3f4250d09a` is **failed**. All three selected
+connected cases fail, after progressing beyond their previous fixture errors:
+
+- Barter reaches 45.3 seconds. The exact two Inventory inspections, retained
+  three-unit draft, native smaller maximum and reviewed counteroffer run; Review
+  changed terms remains disabled after the disconnection/re-entry sequence. Its
+  actual connection/authority state still needs diagnosis before correction.
+- Invitation reaches 48.3 seconds. One real invitation, lost acknowledgement,
+  enabled exact Withdraw, retained original request, blocked new Send, original
+  result read and later deliberate preparation run. Send is enabled, but the
+  fixture expects the purpose textbox where no textbox is currently rendered.
+  Incoming accept/decline/Leave observations are not reached.
+- Browser zoom reaches 51.2 seconds. Native X11 keys double Chromium's pixel ratio
+  from one to two at an unchanged 1440×960 outer window, halving the inner width
+  from 1440 to 720 CSS pixels. Resizing only that owned window to 640 physical
+  pixels supplies a measured 320-CSS-pixel width while keeping real 200% zoom,
+  application scale one and visual viewport scale one. The exact place survives
+  Hide/reopen; full focused controls and outlines fit, no visible tooltip overlaps
+  them, document width stays 320, and the character/world and command count remain
+  unchanged. The final POST allowlist then incorrectly rejects the legitimate initial
+  control-acquisition request and the promises read. Acquiring control is a real
+  entry effect, not a read-only endpoint; it must be accounted for separately
+  from later viewing. Its later usage assertion is not reached; command/provider
+  request observations remain empty.
+
+All three zoom images were inspected. The baseline is a correct 1440×873 content
+capture. The enlarged images are only 720×436 and 320×436 **physical** pixels and
+show the enlarged top-left portion, omitting the controls whose geometry passed.
+They do not establish readable full enlarged-browser pixels. Correct actual
+browser-content capture without changing zoom, viewport geometry or the original
+ten-second capture allowance; this is a capture limitation, not evidence that the
+application itself clips those controls.
+
+The alternate-world run reaches its real clockwork task, four native commands and
+same-database reopening before failing at about seventy seconds with an already
+closed page/context. Its recovery assertions establish that the earlier recharge
+has ended, unreadable browser storage blocks new work, a failed matching clear
+continues blocking it, reading the exact original Stop causes no command replay,
+and restored cleanup permits a deliberate later Start. The saved world reopens
+with exact contents/meters and all four original receipts resolved. Later
+changed-login checks and the touch-world stage are unexecuted; the overall run
+remains failed. Both recorded native shutdowns save cleanly. Diagnose the closed
+page before attributing it to application behavior or weakening any deadline.
+
+The three alternate images were inspected. Inventory uses the actual optional
+icons or visible initials; current work shows Charge, finite supply and Stop all
+work without human Food/Energy defaults. The retained cancelled result shows the
+exact original Stop, known-result/failed-cleanup warning and Check request result.
+The invitation's narrow preparation/pending images were also inspected: work
+choices and deliberate Send are readable, followed by exact companion/destination,
+full stated purpose and focused Withdraw. The barter capture shows its retained
+Inventory entry at a scrolled reading position; complete two-sided terms are not
+visible in that frame and later reply captures remain pending.
+
+[Artifact 11950445239](https://github.com/Macrofold/OpenLegend/actions/runs/38685376344/artifacts/11950445239)
+retains 71,378,848 bytes of original reports, traces and captures. Reuse the
+completed-task, creation, Journal and original action/checkpoint passes above;
+only the still-incomplete cases and newly identified private-ownership/editor
+checks need execution. Additional and cumulative task provider/Jev cost: **$0**.
+
 ## Remaining whole-feature qualification
 
 The October 15 source review also found a Current task recovery defect: failed
@@ -335,9 +398,10 @@ session-storage reads appeared to mean no original request, and failed cleanup
 released a confirmed request. The task now distinguishes unreadable storage,
 verifies exact retention before dispatch and keeps the original guard through
 failed cleanup. TypeScript, production build and changed-file formatting pass.
-The alternate-world check has reached one native Start, but its focused recovery
-cases after the earlier work has ended remain unexecuted. Static checks do not
-establish that guarantee.
+The d23efc05c native clockwork observation now exercises that guarantee after the
+earlier work has ended, including unreadable storage, failed matching cleanup,
+read-only original-result recovery and a deliberate later Start. Its later page
+reuse failure leaves changed-login and touch-world continuation incomplete.
 
 The original action and checkpoint reload-recovery implementation is no longer missing: the three specific interrupted-request journeys above pass. This does not close every compound UIUX12/UIUX14 requirement. Wider storage/identity/revocation combinations, complete native barter/outing continuation and the alternate-world interface qualification retain their earlier explicit tracking and evidence limits. Completed-task rendered-result review now passes at the exact source above.
 

@@ -134,6 +134,22 @@ plus the unchanged required narrow-fit case. No new size policy, polling or shar
 panel mechanism is needed. The failed trace establishes delayed fit, not permanent
 overflow or a graphics performance cause.
 
+The final acceptance audit identifies two concrete remaining private-ownership
+observations beyond the passing storage/timeline cases: checking an original action
+under a different legitimately permitted account/character, and clearing a selected
+Journal place while an older permitted inspection is still waiting. Cover both in
+one finite actual-App/server/PostgreSQL scenario. Keep one real original action and
+remembered observation, change ownership through the existing native account/grant
+owner, receive that account's actual fresh view, and verify old draft/request/place
+details disappear and stay absent after the old inspection is released. Attempt
+only a read of the exact original action under the new permitted identity and
+require no original job/result disclosure or mutation. Reuse the existing
+zero-provider action fixture, native authority and private cleanup owners; do not
+fabricate a granted client view or add production policy. Keep the original
+sixty-second case and local action/assertion/capture bounds. This adds temporary
+verification only; injected Storage tests alone do not establish these composed
+browser boundaries.
+
 ### Original action recovery — UIUX12
 
 Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.

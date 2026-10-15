@@ -464,6 +464,16 @@ The actor recipe workshop in `ui/inventions.tsx` is not the owner session's Work
 
 `EditorPanel` in `ui/editor.tsx` remains the shared window seam for the person/global-event editors in `god-tools.tsx`. Refine tab-to-save scope, current-state summaries and layered detail while preserving authored fields, local dirty state and mutation owners. `FamilyEditor` is an implemented, independently verified upstream workflow; integrate its navigation without claiming it needs rebuilding. `WorldInspection` and `Diagnostics` should keep progressive depth, source limitations, raw details and billing in deliberate inspection. Ordinary conversation should not inherit provider-stage controls. Own knowledge and God-only private inspection must continue to use their respective endpoints.
 
+The shared editor constrains its displayed left/top coordinates in CSS during
+viewport resizing, using its existing scaled width/height and physical edge
+margin. React retains the preferred desktop position for return to a larger
+window; drag, Center window and any resize correction begin from the actual
+computed displayed position. This replaces waiting for a React resize update to
+bring a narrowed dialog back on screen, without changing window dimensions,
+draft ownership or save behavior. The original narrow-fit deadline remains a
+required check; separate normal/130% drag-and-center qualification is recorded
+with its actual result in the completion report.
+
 ### State, focus and responsive ownership
 
 Each connected workflow should own its task identity, draft and read lifecycle. Derive the selected display from the current permitted response; retain the intended selection/draft separately when a page is unavailable. Distinguish intentional navigation from a temporary filter miss, stale page or disconnected state. Reuse the inventory design's existing exact-endpoint and quantity contracts instead of restating or extending them here.

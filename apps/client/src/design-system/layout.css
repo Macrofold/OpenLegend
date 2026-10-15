@@ -2004,12 +2004,14 @@ body,
 
 /* Reusable draggable editor window */
 .ol-editor {
+  --editor-width: min(860px, calc((100dvw - 24px) / var(--ui-scale, 1)));
+  --editor-height: min(700px, calc((100dvh - 24px) / var(--ui-scale, 1)));
   position: fixed;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   /* The HUD is scaled; viewport units alone grow the window past the screen. */
-  width: min(860px, calc((100dvw - 24px) / var(--ui-scale, 1)));
-  height: min(700px, calc((100dvh - 24px) / var(--ui-scale, 1)));
+  width: var(--editor-width);
+  height: var(--editor-height);
   container-type: inline-size;
   overflow: hidden;
   border: 1px solid var(--line-strong);
