@@ -51,7 +51,14 @@
           >Framing
           <select id="framing">
             <option value="close">Inspect the design</option>
+            <option value="detail">Face / upper detail</option>
             <option value="game">Game distance</option>
+          </select></label
+        >
+        <label
+          >Projection<select id="projection">
+            <option value="ortho">Orthographic</option>
+            <option value="perspective">Perspective</option>
           </select></label
         >
         <button id="front" type="button">Front</button
@@ -60,6 +67,7 @@
         <button id="zoom-in" type="button" aria-label="Zoom in">Zoom in</button
         ><button id="zoom-out" type="button" aria-label="Zoom out">Zoom out</button>
         <button id="turn" type="button" aria-pressed="false">Turntable</button>
+        <button id="labels-toggle" type="button" aria-pressed="true">Labels</button>
       </section>
       <section class="study-stage" aria-label="Interactive 3D comparison">
         <canvas

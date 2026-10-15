@@ -34,22 +34,21 @@ def paints(output, variant):
         'graphic': ['#364e43', '#496850', '#66825d', '#83986c', '#9da97d', '#2d453c'],
         'open': ['#4a6055', '#5e7764', '#788c6c', '#93a17d', '#b0b594', '#3d554c'],
     }
-    cells = field(64, 1)
-    # Broad interconnected foliage planes leave substantial resting areas.
-    for x, y, c in [(3, 3, 0), (29, 25, 0), (8, 44, 0), (41, 52, 5)]:
-        patch(cells, x, y, [(5, 9), (2, 16), (0, 20), (1, 21), (3, 18), (5, 14), (8, 8)], c)
-    for x, y in [(10, 10), (38, 4), (25, 43), (49, 31)]:
-        patch(cells, x, y, [(4, 7), (1, 13), (0, 15), (0, 17), (2, 13), (5, 7)], 2)
-        patch(cells, x + 2, y + 5, [(3, 7), (0, 11), (1, 10), (3, 6)], 3)
-    # Sparse smaller leaf pairs sit inside larger painted groups.
-    for x, y in [(15, 15), (43, 9), (31, 48), (54, 36), (3, 33), (35, 20)]:
-        patch(cells, x, y, [(1, 3), (0, 5), (0, 4), (1, 2)], 3)
-        patch(cells, x + 5, y + 3, [(1, 2), (0, 4), (0, 3)], 2)
-        if variant == 'graphic':
-            patch(cells, x + 1, y, [(0, 2), (0, 3)], 4)
+    cells = field(64, 0)
+    # Leaf pairs form connected boughs, with broad shadow gaps between groups.
+    # Their pointed stepped silhouettes describe leaves, rather than camouflage.
+    leaf = [(2, 2), (1, 4), (0, 5), (0, 5), (1, 4), (2, 2)]
+    for group, (x, y) in enumerate([(2, 3), (26, 0), (44, 14), (8, 30), (30, 36), (50, 52)]):
+        patch(cells, x, y, [(5, 7), (2, 13), (0, 17), (0, 18), (1, 19), (3, 16), (2, 16), (5, 12), (8, 7)], 1)
+        for index, (dx, dy) in enumerate([(0, 3), (5, 0), (10, 4), (3, 8), (9, 10), (14, 8)]):
+            patch(cells, x + dx, y + dy, leaf, 2 if index % 3 != 2 else 1)
+            if index % 2 == group % 2:
+                patch(cells, x + dx + 1, y + dy + 1, [(1, 2), (0, 3), (0, 2)], 3)
+            if variant == 'graphic' and index in (1, 4):
+                patch(cells, x + dx + 1, y + dy, [(0, 2), (0, 3)], 4)
     leaves = pixel_material('nature-' + variant + '-leaves', palettes[variant], cells, output)
     bark_cells = field(64, 1)
-    for x, y, height in [(3, 3, 23), (18, 32, 26), (37, 5, 32), (54, 29, 25)]:
+    for x, y, height in [(0, 0, 58), (18, 8, 45), (35, 2, 57), (54, 14, 47)]:
         patch(bark_cells, x, y, [(1 if n % 9 < 3 else 0, 3 if n % 11 < 7 else 2) for n in range(height)], 0)
         patch(bark_cells, x + 4, y + 2, [(0, 2)] * (height - 5), 2)
     for x, y in [(11, 26), (30, 54), (45, 16)]:
@@ -106,22 +105,22 @@ def tube(name, points, radii, material, sides=9):
                 a, b = (i - 1) * sides + k, (i - 1) * sides + (k + 1) % sides
                 faces.append((a, b, b + sides, a + sides))
     faces.extend([tuple(reversed(range(sides))), tuple((len(points) - 1) * sides + k for k in range(sides))])
-    return mesh_object(name, vertices, faces, material, 32)
+    return mesh_object(name, vertices, faces, material, 48)
 
 
 def foliage(name, center, scale, material, phase=0, angular=False):
     # A closed scalloped bough with an offset ridge, rather than a sphere/card.
     vertices, faces = [], []
-    rings = [(-.48, .35), (-.29, .82), (-.04, 1), (.21, .91), (.43, .57), (.54, .12)]
+    rings = [(-.48, .24), (-.32, .76), (-.08, 1), (.14, .92), (.37, .79), (.58, .09)]
     count = 8 if material.name.endswith('-berries') else 16 if angular else 20
     for row, (height, width) in enumerate(rings):
         for k in range(count):
             a = math.tau * k / count
-            outline = 1 + .11 * math.cos(3 * a + phase) + .075 * math.sin(5 * a - phase)
-            scallop = .065 * math.cos(8 * a + .4 * row)
+            outline = 1 + .19 * math.cos(3 * a + phase) + .11 * math.sin(5 * a - phase)
+            scallop = .095 * math.cos(8 * a + .4 * row)
             x = (math.cos(a) * width * (outline + scallop) + .12 * height) * scale[0]
             y = (math.sin(a) * width * outline + .11 * height) * scale[1]
-            z = (height + .07 * math.cos(2 * a + phase) * width) * scale[2]
+            z = (height + (.12 * math.cos(2 * a + phase) + .065 * math.sin(3 * a)) * width) * scale[2]
             vertices.append((center[0] + x, center[1] + y, center[2] + z))
             if row:
                 previous = (row - 1) * count
@@ -291,7 +290,7 @@ def main():
                 family.replace('-', ' ').title() + ' — ' + variant, variant,
                 DESCRIPTIONS[variant] + (' ' + REASONS[family] if recommended else ''), recommended)
             entry['recommendationReason'] = REASONS[family] if recommended else None
-            entry['paintPixelsPerMetre'] = {'stone': 48} if family == 'rock' else {'foliage': 28 if variant == 'graphic' else 24, 'bark': 32, **({'berries': 96} if family == 'berry-bush' else {})}
+            entry['paintPixelsPerMetre'] = {'stone': 48} if family == 'rock' else {'foliage': 28 if variant == 'graphic' else 24, 'bark': 48, **({'berries': 96} if family == 'berry-bush' else {})}
             assets.append(entry)
             roots[identity] = root
             root.location = (column * 5.8, row * 6, 0)

@@ -13,6 +13,7 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from art_study_common import begin, pixel_material, export_asset, finish
 
@@ -58,10 +59,10 @@ def atlas(identity, style, output):
     rect('cloth', 0, 0, 8, 64, 0)
     rect('cloth', 12, 8, 5, 14, 2)
     rect('cloth', 48, 7, 5, 17, 0)
-    line('cloth', [(20, 59), (23, 48), (21, 43)], 2, 3)
-    line('cloth', [(42, 58), (39, 49), (41, 43)], 0, 3)
-    rect('cloth', 29, 0, 3, 64, 0)
-    rect('cloth', 33, 33, 2, 24, 2)
+    rect('cloth', 21, 42, 4, 11, 2)
+    rect('cloth', 45, 42, 4, 11, 0)
+    rect('cloth', 4, 3, 2, 54, 0)
+    rect('cloth', 6, 6, 2, 45, 2)
     rect('cloth', 3, 2, 58, 3, 0)
     if identity == 'mara':
         rect('cloth', 8, 11, 12, 13, 0)
@@ -146,13 +147,13 @@ def atlas(identity, style, output):
     rect('face', 28, 12, 13, 3, 5 if identity == 'mara' else 4)
     # Eyes: brow, pale inset, dark pupil and upper lid remain distinct.
     for x in (14, 39):
-        rect('face', x, 41, 11, 3 if identity != 'mara' else 2, 8)
+        rect('face', x+2, 42, 8, 2, 9)
         rect('face', x+1, 35, 10, 3, 16)
         rect('face', x+5, 35, 3, 4, 17)
-        rect('face', x+1, 38, 10, 2, 4)
-    rect('face', 30, 26, 5, 13, 7)
-    rect('face', 35, 26, 4, 9, 5)
-    rect('face', 30, 25, 9, 3, 4)
+        rect('face', x+2, 38, 8, 1, 4)
+    rect('face', 31, 29, 4, 5, 7)
+    rect('face', 35, 29, 3, 3, 5)
+    rect('face', 31, 28, 6, 1, 5)
     rect('face', 27, 19, 13, 3, 18)
     rect('face', 30, 16, 8, 2, 7)
     if identity == 'armor':
@@ -161,15 +162,15 @@ def atlas(identity, style, output):
         rect('face', 44, 16, 6, 9, 9)
         rect('face', 27, 19, 13, 3, 18)
     elif identity == 'tavin':
-        rect('face', 13, 40, 13, 3, 8)
-        rect('face', 39, 43, 12, 3, 8)
+        rect('face', 16, 42, 8, 2, 9)
+        rect('face', 41, 43, 8, 2, 9)
         rect('face', 27, 18, 13, 2, 18)
         rect('face', 37, 20, 5, 2, 18)
     if style == 'crafted':
         rect('face', 16, 29, 8, 3, 23)
         rect('face', 43, 29, 5, 3, 23)
-        rect('face', 17, 39, 9, 2, 17)
-        rect('face', 40, 39, 9, 2, 17)
+        rect('face', 18, 39, 7, 1, 4)
+        rect('face', 42, 39, 7, 1, 4)
     elif style == 'graphic':
         rect('face', 12, 22, 8, 13, 4)
         rect('face', 45, 24, 7, 10, 4)
@@ -268,7 +269,7 @@ def person(identity, style, output):
          (1.36, 0, .005, .205*width, .111), (1.41, 0, .006, .153*width, .089)], material, 'cloth', 16))
     # A shaped collar surrounds a closed neck, rather than intersecting paper lapels.
     add(volume('Neck', [(1.385, 0, .002, .058, .054), (1.515, 0, .002, .061, .056)], material, 'skin', 10))
-    add(volume('Bound collar', [(1.386, 0, -.001, .085, .074), (1.46 if identity == 'mara' else 1.438, 0, -.001, .072, .065)], material, 'leather', 12))
+    add(volume('Bound collar', [(1.386, 0, -.001, .085, .074), (1.478 if identity == 'mara' else 1.46, 0, -.001, .072, .065)], material, 'leather', 12))
     for side in (-1, 1):
         cuff_z = .99 if identity == 'tavin' else .86
         add(volume('Tailored sleeve '+str(side), [(cuff_z, side*.254, -.024, .054, .059),
@@ -297,11 +298,17 @@ def person(identity, style, output):
     head = add(volume('Shaped face', [(chin_z,0,-.008,.043,.048), (jaw_z,0,-.01,.06,.067),
         (1.55,0,.002,.087 if identity=='tavin' else .083,.079), (1.625,0,.005,.094 if identity=='tavin' else .089,.083),
         (1.69,0,.008,.079,.078), (1.726,0,.011,.058,.06)], material, 'face', 20,
-        bounds=[(-.09,.09),(1.472,1.726)]))
-    add(mesh_object('Shaped nose', [(-.017,-.077,1.631),(.017,-.077,1.631),(-.019,-.084,1.572),
-        (.019,-.084,1.572),(0,-.100 if identity == 'mara' else -.108,1.588),(0,-.084,1.633)],
-        [(0,1,5),(0,5,4,2),(5,1,3,4),(2,4,3),(0,2,3,1)], material, 'face', False,
-        bounds=[(-.09,.09),(1.472,1.726)]))
+        bounds=[(-.096,.096) if identity=='tavin' else (-.09,.09),(1.472,1.726)]))
+    nose_vertices=[(-.010,-.078,1.613),(.010,-.078,1.613),(-.012,-.079,1.583),
+        (.012,-.079,1.583),(0,-.091,1.593)]
+    nose_faces=[(0,1,4),(1,3,4),(3,2,4),(2,0,4),(0,2,3,1)]
+    centroid=sum((Vector(p) for p in nose_vertices),Vector())/len(nose_vertices)
+    for i,face in enumerate(nose_faces):
+        points=[Vector(nose_vertices[v]) for v in face]
+        normal=(points[1]-points[0]).cross(points[2]-points[0])
+        if normal.dot(sum(points,Vector())/len(points)-centroid)<0:
+            nose_faces[i]=tuple(reversed(face))
+    add(mesh_object('Small shaped nose',nose_vertices,nose_faces,material,'skin',False))
     for side in (-1, 1):
         add(volume('Ear '+str(side), [(1.557,side*.086,.004,.014,.013),
             (1.59,side*.094,.002,.018,.018),(1.627,side*.088,.005,.014,.014)], material, 'skin', 8))
@@ -349,6 +356,11 @@ def person(identity, style, output):
                 (1.001,side*.254,-.018,.067,.074)],material,'leather',10,False))
         add(plate('Jack split hem panel', [(-.154,-.094,.956),(.154,-.094,.956),(.147,-.102,.833),
             (.019,-.12,.82),(0,-.115,.87),(-.019,-.12,.82),(-.147,-.102,.833)],.035,material,'cloth'))
+    # Slightly shorter facial proportions keep brows, eyes and mouth together.
+    for obj in objects:
+        if obj.name.startswith(('Shaped face','Small shaped nose','Ear ','Hair crown','Rear hair','Swept fringe','Side lock')):
+            for vertex in obj.data.vertices:
+                vertex.co.z=1.61+(vertex.co.z-1.61)*.93
     # Fit once at authoring; camera motion and zoom never change pixels or model size.
     if identity == 'tavin':
         for obj in objects:
@@ -426,7 +438,7 @@ def main():
     finish('people',entries,output,source,[
         'Nine original static posed human studies. Named characters are visual proposals, not changed native identities or loadouts.',
         'One 128x128 nearest-sampled fixed painted atlas per subject/finish; dedicated 64x64 face with 3–4 texel grouped cells and deliberate eyes.',
-        'Continuous shaped human geometry with closed thick clothing; no naked mesh underneath. No camera sampling/downsampling or cubic anatomy.',
+        'Continuous shaped human geometry with closed thick clothing; no naked mesh underneath. No extra screen-space pixelation or cubic anatomy.',
         'Mara 1.70m, Tavin 1.78m, Kest armor 1.82m. Static art only: no claim of animation, equipped-item compatibility or physical cloth support.',
         'One mesh/material per runtime figure. Separate tailored parts remain editable in the Blender source.',
         'No imported human geometry, reference-game artwork, provider call or unresolved mercenary derivative.'

@@ -120,7 +120,7 @@ def rivet(name, point, mat, radius=.008):
     return cylinder(name, point, radius, .006, mat, vertices=8)
 
 
-def strip(name, x, halfwidth, section, material, thickness=.011):
+def strip(name, x, halfwidth, section, material, thickness=.011, density=64, texture_size=32):
     """A closed iron strap follows the same physical lid curve as the timber."""
     points = []
     for y, z in section:
@@ -132,7 +132,7 @@ def strip(name, x, halfwidth, section, material, thickness=.011):
         faces.extend([(a, a + 1, b + 1, b), (a + 2, b + 2, b + 3, a + 3),
                       (a, b, b + 2, a + 2), (a + 1, a + 3, b + 3, b + 1)])
     faces.extend([(0, 2, 3, 1), (len(points)-4, len(points)-3, len(points)-1, len(points)-2)])
-    return bevel(mesh(name, points, faces, material, 64, 32), .002)
+    return bevel(mesh(name, points, faces, material, density, texture_size), .002)
 
 
 def chest(variant, materials):
@@ -154,6 +154,10 @@ def chest(variant, materials):
     steps = 7 if variant == 'crafted' else 5
     section = [(-.277 + .554 * i / steps, base + arch * math.sin(math.pi * i / steps)) for i in range(steps + 1)]
     # Thick curved slats and closed wooden end caps have no alpha cards.
+    # A fitted continuous liner keeps the small plank joints opaque at every
+    # angle; it prevents black gaps from exposing the hollow chest underneath.
+    objects.append(strip('Continuous solid timber lid liner',0,.441,
+        [(y,z-.014) for y,z in section],wood,.018,32,64))
     for i in range(steps):
         y1, z1 = section[i]
         y2, z2 = section[i + 1]
@@ -162,9 +166,11 @@ def chest(variant, materials):
             [(y1+inset, z1), (y2-inset, z2), (y2-inset, z2-.028), (y1+inset, z1-.028)]]
         objects.append(bevel(mesh('Arched timber lid stave', points,
             [(0, 4, 5, 1), (3, 2, 6, 7), (0, 1, 2, 3), (4, 7, 6, 5), (1, 5, 6, 2), (0, 3, 7, 4)], wood), .003))
-    cap = [(-.277, base-.025)] + section + [(.277, base-.025)]
-    for x in (-.429, .429):
-        points = [(x + dx, y, z) for dx in (-.012, .012) for y, z in cap]
+    # End boards fit beneath the thick staves. Coplanar top faces produce dark
+    # overlap artifacts in both ray-traced and realtime views.
+    cap = [(-.277, base-.045)] + [(y,z-.026) for y,z in section] + [(.277, base-.045)]
+    for x in (-.434, .434):
+        points = [(x + dx, y, z) for dx in (-.014, .014) for y, z in cap]
         n = len(cap)
         faces = [tuple(range(n-1, -1, -1)), tuple(range(n, n*2))]
         faces.extend((i, (i+1) % n, (i+1) % n+n, i+n) for i in range(n))
@@ -387,7 +393,7 @@ DESCRIPTIONS = {
 }
 
 
-def review_render(path, roots):
+def review_render(path, roots, rear=False):
     # CPU-only review: isolated lighting and equal-scale leader objects. The
     # normal study uses actual GLBs in PlayCanvas; this is an authoring check.
     for obj in bpy.context.scene.objects:
@@ -409,7 +415,7 @@ def review_render(path, roots):
     scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.14,.18,.22,1)
     scene.world.node_tree.nodes['Background'].inputs[1].default_value=.6
     ground=solid_material('Review ground','#565d5d')
-    box('Review floor',(1,0,-.04),(5,5,.06),ground,.005)
+    box('Review floor',(1,0,-.04),(6,6,.06),ground,.005)
     for name,location,power,size in [('Broad sky',(-2,-3,5),650,4),('Warm edge',(3,2,4),450,3)]:
         data=bpy.data.lights.new(name,'AREA')
         data.energy=power
@@ -423,10 +429,11 @@ def review_render(path, roots):
     obj=bpy.data.objects.new('Source review camera',data)
     scene.collection.objects.link(obj)
     scene.camera=obj
-    obj.location=(2.35,-3.9,2.3)
-    obj.rotation_euler=(Vector((.65,0,.42))-obj.location).to_track_quat('-Z','Y').to_euler()
+    center=1.1 if len(roots)==3 else .65
+    obj.location=(center+1.7,3.9 if rear else -3.9,2.3)
+    obj.rotation_euler=(Vector((center,0,.42))-obj.location).to_track_quat('-Z','Y').to_euler()
     data.type='ORTHO'
-    data.ortho_scale=2.65
+    data.ortho_scale=3.7 if len(roots)==3 else 2.65
     scene.view_settings.view_transform='Standard'
     scene.view_settings.look='None'
     scene.render.filepath=str(path)
@@ -438,6 +445,7 @@ def main():
     args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
     draft='--draft' in args
     output,source=begin('objects')
+    bpy.context.preferences.filepaths.save_version=0
     assets=[]
     roots=[]
     materials={variant:paints(output,variant) for variant in ('quiet','crafted','graphic') if not draft or variant=='crafted'}
@@ -447,20 +455,35 @@ def main():
             if draft and variant!='crafted': continue
             objects=chest(variant,materials[variant]) if family=='chest' else sword(variant,materials[variant],output) if family=='sword' else shield(variant,materials[variant])
             bpy.context.view_layer.update()
-            minimum=min((obj.matrix_world @ Vector(corner)).z for obj in objects for corner in obj.bound_box)
+            graph=bpy.context.evaluated_depsgraph_get()
+            minimum=math.inf
+            for obj in objects:
+                evaluated=obj.evaluated_get(graph)
+                data=evaluated.to_mesh()
+                minimum=min(minimum,min((evaluated.matrix_world @ vertex.co).z for vertex in data.vertices))
+                evaluated.to_mesh_clear()
             for obj in objects:
                 obj.location.z-=minimum
             entry,root=export_asset(objects,output,family+'-'+variant,family,
-                {'chest':'Travel chest','sword':'Arming sword','shield':'Wooden shield'}[family],variant,DESCRIPTIONS[family][variant],variant=='crafted')
+                {'chest':'Travel chest','sword':'Arming sword','shield':'Wooden shield'}[family],variant,DESCRIPTIONS[family][variant],
+                variant==('quiet' if family=='shield' else 'crafted'))
             root.location=(row*1.05 if draft else col*1.25,row*0 if draft else row*1.25,0)
             assets.append(entry)
             roots.append(root)
     finish('objects',assets,output,source,
-        'Original shaped meshes with deliberate fixed pixel artwork. Crafted is the working recommendation: readable construction and selected material detail with quiet timber/steel fields. Study only; no native equipment or inventory behavior changes. GLB front is +Z and metres are preserved. Timber 32 texels/m, iron 64 texels/m; blade reflection uses a fixed 32 by 128 atlas with no camera-dependent repainting.')
+        'Original shaped meshes with deliberate fixed pixel artwork. Crafted chest and sword are recommended for readable construction and selected material detail with quiet timber/steel fields. The quiet round shield is recommended for its clear rustic silhouette. Study only; no native equipment or inventory behavior changes. GLB front is +Z and metres are preserved. Timber 32 texels/m, iron 64 texels/m; blade reflection uses a fixed 32 by 128 atlas with no camera-dependent repainting.')
     if '--render' in args:
         target=Path(args[args.index('--render')+1])
         target.parent.mkdir(parents=True,exist_ok=True)
-        review_render(target,roots)
+        chosen=roots
+        if '--render-family' in args:
+            family=args[args.index('--render-family')+1]
+            chosen=[root for root in roots if root.name.startswith(family+'-')]
+            for index,root in enumerate(chosen): root.location=(index*1.1,0,0)
+        elif not draft:
+            chosen=[root for root in roots if root.name in ('chest-crafted','sword-crafted')]
+            for index,root in enumerate(chosen): root.location=(index*1.05,0,0)
+        review_render(target,chosen,'--rear' in args)
 
 
 if __name__=='__main__':

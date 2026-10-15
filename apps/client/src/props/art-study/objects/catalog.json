@@ -1,0 +1,207 @@
+{
+  "group": "objects",
+  "notes": "Original shaped meshes with deliberate fixed pixel artwork. Crafted chest and sword are recommended for readable construction and selected material detail with quiet timber/steel fields. The quiet round shield is recommended for its clear rustic silhouette. Study only; no native equipment or inventory behavior changes. GLB front is +Z and metres are preserved. Timber 32 texels/m, iron 64 texels/m; blade reflection uses a fixed 32 by 128 atlas with no camera-dependent repainting.",
+  "sourceFile": "art-direction/assets/representative-study/objects.blend",
+  "sourceSha256": "2e6f30ea4cfeaa3babe4bb2b64b19bd6e830e2792e896218ea0fc4e1bdb8052d",
+  "authoring": {
+    "art_study_common.py": "e5c172762e35dad10f6c8564fe09012d1cd190d8ae5fe1914c98807ac42cf5cb",
+    "prepare-study-objects.py": "8ea203e656fc2649c1d16453519a19a4d9700f77dff5cecf889887ed493c40fd"
+  },
+  "assets": [
+    {
+      "id": "chest-quiet",
+      "family": "chest",
+      "label": "Travel chest",
+      "variant": "quiet",
+      "description": "Low flat lid, pale worn planks and sparse corner iron. Quiet portable storage; little ornament.",
+      "recommended": false,
+      "file": "chest-quiet.glb",
+      "bounds": {
+        "min": [-0.448, 0.0, -0.304382],
+        "max": [0.448, 0.457287, 0.31]
+      },
+      "triangles": 2808,
+      "vertices": 1496,
+      "textureSizes": [
+        [32, 32],
+        [64, 64]
+      ],
+      "sha256": "0171f62c578868920a0f12690a45d56697194777559a112dbfb1aca92b6e5fbd",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "chest-crafted",
+      "family": "chest",
+      "label": "Travel chest",
+      "variant": "crafted",
+      "description": "Seven-stave arched oak lid, continuous forged bindings, real hinges, carrying handles and a clear keyed latch.",
+      "recommended": true,
+      "file": "chest-crafted.glb",
+      "bounds": {
+        "min": [-0.460235, 0.0, -0.304382],
+        "max": [0.460235, 0.589738, 0.31]
+      },
+      "triangles": 3576,
+      "vertices": 1896,
+      "textureSizes": [
+        [32, 32],
+        [64, 64]
+      ],
+      "sha256": "d688fb5fdb451836834de2dea9270d64ed87c1d72b1be3b2f1b91a13c6bb36e1",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "chest-graphic",
+      "family": "chest",
+      "label": "Travel chest",
+      "variant": "graphic",
+      "description": "Broad copper-red timber, shallow pentagonal arch, dark chevron braces and a warm maker mark.",
+      "recommended": false,
+      "file": "chest-graphic.glb",
+      "bounds": {
+        "min": [-0.460235, 0.0, -0.304382],
+        "max": [0.460235, 0.552393, 0.315235]
+      },
+      "triangles": 3588,
+      "vertices": 1904,
+      "textureSizes": [
+        [32, 32],
+        [64, 64]
+      ],
+      "sha256": "297e3983003731f0e391ebcaaa2a5fdb768c38255961d71e98d22e4cb6399a26",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "sword-quiet",
+      "family": "sword",
+      "label": "Arming sword",
+      "variant": "quiet",
+      "description": "Narrow tapered blade, straight iron guard and plain wheel pommel; simple stepped blade reflection.",
+      "recommended": false,
+      "file": "sword-quiet.glb",
+      "bounds": {
+        "min": [-0.095, -0.0, -0.014],
+        "max": [0.095, 0.994, 0.019]
+      },
+      "triangles": 666,
+      "vertices": 349,
+      "textureSizes": [
+        [16, 32],
+        [32, 32],
+        [32, 128]
+      ],
+      "sha256": "feed9b79cdb9bd2da66128252b0261704e5052116ff64cc48bb186416249f05d",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "sword-crafted",
+      "family": "sword",
+      "label": "Arming sword",
+      "variant": "crafted",
+      "description": "Shaped steel blade with a painted fuller, swept quillons, wrapped oval grip and inset bronze wheel pommel.",
+      "recommended": true,
+      "file": "sword-crafted.glb",
+      "bounds": {
+        "min": [-0.123235, -0.0, -0.013906],
+        "max": [0.123235, 0.996, 0.023]
+      },
+      "triangles": 1266,
+      "vertices": 661,
+      "textureSizes": [
+        [16, 32],
+        [32, 32],
+        [32, 128]
+      ],
+      "sha256": "c3fc73a9ad1354ad2d30998398f0db8c9e38f31ffb69c7b5fc5208d04a39f982",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "sword-graphic",
+      "family": "sword",
+      "label": "Arming sword",
+      "variant": "graphic",
+      "description": "Broad dark blade, long stepped reflection and gilt maker cuts; downturned bronze guard with dark capped tips.",
+      "recommended": false,
+      "file": "sword-graphic.glb",
+      "bounds": {
+        "min": [-0.1015, -0.0, -0.017235],
+        "max": [0.1015, 0.996235, 0.0205]
+      },
+      "triangles": 894,
+      "vertices": 469,
+      "textureSizes": [
+        [16, 32],
+        [32, 32],
+        [32, 128]
+      ],
+      "sha256": "e5d1096ebab20d2d5361622a3afce9f74ae034f063698dc020701b6088fcf89a",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "shield-quiet",
+      "family": "shield",
+      "label": "Wooden shield",
+      "variant": "quiet",
+      "description": "Simple round wooden board shield, low iron boss and rear straps. Sparse fixed grain.",
+      "recommended": true,
+      "file": "shield-quiet.glb",
+      "bounds": {
+        "min": [-0.33, 0.0, -0.1145],
+        "max": [0.33, 0.66, 0.09]
+      },
+      "triangles": 762,
+      "vertices": 413,
+      "textureSizes": [
+        [16, 32],
+        [32, 32],
+        [64, 64]
+      ],
+      "sha256": "ff93b16bb13a50cd0131839163e34ee9f8e305e4e593f80f032297eae74e9dbe",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "shield-crafted",
+      "family": "shield",
+      "label": "Wooden shield",
+      "variant": "crafted",
+      "description": "Tapered kite silhouette, close-fitted vertical boards, protective rim, bronze boss nails and visible rear straps.",
+      "recommended": false,
+      "file": "shield-crafted.glb",
+      "bounds": {
+        "min": [-0.331048, 0.0, -0.1145],
+        "max": [0.331048, 0.718946, 0.09]
+      },
+      "triangles": 1334,
+      "vertices": 713,
+      "textureSizes": [
+        [16, 32],
+        [32, 32],
+        [64, 64]
+      ],
+      "sha256": "4f9a3b166aa5e2750192f69b98058dc5cdcb69e62d02a315545537306a6c8914",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    },
+    {
+      "id": "shield-graphic",
+      "family": "shield",
+      "label": "Wooden shield",
+      "variant": "graphic",
+      "description": "Clipped shoulders, broad dark iron cross braces and a raised boss over copper-red boards.",
+      "recommended": false,
+      "file": "shield-graphic.glb",
+      "bounds": {
+        "min": [-0.340735, 0.0, -0.1145],
+        "max": [0.340735, 0.729138, 0.09]
+      },
+      "triangles": 1466,
+      "vertices": 785,
+      "textureSizes": [
+        [16, 32],
+        [32, 32],
+        [64, 64]
+      ],
+      "sha256": "8b623f5e77b63f89b32b63d701c22b63c284c5a5aff1ab270f5d10f6df72db61",
+      "source": "Original OpenLegend Blender study; AGPL-3.0-only."
+    }
+  ]
+}
