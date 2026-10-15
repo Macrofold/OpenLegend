@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 14, 2026 — Realtime pixel rendering and animation research
+
+Mike’s additional references explicitly endorse t3ssel8r’s animated character and question the earlier emphasis on pre-painted pixel textures. The [updated direction](../art-direction/decisions.md#realtime-pixel-rendering-and-animation--october-14-2026) now proposes a renderer-driven animated scene first, with painted-material and articulated-sprite controls. This supersedes the first research recommendation below without accepting a production renderer.
+
+The [follow-up](../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) documents realtime lighting, outlines, grass, separate effects composition, perspective texel stability, animation/pose timing, spring mathematics, export and tooling. All ten supplied videos, the identified Robin Seibold tutorial, five additional attachment copies and the inline scene transcript are preserved/indexed. Texel splatting remains an unqualified WebGPU integration experiment; Critter’s browser/orthographic restrictions and license conditions limit the proposed purchase/port route. [V3D01](maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision) and V3D05 retain actual comparison and animation work. No executable behavior, model, dependency, backend, spending or production limit changed in this research task.
+
 ## October 14, 2026 — Dimensional pixel-art references and production research
 
 Mike selected Garbage Country as a leading environment reference, strongly endorsed The Last Night's pixel craft and lighting, liked EthrA's environments while requesting richer characters, and reinforced REPLACED as a quality benchmark. The [creative brief](../art-direction/final-board/creative-brief.md#dimensional-pixel-art--october-14-direction) and [decision record](../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) now preserve those preferences alongside earlier favorites.

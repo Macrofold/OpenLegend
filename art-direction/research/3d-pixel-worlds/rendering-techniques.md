@@ -1,6 +1,6 @@
 # Assets and rendering: how to build the look
 
-This is a technical synthesis and a set of **proposed OpenLegend experiments**, not a reconstruction of any proprietary renderer. [Reference research](reference-techniques.md) owns claims about the individual games. No technique below was implemented or benchmarked in this documentation task.
+This is a technical synthesis and a set of **proposed OpenLegend experiments**, not a reconstruction of any proprietary renderer. [Reference research](reference-techniques.md) owns claims about the individual games. The [realtime follow-up](realtime-pixel-rendering.md) revises the earlier emphasis: a designed renderer is now the leading candidate to compare, while painted surfaces remain useful. No technique below was implemented or benchmarked in this documentation task.
 
 ## Three different grids
 
@@ -12,7 +12,7 @@ This is a technical synthesis and a set of **proposed OpenLegend experiments**, 
 
 Calling all three “pixel density” hides the design choice. A low-resolution camera can make an ordinary smooth model look pixelated, but the underlying asset may still contain photographic texture detail. Conversely, a smooth polygon cheek can carry a small, deliberately drawn pixel face without any camera pixelation.
 
-For the initial proposed character comparison, hold **authored surface detail** fixed. The face, seams and cloth motifs should be chosen before rendering. An optional scene effect can coordinate the presentation, but it should not be responsible for inventing the face.
+For a fair rendering comparison, hold the underlying geometry and material design fixed. Face features can come from geometry, distinct material regions or targeted artwork; lighting and sampling can generate their final pixel appearance. Compare that designed rendering with ordinary drawing and separately test additional painted detail.
 
 ## What stable pixels can mean
 
@@ -34,7 +34,7 @@ For a skinned character, textures move and deform with the skin. That is expecte
 
 ## Authoring shaped models with pixel textures
 
-This is the proposed leading route for characters, hard props and much scenery; it draws on the documented [Noio and BitGem workflows](reference-techniques.md).
+This remains a useful asset route and comparison control, drawing on the documented [Noio and BitGem workflows](reference-techniques.md). It is not a requirement to paint every surface before the [renderer-driven candidate](realtime-pixel-rendering.md) can work.
 
 1. **Choose silhouette and proportions first.** Model the body, face planes, clothing volume and important equipment. Use enough geometry to avoid a cuboid or toy-like silhouette. Surface pixels do not force cubic anatomy.
 2. **Set a physical scale and a density target together.** Compare the character beside an accepted adult and familiar tools. Choose how many authored texels span a face at the required view. A proposed sampling ladder can test multiple densities; it is not a production limit until the comparison is accepted.
@@ -48,7 +48,7 @@ Do not confuse texture dimensions with usable detail. A large atlas with padded 
 
 ## Faces, eyes and character identity
 
-Treat the face as a small designed image wrapped onto a deliberately shaped head. Establish eye spacing, brow line, nose plane, mouth and hairline as a readable arrangement. Do not rely on a downsampled realistic texture to preserve these features. Test both sides and three-quarter views; a frontal face drawn across a crude box is particularly likely to fail.
+Treat the face as a deliberate arrangement of shape and color on a well-shaped head. A small painted image can supply this arrangement, but geometry and clear material regions can also survive designed pixel shading. Establish eye spacing, brow line, nose plane, mouth and hairline as a readable arrangement. Do not rely on a downsampled realistic texture to preserve these features. Test both sides and three-quarter views; a frontal face drawn across a crude box is particularly likely to fail.
 
 At normal distance, hair, silhouette, skin tone, clothing and posture carry identity. A close camera should reveal the **same** face design at larger size. Lighting must not erase the eyes or turn the entire face into a single dark patch. A separate portrait may enrich conversation, but cannot excuse an unacceptable world character.
 
@@ -66,7 +66,7 @@ Start the comparison with a fitted cape and controlled rig animation. Add cloth 
 
 The [Retronator distinction](https://medium.com/retronator-magazine/the-future-of-pixel-art-with-the-last-night-a9a4eb61e824) is useful terminology, not a mandatory style rule.
 
-**Big-pixel presentation:** draw low-resolution source artwork into a higher-resolution final image. The texture remains visibly pixel-authored while movement, rotation, outlines of geometry and depth effects can be smoother. Pixels from different surfaces need not align to a single screen grid. This is the leading comparison candidate for the supplied preferences.
+**Big-pixel presentation:** draw low-resolution source artwork into a higher-resolution final image. The texture remains visibly pixel-authored while movement, rotation, outlines of geometry and depth effects can be smoother. Pixels from different surfaces need not align to a single screen grid. This was the earlier leading candidate; the realtime follow-up now gives designed scene rendering equal scrutiny as the first experiment.
 
 **Low-resolution scene:** render the world into a smaller image, then enlarge it. All covered content shares a coarse screen grid. This can unify particles, procedural objects and lighting, but also discards faces and thin objects that do not survive the lower resolution.
 
@@ -82,7 +82,7 @@ Project the desired camera position onto that plane, round its coordinates to mu
 
 Only the rendering camera is adjusted. Gameplay positions, physics, picking intentions and authoritative movement must not be rounded to this grid. Picking must account for the actual displayed image and camera.
 
-This handles translation cleanly under the stated conditions. Rotation changes the sampling basis; zoom changes `s`; perspective changes projected scale with distance. Parallax layers need separate treatment. The method therefore deserves a targeted test, not a promise of zero motion artifacts during every OpenLegend camera gesture.
+This handles translation cleanly under the stated conditions. Rotation changes the sampling basis; zoom changes `s`; perspective changes projected scale with distance. Parallax layers need separate treatment. The method therefore deserves a targeted test, not a promise of zero motion artifacts during every OpenLegend camera gesture. The [texel-splatting review](texel-splatting.md) addresses a different approach to perspective stability and its remaining limitations.
 
 ## Lighting without losing the pixel artwork
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                              | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+| In progress | Rendering/animation research and scoped mercenary work are recorded; moving style acceptance and the broader production pipeline remain open. | 2026-10-14   |
 
 **October 14 renderer research:** [Asset/rendering explanations](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) distinguish authored surface texels from voxel geometry and screen sampling. The [PlayCanvas feasibility inspection](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-is-already-available-and-what-is-not-established) identifies candidate facilities in the current pinned engine, without implementing effects or selecting a replacement engine.
 
@@ -118,6 +118,8 @@ Keep CSS pixels, device pixel ratio, render-buffer pixels, low-resolution scene 
 
 ## 7. Animation, attachments, and time
 
+The [animation research](../../art-direction/research/3d-pixel-worlds/animation-tools-and-techniques.md) adds source-backed guidance on strong poses, selective held frames, exported interpolation, smears and bounded secondary motion. It documents installed held-key support and a numerical stability caveat without claiming completed playback or adopting a new cadence.
+
 Begin with a reviewed compatible rig and in-place clips. Root motion must not become a second position writer. Remove or compensate imported root translation in presentation, while native XYZ/support remains authoritative. Foot placement and hand IK are bounded visual adjustments using permitted contacts; unreachable targets use a declared pose/fallback rather than stretching a limb or completing an action.
 
 Rig compatibility includes hierarchy/semantic roles, rest pose, bind transforms, joint limits, scale range, and skinning assumptions. Matching bone names alone is insufficient. Visual joints do not imply functional anatomy. Clothing fit and equipment compatibility are detailed in the [family design](3d-pixel-art-appearance-families.md).
@@ -128,11 +130,11 @@ Continuous simulation, render-frame interpolation, and optionally stepped pose s
 
 ## 8. Pixel rendering profile
 
-The [October 14 research recommendation](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md) makes shaped models with authored pixel textures the leading comparison candidate for free orbit, retaining articulated sprites as an alternative. Higher-resolution presentation with visible source pixels and a lower-resolution world target must be compared separately. Neither is adopted by this documentation update; stable material artwork does not require identical screen pixels during rotation.
+The [October 14 follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) makes shaped animated models with designed realtime pixel shading the leading comparison candidate, retaining painted-material and articulated-sprite alternatives. Compare lighting/sampling choices on the same underlying asset. A separate [texel-splatting experiment](../../art-direction/research/3d-pixel-worlds/texel-splatting.md) investigates perspective stability; its public WebGPU implementation is not integrated with the current WebGL application. No renderer or backend is adopted by this documentation update.
 
 A versioned world presentation profile records approved material families, source texel-density guidance, normal gameplay scale, scene sampling/upscale policy, tone mapping, shading options, outline/dither choices, and family animation presentation policy. Keep device quality preferences separate from the world's identity/style revision.
 
-Start with simple low-complexity geometry, deliberately painted textures, controlled material response, existing dynamic lights/shadows, and a configurable scene render target. Compare this against the sprite baseline before adding specialized passes. Use nearest-neighbor enlargement when appropriate, but also test texture minification/mip choices for fine foliage and surfaces; globally disabling filtering can create severe shimmer. Integer scaling can need letterboxing or a changed internal resolution on arbitrary viewport sizes; define that mapping rather than silently stretching uneven pixels.
+Start with well-shaped geometry, clear material regions, targeted face/identity detail, controlled material response, existing dynamic lights/shadows, and a configurable scene render target. Painted textures can help but are not mandatory for every surface. Compare this against the sprite baseline before adding specialized passes. Use nearest-neighbor enlargement when appropriate, but also test texture minification/mip choices for fine foliage and surfaces; globally disabling filtering can create severe shimmer. Integer scaling can need letterboxing or a changed internal resolution on arbitrary viewport sizes; define that mapping rather than silently stretching uneven pixels.
 
 Screen-space quantization creates edge changes during motion. Quantizing every object's root independently can create sliding contacts and jitter. Compare world-stable texture detail, carefully scoped projection/vertex snapping, silhouette simplification, and controlled animation sampling. Do not quantize the world simulation to solve a raster artifact. Dither patterns need stable coordinate choices, and temporal antialiasing is not enabled by assumption. Use the existing owner for bloom/color grading and keep UI out of the low-resolution target.
 

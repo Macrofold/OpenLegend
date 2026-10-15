@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                              | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+| In progress | Rendering/animation research and scoped mercenary work are recorded; moving style acceptance and the broader production pipeline remain open. | 2026-10-14   |
 
-**October 14 reference update:** [Confirmed art preferences](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) emphasize Garbage Country environments, The Last Night/REPLACED finish, and richer characters than EthrA. The [research collection](../../art-direction/research/3d-pixel-worlds/README.md) explains the evidence. These are visual targets; a textured-model or articulated-sprite choice still requires V3D01 acceptance.
+**October 14 reference update:** [Confirmed art preferences](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) emphasize Garbage Country environments, The Last Night/REPLACED finish, and richer characters than EthrA. The [research collection](../../art-direction/research/3d-pixel-worlds/README.md) explains the evidence. The [realtime follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) adds t3ssel8r’s strongly endorsed character and makes designed pixel shading on animated geometry the proposed first comparison. Painted-material and articulated-sprite alternatives remain available; V3D01 still owns acceptance.
 
 **Original proposal — September 27, 2026.** The general pipeline remains proposed; the separately authorized bundled-model pilot is delivered. Requested by Mike on September 27, 2026. Source baseline: `Macrofold/OpenLegend` `main` at `412b5b480b4911d9977de73168c6072e2c023b83`. The original proposal task changed documentation only: zero runtime logic lines, no dependency changes, no paid generation, and no claimed graphics or provider qualification.
 

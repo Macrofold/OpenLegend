@@ -54,7 +54,17 @@ Evidence: Mike's supplied game/artist links, two attached transcripts and the re
 - **REPLACED remains a strong pixel-art benchmark.** Its fine detail, animation and cinematic composition reinforce the existing preference for recognizable people and deliberate lighting.
 - **Kingdom, BitGem's dungeon, Mark Knight, Holland and the supplied renderer demonstrations contribute specific lessons.** Their visual qualities do not imply that all are built with the same technology or should be copied wholesale.
 
-**Proposed, not accepted:** complete shaped models with deliberately painted pixel textures are the leading general-purpose comparison candidate for our free camera. Compare articulated sprites and optional lower-resolution presentation under [V3D01](../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision). No universal voxel requirement, production texel density, outline style, blur level, engine migration or automatic generation-quality claim follows from this research. The [creative brief](final-board/creative-brief.md#dimensional-pixel-art--october-14-direction) owns the visual interpretation; existing project records own implementation and acceptance.
+**Earlier proposal, superseded by the follow-up below:** painted shaped models led the first free-camera comparison recommendation because the initial Noio/BitGem evidence showed stable authored surface detail. The new realtime examples demonstrate a broader route, so mandatory painted finishing is not the current recommendation. The [creative brief](final-board/creative-brief.md#dimensional-pixel-art--october-14-direction) owns visual interpretation; project records own implementation and acceptance.
+
+## Realtime pixel rendering and animation — October 14, 2026
+
+Evidence: Mike’s ten additional video links, five attached transcripts, inline scene transcript, texel-splatting paper/source and resulting [follow-up research](research/3d-pixel-worlds/realtime-pixel-rendering.md).
+
+- **t3ssel8r’s animated character is a leading character-quality reference.** Mike called the character in [Making an Animation for my 3D Pixel Art Game](https://www.youtube.com/watch?v=1FrIBkuq0ZI) “perfect.” Study shape, clear features, lighting, motion and effects together; the animation transcript does not publish its exact pixel shader.
+- **Realtime generation of pixel shading is explicitly desired for investigation.** A deliberate renderer can produce final pixel clusters from ordinary modeled geometry and controlled materials. Preserve earlier environmental and cinematic preferences.
+- **Perspective shimmer is a concrete research concern.** The texel-splatting paper addresses that concern, but its animated-geometry limitations and our graphics-backend integration remain unproven. Stable pixels do not require a cube-built body or cape.
+
+**Proposed, not accepted:** test the renderer-driven animated scene first, retain painted-material and articulated-sprite controls, and investigate static texel splatting separately under [V3D01](../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision). No production sampling density, outline style, animation cadence, engine migration, paid tool purchase or generation-quality guarantee is selected. [Animation guidance](research/3d-pixel-worlds/animation-tools-and-techniques.md) and [license notes](research/3d-pixel-worlds/tool-and-license-notes.md) inform later choices without authorizing implementation.
 
 ## Decision entry format
 

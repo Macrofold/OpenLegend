@@ -1,6 +1,6 @@
 # Adapting the research to OpenLegend
 
-**Recommendation to test:** preserve the free camera and use complete, shaped 3D assets with deliberately painted pixel textures as the leading general-purpose candidate. Compare an EthrA-inspired articulated sprite character under the same conditions. Use cinematic lighting and selected atmosphere to support the artwork. Do not select a new engine or a universal voxel representation from these references alone.
+**Recommendation to test:** preserve the free camera and begin with complete animated geometry, controlled material colors and a deliberately designed realtime pixel renderer. The t3ssel8r follow-up broadens the earlier painted-texture proposal: lighting and sampling can generate the final pixel clusters. Painted materials and EthrA-inspired articulated sprites remain comparison alternatives. No new engine or universal voxel representation is selected.
 
 This is an art/research recommendation, not approval to implement it. [V3D01](../../../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision) owns the actual comparison and style decision. The [existing technical design](../../../docs/projects/3d-pixel-art-tech-design.md) owns contracts, lifecycle and integration; this document supplies research rationale rather than a second implementation specification.
 
@@ -19,18 +19,20 @@ The inspected checkout was `codex/mercenary-voxel-art` at `26f622ec70bd96506e2b1
 
 The installed engine inspection used its `build/playcanvas/src/framework/components/camera/component.js` and `build/playcanvas/src/extras/render-passes/camera-frame.js` files. Those dependencies are not repository source files. [Official post-effect documentation](https://developer.playcanvas.com/user-manual/graphics/posteffects/) and the [camera API](https://api.playcanvas.com/engine/classes/CameraComponent.html) provide further context, but current online documentation may describe a newer version than the pinned package.
 
+The follow-up inspected the client and installed PlayCanvas at repository commit `631835866`: the current `pc.Application` construction creates a WebGL device. The public texel-splatting demonstration requires WebGPU and is a separate integration investigation. Installed glTF parsing and animation evaluation support held (`STEP`) keys; export, blending and actual playback remain unqualified. See [texel stability](texel-splatting.md) and [animation](animation-tools-and-techniques.md).
+
 No shader was ported, render target enabled or performance measured. Godot and Unity examples describe algorithms; their shader syntax, depth conventions, buffer access and resource ownership must be translated.
 
 ## A useful combination of the references
 
-| Subject                      | Leading proposed treatment                                                                    | Artistic reference                                                 | Main tradeoff                                                                            |
-| ---------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Terrain, rocks and buildings | Shaped meshes, pixel-painted materials, modular construction where useful                     | Garbage Country; BitGem                                            | UV/texture work and repetitive tiling need deliberate correction.                        |
-| People and important animals | Complete animated meshes with designed pixel textures; compare articulated sprites            | Higher character fidelity than EthrA; REPLACED's expressive detail | Meshes need good topology/rigging; sprites need reliable views and joins.                |
-| Cloaks and loose fabric      | Properly fitted, relatively continuous surfaces with coherent folds and surface art           | Original character design, interpreted through the shared palette  | Coverage and animation need explicit testing; physics is optional.                       |
-| Grass and foliage            | A measured mixture of cards, clusters and shaped geometry                                     | Garbage Country; Holland                                           | Transparency, rotation and lighting can expose the construction.                         |
-| Water                        | Coherent surface pattern, depth-related shore treatment, then selective reflection/refraction | Kingdom; Holland                                                   | Extra camera views and transparency cost; no reflection may reveal unauthorized content. |
-| Atmosphere                   | Directional light, atmospheric depth, selective glow/focus                                    | The Last Night; REPLACED; Knight                                   | Too much blur or darkness undermines interaction and fine pixels.                        |
+| Subject                      | Leading proposed treatment                                                                               | Artistic reference                                                | Main tradeoff                                                                            |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Terrain, rocks and buildings | Shaped meshes, controlled/procedural or painted materials, designed pixel shading                        | Garbage Country; BitGem                                           | UV/texture work and repetitive tiling need deliberate correction.                        |
+| People and important animals | Animated meshes with readable features and designed pixel shading; compare painted materials and sprites | t3ssel8r character; richer detail than EthrA; REPLACED            | Meshes need good topology/rigging; sprites need reliable views and joins.                |
+| Cloaks and loose fabric      | Properly fitted, relatively continuous surfaces with coherent folds and surface art                      | Original character design, interpreted through the shared palette | Coverage and animation need explicit testing; physics is optional.                       |
+| Grass and foliage            | A measured mixture of cards, clusters and shaped geometry                                                | Garbage Country; Holland                                          | Transparency, rotation and lighting can expose the construction.                         |
+| Water                        | Coherent surface pattern, depth-related shore treatment, then selective reflection/refraction            | Kingdom; Holland                                                  | Extra camera views and transparency cost; no reflection may reveal unauthorized content. |
+| Atmosphere                   | Directional light, atmospheric depth, selective glow/focus                                               | The Last Night; REPLACED; Knight                                  | Too much blur or darkness undermines interaction and fine pixels.                        |
 
 These are proposed visual methods, not new laws for all authored worlds. The bundled world's palette, clothing motifs, building styles and vegetation belong to its authored art/content. General rendering mechanisms should support other palettes and worlds without embedding those motifs in engine code.
 
@@ -40,11 +42,13 @@ Use one small scene with the same character scale, camera poses, props and light
 
 First compare the character with simple lighting and a plain background. The face, silhouette and cloth coverage must work before fog, bloom or outlines are added. Then place the chosen candidates in the same small camp and move the camera continuously. This separates an asset defect from a render effect that hides or exaggerates it.
 
-The proposed comparison has three candidates:
+The proposed comparison separates asset representation from rendering:
 
-1. **Painted model:** a complete shaped character, stable UV artwork, natural proportions and a properly fitted cape, viewed at adequate render resolution.
-2. **Articulated sprites:** the same character design assembled from drawn parts, with enough directional treatment to cover the allowed camera. This preserves the previously proposed 2D-rig option.
-3. **Low-resolution presentation variant:** use the same underlying asset as candidate one and change only the world rendering resolution/effects. This reveals whether a final pixelation pass helps or simply erases the intended art.
+1. **Renderer-driven model:** a complete character with clear material regions and face features; compare ordinary drawing against designed pixel sampling, lighting bands and selective outlines on the same asset.
+2. **Painted-material control:** the same shaped character with deliberately authored pixel surface details, viewed at adequate render resolution. This tests where texture craft adds value.
+3. **Articulated sprites:** the same character design assembled from drawn parts with enough directional coverage. This preserves the previously proposed 2D-rig alternative.
+
+A separate [static texel-splatting experiment](texel-splatting.md) investigates perspective stability before attempting skinning, capes or a backend change. Do not equate a low-resolution resize with the complete renderer-driven treatment. Animation should follow the [pose, timing and export guidance](animation-tools-and-techniques.md).
 
 A comparison is not fair if the model candidate receives polished face art while the sprite candidate receives placeholder limbs. Record authoring effort as well as visual results. Do not turn this comparison into a broad environment conversion or a provider integration project.
 
@@ -55,7 +59,7 @@ This sequence refines the existing project tasks; the tracker remains the sole o
 | Step                                | Reviewable result                                                                 | Decision it resolves                                               | Existing owner                     |
 | ----------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------- |
 | Establish scale and source art      | Matched character/body scale, readable face design, garment surfaces              | What constitutes acceptable authored detail before rendering?      | V3D01 and the individual art study |
-| Compare representations             | Same moving scene and camera path for the three candidates                        | Which representation preserves detail and dimensionality?          | V3D01                              |
+| Compare representations             | Same moving scene and camera path for the representation/rendering candidates     | Which representation preserves detail and dimensionality?          | V3D01                              |
 | Add light/material treatment        | Same scene with effects enabled separately and together                           | Which effects improve the accepted art without concealing defects? | V3D01 / SW18                       |
 | Evaluate water and foliage          | A small representative patch, motion footage and measured costs                   | Which environmental techniques are worthwhile at our view?         | V3D01 / V3D11                      |
 | Exercise one generated rigid object | A reviewed asset with durable source, runtime file and unchanged gameplay meaning | Can the production process reproduce the accepted style?           | V3D04 / V3D07–V3D09                |
@@ -69,7 +73,7 @@ The [qualification document](../../../docs/projects/3d-pixel-art-validation.md) 
 
 - **Scale:** the character stands naturally beside other adults and known equipment; a camera change does not alter world height.
 - **Face:** eyes, brow, mouth and hairline remain intentional at close range; the usual play view retains recognizable identity. Check front, three-quarter, side and rear transitions.
-- **Surface stability:** freeze animation and lights, then orbit/pitch/zoom. Distinguish stable painted marks from ordinary silhouette changes; inspect with post-effects disabled when a defect appears.
+- **Surface stability:** freeze animation and lights, then orbit/pitch/zoom. Distinguish anchored material marks, lighting-band changes and ordinary silhouette changes; inspect with post-effects disabled when a defect appears.
 - **Garment coverage:** standing and representative action extremes do not expose the body through the cape or shirt. Check the interior and hem, not only the front silhouette.
 - **Environment readability:** water, fog, vegetation and outlines preserve ground contact, important objects, target selection and hidden-character indication.
 - **Motion:** moving plants, shadows, fine textures and highlights do not create distracting shimmer. Record continuous footage, not selected stills alone.

@@ -4,6 +4,8 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 ## Start here
 
+**Realtime follow-up:** [Pixel rendering and lighting](research/3d-pixel-worlds/realtime-pixel-rendering.md) · [Texel splatting and shimmer](research/3d-pixel-worlds/texel-splatting.md) · [Animation tools and techniques](research/3d-pixel-worlds/animation-tools-and-techniques.md) · [All video links](research/3d-pixel-worlds/video-library.md). The t3ssel8r references shift the leading comparison toward renderer-driven art; painted textures remain useful rather than mandatory everywhere.
+
 **October 14 research:** [Building a dimensional pixel-art world](research/3d-pixel-worlds/README.md) · [34-image local gallery](research/3d-pixel-worlds/gallery.md). Garbage Country, The Last Night, EthrA, REPLACED and the supplied technical references are compared with source evidence, rendering explanations and a proposed generative-art workflow.
 
 **Art in progress:** [Maintainer art-direction index](../docs/maintainers/art-direction.md) · [Mercenary study](../docs/maintainers/art/mercenary.md). Editable studies live in [OpenLegend-art](/Users/mzw/Documents/ChatGPT/OpenLegend-art/README.md); this repository folder retains the creative brief, references and feedback.

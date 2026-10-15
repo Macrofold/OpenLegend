@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                              | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+| In progress | Rendering/animation research and scoped mercenary work are recorded; moving style acceptance and the broader production pipeline remain open. | 2026-10-14   |
 
 **October 14 reference update:** The [research comparison proposal](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-a-successful-comparison-must-show) makes surface attachment, face readability, garment coverage and restrained effects explicit review concerns. The 34-image library is external reference media, not OpenLegend qualification evidence. The moving comparison and creator acceptance below remain required.
 
@@ -27,7 +27,7 @@ Use authored or properly licensed native fixtures first. A generated concept ima
 
 Keep the art comparison fair: consistent scale, equivalent identity/detail intent, the same environment and permitted lighting, and disclosed production effort. Comparing a polished sprite with an untextured model only establishes that the model is unfinished. Conversely, a cinematic close-up does not establish ordinary gameplay readability.
 
-For the October 14 references, include a deliberately pixel-painted shaped model, an articulated-sprite candidate, and a presentation variant that changes the model scene's render resolution without changing its artwork. Review face and garment coverage before enabling cinematic effects. Freeze animation/lights while checking surface attachment during camera movement; distinguish ordinary silhouette/occlusion changes from texture swimming. The [research guidance](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) explains the distinction; no new density or performance limit is selected here.
+For the October 14 follow-up, begin with a shaped animated model and compare ordinary drawing with deliberately designed pixel lighting/sampling on that same asset. Retain a painted-material control and articulated-sprite alternative. Evaluate static texel splatting separately, including capture-boundary and newly-visible-surface failures, before inferring animated-character quality. Include held-pose transitions, secondary-motion resets and depth/color/shadow agreement under the [animation guidance](../../art-direction/research/3d-pixel-worlds/animation-tools-and-techniques.md). Review face and garment coverage before enabling cinematic effects. Freeze animation/lights while checking surface attachment during camera movement; distinguish ordinary silhouette/occlusion changes from texture swimming. The [research guidance](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) explains the distinction; no new density or performance limit is selected here.
 
 ## 2. Review motion, scale, and interaction
 

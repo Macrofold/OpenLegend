@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                              | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+| In progress | Rendering/animation research and scoped mercenary work are recorded; moving style acceptance and the broader production pipeline remain open. | 2026-10-14   |
 
-**October 14 composition research:** EthrA's developer describes separately oriented sprite body parts, making articulated sprites a concrete comparison reference. The [research](../../art-direction/research/3d-pixel-worlds/reference-techniques.md#ethra) and [face/cloth guidance](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md#faces-eyes-and-character-identity) inform candidate art, without changing the appearance/mechanics contracts or claiming interchangeable clothing is implemented.
+**October 14 composition research:** EthrA's developer describes separately oriented sprite body parts, making articulated sprites a concrete comparison reference. The [research](../../art-direction/research/3d-pixel-worlds/reference-techniques.md#ethra) and [face/cloth guidance](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md#faces-eyes-and-character-identity) inform candidate art. The [realtime and animation follow-up](../../art-direction/research/3d-pixel-worlds/animation-tools-and-techniques.md) adds shaped animated models, deliberately held poses and controlled garment motion as the leading character comparison. Neither approach changes the appearance/mechanics contracts or establishes that interchangeable clothing is implemented.
 
 **General composition remains proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
 

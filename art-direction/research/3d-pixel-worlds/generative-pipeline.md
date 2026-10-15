@@ -1,6 +1,6 @@
 # How this style fits generative art
 
-**Good fit as an assisted production process; unproven as fully automatic final art.** Generation can provide concepts, variations, draft geometry and texture candidates. The desired finish depends on consistency across views, deliberate pixel clusters, scale, garment coverage and animation. A model followed by a pixel filter does not establish any of those qualities.
+**Good fit as an assisted production process; unproven as fully automatic final art.** Generation can provide concepts, variations, draft geometry and texture candidates. The desired finish depends on consistent forms, scale, garment coverage, motion and a designed pixel renderer. The realtime references show that the renderer can supply the pixel shading; a generated asset does not need a hand-painted texture for every visible pixel. A generic downsampling filter alone still does not establish the quality.
 
 This document owns the art-production implications of the research. The existing [generation/publication design](../../../docs/projects/3d-pixel-art-asset-pipeline.md) owns durable work, admission, storage, spending, failure and publication. Its general pipeline remains proposed. No provider request, tool installation, account access or quality/cost benchmark was performed for this research.
 
@@ -39,9 +39,11 @@ For a model, inspect its neutral untextured shape, full turntable and usable sca
 
 For sprite parts, establish the rig, joints and directional coverage before creating many detailed frames. The production cost grows with the number of distinct parts, views, poses and costume alternatives. Mirroring is useful only where it preserves intentional asymmetry such as equipment placement.
 
-### 3. Make the pixel artwork deliberately
+### 3. Prepare deliberate materials and pixel rendering
 
-Create a usable UV layout and decide the texture allocation by visible importance. Paint or correct the face, material boundaries and key garment marks. A high-resolution generated image can guide this work; automatic shrinking and palette reduction are preparation steps, not proof of final quality.
+For the leading renderer-driven candidate, provide clear material regions, sensible surface normals and restrained base colors. Use vertex colors, procedural materials or textures according to the selected asset. Generate geometry and material candidates, then use the shared renderer to produce consistent lighting bands, edges and effects. Semantic material masks can help keep skin, hair, metal and cloth distinct; they require inspection and do not grant gameplay meaning.
+
+Reserve targeted authored detail for identity and places the renderer cannot infer, especially eyes, brows and distinctive garment marks. When using painted textures, create a usable UV layout and allocate detail by visible importance. A high-resolution generated image can guide this work; automatic shrinking and palette reduction are preparation steps, not proof of final quality.
 
 Noio's [Pixel Unwrapper](https://github.com/noio/Pixel-Unwrapper) is a concrete tool to investigate for controlled UV layout. It has not been installed or qualified here. Aseprite or another pixel editor can support exact pixel edits; Blender can supply geometry, UV inspection and pose tests. The output matters more than mandating a particular editor.
 
@@ -51,7 +53,7 @@ For generated texture candidates, supply only rights-cleared references and a cl
 
 Normalize axes, scale, material slots and texture sampling through trusted import tooling. Use controlled palette/density checks as diagnostics rather than a substitute for art review. Preserve source files and source-to-export relationships so a bad face can be corrected without regenerating the whole asset.
 
-The art review should inspect the same fixed views, lighting cases and movement sequence used for accepted assets. Check both the texture and its rendered result. A face that passes in a portrait-sized render may still fail in ordinary play; a technically valid mesh may still look wrong.
+The art review should inspect the same fixed views, lighting cases and movement sequence used for accepted assets. Check geometry/material inputs and their rendered result, including any authored textures. A face that passes in a portrait-sized render may still fail in ordinary play; a technically valid mesh may still look wrong.
 
 ### 5. Publish a reviewed, durable result
 
@@ -65,6 +67,8 @@ If generation fails or is delayed, retain an appropriate existing representation
 
 The renderer should receive a chosen asset and render it consistently. It should not ask a model to redraw pixels during rotation, synthesize each animation frame on demand, or repair a cape every time it intersects. Such a design would introduce appearance drift, latency and uncontrolled work at exactly the moments when the player expects stable motion.
 
+For animation, retarget candidate clips to a reviewed rig and test held poses, contacts, attachment motion and interruptions through the [animation workflow](animation-tools-and-techniques.md).
+
 Prefer reusable authored structure: body families, compatible garments, approved material families and actual equipment attachment rules. Variation can alter bounded visual choices without regenerating the complete person. This remains a proposed production strategy; the existing mercenary pilot is one fixed outfit, not proof that interchangeable generated clothing already works.
 
 ## A useful first generation experiment
@@ -77,9 +81,9 @@ The experiment should answer whether the output can join existing art without sp
 
 ## Meshy, Blender and access
 
-**No new access is needed to use this research.** A later authored prototype can use existing permitted modeling/painting tools and assets. Meshy or a similar service would be useful only if a chosen experiment actually needs model generation; it is not required to produce pixel-painted polygon art.
+**No new access is needed to use this research.** A later authored prototype can use existing permitted modeling/painting tools and assets. Meshy or a similar service would be useful only if a chosen experiment actually needs model generation; it is not required for either renderer-driven pixel art or painted polygon surfaces.
 
-Before selecting a service, check its then-current input/output capabilities, license terms, rig/texture exports, costs and account authorization. This document does not assume those facts or request credentials. Blender access alone also does not produce the art direction automatically; the key work is shape, UV allocation, deliberate texture painting and visual correction.
+Before selecting a service, check its then-current input/output capabilities, license terms, rig/texture exports, costs and account authorization. This document does not assume those facts or request credentials. Blender access alone also does not produce the art direction automatically; the key work is shape, rigging, controlled materials, selected surface detail, pixel rendering and visual correction.
 
 ## What remains unproven
 
