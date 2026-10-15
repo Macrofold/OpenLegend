@@ -397,7 +397,7 @@ export function createGroupedScenery(
        }`,
       )
       .replace(
-        /(#elif defined\(INSTANCING\)[\s\S]*?mat3 getNormalMatrix\(mat4 modelMatrix\) \{)[\s\S]*?(\n    \})/,
+        /(#elif defined\(INSTANCING\)[\s\S]*?mat3 getNormalMatrix\(mat4 modelMatrix\)\s*\{)[\s\S]*?(\n\s*\})/,
         '$1\n        return ol_sceneryNormalMatrix(modelMatrix);$2',
       ),
   );
