@@ -12,6 +12,12 @@ import {
   setVisibilityStencil,
 } from './visibility-stencil';
 
+type CameraTargetImplementation = {
+  _glMsaaDepthBuffer: WebGLRenderbuffer | null;
+  msaaDepthBufferKey?: string;
+  destroy(device: pc.GraphicsDevice): void;
+};
+
 /** Renderer-only approximations. Mechanical bodies, hearing and sight never use these shaders.
  * docs/world-presentation.md#sprite-lighting
  */
@@ -109,6 +115,8 @@ export class WorldPresentation {
   private readonly sunRotation = new pc.Quat();
   private shadowQuality?: ShadowQuality;
   private readonly frame: pc.CameraFrame;
+  private readonly preparedTargets = new WeakSet<pc.RenderTarget>();
+  private readonly preparedImplementations = new WeakSet<CameraTargetImplementation>();
   private readonly pixels: ScenePixels;
   private readonly updatePixels = (): void => this.pixels.update();
   private effects?: PixelEffects;
@@ -144,6 +152,11 @@ export class WorldPresentation {
     sun.light!.shadowSamples = 16;
     sun.light!.shadowBlockerSamples = 16;
     this.frame = new pc.CameraFrame(app, camera.camera!);
+    const updateFrame = this.frame.update.bind(this.frame);
+    this.frame.update = () => {
+      updateFrame();
+      this.prepareCameraTarget();
+    };
     this.frame.rendering.stencil = true;
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.bloom.intensity = 0.025;
@@ -153,6 +166,45 @@ export class WorldPresentation {
     this.frame.update();
     this.pixels = new ScenePixels(app.graphicsDevice, camera.camera!);
     app.on('prerender', this.updatePixels);
+  }
+  private prepareCameraTarget(): void {
+    const device = this.app.graphicsDevice;
+    if (!(device instanceof pc.WebglGraphicsDevice)) return;
+    const pass = this.camera.camera!.renderPasses.find(
+      (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
+    );
+    const scenePass = pass?.scenePass as pc.RenderPass | undefined;
+    const target = scenePass?.renderTarget;
+    if (!target) return;
+    if (!this.preparedTargets.has(target)) {
+      this.preparedTargets.add(target);
+      const resize = target.resize;
+      target.resize = (width, height) => {
+        const previous = target.impl;
+        resize.call(target, width, height);
+        if (target.impl !== previous) this.prepareCameraImplementation(target);
+      };
+    }
+    this.prepareCameraImplementation(target);
+  }
+  private prepareCameraImplementation(target: pc.RenderTarget): void {
+    const device = this.app.graphicsDevice;
+    if (!(device instanceof pc.WebglGraphicsDevice)) return;
+    const implementation = target.impl as CameraTargetImplementation;
+    if (this.preparedImplementations.has(implementation)) return;
+    this.preparedImplementations.add(implementation);
+    const destroy = implementation.destroy;
+    // PlayCanvas 2.22.2 omits deletion of unshared MSAA depth renderbuffers.
+    // Own only this camera target's missing release, including resize and late
+    // layer rebuilds; cached/shared depth retains its engine owner.
+    // docs/verification/starting-scene-pixel-stability.md
+    implementation.destroy = function (destroyDevice) {
+      if (this._glMsaaDepthBuffer && !this.msaaDepthBufferKey) {
+        device.gl.deleteRenderbuffer(this._glMsaaDepthBuffer);
+        this._glMsaaDepthBuffer = null;
+      }
+      destroy.call(this, destroyDevice);
+    };
   }
   setArtTreatment(style: Readonly<ArtTreatment>): void {
     const restrained = style.atmosphere === 'restrained';
