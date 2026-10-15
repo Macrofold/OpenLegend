@@ -6,6 +6,8 @@
 
 [Starting-scene pixel finish and camera stability](verification/starting-scene-pixel-stability.md) records the newly authorized revision after rejection of the first candidate, including single final sampling, object-attached surface artwork and critical moving-artifact comparisons.
 
+[Licensed library art and authored choices](verification/library-art-variants.md) records actual free source downloads, three mercenary/hare alternatives, imported foliage selection, loading cleanup and current art/performance limits.
+
 This index links recorded checks and measurements by topic. Each report retains its own revision, workload, results and limitations; a passing result for one workload does not establish current release acceptance. The [maintainer index](maintainers/README.md) links the owners of remaining work.
 
 Add detailed evidence to the relevant report under `docs/verification/`, following the [documentation policy](../.agents/rules/documentation.md#verification-reports). Keep this page for navigation and the shared playtest protocol.

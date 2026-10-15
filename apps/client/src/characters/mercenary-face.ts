@@ -33,7 +33,10 @@ export class MercenaryFaceResources {
   private readonly source = new pc.StandardMaterial();
   private readonly material: pc.StandardMaterial;
   private variant: MercenaryArt = 'original';
-  constructor(app: pc.Application, materials: MercenaryMaterials) {
+  constructor(
+    private readonly app: pc.Application,
+    materials: MercenaryMaterials,
+  ) {
     this.source.name = 'Mercenary shaped facial artwork';
     this.source.diffuse.set(1, 1, 1);
     this.source.diffuseVertexColor = true;
@@ -74,7 +77,7 @@ export class MercenaryFaceResources {
     const head = root.findByName('Head');
     if (!head) throw new Error('Mercenary face attachment missing');
     this.heads.set(root, head);
-    const node = new pc.Entity('Mercenary shaped facial details');
+    const node = new pc.Entity('Mercenary shaped facial details', this.app);
     head.addChild(node);
     const instance = new pc.MeshInstance(this.meshes.get(this.variant)!, this.material, node);
     node.addComponent('render', {

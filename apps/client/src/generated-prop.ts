@@ -1,24 +1,15 @@
 import * as pc from 'playcanvas';
+import { BundledModels } from './bundled-models';
 import generatedChestUrl from './props/generated-chest.glb?url';
 import { ArtMaterials } from './art-treatment';
 import { ShadowMaterial } from './shadow-material';
 import { ordinaryStencil, setVisibilityStencil } from './visibility-stencil';
 
-function container(resource: unknown): resource is pc.ContainerResource {
-  return (
-    typeof resource === 'object' &&
-    resource !== null &&
-    'instantiateRenderEntity' in resource &&
-    typeof resource.instantiateRenderEntity === 'function'
-  );
-}
-
 /** One attributed offline E08 prop. Appearance only: its caller supplies the
  * existing object's envelope and owns fallback, reveal and semantic picking.
  * docs/verification/generated-prop-coherence.md */
 export class GeneratedPropResources {
-  private asset?: pc.Asset;
-  private pending?: Promise<pc.ContainerResource>;
+  private readonly models: BundledModels;
   private disposed = false;
   private readonly prepared = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly actors = new Set<GeneratedPropActor>();
@@ -27,7 +18,9 @@ export class GeneratedPropResources {
     private readonly art: ArtMaterials,
     private readonly sun?: pc.Light,
     private readonly prepareSurface?: (material: pc.StandardMaterial) => void,
-  ) {}
+  ) {
+    this.models = new BundledModels(app);
+  }
 
   create(
     parent: pc.Entity,
@@ -41,36 +34,13 @@ export class GeneratedPropResources {
       width,
       height,
       depth,
-      this.load(),
+      this.models.load('Generated chest', generatedChestUrl),
       (material) => this.prepare(material),
       () => this.actors.delete(actor),
       onReady,
     );
     this.actors.add(actor);
     return actor;
-  }
-
-  private load(): Promise<pc.ContainerResource> {
-    return (this.pending ??= new Promise<pc.ContainerResource>((resolve, reject) => {
-      this.app.assets.loadFromUrl(generatedChestUrl, 'container', (error, asset) => {
-        if (this.disposed || error || !asset || !container(asset.resource)) {
-          if (asset) {
-            asset.unload();
-            this.app.assets.remove(asset);
-          }
-          reject(
-            new Error(
-              this.disposed
-                ? 'Generated prop owner was destroyed.'
-                : String(error ?? 'Generated prop did not load.'),
-            ),
-          );
-          return;
-        }
-        this.asset = asset;
-        resolve(asset.resource);
-      });
-    }));
   }
 
   private prepare(source: pc.StandardMaterial): pc.StandardMaterial {
@@ -90,17 +60,13 @@ export class GeneratedPropResources {
     return [...this.prepared.values()];
   }
 
-  destroy(): void {
+  destroy(): Promise<void> | undefined {
     if (this.disposed) return;
     this.disposed = true;
     for (const actor of [...this.actors]) actor.destroy();
     for (const material of this.prepared.values()) material.destroy();
     this.prepared.clear();
-    if (this.asset) {
-      this.asset.unload();
-      this.app.assets.remove(this.asset);
-    }
-    this.asset = undefined;
+    return this.models.destroy();
   }
 }
 

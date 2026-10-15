@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Surface-art trials and scoped checks are delivered; visual acceptance and measured frame-time failures remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Licensed asset and authored variant comparisons are delivered; face, moving-art and frame-time acceptance remain open. | 2026-10-15   |
 
 **October 14 reference update:** The [research comparison proposal](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-a-successful-comparison-must-show) makes surface attachment, face readability, garment coverage and restrained effects explicit review concerns. The 34-image library is external reference media, not OpenLegend qualification evidence. The moving comparison and creator acceptance below remain required.
 

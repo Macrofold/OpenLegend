@@ -1,4 +1,5 @@
 import * as pc from 'playcanvas';
+import { BundledModels, type BundledModel } from '../bundled-models';
 import mercenaryUrl from './mercenary-assets/mercenary.glb?url';
 import motionUrl from './mercenary-assets/mercenary-motion.glb?url';
 import { MercenaryMotion } from './mercenary-motion';
@@ -11,18 +12,7 @@ import { PixelCharacter } from './pixel-character';
 import { CapeCloth } from './mercenary-cloth';
 import { MercenaryMaterials } from './mercenary-materials';
 
-type Container = pc.ContainerResource & { animations: pc.Asset[] };
-type LoadedModel = { resource: Container; tracks: pc.AnimTrack[] };
-function container(value: unknown): value is Container {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'instantiateRenderEntity' in value &&
-    typeof value.instantiateRenderEntity === 'function' &&
-    'animations' in value &&
-    Array.isArray(value.animations)
-  );
-}
+type LoadedModel = { resource: BundledModel; tracks: pc.AnimTrack[] };
 function renders(root: pc.Entity): pc.RenderComponent[] {
   return root
     .findComponents('render')
@@ -32,9 +22,8 @@ function renders(root: pc.Entity): pc.RenderComponent[] {
 /** One trusted bundled pilot. No generated URL intake, appearance authority, or world writes.
  * docs/projects/completed/mercenary-scene-pilot.md */
 export class MercenaryModels {
-  private readonly assets: pc.Asset[] = [];
+  private readonly models: BundledModels;
   private pending?: Promise<LoadedModel>;
-  private disposed = false;
   private readonly materials: MercenaryMaterials;
   private readonly faces: MercenaryFaceResources;
   constructor(
@@ -44,6 +33,7 @@ export class MercenaryModels {
     sun: pc.Light,
     art: ArtMaterials,
   ) {
+    this.models = new BundledModels(app);
     this.materials = new MercenaryMaterials(app, sun, art, (variant) =>
       this.faces.setVariant(variant),
     );
@@ -62,8 +52,8 @@ export class MercenaryModels {
   }
   private load(): Promise<LoadedModel> {
     return (this.pending ??= Promise.all([
-      this.loadAsset(mercenaryUrl),
-      this.loadAsset(motionUrl),
+      this.models.load('Original mercenary', mercenaryUrl),
+      this.models.load('Mercenary motion', motionUrl),
     ]).then(([resource, motion]) => ({
       resource,
       tracks: [...resource.animations, ...motion.animations]
@@ -71,37 +61,13 @@ export class MercenaryModels {
         .filter((track): track is pc.AnimTrack => track instanceof pc.AnimTrack),
     })));
   }
-  private loadAsset(url: string): Promise<Container> {
-    return new Promise((resolve, reject) =>
-      this.app.assets.loadFromUrl(url, 'container', (error, asset) => {
-        if (this.disposed) {
-          asset?.unload();
-          if (asset) this.app.assets.remove(asset);
-          reject(new Error('Mercenary renderer disposed'));
-          return;
-        }
-        if (asset) this.assets.push(asset);
-        const resource: unknown = asset?.resource;
-        if (error || !container(resource)) {
-          reject(new Error('Mercenary model unavailable'));
-          return;
-        }
-        resolve(resource);
-      }),
-    );
-  }
   setArtTreatment(style: Readonly<ArtTreatment>): void {
     this.materials.setArtTreatment(style);
   }
-  destroy(): void {
-    this.disposed = true;
+  destroy(): Promise<void> | undefined {
     this.faces.destroy();
     this.materials.destroy();
-    for (const asset of this.assets) {
-      asset.unload();
-      this.app.assets.remove(asset);
-    }
-    this.assets.length = 0;
+    return this.models.destroy();
   }
 }
 

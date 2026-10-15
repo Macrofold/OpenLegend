@@ -137,7 +137,7 @@ export class CapeCloth {
         lining = at(source.meshInstances, 1).material;
       if (!(material instanceof pc.StandardMaterial) || !(lining instanceof pc.StandardMaterial))
         throw new Error('Unsupported cape material');
-      const node = new pc.Entity('Simulated ' + patch.name);
+      const node = new pc.Entity('Simulated ' + patch.name, app);
       app.root.addChild(node);
       node.addComponent('render', {
         meshInstances: [

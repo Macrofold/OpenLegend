@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Surface-art trials and scoped checks are delivered; visual acceptance and measured frame-time failures remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Licensed asset and authored variant comparisons are delivered; face, moving-art and frame-time acceptance remain open. | 2026-10-15   |
 
 ## Purpose and authorization
 
@@ -76,7 +76,7 @@ Use the existing starting world throughout. Research and actually download usefu
 4. Integrate the best supported provisional environment/animal art and finite developer comparison controls. Share static geometry/material preparation; update only actor transforms/pose on ordinary frames. Keep mesh/depth/shadow/read-through/picking participants aligned, and reject late arrivals after disposal/replacement or while the target is remembered rather than observed.
 5. Capture matched gameplay/close views and pan/orbit/zoom/animation for alternatives, show them to Mike while independent work continues, and judge them explicitly against the references. Run focused loading/failure, interaction, pause, resize, replacement and teardown checks for changed owners; measure current whole-frame cost and resource release. Run relevant TypeScript/build/format/link checks, inspect the complete diff, fix concrete issues, update current owners/trackers and make local commits.
 
-The initial estimate was **400–800 executable lines**. Inspection and implementation expanded that to approximately **1,600–1,900 lines**: three reproducible offline preparation scripts, one shared foliage owner and one shared animated-hare owner, plus finite mercenary artwork integration. This remains the same agreed asset scope; no general publication service, new world or renderer replacement is added. The existing plan is retained because shared-resource teardown, imported animation/UV transforms and texture-cutout picking require coordinated verification. Risk is moderate: those participants must agree before any provisional default is adopted. No native mechanics, protocol, persistence, hidden data or production-generation contracts change. Each final handoff must distinguish delivered candidates, Mike's still-open visual choice and any measured failures.
+The initial estimate was **400–800 executable lines**. Inspection and implementation expanded that to approximately **1,700–2,000 lines**: three reproducible offline preparation scripts, one shared foliage owner and one shared animated-hare owner, plus finite mercenary artwork integration, filtered-leaf picking and shared cancellation/parse cleanup for bundled models. This remains the same agreed asset scope; no general publication service, new world or renderer replacement is added. The existing plan is retained because shared-resource teardown, imported animation/UV transforms and texture-cutout picking require coordinated verification. Risk is moderate: those participants must agree before any provisional default is adopted. No native mechanics, protocol, persistence, hidden data or production-generation contracts change. Each final handoff must distinguish delivered candidates, Mike's still-open visual choice and any measured failures.
 
 Cost grows with visible mesh triangles/materials, animated subjects, shadow redraws and target pixels. Prepare immutable library geometry, fixed pixel textures and source clips once per asset/style; reuse existing scenery instance groups. Only relevant asset/style changes invalidate preparation; camera changes must not regenerate art or add geometry, and native movement updates only the affected actor pose/transform. Measure the complete existing scene at matched camera/light/source view, with draw counts, frame-time tails and owned allocation/teardown accounting. Avoid extra full-scene passes merely to demonstrate a new asset.
 
@@ -84,7 +84,7 @@ Completion means actual licensed downloads and a useful integrated scene revisio
 
 ## Maintained records
 
-- Work, dependencies, decisions and unchecked completion: [V3D01.1–V3D01.12](../maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks).
+- Work, dependencies, decisions and unchecked completion: [V3D01.1–V3D01.14](../maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks).
 - Product/art intent: [feature specification](3d-pixel-art-feature-spec.md#1-recommendation) and [creative brief](../../art-direction/final-board/creative-brief.md).
 - Mechanisms and ownership: [technical design](3d-pixel-art-tech-design.md#8-pixel-rendering-profile) and [current world presentation](../world-presentation.md).
 - Experiment procedures and acceptance: [qualification](3d-pixel-art-validation.md#first-scene-technique-experiments). Keep results in the relevant [verification report](../verification.md), linked from the task when it runs.

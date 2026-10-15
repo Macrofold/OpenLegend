@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — technical design
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Surface-art trials and scoped checks are delivered; visual acceptance and measured frame-time failures remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Licensed asset and authored variant comparisons are delivered; face, moving-art and frame-time acceptance remain open. | 2026-10-15   |
 
 **October 14 renderer research:** [Asset/rendering explanations](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) distinguish authored surface texels from voxel geometry and screen sampling. The [PlayCanvas feasibility inspection](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-is-already-available-and-what-is-not-established) identifies candidate facilities in the current pinned engine, without implementing effects or selecting a replacement engine.
 

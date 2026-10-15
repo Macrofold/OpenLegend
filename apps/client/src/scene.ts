@@ -2631,6 +2631,7 @@ export class WildernessScene implements WorldRenderer {
     this.destroyed = true;
     this.suspended = true;
     this.app.autoRender = false;
+    pc.AppBase.cancelTick(this.app);
     this.canvas.dataset.ready = 'false';
     this.resizeObserver?.disconnect();
     this.canvas.removeEventListener('pointerdown', this.pointerDown);
@@ -2656,8 +2657,8 @@ export class WildernessScene implements WorldRenderer {
       this.presentation?.removeReveal(entry.reveal);
     }
     this.presentation?.destroy();
-    this.generatedProps?.destroy();
-    this.mercenary?.destroy();
+    const propParsing = this.generatedProps?.destroy();
+    const mercenaryParsing = this.mercenary?.destroy();
     const animalParsing = this.libraryAnimals?.destroy();
     this.landscape?.destroy();
     this.libraryScenery?.destroy();
@@ -2676,8 +2677,20 @@ export class WildernessScene implements WorldRenderer {
     for (const buffer of this.landscapeBuffers) buffer.destroy();
     this.landscapeBuffers = [];
     this.setConstructionPreview(null);
-    if (animalParsing) void animalParsing.then(() => this.app.destroy());
-    else this.app.destroy();
+    const parsing = [propParsing, mercenaryParsing, animalParsing].filter(
+      (pending): pending is Promise<void> => pending !== undefined,
+    );
+    const destroyApp = () => {
+      const id = this.canvas.id;
+      const replacement = pc.AppBase.getApplication(id);
+      this.app.destroy();
+      // PlayCanvas 2.22.2 clears this canvas entry unconditionally. An old
+      // parser finishing must not unregister a replacement on the same canvas.
+      if (replacement && replacement !== this.app)
+        Object.assign(pc.AppBase._applications, { [id]: replacement });
+    };
+    if (parsing.length) void Promise.all(parsing).then(destroyApp);
+    else destroyApp();
   }
 }
 

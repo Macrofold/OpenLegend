@@ -1,4 +1,5 @@
 import * as pc from 'playcanvas';
+import { BundledModels, type BundledModel } from './bundled-models';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
 import fieldUrl from './props/library-animals/hare-field.glb?url';
@@ -10,46 +11,33 @@ import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
 
 export type HareVariant = 'field' | 'russet' | 'winter';
-type AnimalContainer = pc.ContainerResource & { animations: pc.Asset[] };
 const sources: Record<HareVariant, string> = {
   field: fieldUrl,
   russet: russetUrl,
   winter: winterUrl,
 };
-function container(value: unknown): value is AnimalContainer {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'instantiateRenderEntity' in value &&
-    typeof value.instantiateRenderEntity === 'function' &&
-    'animations' in value &&
-    Array.isArray(value.animations)
-  );
-}
-
 /** Three fixed painted/shape alternatives from the retained CC0 wild rabbit.
  * Meshes, textures, clips and prepared materials are shared per variant; ordinary
  * frames evaluate only each admitted visible animal's pose and heading. */
 export class LibraryAnimals {
-  private readonly assets: pc.Asset[] = [];
-  private readonly pending = new Map<HareVariant, Promise<AnimalContainer>>();
+  private readonly models: BundledModels;
   private readonly prepared = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly actors = new Set<LibraryAnimalActor>();
   private disposed = false;
-  private readonly downloads = new Set<AbortController>();
-  private readonly parsing = new Set<Promise<AnimalContainer>>();
   constructor(
     private readonly app: pc.Application,
     private readonly presentation: WorldPresentation,
     private readonly camera: pc.Entity,
     private readonly sun: pc.Light,
     private readonly art: ArtMaterials,
-  ) {}
+  ) {
+    this.models = new BundledModels(app);
+  }
   create(parent: pc.Entity, variant: HareVariant): LibraryAnimalActor {
     const actor = new LibraryAnimalActor(
       parent,
       variant,
-      this.load(variant),
+      this.models.load('Library hare · ' + variant, sources[variant]),
       this.presentation,
       this.camera,
       (source) => this.prepare(source),
@@ -57,49 +45,6 @@ export class LibraryAnimals {
     );
     this.actors.add(actor);
     return actor;
-  }
-  private load(variant: HareVariant): Promise<AnimalContainer> {
-    const existing = this.pending.get(variant);
-    if (existing) return existing;
-    const download = new AbortController();
-    this.downloads.add(download);
-    const promise = fetch(sources[variant], { signal: download.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error('Animal asset download failed.');
-        return response.arrayBuffer();
-      })
-      .finally(() => this.downloads.delete(download))
-      .then((contents) => {
-        if (this.disposed) throw new Error('Animal owner was destroyed.');
-        const asset = new pc.Asset('Library hare · ' + variant, 'container', {
-          url: sources[variant],
-          filename: 'hare-' + variant + '.glb',
-          contents,
-        });
-        const parsed = new Promise<AnimalContainer>((resolve, reject) => {
-          asset.once('load', () => {
-            if (this.disposed || !container(asset.resource)) {
-              asset.unload();
-              this.app.assets.remove(asset);
-              reject(new Error('Animal owner was destroyed or its asset is unavailable.'));
-            } else {
-              this.assets.push(asset);
-              resolve(asset.resource);
-            }
-          });
-          asset.once('error', () => {
-            asset.unload();
-            this.app.assets.remove(asset);
-            reject(new Error('Animal asset unavailable.'));
-          });
-        });
-        this.parsing.add(parsed);
-        this.app.assets.add(asset);
-        this.app.assets.load(asset);
-        return parsed.finally(() => this.parsing.delete(parsed));
-      });
-    this.pending.set(variant, promise);
-    return promise;
   }
   private prepare(source: pc.StandardMaterial): pc.StandardMaterial {
     const existing = this.prepared.get(source);
@@ -121,25 +66,13 @@ export class LibraryAnimals {
   destroy(): Promise<void> | undefined {
     if (this.disposed) return;
     this.disposed = true;
-    for (const download of this.downloads) download.abort();
-    this.downloads.clear();
     for (const actor of [...this.actors]) actor.destroy();
     for (const material of this.prepared.values()) {
       this.presentation.releaseMaterial(material);
       material.destroy();
     }
     this.prepared.clear();
-    for (const asset of this.assets) {
-      asset.unload();
-      this.app.assets.remove(asset);
-    }
-    this.assets.length = 0;
-    this.pending.clear();
-    // The pinned glTF parser asynchronously registers embedded textures. Keep
-    // its registry alive until already-started local parsing has released them;
-    // network work was cancelled above and never enters that parser afterward.
-    if (this.parsing.size) return Promise.allSettled([...this.parsing]).then(() => undefined);
-    return undefined;
+    return this.models.destroy();
   }
 }
 
@@ -160,7 +93,7 @@ export class LibraryAnimalActor {
   constructor(
     private readonly parent: pc.Entity,
     private readonly variant: HareVariant,
-    loading: Promise<AnimalContainer>,
+    loading: Promise<BundledModel>,
     private readonly presentation: WorldPresentation,
     private readonly camera: pc.Entity,
     private readonly prepare: (source: pc.StandardMaterial) => pc.StandardMaterial,
@@ -178,7 +111,7 @@ export class LibraryAnimalActor {
         console.warn('Library hare unavailable; keeping its sprite.', error);
       });
   }
-  private install(resource: AnimalContainer): void {
+  private install(resource: BundledModel): void {
     const node = (this.node = resource.instantiateRenderEntity({
       castShadows: true,
       receiveShadows: true,
