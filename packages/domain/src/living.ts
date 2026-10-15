@@ -19,7 +19,8 @@ import { strikeDefinition } from './strikes.js';
 import type { Entity, WorldEvent, WorldState, Transition } from './types.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
-import { projectAttributes } from './world-modules.js';
+import { attributeRange, projectAttributes, readAttribute } from './world-modules.js';
+import { canNoticeInternalChange } from './conditions.js';
 import { BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
 import { baseCombatInjuryInterruption } from './worlds/base/body-policy.js';
 
@@ -64,7 +65,7 @@ export function reconcileBody(
   if (!Number.isSafeInteger(body.revision + 1)) throw new Error('Body revision exhausted.');
   body.revision++;
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'body' });
-  setBodyHealth(actor, Math.max(0, Math.min(body.maxHealth, actor.health)));
+  setBodyHealth(world, actor, Math.max(0, Math.min(body.maxHealth, actor.health)));
   if (actor.health === 0 && actor.alive && !actor.incapacitated) {
     if (actor.action) releaseInvocationResources(world, actor.action.id);
     if (actor.action)
@@ -133,6 +134,69 @@ export interface BodyEffect {
   targetId: string;
   kind: 'health' | 'injury' | 'healing' | 'wetness' | 'burning';
   amount: number;
+}
+/** Record actual health outcomes through the installed meter's disclosure, without injury semantics. */
+export function recordHealthChange(
+  world: WorldState,
+  entity: Entity,
+  before: number,
+  cause: string,
+  events: WorldEvent[],
+): void {
+  const actor = entity.actor!;
+  const definition = world.moduleManifest.definitions.find(
+    (d) => d.implementation === 'native-health-v1',
+  );
+  if (
+    !definition ||
+    before === actor.health ||
+    (definition.disclosure === 'owner' && !canNoticeInternalChange(world, entity))
+  )
+    return;
+  const range = attributeRange(actor, definition);
+  const beforeValue =
+    definition.nativeHealth?.units === 'points'
+      ? before
+      : range.min + (before / actor.body!.maxHealth) * (range.max - range.min);
+  const after = readAttribute(actor, definition);
+  if (typeof after !== 'number') return;
+  emit(
+    world,
+    events,
+    'attribute-changed',
+    {
+      parts: [
+        person(entity, 'possessive'),
+        ` ${definition.name} changed from ${beforeValue}${definition.schema.kind === 'number' ? definition.schema.unit : ''} to ${after}${definition.schema.kind === 'number' ? definition.schema.unit : ''}.`,
+      ],
+    },
+    entity,
+    undefined,
+    {
+      attributeId: definition.id,
+      definitionVersion: definition.version,
+      attributeRevision: actor.body!.revision,
+      before: beforeValue,
+      after,
+      unit: definition.schema.kind === 'number' ? definition.schema.unit : '',
+      cause,
+    },
+    definition.disclosure === 'public' ? 'external' : 'private',
+  );
+}
+/** Passive health changes keep lifecycle effects, without combat interruption or waking. */
+export function commitHealthChange(
+  world: WorldState,
+  entity: Entity,
+  rawDelta: number,
+  cause: string,
+  events: WorldEvent[],
+): { before: number; after: number } {
+  const before = entity.actor!.health;
+  setBodyHealth(world, entity.actor!, before + rawDelta);
+  reconcileBody(world, entity, events, cause);
+  recordHealthChange(world, entity, before, cause, events);
+  return { before, after: entity.actor!.health };
 }
 /** Simultaneous effects aggregate before clamping. Caller supplies native authority, never prose. */
 export function applyBodyEffects(
@@ -216,11 +280,13 @@ export function commitBodyEffects(
     0,
     Math.min(100, previous.burning + totals.burning - totals.wetness),
   );
-  setBodyHealth(
-    actor,
-    actor.health + totals.health + totals.healing - totals.injury - totals.burning,
+  commitHealthChange(
+    world,
+    entity,
+    totals.health + totals.healing - totals.injury - totals.burning,
+    cause,
+    events,
   );
-  reconcileBody(world, entity, events, cause);
   const experience = activeActivity(world, cause);
   const observer = experience && world.entities[experience.actorId];
   connectActivityState(

@@ -10,7 +10,7 @@ import {
 } from './perception-field';
 
 const COLORS = { vision: [0.43, 0.84, 0.72], hearing: [0.91, 0.71, 0.35] } as const;
-const CORE_WIDTH = 0.018;
+const CORE_WIDTH = 0.024;
 const LIFT = 0.035;
 
 /** Scene-owned depth-tested fills and ribbons. No pick registration, authority or animation.
@@ -191,12 +191,12 @@ export class PerceptionOverlay {
           contour.triangles,
           color,
           1,
-          0.006,
+          0.025,
           `${contour.sense} area`,
         );
       for (const [width, opacity] of [
         [CORE_WIDTH * 3, 0.025],
-        [CORE_WIDTH, 0.38],
+        [CORE_WIDTH, 0.55],
       ]) {
         const positions: number[] = [],
           indices: number[] = [];

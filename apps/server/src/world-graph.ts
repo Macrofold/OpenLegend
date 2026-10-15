@@ -233,9 +233,10 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
   for (const d of world.statusEffectPolicy.definitions) {
     const source = resolve('status-effect', d.id)!.node.ref;
     for (const op of d.whileActive)
-      if ('changeRate' in op) {
-        const target = resolve('attribute', op.changeRate.attribute);
-        if (target) link(source, target.node.ref, 'contributes_to', op.changeRate.target);
+      if ('changeRate' in op || 'changeEvery' in op) {
+        const change = 'changeRate' in op ? op.changeRate : op.changeEvery;
+        const target = resolve('attribute', change.attribute);
+        if (target) link(source, target.node.ref, 'contributes_to', change.target);
       }
     let visited = 0;
     for (const { condition, sourcePath } of statusDefinitionConditions(d))

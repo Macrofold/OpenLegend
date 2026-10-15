@@ -64,6 +64,14 @@ pnpm run dev
 
 PostgreSQL with pgvector is required for local development and production. The configured role needs access to the game database and permission to initialize its schemas; install/enable the vector extension beforehand if that role cannot create extensions. Missing `OPEN_LEGEND_DATABASE_URL` fails startup clearly. No SQLite fallback or conversion is provided. Database-dependent checks require `OPENLEGEND_TEST_DATABASE_URL` pointing to a loopback PostgreSQL administrative database: fixtures create and drop their own uniquely named databases, never the named administrative database.
 
+For Codex worktrees, set the project's local environment setup script to:
+
+```sh
+bash bin/setup_worktree.sh
+```
+
+The [setup script](bin/setup_worktree.sh) copies `.env` from Git's main checkout when the destination has no `.env`, then runs `pnpm install --frozen-lockfile`. Existing files and symlinks are preserved. Configure the main checkout's `.env` first; use `--source PATH` or `OPEN_LEGEND_WORKTREE_SOURCE_PATH` to select another source, and `--dry-run` to preview without changes. Configuration is copied so each worktree can change its settings independently. The copied database URL initially selects the same development world; choose a separate database and `OPEN_LEGEND_DATA_DIR` for independent play. Dependencies are installed per checkout; saved files are not copied or linked. Setup does not start the server or dispatch AI requests.
+
 If startup reports an unsupported database schema, the configured development database format differs from the running code. Follow the [development save policy](AGENTS.md#development-save-policy): agents may set up fresh current-format development state without another confirmation. A fresh database URL and separate `OPEN_LEGEND_DATA_DIR` start the latest standard world while leaving the previous database and saves intact. Do not change the stored schema marker to bypass validation. The server itself still refuses incompatible data; this policy does not add automatic reset to `pnpm dev`. Fresh standard starts use the newest integrated world initializer, combining its current characters, encounters and supplies; isolated test fixtures and unfinished branches are not the default seed.
 
 Open **http://127.0.0.1:3210**. For live AI, follow the [setup guide](docs/live-ai-setup.md): a configured Macrofold key selects that backend; direct Jev/OpenAI keys select the direct path otherwise. Current full NPC conversation requires Macrofold with explicit model/compute allowance. Set a chosen nonzero `AI_BUDGET_USD` and restart only when ready to permit paid work. The default is $50 per agent per UTC calendar month; set zero to disable paid dispatch. Keys never go to the browser. The allowance and usage accounting persist with this world's save, rather than resetting on page reload.

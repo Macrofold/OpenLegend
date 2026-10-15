@@ -269,6 +269,7 @@ export function candidateGraph(
         if (!spend()) break;
         const op = record(rawOp),
           rate = record(op.changeRate),
+          periodic = record(op.changeEvery),
           restrictions = record(op.restrictCapabilities);
         if (op.changeRate)
           link(
@@ -276,6 +277,13 @@ export function candidateGraph(
             existing('attribute', rate.attribute, `definitions[${i}].whileActive[${j}]`),
             'contributes_to',
             `${String(rate.target)}: ${String(rate.amount)} per ${String(rate.per)}`,
+          );
+        if (op.changeEvery)
+          link(
+            source,
+            existing('attribute', periodic.attribute, `definitions[${i}].whileActive[${j}]`),
+            'contributes_to',
+            `${String(periodic.target)}: ${String(periodic.amount)} ${String(periodic.unit)} every ${String(periodic.everyGameSeconds)} game seconds`,
           );
         if (op.when)
           pending.push({ value: op.when, field: `definitions[${i}].whileActive[${j}].when` });

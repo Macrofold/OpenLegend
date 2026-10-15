@@ -600,11 +600,12 @@ export function applyResourceGroup(
   world: WorldState,
   group: ResourceGroup,
   events: WorldEvent[],
+  feedback: 'effect' | 'silent' = 'effect',
 ): ResourceResult {
   chargeWork({ claims: group?.operations?.length ?? 0, effects: 1 });
   const plan = planGroup(world, group);
   if (plan.status !== 'planned') return plan;
-  publishResourcePlan(world, plan, events, group.invocationId);
+  publishResourcePlan(world, plan, events, group.invocationId, feedback);
   return { status: 'applied', amounts: plan.amounts };
 }
 function consumePlannedHolds(world: WorldState, plan: ResourcePlan): void {
@@ -668,6 +669,7 @@ function publishResourcePlan(
   plan: ResourcePlan,
   events: WorldEvent[],
   cause: string,
+  feedback: 'effect' | 'silent' = 'effect',
 ): void {
   consumePlannedHolds(world, plan);
   for (const { ref, stock, value } of plan.writes.values()) {
@@ -684,6 +686,8 @@ function publishResourcePlan(
         { kind: 'replace', value },
         events,
         cause,
+        'now',
+        feedback,
       );
       if (result.status !== 'applied' && result.status !== 'unchanged')
         throw new Error('Validated resource owner rejected publication.');

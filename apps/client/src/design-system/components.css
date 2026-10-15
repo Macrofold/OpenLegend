@@ -80,6 +80,35 @@
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: lining-nums;
 }
+/* One scrollbar appearance for every game scroll area, including portaled popups.
+   Keep native scrolling; containers continue to own their size and overflow. */
+:where(.ol-root, .ol-root *) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+:where(.ol-root, .ol-root *)::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+:where(.ol-root, .ol-root *)::-webkit-scrollbar-track,
+:where(.ol-root, .ol-root *)::-webkit-scrollbar-corner {
+  background: transparent;
+}
+:where(.ol-root, .ol-root *)::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background: var(--line-strong);
+}
+:where(.ol-root, .ol-root *)::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted);
+}
+:where(.ol-root, .ol-root *)::-webkit-scrollbar-button {
+  display: none;
+}
+@media (forced-colors: active) {
+  :where(.ol-root, .ol-root *) {
+    scrollbar-color: auto;
+  }
+}
 .ol-root :where(button) {
   font: inherit;
   color: inherit;
@@ -487,15 +516,6 @@
   box-shadow: var(--shadow-float);
   animation: ol-select-in calc(220ms * var(--motion-scale)) var(--ease-out) both;
   transform-origin: var(--trigger-anchor-point);
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
-}
-.ol-select-popover::-webkit-scrollbar {
-  width: 6px;
-}
-.ol-select-popover::-webkit-scrollbar-thumb {
-  border-radius: var(--radius-full);
-  background: var(--line-strong);
 }
 @keyframes ol-select-in {
   from {
@@ -510,15 +530,6 @@
   max-height: min(318px, calc(var(--available-height, 330px) - 12px));
   overflow-y: auto;
   outline: none;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
-}
-.ol-select-list::-webkit-scrollbar {
-  width: 6px;
-}
-.ol-select-list::-webkit-scrollbar-thumb {
-  border-radius: var(--radius-full);
-  background: var(--line-strong);
 }
 .ol-select-option {
   display: grid;
@@ -993,8 +1004,6 @@
   min-height: 0;
   overflow: auto;
   padding: 4px 10px 12px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
 }
 .ol-panel-foot {
   padding: 12px 16px 16px;
@@ -1483,7 +1492,8 @@
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
-.ol-item[aria-disabled='true'] {
+.ol-item[aria-disabled='true'],
+.ol-item[data-unavailable='true'] {
   cursor: default;
   color: var(--ink-faint);
   height: auto;
@@ -1491,7 +1501,8 @@
   padding-top: 4px;
   padding-bottom: 4px;
 }
-.ol-item[aria-disabled='true'] .ol-item-hint {
+.ol-item[aria-disabled='true'] .ol-item-hint,
+.ol-item[data-unavailable='true'] .ol-item-hint {
   color: var(--ink-faint);
 }
 .ol-item[aria-disabled='true'][data-active='true'] {

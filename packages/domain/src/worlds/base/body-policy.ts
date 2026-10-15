@@ -21,14 +21,25 @@ const below = (attribute: string, value: number): StatusCondition => ({
   compare: { target: '$subject', attribute, operator: 'lessThan', value },
 });
 const distress: StatusCondition = {
-  any: [below('wilderness:health', 40), below('wilderness:fullness', 30)],
+  any: [
+    {
+      compare: {
+        target: '$subject',
+        attribute: 'wilderness:health',
+        operator: 'lessThan',
+        value: 0.4,
+        unit: 'fractionOfRange',
+      },
+    },
+    below('wilderness:fullness', 30),
+  ],
 };
 const awake: StatusCondition = {
   statusActive: { target: '$subject', definitionId: 'wilderness:restorative-rest', value: false },
 };
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 8,
+  version: 9,
   evasion: {
     bodyPlans: ['biped'],
     maximumDistance: 2,

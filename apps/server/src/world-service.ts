@@ -277,6 +277,7 @@ export const commandInputSchema = z
     expectedScope: z.string().max(16000).optional(),
     conversationId: id.optional(),
     text: z.string().trim().min(1).max(1500).optional(),
+    volume: z.enum(['whisper', 'normal', 'shout']).optional(),
     facing: z.number().finite().optional(),
     aimId: id.optional(),
     autoEquip: z.boolean().optional(),
@@ -4661,6 +4662,7 @@ export class WorldService {
           ...envelope,
           type: 'say',
           text: input.text,
+          volume: input.volume ?? 'normal',
           ...(input.targetId ? { targetId: input.targetId } : {}),
         };
         break;

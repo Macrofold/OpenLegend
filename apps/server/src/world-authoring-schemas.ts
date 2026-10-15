@@ -29,6 +29,7 @@ export const statusConditionSchema: z.ZodType<StatusCondition> = z.lazy(() =>
               'greaterThanOrEqual',
             ]),
             value: finite,
+            unit: z.literal('fractionOfRange').optional(),
           })
           .strict(),
       })
@@ -117,6 +118,20 @@ export const statusPolicySchema = z
                           attribute: text(),
                           amount: finite.min(-1000000).max(1000000),
                           per: z.literal('gameSecond'),
+                        })
+                        .strict(),
+                      when: statusConditionSchema.optional(),
+                    })
+                    .strict(),
+                  z
+                    .object({
+                      changeEvery: z
+                        .object({
+                          target,
+                          attribute: text(),
+                          amount: finite.min(-1000000).max(1000000),
+                          everyGameSeconds: finite.min(0.000002),
+                          unit: z.enum(['attribute', 'fractionOfRange']),
                         })
                         .strict(),
                       when: statusConditionSchema.optional(),
@@ -232,6 +247,7 @@ const criticalPresentation = z.union([
           operator: z.enum(['lessThan', 'lessThanOrEqual']),
           value: finite,
           rounding: z.enum(['none', 'nearest-integer']),
+          unit: z.literal('fractionOfRange').optional(),
         })
         .strict(),
     })
@@ -254,7 +270,7 @@ const attributeDefinition = z
           min: finite,
           max: finite,
           initial: finite,
-          unit: text(24),
+          unit: z.string().max(24),
         })
         .strict(),
       z
@@ -272,6 +288,7 @@ const attributeDefinition = z
             below: finite,
             text: text(160),
             mode: z.literal('instant'),
+            unit: z.literal('fractionOfRange').optional(),
             notify: z.boolean(),
             reconsider: z.boolean(),
           })

@@ -10,6 +10,7 @@ type Entry = {
   /** Gesture notices: styled apart from status text; `actor` names who acted for screen readers. */
   kind?: 'reaction';
   actor?: string;
+  meter?: { id: string; version: number };
   expires: number;
   progress?: number;
   timing?: { elapsed: number; duration: number; rate: number; at: number };
@@ -20,6 +21,7 @@ export type StatusPresentation = {
   text: string;
   kind?: 'reaction';
   actor?: string;
+  meter?: { id: string; version: number };
   progress?: number;
   timing?: { elapsedSeconds: number; durationSeconds: number; rate: number };
 };
@@ -70,6 +72,7 @@ export class CharacterStatuses {
       queue.entries.unshift(entry);
     }
     entry.text = status.text.slice(0, 240);
+    entry.meter = status.meter;
     this.dirty = true;
     entry.progress = status.progress;
     if (status.progress !== undefined || status.timing) {
@@ -170,6 +173,7 @@ export class CharacterStatuses {
       'offer-expired',
       'ate',
       'recovered',
+      'replenished',
       'equipped',
       'action-stopped',
       'incapacitated',
@@ -181,6 +185,26 @@ export class CharacterStatuses {
     for (const event of view.events) {
       if (this.seen.has(event.id)) continue;
       this.seen.add(event.id);
+      if (event.attributeChange && event.actorId) {
+        const actor =
+          event.actorId === view.player.id
+            ? view.player
+            : view.entities.find((entity) => entity.id === event.actorId);
+        const change = event.attributeChange;
+        const meter = actor?.attributes?.find(
+          (attribute) =>
+            attribute.id === change.attributeId &&
+            attribute.version === change.definitionVersion &&
+            attribute.status === 'known' &&
+            attribute.changeFeedback === 'effects',
+        );
+        if (meter)
+          this.upsert(event.actorId, `stat:${event.actorId}:${meter.id}:event:${event.id}`, {
+            text: meterChangeText(change.after - change.before, meter.name, change.unit),
+            meter: { id: meter.id, version: meter.version },
+          });
+        continue;
+      }
       const reaction = reactionNotice(view, event);
       if (reaction) {
         this.upsert(event.actorId!, `event:${event.id}`, { ...reaction, kind: 'reaction' });
@@ -207,13 +231,13 @@ export class CharacterStatuses {
     const subjects = (state: GameView) => [state.player, ...state.entities];
     const before = new Map(subjects(previous ?? view).map((entity) => [entity.id, entity]));
     const visible = new Set<string>();
-    const known = new Set<string>();
+    const known = new Map<string, number>();
     const now = performance.now();
     for (const entity of subjects(view)) {
       for (const meter of entity.attributes ?? []) {
         if (meter.status !== 'known') continue;
         const key = `stat:${entity.id}:${meter.id}`;
-        known.add(key);
+        known.set(key, meter.version);
         const old = before
           .get(entity.id)
           ?.attributes?.find((attribute) => attribute.id === meter.id);
@@ -264,6 +288,7 @@ export class CharacterStatuses {
           });
         }
         if (!delta || !previous) continue;
+        if (meter.changeFeedback === 'effects') continue;
         // Reuse one notice per meter, accumulating continuous drift instead of flooding
         // the character's three transient slots with each network update.
         const pending = this.deltas.get(key);
@@ -276,7 +301,7 @@ export class CharacterStatuses {
           continue;
         }
         this.upsert(entity.id, key, {
-          text: `${total > 0 ? '+' : '−'}${rounded}${meter.unit ? `${meter.unit === '%' ? '' : ' '}${meter.unit}` : ''} ${meter.name}`,
+          text: meterChangeText(total, meter.name, meter.unit),
         });
         const entry = this.queues.get(entity.id)?.entries.find((entry) => entry.id === key);
         if (entry) entry.expires = until;
@@ -291,7 +316,12 @@ export class CharacterStatuses {
       if (delta.until <= now || !known.has(key)) this.deltas.delete(key);
     for (const [id, queue] of this.queues)
       for (const entry of queue.entries)
-        if (entry.id.startsWith('stat:') && !known.has(entry.id)) this.remove(id, entry.id);
+        if (
+          entry.meter
+            ? known.get(`stat:${id}:${entry.meter.id}`) !== entry.meter.version
+            : entry.id.startsWith('stat:') && !known.has(entry.id)
+        )
+          this.remove(id, entry.id);
   }
 
   private elapsed(entry: Entry, now: number) {
@@ -460,4 +490,9 @@ export class CharacterStatuses {
     // private layer now, then release its nested root after that commit finishes.
     queueMicrotask(() => this.root.unmount());
   }
+}
+
+function meterChangeText(delta: number, name: string, unit?: string): string {
+  const amount = Math.round(Math.abs(delta) * 100) / 100 || '<0.01';
+  return `${delta > 0 ? '+' : '−'}${amount}${unit ? `${unit === '%' ? '' : ' '}${unit}` : ''} ${name}`;
 }

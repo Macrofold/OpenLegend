@@ -85,7 +85,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     const actorId = game.service.controlledEntityId;
     const exposure = game.service.world.participationPolicy!.exitExposureSeconds!;
     await focus(false);
-    await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
+    await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeVisible();
     await expect.poll(() => game.service.present).toBe(false);
     const departureStartedAt = game.service.world.simTime;
     const gameSecondsPerRealSecond = game.service.config.baseRatio * game.service.speed;
@@ -110,7 +110,7 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
     expect(game.service.world.simTime).toBe(departureDeadline);
     await focus(true);
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
+    await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeHidden();
     await enterGame(page);
     await expect.poll(() => game.service.paused).toBe(false);
     expect(game.service.world.entities[actorId]!.actor!.participation?.phase).toBe('active');

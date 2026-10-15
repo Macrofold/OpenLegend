@@ -5,23 +5,34 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
   SLING_HANDLING,
   {
     id: 'wilderness:health',
-    version: 3,
+    version: 4,
     implementation: 'native-health-v1',
+    nativeHealth: { units: 'points', precision: 'whole-points' },
     name: 'Health',
     disclosure: 'public',
     presentation: { icon: 'meter.health', color: 'meter.health' },
-    critical: { compare: { operator: 'lessThanOrEqual', value: 20, rounding: 'nearest-integer' } },
-    editorCritical: { compare: { operator: 'lessThan', value: 40, rounding: 'none' } },
-    schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '%' },
+    critical: {
+      compare: {
+        operator: 'lessThanOrEqual',
+        value: 0.2,
+        unit: 'fractionOfRange',
+        rounding: 'nearest-integer',
+      },
+    },
+    editorCritical: {
+      compare: { operator: 'lessThan', value: 0.4, unit: 'fractionOfRange', rounding: 'none' },
+    },
+    schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '' },
     concern: {
-      below: 40,
+      below: 0.4,
+      unit: 'fractionOfRange',
       text: '{subject.subject} {subject.verb:be} seriously injured.',
       mode: 'instant',
       notify: false,
       reconsider: false,
     },
     meaning:
-      'Health measures bodily integrity. Severe injury can prevent action. At zero, this body dies. Ordinary NPC and animal revival is unavailable. Human-controlled people can return in another life, carrying a scar and leaving some possessions on their old body.',
+      "Health counts whole points of bodily integrity, up to this body's maximum. Severe injury can prevent action. At zero, this body dies. Ordinary NPC and animal revival is unavailable. Human-controlled people can return in another life, carrying a scar and leaving some possessions on their old body.",
   },
   {
     id: 'wilderness:fullness',
@@ -34,7 +45,7 @@ export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
     editorCritical: { compare: { operator: 'lessThan', value: 30, rounding: 'none' } },
     schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '%' },
     meaning:
-      'Fullness measures nourishment; lower means hungrier. Edible food restores fullness. At zero, lack of nourishment continuously damages health and can kill this body.',
+      'Fullness measures nourishment; lower means hungrier. Edible food restores fullness. At zero, lack of nourishment periodically damages health and can kill this body.',
     condition: {
       bands: [
         { below: 40, text: '{subject.subject} {subject.verb:be} hungry.' },

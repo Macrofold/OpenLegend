@@ -3,23 +3,23 @@ import type { CatalogueAction } from '@open-legend/protocol';
 import { actionCommitment } from '../action-browser';
 import { Explanation, Icon } from '../design-system/components';
 
-/** Command and disclosure are siblings: touch/keyboard details never execute an action. */
+/** Blocked rows retain hover and keyboard explanations; only enabled actions execute. */
 export function ActionChoice({
   action,
   icon,
   badge,
   run,
-  expanded,
-  expand,
+  hideTarget = false,
 }: {
   action: CatalogueAction;
   icon: string;
   badge?: string;
+  hideTarget?: boolean;
   run(action: CatalogueAction): void;
-  expanded: boolean;
-  expand(open: boolean): void;
 }) {
-  const identity = action.facts?.filter(([label]) => label === 'Tool' || label === 'Target');
+  const identity = action.facts?.filter(
+    ([label]) => label === 'Tool' || (!hideTarget && label === 'Target'),
+  );
   return (
     <div className="ol-action-choice" data-action-choice={action.id}>
       <Explanation
@@ -48,29 +48,6 @@ export function ActionChoice({
           </span>
         </AriaButton>
       </Explanation>
-      <details
-        className="ol-action-detail"
-        open={expanded}
-        onToggle={(event) => expand(event.currentTarget.open)}
-      >
-        <summary>Details for {action.label}</summary>
-        {expanded && (
-          <>
-            <p className="ol-prose">{action.description}</p>
-            {!action.enabled && <p>{action.reason ?? 'Unavailable right now.'}</p>}
-            {!!action.facts?.length && (
-              <dl>
-                {action.facts.map(([label, value]) => (
-                  <div className="ol-fact" key={label}>
-                    <dt>{label}</dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </>
-        )}
-      </details>
     </div>
   );
 }

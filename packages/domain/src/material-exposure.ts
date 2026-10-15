@@ -281,6 +281,7 @@ export function* integrateMaterialExposure(
         events,
         'material exposure',
         'transition',
+        'silent',
       );
   }
 }

@@ -29,7 +29,29 @@ export function worldEventSourceReference(
 
 /** Presentation never receives raw source text, origins or hidden subject IDs. */
 export function publicEvent(event: ActorEvent): PublicEvent {
+  const change = event.type === 'attribute-changed' ? event.data : undefined;
+  const attributeChange =
+    change &&
+    typeof change['attributeId'] === 'string' &&
+    typeof change['definitionVersion'] === 'number' &&
+    typeof change['before'] === 'number' &&
+    typeof change['after'] === 'number' &&
+    typeof change['unit'] === 'string'
+      ? {
+          attributeId: change['attributeId'],
+          definitionVersion: change['definitionVersion'],
+          before: change['before'],
+          after: change['after'],
+          unit: change['unit'],
+        }
+      : undefined;
   return {
+    ...(event.type === 'expression' &&
+    event.data?.['descriptive'] === true &&
+    event.data?.['mechanical'] === false
+      ? { descriptive: true as const }
+      : {}),
+    ...(attributeChange ? { attributeChange } : {}),
     id: event.id,
     time: event.at,
     type: event.type,
@@ -130,7 +152,7 @@ export async function readPerceivedEvents(
   // Private thoughts, plans and diagnostics do not become world events. Own sensed body/contact
   // episodes are permitted observations, even though their acquisition is receiver-private.
   const where =
-    `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern'))` +
+    `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern','attribute-changed'))` +
     (type === 'all' ? '' : ` AND ${eventType}=?`);
   const args: unknown[] = [worldId, actorId, ...(type === 'all' ? [] : [type])];
   const join =
@@ -297,7 +319,7 @@ export async function readPerceivedEventSources(
   const field = (name: string) => `(e.payload::jsonb->>'${name}')`;
   const join =
     'history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id';
-  const where = `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern')) AND p.event_id IN (${allIds.map(() => '?').join(',')})`;
+  const where = `p.world_id=? AND p.actor_id=? AND (${field('scope')}='external' OR ${field('type')} IN ('encounter','contact','attribute-concern','attribute-changed')) AND p.event_id IN (${allIds.map(() => '?').join(',')})`;
   const snapshot = db.readTransaction?.bind(db) ?? db.transaction.bind(db);
   return snapshot(async () => {
     const rows = await db

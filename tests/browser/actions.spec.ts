@@ -4,7 +4,7 @@ import { PLAYER_ID } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../fixtures/database.js';
-test('scoped React action search, contextual facts and saved unavailable preference (native fixture)', async ({
+test('scoped React action search, contextual facts and known unavailable choices (native fixture)', async ({
   page,
 }, info) => {
   const game = await createGameServer({
@@ -31,6 +31,7 @@ test('scoped React action search, contextual facts and saved unavailable prefere
       tip = page.getByRole('tooltip');
     await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
     await expect(search).toBeFocused();
+    await search.fill('gather');
     const gather = menu.getByRole('button', { name: /Gather River reeds/ });
     await gather.hover();
     await expect(tip).toBeVisible();
@@ -41,11 +42,11 @@ test('scoped React action search, contextual facts and saved unavailable prefere
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
-    const toggle = menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true });
-    await toggle.click();
-    await expect.poll(() => game.service.profile.preferences.showUnavailableActions).toBe(true);
-    await expect(gather).toHaveAttribute('aria-disabled', 'true');
+    await expect(
+      menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true }),
+    ).toHaveCount(0);
     await search.fill('gather');
+    await expect(gather).toHaveAttribute('aria-disabled', 'true');
     await search.press('ArrowDown');
     await expect(gather).toBeFocused();
     await expect(tip).toContainText('Resume the world');
@@ -58,26 +59,23 @@ test('scoped React action search, contextual facts and saved unavailable prefere
     await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
     await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
-    await expect(
-      menu.getByRole('button', { name: 'Hide Unavailable Actions', exact: true }),
-    ).toBeVisible();
-    await menu.getByRole('button', { name: 'Hide Unavailable Actions', exact: true }).click();
-    await expect.poll(() => game.service.profile.preferences.showUnavailableActions).toBe(false);
-    await expect(gather).toHaveCount(0);
+    await search.fill('gather');
+    await expect(gather).toHaveAttribute('aria-disabled', 'true');
     await page.keyboard.press('Escape');
     await page.locator('#world').click({ button: 'right', position: { x: 900, y: 700 } });
     await expect(page.locator('#contextTitle')).toHaveText(
       game.service.world.presentation!.locationName,
     );
-    await expect(menu.getByRole('button', { name: /Walk here/ })).toHaveCount(0); // paused and unavailable hidden
-    await menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true }).click();
-    // Ground-target evasion is an authored action alongside walking.
-    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(2);
+    await search.fill('walk');
+    await expect(menu.getByRole('button', { name: /Walk here/ })).toHaveCount(0);
+    // Walking belongs to primary click. The authored evasive step stays visible,
+    // with its real pause blocker, when searching known contextual choices.
+    await search.fill('evade');
+    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(1);
     await expect(menu.locator('[data-catalogue-action="evade:point"]')).toHaveAttribute(
       'aria-disabled',
       'true',
     );
-    await expect(menu.getByRole('button', { name: /Walk here/ })).toBeVisible();
     expect(errors).toEqual([]);
     expect(paid).toEqual([]);
   } finally {

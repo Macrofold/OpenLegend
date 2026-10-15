@@ -88,12 +88,14 @@ export function nativeInterval(
   };
   const rates = statusAttributeRates(status),
     drains: NativeDrain[] = [];
-  const requiresImmediateIntegration = status.some((interval) =>
-    interval.rates.some((rate) =>
-      world.moduleManifest.definitions.some(
-        (d) => d.id === rate.attribute && d.implementation === 'native-health-v1',
+  const requiresImmediateIntegration = status.some(
+    (interval) =>
+      interval.periodic.length > 0 ||
+      interval.rates.some((rate) =>
+        world.moduleManifest.definitions.some(
+          (d) => d.id === rate.attribute && d.implementation === 'native-health-v1',
+        ),
       ),
-    ),
   );
   const manifest = isDraft(world.moduleManifest)
     ? original(world.moduleManifest)!

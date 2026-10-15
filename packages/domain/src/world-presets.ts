@@ -70,6 +70,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     id: 'clockwork:integrity',
     version: 1,
     implementation: 'native-health-v1',
+    nativeHealth: { units: 'proportional', precision: 'continuous' },
     name: 'Integrity',
     disclosure: 'owner',
     presentation: { icon: 'meter.health', color: 'meter.health' },

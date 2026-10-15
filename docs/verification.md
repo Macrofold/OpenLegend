@@ -1,5 +1,7 @@
 # Verification
 
+- [Speak, descriptive Act and contextual menus](verification/speak-and-act.md) — scoped HTTP/PostgreSQL fixtures, speech volumes, expression-only effects, stale/replay guards and bottom-bar browser interactions.
+
 - [World and engine boundaries](verification/world-engine-boundaries.md) — all 13 selected-owner fixes, capability omission, contrasting native definitions, PostgreSQL continuation and truthful player presentation.
 
 This index links recorded checks and measurements by topic. Each report retains its own revision, workload, results and limitations; a passing result for one workload does not establish current release acceptance. The [maintainer index](maintainers/README.md) links the owners of remaining work.
@@ -59,7 +61,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 - [Editable light shelters](verification/editable-shelters.md): corrected flat one/two-bay and single-bay sloping-cloak build/use/reclaim, exact contact and mid-phase/rain restoration, finite authorized stock and bounded native work; no paid calls or new penalty.
 - [Compatible equipment and chosen shield defense](verification/shield-defense.md): real manufacture/contact cases, exact SQL return, ordinary keyboard/browser flow, disclosure and isolated attachment lookup measurements; no paid model calls.
 - [First threat, player death and danger](verification/first-threat-encounter.md): real native avoidance/contact, exact type loss and corpse theft, scars, simulated fade, authenticated review/replay, SQL restart, browser flows and measured capacity limits; [PX01 integration](verification/first-threat-encounter.md#px01-integrated-encounter--october-6-2026) adds changed-terrain pursuit/aftermath and the corrected real escape route.
-- [Injury, aftermath and direct interaction](verification/embodied-feedback.md): native death/decay/cleanup/revival, exact tool use, browser feedback/targeting/fire memory and bounded escape/guide costs.
+- [Injury, aftermath and direct interaction](verification/embodied-feedback.md): native death/decay/cleanup/revival, exact tool use, browser feedback/targeting/fire memory, quiet routine meter drain with recorded explicit effects, and bounded escape/guide costs.
 - [Whole-interface interaction redesign](verification/game-interaction-redesign.md): paired inventory and object opening, broader player/creator/operations presentation, native and controlled interface evidence, upstream integration and remaining composed-gameplay/input/player qualification.
 - [Embodied survival](verification/embodied-survival.md): native mechanics, inventory stress and real Jev trials.
 - [Reciprocal barter](verification/reciprocal-barter.md): exact two-sided consent, changed goods/work/claims, private terms, actual shared drafts and controls, PostgreSQL rollback/replay, matched server measurements and controlled live accept/refuse costs.
@@ -106,7 +108,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 
 ## Shadow quality
 
-[Command/frame follow-up](verification/command-frame-spikes.md) records isolated route/preview CPU reductions, exact transition comparisons, overloaded-host failures and the still-unavailable physical lower-end device. Whole-game tail improvements remain unqualified.
+[Command/frame follow-up](verification/command-frame-spikes.md) records isolated route/preview CPU reductions, exact transition comparisons, overloaded-host failures and the still-unavailable physical lower-end device. Its [October 14 action-menu follow-on](verification/command-frame-spikes.md#first-opening-action-menus-and-sections--october-14-2026) separates first-opening queue waits, native catalogue cost and grouped production-browser behavior. Whole-game tail improvements remain unqualified.
 
 [Eight-fire 3× evidence](verification/eight-fire-three-times.md) records current full-resolution experiments, shadow draw batching, real PostgreSQL/UI progress and visual/resource checks. It corrects the earlier eight-fire capacity interpretation and keeps physical low-end and real-model qualification separate.
 
@@ -117,7 +119,7 @@ Current 3× scene investigation: [measured improvements, lifecycle checks and un
 ## Foundations and integration history
 
 - [Foundations 1–5](verification/foundations-1-5.md): implementation evidence and follow-up review.
-- [Multiplayer entry and maintenance](verification/multiplayer-entry-maintenance.md): characterless operator/spectator sessions, invite enrollment and scheduled maintenance with real OIDC browsers, restart and time-zone checks. [Sole-tab entry and shared logout](verification/multiplayer-entry-maintenance.md#sole-tab-entry-and-shared-logout--october-3-2026) records automatic entry, deliberate tab transfer, protected departure and all-tab game logout; the earlier mandatory-Resume evidence remains labeled historical.
+- [Multiplayer entry and maintenance](verification/multiplayer-entry-maintenance.md): characterless operator/spectator sessions, invite enrollment and scheduled maintenance with real OIDC browsers, restart and time-zone checks. [Sole-tab entry and shared logout](verification/multiplayer-entry-maintenance.md#sole-tab-entry-and-shared-logout--october-3-2026) records automatic entry, deliberate tab transfer, protected departure and all-tab game logout; the earlier mandatory-Resume evidence remains labeled historical. [Focus-pause presentation](verification/multiplayer-entry-maintenance.md#focus-pause-presentation--october-14-2026) distinguishes the quiet overlay, automatic return and retryable return failure.
 - [Native action integration](verification/native-action-integration.md) and [action reconciliation](verification/action-reconciliation.md).
 - [Historical integration summaries](verification/integration-summaries.md): earlier overview notes and links to action, perception and persistence artifacts.
 - [Historical baseline and acceptance snapshot](verification/historical-baseline.md): earlier automated/provider results, product limits and acceptance owners. This is not the current branch’s test status.

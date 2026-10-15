@@ -598,9 +598,9 @@ describe('perception, survival and continuity', () => {
       if (entity.resource) entity.resource.quantity = 0;
     for (const actor of [world.entities[PLAYER_ID]!, world.entities[NPC_ID]!]) {
       actor.actor!.attributes!['wilderness:fullness']!.value = 0;
-      actor.actor!.health = 0.01;
+      actor.actor!.health = 1;
     }
-    world = advanceWorld(world, 3).world;
+    world = advanceWorld(world, 300).world;
     expect(world.entities[NPC_ID]!.actor!.alive).toBe(false);
     const player = world.entities[PLAYER_ID]!;
     expect(player.actor!.alive).toBe(false);

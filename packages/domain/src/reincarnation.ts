@@ -295,7 +295,7 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   actor.alive = true;
   actor.incapacitated = false;
   actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
-  setBodyHealth(actor, actor.body!.maxHealth);
+  setBodyHealth(world, actor, actor.body!.maxHealth);
   actor.action = null;
   delete actor.combatReadyAt;
   delete actor.evasionReadyAt;
@@ -306,7 +306,9 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   for (const id of policy.fillAttributes) {
     const definition = attributeDefinition(world, id)!;
     if (definition.schema.kind === 'number')
-      setAttribute(world, entity, definition, definition.schema.max, events);
+      setAttribute(world, entity, definition, definition.schema.max, events, 'now', {
+        cause: 'respawn',
+      });
   }
   reconcileBody(world, entity, events, 'respawn');
   rootMembershipChanged(world, entity.id);

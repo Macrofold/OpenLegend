@@ -1,6 +1,6 @@
 import type { GameView } from '@open-legend/protocol';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
-import { Section, SegmentedControl } from '../design-system/components';
+import { Button, Section, SegmentedControl } from '../design-system/components';
 import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
@@ -25,6 +25,7 @@ export function Settings({
   setShadowQuality,
   performance,
   setPerformance,
+  browseActions,
 }: {
   view: GameView;
   theme: string;
@@ -43,9 +44,17 @@ export function Settings({
   setShadowQuality(value: ShadowQuality): void;
   performance: boolean;
   setPerformance(value: boolean): void;
+  browseActions(opener: HTMLElement): void;
 }) {
   return (
     <Tabs className="ol-settings" defaultSelectedKey="reading">
+      <Button
+        onPress={(event) => {
+          if (event.target instanceof HTMLElement) browseActions(event.target);
+        }}
+      >
+        Browse known actions
+      </Button>
       <TabList aria-label="Settings sections" className="ol-settings-tabs">
         <Tab id="reading">Appearance & reading</Tab>
         <Tab id="graphics">Camera & graphics</Tab>
@@ -152,8 +161,8 @@ export function Settings({
           </p>
           <p>
             Open a container from that object. Your belongings and its contents stay together while
-            you move items. Describe an action is available from the object menu or Character when
-            you want to express an intention in your own words.
+            you move items. Describe an action is available from Character when you want to express
+            an intention in your own words.
           </p>
           <p>
             When choosing a subject, click the intended object or use In view. Choosing only

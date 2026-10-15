@@ -22,6 +22,7 @@ export type { SurfacePoint, SpatialLayout };
 
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
+  volume?: SpeechVolume;
   type:
     | 'construction'
     | 'construction-rest'
@@ -312,6 +313,8 @@ export interface ActionContext {
 export interface ActionCatalogue {
   revision: number;
   actions: CatalogueAction[];
+  /** Permitted category labels, including categories with no concrete choices. */
+  categories: string[];
 }
 
 export interface PlayerProfile {
@@ -635,6 +638,16 @@ export interface WorldEventSourcesView {
 }
 
 export interface PublicEvent {
+  /** Perceived descriptive expression, with no mechanical effects. */
+  descriptive?: true;
+  /** Actual committed change, taken only from this observer's permitted evidence. */
+  attributeChange?: {
+    attributeId: string;
+    definitionVersion: number;
+    before: number;
+    after: number;
+    unit: string;
+  };
   speech?: PerceivedSpeech;
   modality?: 'heard' | 'observed' | 'felt' | 'internal';
   source?: WorldEventSourceReference;
@@ -1216,6 +1229,8 @@ export interface GameSaveCatalog {
 
 /** Bounded attribute presentation projected by the server. */
 export interface AttributeView {
+  /** Numeric notices come from committed effects rather than changes between snapshots. */
+  changeFeedback?: 'effects';
   /** Identifies the installed body's health meter independently of its authored name. */
   bodyHealth?: boolean;
   id: string;

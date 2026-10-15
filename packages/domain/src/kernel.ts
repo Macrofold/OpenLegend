@@ -276,6 +276,7 @@ import {
   attributeDefinition,
   definitionPin,
   readAttribute,
+  rawHealthValue,
   advanceReservoirs,
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
@@ -285,6 +286,7 @@ import {
   hasMemory,
   supportsManualWork,
   reconcileBody,
+  recordHealthChange,
   commitBodyEffects,
 } from './living.js';
 import { draftWorld, cloneValue } from './draft.js';
@@ -2556,6 +2558,7 @@ function executeCommandNative(
             bodyPolicy(world)?.recovery?.refusalText ??
               'This body has no available recovery service.',
           );
+        const healthBeforeRecovery = component.health;
         const recovery = world.participationPolicy?.safeReturnAnchor;
         if (!recovery || !isWalkable(world, recovery, recovery.surfaceId, bodyProfile(actor)))
           return reject('return-unavailable', 'The configured recovery location is unavailable.');
@@ -2569,11 +2572,7 @@ function executeCommandNative(
             return reject('cannot-recover', bodyPolicy(world)!.recovery!.refusalText);
           const value = Math.max(prior, floor.value);
           if (definition.implementation === 'native-health-v1')
-            setBodyHealth(
-              component,
-              (value - definition.schema.min) *
-                (component.body!.maxHealth / (definition.schema.max - definition.schema.min)),
-            );
+            setBodyHealth(world, component, rawHealthValue(component, definition, value));
           else {
             const read = readState(world, stateAddress(actor.id, definition), 'owner');
             if (read.status !== 'known')
@@ -2597,6 +2596,7 @@ function executeCommandNative(
         component.action = null;
         component.planGeneration++;
         reconcileBody(world, actor, events, 'camp-recovery');
+        recordHealthChange(world, actor, healthBeforeRecovery, 'camp-recovery', events);
         emit(
           world,
           events,
@@ -3803,6 +3803,7 @@ function advanceAction(
         ],
       },
       events,
+      'silent',
     );
     if (transfer.status !== 'applied') {
       failAction(world, actor, events, 'the replenishment supply is no longer available.');

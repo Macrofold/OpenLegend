@@ -97,11 +97,16 @@ export type AttributeCriticalPredicate =
       compare: {
         operator: 'lessThan' | 'lessThanOrEqual';
         value: number;
+        unit?: 'fractionOfRange';
         rounding: 'none' | 'nearest-integer';
       };
     }
   | { concernActive: true };
 export interface AttributeDefinition {
+  nativeHealth?: {
+    units: 'points' | 'proportional';
+    precision: 'whole-points' | 'continuous';
+  };
   practice?: import('./practical-competence.js').PracticeProfile;
   meaning?: string;
   condition?: ConditionPolicy;
@@ -121,6 +126,7 @@ export interface AttributeDefinition {
     | { kind: 'category'; choices: string[]; initial: string };
   concern?: {
     below: number;
+    unit?: 'fractionOfRange';
     text: string;
     mode: 'instant' | 'latched';
     notify: boolean;
@@ -161,6 +167,8 @@ export interface WorldModuleManifest {
 }
 export interface AttributeView {
   bodyHealth?: boolean;
+  /** Sparse numeric state reports explicit effects; continuous accounting stays quiet. */
+  changeFeedback?: 'effects';
   meaning?: string;
   condition?: string;
   id: string;
@@ -445,6 +453,7 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       'critical',
       'editorCritical',
       'practice',
+      'nativeHealth',
     ]);
     if (
       !namespace.test(d.id) ||
@@ -457,6 +466,15 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     )
       throw new Error('Invalid attribute identity or host implementation.');
     object(d.presentation, ['icon', 'color']);
+    if (d.implementation === 'native-health-v1') {
+      if (!d.nativeHealth) throw new Error('Native health requires explicit units and precision.');
+      object(d.nativeHealth, ['units', 'precision']);
+      if (
+        !['points', 'proportional'].includes(d.nativeHealth.units) ||
+        !['whole-points', 'continuous'].includes(d.nativeHealth.precision)
+      )
+        throw new Error('Invalid native health representation.');
+    } else if (d.nativeHealth) throw new Error('Native health metadata requires its body owner.');
     if (
       ![d.presentation.icon, d.presentation.color].every(
         (symbol) => typeof symbol === 'string' && /^[a-z][a-z0-9.-]{0,63}$/.test(symbol),
@@ -498,7 +516,8 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
         Math.abs(s.max) > 1e9 ||
         s.initial < s.min ||
         s.initial > s.max ||
-        !boundedText(s.unit, 24)
+        typeof s.unit !== 'string' ||
+        s.unit.length > 24
       )
         throw new Error('Invalid attribute range or units.');
     } else if (
@@ -513,12 +532,23 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       throw new Error('Invalid categorical attribute.');
     validateConditionPolicy(d);
     if (d.concern) {
-      object(d.concern, ['below', 'text', 'mode', 'notify', 'reconsider', 'recoveryMargin']);
+      object(d.concern, [
+        'below',
+        'unit',
+        'text',
+        'mode',
+        'notify',
+        'reconsider',
+        'recoveryMargin',
+      ]);
       if (
         d.schema.kind !== 'number' ||
         !finite(d.concern.below) ||
-        d.concern.below < d.schema.min ||
-        d.concern.below > d.schema.max ||
+        (d.concern.unit === 'fractionOfRange'
+          ? d.concern.below < 0 || d.concern.below > 1 || d.concern.mode !== 'instant'
+          : d.concern.unit !== undefined ||
+            d.concern.below < d.schema.min ||
+            d.concern.below > d.schema.max) ||
         !boundedText(d.concern.text, 160) ||
         !validNarrationTemplate(d.concern.text, ['subject']) ||
         !['instant', 'latched'].includes(d.concern.mode) ||
@@ -555,14 +585,15 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
         if (Object.keys(predicate).length !== 1 || predicate.concernActive !== true || !d.concern)
           throw new Error('Invalid concern decoration.');
       } else {
-        object(predicate.compare, ['operator', 'value', 'rounding']);
+        object(predicate.compare, ['operator', 'value', 'rounding', 'unit']);
         const c = predicate.compare;
         if (
           Object.keys(predicate).length !== 1 ||
           d.schema.kind !== 'number' ||
           !finite(c.value) ||
-          c.value < d.schema.min ||
-          c.value > d.schema.max ||
+          (c.unit === 'fractionOfRange'
+            ? c.value < 0 || c.value > 1
+            : c.unit !== undefined || c.value < d.schema.min || c.value > d.schema.max) ||
           !['lessThan', 'lessThanOrEqual'].includes(c.operator) ||
           !['none', 'nearest-integer'].includes(c.rounding)
         )
@@ -604,6 +635,7 @@ export function readAttribute(
     Number.isFinite(actor.body.maxHealth) &&
     actor.body.maxHealth > 0
   ) {
+    if (definition.nativeHealth?.units === 'points') return actor.health;
     const range = definition.schema.max - definition.schema.min;
     // Keep equal-unit reads exact, and avoid introducing rounding at proportional thresholds.
     return (
@@ -615,6 +647,31 @@ export function readAttribute(
   }
   return undefined;
 }
+/** Health points use the body's actual capacity; other numeric hosts use authored bounds. */
+export function attributeRange(actor: ActorComponent | undefined, definition: AttributeDefinition) {
+  if (definition.schema.kind !== 'number') throw new Error('Attribute has no numeric range.');
+  return definition.nativeHealth?.units === 'points' && actor?.body
+    ? { min: 0, max: actor.body.maxHealth }
+    : { min: definition.schema.min, max: definition.schema.max };
+}
+export function rawHealthValue(
+  actor: ActorComponent,
+  definition: AttributeDefinition,
+  value: number,
+) {
+  const range = attributeRange(actor, definition);
+  return (value - range.min) * (actor.body!.maxHealth / (range.max - range.min));
+}
+export function attributeThreshold(
+  actor: ActorComponent | undefined,
+  definition: AttributeDefinition,
+  value: number,
+  unit?: 'fractionOfRange',
+) {
+  if (!unit) return value;
+  const range = attributeRange(actor, definition);
+  return range.min + value * (range.max - range.min);
+}
 export function applicableAttributes(
   world: WorldState,
   actor: ActorComponent,
@@ -624,10 +681,17 @@ export function applicableAttributes(
 export function validateAttributeValue(
   d: AttributeDefinition,
   value: unknown,
+  actor?: ActorComponent,
 ): asserts value is AttributeValue {
+  const range = d.schema.kind === 'number' ? attributeRange(actor, d) : undefined;
   if (
     d.schema.kind === 'number'
-      ? !finite(value) || value < d.schema.min || value > d.schema.max
+      ? !finite(value) ||
+        value < range!.min ||
+        value > range!.max ||
+        (d.nativeHealth?.units === 'points' &&
+          d.nativeHealth.precision === 'whole-points' &&
+          !Number.isSafeInteger(value))
       : typeof value !== 'string' || !d.schema.choices.includes(value)
   )
     throw new Error(`Invalid value for ${d.id}.`);
@@ -641,6 +705,7 @@ export function setAttribute(
   value: AttributeValue,
   events: WorldEvent[],
   conditionTiming: 'now' | 'transition' = 'now',
+  feedback?: { silent?: boolean; cause?: string },
 ): boolean {
   validateAttributeValue(d, value);
   const storage = HOST_IMPLEMENTATIONS[d.implementation].storage;
@@ -666,9 +731,43 @@ export function setAttribute(
   const wasConcerned =
     prior.concernActive ??
     (d.concern && typeof prior.value === 'number' ? prior.value < d.concern.below : false);
+  const before = prior.value;
   prior.value = value;
   prior.revision++;
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'attribute' });
+  // Notice actual one-off outcomes, never infer their cause from later meter readings.
+  // Passive rate/transfer callers opt out, avoiding per-interval history and UI noise.
+  if (
+    !feedback?.silent &&
+    entity.actor &&
+    d.schema.kind === 'number' &&
+    typeof before === 'number' &&
+    typeof value === 'number' &&
+    (d.disclosure === 'public' || canNoticeInternalChange(world, entity))
+  )
+    emit(
+      world,
+      events,
+      'attribute-changed',
+      {
+        parts: [
+          ...narrationTemplate('{subject.subject}', { subject: entity }).parts,
+          ` ${d.name} changed from ${before}${d.schema.unit} to ${value}${d.schema.unit}.`,
+        ],
+      },
+      entity,
+      undefined,
+      {
+        attributeId: d.id,
+        definitionVersion: d.version,
+        attributeRevision: prior.revision,
+        before,
+        after: value,
+        unit: d.schema.unit,
+        cause: feedback?.cause ?? 'attribute change',
+      },
+      d.disclosure === 'owner' ? 'private' : 'external',
+    );
   if (d.concern?.mode === 'latched' && d.schema.kind === 'number' && typeof value === 'number') {
     // A small dead band prevents drain/transfer in one step from creating repeated novelty.
     const recovery = Math.min(d.schema.max, d.concern.below + d.concern.recoveryMargin!);
@@ -739,7 +838,7 @@ export function attributeConcernActive(
   if (!d.concern || typeof value !== 'number') return false;
   return d.concern.mode === 'latched'
     ? !!(entity.actor?.attributes ?? entity.attributes)?.[d.id]?.concernActive
-    : value < d.concern.below;
+    : value < attributeThreshold(entity.actor, d, d.concern.below, d.concern.unit);
 }
 function attributeCritical(
   entity: Entity,
@@ -752,7 +851,8 @@ function attributeCritical(
   if (typeof value !== 'number') return false;
   const c = predicate.compare,
     compared = c.rounding === 'nearest-integer' ? Math.round(value) : value;
-  return c.operator === 'lessThan' ? compared < c.value : compared <= c.value;
+  const threshold = attributeThreshold(entity.actor, d, c.value, c.unit);
+  return c.operator === 'lessThan' ? compared < threshold : compared <= threshold;
 }
 export function projectAttributes(
   world: WorldState,
@@ -764,28 +864,45 @@ export function projectAttributes(
     .filter((d) => audience === 'owner' || d.disclosure === 'public')
     .map((d) => {
       const value = readAttribute(entity.actor!, d);
-      const max = d.schema.kind === 'number' ? d.schema.max : undefined;
-      const threshold = d.concern?.below;
+      const range = d.schema.kind === 'number' ? attributeRange(entity.actor, d) : undefined;
       return {
         id: d.id,
         version: d.version,
         name: d.name,
         display: d.schema.kind === 'number' ? 'meter' : 'category',
         presentation: d.presentation,
+        ...((HOST_IMPLEMENTATIONS[d.implementation].storage === 'attributes' ||
+          d.implementation === 'native-health-v1') &&
+        d.schema.kind === 'number'
+          ? { changeFeedback: 'effects' as const }
+          : {}),
         ...(d.implementation === 'native-health-v1' ? { bodyHealth: true } : {}),
         value: value ?? null,
         status: value === undefined ? 'unknown' : 'known',
         critical: attributeCritical(entity, d, value, d.critical),
         editorCritical: attributeCritical(entity, d, value, d.editorCritical),
         ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
-          ? { editorCriticalComparison: { ...d.editorCritical.compare } }
+          ? {
+              editorCriticalComparison: {
+                operator: d.editorCritical.compare.operator,
+                rounding: d.editorCritical.compare.rounding,
+                value: attributeThreshold(
+                  entity.actor,
+                  d,
+                  d.editorCritical.compare.value,
+                  d.editorCritical.compare.unit,
+                ),
+              },
+            }
           : {}),
         revision:
           entity.actor!.practice?.[d.id]?.revision ??
           entity.actor!.attributes?.[d.id]?.revision ??
           entity.actor!.body?.revision ??
           0,
-        ...(d.schema.kind === 'number' ? { min: d.schema.min, max, unit: d.schema.unit } : {}),
+        ...(d.schema.kind === 'number'
+          ? { min: range!.min, max: range!.max, unit: d.schema.unit }
+          : {}),
         ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
         ...(audience === 'owner' && d.condition
           ? { condition: conditionText(world, entity, d, value) }
@@ -846,6 +963,8 @@ export function advanceReservoirs(
         d,
         Math.max(d.schema.min, (state.value as number) - d.reservoir.drainPerSecond * seconds),
         events,
+        'now',
+        { silent: true },
       );
   }
 }
@@ -952,6 +1071,9 @@ export function validateWorldModules(world: WorldState): void {
   validateRangedActions(world);
   validateNativeStrikes(world);
   validateTerritorialThreats(world);
+  const healthDefinition = world.moduleManifest.definitions.find(
+    (definition) => definition.implementation === 'native-health-v1',
+  );
   for (const e of Object.values(world.entities)) {
     if (e.icon !== undefined && typeof e.icon !== 'string')
       throw new Error('Invalid entity presentation.');
@@ -975,10 +1097,16 @@ export function validateWorldModules(world: WorldState): void {
     if (e.actor)
       for (const definition of world.moduleManifest.definitions) {
         const value = readAttribute(e.actor, definition);
-        if (value !== undefined) validateAttributeValue(definition, value);
+        if (value !== undefined) validateAttributeValue(definition, value, e.actor);
       }
     if (e.actor?.body && (!Number.isFinite(e.actor.body.maxHealth) || e.actor.body.maxHealth <= 0))
       throw new Error('Invalid body maximum.');
+    if (
+      e.actor?.body &&
+      healthDefinition?.nativeHealth?.precision === 'whole-points' &&
+      (!Number.isSafeInteger(e.actor.health) || !Number.isSafeInteger(e.actor.body.maxHealth))
+    )
+      throw new Error('Whole-point bodies require integer health and capacity.');
     if (
       e.actor?.body &&
       (!Number.isFinite(e.actor.health) ||

@@ -16,7 +16,9 @@ export function AimControls({
 }) {
   return (
     <div className="ol-combat-controls" role="region" aria-label={action.label}>
-      <p className="ol-caption">{action.label}</p>
+      <p className="ol-caption" title={action.detail}>
+        {action.label}
+      </p>
       <div className="ol-combat-buttons">
         {action.controls?.map((choice) => (
           <Button
@@ -37,10 +39,6 @@ export function AimControls({
             {choice.reason}
           </p>
         ))}
-      <details>
-        <summary>Details</summary>
-        <p className="ol-caption">{action.detail}</p>
-      </details>
     </div>
   );
 }
