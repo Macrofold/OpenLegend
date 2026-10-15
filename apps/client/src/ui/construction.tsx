@@ -334,7 +334,7 @@ export function Construction({
               ? 'Sending'
               : operations.pending.status === 'checking'
                 ? 'Checking the original result'
-                : 'Outcome not confirmed'}
+                : 'Original request needs recovery'}
           </p>
           <Button
             disabled={!connected || operations.pending.status !== 'unknown'}

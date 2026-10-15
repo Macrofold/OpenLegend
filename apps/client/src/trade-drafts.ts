@@ -52,10 +52,14 @@ type TradeState = SavedTradeDraft & { pending: boolean; inventoryReadBlocked: bo
 type InventoryRecovery = { key?: string; scope: string };
 interface TradeDraftStore {
   recovery?: InventoryRecovery;
+  configureRecovery(recovery?: InventoryRecovery): void;
+  refreshRecovery(): void;
   getSnapshot(): TradeState;
   subscribe(listener: () => void): () => void;
   update(change: (previous: TradeState) => TradeState): void;
-  start(): boolean;
+  start(): symbol | undefined;
+  isCurrent(attempt: symbol): boolean;
+  finish(attempt?: symbol): void;
   active: boolean;
 }
 const stores = new Map<string, TradeDraftStore>();
@@ -77,6 +81,7 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
     inventoryReadBlocked: false,
   };
   const listeners = new Set<() => void>();
+  let submission: symbol | undefined;
   const releaseUnused = () =>
     queueMicrotask(() => {
       if (
@@ -91,22 +96,23 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
     });
   const store: TradeDraftStore = {
     active: true,
-    getSnapshot: () => {
-      if (store.recovery) {
-        const original = store.recovery.key
-          ? readInventoryCommand(store.recovery.key)
-          : { status: 'unknown' as const };
-        const blocked = !!original && !original.request;
-        const receipt =
-          original?.request?.tradeScope === store.recovery.scope
-            ? original.request.commandId
-            : undefined;
-        const inventoryReceipt = blocked ? value.inventoryReceipt : receipt;
-        if (value.inventoryReadBlocked !== blocked || value.inventoryReceipt !== inventoryReceipt)
-          value = { ...value, inventoryReadBlocked: blocked, inventoryReceipt };
-      }
-      return value;
+    configureRecovery(recovery) {
+      if (store.recovery?.key === recovery?.key && store.recovery?.scope === recovery?.scope)
+        return;
+      store.recovery = recovery;
+      // First use and changed request ownership must guard the first render.
+      // Ordinary snapshot reads reuse this result instead of parsing storage.
+      if (readRecovery() && listeners.size)
+        queueMicrotask(() => {
+          // A caller configures its key while rendering; notify existing readers
+          // after that render instead of updating another component inside it.
+          if (store.active) for (const listener of listeners) listener();
+        });
     },
+    refreshRecovery() {
+      if (readRecovery()) for (const listener of listeners) listener();
+    },
+    getSnapshot: () => value,
     subscribe(listener) {
       listeners.add(listener);
       return () => {
@@ -130,7 +136,7 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
       if (!listeners.size) releaseUnused();
     },
     start() {
-      store.getSnapshot();
+      store.refreshRecovery();
       if (
         !store.active ||
         value.pending ||
@@ -138,11 +144,36 @@ function tradeDraftStore(key: string, offers: ItemTradeView['offers']): TradeDra
         value.inventoryReceipt ||
         value.inventoryReadBlocked
       )
-        return false;
+        return undefined;
+      submission = Symbol();
       store.update((previous) => ({ ...previous, pending: true }));
-      return true;
+      return submission;
+    },
+    isCurrent: (attempt) => store.active && submission === attempt,
+    finish(attempt) {
+      if (attempt !== undefined && submission !== attempt) return;
+      submission = undefined;
+      store.update((previous) => (previous.pending ? { ...previous, pending: false } : previous));
     },
   };
+  function readRecovery() {
+    if (store.recovery) {
+      const original = store.recovery.key
+        ? readInventoryCommand(store.recovery.key)
+        : { status: 'unknown' as const };
+      const blocked = !!original && !original.request;
+      const receipt =
+        original?.request?.tradeScope === store.recovery.scope
+          ? original.request.commandId
+          : undefined;
+      const inventoryReceipt = blocked ? value.inventoryReceipt : receipt;
+      if (value.inventoryReadBlocked !== blocked || value.inventoryReceipt !== inventoryReceipt) {
+        value = { ...value, inventoryReadBlocked: blocked, inventoryReceipt };
+        return true;
+      }
+    }
+    return false;
+  }
   stores.set(key, store);
   return store;
 }
@@ -153,7 +184,7 @@ export function useTradeDraft(
   recovery?: InventoryRecovery,
 ) {
   const store = tradeDraftStore(key, offers);
-  store.recovery = recovery;
+  store.configureRecovery(recovery);
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const field = <K extends keyof typeof state>(name: K, next: SetStateAction<(typeof state)[K]>) =>
     store.update((previous) => ({
@@ -165,9 +196,16 @@ export function useTradeDraft(
     setDraft: (next: SetStateAction<TradeDraft | undefined>) => field('draft', next),
     setReviewed: (next: SetStateAction<Record<string, number>>) => field('reviewed', next),
     setUncertain: (next: SetStateAction<boolean>) => field('uncertain', next),
-    setPending: (pending: boolean) => field('pending', pending),
     start: store.start,
+    isCurrent: store.isCurrent,
+    finish: store.finish,
   };
+}
+
+/** Exact command storage changes notify only the trade views reading that owner. */
+export function refreshTradeInventoryRecovery(key: string) {
+  for (const store of stores.values())
+    if (store.active && store.recovery?.key === key) store.refreshRecovery();
 }
 
 /** Inventory owns this exact receipt; reviewing trade terms cannot release it. */
@@ -175,7 +213,11 @@ export function retainTradeInventoryReceipt(scope: string, commandId: string) {
   const store = tradeDraftStore('open-legend:action-draft:trade:' + scope, []);
   store.update((value) => ({ ...value, inventoryReceipt: commandId }));
 }
-export function prepareTradeInventoryReceiptResolution(scope: string, commandId: string) {
+export function prepareTradeInventoryReceiptResolution(
+  scope: string,
+  commandId: string,
+  recovered = false,
+) {
   const key = 'open-legend:action-draft:trade:' + scope;
   const store = tradeDraftStore(key, []);
   const current = store.getSnapshot();
@@ -195,6 +237,10 @@ export function prepareTradeInventoryReceiptResolution(scope: string, commandId:
   if (sessionStorage.getItem(key) !== serialized)
     throw new Error('The resolved trade receipt could not be retained. Check its original result.');
   return () => {
+    // An old Inventory component may still await its network promise. Once the
+    // exact receipt and cleanup are confirmed, that obsolete continuation no
+    // longer owns the shared pending state or any later trade draft.
+    if (recovered) store.finish();
     store.update((value) =>
       value.inventoryReceipt === commandId || value.inventoryReceipt === undefined
         ? { ...value, inventoryReceipt: undefined, uncertain: false }

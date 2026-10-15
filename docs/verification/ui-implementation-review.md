@@ -10,7 +10,7 @@ integrated into main. The refreshed PR base is `Macrofold/OpenLegend`
 `origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4`, already an ancestor.
 Local checkpoints `1985e18c7`, `5ef9c4007` and `2f8654468` preserve the review repairs.
 The first integrated source is `9d7081b0924322ab5587dd85cc0a0687e29a314f`.
-All required checks pass there. Final executable source
+All required checks pass there. The initial review's final executable source
 `38a8adcf6571dfbfdbfbac32a7d9c09cf92bfc48` adds the final Diagnostics repairs and
 passes local static/build checks and every required CI gate below.
 
@@ -20,6 +20,12 @@ The separate item/building follow-on requires clarification because crafting-lis
 and compound equipment additions change native behavior as well as presentation.
 This review does not treat their older design-only status as either implementation
 or a waiver. The current recipe wording defect is repaired independently.
+
+Mike's subsequent correctness, structure, performance and world-boundary review
+starts at published `1dbfbfe63886cc246254b310264f701392153e94`. Its refreshed base
+is unchanged. The [follow-up plan](../projects/game-interaction-redesign-completion.md#follow-up-implementation-review--october-15)
+and the follow-up results below extend this report rather than replacing the
+earlier evidence or reopening excluded simulation work.
 
 ## Source review and repairs
 
@@ -218,9 +224,86 @@ provider/Jev cost: $0.**
   supplied contrasting icon and its existing generic fallback when omitted; both
   labels/icons are inspected. No creation command or provider call is sent.
 
+## Follow-up correctness and performance review
+
+Cross-review traces the complete affected implementation and its callers, with
+different reviewers for creator recovery, player tasks and private diagnostics.
+Confirmed additional defects and repairs:
+
+- World Events' reload screen now forwards the same separately saved narration
+  Close guard as its editing screen. An acknowledged event Save followed by a held
+  or failed reread cannot discard narration. Optional initial/reload reads can be
+  dismissed; a pending narration write still protects Close.
+- An unresolved Speak/Act result retains its original identity through subsequent
+  unconfirmed, expired or conflicting replies. Only a definite outcome releases
+  it for a fresh request; later writing retains its existing revision protection.
+- Barter snapshots no longer reread and parse the retained Inventory command during
+  React rendering and typing. The existing shared store prepares the guard on first
+  use or changed ownership, receives command-owner notifications, and rereads before
+  explicit dispatch. This preserves recovery when Inventory has never mounted.
+- Operations rejects an obsolete reply before pruning checkpoint recovery records
+  or changing shared access. Diagnostics shares one in-flight list/activity read
+  with one coalesced explicit refresh and schedules its next poll after completion.
+  Changed page, filters, access, selection, Hide and unmount abort obsolete client
+  reads. Old list rows/counts disappear immediately when their read identity changes;
+  a definite refused activity read still withdraws the old page.
+
+The existing creator recovery helpers remain local because the general retained
+request helper has different storage, size, identity and cleanup contracts. Reusing
+it directly would change behavior; configuring it for every native operation would
+add a framework without reducing semantic ownership. No dependency, persisted
+schema, execution owner, world rule or admission policy is added. Selected-world
+icons/content and native equipment compatibility remain with their existing authored
+owners. No mutable or cross-observer native cache is introduced.
+
+Focused existing transport/editor checks pass **9 tests in two files** in 2.44 seconds.
+The actual World Events/editor composition and Operations API observation uses
+controlled acknowledgements: three event Saves, one narration Save, eight event
+reads and two Operations reads. It verifies Close while an optional read is held,
+unsaved/pending narration protection, later text, explicit Discard and obsolete
+Operations rejection before recovery cleanup. The settled confirmation pixels are
+inspected. An earlier image caught entry animation and is not painted-confirmation
+evidence.
+
+The actual barter/request/Speak caller observation verifies one command-record read
+on first person-view use, then **zero additional reads** for five unrelated redraws,
+a second shared caller and quantity edits. Command changes notify both callers;
+failed cleanup retains the original and matching receipt inspection releases it.
+Changed recovery ownership blocks correctly, and Speak preserves one exact ID/body
+through unresolved replies. The narrow capture is inspected. These are controlled
+component/request observations, not additional native effects or provider evidence.
+
+Diagnostics' finite controlled-HTTP observation makes **11 requests**, holding one
+for 6.6 seconds across two nominal poll intervals. At most one browser fetch is
+active; explicit Refresh coalesces, focused Follow preserves reading, refusal clears
+rows, and Hide/unmount end scheduling. Two obsolete fetches are aborted. A fresh
+access page appears before the old intercepted callback is released. The inspected
+capture shows the fresh followed page. The first counting variation counted an
+already-aborted interception callback as active until its delayed failure event;
+the final report separately records browser-fetch maximum 1 and retained callback
+maximum 2. This establishes client cancellation, not PostgreSQL/backend work
+cancellation or remote endpoint latency/capacity.
+
+Recurring storage parsing and overlapping optional requests are removed without
+adding polling, a global cache or background queues. Native equipment comparison
+still uses the existing current-equipment query per projected candidate; returning
+all conflicts adds work proportional to those actual conflicts. Complete-menu
+preparation and larger inventory/population qualification remain with
+[AC11](../maintainers/action-capabilities.md#ac11--usability-and-measured-efficiency)
+and [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness),
+and [HV01](../limits/interface.md#hv01) retains the separate complete-list browser
+measurements. These focused observations establish no general scale capacity.
+No provider requests are made: additional and cumulative game-provider/Jev cost
+remain **$0**. Temporary observation code and generated output stay outside the
+repository; owned browser/server handles are closed.
+
+Required automatic CI is unchanged. The [PR's current checks](https://github.com/Macrofold/OpenLegend/pull/27/checks)
+track the published follow-up source; the final handoff identifies that head and
+its results. The earlier source-specific CI below remains historical evidence.
+
 ## Integrated checks and cleanup
 
-The final executable source `38a8adcf6571dfbfdbfbac32a7d9c09cf92bfc48` passes
+The initial review's executable source `38a8adcf6571dfbfdbfbac32a7d9c09cf92bfc48` passes
 full TypeScript and production build locally (`index-C0PuZb-3.js`), changed-file
 pinned formatting, whitespace and 2,373 relative links across 54 affected files.
 Guidance and generated-configuration checks pass. The pre-existing large-bundle

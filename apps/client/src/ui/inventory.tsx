@@ -904,7 +904,7 @@ function InventoryWorkspace({
               <p className="ol-caption">
                 {operations.pending.status === 'sending'
                   ? 'Sending this action…'
-                  : 'The outcome is unresolved. Use Check result in the inventory.'}
+                  : 'The original request needs recovery. Use Check result in the inventory.'}
               </p>
             )}
             {operations.message && <p className="ol-caption">{operations.message}</p>}
@@ -1369,7 +1369,7 @@ function InventoryWorkspace({
                 ? `Sending ${operations.pending.request?.label ?? 'inventory action'}…`
                 : operations.pending.status === 'checking'
                   ? 'Checking the recorded result…'
-                  : `The result of ${operations.pending.request?.label ?? 'an earlier inventory action'} is unknown. Further inventory actions are paused to avoid repeating it.`}
+                  : `The original request for ${operations.pending.request?.label ?? 'an earlier inventory action'} needs recovery. Further inventory actions are paused to avoid repeating it.`}
             </p>
             {operations.pending.status === 'unknown' && (
               <Button

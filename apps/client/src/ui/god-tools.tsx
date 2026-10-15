@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type FormEvent,
 } from 'react';
 import { ClockOffsetContext, clockParts } from './event-time';
@@ -1314,6 +1315,16 @@ export function WorldEventsEditor({ close }: { close(): void }) {
       if (requestGeneration === generation.current) setError(String(reason));
     }
   };
+  const closeGuard =
+    story.dirty || story.writing
+      ? {
+          reason: story.writing
+            ? 'Future narration is saving. Wait for its result before closing.'
+            : 'Future narration has unsaved changes and uses its own Save story mechanism action. Keep editing to save it there, or discard all unsaved changes before closing.',
+          pending: story.writing,
+          discard: story.discard,
+        }
+      : undefined;
   if (!loaded || needsReload)
     return (
       <EditorReload
@@ -1321,6 +1332,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
         saved={needsReload}
         loading={loading}
         error={error}
+        closeGuard={closeGuard}
         reload={async () => {
           await load();
         }}
@@ -1335,17 +1347,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
       dirty={dirty}
       saving={saving || loading}
       error={error}
-      closeGuard={
-        story.dirty || story.writing
-          ? {
-              reason: story.writing
-                ? 'Future narration is saving. Wait for its result before closing.'
-                : 'Future narration has unsaved changes and uses its own Save story mechanism action. Keep editing to save it there, or discard all unsaved changes before closing.',
-              pending: story.writing,
-              discard: story.discard,
-            }
-          : undefined
-      }
+      closeGuard={closeGuard}
       onSave={save}
       onDiscard={() => {
         generation.current++;
@@ -1459,6 +1461,7 @@ function EditorReload({
   saved,
   loading,
   error,
+  closeGuard,
   reload,
   close,
 }: {
@@ -1466,6 +1469,7 @@ function EditorReload({
   saved: boolean;
   loading: boolean;
   error: string;
+  closeGuard?: ComponentProps<typeof EditorPanel>['closeGuard'];
   reload(): Promise<void>;
   close(): void;
 }) {
@@ -1473,8 +1477,10 @@ function EditorReload({
     <EditorPanel
       title={title}
       dirty={false}
-      saving={loading}
+      // Only a read runs here; any preceding write is already acknowledged.
+      saving={false}
       error={error}
+      closeGuard={closeGuard}
       onSave={async () => false}
       onClose={close}
       tabs={[

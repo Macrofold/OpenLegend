@@ -154,7 +154,8 @@ function KnowledgeEditor({
   }, [subjectReadKey, reload, visible]);
   useEffect(() => {
     // A refreshed page cannot silently rebase an unsaved edit onto newer authority.
-    if (dirtyRef.current || (subject && details === undefined)) return;
+    // A confirmed Save can become clean after its fresh snapshot already arrived.
+    if (!readCurrent || dirtyRef.current || (subject && details === undefined)) return;
     const next = {
       text: document?.text ?? '',
       name: identity?.givenName ?? '',
@@ -164,7 +165,14 @@ function KnowledgeEditor({
     setBase(next);
     setText(next.text);
     setName(next.name);
-  }, [subject?.id, document?.revision, identity?.revision, details === undefined]);
+  }, [
+    subject?.id,
+    document?.revision,
+    identity?.revision,
+    details === undefined,
+    dirty,
+    readCurrent,
+  ]);
   const loading = (!!subject && details === undefined) || refreshing;
   const unavailable = !!subject && details === null;
   const limit =
@@ -2547,10 +2555,21 @@ export function Diagnostics({
   const generation = useRef(0),
     panel = useRef<HTMLDivElement>(null),
     newest = useRef<string | undefined>(undefined);
-  newest.current = rows[0]?.id;
-  async function refresh() {
+  const readKey = JSON.stringify([worldId, readScope, offset, filters]);
+  const currentReadKey = useRef(readKey);
+  currentReadKey.current = readKey;
+  const active = useRef(visible && !selection);
+  active.current = visible && !selection;
+  const [rowsKey, setRowsKey] = useState(readKey);
+  const currentRows = rowsKey === readKey ? rows : [];
+  newest.current = currentRows[0]?.id;
+  const readAbort = useRef<AbortController | null>(null);
+  async function read(peek: boolean) {
+    if (!active.current) return;
     const id = ++generation.current;
-    setLoading(true);
+    const controller = new AbortController();
+    readAbort.current = controller;
+    if (!peek) setLoading(true);
     try {
       const result = await post<{
         ok: boolean;
@@ -2558,66 +2577,103 @@ export function Diagnostics({
         worldId?: string;
         roots?: Row[];
         hasMore?: boolean;
-      }>('/api/god/triggers', {
-        offset,
-        ...Object.fromEntries(
-          Object.entries(filters)
-            .filter(([, value]) => value)
-            .map(([key, value]) => [
-              key,
-              key === 'from' || key === 'to' ? new Date(value).toISOString() : value,
-            ]),
-        ),
-      });
-      if (id !== generation.current) return;
+      }>(
+        '/api/god/triggers',
+        {
+          offset: peek ? 0 : offset,
+          ...(peek
+            ? { peek: true }
+            : Object.fromEntries(
+                Object.entries(filters)
+                  .filter(([, value]) => value)
+                  .map(([key, value]) => [
+                    key,
+                    key === 'from' || key === 'to' ? new Date(value).toISOString() : value,
+                  ]),
+              )),
+        },
+        controller.signal,
+      );
+      if (id !== generation.current || currentReadKey.current !== readKey || !active.current)
+        return;
+      if (peek && !result.ok) {
+        setRows([]);
+        return;
+      }
       if (!result.ok || result.worldId !== worldId)
         throw new Error(result.message ?? 'Diagnostics unavailable.');
+      if (peek) {
+        if (result.roots?.[0]?.id && result.roots[0].id !== newest.current) setNewActivity(true);
+        return;
+      }
       setRows(result.roots ?? []);
+      setRowsKey(readKey);
       setMore(!!result.hasMore);
       setError('');
       setNewActivity(false);
     } catch (refreshError) {
-      if (id === generation.current) {
+      if (
+        id === generation.current &&
+        currentReadKey.current === readKey &&
+        active.current &&
+        !peek
+      ) {
         setRows([]);
         setError(String(refreshError));
       }
     } finally {
-      if (id === generation.current) setLoading(false);
+      if (readAbort.current === controller) readAbort.current = null;
+      if (id === generation.current && !peek) setLoading(false);
     }
   }
+  const currentRead = useRef(read);
+  currentRead.current = read;
+  const inFlight = useRef<Promise<void> | null>(null);
+  const refreshPending = useRef(false);
+  function refresh(peek = false): Promise<void> {
+    if (inFlight.current) {
+      if (!peek) refreshPending.current = true;
+      return inFlight.current;
+    }
+    // One reader owns list refreshes and cheap activity checks. Keep at most one
+    // explicit refresh pending, using the latest page and permission on completion.
+    const request = (async () => {
+      do {
+        refreshPending.current = false;
+        await currentRead.current(peek);
+        peek = false;
+      } while (refreshPending.current && active.current);
+    })().finally(() => {
+      if (inFlight.current === request) inFlight.current = null;
+    });
+    inFlight.current = request;
+    return request;
+  }
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || selection) return;
     void refresh();
     return () => {
       generation.current++;
+      refreshPending.current = false;
+      readAbort.current?.abort();
     };
-  }, [offset, worldId, filters, visible, readScope]);
+  }, [offset, worldId, filters, visible, readScope, selection]);
   useEffect(() => {
     if (selection || !visible) return;
-    let active = true;
-    const id = setInterval(async () => {
-      if (follow && offset === 0 && !panel.current?.contains(document.activeElement)) {
-        await refresh();
-        return;
-      }
-      try {
-        const result = await post<{ ok: boolean; roots?: Row[] }>('/api/god/triggers', {
-          offset: 0,
-          peek: true,
-        });
-        if (!active) return;
-        if (!result.ok) {
-          setRows([]);
-          return;
-        }
-        if (result.roots?.[0]?.id && result.roots[0].id !== newest.current) setNewActivity(true);
-      } catch {
-        /* Explicit Refresh exposes errors without replacing a reader's open row. */
-      }
-    }, 3000);
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(async () => {
+        await refresh(
+          !(follow && offset === 0 && !panel.current?.contains(document.activeElement)),
+        );
+        if (!stopped) schedule();
+      }, 3000);
+    };
+    schedule();
     return () => {
-      active = false;
-      clearInterval(id);
+      stopped = true;
+      clearTimeout(timer);
     };
   }, [follow, offset, filters, worldId, selection, visible, readScope]);
   useEffect(() => setRaw(null), [worldId, selection?.id, readScope]);
@@ -2645,7 +2701,11 @@ export function Diagnostics({
         <Button size="sm" disabled={!offset} onPress={() => setOffset(Math.max(0, offset - 25))}>
           Newer
         </Button>
-        <Button size="sm" disabled={!more} onPress={() => setOffset(offset + 25)}>
+        <Button
+          size="sm"
+          disabled={rowsKey !== readKey || !more}
+          onPress={() => setOffset(offset + 25)}
+        >
           Older
         </Button>
       </div>
@@ -2726,12 +2786,12 @@ export function Diagnostics({
         never reruns inference.
       </p>
       {error && <p role="alert">{error}</p>}
-      {rows.map((row) => (
+      {currentRows.map((row) => (
         <TraceRow key={row.id} row={row} onSelect={onSelect} />
       ))}
-      {!!rows.length && (
+      {!!currentRows.length && (
         <p className="ol-caption">
-          Records {offset + 1}–{offset + rows.length} on this retained history page.
+          Records {offset + 1}–{offset + currentRows.length} on this retained history page.
         </p>
       )}
       {loading && (
@@ -2739,7 +2799,7 @@ export function Diagnostics({
           Loading triggers…
         </p>
       )}
-      {!rows.length && !error && !loading && <p>No matching retained triggers.</p>}
+      {!currentRows.length && !error && !loading && <p>No matching retained triggers.</p>}
       {raw && visible && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
     </div>
   );

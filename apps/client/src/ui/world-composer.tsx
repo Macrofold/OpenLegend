@@ -195,6 +195,11 @@ export function WorldComposer({
         setError('Control changed. Check World Events before repeating this request.');
         return;
       }
+      if (['unconfirmed', 'expired', 'idempotency-conflict'].includes(result.code)) {
+        setUncertain(attempt);
+        setError(result.message);
+        return;
+      }
       setUncertain(null);
       if (!result.ok) {
         setError(result.message);

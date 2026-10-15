@@ -53,8 +53,21 @@ through acknowledged event-save reloads; retaining unresolved Speak/Act original
 after an uncertain retry; removing browser-storage reads from barter snapshot
 rendering while retaining original-request checks at recovery and dispatch; and
 finishing FRL02's operator-read fencing/scheduling through the existing API and
-Diagnostics owners. These remain within the 0–200-line additional estimate. Verify
-held responses and real caller composition, not only isolated helper results.
+Diagnostics owners. Review also confirms that a known Inventory/Construction
+result must remain visible when browser cleanup fails, and that renewed control
+must retain the current task's in-memory fields when optional draft storage fails.
+The additional repair estimate is now approximately 260–350 production logic lines,
+with the same medium risk and unchanged native contracts. Keep task drafts under
+their existing private owner while refreshing authority-scoped choices and fencing
+old read/write presentation. Verify held responses and real caller composition,
+not only isolated helper results.
+The shared barter continuation also needs to release its old sending guard after
+explicit receipt recovery, without letting that obsolete promise later change a
+new offer. Reuse the existing shared draft owner with a local attempt identity;
+ordinary acknowledgements retain their normal reviewed-term updates. Private note
+editing must adopt a current saved revision after becoming clean without rebasing
+an unsaved draft. These are additional composed-caller correctness repairs, not
+new trade or knowledge behavior.
 
 ### Complete imported-interface review — October 15
 

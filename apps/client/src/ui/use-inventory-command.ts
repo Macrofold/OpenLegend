@@ -4,6 +4,7 @@ import { post } from '../api';
 import {
   retainTradeInventoryReceipt,
   prepareTradeInventoryReceiptResolution,
+  refreshTradeInventoryRecovery,
 } from '../trade-drafts';
 import type { CommandDispatcher } from '../command-request';
 import {
@@ -53,6 +54,7 @@ export function useInventoryCommand({
   const [message, setMessage] = useState('');
   const guard = useRef(!!pending);
   const activeCommandId = useRef(pending?.request?.commandId);
+  const definiteResult = useRef<{ commandId: string; message: string } | undefined>(undefined);
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -62,13 +64,15 @@ export function useInventoryCommand({
   }, []);
 
   useLayoutEffect(() => {
+    if (storageKey) refreshTradeInventoryRecovery(storageKey);
     const request = pending?.request;
     if (request?.tradeScope) retainTradeInventoryReceipt(request.tradeScope, request.commandId);
-  }, [pending?.request?.commandId]);
+  }, [storageKey]);
 
-  function finish(result: ApiResult, request: PendingCommand) {
+  function finish(result: ApiResult, request: PendingCommand, recovered = false) {
     const { commandId, tradeScope } = request;
     if (!storageKey || !alive.current || activeCommandId.current !== commandId) return;
+    definiteResult.current = { commandId, message: result.message };
     // If storage becomes unavailable, retain the guard. The native result remains
     // recoverable, and a remount cannot accidentally repeat the unresolved request.
     const saved = restore(storageKey);
@@ -81,7 +85,7 @@ export function useInventoryCommand({
     // A response from a former component can arrive after reconnect recovered that
     // command and the current component started another one. It cannot erase the latter.
     const releaseTrade = tradeScope
-      ? prepareTradeInventoryReceiptResolution(tradeScope, commandId)
+      ? prepareTradeInventoryReceiptResolution(tradeScope, commandId, recovered)
       : undefined;
     if (saved?.request?.commandId === commandId) {
       sessionStorage.removeItem(storageKey);
@@ -91,13 +95,22 @@ export function useInventoryCommand({
         );
     }
     releaseTrade?.();
+    refreshTradeInventoryRecovery(storageKey);
     activeCommandId.current = undefined;
+    definiteResult.current = undefined;
     guard.current = false;
     if (alive.current) {
       setPending(undefined);
       setMessage(result.message);
       onResolved(result);
     }
+  }
+
+  function recoveryMessage(reason: string, commandId: string) {
+    const known = definiteResult.current;
+    return known?.commandId === commandId
+      ? `${known.message} The original result is known, but its browser recovery record still needs to be cleared. ${reason}`
+      : reason;
   }
 
   async function dispatch(action: ActionOption, tradeScope?: string): Promise<ApiResult> {
@@ -123,6 +136,7 @@ export function useInventoryCommand({
       guard.current = true;
       activeCommandId.current = previous.request?.commandId;
       setPending(previous);
+      refreshTradeInventoryRecovery(storageKey);
       setMessage(`The original ${taskName} request must be read and resolved before acting again.`);
       return {
         ok: false,
@@ -148,6 +162,7 @@ export function useInventoryCommand({
       guard.current = !!saved;
       activeCommandId.current = saved?.request?.commandId;
       setPending(saved);
+      refreshTradeInventoryRecovery(storageKey);
       const message = saved
         ? `This browser could not retain the new request. No new request was sent. The earlier ${taskName} request still needs recovery.`
         : 'This browser could not retain the new request. No new request was sent.';
@@ -177,13 +192,17 @@ export function useInventoryCommand({
       if (alive.current && activeCommandId.current === request.commandId)
         setMessage(result.message);
     } catch (error: unknown) {
+      refreshTradeInventoryRecovery(storageKey);
+      const message = recoveryMessage(
+        error instanceof Error ? error.message : 'The outcome is unknown.',
+        request.commandId,
+      );
       outcome = {
         ok: false,
         code: 'unconfirmed',
-        message: error instanceof Error ? error.message : 'The outcome is unknown.',
+        message,
       };
-      if (alive.current && activeCommandId.current === request.commandId)
-        setMessage(error instanceof Error ? error.message : 'The outcome is unknown.');
+      if (alive.current && activeCommandId.current === request.commandId) setMessage(message);
     }
     if (alive.current && activeCommandId.current === request.commandId)
       setPending({ request, status: 'unknown' });
@@ -198,6 +217,7 @@ export function useInventoryCommand({
       guard.current = !!saved;
       activeCommandId.current = saved?.request?.commandId;
       setPending(saved);
+      if (storageKey) refreshTradeInventoryRecovery(storageKey);
       request = saved?.request;
       if (!request) {
         setMessage(
@@ -217,14 +237,25 @@ export function useInventoryCommand({
       });
       if (!alive.current || activeCommandId.current !== request.commandId) return;
       if (receipt.scope !== scope) {
-        setMessage('Character access changed. Reconnect before checking the result.');
+        setMessage(
+          recoveryMessage(
+            'Character access changed. Reconnect before checking the result.',
+            request.commandId,
+          ),
+        );
       } else if (receipt.status === 'resolved') {
-        finish(receipt.result, request);
+        finish(receipt.result, request, true);
         return;
-      } else setMessage(receipt.message);
+      } else setMessage(recoveryMessage(receipt.message, request.commandId));
     } catch (error: unknown) {
+      if (storageKey) refreshTradeInventoryRecovery(storageKey);
       if (alive.current && activeCommandId.current === request.commandId)
-        setMessage(error instanceof Error ? error.message : 'The result is still unknown.');
+        setMessage(
+          recoveryMessage(
+            error instanceof Error ? error.message : 'The result is still unknown.',
+            request.commandId,
+          ),
+        );
     }
     if (alive.current && activeCommandId.current === request.commandId)
       setPending({ request, status: 'unknown' });
