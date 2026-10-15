@@ -407,6 +407,7 @@ export function WorldAgentSession({
       current.data.question ||
       current.data.budget.availableUsd <= 0 ||
       pendingUnreadableRef.current ||
+      (existing && !samePending(existing, pendingRef.current)) ||
       (!existing && pendingRef.current) ||
       (!existing && !text.trim())
     )
