@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Surface-art and stability trials are implemented; final edge, cost and memory qualification and creator approval remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Surface-art trials and scoped checks are delivered; visual acceptance and measured frame-time failures remain open. | 2026-10-15   |
 
 **October 14 reference update:** [Confirmed art preferences](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) emphasize Garbage Country environments, The Last Night/REPLACED finish, and richer characters than EthrA. The [research collection](../../art-direction/research/3d-pixel-worlds/README.md) explains the evidence. The [realtime follow-up](../../art-direction/research/3d-pixel-worlds/realtime-pixel-rendering.md) adds t3ssel8r’s strongly endorsed character and makes designed pixel shading on animated geometry the proposed first comparison. Mike has now agreed to this artistic direction and the focused first-scene plan. Painted-material and articulated-sprite alternatives remain available; V3D01 still owns acceptance of actual moving artwork and production settings.
 
@@ -16,7 +16,7 @@
 
 **First starting-scene candidate — October 15, 2026, rejected visually.** The existing world gained shaped vegetation, quiet ground, controlled material/light response, authored facial details, selectively held walking and an attributed generated crate family. Mike rejected its ordinary-3D environmental finish; its bounded technical checks remain historical evidence. [The combined experiment record](../verification/starting-scene-pixel-art.md) distinguishes E01–E08 decisions, native content/route checks, actual device evidence and rejected techniques. Original art remains preserved. Creator review and the broader general pipeline/device gates remain open; no shader/backend or production-rights approval is inferred.
 
-**Surface-art and stability revision — October 15, 2026.** Object-attached painted clusters, full-detail character capture, common final grids and separate subject-detail controls are implemented and compared. The [new trial report](../verification/starting-scene-pixel-stability.md) records the provisional surface-art selection, corrected directional-sun comparison and application checks, as well as poor measured frame times and unfinished edge/memory qualification. It supersedes the rejected first candidate as the current review trial without recording creator approval or a zero-shimmer result. Existing sprites and source/model alternatives remain preserved.
+**Surface-art and stability revision — October 15, 2026.** Object-attached painted clusters, full-detail character capture, common final grids and separate subject-detail controls are implemented and compared. The [new trial report](../verification/starting-scene-pixel-stability.md) records the provisional surface-art selection, corrected directional-sun comparison and application checks, as well as the completed edge/memory checks and unresolved frame-time failures. It supersedes the rejected first candidate as the current review trial without recording creator approval or a zero-shimmer result. Existing sprites and source/model alternatives remain preserved.
 
 ## Maintained records
 
@@ -163,7 +163,7 @@ Consequential identity or silhouette changes require deliberate review rather th
 | S4 — Progressive model publication  | A generated rigid model can replace the sprite; compatible rigs follow only after their own qualification                                                            | Identity and mechanics-fit review, independent stage failure, safe mid-action swap, scoped reusable artifacts                                                     |
 | S5 — Broaden with evidence          | Additional assemblies, creatures, state effects, pack portability, and scalable quality presets                                                                      | Family-specific coverage and whole-application performance; no claim of universal generated anatomy or mechanics                                                  |
 
-Delivery details, dependencies, and unchecked completion criteria belong to [V3D delivery](../maintainers/3d-pixel-art.md). The rejected first candidate and its finite technique investigations retain [historical measured evidence](../verification/starting-scene-pixel-art.md). The [surface-art revision trials](../verification/starting-scene-pixel-stability.md) are implemented, with provisional settings and final edge/cost/memory checks still open; Mike’s visual acceptance remains pending. Later general-pipeline stages retain their existing proposal status.
+Delivery details, dependencies, and unchecked completion criteria belong to [V3D delivery](../maintainers/3d-pixel-art.md). The rejected first candidate and its finite technique investigations retain [historical measured evidence](../verification/starting-scene-pixel-art.md). The [surface-art revision trials](../verification/starting-scene-pixel-stability.md) are implemented, with provisional settings and scoped edge/cost/memory checks recorded; Mike’s visual acceptance remains pending. Later general-pipeline stages retain their existing proposal status.
 
 ## 11. Non-goals
 

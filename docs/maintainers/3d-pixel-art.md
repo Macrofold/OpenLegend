@@ -1,6 +1,6 @@
 # Progressive 3D pixel art — implementation tracker
 
-**Status: The first starting-scene candidate was rejected for its normal-3D environment. A newly authorized pixel-finish and camera-stability revision is in progress; prior E01–E08 measurements remain historical evidence, not visual acceptance. Mike's creator review, broader pipeline, production rights and crowd/device gates remain open.** Last reconciled October 15, 2026.
+**Status: The first starting-scene candidate was rejected for its normal-3D environment. The authorized pixel-finish trials and scoped checks are delivered, with critical visual acceptance and frame-time failures still open; prior E01–E08 measurements remain historical evidence, not visual acceptance. Mike's creator review, broader pipeline, production rights and crowd/device gates remain open.** Last reconciled October 15, 2026.
 
 ## Maintained records
 
@@ -161,10 +161,10 @@ V3D01.1–V3D01.11 are **Completed investigations, scoped implementation and tec
 
 **Owner:** existing character, environment and presentation owners. **Depends on:** the preserved first candidate and Mike’s October 15 feedback. The [authorized revision plan](../projects/3d-pixel-art-first-scene-plan.md#authorized-pixel-finish-and-stability-revision--october-15-2026) owns implementation sequence and scope. V3D01.1–.11 above describe the first finite investigations; their checkmarks do not establish an acceptable pixel-art scene after this rejection.
 
-- [ ] Compare the mercenary at full displayed resolution before a single final pixel treatment against the old double-sampled path, preserving apparent size, source identity, small objects and camera freedom.
-- [ ] Supply deliberate stable surface pixel clusters on the environment and compare common-grid and, if justified, separate scenery/subject drawing. Keep depth, lighting, shadows, fine boundaries, selection and authorized read-through aligned.
-- [ ] Run matched slow pan/orbit/zoom/still/light-isolation footage and a materially changed texel-splatting alternative. Record actual visual failures and supported stability boundaries; no unmeasured artifact-free claim or backend migration.
-- [ ] Integrate the best supported result, verify scoped application/lifecycle behavior and complete-frame cost, reconcile current owners/limits/evidence and commit. Creator visual approval remains V3D01.12 and cannot be inferred from technical passes.
+- [x] Compare the mercenary at full displayed resolution before a single final pixel treatment against the old double-sampled path, preserving apparent size, source identity, small objects and camera freedom.
+- [x] Supply deliberate stable surface pixel clusters on the environment and compare common-grid and, if justified, separate scenery/subject drawing. Keep depth, lighting, shadows, fine boundaries, selection and authorized read-through aligned.
+- [x] Run matched slow pan/orbit/zoom/still/light-isolation footage and a materially changed texel-splatting alternative. Record actual visual failures and supported stability boundaries; no unmeasured artifact-free claim or backend migration.
+- [ ] Integrate the best supported result, verify scoped application/lifecycle behavior and complete-frame cost, reconcile current owners/limits/evidence and commit. Creator visual approval remains V3D01.12 and cannot be inferred from technical passes. **Trial/check portions delivered:** the provisional painted/full-scene/fixed-96 profile, filtered cell boundaries, corrected fixed-sun switch and owned target cleanup are implemented. Application, size/format/teardown, static/build/link checks and actual device costs are recorded in the [revision report](../verification/starting-scene-pixel-stability.md). The no-shimmer/art-quality bar, grainy mercenary detail and measured slow-frame tails are unresolved; this criterion remains unchecked and local-main readiness is not claimed. Earlier source assets and every rejected alternative are preserved.
 
 ## V3D02 — Immutable appearance and artifact foundation
 

@@ -1,8 +1,8 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Surface-art and stability trials are implemented; final edge, cost and memory qualification and creator approval remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Surface-art trials and scoped checks are delivered; visual acceptance and measured frame-time failures remain open. | 2026-10-15   |
 
 ## Purpose and authorization
 
@@ -58,7 +58,7 @@ The provisional review default adds painted surface artwork, four-sample edge co
 
 The initial shadow switch missed the active sun shader, so its identical screen/fixed comparisons cannot support a benefit. The repaired branch now visibly changes sun shading; three corrected moving profiles completed with zero browser errors and byte-identical frozen still pairs. Application selection in both projections, DPR/resize, supported nearby read-through/Off, pause, replacement and teardown checks pass. The detailed report preserves the unsupported-preference fixture failure and limitations. These observations do not close the critical moving-artifact gate.
 
-The current 600-frame production checks at 1×/8× report median frame intervals of 28.4/26.6 ms and p95 of 59.4/56.7 ms, so no smoothness claim is made. Final edge/AA and cost comparisons remain pending. An analytic one-display-pixel filtering alternative for surface-texel boundaries is being implemented against the sharp-edge control; it has no selected result yet. Cleanup for a confirmed multisample depth-target retention issue is implemented but requires a fresh memory probe. Keep this stage In progress until those relevant checks and documentation are reconciled; creator approval, zero-shimmer claims and wider pipeline/device qualification remain ungranted.
+The final sharp/filtered/single-reduction comparison completes the moving trial; all three frozen still pairs are identical and browser errors are zero. The provisional default retains filtered painted boundaries. Actual API accounting passes the multisample-depth cleanup through resize, format changes and destruction. The final 600-frame-per-speed production run still has poor frame-time tails; the revision report owns all timings and no smoothness claim follows. The bounded trial/check delivery is recorded, while this stage remains In progress for critical visual acceptance and measured frame-time failures; wider pipeline/device qualification remains ungranted.
 
 ## Maintained records
 

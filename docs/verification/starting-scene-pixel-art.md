@@ -2,6 +2,8 @@
 
 Verified October 15, 2026. Historical first-candidate evidence: Mike subsequently rejected its normal-3D environment and authorized the [pixel-finish/stability revision](starting-scene-pixel-stability.md). The scoped checks below describe that earlier version, not current artistic acceptance. This report owns the combined E01–E08 findings and actual device envelope for V3D01.1–V3D01.12, not the general generated-appearance pipeline.
 
+**GPU timing interpretation correction — October 15:** The pinned WebGL profiler’s GPU counter sums render-pass intervals; the earlier GPU figures below are that engine-reported aggregate, not a measured first-to-last complete GPU span. CPU and displayed-frame measurements retain their stated scope. The [current revision report](starting-scene-pixel-stability.md) records a separate disjoint-checked complete-frame GPU query rather than inferring it by adding pass times.
+
 ## Scope and evidence baseline
 
 The supplied development base is `https://github.com/Macrofold/OpenLegend.git`, local `codex/mercenary-original-refinement@1438ea13749d4acc7a852843d8677f687dbdd931`, including plan commit `3810138d0`. Created/switched `codex/mercenary-original-refinement → codex/starting-scene-pixel-art` in `/Users/mzw/.codex/worktrees/415f/OpenLegend`; no checkout/worktree switch, local-main incorporation, main-checkout edit, merge or push. The task’s final commits identify the integrated result. Checkpoints do not qualify unfinished work.
