@@ -1,8 +1,8 @@
 # Whole-interface implementation completion
 
-| Status      | Current progress                                                                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Required CI and invitation/alternate-world checks pass; Journal zoom capture and real input/device/player acceptance remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Selected UI qualification passes; final cleanup/checks and real input/device/player acceptance remain open. | 2026-10-15   |
 
 ## Scope and authority
 
@@ -53,7 +53,7 @@ unchanged native ownership/settlement evidence.
 
 **Current checkpoint — October 15:** branch source `b77639184dc6fa291771562dff04c2a554af074d` includes `Macrofold/OpenLegend` `origin/main` at `362d3b0a20e92fc38a672730104b957b1c7c1be4` through merge `ef301fae202f14fe528d1e986712566e965ab2a1`. [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38689010811) and [Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38689010883) pass unchanged deadlines. The invitation passes in 56.0 seconds, with all five focused-control images inspected; the supported alternate recharge/storage/changed-login/touch continuation passes at `b26ecb7cb` and its unchanged owners are reused. Current task retention guards, completed-task focus padding and editor viewport constraints retain their recorded qualification. The narrow Character correction keeps one vertical reader without changing the retained draft or native consent owner. No provider or excluded hunting repair is added.
 
-The independently executable work still open is the selected Journal native browser-zoom/reflow observation. After `b77639184` exhausts the initial capture's ten-second allowance, `526368719` captures correct baseline pixels through the compositor surface but fails the unchanged five-second narrow-layout check at a real 720×436 CSS viewport. A later trace snapshot shows the layout eventually switches. Record native resize events and actual HUD attribute changes in the temporary observation to distinguish browser-event delay, rendering delay and observation overhead before changing production code. Preserve all geometry, capture and total deadlines. Final evidence review and temporary-tooling cleanup also remain, alongside real OS input-method, assistive-device and uncoached player/creator/operator observations. The original implementation sequence below is retained with its source-specific evidence.
+The selected Journal native browser-zoom/reflow observation now passes at `c98de4a07e5bd4b39bee5724c675ac64e76bb91d`: [run 38690319197](https://github.com/Macrofold/OpenLegend/actions/runs/38690319197) completes in 56.1 seconds under the original sixty-second total, five-second assertions and ten-second captures. All three inspected images show the retained place at normal size, native 200% zoom and measured 320-CSS-pixel reflow, with reachable complete focus, no overlays or horizontal overflow, unchanged native world and zero gameplay/provider requests. The earlier `b77639184` capture timeout and `526368719` five-second layout failure remain in the evidence; one measured resize-to-HUD change is not a performance repair. Final evidence review, temporary-tooling cleanup and checks on that final source remain, alongside real OS input-method, assistive-device and uncoached player/creator/operator observations. The original implementation sequence below is retained with its source-specific evidence.
 
 Finish in this order:
 
@@ -255,12 +255,12 @@ All verification starts with providers disabled and `AI_BUDGET_USD=0`. Fixture i
 ## Completion criteria
 
 - [x] Original action and checkpoint requests recover through reload and same-page changes without replacement admission or duplicate effects; the named storage, identity, privacy and stale-result cases pass at their recorded sources.
-- [ ] Completed-task presentation and the already specified composed game journeys are implemented and verified through their actual owners and rendered interface.
+- [x] Completed-task presentation and the already specified composed game journeys are implemented and verified through their actual owners and rendered interface. The selected native Journal zoom/reflow observation passes at `c98de4a07`; full human-use acceptance remains separate.
 - [x] Base, clockwork and touch worlds remain coherent under current definitions, and the supported alternate recharge interaction works through the shared interface and persistence; the b26ecb7cb two-preset continuation passes.
 - [ ] In-scope defects and required final Code/Spatial failures are resolved without weakening acceptance; the affected diff and canonical documentation are reviewed and committed.
 - [ ] Remaining keyboard/non-drag, text/viewport, real operating-system input-method, assistive-device and uncoached-player requirements are accurately qualified. Automated browser or synthetic composition results cannot be reported as human/device evidence.
 
-Required Code and Spatial/interface checks pass at `b77639184`; the review/commit criterion remains open until final documentation and temporary-tooling cleanup are complete. The composed-journey criterion still includes the failed Journal zoom capture, while real input/device/uncoached acceptance remains unperformed.
+Required Code and Spatial/interface checks pass at `b77639184`, and the selected Journal zoom/reflow case passes at `c98de4a07`. The review/commit criterion remains open until final documentation, temporary-tooling cleanup and required checks on the final source are complete. Real input/device/uncoached acceptance remains unperformed.
 
 These are the full feature's acceptance criteria, not authorization to restart the excluded native repairs during the UI-only continuation. Source-specific progress lives in the linked verification report; a passed subset cannot close a compound criterion whose other cases remain unverified.
 

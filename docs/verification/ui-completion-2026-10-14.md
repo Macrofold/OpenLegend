@@ -4,6 +4,8 @@ This report continues [whole-interface verification](game-interaction-redesign.m
 
 **October 14 result: thirteen distinct selected UI scenarios have passing evidence across the source-specific runs below.** This was not one thirteen-test run or a statement that every whole-feature acceptance criterion had passed. Production UI was unchanged during that original narrower testing pass. The October 15 continuation below records later fixes, integration, source-specific passes/failures and current remaining acceptance.
 
+**October 15 current result:** the named recovery and composed-interface observations now have passing source-specific evidence, including short invitation controls, both supported alternate presets and real browser zoom/reflow. Required Code and Spatial/interface CI pass at `b77639184`, `526368719` and `c98de4a07`. All thirteen temporary qualification files are removed from the cleanup candidate; its own required CI remains pending. Real OS input methods, applicable assistive devices and uncoached player/creator/operator acceptance remain unperformed; the project is not declared complete.
+
 ## Scope correction
 
 Mike explicitly directed that the hunting failure be recorded separately and that this continuation test only the UI. The [projectile-progress bug](../maintainers/projectile-progress-bug.md) now owns that investigation. No combat, projectile, cognition or time-simulation implementation is changed in this UI-only pass. The temporary hunting/cognition qualification workflow was removed. Existing automatic repository CI is not disabled or reclassified as passing.
@@ -625,12 +627,67 @@ provider request and complete owned cleanup.
 retains 16,119,852 bytes of the baseline PNG, trace and partial report. Additional
 and cumulative task provider/Jev cost: **$0**.
 
+## Selected continuation at c98de4a07
+
+The [zoom-only ninth run](https://github.com/Macrofold/OpenLegend/actions/runs/38690319197)
+at `c98de4a07e5bd4b39bee5724c675ac64e76bb91d` **passes in 56.1 seconds**
+under the unchanged sixty-second total, five-second assertions, ten-second
+actions/captures and five-second native-input bounds. It uses the same production
+source as the previous two zoom attempts; only temporary observation/reporting
+changes. No product responsiveness repair is claimed.
+
+Native window-directed Ctrl-plus doubles Chromium 145.0.7632.6's DPR from one to
+two while its physical window stays 1440×960 and its reading viewport changes
+from 1440×873 to 720×436 CSS pixels. Application scale, font tokens, CSS zoom and
+visual-viewport scale stay unchanged. The same inspected place and reading text
+survive Hide/reopen. Keyboard Focus last-known location changes only the camera;
+the subsequent Move focus causes no activation. Both complete controls and their
+computed outlines fit and pass visible hit-point/no-hint-overlap checks.
+
+Resizing only that owned native window to 640×960 then yields an actual 320×436
+CSS reading viewport at the same 200% zoom. Selection and text remain, complete
+focused Focus/Move controls fit, document/body width stays exactly 320 and the
+same place has only one inspection. The world digest and character position remain
+unchanged. Zero gameplay/provider requests, errors or outside requests are recorded.
+The initial native control acquisition is accounted for separately from reading;
+no later acquisition is admitted. All observations and owned cleanup complete.
+
+All **three PNGs were inspected**: baseline and enlarged native content are each
+1440×873 physical pixels, and the 320-CSS-pixel view is 640×873. Native pixel
+dimensions match the measured viewport and DPR within the original two-pixel
+rounding allowance; no image rescaling or cached CSS-sized clip is used. The two
+enlarged images show the complete focused Move control/outline. Their scrolled
+reading position does not show every paragraph at once, and the narrow image's
+crowded top HUD is not a qualification of all HUD controls. This closes the
+selected Journal reading/reflow requirement, not whole-interface device or human
+acceptance.
+
+Read-only timing records place the trusted window resize callback at 24,446.1 ms,
+the visual-viewport callback at 24,446.2 ms, the narrow/compact attribute change at
+26,517.9 ms and completed observation at 26,563.6 ms in the page's clock. The
+observed callback-to-layout interval is 2,071.8 ms. Event creation time was not
+recorded; neither OS notification latency nor the cause of that interval is
+established. The previous late-layout failure remains valid historical evidence,
+and this single bounded pass establishes no general latency or screenshot-reliability
+improvement. No deadline, wait-only workaround, fake resize, CSS/font injection,
+emulated page scale or user-browser profile change is introduced.
+
+[Artifact 11951412432](https://github.com/Macrofold/OpenLegend/actions/runs/38690319197/artifacts/11951412432)
+retains 2,406,494 bytes of the three original images and complete JSON report.
+Required [Code](https://github.com/Macrofold/OpenLegend/actions/runs/38690323671)
+and [Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38690323682)
+also pass at this source before temporary-tool removal.
+Existing Journal selection/Move/private-owner and PX03 discovery/correction/privacy
+evidence is reused only for its unchanged owners. X11 XTEST and software rendering
+remain separate from physical input, OS composition, assistive devices and uncoached
+use. Additional and cumulative task provider/Jev cost: **$0**.
+
 ## Reused evidence and remaining experience scope
 
 The final source/acceptance audit compares the integrated owners and their actual
-recorded scenarios. It finds no additional independently executable task beyond
-the selected invitation full-focus, browser zoom/reflow and alternate-world
-continuation, final required CI and evidence/tooling cleanup. This is an overlap
+recorded scenarios. The selected invitation full-focus, browser zoom/reflow and
+alternate-world continuations now pass, leaving final required CI and
+evidence/tooling cleanup as the independently executable work. This is an overlap
 review, not a claim that every historical journey was rerun at the latest source.
 
 | Journey scope                        | Evidence reused and its limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -661,11 +718,13 @@ Existing native barter settlement and outing travel/arrival/restart evidence is
 reused only for its unchanged owners. This is a bounded qualification, not an
 exhaustive identity, grant, world, notice or layout matrix.
 
-At `b77639184`, required Code and Spatial/interface CI are green. Native enlarged
-browser/320-CSS-pixel qualification remains open because the selected zoom case
-has no overall pass; the failed screenshot acquisition is being investigated
-without extending deadlines. Temporary verification tooling removal, final
-documentation review and required checks at the cleaned final HEAD remain open.
+At `b77639184`, `526368719` and `c98de4a07`, required Code and Spatial/interface CI are green.
+Native enlarged-browser/320-CSS-pixel qualification passes at `c98de4a07` with
+all three images inspected; earlier capture and late-layout failures remain
+recorded. The cleanup candidate removes the dedicated workflow, Playwright
+configuration and eleven temporary scenario files; ordinary CI/test entry points
+have no dependency on them. Local TypeScript passes after removal. Final
+documentation review, commit and required checks at the cleaned HEAD remain open.
 
 Real operating-system input-method behavior, applicable physical assistive
 devices and uncoached player/creator/operator observations have not been performed
