@@ -244,11 +244,11 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       try {
         await Promise.race([
           (async () => {
-            // Native page zoom changes DPR after context creation. Omit Playwright's
-            // cached viewport clip and capture the actual view without rescaling it.
+            // Capture the compositor surface without Playwright's cached CSS
+            // viewport clip or rescaling after native browser zoom changes DPR.
             const screenshot = await cdp.send('Page.captureScreenshot', {
               format: 'png',
-              fromSurface: false,
+              fromSurface: true,
               captureBeyondViewport: false,
               optimizeForSpeed: true, // Preserve PNG pixels; accept larger output for faster encoding.
             });

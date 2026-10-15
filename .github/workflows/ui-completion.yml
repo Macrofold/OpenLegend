@@ -47,13 +47,13 @@ jobs:
           command -v xvfb-run
           command -v xdotool
           command -v xauth
-      - name: Observe corrected connected cases and native browser zoom
+      - name: Observe native browser zoom
         id: connected
         continue-on-error: true
         run: >-
           xvfb-run -a -s '-screen 0 1920x1080x24'
           pnpm exec playwright test --config playwright.ui-completion.config.ts
-          --grep 'invitation description search|native Chromium 200%'
+          --grep 'native Chromium 200%'
           --output /tmp/openlegend-connected-cloud
       - uses: actions/upload-artifact@v4
         if: always()
