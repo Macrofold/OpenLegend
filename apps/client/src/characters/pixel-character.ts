@@ -32,7 +32,7 @@ const worldPixelSize = 2.1 / 96;
 /** Sample the whole animated character, including lighting and silhouette.
  * Height matches neighboring camera-facing people; these image-space samples
  * are not permanent 3D cells. Physical rig and shadows retain their own scale.
- * docs/projects/mercenary-visible-size-and-pixels.md */
+ * docs/projects/completed/mercenary-visible-size-and-pixels.md */
 export class PixelCharacter {
   readonly layer = new pc.Layer({ name: 'Character pixels' });
   private readonly pass: CharacterPass;
@@ -128,7 +128,7 @@ export class PixelCharacter {
     // Use that same camera's shadow data instead of rendering the entire shadow map twice.
     this.worldCamera.camera!.camera.beforePasses.push(this.pass);
     this.casters = components.flatMap((c) => c.meshInstances);
-    // Displayed Y can remain on screen after its upright source passes above
+    // Displayed Y can remain on screen after its upright source falls outside
     // the ordinary camera frustum. This dedicated layer has only this actor.
     for (const mesh of this.casters) mesh.cull = false;
     for (const component of components) component.layers = [this.layer.id];

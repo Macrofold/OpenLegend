@@ -184,3 +184,42 @@ The disposable current-world PostgreSQL fixture used `AI_BUDGET_USD=0`, no priva
 - In one 30-frame moving renderer sample, cloth steps advanced 72→102 with finite positions. Cloth diagnostic median was 2.0 ms/p95 4.1 ms; displayed-frame median 16.5 ms/p95 21.1 ms. Display synchronization, one subject and concurrent local activity limit these observations; no moving-crowd, cold-load or low-end qualification follows.
 
 TypeScript, production build, changed-file formatting, local references and full affected-diff review passed. Build warnings remain the pinned worker externalization/large chunk notices. No new automated tests were authored. Owned host/Chrome launchers exited successfully, own disposable database/cache were removed and ports 61143/55258 closed; unrelated HMR port 24678 was left alone. Additional/cumulative provider/Jev cost **$0**. Broader art/rights/pose/equipment/population/device gates retain their existing owners.
+
+## Visible height and whole-character pixels — October 15, 2026
+
+MER11 passed its texture/resource checks but failed Mike's visible height and whole-figure resolution requirements. MER12 restores the original model's complete-character image at 64×112, with separate vertical display correction and fixed physical rig scale. [Current behavior](../world-presentation.md#animated-character-pixels), [scope](../projects/completed/mercenary-visible-size-and-pixels.md) and [MER12](../maintainers/art/mercenary.md#visible-height-and-whole-character-pixels) own the delivery and remaining artistic decisions. Earlier reports below remain historical evidence, not qualification of this path.
+
+### Setup and measured result
+
+Checked runtime checkpoint `65f5a2e91` in the existing `codex/mercenary-original-refinement` worktree against a fresh, disposable PostgreSQL starting world. The browser received only its public view; diagnostic relocation put the mercenary and another person at equal ground height/depth. Native movement/world content was not changed. Fresh Vite caches and source hashes fenced stale builds. Chrome 155 / PlayCanvas 2.22.2 used ANGLE Metal on Apple M1 Pro, 1440×960 CSS pixels. The original GLB remains SHA-256 `cfd519287b4ebcc6233ffd269ea10cc455780f3f52c5c4e789f2db245f444ab6`; original art and both block studies were preserved. No providers, credentials or private saves were used; additional/cumulative provider cost $0.
+
+One-off GPU alpha reads measured the complete opaque figure, rather than treating empty canvas rows or conservative bounds as visible height:
+
+| View                                  | Mercenary opaque rows | Neighbor opaque rows | Result                       |
+| ------------------------------------- | --------------------- | -------------------- | ---------------------------- |
+| Default 0.88 rad pitch, ordinary zoom | 94                    | 86                   | About 9.3% taller            |
+| Default pitch, close zoom             | 94                    | 86                   | Same pixels; no added detail |
+| Low pitch, π/7.2                      | 94                    | 86                   | About 9.3% taller            |
+| High pitch, π/2.4                     | 94                    | 86                   | About 9.3% taller            |
+| Default perspective view              | 94                    | 86                   | About 9.3% taller            |
+
+The target remained 64×112 with square camera-plane pixels sized 2.1/96 display units, matching the neighboring person's artwork. Front, profile and back retained the original outfit and separate fabric cape. Original realistic head proportions remain smaller than the caricatured sprite heads; this is not new hand-painted face art or creator style approval. Camera rotation still changes raster samples: permanent 3D cells were not delivered by this correction.
+
+The first bone-box attempt measured only 89 rows at default pitch and was rejected during verification. Exact neutral body vertices corrected that, but body-only measurement let the cape reach 103 rows at the steep view. Including settled cloth in the cached footprint produced the 94-row results above. Neither intermediate result counts as delivery evidence.
+
+### Interaction, motion and ownership
+
+- Immediate camera orbit followed by same-task label calculation, model picking and real mouse clicks passed in both projections. Labels agreed with the next rendered camera within 0.1 CSS pixels. Another person's selection and a known terrain point also passed both projections, with ground error below 0.00004 m. Pointer mapping retains camera-depth fractions for obstruction comparison.
+- A viewport-edge case kept the displayed head visible at y≈898 while the physical head was below the 960-pixel viewport at y≈972. Source geometry's dedicated-layer culling no longer erased the remaining displayed image.
+- Actual permitted-shape movement snapshots drove Walk; stop returned Idle. Twelve sampled front-walking images across default/high pitch stayed inside every texture edge. Pause preserved cloth step counts and bone transforms. This bounded observation is not arbitrary-pose/self-contact qualification.
+- Selection, hover outline and reveal used the same coarse figure. A dedicated foreground scenery panel at z=15 actually covered the mercenary at z=14: sampled RGBA changed from `[34,80,65,255]` with reveal off to `[27,46,45,255]` at strength 0.7, then `[24,28,36,255]` when selected. Clearing selection/reveal returned exactly to the original scenery pixel. Earlier diagnostic panels behind the actor and an unsupported `all` preference were setup mistakes; their strength toggles alone did not prove occlusion. The positive nearby-reveal case also retained model picking. The artificial visual panel did not change native map collision.
+- Resize to 1000×700 and a separate device-pixel-ratio-2 context retained 64×112 targets and correct picking. Failed GLB loading retained the sprite with no private pass. A removed actor's delayed load did not recreate its node/pass; a subsequent replacement loaded normally.
+- Three appearance replacements retained exactly 18 assets, one character pass, five shared materials, and identical GPU counters: texture 104,770,996 bytes, vertex 4,647,840, index 456,792 and uniform 11,392. Full teardown destroyed both private image textures and cleared materials; vertex/index/uniform bytes reached zero. The engine retained 150,232 texture bytes; this is not a claim of zero total GPU residency.
+
+### Cost, review and limits
+
+Cold preparation evaluated 41,976 clothed vertices once and retained 98 directional extreme points. Two final-fixture observations were approximately 35.6 and 37.2 ms; preparation is not per-frame work. Camera/root/projection/viewport changes recompute the small retained point set; unchanged label/pointer readers share it. The finite direction set approximates a neutral silhouette rather than mathematically enclosing every possible view/cloth pose. No GPU readback occurs during normal game rendering.
+
+One 30-frame moving sample measured displayed-frame median 16.6 ms / p95 17.8 ms and last cloth-step median 2.0 ms / p95 2.2 ms. These synchronized observations qualify neither crowd capacity nor GPU/native headroom. The original full-detail geometry, skinning and shadow cost remain. Creator art acceptance, permanent surface/3D-cell design, source rights, equipment/action poses, slopes, cloth self-contact and broader devices retain their existing owners.
+
+Full affected runtime/documentation review, TypeScript and production build passed; existing worker-externalization/chunk-size warnings remain. Changed-file formatting and repository links are checked with final document reconciliation. Raw screenshots, hashes, scripts and logs stay outside Git. Final cleanup is recorded in the completed plan.

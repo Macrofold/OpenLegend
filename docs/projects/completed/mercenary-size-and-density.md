@@ -4,6 +4,8 @@
 | --------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
 | Completed | Corrected world proportions and coarse surface paint passed scoped visual, identity and texture-lifetime checks. | 2026-10-15   |
 
+Mike subsequently rejected the visible height and whole-figure resolution despite the technical checks below. [MER12's correction](mercenary-visible-size-and-pixels.md) supersedes this historical attempt; its own browser evidence qualifies the replacement.
+
 ## Scope and plan
 
 [MER11](../../maintainers/art/mercenary.md#size-and-surface-pixel-correction) records Mike’s report that the restored original looks twice as large as the other people and its pixel resolution is too high. Keep the original model, face, animation and separate fabric cape; preserve all earlier art. This revises the previous [original-model refinement](mercenary-original-refinement.md)'s 1.6 display enlargement and full-resolution diffuse-texture decision. No native body, world, save, protocol, camera-control or startup behavior changes are needed. The existing startup command is `PORT=3211 pnpm dev`, serving the client/game at the same address.
