@@ -1,11 +1,21 @@
 import * as pc from 'playcanvas';
 import { ShadowMaterial } from '../shadow-material';
-import { ArtMaterials } from '../art-treatment';
+import { ArtMaterials, type ArtTreatment } from '../art-treatment';
 import { personStencil, setVisibilityStencil } from '../visibility-stencil';
 
 /** Shared source artwork lit by the world, then sampled by the character image. */
 export class MercenaryMaterials {
   private readonly prepared = new Map<pc.StandardMaterial, ShadowMaterial>();
+  private readonly textures = new Set<pc.Texture>();
+  private readonly originalSampling = new WeakMap<
+    pc.Texture,
+    {
+      min: number;
+      mag: number;
+      mipmaps: boolean;
+    }
+  >();
+  private filtering: ArtTreatment['filtering'] = 'source';
   constructor(
     private readonly sun: pc.Light,
     private readonly art: ArtMaterials,
@@ -15,6 +25,18 @@ export class MercenaryMaterials {
     const existing = this.prepared.get(source);
     if (existing) return existing;
     const material = new ShadowMaterial(this.sun).copy(source);
+    const paint = material.diffuseMap;
+    if (paint && !this.originalSampling.has(paint)) {
+      // The GLB owner retains these textures. Remember its imported sampling
+      // once so the source control survives nearest/mipmap comparison toggles.
+      this.originalSampling.set(paint, {
+        min: paint.minFilter,
+        mag: paint.magFilter,
+        mipmaps: paint.mipmaps,
+      });
+      this.textures.add(paint);
+      this.filterTexture(paint);
+    }
     material.useMetalness = true;
     material.metalness = 0;
     material.specular.set(0.015, 0.015, 0.015);
@@ -34,7 +56,7 @@ export class MercenaryMaterials {
       material,
       source.name.includes('Madder') || source.name.includes('lining')
         ? 2
-        : source.name.includes('Mercenary')
+        : source.name === 'Mercenary · pixel-painted material atlas'
           ? 1
           : 0,
     );
@@ -43,7 +65,27 @@ export class MercenaryMaterials {
     return material;
   }
 
+  setArtTreatment(style: Readonly<ArtTreatment>): void {
+    if (style.filtering === this.filtering) return;
+    this.filtering = style.filtering;
+    for (const texture of this.textures) this.filterTexture(texture);
+  }
+  private filterTexture(texture: pc.Texture): void {
+    const source = this.originalSampling.get(texture);
+    if (this.filtering === 'source' && source) {
+      texture.minFilter = source.min;
+      texture.magFilter = source.mag;
+      texture.mipmaps = source.mipmaps;
+    } else {
+      texture.mipmaps = this.filtering === 'mip';
+      texture.minFilter =
+        this.filtering === 'mip' ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST;
+      // Minification is compared separately from the final nearest enlargement.
+      texture.magFilter = pc.FILTER_NEAREST;
+    }
+  }
   destroy(): void {
+    this.textures.clear();
     for (const material of this.prepared.values()) material.destroy();
     this.prepared.clear();
   }

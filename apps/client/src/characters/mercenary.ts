@@ -88,6 +88,9 @@ export class MercenaryModels {
       }),
     );
   }
+  setArtTreatment(style: Readonly<ArtTreatment>): void {
+    this.materials.setArtTreatment(style);
+  }
   destroy(): void {
     this.disposed = true;
     this.faces.destroy();

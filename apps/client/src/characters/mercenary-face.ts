@@ -37,8 +37,6 @@ export class MercenaryFaceResources {
       source.metalness = 0;
       source.gloss = 0;
       const material = materials.prepare(source);
-      // These authored feature colors should not be reclassified as clothing.
-      material.setParameter('ol_artRole', 0);
       this.parts.push({ mesh, material, source });
     }
   }
