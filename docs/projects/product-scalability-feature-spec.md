@@ -1,14 +1,16 @@
 # Product scalability — feature specification
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Native execution and admission contracts are specified; the selected fidelity questions and runtime qualification remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The selected exact distant-activity design is ready; implementation and the wider scalability program remain unqualified. | 2026-10-15   |
 
 **Status: accepted strategic direction, proposed detailed product requirements, October 2, 2026. Documentation only; runtime delivery and capacity remain unqualified.**
 
+**Selected refinement, October 15:** distant physical activity must preserve the installed game's actual outcomes. [Section 8](#8-intelligencesimulation-research-refinement--october-15-2026) selects numerical advancement between meaningful events, with ordinary bounded execution wherever a safe longer interval cannot be established. Earlier broad proposals for averaged background outcomes remain conditional future alternatives. Prospective compact speech has its separate [attention and scenes owner](attention-and-scenes-feature-spec.md); it does not permit approximate physical effects.
+
 ## Maintained records
 
-- Research refinement: [Design/integration map](../maintainers/intelligent-simulation.md), [constraint map](../limits/intelligent-simulation.md) and [design completion plan](intelligent-simulation-design-plan.md).
+- Research refinement: [Design/integration map](../maintainers/intelligent-simulation.md), [constraint map](../limits/intelligent-simulation.md) and [design completion plan](completed/intelligent-simulation-design-plan.md).
 - Canonical principles and behavioral detail: [product-scalability suite](../product-scalability/README.md).
 - Implementation interfaces and sequence: [technical design](product-scalability-tech-design.md).
 - Single focused work tracker: [product scalability](../maintainers/product-scalability.md).
@@ -30,7 +32,7 @@ The primary audience is a player participating in a shared authored reality. Oth
 
 A player returns to the same meaningful place and particular people. Their actions accumulate legible consequences. They can own or control a protected personal space without controlling the whole universe. They can participate at any ordinary time and join forecast local campaign activity without travelling to a duplicated parallel copy of their town.
 
-NPCs continue choices when appropriate, react to actual acquired evidence, and remember experiences consistently across coarse and detailed execution. A quiet world can produce fewer optional interactions, but it does not lie about what occurred, discard commitments, or become an expensive burst of overdue cognition when a player arrives.
+NPCs continue choices when appropriate, react to actual acquired evidence, and remember experiences consistently across efficient and ordinary execution. A quiet world can produce fewer optional interactions, but it does not lie about what occurred, discard commitments, or become an expensive burst of overdue cognition when a player arrives.
 
 A crowded experience either remains within a supported envelope or clearly declines additional load. It does not silently erase accepted effects, allow an expensive invention to bypass admission, or claim that one body can be independently defeated by every party.
 
@@ -116,13 +118,13 @@ Worlds can select different risk, senses, clocks, and narrative policies through
 
 ## 5. Product tradeoffs and non-goals
 
-The chosen direction sacrifices a guarantee of identical microscopic offscreen history, unlimited same-location concurrency, constant autonomous novelty, and a personal killing blow for every participant. It preserves coherent history, meaningful local agency, continuous ordinary access, and bounded cost.
+The selected first distant execution preserves the installed physical laws and the actual occurrences they require. It saves calculation and presentation work where nothing consequential can change; it does not substitute average successes, resource use or injuries. This constrains the available speedup, especially when many people genuinely interact. The wider October 2 proposal also considered sacrificing identical microscopic offscreen history through declared approximate families; those remain conditional future choices, rather than an active part of this first scope. Unlimited same-location concurrency, constant autonomous novelty and a personal killing blow for every participant remain outside the product guarantee.
 
 Do not implement a second complete body/inventory world, seamless global simulation as a prerequisite, automatic incompatible-history merges, a universal hardcoded physiology, mandatory chapter hours, or a permanently dedicated model process for every character. Private control does not imply public-economy compatibility. A meaningful shared campaign does not require every human to meet one NPC individually.
 
 ## 6. Quality and economics acceptance
 
-Success must be demonstrated at a funded workload, not only narrated in a specification. The small community must remain compelling when background initiative is reduced. Returning players should recognize people, consequences, and opportunities. Tests must detect boundary exploits and systematic inequities even when coarse outcomes need not match a detailed trace.
+Success must be demonstrated at a funded workload, not only narrated in a specification. The small community must remain compelling when background initiative is reduced. Returning players should recognize people, consequences, and opportunities. Verification must detect boundary exploits and systematic inequities. For the selected exact scope, matched installed laws and admitted subsequent inputs preserve the same consequential occurrences, resource quantities, random choices and permitted evidence; the separate conversation policy determines whether a newly committed speech occurrence contains exact words or only meaning.
 
 Measure actual player experience, model consistency, perspective errors, transition errors, admission fairness, peak/concentrated workloads, background cost, and catch-up work. The [capacity owner](../product-scalability/capacity-and-economics.md) defines the comparison families; no numeric threshold or million-player performance is claimed here.
 
@@ -132,7 +134,19 @@ Ship only the stages whose behavior, unsupported cases, and capacity envelope ha
 
 ## 8. Intelligence/simulation research refinement — October 15, 2026
 
-The [research follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) is now mapped to concrete integration contracts in [technical design §11](product-scalability-tech-design.md#11-research-refinement-one-authoritative-world-under-efficient-execution). This consumes the existing PS project; it does not replace its larger target or claim background lives have shipped. The first fidelity and background-speech selections are awaiting Mike's answers in the [design plan](intelligent-simulation-design-plan.md), before dependent behavior is completed.
+The [research follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) is mapped to concrete integration contracts in [technical design §11](product-scalability-tech-design.md#11-research-refinement-one-authoritative-world-under-efficient-execution). This consumes the existing PS project; it does not replace its larger target or claim background lives have shipped. Mike selected exact distant activity, allowing numerical calculations instead of moving through rendered frames, and separately allowed compact newly occurring speech. Those decisions finish this refinement's fidelity choice; [the design plan](completed/intelligent-simulation-design-plan.md) and [attention and scenes pair](attention-and-scenes-feature-spec.md) retain their respective coordination and speech contracts.
+
+### Selected first distant execution
+
+**Exact means exact under the installed laws.** A person walking out of view still follows the admitted route, meets the same actual blockers and people, uses the same materials and receives the same consequences. The computer can calculate a position or meter directly over a quiet interval, then stop at the first arrival, depletion, threshold, collision, permitted observation, decision opportunity or other relevant occurrence. Rendering every intervening frame is unnecessary. Distance from a human or camera does not remove another character's physical presence or opportunity to notice.
+
+The first inventory is deliberately finite: installed constant meter/status rates between their conditions and thresholds; remaining time on already chosen supported work; current finite replenishment and fire-fuel consumption; validated finite movement segments; and existing saved deadlines and discrete attempts. [Technical §11.2](product-scalability-tech-design.md#112-prepared-work-is-not-authoritative-future-state) supplies equations, dependencies, ordering and fallbacks. A half-finished craft remains partial work; an output appears only when its ordinary completion actually succeeds. The existing alternate recharge activity provides a contrasting consumer of finite supply and capacity, rather than treating food, sleep or human anatomy as universal laws.
+
+Current rates, work, swept movement and saved deadlines already supply parts of this path. Their existence does **not** establish that every distant activity can be advanced in one calculation. The installed game's current sensory rules include bounded sampling; preserving them does not claim exact continuous sight-onset times. Serial resource clamps, unpredictable movement, unsupported coupled rates, new senses or arbitrary new mechanics retain their existing detailed bounded calculation or technical hold. Unknown bounds never mean no interaction, no obstacle or successful completion.
+
+A stochastic attempt remains an actual attempt. A shot still consumes its actual ammunition at release, uses the world's saved random sequence at the ordinary point, and travels through the actual collision path. Advancing an absence cannot replace ten possible shots with an expected number of kills, reorder which animal takes the next random number, or assign guessed emotions after an unseen event. A psychological meter may advance numerically only under its separately installed law; descriptive thoughts are not required for that calculation. [Continuing lives](continuing-lives-feature-spec.md) owns the selected personal-experience profile.
+
+An exchange between two people can establish exact admitted social consequences while recording only the meaning of newly occurring speech. Each person still chooses independently from their own evidence. The [compact-speech policy](attention-and-scenes-feature-spec.md) owns source eligibility, interruption, later quotation and memory; the physical calculation neither invents their agreement nor creates words that were never represented.
 
 ### The experience this extension must protect
 
@@ -144,7 +158,7 @@ The native interval and cognition decision are separate. A character may be carr
 
 | Journey                                | Required ordinary outcome                                                                                                                                                                            | Meaningful failure                                                                                                                                                           |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chosen making, interruption and return | The person retains actual partial work and costs, receives an eligible change and can resume or revise the chosen purpose. The player sees actual work and later effects.                            | A missing material, changed permission or unknown condition blocks that continuation; no imagined substitute or fabricated completion.                                       |
+| Chosen making, interruption and return | The person retains actual partial work and costs, receives an eligible change at its actual occurrence and can resume or revise the chosen purpose. The player sees actual work and later effects.   | A missing material, changed permission or unknown condition blocks that continuation; no imagined substitute or fabricated completion.                                       |
 | Shared resource during preparation     | Two people independently propose use of the same stock. Current admission produces one coherent set of actual effects and the other person's available result.                                       | Stale output cannot consume already spent stock or recreate an earlier successful proposal.                                                                                  |
 | Approach and change of detail          | The current person, placement and supported work become available through actual geometry and scoped evidence, including another NPC observer.                                                       | A required representation/route cannot be prepared: retain the existing valid source situation and ordinary hold/refusal policy rather than inventing arrival or protection. |
 | New sense or installed world rule      | The selected rule supplies the actual dependencies, visible terms and supported effects, through the same actions and private evidence owners.                                                       | Missing or unsupported native computation is explicit. A freeform definition cannot certify reachability, safe skipping or unseen knowledge.                                 |
@@ -152,6 +166,8 @@ The native interval and cognition decision are separate. A character may be carr
 | Save, reopen and later inquiry         | Canonical progress, original deadlines, actual RNG and source-scoped outcomes reopen coherently; rebuildable preparation does not become a second save.                                              | Invalid required references refuse the candidate. A restored private account cannot bypass current forgetting, access revocation or real spending.                           |
 
 These are design acceptance journeys, not newly observed runtime results. Exact invariants, personal/social quality, understandable presentation and operating cost are evaluated separately through [the evaluation feature](intelligent-simulation-evaluation-feature-spec.md).
+
+Acceptance compares the complete ordinary route and the proposed efficient route with the same installed rules and subsequent commands: starting choice, approach, actual work, a competing use of the same supply, an approaching third person, stop/cancel, private evidence, persistence, reopening and later inquiry. Include the installed recharge consumer with different capacity, duration and supply behavior, an omitted/unsupported family, a thin blocker or height crossing, simultaneous resource/attempt deadlines and an effect that continues after its source stops participating. A faster helper alone cannot qualify this path or establish a population promise.
 
 ### Scope and authority
 

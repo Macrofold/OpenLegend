@@ -1,6 +1,6 @@
 # OpenLegend limits and decisions
 
-Proposed [intelligent individuals and efficient simulation](maintainers/intelligent-simulation.md): [IS-L01–IS-L07](limits/intelligent-simulation.md) maps chosen-work bounds, private evidence, conditional routing, truthful detail, fair service and complete-cost comparisons to their existing limit owners. Distant fidelity, meaning-only speech and new psychological meters await developer answers; this design work changes no runtime allowance or measured capacity.
+Proposed [intelligent individuals and efficient simulation](maintainers/intelligent-simulation.md): [IS-L01–IS-L07](limits/intelligent-simulation.md) maps chosen-work bounds, private evidence, conditional routing, truthful detail, fair service and complete-cost comparisons to their existing limit owners. The selected targets are exact calculated activity, compact expressive background communication and direct numerical psychological reactions with optional prose; this design work changes no runtime allowance or measured capacity.
 
 Proposed [durable agreements](projects/durable-agreements-feature-spec.md): [DA-L01–DA-L09](limits/durable-agreements.md) records the first commission, active/pending allowances, owner-local ending, optional advance/association, no currency and growing claims/history. [INV-20.5a–f](maintainers/inventions-and-world-evolution.md#dg22--durable-commissions-and-small-cooperation) owns delivery; existing item, memory and authority limits remain controlling.
 

@@ -6,6 +6,8 @@ OpenLegend should let very large populations belong to places with lasting histo
 
 This is the strategic product-scalability owner: what belonging, absence, attention, participation, and shared consequences mean. Server fleets, protocols, replication, database tuning, backups, disaster recovery, and deployment remain with their existing technical owners. A million people across the platform is not a promise of a million unrestricted participants in one physical encounter.
 
+**October 15 selected design scope:** distant physical activity preserves installed outcomes through rates, trajectories and event timing rather than required rendering frames. Compact expressive background contributions and numerical personal reactions with optional prose are separately selected. [The completed nine-item design map](../maintainers/intelligent-simulation.md) links exact fallback, source/observer boundaries, psychological policy and evaluation. These choices narrow the earlier broad physical-approximation option; runtime, unattended hosting, new clocks and capacity remain unqualified.
+
 ## Read the suite
 
 | Document                                                                             | Question it owns                                                                                                         |
@@ -44,9 +46,9 @@ An entity can exist, move, obstruct, or cause damage without every nearby mind i
 
 Retain the character's chosen objective, method, current work, relevant evidence, and interruption conditions. Execute supported continuation without repeatedly asking whether to continue. Low-power progression may reduce optional initiatives and narrative density; it must not substitute a different personality or accumulate missed optional thoughts as future debt.
 
-### PS-P06 — Approximate unobserved detail, not committed consequences
+### PS-P06 — Calculate unobserved activity without changing its consequences
 
-Coarse outcomes need not match a hypothetical detailed replay. They must respect established facts, scoped knowledge, permissions, resources, accepted obligations, and prior outcomes. Predictions are not already-completed future history. Detailed arrival continues a valid present rather than inventing or replaying the past.
+The selected first physical families preserve the same installed outcomes, ordering, resources, random attempts and eligible observations through calculated progression to the next relevant boundary. Rendering or redundant intermediate arithmetic is unnecessary. The earlier broader option allowing nonmatching approximate outcomes remains conditional future scope; it is not permission to average combat or skip real interactions. Predictions are not already-completed future history. Detailed arrival continues a valid present rather than inventing or replaying the past. Compact speech independently declares that only its meaning and any actually retained phrase exist; it does not approximate physical effects.
 
 ### PS-P07 — Make important interactions interruptible
 
@@ -54,7 +56,7 @@ An expected completion does not make an activity immune to alarms, damage, resou
 
 ### PS-P08 — Reuse mechanical families; do not ask every inventor to author two games
 
-Items, recipes, and supported inventions inherit continuation, interruption, and coarse execution from trusted capabilities. New computational families must define their own bounds and valid approximations. Unsupported unattended behavior has an explicit fallback; natural-language invention never grants unbounded computation or executable authority.
+Items, recipes, and supported inventions inherit continuation, interruption, and coarse execution from trusted capabilities. New computational families must define their own exact bounds and fallback for the selected first scope; a valid approximate evaluator needs its separately selected promise. Unsupported unattended behavior has an explicit fallback; natural-language invention never grants unbounded computation or executable authority.
 
 ### PS-P09 — Protect transitions as well as background outcomes
 

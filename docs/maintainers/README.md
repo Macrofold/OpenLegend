@@ -2,7 +2,7 @@
 
 ## Intelligent individuals and efficient simulation
 
-[The research-to-design map](intelligent-simulation.md) connects all nine new refinements to four feature/technical pairs and existing character, agency, social, performance and scalability owners. It distinguishes prepared exact-play contracts from the three unanswered product choices; implementation and behavioral/capacity evidence remain open. This is coordination and design coverage, not another runtime backlog or a new priority ranking.
+[The research-to-design map](intelligent-simulation.md) connects all nine new refinements to four feature/technical pairs and existing character, agency, social, performance and scalability owners. Mike selected exact calculated progress, compact background exchanges and numerical psychological reactions with optional description. All nine selected designs are complete; implementation and behavioral/capacity evidence remain open. This is coordination and design coverage, not another runtime backlog or a new priority ranking.
 
 ## October 14 foundation review
 

@@ -39,6 +39,20 @@ The following are **proposed cases**, composed from existing mechanics and autho
 
 Author case details in the selected world's own fixture/content owner. Hunger, deer, weapons, social customs and sentimental meanings are not universal engine categories. A contrasting non-survival case, such as an authored machine preserving a designated component while completing a chosen maintenance task, must exercise the same authority and measurement contracts without adding human hunger semantics.
 
+## Selected October 15 comparisons
+
+Mike selected exact mechanically calculated distant activity, compact expressive background communication and numerical personal reactions with optional prose. These are targets awaiting implementation, not the previously unselected approximation/meter options. Their semantic owners are [scalability](product-scalability-tech-design.md), [attention/scenes](attention-and-scenes-tech-design.md) and [personal reactions](continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose), with the [authored reaction profile](../worlds/base/psychological-reactions.md). Compare their complete consequences, rather than equating fewer words with equal meaning or lower total cost.
+
+| Selected comparison                                                            | Required evidence                                                                                                                                                                                                               | What does not establish success                                                                                                   |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Exact calculated progress versus ordinary native progress                      | Same admitted subsequent commands, dependencies and saved randomness produce the same actual effects, order, partial work, observations and restored continuation; exercise trajectory crossings and simultaneous shared stock. | Matching final inventory while missing an intervening injury, audible contribution or different random attempt.                   |
+| Exact dialogue versus independently chosen compact contributions               | Preserve relevant conditions, attribution, ambiguity, expression and recipient knowledge; assess the recipient's actual later choice and feeling under the same scenario rubric. Allow legitimate different trajectories.       | Similar topic words, a narrator deciding both sides, or assuming the exact dialogue is an infallible preference oracle.           |
+| Numerical reaction without prose versus the same supported reaction with prose | Accepted source-linked numeric change persists, enters a later relevant decision and can coexist with silence or different outward expression; disclose actual clamping, decay and rejected proposals.                          | A meter appears in storage but never reaches a choice, or all recipients become happy because the stimulus is labelled gratitude. |
+| Compact aliases versus full labels; selection versus structured generation     | Include legend/options, request input, actual output, preparation, all calls and rejections; compare same installed operation/amounts before assessing novel-expression coverage.                                               | Assuming `j` is one token, ignoring a large candidate menu, or interpreting a selection score as an emotional intensity.          |
+| Player arrival, repeated delivery and forgetting                               | Already committed meaning remains nonverbatim; subsequent exact speech follows its audience boundary; an unsent stale contribution cannot invent words, duplicate a feeling or regain erased support.                           | Backfilling a transcript or dropping a real listener/reaction to make an optimization appear cheaper.                             |
+
+A speech-free numerical reaction requires no written emotional explanation as evidence of correctness. Inspect its native cause/operation/receipt under authorized diagnostics; use later decisions to evaluate behavioral influence. Preserving the originating source does not require copying its full text into the reaction or into every prompt. The optional rich description must earn its actual use, such as preserving a personally important mixed interpretation that the numeric value cannot express.
+
 ## What counts as success
 
 Keep four judgments separate:
@@ -92,7 +106,7 @@ Count every admission, preparation, optional shortlist, attention judgment, reca
 
 Report cost per useful completed episode, cost per real hour and cost per simulated day, with useful completion defined by the prewritten rubric. Retain numerator and denominator, failures, uncompleted work, achieved simulation progress and observation window. With no completed episode the ratio is undefined; it is not zero cost per success. Short-run extrapolations must be labeled estimates.
 
-Distinguish provider-reported estimates, settled charges and outstanding or uncertain commitments. Preserve available decimal precision, including fractions of a cent. Never count both a reservation and its settled replacement as two charges; never treat cancellation or unavailable usage as free. [Verification and spending](../../.agents/rules/verification.md) remains authoritative. This design authorizes no paid calls; the additional Jev cost for preparing it is $0.
+Distinguish provider-reported estimates, settled charges and outstanding or uncertain commitments. Preserve available decimal precision, including fractions of a cent. Never count both a reservation and its settled replacement as two charges; never treat cancellation or unavailable usage as free. [Verification and spending](../../.agents/rules/verification.md) remains authoritative. This design authorizes no paid calls; additional Jev cost and cumulative task Jev cost for preparing these documents are both $0.
 
 Show steady and burst behavior, time to first useful action, time to relevant reconsideration, stage tails, queue age, storage delay and browser responsiveness. Report hardware, source/model versions, clock settings, actual concurrency, active bodies, retained identities, decision counts, environment operations and human reading/composition time. A native profiler excludes provider, database or browser work unless its actual measurement includes them.
 
@@ -115,7 +129,7 @@ Design acceptance means these stages can be implemented without inventing anothe
 
 ## Open decisions
 
-None blocks this comparison design. A production routing change, learned-model deployment, new operating offer or materially changed fidelity promise is not selected here. Its evidence and developer-owned choices must be resolved before dependent implementation; an experiment cannot silently adopt them.
+None blocks this comparison design. The exact calculated-progress, compact-communication and numerical-reaction choices above are resolved. A production routing change, learned-model deployment, new operating offer or additional approximate fidelity promise is not selected here. Its evidence and developer-owned choices must be resolved before dependent implementation; an experiment cannot silently adopt them.
 
 ## Maintained records
 

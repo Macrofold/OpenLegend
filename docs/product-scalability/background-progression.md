@@ -2,11 +2,13 @@
 
 **Status: accepted product direction with proposed execution mechanisms. Existing elapsed-time integration is not evidence that this complete background system is implemented.** [Simulation time](../simulation-time.md), [agency](../agent-agency.md), [performance](../performance.md), and the [technical design](../projects/product-scalability-tech-design.md) retain their respective owners.
 
+**October 15 selected first scope:** Mike chose exact physical outcomes through calculated rates, trajectories and known event timing, with ordinary bounded native execution wherever equivalence cannot be established. No rendering-frame requirement follows from exactness. [Technical §11](../projects/product-scalability-tech-design.md#11-research-refinement-one-authoritative-world-under-efficient-execution) specifies supported families, first interactions and fallback; [compact background communication](../projects/attention-and-scenes-tech-design.md) is a separate source representation with independently interpreted numerical reactions. These are design targets, not delivered unattended service. Earlier approximate physical alternatives below remain conditional future options, not the selected first executor.
+
 ## 1. What low-power progression promises
 
 The [continuing-lives feature specification](../projects/continuing-lives-feature-spec.md) supplies the initial activity proposal and its October 6 DG17 expansion for actual unattended operation, ordinary and failed journeys, quiet initiative, funded operation and behavioral qualification. The optional [prepared camp](../worlds/base/continuing-communities.md) owns the first world's finite horizon and actual provisions. This page retains the accepted cross-feature contract; new choices in that proposal are not current runtime behavior or automatically accepted policy.
 
-An unattended community can continue lives, projects, journeys, commitments, and selected new developments without executing every footstep or continuously reconsidering every goal. Its coarse outcomes need not equal a hypothetical detailed simulation. They must be legal and coherent outcomes of the admitted world rules, consistent with already-established history and actual permissions.
+An unattended community can continue lives, projects, journeys, commitments, and selected new developments without executing every footstep or continuously reconsidering every goal. For the selected first physical families, calculated progression must preserve the same installed mechanical effects and relevant event/observation history as ordinary native execution, including saved randomness and real interventions. A future explicitly selected approximate family could instead promise legal coherent outcomes without equality; that alternative is not selected now.
 
 Low-power mode may intentionally reduce the density of new social encounters, inventions, optional excursions, reflection, and narrative developments per unit of time. This is a world-policy choice, not a claim of exact equivalence. The world may feel quieter while humans are absent. Explain that policy instead of promising uninterrupted maximum autonomous activity.
 
@@ -14,12 +16,12 @@ Do not accumulate missed optional initiatives as debt. A conversation never star
 
 ## 2. Four independent dimensions
 
-| Dimension         | Detailed behavior                                    | Possible background behavior                                                                         | What remains authoritative                                                    |
-| ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Mechanics         | Fine movement, collision, tool use, local encounters | Route progress, finite work stages, supported elapsed integration or declared approximate resolution | Identity, resources, bodily state, admitted effects, progress and obligations |
-| Cognition         | Prompt replies and relevant reconsideration          | Continued plans, fewer optional initiatives, bounded significant decisions                           | Character perspective, values, chosen aims and actual evidence                |
-| Social resolution | Individual utterances and decisions                  | Completed scene beats, structured agreements, gist with selected exact lines                         | Participants, communicated information and admitted consequences              |
-| Representation    | Nearby detail and frequent permitted updates         | Sparse presentation or no active client representation                                               | No invented poses that contradict physical support or committed actions       |
+| Dimension         | Detailed behavior                                    | Possible background behavior                                                                   | What remains authoritative                                                    |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Mechanics         | Fine movement, collision, tool use, local encounters | Exact route/work/rate progression; declared approximate resolution is conditional future scope | Identity, resources, bodily state, admitted effects, progress and obligations |
+| Cognition         | Prompt replies and relevant reconsideration          | Continued plans, fewer optional initiatives, bounded significant decisions                     | Character perspective, values, chosen aims and actual evidence                |
+| Social resolution | Individual utterances and decisions                  | Completed scene beats, structured agreements, gist with selected exact lines                   | Participants, communicated information and admitted consequences              |
+| Representation    | Nearby detail and frequent permitted updates         | Sparse presentation or no active client representation                                         | No invented poses that contradict physical support or committed actions       |
 
 A visible blacksmith may need detailed movement without fresh generation. An unseen queen may need high-quality deliberation while remaining physically inexpensive. Treating all four dimensions as one distance-based switch would waste work and damage consistency.
 
@@ -55,7 +57,7 @@ Predicted completion at 10:30 cannot be committed before an event at 10:07 that 
 
 ### Exact or bounded elapsed integration
 
-For supported constant rates, staged work, and known deadlines, calculate progress until the next relevant change. Respect rate changes, depletion, capacity, geometry, status, shared demand, and intervention. Some families can be exact; others have declared numerical/fidelity bounds. Do not describe sampled perception as exact continuous exposure.
+For supported constant rates, staged work, and known deadlines, calculate progress until the next relevant change. Respect rate changes, depletion, capacity, geometry, status, shared demand, and intervention. The selected first families preserve their installed rules, including existing numerical integration/sensory sample bounds. A calculation may skip redundant work only while it proves the same required effects and evidence; otherwise retain the ordinary bounded path. Do not describe sampled perception as exact continuous exposure or turn an integration tolerance into permission to miss an interaction.
 
 ### Coarse activities
 
@@ -79,7 +81,7 @@ Ordinary creators should not define a second version of every item or recipe. Su
 
 Each computational family must explain its clock, dependencies, progress boundaries, invalidators, scope, supported approximation, interruption, and detailed materialization. Composition must check interactions. Two individually cheap processes can become expensive when they share scarce supplies or repeatedly trigger one another.
 
-A genuinely new capability may lack a cheap coarse executor. Explicit options are funded detailed execution, a reviewed authored approximation, restricted unattended use, or refusal to admit the unsupported configuration. Explain the restriction before a creator relies on it. Neither free prose nor a powerful model proves arbitrary new physics can be summarized safely.
+A genuinely new capability may lack a cheap coarse executor. The selected first options are admitted ordinary detailed calculation, restricted unattended use, or refusal to admit the unsupported configuration; a reviewed authored approximation remains a separately selected later option. Explain the restriction before a creator relies on it. Neither free prose nor a powerful model proves arbitrary new physics can be summarized safely.
 
 This is not a requirement for a second health system or parallel universe. There is one canonical body and resource state, with admitted operations supplying different valid ways to advance it. Supported fantasy creation remains possible through explicit source operations; attribution and permission do not disappear in coarse mode.
 
@@ -111,7 +113,7 @@ Random choices belong to stable occurrences, not to loading callbacks. Reenterin
 
 The protected-background policy applies to the state detailed play will inherit. Avoid a coarse result that technically leaves Ada alive but surrounded by wolves with no meaningful chance to survive once observed. Use allowed safe outcomes or reject the proposed background development under the world's supported protections.
 
-Already-active conflict is different. Leaving an area cannot remove attackers or make a player immortal. Fidelity changes must not provide systematic risk, loot, resource, or scheduling advantages. Exact microscopic equality is not required, but compare distributions and player incentives. If walking away reliably makes a battle easier, the design fails even if every isolated result looks plausible.
+Already-active conflict is different. Leaving an area cannot remove attackers or make a player immortal. Fidelity changes must not provide systematic risk, loot, resource, or scheduling advantages. The selected first physical execution requires equal installed outcomes and relevant event ordering without equal rendering or redundant arithmetic. If a later approximate family is selected, compare its distributions and player incentives under its explicitly different promise. If walking away reliably makes a battle easier, the design fails even if every isolated result looks plausible.
 
 ## 11. Evidence to obtain before broad rollout
 

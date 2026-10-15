@@ -1,10 +1,12 @@
 # Continuing NPC lives — product and behavior specification
 
-| Status      | Current progress                                                                                                                                          | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Continuing activity, attention and experience refinements now have a technical design; implementation and broader life/service qualification remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Continuing activity, attention, experience and compact numerical reactions are designed; implementation and broader life/service qualification remain open. | 2026-10-15   |
 
-**Status: proposed detailed behavior, expanded October 15, 2026.** This specification expands the accepted continuing-world direction into a reviewable product proposal. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. The requested [technical design](continuing-lives-tech-design.md) now maps continuation, attention and evidence refinements to existing owners; service adoption remains separate.
+**Status: detailed design, expanded October 15, 2026.** This specification expands the accepted continuing-world direction into reviewable product behavior, including the selected compact numerical-reaction contract in §16.6. It does not claim the behavior is implemented, approve paid execution, change the bundled world's human protection, or settle commercial prices. The requested [technical design](continuing-lives-tech-design.md) maps continuation, attention, evidence and personal-reaction refinements to existing owners; service adoption remains separate.
+
+**October 15 physical-fidelity selection controls this specification:** supported distant work must preserve the same installed physical effects, ordering, resource use, randomness and eligible observations as ordinary native execution for the same admitted inputs. Rates, trajectories and event timing may avoid unnecessary frame-by-frame work; they cannot replace actual effects with average or guessed outcomes. Unsupported calculation uses the ordinary bounded native path. Wider physical approximation remains a conditional future choice. Separately selected compact expressive background communication changes what is actually communicated and retained, not the accuracy of physical activity; its independent interpretations and private numerical reactions follow the linked attention/scenes and personal-reaction contracts.
 
 ## 1. The experience and the recommendation
 
@@ -20,7 +22,7 @@ Begin with continuation during the personal world's permitted running time and i
 
 ### 1.1 What this adds to existing work
 
-The [background contract](../product-scalability/background-progression.md) already accepts legal coarse outcomes, independent mechanical/cognitive/social/presentation detail, preserved activity ownership and truthful unsupported behavior. The [PS tracker](../maintainers/product-scalability.md) identifies PS02 and PS03 as proposed runtime work. Current elapsed-time integration, ordinary NPC agency, saved methods and human departure handling are foundations, not completed unattended-community delivery.
+The [background contract](../product-scalability/background-progression.md) separates mechanical/cognitive/social/presentation detail, preserves activity ownership and requires truthful unsupported behavior. The October 15 selection requires exact physical outcomes through the supported calculated families; the earlier broader allowance for declared physical approximation is conditional future scope. Compact expressive contributions have their own explicit source/evidence representation and do not weaken physical fidelity. The [PS tracker](../maintainers/product-scalability.md) identifies PS02 and PS03 as proposed runtime work. Current elapsed-time integration, ordinary NPC agency, saved methods and human departure handling are foundations, not completed unattended-community delivery.
 
 This proposal selects the first product scope, describes everyday and adverse behavior, recommends how initiative and funding should work, and defines the evidence required before expanding. It does not replace the existing agency, action, perception, time or spending owners. The first scope uses the current mechanical clock. [DG17's selected finite community](#15-dg17--a-first-funded-unattended-community) makes the later unattended proposal concrete without changing the current mode. Separate calendar pacing, broad dangerous-logout rules, federation and cross-world economic compatibility remain their existing PS05–PS07 work.
 
@@ -64,7 +66,7 @@ Creators should see ordinary terms such as **active**, **quiet** and **paused**,
 | A resident has an idle opportunity                   | Consider a bounded new initiative under the world's activity policy                     | A new choice is possible, not guaranteed every fictional hour |
 | A resident has a real obligation becoming due        | Handle its evidence and supported continuation; obtain a required choice when needed    | The obligation is not silently dropped as optional chatter    |
 | A meaningful stimulus is actually perceived          | Continue a previously chosen contingency or make a fresh scoped decision                | The reaction uses what this resident learned                  |
-| An unfamiliar mechanic lacks background support      | Use its declared funded detail, approved approximation, restriction or refusal          | The creator knew the limit before relying on it               |
+| An unfamiliar mechanic lacks background support      | Retain its ordinary bounded native execution, or disclose an unsupported transition     | The creator knew the limit before relying on it               |
 | The host is paused or unavailable                    | Follow the existing pause/recovery contract and disclose stopped progression            | No fabricated catch-up or hidden completed future             |
 
 ### 3.2 Activity continuation is conditional, not a scripted biography
@@ -158,15 +160,15 @@ Any preparation delay is technical waiting. Before destination admission, retain
 
 ### 6.2 Leave without changing the odds by watching
 
-Walking away does not complete unfinished work, cancel danger, replenish resources or reroll a random result. Background outcomes may be coarser than a hypothetical detailed trace, but repeatedly crossing the detail boundary must not be a reliable way to get better yields, safer fights or different checks.
+Walking away does not complete unfinished work, cancel danger, replenish resources or reroll a random result. Selected calculated physical execution preserves the same effects and intervening relevant observations as the ordinary native path for the same admitted inputs. Repeatedly crossing the detail boundary cannot yield better resources, safer fights or different checks. Wider physical approximation remains unselected future scope; compact expressive communication is a separate source form rather than approximate physics.
 
-If an outcome cannot be represented fairly at reduced detail, keep the relevant interaction detailed within its funded envelope or decline the unsupported transition. A conveniently described result is not sufficient. The [participation owner](../product-scalability/participation-and-protection.md) retains the separate dangerous-logout and protected-outcome requirements.
+If a physical outcome cannot be calculated with that exact contract, retain the ordinary bounded native path or decline the unsupported transition. A conveniently described result is not sufficient. The [participation owner](../product-scalability/participation-and-protection.md) retains the separate dangerous-logout and protected-outcome requirements.
 
 ### 6.3 A useful return account
 
 On return, foreground the player's current location and condition, what happened to activities they had a right to know about, and what now requires a decision. Let them investigate more detail. The return experience should answer "Where are my things? Who is available? What changed? What is still unfinished?" without presenting a compulsory essay.
 
-Distinguish personal experience, a named resident's report, public news, observed present conditions and estimates. An absent human does not remember an NPC conversation they never heard. If a coarse event retained only its meaning, later narration cannot produce an exact historical transcript.
+Distinguish personal experience, a named resident's report, public news, observed present conditions and estimates. An absent human does not remember an NPC conversation they never heard. A compact expressive contribution retains the meaning actually communicated, with an exact phrase only when actually supplied; later narration cannot manufacture an exact historical transcript.
 
 Changes should be discoverable through the world as well as a summary: supplies have moved, a task is incomplete, a resident mentions an interruption, or an accessible record explains a promise. An unavailable narrator should not hide the actual gameplay facts.
 
@@ -312,7 +314,7 @@ The creator receives an understandable warning and can inspect the major causes.
 
 ### CL-J09 — A player tries to farm detail transitions
 
-The player repeatedly leaves and returns during a yield, journey or hazardous activity. The attempts do not regenerate resources, duplicate output, reroll an already established occurrence or remove an ongoing conflict. Compare many equivalent cases for a systematic advantage, not only one identical trace.
+The player repeatedly leaves and returns during a yield, journey or hazardous activity. The attempts do not regenerate resources, duplicate output, reroll an already established occurrence or remove an ongoing conflict. Compare the same admitted command/interaction stream through ordinary and calculated execution for equal effects, ordering and evidence, including interrupted crossings; then vary supported cases to expose any remaining transition exploit. Independent new character choices may legitimately change later events and must be analyzed separately.
 
 ### CL-J10 — A quiet place receives a crowd
 
@@ -363,7 +365,7 @@ Three design conclusions deserve emphasis. First, selective reconsideration has 
 
 **Use one universal needs-driven routine.** This may be inexpensive but can flatten individuality and violate current actor-choice requirements. Continue chosen plans and supported world-authored routines; do not replace the resident's intent whenever paid reasoning becomes inconvenient.
 
-**Guarantee identical microscopic outcomes at every detail.** Exact equality is useful for particular supported mechanics, but a universal guarantee would obstruct the economical approximation accepted by the parent design. Require legal history, preserved commitments and no systematic exploitable advantage; declare the remaining approximation.
+**Calculate exact physical outcomes without rendering every frame.** The October 15 selection requires the same installed physical results, ordering and eligible evidence for supported calculated execution. This replaces the earlier recommendation to accept declared economical physical approximation. The cost tradeoff is explicit: where exact calculation cannot be established, retain the ordinary bounded native path and report its real cost. A later approximate physical family needs a separately selected promise and acceptance; it is not approved here. Compact expressive background contributions remain a different, independently selected communication representation, with no invented exact transcript.
 
 ## 13. Proposed stages and acceptance
 
@@ -598,11 +600,28 @@ Correction, forgetting and privacy changes affect pending preparation and future
 
 Exercise these alongside [CE's complete episodes](compelling-characters-feature-spec.md#complete-behavioral-flows), not instead of them. Mechanical fixtures qualify authority, ordering, effects, privacy and persistence; live selection qualifies voluntary choices; human play qualifies whether leaving and returning is worthwhile. No existing PG02 success is relabeled as reliable whole-life stopping, attention or lasting influence. The finite unattended-community and shared-fidelity stages above retain their separate prerequisites and service evidence.
 
+### 16.6 Compact personal reactions can change a feeling
+
+**Selected design; not current runtime behavior.** A character may interpret something they actually noticed and record a numerical psychological reaction without composing an explanation, thought or spoken reply. For example, in a hypothetical encounter, a resident may privately experience mild joy at another person's appreciation, interpret the same words as insincere, or feel no joy. The person receiving the words makes that interpretation using their own evidence, memories and circumstances. There is no fixed “thanks gives joy points” rule, compulsory smile or shared emotional outcome.
+
+The first proposed world profile uses [cause-linked joy intensity](../worlds/base/psychological-reactions.md#selected-first-profile). Each feeling records what prompted it, a declared numerical meaning, an amount and a supported lifetime. Separate genuine causes may coexist, while replaying or recalling the same occurrence cannot multiply the feeling or make it last longer. This is a numerical feeling about an experience, with no additional global happiness total, friendship score or compulsory social-need bar. Its initial scale, offered amounts and fading rate are adjustable design hypotheses, to be judged through whole episodes rather than treated as established psychology. Current fear, discomfort and qualitative feelings remain unchanged.
+
+A reaction may be returned as a small structured operation or selected from fully specified installed options through Jev. Neither requires verbal reasoning. Short codes such as `j` are optional vocabulary defined unambiguously for that request; the full installed label works when a code is absent. A letter is not assumed to be one tokenizer token. The amount must carry the installed meaning and units, and the operation must bind the actual permitted cause. A label, code or model opinion does not create a new psychological law or permission to edit arbitrary character measurements. A world can use an already supported numerical psychological-meter operation through its existing owner when an installed rule defines the exact change; the first profile needs only the current feeling owner.
+
+This can share an already justified decision opportunity or authorized generative reply. It adds no mandatory call for every stimulus, recurring emotion worker or second mind. In strict Jev-only execution, a character can select a fully specified offered reaction or no change; an unsupported novel reaction or unresolved selection remains explicitly deferred. It must not secretly buy generation or fabricate a result. Rich descriptive experience is available only when the selected ordinary activity needs it, not as proof that a number changed.
+
+A private feeling stays private. A background social exchange may carry compact expressive meaning that other people genuinely perceive; it does not carry the speaker's hidden amount or prescribe the listeners' reactions. Each listener can interpret it independently. A later spoken report is testimony, and a visible gesture is only the actual gesture. Existing human control, senses, consent and inspection privacy remain authoritative.
+
+Later decisions can receive the character's actual current intensity, its declared scale, how it changes with game time and the cause they are allowed to remember. The character may choose another activity, remain with their work or decline an invitation; no conduct is forced by a positive number. A correction can qualify an interpretation without changing what was heard. Explicit forgetting/correction, stale preparation and save/reopen obey existing feeling/evidence rules, including today's conservative invalidation when personal memory is corrected or erased. Reopening cannot recreate a resolved feeling, reveal a forgotten cause or generate an explanation retroactively.
+
+Acceptance requires one silent numerical reaction through ordinary cognition, a genuine no-change outcome, independently interpreted shared meaning, source-linked later-choice use and correct game-time lifetime behavior. It also requires refusal of an uninstalled or stale operation, no duplicate effects from one cause, privacy during delayed preparation, correction/forgetting and current-format restoration. The [technical design](continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose) owns these exact boundaries and implementation stages. Fixture arithmetic cannot qualify naturally chosen meaning, usefulness or enjoyment; live comparisons and a complete CE episode remain required before those claims. Broader multidimensional needs under D69 and internal-process authoring under ACT09 keep their separately scoped unresolved policy work; they do not reopen this selected direct-reaction contract.
+
 ## Maintained records
 
 - Implementation: [PS02–PS03 and dependent PS04–PS06](../maintainers/product-scalability.md); existing agency, action, perception, time and data owners remain controlling.
 - Limits and constraints: [product-scalability inventory](../limits/product-scalability.md), especially PS-L03–05, PS-L08–11, PS-L13, PS-L17–18 and the DG17 selections PS-L23–27.
 - Proposed authored profile: [prepared wilderness community](../worlds/base/continuing-communities.md), the single owner of DG17's selected population, provisions, normal-speed horizon and readiness arithmetic.
+- Selected personal-reaction profile: [cause-linked joy](../worlds/base/psychological-reactions.md); [FL21–FL23](../limits/feelings.md#fl21--compact-numerical-personal-reactions) track the numerical/transport limits and unrun qualification.
 - Accepted behavior: [background progression](../product-scalability/background-progression.md), [participation](../product-scalability/participation-and-protection.md) and [capacity/economics](../product-scalability/capacity-and-economics.md).
 - Research refinements and delivery mapping: [technical design](continuing-lives-tech-design.md), [intelligent-simulation tracking](../maintainers/intelligent-simulation.md) and [shared constraints](../limits/intelligent-simulation.md); existing CE/AG/AE/CR/PS owners remain authoritative.
 - Parent design: [product-scalability feature specification](product-scalability-feature-spec.md) and existing [technical design](product-scalability-tech-design.md). The finite service remains a proposal, separate from its independently useful attended refinements.
