@@ -7,7 +7,7 @@ export interface ArtTreatment {
   lighting: 'smooth' | 'hard' | 'soft';
   sampling: '40' | '60' | '80' | '96' | 'native';
   sceneGrid: 'full' | 'half' | 'third';
-  filtering: 'nearest' | 'mip';
+  filtering: 'source' | 'nearest' | 'mip';
   edges: 'none' | 'silhouette' | 'depth';
   motion: 'smooth' | 'held8' | 'held12';
   cloth: 'flowing' | 'settled';
@@ -23,7 +23,7 @@ export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   lighting: 'smooth',
   sampling: '96',
   sceneGrid: 'full',
-  filtering: 'nearest',
+  filtering: 'source',
   edges: 'none',
   motion: 'smooth',
   cloth: 'flowing',
@@ -42,6 +42,7 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   vegetation: 'smooth',
   atmosphere: 'restrained',
   motion: 'held12',
+  prop: 'generated',
 });
 
 /** Extend the same StandardMaterial programs used by ordinary/reveal/shadow
@@ -166,7 +167,7 @@ export function mountArtControls(
     lighting: ['smooth', 'hard', 'soft'],
     sampling: ['40', '60', '80', '96', 'native'],
     sceneGrid: ['full', 'half', 'third'],
-    filtering: ['nearest', 'mip'],
+    filtering: ['source', 'nearest', 'mip'],
     edges: ['none', 'silhouette', 'depth'],
     motion: ['smooth', 'held8', 'held12'],
     cloth: ['flowing', 'settled'],
@@ -177,18 +178,33 @@ export function mountArtControls(
     prop: ['authored', 'generated'],
   };
   const controls = new Map<keyof ArtTreatment, HTMLSelectElement>();
+  const labels: Record<string, string> = {
+    materials: 'Surface art',
+    lighting: 'Light transitions',
+    sampling: 'Character detail',
+    sceneGrid: 'Scene sampling',
+    filtering: 'Texture filtering',
+    edges: 'Character edges',
+    motion: 'Walking poses',
+    cloth: 'Cape movement',
+    environment: 'Environment shapes',
+    vegetation: 'Grass movement',
+    atmosphere: 'Color and bloom',
+    effects: 'Effects drawing',
+    prop: 'Crate appearance',
+  };
   const refresh = () => {
     for (const [key, select] of controls) select.value = String(current()[key]);
   };
   for (const [key, values] of Object.entries(fields)) {
     const label = document.createElement('label');
     label.style.cssText = 'display:flex;justify-content:space-between;gap:16px;margin-top:8px';
-    label.append(document.createTextNode(key));
+    label.append(document.createTextNode(labels[key]!));
     const select = document.createElement('select');
     for (const value of values) {
       const option = document.createElement('option');
       option.value = String(value);
-      option.textContent = String(value);
+      option.textContent = value === 'native' ? '378 rows (detail control)' : String(value);
       select.append(option);
     }
     select.onchange = () => apply({ ...current(), [key]: select.value });
@@ -210,7 +226,11 @@ export function mountArtControls(
   }
   const fixture = document.createElement('button');
   fixture.textContent = 'Toggle staged motion (visual fixture)';
-  fixture.onclick = () => apply({ ...current(), actionFixture: !current().actionFixture });
+  fixture.setAttribute('aria-pressed', String(current().actionFixture));
+  fixture.onclick = () => {
+    apply({ ...current(), actionFixture: !current().actionFixture });
+    fixture.setAttribute('aria-pressed', String(current().actionFixture));
+  };
   panel.append(fixture);
   document.body.append(panel);
   refresh();

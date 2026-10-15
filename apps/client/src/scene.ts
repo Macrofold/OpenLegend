@@ -70,7 +70,12 @@ import {
   mountArtControls,
   type ArtTreatment,
 } from './art-treatment';
-import { groupedGroundArt, groupedGrassArt, createGroupedScenery } from './environment-art';
+import {
+  groupedGroundArt,
+  groupedGrassArt,
+  createGroupedScenery,
+  type SceneryCameraOcclusion,
+} from './environment-art';
 import { VegetationMotion, type VegetationContributor } from './vegetation-motion';
 import { GeneratedPropResources, type GeneratedPropActor } from './generated-prop';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
@@ -98,6 +103,7 @@ interface RenderedEntity {
   attackPose?: boolean;
   model?: MercenaryActor;
   generatedProp?: GeneratedPropActor;
+  generatedInstalled?: boolean;
   departedAt?: number;
   observed: boolean;
   card: boolean;
@@ -214,6 +220,7 @@ export class WildernessScene implements WorldRenderer {
   private artSettings: ArtTreatment = { ...baselineArt };
   private removeArtControls?: () => void;
   private readonly vegetation = new VegetationMotion();
+  private readonly landscapeOcclusion: SceneryCameraOcclusion[] = [];
   private readonly vegetationBodies: VegetationContributor[] = [];
   private hoverPoint: { x: number; y: number } | null = null;
   private animations: Array<{ y: number; entity: pc.Entity; x: number; z: number; phase: number }> =
@@ -315,6 +322,7 @@ export class WildernessScene implements WorldRenderer {
       this.app.on('postrender', this.recordFrame);
       this.resize();
       this.placeCamera();
+      this.setArtTreatment({ ...candidateArt });
       this.removeArtControls = mountArtControls(
         canvas,
         (style) => this.setArtTreatment(style),
@@ -333,6 +341,7 @@ export class WildernessScene implements WorldRenderer {
     const replaceProp = style.prop !== this.artSettings.prop;
     this.artSettings = { ...style };
     this.artMaterials.update(style);
+    this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
     for (const texture of this.textures) {
       texture.mipmaps = style.filtering === 'mip';
@@ -345,12 +354,14 @@ export class WildernessScene implements WorldRenderer {
       this.applyLevelFocus();
     }
     if (replaceProp && this.view) {
-      const entry = this.actors.get('lookout-cache');
-      if (entry) {
-        this.releaseEntity(entry);
-        this.actors.delete('lookout-cache');
-        this.setView(this.view);
-      }
+      let replaced = false;
+      for (const [id, entry] of this.actors)
+        if (entry.view.appearance === 'crate-mesh') {
+          this.releaseEntity(entry);
+          this.actors.delete(id);
+          replaced = true;
+        }
+      if (replaced) this.setView(this.view);
     }
   }
   artDiagnostics() {
@@ -1414,33 +1425,39 @@ export class WildernessScene implements WorldRenderer {
       height,
       observed: true,
     };
-    if (crate && view.id === 'lookout-cache' && this.artSettings.prop === 'generated') {
-      const fallback = [...root.children];
-      entry.generatedProp = this.generatedProps.create(root, width, height, 0.8, (actor) => {
-        const sprite = actor.root;
-        if (!sprite) return;
-        this.presentation.removeReveal(entry.reveal);
-        for (const node of fallback) node.destroy();
-        entry.sprite = sprite;
-        entry.meshes = this.appearanceMeshes(sprite);
-        entry.meshCasters = entry.meshes.filter((mesh) => mesh.castShadow);
-        entry.materials = entry.meshes.map((mesh) => mesh.material as pc.StandardMaterial);
-        entry.lastFrame = 0;
-        entry.reveal = this.presentation.addReveal(
-          sprite,
-          entry.materials[0]!,
-          false,
-          false,
-          entry.meshes,
-        );
-        actor.setVisible(true);
-      });
+    if (crate && this.artSettings.prop === 'generated') {
+      entry.generatedProp = this.generatedProps.create(root, width, height, 0.8);
     }
     return entry;
+  }
+  private installGeneratedProp(entry: RenderedEntity): void {
+    const actor = entry.generatedProp;
+    const sprite = actor?.root;
+    // Late asset arrival must not upgrade a remembered or cut-away object.
+    // The ordinary visible-frame owner performs the atomic swap after admission.
+    if (!actor || !sprite || actor.state !== 'ready' || entry.generatedInstalled) return;
+    this.presentation.removeReveal(entry.reveal);
+    for (const node of [...entry.root.children]) if (node !== sprite) node.destroy();
+    entry.sprite = sprite;
+    entry.meshes = this.appearanceMeshes(sprite);
+    entry.meshCasters = entry.meshes.filter((mesh) => mesh.castShadow);
+    entry.materials = entry.meshes.map((mesh) => mesh.material as pc.StandardMaterial);
+    entry.lastFrame = 0;
+    entry.reveal = this.presentation.addReveal(
+      sprite,
+      entry.materials[0]!,
+      false,
+      false,
+      entry.meshes,
+    );
+    actor.setVisible(true);
+    entry.generatedInstalled = true;
+    this.applyEntityOpacity(entry, this.entityOpacity(entry));
   }
   private buildLandscape(map: GameView['map']): void {
     const started = performance.now();
     this.vegetation.clear();
+    this.landscapeOcclusion.length = 0;
     this.landscape.destroy();
     for (const buffer of this.landscapeBuffers) buffer.destroy();
     this.landscapeBuffers = [];
@@ -1480,14 +1497,18 @@ export class WildernessScene implements WorldRenderer {
           }
         } else {
           const texture = terrain.style === 'earth' ? earthTexture : groundTexture;
+          // Both treatments consume the same preparation randomness so river
+          // marks and later glints stay in place during a matched comparison.
+          const cropX = rng(),
+            cropY = rng();
           ctx.drawImage(
             texture,
             grouped
               ? (x * tileSize) % texture.width
-              : Math.floor(rng() * (texture.width - tileSize)),
+              : Math.floor(cropX * (texture.width - tileSize)),
             grouped
               ? ((map.height - 1 - z) * tileSize) % texture.height
-              : Math.floor(rng() * (texture.height - tileSize)),
+              : Math.floor(cropY * (texture.height - tileSize)),
             tileSize,
             tileSize,
             px,
@@ -1617,6 +1638,7 @@ export class WildernessScene implements WorldRenderer {
           material,
         );
         if (shape) {
+          if (shape.occlusion) this.landscapeOcclusion.push(shape.occlusion);
           this.geometryMeshes.push(shape.mesh);
           this.landscapeBuffers.push(shape.buffer);
           const node = new pc.Entity(first.appearance, this.app);
@@ -1830,6 +1852,7 @@ export class WildernessScene implements WorldRenderer {
       const positionChanged = position.distance(entry.root.getPosition()) > 1e-6;
       if (positionChanged) entry.root.setPosition(position);
       this.updateModelVisibility(entry);
+      if (entry.root.enabled) this.installGeneratedProp(entry);
       entry.model?.update(
         entry.view,
         dt,
@@ -2192,6 +2215,10 @@ export class WildernessScene implements WorldRenderer {
     if (!this.view) return 0;
     let obstruction =
       rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
+    for (const shape of this.landscapeOcclusion) {
+      const hit = shape.hit(ray.from, ray.to);
+      if (hit !== null) obstruction = Math.min(obstruction, hit);
+    }
     // Decorative canopies obstruct the camera but never grant or remove bodily perception.
     for (const card of this.landscapeCards) {
       if (!card.enabled || this.cards.get(card)!.height < 2) continue;
@@ -2490,6 +2517,7 @@ export class WildernessScene implements WorldRenderer {
   destroy(): void {
     this.removeArtControls?.();
     this.vegetation.clear();
+    this.landscapeOcclusion.length = 0;
     if (this.destroyed) return;
     this.destroyed = true;
     this.canvas.dataset.ready = 'false';
