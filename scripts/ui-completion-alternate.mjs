@@ -4,6 +4,7 @@
 // This segment returns a report even on failure; the caller must require report.passed.
 // No invented items, relocated actors, changed world policies or model responses.
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
@@ -30,8 +31,8 @@ const [
 // Filled from the actual checkout during preparation, before any runtime is authorized.
 const preparedSourceSha256 = {
   'apps/client/src/design-system/layout.css':
-    '4252708accf07af796f68da68a3483a3585aa9a73cad1e44aab356bdffa07619',
-  'apps/client/src/main.tsx': 'fe9761baa102d82aaf54f8a505f24d9739e41a17ca8f02fb24cc91145c55bf44',
+    '13d7010b3ec091099eb7814bb6cd107c81f52ad9716520430bea05f5e437511f',
+  'apps/client/src/main.tsx': '97e23201864eed5a2f6e3c956c9462f74be627685f941e9eb1b51db806bb7135',
   'apps/client/src/ui/camp-activity.tsx':
     '6938d36c405fa393c8275e6bfb170e40b3f09a2b8322e6c83c315a4e3585cecf',
   'apps/client/src/ui/camp-activity.css':
@@ -43,23 +44,23 @@ const preparedSourceSha256 = {
   'apps/client/src/ui/inventory-collection.tsx':
     'd02b6a9e619f38f3095c6f4910365de4e753f4b3e822c64b9b8856d898d72a77',
   'apps/client/src/ui/panels.tsx':
-    '4d88b1d6725b9af725dfddd9633afcf7211a884be4553b7b974823b6fc87541f',
+    '413bc2bbb2780a5d817e6aed1037f13fa569aef1687f2df6482e31a586fb3de6',
   'apps/client/src/design-system/components.tsx':
     '6b4467102fc219e1857d58011c813fd41565d5af710186887a6470c79230b2dc',
-  'apps/server/src/http.ts': 'a9d1250b85eca350e29ae63468a164adb394808fb27f9141c28fbbd589ecb7cf',
+  'apps/server/src/http.ts': '50a99bf1d4f74e040f735b9b23ef5e76f88f3c517ce7de79332196d1dbb0f1f1',
   'apps/server/src/config.ts': 'aab34d4101d845046b0049f68742ae3f60bacd19a93aa8034aa94b72d59b06ce',
   'apps/server/src/world-service.ts':
-    'b6f71fb68d46f780299cf910e3a85a30145f16fc32a5f2c7337649382c450cce',
+    'd00cd52e8dcffb1842aea7501de818d4030694a21548af2be261be2af5dc7403',
   'apps/server/src/activity-requests.ts':
     '4a97ccf680dccfb4ec3461d637eb8f3ddebfc4a5e4a64481b7b16effb3f8856a',
   'apps/server/src/inventory-view.ts':
-    '96209f97645f1ea52e4f816b6bae2b0fd7ba96155cdb3e8180baf6759018e337',
+    '41ff29cba7deb203f229e5f393a5c891db8c0ebad32c3840b2d56553a2433848',
   'apps/server/src/view.ts': '2e7adf59d54f158b37ec4069b4bb21ba7d7a8c13ffc5502f6432df6d580299a9',
   'apps/server/src/authority.ts':
     'e4f419ebb7459e197f8e147aa7ebd556639524a933993f2a5012c390b76aaf81',
-  'apps/server/src/store.ts': 'd76ef52977f65dbf8cfa3faea2fc64113c5d508c962e99518d5c36b1db2ac4d1',
+  'apps/server/src/store.ts': 'f9dc2d67fcb1f4efa575e3c76431e79074a9328d8334eb001738cb1964b2c71b',
   'packages/domain/src/world-presets.ts':
-    'ca43ef4b4d52eabddc30c14a8ce27ab107cd57a0f51cfc01ecee39eabbf2ec51',
+    'f8548f2fd14fede8da08cbb7baf655f01ede74bc773a9cee86a54773c28d0745',
   'packages/domain/src/worlds/base/world.ts':
     '286a0e8509ea935ff19c8241dd0cdc09401c66692428ad2b5708c7991eba361b',
   'packages/domain/src/worlds/base/items.ts':
@@ -71,9 +72,9 @@ const preparedSourceSha256 = {
   'packages/domain/src/worlds/reservoir-demo/activity.ts':
     '766eb5f63ee82179b2c303a7c8573af6cbdaf09dff5d3175b8f9f3ca024706d8',
   'packages/domain/src/world-modules.ts':
-    '7ceb8bb4f1dd67e4859b1c92f9965ac0be18425a174b96ad4c806693fdd8e7b0',
+    'a8b6b6e8ecf87173df6844cd2919d6d6a42c8dfd3aec817cab13125f14e69833',
   'packages/domain/src/kernel.ts':
-    '8c1c6fa3dd6fc0422687ddc2307440a9e3ecf6a25280c4766fc3a9504761e02d',
+    'ddec4cc1c949175beac2353937d26e4aef59bd0e06cc6b74105728cbbbb23bc6',
   'packages/domain/src/activity-execution.ts':
     '5c05040ce17f602d697106c0789caf4addd9df0f80d13b1320e8bb7a2c6c3dd1',
   'packages/domain/src/perception.ts':
@@ -82,7 +83,7 @@ const preparedSourceSha256 = {
     '229cca8b5d5dda514bcb38843832c1fab30c42e38feea8a0d08456c4ae2a328b',
   'apps/client/src/retained-request.ts':
     '9beb246ccd69e61f784223803f43aea00576e0bc000cc0c627a59886287f11ea',
-  'apps/client/src/api.ts': 'ef9334618576ca899c1b2b52e20aab028e5309a43c5e9a4d33eeda8d607ec2a1',
+  'apps/client/src/api.ts': '9d2a19fbcaf8162a82a8a08e4eb72c9d8915456f5c057939600f813e50d85d96',
   'apps/client/src/command-request.ts':
     'd5a0dd481e2d69596a198c688409b7d0e4d8c05f786b40913278fb514cc74829',
   'packages/domain/src/worlds/base/spatial-definitions.ts':
@@ -91,6 +92,9 @@ const preparedSourceSha256 = {
     '1b072686ab4e4ae440aa4214cda09ebd98903cb7d095cf1c4fa8828edaa7f175',
 };
 const sourcePaths = Object.keys(preparedSourceSha256);
+const runtimeSource =
+  process.env.GITHUB_SHA ??
+  execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', timeout: 5000 }).trim();
 const hashFile = async (path) =>
   createHash('sha256')
     .update(await readFile(path))
@@ -109,8 +113,8 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
     stage: 'alternate-world',
     startedAt: new Date().toISOString(),
     originalPreparationBase: '5afc190268370b6c95223433429a17555e28824d',
-    runtimeSource: process.env.GITHUB_SHA ?? 'unrecorded-local-checkout',
-    checkout: process.env.GITHUB_SHA ?? 'unrecorded-local-checkout',
+    runtimeSource,
+    checkout: runtimeSource,
     headRef: process.env.GITHUB_HEAD_REF ?? '',
     node: process.version,
     browser: browser.version(),
@@ -860,10 +864,17 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
           await page.getByRole('button', { name: 'Game', exact: true }).click();
           await expect(page.locator('.ol-game-menu')).toBeVisible();
           const loggedOutDocument = page.waitForEvent('domcontentloaded', { timeout: 20_000 });
+          const loggedOutResponse = page.waitForResponse(
+            (response) => new URL(response.url()).pathname === '/api/session/logout',
+          );
           await page.getByRole('button', { name: 'Log Out', exact: true }).click();
+          const logout = await loggedOutResponse;
+          assert.equal(logout.status(), 200);
+          assert.equal((await logout.json()).ok, true);
           await loggedOutDocument;
-          await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
-          await page.getByRole('link', { name: 'Sign in', exact: true }).click();
+          // Same-database restart created a separate local bootstrap login while
+          // this browser kept the earlier cookie. Logout revokes that old session;
+          // the real cookie-free reload adopts the new local login automatically.
           await enterGame(page);
           await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
           const fresh = await state();
@@ -881,6 +892,8 @@ export async function runAlternateWorldStage({ browser, outputDirectory }) {
             'Changed-session return cannot replay the old command',
           );
           observed.changedSession = {
+            nativeLogoutConfirmed: true,
+            localBootstrapReturn: true,
             previousPrivateRecordCleared: true,
             oldReceiptStatus: inaccessible.status,
             replayed: false,

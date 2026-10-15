@@ -391,6 +391,91 @@ completed-task, creation, Journal and original action/checkpoint passes above;
 only the still-incomplete cases and newly identified private-ownership/editor
 checks need execution. Additional and cumulative task provider/Jev cost: **$0**.
 
+## Selected continuation at a5e825563
+
+The [fifth finite run](https://github.com/Macrofold/OpenLegend/actions/runs/38686358199/job/116261991780)
+at `a5e82556313a150e907cd037f4f6901afc981d57` is **failed overall**. Four of
+five selected connected cases pass under the unchanged sixty-second totals:
+
+| Case                              | Actual result and evidence limits                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reciprocal barter                 | Pass, 57.8 s. Two exact deliberate item inspections are distinguished from exchanges. The exact fiber/knife draft survives Inventory/person entry changes and hiding; typed quantity three remains while the native current maximum becomes two. The native counteroffer, changed terms requiring review, real stream disconnection/reconnect, refusal and decline preserve intended draft and custody. Actual command order is two inspections, counter, refused accept, decline. Recipient fixture decisions use native owners; PX02's existing settlement/replay evidence remains separate.                                                                                                      |
+| Companion invitations             | Pass, 55.2 s. Description-only search binds one exact companion/family without invention or work; destination/purpose, all native current-work choices, picker cancellation and narrow adaptation retain their meaning. A real send loses only acknowledgement; exact Withdraw works independently, a retained original blocks new Send, and original-result inspection causes no replay. Supplied native incoming invitations exercise actual browser Decline, Accept and Leave with no time advanced or travel. PX04 owns actual travel/arrival/restart.                                                                                                                                          |
+| Editor viewport and draft         | Pass, 48.7 s. One unsaved real person-name draft survives pointer dragging, keyboard Center window, shrink/grow and return to preferred desktop position at normal and 130% application scale. All window edges and existing scaled size formulas fit. Native name/position remain unchanged with no save, command or provider submission. Three inspected images show readable full narrow editors and the centered enlarged desktop, including the retained draft and footer.                                                                                                                                                                                                                     |
+| Changed private account/character | Pass, 44.7 s. The original accepted typed wait has a positively read completed native job and an unresolved browser record/newer draft. One real remembered-place inspection is held. Native enrollment/login switches the same tab to another actually permitted, controlling account and Ada. Old request/draft/detail clear; releasing the old inspection does not restore them. The same original receipt body under the new current scope returns unknown without the original result/job, resubmission or world/job change. This is supplied native account setup, not external identity-provider UI; the cancelled older inspection is not claimed as JavaScript consuming a stale response. |
+
+All seven barter images were inspected. Both terms and the review-before-reply
+explanation fit in the 390×844 reading; short images use separate ordinary scroll
+positions for each side and the focused Review control. The later native refusal
+is readable beside reply controls. The initial Inventory image is only its
+recorded scrolled entry, not a simultaneous full draft view.
+
+All five invitation images were inspected. The narrow preparation/pending images
+show exact purpose, work choices, Send and focused Withdraw. The short incoming
+Decline image shows the button at the lower panel edge; a prior refusal notice
+crosses the later incoming/accepted frames, and the accepted Leave label is not
+readable in its capture. Successful keyboard activation establishes functional
+reachability but partial viewport assertions alone do not establish fully visible,
+unobscured focus. Strengthen that measurement within the already selected
+invitation recheck before claiming these pixels close the complete short-control
+presentation criterion. Keep the original five-second assertion and sixty-second
+total; do not hide notices or extend waits merely to obtain a picture.
+
+The changed-owner image shows Ada, an empty action composer and the new owner's
+permitted known-place list without the old selected detail or action result. A
+place with the same public label may independently be known by both people; the
+assertions compare the actual observation source identity, not its label alone.
+
+The zoom case reaches its unchanged sixty-second total during the third capture.
+Its three genuine native captures are 1440×873, 1440×873 and 640×873 physical
+pixels; the enlarged and 320-CSS-pixel images were inspected and now show the full
+focused Move control and outline. The last capture takes 3.398 seconds within its
+ten-second allowance, but starts about 57.5 seconds into the case. All preceding
+zoom/reflow/focus/world/command assertions pass. Teardown's later tracing error is
+secondary; there is no completed JSON report or overall zoom pass. Faster PNG
+encoding may reduce observation overhead without changing pixels or deadlines;
+that improvement remains unmeasured until execution.
+
+Clockwork recharge, failed-read/cleanup recovery and exact same-database reopening
+again run. The later actual logout returns 200, followed by a genuinely different
+recovery scope and native automatic control acquisition. Restarting the fixture
+server created its own separate local login; after the browser's older login is
+revoked, the ordinary reload adopts that valid login. The fixture incorrectly
+expects Sign in and fails its original five-second assertion. This is native
+changed-login evidence, not an application authentication failure. Its subsequent
+private-record/receipt assertions and touch-world stage remain unexecuted. The
+corrected observation must follow the real fresh-login return, preserving all
+privacy/no-replay assertions and bounds.
+
+[Artifact 11950107677](https://github.com/Macrofold/OpenLegend/actions/runs/38686358199/artifacts/11950107677)
+retains 22,361,726 bytes of captures and original failed traces/reports. Code at
+this source passes; PR Spatial could not start because its target advanced and
+GitHub reported conflicts. These passes do not waive that required current gate.
+Additional and cumulative task provider/Jev cost: **$0**.
+
+### Target reconciliation after a5e825563
+
+Merge `dafe09f8dd24d7b077f481d3df6f03ec89f691e4` refreshes the published branch
+against `https://github.com/Macrofold/OpenLegend.git` `origin/main` at
+`062724cdd0312753c40b99b407cf4652ac3ab26a`. Main already squash-integrated
+this UI source through `7da4449fb` as `b2c8e2eee`; newer action controls and
+focus-pause behavior remain intact. The UI executable source at the squash is
+identical to `7da4449fb`; guidance/research/documentation additions are retained.
+The independent changelog additions are combined, and later editor/task fixes
+remain with their owners. The previously untracked environment file is identical
+to main's tracked file and stays byte-for-byte unchanged.
+
+No standard starting-world content or saved development data is replaced. The
+world initializer and supported base/solo starting content match; integrated
+health/need rules remain world-owned. TypeScript, production build, formatting,
+configuration/guidance and fourteen focused transport/draft checks pass. These
+are reconciliation checks, not a browser pass. Review confirms unchanged barter,
+Journal/private ownership, editor and completed-task meanings, so their scoped
+passing evidence is reused. Only invitation search's removed unavailable-action
+toggle needs adaptation to main's accepted known-blocked-action behavior. Final
+required Code/Spatial and the remaining zoom/alternate/invitation observations
+still need their actual results.
+
 ## Remaining whole-feature qualification
 
 The October 15 source review also found a Current task recovery defect: failed

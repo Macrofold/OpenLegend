@@ -168,6 +168,15 @@ sixty-second case and local action/assertion/capture bounds. This adds temporary
 verification only; injected Storage tests alone do not establish these composed
 browser boundaries.
 
+The a5e825563 invitation journey passes functionally, but inspected short images
+show a bottom-edge control and an older notice crossing later consent controls.
+The existing partial-viewport assertion cannot qualify complete visible focus.
+During the already required post-main invitation recheck, require the entire
+focused control/outline inside its panel clip and unobscured by visible notices,
+within the same five-second assertion and sixty-second total. This is verification
+of a concrete image finding, not an additional account or gameplay matrix. Any
+failed geometry must identify its actual owner before production repair.
+
 ### Original action recovery — UIUX12
 
 Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.

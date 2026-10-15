@@ -138,8 +138,120 @@ async function keyboardControl(control: Locator) {
   // A native preview may still be completing. Disabled controls cannot take focus.
   await expect(control).toBeEnabled();
   await control.focus();
+  // Use actual keyboard navigation back to the exact control so its keyboard
+  // outline is measured even when the preceding preparation used the pointer.
+  await control.page().keyboard.press('Tab');
+  await control.page().keyboard.press('Shift+Tab');
   await expect(control).toBeFocused();
-  await expect(control).toBeInViewport();
+  const measure = () =>
+    control.evaluate((button) => {
+      if (!(button instanceof HTMLButtonElement))
+        throw new Error('Expected the exact reply button.');
+      const body = button.closest<HTMLElement>('.ol-panel-body');
+      if (!body) throw new Error('The reply button has no panel scrolling area.');
+      const rect = button.getBoundingClientRect(),
+        bodyRect = body.getBoundingClientRect();
+      const style = getComputedStyle(button);
+      const width = Number.parseFloat(style.outlineWidth),
+        offset = Number.parseFloat(style.outlineOffset);
+      const extent = Math.max(0, width + offset);
+      const ringX = (extent * rect.width) / button.offsetWidth,
+        ringY = (extent * rect.height) / button.offsetHeight;
+      const bodyX = bodyRect.width / body.offsetWidth,
+        bodyY = bodyRect.height / body.offsetHeight;
+      const left = bodyRect.left + body.clientLeft * bodyX,
+        top = bodyRect.top + body.clientTop * bodyY;
+      const ring = {
+        left: rect.left - ringX,
+        top: rect.top - ringY,
+        right: rect.right + ringX,
+        bottom: rect.bottom + ringY,
+      };
+      const overlaps = [
+        ...document.querySelectorAll<HTMLElement>('#toast,[role="tooltip"],.ol-caption-gap'),
+      ]
+        .filter((overlay) => {
+          const box = overlay.getBoundingClientRect(),
+            css = getComputedStyle(overlay);
+          return (
+            css.display !== 'none' &&
+            css.visibility !== 'hidden' &&
+            Number(css.opacity) > 0 &&
+            box.width > 0 &&
+            box.height > 0 &&
+            box.left < ring.right &&
+            box.right > ring.left &&
+            box.top < ring.bottom &&
+            box.bottom > ring.top
+          );
+        })
+        .map((overlay) => {
+          const box = overlay.getBoundingClientRect();
+          return {
+            selector: overlay.id || overlay.className,
+            text: overlay.textContent,
+            bounds: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
+          };
+        });
+      const inset = Math.min(2, rect.width / 4, rect.height / 4);
+      const points = [
+        [rect.left + rect.width / 2, rect.top + rect.height / 2],
+        [rect.left + inset, rect.top + rect.height / 2],
+        [rect.right - inset, rect.top + rect.height / 2],
+        [rect.left + rect.width / 2, rect.top + inset],
+        [rect.left + rect.width / 2, rect.bottom - inset],
+      ] as const;
+      return {
+        control: button.textContent,
+        outline: { width, offset, style: style.outlineStyle },
+        ring,
+        overlaps,
+        hitPoints: points.map(([x, y]) => ({
+          x,
+          y,
+          visible: button.contains(document.elementFromPoint(x, y)),
+        })),
+        clip: {
+          left: Math.max(0, left),
+          top: Math.max(0, top),
+          right: Math.min(innerWidth, left + body.clientWidth * bodyX),
+          bottom: Math.min(innerHeight, top + body.clientHeight * bodyY),
+        },
+      };
+    });
+  let geometry: Awaited<ReturnType<typeof measure>> | undefined;
+  try {
+    await expect
+      .poll(async () => {
+        geometry = await measure();
+        const { ring, clip, outline, overlaps, hitPoints } = geometry;
+        return {
+          visibleOutline: outline.width > 0 && outline.style !== 'none',
+          wholeControlAndOutline:
+            ring.left >= clip.left - 1 &&
+            ring.top >= clip.top - 1 &&
+            ring.right <= clip.right + 1 &&
+            ring.bottom <= clip.bottom + 1,
+          noNoticeOrTooltipOverlap: overlaps.length === 0,
+          allHitPointsVisible: hitPoints.every((point) => point.visible),
+        };
+      })
+      .toEqual({
+        visibleOutline: true,
+        wholeControlAndOutline: true,
+        noNoticeOrTooltipOverlap: true,
+        allHitPointsVisible: true,
+      });
+  } finally {
+    await test.info().attach('keyboard-control-geometry', {
+      body: JSON.stringify(
+        geometry ?? { failure: 'Geometry was unavailable; see the assertion error.' },
+        null,
+        2,
+      ),
+      contentType: 'application/json',
+    });
+  }
 }
 async function draft(page: Page, key: string): Promise<SavedDraft> {
   return page.evaluate((key) => JSON.parse(sessionStorage.getItem(key) ?? 'null'), key);
@@ -516,13 +628,12 @@ test('invitation description search and composed consent controls retain exact p
     const route = menu.locator(`[data-catalogue-action="invite-travel:${companionId}"]`);
     await expect(route).toBeVisible();
     await expect(route).toHaveCount(1);
-    const unavailableVisibility = menu.getByRole('button', {
-      name: /^(Show|Hide) Unavailable Actions$/,
-    });
-    await unavailableVisibility.click();
-    await expect(route).toHaveCount(1);
-    await unavailableVisibility.click();
-    await expect(route).toHaveCount(1);
+    await expect(
+      menu.getByRole('button', { name: /^(Show|Hide) Unavailable Actions$/ }),
+    ).toHaveCount(0);
+    // Current menus retain known blocked choices. This exact companion route is
+    // presently offered; the ordinary Actions journey covers blocked-row input.
+    await expect(route).toHaveAttribute('aria-disabled', 'false');
     await expect(menu.locator('.ol-task-entries [data-picker-row]')).toHaveCount(0);
     await expect(menu.getByRole('button', { name: /^Invent / })).toHaveCount(0);
     await route.click();

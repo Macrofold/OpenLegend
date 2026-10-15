@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import {
@@ -105,7 +106,14 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     providerCostUsd: 0,
     cumulativeTaskProviderCostUsd: 0,
     traceOwner: 'Playwright runner automatic retain-on-failure tracing',
+    cleanupComplete: false,
+    observationsComplete: false,
   };
+  const saveReport = () =>
+    writeFileSync(
+      info.outputPath('browser-zoom-report.json'),
+      JSON.stringify(report, null, 2) + '\n',
+    );
   async function x11(...args: string[]) {
     const result = await runFile('xdotool', args, { timeout: 5000, maxBuffer: 65536 });
     expect(result.stderr.trim()).toBe('');
@@ -231,6 +239,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       viewport: { innerWidth: number; innerHeight: number; dpr: number },
     ) {
       report.captureInProgress = name;
+      saveReport(); // A total-test timeout must not lose the last completed observations.
       let timeout: ReturnType<typeof setTimeout> | undefined;
       try {
         await Promise.race([
@@ -241,6 +250,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
               format: 'png',
               fromSurface: false,
               captureBeyondViewport: false,
+              optimizeForSpeed: true, // Preserve PNG pixels; accept larger output for faster encoding.
             });
             const png = Buffer.from(screenshot.data, 'base64');
             const width = png.readUInt32BE(16),
@@ -249,6 +259,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
               expectedHeight = Math.round(viewport.innerHeight * viewport.dpr);
             await writeFile(info.outputPath(name), png);
             captures.push({ name, width, height, expectedWidth, expectedHeight });
+            saveReport();
             expect(Math.abs(width - expectedWidth)).toBeLessThanOrEqual(2);
             expect(Math.abs(height - expectedHeight)).toBeLessThanOrEqual(2);
           })(),
@@ -263,6 +274,7 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
           }),
         ]);
         delete report.captureInProgress;
+        saveReport();
       } finally {
         clearTimeout(timeout);
       }
@@ -548,12 +560,14 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     expect(usage.budget.reservedUsd).toBe(0);
     report.usage = usage;
     report.nativeWorldUnchanged = true;
-    report.passed = true;
+    report.observationsComplete = true;
   } catch (error) {
     report.failure = error instanceof Error ? (error.stack ?? error.message) : String(error);
+    saveReport();
     throw error;
   } finally {
     phase = 'cleanup';
+    saveReport();
     for (const [owner, close] of [
       [
         'page',
@@ -597,10 +611,14 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
       }
     }
     report.finishedAt = new Date().toISOString();
-    await writeFile(
-      info.outputPath('browser-zoom-report.json'),
-      JSON.stringify(report, null, 2) + '\n',
-    );
+    report.cleanupComplete = cleanup.every((entry) => entry.closed);
+    report.runnerStatus = info.status;
+    report.passed =
+      report.observationsComplete === true &&
+      report.cleanupComplete === true &&
+      !report.failure &&
+      info.status !== 'timedOut';
+    saveReport();
     expect(cleanup.filter((entry) => entry.failure)).toEqual([]);
   }
 });
