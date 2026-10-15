@@ -20,9 +20,9 @@ Original recommendation: **Completed removals**.
 
 ## LA121
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-Body-contact sensing now requires touching physical body surfaces, with a zero sensing radius; other supported sense radii remain capped at 32 world units.
+Body-contact sensing requires touching physical body surfaces and an authored radius of zero. The installed vision detector accepts a strictly positive radius no greater than 32 metres. Hearing does not use that radius field: its detector admits a hearing floor from −120 to +200 dB SPL, with reach derived from source volume, background and the authored acoustic thresholds ([HR01](hearing-and-speech.md#hr01--acoustic-model-and-tuning)).
 
 **Reason / tradeoff:** The former one-unit contact-radius maximum is obsolete. Physical body dimensions and numerical tolerance determine contact; review sight/hearing distances separately.
 
@@ -44,37 +44,37 @@ Original recommendation: **Replace**.
 
 ## LA136
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The current spatial map validator allows at most 128 rows and 128 columns.
+The spatial terrain validator accepts rectangular maps with 2–128 rows and 2–128 columns, with matching tile-array dimensions. This bounds the terrain grid, not an independently supported 512-metre-wide navigable map; LA137 is a separate coordinate guard.
 
 **Reason / tradeoff:** Increase map dimensions only with measured navigation and perception cost, rather than deleting the grid-size guard blindly.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/spatial/src/validation.ts).
 
 Original recommendation: **Review**.
 
 ## LA137
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 A valid world position must keep each coordinate within a magnitude of 512.
 
 **Reason / tradeoff:** Allow larger coordinates when useful, but first check map, movement and rendering assumptions that currently depend on the smaller world.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/spatial/src/geometry.ts).
 
 Original recommendation: **Review**.
 
 ## LA138
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-A spatial map permits at most 32 walkable surfaces, 128 blocking shapes and 16 named height levels.
+A spatial map admits 1–32 walkable surfaces and 1–16 named height levels. At most 128 physical blockers are allowed **in total across rock terrain cells and explicit blocking shapes**; these are not two independent 128-entry allowances. Static decorative scenery has its separate SP07 limit and does not add physical support or blocking.
 
 **Reason / tradeoff:** Increase map-detail capacity with measured pathfinding and collision costs, preserving explicit failure if a supported map exceeds processing capacity.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/spatial/src/validation.ts).
 
 Original recommendation: **Expand**.
 
@@ -96,13 +96,13 @@ The 32,768-expansion lattice-search budget is removed with that planner. Recast 
 
 ## LA141
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 A computed walking path may contain at most 2,048 points.
 
 **Reason / tradeoff:** Allow longer journeys through suitable path processing rather than storing or searching indefinitely without a work budget.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../apps/server/src/navigation/backend.ts).
 
 Original recommendation: **Review**.
 
@@ -114,13 +114,13 @@ The eight lattice endpoint connectors within 1.6 metres are removed with the old
 
 ## LA143
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 The search for a place to stand near an interaction target clamps its sampling radius to between 1 and 12 world units.
 
 **Reason / tradeoff:** Make approach-point sampling respect the intended interaction reach without allowing an uncontrolled search over a huge area.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/domain/src/spatial.ts).
 
 Original recommendation: **Review**.
 
@@ -138,25 +138,25 @@ Original recommendation: **Completed removals**.
 
 ## LA145
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 A flight route's speed cannot exceed 1 world unit per simulation second, climbing cannot exceed its total speed, and waypoint waits cannot exceed 86,400 seconds.
 
 **Reason / tradeoff:** Review speed and wait ceilings as flight-mechanic choices, preserving valid motion calculations when they change.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/domain/src/spatial-state.ts).
 
 Original recommendation: **Review**.
 
 ## LA146
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 A walkable surface must have positive thickness no greater than 32 world units.
 
 **Reason / tradeoff:** Preserve valid collision geometry and check whether larger authored structures genuinely need a higher thickness allowance.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/spatial/src/validation.ts).
 
 Original recommendation: **Review**.
 
@@ -180,49 +180,49 @@ Four terrain samples per horizontal metre are replaced by exact crossed-cell tra
 
 ## LA149
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The sight-check cache stores up to 128 observers and 512 target-position entries per observer; additional checks still run without caching.
+The sight-query cache admits up to 128 observer entries per immutable map and up to 512 target entries per admitted observer. It compares copied positions, body heights and the observer’s current range/eye height before reuse. Overflow computes exact results without evicting every established entry during a dense scan; these are cache-entry limits, not audience or visible-target limits. Mutable maps do not use this cache.
 
 **Reason / tradeoff:** Keep the cache-size bound because it limits reusable computation, not which beings or objects can be seen.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/domain/src/perception.ts).
 
 Original recommendation: **Keep**.
 
 ## LA150
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Removed — delivered hearing model; source inspected 2026-10-06 · Restrictiveness: — (superseded).**
 
-A hearing check requires sound transmission of at least 0.65.
+The former binary 0.65 transmission gate no longer determines hearing. The installed acoustic model uses received sound level, background/listener floor and separate detection, partial-speech and clear-speech thresholds. A positive transmission ratio below 0.65 can still yield audible speech; zero blocks the direct path. [HR01–HR02](hearing-and-speech.md#hr01--acoustic-model-and-tuning) own the replacement tuning and complete-audience contract.
 
-**Reason / tradeoff:** Review this cutoff as a model of audibility, including whether characters miss speech that should be heard.
+**Reason / tradeoff:** Obstruction attenuates a sound instead of applying an unrelated fixed Boolean cutoff. This finite direct-path model does not claim room acoustics, diffraction or physical calibration.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Acoustic calculation](../../packages/domain/src/acoustics.ts) · [Listener projection](../../packages/domain/src/perception.ts).
 
-Original recommendation: **Review**.
+Original recommendation superseded by the delivered hearing model; preserve this ID for removal history.
 
 ## LA151
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 The item-handling policy permits reach up to 10 world units and pickup duration up to 3,600 game seconds.
 
 **Reason / tradeoff:** Review these as authored interaction rules, with movement and action-duration validation preserved.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/domain/src/item-handling.ts).
 
 Original recommendation: **Review**.
 
 ## LA152
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
-The native falling calculation caps downward velocity at 3 world units per simulation second.
+The finite native falling family uses acceleration **0.04 metres per game-second squared** and terminal downward speed **3 metres per game second**. It integrates displacement to a supporting surface; without support, a destination below **−16 metres** throws an unsupported-world error rather than deleting the actor or inventing a landing. This is narrower than the general ±512 coordinate-validation envelope and is not a universal gravity model.
 
-**Reason / tradeoff:** Treat this as a physical-world rule to review deliberately, not a generic software resource cap.
+**Reason / tradeoff:** These are current finite-family assumptions, not generic software resource caps or a complete falling/impact system. [SW07.3](../maintainers/spatial-world.md#sw07--dynamic-obstacles-conflicts-and-support-loss) retains the broader ground/support-loss and consequence work; expansion must reconcile the world-owned rules and supported geometry rather than merely raising the numbers.
 
-[Implementation starting point](../../packages/spatial/src/types.ts).
+[Implementation starting point](../../packages/domain/src/flight.ts).
 
 Original recommendation: **Review**.
 

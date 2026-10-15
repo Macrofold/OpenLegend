@@ -6,13 +6,13 @@ Characters record their own attempted actions, notice their actual results, and 
 
 - Implementation and acceptance: [AE01–AE10](maintainers/action-experience.md).
 - Operating bounds and unsupported extensions: [AEL01–AEL09](limits/action-experience.md).
-- Project history and accepted scenarios: [project](projects/completed/action-experience.md), [feature specification](projects/completed/action-experience-feature-spec.md), [technical design](projects/completed/action-experience-tech-design.md).
+- Project history and accepted scenarios: [project](projects/action-experience.md), [feature specification](projects/action-experience-feature-spec.md), [technical design](projects/action-experience-tech-design.md).
 - Measured evidence, exact model inputs and costs: [verification](verification/action-experience.md).
 - Installed support, restoration and produced-item review: [October 14 evidence](verification/world-engine-boundaries.md#requested-full-review--october-14-2026).
 
 ## What a character sees
 
-The engine builds permitted structured facts, then renders compact English. Names, targets, tools, distances, observed health, costs, requirements, uncertainty and results appear where relevant. Internal IDs, schema tags, reference tables and result codes remain outside action descriptions. Exact request bindings still identify the selected objects internally.
+The engine builds permitted structured facts, then renders compact English. Names, targets, tools, distances, observed health, costs, requirements, uncertainty and results appear where relevant. The occurrence renderer keeps internal IDs, schema tags, reference tables and result codes out of its descriptions. Typed-choice prompts use readable option labels, but the generative action list and known-plan list still expose their selection handles; [AE03](maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) tracks that remaining English-first presentation gap. Exact server-owned request bindings remain necessary to identify the selected objects without guessing from names.
 
 The syntax explanation is: “Each action says what to do and with what. When brackets appear, they contain smaller actions in order; semicolons separate them. Results say what actually happened.” A leaf needs no brackets. Parent actions preserve the chosen purpose, including “Hunt once,” while children describe stages that actually ran. Completion of an attempt does not mean the animal died or the character obtained food.
 
@@ -60,7 +60,7 @@ Completed coaching references the learner's observed release and each participan
 
 ## Learning and shared definitions
 
-`activity-learning.ts` considers a bounded repertoire: direct material pairs with native support, endpoint dependency slices, selected-purpose spans, and compatible known spans. It preserves the raw trace and larger/overlapping candidates. A recognized four-action span does not prevent learning an eight-action span, and overlapping matches do not execute the same source step twice. Misses accompany the evidence without becoming mandatory failed steps. The exact ten-action example remains in the [technical design](projects/completed/action-experience-tech-design.md#exact-ten-action-example).
+`activity-learning.ts` considers a bounded repertoire: direct material pairs with native support, endpoint dependency slices, selected-purpose spans, and compatible known spans. It preserves the raw trace and larger/overlapping candidates. A recognized four-action span does not prevent learning an eight-action span, and overlapping matches do not execute the same source step twice. Misses accompany the evidence without becoming mandatory failed steps. The exact ten-action example remains in the [technical design](projects/action-experience-tech-design.md#exact-ten-action-example).
 
 Server preparation reads actor-scoped indexed pages and bounded dependencies before description construction. Durable cursors and retained records allow later passes; the small pending list is a coalesced wake signal, not the complete history. Time controls when processing happens, not sequence membership.
 

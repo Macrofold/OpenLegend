@@ -12,7 +12,7 @@
 
 A character looking for words in retained evidence should find the same normalized words regardless of the database machine's locale. Another character acquiring evidence or finishing vector indexing should not force the first character to rerank an unchanged word query or recount unchanged indexed memories. A character's correction, forgetting or restored timeline must still invalidate that character's results before they are used.
 
-Current source at local main `6664144a` provides two concrete implementation targets and one measurement decision:
+The original local-main baseline `6664144a` provided two concrete implementation targets and one measurement decision. Both targeted defects are repaired in current main: shared `searchWords` supplies positioned Unicode lexemes, and lexical/coverage reuse follows the owning actor/model revisions and bounded cache-owned epochs. The following table describes that original problem, not current missing implementation:
 
 | Owner and current path                                                                                                                                                                           | Evidence and target                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -37,6 +37,8 @@ The [PostgreSQL cognition-preparation work](../../../verification/postgresql-cog
 Scope is lexical correctness and dependency-correct cache reuse. No retained-history truncation, newest-N scan, automatic forgetting, smaller conversation window, required-evidence omission, new paid embedding dispatch, automatic provider retry, persistent count authority, background index service, observation redesign or storage migration for old development saves. Existing MH04 row/byte admission and explicit failure remain; they are preparation limits, not corpus-retention limits.
 
 ## Implementation sequence and contracts
+
+The five stages are implemented and qualified to the scope recorded in [PW09 evidence](../../../verification/data-foundation.md#pw09--unicode-and-scoped-retrieval). Locale/ranking/privacy/transaction checks passed; the matched 18-run comparison demonstrated removed rerank/count queries without reducing retained history. The two 100,000-source variants both failed large-vector restoration under unchanged deadlines, and one baseline cold exact query was unavailable. Those failed workloads remain with PW09/PF08 and the [save/restore owners](../../../save-and-load.md#performance-and-evidence); they do not invalidate the demonstrated narrow fixes or become restoration passes. The recommendation is a separate approximate-index experiment, not production ANN adoption or an overall latency guarantee.
 
 ### 1. Reproduce current caller cost — 4 hours
 
@@ -104,11 +106,13 @@ The [profiling guide](../../../maintainers/performance-profiling.md) owns explic
 
 ## Completion, effort and risk
 
+The scoped completion below is supported by the current PW09 tracker and linked native/database comparison. It does not complete the shared Engineer 5 plan, owner streaming, the whole playable week or the broader memory release requirements.
+
 PW09 completes only when both implementations reach the actual memory callers, locale/ranking/privacy/lifecycle rows pass, and matched evidence demonstrates the removed invalidation work. Exact-vector measurements and the HNSW recommendation are required supporting evidence, not a substitute for those changes. Unavailable PostgreSQL/locale support or unresolved race cases keep the corresponding acceptance open.
 
 The allocation is **4 + 8 + 8 + 5 + 5 = 30 hours**. Expected changes are approximately **250–450 logic lines**, excluding tests/documentation, with medium risk concentrated in full-text serialization and transaction-safe cache stamps. Reassess if a repository dependency makes either design materially larger. The scoped invalidation implementation must not grow into a general cache framework; the two current repository caches are its consumers. Use the separate integration allowance for combined streaming/memory review and checks. Report incomplete work rather than dropping required privacy or recovery checks to fit the estimate.
 
-Cannot be promised now: a fixed latency at 100,000 or one million sources; cheaper cold exact cosine ranking; bounded work for every broad lexical prefix; natural-history retention qualification; reduced pre-admission observation construction; production ANN quality; or closure of PF08/C17. Actor history remains untruncated. No runtime, database or provider measurement was run while writing this plan.
+Cannot be promised now: a fixed latency at 100,000 or one million sources; cheaper cold exact cosine ranking; bounded work for every broad lexical prefix; natural-history retention qualification; reduced pre-admission observation construction; production ANN quality; or closure of PF08/C17. Actor history remains untruncated. No new runtime, database or provider measurement was run in this documentation reconciliation; linked observations retain their original revisions and workloads.
 
 ## Maintained records
 

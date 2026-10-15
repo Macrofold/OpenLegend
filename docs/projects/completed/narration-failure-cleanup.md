@@ -8,7 +8,7 @@
 
 ## Scope and baseline
 
-Implement the requested player-facing failure behavior on `codex/narration-failure-cleanup`,
+The delivered work implemented the requested player-facing failure behavior on `codex/narration-failure-cleanup`,
 from freshly fetched `origin/main` at `45210d41075dc1db09dbd48f562b76b8b39bcc10`
 in `Macrofold/OpenLegend`. Main contains the action merge `75ee15f7`.
 Conversation compaction is explicitly excluded. AC01.2 already owns detailed action
@@ -53,7 +53,7 @@ fallback entries are normalized only in the public projection. The existing expl
 regeneration API remains; the requested removal is from the player UI. Full-diff review,
 pinned formatting and the affected local-link checks are complete. No actionable in-scope
 findings remain; broad NC12/CR12 and action-integration qualification stay open in their
-existing trackers. The final delivery is the requested commit and push.
+existing trackers. The delivered implementation is integrated in the current source; the original branch publication is not remaining implementation work.
 
 ## Rebase onto hearing integration
 

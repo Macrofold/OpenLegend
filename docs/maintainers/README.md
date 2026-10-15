@@ -42,6 +42,10 @@ DG30 uses [creator funding and contributor governance](creator-fund-and-contribu
 
 [The completed five-group product-design assignment](../projects/completed/product-design-groups-16-20.md) covers a personal Journal edition, continuing lives, worthwhile conversations/scenes, changing supplies and heat/material consequences. The further gameplay review separates useful attended contributions from conditional persistent editing, unattended service, crowd meaning, food aging and broader fire. It recommends strengthening the current adventure and independent resident through existing owners; DG16–DG20 is not a five-feature release order. [NC21](narration-and-conversations.md#nc21--personal-journal-edition), [PS02–PS06](product-scalability.md#ps02--one-interruptible-life), [CS01–CS06](changing-supplies.md) and [HM01–HM06](heat-and-materials.md) retain independently scoped delivery and the fuller unperformed acceptance; technical/runtime gates remain open.
 
+## Full documentation reconciliation
+
+[Exhaustive reconciliation TODO](full-documentation-reconciliation.md) tracks the remaining file-by-file review, upstream integration, historical moves, requirement ownership and final checks under CG17. [The review project](../projects/full-documentation-review.md) retains scope and prior evidence; feature implementation and acceptance stay in their existing trackers.
+
 ## Product design groups 11–15
 
 [The completed five-group design review](../projects/completed/product-design-groups-11-15.md) covers optional well-being evidence, world creation and invention reuse, editable shelter, useful competence and optional story perspective. [Human-evidence tasks](wellbeing-evidence.md) track the new conditional study proposal; [practical-competence tasks](practical-competence.md) track the delivered sling practice/coaching consumer and remaining human appreciation, with its [scoped design](../projects/authored-stats-tech-design.md) and [qualification](../verification/practical-competence.md). [NC20](narration-and-conversations.md#nc20--optional-after-you-left-perspective) tracks the optional story consumer. Existing creation, shelter and stats owners remain authoritative; product proposals do not close technical or runtime acceptance.
@@ -150,7 +154,7 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 ## Reviewed World Agent writes
 
-[Structured invention questions](../projects/completed/invention-questions-feature-spec.md) and [technical design](../projects/completed/invention-questions-tech-design.md) specify inline choices/free text, durable human answers and explicit continuation without idle paid waiting. [WW24–WW30](world-agent-writes.md#structured-invention-questions) track the approved implementation and remaining browser acceptance and initial-size diagnostic under INV-2.3/INV-21; existing release gates remain.
+[Structured invention questions](../projects/completed/invention-questions-feature-spec.md) and [technical design](../projects/completed/invention-questions-tech-design.md) specify inline choices/free text, durable human answers and explicit continuation without idle paid waiting. [WW24–WW30](world-agent-writes.md#structured-invention-questions) record completed bounded native, browser and live acceptance, including the final initial-size diagnostic, under INV-2.3/INV-21; broader deployment and release gates remain.
 
 [World Agent context and invention loop](../projects/completed/world-agent-context/README.md) provides compact source-backed mechanics/context, YAML templates and medium-effort execution. [WW17–WW23](world-agent-writes.md#context-and-invention-loop-design) track the implemented finite foundation and its qualification beneath INV-21, preserving existing live-harness gates.
 

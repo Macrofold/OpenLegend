@@ -20,7 +20,7 @@ Requested in chat on 2026-09-26: pull `feature/simulation-cadence`, thoroughly r
 
 Retain the accepted elapsed-time start/rate/end contract, actual-progress debt accounting, swept continuous movement, semantic support IDs, Recast navigation, selective Rapier collision, independent device-cadence rendering, and observer-authorized presentation. Retain main's canonical production records, bounded history/checkpoints, multiplayer authority and fencing, persistent objects/claims, shared state contributions, dependency-aware native work, appraisals, shared Worker API, indexed memory retrieval and shared inventory access. Reuse each semantic owner instead of duplicating the old and new implementations.
 
-The sound/speech branch remains separate. Inspect its current ref to reconcile the handoff and dependencies; importing an unrelated feature branch is not implicit in this main rebase. Existing PF13/SW/EPR gaps remain open unless current evidence satisfies their criteria. In particular, recorded short 8x success does not qualify the failed staggered-flight workload.
+The sound/speech branch was separate during this operation and was subsequently integrated through the [hearing reconciliation](../hearing-main-integration.md). Its former separation is not a current dependency; importing unrelated branches is not implicit in a rebase. Existing PF13/SW/EPR gaps remain open unless current evidence satisfies their criteria. In particular, recorded short 8x success does not qualify the failed staggered-flight workload.
 
 ## Sequence
 

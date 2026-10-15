@@ -14,7 +14,7 @@ A character can carry grief, unease, affection or another supported appraisal be
 
 Separately, each character can maintain a freely written, directional understanding of another person. “I trust Bo, although I am upset about yesterday” is not a numeric friendship tier and need not match Bo's view. Editing it changes neither objective kinship nor an accepted promise. These are fictional character systems, not diagnoses or inferred psychological attributes of the human player.
 
-## 2. What is already present
+## 2. Historical source baseline
 
 The current appraisal owner in [appraisals.ts](../../../packages/domain/src/appraisals.ts) records stable identities, source links and world-selected lifetimes, including persistent feelings and supported native change. Actor-owned subject knowledge remains the authority for directional relationship prose. Accepted reflection publishes supported changes through the existing coupled personal-evidence boundary; it does not introduce a separate relationship score store. The technical design retains the older fear/discomfort-only baseline and its completed identity work.
 
@@ -112,11 +112,11 @@ Measure actual record cardinality, changed-owner work, context size, wake count,
 
 ## 8. Decisions and open questions
 
-Proposed defaults are no implicit decay for newly authored persistent appraisals; exact policy-defined decay for existing native fear/discomfort; one stable cause-aware appraisal owner; typed optional reflection changes; directional free-text subject notes; and conservative privacy invalidation until selective retention is proven safe.
+The accepted foundation defaults are no implicit decay for newly authored persistent appraisals; exact policy-defined decay for existing native fear/discomfort; one stable cause-aware appraisal owner; typed optional reflection changes; directional free-text subject notes; and conservative privacy invalidation until selective retention is proven safe.
 
 **Blocking product questions: none for the foundation.** World-specific vocabulary, balance and additional mental-effect mechanics remain authoring/feature choices. This design does not require selecting one universal emotion taxonomy before useful continuity can ship.
 
 ## Maintained records
 
-- Implementation: [Feature tasks](../../maintainers/agent-agency.md).
+- Implementation: [ACT07/ACT08 delivery and remaining actor work](../../maintainers/actor-model.md#priority-5-implementation-slices).
 - Limits and constraints: [Feelings and social continuity inventory](../../limits/feelings.md).

@@ -32,7 +32,7 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 
 **Owners:** agency, native action/resource owners, perception/reaction intake, simulation time. **Depends on:** current admitted work and scoped event foundations; reconcile their actual implemented state rather than duplicate them.
 
-- [ ] Retain a chosen activity and supported continuation/interruption conditions through the existing goal/plan owner.
+- [ ] Integrate and qualify the [delivered goals, finite plans and selected activities](../agent-agency.md#learned-activities-and-action-history) in the PS02 life episode. Reuse their persisted continuation, interruption and actual-result records; add only conditions the selected activity needs and its owner does not yet support. Existing retention does not establish believable choice, alarm handling or the complete interruption/restart matrix below.
 - [ ] Demonstrate a useful supported activity interrupted by a legitimately heard alarm, without omniscient reaction or speculative completion beyond it. Gathering or finite crafting can establish the first personal contribution; retain roof progress as a later construction case when that family is supported.
 - [ ] Exercise depletion, missing resource, geometry change, damage, cancellation, restart, and simultaneous boundaries.
 - [ ] Qualify no per-step generation without silently restoring a hardcoded alternative personality or invalidating current Jev-only choices.

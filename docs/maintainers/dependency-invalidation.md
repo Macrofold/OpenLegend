@@ -71,8 +71,11 @@ replacement scheduler is claimed. Final review verified native port coverage and
   host ceiling. Its allocation-only fixture is not a complete-world capacity benchmark.
 - The versioned `native-work-v1` ceilings are operational containment bounds, **not** a
   qualified hosted capacity claim. Native status work permits up to 1024 existing subsecond
-  samples per simulated second; normal server advancement remains one sample per second.
-  No phase order, native rate, saved random draw or provider allowance was changed.
+  samples per simulated second. The September 26 baseline and matched runs used one-second
+  server advancement; the current [elapsed-time contract](../simulation-time.md) owns
+  later integration boundaries. The original extraction changed no phase order, native
+  rate, saved random draw or provider allowance; these historical samples do not prescribe
+  a fixed production cadence.
 
 Disposable native evidence, provider budget $0:
 

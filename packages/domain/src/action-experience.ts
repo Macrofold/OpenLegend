@@ -32,7 +32,7 @@ import { validateCombatHelpReference } from './outings.js';
 
 /** Admission bounds, not promises about how much an actor remembers. Historical
  * records can live in the repository after leaving the resident working set.
- * docs/projects/completed/action-experience-tech-design.md#four-records-one-execution-owner
+ * docs/projects/action-experience-tech-design.md#four-records-one-execution-owner
  */
 export const ACTIVITY_LIMITS = {
   nodes: 64,

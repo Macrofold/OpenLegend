@@ -6,7 +6,11 @@
 
 **Status: finite foundation and approved custom-resource follow-up implemented and qualified; final-head CI remains the merge gate.** The owner’s “Okay implement all of it” approves WW18–WW23 and the initial graph/pipeline foundation. Design verification below remains historical evidence, not runtime completion.
 
-## Implementation plan
+The finite foundation and approved custom-resource follow-up are complete under [WW17–WW23](../../../maintainers/world-agent-writes.md#context-and-invention-loop-design). The [qualification report](../../../verification/world-agent-context.md) distinguishes native, browser and live-provider evidence and the remaining broader deployment gates. The owner’s “Okay implement all of it” authorized this finite scope; it does not approve every later invention proposal.
+
+## Historical implementation plan
+
+The plan, branch names, estimates and spending below describe the original execution, not new work, a current checkout or renewed spending authorization. The linked tracker owns current task state.
 
 Implement the approved feature/technical design and initial foundation end to end. Initial estimate: 3,000–6,000 changed runtime logic lines across server context, graph/check projections, authoring records, shared tool descriptors, execution and review UI; refine this estimate as adapters are integrated. Risk is high across authority/privacy, immutable approval, transactional receipts, bounded preparation, restore and real spending. Preserve existing domain mutation owners, PostgreSQL and the no-legacy-support policy.
 
@@ -117,4 +121,4 @@ The live definition → attachment transition selected the right next profile bu
 
 The resource correction and actual definition/attachment browser Apply are verified. The attachment saved before the local turn deadline and later completed remotely; one internally retried provider timeout lacks complete usage, so the full reservation remains held. This limitation and the next native-retry qualification requirement remain under WW07; no further paid run was dispatched. The finite body/value graph slice is complete, without extending into undesigned physical-source composition.
 
-OpenCode retry handling is an external native-harness limitation, not permission to impose a new platform-wide policy. The pinned adapter exposes no reliable caller control for that outer retry loop; the old SDK chat retry option is not proof of controlling the current native loop. A reviewed caller/runtime contract and network-disabled failure fixture are required before resuming paid qualification. This task leaves that undesigned extension tracked under WW07 and preserves all uncertain spending.
+The missing caller control recorded during that historical run was subsequently supplied and qualified by the [structured-question implementation](../../../verification/invention-questions.md#current-review-and-local-checks). OpenLegend requests `limits.stop_on_model_error` for World Agent execution; the supported external adapter must honor it. This is not a platform-wide retry-policy change or proof that every deployed Macrofold runtime includes the contract. [WW07](../../../maintainers/world-agent-writes.md#remaining-implementation-and-qualification) retains the deployable-runtime gate and all unresolved charges from the original runs.

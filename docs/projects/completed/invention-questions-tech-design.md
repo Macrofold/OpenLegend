@@ -63,7 +63,7 @@ World restore, session close, revocation and disclosure reduction invalidate act
 
 ## 5. Accept an answer and continue exactly once
 
-Use proposed `question-answer` and `question-continue` operations on the existing authenticated session route. The first supplies bundle ID/digest, stable operation ID, answers and an explicit `continueIfReady` intention; the second names the saved answer and its stable continuation operation. Route names may follow local conventions, but keep saved intent distinct from paid admission.
+The implemented `question-answer` and `question-continue` operations use the existing authenticated session route. The first supplies bundle ID/digest, stable operation ID, answers and an explicit `continueIfReady` intention; the second names the saved answer and its stable continuation operation. Both are under `/api/world-agent/session/`; saved intent remains distinct from paid admission.
 
 The server validates current principal/session scope, bundle actionability, answer shape and exact source digest. Under the same serialized owner, it records the immutable human answer before any external dispatch. Same ID/body returns the retained result; same ID/different body conflicts. Competing answers accept one, including submissions from different tabs. A browser saves request identity before sending and reconciles lost acknowledgement by that identity; it does not mint a new operation.
 
@@ -107,7 +107,7 @@ No deterministic domain transition is needed for asking/answering. World-specifi
 
 ## 8. Bounds, storage and extension seams
 
-[QST01–QST04](../../limits/inventions.md#structured-invention-question-proposal) own proposed payload, paging, retained-growth, turn and support limits. Reuse the current PostgreSQL operational record owner, indexed active-session recovery and existing session authorization lifetime. No whole-world scans, model calls on UI polling, new background job platform or global question cache. Event reconciliation is bounded before hydration/normalization, not merely at rendered output.
+[QST01–QST04](../../limits/inventions.md#structured-invention-question-proposal) own current payload, paging, retained-growth, turn and support limits and the separately proposed expansions. Reuse the current PostgreSQL operational record owner, indexed active-session recovery and existing session authorization lifetime. No whole-world scans, model calls on UI polling, new background job platform or global question cache. Event reconciliation is bounded before hydration/normalization, not merely at rendered output.
 
 Storage changes validate the current format and reject incompatible development records explicitly under [the protected development policy](../../../AGENTS.md#development-save-policy). There are no old-save readers, conversion fixtures or automatic deletion/reset. Preserve same-version transactional integrity and non-rewindable financial/operation records.
 

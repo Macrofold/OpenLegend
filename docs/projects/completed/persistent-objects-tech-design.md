@@ -6,7 +6,9 @@
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## Current implementation — October 14, 2026
 
@@ -167,7 +169,7 @@ Consulted September 26, 2026: PostgreSQL [constraints](https://www.postgresql.or
 ## Shared-container follow-through
 
 The immediate gameplay-limits implementation extends the delivered foundation with shared
-reachable world containers, explicit actor access lists, giving without recipient inspection,
+reachable world containers, explicit actor access lists, and giving by recipient-accepted offer without private inventory inspection,
 recursive own ingredient/tool discovery and dependency-aware inventory moves. The current
 contract is [Items](../../worlds/base/items.md); [PO10](../../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
 records its delivered scope and verification. Existing identity, capacity, exact

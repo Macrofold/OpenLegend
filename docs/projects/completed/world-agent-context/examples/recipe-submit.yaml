@@ -1,14 +1,14 @@
-# Proposed API illustration, not a live call or canned production recipe.
-# Serialize arguments as JSON when invoking the tool. All IDs here are synthetic.
+# Synthetic illustration of the current installed-family candidate envelope, not a live call.
+# Serialize arguments as JSON. Review IDs/handles are synthetic; inspect current world families/materials first.
 tool: ol_recipe_submit
 arguments:
   operationId: example-sling-create-1
   packetRef: example-context-1
   contextHandle: <application-issued-handle>
   candidate:
-    schemaVersion: 1
+    family: { id: 'base:swing', version: 1 }
     name: Steady Fiber Sling
-    description: A cord-and-fiber sling prioritizing accuracy with additional crafting work.
+    description: A cord-and-fiber sling with an explicitly chosen accuracy/work tradeoff.
     inputs:
       - definitionId: cord
         quantity: 2
@@ -16,35 +16,29 @@ arguments:
       - definitionId: prepared_fiber
         quantity: 2
         role: pouch
-    workSeconds: 120
     output:
-      kind: launcher
       name: Steady Fiber Sling
       description: A carefully woven pouch with balanced cord arms for throwing stones.
-      properties: [binding, pouch]
-      gatheringTool: null
-      launcher:
-        mechanism: swing
-        ammunitionKind: stone
-        damage: 12
-        range: 4
-        accuracy: 0.8
-      ammunition: null
+    parameters:
+      workSeconds: 120
+      damage: 12
+      range: 4
+      accuracy: 0.8
 success_example:
   status: ready_for_review
   draft: { id: example-draft-1, revision: 1 }
   review: { id: example-plan-1 }
   summary: Saved the sling design. Human review is ready; nothing has been installed.
-  next: Briefly explain the accuracy and crafting-work choice, then finish.
+  next: Briefly explain the independently selected accuracy/work parameters, then finish.
 invalid_example:
   status: needs_revision
   packetRef: example-context-2
   draft: { id: example-draft-2, revision: 1 }
   review: null
   findings:
-    - field: output.launcher.accuracy
+    - field: parameters.accuracy
       message: The supplied value exceeds this family's supported range.
-      correction: Use the current field guide and submit a corrected revision.
+      correction: Use the current installed family and submit a corrected revision.
   next: Revise the saved candidate using its exact expected revision and a new operation ID.
 uncertain_example:
   status: outcome_unknown

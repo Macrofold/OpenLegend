@@ -8,7 +8,7 @@
 
 ## 1. Purpose
 
-A player who says “I promise to gather stone” currently changes native state without any way to see it. The world records an obligation, may later mark it kept when the character gathers stone, can mark it overdue after an amended deadline and refuses new promises once 16 are unresolved. None of this is visible outside God diagnostics. This slice lets a player read their own promises truthfully: what they said, to whom, what the world actually checks and what happened.
+The delivered Journal list makes a player’s own recorded promises visible without God diagnostics: what they said, to whom, what the world actually checks and what happened. Before this slice, saying “I promise to gather stone” could create a native obligation without an ordinary inspection surface. The bundled world can mark a supported gathering promise kept after the matching action, mark it overdue after an amended deadline, and refuse to record more promises at its unresolved-commitment limit. The list does not add amendment controls or change those rules.
 
 ## 2. Supported behavior
 
@@ -33,7 +33,7 @@ The Journal gains a **Promises** section for the player's own character only.
 
 In scope: owner-only reading of open and past obligations, paged past history, honest terms and evidence, refresh after play.
 
-Not in scope: amending deadlines, cancelling, changing completion rules, promises by other characters, NPC promises in God tools (existing diagnostics remain), reciprocal agreements, broader language recognition, rewards, a new promise store, a new launcher button, automatic live updates of the list while it is open.
+Not in scope: amending deadlines, cancelling, changing completion rules, promises by other characters, NPC promises in God tools (existing diagnostics remain), reciprocal agreements, broader language recognition, rewards, a new promise store, a new launcher button, automatic live updates of the list while it is open. Extracting the current English recognition, gathering interpretation, admission tuning and explanatory wording into the bundled-world owner is a required boundary correction under BW17, not approval of broader promise semantics or work waiting on D64.
 
 ## 5. Meaningful failures
 

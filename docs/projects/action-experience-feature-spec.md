@@ -1,17 +1,17 @@
 # Action records and learned activities — feature specification
 
-| Status    | Current progress                                                                                                                  | Last updated         |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| Completed | The accepted behavior matches reviewed current methods, output bindings and retained history; broader extensions remain separate. | 2026-10-14T08:15:16Z |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The initial native and typed-learning implementation is delivered; the generative action-description acceptance remains open in AE03. | 2026-10-15   |
 
-**Status: accepted initial scope implemented; qualification is recorded in [verification](../../verification/action-experience.md).** [Project](action-experience.md) records baseline and authorization; [current behavior](../../action-experience.md) owns the shipped contract. The cases below remain acceptance requirements, not promises of unsupported new physical families.
+**Status: initial delivery and September 28 qualification are retained; [AE03](../maintainers/action-experience.md#ae03--compact-english-and-remaining-work-views) is reopened for the generative action-description caller.** [Project](action-experience.md) records baseline and authorization; [current behavior](../action-experience.md) owns the shipped contract. The cases below remain acceptance requirements, not promises of unsupported new physical families.
 
 ## Maintained records
 
-- Implementation and acceptance: [AE01–AE10](../../maintainers/action-experience.md).
-- Limits and constraints: [AEL inventory](../../limits/action-experience.md), consuming existing cognition, memory and execution budgets.
+- Implementation and acceptance: [AE01–AE10](../maintainers/action-experience.md).
+- Limits and constraints: [AEL inventory](../limits/action-experience.md), consuming existing cognition, memory and execution budgets.
 - Mechanism: [technical design](action-experience-tech-design.md).
-- Existing authority: [action capabilities](../../action-capabilities.md), [agency](../../agent-agency.md), [knowledge](../../knowledge.md), [memory](../../memory-architecture.md).
+- Existing authority: [action capabilities](../action-capabilities.md), [agency](../agent-agency.md), [knowledge](../knowledge.md), [memory](../memory-architecture.md).
 
 ## Purpose and required experience
 
@@ -83,7 +83,7 @@ Equivalent matches may overlap during discovery, but a chosen executable tree pe
 
 A reused sequence links inputs to the actual committed outputs of earlier steps, including newly crafted weapons and ammunition. It does not require the original historical items again. The current exact compatibility description covers the whole selected module manifest; changes to any included definition can make a learned method unavailable even when its steps do not use that definition. Compact storage preserves those dependencies under the existing record allowance rather than raising it.
 
-Completed/cancelled sequences and terminal watches preserve their validated history after support is removed. Active, suspended and other resumable work still require current exact support; retaining an old result grants no new attempt. [Current execution and storage](../../action-experience.md#selected-execution-and-inspection) and [October 14 evidence](../../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) own details and qualification. These corrections fulfill output continuity and truthful history without adding gameplay capabilities.
+Completed/cancelled sequences and terminal watches preserve their validated history after support is removed. Active, suspended and other resumable work still require current exact support; retaining an old result grants no new attempt. [Current execution and storage](../action-experience.md#selected-execution-and-inspection) and [October 14 evidence](../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) own details and qualification. These corrections fulfill output continuity and truthful history without adding gameplay capabilities.
 
 ## Journeys and difficult cases
 
@@ -138,4 +138,4 @@ Stages follow the [project sequence](action-experience.md#delivery-sequence). Th
 
 ## Decisions and tradeoffs
 
-Following the September 28 owner correction, compact English with optional nested brackets is the required presentation direction. Internal typed records provide exactness without making the model read those records. JSON is only a last resort for otherwise unrenderable permitted detail, and cannot expose internal metadata. Brevity must preserve clear targets, actual effects and important uncertainty. A composite may be coherent through selected purpose without a proven causal chain. Reusing a shared definition is separate from learning it personally. Reflection scheduling and processing budgets may defer learning, but cannot rewrite what happened. These are delivered contracts for the accepted initial scope; illustrative physical families remain unsupported until their own implementation and qualification.
+Following the September 28 owner correction, compact English with optional nested brackets is the required presentation direction. Internal typed records provide exactness without making the model read those records. JSON is only a last resort for otherwise unrenderable permitted detail, and cannot expose internal metadata. Brevity must preserve clear targets, actual effects and important uncertainty. A composite may be coherent through selected purpose without a proven causal chain. Reusing a shared definition is separate from learning it personally. Reflection scheduling and processing budgets may defer learning, but cannot rewrite what happened. These are the accepted initial contracts. The tracker distinguishes delivered mechanisms and recorded evidence from the reopened generative presentation gap; hypothetical witness mechanics are still not shipped capabilities.

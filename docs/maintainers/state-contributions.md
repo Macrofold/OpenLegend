@@ -10,8 +10,8 @@ Implementation was authorized September 26, 2026 in the [five-project execution 
 
 ## Execution notes — September 26, 2026
 
-The implementation is on `codex/foundations-1-5`, based on `ce7ef555`.
-Current owner extraction and native integration cover these paths:
+The following owner map and measurements describe the September 26 implementation on `codex/foundations-1-5`, based on `ce7ef555`, now integrated. They are historical evidence, not a second current body-policy contract: [world-configured survival](../worlds/base/survival.md) and [status effects](../status-effects.md) own the subsequently delivered body and effect rules. Current verification uses PostgreSQL only.
+The original owner extraction and native integration covered these paths:
 
 | Value or behavior             | Single owner and current consumers                                                                                                                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -26,7 +26,7 @@ Current owner extraction and native integration cover these paths:
 
 Named resource phases evaluate proposal groups against one start state and a shared
 availability ledger; only accepted groups contribute writes. Native sequential phases
-retain their order. The compatibility charge family retains continuous numbers;
+retain their order. The native charge family retains continuous numbers;
 holds on a continuously draining recipient are explicitly unsupported until a family
 defines depletion arbitration. Supply holds and integer stock holds are supported.
 This restriction prevents native drain from silently spending promised stock.
@@ -82,7 +82,7 @@ reducing finite supply. Final compound resource/object/authority scenarios, sour
 ## SC04 — Real stock consumers and precision continuity
 
 - [x] Adapt charge replenishment and one existing native finite-resource consumption path. Preserve current cancellation/work outcomes and resource definitions.
-- [x] Establish exact quanta for newly admitted conserved families; inspect existing values before conversion, preserve fractional carry and refuse silent rounding/reset.
+- [x] Preserve whole-unit item/gathering precision and native continuous charge, including fractional holds; refuse silent rounding or reset. The original precision audit did not introduce a generic quantized-rate/carry representation. A new precision family requires a real consumer and explicit owner semantics, not legacy-save conversion.
 - [x] Exercise depletion, full recipient, own/other reservations, pause, variable elapsed partitions, source loss and restart. Retain actual transferred amounts.
 
 **Dependencies:** SC03. **Exit:** ordinary actor/player actions execute through the protocol, including contested partial fulfillment. P2's two-human proof may use this interface before P3's object model ships.

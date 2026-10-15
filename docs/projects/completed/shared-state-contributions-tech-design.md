@@ -6,7 +6,9 @@
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](shared-state-contributions-feature-spec.md) owns behavior; [SC01–SC08](../../maintainers/state-contributions.md) owns detailed work and evidence. Parent ownership remains EWF02–03, INV-6.3, EWF07/SL00 and production data. Read [the five-project map](foundations-1-5.md) for the pinned baseline and cross-project order.
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](shared-state-contributions-feature-spec.md) owns behavior; [SC01–SC08](../../maintainers/state-contributions.md) owns detailed work and evidence. Parent ownership remains EWF02–03, INV-6.3, EWF07/SL00 and production data. Read [the five-project map](foundations-1-5.md) for the pinned baseline and cross-project order.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## Current implementation — October 14, 2026
 
@@ -41,7 +43,7 @@ Estimated implementation envelope is roughly 1,500–3,500 production logic line
 
 Use exact definition/version/digest references already owned by declarations. Display names are never keys. A state address is world/entity plus registered state family/key, with exactly one resolved provider. A resource address additionally identifies the semantic resource and unit/quantum pin. Equal units alone are insufficient for transfer compatibility.
 
-Illustrative internal contracts, not a new public protocol:
+Historical illustrative contracts, not runtime types or a new public protocol:
 
 ```ts
 type StateRead<T> =
@@ -76,17 +78,17 @@ interface AtomicEffectGroup {
 }
 ```
 
-Each union branch has a strict codec and service-specific semantic validator. Do not implement `SupportedOwnerOperation` as arbitrary paths or callbacks. Start with existing numeric stock changes, source/recipient transfers and existing capability-block contributions. Category initialization/edit remains the category owner; it is not numeric addition. Reserve editor replacement as a separate authorized operation, never a client-selected override priority.
+The delivered [resource owner](../../../packages/domain/src/resource-claims.ts) uses `ResourceOperation.amount`, exact definition pins and `ResourceStock.precision` (`whole` or `native-continuous`), rather than the sketch’s `amountQuanta` field or another parallel schema. Each current union branch has a strict codec and service-specific semantic validator. Do not implement `SupportedOwnerOperation` as arbitrary paths or callbacks. Start with existing numeric stock changes, source/recipient transfers and existing capability-block contributions. Category initialization/edit remains the category owner; it is not numeric addition. Reserve editor replacement as a separate authorized operation, never a client-selected override priority.
 
 The server supplies current world/timeline, control/grant generations and source provenance. The pure domain receives an already bound authority context but still validates current mechanical inputs. A model cannot invent a reservation, source identity or stacking group that grants access.
 
 ## 4. Number, unit and conservation rules
 
-New discrete/conserved resource families use nonnegative integer quanta with a pinned scale and checked safe arithmetic. Validate each input and every sum/product; do not rely on SQL integer range when TypeScript arithmetic has already lost precision. Wire quantities remain validated numbers within the safe range; larger scales require a separately implemented decimal/string codec rather than silently accepting them.
+The delivered item and gathering ports use whole units (scale one) and checked safe arithmetic; reservoir attributes and sources retain native continuous numbers. Each port’s exact definition pin fixes its resource meaning. New discrete/conserved families need a declared scale and safe arithmetic at their owner boundary when a real consumer requires them; this project did not deliver an unused general fixed-point framework. Wire quantities remain bounded validated numbers. A larger representation would need its own supported codec, not a silent precision loss or a compatibility alias.
 
-Native health/fullness/energy retain their current numeric representation and rounding during owner extraction. They are not automatically reclassified as fungible conserved matter. Existing charge definitions require an explicit precision audit before conversion. A migration must preserve any fractional remainder in the owning representation or refuse a lossy conversion with the original world intact; it cannot round away stock to simplify a new table. SC04 owns this inspected conversion and its current-state comparison.
+The extraction preserved native health/fullness/energy and fractional charge rather than reclassifying every number as fungible conserved matter or rounding stock to fit a new table. SC04’s evidence includes exact 17.125-unit holds and native recharge. This was a precision-preserving implementation decision, not a requirement for future save conversion; the root development policy controls current-format support.
 
-For admitted rates, integrate by simulation elapsed time with a saved fractional carry in the resource owner. Cap integration at the next depletion/capacity/lifetime boundary. Save `lastIntegratedSimTime`, rate pin and remainder with the process/stock transition. Carry does not reset on pause, tick subdivision or restart. Conversion between different resources requires an explicit native conversion policy with ratio, output/waste/source semantics and supported rounding; the first same-resource transfer does not implement a general chemical solver.
+Current [replenishment](../../../packages/domain/src/kernel.ts) computes the continuous requested transfer from the admitted rate and elapsed action time, caps it through the resource owner, and records the actual transferred amount and remaining action time. It does not add the draft’s generic `lastIntegratedSimTime`/fractional-carry record or a second timer. A future quantized-rate family must preserve its own remainder across pause, subdivision and restart. The [elapsed-time contract](../../simulation-time.md) owns current integration boundaries. Conversion between different resources would require an explicit native policy with ratio, output/waste/source semantics and supported rounding; the same-resource transfer does not implement a general chemical solver.
 
 A source operation is explicit and separately authorized. Creator conjuring stays in INV's existing confirmation/receipt path. Declaring a magical source cannot mint real credits, access grants or storage capacity.
 
@@ -147,7 +149,7 @@ Actor/context/UI projections expose only authorized current state and causes. Ra
 
 [SC01–SC08](../../maintainers/state-contributions.md) contains task bodies, dependencies and exits. Deliver in order: baseline/provider map; owner extraction; atomic claims; native resource consumers; active contributions; persistence/lifecycle; scoped surfaces/invention bridge; integrated qualification. P2 can consume the stable transfer interface before all authoring surfaces exist; P3 replaces the lot/placement adapter without redefining claims.
 
-Qualification must compare matched wilderness traces, exercise both SQLite and PostgreSQL commits, and run disposable native scenarios with zero provider budget. Cover every failure boundary before/after receipt publication, repeated cancellation, overlapping blocks, cap/depletion, save between reservation and consumption, source retirement, stale callbacks and fractional integration under different step partitions. Browser evidence verifies current values and truthful partial outcomes. Do not author/run automated suites under the default delegated workflow; record deferred regression work and retain CI requirements.
+The original qualification compared matched wilderness traces and exercised both then-supported SQLite and PostgreSQL commits with zero provider budget. Current database checks use PostgreSQL only under the root verification policy. Cover every failure boundary before/after receipt publication, repeated cancellation, overlapping blocks, cap/depletion, save between reservation and consumption, source retirement, stale callbacks and fractional integration under different step partitions. Browser evidence verifies current values and truthful partial outcomes. Do not author/run automated suites under the default delegated workflow; record deferred regression work and retain CI requirements.
 
 Measure work per admitted group, claim/active-instance counts, mutation wait and commit tail latency, allocation rate, queue age and payload size under the existing mixed workload. An isolated charge benchmark does not establish the first-release player/world capacity.
 

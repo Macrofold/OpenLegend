@@ -6,7 +6,9 @@
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 ## Current implementation — October 14, 2026
 

@@ -10,7 +10,7 @@ Authorized scope: retain committed review fixes; resolve all existing typecheck 
 
 ## Design and owners
 
-- WorldRecords/SqlWorldStore own durable records and the accepted comparison baseline. Cold placement must never appear as deletion, change source identity, or reset list ordering. Full reconstruction remains explicit for backup/export and legacy migration.
+- WorldRecords/SqlWorldStore own durable records and the accepted comparison baseline. Cold placement must never appear as deletion, change source identity, or reset list ordering. Full reconstruction remains explicit for supported backup/export and current-format recovery; legacy migration was part of the historical implementation, not a retained requirement.
 - WorldService owns serialized hydration, mutation and commit. Keep recent evidence and live commitments in the working set; fetch inactive actor evidence for operations that require it, then release it after publication. SQL recall/editor reads retain access to every eligible source. Save/restore captures complete durable state.
 - Cognition maintenance must fetch its source inputs from durable history and revalidate against current sources at publication. Moving data does not introduce semantic expiry or reduce protected evidence.
 - Domain remains deterministic and I/O-free. Preserve perception outcomes, event order, RNG, recipient privacy and individual evidence; optimize repeated identity/perception/copy work rather than dropping observations.

@@ -15,7 +15,7 @@ Mike authorized merging local engineer branches into local `main`, including ada
 - Local `main` starts at `9eb80973`, containing Engineer 1's `1f8fba49` delivery.
 - Engineer 2's source is `oct2-eng-2` at `7530abd9`.
 - Engineer 3's source is local `oct2-eng-3` at `b3c69a8e`, integrated after Engineer 2's merge commit `700ea7b1`.
-- Remain on `main`, preserve the source branches and their other worktrees, and do not push.
+- The authorization for those two local merges was to remain on `main`, preserve the source branches and their other worktrees, and not push. It is not a standing checkout or publication instruction for later tasks.
 
 ## Reconciliation and responsibilities
 

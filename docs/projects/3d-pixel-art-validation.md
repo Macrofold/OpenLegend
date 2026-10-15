@@ -61,7 +61,7 @@ These are required scenario outcomes. Select focused existing checks or manual s
 | Q02 | Replace a representation while moving across a ramp/support seam               | Feet, support, heading and actual route remain coherent; no body teleport or nav rebuild                        |
 | Q03 | Replace while holding/equipping/containing a real item                         | Exactly one item and correct placement/quantity; current attachment state wins                                  |
 | Q04 | Receive corpse art after harvesting/removal                                    | No resurrection, duplicate effect, old pose or phantom picker                                                   |
-| Q05 | Publish a model without the required current animation/state                   | Keep the compatible representation or approved state fallback; no silent loss of readability                    |
+| Q05 | First publication or replacement lacks the required current animation/state    | Retain adequate permitted prior/fallback art; without one, keep the new capability unready                      |
 | Q06 | Change appearance brief/style/physical profile while generation runs           | Exact stale/incompatible candidate rejection; unrelated ticks do not cause spurious rejection                   |
 | Q07 | Duplicate demand, double submit, reconnect and restart                         | Same durable work/receipts; no duplicate generation or publication                                              |
 | Q08 | Lose a provider admission response or cancel after dispatch                    | Uncertainty and financial reserve survive; no automatic paid retry/fallback                                     |
@@ -81,6 +81,8 @@ These are required scenario outcomes. Select focused existing checks or manual s
 | Q22 | Instance with nonhuman articulation and touch-only policy                      | Same rendering contracts without human/sight assumptions or invented actuator mechanics                         |
 | Q23 | Publish/rollback concurrently from two creator sessions                        | Expected-revision conflict, no last-write-wins overwrite of newer approved work                                 |
 | Q24 | Read current job status through ordinary player/NPC context                    | Only permitted art readiness; no private prompts, creator intent, hidden inventions or automatic fiction events |
+
+Q05 follows [minimum presentation adequacy](../invention-art-pipeline.md#21-adequacy-versus-polish), not a requirement to wait for optional polish. Qualify existing-fallback success separately from the no-adequate-fallback refusal. Run the relevant scenarios for each selected family; a first rigid-item proof does not need every humanoid, animal or construction case, and does not qualify them.
 
 Reuse corresponding SW/INV/PO/save evidence where unchanged; do not close broader parent tasks merely because one visual consumer passes.
 
@@ -106,8 +108,8 @@ An attractive single object is not evidence for arbitrary constructions or creat
 
 ## 7. Evidence record and decision rule
 
-For each slice, retain commit/source baseline, exact feature/profile/asset versions, scenario, actor/audience scope, hardware/settings, expected/observed result, actual measurement method, recordings or bounded logs, provider receipts where applicable, failures, and remaining uncertainty. Use disposable worlds and the existing verification owners; do not store private world snapshots, credentials, or copyrighted reference art in public evidence.
+For each slice, record commit/source baseline, exact feature/profile/asset versions, scenario, actor/audience scope, hardware/settings, expected/observed result, actual measurement method, provider-cost/receipt summary where applicable, failures, and remaining uncertainty in the appropriate authored topic report. Keep generated recordings, screenshots, traces, logs and raw provider receipts outside Git unless Mike explicitly requests those artifacts, under [verification report ownership](../../.agents/rules/documentation.md#verification-reports). Use disposable worlds; do not expose private world snapshots, credentials, private provider payloads or unlicensed reference art in evidence.
 
 Advance the visual direction when the moving scene is compelling, identity/interaction depiction remains truthful, critical lifecycle/privacy/spending scenarios pass for that slice, and measured authoring/runtime costs support expansion. Otherwise narrow the family, improve the art/profile, or retain sprites. Bulk conversion is not the default response to an inconclusive experiment.
 
-At this documentation baseline, no Q scenario, graphics profile, provider route, target device, performance target, or art family is newly qualified. [V3D delivery](../maintainers/3d-pixel-art.md) retains all runtime gates as open.
+The original proposal did not qualify a Q scenario, profile, provider route, target device or art family. The later [mercenary pilot evidence](../verification/mercenary-default.md) records actual fixed-asset rendering, lifecycle/failure and local performance checks. Reuse those observations only for matching contracts and workloads; they are not a complete Q01–Q24 matrix or general family, generated-art, device or crowd qualification. [V3D delivery](../maintainers/3d-pixel-art.md) retains the corresponding broader gates. This documentation reconciliation ran no new visual, native or provider experiment.

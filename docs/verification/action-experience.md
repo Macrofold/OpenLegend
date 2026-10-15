@@ -1,6 +1,6 @@
 # Action records and learned activities verification
 
-September 28, 2026, local `main` at `adb52c73f797690edaea41bf9723e13ea433fa3a` plus the AE working diff. Node 22.23.2, local PostgreSQL, disposable worlds/databases and isolated ports 3271/3272. No real save was reset. [Current behavior](../action-experience.md), [AE tasks](../maintainers/action-experience.md), [accepted AXE scenarios](../projects/completed/action-experience-feature-spec.md#acceptance-scenarios) and [limits](../limits/action-experience.md) retain separate ownership.
+September 28, 2026, local `main` at `adb52c73f797690edaea41bf9723e13ea433fa3a` plus the AE working diff. Node 22.23.2, local PostgreSQL, disposable worlds/databases and isolated ports 3271/3272. No real save was reset. [Current behavior](../action-experience.md), [AE tasks](../maintainers/action-experience.md), [accepted AXE scenarios](../projects/action-experience-feature-spec.md#acceptance-scenarios) and [limits](../limits/action-experience.md) retain separate ownership.
 
 ## Workload and interpretation
 

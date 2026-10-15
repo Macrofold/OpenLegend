@@ -28,7 +28,7 @@ The fixed parent meaning, two-parent rule and relationship wording belong to thi
 
 ## Feelings
 
-[Bundled appraisal definitions](../../../packages/domain/src/worlds/base/appraisals.ts) supply fear/discomfort, persistent grief, condition-sustained restlessness and recurring calm examples. Only the compatibility damage reactions run by default: positive strike damage and projectile contact from an actually identified shooter map to fear; supported negative body-health effects map to discomfort. Numeric pacing belongs to the [world defaults inventory](../../limits/base-world.md#bw02) and [decay entry](../../limits/feelings.md#la081).
+[Bundled appraisal definitions](../../../packages/domain/src/worlds/base/appraisals.ts) supply fear/discomfort, persistent grief, condition-sustained restlessness and recurring calm examples. Only the existing world-authored damage reactions run by default: positive strike damage and projectile contact from an actually identified shooter map to fear; supported negative body-health effects map to discomfort. Numeric pacing belongs to the [world defaults inventory](../../limits/base-world.md#bw02) and [decay entry](../../limits/feelings.md#la081).
 
 Installed definitions are not automatic actor enrollment. Kinship and personality prose do not cause grief or enroll restlessness/calm processes by themselves. A valid admitted cause/process is required. Feelings can persist, expire, decay or follow a supported enduring condition through the native owner; they do not force a human's choices.
 
@@ -48,7 +48,7 @@ For example, “I promise to gather berries” can bind the installed berries de
 
 `POST /api/commitment` can amend the current actor's existing obligation using its expected revision, including cancellation, a future/current deadline or a supported completion binding. Invalid/stale requests reject. Permitted God mind diagnostics publish commitment summaries. The player's Journal has a read-only **Promises** list of their own obligations: exact words, recipient as they know them, status, a plain statement of what this world checks automatically (only the gathering form) and fulfillment evidence. It offers no amendment or cancellation; that waits for [D64](../../../archive/05-project/open-decisions.md#social-exposure-decisions). Native fulfillment/overdue/cancellation state is distinct from an actor merely claiming success.
 
-The English parser and gathering interpretation currently live beside reusable obligation state in the general domain module. Their semantic home is this bundled-world contract. [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) calls for extracting policy when that slice needs it, reusing the existing mutation owner rather than adding another promise store. A world with ritual vows or negotiated contracts can differ without changing engine evidence and revision integrity.
+The English parser and gathering interpretation currently live beside reusable obligation state in the general domain module. Their semantic home is this bundled-world contract. The admission cap, server-rendered gathering terms and client recognition help also remain outside that owner. [BW17](../../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) tracks this current boundary defect: extract the existing policy and wording without waiting for new promise language or amendment controls, reusing the existing mutation owner rather than adding another promise store. A world with ritual vows or negotiated contracts can differ without changing engine evidence and revision integrity.
 
 ## Offering and accepting possessions
 
@@ -60,6 +60,8 @@ The parties receive the exact offered terms through the existing native disclosu
 - **Gift:** omitting the requested side retains a one-way gift. Enough free units must remain, but using a different unit from a sufficiently large offered stack does not alone invalidate the gift. Reciprocal terms additionally require unchanged item and placement revisions on both sides.
 - **Final checks:** offering needs sight and arm's reach. Accepting needs mutual sight/reach, living active participants, accessible custody, free quantities and no conflicting work or claims. Bags and individual objects move whole. Bag contents, including nested changes, must still match; access grants must be cleared before offering a bag. The object owner validates final combined packing and placement before changing either side. Reciprocal moves keep distinct lots rather than merging one promised source into the other; ordinary gifts retain their existing merge behavior.
 - **No-transfer endings:** the recipient can decline and the proposer can withdraw. Both require current terms. Unanswered offers expire; changed/unavailable goods or participants lapse at the next simulation moment. Reach loss blocks acceptance without itself transferring or reserving goods. Native failure or storage rollback commits neither side nor a success receipt.
+
+Moving custody preserves existing declared ownership. Receipt of an offered item alone grants no general title transfer or construction/alteration rights.
 
 Gifts still work in the familiar way: Mike can hold out two Wild berries to Ada; only her acceptance moves them. Ignoring, declining or withdrawing moves nothing. If fewer than two free berries remain, acceptance says “The offered items are no longer available.” The native check also verified that eating one different berry from a six-unit stack leaves that two-unit gift valid.
 
@@ -75,7 +77,7 @@ Direct deposit into another person's carried inventory is refused ([items](items
 
 ## Delivery and evidence
 
-Current surfaces are summarized in [gameplay availability](../../../archive/05-project/implementation-status.md#gameplay-availability). Family UI, promise management and process authoring are future tasks, not delivered by this documentation pass. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; the reciprocal-barter and missing-belonging reports above qualify only their selected native, database, client and controlled live journeys.
+Current surfaces are summarized in [gameplay availability](../../../archive/05-project/implementation-status.md#gameplay-availability). The creator family editor and owner-only read-only Promises list are delivered within their recorded scopes. Promise amendment/cancellation controls and general feeling-process authoring remain future work; this review does not implement or qualify them. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; the reciprocal-barter and missing-belonging reports above qualify only their selected native, database, client and controlled live journeys.
 
 ## Maintained records
 

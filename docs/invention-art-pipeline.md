@@ -2,6 +2,8 @@
 
 **Status: accepted target design.** This document owns staged runtime asset production, the presentation contract, review/publication, and compatibility with mechanical revisions. It refines the accepted [visual direction](../archive/03-design-proposals/visual-direction.md#art-generated-during-play); that document retains artistic goals and immediate-state presentation intent. [Hybrid art methods](../archive/03-design-proposals/procedural-art-and-animation.md) owns procedural composition, rigs, pixel density, and rendering choices. [Invention foundation](invention-foundation.md) owns project coordination; [INV](maintainers/inventions-and-world-evolution.md) owns implementation and acceptance.
 
+The [progressive 3D pixel-art proposal](projects/3d-pixel-art-feature-spec.md) and its [generation/publication design](projects/3d-pixel-art-asset-pipeline.md) develop a possible implementation of this contract. They do not replace its mechanical, approval, funding or privacy boundaries. The separate [bundled mercenary pilot](projects/completed/mercenary-scene-pilot.md) is delivered fixed-asset presentation, not evidence that runtime generation, general rig families or safe arbitrary representation replacement are implemented.
+
 ## 1. Purpose and non-negotiable behavior
 
 An invention created during play needs a useful representation without blocking native action resolution, survival, crafting, harvesting, or the simulation clock. It can start with a truthful fallback, gain a rough identity-specific asset, and later receive refined art, directions, or animation. Not every invention needs every stage or any new art.
@@ -155,7 +157,7 @@ Faithful depiction, state variants, and improved art do not consume a second pla
 
 ## 10. Retention, saves, and packs
 
-Retained worlds and saves pin the necessary definition and presentation dependencies. Approved artifacts cannot disappear merely because a model run, temporary URL, or workspace expires. Missing content on load must follow the save compatibility/fallback policy; do not silently buy regeneration.
+Retained worlds and saves pin the necessary definition and presentation dependencies. Approved artifacts cannot disappear merely because a model run, temporary URL, or workspace expires. Missing content on load follows the [current-format save/load contract](save-and-load.md) and the family’s declared adequate fallback, without silently buying regeneration or dropping required dependencies. This target does not authorize legacy asset/save readers or conversions under the [development compatibility policy](../AGENTS.md#development-save-policy). Supported live presentation revisions retain their separate dependency and publication checks.
 
 A saved preferred binding can be restored only where compatible with current external rights/privacy and safety restrictions. Old-generation jobs cannot publish into the restored timeline. Historical art candidates may remain in authorized project history but are not automatically current.
 
@@ -181,6 +183,6 @@ Current authoring records presentation separately from mechanical admission. Sup
 
 ## Maintained records
 
-- Implementation: [World Agent delivery, WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design), with broader INV owners retained above.
-- Limits and constraints: [Invention/context bounds](limits/inventions.md#world-agent-context-proposal).
+- Implementation: [Staged art delivery, INV-12](maintainers/inventions-and-world-evolution.md#inv-12--progressive-in-game-art-and-compatible-publication) and its proposed [3D-pipeline child work, V3D07–V3D10](maintainers/3d-pixel-art.md). [WW18–WW23](maintainers/world-agent-writes.md#context-and-invention-loop-design) owns the finite native-readiness foundation, not completion of generated art.
+- Limits and constraints: [Invention/context bounds](limits/inventions.md#world-agent-context-proposal) and the proposed [3D asset envelopes](limits/3d-pixel-art.md); the latter explicitly separates the delivered fixed-model pilot from unimplemented generation limits.
 - Related contract: [Invention coordination and preparation](invention-foundation.md).

@@ -38,23 +38,11 @@ The browser uses the shared `getScoped` and `post` request helpers, carrying its
 
 The actor-scoped read surface is `GET /api/world-events?type=speech&limit=50&cursor=...`. Its batched detail route, `POST /api/world-events/sources`, accepts `{ references: WorldEventSourceReference[] }` with one or two observer-bound references. The application-issued token binds the observer/world/timeline scope, source family, source ID and revision. Forged, cross-actor or stale-timeline references are refused without exposing another observer's records. A valid reference whose retained evidence is unavailable returns an explicit unavailable result. Results preserve request order, including unavailable entries. Both endpoints use the existing history and experience repositories; they are not a new event system.
 
-Bind world, controlled actor and authorization on the server. The client cannot request another actor's experience by choosing an actor ID. Validate type filters against allowed registered types; bind filter values in SQL rather than interpolating them. Omit type for All.
+Both endpoints bind authenticated account/observer scope and recheck current timeline, evidence and access after asynchronous reads; they do not change Talk or grant a second event authority.
 
-A conceptual result is:
+World, controlled actor and authorization are bound on the server; the client cannot request another actor's experience by choosing an actor ID. The current route accepts a syntactically valid exact event type, binds it in SQL and returns an empty page for an unmatched type; the UI exposes its finite filter catalogue. Registration-driven discovery remains a separate extension, not current server-side catalogue validation. Omit type for All.
 
-```ts
-type PerceivedEventPage = {
-  scope: {
-    worldId: string;
-    saveTimeline: string;
-    historyEpoch: string;
-  };
-  items: PerceivedEventView[];
-  nextCursor: string | null;
-};
-```
-
-The implemented `PublicEvent` includes an observer-bound `source` where comparison is supported. `WorldEventSourceDetail` returned by the detail route is either `available` or `unavailable`. Available detail carries its current reference, recorded time/order, acquisition category/label, source label, permitted text, optional observed location, and `corrected`/`correctionNote`. Unavailable detail carries only the requested source ID and an explanation. Corrected evidence is presented as a qualified source; forgotten evidence is unavailable. The conceptual fields above are not a second wire schema: [the protocol](../packages/protocol/src/index.ts) owns the exact types. Preserve the existing occurrence identity across Talk, captions, Journal references and World Events; never serialize a raw `WorldEvent` as personal evidence.
+The current wire contract is `PerceivedEventsPage` in `packages/protocol/src/index.ts`: an `events` array of `PublicEvent`, an optional `nextCursor`, and an optional `scanLimited` flag for bounded text-search work. An absent next cursor means no further page in that read snapshot. Scope is carried by the authenticated request and bound cursor, not a second client-supplied result envelope. The implemented `PublicEvent` includes an observer-bound `source` where comparison is supported. `WorldEventSourceDetail` returned by the detail route is either `available` or `unavailable`. Available detail carries its current reference, recorded time/order, acquisition category/label, source label, permitted text, optional observed location, and `corrected`/`correctionNote`. Unavailable detail carries only the requested source ID and an explanation. Corrected evidence is presented as a qualified source; forgotten evidence is unavailable. These fields describe the existing wire schema: [the protocol](../packages/protocol/src/index.ts) owns the exact types. Preserve the existing occurrence identity across Talk, captions, Journal references and World Events; never serialize a raw `WorldEvent` as personal evidence.
 
 Use one audited evidence-to-public-view projector for hot events, paginated history and batched source details. It starts from the reader's retained event-time awareness/perspective, not from raw world text after an audience-membership check. Domain/model formatting shares the same underlying permitted content, without requiring a server UI module in the domain.
 
@@ -68,7 +56,7 @@ Apply actor authorization, forgetting/revocation, external/permitted-occurrence 
 
 Newer events arriving during older-page navigation must neither duplicate nor skip rows in that snapshot. A separate refresh supplies the new tail. Use an appropriate existing actor-perspective/order index; add a measured type-query index if plans require it. Do not scan or serialize the entire event archive to open a panel. Avoid expensive total counts; any displayed count must be actor-scoped and clearly describe its filter/retention window.
 
-An optional text search (`q`) filters the same authorized, type-filtered rows before paging. It matches only each row's permitted perspective text, the text the reader is shown, so a search adds no exposure beyond that text and can never confirm unheard words or raw payload content. (Gesture text that names a target by global name is a tracked [leak in the displayed text itself](maintainers/TODO.md#future-character-reaction-bubbles); search finds what is displayed.) Every word must match a word start. One request examines a bounded window of rows; when that window holds no more matches the response says so and the cursor continues into older history, so every retained row stays reachable without unbounded work per request ([HR06](limits/hearing-and-speech.md#hr06--history-paging-and-growth)).
+An optional text search (`q`) filters the same authorized, type-filtered rows before paging. It matches only each row's permitted perspective text, the text the reader is shown, so a search adds no exposure beyond that text and can never confirm unheard words or raw payload content. The [BW22 target-name repair](verification/camp-life.md#observer-safe-target-names-bw22) keeps targeted expression, teaching and strike/hunt shared text neutral and records each observer's own known/unknown label. Its PostgreSQL evidence covers Talk, Journal and World Events without retroactively naming earlier unknown targets; it is not full browser or provider qualification, and existing development history was not backfilled. Every word must match a word start. One request examines a bounded window of rows; when that window holds no more matches the response says so and the cursor continues into older history, so every retained row stays reachable without unbounded work per request ([HR06](limits/hearing-and-speech.md#hr06--history-paging-and-growth)).
 
 Cold-history read failure never falls back to unredacted raw events. A missing expected perspective is an explicit integrity/unavailable condition, not an excuse to show full speech. Preserve current history backpressure and storage-failure boundaries.
 

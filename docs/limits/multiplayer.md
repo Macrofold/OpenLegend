@@ -8,13 +8,13 @@ Implementation starting points: [authority.ts](../../apps/server/src/authority.t
 
 ## LA163
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-An ordinary browser API request may contain 16,384 bytes of JSON, while a world-owner editor request may contain 1,048,576 bytes.
+The browser JSON decoder permits **16,384 bytes** by default, **131,072 bytes (128 KiB)** for the exact `/api/world-agent/authoring` pathname, and **1,048,576 bytes (1 MiB)** only for `/api/god/editor/` paths. Creator permission alone does not enlarge other routes. Declared and actual bytes are checked, invalid UTF-8 is rejected, and body reading has a **10-second** deadline. The browser API also counts at most **16 MiB** of retained in-flight body chunks across requests; this accounting is not a bound on parsed objects, concatenation copies or all HTTP memory. Inner action/editor schemas retain their independent limits.
 
 **Reason / tradeoff:** Keep download/parse protection while ensuring every advertised editor operation can fit through its HTTP request limit.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Shared decoder and route limits](../../apps/server/src/http-json.ts) · [Browser request accounting](../../apps/server/src/http.ts) · [HTTP/MCP parity](../world-agent-mcp.md#local-transport-parity).
 
 Original recommendation: **Review**.
 
@@ -28,11 +28,11 @@ Default player capacity is 100; HTTP streams, service connections and scoped pro
 
 ## LA165
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-The server retains at most 64 recent incremental browser updates or 1 MiB of those updates for reconnecting clients.
+Each scoped gameplay-update channel retains at most **64** incremental update frames and at most **1 MiB** of their encoded bytes; oldest frames are removed until both limits hold. This is **per scope, not server-wide**. The number of channels is bounded by [LA164](#la164). A channel also retains its latest full permitted view, and a client outside the retained update chain receives that view as a reset. Full views, temporary diff/serialization work and socket buffers are not included in the 1-MiB update budget. Private authoring/progress streams use [their separate replaceable-snapshot owner](inventions.md#ws01--world-agent-stream-delivery), not this reconnect ring.
 
-**Reason / tradeoff:** Keep the small reconnect buffer because clients can receive a complete current-state snapshot when older updates are unavailable.
+**Reason / tradeoff:** Bound retained incremental history while allowing recovery from an old cursor. Complete-view size and aggregate projection memory still require population/workload qualification; a per-scope ring does not establish that capacity.
 
 [Implementation starting point](../../apps/server/src/http.ts).
 
@@ -40,13 +40,13 @@ Original recommendation: **Keep**.
 
 ## LA166
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-A browser live-update connection that cannot accept outgoing data is closed after 30 seconds.
+When a gameplay or private-snapshot stream reports backpressure, a **30-second** timer destroys that connection if it remains blocked. A drain clears the timer and permits sending again; this is a continuous blocked-write limit, not a total connection lifetime. Scope revocation may close it sooner. Closing a private stream does not cancel an already admitted authoring operation.
 
 **Reason / tradeoff:** Keep slow-client cleanup so one disconnected or stalled browser cannot retain server resources indefinitely.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Gameplay stream](../../apps/server/src/http.ts) · [Private snapshot stream](../../apps/server/src/private-snapshot-stream.ts).
 
 Original recommendation: **Keep**.
 
@@ -58,7 +58,7 @@ A verified foreground heartbeat expires after 12 seconds. A successful control r
 
 **Reason / tradeoff:** Keep departure detection while ensuring ordinary browser timer delays do not unexpectedly pause active play.
 
-[Implementation starting point](../../apps/server/src/ai-director.ts).
+[Presence, ordering and pause owner](../../apps/server/src/world-service.ts).
 
 Original recommendation: **Review**.
 
@@ -114,19 +114,19 @@ Sole-tab opening, reload and refocus enter automatically. Only switching between
 
 ## MP10
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Very safe.**
 
-Departure cancels actions/plans and action-occupying effects. After the grace period, the character stops physical participation, hazards and survival progression; detached property remains active.
+Beginning an exit records the pending phase and operational deadline; it does not itself cancel the current action. At committed departure after the grace period, the participation owner cancels active and suspended plans/actions, releases their held work/resources and deactivates action-occupying effects without undoing spent inputs or completed effects. The inactive body then stops physical participation, hazards and survival progression; detached property remains active. Return during the grace period and return after committed departure are distinct paths.
 
-**Reason / tradeoff:** Protect absent humans from unattended hazards while leaving detached world property alive.
+**Reason / tradeoff:** Protect absent humans after settled departure without pretending the disconnect instantly undoes ongoing activity. [Domain transition](../../packages/domain/src/participation.ts) · [Operational deadline and commit](../../apps/server/src/world-service.ts).
 
 ## MP11
 
-**Reported · Restrictiveness: Very safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Very safe.**
 
-Return tries only **the saved supported position, then one authored fallback**. It requires a standing position, clears flight/falling state, and performs no nearby-location search.
+Return **after committed inactivity** tries the saved return anchor (or current supported position when no anchor is stored), then **one authored fallback**. The first valid standing position is used and flight/falling state is cleared; no nearby-location search runs. If both candidates fail, the body remains inactive with an explicit failure. Returning from the still-pending exit instead restores active participation without relocation.
 
-**Reason / tradeoff:** Use a deterministic supported return; nearby search/airborne restoration need additional semantics.
+**Reason / tradeoff:** Use a deterministic supported return without moving a character whose departure has not committed. Nearby search or restoring airborne inactivity need separate semantics. [Implementation](../../packages/domain/src/participation.ts).
 
 ## MP12
 
@@ -156,7 +156,7 @@ The world-assistant discussion feature requires creator permission.
 
 **Current (September 28, 2026) · Restrictiveness: Safe.**
 
-Invite links are **single-use** bearer links with a 256-bit token stored only as a SHA-256 hash and shown once. Expiry is **1 hour to 30 days** (default **7 days**); a world has at most **100 pending invites**, and one character can have one pending player invite. The token survives the OIDC round trip in an HttpOnly cookie for **15 minutes**. A redeemer that already holds a grant in the world leaves the invite unused. Issuers delegate only capabilities they hold; player invites bind a living person with no current or historical human owner ([MP06](#mp06)). The console lists the newest **200** invites and **500** grants.
+Invite links are **single-use** bearer links with a 256-bit token stored only as a SHA-256 hash and shown once. Expiry is **1 hour to 30 days** (default **7 days**); a world has at most **100 pending invites**, and one character can have one pending player invite. The token survives the OIDC round trip in an HttpOnly cookie for **15 minutes**. A redeemer that already holds a grant in the world leaves the invite unused. Issuers delegate only capabilities they hold; player invites bind a living person with no current or historical human owner ([MP06](#mp06)). The console lists the newest **200** invites and at most **500** grants ordered by account ID; the grant list is not a newest-grants list.
 
 **Reason / tradeoff:** Short-lived, revocable, one-time links limit exposure of a forwarded link; bounded pending/list sizes keep the console and admission checks small. Expired or used links require a new invite. [Implementation](../../apps/server/src/invites.ts).
 
@@ -170,11 +170,11 @@ Creator maintenance allows **one scheduled or active window** per world. A start
 
 ## MP17
 
-**Current (September 28, 2026) · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-The World operations console refreshes every **5 seconds** while visible and opens no event stream. The spectator overview contains terrain and at most **2,000** bodies as generic categories with positions rounded to 0.1, sorted to remove creation order; further bodies are counted as omitted. It contains no names, identifiers, human/NPC distinction, possessions, speech or knowledge, and departed humans are absent.
+The World operations console refreshes every **5 seconds** while visible and opens no event stream. The spectator overview sends the terrain tile map and at most **2,000** world-placed bodies as generic categories with X/Z positions rounded to 0.1; further eligible bodies are counted as omitted. Retired objects and inactive humans are excluded. The selected rows are sorted by category and coordinates, but selection happens first in entity-enumeration order: sorting does not make the omitted subset independent of insertion history. The projection omits explicit names, identifiers, human/NPC distinction, inventories, speech and knowledge; public category/location patterns are not a promise of anonymity.
 
-**Reason / tradeoff:** Polling keeps operator/spectator tabs out of presence and control accounting; the overview bound caps payload size in dense worlds. Richer spectator presentation (for example a 3D camera) needs renderer support and a privacy decision. [Implementation](../../apps/server/src/operations-routes.ts).
+**Reason / tradeoff:** Polling keeps operator/spectator tabs out of presence and control accounting. The body-row limit does not bound the complete payload or preparation: terrain is sent separately and constructing a new overview enumerates all entities before caching it for the current service revision. Larger maps/populations and richer spectator presentation need explicit work/payload and disclosure qualification, not a claim that 2,000 rows bounds all costs. [Implementation](../../apps/server/src/operations-routes.ts).
 
 ## AU01
 
@@ -250,13 +250,13 @@ OIDC mode judges the game's public address and the login service separately. HTT
 
 ## PB13
 
-**Reported · Restrictiveness: Safe.**
+**Current — source inspected October 6, 2026 · Restrictiveness: Safe.**
 
-Login provider subject: **512 characters maximum**.
+A **configured startup binding** limits its provider subject to **512 characters**. This is not a universal login-identity bound: verified OIDC callback identities require a nonempty string, and the account repository stores that verified subject without applying the startup binding schema. Provider verification, subject identity and configuration length validation have separate owners.
 
-**Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
+**Reason / tradeoff:** Bound operator-supplied startup configuration without misrepresenting it as a limit enforced on every authenticated account. Any additional identity-input rejection needs a concrete consumer/risk under the root validation policy, not a duplicate configuration check.
 
-[Implementation starting point](../../apps/server/src/authentication.ts).
+[Startup binding and account storage](../../apps/server/src/authority.ts) · [Verified callback](../../apps/server/src/authentication.ts).
 
 ## PB14
 

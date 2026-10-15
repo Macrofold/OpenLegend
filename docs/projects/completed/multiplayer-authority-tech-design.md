@@ -6,7 +6,9 @@
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
 
-The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
+**Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
+
+The original source audit and staged plan below describe the completed September 26 foundation. The [current reading guide](foundations-1-5.md#current-reading-guide) identifies later policy and verification owners; these stages are not a new backlog.
 
 **Implemented 2026-09-26.** The [foundation verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records the agreed slice. Source-audit tables and conversion stages below describe the pre-implementation design. Historical SQLite and migration portions were superseded by the PostgreSQL-only runtime on 2026-09-27 and the controlling [development policy](../../../AGENTS.md#development-save-policy); they do not authorize compatibility work. Current feature contracts and focused trackers own later extensions.
 

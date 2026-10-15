@@ -14,6 +14,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Chosen camp supplies and fire watches](camp-routines.md) — implemented finite methods and explicitly selected one-session care; uncoached/live integration remains open, with no automatic goals or learned conditional policies.
 - [Light canopies and useful shelter](editable-shelters.md) — implemented flat one/two-bay canopies, a single-bay lean-to, reversible work and nonpunitive moisture; wider homes and scale qualification remain open.
 - [Sling handling, practice and coaching](practical-competence.md) — implemented finite competence gain, real quiet practice and voluntary instruction; human appreciation and broader stat proposals remain open.
+- [Manufactured cordage](items.md#cordage-manufacture-and-reuse) supplies the delivered binding-material family and verified container reuse; this does not imply unrestricted invented-input composition.
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
@@ -53,7 +54,7 @@ God-mode **Add something** groups the creation catalogue into **Items**, **Actor
 
 Known items include installed generated definitions. A resource source such as a berry bush is Environment; the harvested berries are Items. “Object” is the general term, not another overlapping menu category.
 
-Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecycle-and-protection.md) (accepted targets; BW13–BW15).
+Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecycle-and-protection.md) distinguish delivered departure/return from remaining conflict and ghost work under BW13–BW15; they are not one undelivered feature.
 
 ## Maintained records
 

@@ -8,16 +8,16 @@
 
 ## Scope and baseline
 
-Integrate the complete hearing branch, including review and performance fixes, with current main; reconcile code, accepted contracts, documentation and tracking before recommending merge. Source: `c4379246b8db98974de319e1f5315439ac8176bd` (`feat/hearing-speech-captions`), retained at `codex/hearing-before-main-20260926`. Base: freshly fetched `Macrofold/OpenLegend` `origin/main`, initially `f551e3d8`, refreshed to `a39311dc`. The source contributes about 5,000 added and 800 removed lines across 85 files; cross-layer privacy, immutable-state, persistence and scheduling overlap makes this high-risk work.
+The original task integrated the complete hearing branch, including review and performance fixes, with the then-current main, reconciling code, accepted contracts, documentation and tracking before recommending merge. Source: `c4379246b8db98974de319e1f5315439ac8176bd` (`feat/hearing-speech-captions`), retained at `codex/hearing-before-main-20260926`. Base: freshly fetched `Macrofold/OpenLegend` `origin/main`, initially `f551e3d8`, refreshed to `a39311dc`. The source contributes about 5,000 added and 800 removed lines across 85 files; cross-layer privacy, immutable-state, persistence and scheduling overlap makes this high-risk work.
 
-The local `codex/hearing-main-integration` branch consolidated the source's final tree into one replay commit, preserving the original published history and backup. The final working branch is `codex/hearing-ready-for-main`; its refreshed base and follow-up reconciliation are recorded below. Rebase this commit onto the selected base without modifying main or force-pushing the published branch. Temporary transfer commits have no independent runtime behavior to carry into the final history.
+The local `codex/hearing-main-integration` branch consolidated the source's final tree into one replay commit, preserving the original published history and backup. The final working branch is `codex/hearing-ready-for-main`; its refreshed base and follow-up reconciliation are recorded below. That replay preserved main and the published source branch; it is not an operation to perform again. Temporary transfer commits have no independent runtime behavior to carry into the final history.
 
 ## Owners and invariants
 
 - HE01–HE05: [hearing delivery](../maintainers/hearing-and-speech.md); accepted [hearing](../hearing-and-speech.md), [captions/lifetimes](../timed-ui.md), [perceived events](../perceived-world-events.md).
 - PF03/PF09, SW08 and the cadence/spatial integration: native work, exposure invalidation, deadlines and performance; preserve newer main ownership when it supersedes an older optimization.
 - CR/NC/EPR: only listener-permitted evidence reaches history, recall, embeddings, responses or narration. Preserve source revisions, forgetting, authority and asynchronous publication fences.
-- SL/production-data: current relational records, scoped cold history, atomic commits, recovery and current-format restore. Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). The integration retained existing runtime conversions and never re-heard historical utterances or reset worlds.
+- SL/production-data: current relational records, scoped cold history, atomic commits, recovery and current-format restore. Development compatibility follows the [root policy](../../AGENTS.md#development-save-policy). The historical integration retained then-existing conversions and never re-heard utterances or reset worlds. Residual conversion cleanup belongs to DF04 under the root policy, not to continued hearing compatibility.
 - Client/protocol: retain current motion/rendering, authentication and UI behavior while adding volume, captions and perceived history. Public DTOs disclose no hidden speech or source coordinates.
 
 ## Execution and completion

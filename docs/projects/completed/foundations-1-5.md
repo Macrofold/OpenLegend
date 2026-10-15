@@ -6,6 +6,14 @@
 
 **Historical implementation record.** The September 26 delivery below includes the then-supported dual database adapters and conversion work. PostgreSQL became the sole adapter on September 27; the current [development save policy](../../../AGENTS.md#development-save-policy) supersedes all earlier compatibility/conversion instructions. The original rationale remains history, not authorization to restore those paths.
 
+## Current reading guide
+
+This package records the completed September 26 foundation and its follow-up review, not the present implementation backlog. The five original priorities describe that package’s scope and dependency order; [playable-game-first selection](../../repertoires/gameplay-priorities.md) controls current product priorities. Current feature contracts and focused trackers take precedence over the historical source pins, illustrative interfaces and execution instructions below.
+
+The [development compatibility policy](../../../AGENTS.md#development-save-policy) now forbids retaining old-format readers or converters; [DF04](../../maintainers/production-data.md#df04--retire-residual-compatibility-paths) tracks the remaining unused feeling-conversion helper and precise packing-metadata follow-up; actorless reservation admission is already repaired. Historical conversion tests remain evidence of their recorded runs, not current support or instructions to rebuild them. New verification follows the [current policy](../../../.agents/rules/verification.md), including PostgreSQL-only database checks and selectively permitted existing tests.
+
+Later body rules and elapsed integration belong to [world-configured survival](../../worlds/base/survival.md) and [simulation time](../../simulation-time.md); continuous native resources were not converted into a universal fixed-point model. Current giving requires recipient consent under [PO10](../../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling). Auth0 is selected, and sole-tab entry differs from the original manual-control flow: [IDP01–IDP03 and MP18](../../maintainers/multiplayer.md#identity-provider--auth0) own those later changes and remaining acceptance. None of these follow-throughs closes the outstanding mixed-workload CPU regression or hosted qualification.
+
 ## Approved implementation plan
 
 The developer authorized full implementation of priorities 1–5 in chat on September 26,
@@ -17,7 +25,7 @@ remain with their existing owners. Foundation contracts take precedence over
 older branch assumptions; repertoire examples inform extension seams without adding all
 catalogued mechanics to this project.
 
-Implementation branch: `codex/foundations-1-5`, based on refreshed `origin/main`
+Historical implementation branch: `codex/foundations-1-5`, based on refreshed `origin/main`
 `ce7ef555f50c979ac3d2179cf5876ea4a55e1318`. The initial rebase was already current and had
 no conflicts. The worktree was clean. Estimated production logic affected: **10,000–20,000
 lines**, excluding tests, across the existing domain, server, protocol and client owners.
@@ -89,8 +97,9 @@ work accounts (approximately 200–250 logic lines plus caller verification). Th
 owner will derive live/retained totals by claimant, definition and invocation from its
 canonical records; no second writable allocation ledger is introduced. New holds must
 bind an actual action or admitted native process and its actor. Already saved holds retain
-their identities and quantities; legacy records without claimant evidence remain charged
-to world/host capacity, without inventing historical ownership. Admission combines these
+their identities and quantities. The original implementation also accepted actorless legacy
+records in world/host capacity without inventing ownership; that exception is now obsolete
+under the root policy and its removal is explicitly tracked in DF04. Admission combines these
 totals with native work, terminal release drops live occupancy while retained receipts
 remain accounted, and completion/cancellation/save-reload checks must prove conservation.
 Required verification includes aggregate refusal before publication, exact duplicate
@@ -157,7 +166,7 @@ responsiveness. Check complete outcomes, recipient ordering, RNG, quantities and
 alongside timing. Compare repeat measurements; a timeout is incomplete, and native
 headroom alone never qualifies PF/D5's hosted workload. Existing CI remains mandatory.
 
-**Current execution status:** all five foundations and all 46 agreed delivery slices are
+**September 26 completion status:** all five foundations and all 46 agreed delivery slices are
 implemented and qualified through the permitted native/manual workflow. Complete source
 review and acceptance reconciliation cover both SQL adapters, genuine two-human OIDC
 sessions, quantity/custody contention, private scope replacement, absence/return, coupled
@@ -178,9 +187,9 @@ they were not merged or independently qualified by this implementation.
 
 ## Thorough implementation review
 
-The developer requested a full review and in-scope improvements after delivery. Refreshed
-`origin/main` remains `ce7ef555f50c979ac3d2179cf5876ea4a55e1318`; the branch is already
-at that base and the complete uncommitted implementation is preserved. Review scope is the
+The developer requested a full review and in-scope improvements after delivery. At that
+review, refreshed `origin/main` was `ce7ef555f50c979ac3d2179cf5876ea4a55e1318`; the branch
+was already at that base and its complete uncommitted implementation was preserved. Review scope is the
 entire foundation diff, including new files and existing callers. Initial repair estimate:
 200–800 production logic lines, refined from confirmed findings before larger changes.
 
@@ -286,7 +295,7 @@ The [Worker cutover owner](../../maintainers/macrofold-worker-api.md) now contro
 
 The [completed cold-history consumer review](data-runtime-hardening.md#follow-up-consumer-review) adds exact eligible delayed-trigger reads, actor-scoped inspection freshness, legacy cold-awareness completeness and the live-obligation guard inside the publication mutation. P2/P4/P5 must extend those checks, not reimplement or weaken them. An unrelated actor change need not invalidate a permitted actor-specific inspection, but current source, timeline, privacy, control and grant changes still do. Reflection validates new appraisal/note changes alongside the already-current live-obligation guard. Cold sources remain available through scoped canonical queries without routine full-history materialization, and complete save capture remains mandatory.
 
-Implementation should refresh from this integrated main and then reconcile relevant still-separate invention/action/hearing/cadence work through DF02. The design packet does not authorize discarding those branches' unique fixes or inferring their readiness from this merge.
+At design delivery, implementation was to refresh from that integrated main and reconcile the then-separate invention/action/hearing/cadence work through DF02. Those original integrations are now present; DF02 retains combined-owner qualification and newly introduced dependencies, not a requirement to merge those branches again. The historical design integration never qualified their gameplay or authorized discarding unique fixes.
 
 ## Cross-project implementation order
 

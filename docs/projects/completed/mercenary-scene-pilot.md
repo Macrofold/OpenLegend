@@ -20,9 +20,13 @@ Estimated affected logic: 800–1,100 lines, mostly the existing cloth/material 
 
 ## Base and existing work
 
-Remote `https://github.com/Macrofold/OpenLegend.git`, verified default `origin/main@c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2`, refreshed before implementation. Current `codex/shadow-quality@cfa81e9d` already contains that commit; no rebase or branch change is needed. Preserve all pre-existing uncommitted shadow batching and qualification work. The initial affected-file snapshots are retained outside the checkout for review; never stage/commit unrelated work.
+This section records the September 28 implementation environment, not instructions to return to that branch or reuse another task’s edits. Later work follows the current [base-selection policy](../../../.agents/skills/openlegend-rebase/SKILL.md).
+
+Remote `https://github.com/Macrofold/OpenLegend.git`, verified default `origin/main@c5455cf8fc9e4d4fe03034a7f069d6d6581bb8f2`, refreshed before implementation. At implementation, `codex/shadow-quality@cfa81e9d` already contained that commit; no rebase or branch change was needed. The task preserved pre-existing uncommitted shadow batching and qualification work and retained its initial affected-file snapshots outside the checkout. This historical record grants no permission to stage unrelated work.
 
 ## Implementation and verification
+
+The sequence and follow-up below describe delivered work. The completed pilot is not permission to implement the broader proposed appearance pipeline, and its local measurements do not establish production art acceptance.
 
 1. Produce one self-contained model with both existing clips, preserve source provenance/digests, and bound this pilot to the known bundled asset. Keep the source study intact.
 2. Add typed, scene-owned model/material/cloth resources. Drive heading and movement from projected state; freeze on pause and release or hide immediately on replacement/removal. Bind contacts to the reference skeleton and ground the cloth relative to current support height.

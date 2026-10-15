@@ -1,24 +1,24 @@
 # Extensibility roadmap: from OpenLegend to authored realities
 
-**Status: target capability sequence, not a delivery-status report or a second task tracker.** [Engine/world boundaries](engine-and-world-boundaries.md) owns principles; [world-module runtime](../archive/07-technical-architecture/world-module-runtime.md) owns shared contracts. The [maintainer index](maintainers/README.md) points to actual work. The product's P1–P7 roadmap continues to own player-facing milestones.
+**Status: target capability sequence, not a delivery-status report or a second task tracker.** [Engine/world boundaries](engine-and-world-boundaries.md) owns principles; [world-module runtime](../archive/07-technical-architecture/world-module-runtime.md) owns shared contracts. The [maintainer index](maintainers/README.md) points to actual work. The [current gameplay priorities](repertoires/gameplay-priorities.md) and [whole-game coverage](repertoires/coverage.md) control player-facing selection; capability stages here are not a competing feature order.
 
 Build OpenLegend through this sequence, extracting an engine from real needs. A stage becomes useful when its narrow end-to-end capability works; it does not require perfect generality across all future examples. Later stages are enabled by interfaces, not made prerequisites for the first game.
 
 ## Starting architecture and preservation rule
 
-Use the latest checkout and `docs/architecture.md` for actual state. The audited baseline has pure domain transitions, one world writer, unified physical actors, finite body and weapon families, scoped context/AI execution, durable conversations/story history, journal/checkpoint persistence, and current-format manual saves. AG and EPR describe further work beyond that baseline. The module/attribute/sense composition foundation is not implied by those working systems.
+Use the reviewed source revision and [Architecture](architecture.md) for actual state. Retain pure domain transitions, one world writer, unified physical actors, scoped context/AI execution, durable conversations/story history, independent canonical records and current-format streamed saves. Finite numeric/category attributes, registered vision/hearing/coarse-contact adapters, world-owned body and recipe policies, operational agency and reviewed World Agent writes are already delivered under their focused owners. They do not establish full cross-subsystem constructs, general sensory navigation, portability or the remaining release/scale gates.
 
-Preserve their authority, privacy, timing, receipts, and existing behavior when extracting interfaces. Do not recreate actor unification, the world journal, Narrator, spatial candidate work, or save/load. A code change affecting gameplay order, senses, or controller behavior must be identified as such, not hidden in a refactor.
+Preserve their authority, privacy, timing, receipts, and existing behavior when extracting interfaces. Do not recreate actor unification, canonical record persistence, Narrator, spatial candidate work, or save/load. A code change affecting gameplay order, senses, or controller behavior must be identified as such, not hidden in a refactor.
 
 Current source-specific gaps and citations are in the delivery audit; do not copy that pinned snapshot into this roadmap as a permanent implementation diary.
 
 ## Two parallel paths
 
-**The playable-game path** continues AG decisions/plans, INV's authorized invention loop, current conversation/narration quality, and measured performance fixes.
+**The playable-game path** follows the current experience-led priority policy: understandable control, worthwhile challenge and exploration, rewards and recovery, with a small real instance of useful invention and independent character consequence. AG/INV, conversation quality and measured reliability/performance work support that experience; their proximity in the code or this roadmap does not make them the next product milestone.
 
 **The reusable-engine path** extracts shared state, sense, action-family, composition, and lifecycle contracts as those features need them.
 
-The two meet at small interfaces. AG01–AG04 may initially use current native command adapters. EPR can initially use current sight/hearing implementations. The world-agent workflow can author the finite supported families before generic templates exist. None must wait for an entire module engine, G2 scripting, or marketplace.
+The two meet at small interfaces. The delivered agency, perception and finite authoring consumers already use native adapters. Reuse those consumers and their recorded evidence while completing named remaining criteria, rather than waiting for or rebuilding a universal framework. None must wait for an entire module engine, G2 scripting, or marketplace.
 
 ## Capability stages
 
@@ -37,7 +37,7 @@ These are not all-or-nothing releases. A simple reusable construct can ship befo
 
 ## EW-R0: the first development step
 
-Use EWF00 to select one concrete consumer. Record its current assumptions and readers/writers, inspect existing tests, and establish behavior that must not change. Add the architectural principles pointer to `AGENTS.md` through the documentation integration instructions.
+For a genuinely new seam, use EWF00 to identify one concrete consumer, its assumptions and readers/writers, existing checks and behavior that must not change. The root instructions already link the architectural principles; retain that owner instead of scheduling the pointer again. The delivered first attribute/contact baseline does not need to be recreated, while its outstanding whole-system qualification remains open.
 
 Mark deliberate current limitations at important boundaries. A narrow native physiology adapter is acceptable. A requirement that every new stat be manually recognized in the scheduler, prompt, protocol, UI, and persistence is the problem to remove.
 
@@ -47,13 +47,13 @@ Do not spend this stage building a general benchmark platform, relocating every 
 
 Resolve a minimal reviewed world composition and one state owner. Keep existing physical storage behind an adapter if that is the smallest correct change. Extract one current need's concern and UI projection; then support a different reservoir with an actual replenishment action and no compulsory human need fields in generic interfaces.
 
-Use current native protection before full EPR delivery. Provide EPR-compatible change metadata without implementing a second threshold/event pipeline. Have current-format save coverage from the first stateful change.
+Preserve deterministic bodily consequences and the installed world’s actual native response policy while using the existing EPR intake. Do not recreate the removed automatic human food-seeking controller: [bundled survival](worlds/base/survival.md) distinguishes cognitive choices from native bodily effects. New state owners supply meaningful change metadata without a second threshold/event pipeline and retain current-format save coverage from their first stateful change.
 
 **Ship/stop gate:** the second same-family definition needs no new generic need-name branches; both the original game and the new fixture behave correctly. Stop generalizing adjacent body/psychology systems until a concrete next consumer warrants it.
 
 ## EW-R2: inputs beyond vision and hunger
 
-Wrap the existing sight/hearing rules before changing their geometry. Introduce a supported third modality, including uncertain source identity and modality-specific detail. Prove that a blind tactile actor receives only permitted information, not an ordinary vision context with the display hidden.
+Reuse the delivered registered sight/hearing adapters and coarse-contact proof before changing geometry or adding another modality. Complete the named uncertain-identity, modality-specific projection and controller/navigation requirements through EWF05/EWF06 and EPR. A blind tactile actor must receive only permitted information, not an ordinary vision context with the display hidden; the existing coarse proof is not complete tactile navigation.
 
 EPR remains responsible for scope, episodes, thresholds, dirty intake, and coalescing. CR/AG consume concerns and evidence; no separate tactile cognition service. Identify any unavailable contact/navigation capability honestly and implement only the approved coarse proof.
 

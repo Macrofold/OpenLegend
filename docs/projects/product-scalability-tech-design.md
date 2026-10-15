@@ -15,6 +15,7 @@
 - Player-facing specification: [feature specification](product-scalability-feature-spec.md).
 - Delivery: [product-scalability tracker](../maintainers/product-scalability.md).
 - Constraints and decisions needing qualification: [limits register](../limits/product-scalability.md).
+- Later product elaboration and selection: [continuing NPC lives](continuing-lives-feature-spec.md), [attention and scenes](attention-and-scenes-feature-spec.md), and the [game-first sequence](five-product-feature-specs.md#game-first-delivery-sequence). Their detailed technical designs remain deliberately deferred; this shared foundation does not claim those contracts are complete.
 
 ## 1. Agreed documentation scope and risk
 
@@ -75,7 +76,7 @@ Group formation must not use hidden alliance, private goals, or unavailable exac
 
 ## 4. Scheduling and interruption
 
-An activity's predicted completion is not a committed future. Maintain bounded dependencies that can make its continuation invalid. On a relevant occurrence, materialize affected activities through that occurrence time, resolve resources and perceptions coherently, then continue, suspend, or reconsider using actual evidence. The roof/alarm scenario is a required consumer, not an abstract scheduling benchmark.
+An activity's predicted completion is not a committed future. Maintain bounded dependencies that can make its continuation invalid. On a relevant occurrence, materialize affected activities through that occurrence time, resolve resources and perceptions coherently, then continue, suspend, or reconsider using actual evidence. A useful chosen activity interrupted by a legitimately heard alarm is the required consumer, not an abstract scheduling benchmark. Under the later PS02 product scope, existing gathering or finite crafting can provide that first personal contribution; the roof/alarm example remains a later construction case, not a prerequisite for useful follow-through.
 
 Calculated movement reaching an encounter boundary can produce an alarm or attack without per-footstep reasoning. Local actor and encounter owners still have to detect that boundary and admit the actual attempt. Event-driven execution removes unchanged work; it cannot make unbounded real causal activity cheap. Unknown dependencies require a conservative fallback, not an infinite validity claim.
 
@@ -109,11 +110,11 @@ A shared campaign owns bounded canonical strategic facts. Local encounters stay 
 
 **PS01: preserve the target and reconcile owners.** Deliver this documentation suite and explicitly distinguish current execution from future policy. No runtime changes.
 
-**PS02: one interruptible life.** Extend one existing activity family and its agency continuation. Demonstrate work, resource exhaustion, alarm, damage, cancellation, and restart with scoped evidence and no per-step generation. Decide the smallest policy vocabulary from these cases.
+**PS02: one interruptible life.** First improve one resident’s useful follow-through in the running personal game. Reuse one supported activity family and its existing agency continuation rather than waiting for an unattended community or a new construction family. Extend only the concrete completion or interruption conditions that the selected episode needs and the current owner lacks; retained goals and plans are already available, not new PS02 machinery. Demonstrate work, resource exhaustion, alarm, damage, cancellation, and restart with scoped evidence and no per-step generation. Decide the smallest policy vocabulary from these cases.
 
 **PS03: one cheap unattended community.** Add low-power initiative and a small set of efficiently computed activities, with viable needs, obligations, bounded background scheduling, and no accumulated optional-thought debt. The selected first physical scope uses §11's exact path; any later approximation needs separate adoption. Prove travel and partly completed construction can resume in detail. Isolate unsupported mechanics explicitly.
 
-**PS04: one coherent scene and perceptual crowd.** Add completed scene beats, gist/exact evidence, focused speech, and aggregate visual/acoustic episodes through existing owners. Test secrets, unwanted focus changes, unrecognized identities, partial speech, and midscene arrival. This is an explicit semantic extension, not a silent optimization of existing exact evidence.
+**PS04: one coherent scene and perceptual crowd.** Ordinary directed conversation and useful interruptions can improve independently of PS03 unattended service. Add the broader completed scene beats, gist/exact evidence, focused speech, and aggregate visual/acoustic episodes through existing owners only under their scoped design and playability gates; existing instantaneous speech is not changed by this plan. Test secrets, unwanted focus changes, unrecognized identities, partial speech, and midscene arrival. This is an explicit semantic extension, not a silent optimization of existing exact evidence.
 
 **PS05: safe absence and local transitions.** Integrate overlapping players, preparation, teleport admission, protected-background outcomes, dangerous logout, reconnect, and world-specific aftermath. Test mode cycling, wolf-entry traps, attacks followed by departure, and network loss. No new deployment topology is prerequisite.
 

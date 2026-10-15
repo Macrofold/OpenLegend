@@ -14,25 +14,25 @@ The mandatory one-game-second integration step is removed. The host still wakes 
 
 ## LA169
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The server yields after roughly 8 milliseconds of native simulation work before continuing accumulated work.
+The world service yields to I/O between native checkpoints after at least 8 milliseconds since its previous yield. It also requests a coherent boundary and stops the current batch after roughly 8 milliseconds of batch wall time. An individual native iterator call or finalization cannot be interrupted, so this is a cooperative scheduling target, not an 8-millisecond command-latency ceiling.
 
-**Reason / tradeoff:** Keep opportunities for commands and network handling to run while the simulation catches up.
+**Reason / tradeoff:** Let network handling and other ready work run without exposing an unfinished world transition, replacing its writer or replenishing its work allowance. The authoritative mutation queue remains owned until the transition finishes; yielding does not itself admit another world mutation.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Implementation](../../apps/server/src/world-service.ts) · [Detailed bounds](#nw10).
 
 Original recommendation: **Keep**.
 
 ## LA170
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Medium.**
 
-A gap longer than 2 seconds between server timer callbacks is treated as possible host suspension rather than normal elapsed play.
+A gap strictly longer than 2 real seconds between the 50-millisecond timer callbacks is classified as possible host suspension. The service excludes the entire reported gap from elapsed play and discards pending simulated-time debt. Callbacks still update the gap measurement while an asynchronous tick is busy; a slow tick alone is not this signal.
 
-**Reason / tradeoff:** Keep an explicit suspended-time policy and ensure heavy processing is not incorrectly mistaken for the computer being asleep.
+**Reason / tradeoff:** Avoid applying unattended hunger, movement or other elapsed effects after a suspended host resumes. Missing callbacks are a heuristic, not proof that the host slept: a long indivisible event-loop operation can also cause a gap. Preserve that distinction when diagnosing lost simulation time; do not describe this as a measured suspension detector.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Timer classification](../../apps/server/src/http.ts) · [Clock/debt handling](../../apps/server/src/world-service.ts).
 
 Original recommendation: **Review**.
 
@@ -40,9 +40,9 @@ Original recommendation: **Review**.
 
 **Reported · Restrictiveness: Medium.**
 
-The **whole server process shares the same ceilings as one world**, across its world instances. No distributed budget coordinator. [Host accounting](../../apps/server/src/host-work.ts)
+The whole server process shares the **WB02 world ceilings for retained work allocations** across its world instances: live/queued allocations, estimated retained bytes and subscriptions. Host admission sums active work and installed interfaces, retaining the larger old/new allocation during a pending commit and releasing it on rollback or close. It does not aggregate every world’s per-call candidate visits, predicate checks, input/output bytes or elapsed CPU time. There is no distributed coordinator. [Host accounting](../../apps/server/src/host-work.ts)
 
-**Reason / tradeoff:** Contain one process’s aggregate work; this is not a distributed or per-world scaling guarantee.
+**Reason / tradeoff:** Contain the admitted retained work of one process without allowing a pending commit to borrow another world’s capacity. This is neither a complete process-heap bound nor a process-wide CPU or supported-population guarantee.
 
 ## NW02
 
@@ -56,9 +56,9 @@ Limits are hardcoded, versioned constants, without deployment configuration.
 
 **Reported · Restrictiveness: Medium.**
 
-Memory accounting uses conservative estimates: generally serialized string length × 3; reservation overhead **256 bytes**; status-effect overhead **1,024 bytes**.
+Retained-work accounting estimates selected records from **JSON string length × 3**, with **256 bytes** added for each resource reservation and **1,024 bytes** for each status definition’s episode estimate. JavaScript string length is not a UTF-8 byte count or measured heap size. The group’s actual UTF-8 output accounting is separate.
 
-**Reason / tradeoff:** Conservative estimates bound retained state without expensive heap tracing; estimates can over-admit or over-reject.
+**Reason / tradeoff:** Estimate admitted work without expensive heap tracing; estimates can undercount or overcount actual memory. Unmetered world data, derived caches, database state and temporary allocations are not made bounded by these constants. [Reservations](../../packages/domain/src/resource-claims.ts) · [Status/interface estimates](../../packages/domain/src/native-work.ts).
 
 ## NW04
 
@@ -72,7 +72,7 @@ Installation estimates multiply interface subscriptions/work by **every independ
 
 **Reported · Restrictiveness: Medium.**
 
-Each status-effect episode permits **1,024 evaluations per simulated second**. [Native accounting](../../packages/domain/src/native-work.ts)
+Each active status-effect episode permits **1,024 accounting charges per recurrence interval of at least one simulated second**, with its admitted test/effect demand scaled by that burst. Renewal begins at the current simulation time rather than banking missed intervals. This is an operational work allowance, not a one-hertz server clock or a prescription to evaluate every status 1,024 times. [Native accounting](../../packages/domain/src/native-work.ts) · [Interval renewal](../../packages/domain/src/work-budget.ts)
 
 **Reason / tradeoff:** Bound repeated native condition evaluation during elapsed simulation time. Captured episode accounting completes before health-rate lifecycle cleanup; an ended episode cannot recreate its live work root. Passive interfaces and installed body-policy predicates/service lookups join aggregate admission. Each of the three new survival rules costs installation work even when its damage is inactive. [Matched cost evidence](../verification/world-configured-survival.md#matched-flock-cost) distinguishes static bounds from measured throughput.
 

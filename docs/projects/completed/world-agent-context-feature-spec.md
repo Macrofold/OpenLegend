@@ -81,7 +81,7 @@ Existing INV/WW owners retain real harness reliability, generated art and richer
 4. Selected field documentation and examples match strict schemas, native admission and consumers. Adding a property to prose cannot invent an effect.
 5. Failed validation preserves recoverable work as specified; stale edits, duplicate submissions, timeouts, cancellation and restore neither duplicate effects nor misstate completion.
 6. Recipient grants filter all input before formatting; altered grants/world generation require safe fresh context. No administrative context leaks into NPC cognition or another conversation.
-7. Matched workload measurements meet the proposed [context targets](../../limits/inventions.md#ctx01--context-size-and-measured-efficiency) without reducing semantic correctness. No byte savings are claimed as measured token or latency savings.
+7. Matched workload measurements meet the initial diagnostic [context targets](../../limits/inventions.md#ctx01--context-size-and-measured-efficiency) without reducing semantic correctness. No byte savings are claimed as measured token or latency savings.
 8. Macrofold's outgoing request confirms medium effort and a permission-appropriate tool/instruction surface. File tasks continue working under their own permissions.
 9. The [initial foundation proof](world-agent-context/initial-foundation.md#6-concrete-first-version-proof) demonstrates graph/context/review parity, scoped native check completeness, presentation adequacy and recovery across recipe, gathering and owner sleep-policy cases. Harder repertoire cases preserve their requirements or report missing support, without claiming new execution systems.
 

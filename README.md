@@ -10,13 +10,13 @@ These are proposals, not implemented-feature claims. [Architecture](docs/archite
 
 ## Simulation cadence
 
-One real second equals one game minute at normal speed; that does not mean sixty simulation ticks. Native work now integrates elapsed time to mechanical/fidelity boundaries, independently of the 50 ms host wake and browser frame cadence. Rendering is not capped at 20 FPS. Existing worlds update in place; do not reset a save for this change. [Time contract](docs/simulation-time.md), [PF13 delivery](docs/maintainers/simulation-time.md), [future bounds](docs/maintainers/simulation-boundaries.md) and [runtime evidence](docs/verification/simulation-cadence.md) distinguish the implemented slice from exact fleeting-exposure, regional and full-stack scale qualification.
+One real second equals one game minute at normal speed; that does not mean sixty simulation ticks. Native work now integrates elapsed time to mechanical/fidelity boundaries, independently of the 50 ms host wake and browser frame cadence. Rendering is not capped at 20 FPS. Current-format worlds retain native progress across save/load; this is not an older-save upgrade promise. Incompatible development saves follow the [root policy](AGENTS.md#development-save-policy) without automatic reset. [Time contract](docs/simulation-time.md), [PF13 delivery](docs/maintainers/simulation-time.md), [future bounds](docs/maintainers/simulation-boundaries.md) and [runtime evidence](docs/verification/simulation-cadence.md) distinguish the implemented slice from exact fleeting-exposure, regional and full-stack scale qualification.
 
 ## Movement and lighting
 
 The game uses Recast/Detour in one reused navigation worker and Rapier capsule/cylinder queries for physical clearance. Clear moves need no worker; detours follow smoothed arbitrary-angle routes. **Preparing navigation** is technical waiting, not elapsed game time. Ordinary 2D sprites remain front-facing under both camera orbit and pitch, without changing their image proportions. They respond to ambient/local lighting and cast artwork-derived volume shadows onto the actual receiving surfaces; physical bodies do not rotate with the artwork. **Settings and help → World visibility** configures nearby character-visible read-through, radius and strength. See [presentation](docs/world-presentation.md), [implementation evidence](docs/verification/recast-integration.md), and [final browser/runtime observations](docs/verification/recast-finalization.md); high-end art, crowd dynamics and arbitrary 3D model delivery remain future work.
 
-For the accepted next-generation authoring design, start with [player/NPC target scenarios](docs/invention-scenarios.md), [unified World Agent](docs/world-agent-runtime.md), [MCP integration](docs/world-agent-mcp.md), and [relationship graph](docs/invention-graph.md). These specifications distinguish planned capability from the current finite workshop; they do not claim an already-connected MCP harness.
+For authoring, start with [player/NPC target scenarios](docs/invention-scenarios.md), [unified World Agent](docs/world-agent-runtime.md), [MCP integration](docs/world-agent-mcp.md), and [relationship graph](docs/invention-graph.md). The finite workshop, read-only MCP endpoint and supported unified owner conversation are implemented, with explicit setup and bounded write adapters. General composition, unsupported mechanics and broader production qualification remain targets; merely configuring a harness does not establish live acceptance.
 
 ## Play the elevated world
 
@@ -74,7 +74,7 @@ The [setup script](bin/setup_worktree.sh) copies `.env` from Git's main checkout
 
 If startup reports an unsupported database schema, the configured development database format differs from the running code. Follow the [development save policy](AGENTS.md#development-save-policy): agents may set up fresh current-format development state without another confirmation. A fresh database URL and separate `OPEN_LEGEND_DATA_DIR` start the latest standard world while leaving the previous database and saves intact. Do not change the stored schema marker to bypass validation. The server itself still refuses incompatible data; this policy does not add automatic reset to `pnpm dev`. Fresh standard starts use the newest integrated world initializer, combining its current characters, encounters and supplies; isolated test fixtures and unfinished branches are not the default seed.
 
-Open **http://127.0.0.1:3210**. For live AI, follow the [setup guide](docs/live-ai-setup.md): a configured Macrofold key selects that backend; direct Jev/OpenAI keys select the direct path otherwise. Current full NPC conversation requires Macrofold with explicit model/compute allowance. Set a chosen nonzero `AI_BUDGET_USD` and restart only when ready to permit paid work. The default is $50 per agent per UTC calendar month; set zero to disable paid dispatch. Keys never go to the browser. The allowance and usage accounting persist with this world's save, rather than resetting on page reload.
+Open **http://127.0.0.1:3210**. For live AI, follow the [setup guide](docs/live-ai-setup.md): a configured Macrofold key selects that backend; direct Jev/OpenAI keys select the direct path otherwise. Immediate conversation and decision inference can use the direct adapters; independent workspace reflection and the unified owner authoring harness require Macrofold and an authorized existing Worker. Shared Worker capacity is owner-managed, not a second per-agent compute allowance. Set a chosen nonzero `AI_BUDGET_USD` and restart only when ready to permit paid work. The default is $50 per agent per UTC calendar month; set zero to disable paid dispatch. Keys never go to the browser. The allowance and attempt/usage records persist in PostgreSQL across reloads and restarts; gameplay checkpoint restore cannot rewind charges, reservations or uncertain calls.
 
 If another app uses that port, run `PORT=3211 pnpm run dev` and open **http://127.0.0.1:3211** instead. Set `PORT=3211` in your existing `.env` to keep that choice across restarts.
 
@@ -139,15 +139,18 @@ For a reviewable draft, select **World agent → Review in workshop before insta
 
 The optional native `reservoir-demo` preset replaces the player/resident's food and fatigue with charge and a categorical disposition. Open **In view → Charged capacitor → Recharge**. Ada can replenish autonomously from the same finite supply. This demonstrates attribute interfaces; it is not live-model acceptance or an electrical simulation.
 
-Use a separate new data directory and disable paid work:
+Create a separate empty PostgreSQL database with pgvector for the demo, and use both its distinct URL and a distinct checkpoint directory. Adapt the URL for your local role and authentication. Do not point the demo at your existing game database; changing the directory or preset alone does not create a new world. Disable paid work:
 
 ```sh
-OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 node --import tsx apps/server/src/main.ts
+OPEN_LEGEND_DATABASE_URL=postgresql://127.0.0.1/openlegend_reservoir_demo \
+OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo \
+OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 \
+node --import tsx apps/server/src/main.ts
 ```
 
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Current-format worlds reopen without regeneration; incompatible data follows the [development save policy](AGENTS.md#development-save-policy). Use a separate PostgreSQL database and save directory when creating a different world. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
+Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only when the selected database has no world; preset selection does not rewrite an existing current-format world. Current-format worlds reopen without regeneration; incompatible data follows the [development save policy](AGENTS.md#development-save-policy). Use a separate PostgreSQL database and save directory when creating a different world. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
 
-For the coarse touch-only resident, use a separate data directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
+For the coarse touch-only resident, select another empty PostgreSQL database, its own checkpoint directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
 
 ## Develop
 
@@ -214,7 +217,7 @@ The native perception/runtime changes and their measured limits are documented i
 
 ### World-owner relationship inspection
 
-With local god/owner mode enabled, the World Agent panel includes demand-driven definition search, exact source and relationship inspection, current work and retained evidence. This is an out-of-world read view, not character knowledge or a full graph editor. A separately configured, disabled-by-default read-only MCP endpoint uses the same service; see [MCP setup](docs/world-agent-mcp.md#implemented-read-only-bootstrap). No paid model is needed for these readers. The [repertoire foundation](docs/repertoire-foundation.md) and [INV tracker](docs/maintainers/inventions-and-world-evolution.md) distinguish delivered source inspection from future native-harness, interaction, information, joint-work and social-family implementation.
+With local god/owner mode enabled, the World Agent panel includes demand-driven definition search, exact source and relationship inspection, current work and retained evidence. This is an out-of-world read view, not character knowledge or a full graph editor. A separately configured, disabled-by-default read-only MCP endpoint uses the same service; see [MCP setup](docs/world-agent-mcp.md#implemented-read-only-bootstrap). No paid model is needed for these readers. The [repertoire foundation](docs/repertoire-foundation.md) and [INV tracker](docs/maintainers/inventions-and-world-evolution.md) distinguish delivered source inspection and the supported configured native harness from remaining interaction, information, joint-work and social-family implementation.
 
 ### Unified World Agent authoring
 

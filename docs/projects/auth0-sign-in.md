@@ -19,7 +19,7 @@ The original configuration accepted plain HTTP only when **both** the game addre
    - The login service may use HTTP only on a loopback host. An HTTPS login service is always accepted.
    - HTTP on any non-loopback host stays refused for both.
 2. **Login adapter** ([authentication.ts](../../apps/server/src/authentication.ts)): relax the `openid-client` HTTPS requirement only when the login service itself uses HTTP (local Keycloak), never for an HTTPS service such as Auth0.
-3. **Cookies** ([http.ts](../../apps/server/src/http.ts)): session, login and invite cookies are `Secure` whenever the public address is HTTPS. The flag is omitted only for an HTTP loopback address. Today the rule follows the opt-in setting instead of the actual address.
+3. **Cookies** ([http.ts](../../apps/server/src/http.ts)): session, login and invite cookies are `Secure` whenever the public address is HTTPS. The flag is omitted only for an HTTP loopback address. This actual-address rule is implemented; the original opt-in-based rule was the pre-change defect.
 4. **Issuer spelling** ([config.ts](../../apps/server/src/config.ts)): store the configured issuer and every binding's issuer in normalized URL form. Auth0 signs tokens with `https://<tenant>/` (trailing slash), so both spellings in configuration must match. Issuers with a path, such as Keycloak realms, are unchanged.
 
 No UI or protocol change is needed. Invites, World operations and account bindings work unchanged with Auth0 user IDs (for example `auth0|…` or `google-oauth2|…`).
@@ -47,9 +47,9 @@ No UI or protocol change is needed. Invites, World operations and account bindin
 ## Completion criteria
 
 - [ ] Local Auth0 sign-in, invite enrollment and access removal work at an HTTP loopback address against an unmodified HTTPS Auth0 tenant.
-- [ ] HTTPS deployments keep `Secure` cookies and full HTTPS checks; HTTP on non-loopback hosts is still refused.
-- [ ] Either issuer spelling works, including in account bindings.
-- [ ] README setup section, [architecture](../architecture.md#account-authority-and-participation), [AU09](../limits/multiplayer.md#au09), the tracker and the changelog describe the delivered behavior.
+- [x] Configuration/code checks establish that HTTPS origins retain `Secure` cookies and HTTPS enforcement, while non-loopback HTTP is refused. Hosted deployment remains IDP02, not evidence from these local checks.
+- [x] Both issuer spellings normalize consistently, including account bindings, in the recorded configuration checks.
+- [x] README setup, [architecture](../architecture.md#account-authority-and-participation), [AU09](../limits/multiplayer.md#au09), the tracker and changelog describe the delivered configuration and partial live acceptance.
 
 ## Maintained records
 

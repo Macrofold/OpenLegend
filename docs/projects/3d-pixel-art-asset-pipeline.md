@@ -10,7 +10,7 @@
 
 - Implementation: [V3D07–V3D10](../maintainers/3d-pixel-art.md).
 - Capacity and staged-work limits: [A3D inventory](../limits/3d-pixel-art.md). Shared [AI execution](../limits/ai-execution.md), [invention](../limits/inventions.md), and [persistence](../limits/persistence.md) limits remain controlling.
-- Existing policy: [art generated during play](../../archive/03-design-proposals/visual-direction.md#art-generated-during-play), [INV workflow](../maintainers/inventions-and-world-evolution.md), and [AI/provider boundary](../ai-providers.md).
+- Existing policy: [runtime art and publication](../invention-art-pipeline.md), [shared episode funding](../invention-budgets.md), [INV workflow](../maintainers/inventions-and-world-evolution.md), and [AI/provider boundary](../ai-providers.md). The [original visual direction](../../archive/03-design-proposals/visual-direction.md#art-generated-during-play) retains artistic intent, not a competing publication or spending contract.
 - Visual coverage: [appearance families](3d-pixel-art-appearance-families.md). Evidence: [qualification](3d-pixel-art-validation.md).
 
 ## 1. The pipeline is demand-driven, not a simulation loop
@@ -46,7 +46,7 @@ Use the appearance brief to constrain both outputs. A change in the accepted spr
 
 ### Reuse or native composition
 
-Select approved components, vary supported material/proportion parameters, and compile a representation locally or in bounded trusted server work. No generative call is needed. Persist the recipe and exact dependencies; retain approved bytes where exact reproduction matters. Known procedural rebuilding is separate from paid generation.
+Select approved components, vary supported material/proportion parameters, and compile a representation locally or in bounded trusted server work. No generative call is needed. Persist the visual assembly recipe and exact asset dependencies; this is not a second writable copy of a mechanical invention recipe. Retain approved bytes where exact reproduction matters. Known procedural rebuilding is separate from paid generation.
 
 ### 2D first, 3D later
 
@@ -112,7 +112,7 @@ Validate in layers: structural safety; geometry/anchor fit; appearance identity;
 
 Render controlled turntables and the target gameplay-scale previews in neutral, daylight, and local firelight profiles. Check that distinctive features and dimensions remain consistent with the accepted brief/sprite, textures are not fighting new light directions, and thin tools/limbs remain readable. For rigs, evaluate representative poses, clipping, joint extremes, item grips, feet and supported death/rest states. For assemblies, inspect intended separations and functional openings.
 
-Initially require creator review of the new production families and genuinely novel silhouettes/rigs. Exact approved reuse and deterministic variants within an already reviewed envelope need no repeated manual approval. A later opt-in automatic-publication policy can cover qualified low-risk families after its false-accept/rejection evidence exists. Keep it distinct from mechanical admission and art-budget authorization; do not introduce a mandatory confirmation on every ordinary valid invention. Awaiting review never blocks gameplay.
+Initially require creator review of the new production families and genuinely novel silhouettes/rigs. Exact approved reuse and deterministic variants within an already reviewed envelope need no repeated manual approval. A later opt-in automatic-publication policy can cover qualified low-risk families after its false-accept/rejection evidence exists. Keep it distinct from mechanical admission and art-budget authorization; do not introduce a mandatory confirmation on every ordinary valid invention. Awaiting optional polish does not block continued play with an already adequate representation. A new family without a permitted adequate fallback cannot become usable merely because its mechanics passed validation; hold the affected capability until [presentation adequacy](../invention-art-pipeline.md#21-adequacy-versus-polish) is satisfied, while unrelated native play continues.
 
 ## 7. Atomic publication and current-state binding
 
@@ -166,6 +166,8 @@ Official documentation checked September 27, 2026 establishes possibilities, not
 Pin selected model/configuration/adapter versions and record the actual reported revision, rather than silently relying on a changing `latest` alias. Verify current limits, pricing, terms, and account capabilities before real dispatch. A hosted API's existence is not evidence that its price or output is appropriate for this game.
 
 ## 11. First live proof
+
+The [completed mercenary pilot](completed/mercenary-scene-pilot.md) processes one trusted authored asset and demonstrates its client resource lifecycle. It is not evidence that the quarantined intake, scoped artifact store, generated-family validation, funded stage accounting or durable publication proposed here exists. Reuse the matching renderer work while keeping those V3D07–V3D10 requirements open.
 
 After the native artifact/publication pipeline works, use one explicitly bounded approved trial: a supported rigid invention with a distinctive appearance and known physical constraints. Produce an approved 2D representation, then a matching model, display the transition in the real client, reload, and reuse it on a compatible second instance without generation. Include a rejected candidate or failed stage and a removed initiating object.
 

@@ -2,27 +2,27 @@
 
 [Feature contract](../memory-architecture.md) · [Implementation work](../maintainers/cognition-redesign.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
-Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
+Values describe the stated baseline, not approved future targets. Entries marked **source inspected 2026-10-06** were checked against review-branch source at `7fddcea7c7c1adf79bd53c1dfa16558111c772d3`; synchronization with newer main is deferred. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. Original recommendations preserve the audit rationale, not fresh implementation approval. In particular, the residual structured-mind helpers in LA024–LA030/LA238 are not the current inner-world publication path; do not expand them merely to preserve an earlier iteration. [DF04](../maintainers/production-data.md#df04--retire-residual-compatibility-paths) owns residual compatibility cleanup. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
 Implementation starting points: [experience.ts](../../packages/domain/src/experience.ts), [memory-repository.ts](../../apps/server/src/memory-repository.ts), [cognition-maintenance.ts](../../apps/server/src/cognition-maintenance.ts).
 
 ## LA007
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Retrieval of verbatim speech uses the latest 512 speech experiences available to the character.
+The latest 512 eligible linguistic speech experiences are protected from routine and daily consolidation. Heard partial words qualify; purely seen speech and speech with no intelligible words do not. This is the retained verbatim-speech pool, not a ceiling on searchable history or the current conversation. Repository-backed recall can select older retained eligible sources; the complete permitted active conversation has its own preparation/compaction contract ([LA014](#la014), [MH04](#mh04)).
 
-**Reason / tradeoff:** Allow searches of older retained speech while keeping recent messages from the current conversation directly available.
+**Reason / tradeoff:** Keep a finite exact-speech tail without confusing it with a first-512 search filter. The historical proposal to reach older retained speech is partly delivered; further model-facing query continuation needs a demonstrated omission under the existing recall owner.
 
-[Implementation starting point](../../apps/server/src/recall.ts).
+[Speech-pool owner](../../apps/server/src/speech-recall.ts) · [SQL maintenance selection](../../apps/server/src/memory-repository.ts).
 
 Original recommendation: **Expand**.
 
 ## LA008
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-The text used to search a character's memories includes only the first 8 matching lines from their private mind text, cut to 1,600 characters.
+The later attention-selection query takes the first 8 private-mind lines matching its English concern/goal/belief keywords and clips the joined excerpt to 1,600 JavaScript string units. This is not the complete retained-corpus retrieval query: `RecallService.candidates` includes the full accepted inner-world text before its separate 8,000-byte query-embedding admission. The excerpt is a heuristic cue, not verified belief extraction or permission to truncate the accepted mind in final context.
 
 **Reason / tradeoff:** Choose search clues by relevance instead of where they appear in the character's private text.
 
@@ -32,9 +32,9 @@ Original recommendation: **Replace**.
 
 ## LA009
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The text sent to generate a meaning-based search query must fit within 8,000 bytes of encoded text.
+A query sent for an embedding must fit 8,000 UTF-8 bytes. The retained-corpus candidate path skips paid query embedding when its complete query is too large and returns structured fallback with coverage instead; the later attention path explicitly rejects an oversized compact query. Neither outcome establishes that no matching memory exists. Keep these different consumers and their reported retrieval quality distinct.
 
 **Reason / tradeoff:** Keep a finite query-size limit, and explain oversized-query failures instead of treating them as no matching memories.
 
@@ -44,35 +44,35 @@ Original recommendation: **Keep**.
 
 ## LA010
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-One foreground memory-selection request indexes at most 32 previously unindexed records for meaning-based search.
+The later attention-selection path may index one batch of at most 32 eligible previously unindexed source texts, with an optional query prefix. The shared batcher also enforces 8,000 UTF-8 bytes per text and 64,000 bytes for the exact JSON text array; the adapter allows at most 33 texts including the query. Oversized optional source text remains available through structured recall instead of being truncated or deleted. The primary retained-corpus candidate query does not inline a complete source-indexing pass.
 
 **Reason / tradeoff:** Keep indexing work per decision bounded, but report incomplete search coverage and preserve required facts through direct retrieval.
 
-[Implementation starting point](../../apps/server/src/recall.ts).
+[Attention consumer](../../apps/server/src/recall.ts) · [Shared batcher](../../apps/server/src/embedding-batches.ts) · [Adapter bounds](../../packages/ai/src/embedding.ts).
 
 Original recommendation: **Review**.
 
 ## LA011
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The background worker indexes speech for meaning-based search in batches of 32 records.
+The background indexer processes eligible memory sources, not only speech, through the same count-and-byte-bounded embedding batcher as LA010. It takes one batch per eligible NPC turn and revisits remaining work under spending admission and recorded-attempt rules. The 32-source ceiling is a work batch, not a speech-retention limit.
 
-**Reason / tradeoff:** Keep the batch size; remaining speech can be processed in later batches rather than discarded.
+**Reason / tradeoff:** Keep bounded, fairly scheduled indexing and preserve incomplete coverage explicitly. Additional batches still need admission; unfinished work does not authorize automatic paid retries.
 
-[Implementation starting point](../../apps/server/src/recall.ts).
+[Background indexer](../../apps/server/src/recall.ts) · [Shared batcher](../../apps/server/src/embedding-batches.ts).
 
 Original recommendation: **Keep**.
 
 ## LA012
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The server keeps reusable numerical search representations for only 16 recent queries.
+The attention-selection cache retains embeddings for 16 recent queries per actor. The retained-corpus path separately stores one exact query entry under its world/actor key, checking query content, generation, model and dimension before reuse. Neither is a limit on the number of stored or searchable memories.
 
-**Reason / tradeoff:** Keep this cache limit; an evicted query can be recomputed without deleting its source memories.
+**Reason / tradeoff:** Bound replaceable query reuse. Eviction can require recomputation under spending admission; it does not delete source evidence or justify claiming complete semantic coverage when an embedding is unavailable.
 
 [Implementation starting point](../../apps/server/src/recall.ts).
 
@@ -80,13 +80,13 @@ Original recommendation: **Keep**.
 
 ## LA013
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 Raw experiences become eligible for replacement by summaries after 6 game hours; this age alone does not prevent recalling them.
 
 **Reason / tradeoff:** Keep the distinction between summarization eligibility and recall eligibility; do not hide an experience merely because it is older than six hours.
 
-[Implementation starting point](../../packages/domain/src/experience.ts).
+[Experience policy](../../packages/domain/src/experience.ts) · [SQL maintenance eligibility](../../apps/server/src/memory-repository.ts).
 
 Original recommendation: **Keep**.
 
@@ -106,9 +106,9 @@ Original finding and recommendation superseded by the merged implementation; the
 
 ## LA015
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-An experience with importance at least 8 out of 10 receives special protection during memory summarization.
+An experience with importance at least 8 out of 10 must be represented by a separate unchanged-text group when consolidated: its group contains exactly that one source and the original summary text. This protection is enforced at publication, not only in model instructions. It does not override explicit forgetting, correction or privacy obligations.
 
 **Reason / tradeoff:** Review whether the importance score reliably identifies memories that must survive unchanged before moving the cutoff.
 
@@ -118,45 +118,45 @@ Original recommendation: **Review**.
 
 ## LA016
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Historical value — no active expiry consumer at the inspected revision · Restrictiveness: — (not enforced).**
 
-Ordinary memories produced by summarizing earlier experiences can expire after 30 game days; specially protected memories follow different retention rules.
+The historical `historyDays: 30` constant remains declared, but the inspected runtime has no consumer applying it as an automatic summary-expiry window. Consolidation retains unrelated summaries; age alone does not delete them. The canonical memory contract labels weekly/thirty-day transformation as a future idea, not delivered expiry. Retained history therefore still has the growth exposure in [MH06](#mh06).
 
-**Reason / tradeoff:** Treat thirty-day forgetting as a character-memory design decision, not a performance requirement to remove automatically.
+**Reason / tradeoff:** Do not promise automatic forgetting that does not run, or introduce deletion merely to make an unused constant true. A future retention rule needs an explicit accepted policy, preservation of required evidence and scoped verification; this correction is not a decision to retain everything forever.
 
-[Implementation starting point](../../packages/domain/src/experience.ts).
+[Declared value and summary publication](../../packages/domain/src/experience.ts) · [Future transformation ideas](../memory-architecture.md#future-memory-transformation-ideas--not-implemented).
 
 Original recommendation: **Review**.
 
 ## LA017
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Each generated memory summary must fit 1,200 bytes; the model response format also imposes a separate 1,200-character check.
+Each generated consolidation summary must fit 1,200 UTF-8 bytes at native publication; the model schema independently allows up to 1,200 JavaScript string units. These are different checks for non-ASCII text. Protected-source identity and text preservation still apply; an oversized required source is not permission to truncate it.
 
 **Reason / tradeoff:** Allow longer summaries when needed to preserve meaning, and use consistent size accounting for text containing non-English characters.
 
-[Implementation starting point](../../packages/domain/src/experience.ts).
+[Native admission](../../packages/domain/src/experience.ts) · [Response schema](../../apps/server/src/cognition-contracts.ts).
 
 Original recommendation: **Expand**.
 
 ## LA018
 
-**Historical — needs recheck · Restrictiveness: Too liberal.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Too liberal.**
 
-8,192 awareness records or 8,208 personal memories signal delayed summarization, but no longer stop simulation or cap total stored history.
+The SQL scheduling status signals pressure at 8,192 awareness records or 8,208 personal memories for an actor. It does not stop simulation, limit total retained history or mean that all of those records reside in the hot projection. The separate hot-memory bounds are in [MH05](#mh05).
 
 **Reason / tradeoff:** Preserve movement and memories while improving long-history storage; this warning threshold alone does not prevent unlimited history growth.
 
-[Implementation starting point](../../packages/domain/src/experience.ts).
+[SQL scheduling facts](../../apps/server/src/memory-repository.ts) · [Maintenance scheduler](../../apps/server/src/cognition-maintenance.ts).
 
 Original recommendation: **Review**.
 
 ## LA019
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-A character's private written mind must contain between 1 and 10 files.
+An accepted inner-world snapshot contains 1–10 files. `flattenFiles` also validates distinct permitted filenames and per-file text allowances; it rejects an invalid snapshot rather than accepting a truncated one.
 
 **Reason / tradeoff:** Replace the file-count ceiling with a total text allowance, allowing the character to organize the same amount of information across more files.
 
@@ -166,9 +166,9 @@ Original recommendation: **Replace**.
 
 ## LA020
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-Each file in a character's private written mind is limited to 500 words and 8,000 bytes.
+Each accepted inner-world file is limited to 500 normalized whitespace-delimited words and 8,000 UTF-8 bytes, counting the filename with the text. This is a per-file allowance in addition to LA019, not a single 80,000-byte pool that a larger file can borrow from.
 
 **Reason / tradeoff:** Use a coherent total private-text allowance so important information is not rejected simply because one file needs more space.
 
@@ -178,31 +178,31 @@ Original recommendation: **Replace**.
 
 ## LA021
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-A reflection or dream publishes 1–3 short thoughts for display, each limited to 20 words and 240 characters.
+A reflection or dream inner-world publication supplies 1–3 nonempty short presentation thoughts, each at most 20 words; the response schema additionally checks at most 240 JavaScript string units. These are not the daily consolidation summaries, which use LA017, or the residual structured-mind thought in LA026.
 
 **Reason / tradeoff:** Review this as a presentation choice; the short displayed thoughts do not need to contain the character's complete private reflection.
 
-[Implementation starting point](../../packages/domain/src/experience.ts).
+[Native publication](../../packages/domain/src/experience.ts) · [Reflection schema](../../apps/server/src/cognition-contracts.ts).
 
 Original recommendation: **Review**.
 
 ## LA022
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-One reflection can update at most 16 knowledge notes, 16 learned names and 8 goals.
+One reflection publication can include at most 16 knowledge-note changes, 16 learned-name changes, 8 goal changes and 8 appraisal changes. Each still uses its own authority, evidence and revision checks; the count allowances do not permit replacing player intentions.
 
 **Reason / tradeoff:** Allow larger updates when they fit the request and can be validated and saved together safely.
 
-[Implementation starting point](../../packages/domain/src/experience.ts).
+[Publication owner](../../packages/domain/src/experience.ts) · [Reflection schema](../../apps/server/src/cognition-contracts.ts).
 
 Original recommendation: **Expand**.
 
 ## LA023
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 A character retains only the latest 100 short thoughts produced for display in the thought-history list.
 
@@ -214,7 +214,7 @@ Original recommendation: **Keep**.
 
 ## LA024
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
 The older structured representation of a character's mind permits 10 prose documents and 80 records describing beliefs, relationships or similar facts.
 
@@ -226,7 +226,7 @@ Original recommendation: **Replace**.
 
 ## LA025
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 A model's proposed update to the older structured character mind may contain at most 100,000 bytes.
 
@@ -238,7 +238,7 @@ Original recommendation: **Keep**.
 
 ## LA026
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 A displayed thought from the older structured-mind workflow is limited to 2,000 characters and 250 words.
 
@@ -250,9 +250,9 @@ Original recommendation: **Keep**.
 
 ## LA027
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-An update to the older structured character mind can cite at most 16 evidence records, and each document title is limited to 120 characters.
+Each document or record update in `commitCognition` can cite at most 16 evidence links; this is not a single sixteen-link total for the entire proposed update. Each document title is limited to 120 JavaScript string units. These checks belong to the residual structured-mind helper, not the current freeform inner-world filename contract.
 
 **Reason / tradeoff:** Preserve all evidence needed to support a belief within a total update allowance; a document-title limit can remain a separate display choice.
 
@@ -262,7 +262,7 @@ Original recommendation: **Replace**.
 
 ## LA028
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 The older character-mind workflow remembers only its latest 300 completed-update identifiers to avoid applying the same update twice.
 
@@ -274,9 +274,9 @@ Original recommendation: **Replace**.
 
 ## LA029
 
-**Historical — needs recheck · Restrictiveness: Very safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Very safe.**
 
-The memory-query function returns 30 records by default and never more than 300 per call.
+The in-memory `get_memories` helper returns 30 entries by default and clamps the requested count to 0–300. It reports omitted and required-missing entries instead of granting them extra slots. These helper limits do not describe the retained-corpus SQL selection or the independently paged player/inspector history in MH08; the remaining structured-mind verification script is not evidence that the current director uses this older preparation path.
 
 **Reason / tradeoff:** Select memories using relevance and available request space, and allow additional query pages rather than permanently hiding results beyond the count.
 
@@ -286,9 +286,9 @@ Original recommendation: **Replace**.
 
 ## LA030
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The memory-query function returns at most 30,000 bytes by default, with an allowed maximum of 400,000 bytes.
+The in-memory `get_memories` helper has a 30,000-byte default serialized-result allowance, clamped to 0–400,000 bytes. Required entries also consume it, with missing required IDs explicitly reported. Its older `cognitionContext` caller requests different tier-specific budgets and rejects missing required evidence. The production retained-corpus path has its own preparation and complete-context allowances.
 
 **Reason / tradeoff:** Keep a response-size budget, but align it with the actual model request so the query does not return unusably large results.
 
@@ -298,7 +298,7 @@ Original recommendation: **Review**.
 
 ## LA031
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — absence rechecked 2026-10-06 · Restrictiveness: — (removed).**
 
 **Former limit, now removed:** The code advertises memory-query quotas of 300 experiences and 400,000 bytes in a metadata object, while separate code enforces the query limits.
 
@@ -310,7 +310,7 @@ Original recommendation: **Completed removals**.
 
 ## LA082
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 Only one background memory-maintenance job runs at a time, and it waits while interactive cognition is busy.
 
@@ -322,7 +322,7 @@ Original recommendation: **Review**.
 
 ## LA083
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 Background memory maintenance for the same character is spaced at least 60 real seconds apart.
 
@@ -346,21 +346,21 @@ Original recommendation: **Review**.
 
 ## LA085
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-A daily memory-summary review requires at least 2 source memories or summaries.
+The SQL-backed daily-review selector can return one eligible source and partitions a completed day under SV09/SB07. The older pure `consolidationBatch` fallback requires at least two sources for daily mode; that check is not a universal runtime minimum. Protected-only selections can take native cleanup instead of buying a summarizer call.
 
-**Reason / tradeoff:** Keep this rule when reviewing one source cannot usefully combine information and would only buy unnecessary model work.
+**Reason / tradeoff:** Judge unnecessary summarization at the actual selected consumer. Do not add a two-source gate that strands a final one-record SQL partition, and do not infer unlimited whole-day preparation from the fallback selector.
 
-[Implementation starting point](../../apps/server/src/cognition-maintenance.ts).
+[SQL selector](../../apps/server/src/memory-repository.ts) · [Fallback selector](../../apps/server/src/memory-consolidation.ts) · [Execution](../../apps/server/src/cognition-maintenance.ts).
 
 Original recommendation: **Keep**.
 
 ## LA086
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Background reflection is spaced at least 1 game hour apart, with additional daily scheduling checks.
+A native-downtime reflection opportunity requires no accepted reflection in the current game day and at least one game hour since the last accepted reflection. Separately, the maintenance scheduler durably records at most one reflection-harness attempt per actor per game day before starting it. Failure does not clear that attempt marker or authorize a retry; a later opportunity can remain queued for another eligible day. These rules do not schedule hourly paid reflection. Dream-episode eligibility, daily-summary cursors and the real-time maintenance cooldown remain separate.
 
 **Reason / tradeoff:** Review reflection frequency as intended character behavior rather than assuming every new event needs another reflection call.
 
@@ -370,13 +370,13 @@ Original recommendation: **Review**.
 
 ## LA087
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-A dream becomes eligible after 7,200 game seconds in the configured resting state.
+The bundled cognition policy makes a dream eligible after 7,200 game seconds continuously in its configured restorative-rest effect. The engine reads the installed status-effect reference and elapsed threshold; an explicitly null dream policy disables this opportunity. Episode identity, current eligibility and spending admission still apply.
 
 **Reason / tradeoff:** Treat the two-hour delay as an authored sleep/dream rule, not a universal engine requirement.
 
-[Implementation starting point](../../apps/server/src/cognition-maintenance.ts).
+[Authored default](../../packages/domain/src/worlds/base/cognition.ts) · [Maintenance consumer](../../apps/server/src/cognition-maintenance.ts).
 
 Original recommendation: **Review**.
 
@@ -390,37 +390,37 @@ Exact body/manifest/status/cognition dependency evidence is captured before asyn
 
 ## LA089
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-Each memory-summarization request is packed into 220,000 characters, with 4,096 characters reserved for instructions and response-format overhead.
+Memory-summarization input packing uses a 220,000-character allowance, counting encoded source text plus instructions and a 4,096-character framing estimate. This is distinct from the earlier 128-source/512-KiB SQL preparation allowance. A single source that cannot fit fails explicitly; additional complete-source partitions require separately admitted calls.
 
 **Reason / tradeoff:** Keep complete-source batches small enough for the model, and split additional memories into further authorized requests.
 
-[Implementation starting point](../../apps/server/src/cognition-maintenance.ts).
+[Summarization packing](../../apps/server/src/memory-consolidation.ts) · [SQL source preparation](../../apps/server/src/memory-repository.ts).
 
 Original recommendation: **Review**.
 
 ## LA090
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
 Each memory-summarization call permits 8,192 output tokens; batch sizing estimates 24,576 output characters plus 128 characters of fixed overhead.
 
 **Reason / tradeoff:** Keep output room for faithful summaries without requiring the model to erase distinctions just to fit the batch.
 
-[Implementation starting point](../../apps/server/src/cognition-maintenance.ts).
+[Output estimate and packing](../../apps/server/src/memory-consolidation.ts).
 
 Original recommendation: **Review**.
 
 ## LA193
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The remote character-mind workspace lists 20 files per request, permits 8,000 bytes per authored file and caps a downloaded file response at 16,000 bytes.
+The remote inner-world workspace requests at most 20 listing entries and rejects a returned continuation cursor rather than silently accepting the first page. Export rejects an authored file reported above 8,000 bytes; the transport independently stops a file response above 16,000 bytes, and final `flattenFiles` admission enforces LA019/LA020 including filenames. Export also rechecks the workspace revision; listing, transfer and accepted-file quotas are different boundaries.
 
-**Reason / tradeoff:** Follow file-list pages and align download sizes with allowed files before increasing the character's mind-file capacity.
+**Reason / tradeoff:** Keep bounded, complete snapshot export rather than silently omitting files. Any future increase in accepted file capacity must reconcile listing coverage and byte limits together; following extra pages is not currently delivered.
 
-[Implementation starting point](../../apps/server/src/config.ts).
+[Workspace listing/export](../../apps/server/src/workspace.ts) · [File transport](../../packages/ai/src/macrofold.ts).
 
 Original recommendation: **Review**.
 
@@ -438,37 +438,37 @@ Original recommendation: **Replace** — delivered.
 
 ## LA219
 
-**Removed at original audit; not reverified · Restrictiveness: — (removed).**
+**Removed — source inspected 2026-10-06 · Restrictiveness: — (removed).**
 
 **Former limit, now removed:** When the domain event-handling code creates a memory, it stores identifiers for only the first 8 characters, animals or objects associated with that memory.
 
 **Reason / tradeoff:** Removed the eight-reference memory cutoff. Memory creation copies every supplied permitted reference to the beings and objects involved.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Memory creation](../../packages/domain/src/events.ts).
 
 Original recommendation: **Completed removals**.
 
 ## LA220
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-A proposed memory summary is limited to 700 characters, and a native repeated-observation check uses a one-game-hour lookback.
+The native `remember` proposal boundary still permits a summary of at most 700 JavaScript string units; this does not cap every stored awareness, reflected thought or consolidation summary. The current `appendMemory` deduplication checks the same event ID and memory kind among resident records, with no one-game-hour lookback. The historical lookback description is not a current repeat-observation rule.
 
 **Reason / tradeoff:** Preserve a memory's full meaning and distinguish genuinely new events from repeated descriptions of the same observation.
 
-[Implementation starting point](../../apps/server/src/http.ts).
+[Proposal admission](../../packages/domain/src/kernel.ts) · [Memory append/deduplication](../../packages/domain/src/events.ts).
 
 Original recommendation: **Expand**.
 
 ## LA238
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Residual helper — source inspected 2026-10-06 · Restrictiveness: Safe.**
 
-The older structured-mind workflow limits local document and record identifiers to 64 characters.
+The residual structured-mind helper accepts local document/record IDs of 1–64 ASCII letters, digits, underscores or hyphens, excluding unsafe object-property names. Current freeform inner-world filenames use their separate Unicode filename rule in `flattenFiles`; this helper limit is not a reason to narrow or rebuild that file interface.
 
 **Reason / tradeoff:** Keep internal labels bounded and align them with every interface that reads or writes those same documents.
 
-[Implementation starting point](../../apps/server/src/ai-director.ts).
+[Residual structured-mind admission](../../packages/domain/src/mind.ts) · [Current file admission](../../packages/domain/src/experience.ts).
 
 Original recommendation: **Expand**.
 
@@ -596,7 +596,7 @@ Resident awareness: latest 256 records/actor, targeting 1 MiB while always prese
 
 Owner memory history and search (`/api/memories`, god variant for inspectable non-player characters) return pages of **20**, newest first by (time, ID, source kind), with a fenced continuation cursor of at most 2,048 characters. A search accepts up to **200** characters, which become at most **8** distinct letter/number words of at most **64** characters each; every word must match the start of a word in the memory text the viewer is shown (`recall_sources.search_text`, AND semantics). The server matches in JavaScript after NFKC normalization and lowercasing, so matching does not depend on the database locale; accents must match (“eloise” does not find “Éloise”). A search or the **Private thoughts only** filter examines at most **2,000** eligible memories per request, read in chunks of 250 that stop once a page of matches is found; when that window holds no more matches, the response says so and the cursor continues into older memories. The same bounds apply to perceived-event search ([HR06](hearing-and-speech.md#hr06--history-paging-and-growth)). A plain browse request reads 21 index rows and hydrates at most 20 bodies within the shared [preparation allowance](#la014).
 
-**Reason / tradeoff:** Predictable work per request on a growing corpus, while every eligible retained memory stays reachable through continuation. Matching only displayed text means a search adds no exposure beyond that text: it cannot confirm unheard words or forgotten sources. Displayed gesture text can still contain a target's global name until the [targeted-event text leak](../maintainers/TODO.md#future-character-reaction-bubbles) is fixed, and search then finds that name too. Prefix matching is weaker for scripts without spaces; semantic search would need paid query embeddings and is not used. Measured on one host with the earlier SQL matcher: a 2,000-row window with no match took 107 ms, the following continuation 21 ms; the chunked JavaScript matcher's private-thoughts window with no match took 38 ms ([evidence](../verification/player-clarity-ui.md#review-follow-up)). History retains its displayed-text AND-prefix matcher; [MH03](#mh03) now uses the same Unicode words with separately serialized OR-prefix database recall. [Implementation](../../apps/server/src/memory-history.ts), [search terms](../../apps/server/src/text-search.ts).
+**Reason / tradeoff:** Predictable work per request on a growing corpus, while every eligible retained memory stays reachable through continuation. Matching only displayed text means a search adds no exposure beyond that text: it cannot confirm unheard words or forgotten sources. [BW22](../maintainers/base-world.md#bw22--observer-safe-names-in-event-text) repaired targeted-event names at occurrence: the stored perspective uses the witness's then-permitted name rather than the target's global name. Its [native/PostgreSQL evidence](../verification/camp-life.md#observer-safe-target-names-bw22) does not qualify arbitrary generated prose or authorize rewriting historical development saves. Search still matches only the resulting displayed text; it does not confer name knowledge. Prefix matching is weaker for scripts without spaces; semantic search would need paid query embeddings and is not used. Measured on one host with the earlier SQL matcher: a 2,000-row window with no match took 107 ms, the following continuation 21 ms; the chunked JavaScript matcher's private-thoughts window with no match took 38 ms ([evidence](../verification/player-clarity-ui.md#review-follow-up)). History retains its displayed-text AND-prefix matcher; [MH03](#mh03) now uses the same Unicode words with separately serialized OR-prefix database recall. [Implementation](../../apps/server/src/memory-history.ts), [search terms](../../apps/server/src/text-search.ts).
 
 ## KG01
 

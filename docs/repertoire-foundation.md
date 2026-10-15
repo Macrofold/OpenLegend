@@ -19,7 +19,7 @@ The repertoire is a design/evaluation catalogue, not the runtime capability regi
 | LAW-01–12: promise, negotiate and establish a custom     | Communication/acceptance can establish terms or voluntary practice without installing enforcement physics.                                              |
 | COL / TMP / SYN: unusual bodies, clocks and topology     | The common interfaces retain extension seams, but do not claim new solvers, cloning, time travel or graph-world traversal already exist.                |
 
-The first implementable foundation is a usable relationship reader, shared world-level inspection and safe MCP access to existing native capabilities. It is not a new physics engine. Subsequent releases prove unlike domains rather than implement hundreds of named verbs.
+The initial relationship reader, shared world-level inspection and authenticated MCP access are implemented, with finite reviewed authoring and local native-harness execution added under INV-21. Those foundations do not implement the repertoire's remaining physical/social families or complete deployed qualification. Subsequent releases prove unlike domains through real owners rather than implement hundreds of named verbs.
 
 ## 2. One route for use, another for definition change
 
@@ -121,13 +121,13 @@ Deformation, living buildings and detachment need qualified body/topology/suppor
 
 ## 10. Foundation implementation boundaries
 
-Implement the core projection/index and strict shared tool service against the current immutable native records. Add a disabled-by-default authenticated MCP adapter that exposes only implemented read/preview operations. Keep local browser inspection behind the existing owner boundary; remote inspection requires its own world-bound credential and never browser cookies.
+The core projection/index, strict shared reads and authenticated MCP adapter are delivered against current native records. Local browser inspection retains the existing inspection authority, and remote inspection requires a world-bound credential rather than browser cookies. Separately opted-in reviewed mutation requires a funded, account-bound application session context and exact human approval; it is not authority conferred by the read credential or by a graph edge.
 
-Use the official pinned SDK for protocol conversion, fresh request-scoped servers, no model-controlled principal/world selection, bounded inputs/results and no automatic paid work. Read-only previews can function without a paid session; mutation/session context and native Macrofold provisioning remain their existing INV-16/18 work. Do not counterfeit a unified native harness by exposing a standalone endpoint.
+The current adapter uses the pinned official SDK, request-scoped servers, application-established principal/world scope and bounded inputs/results. Read-only previews can function without a paid session. Mutation/session context and native Macrofold provisioning are implemented through the existing INV-21 owners, with WW07 retaining the deployable-build and matching-runtime gate. Do not replace those delivered services or treat a standalone endpoint as native-harness interoperability. WW11 separately retains the inspected-subject privacy race after awaited evidence reads.
 
 No new saved-world fields are required for derived graph indexes. Define cache invalidation on exact immutable source identity and restore generation. Keep adapters and traversal separate so new real relation sources do not rewrite MCP or AI schemas. Do not create dormant unconsumed runtime stores for future social/physical families merely to mark a task implemented.
 
-Implementation/acceptance are tracked under INV-20 and the existing AC/EWF owners. All architecture claims must identify the delivered projection coverage. The complete graph, joint physics, information carriers, institutions, generated art and live Macrofold integration require their stated follow-up consumers and qualification.
+Implementation/acceptance are tracked under INV-20 and the existing AC/EWF owners. All architecture claims must identify the delivered projection coverage. Complete interaction closure, joint physics, information carriers, institutions and generated art require their stated follow-up consumers and qualification. Local live Macrofold evidence does not close the separate deployment, sustained-load or privacy gates.
 
 ## 11. Technical extension contracts
 
@@ -212,8 +212,8 @@ The default scene can retain its current rendering until illusion/disguise/carri
 
 ### 11.6 Incremental delivery and expansion stop points
 
-The read-only foundation can ship without new saved fields, paid models, a graph database, or parallel activity execution. The next meaningful increment is the native Macrofold connector/session/approval path under INV-16/18, using these existing readers and native recipe draft services. A real authenticated deployment and live harness qualification are required before claiming that connection works.
+The read-only foundation shipped without new saved fields, paid models, a graph database or parallel activity execution. The native Macrofold connector/session/approval increment and finite custom-attribute adapters are also implemented under INV-21 with local live evidence. WW07 retains the exact deployable-build and matching-runtime qualification; a working local journey neither closes that gate nor requires repeating the delivered implementation.
 
-Thereafter select one unlike consumer at a time: note/carrier, exact offer/transfer, worksite hold/fasten, then a composed pot/bell/convention/request scene. Each demonstrates actual family behavior, graph extraction, cognitive projection, native use, interruption and current-format persistence. Do not call an unconsumed type declaration an implemented family.
+The remaining note/carrier, exact offer/transfer, worksite hold/fasten and composed pot/bell/convention/request scenes are unlike-domain proof candidates, not a whole-game build order. The later [playable-game-first policy](repertoires/gameplay-priorities.md) controls selection; optional administration and camp detail are not prerequisites for enemies, combat, exploration or rewarding progression. Retain each selected proof's actual family behavior, graph extraction, cognitive projection, native use, interruption and current-format persistence requirements. An unconsumed type declaration is not an implemented family.
 
 Before exposing clone/merge, local clocks, graph-world travel or deformation, the respective host consumer must define its identity, collision/topology, resource, observation, scheduling and recovery semantics. Generic references and adapter boundaries leave room for them; the current runtime must continue to report them as unsupported. These are architectural extension points, not latent gameplay switches.

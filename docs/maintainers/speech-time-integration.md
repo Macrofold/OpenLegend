@@ -4,7 +4,7 @@ This is an integration record, not a second specification. [Simulation time](../
 
 ## Reconciled ownership
 
-The hearing source `c4379246` is consolidated and rebased in `codex/hearing-ready-for-main` onto main `45210d41`, which contains cadence/spatial, native actions and the latest scene/cognition/persistence improvements. Earlier references to two unmerged branches, main `03105fed`/`56b8c383`, mandatory one-second evolution, 480 ticks per wall second and four-second routine visual acquisition are superseded.
+Historical integration: hearing source `c4379246` was consolidated on `codex/hearing-ready-for-main` against main `45210d41`. That work is now integrated in main alongside subsequent cadence, spatial, action, cognition and persistence changes; neither branch is a pending merge prerequisite. Earlier references to two unmerged branches, main `03105fed`/`56b8c383`, mandatory one-second evolution, 480 ticks per wall second and four-second routine visual acquisition are superseded.
 
 - Main's cooperative elapsed-time start/rate/end phases, displacement/contact boundaries, Recast waits, debt, work budgets and mutation ownership remain. 8× means requested elapsed time, not a prescribed call count.
 - Speech is an instantaneous committed occurrence. It resolves current pose, geometry, participation, capability, noise and listener floor at emission. Neither sparse visual discovery nor an unchanged-exposure proof delays speech or grants acoustic access.
