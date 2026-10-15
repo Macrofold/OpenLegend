@@ -1,5 +1,5 @@
 import * as pc from 'playcanvas';
-import type { SceneryInstance } from '@open-legend/spatial';
+import { intersectBox, type SceneryInstance } from '@open-legend/spatial';
 import { random } from './art';
 
 /** Quiet painted regions replace the old all-over flecks. The scene still places
@@ -211,7 +211,7 @@ function coniferTier(
     }
 }
 
-function sceneryMesh(device: pc.GraphicsDevice, appearance: string, seed: number): pc.Mesh {
+function sceneryMesh(device: pc.GraphicsDevice, appearance: string, seed: number) {
   const geometry: Geometry = { positions: [], normals: [], colors: [], indices: [] };
   const rng = random(seed);
   const birch = appearance === 'tree-birch';
@@ -291,7 +291,72 @@ function sceneryMesh(device: pc.GraphicsDevice, appearance: string, seed: number
   mesh.setColors(geometry.colors);
   mesh.setIndices(geometry.indices);
   mesh.update();
-  return mesh;
+  return { mesh, positions: geometry.positions, indices: geometry.indices };
+}
+
+interface OccludingInstance {
+  inverse: pc.Mat4;
+  bounds: { min: pc.Vec3; max: pc.Vec3 };
+}
+
+/** Pointer occlusion follows the actual decorative crowns without giving them
+ * native collision or sight authority. Shared local triangles and transforms
+ * are prepared once; bounds reject irrelevant instances before triangle work. */
+export class SceneryCameraOcclusion {
+  private readonly from = new pc.Vec3();
+  private readonly to = new pc.Vec3();
+  private readonly direction = new pc.Vec3();
+  constructor(
+    private readonly positions: readonly number[],
+    private readonly indices: readonly number[],
+    private readonly instances: readonly OccludingInstance[],
+    private readonly bounds: { min: pc.Vec3; max: pc.Vec3 },
+  ) {}
+
+  hit(from: pc.Vec3, to: pc.Vec3): number | null {
+    if (intersectBox(from, to, this.bounds) === null) return null;
+    let nearest = Infinity;
+    for (const instance of this.instances) {
+      const bound = intersectBox(from, to, instance.bounds);
+      if (bound === null || bound > nearest) continue;
+      instance.inverse.transformPoint(from, this.from);
+      instance.inverse.transformPoint(to, this.to);
+      this.direction.sub2(this.to, this.from);
+      for (let i = 0; i < this.indices.length; i += 3) {
+        const a = this.indices[i]! * 3;
+        const b = this.indices[i + 1]! * 3;
+        const c = this.indices[i + 2]! * 3;
+        const ax = this.positions[a]!;
+        const ay = this.positions[a + 1]!;
+        const az = this.positions[a + 2]!;
+        const e1x = this.positions[b]! - ax;
+        const e1y = this.positions[b + 1]! - ay;
+        const e1z = this.positions[b + 2]! - az;
+        const e2x = this.positions[c]! - ax;
+        const e2y = this.positions[c + 1]! - ay;
+        const e2z = this.positions[c + 2]! - az;
+        const px = this.direction.y * e2z - this.direction.z * e2y;
+        const py = this.direction.z * e2x - this.direction.x * e2z;
+        const pz = this.direction.x * e2y - this.direction.y * e2x;
+        const determinant = e1x * px + e1y * py + e1z * pz;
+        if (Math.abs(determinant) < 1e-9) continue;
+        const inv = 1 / determinant;
+        const tx = this.from.x - ax;
+        const ty = this.from.y - ay;
+        const tz = this.from.z - az;
+        const u = (tx * px + ty * py + tz * pz) * inv;
+        if (u < 0 || u > 1) continue;
+        const qx = ty * e1z - tz * e1y;
+        const qy = tz * e1x - tx * e1z;
+        const qz = tx * e1y - ty * e1x;
+        const v = (this.direction.x * qx + this.direction.y * qy + this.direction.z * qz) * inv;
+        if (v < 0 || u + v > 1) continue;
+        const fraction = (e2x * qx + e2y * qy + e2z * qz) * inv;
+        if (fraction >= 0 && fraction <= 1 && fraction < nearest) nearest = fraction;
+      }
+    }
+    return nearest === Infinity ? null : nearest;
+  }
 }
 
 /** A replacement appearance for existing decorative instances only. Dimensions,
@@ -307,10 +372,11 @@ export function createGroupedScenery(
   instance: pc.MeshInstance;
   buffer: pc.VertexBuffer;
   bounds: pc.BoundingBox;
+  occlusion: SceneryCameraOcclusion | null;
 } | null {
   if (!['tree-conifer', 'tree-birch', 'tree-broadleaf', 'woodland-shrub'].includes(appearance))
     return null;
-  const mesh = sceneryMesh(device, appearance, seed);
+  const { mesh, positions, indices } = sceneryMesh(device, appearance, seed);
   material.diffuseVertexColor = true;
   material.diffuse.set(1, 1, 1);
   material.specular.set(0.015, 0.015, 0.015);
@@ -343,6 +409,7 @@ export function createGroupedScenery(
   const position = new pc.Vec3();
   const min = new pc.Vec3(Infinity, Infinity, Infinity);
   const max = new pc.Vec3(-Infinity, -Infinity, -Infinity);
+  const occluding: OccludingInstance[] = [];
   for (const [index, source] of instances.entries()) {
     const p = source.position;
     const angle = Math.sin(p.x * 12.9898 + p.z * 78.233 + seed) * 360;
@@ -355,6 +422,13 @@ export function createGroupedScenery(
     transforms.set(matrix.data, index * 16);
     min.min(position.set(p.x - source.width * 0.7, p.y, p.z - source.width * 0.7));
     max.max(position.set(p.x + source.width * 0.7, p.y + source.height, p.z + source.width * 0.7));
+    occluding.push({
+      inverse: matrix.clone().invert(),
+      bounds: {
+        min: new pc.Vec3(p.x - source.width * 0.7, p.y, p.z - source.width * 0.7),
+        max: new pc.Vec3(p.x + source.width * 0.7, p.y + source.height, p.z + source.width * 0.7),
+      },
+    });
   }
   const instance = new pc.MeshInstance(mesh, material);
   const buffer = new pc.VertexBuffer(
@@ -369,5 +443,13 @@ export function createGroupedScenery(
   instance.setInstancing(buffer, true);
   instance.castShadow = instances[0]?.castShadows ?? false;
   instance.receiveShadow = true;
-  return { mesh, instance, buffer, bounds };
+  return {
+    mesh,
+    instance,
+    buffer,
+    bounds,
+    occlusion: occluding.length
+      ? new SceneryCameraOcclusion(positions, indices, occluding, { min, max })
+      : null,
+  };
 }
