@@ -4,7 +4,7 @@ This report continues [whole-interface verification](game-interaction-redesign.m
 
 **October 14 result: thirteen distinct selected UI scenarios have passing evidence across the source-specific runs below.** This was not one thirteen-test run or a statement that every whole-feature acceptance criterion had passed. Production UI was unchanged during that original narrower testing pass. The October 15 continuation below records later fixes, integration, source-specific passes/failures and current remaining acceptance.
 
-**October 15 current result:** the named recovery and composed-interface observations now have passing source-specific evidence, including short invitation controls, both supported alternate presets and real browser zoom/reflow. Required Code and Spatial/interface CI pass at `b77639184`, `526368719` and `c98de4a07`. All thirteen temporary qualification files are removed from the cleanup candidate; its own required CI remains pending. Real OS input methods, applicable assistive devices and uncoached player/creator/operator acceptance remain unperformed; the project is not declared complete.
+**October 15 current result:** the named recovery and composed-interface observations now have passing source-specific evidence, including short invitation controls, both supported alternate presets and real browser zoom/reflow. The cleaned source at `d3c526392` passes required Code and Spatial/interface CI after all thirteen temporary qualification files are removed. Real OS input methods, applicable assistive devices and uncoached player/creator/operator acceptance remain unperformed; the project is not declared complete.
 
 ## Scope correction
 
@@ -682,12 +682,47 @@ evidence is reused only for its unchanged owners. X11 XTEST and software renderi
 remain separate from physical input, OS composition, assistive devices and uncoached
 use. Additional and cumulative task provider/Jev cost: **$0**.
 
+## Cleaned source and required checks
+
+Cleanup commit `d3c52639279ef8547fc7dc32126b3526665f6a99` removes exactly the
+dedicated workflow, Playwright configuration and eleven temporary observation
+files. Generated logs, traces and pixels remain outside canonical source. Ordinary
+CI entry points and workflows are unchanged. Production, protocol, native and
+permanent test source are identical to the passing `c98de4a07` observation source.
+
+Required [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38691148982)
+and [push Code](https://github.com/Macrofold/OpenLegend/actions/runs/38691143590)
+both **pass**: all **392 tests in 43 files**, guidance, generated configuration,
+formatting, TypeScript and production build. Required
+[Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38691148985)
+also **passes**: all **28 native tests**, the spatial browser journey and all
+**six ordinary interface journeys**. God editor takes 25.4 seconds and Time takes
+50.0 seconds under its unchanged sixty-second total. Historical failures remain;
+these source-specific passes establish no general performance improvement.
+
+Local TypeScript passes after removal. The complete affected production/test diff
+and reconciled documentation were reviewed; changed-file formatting, whitespace
+and 1,834 local Markdown targets/anchors pass in the cleanup review. The direct
+production difference from selected `Macrofold/OpenLegend` `origin/main` at
+`362d3b0a20e92fc38a672730104b957b1c7c1be4` is the editor's viewport constraints,
+completed-button focus margin and narrow Character reading-area correction.
+The two permanent fixture corrections follow main's existing action/camera
+behavior. Original-request recovery is already integrated into main and is not
+duplicated by this final difference.
+
+This completes the independently executable implementation, selected
+qualification and tooling cleanup identified by the source/acceptance audit.
+Project status remains **In progress** for the real input/device/uncoached
+requirements below, and PR #27 remains draft and unmerged. Additional and
+cumulative task provider/Jev cost: **$0**.
+
 ## Reused evidence and remaining experience scope
 
 The final source/acceptance audit compares the integrated owners and their actual
 recorded scenarios. The selected invitation full-focus, browser zoom/reflow and
-alternate-world continuations now pass, leaving final required CI and
-evidence/tooling cleanup as the independently executable work. This is an overlap
+alternate-world continuations, cleaned-source required CI and evidence/tooling
+cleanup now pass. It identifies no further independently executable in-scope
+task while real participant/device evidence is unavailable. This is an overlap
 review, not a claim that every historical journey was rerun at the latest source.
 
 | Journey scope                        | Evidence reused and its limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -718,13 +753,13 @@ Existing native barter settlement and outing travel/arrival/restart evidence is
 reused only for its unchanged owners. This is a bounded qualification, not an
 exhaustive identity, grant, world, notice or layout matrix.
 
-At `b77639184`, `526368719` and `c98de4a07`, required Code and Spatial/interface CI are green.
+At cleaned source `d3c526392`, required Code and Spatial/interface CI are green.
 Native enlarged-browser/320-CSS-pixel qualification passes at `c98de4a07` with
 all three images inspected; earlier capture and late-layout failures remain
-recorded. The cleanup candidate removes the dedicated workflow, Playwright
-configuration and eleven temporary scenario files; ordinary CI/test entry points
-have no dependency on them. Local TypeScript passes after removal. Final
-documentation review, commit and required checks at the cleaned HEAD remain open.
+recorded. Temporary tools are removed, ordinary CI/test entry points have no
+dependency on them, and local TypeScript and affected-diff/documentation review
+pass. No further independent implementation or qualification task was identified
+by the current audit.
 
 Real operating-system input-method behavior, applicable physical assistive
 devices and uncoached player/creator/operator observations have not been performed
