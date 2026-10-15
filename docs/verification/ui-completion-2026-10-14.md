@@ -210,6 +210,14 @@ Additional and cumulative task provider/Jev cost: **$0**.
 
 ## Remaining whole-feature qualification
 
+The October 15 source review also found a Current task recovery defect: failed
+session-storage reads appeared to mean no original request, and failed cleanup
+released a confirmed request. The task now distinguishes unreadable storage,
+verifies exact retention before dispatch and keeps the original guard through
+failed cleanup. TypeScript, production build and changed-file formatting pass.
+Its focused alternate-world browser observation is prepared but has not yet run;
+static checks do not establish the after-earlier-work-ended recovery guarantee.
+
 The original action and checkpoint reload-recovery implementation is no longer missing: the three specific interrupted-request journeys above pass. This does not close every compound UIUX12/UIUX14 requirement. Wider storage/identity/revocation combinations, complete native barter/outing continuation, completed-task rendered-result review and the alternate-world interface qualification retain their earlier explicit tracking and evidence limits.
 
 Real operating-system input-method behavior, physical assistive devices and uncoached-player observation have not been performed here. Scripted keyboard tests and automated Chromium interaction cannot substitute for that evidence. The twelve-image inspection resolves the earlier pixel-inspection blocker for that historical subset only. Current required CI is green at the exact source above; it does not establish entire-feature completion or replace the remaining specific interface and human observations. The unrelated hunting repair remains excluded at Mike's direction rather than being restarted under UI acceptance.

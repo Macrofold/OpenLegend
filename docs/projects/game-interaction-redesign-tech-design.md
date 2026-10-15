@@ -1,8 +1,8 @@
 # Open Legend: whole-interface technical design
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Current-main integration and recovery safeguards are delivered; owner storage and final browser/device/player verification remain open. | 2026-10-15   |
+| Status      | Current progress                                                                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Current-main integration and owner-message storage checks pass; Current task recovery and final browser/device/player verification remain open. | 2026-10-15   |
 
 [Feature specification](game-interaction-redesign-feature-spec.md) · [Pinned source audit](../ui-ux/current-interface-audit.md) · [Handbook](../ui-ux/README.md)
 
@@ -479,6 +479,8 @@ Focus restoration belongs to the completed/dismissed task and must not steal foc
 Use `command-request.ts` and `/api/command` for supported gameplay intentions, preserving the native action and revision contracts. The detailed inventory design already owns original command identity, exact available quantities, read-only receipt recovery and unknown-result guarding. Reuse that mechanism only for a genuinely matching gameplay command owner. Do not replace creator reviewed receipts, save/load request identities, invitations or speech retry with one generic request abstraction that changes their semantics.
 
 Creator operations that use `reviewedTransition` retain its authority and their null gameplay recovery fingerprint; other creator writes retain their respective route owners. `/api/command/receipt` remains a read, not a generic result search, retry executor or creator operation reader. A stale or missing receipt does not license a new effect. Pending completion and storage cleanup must match the original request, so an old response cannot clear a newer draft or guard. Scope errors should lead to fresh access/recovery, never weaker checks.
+
+Current task distinguishes an absent request from an unreadable browser record. Before Start, Stop or another physical task command, it verifies that no original request remains, stores the exact new command identity and intention, and reads them back before dispatch. A known original remains available for read-only result checks when storage later fails. Even a confirmed result keeps new task commands blocked until matching local cleanup succeeds. Draft editing remains available. This changes the earlier behavior that treated failed reads as absence and released the guard despite failed cleanup; the native command, permission and receipt owners remain unchanged. Exact current agreement replies keep their separate native admission, as they already do in Character: an uncertain task cannot prevent declining or withdrawing consent. This removes the earlier task-only restriction on those replies while retaining connection, control and active-request restrictions. The completion report records the focused browser qualification separately.
 
 Preserve the separate full request scope, private-draft namespace and command-recovery namespace. Same authorized owner may retain permitted drafts across connection/control Resume; changed session, grant, actor, world/timeline or audience invalidates the relevant private state. Restored navigation is not restored permission. Account preferences, device presentation, private drafts and durable domain records have different lifetimes; classify a value before persisting it. Any current-format model/protocol change updates admission and persistence together without a compatibility reader or parallel mutation owner.
 

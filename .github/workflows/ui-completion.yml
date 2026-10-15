@@ -39,36 +39,37 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Observe exact owner-request storage recovery
-        id: owner
+      - name: Observe remaining connected UI and recovery cases
+        id: connected
         continue-on-error: true
         run: >-
           pnpm exec playwright test --config playwright.ui-completion.config.ts
-          --output /tmp/openlegend-owner-cloud
-      - name: Observe native denied external-container presentation
-        id: denied
-        continue-on-error: true
-        run: >-
-          node --import tsx scripts/ui-completion-denied.mjs
-          /tmp/openlegend-denied-cloud
+          --output /tmp/openlegend-connected-cloud
       - name: Observe retained completed-task presentation
         id: care
         continue-on-error: true
         run: >-
           node --import tsx scripts/ui-completion-care.mjs
           /tmp/openlegend-care-cloud
+      - name: Observe alternate-world task recovery and persistence
+        id: alternate
+        timeout-minutes: 6
+        continue-on-error: true
+        run: >-
+          node --import tsx scripts/ui-completion-alternate.mjs
+          /tmp/openlegend-alternate-cloud
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: finite-ui-completion-${{ github.sha }}
           retention-days: 7
           path: |
-            /tmp/openlegend-owner-cloud
-            /tmp/openlegend-denied-cloud
+            /tmp/openlegend-connected-cloud
             /tmp/openlegend-care-cloud
+            /tmp/openlegend-alternate-cloud
       - name: Require all three observations to pass
         if: always()
         run: |
-          test '${{ steps.owner.outcome }}' = success
-          test '${{ steps.denied.outcome }}' = success
+          test '${{ steps.connected.outcome }}' = success
           test '${{ steps.care.outcome }}' = success
+          test '${{ steps.alternate.outcome }}' = success

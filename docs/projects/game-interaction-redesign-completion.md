@@ -79,7 +79,7 @@ The alternate-world review identified the same consequential boundary in the
 existing Current task owner: unreadable session recovery was treated as no request,
 and a fresh Start could overwrite the unknown original with a new command identity.
 Keep the current stored shape and native command/receipt owners, reuse the existing
-retained-request reader where its contract fits, verify storage before dispatch and
+empty/pending/unreadable result type, verify storage before dispatch and
 matching cleanup before releasing the guard, and retain a known original for
 read-only result checks. Qualify refusal after the earlier work has actually ended,
 so an ordinary busy-work refusal cannot hide a missing recovery constraint. This
@@ -87,6 +87,14 @@ adds roughly 80–110 task-owner logic lines; combined production changes are no
 about 200 lines. The existing durable plan remains appropriate because original
 effects, storage failure and stale results cross the client/native boundary; no
 server schema, paid retry or new general recovery framework is introduced.
+The action/checkpoint reader's existing serialized-length ceiling does not cover
+authored task labels and metadata. Keep parsing with the task owner rather than
+adding that new task limit merely to share a helper; actual storage failure still
+refuses dispatch without truncating the intention.
+Keep exact agreement replies with their existing native owner rather than treating
+an uncertain task as a consent-ending prerequisite. Qualify losing the real Send
+acknowledgement, explicit Withdraw, and then reading that original Send result
+without another invitation or movement, within the existing composed outing case.
 
 ### Original action recovery — UIUX12
 

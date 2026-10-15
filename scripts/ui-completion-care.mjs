@@ -23,7 +23,7 @@ const expectedSource = {
   'apps/server/src/view.ts': '2e7adf59d54f158b37ec4069b4bb21ba7d7a8c13ffc5502f6432df6d580299a9',
   'apps/client/src/main.tsx': 'fe9761baa102d82aaf54f8a505f24d9739e41a17ca8f02fb24cc91145c55bf44',
   'apps/client/src/ui/camp-activity.tsx':
-    '77ccab48f2952bbc245c991ecb1b690ea480c971c2e1e65f140c8ef149b0d446',
+    '6938d36c405fa393c8275e6bfb170e40b3f09a2b8322e6c83c315a4e3585cecf',
   'apps/client/src/ui/activity-object-field.tsx':
     'f3d04b26b7f2665e282bb9834550bb923e9d2f608a7696c90cfed2cd2530a3f8',
   'packages/domain/src/kernel.ts':

@@ -12,6 +12,7 @@ import type {
   GameView,
 } from '@open-legend/protocol';
 import { post } from '../api';
+import type { RetainedRequest } from '../retained-request';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
 import { Button, Icon, Section, SelectField, Tag } from '../design-system/components';
 import { ActivityObjectField } from './activity-object-field';
@@ -68,33 +69,34 @@ function storedCommand(value: unknown): value is CommandInput {
     typeof position.surfaceId === 'string'
   );
 }
-function readPending(key: string): PendingTask | undefined {
+function validPending(value: unknown): value is PendingTask {
+  return (
+    record(value) &&
+    record(value.request) &&
+    record(value.action) &&
+    typeof value.request.commandId === 'string' &&
+    typeof value.request.commandEpoch === 'string' &&
+    typeof value.action.id === 'string' &&
+    typeof value.action.label === 'string' &&
+    value.action.enabled === true &&
+    storedCommand(value.action.command)
+  );
+}
+function readPending(key: string | undefined): RetainedRequest<PendingTask> {
+  if (!key) return { status: 'unreadable' };
   try {
-    const value: unknown = JSON.parse(sessionStorage.getItem(key) ?? 'null');
-    if (
-      record(value) &&
-      record(value.request) &&
-      record(value.action) &&
-      typeof value.request.commandId === 'string' &&
-      typeof value.request.commandEpoch === 'string' &&
-      typeof value.action.id === 'string' &&
-      typeof value.action.label === 'string' &&
-      value.action.enabled === true &&
-      storedCommand(value.action.command)
-    )
-      return {
-        request: { commandId: value.request.commandId, commandEpoch: value.request.commandEpoch },
-        action: {
-          id: value.action.id,
-          label: value.action.label,
-          enabled: true,
-          command: value.action.command,
-        },
-      };
+    const text = sessionStorage.getItem(key);
+    if (text === null) return { status: 'empty' };
+    const value: unknown = JSON.parse(text);
+    return validPending(value) ? { status: 'pending', request: value } : { status: 'unreadable' };
   } catch {
-    /* An invalid private draft cannot grant an executable request. */
+    return { status: 'unreadable' };
   }
 }
+const samePending = (a: PendingTask, b: PendingTask) =>
+  a.request.commandId === b.request.commandId &&
+  a.request.commandEpoch === b.request.commandEpoch &&
+  JSON.stringify(a.action.command) === JSON.stringify(b.action.command);
 
 /** Exact-target discovery uses authored role predicates; opening a task is only a read.
  * docs/projects/parallel-batch-01-playable-week/camp-activities.md#observation-memory-and-ordinary-ui */
@@ -255,9 +257,15 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [operation, setOperation] = useState<'start' | 'stop' | 'native' | null>(null);
-  const [unresolved, setUnresolved] = useState(() =>
-    recoveryScope ? readPending(pendingKey) : undefined,
+  const [retained, setRetained] = useState<RetainedRequest<PendingTask>>(() =>
+    readPending(recoveryScope ? pendingKey : undefined),
   );
+  const retainedRef = useRef(retained);
+  const unresolved = retained.status === 'pending' ? retained.request : undefined;
+  function remember(next: RetainedRequest<PendingTask>) {
+    retainedRef.current = next;
+    setRetained(next);
+  }
   const [recovering, setRecovering] = useState(false);
   const [selections, setSelections] = useState<
     Record<string, { key: string; page: ActivityChoicePage }>
@@ -545,23 +553,34 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     }
   }
   async function perform(action: ActionOption, kind: 'start' | 'stop' | 'native') {
-    if (pending.current || unavailable || unresolved) return undefined;
+    if (pending.current || unavailable || retainedRef.current.status !== 'empty') return undefined;
     if (!view.commandEpoch || !recoveryScope) {
       setError('Refresh your connection before starting work.');
       return undefined;
     }
+    const previous = readPending(pendingKey);
+    if (previous.status !== 'empty') {
+      remember(previous);
+      setError('Check the original task request before starting other work. Nothing was sent.');
+      return undefined;
+    }
     const request = { commandId: crypto.randomUUID(), commandEpoch: view.commandEpoch };
     const saved = { request, action };
-    // Preserve the exact intention before dispatch so hiding/reopening cannot create a fresh retry.
+    // Retention must survive reload before dispatch; a different or unreadable original
+    // cannot authorize a replacement. docs/save-and-load.md#continuation-and-identity
     try {
-      sessionStorage.setItem(pendingKey, JSON.stringify(saved));
+      const serialized = JSON.stringify(saved);
+      sessionStorage.setItem(pendingKey, serialized);
+      if (sessionStorage.getItem(pendingKey) !== serialized)
+        throw new Error('The exact task request was not retained.');
     } catch {
+      remember(readPending(pendingKey));
       setError(
-        'This browser could not retain the request for safe recovery. Allow session storage before starting work.',
+        'This browser could not retain the exact task request. Nothing was sent. Restore session storage before starting work.',
       );
       return undefined;
     }
-    setUnresolved(saved);
+    remember({ status: 'pending', request: saved });
     pending.current = request.commandId;
     if (kind === 'start') rememberFocus();
     setOperation(kind);
@@ -592,13 +611,26 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   }
   function acceptReceipt(result: ApiResult, commandId: string, input: CommandInput) {
     if (!alive.current || pending.current !== commandId) return;
+    const current = retainedRef.current;
+    if (current.status !== 'pending' || current.request.request.commandId !== commandId) return;
     try {
-      if (readPending(pendingKey)?.request.commandId === commandId)
-        sessionStorage.removeItem(pendingKey);
+      const stored = readPending(pendingKey);
+      if (
+        stored.status === 'unreadable' ||
+        (stored.status === 'pending' && !samePending(current.request, stored.request))
+      )
+        throw new Error('The retained task request changed or could not be read.');
+      sessionStorage.removeItem(pendingKey);
+      if (sessionStorage.getItem(pendingKey) !== null)
+        throw new Error('The confirmed request could not be cleared.');
     } catch {
-      /* A retained receipt can be checked again. */
+      setMessage(result.message);
+      setError(
+        'The original task result is known, but its recovery record could not be cleared. Restore session storage and check the request result again before starting other work.',
+      );
+      return;
     }
-    setUnresolved((current) => (current?.request.commandId === commandId ? undefined : current));
+    remember({ status: 'empty' });
     if (result.ok) {
       setError('');
       setMessage(result.message);
@@ -617,21 +649,28 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     } else setError(result.message);
   }
   async function recover() {
-    if (!unresolved || unavailable || recovering || pending.current) return;
-    const commandId = unresolved.request.commandId;
+    if (unavailable || recovering || pending.current) return;
+    let current = retainedRef.current;
+    if (current.status !== 'pending') {
+      current = readPending(pendingKey);
+      remember(current);
+    }
+    if (current.status !== 'pending') return;
+    const original = current.request;
+    const commandId = original.request.commandId;
     rememberFocus();
     pending.current = commandId;
     setRecovering(true);
     try {
       const receipt = await post<CommandReceiptResult>('/api/command/receipt', {
-        ...unresolved.request,
-        command: unresolved.action.command,
+        ...original.request,
+        command: original.action.command,
       });
       if (!alive.current || pending.current !== commandId) return;
       if (receipt.scope !== view.access?.scope)
         throw new Error('Your access changed. Reopen this task.');
       if (receipt.status === 'resolved') {
-        acceptReceipt(receipt.result, commandId, unresolved.action.command);
+        acceptReceipt(receipt.result, commandId, original.action.command);
         await refreshStatus();
         if (alive.current && pending.current === commandId) setRefresh((value) => value + 1);
       } else setError(receipt.message);
@@ -663,7 +702,8 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       'start',
     );
   }
-  const disabled = unavailable || !!operation || !!unresolved || recovering;
+  const disabled = unavailable || !!operation || recovering;
+  const mutationDisabled = disabled || retained.status !== 'empty';
   function edit(kind: NonNullable<typeof editing>) {
     rememberFocus();
     setEditing(kind);
@@ -787,7 +827,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         page={selectedPage(key)}
         visible={visible && preparing}
         connected={!unavailable}
-        busy={!!operation || !!unresolved || recovering}
+        busy={!!operation || retained.status !== 'empty' || recovering}
         working={working}
         readOnly={readOnly}
         onRead={(keyValue, page) =>
@@ -844,20 +884,29 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       }}
       onPointerDown={(event) => event.stopPropagation()}
     >
+      {/* Exact agreement replies retain their own native admission; an uncertain task
+          cannot prevent consent ending. docs/action-capabilities.md#exact-social-consent-with-separate-movement */}
       <OutingStatus view={view} connected={!disabled} command={(action) => void command(action)} />
-      {unresolved && (
+      {retained.status !== 'empty' && (
         <div className="ol-task-recovery" role="status">
-          <p>
-            Awaiting the exact result of {unresolved.action.label}. Current work alone does not
-            prove whether this request arrived.
-          </p>
+          {unresolved ? (
+            <p>
+              Awaiting the exact result of {unresolved.action.label}. Current work alone does not
+              prove whether this request arrived.
+            </p>
+          ) : (
+            <p>
+              This browser could not read the original task request. Restore session storage and
+              check the retained request before starting other work.
+            </p>
+          )}
           <Button
             variant="quiet"
             disabled={unavailable || !!operation || recovering}
             busy={recovering}
             onPress={() => void recover()}
           >
-            Check request result
+            {unresolved ? 'Check request result' : 'Read retained request'}
           </Button>
         </div>
       )}
@@ -897,7 +946,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
           {working && (
             <>
               <Button
-                disabled={disabled || !stopAction?.enabled}
+                disabled={mutationDisabled || !stopAction?.enabled}
                 onPress={() => {
                   if (stopAction?.enabled)
                     void perform({ ...stopAction, id: 'stop-current-task' }, 'stop');
@@ -1180,11 +1229,14 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         </Section>
       )}
       {preparing && !unavailable && entry && presentation && bound && (
-        <div className="ol-actions ol-task-submit" data-unresolved={!!unresolved || undefined}>
+        <div
+          className="ol-actions ol-task-submit"
+          data-unresolved={retained.status !== 'empty' || undefined}
+        >
           <Button
             id={`${fieldId}-start`}
             variant="primary"
-            disabled={disabled || !ready || !currentReview?.result.ok || expired}
+            disabled={mutationDisabled || !ready || !currentReview?.result.ok || expired}
             busy={operation === 'start'}
             onPress={() => void start()}
           >
