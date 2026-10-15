@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — visual and operational qualification
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The sculpted mercenary and its scoped game checks are delivered; creator approval and the broader V3D pipeline remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                              | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+
+**October 14 reference update:** The [research comparison proposal](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-a-successful-comparison-must-show) makes surface attachment, face readability, garment coverage and restrained effects explicit review concerns. The 34-image library is external reference media, not OpenLegend qualification evidence. The moving comparison and creator acceptance below remain required.
 
 **Broader qualification remains required; the bundled-model pilot has its own limited evidence.** This document turns the [feature specification](3d-pixel-art-feature-spec.md) into reviewable experiments and acceptance scenarios. It does not authorize game changes, automated test authoring, live provider work, or spending.
 
@@ -24,6 +26,8 @@ The scene includes one recognizable person, backpack, axe or other supported hel
 Use authored or properly licensed native fixtures first. A generated concept image is not a runtime render. Capture actual gameplay footage and screenshots from the application, with the exact asset/style versions and settings. Label grayboxes, authored fixtures, provider-generated artifacts, and missing mechanics clearly.
 
 Keep the art comparison fair: consistent scale, equivalent identity/detail intent, the same environment and permitted lighting, and disclosed production effort. Comparing a polished sprite with an untextured model only establishes that the model is unfinished. Conversely, a cinematic close-up does not establish ordinary gameplay readability.
+
+For the October 14 references, include a deliberately pixel-painted shaped model, an articulated-sprite candidate, and a presentation variant that changes the model scene's render resolution without changing its artwork. Review face and garment coverage before enabling cinematic effects. Freeze animation/lights while checking surface attachment during camera movement; distinguish ordinary silhouette/occlusion changes from texture swimming. The [research guidance](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) explains the distinction; no new density or performance limit is selected here.
 
 ## 2. Review motion, scale, and interaction
 

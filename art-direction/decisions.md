@@ -33,6 +33,8 @@ The [second board](round-02/index.html) explores these remaining questions. It k
 
 ## Choices to resolve from feedback
 
+The following earlier questions remain useful, but the October 14 preferences below now narrow the visual target. They do not settle a renderer or character representation.
+
 1. Character proportions and how much individual identity is visible at the normal camera scale.
 2. Pixel density and fine texture versus broad, readable shapes.
 3. Natural, pastel, or deliberately heightened color palettes.
@@ -41,6 +43,18 @@ The [second board](round-02/index.html) explores these remaining questions. It k
 6. Foliage density, terrain texture, and amount of visual clutter.
 7. Gesture, everyday work, rest, animal behavior, and ambient animation.
 8. Which qualities must remain consistent across purchased, commissioned, or original assets.
+
+## Dimensional pixel-art references — October 14, 2026
+
+Evidence: Mike's supplied game/artist links, two attached transcripts and the resulting [research collection](research/3d-pixel-worlds/README.md).
+
+- **Garbage Country is a leading environment reference.** Mike especially likes its appearance; study shaped forms, pixel texture craft, foliage, water and atmospheric distance.
+- **The Last Night is a leading overall finish reference.** Mike strongly endorses its pixel art, lighting, bokeh and dimensional presentation, and wants as much of that visual quality as is feasible for OpenLegend. This endorses qualities, not the city setting or a restricted side-view camera.
+- **EthrA's environments are endorsed; its character detail is not the target.** Mike explicitly wants higher-fidelity pixels on characters. Research supports articulated sprite parts for EthrA's characters; that is an option to compare, not an adopted implementation.
+- **REPLACED remains a strong pixel-art benchmark.** Its fine detail, animation and cinematic composition reinforce the existing preference for recognizable people and deliberate lighting.
+- **Kingdom, BitGem's dungeon, Mark Knight, Holland and the supplied renderer demonstrations contribute specific lessons.** Their visual qualities do not imply that all are built with the same technology or should be copied wholesale.
+
+**Proposed, not accepted:** complete shaped models with deliberately painted pixel textures are the leading general-purpose comparison candidate for our free camera. Compare articulated sprites and optional lower-resolution presentation under [V3D01](../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision). No universal voxel requirement, production texel density, outline style, blur level, engine migration or automatic generation-quality claim follows from this research. The [creative brief](final-board/creative-brief.md#dimensional-pixel-art--october-14-direction) owns the visual interpretation; existing project records own implementation and acceptance.
 
 ## Decision entry format
 

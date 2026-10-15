@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — generation and publication pipeline
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The sculpted mercenary and its scoped game checks are delivered; creator approval and the broader V3D pipeline remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                              | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+
+**October 14 production research:** The [generative-art assessment](../../art-direction/research/3d-pixel-worlds/generative-pipeline.md) explains how concepts, draft models, UV layout, deliberate pixel painting and visual correction can support the new references. It is an authoring supplement to this pipeline, not a second work/publication system or evidence of provider quality. The saved reference images are not automatically licensed generation inputs.
 
 **General generation/publication pipeline remains proposed; no live-generation qualification is claimed.** This document specifies art production during play, including optional 2D-first/3D-later delivery. It implements the direction of the [feature specification](3d-pixel-art-feature-spec.md) through the [technical contracts](3d-pixel-art-tech-design.md); it does not authorize mechanical invention, spending, or arbitrary generated code by itself.
 

@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — appearance families and composition
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The sculpted mercenary and its scoped game checks are delivered; creator approval and the broader V3D pipeline remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                              | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+
+**October 14 composition research:** EthrA's developer describes separately oriented sprite body parts, making articulated sprites a concrete comparison reference. The [research](../../art-direction/research/3d-pixel-worlds/reference-techniques.md#ethra) and [face/cloth guidance](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md#faces-eyes-and-character-identity) inform candidate art, without changing the appearance/mechanics contracts or claiming interchangeable clothing is implemented.
 
 **General composition remains proposed.** This is the appearance-composition detail of the [feature specification](3d-pixel-art-feature-spec.md), not a new mechanical ontology. Family examples are concrete design fixtures; their depiction does not claim that all corresponding gameplay mechanics exist.
 

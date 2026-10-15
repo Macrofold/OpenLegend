@@ -18,6 +18,16 @@ Richly detailed, dimensional worlds; expressive and recognizable people; purpose
 
 ## Favorites and their contributions
 
+### Dimensional pixel art — October 14 direction
+
+Mike's new references sharpen the target without replacing the earlier favorites. **Garbage Country** is a leading environment reference; **The Last Night** is a leading reference for fine pixel craft, dimensional staging, light and focus. **EthrA's environments** are strongly liked, but its small world characters should be exceeded in facial and material detail. **REPLACED** reinforces the desired cinematic finish.
+
+Translate those preferences into shaped, believable forms; deliberately grouped surface detail; readable faces and equipment; atmospheric distance; and light that describes materials. Keep quiet areas so foliage, clothing and weathering do not become uniform noise. Strong bokeh and blur are references to evaluate selectively, not a mandate to blur normal play. The primitive wilderness can achieve the light/material relationships through fire, sky, water and foliage without inheriting a neon city or permanent gloom.
+
+A pixel-authored surface does not require cubic anatomy. Cloth may use a continuous shaped surface and a different degree of texture detail if it belongs with the body. The specific model/sprite/rendering choice remains proposed and must survive the actual camera and animation comparison. A beautiful still image, a hidden rear surface, or extra detail visible only in a portrait does not establish an acceptable world character.
+
+See the [local reference gallery](../research/3d-pixel-worlds/gallery.md), [creator evidence](../research/3d-pixel-worlds/reference-techniques.md) and [OpenLegend adaptation proposal](../research/3d-pixel-worlds/openlegend-adaptation.md). These explain which examples are polygon meshes, articulated sprites, 2D illustrations or low-resolution renders; liking their finish does not select one shared construction method.
+
 ### Dave the Diver — Personality at every scale
 
 **Your preference:** Your strongest new endorsement: “I LOVE DAVE THE DIVER ART.” You supplied the underwater scene, character close-up and restaurant as references.

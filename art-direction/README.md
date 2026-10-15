@@ -4,6 +4,8 @@ This folder is the shared home for visual references, feedback, decisions, and f
 
 ## Start here
 
+**October 14 research:** [Building a dimensional pixel-art world](research/3d-pixel-worlds/README.md) · [34-image local gallery](research/3d-pixel-worlds/gallery.md). Garbage Country, The Last Night, EthrA, REPLACED and the supplied technical references are compared with source evidence, rendering explanations and a proposed generative-art workflow.
+
 **Art in progress:** [Maintainer art-direction index](../docs/maintainers/art-direction.md) · [Mercenary study](../docs/maintainers/art/mercenary.md). Editable studies live in [OpenLegend-art](/Users/mzw/Documents/ChatGPT/OpenLegend-art/README.md); this repository folder retains the creative brief, references and feedback.
 
 **Final selection:** [Creative inspiration board](final-board/index.html) · [Creative brief](final-board/creative-brief.md)
@@ -20,7 +22,7 @@ Round two has 17 new references and three familiar benchmarks. It saves separate
 
 Open `index.html` in a browser. It contains 48 illustrated reference cards: 34 games, six artist/concept studies, and eight sprite or tileset packs. Start Here shows twelve contrasting examples; All exposes the full collection. Search by reference ID, title, or visual theme. Click an image for a larger view, Like/Maybe/Pass, aspect tags, and notes.
 
-Images remain hosted by their sources and require internet access. Original source links remain available if a host stops serving a preview. This is a reference collection, not an offline image archive.
+Images in the original board remain hosted by their sources and require internet access. Original source links remain available if a host stops serving a preview. The separate [October 14 research gallery](research/3d-pixel-worlds/gallery.md) saves its 34 reference images locally with provenance; it does not change the original board's image hosting.
 
 ### Save feedback beside the HTML
 
@@ -48,6 +50,7 @@ API behavior: [Chrome's direct-file saving guide](https://developer.chrome.com/d
 - `feedback.md`: place to record specific user reactions as they arrive.
 - `feedback.json`: live feedback file created when you first click Save and select this folder. Read this file for the latest saved browser feedback.
 - `assets/README.md`: asset organization and acquisition log.
+- `research/3d-pixel-worlds/`: source-backed research, local screenshot gallery, supplied transcripts and proposed rendering/production methods; reference media are not game assets.
 - `midjourney/`: Midjourney prompting guide for painted concept art (versions, prompt writing, parameters, consistency, templates, house style, rights).
 - `prompts/`: per-character Midjourney prompt sets, one file per character, starting with Halven Rusk.
 - `board-template.html` and `build_board.py`: regenerate the board/catalog after changing references. Run `python3 art-direction/build_board.py` from the project root.

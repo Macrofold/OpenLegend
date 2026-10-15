@@ -1,8 +1,10 @@
 # Progressive 3D pixel art — technical design
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The sculpted mercenary and its scoped game checks are delivered; creator approval and the broader V3D pipeline remain open. | 2026-10-14   |
+| Status      | Current progress                                                                                                                              | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Reference research and scoped mercenary checks are delivered; the moving style comparison, creator approval and broader pipeline remain open. | 2026-10-14   |
+
+**October 14 renderer research:** [Asset/rendering explanations](../../art-direction/research/3d-pixel-worlds/rendering-techniques.md) distinguish authored surface texels from voxel geometry and screen sampling. The [PlayCanvas feasibility inspection](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md#what-is-already-available-and-what-is-not-established) identifies candidate facilities in the current pinned engine, without implementing effects or selecting a replacement engine.
 
 **General pipeline proposal; partial delivery is recorded below.** Companion to the [feature specification](3d-pixel-art-feature-spec.md). Inspected baseline: `412b5b480b4911d9977de73168c6072e2c023b83`, September 27, 2026. That original documentation task added no runtime implementation, dependency upgrade, provider dispatch or performance result.
 
@@ -125,6 +127,8 @@ Use committed activity progress and supported recent-past samples for animation.
 Continuous simulation, render-frame interpolation, and optionally stepped pose sampling are separate clocks. Sample a stepped pose without quantizing authoritative position or UI. Contacts, equipment, shadows, and visible pose use the same evaluated transform state so an axe cannot cast the previous frame's swing shadow.
 
 ## 8. Pixel rendering profile
+
+The [October 14 research recommendation](../../art-direction/research/3d-pixel-worlds/openlegend-adaptation.md) makes shaped models with authored pixel textures the leading comparison candidate for free orbit, retaining articulated sprites as an alternative. Higher-resolution presentation with visible source pixels and a lower-resolution world target must be compared separately. Neither is adopted by this documentation update; stable material artwork does not require identical screen pixels during rotation.
 
 A versioned world presentation profile records approved material families, source texel-density guidance, normal gameplay scale, scene sampling/upscale policy, tone mapping, shading options, outline/dither choices, and family animation presentation policy. Keep device quality preferences separate from the world's identity/style revision.
 

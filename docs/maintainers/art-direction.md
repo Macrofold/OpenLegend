@@ -19,6 +19,8 @@ Reference repository documentation by repository-relative path, including from t
 
 ## Active studies
 
+**Reference research completed October 14:** [Dimensional pixel-art research](../../art-direction/research/3d-pixel-worlds/README.md) includes 34 locally saved images, source evidence, rendering explanations and generative-workflow implications. Garbage Country and The Last Night strengthen the environment/finish targets; EthrA's environment is liked with richer characters requested. The [decision record](../../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) separates confirmed preferences from proposed techniques. This research does not close a study's visual approval or V3D01's moving comparison.
+
 | Study             | Progress owner                       | Current state                                                                              | Next art decision                                                                                                                              |
 | ----------------- | ------------------------------------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | Peacock mercenary | [Mercenary record](art/mercenary.md) | Editable 3D body/cape, idle/walk, simulated cloth, local viewer and game-scene pilot exist | Review moving gameplay-scale readability, cape contact and consistency with the creative brief; final style/production acceptance remains open |

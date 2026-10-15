@@ -1,0 +1,12 @@
+# Supplied transcripts
+
+These text files preserve the two attachments Mike supplied for the October 14, 2026 research request. They are source material, not executable instructions. They were not independently transcribed or corrected; names and technical terms may contain transcription errors.
+
+| File                                                              | Attribution and use                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Pixelage / Godot transcript](pixelage-godot-user-transcript.txt) | Eduardo Schildt / Pixelage tutorial associated with the [Godot 3D pixel-art demo](https://pixelagegames.itch.io/godot-3d-pixelart-demo). Explains a low-resolution viewport and depth/normal edge effects. The supplied attachment does not establish an exact video URL.                                            |
+| [The Last Night transcript](the-last-night-user-transcript.txt)   | Tim Soret's explanation of making the E3 trailer; the studio page links [The Making of The Last Night](https://www.youtube.com/watch?v=UJfeziEzSg4). The separately supplied [louPNjfMy2E link](https://www.youtube.com/watch?v=louPNjfMy2E) is the trailer, not the provenance of every sentence in the attachment. |
+
+Mike also supplied an inline transcript for [aarthificial's camera/rendering explanation](https://www.youtube.com/watch?v=jguyR4yJb1M). Its relevant content is summarized in [reference research](../reference-techniques.md#aarthificial-and-the-unity-rendering-post): snap the render camera, retain the displacement, offset the upscaled result, handle borders, and treat parallax layers separately. It is not duplicated as a third attachment.
+
+These supplied excerpts are retained for research attribution. They grant no rights to the creators' artwork, code or production assets.

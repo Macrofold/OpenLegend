@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## October 14, 2026 — Dimensional pixel-art references and production research
+
+Mike selected Garbage Country as a leading environment reference, strongly endorsed The Last Night's pixel craft and lighting, liked EthrA's environments while requesting richer characters, and reinforced REPLACED as a quality benchmark. The [creative brief](../art-direction/final-board/creative-brief.md#dimensional-pixel-art--october-14-direction) and [decision record](../art-direction/decisions.md#dimensional-pixel-art-references--october-14-2026) now preserve those preferences alongside earlier favorites.
+
+The [research collection](../art-direction/research/3d-pixel-worlds/README.md) saves 34 credited images and both supplied transcripts, distinguishes documented techniques from visual inference, and explains stable surface textures, articulated sprites, camera sampling, cloth, lighting, foliage, water, bokeh and generative production. Painted shaped models are the proposed leading free-camera comparison candidate; EthrA-inspired sprite parts remain an alternative. [V3D01](maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision) retains the actual style decision. No runtime, model, dependency, production limit, provider dispatch or engine change was delivered; current mercenary technical evidence does not imply creator art approval. Reference artwork retains its creators' rights and is not licensed as game content.
+
 ## October 14, 2026 — Mercenary likeness after rejected block figure
 
 Mike rejected the first authored block figure as ugly and asked for a result closer to the actual 3D model. The replacement uses the original standing anatomy and fitted cape as an offline shape scaffold, with finer permanent cells and deliberately repainted face, hair/beard, mail, quilt, wraps, leather and two-peacock cape details. Both earlier art sets remain preserved. This changes the first figure's independent cuboid construction to source-guided sculpting; the derivative retains the original model's unresolved production rights.
