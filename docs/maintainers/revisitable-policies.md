@@ -24,7 +24,7 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 ## RP03 — Selective history and initial overload handling
 
-**Current policies:** [Retention decision ledger](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger) and [regional admission](../../archive/07-technical-architecture/data-delivery-and-scale.md#shared-world-regions-and-active-state). Engineering has authority to select and document performance/retention choices, with meaningful experience and game-level privacy preserved. The [immediate implementation](../projects/immediate-gameplay-limits.md) selects bounded awareness residency and queued-work admission without deleting canonical evidence.
+**Current policies:** [Retention decision ledger](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger) and [regional admission](../../archive/07-technical-architecture/data-delivery-and-scale.md#shared-world-regions-and-active-state). Engineering has authority to select and document performance/retention choices, with meaningful experience and game-level privacy preserved. The [immediate implementation](../projects/completed/immediate-gameplay-limits.md) selects bounded awareness residency and queued-work admission without deleting canonical evidence.
 
 **Why revisit:** New gameplay can make previously routine detail meaningful, and measured crowded-world behavior can justify a different scheduling or admission design.
 

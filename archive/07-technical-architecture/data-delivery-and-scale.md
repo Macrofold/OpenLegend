@@ -2,7 +2,7 @@
 
 Operational recovery and retention must respect the [gameplay save/load design](../../docs/save-and-load.md). That document owns gameplay rewind semantics; this document owns storage operations and disaster recovery.
 
-The implemented personal-world baseline uses `WorldChanges`, one-second routine durability coalescing, periodic snapshots, journal recovery, SQLite/PostgreSQL adapters, pgvector recall, response receipts, typed SSE patches and atomic god-editor mutations. [Architecture](../../docs/architecture.md) owns those current mechanics. This document owns the remaining migration, retention, recovery, external deployment, normalization, backup/restore, sharding and measured-scale design; active D0–D6 work lives in the [production-data tracker](../../docs/maintainers/production-data.md).
+The earlier personal-world baseline used snapshot/change-journal recovery and SQLite/PostgreSQL adapters. That baseline is historical: as of October 14, 2026, startup reads current independent PostgreSQL records only, and the old journal reader and in-place extraction code have been removed. [Architecture](../../docs/architecture.md) owns current persistence, pgvector recall, response receipts, typed SSE patches and atomic god-editor mutations. This document retains the historical transition design and remaining retention, recovery, external deployment, normalization, backup/restore, sharding and measured-scale design; active D0–D6 work lives in the [production-data tracker](../../docs/maintainers/production-data.md).
 
 ## 1. What scaling means for this product
 
@@ -158,11 +158,11 @@ The local SIGKILL drills qualify application-process interruption, not host powe
 
 ## 6. Migration from the local snapshot and change journal
 
-For development compatibility, follow the [root policy](../../AGENTS.md#development-save-policy). The delivered transition to independent records is historical implementation evidence. Current record publication, save/load and operational adapter import still require coherent authority, validation, privacy and external accounting.
+**Historical procedure — superseded October 14, 2026.** The earlier transition to independent records and the importer procedure below retain design history, not current implementation or operational instructions. Current startup and restore consume only the current PostgreSQL record model; the old snapshot/journal reader, projection verification and in-place extraction were removed. The [root development policy](../../AGENTS.md#development-save-policy) prohibits compatibility readers and migrations unless the owner changes that policy. Current same-format database transfer still requires coherent authority, validation, privacy and external accounting through the current checkpoint/restore owners.
 
-The following importer procedure applies when an explicit deployment move requires transferring a world between databases, such as SQLite to PostgreSQL. It is not the default workflow for ordinary development schema changes. Apply it to records consumed by each baseline feature; checkpoint/replay exports, content-rights records and distributed routing steps apply only when those capabilities are enabled. Preserve all existing source information even when its target feature is deferred, and retain the source through the operational cutover/backup window. Current evidence is recorded in [Verification](../../docs/verification.md); broader production normalization and disaster recovery remain open.
+The following sequence described the former proposed deployment move, including SQLite-to-PostgreSQL import. Its old-schema conversion, aliases and compatibility receipts must not be treated as permission to restore or reintroduce them. Earlier evidence qualifies only the implementation and scope that actually ran; broader production normalization and disaster recovery remain open.
 
-1. Freeze the source world for export or use a verified consistent SQLite backup. Capture its schema/revision, source checksum, AI ledgers and configuration inputs required to interpret the save. Never copy a live main SQLite file while omitting uncheckpointed WAL. Materialize all contiguous `world_journal` entries over the saved snapshot before exporting its latest revision; the current backup/import tools do this inside the source read transaction.
+1. Freeze the source world for export or use a verified consistent SQLite backup. Capture its schema/revision, source checksum, AI ledgers and configuration inputs required to interpret the save. Never copy a live main SQLite file while omitting uncheckpointed WAL. Materialize all contiguous `world_journal` entries over the saved snapshot before exporting its latest revision; the historical backup/import design placed this inside the source read transaction.
 2. Create an import identity and deterministic ID mapping for world, entities, items, recipes, memories, events and legacy request IDs. Keep `legacy_id_aliases`/import provenance in the target. Do not assume local `player` has a verified platform account; require explicit owner linkage or preserve unattributed origin.
 3. Parse and validate source data using its original schema. Import map into chunks; entity headers/vitals/components; item lots and containment; reservoirs/yields; current paths/actions; definitions and pins; actor knowledge/memories; retained events and receipts; controls and milestones.
 4. Convert current simulated seconds to the selected integer time unit exactly. Preserve seed/RNG, consumed materials, remaining work, ownership and equipped identity. New schema fields use explicit initialization/unknown policies; do not reinterpret old condition defaults.
@@ -222,7 +222,7 @@ This is an extensible relational/JSON design with explicit ownership and query c
 
 ## First shared-world authority boundary
 
-The approved [multiplayer implementation](../../docs/projects/multiplayer-authority-tech-design.md)
+The approved [multiplayer implementation](../../docs/projects/completed/multiplayer-authority-tech-design.md)
 delivers this boundary through verified external identity, server sessions, explicit
 control replacement and audience-scoped publication. The initial application policy is
 one active embodiment per account/world and one controlling connection per embodiment.

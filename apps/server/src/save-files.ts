@@ -5,30 +5,22 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { CHECKPOINT_ENCODING, CHECKPOINT_LIMITS } from './checkpoint-format.js';
 
-const metadataSchema = z
-  .object({
-    id: z.string().uuid(),
-    worldId: z.string().min(1),
-    label: z.string().min(1).max(80),
-    createdAt: z.string().datetime(),
-    simTime: z.number().finite(),
-    format: z.string().min(1),
-    checksum: z.string().regex(/^[a-f0-9]{64}$/),
-    encoding: z.literal(CHECKPOINT_ENCODING).optional(),
-    kind: z.enum(['manual', 'auto', 'recovery']).optional(),
-    bytes: z.number().int().positive().max(CHECKPOINT_LIMITS.bytes).optional(),
-    rows: z.number().int().positive().max(CHECKPOINT_LIMITS.rows).optional(),
-    revision: z.number().int().nonnegative().optional(),
-    // Durable capture order (SL09-B). Wall-clock createdAt is display only.
-    sequence: z.number().int().positive().optional(),
-  })
-  .refine(
-    (metadata) =>
-      !metadata.encoding || (metadata.bytes !== undefined && metadata.rows !== undefined),
-    {
-      message: 'Streamed checkpoint metadata requires byte and record counts.',
-    },
-  );
+const metadataSchema = z.object({
+  id: z.string().uuid(),
+  worldId: z.string().min(1),
+  label: z.string().min(1).max(80),
+  createdAt: z.string().datetime(),
+  simTime: z.number().finite(),
+  format: z.string().min(1),
+  checksum: z.string().regex(/^[a-f0-9]{64}$/),
+  encoding: z.literal(CHECKPOINT_ENCODING),
+  kind: z.enum(['manual', 'auto', 'recovery']).optional(),
+  bytes: z.number().int().positive().max(CHECKPOINT_LIMITS.bytes),
+  rows: z.number().int().positive().max(CHECKPOINT_LIMITS.rows),
+  revision: z.number().int().nonnegative().optional(),
+  // Durable capture order (SL09-B). Wall-clock createdAt is display only.
+  sequence: z.number().int().positive().optional(),
+});
 export type SaveFileMetadata = z.infer<typeof metadataSchema>;
 const restoreOwnerSchema = z.object({
   attemptId: z.string().uuid(),
@@ -114,16 +106,8 @@ export class SaveFiles {
         const metadata = await this.metadata(entry.name);
         if (!metadata) throw new Error('Save metadata is missing.');
         if (metadata.worldId === worldId) {
-          const size = (
-            await stat(
-              join(this.path(entry.name), metadata.encoding ? 'world.jsonl' : 'world.json'),
-            )
-          ).size;
-          if (
-            size <= 0 ||
-            size > (metadata.encoding ? CHECKPOINT_LIMITS.bytes : 64 * 1024 * 1024) ||
-            (metadata.bytes !== undefined && size !== metadata.bytes)
-          )
+          const size = (await stat(join(this.path(entry.name), 'world.jsonl'))).size;
+          if (size <= 0 || size > CHECKPOINT_LIMITS.bytes || size !== metadata.bytes)
             throw new Error('Incomplete save payload.');
           if (
             (options.kind && metadata.kind !== options.kind) ||
@@ -169,44 +153,26 @@ export class SaveFiles {
       throw error;
     }
   }
-  async write(metadata: SaveFileMetadata, payload: string): Promise<void> {
-    await this.publish(
-      metadata,
-      (async function* () {
-        yield payload;
-      })(),
-    );
-  }
   async writeStream(
-    metadata: Omit<SaveFileMetadata, 'checksum'>,
+    metadata: Omit<SaveFileMetadata, 'checksum' | 'encoding' | 'bytes' | 'rows'>,
     lines: AsyncIterable<string>,
   ): Promise<void> {
-    await this.publish(
-      { ...metadata, checksum: '0'.repeat(64), encoding: CHECKPOINT_ENCODING },
-      lines,
-    );
-  }
-  private async publish(metadata: SaveFileMetadata, chunks: AsyncIterable<string>): Promise<void> {
     await mkdir(this.directory, { recursive: true, mode: 0o700 });
     const destination = this.path(metadata.id);
     const staging = join(this.directory, `.pending-${process.pid}-${this.stageId ?? randomUUID()}`);
     await mkdir(staging, { mode: 0o700 });
     try {
-      const file = await open(
-        join(staging, metadata.encoding ? 'world.jsonl' : 'world.json'),
-        'wx',
-        0o600,
-      );
+      const file = await open(join(staging, 'world.jsonl'), 'wx', 0o600);
       const hash = createHash('sha256');
       let bytes = 0,
         rows = 0,
         pending = '',
         pendingBytes = 0;
       try {
-        for await (const chunk of chunks) {
+        for await (const chunk of lines) {
           const size = Buffer.byteLength(chunk);
           if (
-            (metadata.encoding && size > CHECKPOINT_LIMITS.rowBytes) ||
+            size > CHECKPOINT_LIMITS.rowBytes ||
             (bytes += size) > CHECKPOINT_LIMITS.bytes ||
             ++rows > CHECKPOINT_LIMITS.rows
           )
@@ -227,9 +193,13 @@ export class SaveFiles {
       } finally {
         await file.close();
       }
-      const complete = metadata.encoding
-        ? { ...metadata, checksum: hash.digest('hex'), bytes, rows }
-        : metadata;
+      const complete = {
+        ...metadata,
+        encoding: CHECKPOINT_ENCODING,
+        checksum: hash.digest('hex'),
+        bytes,
+        rows,
+      };
       metadataSchema.parse(complete);
       const manifest = await open(join(staging, 'metadata.json'), 'wx', 0o600);
       try {
@@ -284,14 +254,9 @@ export class SaveFiles {
     }
     return bytes;
   }
-  async read(id: string, maxBytes: number): Promise<string> {
-    const path = join(this.path(id), 'world.json');
-    if ((await stat(path)).size > maxBytes) throw new Error('Save exceeds the supported size.');
-    return readFile(path, 'utf8');
-  }
   async *lines(metadata: SaveFileMetadata): AsyncGenerator<string> {
     const path = join(this.path(metadata.id), 'world.jsonl');
-    if (metadata.bytes === undefined || (await stat(path)).size !== metadata.bytes)
+    if ((await stat(path)).size !== metadata.bytes)
       throw new Error('Incomplete checkpoint payload.');
     const hash = createHash('sha256');
     let bytes = 0,
@@ -324,16 +289,9 @@ export class SaveFiles {
       throw new Error('Checkpoint integrity check failed.');
   }
   async verify(metadata: SaveFileMetadata) {
-    if (metadata.encoding) {
-      for await (const _line of this.lines(metadata)) {
-        /* Validate the complete stream before retention. */
-      }
-    } else if (
-      createHash('sha256')
-        .update(await this.read(metadata.id, 64 * 1024 * 1024))
-        .digest('hex') !== metadata.checksum
-    )
-      throw new Error('Save integrity check failed.');
+    for await (const _line of this.lines(metadata)) {
+      /* Validate the complete stream before retention. */
+    }
   }
   async confirmPublished(metadata: SaveFileMetadata) {
     await this.verify(metadata);

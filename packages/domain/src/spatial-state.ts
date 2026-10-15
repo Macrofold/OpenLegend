@@ -2,7 +2,6 @@ import { recordSemanticChange } from './dependencies.js';
 import { assemblySpatialMap } from './assembly-geometry.js';
 import { activelyParticipates } from './participation-state.js';
 import {
-  BODY_PROFILES,
   canFlySegment,
   canStand,
   finitePoint,
@@ -12,7 +11,8 @@ import {
   SPATIAL_LIMITS,
   validateSpatialMap,
   type Bounds3,
-  type BodyProfileId,
+  type BodyProfile,
+  validateBodyProfile,
   type SpatialLayout,
   type SurfacePoint,
   type WorldPoint,
@@ -26,7 +26,10 @@ export interface FlightProgress {
   waitSeconds: number;
 }
 export interface EntitySpatial {
-  bodyProfileId: BodyProfileId;
+  /** The current physical shape, initialized from authored content and saved with this body. */
+  body: BodyProfile;
+  /** Authored inactive posture, if this body changes shape when its actor dies. */
+  inactiveBody?: BodyProfile;
   /** A qualified non-solid exposed form, independent of rendered artwork. */
   softFootprint?: { width: number; length: number; height: number };
   heading: number;
@@ -36,6 +39,7 @@ export interface EntitySpatial {
 }
 export interface FlightRoute {
   id: string;
+  body: BodyProfile;
   speed: number;
   climbSpeed: number;
   points: Array<{ position: WorldPoint; landingSurfaceId?: string; waitSeconds: number }>;
@@ -72,8 +76,8 @@ export function worldPlacement(
     revision: 0,
   };
 }
-export function groundedSpatial(bodyProfileId: BodyProfileId = 'person'): EntitySpatial {
-  return { bodyProfileId, heading: 0 };
+export function groundedSpatial(body: BodyProfile): EntitySpatial {
+  return { body: { ...body }, heading: 0 };
 }
 export function hasWorldPlacement(entity: Entity | undefined): boolean {
   return !!entity && !entity.retirement && entity.placement?.mode === 'world';
@@ -93,28 +97,35 @@ export function worldSupport(entity: Entity | undefined): string | null {
   const placement = entity?.placement;
   return placement?.mode === 'world' ? placement.supportSurfaceId : null;
 }
-export function bodyProfile(entity: Entity) {
-  const base = BODY_PROFILES[entity.spatial.bodyProfileId];
+export function bodyProfile(entity: Entity): BodyProfile {
+  const base =
+    entity.actor && !entity.actor.alive && entity.spatial.inactiveBody
+      ? entity.spatial.inactiveBody
+      : entity.spatial.body;
+  // Navigation requests and reusable reads must never retain a live Immer proxy.
+  const resolved = isDraft(base) ? current(base) : base;
   const form = entity.spatial.softFootprint;
-  const profile = form
+  return form
     ? {
-        ...base,
+        ...resolved,
         radius: Math.max(form.width, form.length) / 2,
         height: form.height,
         eyeHeight: form.height,
         earHeight: form.height,
         interactionHeight: form.height,
       }
-    : base;
-  return entity.actor && !entity.actor.alive
-    ? {
-        ...profile,
-        height: Math.min(0.3, profile.height),
-        eyeHeight: 0.15,
-        earHeight: 0.15,
-        interactionHeight: 0.15,
-      }
-    : profile;
+    : resolved;
+}
+function sameBody(a: BodyProfile, b: BodyProfile): boolean {
+  return (
+    a.id === b.id &&
+    a.radius === b.radius &&
+    a.height === b.height &&
+    a.maxSlope === b.maxSlope &&
+    a.eyeHeight === b.eyeHeight &&
+    a.earHeight === b.earHeight &&
+    a.interactionHeight === b.interactionHeight
+  );
 }
 export function supportedPosition(entity: Entity): SurfacePoint | null {
   const surfaceId = worldSupport(entity);
@@ -191,6 +202,7 @@ export function validateSpatialWorld(world: WorldState): void {
       )
     )
       throw new Error('Invalid native flight route.');
+    validateBodyProfile(route.body);
     for (let index = 0; index < route.points.length; index++) {
       const from = route.points[index]!,
         to = route.points[(index + 1) % route.points.length]!;
@@ -206,19 +218,21 @@ export function validateSpatialWorld(world: WorldState): void {
           map,
           from.position,
           to.position,
-          BODY_PROFILES.bird,
+          route.body,
           [from.landingSurfaceId, to.landingSurfaceId].filter((id): id is string => !!id),
         )
       )
         throw new Error('Flight corridor intersects geometry.');
       if (
         to.landingSurfaceId &&
-        !canStand(map, { ...to.position, surfaceId: to.landingSurfaceId }, BODY_PROFILES.bird)
+        !canStand(map, { ...to.position, surfaceId: to.landingSurfaceId }, route.body)
       )
         throw new Error('Flight landing has no valid stance.');
     }
   }
   for (const entity of Object.values(world.entities)) {
+    validateBodyProfile(entity.spatial?.body);
+    if (entity.spatial.inactiveBody !== undefined) validateBodyProfile(entity.spatial.inactiveBody);
     if (
       entity.retirement ||
       entity.assembly?.retired ||
@@ -231,13 +245,14 @@ export function validateSpatialWorld(world: WorldState): void {
       s?.softFootprint &&
       (entity.actor ||
         entity.kind !== 'item-pile' ||
-        !Object.values(s.softFootprint).every((v) => Number.isFinite(v) && v > 0 && v <= 1))
+        ![s.softFootprint.width, s.softFootprint.length, s.softFootprint.height].every(
+          (v) => Number.isFinite(v) && v > 0 && v <= 1,
+        ))
     )
       throw new Error('Invalid non-solid material form.');
     if (
       !finitePoint(worldPosition(entity)) ||
       !s ||
-      !Object.hasOwn(BODY_PROFILES, s.bodyProfileId) ||
       !Number.isFinite(s.heading) ||
       (activelyParticipates(entity) &&
         worldSupport(entity) !== null &&
@@ -262,8 +277,8 @@ export function validateSpatialWorld(world: WorldState): void {
         ? world.flightRoutes[s.flight.routeId]
         : undefined;
       if (
-        s.bodyProfileId !== 'bird' ||
         !route ||
+        !sameBody(bodyProfile(entity), route.body) ||
         !Number.isSafeInteger(s.flight.next) ||
         s.flight.next < 0 ||
         s.flight.next >= route.points.length ||
@@ -297,13 +312,7 @@ export function validateSpatialWorld(world: WorldState): void {
             (p) => !finitePoint(p) || typeof p.surfaceId !== 'string' || p.surfaceId.length > 120,
           ) ||
           !request.body ||
-          !Object.values(BODY_PROFILES).some(
-            (p) =>
-              p.id === request.body.id &&
-              p.radius === request.body.radius &&
-              p.height === request.body.height &&
-              p.maxSlope === request.body.maxSlope,
-          ) ||
+          !sameBody(request.body, bodyProfile(entity)) ||
           (a.navigation.failure !== undefined &&
             (typeof a.navigation.failure !== 'string' || a.navigation.failure.length > 300))
         )

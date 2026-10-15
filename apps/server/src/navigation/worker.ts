@@ -24,7 +24,7 @@ parentPort.on('message', (message: NavigationMessage) => {
       if (!message.map) throw new Error('Navigation geometry is not prepared.');
       planner = new RecastPlanner(message.map);
       timing.prepareMapMs = planner.prepareMapMs;
-      planner.prepare(message.request?.body, 'map');
+      if (message.request) planner.prepare(message.request.body, 'map');
     }
     if (!planner) throw new Error('Navigation is unavailable.');
     if (message.request) {

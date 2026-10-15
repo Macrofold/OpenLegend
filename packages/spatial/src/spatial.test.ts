@@ -1,7 +1,10 @@
+import {
+  BASE_BODY_PROFILES as BODY_PROFILES,
+  BASE_TERRAIN,
+} from '../../domain/src/worlds/base/spatial-definitions.js';
 import { describe, expect, it } from 'vitest';
 import { preparedRoute } from '../../../tests/fixtures/navigation.js';
 import {
-  BODY_PROFILES,
   canFlySegment,
   canStand,
   canWalkSegment,
@@ -22,6 +25,7 @@ function fixture(): SpatialMap {
   return {
     width: 12,
     height: 12,
+    terrain: structuredClone(BASE_TERRAIN),
     tiles: Array.from({ length: 12 }, () => Array(12).fill('grass')),
     spatial: {
       version: 1,
@@ -48,6 +52,7 @@ function fixture(): SpatialMap {
           solidBase: -16,
           acousticTransmission: 0,
           material: 'ground',
+          terrain: true,
         },
         {
           id: 'deck',
@@ -98,8 +103,8 @@ describe('bounded 3D geometry and layered navigation', () => {
     expect(distance3D(point(4, 0, 2), point(4, 3, 2, 'deck'))).toBe(3);
     expect(resolveSupport(map, point(4, 3, 2), 'terrain')).toBeNull();
     expect(resolveSupport(map, point(4, 2.5, 2))).toBeNull();
-    expect(canStand(map, point(4, 0, 2))).toBe(true);
-    expect(canStand(map, point(4, 3, 2, 'deck'))).toBe(true);
+    expect(canStand(map, point(4, 0, 2), BODY_PROFILES.person)).toBe(true);
+    expect(canStand(map, point(4, 3, 2, 'deck'), BODY_PROFILES.person)).toBe(true);
   });
   it('follows a real ramp in both directions without connecting adjacent floors', () => {
     const map = fixture(),
@@ -109,23 +114,25 @@ describe('bounded 3D geometry and layered navigation', () => {
       [start, target],
       [target, start],
     ]) {
-      expect(findSurfaceRoute(map, from!, to!).status).toBe('pending');
+      expect(findSurfaceRoute(map, from!, to!, BODY_PROFILES.person).status).toBe('pending');
       const route = preparedRoute(map, from!, to!);
       expect(route.status).toBe('reached');
       expect(route.path.at(-1)).toEqual(to);
       let previous = from!;
       for (const next of route.path) {
-        expect(canWalkSegment(map, previous, next)).toBe(true);
+        expect(canWalkSegment(map, previous, next, BODY_PROFILES.person)).toBe(true);
         previous = next;
       }
     }
-    expect(canWalkSegment(map, point(4, 0, 2), target)).toBe(false);
+    expect(canWalkSegment(map, point(4, 0, 2), target, BODY_PROFILES.person)).toBe(false);
   });
   it('does not let a ramp seam exception bypass its filled interior', () => {
     const map = fixture();
-    expect(canWalkSegment(map, point(5, 0, 6), point(9, 0, 6))).toBe(false);
-    expect(canStand(map, point(7, 0, 6))).toBe(false);
-    expect(canWalkSegment(map, point(7, 3, 3, 'deck'), point(7, 3, 3, 'ramp'))).toBe(true);
+    expect(canWalkSegment(map, point(5, 0, 6), point(9, 0, 6), BODY_PROFILES.person)).toBe(false);
+    expect(canStand(map, point(7, 0, 6), BODY_PROFILES.person)).toBe(false);
+    expect(
+      canWalkSegment(map, point(7, 3, 3, 'deck'), point(7, 3, 3, 'ramp'), BODY_PROFILES.person),
+    ).toBe(true);
   });
   it('checks headroom and thin obstacles with swept volume, not just endpoints', () => {
     const map = fixture();
@@ -137,7 +144,7 @@ describe('bounded 3D geometry and layered navigation', () => {
       acousticTransmission: 0.2,
       material: 'stone',
     });
-    expect(canWalkSegment(map, point(3, 0, 6), point(6, 0, 6))).toBe(false);
+    expect(canWalkSegment(map, point(3, 0, 6), point(6, 0, 6), BODY_PROFILES.person)).toBe(false);
     expect(canFlySegment(map, point(3, 1, 6), point(6, 1, 6), BODY_PROFILES.bird)).toBe(false);
     expect(canFlySegment(map, point(3, 2.1, 6), point(6, 2.1, 6), BODY_PROFILES.bird)).toBe(true);
     const low = fixture();
@@ -168,18 +175,20 @@ describe('bounded 3D geometry and layered navigation', () => {
     const map = fixture(),
       from = point(4, 0, 8),
       to = point(4, 3, 2, 'deck');
-    expect(findSurfaceRoute(map, from, to).status).toBe('pending');
+    expect(findSurfaceRoute(map, from, to, BODY_PROFILES.person).status).toBe('pending');
     const disconnected = fixture();
     disconnected.spatial.surfaces.pop();
-    expect(findSurfaceRoute(disconnected, from, to).status).toBe('pending');
+    expect(findSurfaceRoute(disconnected, from, to, BODY_PROFILES.person).status).toBe('pending');
     expect(preparedRoute(disconnected, from, to).status).toBe('no-route');
-    expect(findSurfaceRoute(map, from, { ...to, y: NaN }).status).toBe('invalid-endpoint');
+    expect(findSurfaceRoute(map, from, { ...to, y: NaN }, BODY_PROFILES.person).status).toBe(
+      'invalid-endpoint',
+    );
   });
   it('invalidates changed immutable geometry rather than reusing a route through a wall', () => {
     const map = fixture(),
       from = point(0, 0, 5),
       to = point(3, 0, 5);
-    expect(findSurfaceRoute(map, from, to).status).toBe('reached');
+    expect(findSurfaceRoute(map, from, to, BODY_PROFILES.person).status).toBe('reached');
     const next = structuredClone(map);
     next.spatial.revision++;
     next.spatial.blockers.push({
@@ -190,8 +199,56 @@ describe('bounded 3D geometry and layered navigation', () => {
       acousticTransmission: 0,
       material: 'stone',
     });
-    expect(findSurfaceRoute(next, from, to).status).toBe('pending');
+    expect(findSurfaceRoute(next, from, to, BODY_PROFILES.person).status).toBe('pending');
     expect(preparedRoute(next, from, to).status).toBe('no-route');
+  });
+  it('uses authored terrain and explicit body dimensions through movement and sound', () => {
+    const map = fixture();
+    map.terrain = {
+      moss: structuredClone(BASE_TERRAIN.grass!),
+      crystal: {
+        ...structuredClone(BASE_TERRAIN.rock!),
+        solid: {
+          height: 1,
+          movement: true,
+          sight: true,
+          acousticTransmission: 0.37,
+          material: 'crystal',
+          name: 'Crystal shelf',
+        },
+      },
+    };
+    map.tiles = map.tiles.map((row) => row.map(() => 'moss'));
+    const body = {
+      id: 'crawler',
+      radius: 0.12,
+      height: 0.4,
+      eyeHeight: 0.3,
+      earHeight: 0.3,
+      interactionHeight: 0.2,
+      maxSlope: 0.8,
+    };
+    validateSpatialMap(map);
+    expect(canStand(map, point(4, 0, 2), body)).toBe(true);
+    expect(findSurfaceRoute(map, point(2, 0, 9), point(8, 0, 9), body).status).toBe('reached');
+    const blocked = structuredClone(map);
+    blocked.tiles[9]![5] = 'crystal';
+    expect(canWalkSegment(blocked, point(2, 0, 9), point(8, 0, 9), body)).toBe(false);
+    expect(soundTransmission(blocked, point(2, 0.5, 9), point(8, 0.5, 9))).toBe(0.37);
+    expect(resolveSupport(blocked, point(5, 1, 9))?.surfaceId).toBe('terrain-solid:5:9');
+    // A definition replacement invalidates prepared solids even at an unchanged layout revision.
+    blocked.terrain = {
+      ...blocked.terrain,
+      crystal: {
+        ...blocked.terrain.crystal!,
+        solid: { ...blocked.terrain.crystal!.solid!, acousticTransmission: 0.62 },
+      },
+    };
+    expect(soundTransmission(blocked, point(2, 0.5, 9), point(8, 0.5, 9))).toBe(0.62);
+    const low = fixture();
+    low.spatial.surfaces[1]!.y = 1;
+    expect(canStand(low, point(4, 0, 2), body)).toBe(true);
+    expect(canStand(low, point(4, 0, 2), { ...body, height: 2 })).toBe(false);
   });
   it('rejects unbounded geometry and unsafe semantic IDs', () => {
     const map = fixture();

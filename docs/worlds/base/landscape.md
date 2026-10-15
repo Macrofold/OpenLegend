@@ -2,6 +2,12 @@
 
 New bundled worlds begin in a larger wilderness around the established camp and lookout. Its size is about five times the former area, keeping a useful local view while leaving places to explore beyond it. The conspicuous rectangular clearing plate is replaced by matching surrounding soil and an uneven forest margin. The native map remains finite; walking beyond supported ground is refused. Existing saved worlds are neither reseeded nor reset.
 
+## Authored physical presets
+
+[Spatial definitions](../../../packages/domain/src/worlds/base/spatial-definitions.ts) own the bundled terrain and starting body dimensions. Grass and sand support ordinary walking; water does not. Rock cells create two-metre solids above the supporting ground, block movement and sight, apply the existing 0.15 sound-transmission factor, and expose their top as a real support. The client reads the same terrain definitions for its existing artwork families and overview colors.
+
+People, hares, deer, birds and objects receive their initial physical profiles from that source. Their saved shapes remain authoritative afterward. The bundled inactive posture keeps the current radius, caps height at 0.3 metres and uses 0.15-metre eye, ear and interaction anchors. These choices are this world's presets, not engine biology. [The spatial contract](../../spatial-world.md#authored-terrain-and-bodies) owns replacement, validation and cache dependencies.
+
 ## Places and inhabitants
 
 The original camp, ford, lookout, supplies and bird flight corridor retain their working space. Beyond them are connected low rises, a bending river, more rock formations, scattered berry/wood/stone/fiber patches, and more hares and deer. Wolves and bears start farther east and south. They use existing wandering, perceived-threat escape, injury, harvest and body decay; this introduces no aggression, hunting other animals, packs or new animal intelligence. Their physical clearance currently reuses the existing quadruped profile, while their authored anatomy and harvest quantities belong to `bodies.ts`.

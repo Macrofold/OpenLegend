@@ -12,7 +12,7 @@ Current-format validation requires a finite, nonnegative inactivity duration and
 
 An actor's directional relationship description is its subject knowledge document. **My thoughts and relationships** displays that understanding and edits the same text through Knowledge notepads. One person's revision does not revise the other's view, establish kinship, cancel an obligation or grant possession access. Known/remembered subjects do not automatically become currently visible or targetable. Human-private content stays private even from an in-game creator.
 
-For example, Ada can write that she distrusts Bo while Bo still considers Ada a friend. These are independent interpretations, not friendship scores. The [appraisal/social project](../../projects/appraisal-social-continuity-feature-spec.md) defines the delivered continuity scope; it does not promise that arbitrary prose changes physical behavior.
+For example, Ada can write that she distrusts Bo while Bo still considers Ada a friend. These are independent interpretations, not friendship scores. The [appraisal/social project](../../projects/completed/appraisal-social-continuity-feature-spec.md) defines the delivered continuity scope; it does not promise that arbitrary prose changes physical behavior.
 
 ## Objective family facts
 
@@ -54,6 +54,8 @@ The English parser and gathering interpretation currently live beside reusable o
 
 A person may offer a gift or propose one exact item quantity for another exact item quantity. Submission moves and reserves nothing. Only the named recipient can accept, through their own command; acceptance transfers both agreed sides together or neither. The current owner is `packages/domain/src/handover.ts`, with authored choices and wording in `worlds/base/handover.ts`.
 
+The parties receive the exact offered terms through the existing native disclosure. A bystander seeing the people retains only their observable offering/exchange activity; seeing a carrier does not reveal the material or quantity inside carried containers. The selected [event disclosure policy](../../../packages/domain/src/worlds/base/event-disclosure.ts) supplies this wording and permitted fields.
+
 - **Exact agreement:** a proposal identifies the two people, exact lots/individuals and quantities, definition and item/placement revisions, bag contents and game-clock deadline. The proposer's explicit submission agrees to that revision. The recipient must accept the same revision. A **Counteroffer** replaces the terms, advances the revision and makes its author the proposer; earlier consent cannot accept the new terms.
 - **Gift:** omitting the requested side retains a one-way gift. Enough free units must remain, but using a different unit from a sufficiently large offered stack does not alone invalidate the gift. Reciprocal terms additionally require unchanged item and placement revisions on both sides.
 - **Final checks:** offering needs sight and arm's reach. Accepting needs mutual sight/reach, living active participants, accessible custody, free quantities and no conflicting work or claims. Bags and individual objects move whole. Bag contents, including nested changes, must still match; access grants must be cleared before offering a bag. The object owner validates final combined packing and placement before changing either side. Reciprocal moves keep distinct lots rather than merging one promised source into the other; ordinary gifts retain their existing merge behavior.
@@ -79,7 +81,7 @@ Current surfaces are summarized in [gameplay availability](../../../archive/05-p
 
 - Implementation: [BW16/BW17](../../maintainers/base-world.md#social-playable-slices), [BW20/BW21](../../maintainers/base-world.md#camp-fire-care-and-sharing), [PX02](../../maintainers/parallel-batch-04-expeditions-and-exchange.md#px02--reciprocal-barter), [MY03](../../maintainers/parallel-batch-08-the-missing-belonging.md#my03--independent-witnesses-and-remembered-conduct), [ACT07/ACT08 and ACT09](../../maintainers/actor-model.md).
 - Limits and constraints: [base-world defaults](../../limits/base-world.md), [Batch 08 limits](../../limits/parallel-batch-08-the-missing-belonging.md), [feelings](../../limits/feelings.md), [memory](../../limits/memory.md).
-- Related contract/design: [appraisal/social continuity](../../projects/appraisal-social-continuity-feature-spec.md), [technical design](../../projects/appraisal-social-continuity-tech-design.md), [missing belonging](missing-belonging.md), [knowledge](knowledge.md).
+- Related contract/design: [appraisal/social continuity](../../projects/completed/appraisal-social-continuity-feature-spec.md), [technical design](../../projects/completed/appraisal-social-continuity-tech-design.md), [missing belonging](missing-belonging.md), [knowledge](knowledge.md).
 
 ## Voluntary outings
 

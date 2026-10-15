@@ -1,3 +1,4 @@
+import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { rootMembershipChanged } from '../../entity-index.js';
@@ -32,7 +33,7 @@ export function installFirstThreat(world: WorldState): void {
     kind: 'animal',
     description:
       'A heavy stag paws the ground around a torn supply cache. Its lowered antlers and restless stance suggest aggression.',
-    spatial: { bodyProfileId: 'deer', heading: -2.2 },
+    spatial: { ...baseSpatial('deer'), heading: -2.2 },
     placement: worldPlacement(home, home.surfaceId),
     actor: nativeActor(
       'deer',
@@ -89,7 +90,7 @@ export function installFirstThreat(world: WorldState): void {
       name: 'Torn woodland cache',
       kind: 'item-pile',
       description: 'Prepared fibers, cord and stones spill from a torn bundle beside the stag.',
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       placement: worldPlacement(cachePosition, cachePosition.surfaceId),
     },
     ...(
@@ -114,7 +115,7 @@ export function installFirstThreat(world: WorldState): void {
         name,
         description,
         kind: 'resource',
-        spatial: { bodyProfileId: 'object', heading: 0 },
+        spatial: baseSpatial('object'),
         placement: worldPlacement(point, point.surfaceId),
       };
     }),

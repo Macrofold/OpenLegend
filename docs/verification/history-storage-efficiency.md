@@ -4,7 +4,7 @@ These are recorded observations from the original verification log, not a new ru
 
 ## History storage efficiency
 
-2026-09-27, branch `codex/history-storage-efficiency`, refreshed `origin/main` at `0b9c51aa`. Local macOS ARM, Node 22.23.2 and PostgreSQL 14.17 via the explicit loopback disposable-database helper; all created databases were closed/dropped. `AI_BUDGET_USD=0`; no provider execution. Scope: [D1/D2 plan](../projects/history-storage-efficiency.md), PF08, MH07 and SB15.
+2026-09-27, branch `codex/history-storage-efficiency`, refreshed `origin/main` at `0b9c51aa`. Local macOS ARM, Node 22.23.2 and PostgreSQL 14.17 via the explicit loopback disposable-database helper; all created databases were closed/dropped. `AI_BUDGET_USD=0`; no provider execution. Scope: [D1/D2 plan](../projects/completed/history-storage-efficiency.md), PF08, MH07 and SB15.
 
 Matched synthetic query workloads used 100,000 and 1,000,000 event, awareness and old resolved-memory rows with unchanged actor owners. The memory cutoff excluded those old rows; a separate native scenario exercised recent and unresolved records. Each latency below is a single client-observed query sample, including I/O, not a percentile or complete startup measurement. The original-query sample preceded the schema change; the revised query used the same generated cardinalities/payload patterns plus its required projections. Cache/I/O conditions were not controlled.
 

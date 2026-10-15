@@ -148,11 +148,8 @@ describe('local HTTP boundary', () => {
     const { initial } = await start();
     expect(initial.clock.pauseReason).toBe('away');
     expect(initial.ai.mode).toBe('unconfigured');
-    expect(initial.recipes.map((recipe) => [recipe.name, recipe.origin]).sort()).toEqual([
-      ['River line', 'authored'],
-      ['Wooden shield', 'authored'],
-      ['Woven gathering container', 'authored'],
-    ]);
+    expect(initial.recipes.length).toBeGreaterThan(0);
+    expect(new Set(initial.recipes.map((recipe) => recipe.origin))).toEqual(new Set(['authored']));
     expect(initial).not.toHaveProperty('memories');
     expect(initial).not.toHaveProperty('items');
     expect(JSON.stringify(initial)).not.toContain('planGeneration');

@@ -22,7 +22,7 @@ Current main was inspected at [0a3ab79b](https://github.com/Macrofold/OpenLegend
 
 An unreachable intended speech recipient can currently result in the speaker speaking aloud. The new text route must never use that fallback. Failed private sending cannot become public speech, a spatial caption, a global event body or a local conversation message. A whisper is still potentially overheard sound; it is not the same permission as a private message. [Speech intent](../narration-and-conversations.md#speech-intent-and-audience), [hearing](../hearing-and-speech.md).
 
-Current multiplayer separates account, session, person and controlling connection. Creator access excludes human-private messages and notes. It does not yet prove that a human's private text can safely flow through an NPC's later mind and creator diagnostics. That is substantive new dependent work. [Multiplayer authority](multiplayer-authority-feature-spec.md), [D48's private-content boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary).
+Current multiplayer separates account, session, person and controlling connection. Creator access excludes human-private messages and notes. It does not yet prove that a human's private text can safely flow through an NPC's later mind and creator diagnostics. That is substantive new dependent work. [Multiplayer authority](completed/multiplayer-authority-feature-spec.md), [D48's private-content boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary).
 
 ## 3. A real world affordance
 

@@ -18,6 +18,8 @@ The complete J01–J48 acceptance scope remains with [UIUX08–UIUX18](../mainta
 
 The [implementation gallery](runtime/README.md) contains **74 annotated capture records (73 distinct image hashes)** of the actual App and focused production components. Each identifies its source, controlled or native data, viewport and limits. These images are separate from the 98 external digital game screenshots and nine original design proposals.
 
+**Contract review: October 14, 2026.** The foundation hardening reconciles [inventory continuity](inventory.md), [draft cleanup](chat-and-invention.md#composer-contract), [private detail reads](react.md#effects-asynchronous-work-and-mutations), and [Resume presentation](world-interaction.md#paused-game-tabs). These are current contracts; the [foundation tracker](../maintainers/foundation-review-todos.md) records implementation and still-open verification. The dated research evidence below is not a new usability certification.
+
 ## Start here, not everywhere
 
 Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.
@@ -57,3 +59,9 @@ Integrate accepted findings and corrections into the owning topic chapter and ad
 The handbook combines task-first decisions, coherent control alternatives, semantic reuse, preserved working context and behavior verification. Searchable pickers and comboboxes have distinct legitimate contracts; disabled explanations remain reachable; child popups dismiss before their modal parent; utility styling preserves accessibility colors. Composition, persistence and agent confidence require explicit behavior, privacy and evidence rather than wholesale adoption of vendor checklists. The [principle-to-evidence map](research.md#principle-to-evidence-map) connects these decisions to their sources.
 
 Root/client guidance routes to one short core; details and research remain conditional. Guidance alone does not authorize vendor library/skill, runtime behavior, camera binding, dimension, save format or permission changes. The [UI/UX follow-through tracker](../maintainers/ui-ux.md) distinguishes implemented changes, bounded checks and remaining native/input/experience qualification; subsystem trackers still own their implementation and acceptance.
+
+## Designed application follow-ons
+
+**Item and building workflows, October 14, 2026:** the [feature specification](../projects/item-and-building-workflows-feature-spec.md) and [technical design](../projects/item-and-building-workflows-tech-design.md) define connected exact-item review, safe equipment replacement, finite manufacturing lists and supported shelter placement/correction beyond delivered PW04/PW11/SH foundations. The dedicated [IWB01–IWB07 maintainer tracker](../maintainers/item-and-building-workflows.md) owns tasks and dependencies; [its limits inventory](../limits/item-and-building-workflows.md) owns proposed scope and operation bounds.
+
+The design is prepared, not implemented. It applies existing interaction principles without replacing this handbook or closing broader UIUX, inventory, shelter or ND07/ND13 acceptance. Missing current Rust footage remains a research limitation, not proof of an OpenLegend defect or a prerequisite for designing these additions.

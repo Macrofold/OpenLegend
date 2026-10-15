@@ -1,6 +1,6 @@
 # Invention question implementation verification
 
-Implementation and bounded acceptance are complete under [the approved plan](../projects/invention-questions-tech-design.md#10-approved-implementation-plan) and [WW25–WW30](../maintainers/world-agent-writes.md#structured-invention-questions). Results below distinguish the reused context foundation from the new question feature. The final acceptance section supersedes earlier browser-access and initial-size gaps. Native fixtures, browser interaction and real-provider evidence remain distinct; broader release qualification is unchanged.
+Implementation and bounded acceptance are complete under [the approved plan](../projects/completed/invention-questions-tech-design.md#10-approved-implementation-plan) and [WW25–WW30](../maintainers/world-agent-writes.md#structured-invention-questions). Results below distinguish the reused context foundation from the new question feature. The final acceptance section supersedes earlier browser-access and initial-size gaps. Native fixtures, browser interaction and real-provider evidence remain distinct; broader release qualification is unchanged.
 
 ## Integrated baseline
 

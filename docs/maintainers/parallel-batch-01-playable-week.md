@@ -159,7 +159,7 @@ PW08's selected work reductions are demonstrated; complete acceptance remains op
 
 ## PW09 — Correct and efficient memory retrieval
 
-**Engineer 5 · 30 hours plus shared integration · 250–450 logic lines · medium risk.** Owns the MH03 lexical bug plus narrowly scoped invalidation work beneath C01/C17/C20. [Task definition](../projects/parallel-batch-01-playable-week/memory-retrieval.md).
+**Engineer 5 · 30 hours plus shared integration · 250–450 logic lines · medium risk.** Owns the MH03 lexical bug plus narrowly scoped invalidation work beneath C01/C17/C20. [Task definition](../projects/completed/parallel-batch-01-playable-week/memory-retrieval.md).
 
 - [x] Use shared locale-independent normalization and parser-independent quoted lexical representations, with positions, on both indexing and recall queries; preserve original text, OR-prefix behavior and ranking semantics.
 - [x] Key lexical selection reuse by actor source changes and vector-coverage reuse by actor/model/dimensions. Retain global fallback for restore or unknown mutation scope and transactional publication checks.
@@ -265,6 +265,6 @@ No provider call, runtime test or benchmark was performed to produce this plan. 
 
 ## Local branch integration
 
-Mike authorized integrating Engineers 2 and 3 into local main after Engineer 1, preserving shared action admission/execution and saved simulation progress. Engineer 2 is integrated as `700ea7b1`; Engineer 3's source is `b3c69a8e`. [The local reconciliation plan](../projects/parallel-batch-01-playable-week/local-branch-integration.md) records source tips and selected checks, with [camp integration evidence](../verification/camp-life.md#local-main-reconciliation). Earlier handoff tables and independent-branch consumption statements describe their original checkpoints; they do not supersede this integration. The full PW06 acceptance matrix and unmet capacity/browser/provider checks remain open.
+Mike authorized integrating Engineers 2 and 3 into local main after Engineer 1, preserving shared action admission/execution and saved simulation progress. Engineer 2 is integrated as `700ea7b1`; Engineer 3's source is `b3c69a8e`. [The local reconciliation plan](../projects/completed/parallel-batch-01-playable-week/local-branch-integration.md) records source tips and selected checks, with [camp integration evidence](../verification/camp-life.md#local-main-reconciliation). Earlier handoff tables and independent-branch consumption statements describe their original checkpoints; they do not supersede this integration. The full PW06 acceptance matrix and unmet capacity/browser/provider checks remain open.
 
 Engineer 4’s final independent [report](../verification/parallel-batch-01-playable-week-engineer-4.md) additionally records current-after-wait Check, transactional approval rollback, reload-safe private draft recovery, saved-preparation labels and keyboard focus restoration. These additions are integrated into local main alongside its existing Conversation/Work parent and Engineer 3 camp activities; the report’s earlier integration-blocked statements describe its source-branch cutoff. Combined PW06 acceptance remains open.

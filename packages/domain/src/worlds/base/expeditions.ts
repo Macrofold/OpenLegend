@@ -1,3 +1,4 @@
+import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { installRecipe } from '../../declarations.js';
 import { recipeMechanicalPin } from '../../invention-families.js';
@@ -89,7 +90,7 @@ export function installExpeditions(world: WorldState): void {
       description:
         'A weathered arrow points toward the raised timber lookout beyond the camp rocks. Its stone ramp rises on the far side: walk around the rocks to reach the foot, then up the ramp. An abandoned equipment bundle and a written clue were left on the deck; their contents may have been taken. This is a direction, not a quest to accept.',
       placement: worldPlacement(EXPEDITION_LOCATIONS.marker, 'terrain'),
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       appearance: 'crate-mesh',
     },
     {
@@ -102,7 +103,7 @@ export function installExpeditions(world: WorldState): void {
         EXPEDITION_LOCATIONS.lookout,
         EXPEDITION_LOCATIONS.lookout.surfaceId,
       ),
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
     },
     {
       id: 'riverside-workshop',
@@ -111,7 +112,7 @@ export function installExpeditions(world: WorldState): void {
       description:
         'An abandoned open workbench stands on the riverbank before the distant reeds. Reach it and inspect the supplies and physical records that actually remain. Nothing here replenishes when opened.',
       placement: worldPlacement(workshop, workshop.surfaceId),
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       appearance: 'crate-mesh',
     },
   ];

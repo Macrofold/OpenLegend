@@ -1,6 +1,6 @@
 # Objects, inventory and equipment: limits and constraints
 
-[Feature contract](../projects/persistent-objects-feature-spec.md) · [Implementation work](../maintainers/persistent-objects.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
+[Feature contract](../projects/completed/persistent-objects-feature-spec.md) · [Implementation work](../maintainers/persistent-objects.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
@@ -96,7 +96,7 @@ Visible reachable world containers/piles are shared by default. Explicit actor l
 
 **Reason / tradeoff:** Enable ordinary sharing while keeping physical access separate from title and human-private data. A bounded explicit grant list supports the release population; roles and locks need authored consumers. PX02 now supplies immediate reciprocal barter through the same custody owner; its first-family bounds belong to BW11. The former custody-only/no-giving rule is removed. Reciprocal placement evaluates final net loads rather than rejecting a fictional one-sided intermediate. It retains distinct transferred lots; gifts retain ordinary merging. Existing capacity, nesting, work and privacy checks remain ([evidence](../verification/reciprocal-barter.md)).
 
-**Changed 2026-09-28:** the unilateral deposit into a reachable living person (E04/R03, 2026-09-26) was replaced by consent-aware offers, following Mike's rule that nothing changes hands without acceptance ([camp fire and sharing decision 6](../projects/camp-fire-and-sharing.md#decisions)). Privacy is unchanged. [Contract](../worlds/base/items.md).
+**Changed 2026-09-28:** the unilateral deposit into a reachable living person (E04/R03, 2026-09-26) was replaced by consent-aware offers, following Mike's rule that nothing changes hands without acceptance ([camp fire and sharing decision 6](../projects/completed/camp-fire-and-sharing.md#decisions)). Privacy is unchanged. [Contract](../worlds/base/items.md).
 
 ## OB13
 

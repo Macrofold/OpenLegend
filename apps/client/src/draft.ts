@@ -84,6 +84,17 @@ export function readDraft(
   }
 }
 
+/** Access replacement clears every known private composer key without reading old formats. */
+export function clearDraft(getStorage: GetStorage = () => window.sessionStorage): void {
+  try {
+    const storage = getStorage();
+    for (const key of Object.keys(storage))
+      if (key.startsWith('open-legend:composer-draft:')) storage.removeItem(key);
+  } catch {
+    // Storage can be disabled independently of in-memory editing.
+  }
+}
+
 export function saveDraft(
   key: string | null,
   draft: ComposerDraft,

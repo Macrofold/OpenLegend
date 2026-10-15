@@ -1,5 +1,11 @@
 # Hearing integration with current main
 
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Hearing reconciliation is integrated and locally verified, but the recorded required CI and broader HE05 qualification are not established by this audit. | 2026-10-14   |
+
+**Currency review — October 14, 2026.** [September 27 integration evidence](../verification/hearing-main-integration.md#current-main-rebase) records the delivered reconciliation and its remaining gates. The branch/rebase procedure and separate-branch descriptions below are historical provenance, not a new instruction to reconstruct the integration. SQLite and conversion references describe the old implementation; [PostgreSQL-only storage](completed/postgresql-cognition-preparation.md) and the [current development-save policy](../../AGENTS.md#development-save-policy) supersede them. A later focused hearing-fixture repair does not establish every HE05 check or matching published-head CI.
+
 ## Scope and baseline
 
 Integrate the complete hearing branch, including review and performance fixes, with current main; reconcile code, accepted contracts, documentation and tracking before recommending merge. Source: `c4379246b8db98974de319e1f5315439ac8176bd` (`feat/hearing-speech-captions`), retained at `codex/hearing-before-main-20260926`. Base: freshly fetched `Macrofold/OpenLegend` `origin/main`, initially `f551e3d8`, refreshed to `a39311dc`. The source contributes about 5,000 added and 800 removed lines across 85 files; cross-layer privacy, immutable-state, persistence and scheduling overlap makes this high-risk work.

@@ -1,6 +1,7 @@
 import { CANOPY_ATTRIBUTES, BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
 import { SLING_HANDLING } from './worlds/base/practical-competence.js';
 import { directChildIds, unequipLot } from './objects.js';
+import { baseSpatial } from './worlds/base/spatial-definitions.js';
 import { worldPlacement } from './spatial-state.js';
 import type { WorldCreationAccounts } from './invention-attribution.js';
 import { seedAgency } from './agency.js';
@@ -137,7 +138,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
   }
   world.entities['charge-bank'] = {
     icon: 'meter.energy',
-    spatial: { bodyProfileId: 'object', heading: 0 },
+    spatial: baseSpatial('object'),
     id: 'charge-bank',
     name: 'Charged capacitor',
     kind: 'resource',

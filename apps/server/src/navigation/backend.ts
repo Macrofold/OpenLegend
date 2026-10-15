@@ -1,7 +1,6 @@
 import * as R from 'recast-navigation';
 import { generateTiledNavMesh } from 'recast-navigation/generators';
 import {
-  BODY_PROFILES,
   MOVEMENT,
   SPATIAL_LIMITS,
   canStand,
@@ -52,7 +51,7 @@ export class RecastPlanner {
     this.builds = [];
     return builds;
   }
-  prepare(body: BodyProfile = BODY_PROFILES.person, reason: 'map' | 'first-use' = 'map'): Prepared {
+  prepare(body: BodyProfile, reason: 'map' | 'first-use' = 'map'): Prepared {
     const key = `${body.radius}:${body.height}:${body.maxSlope}`;
     let prepared = this.meshes.get(key);
     if (prepared) {

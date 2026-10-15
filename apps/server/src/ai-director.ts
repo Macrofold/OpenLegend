@@ -199,8 +199,10 @@ export class AiDirector {
     return next;
   }
 
-  private readonly schedules = new Map<string, ThoughtSchedule | undefined>();
-  private readonly thoughtWork = new ActorWork('thought', () => this.now());
+  private readonly thoughtWork = new ActorWork('thought', () => this.now(), {
+    capture: () => this.service.durabilityTicket(),
+    current: (ticket) => this.service.isDurable(ticket),
+  });
   private readonly thoughtInputs = new ThoughtIntakeInputs();
   private readonly unsubscribe: () => void;
   private stopped = false;
@@ -1947,7 +1949,7 @@ export class AiDirector {
         };
     const selectionMode = combined ? 'combined' : 'dependent';
     if (generationAvailable && policy.reflection && choice(judged.answers['reflection']) === 'yes')
-      await this.maintenance.enqueue(actorId, run.job.id, stimulus);
+      await this.maintenance.enqueue(actorId, run.job.id, stimulus, run.generation);
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:routing`,
       'Semantic decision',
@@ -2606,6 +2608,7 @@ export class AiDirector {
       if (this.running || this.stopped || this.service.paused) return;
       const world = this.service.world;
       const policy = world.cognitionPolicy;
+      const generation = this.service.generation;
       // One change-fed intake: cheap per-character tokens; visibility reruns only for a
       // character whose own exposure or position changed (EPR05).
       this.thoughtInputs.reset(this.service.generation);
@@ -2698,7 +2701,12 @@ export class AiDirector {
         const latest = unseen.slice(0, 8);
         // This is a wakeup snapshot, not a queue of memories owed future model calls.
         // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
-        const snapshotWatermark = Math.max(last?.watermark ?? 0, maxSequence);
+        // Awareness and personal-memory sequences share the native allocation counter,
+        // not the world-event counter. Never acknowledge observations beyond this saved cut.
+        const snapshotWatermark = Math.min(
+          Math.max(last?.watermark ?? 0, maxSequence),
+          this.service.durable.nextId,
+        );
         const subscription = (await this.service.store.getIntegration(
           `interests:${world.id}:${entity.id}`,
         )) as InterestSubscription | undefined;
@@ -2822,29 +2830,40 @@ export class AiDirector {
           });
           // Deferred, not consumed: evidence gathered before or during sleep stays unread
           // for the next capable opportunity. Native handling queues no paid catch-up.
-          await this.writeSchedule(key, {
-            fingerprint,
-            at: this.now(),
-            ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
-            ...(last?.attemptedOpportunity
-              ? { attemptedOpportunity: last.attemptedOpportunity }
-              : {}),
-            skippedOpportunity: opportunity,
-            ...(review.key ? { reviewKey: review.key } : {}),
-          });
+          await this.writeSchedule(
+            key,
+            {
+              fingerprint,
+              at: this.now(),
+              ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
+              ...(last?.attemptedOpportunity
+                ? { attemptedOpportunity: last.attemptedOpportunity }
+                : {}),
+              skippedOpportunity: opportunity,
+              ...(review.key ? { reviewKey: review.key } : {}),
+            },
+            generation,
+          );
           continue;
         }
         this.thoughtWork.recordOutcome('admitted', all.length);
         // Attempted, not consumed: the cursor advances only when the decision completes. A
         // failed decision is not a debt to replay; the same opportunity is not retried and
         // new changes create fresh opportunities that still include unread evidence.
-        await this.writeSchedule(key, {
-          fingerprint,
-          at: this.now(),
-          ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
-          attemptedOpportunity: opportunity,
-          ...(review.key ? { reviewKey: review.key } : {}),
-        });
+        if (
+          !(await this.writeSchedule(
+            key,
+            {
+              fingerprint,
+              at: this.now(),
+              ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
+              attemptedOpportunity: opportunity,
+              ...(review.key ? { reviewKey: review.key } : {}),
+            },
+            generation,
+          ))
+        )
+          continue;
         const significant = latest.some(
           (m) =>
             m.id === m.eventId &&
@@ -2852,7 +2871,8 @@ export class AiDirector {
               m.eventType ?? this.service.worldEvent(m.id)?.type ?? '',
             ),
         );
-        if (significant) await this.maintenance.enqueue(entity.id, id, sentence);
+        if (significant) await this.maintenance.enqueue(entity.id, id, sentence, generation);
+        if (generation !== this.service.generation || this.stopped || this.service.paused) return;
         await this.begin(
           {
             id,
@@ -2869,13 +2889,20 @@ export class AiDirector {
           },
           async () => {
             const current = await this.readSchedule(key);
-            await this.writeSchedule(key, {
-              fingerprint,
-              at: this.now(),
-              watermark: Math.max(current?.watermark ?? 0, snapshotWatermark),
-              attemptedOpportunity: opportunity,
-              ...(review.key ? { reviewKey: review.key } : {}),
-            });
+            await this.writeSchedule(
+              key,
+              {
+                fingerprint,
+                at: this.now(),
+                watermark: Math.min(
+                  Math.max(current?.watermark ?? 0, snapshotWatermark),
+                  this.service.durable.nextId,
+                ),
+                attemptedOpportunity: opportunity,
+                ...(review.key ? { reviewKey: review.key } : {}),
+              },
+              generation,
+            );
           },
         );
         const trace = this.log.get(id);
@@ -2907,17 +2934,25 @@ export class AiDirector {
     });
   }
   private async readSchedule(key: string): Promise<ThoughtSchedule | undefined> {
-    if (!this.schedules.has(key))
-      this.schedules.set(
-        key,
-        (await this.service.store.getIntegration(key)) as ThoughtSchedule | undefined,
-      );
-    return this.schedules.get(key);
+    // The repository owns bounded committed reuse and invalidates it on restore.
+    // A second director cache would retain the abandoned timeline's considered cursor.
+    const value = (await this.service.store.getIntegration(key)) as ThoughtSchedule | undefined;
+    return value && value.watermark !== undefined
+      ? { ...value, watermark: Math.min(value.watermark, this.service.durable.nextId) }
+      : value;
   }
-  private async writeSchedule(key: string, value: ThoughtSchedule): Promise<void> {
-    // This director is the sole schedule writer. Failed writes never update its cache.
-    await this.service.store.putIntegration(key, value);
-    this.schedules.set(key, value);
+  private async writeSchedule(
+    key: string,
+    value: ThoughtSchedule,
+    generation: string,
+  ): Promise<boolean> {
+    // Share the existing publication lane with restore: an old completion must not
+    // recreate scheduling records after that timeline's records have been cleared.
+    return this.service.publishRecall(async () => {
+      if (generation !== this.service.generation || this.stopped) return false;
+      await this.service.store.putIntegration(key, value);
+      return true;
+    });
   }
   private async think(run: Running): Promise<void> {
     return await this.decide(run, false);

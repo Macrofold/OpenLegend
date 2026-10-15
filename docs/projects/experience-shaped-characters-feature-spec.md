@@ -18,7 +18,7 @@ Older recollection adds a second useful possibility: a person can understand an 
 
 ## 2. What already exists and what is genuinely new
 
-Current context was inspected at main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425), separately from this branch's older runtime ancestry. [ACT07/ACT08](../maintainers/actor-model.md) already provide persistent, cause-aware feelings and actor-owned directional relationship notes. [Reflection](../memory-architecture.md#8-reflection-workspaces-and-publication) already revises accepted self-understanding, knowledge and supported appraisals. Publication preserves protected identity, accepted authority and the previous valid state when work fails. These are existing capabilities, not DG23 inventions.
+Current context was inspected at main [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425) during the original proposal audit. [ACT07/ACT08](../maintainers/actor-model.md) already provide persistent, cause-aware feelings and actor-owned directional relationship notes. [Reflection](../memory-architecture.md#8-reflection-workspaces-and-publication) already revises accepted self-understanding, knowledge and supported appraisals. Publication preserves protected identity, accepted authority and the previous valid state when work fails. These are existing capabilities, not DG23 inventions.
 
 The current base world seeds descriptive traits at creation. They are not a delivered mutable numerical personality vector or a native bonus. The inspected reflection instructions preserve protected identity documents exactly. NPC maintenance eligibility is also distinct from human control; automatic reflection is not an existing permission to rewrite a human's autobiography. [Current maintenance and publication instructions](https://github.com/Macrofold/OpenLegend/blob/0a3ab79b7a698a7f1941dc23722f89220d1ba425/apps/server/src/cognition-maintenance.ts).
 
@@ -280,6 +280,6 @@ These primary records distinguish documented behavior and study findings from th
 
 - World behavior: [A resident revises an outlook](../worlds/base/experience-shaped-characters.md).
 - Delivery: [Actor model](../maintainers/actor-model.md), [Cognition redesign](../maintainers/cognition-redesign.md), [CE05](../maintainers/character-experience.md#ce05--integrated-character-quality-and-complete-cost-qualification).
-- Existing product contracts: [Appraisal and social continuity](appraisal-social-continuity-feature-spec.md), [Compelling characters](compelling-characters-feature-spec.md), [Memory](../memory-architecture.md), [Knowledge](../knowledge.md).
+- Existing product contracts: [Appraisal and social continuity](completed/appraisal-social-continuity-feature-spec.md), [Compelling characters](compelling-characters-feature-spec.md), [Memory](../memory-architecture.md), [Knowledge](../knowledge.md).
 - Constraints: [Memory](../limits/memory.md), [Feelings](../limits/feelings.md), [Cognition](../limits/cognition.md), [AI execution](../limits/ai-execution.md), [Retention decisions](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger).
 - Queue and decisions: [DG23](../maintainers/needs-design.md#dg23--characters-changed-by-their-experience), [D14/D59](../../archive/05-project/open-decisions.md).

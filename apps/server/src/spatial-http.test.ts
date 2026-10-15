@@ -76,11 +76,14 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
 it('preserves elevated position and manual route snapshots while departure cancels walking', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-spatial-'));
   const config = readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_DATA_DIR: directory });
+  // CPU time must not expire a controller that this native fixture keeps present.
+  const now = () => 10_000;
   let game = await createGameServer({
     config,
     store: await testRepository(config.dataDirectory),
     production: true,
     tick: false,
+    now,
   });
   await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
   try {
@@ -101,8 +104,9 @@ it('preserves elevated position and manual route snapshots while departure cance
         timeout: 10_000,
       })
       .toBeUndefined();
+    // Ordinary progress uses the server's buffer; the save below establishes durability.
     for (let n = 0; n < 250 && worldPosition(game.service.world.entities[actorId]!).y < 0.1; n++)
-      await game.service.transition((world) => advanceWorld(world, 1));
+      await game.service.tick(1 / (config.baseRatio * game.service.speed), 0);
     const snapshot = structuredClone(game.service.world.entities[actorId]);
     expect(worldSupport(snapshot!)).toBe('lookout-ramp');
     const id = randomUUID();
@@ -116,6 +120,7 @@ it('preserves elevated position and manual route snapshots while departure cance
       store: await testRepository(config.dataDirectory),
       production: true,
       tick: false,
+      now,
     });
     await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
     await enterLocalWorld(game.service);

@@ -1,3 +1,4 @@
+import { BASE_BODY_PROFILES } from './spatial-definitions.js';
 import type { SpatialLayout, WalkableSurface } from '@open-legend/spatial';
 import type { FlightRoute } from '../../spatial-state.js';
 
@@ -76,6 +77,7 @@ export function starterFlightRoutes(): Record<string, FlightRoute> {
   return {
     'clearing-bird-loop': {
       id: 'clearing-bird-loop',
+      body: { ...BASE_BODY_PROFILES.bird },
       speed: 0.12,
       climbSpeed: 0.06,
       points: [
@@ -132,6 +134,7 @@ function starterGroundSurfaces(width: number, depth: number): WalkableSurface[] 
         solidBase: -16,
         acousticTransmission: 0,
         material: 'ground',
+        terrain: true,
       });
     }
   return result;

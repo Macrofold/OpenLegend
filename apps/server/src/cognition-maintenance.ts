@@ -59,7 +59,10 @@ function availableForMaintenance(world: WorldState, actorId: string): boolean {
 }
 
 export class CognitionMaintenance {
-  private readonly work = new ActorWork('maintenance', () => this.now());
+  private readonly work = new ActorWork('maintenance', () => this.now(), {
+    capture: () => this.service.durabilityTicket(),
+    current: (ticket) => this.service.isDurable(ticket),
+  });
   private readonly lastStarted = new Map<string, number>();
   private budgetActor = 'world-agent';
   private active: AbortController | null = null;
@@ -89,7 +92,13 @@ export class CognitionMaintenance {
   private key(actorId: string) {
     return `reflection-queue:${this.service.world.id}:${actorId}`;
   }
-  async enqueue(actorId: string, origin: string, reason: string): Promise<void> {
+  async enqueue(
+    actorId: string,
+    origin: string,
+    reason: string,
+    generation: string,
+  ): Promise<void> {
+    if (generation !== this.service.generation) return;
     if (this.service.config.jevOnly) return;
     if (!this.service.world.cognitionPolicy.reflection) return;
     const world = this.service.world;
@@ -105,7 +114,10 @@ export class CognitionMaintenance {
       at: current?.at ?? this.now(),
     };
     if (current?.reason === reason) return;
-    await this.service.store.putIntegration(this.key(actorId), request);
+    const retained = await this.writeSchedule(generation, async () => {
+      await this.service.store.putIntegration(this.key(actorId), request);
+    });
+    if (!retained) return;
     this.work.wake(actorId);
     const unavailable = !this.service.config.macrofoldKey
       ? 'Reflection harness is not configured.'
@@ -137,6 +149,17 @@ export class CognitionMaintenance {
     } catch (cause) {
       throw new MaintenanceReadFailure('Maintenance scheduling read failed.', { cause });
     }
+  }
+  /** A scheduling read may finish after restore has replaced its world. Keep every
+   * subsequent scheduling write in the same publication lane as restore, including
+   * acknowledgements that would otherwise consume a newly queued opportunity.
+   * docs/save-and-load.md#external-work-privacy-and-shared-authority */
+  private async writeSchedule(generation: string, write: () => Promise<void>): Promise<boolean> {
+    return this.service.publishRecall(async () => {
+      if (this.stopped || generation !== this.service.generation) return false;
+      await write();
+      return true;
+    });
   }
   async tick(interactiveBusy: boolean): Promise<void> {
     if (this.schedulingTask || this.now() < this.readRetryAt) return;
@@ -176,6 +199,7 @@ export class CognitionMaintenance {
     this.scheduling = true;
     try {
       const current = this.service.world;
+      const generation = this.service.generation;
       timedSync('cognition.maintenanceRefresh', () =>
         this.work.refresh(
           current,
@@ -252,7 +276,7 @@ export class CognitionMaintenance {
           const batch = await this.service.prepareActivityLearning(entity.id);
           if (batch.capacityBlocked) continue;
           if (batch.candidates.length) {
-            await this.start(entity.id, 'activity-learning', (controller) =>
+            await this.start(entity.id, 'activity-learning', generation, (controller) =>
               this.learnActivities(batch, controller),
             );
             return;
@@ -317,6 +341,7 @@ export class CognitionMaintenance {
             entity.id,
             'native-downtime',
             'Safe idle time to reconsider remembered experience',
+            generation,
           );
 
         // Dream maintenance reviews a completed day in bounded, resumable partitions.
@@ -361,24 +386,31 @@ export class CognitionMaintenance {
           const progress = review?.day === reviewDay ? review : { day: reviewDay };
           const batch = await this.service.maintenanceBatch(entity.id, 'daily', progress);
           // A crash or failed partition cannot authorize automatic paid retry.
-          await this.service.store.putIntegration(reviewKey, {
-            ...progress,
-            timeline: this.service.timelineId,
-            completed: !batch,
-            failed: !!batch,
-          });
+          if (
+            !(await this.writeSchedule(generation, () =>
+              this.service.store.putIntegration(reviewKey, {
+                ...progress,
+                timeline: this.service.timelineId,
+                completed: !batch,
+                failed: !!batch,
+              }),
+            ))
+          )
+            return;
           if (batch) {
-            await this.start(entity.id, 'consolidation', async (controller) => {
+            await this.start(entity.id, 'consolidation', generation, async (controller) => {
               const accepted = await this.consolidate(entity.id, batch, controller);
               if (accepted)
-                await this.service.store.putIntegration(reviewKey, {
-                  day: reviewDay,
-                  timeline: this.service.timelineId,
-                  failed: false,
-                  completed: batch.selection?.complete ?? true,
-                  throughRevision: batch.selection?.throughRevision,
-                  after: batch.selection?.after,
-                });
+                await this.writeSchedule(generation, () =>
+                  this.service.store.putIntegration(reviewKey, {
+                    day: reviewDay,
+                    timeline: this.service.timelineId,
+                    failed: false,
+                    completed: batch.selection?.complete ?? true,
+                    throughRevision: batch.selection?.throughRevision,
+                    after: batch.selection?.after,
+                  }),
+                );
             });
             return;
           }
@@ -403,12 +435,17 @@ export class CognitionMaintenance {
           // Protected-only cleanup preserves exact native text and needs no thinking
           // opportunity. Routine summarization must wait for the configured body gate.
           if (batch.routine.length && !safe) continue;
-          await this.service.store.putIntegration(cleanupKey, {
-            hour,
-            timeline: this.service.timelineId,
-            sourceDigest: digest(batch.sources),
-          });
-          await this.start(entity.id, 'consolidation', (controller) =>
+          if (
+            !(await this.writeSchedule(generation, () =>
+              this.service.store.putIntegration(cleanupKey, {
+                hour,
+                timeline: this.service.timelineId,
+                sourceDigest: digest(batch.sources),
+              }),
+            ))
+          )
+            return;
+          await this.start(entity.id, 'consolidation', generation, (controller) =>
             this.consolidate(entity.id, batch, controller).then(() => undefined),
           );
           return;
@@ -420,9 +457,14 @@ export class CognitionMaintenance {
           this.service.store.getIntegration(attemptKey),
         )) as { day?: number } | undefined;
         if (attempt?.day === day) continue;
-        await this.service.store.putIntegration(attemptKey, { day });
-        await this.service.store.putIntegration(this.key(entity.id), null);
-        await this.start(entity.id, queued.reason, (controller) =>
+        if (
+          !(await this.writeSchedule(generation, async () => {
+            await this.service.store.putIntegration(attemptKey, { day });
+            await this.service.store.putIntegration(this.key(entity.id), null);
+          }))
+        )
+          return;
+        await this.start(entity.id, queued.reason, generation, (controller) =>
           this.reflect(queued, controller),
         );
         return;
@@ -443,32 +485,52 @@ export class CognitionMaintenance {
   private async start(
     actorId: string,
     reason: string,
+    generation: string,
     execute: (controller: AbortController) => Promise<void>,
   ) {
     if (
       this.stopped ||
+      generation !== this.service.generation ||
       this.service.paused ||
       (reason !== 'consolidation' && !availableForMaintenance(this.service.world, actorId))
     )
       return;
-    this.activeAdmission = {
+    const admission = {
       actorId,
-      generation: this.service.generation,
+      generation,
       fence: bodyEligibilityRevision(this.service.world, this.service.world.entities[actorId]!),
       purpose: ['consolidation', 'activity-learning'].includes(reason)
-        ? 'maintenance'
-        : 'reflection',
+        ? ('maintenance' as const)
+        : ('reflection' as const),
       requiresBody: reason !== 'consolidation',
     };
     const controller = new AbortController();
     this.active = controller;
-    await this.service.store.putIntegration(
-      `maintenance-kind:${this.service.world.id}:${actorId}`,
-      reason === 'consolidation' ? 'consolidation' : 'reflection',
-    );
+    this.activeAdmission = admission;
     const key = `maintenance-at:${this.service.world.id}:${actorId}`;
     const startedAt = this.now();
-    await this.service.store.putIntegration(key, startedAt);
+    let admitted = false;
+    try {
+      const recorded = await this.writeSchedule(generation, async () => {
+        await this.service.store.putIntegration(
+          `maintenance-kind:${this.service.world.id}:${actorId}`,
+          reason === 'consolidation' ? 'consolidation' : 'reflection',
+        );
+        await this.service.store.putIntegration(key, startedAt);
+      });
+      admitted =
+        recorded &&
+        !this.stopped &&
+        !controller.signal.aborted &&
+        generation === this.service.generation &&
+        !this.service.paused;
+    } finally {
+      if (!admitted) {
+        this.active = null;
+        this.activeAdmission = null;
+      }
+    }
+    if (!admitted) return;
     this.lastStarted.set(key, startedAt);
     this.work.defer(actorId, startedAt + 60000);
     this.pending = execute(controller)
@@ -601,7 +663,8 @@ export class CognitionMaintenance {
   }
   private assertAdmission(world = this.service.world): void {
     const admission = this.activeAdmission;
-    if (admission && !admission.requiresBody) return;
+    if (admission && admission.generation === this.service.generation && !admission.requiresBody)
+      return;
     if (
       !admission ||
       admission.generation !== this.service.generation ||

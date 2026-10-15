@@ -1,4 +1,6 @@
 import { BASE_NATIVE_ACTIVITY_HOSTS } from './native-activities.js';
+import { baseSpatial } from './spatial-definitions.js';
+import { BASE_TERRAIN } from './spatial-definitions.js';
 import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js';
 import { BASE_SOCIAL_POLICY } from './social.js';
 import { baseConstructionProfile } from './canopy-scene.js';
@@ -219,6 +221,7 @@ export function createFreshBaseWorld(
       width: STARTER_EXTENT.width,
       height: STARTER_EXTENT.depth,
       tiles: [],
+      terrain: structuredClone(BASE_TERRAIN),
       spatial: starterSpatialLayout(STARTER_EXTENT.width, STARTER_EXTENT.depth),
     },
     flightRoutes: starterFlightRoutes(),
@@ -277,12 +280,12 @@ export function createWorld(
       name: SLING_TARGET.name,
       description: SLING_TARGET.description,
       kind: 'practice-target',
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       placement: worldPlacement(SLING_TARGET.position, 'terrain'),
       practiceTarget: { attributeId: SLING_TARGET.attributeId },
     },
     {
-      spatial: { bodyProfileId: 'person', heading: 0 },
+      spatial: baseSpatial('person'),
       id: playerId,
       name: 'Mike',
       nameForm: 'proper',
@@ -291,7 +294,7 @@ export function createWorld(
       actor: createActor(world, 'player', 76),
     },
     {
-      spatial: { bodyProfileId: 'person', heading: 0 },
+      spatial: baseSpatial('person'),
       id: residentId,
       name: 'Ada',
       nameForm: 'proper',
@@ -300,7 +303,7 @@ export function createWorld(
       actor: createActor(world, 'npc', 35, ADA_IDENTITY),
     },
     {
-      spatial: { bodyProfileId: 'person', heading: 0 },
+      spatial: baseSpatial('person'),
       id: MERCENARY_ID,
       name: 'Peacock Mercenary',
       nameForm: 'proper',
@@ -316,7 +319,7 @@ export function createWorld(
       }),
     },
     {
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       id: 'campfire',
       name: 'Banked campfire',
       kind: 'campfire',
@@ -324,7 +327,7 @@ export function createWorld(
       heat: { lit: true, fuelSeconds: 172800 },
     },
     {
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       id: 'reeds',
       name: 'River reeds',
       nameForm: 'plural',
@@ -337,7 +340,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       id: 'reeds-east',
       name: 'Dry grass fibers',
       nameForm: 'plural',
@@ -350,7 +353,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       id: 'branches',
       name: 'Fallen branches',
       nameForm: 'plural',
@@ -363,7 +366,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       id: 'stones',
       name: 'River stones',
       nameForm: 'plural',
@@ -376,7 +379,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       id: 'berries-west',
       name: 'Berry bush',
       kind: 'resource',
@@ -388,7 +391,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       id: 'berries-east',
       name: 'Berry thicket',
       kind: 'resource',
@@ -400,7 +403,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'hare', heading: 0 },
+      spatial: baseSpatial('hare'),
       id: 'hare-1',
       name: 'Hare',
       kind: 'animal',
@@ -423,7 +426,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'hare', heading: 0 },
+      spatial: baseSpatial('hare'),
       id: 'hare-2',
       name: 'Hare',
       kind: 'animal',
@@ -446,7 +449,7 @@ export function createWorld(
       },
     },
     {
-      spatial: { bodyProfileId: 'deer', heading: 0 },
+      spatial: baseSpatial('deer'),
       id: 'deer-1',
       name: 'Deer',
       kind: 'animal',
@@ -473,7 +476,7 @@ export function createWorld(
       name: 'Lookout supply crate',
       kind: 'resource',
       placement: worldPlacement({ x: 20, y: 3, z: 5.5 }, 'lookout-deck'),
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       appearance: 'crate-mesh',
       resource: {
         definitionId: 'wood',
@@ -487,7 +490,7 @@ export function createWorld(
       kind: 'animal',
       placement: worldPlacement({ x: 22, y: 3, z: 5.5 }, 'lookout-deck'),
       spatial: {
-        bodyProfileId: 'bird',
+        ...baseSpatial('bird'),
         heading: 0,
         flight: { routeId: 'clearing-bird-loop', next: 1, waitSeconds: 180 },
       },

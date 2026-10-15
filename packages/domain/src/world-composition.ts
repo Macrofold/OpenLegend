@@ -1,4 +1,5 @@
 import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
+import { BASE_EVENT_DISCLOSURE } from './worlds/base/event-disclosure.js';
 import {
   nativeActivityView as baseActivityView,
   sharedNativeActivityName as baseActivityName,
@@ -86,4 +87,9 @@ export function nativeActivityView(world: WorldState, command: Command) {
 export function sharedNativeActivityName(world: WorldState, command: Command) {
   selectedCreationProfileForWorld(world);
   return baseActivityName(world, command);
+}
+
+export function selectedEventDisclosure(world: WorldState) {
+  selectedCreationProfileForWorld(world);
+  return BASE_EVENT_DISCLOSURE;
 }

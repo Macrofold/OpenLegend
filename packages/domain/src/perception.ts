@@ -518,13 +518,14 @@ export function directProbe(
   world: WorldState,
   from: Position,
   to: Position,
-  fromSurfaceId?: string,
-  toSurfaceId?: string,
+  fromSurfaceId: string | undefined,
+  toSurfaceId: string | undefined,
+  body: import('@open-legend/spatial').BodyProfile,
 ): SurfacePoint[] | null {
   const map = spatialMap(world),
     a = resolveSupport(map, from, fromSurfaceId),
     b = resolveSupport(map, to, toSurfaceId);
-  if (!a || !b || distance(from, to) > 1 || !canWalkSegment(map, a, b)) return null;
+  if (!a || !b || distance(from, to) > 1 || !canWalkSegment(map, a, b, body)) return null;
   return [{ ...b }];
 }
 // Position-only helpers retain the default geometry for callers that do not have a receiver.

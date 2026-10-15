@@ -13,6 +13,8 @@ import './inventory.css';
  * source, the same reader returns move/offer previews; selecting still performs no write. */
 type DestinationProps = {
   scope: string;
+  /** A retained private workspace may receive fresh control without losing its search. */
+  authorityRevision?: string;
   source?: InventoryTransferSource;
   activity?: { family: string; field: string };
   connected: boolean;
@@ -30,6 +32,7 @@ export function InventoryDestinations(props: DestinationProps) {
 }
 function DestinationWorkspace({
   scope,
+  authorityRevision,
   source,
   activity,
   connected,
@@ -56,6 +59,7 @@ function DestinationWorkspace({
   const collection = useRef<HTMLDivElement>(null);
   const base = JSON.stringify([
     scope,
+    authorityRevision,
     source,
     activity,
     parentId,

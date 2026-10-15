@@ -273,7 +273,7 @@ export function sensoryDraftWrites(world: WorldState) {
     const entity = readOnlyDraftView(value) as WorldState['entities'][string];
     const source =
       changed(value, ['name', 'kind', 'appearance', 'placement', 'retirement']) ||
-      changed(entity.spatial, ['bodyProfileId']) ||
+      changed(entity.spatial, ['body', 'inactiveBody', 'softFootprint']) ||
       changed(entity.heat, ['lit']) ||
       changed(entity.resource, ['quantity']) ||
       changed(entity.remains, ['harvested']) ||

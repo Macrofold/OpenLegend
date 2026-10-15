@@ -1195,11 +1195,6 @@ export async function projectView(
     map: memo<GameView['map']>('map', [world.map, world.seed], () => ({
       ...world.map,
       seed: world.seed,
-      obstacles: world.map.tiles.flatMap((row, z) =>
-        row.flatMap((tile, x) =>
-          tile === 'rock' ? [{ y: 0, x, z, radius: 0.52, kind: 'rock' }] : [],
-        ),
-      ),
     })),
     clock: {
       ...calendarFields(world),
@@ -1553,8 +1548,14 @@ function same(left: unknown, right: unknown): boolean {
 function changedFields<T extends object>(previous: T, next: T): Partial<T> | undefined {
   const changed: Partial<T> = {};
   for (const key of Object.keys(next) as Array<keyof T>)
-    if (!same(previous[key], next[key])) changed[key] = next[key];
+    if (next[key] !== undefined && !same(previous[key], next[key])) changed[key] = next[key];
   return Object.keys(changed).length ? changed : undefined;
+}
+function removedFields<T extends object>(previous: T, next: T): Array<keyof T> | undefined {
+  const keys = (Object.keys(previous) as Array<keyof T>).filter(
+    (key) => previous[key] !== undefined && next[key] === undefined,
+  );
+  return keys.length ? keys : undefined;
 }
 
 /** Public transport delta only. Authoritative/private state never enters this comparison. */
@@ -1588,9 +1589,25 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   const clock = changedFields(previous.clock, next.clock);
   const player = changedFields(previous.player, next.player);
   const ai = changedFields(previous.ai, next.ai);
+  const removedView = (
+    ['commandEpoch', 'worldEventsRevision', 'historyRevision', 'historyEpoch', 'narrator'] as const
+  ).filter((key) => previous[key] !== undefined && next[key] === undefined);
+  const removedClock = removedFields(previous.clock, next.clock);
+  const removedPlayer = removedFields(previous.player, next.player);
+  const removedAi = removedFields(previous.ai, next.ai);
   return {
     schemaVersion: 2,
     scope: next.access?.scope,
+    ...(removedView.length || removedClock || removedPlayer || removedAi
+      ? {
+          remove: {
+            ...(removedView.length ? { view: removedView } : {}),
+            ...(removedClock ? { clock: removedClock } : {}),
+            ...(removedPlayer ? { player: removedPlayer } : {}),
+            ...(removedAi ? { ai: removedAi } : {}),
+          },
+        }
+      : {}),
     ...(previous.commandEpoch !== next.commandEpoch ? { commandEpoch: next.commandEpoch } : {}),
     baseRevision: previous.revision,
     revision: next.revision,

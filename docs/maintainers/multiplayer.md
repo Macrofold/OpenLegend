@@ -12,7 +12,7 @@ Later regional authority/transfer is D6, not another MP implementation here. Ope
 
 ## Execution notes — September 26, 2026
 
-Implementation is authorized by the [foundation execution plan](../projects/foundations-1-5.md#approved-implementation-plan).
+Implementation is authorized by the [foundation execution plan](../projects/completed/foundations-1-5.md#approved-implementation-plan).
 MP01/MP04 and their ten foundation slices are **implemented and locally qualified**. Required CI, hostile-client/hosted qualification and broader MP02/MP03 remain open.
 
 - `authority.ts` adds consumed account/session/grant/control/exit records outside gameplay
@@ -76,7 +76,7 @@ Mike selected Auth0 as the world login service on October 1, 2026 ([D05](../../a
 
 ## Entry and maintenance execution notes — September 28, 2026
 
-Authorized by the [entry and maintenance plan](../projects/multiplayer-entry-maintenance.md); [verification](../verification/multiplayer-entry-maintenance.md) records the evidence.
+Authorized by the [entry and maintenance plan](../projects/completed/multiplayer-entry-maintenance.md); [verification](../verification/multiplayer-entry-maintenance.md) records the evidence.
 
 - `authority.ts` grants may omit a character (stored without changing the existing grant table). Such grants never include play, never acquire a control lease and never count toward exit or shared pause. A new `spectate` capability permits a public overview. `operations-routes.ts` owns an explicit characterless route allowlist; every character route rejects those sessions before dispatch.
 - `invites.ts` issues hashed, single-use, expiring, revocable invites; issuers delegate only capabilities they hold. The OIDC callback redeems a remembered invite after verified sign-in. A player invite binds an unowned living person in the same world commit as the invite and grant; the body departs until the invitee explicitly takes control. Removing an enrolled account uses the existing audited capability change.
@@ -87,7 +87,7 @@ Authorized by the [entry and maintenance plan](../projects/multiplayer-entry-mai
 
 ## Priority 2 implementation slices
 
-The approved [feature specification](../projects/multiplayer-authority-feature-spec.md) and [technical design](../projects/multiplayer-authority-tech-design.md) govern these MP01/MP04 child slices. The foundation plan is implemented; the evidence above satisfies MP01/MP04. Other MP gates retain their separate scope.
+The approved [feature specification](../projects/completed/multiplayer-authority-feature-spec.md) and [technical design](../projects/completed/multiplayer-authority-tech-design.md) govern these MP01/MP04 child slices. The foundation plan is implemented; the evidence above satisfies MP01/MP04. Other MP gates retain their separate scope.
 
 ### MP01.1 — Authenticated accounts and current scope
 
@@ -175,7 +175,7 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 
 ## Release admission follow-through
 
-The [immediate limits implementation](../projects/immediate-gameplay-limits.md) coordinates release admission and projection cache capacity from `OPEN_LEGEND_PLAYER_CAPACITY` (default 100), retaining per-scope authority and slow-client handling. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) includes 100 separate synthetic accounts with actual SSE/control/commands; session setup bypassed OIDC. MP01 authority remains required. PF11/D5 and [E01](limits-audit.md#e01) remain open for sustained mixed gameplay, hosted operation and 10,000-player growth; the 100-player burst latency is not acceptable release evidence.
+The [immediate limits implementation](../projects/completed/immediate-gameplay-limits.md) coordinates release admission and projection cache capacity from `OPEN_LEGEND_PLAYER_CAPACITY` (default 100), retaining per-scope authority and slow-client handling. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) includes 100 separate synthetic accounts with actual SSE/control/commands; session setup bypassed OIDC. MP01 authority remains required. PF11/D5 and [E01](limits-audit.md#e01) remain open for sustained mixed gameplay, hosted operation and 10,000-player growth; the 100-player burst latency is not acceptable release evidence.
 
 ## Optional private correspondence consumer
 

@@ -1161,7 +1161,7 @@ export class MemoryRepository {
   }
   /** Resolved (kept or cancelled) eligible commitments, newest spoken first, for the owner's
    * promise list. Reads the partial commitment index; open obligations stay resident.
-   * docs/projects/readable-promises-tech-design.md#3-algorithm-appsserversrccommitment-viewts */
+   * docs/projects/completed/readable-promises-tech-design.md#3-algorithm-appsserversrccommitment-viewts */
   async resolvedCommitments(
     scope: MemoryScope,
     before: { at: number; id: string } | undefined,

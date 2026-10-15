@@ -4,7 +4,11 @@ import {
   readPerceivedEventSources,
   perspectiveField,
 } from './perceived-events.js';
-import { projectEventEvidence, type EventEvidence } from '@open-legend/domain';
+import {
+  projectEventEvidence,
+  validateEventEvidence,
+  type EventEvidence,
+} from '@open-legend/domain';
 import {
   appendedEventCount,
   appendedRecordCount,
@@ -46,6 +50,22 @@ export const HISTORY_TABLES = [
   'story_transition_sources',
   'history_totals',
 ] as const;
+/** Restore admission already has complete history rows; validate without another SQL scan. */
+export function validateHistoryEvidence(
+  history: Record<(typeof HISTORY_TABLES)[number], Record<string, unknown>[]>,
+) {
+  for (const row of history.history_perspectives) {
+    const source = JSON.parse(String(row['payload'])) as StorySource;
+    validateEventEvidence(source.evidence);
+    if (source.type !== source.evidence.eventType)
+      throw new Error('History event type disagrees with observer facts.');
+  }
+  for (const row of history.story_jobs) {
+    const job = JSON.parse(String(row['payload'])) as StoryJob;
+    if (!Array.isArray(job.sources)) throw new Error('Invalid retained story evidence.');
+    for (const source of job.sources) validateEventEvidence(source.evidence);
+  }
+}
 export type NarratorVoice = 'restrained' | 'lyrical' | 'wry';
 export interface StorySource {
   evidence: EventEvidence;
@@ -76,6 +96,8 @@ const revisionOf = (text: string) => createHash('sha256').update(text).digest('h
 function eventEvidence(awareness: EventEvidence): EventEvidence {
   const {
     actorId,
+    eventData,
+    eventType,
     text,
     content,
     modality,
@@ -89,6 +111,8 @@ function eventEvidence(awareness: EventEvidence): EventEvidence {
   } = awareness;
   return {
     actorId,
+    eventData,
+    eventType,
     text,
     content,
     modality,
@@ -406,7 +430,7 @@ export class HistoryRepository {
           // Consolidation removes hot recall, not durable authorization. Reuse that perspective;
           // the domain forbids speech rewrites, so this path only rephrases non-speech edits.
           evidence =
-            event.type === 'speech'
+            event.type === 'speech' || retained.evidence.eventType === 'activity-observed'
               ? retained.evidence
               : {
                   ...retained.evidence,
@@ -423,7 +447,7 @@ export class HistoryRepository {
           revision: revisionOf(eventRevision + JSON.stringify(evidence)),
           time: event.at,
           order: position,
-          type: event.type,
+          type: evidence.eventType!,
           ...(evidence.content !== undefined ? { content: evidence.content } : {}),
         };
         perspectives.set(actorId, source);

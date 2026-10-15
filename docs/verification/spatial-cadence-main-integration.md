@@ -1,6 +1,6 @@
 # Spatial/cadence reconciliation with main
 
-September 26, 2026. The [integration plan](../projects/spatial-cadence-main-integration.md) owns scope. Source `origin/feature/simulation-cadence` was refreshed at `edc6980f7634bf4088c259cb4dfd61f03bbb9ce9`; the explicitly requested base `origin/main` was refreshed at `56b8c383be1ef0e13416769e942f89b2ce6d15e2` in `https://github.com/Macrofold/OpenLegend.git`. The common ancestor was `03105fed9209c126e4e69e9faeb4687f42d1e74a`. Local recovery ref `codex/cadence-before-main-20260926` preserves the original source tip. The local branch was rebased; main and the remote source branch were not rewritten or merged.
+September 26, 2026. The [integration plan](../projects/completed/spatial-cadence-main-integration.md) owns scope. Source `origin/feature/simulation-cadence` was refreshed at `edc6980f7634bf4088c259cb4dfd61f03bbb9ce9`; the explicitly requested base `origin/main` was refreshed at `56b8c383be1ef0e13416769e942f89b2ce6d15e2` in `https://github.com/Macrofold/OpenLegend.git`. The common ancestor was `03105fed9209c126e4e69e9faeb4687f42d1e74a`. Local recovery ref `codex/cadence-before-main-20260926` preserves the original source tip. The local branch was rebased; main and the remote source branch were not rewritten or merged.
 
 ## Integration analysis
 

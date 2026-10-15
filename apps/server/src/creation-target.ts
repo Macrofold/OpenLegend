@@ -172,10 +172,6 @@ export class CreationTargetRepository {
       ...new Set([
         ...WORLD_RECORD_TABLES,
         ...BACKUP_TABLES,
-        'world',
-        'world_journal',
-        'mind.inner_world',
-        'knowledge_documents',
         'recall_vectors',
         'recall_sources',
         'mind_summary_sources',

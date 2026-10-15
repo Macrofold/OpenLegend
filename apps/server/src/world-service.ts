@@ -967,7 +967,7 @@ export class WorldService {
     );
   }
   /** Operational MP03 hold and public notice, owned by MaintenanceSchedule and outside
-   * gameplay saves. docs/projects/multiplayer-entry-maintenance.md#decisions */
+   * gameplay saves. docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
   maintenanceNotice: MaintenanceWindowView | null = null;
   private maintenanceHeld = false;
   get maintenanceActive(): boolean {
@@ -1846,6 +1846,21 @@ export class WorldService {
       throw new Error('Trigger evidence changed during retrieval.');
     return selected.flatMap((entry) => (entry.awareness ? [entry.awareness] : []));
   }
+  /** Bind retained text to its actor's evidence and the caller's current permission.
+   * Recheck immediately before disclosure, after the final await; invalidating a cache
+   * alone cannot retract an already pending read. No storage read is needed here.
+   * docs/memory-architecture.md#private-retrieval-fencing */
+  privateReadFence(actorId: string, permitted: () => boolean): () => boolean {
+    const worldId = this.world.id,
+      generation = this.generation,
+      sourceRevision = this.store.memories?.actorRevision(actorId);
+    return () =>
+      worldId === this.world.id &&
+      generation === this.generation &&
+      sourceRevision === this.store.memories?.actorRevision(actorId) &&
+      permitted();
+  }
+
   async inspectMemoryContext(actorId: string, scope = this.localScope) {
     if (!this.config.godMode || !this.mayInspectPrivate(actorId, scope))
       throw new Error('Private mind inspection is unavailable.');
@@ -1853,6 +1868,9 @@ export class WorldService {
     const world = this.world,
       generation = this.generation;
     const sourceRevision = this.store.memories?.actorRevision(actorId);
+    const stillPrivate = this.privateReadFence(actorId, () =>
+      this.mayInspectPrivate(actorId, scope),
+    );
     const head = await this.store.records?.head();
     const commitments =
       this.store.memories && head
@@ -1869,13 +1887,7 @@ export class WorldService {
         { worldId: world.id, actorId, generation: head!.generation },
         commitments.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
       ));
-    if (
-      !current ||
-      generation !== this.generation ||
-      !this.mayInspectPrivate(actorId, scope) ||
-      sourceRevision !== this.store.memories?.actorRevision(actorId)
-    )
-      throw new Error('Private mind changed during inspection.');
+    if (!current || !stillPrivate()) throw new Error('Private mind changed during inspection.');
     return {
       generation,
       sourceRevision,
@@ -2553,7 +2565,7 @@ export class WorldService {
   /** Invite enrollment: an unowned person becomes a human character in the same commit that
    * redeems the invite and records its grant. The caller validates inside this writer lane.
    * Like a rebinding, the body departs until its new controller explicitly takes control.
-   * docs/projects/multiplayer-entry-maintenance.md#decisions */
+   * docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
   async enrollCharacter(
     actorId: string,
     accountId: string,
@@ -2814,7 +2826,7 @@ export class WorldService {
 
   /** Host monotonic instant (`performance.now`) of the latest resume. The host clock never
    * charges real time from before it, so a tick left waiting across a pause (for example a
-   * maintenance window) adds no catch-up. docs/projects/multiplayer-entry-maintenance.md */
+   * maintenance window) adds no catch-up. docs/projects/completed/multiplayer-entry-maintenance.md */
   clockStartedAt = 0;
   private async syncPause(): Promise<void> {
     return this.mutate(async () => {
@@ -4053,6 +4065,9 @@ export class WorldService {
     const actor = this.world.entities[actorId];
     if (!actor?.actor || !hasMemory(actor))
       return { ok: false, code: 'actor', message: 'Choose a person.' };
+    const stillPrivate = this.privateReadFence(actorId, () =>
+      this.mayInspectPrivate(actorId, scope),
+    );
     const head = await this.store.records?.head();
     const selected =
       this.store.memories && head
@@ -4061,7 +4076,7 @@ export class WorldService {
             before,
           )
         : undefined;
-    if (generation !== this.generation || !this.mayInspectPrivate(actorId, scope))
+    if (!stillPrivate())
       return {
         ok: false as const,
         code: 'stale',
@@ -4122,7 +4137,9 @@ export class WorldService {
         message: 'Human-private character content is unavailable to this principal.',
       };
     await this.flush();
-    const generation = this.generation;
+    const stillPrivate = this.privateReadFence(actorId, () =>
+      this.mayInspectPrivate(actorId, scope),
+    );
     const head = await this.store.records?.head();
     const entry =
       this.store.memories && head
@@ -4131,7 +4148,7 @@ export class WorldService {
             entryId,
           )
         : experienceEntry(this.world, actorId, entryId);
-    if (generation !== this.generation || !this.mayInspectPrivate(actorId, scope))
+    if (!stillPrivate())
       return {
         ok: false as const,
         code: 'stale',

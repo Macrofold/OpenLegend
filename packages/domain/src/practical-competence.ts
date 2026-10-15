@@ -1,11 +1,10 @@
 import { emit, outcome } from './events.js';
 import { occurrenceFor, renderActivity } from './action-experience.js';
-import { BODY_PROFILES } from '@open-legend/spatial';
 import { recordSemanticChange } from './dependencies.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { supportsManualWork } from './living.js';
-import { nearbyLivingEntities, canReachEntity, hasLineOfSight, distance } from './spatial.js';
+import { nearbyBodyEntities, canReachEntity, hasLineOfSight, distance } from './spatial.js';
 import { worldPosition, bodyProfile } from './spatial-state.js';
 import { chargeWork, requireWork, WORK_LIMITS } from './work-budget.js';
 import { definitionPin, type AttributeDefinition, type DefinitionPin } from './world-modules.js';
@@ -374,9 +373,6 @@ export function revokePracticeSupport(
     }
   }
 }
-// Candidate grids store feet. A body below a short elevated shot can still cross
-// the lane, so the conservative bound must include height as well as width.
-const bodyExtent = Math.max(...Object.values(BODY_PROFILES).flatMap((p) => [p.radius, p.height]));
 /** Body clearance is real, but this consumer has no simulated projectile trajectory. */
 export function practiceLaneProblem(
   world: WorldState,
@@ -395,7 +391,7 @@ export function practiceLaneProblem(
     aim = { ...to, y: to.y + bodyProfile(target).height / 2 };
   if (!hasLineOfSight(world, eye, aim))
     return outcome(false, 'blocked-lane', profile.presentation.laneBlocked);
-  for (const entity of nearbyLivingEntities(world, from, length + margin + bodyExtent)) {
+  for (const entity of nearbyBodyEntities(world, from, length + margin, true)) {
     chargeWork({ tests: 1 });
     if (entity.id === actor.id || !entity.actor?.alive) continue;
     const body = bodyProfile(entity);

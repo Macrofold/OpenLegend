@@ -1,6 +1,10 @@
 # Product scalability — technical design and staged plan
 
-**Status: proposed implementation design supporting accepted product direction, October 2, 2026. The current task delivers documentation only. No runtime work, new service, database migration, paid experiment, or deployment is authorized by this document.**
+| Status      | Current progress                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Product direction and staged technical proposals are documented; runtime delivery and measured capacity remain open. | 2026-10-14   |
+
+**Status: proposed implementation design supporting accepted product direction, October 2, 2026. The October 2 design task delivered documentation only. No runtime work, new service, database migration, paid experiment, or deployment is authorized by this document.**
 
 ## Maintained records
 

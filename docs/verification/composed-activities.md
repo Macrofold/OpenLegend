@@ -2,7 +2,7 @@
 
 September 29, 2026, branch `codex/composed-activities` (built on `origin/main` `be68b1e0`, rebased onto `origin/main` `0382be76`; commit IDs below are the rebased ones); first review fixes at `371af491`, final code at `bfe7a8da` (world-supplied wording `cafd7006` plus its review fixes). Node 22.23.2, local PostgreSQL 127.0.0.1:5432, one disposable database per scenario created and dropped by the scenario harness (all 256 logged names, including browser-check servers, were dropped afterwards). `AI_BUDGET_USD=0`; the harness replaces the provider client with a stub that counts and refuses every call. **Every scenario recorded zero judge and zero generation calls; Jev and provider cost for this task is $0.** Other agents were loading the same machine; all durations are shared-host wall times, not performance evidence.
 
-[Project plan](../projects/composed-activities.md) · [current behavior](../architecture.md#requested-activities-and-typed-actions) · [AC tracker](../maintainers/action-capabilities.md#composed-activities-slice) · [AG03](../maintainers/agent-agency.md#ag03--bounded-plan-frontier-and-one-native-physical-lane) · [BW05](../maintainers/base-world.md)
+[Project plan](../projects/completed/composed-activities.md) · [current behavior](../architecture.md#requested-activities-and-typed-actions) · [AC tracker](../maintainers/action-capabilities.md#composed-activities-slice) · [AG03](../maintainers/agent-agency.md#ag03--bounded-plan-frontier-and-one-native-physical-lane) · [BW05](../maintainers/base-world.md)
 
 ## Workload and interpretation
 

@@ -1,6 +1,12 @@
 # Progressive 3D pixel art — technical design
 
-**Status: proposed, documentation only.** Companion to the [feature specification](3d-pixel-art-feature-spec.md). Inspected baseline: `412b5b480b4911d9977de73168c6072e2c023b83`, September 27, 2026. No runtime implementation, dependency upgrade, provider dispatch, or performance result is implied.
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The bundled mercenary pilot is delivered; general appearance publication, generated assets and broader qualification remain open in V3D. | 2026-10-14   |
+
+**General pipeline proposal; partial delivery is recorded below.** Companion to the [feature specification](3d-pixel-art-feature-spec.md). Inspected baseline: `412b5b480b4911d9977de73168c6072e2c023b83`, September 27, 2026. No runtime implementation, dependency upgrade, provider dispatch, or performance result is implied.
+
+**Delivery review — October 14, 2026.** The [bundled mercenary pilot](completed/mercenary-scene-pilot.md) now supplies one authored animated model, fixed-resolution character rendering, actual-depth compositing and owned replacement resources in the default scene. Its [recorded evidence](../verification/mercenary-default.md) does not qualify general imported/generated assets, equipment composition, crowds or lower-end hardware. [V3D](../maintainers/3d-pixel-art.md) retains those open tasks; [world presentation](../world-presentation.md) owns current behavior. Earlier statements that no model delivery exists are superseded by this narrow pilot, not by acceptance of the entire proposal.
 
 ## Maintained records
 
@@ -9,11 +15,11 @@
 - Detailed mechanisms: [generation pipeline](3d-pixel-art-asset-pipeline.md), [appearance families](3d-pixel-art-appearance-families.md), [qualification](3d-pixel-art-validation.md).
 - Existing boundaries: [engine/world](../engine-and-world-boundaries.md), [spatial renderer contract](../../archive/07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets), [world presentation](../world-presentation.md), and [AI providers](../ai-providers.md).
 
-## 1. Inspected application and smallest useful change
+## 1. Original inspected application and smallest useful change
 
-The client pins PlayCanvas `2.22.2` in [its package](../../apps/client/package.json). [WorldRenderer](../../apps/client/src/world-renderer.ts) already separates plain views, intentions, and camera commands from PlayCanvas objects. [WildernessScene](../../apps/client/src/scene.ts) owns entity scene nodes, sprite images/materials, appearance-cache references, shadow/reveal bindings, geometry, selection, and teardown. Its `RenderedEntity` still assumes sprite-oriented fields. [EntityView](../../packages/protocol/src/index.ts) currently carries `appearance: 'sprite' | 'crate-mesh'`, heading, XYZ/support, and a small action/status projection. These are useful migration seams, not an existing general asset-manifest implementation.
+At the September 27 baseline, the client pinned PlayCanvas `2.22.2` in [its package](../../apps/client/package.json). [WorldRenderer](../../apps/client/src/world-renderer.ts) already separates plain views, intentions, and camera commands from PlayCanvas objects. [WildernessScene](../../apps/client/src/scene.ts) owns entity scene nodes, sprite images/materials, appearance-cache references, shadow/reveal bindings, geometry, selection, and teardown. Its `RenderedEntity` still assumes sprite-oriented fields. [EntityView](../../packages/protocol/src/index.ts) then carried `appearance: 'sprite' | 'crate-mesh'`, heading, XYZ/support, and a small action/status projection. These are useful migration seams, not an existing general asset-manifest implementation.
 
-Preserve `WorldRenderer` rather than implementing every illustrative method in the older spatial design. Extract a small representation resource behind the existing scene when both sprite and model implementations need it. Let a plain adapter derive the renderer's inputs from `GameView`; introduce a separate network view only for a concrete projection need. Do not create a second scene graph, public asset registry, or world state store.
+The later pilot extends the authored appearance choice with `mercenary-model` and a renderer-local model resource; the general manifest/publication contracts below are still proposals. Preserve `WorldRenderer` rather than implementing every illustrative method in the older spatial design. Extract a small representation resource behind the existing scene when both sprite and model implementations need it. Let a plain adapter derive the renderer's inputs from `GameView`; introduce a separate network view only for a concrete projection need. Do not create a second scene graph, public asset registry, or world state store.
 
 Documentation changes affect zero runtime logic lines. Future work spans protocol, domain presentation references, server projection/storage/jobs, client representation/presentation, and authored assets. It is cross-layer and high-risk around privacy, lifecycle, and spending; estimates for each implementation slice must be refreshed from its then-current callers rather than pretending a shader-only change covers the project.
 

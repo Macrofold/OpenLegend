@@ -1,12 +1,95 @@
 import { panelGeometry } from './finite-panel.js';
 import { finitePoint, surfaceHeight } from './geometry.js';
-import { SPATIAL_LIMITS, type SpatialMap } from './types.js';
+import {
+  SPATIAL_LIMITS,
+  type SpatialMap,
+  type BodyProfile,
+  type TerrainDefinition,
+} from './types.js';
 const safeId = (v: unknown): v is string =>
   typeof v === 'string' &&
   /^[a-zA-Z0-9][a-zA-Z0-9:_-]{0,119}$/.test(v) &&
   !['constructor', 'prototype', '__proto__'].includes(v);
+/** Numeric geometry is current body state; an authored name never chooses dimensions. */
+export function validateBodyProfile(body: BodyProfile): void {
+  if (
+    !body ||
+    !safeId(body.id) ||
+    ![
+      body.radius,
+      body.height,
+      body.eyeHeight,
+      body.earHeight,
+      body.interactionHeight,
+      body.maxSlope,
+    ].every(Number.isFinite) ||
+    body.radius <= 0 ||
+    body.height <= 0 ||
+    body.radius > SPATIAL_LIMITS.maxExtent ||
+    body.height > SPATIAL_LIMITS.maxExtent ||
+    body.maxSlope < 0 ||
+    body.maxSlope > 1 ||
+    [body.eyeHeight, body.earHeight, body.interactionHeight].some((v) => v < 0 || v > body.height)
+  )
+    throw new Error('Invalid physical body profile.');
+}
+const color = (value: unknown): value is string =>
+  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+const overviewColor = (value: unknown): value is string =>
+  color(value) ||
+  (typeof value === 'string' &&
+    /^color-mix\(in srgb, var\(--[a-z-]+\) (?:100|[0-9]{1,2})%, var\(--[a-z-]+\)\)$/.test(value));
+function validateTerrain(definitions: Record<string, TerrainDefinition>): void {
+  if (
+    !definitions ||
+    typeof definitions !== 'object' ||
+    Array.isArray(definitions) ||
+    !Object.keys(definitions).length
+  )
+    throw new Error('Invalid terrain definitions.');
+  for (const [id, definition] of Object.entries(definitions)) {
+    const p = definition?.presentation,
+      solid = definition?.solid;
+    if (
+      !safeId(id) ||
+      !definition ||
+      typeof definition.walkable !== 'boolean' ||
+      !p ||
+      !['ground', 'earth', 'liquid'].includes(p.style) ||
+      !color(p.color) ||
+      !overviewColor(p.overviewColor) ||
+      (p.patternColors !== undefined &&
+        (!Array.isArray(p.patternColors) ||
+          !p.patternColors.length ||
+          !p.patternColors.every(color))) ||
+      [p.bankColors, p.glintColors].some(
+        (v) => v !== undefined && (!Array.isArray(v) || v.length !== 2 || !v.every(color)),
+      ) ||
+      (p.style === 'liquid' && (!p.patternColors || !p.bankColors || !p.glintColors))
+    )
+      throw new Error('Invalid terrain definition.');
+    if (
+      solid &&
+      (!Number.isFinite(solid.height) ||
+        solid.height <= 0 ||
+        solid.height > SPATIAL_LIMITS.maxExtent ||
+        typeof solid.movement !== 'boolean' ||
+        typeof solid.sight !== 'boolean' ||
+        !Number.isFinite(solid.acousticTransmission) ||
+        solid.acousticTransmission < 0 ||
+        solid.acousticTransmission > 1 ||
+        !safeId(solid.material) ||
+        typeof solid.name !== 'string' ||
+        !solid.name.trim() ||
+        solid.name.length > 80)
+    )
+      throw new Error('Invalid terrain solid.');
+    if (definition.solid !== undefined && !solid) throw new Error('Invalid terrain solid.');
+  }
+}
 /** Validate once at construction/load/mutation, never silently reinterpret invalid geometry as air. */
 export function validateSpatialMap(map: SpatialMap): void {
+  validateTerrain(map?.terrain);
   if (
     !map ||
     !Number.isInteger(map.width) ||
@@ -21,12 +104,12 @@ export function validateSpatialMap(map: SpatialMap): void {
       (row) =>
         !Array.isArray(row) ||
         row.length !== map.width ||
-        row.some((tile) => !['grass', 'sand', 'water', 'rock'].includes(tile)),
+        row.some((tile) => typeof tile !== 'string' || !Object.hasOwn(map.terrain, tile)),
     )
   )
     throw new Error('Invalid spatial terrain.');
   if (
-    map.tiles.reduce((n, row) => n + row.filter((tile) => tile === 'rock').length, 0) +
+    map.tiles.reduce((n, row) => n + row.filter((tile) => map.terrain[tile]?.solid).length, 0) +
       (map.spatial?.blockers?.length ?? 0) >
     SPATIAL_LIMITS.maxBlockers
   )
@@ -90,12 +173,13 @@ export function validateSpatialMap(map: SpatialMap): void {
   for (const s of layout.surfaces) {
     if (
       !safeId(s.id) ||
-      s.id.startsWith('terrain-rock:') ||
+      s.id.startsWith('terrain-solid:') ||
       ids.has(s.id) ||
       !levels.has(s.levelId) ||
       typeof s.name !== 'string' ||
       s.name.length > 80 ||
-      !['ground', 'timber', 'stone'].includes(s.material) ||
+      !safeId(s.material) ||
+      (s.terrain !== undefined && typeof s.terrain !== 'boolean') ||
       ![
         s.minX,
         s.maxX,
@@ -143,7 +227,7 @@ export function validateSpatialMap(map: SpatialMap): void {
   for (const b of layout.blockers) {
     if (
       !safeId(b.id) ||
-      b.id.startsWith('terrain-rock:') ||
+      b.id.startsWith('terrain-solid:') ||
       ids.has(b.id) ||
       !b.bounds ||
       !finitePoint(b.bounds.min) ||
@@ -154,7 +238,7 @@ export function validateSpatialMap(map: SpatialMap): void {
       typeof b.movement !== 'boolean' ||
       typeof b.sight !== 'boolean' ||
       (b.nonWalkable !== undefined && typeof b.nonWalkable !== 'boolean') ||
-      !['stone', 'timber', 'panel'].includes(b.material) ||
+      !safeId(b.material) ||
       !Number.isFinite(b.acousticTransmission) ||
       b.acousticTransmission < 0 ||
       b.acousticTransmission > 1

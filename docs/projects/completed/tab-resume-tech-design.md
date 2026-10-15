@@ -1,8 +1,8 @@
 # Explicit tab resume — technical design
 
-| Status    | Current progress                                                                                               | Last updated |
-| --------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | Stable tab identity, fenced entry, closing-tab reconciliation and all-tab logout are implemented and verified. | 2026-10-03   |
+| Status    | Current progress                                                                                                  | Last updated |
+| --------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | Tab control and later draft/resource continuity are implemented, with focused native/browser acceptance complete. | 2026-10-14   |
 
 ## Plan, owners and risk
 
@@ -24,6 +24,14 @@ Automatic acquisition cannot replace a live different controller. A same-page re
 ## Race and recovery requirements
 
 Preserve generation fencing for delayed pause, command and heartbeat requests. Capture pause authority before queuing release. A browser notification can pause presentation but cannot grant play. Re-check the latest intent after every await; prevent focus and automatic acquisition from racing explicit Resume or logout. A failed return stays blocked with its actual error; do not show the other-tab explanation without evidence. Logout notification also reaches tabs without world streams, while revoked sessions cannot disclose new data even if a notification is missed. Paused tabs check current authentication when foregrounded.
+
+## Subsequent continuity hardening — October 14, 2026
+
+**Design consulted and implementation alignment recorded 2026-10-14T21:11:40Z.** This dates the foundation follow-up’s use of this design; the original October 3 completion remains historical.
+
+The completed October 3 tab-entry behavior remains the accepted contract. Foundation hardening preserves inventory navigation, search, unfinished quantities and camera/scene resources when the same player resumes, while refreshing private reads and clearing transient captions/hover. Failed or obsolete reads cannot restore private details; actual account, character or timeline replacement clears private work. The complete final-build browser journey now passes, including real geometry replacement and scene disposal/reload. [Inventory continuity](../../ui-ux/inventory.md#organize-around-player-tasks-not-container-internals) and [world presentation](../../world-presentation.md#camera-and-settings) own the current behavior; [FR10](../../maintainers/foundation-review-todos.md#fr10--preserve-same-character-work-and-camera-on-resume) and the [new browser evidence](../../verification/foundation-hardening.md#resume-and-private-draft-browser-acceptance--october-14) record this separate acceptance.
+
+Initial 3D construction now waits until the tab enters play, keeping cold graphics preparation out of control acquisition. A newly opened competing tab shows the permitted interface and Resume dialog before preparing its 3D background; an existing paused tab preserves its scene and receives current invalidation. Caption/perception preferences apply when that first scene is created. This changes presentation timing, not who may control the character or the authored departure rule.
 
 ## Maintained records
 

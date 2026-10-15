@@ -74,7 +74,7 @@ export function finishSimulatedExits(world: WorldState, events: WorldEvent[]): b
 }
 
 /** Operational deadlines are supplied as facts by the server, never read by the domain.
- * docs/projects/multiplayer-authority-tech-design.md#7-presence-exit-and-return
+ * docs/projects/completed/multiplayer-authority-tech-design.md#7-presence-exit-and-return
  */
 export function changeParticipation(
   input: WorldState,

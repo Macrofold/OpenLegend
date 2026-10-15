@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ContainerPage } from '@open-legend/protocol';
 import { post } from '../api';
 
@@ -47,6 +47,9 @@ export function useInventoryCollection({
     page?: ContainerPage;
     error?: string;
   }>();
+  // A changed render can withdraw permission before the previous Effect cleans up.
+  const currentReadKey = useRef<string | null>(key);
+  currentReadKey.current = available ? key : null;
   useEffect(() => {
     if (!available) return;
     const controller = new AbortController();
@@ -58,7 +61,7 @@ export function useInventoryCollection({
           controller.signal,
         )
           .then((page) => {
-            if (controller.signal.aborted) return;
+            if (controller.signal.aborted || currentReadKey.current !== key) return;
             // An opened bag belongs to this interaction only while it remains under its
             // original carried/world root. A grant to a new custodian is not a reopen.
             if (page.ok && !page.breadcrumbs.some((entry) => entry.id === expectedRootId)) {
@@ -76,7 +79,7 @@ export function useInventoryCollection({
             });
           })
           .catch((error: unknown) => {
-            if (!controller.signal.aborted)
+            if (!controller.signal.aborted && currentReadKey.current === key)
               setResult({
                 key,
                 error: error instanceof Error ? error.message : 'These contents are unavailable.',

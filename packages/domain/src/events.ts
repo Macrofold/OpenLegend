@@ -1,3 +1,4 @@
+import { observeEvent } from './event-observation.js';
 import { reconcileCoaching } from './coaching.js';
 import { renderNarration, subjectNarration, personalText, type Narration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
@@ -447,8 +448,8 @@ function recordEvent(
       // Native participants and grammar are rendered once for this observer; literal
       // prose/quotes retain their supplied ownership. Speech has listener-specific evidence.
       // docs/architecture.md#private-perception-and-evidence-batches
-      const perceivedText =
-        typeof narration === 'string' ? narration : renderNarration(world, narration, actorId);
+      const perceived = observeEvent(world, event, actorId);
+      const perceivedText = perceived.text;
       const awareness: Awareness = {
         ...(event.exposure ? { exposure: cloneValue(event.exposure) } : {}),
         eventId: event.id,
@@ -467,19 +468,20 @@ function recordEvent(
               ? 'heard'
               : 'observed',
         entityEpisodes: Object.fromEntries(
-          [source?.id, targetId].flatMap((id) => {
+          [perceived.sourceId, perceived.targetId].flatMap((id) => {
             const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
             return id && episode ? [[id, episode]] : [];
           }),
         ),
         recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
         intelligible: true,
-        entityIds: [source?.id, targetId].filter((id): id is string => !!id),
+        entityIds: [perceived.sourceId, perceived.targetId].filter((id): id is string => !!id),
         importance: event.importance ?? importance,
         urgency: event.urgency ?? urgency,
-        eventType: type,
-        ...(source ? { sourceId: source.id } : {}),
-        ...(targetId ? { targetId } : {}),
+        eventType: perceived.eventType,
+        eventData: perceived.eventData,
+        ...(perceived.sourceId ? { sourceId: perceived.sourceId } : {}),
+        ...(perceived.targetId ? { targetId: perceived.targetId } : {}),
         triggerKind:
           data?.['acquisition'] === true
             ? 'observed_event'
@@ -488,7 +490,10 @@ function recordEvent(
               : targetId === actorId
                 ? 'directed_action'
                 : 'observed_event',
-        content: typeof data?.['text'] === 'string' ? data['text'] : perceivedText,
+        content:
+          typeof perceived.eventData['text'] === 'string'
+            ? perceived.eventData['text']
+            : perceivedText,
         ...(data?.['acquisition'] === true &&
         (data['change'] === 'onset' || data['change'] === 'detail' || data['change'] === 'end')
           ? { change: data['change'] }

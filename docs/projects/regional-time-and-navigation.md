@@ -1,5 +1,11 @@
 # Regional time and navigation performance
 
+| Status      | Current progress                                                                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The measured time and navigation reductions are delivered, while driven boundary scenarios and broader dense-work qualification remain open. | 2026-10-14   |
+
+**Currency review — October 14, 2026.** The implementation was integrated in `bd0ac3f39` on October 1; [the evidence](../verification/regional-time-and-navigation.md) preserves its measurements and explicit omissions. The dated baseline and future-tense design below describe that implementation, not unimplemented private-turn or deferred-rate work. October 2 continuation repairs extend the evidence without qualifying dense 8× or the outstanding PF13.16 scenarios. Survival rules and body geometry have since moved behind authored policies; historical named-need/body assumptions are not current engine requirements. Task state remains with PF13/PF12/SW.
+
 Requested in chat on 2026-09-28 by Mike (project owner) as a go-ahead to implement: elapsed-time, status-effect and navigation performance in the priority order below. This plan is the durable record required by [root planning](../../AGENTS.md#plan-before-implementation). Canonical contracts stay with [simulation time](../simulation-time.md), [base-world time](../worlds/base/time.md), the [boundary catalogue](../maintainers/simulation-boundaries.md) and the focused trackers ([PF13](../maintainers/simulation-time.md#pf13--elapsed-time-simulation), [PF12](../maintainers/performance.md#pf12--eight-times-spatial-and-sensory-execution), [SW06/SW17](../maintainers/spatial-world.md)).
 
 ## Baseline, ownership and constraints
@@ -19,7 +25,7 @@ A disposable native harness (outside the repository) drives the real `advanceWor
 
 ## Design
 
-The two-level structure from the [cadence integration decision](spatial-cadence-main-integration.md#motion-deadline-implementation-decision) remains: one authoritative `world.simTime`, shared mechanical deadlines, private motion slices, no second per-region authority and no externally visible per-actor clock. Everything below changes which work a slice must perform, never the saved representation.
+The two-level structure from the [cadence integration decision](completed/spatial-cadence-main-integration.md#motion-deadline-implementation-decision) remains: one authoritative `world.simTime`, shared mechanical deadlines, private motion slices, no second per-region authority and no externally visible per-actor clock. Everything below changes which work a slice must perform, never the saved representation.
 
 1. **Private corridor turns (PF13.11).** A mid-air flight waypoint with no wait and no landing emits nothing, reserves nothing and is not observed as an occurrence. The mover traverses such turns inside one slice with a swept check per segment; landing and hovering waypoints remain slice boundaries, and the sensing travel bound applies to total path length. A prototype reduced the flight fixture from 204 to 73 slices (about 3× less wall time) with identical mechanical, event, audience and awareness digests.
 2. **Regional rate integration (PF13.11, PF12.5).** Rates captured at a shared interval's start stay constant until its predicted end or a mutation. A slice that only moves bodies defers integration and skips no-op endpoint reconciliation for everything else; the deferred values are applied through the same operators when the shared interval ends, before any occurrence, command or reader that needs magnitudes, and always before a coherent publication. Perception runs before deferred values are applied on such slices, so it no longer copies every rate-bearing entity. Unsupported or uncertain readers force immediate application (conservative fallback).

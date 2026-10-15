@@ -202,6 +202,8 @@ export function perceiveSpeech(
 export type EventEvidence = Pick<
   Awareness,
   | 'actorId'
+  | 'eventData'
+  | 'eventType'
   | 'text'
   | 'content'
   | 'modality'
@@ -213,28 +215,44 @@ export type EventEvidence = Pick<
   | 'urgency'
   | 'exposure'
 >;
+/** Current persisted observation format; absent payload is never permission to consult truth. */
+export function validateEventEvidence(value: unknown): asserts value is EventEvidence {
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Invalid committed observer facts.');
+  const evidence = value as Partial<EventEvidence>;
+  if (
+    typeof evidence.eventType !== 'string' ||
+    !/^[a-z][a-z0-9_.:-]{0,63}$/.test(evidence.eventType)
+  )
+    throw new Error('Invalid committed observer event type.');
+  if (evidence.eventType === 'speech') {
+    if (!evidence.speech) throw new Error('Speech is missing its committed listener perspective.');
+  } else if (
+    !evidence.eventData ||
+    typeof evidence.eventData !== 'object' ||
+    Array.isArray(evidence.eventData) ||
+    Object.values(evidence.eventData).some(
+      (entry) =>
+        entry !== null &&
+        typeof entry !== 'string' &&
+        typeof entry !== 'boolean' &&
+        !(typeof entry === 'number' && Number.isFinite(entry)),
+    )
+  )
+    throw new Error('Event is missing valid committed observer facts.');
+}
 export type ActorEvent = WorldEvent & { speech?: PerceivedSpeech; modality: Awareness['modality'] };
 export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence): ActorEvent {
   if (event.type === 'speech' && !evidence.speech)
     throw new Error('Speech is missing its committed listener perspective.');
-  const privateMetrics =
-    event.type === 'body-effect'
-      ? ['healthDelta', 'injuryDelta', 'wetnessDelta', 'burningDelta']
-      : event.data?.['contactInjury'] === true
-        ? ['rawInjury', 'preventedInjury', 'healthBefore', 'healthAfter', 'damage']
-        : [];
-  const data =
-    event.data && privateMetrics.length && evidence.actorId !== event.targetId
-      ? Object.fromEntries(
-          Object.entries(event.data).filter(([key]) => !privateMetrics.includes(key)),
-        )
-      : event.data;
+  if (!evidence.speech && (!evidence.eventData || !evidence.eventType))
+    throw new Error('Event is missing its committed observer facts.');
   return {
     id: event.id,
     sequence: event.sequence,
     at: event.at,
     order: event.order,
-    type: event.type,
+    type: evidence.eventType!,
     scope: event.scope,
     conversationId: event.conversationId,
     text: evidence.text,
@@ -259,6 +277,6 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
               : {}),
           },
         }
-      : { data }),
+      : { data: evidence.eventData }),
   };
 }

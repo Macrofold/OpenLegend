@@ -12,9 +12,9 @@ import { itemsForOwner, setItemQuantity } from './objects.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { readState, stateAddress, writeState } from './state-owners.js';
-import { personTraits, spawnedEntity } from './worlds/base/spawn.js';
+import { personTraits, spawnedEntity, spawnSpatial } from './worlds/base/spawn.js';
 import { interruptStatusEffects } from './status-effects.js';
-import { BODY_PROFILES, canStand } from '@open-legend/spatial';
+import { canStand } from '@open-legend/spatial';
 import { spatialMap } from './spatial-state.js';
 import { goalTexts, replaceGoals } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
@@ -76,21 +76,7 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
       : reject(original, 'identity', 'That request identity was already used.');
   if (!GOD_SPAWN_OPTIONS.some((option) => option.id === draft.type))
     return reject(original, 'unsupported', 'That object type cannot be added.');
-  if (
-    !canStand(
-      spatialMap(original),
-      draft.position,
-      BODY_PROFILES[
-        draft.type === 'person'
-          ? 'person'
-          : draft.type === 'hare'
-            ? 'hare'
-            : draft.type === 'deer'
-              ? 'deer'
-              : 'object'
-      ],
-    )
-  )
+  if (!canStand(spatialMap(original), draft.position, spawnSpatial(draft.type).body))
     return reject(original, 'blocked', 'Choose an unobstructed walkable surface.');
   if (
     worldRootEntities(original).some(
@@ -194,7 +180,7 @@ export function reviveActor(
     !canStand(
       spatialMap(original),
       { ...worldPosition(current), surfaceId: worldSupport(current)! },
-      BODY_PROFILES[current.spatial.bodyProfileId],
+      current.spatial.body,
     )
   )
     return reject(
@@ -736,11 +722,11 @@ export function editWorldEvents(
       const aware = awareness.get(sourceId);
       const remembered = memories.get(sourceId) ?? [];
       if (change.replacement) {
-        const text = personalText(
-          world,
-          actorId,
-          change.replacement.narration ?? change.replacement.text,
-        );
+        // Editing exact history does not add detail to an occurrence only partly seen.
+        if (aware?.eventType === 'activity-observed') continue;
+        // The edit replaces prose, not participants; the old structured narration was
+        // removed above and must not silently override that accepted replacement.
+        const text = personalText(world, actorId, change.replacement.text);
         if (aware)
           mutations.push({
             operation: 'update',

@@ -102,7 +102,7 @@ function distribution(keys: string[], weights: Record<string, number>): Judgment
 const noul = (rating: number): JudgmentAnswer => ({ type: 'noul', noul: rating });
 const handleKey = (key: string) => /^a\d+$/.test(key);
 const isEat = (description: string) =>
-  description.startsWith('Eat one. Selected item: the wild berries.');
+  description.startsWith('Eat one.') && /wild berries/i.test(description);
 const isContinue = (description: string) =>
   description.startsWith('Continue the') || description.startsWith('Remain in place');
 
@@ -438,6 +438,10 @@ const sectionSizes = (parts: Section[]) =>
 
 type Harness = Awaited<ReturnType<typeof harness>>;
 
+/** Preparation attention is accounted and size-checked separately from decision routing. */
+const decisionJudges = (requests: JudgeRequest[]) =>
+  requests.filter((request) => !/:attention:\d+$/.test(request.requestId));
+
 /** Inspect one Jev request; Jev counts serialized state plus questions as its level-1 input. */
 function inspectJudge(h: Harness, jobId: string, request: JudgeRequest): Inspection {
   const limits = levelLimits(h.config)[1];
@@ -591,6 +595,8 @@ async function harness(
     trace,
     /** Admit one autonomous decision and wait for it; returns the newest thought job. */
     async thought(): Promise<JobRecord> {
+      // The autonomous scheduler now requires the fixture's actual evidence to be committed.
+      await service.whenDurable();
       const before = new Set(
         (await store.recentJobs(50)).filter((job) => job.kind === 'thought').map((job) => job.id),
       );
@@ -828,7 +834,7 @@ describe(
       );
       // Speech routing sees the same readable context the generation later receives.
       expect(typeof route!.state).toBe('string');
-      expect(dispatched.judges.map((request) => request.requestId)).toEqual([
+      expect(decisionJudges(dispatched.judges).map((request) => request.requestId)).toEqual([
         `${job.id}${ROUTE}`,
         `${job.id}:attempt:0:action-attention`,
       ]);
@@ -910,9 +916,11 @@ describe(
       });
       const dispatched = h.jobCalls(job.id);
       // Exactly one Jev request carries the route question and every a* rating.
-      expect(dispatched.judges.map((request) => request.requestId)).toEqual([`${job.id}${ROUTE}`]);
+      expect(decisionJudges(dispatched.judges).map((request) => request.requestId)).toEqual([
+        `${job.id}${ROUTE}`,
+      ]);
       expect(dispatched.generations).toHaveLength(0);
-      const route = dispatched.judges[0]!;
+      const route = decisionJudges(dispatched.judges)[0]!;
       const keys = Object.keys(route.questions);
       expect(keys).toEqual(expect.arrayContaining(['route', 'reflection']));
       expect(keys.filter(handleKey).length).toBeGreaterThan(1);
@@ -946,7 +954,9 @@ describe(
       const job = await h.thought();
       expect(job.status).toBe('completed');
       const dispatched = h.jobCalls(job.id);
-      expect(dispatched.judges.map((request) => request.requestId)).toEqual([`${job.id}${ROUTE}`]);
+      expect(decisionJudges(dispatched.judges).map((request) => request.requestId)).toEqual([
+        `${job.id}${ROUTE}`,
+      ]);
       expect(dispatched.generations).toHaveLength(1);
       const [generation] = dispatched.generations;
       const ledger = await h.accounting(job.id, 2);
@@ -959,18 +969,16 @@ describe(
       expect(section(parts, 'Inventory').body).toContain('Wild berries');
       expect(section(parts, 'Me').body).not.toContain('I have no food.');
       // Ratings from the routing request are reused at the relevance line: eating is offered.
-      expect(section(parts, 'Actions').body).toContain('Eat one. Selected item: the wild berries.');
-      const route = dispatched.judges[0]!;
+      const actions = [...section(parts, 'Actions').body.matchAll(/^- (a\d+): (.+)$/gm)];
+      const eat = actions.find(([, , description]) => isEat(description ?? ''))?.[1];
+      expect(eat).toBeDefined();
+      const route = decisionJudges(dispatched.judges)[0]!;
       expect(
         (route.state as { decisionContext: Record<string, unknown> }).decisionContext[
           'carryingConcern'
         ],
       ).toBeUndefined();
       // The listed eat option's handle is one the generation schema permits.
-      const eat = /^- (a\d+): Eat one\. Selected item: the wild berries\./m.exec(
-        section(parts, 'Actions').body,
-      )?.[1];
-      expect(eat).toBeDefined();
       expect(actionHandles(generation!.schema)).toContain(eat);
       report('resource-task:level2', {
         trigger: section(parts, 'Trigger').body.trim(),
@@ -1096,11 +1104,10 @@ describe(
       const job = await h.thought();
       expect(job.status).toBe('completed');
       const dispatched = h.jobCalls(job.id);
-      expect(dispatched.judges.map((request) => request.requestId)).toEqual([
-        `${job.id}:attempt:0:attention:0`,
+      expect(decisionJudges(dispatched.judges).map((request) => request.requestId)).toEqual([
         `${job.id}${ROUTE}`,
       ]);
-      const route = dispatched.judges[1]!;
+      const route = decisionJudges(dispatched.judges)[0]!;
       const decisionContext = (route.state as { decisionContext: Record<string, unknown> })
         .decisionContext;
       expect(String(decisionContext['stimulus'])).toMatch(/punched/);
@@ -1110,8 +1117,8 @@ describe(
       expect(generation).toMatchObject({ execution: 'complex', reasoningEffort: 'low' });
       const ledger = await h.accounting(job.id, 3);
       expect(ledger.level(generation!.requestId)).toBe(3);
-      expect(ledger.summary.groups).toEqual({ level1: 2, level3: 1 });
-      expect(ledger.summary.requests).toBe(3);
+      expect(ledger.summary.groups).toEqual({ level1: dispatched.judges.length, level3: 1 });
+      expect(ledger.summary.requests).toBe(dispatched.judges.length + 1);
       const parts = sections(String(generation!.context));
       expect(section(parts, 'Trigger').body).toMatch(/punched/);
       report('hazard', {
@@ -1419,12 +1426,12 @@ describe(
       // confounds the result.
       const fresh = await harness({ script: { route: { level2: 0.9 } }, reply });
       probes.push(await probe(fresh, 'fresh', 9.5, [...files.slice(0, 9), half]));
-      // The current required context also rejects the former six-file control. Retain that
-      // measured boundary explicitly; a separate smaller snapshot must actually complete.
+      // The large snapshots must refuse before dispatch. A small accepted snapshot supplies
+      // a positive control independently of growing authored starting context.
       const sixFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
       probes.push(await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6)));
       const control = await harness({ script: { route: { level2: 0.9 } }, reply });
-      const positive = await probe(control, 'fresh-control', 4, files.slice(0, 4));
+      const positive = await probe(control, 'fresh-control', 1, files.slice(0, 1));
       report('inner-world-quota', {
         ...quota,
         fileBytes: fileBytes[0],
@@ -1455,7 +1462,7 @@ describe(
       // Preserve positive full-snapshot, request-limit and accounting coverage, including
       // the actual native reply; an arbitrary refusal cannot satisfy this control.
       expect(positive).toMatchObject({
-        files: 4,
+        files: 1,
         status: 'completed',
         disposition: 'responded',
         failure: [],

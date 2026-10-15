@@ -1,5 +1,11 @@
 # Parallel batch 01 — PW07 — Survival rules owned by the world
 
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | World-owned survival and meter consumers are delivered; the complete alternate-world and combined UI matrix remains open. | 2026-10-14   |
+
+**Currency review, October 14, 2026.** The assignments, source observations and estimates below describe their original October 2 execution context. The table above and [PW tracking](../../maintainers/parallel-batch-01-playable-week.md) distinguish delivered work from remaining qualification; old branch/format references do not select the current development base or authorize compatibility work.
+
 **Status: implementation authorized in chat; domain/server delivered, combined UI acceptance pending.** This supplies a concrete mechanism and assignment for both stages of the [approved survival plan](../world-configured-survival.md), rather than narrowing it to moving constants. The exact schema below was agreed for the authorized implementation; the earlier approval established behavior rather than these field names. The [week feature specification](../parallel-batch-01-playable-week-feature-spec.md) and [technical design](../parallel-batch-01-playable-week-tech-design.md) own the wider project. Assignment and completion state belong to [PW07](../../maintainers/parallel-batch-01-playable-week.md#pw07--world-configured-survival), under [EWF03/EWF04](../../maintainers/extensible-world-foundation.md#ewf03--extract-default-body-and-need-policies-through-real-consumers). Historical inspected baseline: local `main`, `6664144a`; Engineer 2 executes from inherited planning commit `8005f7c7245cfecec128652efe3ef07926604e0a`. [Current evidence](../../verification/parallel-batch-01-playable-week-engineer-2.md) records implemented contracts and actual checks.
 
 ## Outcome and complete scope

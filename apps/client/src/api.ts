@@ -10,6 +10,7 @@ import type {
 } from '@open-legend/protocol';
 
 import { clearTradeDrafts } from './trade-drafts';
+import { clearDraft } from './draft';
 import { announceLogout, tabClientId, tabIdentityReady } from './tab-session';
 
 let presenceSequence = 0;
@@ -104,8 +105,10 @@ export function acceptAccess(view: GameView): void {
   if (
     (privateDraftNamespace && privateDraftNamespace !== view.access?.privateDraftScope) ||
     (privateDraftTimeline && privateDraftTimeline !== view.saveTimeline)
-  )
+  ) {
     clearTradeDrafts();
+    clearDraft();
+  }
   privateDraftNamespace = view.access?.privateDraftScope ?? '';
   pruneCheckpointRequests(view.checkpoint?.recoveryScope);
   privateDraftTimeline = view.saveTimeline ?? '';
@@ -293,6 +296,16 @@ export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<
     throw new Error('Your access or world changed. Reload this information.');
   return result;
 }
+function applyFields<T extends object>(
+  current: T,
+  fields?: Partial<T>,
+  remove?: Array<keyof T>,
+): T {
+  if (!fields && !remove?.length) return current;
+  const next = { ...current, ...fields };
+  for (const key of remove ?? []) delete next[key];
+  return next;
+}
 export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
   if (
     patch.scope !== current.access?.scope ||
@@ -313,25 +326,29 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
       ? patch.entities.order.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []))
       : [...byId.values()];
   }
-  return {
+  const next: GameView = {
     ...current,
     revision: patch.revision,
     ...(patch.commandEpoch !== undefined ? { commandEpoch: patch.commandEpoch } : {}),
-    ...(patch.historyEpoch ? { historyEpoch: patch.historyEpoch } : {}),
-    ...(patch.worldEventsRevision ? { worldEventsRevision: patch.worldEventsRevision } : {}),
-    ...(patch.historyRevision ? { historyRevision: patch.historyRevision } : {}),
+    ...(patch.historyEpoch !== undefined ? { historyEpoch: patch.historyEpoch } : {}),
+    ...(patch.worldEventsRevision !== undefined
+      ? { worldEventsRevision: patch.worldEventsRevision }
+      : {}),
+    ...(patch.historyRevision !== undefined ? { historyRevision: patch.historyRevision } : {}),
     ...(Object.hasOwn(patch, 'narrator') ? { narrator: patch.narrator } : {}),
     ...(patch.profile ? { profile: patch.profile } : {}),
-    ...(patch.clock ? { clock: { ...current.clock, ...patch.clock } } : {}),
-    ...(patch.player ? { player: { ...current.player, ...patch.player } } : {}),
+    clock: applyFields(current.clock, patch.clock, patch.remove?.clock),
+    player: applyFields(current.player, patch.player, patch.remove?.player),
     ...(patch.entities ? { entities } : {}),
     ...(patch.recipes ? { recipes: patch.recipes } : {}),
     ...(patch.events ? { events: patch.events } : {}),
     ...(patch.conversation ? { conversation: patch.conversation } : {}),
-    ...(patch.ai ? { ai: { ...current.ai, ...patch.ai } } : {}),
+    ai: applyFields(current.ai, patch.ai, patch.remove?.ai),
     ...(patch.milestones ? { milestones: patch.milestones } : {}),
     ...(patch.persistence ? { persistence: patch.persistence } : {}),
   };
+  for (const key of patch.remove?.view ?? []) delete next[key];
+  return next;
 }
 export async function post<T extends { ok: boolean; message?: string } = ApiResult>(
   path: string,

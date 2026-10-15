@@ -1,6 +1,6 @@
 # Multiplayer entry and maintenance verification
 
-[Verification index](../verification.md) · [Plan](../projects/multiplayer-entry-maintenance.md) · [Work](../maintainers/multiplayer.md#entry-and-maintenance-execution-notes--september-28-2026) · [Limits](../limits/multiplayer.md#mp15)
+[Verification index](../verification.md) · [Plan](../projects/completed/multiplayer-entry-maintenance.md) · [Work](../maintainers/multiplayer.md#entry-and-maintenance-execution-notes--september-28-2026) · [Limits](../limits/multiplayer.md#mp15)
 
 ## Entry and maintenance — September 28–29, 2026
 

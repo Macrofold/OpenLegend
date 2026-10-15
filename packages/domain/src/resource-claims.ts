@@ -21,8 +21,8 @@ export type ResourceRef =
   | { kind: 'gathering'; entityId: string; definition: DefinitionPin }
   | { kind: 'item'; itemId: string; definition: DefinitionPin };
 export interface ResourceReservation {
-  /** Older canonical holds may lack claimant evidence; never infer private ownership. */
-  actorId?: string;
+  /** Exact claimant is retained after release; only a live hold requires live owned work. */
+  actorId: string;
   requestDigest: string;
   id: string;
   invocationId: string;
@@ -415,7 +415,7 @@ export function availableItemQuantity(
 
 /** Planning reads one start state; a coupled group cannot spend its own speculative
  * outputs. Holds are converted once, not deducted a second time from available stock.
- * docs/projects/shared-state-contributions-tech-design.md#5-execution-phases-and-deterministic-arbitration
+ * docs/projects/completed/shared-state-contributions-tech-design.md#5-execution-phases-and-deterministic-arbitration
  */
 function planGroup(
   world: WorldState,
@@ -710,7 +710,7 @@ function publishResourcePlan(
 
 export function reserveResource(
   world: WorldState,
-  request: Omit<ResourceReservation, 'state' | 'revision' | 'requestDigest'> & { actorId: string },
+  request: Omit<ResourceReservation, 'state' | 'revision' | 'requestDigest'>,
   expectedRevision: number,
 ): ResourceResult {
   if (
@@ -829,14 +829,22 @@ export function validateResourceReservations(world: WorldState): void {
     if (
       !hasRecordFields(
         hold,
-        ['id', 'invocationId', 'resource', 'amount', 'requestDigest', 'revision', 'state'],
-        ['expiresAt', 'actorId'],
+        [
+          'id',
+          'invocationId',
+          'actorId',
+          'resource',
+          'amount',
+          'requestDigest',
+          'revision',
+          'state',
+        ],
+        ['expiresAt'],
       ) ||
       id !== hold.id ||
       !isSafeRecordId(id) ||
       !isSafeRecordId(hold.invocationId) ||
-      (hold.actorId !== undefined &&
-        (!isSafeRecordId(hold.actorId) || !world.entities[hold.actorId]?.actor)) ||
+      !isSafeRecordId(hold.actorId) ||
       !isResourceRef(hold.resource) ||
       typeof hold.requestDigest !== 'string' ||
       !['held', 'released', 'consumed'].includes(hold.state) ||
@@ -850,16 +858,14 @@ export function validateResourceReservations(world: WorldState): void {
       throw new Error('Invalid resource reservation.');
     if (hold.state !== 'held') continue;
     const stock = readResource(world, hold.resource);
-    if (hold.actorId) {
-      const actor = world.entities[hold.actorId]!;
-      if (
-        !actor.actor!.alive ||
-        actor.retirement ||
-        (actor.actor!.action?.id !== hold.invocationId &&
-          world.workState?.invocations[hold.invocationId]?.actorId !== hold.actorId)
-      )
-        throw new Error('Resource reservation has no live owning process.');
-    }
+    const actor = world.entities[hold.actorId];
+    if (
+      !actor?.actor?.alive ||
+      actor.retirement ||
+      (actor.actor.action?.id !== hold.invocationId &&
+        world.workState?.invocations[hold.invocationId]?.actorId !== hold.actorId)
+    )
+      throw new Error('Resource reservation has no live owning process.');
     const key = resourceKey(hold.resource);
     const total = (totals.get(key) ?? 0) + hold.amount;
     if (

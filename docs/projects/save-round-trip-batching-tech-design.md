@@ -1,5 +1,9 @@
 # Save round-trip batching — technical design
 
+| Status      | Current progress                                                                                                 | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| Not started | The 2026-09-29 batching proposal remains unimplemented; its decision and measurement gate is still open in PF15. | 2026-10-14   |
+
 **Status: proposal, not approved for implementation.** Behavior, scenarios and acceptance are in the [feature spec](save-round-trip-batching-feature-spec.md); work items are [PF15](../maintainers/performance.md#pf15--save-round-trip-batching). Source references are to branch `codex/save-stall-recovery` at `f00a0468`.
 
 ## Terms

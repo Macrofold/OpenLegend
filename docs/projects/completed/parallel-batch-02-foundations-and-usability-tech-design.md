@@ -2,7 +2,9 @@
 
 | Status    | Current progress                                                                                                          | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-04   |
+| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-14   |
+
+**Status review — October 14, 2026.** Completion refers to the original scoped batch and its dated evidence. Subsequent corrections and additional foundation checks are tracked in the [foundation hardening work](../../maintainers/foundation-review-todos.md); this status review does not rerun the batch or close its separately deferred multilingual, provider or broader performance qualification.
 
 Originally prepared as a documentation-only proposal. Read the [feature specification](parallel-batch-02-foundations-and-usability-feature-spec.md) for priorities, scenarios and exclusions. Source baseline is local `main` at `c2e670b0`; `origin/main` was refreshed to `1253415b` and was already an ancestor, 21 commits behind. No branch/history change was made. Revalidate changed owners against the worker's actual starting source rather than treating these line locations as immutable.
 

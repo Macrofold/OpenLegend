@@ -44,7 +44,7 @@ function PromiseItem({ promise }: { promise: OwnPromise }) {
 
 /** Read-only list of the player's own spoken promises: exact words, what the world checks
  * and what happened. Changing or cancelling promises is not offered (open decision D64).
- * docs/projects/readable-promises-feature-spec.md */
+ * docs/projects/completed/readable-promises-feature-spec.md */
 export function Promises({ visible = true, revision }: { visible?: boolean; revision?: string }) {
   const [page, setPage] = useState<OwnPromisePage | null>(null);
   const [past, setPast] = useState<OwnPromise[]>([]);

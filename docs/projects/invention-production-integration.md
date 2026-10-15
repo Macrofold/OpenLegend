@@ -1,5 +1,11 @@
 # Invention production-data integration
 
+| Status      | Current progress                                                                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Integration and finite live authoring journeys are delivered, while deployable-runtime qualification and historical accounting uncertainty remain open under WW07. | 2026-10-14   |
+
+**Currency review — October 14, 2026.** This plan preserves the September 27–28 attempts and October 1 reconciliation as history. The old credit, schema, snapshot and no-draft blockers below are not the current overall status: [later local qualification](../verification/world-agent-context.md#final-local-qualification) and [question acceptance](../verification/invention-questions.md#final-acceptance--september-29) establish successful finite journeys. [WW07](../maintainers/world-agent-writes.md#remaining-implementation-and-qualification) remains the current owner of matching deployable revisions, forwarding/failure qualification and unresolved historical charges; later success does not settle earlier uncertainty. Old dispatch instructions and caps below authorize no new call in this documentation audit. The [root development-save policy](../../AGENTS.md#development-save-policy) supersedes the earlier prohibition on replacing incompatible development data.
+
 ## Scope and authority
 
 Updated September 27, 2026 for the owner's explicit integration request and subsequent billing/usage-display decision. Merge the published invention branch into `codex/integrate-invention`, created from refreshed `origin/main` in the current worktree, preserving both parents' ancestry. Review and fix the complete resulting feature diff, verify the affected journeys, commit, push and open a PR targeting main. The final PR merge remains the owner's decision. Do not rewrite or force-push the published feature branch or change another checkout.

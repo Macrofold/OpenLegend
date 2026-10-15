@@ -188,13 +188,13 @@ Threshold episode/detection/notification behavior stays in EPR04. The attribute 
 
 ## 5. Effects, ownership, and deterministic composition
 
-The approved [P1 implementation](../../docs/projects/shared-state-contributions-tech-design.md)
+The approved [P1 implementation](../../docs/projects/completed/shared-state-contributions-tech-design.md)
 delivers typed stock operations, atomic claims with explicitly partial transfer families,
 and independently removable active capabilities through existing owners. These remain
 finite native implementations with SC02–SC08 evidence. Native extraction preserves sequential order;
 ending an active contribution never reverses committed stock history.
 
-Use the existing centralized semantic mutation principle. A module proposes typed effects or contributions to an owning native service; it never obtains a generic `set(path, value)` API into the whole world. Private `WorldChanges` operations remain a persistence implementation detail, not a mod API.
+Use the existing centralized semantic mutation principle. A module proposes typed effects or contributions to an owning native service; it never obtains a generic `set(path, value)` API into the whole world. Current record changes remain a private persistence implementation detail, not a mod API. The former `WorldChanges` snapshot/journal representation and its import-only reader were removed on October 14, 2026.
 
 Required validation covers target identity, capabilities, current policy and definition versions, applicable writer, source/resource claims, units/bounds, and the relevant expected revision. Multiple independently valid proposals still compete for finite resources.
 
@@ -344,7 +344,7 @@ Advanced nonverbal controllers may use a different internal representation. Stan
 
 ## 9. Change dependencies and work budgets
 
-The approved [P4 implementation](../../docs/projects/dependency-invalidation-tech-design.md)
+The approved [P4 implementation](../../docs/projects/completed/dependency-invalidation-tech-design.md)
 uses mandatory query-membership dependencies and captured-generation acknowledgment.
 Root invocation budgets include descendants and explicitly bounded recurrence; incomplete
 queries cannot establish absence. DI01–DI08 own delivery and qualification. Existing

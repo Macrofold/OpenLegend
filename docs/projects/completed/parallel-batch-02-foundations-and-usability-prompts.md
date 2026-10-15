@@ -2,7 +2,9 @@
 
 | Status    | Current progress                                                                                                          | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-03   |
+| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-14   |
+
+**Status review — October 14, 2026.** Completion refers to the original scoped batch and its dated evidence. Subsequent corrections and additional foundation checks are tracked in the [foundation hardening work](../../maintainers/foundation-review-todos.md); this status review does not rerun the batch or close its separately deferred multilingual, provider or broader performance qualification.
 
 These assignments accompany the [feature specification](parallel-batch-02-foundations-and-usability-feature-spec.md), [technical design](parallel-batch-02-foundations-and-usability-tech-design.md) and [tracker](../../maintainers/parallel-batch-02-foundations-and-usability.md). These original assignments are retained as history: all five implementations are merged, NP01–NP05 are completed for their agreed scope, and both combined scenarios have passed; broader parent verification remains separately tracked. Do not restart completed implementation from these prompts. They do not require communication between workers. This document does not execute the assignments or create chats.
 

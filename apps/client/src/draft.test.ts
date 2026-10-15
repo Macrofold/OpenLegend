@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { composerDraftKey, emptyDraft, readDraft, saveDraft } from './draft';
+import { clearDraft, composerDraftKey, emptyDraft, readDraft, saveDraft } from './draft';
 
 function memoryStorage(initial: Array<[string, string]> = []) {
   const data = new Map(initial);
   const storage = () => ({
+    ...Object.fromEntries(data),
     getItem: (key: string) => data.get(key) ?? null,
     setItem: (key: string, value: string) => {
       data.set(key, value);
@@ -49,6 +50,20 @@ describe('local composer draft', () => {
     expect(data.size).toBe(1);
   });
 
+  it('clears private composer drafts for every recipient and owner on access replacement', () => {
+    const firstKey = composerDraftKey('owner-a', 'chat', 'person-a')!;
+    const secondKey = composerDraftKey('owner-b', 'invention', null)!;
+    const { data, storage } = memoryStorage([
+      [firstKey, JSON.stringify({ text: 'First private draft', revision: 'edit-1' })],
+      [secondKey, JSON.stringify({ text: 'Second private draft', revision: 'edit-2' })],
+      ['unrelated-preference', 'preserved'],
+    ]);
+    clearDraft(storage);
+    expect(readDraft(firstKey, storage)).toEqual(emptyDraft());
+    expect(readDraft(secondKey, storage)).toEqual(emptyDraft());
+    expect([...data]).toEqual([['unrelated-preference', 'preserved']]);
+  });
+
   it.each([
     '{broken',
     '{"text":"Missing revision"}',
@@ -72,6 +87,7 @@ describe('local composer draft', () => {
     expect(() =>
       saveDraft('scoped-draft', { text: 'Keep writing', revision: 'edit-1' }, unavailable),
     ).not.toThrow();
+    expect(() => clearDraft(unavailable)).not.toThrow();
   });
 
   it('does not block editing when storage quota is exhausted', () => {

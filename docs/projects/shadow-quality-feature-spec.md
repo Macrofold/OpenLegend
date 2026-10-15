@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                   | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open. | 2026-10-04   |
+| In progress | Shadow improvements and scoped PG04 preview optimization are delivered; reliable sustained tails and physical lower-end qualification remain open. | 2026-10-14   |
 
 Approved for implementation in chat on 2026-09-27. Scope: improve the existing PlayCanvas lighting/shadow system and qualify the result without requiring metadata for every image. [Technical design](shadow-quality-tech-design.md) owns the implementation plan. [World presentation](../world-presentation.md) remains the current behavior owner.
 

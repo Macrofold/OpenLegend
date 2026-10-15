@@ -80,7 +80,7 @@ PostgreSQL connection/read statements have a 5-second timeout; write transaction
 
 **Changed — current checkpoint path · Restrictiveness: Too liberal.**
 
-No named-manual-save count ceiling; saves persist until deleted. New streamed packages use SV04–SV06; the 64 MiB non-streamed decode guard is separate from current-format validation (SV14). Legacy operational JSON restore is not supported.
+No named-manual-save count ceiling; saves persist until deleted. Current streamed packages use SV04–SV06; the obsolete whole-document decode path was removed (SV14). Legacy operational JSON restore is not supported.
 
 **Reason / tradeoff:** Keep complete user-selected saves; there is currently no overall disk quota. Backup separately refuses more than 10,000 retained packages (SV13).
 
@@ -202,11 +202,11 @@ Original recommendation: **Keep**.
 
 ## SV14
 
-**Historical legacy use; current guard distinguished · Restrictiveness: Safe.**
+**Removed 2026-10-14 · Historical allowance.**
 
-**Non-streamed decode guard:** 64 MiB, followed by exact current-format/state validation. The earlier audit applied the same guard to legacy JSON operational restore/import; those legacy operational paths are now removed. This is a resource bound, not an older-save support window.
+The former **64 MiB non-streamed decode guard** accompanied whole-JSON checkpoint loading. FR08 removed that unused alternative together with inline world payloads and alternate write/copy paths. Current packages require streamed metadata and use SV04–SV06; the small database recovery pointer is bounded to 1 KiB before decoding.
 
-**Reason / tradeoff:** Whole-document decoding requires a finite allocation guard. Preserve current-format refusal and the root development policy; a historical limit does not authorize compatibility.
+**Reason / tradeoff:** One current representation avoids maintaining an unused loader. Atomic publication, exact integrity and current-format validation remain required; no conversion or deletion of unrelated data is performed.
 
 ## SV15
 
@@ -348,7 +348,7 @@ Earlier feeling conversion supported only the known fear/discomfort format and d
 
 **Changed · Restrictiveness: Safe.**
 
-**Only the current physical format is supported.** Database format 13, `records-jsonl-2` and save format `development-2026-10-14-world-rules-and-contested-ground` require the combined perspective/access table, maintained event totals and [saved sampling progress](../simulation-time.md#native-interval-contract). The integrated model also requires exact recipe-family pins, sparse body meters and the explicit memory-search projection. Format 13 additionally requires exact body-port equipment attachments, finite guard work, authored-method provenance, source-bearing invention receipts, current recipe-record acquisitions/transactions, owned practice support, active coaching records and shelter/material-exposure records, installed preparation definitions, finite cast definitions, selected world rules and knowledge origins, held aims, finite projectile flights and exact combat-help agreements. It replaces the separate preceding layouts without retaining an older reader. The remainder must be finite, positive above the current time tolerance and no greater than the world-owned fallback horizon; any exact deadline must agree with the saved clock and remainder. Exact current table coverage is mandatory. Incompatible databases and checkpoints are rejected as current data without conversion. The [development save policy](../../AGENTS.md#development-save-policy) permits replacement of incompatible development state while protecting credentials, access controls and real spending records.
+**Only the current physical format is supported.** Database format 14, `records-jsonl-2` and save format `development-2026-10-14-foundation-hardening` require the combined perspective/access table, maintained event totals and [saved sampling progress](../simulation-time.md#native-interval-contract). The integrated model also requires exact recipe-family pins, sparse body meters and the explicit memory-search projection. The integrated current format also requires exact body-port equipment attachments, finite guard work, authored-method provenance, source-bearing invention receipts, current recipe-record acquisitions/transactions, owned practice support, active coaching records and shelter/material-exposure records, installed preparation definitions, finite cast definitions, selected world rules and knowledge origins, held aims, finite projectile flights and exact combat-help agreements. Format 14 additionally requires authored terrain descriptors, saved numeric body shapes, claimant-bearing resource reservations and committed observer-specific event facts. Every package requires stream encoding, byte/row counts and checksum; inline worlds and whole-JSON slots are refused. It replaces the preceding layouts without retaining an older reader. The remainder must be finite, positive above the current time tolerance and no greater than the world-owned fallback horizon; any exact deadline must agree with the saved clock and remainder. Exact current table coverage is mandatory. Incompatible databases and checkpoints are rejected as current data without conversion. The [development save policy](../../AGENTS.md#development-save-policy) permits replacement of incompatible development state while protecting credentials, access controls and real spending records.
 
 **Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That reader was removed with the history layout change; it is not a promised support window. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
 
@@ -390,7 +390,7 @@ Earlier feeling conversion supported only the known fear/discomfort format and d
 
 **Removed — PostgreSQL-only storage, 2026-09-27.**
 
-The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches were removed with SQLite support. They isolated native SQLite CPU and preserved transaction ownership, but no embedded/offline deployment is required. PostgreSQL keeps its existing lane limits; removing this adapter does not relax authoritative commit, save/load or uncertain-write guarantees. See the [implementation plan](../projects/postgresql-cognition-preparation.md).
+The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches were removed with SQLite support. They isolated native SQLite CPU and preserved transaction ownership, but no embedded/offline deployment is required. PostgreSQL keeps its existing lane limits; removing this adapter does not relax authoritative commit, save/load or uncertain-write guarantees. See the [implementation plan](../projects/completed/postgresql-cognition-preparation.md).
 
 ## SV19
 

@@ -81,7 +81,7 @@ export function inviteView(invite: InviteRecord, now: number): InviteView {
 }
 
 /** Capabilities an invite grants. Issuers delegate only what they currently hold, and a
- * characterless grant never plays. docs/projects/multiplayer-entry-maintenance.md#decisions */
+ * characterless grant never plays. docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
 export function inviteCapabilities(
   request: InviteRequest,
   issuer: readonly Capability[],

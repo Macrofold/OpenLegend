@@ -27,7 +27,7 @@ import type { WorldService } from './world-service.js';
 
 /** Routes a characterless operator/spectator session may reach. Every other route assumes an
  * embodied character and rejects such a session before dispatch; each listed route still
- * checks its own capability. docs/projects/multiplayer-entry-maintenance.md#decisions */
+ * checks its own capability. docs/projects/completed/multiplayer-entry-maintenance.md#decisions */
 const CHARACTERLESS_ROUTES = new Set([
   'GET /api/operations',
   'GET /api/performance',
@@ -103,7 +103,12 @@ export function worldOverview(world: WorldState): WorldOverview {
   }
   bodies.sort((a, b) => a.category.localeCompare(b.category) || a.x - b.x || a.z - b.z);
   return {
-    map: { width: world.map.width, height: world.map.height, tiles: world.map.tiles },
+    map: {
+      width: world.map.width,
+      height: world.map.height,
+      tiles: world.map.tiles,
+      terrain: world.map.terrain,
+    },
     bodies,
     omitted,
   };

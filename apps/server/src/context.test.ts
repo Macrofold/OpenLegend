@@ -84,34 +84,35 @@ describe('actor-scoped native decision candidates', () => {
       output: { name: 'Fixture sling', description: 'Test only.' },
       parameters: { workSeconds: 60, damage: 18, range: 7, accuracy: 0.9 },
     };
-    expect(
-      (
-        await service.admit(draft, {
-          actorId: NPC_ID,
-          requestId: 'learned-fixture',
-          source: 'test-fixture',
-          authority: { origin: 'player', policyRevision: 1 },
-        })
-      ).ok,
-    ).toBe(true);
-    const recipe = Object.values(service.world.recipes).find((entry) => entry.name === draft.name)!;
-    expect(recipe).toBeDefined();
+    const admitted = await service.admit(draft, {
+      actorId: NPC_ID,
+      requestId: 'learned-fixture',
+      source: 'test-fixture',
+      authority: { origin: 'player', policyRevision: 1 },
+    });
+    expect(admitted.ok, admitted.message).toBe(true);
+    expect(admitted.recipeId).toBeDefined();
+    const recipe = service.world.recipes[admitted.recipeId!]!;
     await perform(
       service,
       select(service, 'craft', (action) => action.command?.recipeId === recipe.id),
     );
     await service.transition((world) => advanceWorld(world, 60));
-    const sling = inventoryFor(service.world, NPC_ID).find(
+    const tool = inventoryFor(service.world, NPC_ID).find(
       (item) => item.definitionId === recipe.outputDefinitionId,
-    )!;
-    expect(sling).toBeDefined();
+    );
+    expect(tool).toBeDefined();
     await perform(
       service,
-      select(service, 'equip', (action) => action.command?.itemId === sling.id),
+      select(service, 'equip', (action) => action.command?.itemId === tool!.id),
     );
     await perform(
       service,
-      select(service, 'hunt', (action) => action.command?.targetId === 'hare-1'),
+      select(
+        service,
+        'hunt',
+        (action) => action.command?.targetId === 'hare-1' && action.command.itemId === tool!.id,
+      ),
     );
     await service.transition((world) => advanceWorld(world, 18));
     expect(
@@ -122,19 +123,23 @@ describe('actor-scoped native decision candidates', () => {
     ).toBe(true);
     // Releasing the shot does not resolve its flight or guarantee an impact.
     expect(service.world.entities['hare-1']!.actor!.alive).toBe(true);
-    for (let step = 0; step < 20 && service.world.entities['hare-1']!.actor!.alive; step++) {
-      const before = service.world.simTime;
-      const result = await service.transition((world) => advanceWorld(world, 0.1));
-      const evidence = JSON.stringify({
-        result,
-        before,
-        after: service.world.simTime,
-        navigationBlocked: navigationBlocked(service.world),
-        projectiles: service.world.projectiles,
-      });
-      expect(result.ok, evidence).toBe(true);
-      expect(service.world.simTime, evidence).toBeGreaterThan(before);
-    }
+    const flight = Object.values(service.world.projectiles ?? {}).find(
+      (projectile) => projectile.sourceId === NPC_ID && projectile.targetId === 'hare-1',
+    );
+    expect(flight).toBeDefined();
+    const before = service.world.simTime;
+    const result = await service.transition((world) =>
+      advanceWorld(world, flight!.remainingRange / flight!.speed),
+    );
+    const evidence = JSON.stringify({
+      result,
+      before,
+      after: service.world.simTime,
+      navigationBlocked: navigationBlocked(service.world),
+      projectiles: service.world.projectiles,
+    });
+    expect(result.ok, evidence).toBe(true);
+    expect(service.world.simTime, evidence).toBeGreaterThan(before);
     expect(
       service.world.entities['hare-1']!.actor!.alive,
       JSON.stringify(service.world.events.slice(-10)),

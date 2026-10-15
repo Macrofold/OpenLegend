@@ -12,7 +12,6 @@ import { draftWorld, finishWorld, changedEntityIds } from './draft.js';
 import { WorkBudgetError } from './work-budget.js';
 import { ResourceReservationError } from './resource-claims.js';
 import {
-  BODY_PROFILES,
   MOVEMENT,
   SPATIAL_LIMITS,
   canStand,
@@ -404,7 +403,14 @@ export function assemblySupportProblem(
         !canStand(
           map,
           { x, y, z, surfaceId: surface.id },
-          { ...BODY_PROFILES.object, radius: 0.001, height: 0.001 },
+          {
+            ...world.itemHandling.objectBody,
+            radius: 0.001,
+            height: 0.001,
+            eyeHeight: 0,
+            earHeight: 0,
+            interactionHeight: 0,
+          },
         )
       )
         return 'The entire covering, including its overhang, needs supported clear ground.';
@@ -809,7 +815,7 @@ export function assemblyGroundDestination(
     name: family.presentation.loweredName,
     placement: worldPlacement(site, site.surfaceId),
     spatial: {
-      ...groundedSpatial('object'),
+      ...groundedSpatial(world.itemHandling.objectBody),
       softFootprint: family.exposure.folded,
     },
   };
@@ -822,7 +828,7 @@ function commitAssemblyParts(
   actorId: string,
   phase: AssemblyPhase,
   invocationId: string,
-): { rootId: string; installed: string[]; released: string[] } {
+): { rootId: string; installed: string[]; released: string[]; retire: boolean } {
   const family = assemblyFamily(world, phase.familyId)!;
   let root = assemblyRoot(world, phase);
   if (!root) {
@@ -833,7 +839,7 @@ function commitAssemblyParts(
       description: family.description,
       kind: 'assembly',
       placement: worldPlacement(phase.destination, phase.destination.surfaceId),
-      spatial: { ...groundedSpatial('object'), heading: phase.heading },
+      spatial: { ...groundedSpatial(world.itemHandling.objectBody), heading: phase.heading },
       assembly: {
         family: definitionPin(family),
         arrangementId: phase.arrangementId,
@@ -936,16 +942,9 @@ function commitAssemblyParts(
     before: phase.destination,
     after: phase.destination,
   });
-  if (
-    !Object.keys(component.parts).length &&
-    loweredAssemblyMaterials(world, root.id).length === 0
-  ) {
-    component.retired = { at: world.simTime, cause: 'dismantled' };
-    delete component.activeEdit;
-    delete root.placement;
-    rootMembershipChanged(world, root.id);
-  }
-  return { rootId: root.id, installed, released };
+  const retire =
+    !Object.keys(component.parts).length && loweredAssemblyMaterials(world, root.id).length === 0;
+  return { rootId: root.id, installed, released, retire };
 }
 
 export function commitAssemblyPhase(
@@ -1000,6 +999,15 @@ export function commitAssemblyPhase(
       actionId: invocationId,
     },
   );
+  // Record this visible completion while the physical subject still exists. Retirement
+  // publishes in the same transition; later readers must use the saved observer facts.
+  if (parts.retire) {
+    const root = world.entities[parts.rootId]!;
+    root.assembly!.retired = { at: world.simTime, cause: 'dismantled' };
+    delete root.assembly!.activeEdit;
+    delete root.placement;
+    rootMembershipChanged(world, root.id);
+  }
   return outcome(true, 'construction-completed', family.labels[phase.operation]);
 }
 

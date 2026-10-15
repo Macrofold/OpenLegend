@@ -1,6 +1,6 @@
 # Accounts, participation and transport: limits and constraints
 
-[Feature contract](../projects/multiplayer-authority-feature-spec.md) · [Implementation work](../maintainers/multiplayer.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
+[Feature contract](../projects/completed/multiplayer-authority-feature-spec.md) · [Implementation work](../maintainers/multiplayer.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
@@ -76,7 +76,7 @@ Original recommendation: **Review**.
 
 Six fixed permissions: play, spectate, create, inspect, save and manage access. A grant either binds **one character** (the only grant that may include play) or **no character**. A characterless operator/spectator session holds no control lease, never counts as a participating connection for exit or shared pause, and reaches only the explicit route allowlist in [operations-routes.ts](../../apps/server/src/operations-routes.ts); every character route rejects it with `characterless`. Characterless creator editing (god/editor routes) and promoting a characterless account to a character are not supported.
 
-**Reason / tradeoff:** Operators and spectators need entry without a playable embodiment; an allowlist keeps character-assuming routes from receiving a scope with no actor. Characterless god tools need their own UI and caller audit. [Design](../projects/multiplayer-entry-maintenance.md#decisions).
+**Reason / tradeoff:** Operators and spectators need entry without a playable embodiment; an allowlist keeps character-assuming routes from receiving a scope with no actor. Characterless god tools need their own UI and caller audit. [Design](../projects/completed/multiplayer-entry-maintenance.md#decisions).
 
 ## MP03
 

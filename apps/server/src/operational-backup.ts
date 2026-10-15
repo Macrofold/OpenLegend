@@ -68,7 +68,7 @@ function validateRecoveryReferences(
     if (row['world_id'] !== worldId)
       throw new Error('Recovery checkpoint belongs to another world.');
     const reference = recoveryFile(JSON.parse(String(row['payload'])), row['checksum']);
-    if (reference && !saves.includes(reference))
+    if (!saves.includes(reference))
       throw new Error('Backup is missing its referenced recovery checkpoint.');
   }
 }
@@ -97,7 +97,7 @@ async function copySlot(
   const staging = join(target, `.pending-${process.pid}-${randomUUID()}`);
   await mkdir(staging, { mode: 0o700 });
   try {
-    for (const name of ['metadata.json', metadata.encoding ? 'world.jsonl' : 'world.json']) {
+    for (const name of ['metadata.json', 'world.jsonl']) {
       await copyFile(join(source, id, name), join(staging, name), constants.COPYFILE_EXCL);
       const file = await open(join(staging, name), 'r');
       try {
@@ -145,10 +145,7 @@ export async function writeOperationalBackup(
   try {
     await (db.readTransaction?.bind(db) ?? db.transaction.bind(db))(async () => {
       const head = await new WorldRecords(db).head();
-      if (!head)
-        throw new Error(
-          'No canonical world to back up. Preserve legacy storage and start the compatible server before retrying.',
-        );
+      if (!head) throw new Error('No current world records are available to back up.');
       const checkpoint = randomUUID(),
         operations = randomUUID();
       // Only the identity is used: the stream reads all state from this same snapshot.

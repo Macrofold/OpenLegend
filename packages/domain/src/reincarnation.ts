@@ -11,7 +11,6 @@ import { emit, outcome } from './events.js';
 import { directChildIds, itemFor, moveLot, setItemQuantity, unequipLot } from './objects.js';
 import { releaseInvocationResources, availableItemQuantity } from './resource-claims.js';
 import {
-  bodyProfile,
   setSpatialPosition,
   spatialMap,
   supportedPosition,
@@ -230,7 +229,9 @@ function spawnCandidates(
     return { ...support, x, z, y: surfaceHeight(surface, x, z) };
   }).filter(
     (point) =>
-      canStand(map, point, bodyProfile(entity)) &&
+      // Return creates a living body; the still-dead actor's inactive posture cannot
+      // establish clearance for the taller shape that will occupy this point.
+      canStand(map, point, entity.spatial.body) &&
       !nearby.some(
         (other) =>
           distance3D(worldPosition(other), point) <

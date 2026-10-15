@@ -16,7 +16,7 @@ export interface PreparedHistoryEdit {
 /** Complete dependency closure for an explicit creator edit, never a recall candidate limit.
  * Reads stay in one snapshot outside mutation ownership. The service must reject a changed
  * world before adopting this residency-only preparation. Unselected SQL rows remain intact.
- * docs/projects/history-storage-efficiency.md
+ * docs/projects/completed/history-storage-efficiency.md
  */
 export async function prepareHistoryEdit(
   db: SqlDatabase,

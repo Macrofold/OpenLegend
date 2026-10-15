@@ -18,7 +18,7 @@ The priorities are ordinary continuation first, a legible correction second, and
 
 ## 2. Current reality and scope
 
-Current main was rechecked at [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425), separately from this branch's parent runtime. The following facts and accepted rules are inputs, not new features claimed by this proposal.
+Current main was rechecked at [0a3ab79b](https://github.com/Macrofold/OpenLegend/commit/0a3ab79b7a698a7f1941dc23722f89220d1ba425) during the original proposal audit. The following facts and accepted rules are inputs, not new features claimed by this proposal.
 
 | Owner                                                                                | Existing behavior or accepted rule                                                                                                                                                                                                                            | Remaining product consumer                                                                                                                                                                          |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

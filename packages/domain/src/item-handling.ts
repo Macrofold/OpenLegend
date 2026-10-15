@@ -18,10 +18,10 @@ import { worldPlacement } from './spatial-state.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
 import { worldSupport, worldPosition } from './spatial-state.js';
 import {
-  BODY_PROFILES,
   canStand,
   type SurfacePoint,
-  type BodyProfileId,
+  type BodyProfile,
+  validateBodyProfile,
 } from '@open-legend/spatial';
 import { addItem, nextEntityId } from './data.js';
 import { availableResource, itemDefinitionPin, itemHasReservations } from './resource-claims.js';
@@ -40,12 +40,13 @@ export interface ItemHandlingPolicy {
   defaultPortable: boolean;
   reach: number;
   pickupSeconds: number;
-  actorBodyProfiles: BodyProfileId[];
+  actorBodyProfiles: string[];
+  objectBody: BodyProfile;
 }
 export function canHandleItems(world: WorldState, actor: Entity): boolean {
   return (
     world.itemHandling.enabled &&
-    world.itemHandling.actorBodyProfiles.includes(actor.spatial.bodyProfileId)
+    world.itemHandling.actorBodyProfiles.includes(actor.spatial.body.id)
   );
 }
 export function portableItems(world: WorldState, ownerId: string): ItemInstance[] {
@@ -74,7 +75,7 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
     nameForm: 'plural',
     kind: 'item-pile',
     placement: worldPlacement({ x: position.x, y: position.y, z: position.z }, position.surfaceId),
-    spatial: groundedSpatial('object'),
+    spatial: groundedSpatial(world.itemHandling.objectBody),
   };
   world.entities[id] = pile;
   rootMembershipChanged(world, id);
@@ -88,7 +89,11 @@ export function releaseBodyPossessions(world: WorldState, body: Entity): boolean
   const surfaceId = worldSupport(body);
   if (
     !surfaceId ||
-    !canStand(spatialMap(world), { ...worldPosition(body), surfaceId }, BODY_PROFILES.object)
+    !canStand(
+      spatialMap(world),
+      { ...worldPosition(body), surfaceId },
+      world.itemHandling.objectBody,
+    )
   )
     return false;
   atomicObjects(world, (candidate) => {
@@ -217,7 +222,11 @@ export function dropItemReason(
   const surfaceId = worldSupport(actor);
   if (
     !surfaceId ||
-    !canStand(spatialMap(world), { ...worldPosition(actor), surfaceId }, BODY_PROFILES.object)
+    !canStand(
+      spatialMap(world),
+      { ...worldPosition(actor), surfaceId },
+      world.itemHandling.objectBody,
+    )
   )
     return 'Dropping requires space for a pile on a supported surface.';
   const workReason = inventoryWorkReason(world, actor.id, itemId);
@@ -332,7 +341,7 @@ export function createGodItem(original: WorldState, request: GodItemRequest): Tr
   if (
     'actorId' in destination
       ? !getOwn(original.entities, destination.actorId)?.actor
-      : !canStand(spatialMap(original), destination.position, BODY_PROFILES.object)
+      : !canStand(spatialMap(original), destination.position, original.itemHandling.objectBody)
   )
     return reject('Choose an existing actor or a supported ground position.');
   const world = draftWorld(original);
@@ -349,7 +358,17 @@ export function createGodItem(original: WorldState, request: GodItemRequest): Tr
   }
   const events: WorldEvent[] = [];
   const message = `God mode added ${request.quantity} ${world.itemDefinitions[request.definitionId]!.name} to ${namePhrase(owner, 'definite')}.`;
-  emit(world, events, 'god-item-created', message, owner);
+  // Changing a carried inventory is private; visibility of its carrier grants no contents.
+  emit(
+    world,
+    events,
+    'god-item-created',
+    message,
+    owner,
+    undefined,
+    undefined,
+    'actorId' in destination ? 'private' : 'external',
+  );
   const result = { ...outcome(true, 'item-created', message), itemId };
   world.commandReceipts[request.id] = { digest, outcome: result };
   return finish(world, events, result);
@@ -367,9 +386,10 @@ export function validateItemHandling(world: WorldState): void {
     policy.pickupSeconds < 0 ||
     policy.pickupSeconds > 3600 ||
     !Array.isArray(policy.actorBodyProfiles) ||
-    policy.actorBodyProfiles.some((id) => !Object.hasOwn(BODY_PROFILES, id))
+    policy.actorBodyProfiles.some((id) => !isSafeRecordId(id))
   )
     throw new Error('Invalid item-handling policy.');
+  validateBodyProfile(policy.objectBody);
   for (const definition of Object.values(world.itemDefinitions)) {
     validateItemCharacteristics(definition);
     if (definition.portable !== undefined && typeof definition.portable !== 'boolean')

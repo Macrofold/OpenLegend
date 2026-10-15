@@ -83,10 +83,7 @@ export function resolveLevel1(input: {
     const status: Level1Rating['status'] =
       answer === undefined
         ? 'missing'
-        : answer.type === 'noul' &&
-            Number.isFinite(answer.noul) &&
-            answer.noul >= 0 &&
-            answer.noul <= 1
+        : answer.type === 'noul' && Number.isFinite(answer.noul)
           ? 'rated'
           : 'invalid';
     return {

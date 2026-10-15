@@ -1,3 +1,4 @@
+import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { installRecipe } from '../../declarations.js';
 import { equipLot } from '../../objects.js';
@@ -97,7 +98,7 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
     kind: 'item-pile',
     description: WATCHPOST.description,
     placement: worldPlacement(point, point.surfaceId),
-    spatial: { bodyProfileId: 'object', heading: 0 },
+    spatial: baseSpatial('object'),
     appearance: 'crate-mesh',
   };
   world.entities[cache.id] = cache;
@@ -118,7 +119,7 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
       name: resident.name,
       nameForm: 'proper',
       kind: 'npc',
-      spatial: { bodyProfileId: 'person', heading: Math.PI },
+      spatial: { ...baseSpatial('person'), heading: Math.PI },
       placement: worldPlacement(p, p.surfaceId),
       actor: makeActor(world, 'npc', 76, resident.identity),
     };

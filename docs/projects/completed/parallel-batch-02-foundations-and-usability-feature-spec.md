@@ -2,7 +2,9 @@
 
 | Status    | Current progress                                                                                                          | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-04   |
+| Completed | All five assignments and both combined verification scenarios are completed; multilingual input verification is deferred. | 2026-10-14   |
+
+**Status review — October 14, 2026.** Completion refers to the original scoped batch and its dated evidence. Subsequent corrections and additional foundation checks are tracked in the [foundation hardening work](../../maintainers/foundation-review-todos.md); this status review does not rerun the batch or close its separately deferred multilingual, provider or broader performance qualification.
 
 The [merged review](../../maintainers/parallel-batch-02-foundations-and-usability.md#merged-review--october-3-2026) records completion boundaries and remaining checks. The whole agreed batch, including its combined scenarios, is complete; these shared documents are archived together.
 

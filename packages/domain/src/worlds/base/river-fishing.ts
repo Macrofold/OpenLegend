@@ -1,3 +1,4 @@
+import { baseSpatial } from './spatial-definitions.js';
 import type { CastDefinition } from '../../finite-casts.js';
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
 import type { RecipeCandidate, WorldState } from '../../types.js';
@@ -167,7 +168,7 @@ export function installRiverReaches(world: WorldState): void {
       name: BASE_CAST_DEFINITIONS[reach.profile]!.name,
       kind: 'resource',
       description: reach.description,
-      spatial: { bodyProfileId: 'object', heading: 0 },
+      spatial: baseSpatial('object'),
       placement: worldPlacement(stance, stance.surfaceId),
       resource: {
         definitionId: 'raw_river_fish',
