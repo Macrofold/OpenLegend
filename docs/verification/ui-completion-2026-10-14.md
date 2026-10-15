@@ -208,6 +208,64 @@ image SHA-256 is
 `88d4204b771245c8cc4392d5238dd890cb91b8b427fb04e84960974a3cf31839`.
 Additional and cumulative task provider/Jev cost: **$0**.
 
+## Selected continuation at 7da4449fb
+
+The [second finite run](https://github.com/Macrofold/OpenLegend/actions/runs/38682587472/job/116250230154)
+at `7da4449fb7d6647d3d83b05354e14756ab881285` is **failed**. Its ordinary
+required checks are independently green: [PR Code](https://github.com/Macrofold/OpenLegend/actions/runs/38682591099/job/116250241265)
+and push Code pass 392 tests in 43 files and the static/build gates;
+[Spatial/interface](https://github.com/Macrofold/OpenLegend/actions/runs/38682591101/job/116250241469)
+passes 28 selected native tests and all seven browser journeys. Time takes
+55.2 seconds under the unchanged sixty-second total. This is another bounded
+pass, not a performance improvement or explanation of earlier failures.
+
+The finite connected-screen batch reports **two passes and five failures**:
+
+| Selected case                       | Observed result and limit                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Original action recovery            | Pass, 38.4 s. Failed retention sends nothing; lost native acknowledgement, edited draft, ended work and reload preserve the original. Failed local cleanup keeps the guard; restored cleanup reads that same outcome with no new submission/effect.                                                                                                                                                                                                                |
+| Checkpoint creation recovery        | Pass, 32.4 s. Failed retention captures nothing; the one actual checkpoint survives acknowledgement loss and reload. Result inspection preserves the catalogue without another capture.                                                                                                                                                                                                                                                                            |
+| Combined action and checkpoint load | Fails at post-logout Sign in while the actual document reload is unfinished. Before that, the real load changes timeline once, old action/draft disappear after controlled delivery of its fetched native receipt, the original load result resolves under current save authority, and the exact protection checkpoint/catalogue/world remain unchanged. Native logout returns 200 and the next state read returns 401. Fresh-session assertions were not reached. |
+| Creation with failed local markers  | Fails at the same unfinished logout navigation. Before that, one real Woven bag creation and its identical retry retain one output/receipt, unavailable local markers/read/cleanup preserve the exact session request, and native logout succeeds. The fresh-session observations were not reached. One pre-retry image was captured.                                                                                                                              |
+| Retained Journal place              | Real Inspect, section and Hide/reopen retention, and camera-only Focus pass. The first narrow measurement occurs about 105 ms after resize while the HUD still reports its desktop layout: right edge 596 versus permitted 391. No narrow image, short keyboard, obsolete inspection or explicit Move observation follows.                                                                                                                                         |
+| Reciprocal barter                   | Mara's real knife gift and Counteroffer preparation occur without a browser command. Prepared fibers are outside the person detail's first six offered carried lots, so selecting that absent option reaches sixty seconds. Later shared-draft, quantity/revision, disconnection/refusal and reply observations were not reached.                                                                                                                                  |
+| Companion invitation                | Description search, exact destination/purpose and work-choice preparation occur without a browser command. The fixture focuses Send while it is disabled and does not refocus after the genuine preview enables it; the five-second focus assertion fails. Sending, withdrawal/recovery and incoming choices were not reached.                                                                                                                                     |
+
+The completed-task observation **passes in 76,641 ms**, within its original
+120-second work / 150-second hard limits. One real Start spends one branch and
+ends at sixty native seconds; Hide/reopen, reading, deliberate preparation and
+time 61 cause no restart or extra debit. Six captures cover short native wording
+and explicitly supplied long display prose at 1440×960, 390×844 and 390×420. All
+six pixels were inspected. The short desktop card is 337 pixels high with 16
+pixels below its content. The narrow reading fits; short captures show the final
+button reading position after scrolling through earlier text. The long desktop
+and short images also expose a partly clipped lower focus outline, which requires
+review before claiming fully unobscured keyboard focus. Black world backgrounds
+in the 390×844 frames qualify no graphics-readiness or performance guarantee.
+The report's copied `runtimeSource` field still names `a367c4d1b`; its actual
+checkout and per-owner hashes identify this run, including Current task SHA-256
+`6938d36c405fa393c8275e6bfb170e40b3f09a2b8322e6c83c315a4e3585cecf`.
+
+The alternate-world observation fails after thirteen seconds, before any task
+command or image. Its real inventory has 24 carried lots, including authored
+shelter items with no icon. The native optional-icon projection and existing
+visible letter-symbol fallback agree; the probe's requirement that every item
+have an icon is false. Later recharge/recovery/reopening observations did not run.
+
+The prepared corrections retain all original assertion/test/capture bounds:
+await actual logout DOMContentLoaded before the five-second Sign in assertion;
+await the Journal's actual narrow layout before measuring; select/read the exact
+fiber through Inventory; wait for Send to be enabled before focusing; and verify
+each alternate item against its actual optional icon or visible initial. No
+production authentication, item rule, renderer or deadline change follows from
+these fixture failures. Rerun only the affected cases and the new browser-zoom
+sample; reuse the two passing recovery cases and valid earlier native evidence.
+
+[Artifact 11949605158](https://github.com/Macrofold/OpenLegend/actions/runs/38682587472/artifacts/11949605158)
+contains 120,919,664 bytes of original traces, reports and captures. Owned cleanup
+passes for the completed-task run and the failed alternate stage. Additional
+provider/Jev cost is **$0**; cumulative task provider/Jev cost is **$0**.
+
 ## Remaining whole-feature qualification
 
 The October 15 source review also found a Current task recovery defect: failed
@@ -215,8 +273,9 @@ session-storage reads appeared to mean no original request, and failed cleanup
 released a confirmed request. The task now distinguishes unreadable storage,
 verifies exact retention before dispatch and keeps the original guard through
 failed cleanup. TypeScript, production build and changed-file formatting pass.
-Its focused alternate-world browser observation is prepared but has not yet run;
-static checks do not establish the after-earlier-work-ended recovery guarantee.
+Its focused alternate-world recovery cases were not reached before the icon
+fixture failed; static checks do not establish the after-earlier-work-ended
+recovery guarantee.
 
 The original action and checkpoint reload-recovery implementation is no longer missing: the three specific interrupted-request journeys above pass. This does not close every compound UIUX12/UIUX14 requirement. Wider storage/identity/revocation combinations, complete native barter/outing continuation, completed-task rendered-result review and the alternate-world interface qualification retain their earlier explicit tracking and evidence limits.
 

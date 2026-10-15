@@ -439,10 +439,13 @@ test('loading an earlier checkpoint clears the original action while preserving 
     // A fresh Game menu owns Log Out. Returning from the Checkpoints task does
     // not require selecting a hidden inner section.
     await page.locator('#gameMenuButton').click();
+    // The native logout completes before its asynchronous document reload starts.
+    const loggedOutDocument = page.waitForEvent('domcontentloaded', { timeout: 20_000 });
     await page
       .locator('.ol-game-menu')
       .getByRole('button', { name: 'Log Out', exact: true })
       .click();
+    await loggedOutDocument;
     await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
     expect(await records('open-legend:checkpoint-request:')).toEqual([]);
     currentView = undefined;

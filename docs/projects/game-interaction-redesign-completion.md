@@ -96,6 +96,25 @@ an uncertain task as a consent-ending prerequisite. Qualify losing the real Send
 acknowledgement, explicit Withdraw, and then reading that original Send result
 without another invitation or movement, within the existing composed outing case.
 
+The existing enlarged-reading requirement also needs evidence beyond component UI
+scale. Prepare one selected-place Journal observation in a disposable headed
+Chromium window under Linux Xvfb. Native window-directed keyboard focus and
+Ctrl-plus should reach 200% browser zoom; require unchanged physical window
+bounds, doubled device-pixel ratio, approximately halved CSS viewport width and
+unchanged visual-viewport scale before counting it. Retain the same real place,
+Hide/reopen and keyboard reach without Move or a new command. This is one bounded
+browser-zoom sample, not whole-interface text/input or human acceptance. Do not
+edit user profiles/preferences or substitute CSS/font injection or pinch emulation.
+
+The six completed-task images expose a partly clipped Prepare another task focus
+outline on the long desktop/short results, despite the probe's partial-visibility
+pass. Add the existing small scroll-margin token only to that completed task's
+direct button, then require the whole button and computed outline inside the
+actual scrolling clip after the same Task→Tab route. Reuse all native completion
+evidence; rerun this one presentation observation because the pixels demonstrate
+a new in-scope defect. This adds fewer than ten CSS lines, no shared Panel change,
+new size limit or focus event handler, and keeps all original execution bounds.
+
 ### Original action recovery — UIUX12
 
 Keep one unresolved Describe an action request separately from subsequent draft edits. Before dispatch, retain its exact identity, text, selected subject and scheduling choice under the existing authenticated private ownership boundary. A changed subject, edited words, completion of the character's current work, hiding the panel or reloading must not allocate a replacement while the original result is unknown.

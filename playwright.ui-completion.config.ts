@@ -9,5 +9,6 @@ export default defineConfig({
     'ui-completion-journal.spec.ts',
     'ui-completion-composed.spec.ts',
     'ui-completion-creation.spec.ts',
+    'ui-completion-zoom.spec.ts',
   ],
 });

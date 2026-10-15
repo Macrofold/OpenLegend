@@ -97,9 +97,12 @@ test('Journal preserves a selected place across layout changes and focus never w
     );
     expect(commands).toEqual([]);
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
     await expect(detail.getByRole('heading')).toHaveText(heading);
     await fit(page, '#journalPanel', info, 'journal-place-narrow');
     await page.setViewportSize({ width: 1024, height: 600 });
+    // A 600px-high window intentionally uses the same sheet as a narrow screen.
+    await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
     await expect(detail.getByRole('heading')).toHaveText(heading);
     await detail.getByRole('heading').focus();
     await page.keyboard.press('Tab');

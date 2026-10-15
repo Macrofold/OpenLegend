@@ -135,6 +135,8 @@ async function fit(page: Page, area: Locator, info: TestInfo, name: string) {
   await page.screenshot({ path: info.outputPath(name + '.png'), timeout: 10_000 });
 }
 async function keyboardControl(control: Locator) {
+  // A native preview may still be completing. Disabled controls cannot take focus.
+  await expect(control).toBeEnabled();
   await control.focus();
   await expect(control).toBeFocused();
   await expect(control).toBeInViewport();
@@ -185,6 +187,7 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
     );
     expect(fiber && fiber.quantity >= 3).toBe(true);
     expect(knife).toBeDefined();
+    const fiberName = game.service.world.itemDefinitions[fiber!.definitionId]!.name;
     const starting = holdings(game, [actorId, companionId]);
     // Mara initially knows no private player lot. Her gift discloses only her knife;
     // the player's later deliberate counteroffer discloses the exact fiber lot to her.
@@ -207,31 +210,42 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
     const offer = trade.locator('.ol-trade-offer');
     await expect(offer).toContainText(labels.incoming);
     await trade.getByRole('button', { name: labels.counter, exact: true }).click();
-    await trade.locator('.ol-trade-draft select').first().selectOption(fiber!.id);
     const amount = trade.getByRole('textbox', { name: labels.giveQuantity, exact: true });
-    await amount.fill('3');
     await expect(trade.locator('.ol-trade-draft select').nth(1)).toHaveValue(knife!.id);
     await expect(
       trade.getByRole('textbox', { name: labels.receiveQuantity, exact: true }),
     ).toHaveValue('1');
 
-    await openPanel(page, 'inventory', 'Inventory');
-    await page.locator(`#inventoryPanel [data-item-id="${fiber!.id}"]`).click();
-    const detail = page.locator('.ol-inventory-detail');
-    const recipientRead = page.waitForResponse(
-      (response) => new URL(response.url()).pathname === '/api/inventory/destinations',
-    );
-    await detail.getByRole('button', { name: 'Offer to a person…', exact: true }).click();
-    const recipients = (await (await recipientRead).json()) as InventoryDestinationPage;
-    const index = recipients.destinations
-      .filter((entry) => entry.kind === 'recipient')
-      .findIndex((entry) => entry.id === companionId);
-    expect(index).toBeGreaterThanOrEqual(0);
-    await detail
-      .getByRole('button', { name: /^Trade with / })
-      .nth(index)
-      .click();
-    const inventoryTrade = detail.locator('.ol-item-trade');
+    async function inventoryDraft(expectedQuantity: number) {
+      const inventory = await openPanel(page, 'inventory', 'Inventory');
+      const contents = inventory.locator('.ol-inventory-collection[data-side="belongings"]');
+      await contents.getByRole('textbox', { name: /^Search / }).fill(fiberName);
+      await contents.locator(`[data-item-id="${fiber!.id}"]`).click();
+      const detail = page.locator('.ol-inventory-detail');
+      await expect(detail).toContainText(`${expectedQuantity} units`);
+      const recipientRead = page.waitForResponse(
+        (response) => new URL(response.url()).pathname === '/api/inventory/destinations',
+      );
+      await detail.getByRole('button', { name: 'Offer to a person…', exact: true }).click();
+      const recipients = (await (await recipientRead).json()) as InventoryDestinationPage;
+      const index = recipients.destinations
+        .filter((entry) => entry.kind === 'recipient')
+        .findIndex((entry) => entry.id === companionId);
+      expect(index).toBeGreaterThanOrEqual(0);
+      await detail
+        .getByRole('button', { name: /^Trade with / })
+        .nth(index)
+        .click();
+      return { detail, trade: detail.locator('.ol-item-trade') };
+    }
+    // The person panel deliberately offers only six carried lots. Select this
+    // other exact lot through Inventory, which adds it without expanding that list.
+    const { detail, trade: inventoryTrade } = await inventoryDraft(fiber!.quantity);
+    await expect(
+      inventoryTrade.locator(`.ol-trade-draft select option[value="${fiber!.id}"]`),
+    ).toHaveCount(1);
+    await inventoryTrade.locator('.ol-trade-draft select').first().selectOption(fiber!.id);
+    await inventoryTrade.getByRole('textbox', { name: labels.giveQuantity, exact: true }).fill('3');
     await expect(
       inventoryTrade.getByRole('textbox', { name: labels.giveQuantity, exact: true }),
     ).toHaveValue('3');
@@ -247,6 +261,7 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
     await openPanel(page, 'nearby', 'In view');
     await nearby.getByRole('button', { name: /^Hide / }).click();
     await person(page, companionId);
+    await expect(trade.locator('.ol-trade-draft select').first()).toHaveValue(fiber!.id);
     await expect(amount).toHaveValue('3');
     expect(observation.browserCommands).toEqual([]);
     expect(holdings(game, [actorId, companionId])).toEqual(starting);
@@ -264,23 +279,28 @@ test('reciprocal barter retains exact terms through entry changes, revision revi
         quantity: fiber!.quantity - 2,
       },
     );
-    await expect
-      .poll(
-        async () =>
-          (await read()).entities
-            .find((entity) => entity.id === companionId)
-            ?.trade?.ownLots.find((lot) => lot.id === fiber!.id)?.quantity,
-      )
-      .toBe(2);
-    await trade.getByRole('button', { name: labels.refresh, exact: true }).click();
-    await expect(amount).toHaveValue('3');
+    expect(
+      inventoryFor(game.service.world, actorId).find((item) => item.id === fiber!.id)?.quantity,
+    ).toBe(2);
+    const current = await inventoryDraft(2);
+    await current.trade.getByRole('button', { name: labels.refresh, exact: true }).click();
+    const currentAmount = current.trade.getByRole('textbox', {
+      name: labels.giveQuantity,
+      exact: true,
+    });
+    await expect(currentAmount).toHaveValue('3');
     await expect(
-      amount.locator('xpath=ancestor::div[@class="ol-inventory-quantity"]'),
+      currentAmount.locator('xpath=ancestor::div[@class="ol-inventory-quantity"]'),
     ).toContainText('2 available whole units.');
     await expect(
-      trade.locator('.ol-trade-draft').getByRole('button', { name: labels.counter, exact: true }),
+      current.trade
+        .locator('.ol-trade-draft')
+        .getByRole('button', { name: labels.counter, exact: true }),
     ).toBeDisabled();
-    await amount.fill('2');
+    await currentAmount.fill('2');
+    await current.detail.getByRole('button', { name: 'Close', exact: true }).click();
+    await person(page, companionId);
+    await expect(amount).toHaveValue('2');
     const unchanged = holdings(game, [actorId, companionId]);
     expect(
       (

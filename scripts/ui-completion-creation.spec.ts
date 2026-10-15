@@ -247,10 +247,13 @@ test('creation survives failed local markers and safely refuses unavailable reco
     await recovery.getByRole('button', { name: 'Close', exact: true }).click();
 
     await page.locator('#gameMenuButton').click();
+    // Logout reloads only after its awaited native write, after click has returned.
+    const loggedOutDocument = page.waitForEvent('domcontentloaded', { timeout: 20_000 });
     await page
       .locator('.ol-game-menu')
       .getByRole('button', { name: 'Log Out', exact: true })
       .click();
+    await loggedOutDocument;
     await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
     expect(await retainedCreation(page)).toEqual([]);
     currentView = undefined;
