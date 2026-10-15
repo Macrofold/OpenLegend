@@ -231,6 +231,7 @@ export class WorldPresentation {
     material: pc.StandardMaterial,
     billboard = false,
     character = false,
+    sourceMeshes = sprite.render?.meshInstances ?? [],
   ): RevealBinding {
     if (billboard && !this.spriteRevealMesh) {
       // Reveal only the front image. A relief's back faces are behind its visible
@@ -241,7 +242,7 @@ export class WorldPresentation {
       );
       this.spriteRevealMesh.incRefCount();
     }
-    const meshes = (sprite.render?.meshInstances ?? []).map((mi) => {
+    const meshes = sourceMeshes.map((mi) => {
       const copy = new pc.MeshInstance(
         billboard ? this.spriteRevealMesh! : mi.mesh,
         this.revealMaterial(material),
@@ -262,6 +263,8 @@ export class WorldPresentation {
           const copy = new pc.MeshInstance(mesh.mesh, this.protectionMaterial(material), mesh.node);
           copy.visible = false;
           copy.castShadow = copy.receiveShadow = false;
+          copy.skinInstance = mesh.skinInstance;
+          copy.morphInstance = mesh.morphInstance;
           return copy;
         })
       : undefined;
@@ -270,7 +273,7 @@ export class WorldPresentation {
       meshes,
       layer,
       protection,
-      sourceMesh: sprite.render?.meshInstances[0],
+      sourceMesh: sourceMeshes[0],
       strength: 0,
       frame: material,
       lastStrength: 0,

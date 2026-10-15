@@ -14,19 +14,19 @@ class SurfacePass extends pc.RenderPass {
 
 /** Selected/read-through meshes ignore scenery depth, but must still reject their
  * own rear surfaces. This full-resolution depth-only pass never supplies color or
- * changes the model's cells. docs/world-presentation.md#animated-character-pixels */
+ * changes the model's geometry. docs/world-presentation.md#animated-character-pixels */
 export class ModelSurfaceDepth {
   private readonly depth: pc.Texture;
   private readonly target: pc.RenderTarget;
   private readonly pass: SurfacePass;
-  private readonly material: pc.ShaderMaterial;
+  private readonly material: pc.StandardMaterial;
   private readonly copies: pc.MeshInstance[];
   private readonly size = new Float32Array(2);
   private readonly bound = new WeakSet<pc.MeshInstance>();
   constructor(
     private readonly app: pc.Application,
     private readonly camera: pc.Entity,
-    meshes: readonly pc.MeshInstance[],
+    private readonly meshes: readonly pc.MeshInstance[],
   ) {
     const device = app.graphicsDevice;
     this.depth = new pc.Texture(device, {
@@ -41,18 +41,12 @@ export class ModelSurfaceDepth {
       addressV: pc.ADDRESS_CLAMP_TO_EDGE,
     });
     this.target = new pc.RenderTarget({ depthBuffer: this.depth, samples: 1 });
-    this.material = new pc.ShaderMaterial({
-      uniqueName: 'Rigid character nearest depth',
-      attributes: { aPosition: pc.SEMANTIC_POSITION },
-      vertexGLSL: `attribute vec3 aPosition;
-        uniform mat4 matrix_model;
-        uniform mat4 matrix_viewProjection;
-        void main(void) {
-          vec4 world = matrix_model * vec4(aPosition, 1.0);
-          gl_Position = matrix_viewProjection * world;
-        }`,
-      fragmentGLSL: 'void main(void) { gl_FragColor = vec4(0.0); }',
-    });
+    // Use the same engine vertex path as the visible material, including skinning.
+    // A position-only rigid shader would compare the animated face with its bind pose.
+    this.material = new pc.StandardMaterial();
+    this.material.name = 'Character nearest depth';
+    this.material.useLighting = false;
+    this.material.cull = pc.CULLFACE_NONE;
     this.material.redWrite =
       this.material.greenWrite =
       this.material.blueWrite =
@@ -62,6 +56,7 @@ export class ModelSurfaceDepth {
     this.copies = meshes.map((mesh) => {
       const copy = new pc.MeshInstance(mesh.mesh, this.material, mesh.node);
       copy.castShadow = copy.receiveShadow = false;
+      copy.skinInstance = mesh.skinInstance;
       return copy;
     });
     this.pass = new SurfacePass(device, () => {
@@ -99,7 +94,7 @@ export class ModelSurfaceDepth {
           float nearest = texture2D(ol_modelSurfaceDepth,
             gl_FragCoord.xy / ol_modelSurfaceSize).r;
           // Identical projection/vertex math: two float-depth ulps suffice.
-          // A larger normalized tolerance leaks rear cells at distant perspective zoom.
+          // A larger normalized tolerance leaks rear surfaces at distant perspective zoom.
           if (gl_FragCoord.z > nearest + 0.0000001) discard;
         }`,
       )}
@@ -114,6 +109,10 @@ export class ModelSurfaceDepth {
     mesh.setParameter('ol_nearestSurfaceOnly', nearestOnly ? 1 : 0);
   }
   setEnabled(enabled: boolean): void {
+    if (enabled)
+      for (let i = 0; i < this.copies.length; i++)
+        if (this.copies[i]!.skinInstance !== this.meshes[i]!.skinInstance)
+          this.copies[i]!.skinInstance = this.meshes[i]!.skinInstance;
     if (
       enabled &&
       (this.depth.width !== this.app.graphicsDevice.width ||
@@ -127,7 +126,11 @@ export class ModelSurfaceDepth {
     const index = passes.indexOf(this.pass);
     if (index >= 0) passes.splice(index, 1);
     this.pass.destroy();
-    for (const copy of this.copies) copy.destroy();
+    for (const copy of this.copies) {
+      // The visible actor owns the shared skin; copies must not destroy it.
+      copy.skinInstance = null;
+      copy.destroy();
+    }
     this.material.destroy();
     this.target.destroy();
     this.depth.destroy();

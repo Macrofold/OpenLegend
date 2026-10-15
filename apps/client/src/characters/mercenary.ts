@@ -2,8 +2,8 @@ import * as pc from 'playcanvas';
 import mercenaryUrl from './mercenary-assets/mercenary.glb?url';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
-import { WorldPresentation } from '../world-presentation';
-import { PixelCharacter } from './pixel-character';
+import { WorldPresentation, type RevealBinding } from '../world-presentation';
+import { ModelSurfaceDepth } from './model-surface-depth';
 import { CapeCloth } from './mercenary-cloth';
 import { MercenaryMaterials } from './mercenary-materials';
 
@@ -37,7 +37,7 @@ export class MercenaryModels {
     private readonly camera: pc.Entity,
     sun: pc.Light,
   ) {
-    this.materials = new MercenaryMaterials(app.graphicsDevice, sun);
+    this.materials = new MercenaryMaterials(sun, app.graphicsDevice);
   }
   create(parent: pc.Entity): MercenaryActor {
     return new MercenaryActor(
@@ -70,20 +70,22 @@ export class MercenaryModels {
   }
   destroy(): void {
     this.disposed = true;
+    for (const material of this.materials.values) this.presentation.releaseMaterial(material);
     this.materials.destroy();
     this.asset?.unload();
     if (this.asset) this.app.assets.remove(this.asset);
   }
 }
 
+// The pitched game camera foreshortens upright geometry beside camera-facing people.
+// Choose one fixed art scale; zoom/orbit never change anatomy or the source artwork.
+const displayScale = 1.6;
+
 export class MercenaryActor {
   private node?: pc.Entity;
   private cloth?: CapeCloth;
-  private pixels?: PixelCharacter;
-  private revealAmount = 0;
-  private selected = false;
-  private readonly renderPixels = () =>
-    this.pixels?.update(this.parent.getPosition(), this.visible, this.revealAmount, this.selected);
+  private surface?: ModelSurfaceDepth;
+  private bindings: { reveal: RevealBinding; material: pc.StandardMaterial }[] = [];
   private meshes: pc.MeshInstance[] = [];
   private disposed = false;
   private wanted = false;
@@ -94,7 +96,8 @@ export class MercenaryActor {
   private readonly previousFoot = new pc.Vec3();
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
-  readonly height = 1.85;
+  readonly height = 1.85 * displayScale;
+  readonly width = 0.95 * displayScale;
   constructor(
     private readonly app: pc.Application,
     private readonly parent: pc.Entity,
@@ -103,7 +106,6 @@ export class MercenaryActor {
     loading: Promise<Container>,
     private readonly camera: pc.Entity,
   ) {
-    this.app.on('prerender', this.renderPixels);
     void loading
       .then((resource) => {
         if (this.disposed) return;
@@ -129,6 +131,8 @@ export class MercenaryActor {
       receiveShadows: true,
     }));
     this.parent.addChild(node);
+    // Preserve the GLB root's centimetre-to-metre conversion.
+    node.setLocalScale(node.getLocalScale().clone().mulScalar(displayScale));
     node.enabled = false;
     for (const render of renders(node))
       for (const mesh of render.meshInstances) {
@@ -158,32 +162,56 @@ export class MercenaryActor {
     // Force the first supported pose before attaching skin-relative fabric.
     node.enabled = true;
     layer.update(0);
-    this.cloth = new CapeCloth(this.app, node);
+    this.cloth = new CapeCloth(this.app, node, displayScale);
     const components = [
       ...renders(node).filter((r) => r.enabled),
       ...this.cloth.patches.flatMap((p) => renders(p.node)),
     ];
     this.meshes = components.flatMap((r) => r.meshInstances);
-    this.pixels = new PixelCharacter(
-      this.app,
-      this.camera,
-      this.presentation.characterLayer,
-      this.presentation.foregroundLayer,
-      this.presentation.protectionLayer,
-      components,
-    );
+    for (const component of components) {
+      for (const mesh of component.meshInstances) {
+        const material = mesh.material as pc.StandardMaterial;
+        // Fabric outer and lining share a simulated surface but retain their own artwork.
+        this.bindings.push({
+          reveal: this.presentation.addReveal(component.entity, material, false, true, [mesh]),
+          material,
+        });
+      }
+    }
+    this.surface = new ModelSurfaceDepth(this.app, this.camera, this.meshes);
+    for (const { reveal } of this.bindings)
+      for (const mesh of [...reveal.meshes, ...(reveal.protection ?? [])]) this.surface.bind(mesh);
     this.previousFoot.copy(this.parent.getPosition());
     this.state = 'ready';
-    this.setVisible(false);
+    this.setVisible(this.wanted);
   }
   setVisible(visible: boolean): void {
     if (visible && !this.wanted) this.resetCloth = true;
     this.wanted = visible;
     this.visible = visible && this.state === 'ready' && !this.resetCloth && this.settling === 0;
-    if (this.node) this.node.enabled = this.visible;
+    // Disabling a skinned RenderComponent destroys its cached skin. Keep the rig
+    // alive while settling/falling back; hide its geometry and stop its animation.
+    if (this.node?.anim && !this.visible) this.node.anim.speed = 0;
     this.cloth?.setVisible(this.visible);
-    for (const mesh of this.meshes) mesh.castShadow = this.visible;
-    this.pixels?.setVisible(this.visible);
+    for (const mesh of this.meshes) {
+      mesh.visible = this.visible;
+      mesh.castShadow = this.visible;
+    }
+    if (!this.visible) {
+      this.surface?.setEnabled(false);
+      for (const { reveal, material } of this.bindings)
+        this.presentation.updateReveal(
+          reveal,
+          material,
+          this.parent.getPosition(),
+          this.width,
+          this.height,
+          0,
+          0,
+          false,
+          false,
+        );
+    }
   }
   update(
     view: EntityView,
@@ -193,7 +221,6 @@ export class MercenaryActor {
     reveal: number,
     selected: boolean,
   ): void {
-    this.selected = selected;
     const node = this.node,
       anim = node?.anim;
     if (!node || !anim || !this.cloth || !this.wanted) return;
@@ -226,13 +253,37 @@ export class MercenaryActor {
     }
     anim.speed = paused ? 0 : 1;
     this.cloth.update(dt, !paused);
-    this.revealAmount = reveal;
+    for (const { reveal: binding, material } of this.bindings) {
+      // An unobserved actor's ancestor can disable/recreate the source skin.
+      // All extra passes borrow its current owner before becoming visible again.
+      const skin = binding.sourceMesh?.skinInstance ?? null;
+      for (const mesh of binding.meshes)
+        if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
+      for (const mesh of binding.protection ?? [])
+        if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
+      for (const mesh of binding.foreground ?? [])
+        if (mesh.skinInstance !== skin) mesh.skinInstance = skin;
+      this.presentation.updateReveal(
+        binding,
+        material,
+        foot,
+        this.width,
+        this.height,
+        reveal,
+        dt,
+        true,
+        selected,
+      );
+      for (const mesh of binding.foreground ?? []) this.surface?.bind(mesh);
+    }
+    // Keep nearest depth current through the entire read-through fade and camera orbit.
+    this.surface?.setEnabled(selected || (this.bindings[0]?.reveal.strength ?? 0) > 0.01);
   }
   get revealStrength(): number {
-    return this.visible ? this.revealAmount : 0;
+    return this.visible ? (this.bindings[0]?.reveal.strength ?? 0) : 0;
   }
   get outlineMeshes(): readonly pc.MeshInstance[] {
-    return this.pixels?.outlineMeshes ?? [];
+    return this.meshes;
   }
   hit(from: pc.Vec3, to: pc.Vec3): number | null {
     // Conservative per-mesh bounds for this one pilot, retaining world obstruction.
@@ -249,14 +300,20 @@ export class MercenaryActor {
       state: this.state,
       visible: this.visible,
       meshes: this.meshes.length,
-      resolution: [128, 192],
+      representation: 'original-textured-model',
+      displayScale,
+      height: this.height,
+      width: this.width,
+      animation: this.node?.anim?.baseLayer?.activeState,
       settling: this.settling,
       cloth: this.cloth?.diagnostics(),
     };
   }
   private release(): void {
-    this.pixels?.destroy();
-    this.pixels = undefined;
+    for (const { reveal } of this.bindings) this.presentation.removeReveal(reveal);
+    this.bindings.length = 0;
+    this.surface?.destroy();
+    this.surface = undefined;
     this.cloth?.destroy();
     this.cloth = undefined;
     this.node?.destroy();
@@ -266,7 +323,6 @@ export class MercenaryActor {
   }
   destroy(): void {
     this.disposed = true;
-    this.app.off('prerender', this.renderPixels);
     this.release();
   }
 }
