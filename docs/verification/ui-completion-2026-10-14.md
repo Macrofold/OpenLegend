@@ -2,7 +2,7 @@
 
 This report continues [whole-interface verification](game-interaction-redesign.md). The [execution plan](../projects/game-interaction-redesign-completion.md) and [UI/UX tracker](../maintainers/ui-ux.md) retain the agreed acceptance requirements. It records actual interface checks, not approval of the entire game or model behavior.
 
-**Result: thirteen distinct selected UI scenarios have passing evidence across the source-specific runs below.** This is not one thirteen-test run or a statement that every whole-feature acceptance criterion has passed. The current production UI was unchanged during this narrower testing pass.
+**October 14 result: thirteen distinct selected UI scenarios have passing evidence across the source-specific runs below.** This was not one thirteen-test run or a statement that every whole-feature acceptance criterion had passed. Production UI was unchanged during that original narrower testing pass. The October 15 continuation below records later fixes, integration, source-specific passes/failures and current remaining acceptance.
 
 ## Scope correction
 
@@ -604,6 +604,27 @@ Only the still-incomplete zoom observation needs further execution; passing
 invitation and alternate-world evidence retains its recorded scope. Additional
 and cumulative task provider/Jev cost: **$0**.
 
+## Selected continuation at 526368719
+
+The [zoom-only eighth run](https://github.com/Macrofold/OpenLegend/actions/runs/38689677284)
+at `526368719734a0df27d9086e27ffc1462e2bc73d` **fails** after its initial
+capture succeeds. The temporary request now uses Chromium's compositor surface
+without a clip or rescaling; the baseline PNG is exactly 1440×873 physical
+pixels. The original ten-second capture, five-second assertion and sixty-second
+aggregate limits remain unchanged. This improves one observed capture, not a
+general screenshot-reliability or product-performance claim.
+
+Native Ctrl-plus doubles DPR, and trace snapshots show an actual 720×436 CSS
+viewport. The HUD nevertheless remains in its wide presentation through the
+original five-second narrow-layout check. No enlarged/320 image or overall pass
+follows; determine why the measured viewport and the selected layout disagree
+before changing production behavior. The partial report records no gameplay or
+provider request and complete owned cleanup.
+
+[Artifact 11952181120](https://github.com/Macrofold/OpenLegend/actions/runs/38689677284/artifacts/11952181120)
+retains 16,119,852 bytes of the baseline PNG, trace and partial report. Additional
+and cumulative task provider/Jev cost: **$0**.
+
 ## Reused evidence and remaining experience scope
 
 The final source/acceptance audit compares the integrated owners and their actual
@@ -615,7 +636,7 @@ review, not a claim that every historical journey was rerun at the latest source
 | Journey scope                        | Evidence reused and its limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | J01–J16 everyday connections         | The native paired Inventory/two-account conservation, denied-container image, [ten-command camp](game-interaction-redesign.md#completed-native-camp-connection), [seven-command approach/care/crafting](game-interaction-redesign.md#native-approach-recovery-longer-care-and-physical-crafting), barter and outing owners cover their specific real effects and receipts. The camp sends no speech/chat and generates no reply; it retains recipient/draft and reads unavailable-AI feedback. It is not an uncoached complete J16 session. |
-| J13/J25–J27 speech and reading       | [Native speech/search/paging/Talk history](player-clarity-ui.md#c11e02--older-history-and-bounded-search) and [actual captions/hearing](hearing-main-integration.md#manual-runtime-verification) retain event-time audience and permitted-word meanings. Current controlled Conversation checks cover draft/retry presentation; Journal has actual selection, exact Move, cancellation and changed-owner observations. No live generated reply is newly qualified.                                                                          |
+| J13/J25–J27 speech and reading       | [Native speech/search/paging/Talk history](player-clarity-ui.md#c11e02--older-history-and-bounded-search) and [actual captions/hearing](hearing-main-integration.md#focused-native-http-and-browser-observations) retain event-time audience and permitted-word meanings. Current controlled Conversation checks cover draft/retry presentation; Journal has actual selection, exact Move, cancellation and changed-owner observations. No live generated reply is newly qualified.                                                         |
 | J17–J18/J28–J35 entry and operations | Current required Time, exact checkpoint/protection recovery, [native owner Operations return](game-interaction-redesign.md#native-owner-return-at-a4e02cc--october-6-2026) and [native invitation/revocation/maintenance](multiplayer-entry-maintenance.md#invite-enrollment-and-revocation) retain distinct browser and administrative-write scope. Reading does not acquire control before Return.                                                                                                                                        |
 | J36–J45 creation and inspection      | [Existing typed-question acceptance](game-interaction-redesign.md#reused-typed-question-acceptance), native Preview/Save/Approve/Apply recovery, item/person/environment recovery, person save, definition/source navigation and the scaled editor observation cover their recorded native or controlled boundaries. No new provider quality or exhaustive long-history claim follows.                                                                                                                                                      |
 | J46 portability                      | The b26ecb7cb recharge/storage/return/touch continuation passes its concrete current interface requirements. Earlier native persistence and alternate-definition evidence retains its scope; arbitrary-world and real-device behavior is not inferred.                                                                                                                                                                                                                                                                                      |

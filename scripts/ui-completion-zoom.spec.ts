@@ -304,20 +304,78 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     expect(baseline.dom.appScale).toBe('1');
     expect(baseline.dom.visualScale).toBe(1);
     await capture('journal-browser-zoom-100.png', baseline.dom);
-    await x11(
-      'key',
-      '--clearmodifiers',
-      'ctrl+plus',
-      'ctrl+plus',
-      'ctrl+plus',
-      'ctrl+plus',
-      'ctrl+plus',
-    );
-    await expect
-      .poll(() => page!.evaluate(() => window.devicePixelRatio))
-      .toBeCloseTo(baseline.dom.dpr * 2, 5);
-    await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
-    const enlarged = await metrics();
+    const viewportDiagnostics = await page.evaluateHandle(() => {
+      const hud = document.querySelector<HTMLElement>('.ol-hud')!;
+      const events: Array<Record<string, unknown>> = [];
+      const record = (source: string, event?: Event) => {
+        events.push({
+          source,
+          trusted: event?.isTrusted,
+          time: performance.now(),
+          wallTime: new Date().toISOString(),
+          documentTime: document.timeline.currentTime,
+          innerWidth,
+          innerHeight,
+          dpr: devicePixelRatio,
+          visualWidth: visualViewport?.width,
+          visualHeight: visualViewport?.height,
+          visualScale: visualViewport?.scale,
+          narrow: hud.dataset.narrow,
+          compact: hud.dataset.compact,
+          tight: hud.dataset.tight,
+        });
+      };
+      const windowResize = (event: Event) => record('window-resize', event);
+      const visualResize = (event: Event) => record('visual-viewport-resize', event);
+      const attributes = new MutationObserver((changes) =>
+        record(`hud-attributes:${changes.map((change) => change.attributeName).join(',')}`),
+      );
+      attributes.observe(hud, {
+        attributes: true,
+        attributeFilter: ['data-narrow', 'data-compact', 'data-tight'],
+      });
+      window.addEventListener('resize', windowResize);
+      visualViewport?.addEventListener('resize', visualResize);
+      record('before-native-zoom');
+      return {
+        events,
+        finish() {
+          record('after-narrow-assertion');
+          window.removeEventListener('resize', windowResize);
+          visualViewport?.removeEventListener('resize', visualResize);
+          attributes.disconnect();
+          return events;
+        },
+      };
+    });
+    let enlarged: Awaited<ReturnType<typeof metrics>>;
+    try {
+      await x11(
+        'key',
+        '--clearmodifiers',
+        'ctrl+plus',
+        'ctrl+plus',
+        'ctrl+plus',
+        'ctrl+plus',
+        'ctrl+plus',
+      );
+      await expect
+        .poll(() => page!.evaluate(() => window.devicePixelRatio))
+        .toBeCloseTo(baseline.dom.dpr * 2, 5);
+      enlarged = await metrics();
+      report.zoom = { baseline, enlarged, browser: browser.version(), pid, ownedWindow, ratio: 2 };
+      report.viewportEvents = await viewportDiagnostics.evaluate(
+        (diagnostics) => diagnostics.events,
+      );
+      saveReport();
+      await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
+    } finally {
+      report.viewportEvents = await viewportDiagnostics.evaluate((diagnostics) =>
+        diagnostics.finish(),
+      );
+      saveReport();
+      await viewportDiagnostics.dispose();
+    }
     expect(enlarged.bounds).toEqual(baseline.bounds);
     expect(enlarged.xGeometry).toBe(baseline.xGeometry);
     expect(enlarged.dom.outerWidth).toBe(baseline.dom.outerWidth);
@@ -326,7 +384,6 @@ test('native Chromium 200% zoom retains a Journal place and reachable keyboard c
     expect(enlarged.dom.visualScale).toBe(1);
     for (const key of ['appScale', 'fontSize', 'bodyTextToken', 'cssZoom'] as const)
       expect(enlarged.dom[key]).toBe(baseline.dom[key]);
-    report.zoom = { baseline, enlarged, browser: browser.version(), pid, ownedWindow, ratio: 2 };
     await expect(heading).toHaveText(selected.place.label);
     await expect(detail).toHaveText(retainedText, { useInnerText: true });
     await journal.getByRole('button', { name: 'Hide Journal panel', exact: true }).click();
